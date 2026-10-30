@@ -1,0 +1,788 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+  "runtimeInstalled": true,
+  "scope": "UI6e6381f1/API3d1b3b5d installed on3015/Tuna; verified APK59 packages 15, offline or unverified 6. Controlled numeric-ICE canary mode change, synthetic online recovery, native UP and post-recovery cadence accepted. Ordinary Chrome, PH030 local route and physical network switching remain open.",
+  "runtime": {
+    "sourceRevision": "6e6381f1a72f85739788e452a96e135c88f8059c",
+    "apiSourceRevision": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+    "uiContainer": {
+      "id": "850a37f413c8dbd1ce40337b6c6f9c824130e8e89b8476a53b44e0e4f92edcc4",
+      "imageId": "sha256:137882c2ede9c1cca844b3331c131c55ec402d8cde401100e0108282a77b4714",
+      "imageTag": "sphere-review-frontend:6e6381f1a72f85739788e452a96e135c88f8059c",
+      "startedAt": "2026-10-11T20:52:11.733300546Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "484d1a4ca0f1ac593a0ed851e2b8a9e128cf544c3389c3eaaec479b7718bbeb2",
+      "imageId": "sha256:ed11558043c2b81ca2ce1b33479212998686274f1e65246730df8470d69cb126",
+      "imageTag": "sphere-reviewed-backend:3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+      "startedAt": "2026-10-11T19:51:51.070954793Z",
+      "status": "running"
+    },
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otherContainersPreservedPerInstall": 45,
+    "primaryDirectVideoEnabled": true,
+    "directMediaControlInstalled": true
+  },
+  "delivery": {
+    "web": {
+      "runId": 38173354909,
+      "configImageId": "sha256:bc3f416409ca9c5c6adc917ef82804e799cb736a29ee3c4b1b0ef90aca6f5c26",
+      "installedImageId": "sha256:137882c2ede9c1cca844b3331c131c55ec402d8cde401100e0108282a77b4714"
+    },
+    "api": {
+      "runId": 38167980739,
+      "configImageId": "sha256:6ad7ce9e05df784afed07dee63f1b9522830511e4de3fa99182b2c9d3349be16",
+      "installedImageId": "sha256:ed11558043c2b81ca2ce1b33479212998686274f1e65246730df8470d69cb126"
+    },
+    "staticAssetsIdentical": true,
+    "streamRouteStaticAssetCount": 29,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-11T21:41:22.558437+00:00",
+        "apiSourceRevision": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+        "ready": {
+          "postgres": "ok",
+          "redis": "ok"
+        },
+        "anonymousHistoryStatus": 401
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-11T21:42:11.022910+00:00",
+        "apiSourceRevision": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+        "ready": {
+          "postgres": "ok",
+          "redis": "ok"
+        },
+        "anonymousHistoryStatus": 401
+      }
+    ],
+    "rootRedirect": {
+      "sourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+      "templateSha256": "7b70e792670184d69137a0b037ebcaefe8b19cf32deea6a4f31dff3d315eb3ba",
+      "observedAtUtc": "2026-10-11T21:08:40.935767+00:00",
+      "containersRestarted": 0,
+      "observations": [
+        {
+          "origin": "http://127.0.0.1:3015",
+          "status": 307,
+          "location": "/dashboard",
+          "destinationStatus": 200
+        },
+        {
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "status": 307,
+          "location": "/dashboard",
+          "destinationStatus": 200
+        }
+      ]
+    }
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "PH010 controlled numeric-ICE Chrome; actual native DOWN/MOVE/UP and mode transitions, one synthetic online event; no physical network change or ordinary-browser acceptance",
+    "modeRoundtrip": {
+      "at": "2026-10-11T21:16:43.395Z",
+      "previousOwnerReleased": true,
+      "peersBefore": 1,
+      "retiredPeers": 1,
+      "ready": true,
+      "control": "Непрерывное управление · зажмите и ведите мышь",
+      "commandsReplayed": false
+    },
+    "recovery": {
+      "at": "2026-10-11T21:17:16.424Z",
+      "trigger": "one synthetic online event",
+      "physicalNetworkChanged": false,
+      "connectedPeersBefore": 1,
+      "peerConnected": true,
+      "controlState": "ready",
+      "video": [
+        {
+          "framesDecoded": 35,
+          "framesPerSecond": 32,
+          "freezeCount": 0
+        }
+      ],
+      "commandsReplayed": false
+    },
+    "gestures": [
+      {
+        "observedAtUtc": "2026-10-11T21:17:11.978Z",
+        "sentEvents": 13,
+        "nativeUpConfirmed": true,
+        "nativeInputReceipts": 13,
+        "serverTouchEvents": 0
+      },
+      {
+        "observedAtUtc": "2026-10-11T21:17:47.248Z",
+        "sentEvents": 14,
+        "nativeUpConfirmed": true,
+        "nativeInputReceipts": 14,
+        "serverTouchEvents": 0
+      }
+    ],
+    "sustainedPostRecoveryCadence": [
+      {
+        "state": "closed",
+        "ice": "closed",
+        "videoRows": [],
+        "receivers": 1
+      },
+      {
+        "state": "connected",
+        "ice": "connected",
+        "videoRows": [
+          {
+            "kind": "video",
+            "mediaType": "video",
+            "timestamp": 1791754177848.576,
+            "packetsReceived": 233251,
+            "bytesReceived": 265822643,
+            "framesDecoded": 21530,
+            "framesDropped": 0,
+            "jitterBufferDelay": 1125.7939629999998,
+            "jitterBufferEmittedCount": 21530,
+            "totalDecodeTime": 6.922002,
+            "framesPerSecond": 28,
+            "frameWidth": 960,
+            "frameHeight": 540,
+            "keyFramesDecoded": 26,
+            "freezeCount": 0,
+            "pauseCount": 0,
+            "packetsLost": 0,
+            "nackCount": 0,
+            "pliCount": 0,
+            "firCount": 0,
+            "framesReceived": 21531,
+            "jitter": 0.01,
+            "retransmittedPacketsReceived": 224
+          }
+        ],
+        "receivers": 1
+      }
+    ],
+    "cadenceObservedAtUtc": "2026-10-11T21:29:37.849Z",
+    "sustainedCadenceAccepted": true,
+    "retiredNativeReceipts": [
+      {
+        "received": 924,
+        "forwarded": 922,
+        "budgetRejected": 0,
+        "invalidAccessUnits": 0,
+        "failed": 0,
+        "retainedInputFrames": 0,
+        "retainedInputBytes": 0,
+        "retainedOutputFrames": 0,
+        "retainedOutputBytes": 0,
+        "encodeCalls": 923,
+        "keyframeWaitDrops": 1,
+        "pausedFrames": 0,
+        "keyframeHints": 0,
+        "syncRequests": 2,
+        "forwardedBytes": 10816980,
+        "targetBitrateBps": 1425344,
+        "targetFramerate": 29
+      },
+      {
+        "received": 22985,
+        "forwarded": 22985,
+        "budgetRejected": 0,
+        "invalidAccessUnits": 0,
+        "failed": 0,
+        "retainedInputFrames": 0,
+        "retainedInputBytes": 0,
+        "retainedOutputFrames": 0,
+        "retainedOutputBytes": 0,
+        "encodeCalls": 22985,
+        "keyframeWaitDrops": 0,
+        "pausedFrames": 0,
+        "keyframeHints": 0,
+        "syncRequests": 1,
+        "forwardedBytes": 284806297,
+        "targetBitrateBps": 1446051,
+        "targetFramerate": 29
+      }
+    ],
+    "nativeReadbackVerification": {
+      "observedAtUtc": "2026-10-11T21:30:29.937234+00:00",
+      "versionCode": 10259,
+      "currentProcessFiltered": true,
+      "sameProcessAcrossReadback": true,
+      "processIdStored": false,
+      "retainedLogs": false,
+      "addressesStored": false
+    },
+    "ordinaryBrowserObservation": {
+      "schemaVersion": 1,
+      "observedAtUtc": "2026-10-11T21:49:08.453Z",
+      "scope": "Owned ordinary default Chrome on main PC, PH010 APK59, local3015 origin; no browser policy or physical network change",
+      "apkSourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+      "versionCode": 10259,
+      "uiSourceRevision": "6e6381f1a72f85739788e452a96e135c88f8059c",
+      "apiSourceRevision": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+      "numericIceOverride": false,
+      "browserCandidateAggregates": [
+        {
+          "state": "closed",
+          "ice": "closed",
+          "localHostCandidates": 1,
+          "localMdnsHostCandidates": 1,
+          "localSrflxCandidates": 1,
+          "localRelayCandidates": 0,
+          "video": []
+        },
+        {
+          "state": "closed",
+          "ice": "closed",
+          "localHostCandidates": 1,
+          "localMdnsHostCandidates": 1,
+          "localSrflxCandidates": 1,
+          "localRelayCandidates": 0,
+          "video": []
+        },
+        {
+          "state": "closed",
+          "ice": "closed",
+          "localHostCandidates": 1,
+          "localMdnsHostCandidates": 1,
+          "localSrflxCandidates": 1,
+          "localRelayCandidates": 0,
+          "video": []
+        },
+        {
+          "state": "closed",
+          "ice": "closed",
+          "localHostCandidates": 1,
+          "localMdnsHostCandidates": 1,
+          "localSrflxCandidates": 1,
+          "localRelayCandidates": 0,
+          "video": []
+        }
+      ],
+      "browserSamples": [
+        {
+          "received_at": "2026-10-11T21:47:39.733818+00:00",
+          "rendered_frames": 630,
+          "incoming_fps": 29,
+          "control_rtt_ms": 164,
+          "control_transport": "server_websocket",
+          "transport": "server_websocket",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_state": "connecting",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 2,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T21:47:49.733613+00:00",
+          "rendered_frames": 917,
+          "incoming_fps": 29,
+          "control_rtt_ms": 166,
+          "control_transport": "server_websocket",
+          "transport": "server_websocket",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_state": "connecting",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 3,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T21:48:04.726189+00:00",
+          "rendered_frames": 1350,
+          "incoming_fps": 28,
+          "control_rtt_ms": 227,
+          "control_transport": "server_websocket",
+          "transport": "server_websocket",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_state": "connecting",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 4,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T21:48:14.747491+00:00",
+          "rendered_frames": 1638,
+          "incoming_fps": 25,
+          "control_rtt_ms": 162,
+          "control_transport": "server_websocket",
+          "transport": "server_websocket",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_state": "failed",
+          "direct_failure": "connection_deadline",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 4,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T21:48:29.733799+00:00",
+          "rendered_frames": 2076,
+          "incoming_fps": 28,
+          "control_rtt_ms": 170,
+          "control_transport": "server_websocket",
+          "transport": "server_websocket",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_state": "failed",
+          "direct_failure": "connection_deadline",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 4,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T21:48:39.734823+00:00",
+          "rendered_frames": 2366,
+          "incoming_fps": 29,
+          "control_rtt_ms": 167,
+          "control_transport": "server_websocket",
+          "transport": "server_websocket",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_state": "failed",
+          "direct_failure": "connection_deadline",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 4,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T21:48:54.725133+00:00",
+          "rendered_frames": 2803,
+          "incoming_fps": 29,
+          "control_rtt_ms": 165,
+          "control_transport": "server_websocket",
+          "transport": "server_websocket",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_state": "failed",
+          "direct_failure": "connection_deadline",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 4,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T21:49:04.726273+00:00",
+          "rendered_frames": 3094,
+          "incoming_fps": 29,
+          "control_rtt_ms": 170,
+          "control_transport": "server_websocket",
+          "transport": "server_websocket",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_state": "failed",
+          "direct_failure": "connection_deadline",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 4,
+          "decode_errors": 0,
+          "render_errors": 0
+        }
+      ],
+      "nativeSamples": [
+        {
+          "received_at": "2026-10-11T21:48:11.878052+00:00",
+          "kind": "sample",
+          "stage": "answer_sent",
+          "elapsed_ms": 10191,
+          "answer_sent": true,
+          "network": {
+            "local_candidates": 3,
+            "remote_candidates": 1,
+            "pairs": 1,
+            "checking_pairs": 1,
+            "failed_pairs": 0,
+            "succeeded_pairs": 0,
+            "requests_sent": 204,
+            "requests_received": 0,
+            "responses_sent": 0,
+            "responses_received": 0,
+            "dtls_state": "new"
+          }
+        },
+        {
+          "received_at": "2026-10-11T21:48:12.885076+00:00",
+          "kind": "sample",
+          "stage": "answer_sent",
+          "elapsed_ms": 11198,
+          "answer_sent": true,
+          "network": {
+            "local_candidates": 3,
+            "remote_candidates": 1,
+            "pairs": 1,
+            "checking_pairs": 1,
+            "failed_pairs": 0,
+            "succeeded_pairs": 0,
+            "requests_sent": 224,
+            "requests_received": 0,
+            "responses_sent": 0,
+            "responses_received": 0,
+            "dtls_state": "new"
+          }
+        },
+        {
+          "received_at": "2026-10-11T21:48:13.891342+00:00",
+          "kind": "sample",
+          "stage": "answer_sent",
+          "elapsed_ms": 12204,
+          "answer_sent": true,
+          "network": {
+            "local_candidates": 3,
+            "remote_candidates": 1,
+            "pairs": 1,
+            "checking_pairs": 1,
+            "failed_pairs": 0,
+            "succeeded_pairs": 0,
+            "requests_sent": 244,
+            "requests_received": 0,
+            "responses_sent": 0,
+            "responses_received": 0,
+            "dtls_state": "new"
+          }
+        }
+      ],
+      "browserSummary": {
+        "max_control_rtt_ms": 227,
+        "max_decode_errors": 0,
+        "max_render_errors": 0
+      },
+      "directAttempts": 4,
+      "directFrames": 0,
+      "browserControlState": "ready",
+      "browserControlTransport": "server_websocket",
+      "directAccepted": false,
+      "closestLocalRouteAccepted": false,
+      "productionAccepted": false,
+      "inference": "mDNS host discovery and emulator/network NAT path remain suspected boundaries; exact resolution or network rejection is not proven",
+      "rawSdpRetained": false,
+      "candidateAddressesRetained": false,
+      "candidateNamesRetained": false,
+      "credentialsRetained": false,
+      "nativeTouchGestureTested": false,
+      "physicalNetworkChanged": false
+    }
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+        "version": "1.2.55-dev",
+        "versionCode": 10255,
+        "sha256": "9abe0fce7846cfc61e1d19142b2ce854d096eac71b63fe5ba0ec6465030892ca",
+        "bytes": 57688052,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1038,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1038,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      },
+      {
+        "sourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+        "version": "1.2.59-dev",
+        "versionCode": 10259,
+        "sha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "bytes": 57688052,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1043,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1043,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "17991c70-2fc7-4dd6-86ba-42f12ce6a4fc",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:19.676542+00:00"
+      },
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "device": "auto-ph-028",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "c2ef5b87-60b3-4403-aa26-8902c2d1f130",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:21.980667+00:00"
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "c540d277-7811-4672-81d0-67c67356f604",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:26.772577+00:00"
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "device": "auto-ph-022",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "ec2c0883-5c8e-4ce6-b6cb-d55ad36f887f",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:39.476251+00:00"
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "device": "auto-ph-020",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "111061e3-16fe-46ee-99be-73df5eb224cc",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:49.391165+00:00"
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "device": "auto-ph-019",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "78fd72e1-48f7-40cb-8b1f-f1151e72d2e2",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:51.756773+00:00"
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "device": "auto-ph-018",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "162644fa-cc76-48f1-8c90-708227e67110",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:59.273574+00:00"
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "device": "auto-ph-017",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "ad58a820-bbd7-45a5-ad49-c64834244b84",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:01.354898+00:00"
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "device": "auto-ph-016",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "a76b7731-618b-4677-b497-ae6406a1bf1f",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:02.777407+00:00"
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "device": "auto-ph-015",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "e0669038-e8ed-4b51-9ea1-93005a6e6375",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:06.182717+00:00"
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "device": "auto-ph-014",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "91cd9cbb-e312-4b72-a536-0c15074f2fa5",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:04.825584+00:00"
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "device": "auto-ph-013",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "2a850884-0f22-41f3-abcf-a713b8776e88",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:08.022650+00:00"
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "device": "auto-ph-012",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "fd022925-db21-4a8e-8233-cb9875e400a1",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:07.948183+00:00"
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "eab9b447-8715-407d-8e24-1973c57f9435",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:06.484255+00:00"
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "b08efd84-825b-4c4a-be9e-116e0cdeeff5",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:15:00.456247+00:00"
+      }
+    ],
+    "offlineDevices": [
+      {
+        "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+        "device": "auto-ph-029",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+        "device": "auto-ph-027",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+        "device": "auto-ph-026",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+        "device": "auto-ph-024",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+        "device": "auto-ph-023",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+        "device": "auto-ph-021",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      }
+    ],
+    "ordinaryChannelUnchanged": true,
+    "targetedRecoveryGrants": 15,
+    "fullExactAndroidCi": {
+      "runId": 38175086842,
+      "sourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+      "status": "completed",
+      "conclusion": "success",
+      "observedAtUtc": "2026-10-11T21:40:01.855801+00:00"
+    },
+    "heldVersionCodes": [
+      10257,
+      10258
+    ],
+    "dataClears": 0,
+    "adbInstalls": 0
+  },
+  "deliveredCorrectionIds": [
+    "stream-live-metric-sampler",
+    "stream-view-permission-and-startup-release",
+    "stream-coded-reference-factory-policy",
+    "review-origin-preserving-root-redirect"
+  ],
+  "productionAccepted": false,
+  "closestLocalRouteAccepted": false,
+  "physicalNetworkSwitchAccepted": false
+}

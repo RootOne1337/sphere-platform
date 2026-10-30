@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "kind": "NAVIGATION_RECOVERY_PRIMITIVES_NOT_PRODUCTION_OBSTACLE_AVOIDANCE",
+  "observedAtUtc": "2026-10-17T14:45:34.572407+00:00",
+  "sourceRevision": "ff4eaf80d77e4593c43640ce351a11b688690aa4",
+  "device": "auto-ph-011",
+  "implemented": {
+    "boundedProgressSupervisor": true,
+    "receiverFreshnessGuard": true,
+    "goalLossIsNotArrival": true,
+    "cameraMotionDoesNotOverrideKnownDistanceProgress": true,
+    "fallWaitAndConfirmationContract": true,
+    "atMostOnceRecoveryDirective": true,
+    "calibratedLowObstacleJumpGate": true,
+    "assessedFreeSideRequiredForDetour": true,
+    "sequentialDoubleTapAndCameraDrag": true,
+    "optionalOpenCvBackgroundMotion": true
+  },
+  "notImplementedOrAccepted": {
+    "semanticBuildingAndObstaclePerception": true,
+    "autonomousFreeSideAssessment": true,
+    "automaticFallenPoseClassifier": true,
+    "recoveryActuatorIntegratedIntoWaypointRunner": true,
+    "simultaneousStickCameraJump": true,
+    "nativeMultiContactProtocol": true,
+    "positiveJumpLiveCalibration": true,
+    "positiveCameraLiveCalibration": true,
+    "productionObstacleAvoidance": true
+  },
+  "verification": {
+    "motorTestsPassed": 122,
+    "motorTestsLog": {
+      "path": ".local-pilot/motor-amd-20261017/recovery-tests.log",
+      "sha256": "36f26353d76d8fabcdc4801b0dcf0e92d8854a4562a3382ca4eac6e5419cf809"
+    },
+    "ruffPassed": true,
+    "pipCheckPassed": true,
+    "opencv": "4.13.0.92",
+    "numpy": "2.4.4",
+    "opticalFlowTests": "synthetic translated background / excluded moving avatar / missing texture",
+    "realObstacleAvoidanceLiveVerified": false
+  },
+  "secondWaypointNegativeTrial": {
+    "raw": {
+      "path": ".local-pilot/motor-amd-20261017/waypoint-cv-v2.json",
+      "sha256": "17247cbb5502807fc425d20dd18d64936380fb0c16b54769931c33c00091d73e"
+    },
+    "finishReason": "visual_target_lost",
+    "nativeApplied": 37,
+    "participantClosed": true,
+    "goalReachedConfirmed": false
+  },
+  "gameState": {
+    "initialNativeScreenshot": {
+      "path": ".local-pilot/motor-amd-20261017/ph011-20261017T142209Z.png",
+      "sha256": "2f359fd40ff83d726c53412c4c2a34a86842f52ad80d030429a0a04d71ee30e4"
+    },
+    "initialCondition": "Native game chat explicitly says disconnected for inactivity.",
+    "fullGameRestartsBeforeAndroidReboot": 2,
+    "androidRebootRequested": true,
+    "androidRebootAcknowledged": true,
+    "gameLaunchedAfterAndroidReboot": true,
+    "finalNativeLoadingScreenshotBeforeReboot": {
+      "path": ".local-pilot/motor-amd-20261017/ph011-20261017T143553Z.png",
+      "sha256": "18f07a4c2a9c9b855764ab76220507e23c48762344ce04d9fe535f7d60773f8d"
+    },
+    "finalGuardDecodedScreenshot": {
+      "path": ".local-pilot/motor-amd-20261017/input-calibration-guard-144333-after.png",
+      "sha256": "0105b932143b337a745de0af66089006fc7a7dcba59d460601ab029b211e2259"
+    },
+    "result": "Game remains at Connecting to server; cause not localized.",
+    "gameDataCleared": false,
+    "otherEmulatorsRestarted": false,
+    "cooldownAtLeast20SecondsMaintained": true
+  },
+  "finiteGuardLive": {
+    "raw": {
+      "path": ".local-pilot/motor-amd-20261017/input-calibration-guard-144333.json",
+      "sha256": "c8ea3f70ecc90dc64497b3e50e0fd005e6a71ca35a07924bf8c991695f852617"
+    },
+    "kind": "READ_ONLY_PHYSICAL_EXECUTION_DISABLED",
+    "success": true,
+    "failure": null,
+    "durationSeconds": 6.001,
+    "checkedFrames": 114,
+    "physicalActions": 0,
+    "nativeAlive": 20,
+    "participantClosed": true,
+    "serverBootstrapBytes": 0,
+    "serverBytesAfterHandover": 0
+  },
+  "uiApiApkChanged": false,
+  "productionNavigationAccepted": false,
+  "sources": [
+    "https://docs.opencv.org/4.13.0/dc/d6b/group__video__track.html",
+    "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchBridge.java",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedPointerArbiter.kt"
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T21:19:44.815923+00:00",
+  "scope": "One addressed PH011 main-APK canary installation; source/CI binding is separate from physical VPN acceptance. PH030 was offline and received no APK84 grant.",
+  "apk": {
+    "version": "1.2.84-dev",
+    "versionCode": 10284,
+    "sourceRevision": "7f06701ed6f1a0fd66a0d7d5f50234160e5324cd",
+    "sha256": "33916fa4f605afbbd62e2b76032b8c7b51184ef919afff50f9e3c2ce88c2b7b0",
+    "installedDevices": [
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10284,
+        "installedPackageSha256": "33916fa4f605afbbd62e2b76032b8c7b51184ef919afff50f9e3c2ce88c2b7b0",
+        "packageProofObservedAtUtc": "2026-10-21T21:19:44.815923+00:00",
+        "completedAddressedOta": true,
+        "recoveredAfterProcessRestart": true
+      }
+    ]
+  },
+  "componentCi": {
+    "schemaVersion": 1,
+    "apkSourceRevision": "7f06701ed6f1a0fd66a0d7d5f50234160e5324cd",
+    "apkSha256": "33916fa4f605afbbd62e2b76032b8c7b51184ef919afff50f9e3c2ce88c2b7b0",
+    "versionCode": 10284,
+    "hostedCiSourceRevision": "c6aa6f0cd2dfbaacc1adc94a0d43eb42892cdbd7",
+    "runId": 39668905286,
+    "runAttempt": 1,
+    "ciConclusion": "success",
+    "androidTree": "7eee3c47c047928ce6ed82d1b950aa0a4bd37e35",
+    "nativeBuilderGitBlob": "f151e9d3d419df0f0134d4819379adb40dc62a00",
+    "nativeSourceAndHardeningContractEqual": true,
+    "localApkNativeManifestVerified": true,
+    "hostedTestResults": {
+      "dev": {
+        "tests": 1275,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 1275,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "localTestResults": {
+      "dev": {
+        "tests": 1275,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1275,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "apkBuiltByHostedCi": false,
+    "sourceRelabelled": false,
+    "scope": "The local signed APK and hosted-tested components share identical Android/native builder source. Signing/discovery differ; CI APKs are not installed.",
+    "runtimeAcceptance": false,
+    "ciStatusPublished": false
+  },
+  "ordinaryChannelUnchanged": true,
+  "fleetRollout": false,
+  "dataClears": 0,
+  "adbInstalls": 0,
+  "physicalVpnAccepted": false,
+  "productionAccepted": false,
+  "privateDeliveryReceiptSha256NormalizedLf": "f0b115d99ccb8d528f5771224df6ba41d03e324c79e1888d54d9ddb636f550fe"
+}

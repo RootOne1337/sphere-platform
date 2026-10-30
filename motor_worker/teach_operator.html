@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sphere · Обучающий проход</title>
+<style>
+:root{color-scheme:dark;font:15px system-ui;background:#111315;color:#edf0f3}body{margin:0}
+main{max-width:1100px;margin:auto;padding:20px}header{position:sticky;top:0;background:#111315;padding:12px 0;display:flex;gap:16px;align-items:center;z-index:1}
+h1{font-size:20px;margin:0}p{color:#aeb6be;line-height:1.5}button{margin-left:auto;background:#cb4b51;border:0;border-radius:8px;padding:12px 18px;color:white;font:inherit;cursor:pointer}
+canvas{display:block;width:auto;height:auto;max-width:100%;max-height:72vh;margin:auto;touch-action:none;background:#08090a;border:1px solid #34383d;border-radius:8px}
+#state{padding:12px 0;min-height:24px}small{color:#aeb6be}.panel{padding:8px 16px;border:1px solid #34383d;border-radius:8px;margin-top:16px}
+</style>
+<main><header><h1>Sphere · Обучающий проход</h1><button id="stop">Завершить запись</button></header>
+<div id="state" role="status">Подключаемся к выбранному Android…</div>
+<canvas id="screen" width="960" height="540" aria-label="Управление Android одним пальцем"></canvas>
+<div class="panel"><p>Управляйте нажатием и перетаскиванием по экрану. Один жест удерживается до отпускания. Это ручная демонстрация, нейросеть не управляет.</p>
+<p>Предпросмотр — до <span id="preview-rate">5</span> кадров/с. Исходный H.264 сохраняется отдельно с фактической частотой устройства. Эта панель не повышает качество игры.</p>
+<small>При потере окна, соединения или подтверждений Android управление прекращается. Автоматического переподключения нет. Не вводите здесь пароли и личные данные.</small></div></main>
+<script>
+'use strict';
+const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d'),status=document.getElementById('state'),stopButton=document.getElementById('stop');
+const socket=new WebSocket(`ws://${location.host}/control`);socket.binaryType='blob';
+let sequence=0,ready=false,binding=null,held=null,ended=false,imageUrl=null,drawn=false,displayNumber=0,offeredNumber=0;
+function send(data){if(socket.readyState!==WebSocket.OPEN||ended)return;socket.send(JSON.stringify({...data,sequence:++sequence}));}
+function stop(){if(ended)return;send({type:'stop'});ended=true;ready=false;held=null;status.textContent='Завершаем запись и освобождаем ввод Android…';stopButton.disabled=true;}
+socket.onmessage=event=>{if(typeof event.data==='string'){const s=JSON.parse(event.data);if(s.type!=='state')return;if(binding&&binding.capture_epoch!==s.capture_epoch)drawn=false;binding=s;document.getElementById('preview-rate').textContent=String(s.preview_hz);ready=s.ready&&!s.failure&&!ended&&drawn;status.textContent=s.failure?`Остановлено: ${s.failure}`:ended?'Запись завершается…':ready?'Запись идёт · управляйте выбранным Android':'Ожидаем видеокадр и готовность управления Android…';return;}
+ const image=new Image(),number=++offeredNumber;const next=URL.createObjectURL(event.data);image.onload=()=>{if(ended||number<=displayNumber){URL.revokeObjectURL(next);return;}displayNumber=number;if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=next;canvas.width=image.width;canvas.height=image.height;ctx.drawImage(image,0,0);drawn=true;ready=!!binding?.ready&&!binding?.failure;};image.onerror=()=>URL.revokeObjectURL(next);image.src=next;};
+socket.onclose=()=>{ready=false;ended=true;held=null;status.textContent='Сеанс закрыт. Результат записи проверьте в отчёте Sphere worker.';stopButton.disabled=true;if(imageUrl)URL.revokeObjectURL(imageUrl);};
+socket.onerror=()=>{ready=false;status.textContent='Соединение потеряно. Управление остановлено.';};
+const pulse=setInterval(()=>{if(!ended)send({type:'heartbeat'});else clearInterval(pulse);},100);
+function point(event,action){if(!binding)return;const r=canvas.getBoundingClientRect();send({type:'pointer',capture_epoch:binding.capture_epoch,action,x:Math.max(0,Math.min(binding.width-1,Math.floor((event.clientX-r.left)*binding.width/r.width))),y:Math.max(0,Math.min(binding.height-1,Math.floor((event.clientY-r.top)*binding.height/r.height)))});}
+canvas.addEventListener('pointerdown',e=>{if(!ready||held!==null||e.button!==0)return;e.preventDefault();held=e.pointerId;canvas.setPointerCapture(e.pointerId);point(e,0);});
+canvas.addEventListener('pointermove',e=>{if(ready&&held===e.pointerId)point(e,2);});
+canvas.addEventListener('pointerup',e=>{if(held!==e.pointerId)return;point(e,1);held=null;});
+canvas.addEventListener('pointercancel',e=>{if(held!==e.pointerId)return;point(e,3);held=null;});
+stopButton.addEventListener('click',stop);window.addEventListener('blur',stop);window.addEventListener('pagehide',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
+</script></html>

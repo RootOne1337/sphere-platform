@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T18:24:31.275158+00:00",
+  "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+  "completed": {
+    "state": "complete",
+    "pid": 43640,
+    "administrator": false,
+    "launchMode": "limited-unprivileged",
+    "vssAccessGuaranteed": false,
+    "startedUtc": "2026-10-10T10:19:52.233013+00:00",
+    "dueUtc": "2026-10-10T18:19:52.233013+00:00",
+    "samplesLimit": 241,
+    "samplesWritten": 241,
+    "intervalSeconds": 120,
+    "dockerEverySamples": 8,
+    "reportBudgetBytes": 16777216,
+    "sampleLimitBytes": 131072,
+    "reportBytes": 3154683,
+    "cleanupPerformed": false,
+    "deviceCommandsSent": false,
+    "autostartConfigured": false,
+    "fullDirectoryScans": false,
+    "processIoIsWriterAttribution": false,
+    "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+    "lastSampleUtc": "2026-10-10T18:19:52.234782+00:00",
+    "freeDiskBytes": 36098129920,
+    "finishedUtc": "2026-10-10T18:20:01.527358+00:00"
+  },
+  "completedScalars": {
+    "firstSampleUtc": "2026-10-10T10:19:52.234371+00:00",
+    "lastSampleUtc": "2026-10-10T18:19:52.234782+00:00",
+    "firstFreeBytes": 49300525056,
+    "lastFreeBytes": 36098129920,
+    "minimumFreeBytes": 36051365888,
+    "maximumFreeBytes": 49306447872,
+    "freeDeltaBytes": -13202395136,
+    "dockerAllocationSamples": 241,
+    "distinctDockerAllocationBytes": [
+      234731077632
+    ],
+    "distinctPagefileAllocatedMiB": [
+      48320
+    ],
+    "vssUnavailableSamples": 241
+  },
+  "current": {
+    "state": "running",
+    "pid": 2380,
+    "administrator": false,
+    "launchMode": "limited-unprivileged",
+    "vssAccessGuaranteed": false,
+    "startedUtc": "2026-10-10T18:22:19.273130+00:00",
+    "dueUtc": "2026-10-11T02:22:19.273130+00:00",
+    "samplesLimit": 241,
+    "samplesWritten": 2,
+    "intervalSeconds": 120,
+    "dockerEverySamples": 8,
+    "reportBudgetBytes": 16777216,
+    "sampleLimitBytes": 131072,
+    "reportBytes": 37844,
+    "cleanupPerformed": false,
+    "deviceCommandsSent": false,
+    "autostartConfigured": false,
+    "fullDirectoryScans": false,
+    "processIoIsWriterAttribution": false,
+    "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+    "lastSampleUtc": "2026-10-10T18:24:19.273540+00:00",
+    "freeDiskBytes": 36099588096
+  },
+  "currentProcess": {
+    "pid": 2380,
+    "name": "python.exe",
+    "matchingCommand": true,
+    "createdUtc": "2026-10-10T18:22:19.0768400Z"
+  },
+  "gap": {
+    "fromUtc": "2026-10-10T18:19:52.234782+00:00",
+    "toUtc": "2026-10-10T18:22:19.273130+00:00",
+    "covered": false
+  },
+  "scope": "Limited metadata observer, 24 named files, host RAM/commit/process IO and periodic Docker/WSL aggregates. No privileged VSS/USN/kernel writer attribution, no full directory scans, no autostart. Known build artifacts and image deliveries occurred during this window; their total allocation is not reconciled here.",
+  "writerAttribution": "UNDETERMINED",
+  "resourceLeakFixed": false,
+  "collectorDeletedFiles": false,
+  "collectorSentDeviceCommands": false
+}

@@ -1,0 +1,288 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "checks": {
+    "agentStatusDeviceVpn": {
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "startedAt": "2026-10-06T07:28:13.185122+00:00",
+      "finishedAt": "2026-10-06T07:28:25.056431+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "network": "none",
+      "backendApplicationSourceMounted": false,
+      "maintenanceHelperSourceMounted": false,
+      "postgresAcceptance": false,
+      "deviceCommandsSent": false,
+      "runtimeServicesRestarted": false,
+      "result": {
+        "tests": 596,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "junitDurationSeconds": 6.714
+      },
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "agent-status-image-tests.json",
+          "sha256": "71d8a8c61c1897a4ae6101717deb824065dda99409582a384f1681b2524a3857",
+          "bytes": 752
+        },
+        {
+          "retainedPrivateReceipt": "agent-status-image-tests.log",
+          "sha256": "11b6be60d06b081e16d61ba2c8553d3bb9f103ed6cc5c7dd772cb115503b3f06",
+          "bytes": 762
+        },
+        {
+          "retainedPrivateReceipt": "agent-status-image-tests.xml",
+          "sha256": "e3297337b42cc321560fcd45d86058d2ee554268249a2e6877d652a85568ac2b",
+          "bytes": 83267
+        }
+      ]
+    },
+    "catalogPureContracts": {
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "startedAt": "2026-10-06T07:29:02.540881+00:00",
+      "finishedAt": "2026-10-06T07:29:07.604328+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "network": "none",
+      "backendApplicationSourceMounted": false,
+      "maintenanceHelperSourceMounted": false,
+      "postgresAcceptance": false,
+      "deviceCommandsSent": false,
+      "runtimeServicesRestarted": false,
+      "result": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "junitDurationSeconds": 0.79
+      },
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "catalog-image-tests.json",
+          "sha256": "edf82df03a6e35ebeeb0d393294a1a198c3fe0e8837d9506d88328a967e9b4c9",
+          "bytes": 746
+        },
+        {
+          "retainedPrivateReceipt": "catalog-image-tests.log",
+          "sha256": "f870c610ef3c3b142e86763d86959bd46c53391c4a28062617546e93981ff97d",
+          "bytes": 113
+        },
+        {
+          "retainedPrivateReceipt": "catalog-image-tests.xml",
+          "sha256": "285f84f61b5350001ce886415acc37027fd85858f64872a1cdd746264f420db9",
+          "bytes": 5629
+        }
+      ],
+      "overlapsSourceSelectedSet": true
+    },
+    "resourceContracts": {
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "startedAt": "2026-10-06T07:29:13.944706+00:00",
+      "finishedAt": "2026-10-06T07:29:20.052290+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "network": "none",
+      "backendApplicationSourceMounted": false,
+      "maintenanceHelperSourceMounted": false,
+      "postgresAcceptance": false,
+      "deviceCommandsSent": false,
+      "runtimeServicesRestarted": false,
+      "result": {
+        "tests": 35,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "junitDurationSeconds": 2.112
+      },
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "resource-image-tests.json",
+          "sha256": "7e8119fe2f7be5cc9214447b81f254334ace07dde0f5962a93de1b96b94d7e57",
+          "bytes": 747
+        },
+        {
+          "retainedPrivateReceipt": "resource-image-tests.log",
+          "sha256": "53a7c087567a8c0a7f655cf7aea394f2b7b523c91a386eed5d12a56c327fac41",
+          "bytes": 113
+        },
+        {
+          "retainedPrivateReceipt": "resource-image-tests.xml",
+          "sha256": "712a1176919a124e540af790352c48a91df67c6489f0d7024eb82e0afa6269f9",
+          "bytes": 9717
+        }
+      ]
+    },
+    "packagedMaintenanceCli": {
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "startedAt": "2026-10-06T07:29:25.881382+00:00",
+      "finishedAt": "2026-10-06T07:29:28.107342+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "network": "none",
+      "backendApplicationSourceMounted": false,
+      "maintenanceHelperSourceMounted": false,
+      "postgresAcceptance": false,
+      "deviceCommandsSent": false,
+      "runtimeServicesRestarted": false,
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "maintenance-cli-image-check.json",
+          "sha256": "f7bd47e59b7fb77543fd64e97abdda7ec8a17ea6e5f10f557fa1bf6a7fdc6b54",
+          "bytes": 687
+        },
+        {
+          "retainedPrivateReceipt": "maintenance-cli-image-check.log",
+          "sha256": "b92fd93e76e520be4a32fb584f8baa6c748fabf961f9ace640efa7c703d803e0",
+          "bytes": 49
+        }
+      ]
+    },
+    "bootstrap": {
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "startedAt": "2026-10-06T07:30:54.560734+00:00",
+      "finishedAt": "2026-10-06T07:30:59.687283+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "network": "none",
+      "backendApplicationSourceMounted": false,
+      "maintenanceHelperSourceMounted": false,
+      "postgresAcceptance": false,
+      "deviceCommandsSent": false,
+      "runtimeServicesRestarted": false,
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "bootstrap-image-probe.json",
+          "sha256": "7c5bc10c96c668e115faf1bedcedbd32c84e68588ce1443d4fe535e059202e45",
+          "bytes": 683
+        },
+        {
+          "retainedPrivateReceipt": "bootstrap-image-probe.log",
+          "sha256": "5ce801916449798d42214a915d8682cea0680d84ba2ea674c5f5045965aa4ade",
+          "bytes": 917
+        }
+      ],
+      "result": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "testSource": {
+        "file": "tests/containers/backend_bootstrap_probe.py",
+        "sha256": "6c1bb79f18a4235228c777209ae63bc9fdaac79d9a24fb76eadc43eb79a3fb0f"
+      }
+    },
+    "mypy": {
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "startedAt": "2026-10-06T07:29:41.291466+00:00",
+      "finishedAt": "2026-10-06T07:29:52.543682+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "network": "none",
+      "backendApplicationSourceMounted": false,
+      "maintenanceHelperSourceMounted": false,
+      "postgresAcceptance": false,
+      "deviceCommandsSent": false,
+      "runtimeServicesRestarted": false,
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "mypy.json",
+          "sha256": "2ed4caa36be931fb188c210dc4de2c54e70ec5ec19141cbe7e10ce1d4f06d6b6",
+          "bytes": 664
+        },
+        {
+          "retainedPrivateReceipt": "mypy.log",
+          "sha256": "46d558359e0881a912b9a798110bd5f94e30862c4689a043d3558930931bd0de",
+          "bytes": 46
+        }
+      ],
+      "filesChecked": 237
+    },
+    "ruff": {
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "startedAt": "2026-10-06T07:31:36.045529+00:00",
+      "finishedAt": "2026-10-06T07:31:36.943419+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "network": "none",
+      "backendApplicationSourceMounted": false,
+      "maintenanceHelperSourceMounted": false,
+      "lintScriptSourceMounted": true,
+      "postgresAcceptance": false,
+      "deviceCommandsSent": false,
+      "runtimeServicesRestarted": false,
+      "scope": "full backend and tests, schema exporter, and seven catalog maintenance/generator writers",
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "ruff.json",
+          "sha256": "01b8769ef34ce93b758e0a485b679a3dc3ef8a707e8d67ff35d8b5df280531df",
+          "bytes": 804
+        },
+        {
+          "retainedPrivateReceipt": "ruff.log",
+          "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+          "bytes": 20
+        }
+      ],
+      "initialImportClassificationFailureRetained": true,
+      "layoutCorrection": "Archived scripts were mounted read-only at /app/scripts for lint classification only; application and maintenance bootstrap probes had no source mounts.",
+      "initialFailureProvenance": [
+        {
+          "retainedPrivateReceipt": "ruff-initial-layout.json",
+          "sha256": "b683491384f1146a228d88d2ed648ae0c711d24047279b324bf40a5b1c73b7ed",
+          "bytes": 772
+        },
+        {
+          "retainedPrivateReceipt": "ruff-initial-layout.log",
+          "sha256": "0542b21c658bca5a66af71bfbf16a2016050d2817fe9495e7c6ccee7972e750e",
+          "bytes": 7433
+        }
+      ]
+    },
+    "openapi": {
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "startedAt": "2026-10-06T07:30:46.125055+00:00",
+      "finishedAt": "2026-10-06T07:30:49.949979+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "network": "none",
+      "backendApplicationSourceMounted": false,
+      "maintenanceHelperSourceMounted": false,
+      "postgresAcceptance": false,
+      "deviceCommandsSent": false,
+      "runtimeServicesRestarted": false,
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "api-schema-check.json",
+          "sha256": "3cc4de14905c97af73f6c8db4c0b2251bc248fcae033ea152bf729dcaaf3d9f5",
+          "bytes": 678
+        },
+        {
+          "retainedPrivateReceipt": "api-schema-check.log",
+          "sha256": "124f6b5dc6f13ea0d563eac68c035d6de5edd927ec049ed923d2ef3fc2bb5407",
+          "bytes": 316
+        }
+      ]
+    }
+  },
+  "uniqueCrossRunTestTotalClaimed": false,
+  "acceptanceBoundary": "Offline exact-image contracts and packaged bootstrap, not PostgreSQL, Android runtime or fleet execution."
+}

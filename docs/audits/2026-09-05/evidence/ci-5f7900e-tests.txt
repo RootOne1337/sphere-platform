@@ -1,0 +1,10 @@
+Backend run 34489393150, head 5f7900e84c15f903a7b9ac19285cc0225e20a4a5, attempt 1
+Full suite summary and five new saved-route cases (three PostgreSQL/ASGI, two generator).
+
+Tests	Unit and real-service regression tests	2026-09-10T14:31:26.7489144Z tests/production/test_agent_tenant_runtime.py::test_public_discovery_advertises_optional_same_installation_fallback[None] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T14:31:27.0579836Z tests/production/test_agent_tenant_runtime.py::test_public_discovery_advertises_optional_same_installation_fallback[https://secondary.invalid] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T14:31:27.5160638Z tests/production/test_agent_tenant_runtime.py::test_refresh_response_lost_on_primary_replays_on_secondary_origin PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T14:34:40.8127246Z tests/test_agent_config_routes.py::test_config_generator_preserves_optional_fallback[None] PASSED [ 55%]
+Tests	Unit and real-service regression tests	2026-09-10T14:34:40.8150538Z tests/test_agent_config_routes.py::test_config_generator_preserves_optional_fallback[https://secondary.invalid] PASSED [ 55%]
+Tests	Unit and real-service regression tests	2026-09-10T14:35:16.5420307Z Required test coverage of 65% reached. Total coverage: 69.38%
+Tests	Unit and real-service regression tests	2026-09-10T14:35:16.5420720Z ================= 1390 passed, 4 warnings in 289.08s (0:04:49) =================

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "runtimeInstalled": true,
+  "productionAccepted": false,
+  "observedAtUtc": "2026-10-26T17:02:19.992396841Z",
+  "scope": "Physical key remapping to existing calibrated control roles; not gameplay or browser acceptance",
+  "runtime": {
+    "sourceRevision": "60c0dc7a56e3d027becdc5863ce979c8d09495a6",
+    "apiSourceRevision": "1afdc529e18cd34b5d8ee0919f217076a8592846",
+    "imageId": "sha256:fb1ba6a7c6ee35d593cb962cda4f85b1bd624e314b99b388cd94a5afd705e9c1",
+    "otherContainersPreserved": 45,
+    "apkChanges": 0,
+    "otaCatalogPreserved": true
+  },
+  "deliveredCorrectionIds": [
+    "TEACHING_PHYSICAL_KEYS_20261026"
+  ],
+  "browser": {
+    "finiteAccepted": false,
+    "reason": "CUA and Node REPL fail before executing code: kernel assets Windows error 3"
+  },
+  "ci": {
+    "mode": "maintainer-local-executor",
+    "runId": "20261026T165531Z-345968f2",
+    "tests": {
+      "tests": 2719,
+      "passed": 2719,
+      "failures": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "suites": 198,
+      "success": true
+    },
+    "github": {
+      "id": 57284835141,
+      "context": "Sphere Local / Frontend regressions",
+      "state": "success",
+      "createdAt": "2026-10-26T16:57:59Z",
+      "readbackVerified": true,
+      "targetUrl": null
+    },
+    "stepExitCodes": {
+      "action-contract": 0,
+      "jest": 0,
+      "test_preview_relay.cjs": 0,
+      "test_frontend_standalone_probe.mjs": 0,
+      "test_package_command_failure.mjs": 0,
+      "archive-admission": 0,
+      "types": 0
+    },
+    "nodeVersion": "v24.22.1"
+  },
+  "packaging": {
+    "linuxImageBoundToSource": true,
+    "pages": 26,
+    "clientAssets": 72,
+    "archivesCreated": 0
+  },
+  "previousUi": "sphere-review-frontend:b1e897979538791a1829c7b8dde77b5186ba3bc4",
+  "privateEvidence": [
+    {
+      "privateFile": ".local-pilot/local-ci/runs/20261026T165531Z-345968f2/receipt.json",
+      "sha256": "b79366c1f6c8a5008939c4e08955f95f7bd55af7fbc4addf43b3a7ae00b68191"
+    },
+    {
+      "privateFile": ".local-pilot/teaching-keys-web-60c0dc7a/receipt.json",
+      "sha256": "e59455d47903c4df33685a0d60996e20059ff298869dfc01fdae410ab9498534"
+    },
+    {
+      "privateFile": ".local-pilot/reviewed-web-install-60c0dc7a56e3-2a70240b/installed.json",
+      "sha256": "a33a9b0ea968d7b22082c8a002aa3999245328add065f792d21921caeb21d759"
+    }
+  ],
+  "limits": [
+    "browser rendering and actual assigned-key Android input unverified",
+    "six role bindings, not arbitrary zone count or account preset sync",
+    "no live motor navigation or scene qualification performed by this update"
+  ]
+}

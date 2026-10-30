@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,11 +18,25 @@ class ScriptVersion(Base, UUIDMixin, TimestampMixin):
     Структура DAG-шагов описана в TZ-04 SPLIT-1.
     """
     __tablename__ = "script_versions"
+    __table_args__ = (
+        CheckConstraint(
+            "(dag_hash IS NULL) = (node_count IS NULL)",
+            name="ck_script_versions_dag_metadata_pair",
+        ),
+        CheckConstraint("node_count >= 0", name="ck_script_versions_node_count"),
+        CheckConstraint(
+            "dag_hash IS NULL OR dag_hash ~ '^[0-9a-f]{64}$'",
+            name="ck_script_versions_dag_hash",
+        ).ddl_if(dialect="postgresql"),
+    )
 
     script_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scripts.id"), index=True)
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     dag: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
+    # Nullable during writer rollout/backfill; derived from the stored JSONB DAG.
+    dag_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    node_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T12:51:26.507214+00:00",
+  "state": "RUNNING_FINITE_LIMITED_OBSERVATION",
+  "sourceRevision": "1078170966ce1072542940d5f2859ed32e0fc2df",
+  "collectorSourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+  "process": {
+    "pid": 26192,
+    "creationUtc": "2026-10-09T12:42:56.8433900Z",
+    "commandBindingVerified": true
+  },
+  "privateReportDirectory": ".local-pilot/host-storage-limited-20261009T124256Z",
+  "startedUtc": "2026-10-09T12:42:57.051894+00:00",
+  "dueUtc": "2026-10-10T12:42:57.051894+00:00",
+  "intervalSeconds": 120,
+  "samplesLimit": 721,
+  "completeSamplesVerified": 5,
+  "reportBudgetBytes": 16777216,
+  "sampleLimitBytes": 131072,
+  "watchFileCount": 24,
+  "firstSampleUtc": "2026-10-09T12:42:57.052934+00:00",
+  "lastSampleUtc": "2026-10-09T12:50:57.052463+00:00",
+  "prefixSha256": "744aa366cac63eccfb5411eddf4d517e653a645b210d3d6cc454e0b42774e053",
+  "prefixBytes": 73462,
+  "firstFreeDiskBytes": 47626465280,
+  "lastFreeDiskBytes": 47609090048,
+  "windowFreeDiskDeltaBytes": -17375232,
+  "dockerVhdxBaselineAllocatedBytes": 234731077632,
+  "sameIdentityNamedFileAllocationChanges": [
+    {
+      "fileName": "state_5.sqlite-wal",
+      "allocatedDeltaBytes": 1400800
+    },
+    {
+      "fileName": "thread_history_1.sqlite-wal",
+      "allocatedDeltaBytes": 1540880
+    }
+  ],
+  "lastHostCountersState": "measured",
+  "vssState": "unavailable",
+  "administrator": false,
+  "kernelTraceStarted": false,
+  "usnReaderStarted": false,
+  "fullDirectoryScans": false,
+  "autostartConfigured": false,
+  "cleanupPerformed": false,
+  "deviceCommandsSent": false,
+  "writerAttribution": "UNDETERMINED",
+  "claims": {
+    "newPeriodicSamplesConfirmed": true,
+    "previousGapCovered": false,
+    "futureDeadlineCoverageGuaranteed": false,
+    "globalDiskWriterIdentified": false,
+    "memoryLeakFixed": false
+  }
+}

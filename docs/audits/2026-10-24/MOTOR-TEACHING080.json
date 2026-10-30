@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T19:03:51.602573+00:00",
+  "scope": "Bounded opt-in encoded teaching capture, own single-pointer input journal, offline ordered view bundles and observation-only progress. Not autonomous navigation.",
+  "baseRevision": "1f2baa1953d6030b22fa2ee896c9e350e832b3ce",
+  "workerVersion": "0.8.0",
+  "motorTestsPassed": 295,
+  "testSeconds": 80.668,
+  "testLogSha256NormalizedLf": "792fe188bd6847ad110d3052760d5c27a67c3da406c015ef567608e961f4d336",
+  "ruffPassed": true,
+  "sourceArtifacts": {
+    "motor_worker/__init__.py": "61664b0a217c6bb263fa05be76d92626da0c0dbd2840ca84050be89d46b94012",
+    "motor_worker/receiver.py": "65916aa76f89d0fcc8e34aa458f2f75d37a66b37ab7c400bcc13df8ab4980bca",
+    "motor_worker/session.py": "ad40c2ea9b677b770dbd693e9807ec064bd6d5ebcb759a47dc7afab2d7f218d2",
+    "motor_worker/teach_capture.py": "20746c752851de799efed9770af7bb2ada4ab29ce24cab737745044c7135fe96",
+    "motor_worker/teach_operator.py": "959d2c5eca886d9ea86be954877b9ffb13709ea91bbbe9bd9794830a663d0813",
+    "motor_worker/teach_operator.html": "6c876ff0af747e7abb0a4bbff62e1340c3fc019079aee61b63d11fc3e077b5ff",
+    "motor_worker/teach.py": "9c3b4482b76d3fa0999d4193e8969e8869d0bd2297c4eb17aa8c077f87451c4e",
+    "motor_worker/route_memory.py": "72befece5981cac0d20100567b19d19b8e52f05f071b9bf45b78ad2e4dd61aae",
+    "motor_worker/route_quality.py": "c4714d2fe824159d477ff37cc1d1de4969a05526e1ce3292ae7ded4327965638",
+    "motor_worker/landmarks.py": "e185229911df774b903e55b87d86dc79c0856331c2436d48bfe90a2c8a52046f",
+    "motor_worker/protocol.py": "02ef7641af2940147344249d5d3ca7dd64e40b9121df3e69de0cc7ea5d9f197d",
+    "motor_worker/policy.py": "662c1820d6b2ade28eff22e0a589709c7da107104924043fbad56a1225045576",
+    "tests/test_motor_teach_capture.py": "757cedb6116563ba3f436b484ef563188b5f72cd57bac61cbbd488f5ce573173",
+    "tests/test_motor_teach_operator.py": "19920edc00adb43f7fbbdfc02efe0c1944e4aec0b0ca297c0ba4656b0f2bad3f",
+    "tests/test_motor_route_memory.py": "1263855a50dd19ff3e5cb4e9dcaad527329ad931a593f7d3898bea8b9679a0fe",
+    "tests/test_motor_worker_integration.py": "b11889ab382736565267d37ab5137a9b0dc25de485aafe762a0e2750132e19f5",
+    "examples/motor-route-view-profile.json": "4842b0327fd4638865da4f84070d464683c7ea3c610dbbe5e3b17dda9d5017d5"
+  },
+  "physicalAndroidPointerActionsThisStage": 0,
+  "productionAccepted": false,
+  "implementation": {
+    "encodedRecorder": true,
+    "ownInputJournal": true,
+    "strictImport": true,
+    "manualLoopbackConsole": true,
+    "orderedViewBundle": true,
+    "sequentialObservation": true,
+    "degradedQualityExperiment": true,
+    "autonomousExecutor": false,
+    "roadGraph": false,
+    "worldPose": false,
+    "obstacleAvoidance": false,
+    "textGoalMotorConditioning": false,
+    "mainWebTeachingModule": false,
+    "multitouchVehicleTeaching": false
+  },
+  "softwareBounds": {
+    "maxDurationSeconds": 300,
+    "cliMonitorMaxSeconds": 285,
+    "cliSetupMarginSeconds": 15,
+    "maxBytes": 2147483648,
+    "defaultBytes": 536870912,
+    "queueUnits": 32,
+    "queueBytes": 8388608,
+    "maxAccessUnitBytes": 2097152,
+    "maxFrames": 36000,
+    "defaultFrames": 18000,
+    "maxEvents": 80000,
+    "defaultEvents": 40000,
+    "routeViewsMin": 2,
+    "routeViewsMax": 64,
+    "referencesPerCompareMax": 16,
+    "previewHzDefault": 5,
+    "previewHzChoices": [
+      5,
+      10,
+      15,
+      20
+    ],
+    "heldFrameReceiverAgeMaxMs": 250,
+    "operatorHeartbeatMaxMs": 350,
+    "commandReceiverAgeMaxMs": 200,
+    "queueEvents": 8,
+    "nativePendingCommands": 1,
+    "routeConfirmationCount": 3,
+    "routeObservationGapMaxMs": 500,
+    "lossMeansStop": true,
+    "incompleteCannotImport": true,
+    "importedInputsExecute": false,
+    "sourceCaptureClockMappingKnown": false
+  },
+  "physicalVideoRuns": [
+    {
+      "kind": "REAL_PH011_READ_ONLY_VIDEO_NOT_GAMEPLAY",
+      "reportSha256NormalizedLf": "3bbc629d48d021992ea99d47fe02302f7009168932efcf97ad1db037a03a6558",
+      "inspection": {
+        "complete": true,
+        "frames": 276,
+        "media_seconds": 10.013,
+        "mean_frame_hz": 27.46429641466094,
+        "max_receiver_gap_ms": 367.0974000124261,
+        "inputs": {
+          "commands": 0,
+          "applied": 0,
+          "complete": true
+        },
+        "purpose": "video_only",
+        "geometry": [
+          960,
+          540
+        ],
+        "source_capture_clock_mapping_known": false,
+        "execution_qualified": false
+      },
+      "offlineDecodedFrames": 276,
+      "allRecordedFramesDecoded": true,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "nativeCommands": 0,
+      "writerRetired": true,
+      "remainingThreads": [
+        {
+          "name": "MainThread",
+          "daemon": false
+        }
+      ],
+      "guardFindings": []
+    },
+    {
+      "kind": "REAL_PH011_READ_ONLY_VIDEO_NOT_GAMEPLAY",
+      "reportSha256NormalizedLf": "49ac854cf278a9bc0a544f3d84857d724ff4f56f88198ef966dfd96547cc4c28",
+      "inspection": {
+        "complete": true,
+        "frames": 137,
+        "media_seconds": 5.004,
+        "mean_frame_hz": 27.17825739408473,
+        "max_receiver_gap_ms": 93.79069996066391,
+        "inputs": {
+          "commands": 0,
+          "applied": 0,
+          "complete": true
+        },
+        "purpose": "video_only",
+        "geometry": [
+          960,
+          540
+        ],
+        "source_capture_clock_mapping_known": false,
+        "execution_qualified": false
+      },
+      "offlineDecodedFrames": 137,
+      "allRecordedFramesDecoded": true,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "nativeCommands": 0,
+      "writerRetired": true,
+      "remainingThreads": [
+        {
+          "name": "MainThread",
+          "daemon": false
+        }
+      ],
+      "guardFindings": []
+    }
+  ],
+  "realCliReadOnly": {
+    "inspection": {
+      "complete": true,
+      "frames": 136,
+      "media_seconds": 5.039,
+      "mean_frame_hz": 26.791029966263146,
+      "max_receiver_gap_ms": 181.98170000687242,
+      "inputs": {
+        "commands": 0,
+        "applied": 0,
+        "complete": true
+      },
+      "purpose": "video_only",
+      "geometry": [
+        960,
+        540
+      ],
+      "source_capture_clock_mapping_known": false,
+      "execution_qualified": false
+    },
+    "inspectionSha256NormalizedLf": "2867397b628a357c878e569b65395eeec0353beb81f6bda3b7f9e96d6055601f"
+  },
+  "physicalNativeIdle": {
+    "inspection": {
+      "complete": true,
+      "frames": 143,
+      "media_seconds": 5.426,
+      "mean_frame_hz": 26.17029119056395,
+      "max_receiver_gap_ms": 133.5151999955997,
+      "inputs": {
+        "commands": 0,
+        "applied": 0,
+        "complete": true
+      },
+      "purpose": "video_only",
+      "geometry": [
+        960,
+        540
+      ],
+      "source_capture_clock_mapping_known": false,
+      "execution_qualified": false
+    },
+    "nativeCommands": 0,
+    "availability": "manual",
+    "nativeAdmissionConfirmed": true,
+    "nativeClosedConfirmed": true,
+    "afterAsyncioThreads": [
+      "MainThread"
+    ],
+    "reportSha256NormalizedLf": "2fcf99b2743f3bea25942a376baf48f2b7ce2e0609e252c7856a7c9f7a0bf0e8"
+  },
+  "browserFixture": {
+    "kind": "LOCAL_FAKE_ANDROID_NOT_PHYSICAL_GAMEPLAY",
+    "inspection": {
+      "complete": true,
+      "frames": 1059,
+      "media_seconds": 35.266666666666666,
+      "mean_frame_hz": 30.0,
+      "max_receiver_gap_ms": 54.82109996955842,
+      "inputs": {
+        "commands": 2,
+        "applied": 2,
+        "complete": true
+      },
+      "purpose": "video_and_own_inputs",
+      "geometry": [
+        320,
+        180
+      ],
+      "source_capture_clock_mapping_known": false,
+      "execution_qualified": false
+    },
+    "commands": 2,
+    "fakeNativeApplied": 2,
+    "fakeNativeClosed": true,
+    "resultSha256NormalizedLf": "81da14db464ef2c60ce1612e1a69b373c69e015c07d58deefd4eb8428bb7ffef",
+    "cleanExit": {
+      "asyncioRunReturned": true,
+      "threads": [
+        "MainThread"
+      ]
+    },
+    "stoppedScreenshotSha256": "8df82834c6dcea2455ca1bc7fed4b05a56968ed5e7043dde036ed6b7989d1143"
+  },
+  "synthetic1080": {
+    "kind": "SYNTHETIC_FORMAT_TEST_NOT_ANDROID_1080P60_ACCEPTANCE",
+    "physicalAndroidActions": 0,
+    "encodeAndWriteWallSeconds": 0.6435982999391854,
+    "packets": 120,
+    "capture": {
+      "complete": true,
+      "failure": null,
+      "frames": 120,
+      "input_commands": 0,
+      "applied_inputs": 0,
+      "writer_retired": true,
+      "native_clock_mapping_known": false,
+      "physical_route_accepted": false
+    },
+    "inspection": {
+      "complete": true,
+      "frames": 120,
+      "media_seconds": 1.9833333333333334,
+      "mean_frame_hz": 60.0,
+      "max_receiver_gap_ms": 16.66666666667993,
+      "inputs": {
+        "commands": 0,
+        "applied": 0,
+        "complete": true
+      },
+      "purpose": "video_only",
+      "geometry": [
+        1920,
+        1080
+      ],
+      "source_capture_clock_mapping_known": false,
+      "execution_qualified": false
+    },
+    "decodedFrames": 120,
+    "offlineDecodeWallSeconds": 0.07171139994170517,
+    "androidSource1080p60Accepted": false,
+    "fullLatencyAccepted": false
+  },
+  "largeAnnexBScan": {
+    "kind": "SYNTHETIC_MAX_UNIT_SCAN_NOT_VIDEO_LATENCY",
+    "bytes": 2097152,
+    "iterations": 20,
+    "maximumMs": 0.4523999523371458,
+    "meanMs": 0.3543199913110584,
+    "beforeSingleSampleMs": 289.076,
+    "beforeSingleSampleNotDistribution": true
+  },
+  "retainedNegativeResults": {
+    "earlyCaptureQuota": "teach_frame_or_duration_quota",
+    "earlyCaptureWriterRetired": true,
+    "earlyBrowserFailure": "operator_heartbeat_deadline",
+    "earlyBrowserComplete": false,
+    "earlyTestRun": "294 tests failed one manual Stop/socket cleanup case; fixed owned-task drain and Stop ordering; final295 passed",
+    "realReceiverGapOver250MsObserved": true,
+    "allRealRunsMeet250Ms": false
+  },
+  "acceptance": {
+    "controlledCaptureTrialPrepared": true,
+    "physicalHumanTeachingConfirmed": false,
+    "android1080p60Confirmed": false,
+    "realLowRenderRepeatConfirmed": false,
+    "fullCaptureToActionLatency": false,
+    "robustArrival": false,
+    "dynamicObstacleAvoidance": false,
+    "fleetCapacity": false,
+    "originalOuterHangRootCauseResolved": false
+  },
+  "unchanged": {
+    "apk": "1.2.88-dev/10288 retained; no new install this stage",
+    "api": true,
+    "installedWeb": true,
+    "vpn": true,
+    "resourceGuards": true,
+    "emulators": true,
+    "models": true,
+    "githubJobsStarted": 0,
+    "newProviderPeers": 0
+  },
+  "retention": "Private opt-in finite captures only; no images/video committed, no periodic recording or automatic cleanup."
+}

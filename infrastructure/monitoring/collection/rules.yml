@@ -1,0 +1,10 @@
+groups:
+  - name: sphere-collection
+    rules:
+      - alert: SphereBackendMetricsUnavailable
+        expr: up{job="sphere-backend"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: Backend /metrics cannot be scraped for at least one minute
+          description: This checks metrics delivery, not Android stream or script health.

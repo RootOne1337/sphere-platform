@@ -1,0 +1,5 @@
+Build APK	Run unit tests	2026-09-10T14:34:24.5373868Z ConfigRecoveryTest > enrolled watchdog discovers public config without misusing device JWT as API key FAILED
+Build APK	Run unit tests	2026-09-10T14:34:24.5420640Z     java.lang.AssertionError at ConfigRecoveryTest.kt:117
+Build APK	Run unit tests	2026-09-10T14:35:37.7228240Z 426 tests completed, 1 failed
+Build APK	Run unit tests	2026-09-10T14:35:50.0190795Z FAILURE: Build failed with an exception.
+Build APK	Run unit tests	2026-09-10T14:35:50.0250452Z BUILD FAILED in 3m 13s

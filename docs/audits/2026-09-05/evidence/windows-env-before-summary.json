@@ -1,0 +1,43 @@
+{
+  "baseline": "f811320fc82f545694c4919fa9c5b7ff6de4b772",
+  "state": "before",
+  "totals": {
+    "tests": 17,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [
+    {
+      "name": "test_full_deploy_renders_the_selected_installation_env_from_another_directory[both]",
+      "failure": {
+        "message": "AssertionError: assert 'selected-default' == 'selected-local'\n  \n  - selected-local\n  + selected-default"
+      }
+    },
+    {
+      "name": "test_full_deploy_renders_the_selected_installation_env_from_another_directory[local]",
+      "failure": {
+        "message": "AssertionError: assert 'missing' == 'selected-local'\n  \n  - selected-local\n  + missing"
+      }
+    },
+    {
+      "name": "test_full_deploy_rejects_missing_installation_env_before_docker",
+      "failure": {
+        "message": "AssertionError: {\n    \"name\": \"isolated-env-probe\",\n    \"networks\": {\n      \"default\": {\n        \"name\": \"isolated-env-probe_default\",\n        \"ipam\": {}\n      }\n    },\n    \"services\": {\n      \"probe\": {\n        \"command\": null,\n        \"entrypoint\": null,\n        \"environment\": {\n          \"MARKER\": \"missing\"\n        },\n        \"image\": \"busybox:latest\",\n        \"networks\": {\n          \"default\": null\n        }\n      }\n    }\n  }\nassert 0 != 0\n +  where 0 = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powersh...},\\n      \"image\": \"busybox:latest\",\\n      \"networks\": {\\n        \"default\": null\\n      }\\n    }\\n  }\\n}', stderr='').returncode"
+      }
+    },
+    {
+      "name": "test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call[False]",
+      "failure": {
+        "message": "AssertionError: ['compose', '-f', 'C:\\\\Users\\\\dimas\\\\AppData\\\\Local\\\\Temp\\\\pytest-of-dimas\\\\pytest-93\\\\test_dev_launcher_uses_generat0...st-of-dimas\\\\pytest-93\\\\test_dev_launcher_uses_generat0\\\\checkout with spaces\\\\docker-compose.full.yml', 'config', ...]\nassert '--env-file' in ['compose', '-f', 'C:\\\\Users\\\\dimas\\\\AppData\\\\Local\\\\Temp\\\\pytest-of-dimas\\\\pytest-93\\\\test_dev_launcher_uses_generat0...st-of-dimas\\\\pytest-93\\\\test_dev_launcher_uses_generat0\\\\checkout with spaces\\\\docker-compose.full.yml', 'config', ...]"
+      }
+    },
+    {
+      "name": "test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call[True]",
+      "failure": {
+        "message": "AssertionError: \n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n  \u2551          Sphere Platform \u2014 Dev Starter v1.0             \u2551\n  \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\n  \n    \u25b6 \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u044e Docker Desktop...\n    \u2713 Docker \u0437\u0430\u043f\u0443\u0449\u0435\u043d\n    \u25b6 \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u044e .env \u0444\u0430\u0439\u043b...\n    \u00b7 .env \u0441\u043e\u0437\u0434\u0430\u043d \u0438\u0437 .env.example \u2014 \u0437\u0430\u043f\u043e\u043b\u043d\u0438 \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b \u0438 \u043f\u043e\u0432\u0442\u043e\u0440\u0438 \u0437\u0430\u043f\u0443\u0441\u043a.\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powersh...\u0440\u043e\u0432\u0435\u0440\u044f\u044e .env \u0444\u0430\u0439\u043b...\\n  \u00b7 .env \u0441\u043e\u0437\u0434\u0430\u043d \u0438\u0437 .env.example \u2014 \u0437\u0430\u043f\u043e\u043b\u043d\u0438 \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b \u0438 \u043f\u043e\u0432\u0442\u043e\u0440\u0438 \u0437\u0430\u043f\u0443\u0441\u043a.\\n', stderr='').returncode"
+      }
+    }
+  ],
+  "boundaries": "Actual PowerShell Invoke-Compose with actual docker compose config using only synthetic temp dotenv/YAML; no daemon operations. Full start-dev subprocess uses process-backed Docker double."
+}

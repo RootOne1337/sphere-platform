@@ -1,0 +1,582 @@
+{
+  "schemaVersion": 1,
+  "kind": "EXTERNAL_GAME_CONNECTION_DIAGNOSIS_NOT_FIX_OR_GAMEPLAY_ACCEPTANCE",
+  "recordedAtUtc": "2026-10-20T20:26:00.454159+00:00",
+  "ownerCalendarDate": "2026-10-21",
+  "sourceBaseRevision": "3d109fea679797fa2e6cc3ba3ac56d335ad1ae79",
+  "scope": "Finite PH025 diagnostics, one manual icon tap, one full app stop/launch; public-source review and separately attributed user phone report.",
+  "device": {
+    "name": "auto-ph-025",
+    "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+    "android": "9",
+    "emulator": "LDPlayer",
+    "gamePackage": "com.br.top",
+    "gameVersion": "16.110.18323",
+    "gameVersionCode": 1571,
+    "versionEvidence": "fresh game footer plus prior installed-package receipt; no full package dump version inference"
+  },
+  "outcome": {
+    "gameScene": "connecting_to_server",
+    "fullRestartRecovered": false,
+    "rootCauseConfirmed": false,
+    "gameplayEntered": false,
+    "motorModelActionsSent": 0,
+    "autonomousNavigationAccepted": false,
+    "fixAccepted": false,
+    "vpnSoleCauseConfirmed": false,
+    "emulatorSoleCauseConfirmed": false,
+    "emailCausesTimedKickConfirmed": false,
+    "shadowBanConfirmed": false,
+    "massOutageConfirmed": false
+  },
+  "directTransport": {
+    "baselineEchoRttMs": 18.301700009033084,
+    "finalEchoRttMs": 21.28940005786717,
+    "baselineActorRttMs": 21.595700061880052,
+    "path": {
+      "path": "nat",
+      "protocol": "udp",
+      "candidateTypes": [
+        "host",
+        "srflx"
+      ],
+      "addressScopes": [
+        "private",
+        "public"
+      ],
+      "evidence": "aiortc_1_15_nominated_pair_adapter",
+      "lanProven": false
+    },
+    "serverBootstrapBytesDiscarded": 0,
+    "serverBytesAfterHandover": 0,
+    "relayFramesDecoded": 0,
+    "scope": "Sphere APK to headless worker only; not game-server latency or physical LAN proof"
+  },
+  "nativeManualTap": {
+    "purpose": "launch visible app icon from fresh checked desktop",
+    "commandsSent": 2,
+    "commandsApplied": 2,
+    "participantClosedConfirmed": true,
+    "learnedPolicy": false
+  },
+  "gameObservations": {
+    "freeDataKiB": 24041336,
+    "androidEpoch": 1792526959,
+    "hostTaskFinishedAtUtc": "2026-10-20T20:09:16.612962Z",
+    "clockScope": "About 2-3 seconds difference in a bounded task window, not NTP calibration",
+    "watchdogFreezes": [
+      {
+        "pid": 12105,
+        "threadId": 12593,
+        "threadLabel": "MainThread",
+        "durationMs": 6021,
+        "atUtc": "2026-10-20T20:01:17.717Z"
+      },
+      {
+        "pid": 6948,
+        "threadId": 7491,
+        "threadLabel": "MainThread",
+        "durationMs": 6047,
+        "atUtc": "2026-10-20T20:12:14.805Z"
+      }
+    ],
+    "laterSameThreadLogsObserved": true,
+    "androidAnrRecordedSinceBoot": false,
+    "persistentDeadlockConfirmed": false,
+    "firebaseHttp200Observed": true,
+    "firebaseHttp200ProvesGameHandshake": false,
+    "socketUid": 10060,
+    "firstFilteredSocketSample": {
+      "atUtc": "2026-10-20T20:16:01.551493Z",
+      "tcpRows": 0,
+      "tcp6Rows": 3,
+      "remotePorts": [
+        443,
+        443,
+        443
+      ],
+      "states": [
+        "01",
+        "08",
+        "08"
+      ],
+      "udpRows": 0,
+      "udp6Rows": 0
+    },
+    "secondSampleUdpRows": 0,
+    "secondSampleUdp6Rows": 0,
+    "socketScope": "UID-filtered snapshots, not packet trace; no claim UDP blocked; other UIDs excluded",
+    "broadInitialOutputsTruncated": true,
+    "truncatedAbsenceUsedAsEvidence": false
+  },
+  "userPhoneReport": {
+    "source": "human_user_not_independently_instrumented",
+    "device": "Galaxy S24 Ultra",
+    "account": "Google sign-in reported; no personal identity recorded",
+    "symptom": "session runs for minutes, disconnects, automatic about 15-second reconnect, repeats",
+    "vpnOnAndOffBothFailReported": true,
+    "unboundEmailWarningReported": true,
+    "sameNetworkVersusMobileComparison": "Owner confirms Rostelecom Wi-Fi drops with and without VPN; same phone/account/PENZA has no drop on MTS for approximately 15-20 minutes.",
+    "serverAndDisconnectCode": "PENZA confirmed by user; exact disconnect code/text/PacketLoss/Ping remain unknown",
+    "sameRootCauseAsPh025Confirmed": false,
+    "server": "PENZA",
+    "wifiIsp": "Rostelecom",
+    "mobileIsp": "MTS",
+    "mobileObservationNoDisconnectReported": true,
+    "mobileStableLongSessionAccepted": true,
+    "ipBlacklistConfirmed": false,
+    "updatedAtUtc": "2026-10-20T20:45:26.570853+00:00",
+    "userReportedObservationMinutesRange": [
+      15,
+      20
+    ],
+    "userConfirmedFiniteMobileSessionPassed": true,
+    "acceptanceScope": "Owner-confirmed single finite S24/PENZA/MTS session only, not independently instrumented, not fleet or motor production readiness."
+  },
+  "mutations": {
+    "fullGameRestartCount": 1,
+    "manualIconTapCount": 1,
+    "gameDataCleared": false,
+    "gameCacheCleared": false,
+    "gameResourcesPatched": false,
+    "accountBindingChanged": false,
+    "networkSettingsChanged": false,
+    "emulatorRebooted": false,
+    "supportMessageSent": false,
+    "runtimeUiApiApkUpdated": false,
+    "ownDiagnosticScriptsArchived": 7,
+    "archivedVersionsAndTaskResultsRetained": true,
+    "userScriptsArchived": false
+  },
+  "diagnosticLimitations": [
+    "Standalone shell returned device_input_busy; UI hierarchy root/UI Automator failed. Normal DAG coordinator used instead.",
+    "MainThread startup stalls repeat but healthy control launch absent; causal link unknown.",
+    "Final fresh capture remains loading about seven minutes after restart.",
+    "No direct access to personal S24 logs; phone report cannot establish account state or common cause.",
+    "Official private technical threads not accessible to guest.",
+    "No evidence found for reconnect shadow-ban mechanism; absence of a public explanation does not prove no rate limiting."
+  ],
+  "sources": [
+    {
+      "id": "rustore_oct19_oct20",
+      "url": "https://www.rustore.ru/catalog/app/com.launcher.brgame/reviews",
+      "evidenceClass": "developer_reply_and_firsthand_player",
+      "finding": "Player Andrey dated 2026-10-19 reports repeating reconnect without VPN; developer replies 2026-10-20 with network comparison / temporary VPN advice. Other distribution, not diagnosis of PH025.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "guest_limitations",
+      "url": "https://helpshift.blackrussian.games/hc/ru/3-black-russia/faq/243-guest-account-limitations/?p=android",
+      "evidenceClass": "official_help",
+      "finding": "Guest progression and feature restrictions; periodic timed disconnect not documented.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "auth_binding",
+      "url": "https://helpshift.blackrussian.games/hc/ru/3-black-russia/faq/237-how-do-i-link-an-authentication-method-to-my-account/?p=android",
+      "evidenceClass": "official_help",
+      "finding": "Separate verified email binding and additional social methods; actual S24 account state not inspected.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "auth_faq",
+      "url": "https://helpshift.blackrussian.games/hc/ru/3-black-russia/faq/248-faq-new-authorization/?p=android",
+      "evidenceClass": "official_help",
+      "finding": "Account / characters, rollout and legacy login distinction; not current outage notice.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "anticheat_disconnect",
+      "url": "https://helpshift.blackrussian.games/hc/ru/3-black-russia/faq/201-disconnected-by-anti-cheat/?p=android",
+      "evidenceClass": "official_help",
+      "finding": "Some anti-cheat disconnects related to packet loss / ping spikes; no proof this case is anti-cheat or permanent ban.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "phone_report",
+      "url": "https://www.sikayetvar.com/ru/black-russia-ru/ne-mogu-podklucitsa-k-serveru-black-russia-osibka-seti-pri-vhode",
+      "evidenceClass": "firsthand_player",
+      "finding": "Samsung A16 connection errors; author reports cache/reboot ineffective; visible March 23 date has no verified year.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "isp_report",
+      "url": "https://www.sikayetvar.com/ru/black-russia-ru/ne-mogu-zajti-na-server-mahackala-v-black-russia-s-domasnego-interneta",
+      "evidenceClass": "firsthand_player",
+      "finding": "Author reports home ISP failure / mobile success; IP-block suspicion unconfirmed; visible April 12 date has no verified year.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "ldplayer",
+      "url": "https://ru.ldplayer.net/blog/kak-igrat-black-russia-na-pc-cherez-ldplayer.html",
+      "evidenceClass": "emulator_vendor",
+      "finding": "Vendor guide dated 2026-09-07; not certification by game developer or a hang fix.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "forum",
+      "url": "https://forum.blackrussia.online/forums/Технический-раздел.22/",
+      "evidenceClass": "official_forum_structure",
+      "finding": "Server technical threads private to guest; private reports not read.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "forum_template",
+      "url": "https://forum.blackrussia.online/threads/Шаблон-для-подачи-заявки-в-технический-раздел-если-не-по-форме-—-отказ.7551899/",
+      "evidenceClass": "official_forum_template",
+      "finding": "Public submission fields read in browser; no support message sent.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "project_rules",
+      "url": "https://helpshift.blackrussian.games/hc/ru/3-black-russia/faq/203-game-rules/",
+      "evidenceClass": "official_rules",
+      "finding": "Section 2.22 prohibits advantage automation/macros, including emulator macros; does not prove the current failure is enforcement.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "proc_tcp",
+      "url": "https://docs.kernel.org/networking/proc_net_tcp.html",
+      "evidenceClass": "primary_technical_docs",
+      "finding": "UID / remote port parsing reference; current sockets snapshot is not packet trace.",
+      "checkedAtUtc": "2026-10-20T20:26:00.454159+00:00"
+    },
+    {
+      "id": "rt_ethernet",
+      "url": "https://rostov.rt.ru/-novoshahtinsk-/care/internet/equipment/net-dostupa-k-internetu",
+      "evidenceClass": "isp_official_help",
+      "finding": "ISP advises Ethernet comparison and notes an individual app may fail while others work; no Black Russia incident notice.",
+      "checkedAtUtc": "2026-10-20T20:45:26.570853+00:00"
+    },
+    {
+      "id": "ld_bridge",
+      "url": "https://ru.ldplayer.net/support/131.html",
+      "evidenceClass": "emulator_vendor_help",
+      "finding": "Bridge may change LAN adapter/address, not external public IP. Historical guide, not applied.",
+      "checkedAtUtc": "2026-10-20T20:45:26.570853+00:00"
+    },
+    {
+      "id": "pathping",
+      "url": "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping",
+      "evidenceClass": "primary_technical_docs",
+      "finding": "Auxiliary route/loss observation, not game handshake or UDP proof.",
+      "checkedAtUtc": "2026-10-20T20:45:26.570853+00:00"
+    },
+    {
+      "id": "android_tethering",
+      "url": "https://source.android.com/docs/core/ota/modular-system/tethering",
+      "evidenceClass": "primary_technical_docs",
+      "finding": "IPv4 NAT and IPv6 SLAAC tethering; same hotspot is not proof of identical game endpoint egress.",
+      "checkedAtUtc": "2026-10-20T20:59:57.911558+00:00"
+    },
+    {
+      "id": "android_clear_cache",
+      "url": "https://support.google.com/android/answer/7431795?hl=ru",
+      "evidenceClass": "official_platform_help",
+      "finding": "Clear cache and clear storage differ; reset result does not isolate the broken component.",
+      "checkedAtUtc": "2026-10-20T20:59:57.911558+00:00"
+    },
+    {
+      "id": "official_cus",
+      "url": "https://t.me/br_lab/59",
+      "evidenceClass": "official_developer_technical_publication",
+      "publicationDateUtc": "2026-06-19T14:23:48+00:00",
+      "finding": "CUS resource selection, consistency and fragment repair; not diagnosis of this incident.",
+      "checkedAtUtc": "2026-10-20T21:02:32.835874+00:00"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "after-restart-log",
+      "taskId": "cb86ba03-2b50-4fbb-a2fb-85226c4e1360",
+      "status": "completed",
+      "startedAtUtc": "2026-10-20T20:16:59.841394Z",
+      "finishedAtUtc": "2026-10-20T20:17:01.254303Z",
+      "nodeCount": 7,
+      "privateResultSha256": "a52d5cb0909d7da4e2868f01e1079da3ce9a20e3b0a17a32b88da718f4fa8eb7"
+    },
+    {
+      "label": "after-restart-network",
+      "taskId": "c0ac1af8-3b56-44ea-a990-3f3412f3f35f",
+      "status": "completed",
+      "startedAtUtc": "2026-10-20T20:15:59.783163Z",
+      "finishedAtUtc": "2026-10-20T20:16:01.551493Z",
+      "nodeCount": 8,
+      "privateResultSha256": "da19d8f228082b800c662bb14a4d86e9b597f84975ae058ad5da632c95784008"
+    },
+    {
+      "label": "after-restart-thread",
+      "taskId": "423d35d2-f2ea-48de-a1ca-33e82119e0b4",
+      "status": "completed",
+      "startedAtUtc": "2026-10-20T20:17:52.868388Z",
+      "finishedAtUtc": "2026-10-20T20:17:54.702163Z",
+      "nodeCount": 9,
+      "privateResultSha256": "a28270fefc2a34738d5b232faee2764b6cd339a927d4d6d77e22580665619c46"
+    },
+    {
+      "label": "connection-detail",
+      "taskId": "d7a18cc0-7657-43f3-9ed9-a64686f5b23c",
+      "status": "completed",
+      "startedAtUtc": "2026-10-20T20:11:24.525006Z",
+      "finishedAtUtc": "2026-10-20T20:11:26.185703Z",
+      "nodeCount": 8,
+      "privateResultSha256": "c0be5dffd30d4f4a03bd79a918d10ecb0817bdccc5820a0c9aa0dc954f425f10"
+    },
+    {
+      "label": "connection-diagnostics",
+      "taskId": "d9936294-23aa-4262-9512-46f6ac013293",
+      "status": "completed",
+      "startedAtUtc": "2026-10-20T20:09:14.395890Z",
+      "finishedAtUtc": "2026-10-20T20:09:16.612962Z",
+      "nodeCount": 11,
+      "privateResultSha256": "dd8968e0ca7a6715249e9435f9eb920cc8a623d2a640660ac8cc757c0e455dff"
+    },
+    {
+      "label": "game-pid-log",
+      "taskId": "d23c0d8a-6d3e-405d-b65a-a55afe8bdc7d",
+      "status": "completed",
+      "startedAtUtc": "2026-10-20T20:09:52.425502Z",
+      "finishedAtUtc": "2026-10-20T20:09:53.286003Z",
+      "nodeCount": 3,
+      "privateResultSha256": "3844fa40c7fa8c200e7d4bb94076dceefc2fed15d760814dc462de208dabb45e"
+    },
+    {
+      "label": "one-full-game-restart",
+      "taskId": "c92c13ef-b4d6-4f27-a69a-2ec5f81ace42",
+      "status": "completed",
+      "startedAtUtc": "2026-10-20T20:12:00.670909Z",
+      "finishedAtUtc": "2026-10-20T20:12:03.589953Z",
+      "nodeCount": 5,
+      "privateResultSha256": "0491210ef4a407b1b808e69b120b983b1180b5eb19db7f222c3828d6b097265d"
+    }
+  ],
+  "finiteSnapshots": [
+    {
+      "localFilename": "baseline-scene.png",
+      "bytes": 157260,
+      "sha256": "8873dfcc9c253d8afc2bed1ed65fac6c971f8236a7bb996c51e9c832ab18039f",
+      "committed": false
+    },
+    {
+      "localFilename": "game-launch.png",
+      "bytes": 4169,
+      "sha256": "6806b9e9f978727741f9b897558c3d0d1fe187305eb5bf78a3cb7301cf1387fb",
+      "committed": false
+    },
+    {
+      "localFilename": "game-ready.png",
+      "bytes": 706063,
+      "sha256": "029779f7c6a1087c74d6e59a196487b7fbfc43424b179575014ff974b1331a53",
+      "committed": false
+    },
+    {
+      "localFilename": "connection-check-2.png",
+      "bytes": 706063,
+      "sha256": "029779f7c6a1087c74d6e59a196487b7fbfc43424b179575014ff974b1331a53",
+      "committed": false
+    },
+    {
+      "localFilename": "after-full-restart.png",
+      "bytes": 706063,
+      "sha256": "029779f7c6a1087c74d6e59a196487b7fbfc43424b179575014ff974b1331a53",
+      "committed": false
+    },
+    {
+      "localFilename": "connection-final.png",
+      "bytes": 706063,
+      "sha256": "029779f7c6a1087c74d6e59a196487b7fbfc43424b179575014ff974b1331a53",
+      "committed": false
+    }
+  ],
+  "privateArtifactsDirectory": ".local-pilot/motor-ph025-20261021",
+  "rawLogsAddressesCredentialsPublished": false,
+  "nextDiscriminatingChecks": [
+    "Wait for owner download-complete signal; do not touch PH030 download.",
+    "Capture healthy post-download baseline first, no motor actions.",
+    "At first disconnect capture exact scene/code and process logs before another reset; one full restart only after capture and minimum interval.",
+    "Compare failed re-entry against baseline, distinguishing resources/auth/game handshake/native faults.",
+    "Do not interpret full reset recovery as proof of cache-only corruption or anti-cheat flag."
+  ],
+  "guide": "docs/audits/2026-10-21/BLACK-RUSSIA-PH025-CONNECTION.md",
+  "previousEvidence": "docs/audits/2026-10-17/BLACK-RUSSIA-CONNECTION-HANG.json",
+  "updatedAtUtc": "2026-10-20T21:02:32.835874+00:00",
+  "stableTestPlan": {
+    "phase": "PH030_RECONNECT_REPRODUCED_BY_OWNER_RESOURCES_REDOWNLOADING",
+    "ph030DeviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+    "ph030GameInstalledConfirmed": true,
+    "ph030WorldEnteredConfirmed": true,
+    "ph030MobileStabilityAccepted": false,
+    "userReportsLaptopMobileTethering": true,
+    "manualBaselineMinutesTarget": 20,
+    "fullRestartChecksTarget": 1,
+    "minimumSecondsBetweenAttempts": 20,
+    "separateTransportPaths": [
+      "Android to game server",
+      "Android APK to Sphere headless worker/GPU"
+    ],
+    "sameLanForPh030AndGpuProven": false,
+    "firstMotorTestRequiresManualSceneBaseline": true,
+    "perEmulatorProxyRequiredForInitialTest": false,
+    "homeEthernetComparisonPerformed": false,
+    "dnsMtuVpnFirewallChanged": false,
+    "hostReadOnlyNetworkObservation": {
+      "machineScope": "current Sphere workstation, not PH030 laptop or S24",
+      "physicalEthernetLink": "1 Gbps",
+      "wireguardInterfaceActive": true,
+      "physicalMtu": 1500,
+      "wireguardMtu": 1376,
+      "mtuFaultConfirmed": false
+    },
+    "ph030InitialWorldEntryEvidence": "Owner confirms initial entry on home Wi-Fi, then repeated disconnects; not a new instrumented session.",
+    "ph030WorldCurrentlyEntered": false,
+    "ph030NetworkSwitchRecovered": false,
+    "ph030ResetTypeConfirmed": true,
+    "gameResourcesRedownloadingUserReported": true,
+    "commandsSentToPh030AfterLatestUserReport": 0,
+    "resetScope": "Owner explicitly confirms cache and application data fully cleared; same emulator, game resources downloading on MTS.",
+    "firstPostDownloadLoginOwnerWillPerform": true,
+    "cacheOnlyTestIsolated": false
+  },
+  "latestPh030UserReport": {
+    "source": "owner_report",
+    "initialPh030OnHomeWifi": "Installed, test account registered, world entered, then repeated reconnects",
+    "afterSwitchToMtsTetheringAndFullGameRestart": "Infinite connecting to server",
+    "phoneOnMtsAtSameTime": "Enters promptly per owner",
+    "sameGameEndpointExternalIpProven": false,
+    "sameAccountServerDistributionProven": false,
+    "cacheOnlyVersusDataResetIsolated": false,
+    "redownloadInProgressReported": true,
+    "serverProtectionFlagConfirmed": false,
+    "clientPersistentFaultConfirmed": false,
+    "persistentClientStateHypothesis": "Plausible, not isolated from account/server state, resources, timing or host network differences",
+    "credentialsUsedOrRecordedInArtifacts": false,
+    "recordedAtUtc": "2026-10-20T21:02:32.835874+00:00",
+    "fullCacheAndStorageClearConfirmedByOwner": true,
+    "sameEmulatorConfirmed": true,
+    "redownloadNetwork": "MTS mobile tethering",
+    "firstNewLoginOwnerWillPerform": true
+  },
+  "staticOfficialApkReview": {
+    "kind": "STATIC_PUBLIC_APK_LITERAL_OBSERVATION_NOT_CAUSE_OR_CURRENT_PH030_PROOF",
+    "apkSha256": "130083a2b9f6cbe8364ae7b519d35d0e1e3ca519019d763fe55bb9e1c431ac14",
+    "apkBytes": 123990477,
+    "nativeAbis": [
+      "arm64-v8a",
+      "armeabi-v7a"
+    ],
+    "observations": [
+      {
+        "entry": "classes3.dex",
+        "bytes": 9998908,
+        "literalCounts": {
+          "reconnect": 14
+        }
+      },
+      {
+        "entry": "classes4.dex",
+        "bytes": 13210728,
+        "literalCounts": {
+          "state_monitor.sm": 3,
+          "patch_index.json": 1,
+          "Connection timed out": 1,
+          "reconnect": 2
+        }
+      },
+      {
+        "entry": "classes5.dex",
+        "bytes": 8477392,
+        "literalCounts": {
+          "reconnect": 1
+        }
+      },
+      {
+        "entry": "classes6.dex",
+        "bytes": 10133676,
+        "literalCounts": {
+          "reconnect": 15
+        }
+      },
+      {
+        "entry": "classes7.dex",
+        "bytes": 1724692,
+        "literalCounts": {
+          "reconnect": 1
+        }
+      },
+      {
+        "entry": "lib/armeabi-v7a/libblackrussia-client.so",
+        "bytes": 27643412,
+        "literalCounts": {
+          "Connection timed out": 1
+        }
+      },
+      {
+        "entry": "lib/armeabi-v7a/libupdate-manager.so",
+        "bytes": 5446020,
+        "literalCounts": {
+          "state_monitor.sm": 2,
+          "patch_index.json": 10,
+          "Connection timed out": 1
+        }
+      }
+    ],
+    "gameFilesModified": false,
+    "deviceCommandsSent": false,
+    "credentialsRead": false,
+    "source": "Previously downloaded official vendor APK, not inspected current PH030 installed package",
+    "evidenceScope": "Literal presence and ZIP ABI inventory only. No semantic proof of flag, anti-cheat, corrupted file, current execution path or emulator incompatibility."
+  },
+  "preparedDiagnosticDraft": {
+    "recordedAtUtc": "2026-10-20T20:58:42.719401+00:00",
+    "deviceIdIntended": "753fd530-2f19-4e5e-98ba-769863678141",
+    "scope": "Draft action validation only; does not create script/task or send commands to emulator. Intended for healthy/first-disconnect/hang comparison after user reports download complete.",
+    "draftValid": true,
+    "nodeCount": 13,
+    "actionTypes": [
+      "end",
+      "shell",
+      "start"
+    ],
+    "dagHash": "04857493e6beace186160c95ea5b93899733ff1f94b810fd3a8b9c60624b9870",
+    "scriptCreated": false,
+    "taskCreated": false,
+    "deviceCommandsSent": 0,
+    "retries": 0,
+    "appRestarted": false,
+    "dataCleared": false,
+    "downloadObservedOrInterrupted": false,
+    "loggingLimit": "Node outputs are bounded/clipped. Preserve private originals and do not use clipped absence as proof. PID and UID must be refreshed for any later process-specific stage.",
+    "rawResultsPublishAllowed": false
+  },
+  "additionalSearchReview": {
+    "officialClientMarkAfterReconnectMechanismFound": false,
+    "unverifiedSeoAndUserscriptTemplatesExcluded": true,
+    "thirdPartyScriptsExecuted": false,
+    "ph030DeviceCommandsSent": 0,
+    "staticApkModified": false
+  },
+  "officialResourceSystemFollowup": {
+    "source": "https://t.me/br_lab/59",
+    "publicationDates": [
+      "2026-06-19T14:23:48+00:00"
+    ],
+    "checkedAtUtc": "2026-10-20T21:02:32.835874+00:00",
+    "finding": "CUS chooses device/build resources, keeps client/resources consistent and repairs fragments; not proof of current hang cause.",
+    "vendorApkHead": {
+      "checkedAtUtc": "2026-10-20T21:01:25.857552+00:00",
+      "status": 200,
+      "contentLength": "123990477",
+      "lastModified": "Fri, 16 Oct 2026 11:45:42 GMT",
+      "etag": "\"6ad20e66-763f1cd\"",
+      "shaCompared": false,
+      "downloaded": false
+    }
+  },
+  "cleanMobileTestLogic": {
+    "firstLogin": "Owner performs after download",
+    "secondLogin": "One complete stop/open on same MTS after healthy baseline, no return to Rostelecom",
+    "ifRepeatedFailure": "Historical Rostelecom IP is not necessary to reproduce; still distinguish session/server/resources/emulator/tether path.",
+    "ifSuccess": "Combined clean-data plus mobile condition works; network versus reset effects not isolated.",
+    "noResetBeforeFirstFailureEvidence": true
+  }
+}

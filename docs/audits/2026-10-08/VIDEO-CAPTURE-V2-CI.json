@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "verifiedUtc": "2026-10-07T20:28:18.503162+00:00",
+  "sourceSha": "3dc2456b0b60a360db43a32f255034b274359e2a",
+  "status": "EXACT_SOURCE_CI_SUCCESS_NOT_INSTALLED",
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 37673151006,
+      "headSha": "3dc2456b0b60a360db43a32f255034b274359e2a",
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37673151006"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37673151029,
+      "headSha": "3dc2456b0b60a360db43a32f255034b274359e2a",
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37673151029"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37673151037,
+      "headSha": "3dc2456b0b60a360db43a32f255034b274359e2a",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37673151037"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37673150986,
+      "headSha": "3dc2456b0b60a360db43a32f255034b274359e2a",
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37673150986"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37673142724,
+      "headSha": "3dc2456b0b60a360db43a32f255034b274359e2a",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37673142724"
+    }
+  ],
+  "validation": {
+    "backend": {
+      "passed": 3172,
+      "skipped": 37,
+      "subtestsPassed": 229,
+      "jobsPassed": 6
+    },
+    "frontend": {
+      "passed": 1753,
+      "suites": 136,
+      "freshTypesAndBuild": "success"
+    },
+    "android": {
+      "push": "success",
+      "pullRequest": "success",
+      "releaseSmokeBuild": "success",
+      "localPassedPerDebugVariant": 966,
+      "localSkippedPerDebugVariant": 3
+    }
+  },
+  "privateLogHashes": {
+    "capture-frame-v2-backend-ci-37673150986.log": {
+      "bytes": 1465452,
+      "sha256": "041e18ee24e7fcced1b6597360f3d36ca52255050c0dbb4f165adf595b360dde"
+    },
+    "capture-frame-v2-frontend-ci-37673151029.log": {
+      "bytes": 299153,
+      "sha256": "d9641793b987b8e0e5717cb0e9000bdc76112b5c3be4c9bce96f985facf62e41"
+    },
+    "capture-frame-v2-android-ci-37673151037.log": {
+      "bytes": 146871,
+      "sha256": "8ed7f2f9e93b7bce5c78d3ba9ea6f25412189e2f3b7d82b9d2dbf354a52f7bbb"
+    },
+    "capture-frame-v2-android-ci-37673142724.log": {
+      "bytes": 145314,
+      "sha256": "467c37381e88447a1b72168d98d8914f1f62b839331a18f213681758ee81b243"
+    },
+    "capture-frame-v2-debug-enabled-20261008.log": {
+      "bytes": 2458,
+      "sha256": "b765dffd3e995b01004618358cfea4312057b178cecee6818a01e5047793406e"
+    }
+  },
+  "retainedDebugArtifacts": {
+    "app-dev-debug-default.apk": {
+      "bytes": 8614236,
+      "sha256": "1a34ddace94d0bcd9ae8be0f81a6ba3f69b7f6c06b4eb993854cceebfbc6223d",
+      "privateSnapshot": ".local-pilot/capture-frame-v2-artifacts-3dc2456/app-dev-debug-default.apk",
+      "canaryEnabled": false,
+      "installed": false
+    },
+    "app-dev-debug-continuous-canary.apk": {
+      "bytes": 8614299,
+      "sha256": "2a757e45484f1400f6c1fee7abe79ddd6b216cbde01ea5685961c7c7d9cdf56c",
+      "privateSnapshot": ".local-pilot/capture-frame-v2-artifacts-3dc2456/app-dev-debug-continuous-canary.apk",
+      "canaryEnabled": true,
+      "installed": false
+    }
+  },
+  "artifactMeaning": "Default snapshot was copied and byte-verified before the subsequent flagged devDebug build. Flagged artifact built successfully; neither was installed. The mutable Gradle output path now contains flagged debug, not the earlier default bytes.",
+  "runtime": {
+    "lastAcceptedUI": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "lastAcceptedAPI": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "webDeploy": false,
+    "apkInstall": false,
+    "apiDeploy": false,
+    "continuousPointerEnabled": false
+  },
+  "remaining": "Real Kotlin pipe/frame and browser/server integration/latency/resource acceptance remain open. CI does not prove a live swipe. Ledger 9 accepted /41 open unchanged."
+}

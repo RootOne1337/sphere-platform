@@ -1,0 +1,605 @@
+{
+  "schema": "sphere-recorded-control-replay-delivery-v1",
+  "date": "2026-10-29",
+  "physicalActions": 0,
+  "baseline": {
+    "schema": "sphere-recorded-control-replay-v1",
+    "cases": [
+      {
+        "case": "baseline",
+        "states": {
+          "confirming": 14,
+          "localized": 201,
+          "unknown": 8
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 20,
+          "stopped": 201
+        },
+        "fault": null,
+        "firstStop": {
+          "seconds": 4.837,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 1,
+        "effectiveMovingSamples": 20
+      },
+      {
+        "case": "freeze",
+        "states": {
+          "confirming": 6,
+          "localized": 53,
+          "unknown": 5
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 28,
+          "stopped": 34
+        },
+        "fault": "repeated_rgb_1s",
+        "firstStop": {
+          "seconds": 6.506,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 2,
+        "effectiveMovingSamples": 24
+      },
+      {
+        "case": "gap",
+        "states": {
+          "confirming": 6,
+          "localized": 53,
+          "unknown": 2
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 32,
+          "stopped": 27
+        },
+        "fault": "observation_gap_700ms",
+        "firstStop": {
+          "seconds": 7.357,
+          "reason": "walk_localization_lost"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 0,
+        "effectiveMovingSamples": 32
+      },
+      {
+        "case": "late_reply",
+        "states": {
+          "confirming": 2,
+          "localized": 62
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 62
+        },
+        "fault": "response_delivery_delayed_300ms",
+        "firstStop": null,
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 3,
+        "effectiveMovingSamples": 20
+      }
+    ],
+    "physicalActions": 0,
+    "sourceUnchanged": true,
+    "independentPositiveCapture": false,
+    "closedLoop": false,
+    "arrivalProven": false,
+    "referenceSourceFramesExcluded": 174,
+    "routeSha256": "11bc3604195ce20ecd5f76853331cf3d6b5b8c5c6c6cc7e860e66c50a03221a8",
+    "queryManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    "queryTimesSentToLocalizer": false,
+    "afterStop": "diagnostic_localization_continues_planner_remains_terminal",
+    "nativeInputClientPresent": false
+  },
+  "earlyFaults": {
+    "schema": "sphere-recorded-control-replay-v1",
+    "cases": [
+      {
+        "case": "freeze",
+        "states": {
+          "confirming": 10,
+          "localized": 47,
+          "unknown": 7
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 8,
+          "stopped": 54
+        },
+        "fault": "repeated_rgb_1s",
+        "firstStop": {
+          "seconds": 2.27,
+          "reason": "walk_localization_lost"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 3,
+        "effectiveMovingSamples": 8
+      },
+      {
+        "case": "gap",
+        "states": {
+          "confirming": 6,
+          "localized": 53,
+          "unknown": 2
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 7,
+          "stopped": 52
+        },
+        "fault": "observation_gap_700ms",
+        "firstStop": {
+          "seconds": 2.736,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 2,
+        "effectiveMovingSamples": 7
+      },
+      {
+        "case": "late_reply",
+        "states": {
+          "confirming": 7,
+          "localized": 53,
+          "unknown": 3
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 20,
+          "stopped": 41
+        },
+        "fault": "response_delivery_delayed_300ms",
+        "firstStop": {
+          "seconds": 4.837,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 5,
+        "effectiveMovingSamples": 7
+      },
+      {
+        "case": "jpeg60",
+        "states": {
+          "confirming": 10,
+          "localized": 48,
+          "unknown": 5
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 12,
+          "stopped": 49
+        },
+        "fault": null,
+        "firstStop": {
+          "seconds": 3.187,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 5,
+        "effectiveMovingSamples": 12
+      }
+    ],
+    "physicalActions": 0,
+    "sourceUnchanged": true,
+    "independentPositiveCapture": false,
+    "closedLoop": false,
+    "arrivalProven": false,
+    "referenceSourceFramesExcluded": 174,
+    "routeSha256": "11bc3604195ce20ecd5f76853331cf3d6b5b8c5c6c6cc7e860e66c50a03221a8",
+    "queryManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    "queryTimesSentToLocalizer": false,
+    "recipeSourceHashes": {
+      "scripts/pilot/check_route_control_replay.py": "73266868c2b99072549735b774fab4701df78236e5ddd7430c811e0e2c24d3fe",
+      "scripts/pilot/route_workspace.py": "7f4f81ec597c7257ec49a454d780c392cdaa106b0464e388030efd48aae3cd3a",
+      "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331",
+      "motor_worker/route_localization.py": "9e09a678aa4b26a3fd07556d450eb93561f395797ff575d18a69fd5c2e368e86",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "motor_worker/walk_route.py": "ba8344fcc2601873d32cf88d23ff165b3005a0d89baf3f6ab9fd9178db32199c"
+    },
+    "afterStop": "diagnostic_localization_continues_planner_remains_terminal",
+    "nativeInputClientPresent": false
+  },
+  "otherLocation": {
+    "schema": "sphere-recorded-control-replay-v1",
+    "cases": [
+      {
+        "case": "baseline",
+        "states": {
+          "unknown": 37
+        },
+        "plans": {
+          "waiting": 34,
+          "stopped": 3
+        },
+        "fault": null,
+        "firstStop": {
+          "seconds": 7.486,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": null,
+        "browserExpiredReplies": 2,
+        "effectiveMovingSamples": 0
+      }
+    ],
+    "physicalActions": 0,
+    "sourceUnchanged": true,
+    "independentPositiveCapture": false,
+    "closedLoop": false,
+    "arrivalProven": false,
+    "referenceSourceFramesExcluded": 0,
+    "routeSha256": "11bc3604195ce20ecd5f76853331cf3d6b5b8c5c6c6cc7e860e66c50a03221a8",
+    "queryManifestSha256": "6600429df8f21fb079ca3c5256efa986ea702c6df9a9be984cf2a764639f7cd0",
+    "queryTimesSentToLocalizer": false,
+    "recipeSourceHashes": {
+      "scripts/pilot/check_route_control_replay.py": "73266868c2b99072549735b774fab4701df78236e5ddd7430c811e0e2c24d3fe",
+      "scripts/pilot/route_workspace.py": "7f4f81ec597c7257ec49a454d780c392cdaa106b0464e388030efd48aae3cd3a",
+      "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331",
+      "motor_worker/route_localization.py": "9e09a678aa4b26a3fd07556d450eb93561f395797ff575d18a69fd5c2e368e86",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "motor_worker/walk_route.py": "ba8344fcc2601873d32cf88d23ff165b3005a0d89baf3f6ab9fd9178db32199c"
+    },
+    "afterStop": "diagnostic_localization_continues_planner_remains_terminal",
+    "nativeInputClientPresent": false
+  },
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "e752e5ee65f40bb0233fecd4fd2e0b68644fcde3650f3cd1c059ebb6e8b6347e",
+    "source_sha_after": "e752e5ee65f40bb0233fecd4fd2e0b68644fcde3650f3cd1c059ebb6e8b6347e",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 6.5,
+      "stop_ram_gib": 5.5,
+      "max_commit_percent": 85,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "install": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:18eb5912f9a7e846bcf56f69dfa6bd5c273ddb18d125f16ff1975a96c838ad66",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "api": {
+    "outcome": "verified",
+    "launcherPid": 684,
+    "physicalActions": 0,
+    "health": 200,
+    "missingCapability": 403,
+    "existingAssetsUnchanged": true,
+    "sourceHashes": {
+      "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331",
+      "scripts/pilot/route_workspace.py": "0bfcab7c81f64ac8979ba1e8d57ceef35f5df4b09e15df0cb522241a58616850",
+      "motor_worker/route_localization.py": "a5b05f938aaf806bd75b7c96331d2ae12bcd269d54544372663be9a1ff171095",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "motor_worker/walk_route.py": "2aaf1e3066499a6c75ebaa25ba076062ddf3bb02a3f9b0da230634309f019d96"
+    }
+  },
+  "tests": {
+    "frontend": 57,
+    "pythonUnittest": 81,
+    "pythonPytest": 34,
+    "typeCheck": true
+  },
+  "screenshotSha256": "0c5dc60bcad225724a5100d70d74697750a2b289ec4e2985e1ff4dd4bb9dfbad",
+  "browserVisualAcceptance": false,
+  "limitation": "Open-loop recorded queries do not react to emitted stick plans; no real A-to-B, obstacle avoidance or metric accuracy proven",
+  "initialBuild": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "9c868741b05187b8a7e3ad411eff6a499eed767ffaf0c7491f7a9e0fa67e04bc",
+    "source_sha_after": "9c868741b05187b8a7e3ad411eff6a499eed767ffaf0c7491f7a9e0fa67e04bc",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 9,
+      "stop_ram_gib": 8,
+      "max_commit_percent": 85,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "initialInstall": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:8083a671082d68983a7e6419cac1895425679224f1f3413a50a6ad6e2ebae4ca",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "initialApi": {
+    "outcome": "verified",
+    "launcherPid": 44620,
+    "physicalActions": 0,
+    "health": 200,
+    "missingCapability": 403,
+    "existingAssetsUnchanged": true,
+    "sourceHashes": {
+      "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331",
+      "scripts/pilot/route_workspace.py": "7f4f81ec597c7257ec49a454d780c392cdaa106b0464e388030efd48aae3cd3a",
+      "motor_worker/route_localization.py": "9e09a678aa4b26a3fd07556d450eb93561f395797ff575d18a69fd5c2e368e86",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "motor_worker/walk_route.py": "ba8344fcc2601873d32cf88d23ff165b3005a0d89baf3f6ab9fd9178db32199c"
+    }
+  },
+  "optimizedFullReplay": {
+    "schema": "sphere-recorded-control-replay-v1",
+    "cases": [
+      {
+        "case": "baseline",
+        "states": {
+          "confirming": 7,
+          "localized": 213,
+          "unknown": 3
+        },
+        "plans": {
+          "waiting": 6,
+          "following": 135,
+          "stopped": 82
+        },
+        "fault": null,
+        "firstStop": {
+          "seconds": 31.599,
+          "reason": "walk_relocalization_drift"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 0,
+        "effectiveMovingSamples": 135
+      }
+    ],
+    "physicalActions": 0,
+    "sourceUnchanged": true,
+    "independentPositiveCapture": false,
+    "closedLoop": false,
+    "arrivalProven": false,
+    "referenceSourceFramesExcluded": 174,
+    "routeSha256": "11bc3604195ce20ecd5f76853331cf3d6b5b8c5c6c6cc7e860e66c50a03221a8",
+    "queryManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    "queryTimesSentToLocalizer": false,
+    "recipeSourceHashes": {
+      "scripts/pilot/check_route_control_replay.py": "73266868c2b99072549735b774fab4701df78236e5ddd7430c811e0e2c24d3fe",
+      "scripts/pilot/route_workspace.py": "0bfcab7c81f64ac8979ba1e8d57ceef35f5df4b09e15df0cb522241a58616850",
+      "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331",
+      "motor_worker/route_localization.py": "a5b05f938aaf806bd75b7c96331d2ae12bcd269d54544372663be9a1ff171095",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "motor_worker/walk_route.py": "2aaf1e3066499a6c75ebaa25ba076062ddf3bb02a3f9b0da230634309f019d96"
+    },
+    "afterStop": "diagnostic_localization_continues_planner_remains_terminal",
+    "nativeInputClientPresent": false
+  },
+  "optimizedFaults": {
+    "schema": "sphere-recorded-control-replay-v1",
+    "cases": [
+      {
+        "case": "freeze",
+        "states": {
+          "confirming": 4,
+          "localized": 56,
+          "unknown": 4
+        },
+        "plans": {
+          "waiting": 9,
+          "following": 8,
+          "stopped": 47
+        },
+        "fault": "repeated_rgb_1s",
+        "firstStop": {
+          "seconds": 3.804,
+          "reason": "walk_relocalization_drift"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 0,
+        "effectiveMovingSamples": 8
+      },
+      {
+        "case": "gap",
+        "states": {
+          "confirming": 4,
+          "localized": 56,
+          "unknown": 1
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 7,
+          "stopped": 52
+        },
+        "fault": "observation_gap_700ms",
+        "firstStop": {
+          "seconds": 2.736,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 0,
+        "effectiveMovingSamples": 7
+      },
+      {
+        "case": "late_reply",
+        "states": {
+          "confirming": 2,
+          "localized": 62
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 62
+        },
+        "fault": "response_delivery_delayed_300ms",
+        "firstStop": null,
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 1,
+        "effectiveMovingSamples": 7
+      },
+      {
+        "case": "jpeg60",
+        "states": {
+          "confirming": 7,
+          "localized": 53,
+          "unknown": 3
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 24,
+          "stopped": 37
+        },
+        "fault": null,
+        "firstStop": {
+          "seconds": 5.638,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 4,
+        "effectiveMovingSamples": 24
+      }
+    ],
+    "physicalActions": 0,
+    "sourceUnchanged": true,
+    "independentPositiveCapture": false,
+    "closedLoop": false,
+    "arrivalProven": false,
+    "referenceSourceFramesExcluded": 174,
+    "routeSha256": "11bc3604195ce20ecd5f76853331cf3d6b5b8c5c6c6cc7e860e66c50a03221a8",
+    "queryManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    "queryTimesSentToLocalizer": false,
+    "recipeSourceHashes": {
+      "scripts/pilot/check_route_control_replay.py": "73266868c2b99072549735b774fab4701df78236e5ddd7430c811e0e2c24d3fe",
+      "scripts/pilot/route_workspace.py": "0bfcab7c81f64ac8979ba1e8d57ceef35f5df4b09e15df0cb522241a58616850",
+      "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331",
+      "motor_worker/route_localization.py": "a5b05f938aaf806bd75b7c96331d2ae12bcd269d54544372663be9a1ff171095",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "motor_worker/walk_route.py": "2aaf1e3066499a6c75ebaa25ba076062ddf3bb02a3f9b0da230634309f019d96"
+    },
+    "afterStop": "diagnostic_localization_continues_planner_remains_terminal",
+    "nativeInputClientPresent": false
+  },
+  "optimizedNegative": {
+    "schema": "sphere-recorded-control-replay-v1",
+    "cases": [
+      {
+        "case": "baseline",
+        "states": {
+          "unknown": 37
+        },
+        "plans": {
+          "waiting": 37
+        },
+        "fault": null,
+        "firstStop": null,
+        "firstFollowingSeconds": null,
+        "browserExpiredReplies": 0,
+        "effectiveMovingSamples": 0
+      }
+    ],
+    "physicalActions": 0,
+    "sourceUnchanged": true,
+    "independentPositiveCapture": false,
+    "closedLoop": false,
+    "arrivalProven": false,
+    "referenceSourceFramesExcluded": 0,
+    "routeSha256": "11bc3604195ce20ecd5f76853331cf3d6b5b8c5c6c6cc7e860e66c50a03221a8",
+    "queryManifestSha256": "6600429df8f21fb079ca3c5256efa986ea702c6df9a9be984cf2a764639f7cd0",
+    "queryTimesSentToLocalizer": false,
+    "recipeSourceHashes": {
+      "scripts/pilot/check_route_control_replay.py": "73266868c2b99072549735b774fab4701df78236e5ddd7430c811e0e2c24d3fe",
+      "scripts/pilot/route_workspace.py": "0bfcab7c81f64ac8979ba1e8d57ceef35f5df4b09e15df0cb522241a58616850",
+      "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331",
+      "motor_worker/route_localization.py": "a5b05f938aaf806bd75b7c96331d2ae12bcd269d54544372663be9a1ff171095",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "motor_worker/walk_route.py": "2aaf1e3066499a6c75ebaa25ba076062ddf3bb02a3f9b0da230634309f019d96"
+    },
+    "afterStop": "diagnostic_localization_continues_planner_remains_terminal",
+    "nativeInputClientPresent": false
+  },
+  "managedExistingMap": {
+    "schema": "sphere-recorded-control-replay-v1",
+    "cases": [
+      {
+        "case": "baseline",
+        "states": {
+          "confirming": 10,
+          "localized": 209,
+          "unknown": 4
+        },
+        "plans": {
+          "waiting": 2,
+          "following": 20,
+          "stopped": 201
+        },
+        "fault": null,
+        "firstStop": {
+          "seconds": 4.837,
+          "reason": "walk_pose_binding_or_age"
+        },
+        "firstFollowingSeconds": 0.402,
+        "browserExpiredReplies": 2,
+        "effectiveMovingSamples": 20
+      }
+    ],
+    "physicalActions": 0,
+    "sourceUnchanged": true,
+    "independentPositiveCapture": false,
+    "closedLoop": false,
+    "arrivalProven": false,
+    "referenceSourceFramesExcluded": 174,
+    "routeSha256": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+    "queryManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    "queryTimesSentToLocalizer": false,
+    "recipeSourceHashes": {
+      "scripts/pilot/check_route_control_replay.py": "73266868c2b99072549735b774fab4701df78236e5ddd7430c811e0e2c24d3fe",
+      "scripts/pilot/route_workspace.py": "0bfcab7c81f64ac8979ba1e8d57ceef35f5df4b09e15df0cb522241a58616850",
+      "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331",
+      "motor_worker/route_localization.py": "a5b05f938aaf806bd75b7c96331d2ae12bcd269d54544372663be9a1ff171095",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "motor_worker/walk_route.py": "2aaf1e3066499a6c75ebaa25ba076062ddf3bb02a3f9b0da230634309f019d96"
+    },
+    "afterStop": "diagnostic_localization_continues_planner_remains_terminal",
+    "nativeInputClientPresent": false
+  },
+  "webImage": "sphere-route-local:route-live-frame-20261029-v1",
+  "sourceHashes": {
+    "frontend/src/features/stream/WalkingRoutePilot.tsx": "0bf8924a3641862d62e0b7f38aeaa8dc82cf69f6f664a5b4b61fca1a824578d6",
+    "frontend/src/features/stream/TeachingWorkbench.tsx": "8fa31d9c4846007a3de091761ad194ff4e7d239251b5d852471becab959e803c",
+    "frontend/src/features/stream/teachingConnection.ts": "cdbff3a92c6e2d420e176c3068ca6356de990956db4d1a367ac7765a86c21349",
+    "frontend/src/features/stream/RecordedControlReplay.tsx": "e4b9746c407aaa0ca9f96c32601f713c3b8a2d2b6ecd7e9c2aadca7327b2b1c5",
+    "motor_worker/route_localization.py": "a5b05f938aaf806bd75b7c96331d2ae12bcd269d54544372663be9a1ff171095",
+    "motor_worker/walk_route.py": "2aaf1e3066499a6c75ebaa25ba076062ddf3bb02a3f9b0da230634309f019d96",
+    "scripts/pilot/route_workspace.py": "0bfcab7c81f64ac8979ba1e8d57ceef35f5df4b09e15df0cb522241a58616850",
+    "scripts/pilot/reconstruction_service.py": "aa3f2c8edd937a4018f28fcd365e919e9be59665f5fb8a50d51269199024b331"
+  },
+  "optimizedTimingMs": {
+    "computeP50": 9.423199982848018,
+    "computeP95": 138.55512998416089,
+    "computeMax": 188.0800000508316,
+    "httpP95": 156.9496900134254,
+    "httpMax": 204.99520003795624
+  },
+  "liveFix": {
+    "sourceRemainsPresentedOnScroll": true,
+    "blankCanvasAfterStopFixed": true,
+    "hiddenPreviewRetainsTransport": true,
+    "hiddenInputFreshnessGranted": false,
+    "staleCommandsApplied": false,
+    "neutralWaitSeconds": 2,
+    "neutralConfirmations": 3,
+    "neutralWaitBudget": 3,
+    "realGameRepeatVerified": false
+  }
+}

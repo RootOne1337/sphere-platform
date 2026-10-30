@@ -1,0 +1,74 @@
+{
+  "tests": 378,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": 30,
+  "scope": "EnterpriseDebug JVM; WebSocket/OS boundary doubles, no sockets or hardware fleet",
+  "new_cases": [
+    {
+      "name": "malformedAckCannotEnableChannel",
+      "passed": true
+    },
+    {
+      "name": "messagesFromFailedSessionAreIgnoredDuringBackoff",
+      "passed": true
+    },
+    {
+      "name": "binaryBeforeAckCannotReachApplication",
+      "passed": true
+    },
+    {
+      "name": "stringAckVersionCannotEnableChannel",
+      "passed": true
+    },
+    {
+      "name": "authRejectionBeforeAckRefreshesImmediatelyWithoutHandshakeTimeout",
+      "passed": true
+    },
+    {
+      "name": "transportCancellationCannotReenterAnAuthenticatedListener",
+      "passed": true
+    },
+    {
+      "name": "failedSocketCannotReauthenticateBeforeCleanupRuns",
+      "passed": true
+    },
+    {
+      "name": "wrongDeviceAckCannotEnableChannel",
+      "passed": true
+    },
+    {
+      "name": "rejectedAckCannotBeReplacedBeforeCleanupRuns",
+      "passed": true
+    },
+    {
+      "name": "commandBeforeAckIsNotExecuted",
+      "passed": true
+    },
+    {
+      "name": "validAckAnnouncesOnceAndIsNotDispatchedAsACommand",
+      "passed": true
+    },
+    {
+      "name": "callbacksFromTimedOutHandshakeCannotRestoreConnectedState",
+      "passed": true
+    },
+    {
+      "name": "unsupportedAckVersionCannotEnableChannel",
+      "passed": true
+    },
+    {
+      "name": "transportOpenDoesNotAnnounceOrSendApplicationTraffic",
+      "passed": true
+    },
+    {
+      "name": "cancellationWhileAwaitingAckReleasesSocket",
+      "passed": true
+    },
+    {
+      "name": "silentAuthAfterOpenTimesOutAndRetries",
+      "passed": true
+    }
+  ]
+}

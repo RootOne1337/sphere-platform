@@ -1,0 +1,72 @@
+{
+  "finding": "AUD-130 / F32-05 bounded pipeline admission; F32-04 wait verification",
+  "baseline_source": "4b96ba2a997655b1a6303c6ef5091858a1fbe3eb",
+  "before_admission": {
+    "tests": 10,
+    "failures": 9,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 5.776
+  },
+  "after_admission": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 4.7
+  },
+  "sql_wait_regressions_for_AUD_129": {
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 6.762
+  },
+  "full_backend_except_load_profiles": {
+    "tests": 1815,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 422.915
+  },
+  "admission_contract": {
+    "limit_per_executor": 10,
+    "four_executors_limit": 40,
+    "queue_sizes_tested": [
+      32,
+      1000
+    ],
+    "concurrent_polls_per_executor_tested": 4,
+    "released_slots_reused": 3,
+    "cross_executor_duplicate_claims": 0,
+    "known_precommit_failure_starts_work": false
+  },
+  "wait_contract": {
+    "real_handlers": [
+      "delay",
+      "execute_script",
+      "sub_pipeline"
+    ],
+    "pool_size": 1,
+    "max_overflow": 0,
+    "idle_in_transaction_session_timeout_ms": 900,
+    "observed_idle_in_transaction_before_and_after_timeout": 0,
+    "concurrent_control_query": "same one-connection pool; SELECT 1 succeeds",
+    "terminal_state_each": "completed",
+    "child_receipt_source": "isolated SQL fixture, not Android"
+  },
+  "validation_limits": [
+    "Isolated loopback PostgreSQL/Redis only; no pilot mutation",
+    "Admission uses controlled execution waits; no APK load or network capacity claim",
+    "Four executors use separate SQL sessions in one event loop, not four OS processes",
+    "Wait transaction release was introduced in AUD-129; these add runtime regression coverage",
+    "Lease recovery, ambiguous commit reconciliation, nested capacity and global/device quotas remain open",
+    "stop() regression is executor API only; pipeline startup still lacks shutdown hook",
+    "Not installed; no new native or eight-hour acceptance"
+  ],
+  "installed_versions_unchanged": {
+    "backend": "85fb1ea",
+    "frontend": "03b161e",
+    "apk": "1.2.7/10207"
+  }
+}

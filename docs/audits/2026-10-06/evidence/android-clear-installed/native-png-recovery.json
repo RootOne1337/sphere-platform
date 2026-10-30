@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-10-06T14:05:11.052589+00:00",
+  "taskId": "043e6a3e-e68e-4967-9cd1-104685145adf",
+  "nodeId": "final_screenshot",
+  "path": "/sdcard/sphere_screenshot_1791294540156.png",
+  "sha256": "6a5f4e6de6d44a49f3c93f970a880f9fcce618cda78e6f7819e615d1604fd2ee",
+  "bytes": 17441,
+  "dimensions": [
+    960,
+    540
+  ],
+  "pixelReencoding": false,
+  "taskArtifactUploaded": false,
+  "manualAdbRecovery": true,
+  "ownedLocalFileCleanupConfirmed": true,
+  "frameTimeCorrelatedWithXpathAssertion": false
+}

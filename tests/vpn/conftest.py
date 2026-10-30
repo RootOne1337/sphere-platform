@@ -11,8 +11,8 @@ from cryptography.fernet import Fernet
 from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
 
+from backend.api.v1.vpn.router import get_key_cipher_factory
 from backend.services.vpn.awg_config import AWGConfigBuilder
-from backend.services.vpn.dependencies import get_key_cipher
 from backend.services.vpn.event_publisher import EventPublisher
 from backend.services.vpn.ip_pool import IPPoolAllocator
 from backend.services.vpn.pool_service import VPNPoolService
@@ -110,7 +110,7 @@ async def vpn_admin_client(db_session, pool_redis, fernet_cipher, test_org) -> A
     app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[get_db] = _db_gen
     app.dependency_overrides[get_redis] = lambda: pool_redis
-    app.dependency_overrides[get_key_cipher] = lambda: fernet_cipher
+    app.dependency_overrides[get_key_cipher_factory] = lambda: fernet_cipher
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
@@ -142,7 +142,39 @@ async def vpn_manager_client(db_session, pool_redis, fernet_cipher, test_org) ->
     app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[get_db] = _db_gen
     app.dependency_overrides[get_redis] = lambda: pool_redis
-    app.dependency_overrides[get_key_cipher] = lambda: fernet_cipher
+    app.dependency_overrides[get_key_cipher_factory] = lambda: fernet_cipher
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def vpn_owner_client(db_session, pool_redis, fernet_cipher, test_org) -> AsyncClient:
+    """HTTP client authenticated as org_owner to verify the documented permission matrix."""
+    from backend.core.dependencies import get_current_user
+    from backend.database.engine import get_db
+    from backend.database.redis_client import get_redis
+    from backend.main import app
+
+    mock_user = SimpleNamespace(
+        id=uuid.uuid4(),
+        org_id=test_org.id,
+        role="org_owner",
+        email="owner@vpn.test",
+    )
+
+    async def _db_gen():
+        yield db_session
+
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    app.dependency_overrides[get_db] = _db_gen
+    app.dependency_overrides[get_redis] = lambda: pool_redis
+    app.dependency_overrides[get_key_cipher_factory] = lambda: fernet_cipher
 
     async with AsyncClient(
         transport=ASGITransport(app=app),

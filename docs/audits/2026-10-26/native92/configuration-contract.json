@@ -1,0 +1,42 @@
+{
+  "cases": [
+    {
+      "name": "reject-old-mix",
+      "expectedRefusal": true,
+      "exitCode": 1,
+      "expectedContractObserved": true
+    },
+    {
+      "name": "reject-no-direct",
+      "expectedRefusal": true,
+      "exitCode": 1,
+      "expectedContractObserved": true
+    },
+    {
+      "name": "reject-release",
+      "expectedRefusal": true,
+      "exitCode": 1,
+      "expectedContractObserved": true
+    },
+    {
+      "name": "accept-gpu-planar",
+      "expectedRefusal": false,
+      "exitCode": 0,
+      "expectedContractObserved": true
+    }
+  ],
+  "deviceCommandsSent": 0,
+  "apkBuilds": 0,
+  "schemaVersion": 1,
+  "sourceRevision": "ef69ee25342c9f59ed6fd137f03e38295a38b1fa",
+  "androidTree": "22e5b8f6073bb5947259fa51bb44a04c5aaf8d67",
+  "scope": "Gradle admission contract on reviewed working tree before commit, offline help/dry-run only",
+  "newMode": {
+    "SPHERE_STREAM_GPU_PLANAR_INPUT": true,
+    "SPHERE_STREAM_PLANAR_INPUT": true,
+    "SPHERE_STREAM_GPU_BRIDGE": false,
+    "SPHERE_DIRECT_TRANSPORT_CANARY": true
+  },
+  "gradleBuildFileSha256": "dcccb97b23e45414b4f5ad8a3a71996640a98f27ab3c442bb6362955db4c9bed",
+  "ordinarySurfacePlanarExclusionRetained": true
+}

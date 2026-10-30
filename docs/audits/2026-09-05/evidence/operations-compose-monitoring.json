@@ -1,0 +1,112 @@
+{
+  "check": "config only; synthetic variables; no services launched",
+  "networks": [
+    "backend-net",
+    "frontend-net",
+    "monitoring-net",
+    "sphere-net"
+  ],
+  "services": {
+    "backend": {
+      "networks": [
+        "backend-net",
+        "frontend-net"
+      ],
+      "bind_mounts": [
+        {
+          "source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform",
+          "exists": true
+        },
+        {
+          "source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\updates",
+          "exists": false
+        }
+      ],
+      "published_ports": [
+        "58080"
+      ]
+    },
+    "frontend": {
+      "networks": [
+        "frontend-net"
+      ],
+      "bind_mounts": [
+        {
+          "source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend",
+          "exists": true
+        }
+      ],
+      "published_ports": [
+        "3000"
+      ]
+    },
+    "prometheus": {
+      "networks": [
+        "monitoring-net",
+        "sphere-net"
+      ],
+      "bind_mounts": [
+        {
+          "source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\prometheus.yml",
+          "exists": false
+        },
+        {
+          "source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\alert-rules.yml",
+          "exists": false
+        }
+      ],
+      "published_ports": [
+        "9090"
+      ]
+    },
+    "grafana": {
+      "networks": [
+        "monitoring-net"
+      ],
+      "bind_mounts": [
+        {
+          "source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\grafana\\provisioning",
+          "exists": false
+        },
+        {
+          "source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\grafana\\dashboards",
+          "exists": false
+        }
+      ],
+      "published_ports": [
+        "3000"
+      ]
+    },
+    "alertmanager": {
+      "networks": [
+        "monitoring-net",
+        "sphere-net"
+      ],
+      "bind_mounts": [
+        {
+          "source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\alertmanager.yml",
+          "exists": false
+        }
+      ],
+      "published_ports": [
+        "9093"
+      ]
+    },
+    "postgres-exporter": {
+      "networks": [
+        "monitoring-net",
+        "sphere-net"
+      ],
+      "bind_mounts": [],
+      "published_ports": []
+    },
+    "redis-exporter": {
+      "networks": [
+        "monitoring-net",
+        "sphere-net"
+      ],
+      "bind_mounts": [],
+      "published_ports": []
+    }
+  }
+}

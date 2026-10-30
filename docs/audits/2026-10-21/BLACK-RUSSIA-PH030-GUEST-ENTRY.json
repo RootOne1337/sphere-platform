@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "kind": "PH030_FINITE_GUEST_WORLD_ENTRY_NOT_STABILITY_OR_MOTOR_ACCEPTANCE",
+  "recordedAtUtc": "2026-10-20T21:18:31.707798+00:00",
+  "documentedAtUtc": "2026-10-20T21:21:22.084454+00:00",
+  "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+  "server": "VOLOGDA",
+  "characterName": "Гость",
+  "accountMode": "guest",
+  "worldEnteredConfirmedByFreshNativePng": true,
+  "evidencePngSha256": "3e793255bb690b202f993cb12f0a356cec2b4444a0e0efc7bc9df4be43dc3433",
+  "privateSnapshot": ".local-pilot/black-russia-ph030-20261021/world-ready-before.png",
+  "xpath": "Request succeeded; game renderer exposed no text nodes",
+  "operation": "Finite manual UI taps through Sphere; no repeated unconfirmed tap",
+  "passwordUsedOrPublished": false,
+  "dataResetByAgent": false,
+  "networkSettingsChangedByAgent": false,
+  "modelActionsSent": 0,
+  "directHeadlessSetup": {
+    "initialAttempt": "Agent offline / capture socket closed",
+    "afterAgentReconnected": "Source ready but video_or_control_setup_deadline, decoded frames=0",
+    "nativeMediaFrameDeliveryAccepted": false,
+    "fallbackForRegistration": "Native PNG screenshots and discrete shell input through Sphere",
+    "laterDirectRouteUnchangedAssumed": false
+  },
+  "stabilitySessionMinutesAccepted": 0,
+  "gameReconnectRecoveryAccepted": false,
+  "autonomousGameplayAccepted": false,
+  "confoundersComparedWithEarlierFailure": [
+    "full data/cache reset by owner",
+    "network changed to MTS",
+    "new guest account",
+    "server now VOLOGDA; previous emulator server unverified"
+  ],
+  "nextOrderedChecks": [
+    "Same guest/server/MTS manual activity 15-20 min, capture first disconnect before reset",
+    "One full game restart and same-account same-server MTS login",
+    "Restore and measure direct headless RGB and native held input before any AI action test",
+    "Old account on its original server through same MTS as separate comparison, no new reset",
+    "Wi-Fi change as separate later phase; do not mix network and account changes"
+  ],
+  "accountOrIpShadowBanConfirmed": false
+}

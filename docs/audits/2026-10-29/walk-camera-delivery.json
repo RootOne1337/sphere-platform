@@ -1,0 +1,68 @@
+{
+  "schema": "sphere-walk-camera-delivery-v1",
+  "frontendTests": {
+    "success": true,
+    "numPassedTests": 103,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 10
+  },
+  "pythonUnitTests": 86,
+  "httpTests": 36,
+  "httpSubtests": 5,
+  "typescript": "passed",
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "acf22c6e64e656a1303810e2a71c0e6daaae9293c790cf424af5e62db07511f3",
+    "source_sha_after": "acf22c6e64e656a1303810e2a71c0e6daaae9293c790cf424af5e62db07511f3",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 6.5,
+      "stop_ram_gib": 5.5,
+      "max_commit_percent": 85,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "service": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "sourceHashes": {
+      "scripts\\pilot\\reconstruction_service.py": "e42bd157ccf7b6f2c8d9d7558ce86032ccc06bf859f3a2e641a6ea40cfa505b2",
+      "scripts\\pilot\\route_walk_reports.py": "9d0fcb4cea256b73264a58b56629e3dea12be42d86f9b7207c27f354c5983dc7",
+      "scripts\\pilot\\route_workspace.py": "810cd498e1ec1df9bfe2ba7f3e207770c778f015e85343e2531ab0821b8d8292",
+      "motor_worker\\route_localization.py": "a5b05f938aaf806bd75b7c96331d2ae12bcd269d54544372663be9a1ff171095",
+      "motor_worker\\walk_route.py": "6b71a3e20f6b260d14e66290f2c89efc8cbf65a78299734fa4fd8d07d8675c11"
+    },
+    "health": 200,
+    "missingCapability": 403,
+    "existingAssetsUnchanged": true
+  },
+  "installed": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:58cb5695602f324267924340957b0e8e21267e992c25bc2b6e4a477555acc9cf",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "probe": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "workerMatches": true,
+    "newBundlePresent": true
+  },
+  "liveGameFullRouteVerified": false,
+  "visualBrowserCheck": "blocked_by_browser_tool_disabled",
+  "nativeDesktopUsed": false,
+  "independentGameplayTest": false,
+  "multiWindowReady": false
+}

@@ -1,8 +1,9 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Code2 } from 'lucide-react';
+import { ActionRoutes } from './ActionRoutes';
 
 export function LuaNode({ data, selected }: NodeProps) {
-  const d = data as { code?: string };
+  const d = data.action as { code?: string };
   const preview = (d.code ?? '').split('\n')[0].slice(0, 30);
   return (
     <div
@@ -16,7 +17,7 @@ export function LuaNode({ data, selected }: NodeProps) {
         <span className="text-sm font-medium text-yellow-200">Lua</span>
       </div>
       <p className="text-xs text-yellow-600 font-mono truncate">{preview || '…'}</p>
-      <Handle type="source" position={Position.Bottom} />
+      <ActionRoutes />
     </div>
   );
 }

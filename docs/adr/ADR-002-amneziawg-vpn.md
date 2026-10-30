@@ -1,5 +1,10 @@
 # ADR-002 — Use AmneziaWG for Device VPN Tunnels
 
+> Historical decision, not an installation/readiness receipt. The current
+> [VPN/egress design](../design/VPN-EGRESS-ARCHITECTURE.md) supersedes its SDK,
+> routing and fixed-parameter assumptions. AWG remains a candidate; the app-scoped
+> Android provider and live fault acceptance are still pending.
+
 **Status:** Accepted  
 **Date:** 2024-02-01  
 **Deciders:** Infrastructure Lead, Android Team Lead, CTO  

@@ -1,0 +1,152 @@
+{
+  "mode": "artifact validation, not functional product testing",
+  "source_commit": "1354d66660041ba17afb64399d567ca29dd91866",
+  "checks": [
+    {
+      "check": "source HEAD unchanged",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "tracked application files unchanged",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "staged application files unchanged",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "all 156 frontend source hashes stable",
+      "passed": true,
+      "details": []
+    },
+    {
+      "check": "OpenAPI hash stable",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "CI evidence belongs to audited HEAD",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "repeated public health reads recorded without auth",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "union schema branch constraints retained",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "41 source finding anchors and hashes",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "41 unique findings represented",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "29 route cards represented",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "169 REST operations",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "151 schema declarations",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "1112 property entries",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "565 control declarations",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "41 modal declarations",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "266 menu/tab/option/form declarations",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "9 isolated proofs, explicitly not E2E",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "runtime snapshot uses GET only",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "all four WebSocket handlers represented",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Sphere visual limitation explicit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Prometheus image identical to original capture",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "local links and explicit section anchors valid",
+      "passed": true,
+      "details": []
+    },
+    {
+      "check": "all source permalink paths and line bounds valid",
+      "passed": true,
+      "details": {
+        "links": 2091,
+        "unique_files": 291,
+        "invalid": []
+      }
+    },
+    {
+      "check": "public text has no token/private-key patterns",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "actual private JWT absent from public files",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "document exceeds many-thousand-line requirement",
+      "passed": true,
+      "details": {
+        "lines": 21190,
+        "bytes": 1485797
+      }
+    }
+  ],
+  "passed": 27,
+  "total": 27,
+  "document_sha256": "77bc968e555ad5a5b0468f8e6ffeecb6651b1cc936266162713f68a288c0306d",
+  "evidence_sha256": "6d243f03e1c7a7e589620cbf05ce2a44439d073a53c807b054c61ac04181ac71"
+}

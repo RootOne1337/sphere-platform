@@ -1,0 +1,124 @@
+# Веб-запись маршрута и три нативных контакта
+
+## Addendum90: длинная игровая запись и capture foreground
+
+APK90/10290 установлена только PH011; SHA-256 `51e2f6df58a73a10e730d8494e264f72ce1431ca86df8e3704887bea26ee70cc`.
+После нового потока та же JNIActivity игры осталась foreground: изолированный
+capture-consent task не раскрывает предыдущую Activity Sphere. Веб8e752e14:
+190,215с/6026кадров,31,67FPS, maxRTPmediaGap191мс; декодированы все кадры и
+проверены SHA/COMPLETE/журнал/CLOSED. W1200мс одним DOWN/UP, camera8MOVE/134мс,
+действие502мс. Viewer показал кадр5001 на158,289с без прежнего ограничения600.
+3D работал параллельно после прогрева,112окон при остановке записи; масштаб и
+global map не квалифицированы. Негативные275/518frame прогоны не удалены и
+не выдаются за успех: iframe focus/cold startup были отдельными исправлениями.
+Read-onlyRGB monitor90:4,797Hz в среднем, maxreceiveGap417,412мс/4gaps>250мс.
+Строгого5Hz SLA и capture→action latency это не подтверждает. [Квитанция](WEB-TEACHING-DELIVERY.json).
+
+## Addendum: фактическая доставка24 октября
+
+APK89 собрана локально, подписана прежним сертификатом и установлена только PH011.
+SHA-256 установленного пакета `4367c3b7a6a25c9ac99212028b3af9ca1360d345c14ddb210b6692cc19863b0a`.
+Обычные4варианта5144cases/12skip, direct2варианта2600cases/6skip,0failures/errors;
+configured dev/enterprise lint/test/assemble прошли. Старый блок RAM ниже исторический.
+Три контакта8/8APPLIED+CLOSED;5с observation4,99Hz,57,086decodedFPS, maxrecvGap48,097мс.
+Browser launcher1496/1496кадров и debug fixture1205/1205кадров декодированы, SHA каждого
+access unit/COMPLETE проверены. W1206мс одним DOWN/UP, Space506мс, камера8MOVE.
+Это не игровой эффект или автономный маршрут. [Полная квитанция](WEB-TEACHING-DELIVERY.json).
+Веб дополнен подготовительным управлением,10минутным пределом и отдельным локальным
+DA3/Rerun preview. Сшивка карты и low-render route repeat остаются открыты.
+
+## Исторический исходный срез реализации
+
+24 октября2026. **Состояние: реализация в коде, полный runtime-допуск открыт.**
+Это продолжение0.8.1, а не новая версия motor worker; worker остаётся0.8.1.
+Кандидат Android:1.2.89/10289. Установленная по прежней квитанции версия88 не
+выдаётся за новую. APK89 не собрана/не установлена; новые GitHub jobs не запускались.
+
+## Реализовано
+
+- Из карточки и потока доступен отдельный web teaching workbench: явный connect,
+  калибровка стика и действия, WASD, Shift, независимая мышь/камера, пробел,
+  закреплённые Start/Stop/Escape, качество через существующий device-wide control.
+- Один capture-only presence и один авторизованный WebRTC peer; original encoded
+  H264 копируется до декодера и сохраняется worker в OPFS. Весь видеопоток через
+  backend не копируется. Сбой не переключает ввод на другой транспорт.
+- Три stable pointer IDs на одном downTime; POINTER_DOWN/POINTER_UP с правильными
+  индексами Android. Снятие одного контакта сохраняет остальные. Стик получает
+  один DOWN в центре, далее MOVE до отпускания клавиш. Key repeat не создаёт тапов.
+- Explicit JSON opt-in `touch_open.contact_protocol=1`, затем `touch_contact_event`
+  с pointer_id0..2/action0..2; handshake/status включают max_pointers3. Старый25-byte
+  private pipe остаётся прежним; внутри action16+4*id+baseAction и CANCEL_ALL28.
+  Старые участники не могут отправить новые действия без opt-in; полный teaching
+  резервирует физический ввод от других участников. Видеопросмотр сохраняется.
+- На старой APK отсутствие контактов не маскируется тремя single-pointer жестами.
+  Auth/capture-bound grants, native lease1500мс, strict sequence, epoch/geometry,
+  uncertainty fences и подтверждённое освобождение сохраняются.
+- Browser driver: latest MOVE coalescing только внутри одного контакта;
+  очередь≤8, возраст команды200мс, кадра250мс, ACK500мс, heartbeat300мс,
+  close confirmation2500мс. Нет replay/rearm после blur/disconnect.
+- Bounded H264/index/input journal, per-unit SHA-256, COMPLETE последним;
+  viewer с временной шкалой, проверкой файлов и экспортом. Нет вечного архива
+  снимков; запись только по явной кнопке оператора.
+
+## Выполненные проверки
+
+1. Scoped Java8 javac + Kotlin1.9.23/JUnit, JVM≤512MiB:35 тестов
+   RootTouchSession/RootContactState, затем72 теста shared controller/arbiter/mailbox/
+   ProcessTouchPipe — **107 passed**. Java Bridge компилирован против android-35.jar.
+   Неизменённый AndroidRemoteKeyboard разрешён из прежних devDebug classes через
+   friend-path; эти тесты не выполняли Android IME. Это **не полный Android Gradle CI**,
+   не dex/APK/R8/signature и не физический MotionEvent на устройстве.
+2. Full frontend Jest:185 suites/2648 tests passed на промежуточном дереве;
+   после добавления UI tests:3 новых targeted suites/17tests passed (14 из них
+   уже входят в прежний full suite). TypeScript `--noEmit --incremental false` passed.
+   Окончательная source-bound локальная квитанция доставки будет отдельным addendum.
+3. Worker tests проверяют отсутствие файлов до Start; IDR/header gate; исходные
+   байты/90k timeline; отказ COMPLETE при pending/unknown/clock regression;
+   bounded disk queue; запрет перезаписи папки. Driver tests проверяют три контакта,
+   удержание/коррекцию/heartbeat, закрытие и отсутствие replay после неопределённости.
+4. Визуально через CUA просмотрен **статический layout fixture реального компонента**:
+   обычная узкая панель и вложенные1440/390 layouts. Wide показывает настройки
+   рядом с видео, narrow — ниже; controls вне картинки. Это не авторизованный
+   production UI, не реальное видео/игра, не end-to-end browser capture.
+
+## Блокирующие условия и незакрытые проверки
+
+Последний Android resource preflight:available8228933632bytes (~7.66GiB),
+required12GiB, `ram_headroom_low`, `buildAllowed=false`. Guard не ослаблялся;
+host/emulator не перезагружались, память чужих процессов не освобождалась.
+Нативные focused tests обходом guard полного APK не являются: APK не собиралась.
+
+Остаётся обязательным: локальный полный Android gate и APK89 package/sign/admit,
+адресная установка PH011; полная source-bound frontend admission/install; настоящий
+WebRTC encoded-transform H264 capture с реальным браузером и APK; native3-contact
+hold/release; фактические FPS/frame gaps и повтор после game restart. Account
+library, общий importer worker/browser,3D, route controller/arrival не реализованы.
+Product9accepted/41open/50 не изменяется.
+
+Инструкция оператора и формат:
+[TEACHING-WEB](../../operations/TEACHING-WEB.md). Новый режим не меняет VPN,
+игровые файлы, серверные аккаунты, настройки разрешения эмулятора или старые записи.
+
+
+## Дополнение: настоящая browser encoded-transform проверка
+
+После host reboot resource guard пропустил сборку (available22597459968bytes,
+C:Healthy/OK; health/ready/login200; Gitfsck0 и HEAD98bd7457 совпадал с remote до
+нового commit). Запущена полная локальная Android проверка; окончательные
+результаты/пакет/доставка фиксируются отдельно после завершения, а не заранее.
+
+Synthetic browser loopback в реальном IAB проверил worker на настоящих H264
+encoded frames, OPFS и WebCrypto. Первый опыт корректно не создал COMPLETE,
+потому что Chromium выставляет width/height0 для delta frames. Исправлено:
+только уже установленная геометрия SPS/IDR может наследоваться нулевым delta;
+изменённые явные размеры, keyframe без геометрии или новый SSRC отказывают.
+Новые unit tests покрывают эти случаи и heartbeat, пересекающий первый IDR.
+Подтверждение CLOSED сохраняется также после отказа видео.
+
+Повторный synthetic опыт:90 кадров,685995bytes,270270ticks/90000=3.003с,
+COMPLETE=true, manifest/index hashes; последняя delta geometry_reported=false,
+первый IDR=true. Приёмник/диск были настоящими browser API; вход CLOSED был
+**синтетическим**. Ни Android/multitouch, ни gameplay этим не доказаны. Private
+proof `.local-pilot/teaching89-delivery/browser-h264-synthetic-proof.txt` иPNG.
+Локальная библиотека теперь разделена по org/account namespace; серверной
+синхронизации всё ещё нет.

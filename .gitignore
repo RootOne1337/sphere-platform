@@ -97,6 +97,11 @@ docs/MERGE_LOG.md
 
 # Deployment artifacts (генерируются скриптами развёртывания)
 .admin-credentials
+.local-pilot/
+/reviewed-backend/
+/frontend/reviewed-web/
+.playwright-cli/
+output/playwright/
 .deploy.log
 backups/
 ui_dump*.xml
@@ -117,3 +122,4 @@ test_task*.py
 test_task.py
 verify_dag.py
 reset_pw.py
+frontend/public/vendor/elk/

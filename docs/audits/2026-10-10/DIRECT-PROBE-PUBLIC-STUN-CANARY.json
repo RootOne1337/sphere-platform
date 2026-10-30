@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T03:23:31.290471+00:00",
+  "runtimeInstalled": true,
+  "scope": "One PH011 explicit public-STUN diagnostic; no answer before browser close, direct channel not accepted. Original APK restored, API gate off and ordinary viewer rechecked on both origins. Not a native cause, idle/input, media, resource soak or fleet acceptance.",
+  "runtime": {
+    "sourceRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+    "apiSourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "uiContainer": {
+      "id": "2109cf7c08790a48f9637031f1603bbdba1d435e9260a1f32a5719c827be9102",
+      "imageId": "sha256:addce2bdef7e7c574fa68abfa0bc273184e63df81d1a721268caefbf4874ab13",
+      "imageTag": "sphere-review-frontend:639b6ad52fe3651579499659ded46ff73027f313",
+      "startedAt": "2026-10-10T00:38:05.533230075Z"
+    },
+    "apiContainer": {
+      "id": "5a7a008fbef5d6a0a3ffd31b599cf18f32960d020375454b1d5c9b71b7566208",
+      "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "startedAt": "2026-10-10T03:09:09.648855864Z"
+    },
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "schemaMigrationPerformed": false,
+    "otherContainersPreservedPerInstallation": 45,
+    "containerCount": 46,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "directProbeEnabled": false,
+    "directProbeDeviceIds": [],
+    "nativeCanaryCurrentlyInstalled": false,
+    "originalApkRestored": true,
+    "publicHostMapChanged": false
+  },
+  "sourceAdmission": {
+    "revision": "934f46a809220931b6af9e183838a1e03efc6194",
+    "hostedCi": [
+      {
+        "kind": "android",
+        "runId": 38012383913,
+        "conclusion": "success",
+        "headSha": "934f46a809220931b6af9e183838a1e03efc6194",
+        "status": "completed"
+      },
+      {
+        "kind": "backend",
+        "runId": 38012386886,
+        "conclusion": "success",
+        "headSha": "934f46a809220931b6af9e183838a1e03efc6194",
+        "status": "completed"
+      },
+      {
+        "kind": "frontend",
+        "runId": 38012386912,
+        "conclusion": "success",
+        "headSha": "934f46a809220931b6af9e183838a1e03efc6194",
+        "status": "completed"
+      },
+      {
+        "kind": "preview",
+        "runId": 38012386862,
+        "conclusion": "success",
+        "headSha": "934f46a809220931b6af9e183838a1e03efc6194",
+        "status": "completed"
+      }
+    ],
+    "signedApkSha256": "22da66fa9509abecae2e43e0a70f344b7df924719e686d06941f40123ac66fe2",
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version": "1.2.49-dev / 10249",
+    "jniAbis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "otaPublished": false,
+    "otherDevicesUpdated": false
+  },
+  "probe": {
+    "iceProfile": "public-stun",
+    "stunUrl": "stun:stun.cloudflare.com:3478",
+    "events": [
+      {
+        "kind": "offer",
+        "sdpBytes": 781,
+        "candidates": 2,
+        "mdnsCandidates": 1,
+        "candidateTypes": {
+          "host": 1,
+          "srflx": 1,
+          "prflx": 0,
+          "relay": 0
+        },
+        "media": [
+          "m=application"
+        ],
+        "hasFingerprint": true,
+        "elapsedSeconds": 18.235
+      },
+      {
+        "kind": "close",
+        "sdpBytes": 0,
+        "candidates": 0,
+        "mdnsCandidates": 0,
+        "candidateTypes": {
+          "host": 0,
+          "srflx": 0,
+          "prflx": 0,
+          "relay": 0
+        },
+        "media": [],
+        "hasFingerprint": false,
+        "elapsedSeconds": 26.224
+      }
+    ],
+    "offerToCloseSeconds": 7.989,
+    "answerObserved": false,
+    "nativeStatsSamples": 0,
+    "echoCount": 0,
+    "rttMs": null,
+    "selectedCandidatePair": null,
+    "directChannelAccepted": false,
+    "rawSdpRecorded": false,
+    "androidInputSent": false,
+    "browserResultReported": "signaling_deadline",
+    "browserFailureScreenshotRetained": false,
+    "limitation": "The later browser-result screenshot is an overview at03:08UTC, not the failure screen. Browser failure reason was observed live; the durable observer independently proves offer then close with no answer in that finite interval. Empty native stats are not evidence of no JNI:934 sampled only after answer."
+  },
+  "nativeResources": {
+    "scope": "Different APK/process epochs and capture states; descriptive snapshots, not native memory leak attribution. KiB VmRSS and integer thread counts from /proc status.",
+    "snapshots": [
+      {
+        "observedAtUtc": "2026-10-10T01:24:38.323512+00:00",
+        "pid": 2874,
+        "procStatus": {
+          "VmSize": 3407244,
+          "VmRSS": 95320,
+          "Threads": 43
+        },
+        "webrtcLogLines": 0
+      },
+      {
+        "observedAtUtc": "2026-10-10T01:40:20.314504+00:00",
+        "pid": 8901,
+        "procStatus": {
+          "VmSize": 3404392,
+          "VmRSS": 123236,
+          "Threads": 40
+        },
+        "webrtcLogLines": 0
+      },
+      {
+        "observedAtUtc": "2026-10-10T01:41:49.883096+00:00",
+        "pid": 8901,
+        "procStatus": {
+          "VmSize": 3429480,
+          "VmRSS": 134032,
+          "Threads": 45
+        },
+        "webrtcLogLines": 19
+      },
+      {
+        "observedAtUtc": "2026-10-10T01:42:31.286573+00:00",
+        "pid": 8901,
+        "procStatus": {
+          "VmSize": 3424848,
+          "VmRSS": 133584,
+          "Threads": 41
+        },
+        "webrtcLogLines": 21
+      },
+      {
+        "observedAtUtc": "2026-10-10T03:20:02.364419+00:00",
+        "pid": 7617,
+        "procStatus": {
+          "VmSize": 3404060,
+          "VmRSS": 112680,
+          "Threads": 36
+        },
+        "webrtcLogLines": 0
+      }
+    ]
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Post-cleanup ordinary view-only frame decoding on both origins. Does not establish continuous media cadence or Android input reliability. Android capture telemetry may be stale independently.",
+    "observations": [
+      {
+        "origin": "public",
+        "decodedFrames": 25,
+        "drawnFrames": 25,
+        "invalidPackets": 0,
+        "decodeErrors": 0,
+        "renderErrors": 0,
+        "androidInputSent": false,
+        "viewOnly": true,
+        "domSha256NormalizedLf": "aad75b9ae002945aa9c820916281b4bcd81254777888997957bcfae5b06a3981"
+      },
+      {
+        "origin": "local",
+        "decodedFrames": 24,
+        "drawnFrames": 24,
+        "invalidPackets": 0,
+        "decodeErrors": 0,
+        "renderErrors": 0,
+        "androidInputSent": false,
+        "viewOnly": true,
+        "domSha256NormalizedLf": "00596e720b6ca0a0f38a597a8cdf825bbd35e3ba33d91e54108e959888a782c5"
+      }
+    ]
+  },
+  "cleanup": {
+    "originalApk": {
+      "observedAtUtc": "2026-10-10T03:08:10.967198+00:00",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "installedApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+      "sourceRevision": "d8023bce29c518cca7ab83b907c96e142081f106",
+      "restoredOriginalApk": true,
+      "appDataCleared": false,
+      "otaPublished": false,
+      "directProbeNativeInstalled": false
+    },
+    "backend": {
+      "disabled": true,
+      "allowlist": [],
+      "startedAt": "2026-10-10T03:09:09.648855864Z"
+    },
+    "temporaryPreview": {
+      "observedAtUtc": "2026-10-10T03:08:39.0200433Z",
+      "userProcessesStopped": false,
+      "stoppedOwnedPids": [
+        30352,
+        41192
+      ]
+    },
+    "agentCreatedTabsClosed": true,
+    "interruption": "No new peer after finite8s probe; original diagnostic APK/backend flag remained until work resumed03:08UTC. APK restored03:08:10UTC, backend gate disabled03:09:09UTC. Active peers have an unextended30s lease; this does not mean the canary APK was installed for only30s.",
+    "appDataCleared": false,
+    "inputReplayPerformed": false
+  },
+  "acceptance": {
+    "nativeSetupCause": "UNKNOWN",
+    "directChannel": "OPEN",
+    "directMediaControl": "OPEN",
+    "stableApk13": "NO_GO",
+    "productAccepted": 9,
+    "productOpen": 41,
+    "legacyUnclosed": 7,
+    "newProductItemsClosed": []
+  },
+  "previousInstalledObservation": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json"
+}

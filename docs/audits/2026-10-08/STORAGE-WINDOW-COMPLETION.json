@@ -1,0 +1,121 @@
+{
+  "state": "complete",
+  "samples": 241,
+  "firstUtc": "2026-10-08T01:01:25.608239+00:00",
+  "lastUtc": "2026-10-08T09:01:25.607563+00:00",
+  "finishedUtc": "2026-10-08T09:01:34.471173+00:00",
+  "reportBytes": 2210733,
+  "budgetBytes": 16777216,
+  "freeDisk": {
+    "first": 53474902016,
+    "last": 46517481472,
+    "delta": -6957420544
+  },
+  "files": [
+    {
+      "file": "docker_data.vhdx",
+      "samples": 241,
+      "measured": 241,
+      "logicalDistinct": 1,
+      "allocatedDistinct": 1,
+      "logicalFirst": 234731077632,
+      "logicalLast": 234731077632,
+      "allocatedFirst": 234731077632,
+      "allocatedLast": 234731077632,
+      "identityDistinct": 1,
+      "label": "Docker data VHDX"
+    },
+    {
+      "file": "data.vmdk",
+      "samples": 241,
+      "measured": 241,
+      "logicalDistinct": 1,
+      "allocatedDistinct": 1,
+      "logicalFirst": 9539223552,
+      "logicalLast": 9539223552,
+      "allocatedFirst": 9539223552,
+      "allocatedLast": 9539223552,
+      "identityDistinct": 1,
+      "label": "LDPlayer data0"
+    },
+    {
+      "file": "sdcard.vmdk",
+      "samples": 241,
+      "measured": 241,
+      "logicalDistinct": 1,
+      "allocatedDistinct": 1,
+      "logicalFirst": 12709658624,
+      "logicalLast": 12709658624,
+      "allocatedFirst": 12709658624,
+      "allocatedLast": 12709658624,
+      "identityDistinct": 1,
+      "label": "LDPlayer sdcard0"
+    },
+    {
+      "file": "data.vmdk",
+      "samples": 241,
+      "measured": 241,
+      "logicalDistinct": 1,
+      "allocatedDistinct": 1,
+      "logicalFirst": 7065174016,
+      "logicalLast": 7065174016,
+      "allocatedFirst": 7065174016,
+      "allocatedLast": 7065174016,
+      "identityDistinct": 1,
+      "label": "LDPlayer data1"
+    },
+    {
+      "file": "sdcard.vmdk",
+      "samples": 241,
+      "measured": 241,
+      "logicalDistinct": 1,
+      "allocatedDistinct": 1,
+      "logicalFirst": 9272950784,
+      "logicalLast": 9272950784,
+      "allocatedFirst": 9272950784,
+      "allocatedLast": 9272950784,
+      "identityDistinct": 1,
+      "label": "LDPlayer sdcard1"
+    }
+  ],
+  "vss": {
+    "measured": 0,
+    "unavailable": 241
+  },
+  "hostScalar": {
+    "availableRamBytes": {
+      "first": 22186770432,
+      "last": 14483935232,
+      "minimum": 13038891008,
+      "maximum": 22186770432
+    },
+    "committedBytes": {
+      "first": 49303343104,
+      "last": 57820225536,
+      "minimum": 49303343104,
+      "maximum": 59306143744
+    },
+    "commitLimitBytes": {
+      "first": 101336473600,
+      "last": 101336473600,
+      "minimum": 101336473600,
+      "maximum": 101336473600
+    },
+    "pagedPoolBytes": {
+      "first": 2791862272,
+      "last": 3153330176,
+      "minimum": 2791862272,
+      "maximum": 3187679232
+    },
+    "nonpagedPoolBytes": {
+      "first": 2280345600,
+      "last": 2469113856,
+      "minimum": 2269773824,
+      "maximum": 2473758720
+    }
+  },
+  "writerAttribution": "UNDETERMINED",
+  "autostartConfigured": false,
+  "continuousAfterLastSample": false,
+  "samplesSha256": "eb8d1e18fbb20cb6546e458df9dbd6349efe8fbca195c61597b3e0988415099d"
+}

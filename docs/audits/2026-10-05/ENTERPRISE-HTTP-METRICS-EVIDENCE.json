@@ -1,0 +1,520 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-05T14:11:11.521431+00:00",
+  "auditSource": "c3937a1abf55eca73662bdc720699eb29b6653a6",
+  "previousEvidence": "ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json",
+  "textHashFormat": "UTF-8 bytes with CRLF normalized to LF; matches Git text blobs",
+  "previousEvidenceSha256": "d32f3b7eedc2e1a63ed85fa17eddae60251c421bed4bb90407894d03ca1f7b6e",
+  "auditBaselineSha256": "8ea6e56d57af1570baab08cb0d4aac4e52b0029f95067b19d8f6391eeac9f915",
+  "sources": {
+    "feature": "72debfbc39d088df36707879b8a6bfbbd17806cf",
+    "ui": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+    "api": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+    "gateway": "993d9eac0f09372573ba4b10b1323d61d94a19ad",
+    "gatewayPreflight": "00ed391f81ef9897f4d4dea226170b7068495f4a",
+    "toolsTopology": "52403b4c75e43f6283b04fe5f8e5ff204a037fc2",
+    "resourceFinal": "c9a3fcc106dfea460dbb9ebf93038017019b7f81"
+  },
+  "gitBlobHashes": [
+    {
+      "file": "frontend/lib/server/httpObservability.ts",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "14e6f64540c61d7a461419001302f68d25ec4120c5a60bfcdb55706245a804e3"
+    },
+    {
+      "file": "frontend/lib/server/observability.ts",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "f50a0424b2db8f010ea28f55a957d88c75fe2274c2a8162827dda2698a6777d7"
+    },
+    {
+      "file": "frontend/app/api/observability/http/route.ts",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "a2e548acca64dc560539daaec084904f3ee634a084f2547bec585ad61d26f852"
+    },
+    {
+      "file": "frontend/src/features/monitoring/httpMetricsTypes.ts",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "b074893df10c79af90bb25d7965a8ec652982d2921d0de2d14d3298975be7d32"
+    },
+    {
+      "file": "frontend/src/features/monitoring/HttpMetricsPanel.tsx",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "a722442af434fd7cdb0820d9c58834d769cd44392a647a949f46713035a16e46"
+    },
+    {
+      "file": "frontend/src/features/monitoring/HistoryChart.tsx",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "40636e828082221ba1b1151ac1a41281c7aaf1229e9e98f770d50be11e837f01"
+    },
+    {
+      "file": "frontend/src/features/monitoring/ObservabilityPanel.tsx",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "52599a29535df81e4db48dcff25334486e3aaa9923673b1ac32ce8eec7cbe038"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/http-observability-server.test.ts",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "87a164eb2289a4b869159cf384d3eb8e4ffd127850e1e73ee958f341ee392767"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/http-metrics-panel.test.tsx",
+      "revision": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "sha256": "8c2cdb7fcb96f7dc2eb7e7f17073a32689e52cea951ffea629dd2524797851f8"
+    },
+    {
+      "file": "backend/middleware/metrics.py",
+      "revision": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "sha256": "b7e12ae8f41c5e977db3f15392dc1a48f02a965a23356e042816c02225f4e113"
+    },
+    {
+      "file": "backend/metrics.py",
+      "revision": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "sha256": "2b545f911106ca020f096b17d68d73c1e08260fb68aae678cb776dbb8a235ea5"
+    },
+    {
+      "file": "docker-compose.review.yml",
+      "revision": "993d9eac0f09372573ba4b10b1323d61d94a19ad",
+      "sha256": "4c5c103678a06c082bca7705b79cac3c2248b18396e7a7e89eb89de3cabd5cbc"
+    },
+    {
+      "file": "infrastructure/nginx/review.conf",
+      "revision": "993d9eac0f09372573ba4b10b1323d61d94a19ad",
+      "sha256": "55e569a591d2fd9738412cce1b4f68ec8b54c35a605e5440124f6071a83e7390"
+    },
+    {
+      "file": "infrastructure/monitoring/docker-compose.review-observability.yml",
+      "revision": "993d9eac0f09372573ba4b10b1323d61d94a19ad",
+      "sha256": "8ec2309ddb7f9e315640b94ea2c81e7214613fd598584f31d61762704c217388"
+    },
+    {
+      "file": "scripts/pilot/review_gateway_preflight.py",
+      "revision": "00ed391f81ef9897f4d4dea226170b7068495f4a",
+      "sha256": "6b188ce9abbeb2ce49b253855c00ca7e8dd3d62adec037bd1819c34b99d4d13f"
+    },
+    {
+      "file": "tests/test_review_gateway_preflight.py",
+      "revision": "00ed391f81ef9897f4d4dea226170b7068495f4a",
+      "sha256": "127013f65ab5a1cd0e52a1b196d6cdc562149150d45e0485cfe65745202efa14"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
+      "revision": "00ed391f81ef9897f4d4dea226170b7068495f4a",
+      "sha256": "8ea6e56d57af1570baab08cb0d4aac4e52b0029f95067b19d8f6391eeac9f915"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json",
+      "revision": "00ed391f81ef9897f4d4dea226170b7068495f4a",
+      "sha256": "d32f3b7eedc2e1a63ed85fa17eddae60251c421bed4bb90407894d03ca1f7b6e"
+    },
+    {
+      "file": "docs/audits/2026-10-05/HOST-STORAGE-NIGHT-FINAL-EVIDENCE.json",
+      "revision": "c9a3fcc106dfea460dbb9ebf93038017019b7f81",
+      "sha256": "c4e77722cdae4ee680d8c35d9f71d2f1be954f6045214605a8d6175d0fd7277b"
+    }
+  ],
+  "build": {
+    "source": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+    "imageId": "sha256:a50a08b7974ff87c644ba6d19470b3b4c884cdbceb35cf449f607dff1c6cd650",
+    "exit": 0,
+    "gitArchive": true,
+    "apiImagePreserved": true
+  },
+  "tests": {
+    "frontendFull": {
+      "source": "72debfbc39d088df36707879b8a6bfbbd17806cf",
+      "success": true,
+      "numTotalTestSuites": 118,
+      "numPassedTestSuites": 118,
+      "numTotalTests": 1235,
+      "numPassedTests": 1235,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "frontendTargeted": {
+      "source": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+      "success": true,
+      "numTotalTestSuites": 4,
+      "numPassedTestSuites": 4,
+      "numTotalTests": 99,
+      "numPassedTests": 99,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "frontendHttpAndAndroidMocked": true,
+    "frontendTypeScriptPassed": true,
+    "changedFileLintPassed": true,
+    "eslintCompatibilityMode": true,
+    "gatewayPreflight": {
+      "source": "00ed391f81ef9897f4d4dea226170b7068495f4a",
+      "tests": 14,
+      "failed": 0,
+      "exit": 0,
+      "globalBackendConftestDisabled": true,
+      "ruffPassed": true,
+      "realRenderedComposeValidated": true,
+      "gatewayImageNginxTestPassed": true,
+      "nginxTestExternalNetworkDisabled": true
+    },
+    "apiRegressionsRerunInThisBatch": false,
+    "setupCorrections": [
+      "Default ESLint9 stopped without flat config; current .eslintrc compatibility mode passed.",
+      "Two ambiguous UI assertions corrected for repeated values; targeted 99 tests passed.",
+      "Initial pytest stopped in shared backend JWT settings; isolated --noconftest run passed.",
+      "Rendered Compose $$ escaping normalized and covered by gateway regression test.",
+      "Grafana helper referenced renamed historical receipt; final receipt path corrected before login."
+    ]
+  },
+  "installation": {
+    "observedAt": "2026-10-05T13:56:11.196817+00:00",
+    "uiSource": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+    "gatewaySource": "993d9eac0f09372573ba4b10b1323d61d94a19ad",
+    "uiImageId": "sha256:a50a08b7974ff87c644ba6d19470b3b4c884cdbceb35cf449f607dff1c6cd650",
+    "gatewayImageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+    "changedContainers": [
+      "sphere-review-20261002-review-gateway-1",
+      "sphere-review-20261002-review-ui-1"
+    ],
+    "otherContainersPreserved": 44,
+    "staticUiIp": "172.30.0.3",
+    "toolsProxyIp": "172.29.0.3",
+    "network": "sphere-review-stable_ui",
+    "dynamicPool": "172.30.0.128/25",
+    "nginxRenderedAndHealthy": true,
+    "apiApkTunnelsUnchanged": true,
+    "zeroDowntimeClaimed": false
+  },
+  "firstGuardRollback": {
+    "newUiSource": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+    "stage": "gateway-login-after-container-health",
+    "errorStatus": 504,
+    "rolledBackTo": "72debfbc39d088df36707879b8a6bfbbd17806cf",
+    "rollbackLoginStatus": 200,
+    "otherContainerGuardPassedBeforeHttpProbe": true,
+    "exactCause": "UNDETERMINED_TRANSIENT_GATEWAY_READINESS",
+    "zeroDowntimeClaimed": false,
+    "subsequentLogEvidence": {
+      "windowStart": "2026-10-05T13:48:55Z",
+      "windowEnd": "2026-10-05T13:49:02Z",
+      "observedWrongUiUpstream": "192.168.0.1:3000",
+      "externalDnsProducer": "UNDETERMINED",
+      "historicFailureReceiptNotRewritten": true
+    }
+  },
+  "replacementCanary": {
+    "observedAt": "2026-10-05T13:57:25.344662+00:00",
+    "uiSource": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+    "gatewaySource": "993d9eac0f09372573ba4b10b1323d61d94a19ad",
+    "containerReplaced": true,
+    "uiImagePreserved": true,
+    "gatewayNotRestarted": true,
+    "staticUiIp": "172.30.0.3",
+    "toolsProxyIp": "172.29.0.3",
+    "probeCount": 23,
+    "observedStatuses": [
+      "200",
+      "502"
+    ],
+    "uiErrorUpstreamCount": 2,
+    "allObservedUiErrorUpstreamsReservedAddress": true,
+    "finalLoginStatus": 200,
+    "finalUiHealthy": true,
+    "androidCommandsSent": false,
+    "zeroDowntimeClaimed": false
+  },
+  "liveHttp": {
+    "observedAt": "2026-10-05T14:00:35.875833+00:00",
+    "uiSource": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+    "gatewaySource": "993d9eac0f09372573ba4b10b1323d61d94a19ad",
+    "anonymousStatus": 401,
+    "windows": [
+      {
+        "window": "1h",
+        "stepSeconds": 15,
+        "bytes": 41793,
+        "durationSeconds": 0.031,
+        "metrics": {
+          "rps": {
+            "state": "ready",
+            "points": 241,
+            "latest": 0.4421316359221427
+          },
+          "p95": {
+            "state": "ready",
+            "points": 241,
+            "latest": 0.013999999999999981
+          },
+          "serverErrors": {
+            "state": "ready",
+            "points": 241,
+            "latest": 0
+          },
+          "clientErrors": {
+            "state": "ready",
+            "points": 241,
+            "latest": 0
+          }
+        },
+        "routeCount": 25,
+        "statusCodes": [
+          "200",
+          "204",
+          "401"
+        ],
+        "lastScrape": "2026-10-05T14:00:29.829267107Z"
+      },
+      {
+        "window": "6h",
+        "stepSeconds": 30,
+        "bytes": 112407,
+        "durationSeconds": 0.063,
+        "metrics": {
+          "rps": {
+            "state": "ready",
+            "points": 721,
+            "latest": 0.4421316359221427
+          },
+          "p95": {
+            "state": "ready",
+            "points": 721,
+            "latest": 0.013999999999999981
+          },
+          "serverErrors": {
+            "state": "ready",
+            "points": 721,
+            "latest": 0
+          },
+          "clientErrors": {
+            "state": "ready",
+            "points": 721,
+            "latest": 0
+          }
+        },
+        "routeCount": 25,
+        "statusCodes": [
+          "200",
+          "204",
+          "401"
+        ],
+        "lastScrape": "2026-10-05T14:00:29.829267107Z"
+      },
+      {
+        "window": "24h",
+        "stepSeconds": 60,
+        "bytes": 209117,
+        "durationSeconds": 0.312,
+        "metrics": {
+          "rps": {
+            "state": "ready",
+            "points": 1328,
+            "latest": 0.4421316359221427
+          },
+          "p95": {
+            "state": "ready",
+            "points": 1328,
+            "latest": 0.013999999999999981
+          },
+          "serverErrors": {
+            "state": "ready",
+            "points": 1328,
+            "latest": 0
+          },
+          "clientErrors": {
+            "state": "ready",
+            "points": 1328,
+            "latest": 0
+          }
+        },
+        "routeCount": 25,
+        "statusCodes": [
+          "200",
+          "204",
+          "401"
+        ],
+        "lastScrape": "2026-10-05T14:00:29.829267107Z"
+      }
+    ],
+    "duplicateWindowStatus": 400,
+    "arbitraryQueryStatus": 400,
+    "backendSource": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+    "fleet": {
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "observedAt": "2026-10-05T14:00:36.307094Z"
+    },
+    "logoutStatus": 204,
+    "revokedProbeStatus": 401,
+    "remoteCommandsSent": false
+  },
+  "liveGrafana": {
+    "observedAt": "2026-10-05T14:03:28.030592+00:00",
+    "url": "http://127.0.0.1:3015/monitoring",
+    "apiSource": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+    "uiSource": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+    "grafanaProfileStatus": 200,
+    "grafanaOrgId": 1,
+    "grafanaRole": "Viewer",
+    "grafanaAdmin": false,
+    "dashboardUid": "sphere-collection",
+    "dashboardCanEdit": false,
+    "dashboardPanels": 5,
+    "dashboardHtmlStatus": 200,
+    "grafanaQueryStatus": 200,
+    "grafanaQueryFrames": 1,
+    "featureReadStatus": 200,
+    "anonymousStatus": 401,
+    "tamperedStatus": 401,
+    "mutationStatus": 405,
+    "directSpoofedHeaderStatus": 401,
+    "sphereLogoutStatus": 204,
+    "revokedTicketStatus": 401,
+    "revokedRenewalStatus": 401,
+    "secondsAfterMintAtRevocation": 0.24,
+    "logoutOnlyOwnedCanarySession": true,
+    "historyPoints": [
+      241
+    ],
+    "fleet": {
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "observedAt": "2026-10-05T14:03:28.006605Z"
+    },
+    "deviceCommandsSent": false
+  },
+  "browser": {
+    "observedUiRevision": "7c985feb",
+    "observedApiRevision": "51ccaa36",
+    "realDataGraphsVisuallyReviewed": true,
+    "routeFilterAndSelectionVerified": true,
+    "darkAndLightThemesVerified": true,
+    "oneAndTwentyFourHourWindowsVerified": true,
+    "wideViewport": {
+      "width": 1600,
+      "clientWidth": 1600,
+      "documentScrollWidth": 1600
+    },
+    "mobileViewport": {
+      "width": 390,
+      "clientWidth": 390,
+      "documentScrollWidth": 390,
+      "refreshButtonWidth": 40,
+      "refreshButtonHeight": 40,
+      "onlyRouteTableHorizontallyScrolls": true,
+      "detailsBelowTable": true
+    },
+    "nativeGrafanaVisuallyReviewed": true,
+    "nativeGrafanaDefaultWidth": 724,
+    "nativeGrafanaWelcomeInsteadOfDashboard": false,
+    "screenshots": [
+      {
+        "file": "docs/audits/2026-10-05/assets/http-metrics/wide-final-live.jpg",
+        "source": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+        "bytes": 134987,
+        "sha256": "a9c7eff8b725f30315ace9282bac70352a3ba9957dc6c6dc1340dc78342342b1",
+        "width": 1600,
+        "height": 1000,
+        "format": "JPEG",
+        "visuallyReviewed": true,
+        "fileWrittenAt": "2026-10-05T13:59:41.461611+00:00"
+      },
+      {
+        "file": "docs/audits/2026-10-05/assets/http-metrics/wide-light-live.jpg",
+        "source": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+        "bytes": 138772,
+        "sha256": "e19268a9475aaf7c94408e58998c2179251f5d667e01c29dd36aa71baf42f1c7",
+        "width": 1600,
+        "height": 1000,
+        "format": "JPEG",
+        "visuallyReviewed": true,
+        "fileWrittenAt": "2026-10-05T13:59:21.800390+00:00"
+      },
+      {
+        "file": "docs/audits/2026-10-05/assets/http-metrics/mobile-live.jpg",
+        "source": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+        "bytes": 42691,
+        "sha256": "31c5641b298f6a6a29d57e060635e0a3c4192030dbd8da0f09a481438275997a",
+        "width": 390,
+        "height": 844,
+        "format": "JPEG",
+        "visuallyReviewed": true,
+        "fileWrittenAt": "2026-10-05T13:57:55.778946+00:00"
+      },
+      {
+        "file": "docs/audits/2026-10-05/assets/http-metrics/mobile-details-live.jpg",
+        "source": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+        "bytes": 34609,
+        "sha256": "4bf273bc35d3ca915ccd2aeb59075ff75caa65afe46bf502e3eb574956184b01",
+        "width": 390,
+        "height": 844,
+        "format": "JPEG",
+        "visuallyReviewed": true,
+        "fileWrittenAt": "2026-10-05T13:58:31.176740+00:00"
+      },
+      {
+        "file": "docs/audits/2026-10-05/assets/http-metrics/grafana-final-live.jpg",
+        "source": "7c985febcfaff8db7e92fa9e48a5d7b9935a43ea",
+        "bytes": 67646,
+        "sha256": "b5bd02a413be1e8a10412a3cda3b925c29cb3dc92d7e1f4f113f21467313579e",
+        "width": 724,
+        "height": 884,
+        "format": "JPEG",
+        "visuallyReviewed": true,
+        "fileWrittenAt": "2026-10-05T14:04:41.053950+00:00"
+      }
+    ],
+    "temporaryViewportReset": true
+  },
+  "ledger": {
+    "originalItems": 50,
+    "closedInPreviousBatch": [
+      "EP-001",
+      "EP-002",
+      "EP-003",
+      "EP-004",
+      "EP-005",
+      "EP-006",
+      "EP-007"
+    ],
+    "closedInThisBatch": [
+      "EP-008"
+    ],
+    "totalClosed": 8,
+    "itemsWithOpenCriteria": 42,
+    "baselineNotRewritten": true,
+    "closedScope": "EP-008 acceptance only; not total platform or fleet readiness",
+    "acceptedCriteria": [
+      "RPS/p95 unit, rolling window and backend-header scope visible",
+      "empty/stale/error/partial distinct; tested with mocks and real ready data",
+      "endpoint/error drilldown and bounded server query allowlist"
+    ]
+  },
+  "resourceFinal": {
+    "file": "HOST-STORAGE-NIGHT-FINAL-EVIDENCE.json",
+    "sha256": "c4e77722cdae4ee680d8c35d9f71d2f1be954f6045214605a8d6175d0fd7277b",
+    "collectorComplete": true,
+    "diskOrRamLeakDeclaredFixed": false
+  },
+  "limits": [
+    "Finite low-load acceptance; no 500-1000 device performance or stream/script soak.",
+    "Histogram estimates time to response headers, not body/WebSocket/Android latency.",
+    "Only top30 routes; no arbitrary PromQL, tenant/device labeling or universal API explorer.",
+    "Native Grafana still has five collection panels; HTTP panels are separate Sphere UI.",
+    "CPU/RAM history, fleet/tunnel coverage and HTTP-specific alerts remain open.",
+    "Replacement produced 502 and earlier504/rollback; zero downtime not claimed.",
+    "API DNS route unchanged; only wrong UI DNS resolution was removed.",
+    "API/APK/databases/tunnels/public18080 unchanged by this batch.",
+    "Host recorder complete but writer attribution and controlled RAM soak remain open.",
+    "Previous CI Codecov upload failure retained; final head CI checked independently after push."
+  ]
+}

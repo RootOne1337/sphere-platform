@@ -1,0 +1,245 @@
+{
+  "writtenAtUtc": "2026-10-08T21:54:02.256750+00:00",
+  "sourceRevision": "ec3f22678f20c16c221d4e2d02810d4f8122e6af",
+  "installedPort": 3015,
+  "installation": {
+    "imageId": "sha256:3831170254b51f12af7538bc1dd4dac5315666f83481aac0568c2609b1cc6ff6",
+    "loadedImageId": "sha256:2cb783f7ab485dcf39c4b6ce7d573b943edfeb0f09ecc3c08867bbcf2b49cbfe",
+    "archiveBytes": 120872803,
+    "installedUi": {
+      "id": "0880bfe04f7b83201e9c66fd0ec6e0c629fff7ba941ba5cc7583d49602c17d48",
+      "imageId": "sha256:2cb783f7ab485dcf39c4b6ce7d573b943edfeb0f09ecc3c08867bbcf2b49cbfe",
+      "imageTag": "sphere-review-frontend:ec3f22678f20c16c221d4e2d02810d4f8122e6af",
+      "startedAt": "2026-10-08T21:43:08.839378017Z",
+      "status": "running"
+    },
+    "previousUi": {
+      "id": "7341ad7d40a64b88ef27e816b8a0cfb1d33adda033c4d6ed5a8dff661b7996cf",
+      "imageId": "sha256:898fa44854c86d6c8afc914a08011a00a929f50d6d2aa2a9541a9869ac9fd820",
+      "imageTag": "sphere-review-frontend:b36adbb3e2f278a9acf8b18a5e80aa5e9dd7737a",
+      "startedAt": "2026-10-08T21:28:11.404267542Z",
+      "status": "running"
+    },
+    "otherContainersPreserved": 45,
+    "backendPreserved": true,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "resourceFindings": []
+  },
+  "apiRevisionPreserved": "be803773037c16a113b50c1a2774793fffae8773",
+  "pilotAgent": {
+    "name": "PH011",
+    "version": "1.2.49-dev",
+    "versionCode": 10249,
+    "reinstalled": false
+  },
+  "workflows": {
+    "frontend": {
+      "conclusion": "success",
+      "headSha": "ec3f22678f20c16c221d4e2d02810d4f8122e6af",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37847915500",
+      "runId": 37847915500
+    },
+    "backend": {
+      "conclusion": "success",
+      "headSha": "ec3f22678f20c16c221d4e2d02810d4f8122e6af",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37847915547",
+      "runId": 37847915547
+    },
+    "android": {
+      "conclusion": "success",
+      "headSha": "ec3f22678f20c16c221d4e2d02810d4f8122e6af",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37847915783",
+      "runId": 37847915783
+    },
+    "preview": {
+      "conclusion": "success",
+      "headSha": "ec3f22678f20c16c221d4e2d02810d4f8122e6af",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37847915566",
+      "runId": 37847915566
+    }
+  },
+  "tests": {
+    "frontendPassed": 1936,
+    "frontendSuites": 139,
+    "backendPassed": 3346,
+    "backendSkipped": 37,
+    "backendSubtestsPassed": 229,
+    "backendWarnings": 2,
+    "backendCoveragePercent": 80.72,
+    "navigationFocused": 10,
+    "builderFocused": 54,
+    "nonincrementalTypeScript": "passed",
+    "packagedHttpPages": 26,
+    "packagedClientAssets": 73
+  },
+  "browser": {
+    "landscape": {
+      "viewport": [
+        844,
+        390
+      ],
+      "main": [
+        844,
+        342
+      ],
+      "mainScrollSize": [
+        844,
+        342
+      ],
+      "graphRect": [
+        0,
+        158,
+        844,
+        195
+      ],
+      "previousGraphHeightApprox": 112,
+      "toolsMenuOpened": true,
+      "verticalOverviewNodeSizeApprox": [
+        38,
+        20
+      ],
+      "overviewReadabilityFollowupOpen": true
+    },
+    "portrait": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panelsAvailable": 4,
+      "actionLibraryCount": 32,
+      "headerMenuCollisionObserved": false,
+      "queueInner224pxScrollRemoved": true
+    },
+    "desktop": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "mainClientWidth": 1176,
+      "mainScrollWidth": 1176,
+      "libraryWidth": 220,
+      "graphWidth": 434.09375,
+      "workbenchWidth": 520.90625
+    },
+    "nodeCheck": {
+      "before": {
+        "nodes": 3,
+        "edges": 2
+      },
+      "detachedSleepAdded": {
+        "nodes": 4,
+        "edges": 2,
+        "milliseconds": 1000
+      },
+      "parametersObserved": true,
+      "undoRestored": {
+        "nodes": 3,
+        "edges": 2
+      },
+      "publishedVersionChanged": false
+    },
+    "recorder": {
+      "orderedKeyCodes": [
+        3,
+        187,
+        4,
+        82
+      ],
+      "orderedLabels": [
+        "Домой",
+        "Недавние",
+        "Назад",
+        "Меню"
+      ],
+      "outcomes": [
+        "apk_confirmed",
+        "apk_confirmed",
+        "apk_confirmed",
+        "apk_confirmed"
+      ],
+      "confirmedAtUtc": "2026-10-08T21:47:23.035Z",
+      "panelRoundtrip": "Actions → Device",
+      "queueAfterRoundtrip": 4,
+      "recordingAutomaticallyResumed": false,
+      "viewSelected": true,
+      "testQueueExplicitlyCleared": true,
+      "insertIntoGraphPressed": false,
+      "taskLaunchPressed": false,
+      "continuousTrajectoryRecorded": false,
+      "automaticObservationBundle": false
+    },
+    "scrollReturn": {
+      "catalog": "/scripts",
+      "openedScriptId": "08615c8f-599a-4aa0-9b81-06efe721be38",
+      "browserBack": {
+        "before": 2132.5,
+        "afterRouteCommit": 2132.5
+      },
+      "shellBack": {
+        "before": 2132.5,
+        "afterRouteCommit": 2132.5
+      },
+      "initialPreviewObservation": {
+        "before": 884,
+        "after": 884
+      }
+    },
+    "cleanup": {
+      "viewportOverrideReset": true,
+      "previewTabsClosed": true,
+      "developmentPreviewServerStopped": true,
+      "userTabKeptOpen": true,
+      "userScriptId": "fbffbc95-3c16-4f1e-8833-d77271ac1b28"
+    }
+  },
+  "assets": {
+    "assets/responsive-workspace/landscape-before.jpg": {
+      "bytes": 26381,
+      "sha256": "fc63b4dd5e1904f8d5736df0b4e758fb1c274fd032e09b22d5ae05189c27c934",
+      "mime": "image/jpeg"
+    },
+    "assets/responsive-workspace/landscape-final.jpg": {
+      "bytes": 25676,
+      "sha256": "983f2fd411d21f7eab6d68a8f25c6bb26b93dcd9100364542988568701b9b0e4",
+      "mime": "image/jpeg"
+    },
+    "assets/responsive-workspace/portrait-actions-final.jpg": {
+      "bytes": 33000,
+      "sha256": "0586f2990656ab14c68732735253642c34b41270cbf270e552fba0498da8c2fe",
+      "mime": "image/jpeg"
+    },
+    "assets/responsive-workspace/recorded-navigation.jpg": {
+      "bytes": 35154,
+      "sha256": "c33e5bc719f7443aa5e72e6a594fb9327f7444cd8f35c4c3492fbff4f06b47e8",
+      "mime": "image/jpeg"
+    },
+    "assets/responsive-workspace/catalog-back-final.jpg": {
+      "bytes": 105031,
+      "sha256": "b4f261053951b924854efde768178eca95ba5f3728fdc930d9ea5137f83aa203",
+      "mime": "image/jpeg"
+    }
+  },
+  "auditLedger": {
+    "accepted": 9,
+    "open": 41,
+    "broadGateClosed": false
+  },
+  "remaining": [
+    "continuous trajectory recording and replay",
+    "automatic XPath/native PNG/crop/pixel observation manifest",
+    "adaptive landscape graph overview readability",
+    "physical phone and IME acceptance",
+    "browser history dirty leave guard",
+    "live same-session token refresh",
+    "idle native_receipt_timeout",
+    "distributed controller/task lease",
+    "durable admission reconciliation",
+    "storage writer attribution"
+  ],
+  "storageCollectorStarted": false,
+  "directMediaTransportIntroduced": false
+}

@@ -24,7 +24,7 @@ async def sync_device_status_to_db() -> None:
     """
     from backend.database.engine import AsyncSessionLocal
     from backend.database.redis_client import redis_binary as _redis_bin
-    from backend.models.device import Device
+    from backend.models.device import Device, DeviceStatus
     from backend.services.device_status_cache import DeviceStatusCache
 
     if _redis_bin is None:
@@ -48,11 +48,18 @@ async def sync_device_status_to_db() -> None:
                         dev_uuid = uuid.UUID(device_id)
                     except ValueError:
                         continue
+                    # ``connecting`` is a transient Redis-only readiness state.
+                    # PostgreSQL's device_status_enum intentionally stores only
+                    # durable states, so persist it as offline until a heartbeat
+                    # proves the authenticated socket is responsive.
+                    persisted_status = (
+                        DeviceStatus.OFFLINE if live.status == "connecting" else live.status
+                    )
                     await db.execute(
                         update(Device)
                         .where(Device.id == dev_uuid)
                         .values(
-                            last_status=live.status,
+                            last_status=persisted_status,
                         )
                     )
                     if live.status == "online":
@@ -62,7 +69,6 @@ async def sync_device_status_to_db() -> None:
             # Устройства с last_status=ONLINE в БД, но без online-записи в Redis
             from sqlalchemy import select as sa_select
 
-            from backend.models.device import DeviceStatus
             stale_online = (await db.execute(
                 sa_select(Device.id).where(
                     Device.last_status == DeviceStatus.ONLINE,

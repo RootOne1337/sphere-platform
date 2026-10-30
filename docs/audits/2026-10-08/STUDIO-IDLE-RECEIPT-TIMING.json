@@ -1,0 +1,1239 @@
+{
+  "startUtc": "2026-10-08T08:04:58.531647+00:00",
+  "endUtc": "2026-10-08T08:05:59.955025+00:00",
+  "state": "completed",
+  "device": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+  "maximumSeconds": 60,
+  "lastPhase": "service_heartbeats",
+  "ownedBinaryBeforeProbe": true,
+  "touchesSent": 0,
+  "heartbeatIntervalMs": 250,
+  "heartbeatsSent": 240,
+  "receipts": 240,
+  "over500Ms": 0,
+  "maximumRoundTripMs": 461.92,
+  "medianRoundTripMs": 258.37,
+  "p95RoundTripMs": 264.77,
+  "stages": [
+    {
+      "stage": "startup",
+      "status": 0,
+      "sequence": 0,
+      "atMs": 961
+    },
+    {
+      "stage": "release",
+      "status": 3,
+      "sequence": 0,
+      "atMs": 61245
+    }
+  ],
+  "errors": [],
+  "samples": [
+    {
+      "sequence": 1,
+      "status": 2,
+      "roundTripMs": 254.7
+    },
+    {
+      "sequence": 2,
+      "status": 2,
+      "roundTripMs": 258.07
+    },
+    {
+      "sequence": 3,
+      "status": 2,
+      "roundTripMs": 257.61
+    },
+    {
+      "sequence": 4,
+      "status": 2,
+      "roundTripMs": 257.21
+    },
+    {
+      "sequence": 5,
+      "status": 2,
+      "roundTripMs": 260.34
+    },
+    {
+      "sequence": 6,
+      "status": 2,
+      "roundTripMs": 262.12
+    },
+    {
+      "sequence": 7,
+      "status": 2,
+      "roundTripMs": 253.36
+    },
+    {
+      "sequence": 8,
+      "status": 2,
+      "roundTripMs": 254.47
+    },
+    {
+      "sequence": 9,
+      "status": 2,
+      "roundTripMs": 255.49
+    },
+    {
+      "sequence": 10,
+      "status": 2,
+      "roundTripMs": 255.94
+    },
+    {
+      "sequence": 11,
+      "status": 2,
+      "roundTripMs": 258.63
+    },
+    {
+      "sequence": 12,
+      "status": 2,
+      "roundTripMs": 260.48
+    },
+    {
+      "sequence": 13,
+      "status": 2,
+      "roundTripMs": 263.04
+    },
+    {
+      "sequence": 14,
+      "status": 2,
+      "roundTripMs": 253.44
+    },
+    {
+      "sequence": 15,
+      "status": 2,
+      "roundTripMs": 257.79
+    },
+    {
+      "sequence": 16,
+      "status": 2,
+      "roundTripMs": 260.46
+    },
+    {
+      "sequence": 17,
+      "status": 2,
+      "roundTripMs": 259.81
+    },
+    {
+      "sequence": 18,
+      "status": 2,
+      "roundTripMs": 259.38
+    },
+    {
+      "sequence": 19,
+      "status": 2,
+      "roundTripMs": 262.01
+    },
+    {
+      "sequence": 20,
+      "status": 2,
+      "roundTripMs": 260.62
+    },
+    {
+      "sequence": 21,
+      "status": 2,
+      "roundTripMs": 262.79
+    },
+    {
+      "sequence": 22,
+      "status": 2,
+      "roundTripMs": 254.74
+    },
+    {
+      "sequence": 23,
+      "status": 2,
+      "roundTripMs": 260.12
+    },
+    {
+      "sequence": 24,
+      "status": 2,
+      "roundTripMs": 255.54
+    },
+    {
+      "sequence": 25,
+      "status": 2,
+      "roundTripMs": 263.3
+    },
+    {
+      "sequence": 26,
+      "status": 2,
+      "roundTripMs": 254.76
+    },
+    {
+      "sequence": 27,
+      "status": 2,
+      "roundTripMs": 256.05
+    },
+    {
+      "sequence": 28,
+      "status": 2,
+      "roundTripMs": 256.57
+    },
+    {
+      "sequence": 29,
+      "status": 2,
+      "roundTripMs": 255.31
+    },
+    {
+      "sequence": 30,
+      "status": 2,
+      "roundTripMs": 258.13
+    },
+    {
+      "sequence": 31,
+      "status": 2,
+      "roundTripMs": 257.71
+    },
+    {
+      "sequence": 32,
+      "status": 2,
+      "roundTripMs": 257.59
+    },
+    {
+      "sequence": 33,
+      "status": 2,
+      "roundTripMs": 262.76
+    },
+    {
+      "sequence": 34,
+      "status": 2,
+      "roundTripMs": 266.0
+    },
+    {
+      "sequence": 35,
+      "status": 2,
+      "roundTripMs": 265.31
+    },
+    {
+      "sequence": 36,
+      "status": 2,
+      "roundTripMs": 264.77
+    },
+    {
+      "sequence": 37,
+      "status": 2,
+      "roundTripMs": 256.01
+    },
+    {
+      "sequence": 38,
+      "status": 2,
+      "roundTripMs": 259.58
+    },
+    {
+      "sequence": 39,
+      "status": 2,
+      "roundTripMs": 261.85
+    },
+    {
+      "sequence": 40,
+      "status": 2,
+      "roundTripMs": 254.22
+    },
+    {
+      "sequence": 41,
+      "status": 2,
+      "roundTripMs": 257.93
+    },
+    {
+      "sequence": 42,
+      "status": 2,
+      "roundTripMs": 259.35
+    },
+    {
+      "sequence": 43,
+      "status": 2,
+      "roundTripMs": 260.45
+    },
+    {
+      "sequence": 44,
+      "status": 2,
+      "roundTripMs": 261.95
+    },
+    {
+      "sequence": 45,
+      "status": 2,
+      "roundTripMs": 461.92
+    },
+    {
+      "sequence": 46,
+      "status": 2,
+      "roundTripMs": 260.55
+    },
+    {
+      "sequence": 47,
+      "status": 2,
+      "roundTripMs": 263.58
+    },
+    {
+      "sequence": 48,
+      "status": 2,
+      "roundTripMs": 252.98
+    },
+    {
+      "sequence": 49,
+      "status": 2,
+      "roundTripMs": 254.8
+    },
+    {
+      "sequence": 50,
+      "status": 2,
+      "roundTripMs": 255.54
+    },
+    {
+      "sequence": 51,
+      "status": 2,
+      "roundTripMs": 256.14
+    },
+    {
+      "sequence": 52,
+      "status": 2,
+      "roundTripMs": 254.75
+    },
+    {
+      "sequence": 53,
+      "status": 2,
+      "roundTripMs": 258.45
+    },
+    {
+      "sequence": 54,
+      "status": 2,
+      "roundTripMs": 269.72
+    },
+    {
+      "sequence": 55,
+      "status": 2,
+      "roundTripMs": 258.66
+    },
+    {
+      "sequence": 56,
+      "status": 2,
+      "roundTripMs": 271.57
+    },
+    {
+      "sequence": 57,
+      "status": 2,
+      "roundTripMs": 263.22
+    },
+    {
+      "sequence": 58,
+      "status": 2,
+      "roundTripMs": 262.42
+    },
+    {
+      "sequence": 59,
+      "status": 2,
+      "roundTripMs": 254.6
+    },
+    {
+      "sequence": 60,
+      "status": 2,
+      "roundTripMs": 258.25
+    },
+    {
+      "sequence": 61,
+      "status": 2,
+      "roundTripMs": 255.93
+    },
+    {
+      "sequence": 62,
+      "status": 2,
+      "roundTripMs": 259.34
+    },
+    {
+      "sequence": 63,
+      "status": 2,
+      "roundTripMs": 262.84
+    },
+    {
+      "sequence": 64,
+      "status": 2,
+      "roundTripMs": 263.31
+    },
+    {
+      "sequence": 65,
+      "status": 2,
+      "roundTripMs": 253.06
+    },
+    {
+      "sequence": 66,
+      "status": 2,
+      "roundTripMs": 255.05
+    },
+    {
+      "sequence": 67,
+      "status": 2,
+      "roundTripMs": 255.32
+    },
+    {
+      "sequence": 68,
+      "status": 2,
+      "roundTripMs": 258.0
+    },
+    {
+      "sequence": 69,
+      "status": 2,
+      "roundTripMs": 259.8
+    },
+    {
+      "sequence": 70,
+      "status": 2,
+      "roundTripMs": 260.69
+    },
+    {
+      "sequence": 71,
+      "status": 2,
+      "roundTripMs": 262.29
+    },
+    {
+      "sequence": 72,
+      "status": 2,
+      "roundTripMs": 262.45
+    },
+    {
+      "sequence": 73,
+      "status": 2,
+      "roundTripMs": 255.36
+    },
+    {
+      "sequence": 74,
+      "status": 2,
+      "roundTripMs": 267.11
+    },
+    {
+      "sequence": 75,
+      "status": 2,
+      "roundTripMs": 260.02
+    },
+    {
+      "sequence": 76,
+      "status": 2,
+      "roundTripMs": 253.49
+    },
+    {
+      "sequence": 77,
+      "status": 2,
+      "roundTripMs": 255.21
+    },
+    {
+      "sequence": 78,
+      "status": 2,
+      "roundTripMs": 255.34
+    },
+    {
+      "sequence": 79,
+      "status": 2,
+      "roundTripMs": 255.09
+    },
+    {
+      "sequence": 80,
+      "status": 2,
+      "roundTripMs": 256.75
+    },
+    {
+      "sequence": 81,
+      "status": 2,
+      "roundTripMs": 259.81
+    },
+    {
+      "sequence": 82,
+      "status": 2,
+      "roundTripMs": 263.91
+    },
+    {
+      "sequence": 83,
+      "status": 2,
+      "roundTripMs": 262.09
+    },
+    {
+      "sequence": 84,
+      "status": 2,
+      "roundTripMs": 262.02
+    },
+    {
+      "sequence": 85,
+      "status": 2,
+      "roundTripMs": 263.63
+    },
+    {
+      "sequence": 86,
+      "status": 2,
+      "roundTripMs": 253.59
+    },
+    {
+      "sequence": 87,
+      "status": 2,
+      "roundTripMs": 257.33
+    },
+    {
+      "sequence": 88,
+      "status": 2,
+      "roundTripMs": 256.55
+    },
+    {
+      "sequence": 89,
+      "status": 2,
+      "roundTripMs": 255.08
+    },
+    {
+      "sequence": 90,
+      "status": 2,
+      "roundTripMs": 256.5
+    },
+    {
+      "sequence": 91,
+      "status": 2,
+      "roundTripMs": 255.28
+    },
+    {
+      "sequence": 92,
+      "status": 2,
+      "roundTripMs": 254.75
+    },
+    {
+      "sequence": 93,
+      "status": 2,
+      "roundTripMs": 255.99
+    },
+    {
+      "sequence": 94,
+      "status": 2,
+      "roundTripMs": 257.7
+    },
+    {
+      "sequence": 95,
+      "status": 2,
+      "roundTripMs": 263.27
+    },
+    {
+      "sequence": 96,
+      "status": 2,
+      "roundTripMs": 262.73
+    },
+    {
+      "sequence": 97,
+      "status": 2,
+      "roundTripMs": 254.02
+    },
+    {
+      "sequence": 98,
+      "status": 2,
+      "roundTripMs": 265.89
+    },
+    {
+      "sequence": 99,
+      "status": 2,
+      "roundTripMs": 255.39
+    },
+    {
+      "sequence": 100,
+      "status": 2,
+      "roundTripMs": 257.43
+    },
+    {
+      "sequence": 101,
+      "status": 2,
+      "roundTripMs": 261.2
+    },
+    {
+      "sequence": 102,
+      "status": 2,
+      "roundTripMs": 260.82
+    },
+    {
+      "sequence": 103,
+      "status": 2,
+      "roundTripMs": 262.53
+    },
+    {
+      "sequence": 104,
+      "status": 2,
+      "roundTripMs": 254.27
+    },
+    {
+      "sequence": 105,
+      "status": 2,
+      "roundTripMs": 255.75
+    },
+    {
+      "sequence": 106,
+      "status": 2,
+      "roundTripMs": 261.1
+    },
+    {
+      "sequence": 107,
+      "status": 2,
+      "roundTripMs": 255.88
+    },
+    {
+      "sequence": 108,
+      "status": 2,
+      "roundTripMs": 259.05
+    },
+    {
+      "sequence": 109,
+      "status": 2,
+      "roundTripMs": 262.49
+    },
+    {
+      "sequence": 110,
+      "status": 2,
+      "roundTripMs": 254.35
+    },
+    {
+      "sequence": 111,
+      "status": 2,
+      "roundTripMs": 263.32
+    },
+    {
+      "sequence": 112,
+      "status": 2,
+      "roundTripMs": 255.45
+    },
+    {
+      "sequence": 113,
+      "status": 2,
+      "roundTripMs": 264.33
+    },
+    {
+      "sequence": 114,
+      "status": 2,
+      "roundTripMs": 253.31
+    },
+    {
+      "sequence": 115,
+      "status": 2,
+      "roundTripMs": 257.66
+    },
+    {
+      "sequence": 116,
+      "status": 2,
+      "roundTripMs": 263.85
+    },
+    {
+      "sequence": 117,
+      "status": 2,
+      "roundTripMs": 255.54
+    },
+    {
+      "sequence": 118,
+      "status": 2,
+      "roundTripMs": 256.11
+    },
+    {
+      "sequence": 119,
+      "status": 2,
+      "roundTripMs": 257.98
+    },
+    {
+      "sequence": 120,
+      "status": 2,
+      "roundTripMs": 262.76
+    },
+    {
+      "sequence": 121,
+      "status": 2,
+      "roundTripMs": 256.03
+    },
+    {
+      "sequence": 122,
+      "status": 2,
+      "roundTripMs": 257.84
+    },
+    {
+      "sequence": 123,
+      "status": 2,
+      "roundTripMs": 253.87
+    },
+    {
+      "sequence": 124,
+      "status": 2,
+      "roundTripMs": 254.43
+    },
+    {
+      "sequence": 125,
+      "status": 2,
+      "roundTripMs": 256.27
+    },
+    {
+      "sequence": 126,
+      "status": 2,
+      "roundTripMs": 258.98
+    },
+    {
+      "sequence": 127,
+      "status": 2,
+      "roundTripMs": 262.4
+    },
+    {
+      "sequence": 128,
+      "status": 2,
+      "roundTripMs": 253.97
+    },
+    {
+      "sequence": 129,
+      "status": 2,
+      "roundTripMs": 254.94
+    },
+    {
+      "sequence": 130,
+      "status": 2,
+      "roundTripMs": 254.44
+    },
+    {
+      "sequence": 131,
+      "status": 2,
+      "roundTripMs": 268.06
+    },
+    {
+      "sequence": 132,
+      "status": 2,
+      "roundTripMs": 253.86
+    },
+    {
+      "sequence": 133,
+      "status": 2,
+      "roundTripMs": 256.9
+    },
+    {
+      "sequence": 134,
+      "status": 2,
+      "roundTripMs": 264.13
+    },
+    {
+      "sequence": 135,
+      "status": 2,
+      "roundTripMs": 257.04
+    },
+    {
+      "sequence": 136,
+      "status": 2,
+      "roundTripMs": 256.8
+    },
+    {
+      "sequence": 137,
+      "status": 2,
+      "roundTripMs": 399.8
+    },
+    {
+      "sequence": 138,
+      "status": 2,
+      "roundTripMs": 260.31
+    },
+    {
+      "sequence": 139,
+      "status": 2,
+      "roundTripMs": 262.0
+    },
+    {
+      "sequence": 140,
+      "status": 2,
+      "roundTripMs": 261.26
+    },
+    {
+      "sequence": 141,
+      "status": 2,
+      "roundTripMs": 260.06
+    },
+    {
+      "sequence": 142,
+      "status": 2,
+      "roundTripMs": 263.02
+    },
+    {
+      "sequence": 143,
+      "status": 2,
+      "roundTripMs": 255.52
+    },
+    {
+      "sequence": 144,
+      "status": 2,
+      "roundTripMs": 259.2
+    },
+    {
+      "sequence": 145,
+      "status": 2,
+      "roundTripMs": 257.67
+    },
+    {
+      "sequence": 146,
+      "status": 2,
+      "roundTripMs": 257.5
+    },
+    {
+      "sequence": 147,
+      "status": 2,
+      "roundTripMs": 263.33
+    },
+    {
+      "sequence": 148,
+      "status": 2,
+      "roundTripMs": 261.99
+    },
+    {
+      "sequence": 149,
+      "status": 2,
+      "roundTripMs": 263.84
+    },
+    {
+      "sequence": 150,
+      "status": 2,
+      "roundTripMs": 262.16
+    },
+    {
+      "sequence": 151,
+      "status": 2,
+      "roundTripMs": 265.69
+    },
+    {
+      "sequence": 152,
+      "status": 2,
+      "roundTripMs": 261.52
+    },
+    {
+      "sequence": 153,
+      "status": 2,
+      "roundTripMs": 264.59
+    },
+    {
+      "sequence": 154,
+      "status": 2,
+      "roundTripMs": 263.02
+    },
+    {
+      "sequence": 155,
+      "status": 2,
+      "roundTripMs": 256.63
+    },
+    {
+      "sequence": 156,
+      "status": 2,
+      "roundTripMs": 256.49
+    },
+    {
+      "sequence": 157,
+      "status": 2,
+      "roundTripMs": 259.63
+    },
+    {
+      "sequence": 158,
+      "status": 2,
+      "roundTripMs": 261.14
+    },
+    {
+      "sequence": 159,
+      "status": 2,
+      "roundTripMs": 258.88
+    },
+    {
+      "sequence": 160,
+      "status": 2,
+      "roundTripMs": 259.84
+    },
+    {
+      "sequence": 161,
+      "status": 2,
+      "roundTripMs": 263.81
+    },
+    {
+      "sequence": 162,
+      "status": 2,
+      "roundTripMs": 255.24
+    },
+    {
+      "sequence": 163,
+      "status": 2,
+      "roundTripMs": 255.89
+    },
+    {
+      "sequence": 164,
+      "status": 2,
+      "roundTripMs": 257.04
+    },
+    {
+      "sequence": 165,
+      "status": 2,
+      "roundTripMs": 255.13
+    },
+    {
+      "sequence": 166,
+      "status": 2,
+      "roundTripMs": 258.12
+    },
+    {
+      "sequence": 167,
+      "status": 2,
+      "roundTripMs": 259.91
+    },
+    {
+      "sequence": 168,
+      "status": 2,
+      "roundTripMs": 260.24
+    },
+    {
+      "sequence": 169,
+      "status": 2,
+      "roundTripMs": 260.4
+    },
+    {
+      "sequence": 170,
+      "status": 2,
+      "roundTripMs": 264.45
+    },
+    {
+      "sequence": 171,
+      "status": 2,
+      "roundTripMs": 253.66
+    },
+    {
+      "sequence": 172,
+      "status": 2,
+      "roundTripMs": 256.67
+    },
+    {
+      "sequence": 173,
+      "status": 2,
+      "roundTripMs": 258.71
+    },
+    {
+      "sequence": 174,
+      "status": 2,
+      "roundTripMs": 259.29
+    },
+    {
+      "sequence": 175,
+      "status": 2,
+      "roundTripMs": 263.62
+    },
+    {
+      "sequence": 176,
+      "status": 2,
+      "roundTripMs": 257.46
+    },
+    {
+      "sequence": 177,
+      "status": 2,
+      "roundTripMs": 264.62
+    },
+    {
+      "sequence": 178,
+      "status": 2,
+      "roundTripMs": 258.44
+    },
+    {
+      "sequence": 179,
+      "status": 2,
+      "roundTripMs": 263.42
+    },
+    {
+      "sequence": 180,
+      "status": 2,
+      "roundTripMs": 261.19
+    },
+    {
+      "sequence": 181,
+      "status": 2,
+      "roundTripMs": 262.06
+    },
+    {
+      "sequence": 182,
+      "status": 2,
+      "roundTripMs": 254.57
+    },
+    {
+      "sequence": 183,
+      "status": 2,
+      "roundTripMs": 254.17
+    },
+    {
+      "sequence": 184,
+      "status": 2,
+      "roundTripMs": 259.32
+    },
+    {
+      "sequence": 185,
+      "status": 2,
+      "roundTripMs": 257.98
+    },
+    {
+      "sequence": 186,
+      "status": 2,
+      "roundTripMs": 258.34
+    },
+    {
+      "sequence": 187,
+      "status": 2,
+      "roundTripMs": 261.4
+    },
+    {
+      "sequence": 188,
+      "status": 2,
+      "roundTripMs": 263.83
+    },
+    {
+      "sequence": 189,
+      "status": 2,
+      "roundTripMs": 263.61
+    },
+    {
+      "sequence": 190,
+      "status": 2,
+      "roundTripMs": 253.73
+    },
+    {
+      "sequence": 191,
+      "status": 2,
+      "roundTripMs": 258.68
+    },
+    {
+      "sequence": 192,
+      "status": 2,
+      "roundTripMs": 260.83
+    },
+    {
+      "sequence": 193,
+      "status": 2,
+      "roundTripMs": 262.64
+    },
+    {
+      "sequence": 194,
+      "status": 2,
+      "roundTripMs": 261.92
+    },
+    {
+      "sequence": 195,
+      "status": 2,
+      "roundTripMs": 257.41
+    },
+    {
+      "sequence": 196,
+      "status": 2,
+      "roundTripMs": 255.39
+    },
+    {
+      "sequence": 197,
+      "status": 2,
+      "roundTripMs": 255.64
+    },
+    {
+      "sequence": 198,
+      "status": 2,
+      "roundTripMs": 258.2
+    },
+    {
+      "sequence": 199,
+      "status": 2,
+      "roundTripMs": 258.4
+    },
+    {
+      "sequence": 200,
+      "status": 2,
+      "roundTripMs": 258.56
+    },
+    {
+      "sequence": 201,
+      "status": 2,
+      "roundTripMs": 262.49
+    },
+    {
+      "sequence": 202,
+      "status": 2,
+      "roundTripMs": 253.73
+    },
+    {
+      "sequence": 203,
+      "status": 2,
+      "roundTripMs": 256.92
+    },
+    {
+      "sequence": 204,
+      "status": 2,
+      "roundTripMs": 264.46
+    },
+    {
+      "sequence": 205,
+      "status": 2,
+      "roundTripMs": 255.97
+    },
+    {
+      "sequence": 206,
+      "status": 2,
+      "roundTripMs": 256.7
+    },
+    {
+      "sequence": 207,
+      "status": 2,
+      "roundTripMs": 253.16
+    },
+    {
+      "sequence": 208,
+      "status": 2,
+      "roundTripMs": 256.68
+    },
+    {
+      "sequence": 209,
+      "status": 2,
+      "roundTripMs": 260.5
+    },
+    {
+      "sequence": 210,
+      "status": 2,
+      "roundTripMs": 263.94
+    },
+    {
+      "sequence": 211,
+      "status": 2,
+      "roundTripMs": 255.22
+    },
+    {
+      "sequence": 212,
+      "status": 2,
+      "roundTripMs": 255.89
+    },
+    {
+      "sequence": 213,
+      "status": 2,
+      "roundTripMs": 264.56
+    },
+    {
+      "sequence": 214,
+      "status": 2,
+      "roundTripMs": 257.76
+    },
+    {
+      "sequence": 215,
+      "status": 2,
+      "roundTripMs": 253.26
+    },
+    {
+      "sequence": 216,
+      "status": 2,
+      "roundTripMs": 257.73
+    },
+    {
+      "sequence": 217,
+      "status": 2,
+      "roundTripMs": 258.25
+    },
+    {
+      "sequence": 218,
+      "status": 2,
+      "roundTripMs": 262.87
+    },
+    {
+      "sequence": 219,
+      "status": 2,
+      "roundTripMs": 253.79
+    },
+    {
+      "sequence": 220,
+      "status": 2,
+      "roundTripMs": 254.16
+    },
+    {
+      "sequence": 221,
+      "status": 2,
+      "roundTripMs": 256.38
+    },
+    {
+      "sequence": 222,
+      "status": 2,
+      "roundTripMs": 253.77
+    },
+    {
+      "sequence": 223,
+      "status": 2,
+      "roundTripMs": 254.54
+    },
+    {
+      "sequence": 224,
+      "status": 2,
+      "roundTripMs": 256.07
+    },
+    {
+      "sequence": 225,
+      "status": 2,
+      "roundTripMs": 259.06
+    },
+    {
+      "sequence": 226,
+      "status": 2,
+      "roundTripMs": 263.9
+    },
+    {
+      "sequence": 227,
+      "status": 2,
+      "roundTripMs": 263.68
+    },
+    {
+      "sequence": 228,
+      "status": 2,
+      "roundTripMs": 255.26
+    },
+    {
+      "sequence": 229,
+      "status": 2,
+      "roundTripMs": 263.37
+    },
+    {
+      "sequence": 230,
+      "status": 2,
+      "roundTripMs": 260.43
+    },
+    {
+      "sequence": 231,
+      "status": 2,
+      "roundTripMs": 263.0
+    },
+    {
+      "sequence": 232,
+      "status": 2,
+      "roundTripMs": 264.83
+    },
+    {
+      "sequence": 233,
+      "status": 2,
+      "roundTripMs": 263.59
+    },
+    {
+      "sequence": 234,
+      "status": 2,
+      "roundTripMs": 253.4
+    },
+    {
+      "sequence": 235,
+      "status": 2,
+      "roundTripMs": 257.54
+    },
+    {
+      "sequence": 236,
+      "status": 2,
+      "roundTripMs": 263.94
+    },
+    {
+      "sequence": 237,
+      "status": 2,
+      "roundTripMs": 255.04
+    },
+    {
+      "sequence": 238,
+      "status": 2,
+      "roundTripMs": 253.71
+    },
+    {
+      "sequence": 239,
+      "status": 2,
+      "roundTripMs": 256.3
+    },
+    {
+      "sequence": 240,
+      "status": 2,
+      "roundTripMs": 259.16
+    }
+  ],
+  "limitations": [
+    "direct WebSocket service-only timings; not browser timer scheduling",
+    "does not recreate the viewer controller 500ms retirement policy",
+    "not input-to-picture latency or a fleet SLO"
+  ]
+}

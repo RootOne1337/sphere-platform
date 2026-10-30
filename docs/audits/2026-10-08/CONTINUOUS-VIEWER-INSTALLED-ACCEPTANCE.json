@@ -1,0 +1,72 @@
+{
+  "state": "installed-finite-delivery-idle-failure-open",
+  "apiSource": "be803773037c16a113b50c1a2774793fffae8773",
+  "uiSource": "36b160f925e3f1d073620281bbf6e584636ada14",
+  "apiInstalledUtc": "2026-10-08T18:39:32.677540078Z",
+  "apiCiRun": 37823344986,
+  "apiCiConfigDigest": "sha256:f842b85644314e2c8227f7ef210bb0f61cd34798678f122afbf7f6859fe4b94b",
+  "apiLoadedImage": "sha256:49a0ac9dca8f27db1dd8564090ef495139682919ebaa39d5cb396c43ad51ede1",
+  "backendCi": {
+    "passed": 3346,
+    "skipped": 37,
+    "subtests": 229,
+    "coveragePercent": 80.71
+  },
+  "frontendCi": {
+    "passed": 1892,
+    "suites": 138
+  },
+  "androidCi": "success",
+  "previewCi": "success",
+  "otherContainersPreserved": 45,
+  "schemaHead": "20261006_script_catalog_metadata",
+  "normalOtaChanged": false,
+  "pilotVersionCode": 10249,
+  "device": "PH011",
+  "savedGraphNodes": 3,
+  "savedGraphEdges": 2,
+  "recordingEntries": 0,
+  "viewSelectedAtCleanup": true,
+  "viewportReset": true,
+  "receiverArtifactSha256": "87784dbb6ea25e43dab89d9b361d9ded798d4d51eb70e4760c82965fd991195e",
+  "receiverFinalState": {
+    "down": 2,
+    "move": 6,
+    "up": 2,
+    "cancel": 0,
+    "firstDownUptimeMs": 72295557,
+    "lastMoveUptimeMs": 72295581,
+    "terminalUptimeMs": 72295620,
+    "x": 466,
+    "y": 206
+  },
+  "receiverFinalUtc": "2026-10-08T19:27:16.647951+00:00",
+  "receiverCleanupUtc": "2026-10-08T19:28:20.546683+00:00",
+  "receiverUninstalled": true,
+  "initialFencedDragAndroidEvents": 0,
+  "acceptedDragDelta": {
+    "down": 1,
+    "move": 5,
+    "up": 1,
+    "cancel": 0
+  },
+  "acceptedWheelDelta": {
+    "down": 1,
+    "move": 1,
+    "up": 1,
+    "cancel": 0
+  },
+  "idleNativeReceiptTimeoutReproduced": true,
+  "permissionsOutageStateLossReproduced": true,
+  "ordinaryTokenRefreshWitnessed": false,
+  "browserHomeAcceptedThisRun": false,
+  "inputToPictureLatencyMeasured": false,
+  "fleetSoakAccepted": false,
+  "assetSha256": {
+    "mobile-reports-before-api.png": "552e968d9fbac0547ebcec44385bc7ba1778059004ae09e2121876fd493253e8",
+    "native-gesture-after-api.png": "9e1c977255fa3b5f0c5fab79475d15e7ec2f56879dfec879de17be9db1bd9a24",
+    "permission-restart-fence.png": "cdfc894d7c00a2eac93a87b3457697138862d2dcfa958ee60a25de9d8a4d9b00",
+    "task-before-api.png": "12dd2941b82d0cf13c2c96b40e621e8f7f38cdbbb8a5303cbc43d3e5474a7250",
+    "task-reports-before-api.png": "70382921c0813431d23fec3b11822d7d1b5fd0341b23cd5b8d716a0760cfbfb0"
+  }
+}

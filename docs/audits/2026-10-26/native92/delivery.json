@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-26",
+  "observedAtUtc": "2026-10-26T16:09:27.853816+00:00",
+  "runtimeInstalled": true,
+  "productionAccepted": false,
+  "scope": "PH011-only APK92 GPU planar capture, guarded VPN handover and finite Android fixture contact. No game input or motor navigation.",
+  "runtime": {
+    "sourceRevision": "b1e897979538791a1829c7b8dde77b5186ba3bc4",
+    "apiSourceRevision": "1afdc529e18cd34b5d8ee0919f217076a8592846"
+  },
+  "browser": {
+    "finiteAccepted": false,
+    "reason": "Browser automation could not initialize kernel assets (Windows error3) after reset; Android/native PNG and direct headless receiver used. No new browser UI acceptance.",
+    "previousFiniteUiEvidence": "../native91/delivery.json",
+    "previousUiSourceRevision": "b1e897979538791a1829c7b8dde77b5186ba3bc4"
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "sha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "bytes": 73217607,
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "hostedCertificateSha256": "70e67b0395df3cf30feb1d10f06303a7598b8453e5d965db06a4d00defdbc3e7",
+        "cloudApkSha256": "7b98a6dffff8cb8b91a08d527b9fb131b0d69971ec18736365760db86668cc6c",
+        "builtByHostedCi": true,
+        "onlySignatureChangedLocally": true,
+        "unchangedPayloadEntries": 936
+      },
+      {
+        "version": "1.2.88-dev",
+        "versionCode": 10288,
+        "sourceRevision": "6ad0df5fbcc3590ae9c63fe6922db178b45aeee1",
+        "sha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "builtLocally": true,
+        "builtByHostedCi": false
+      },
+      {
+        "version": "1.2.90-dev",
+        "versionCode": 10290,
+        "sourceRevision": "d62088094abcc136c1d29beea834dd4486d874e2",
+        "sha256": "51e2f6df58a73a10e730d8494e264f72ce1431ca86df8e3704887bea26ee70cc",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+      },
+      {
+        "version": "1.2.91-dev",
+        "versionCode": 10291,
+        "sourceRevision": "b26adc72a6caaf5fbafc415e61cc289b45360745",
+        "sha256": "2dd205c82785c14499edb52008988b8b1c8d78c31063e6da4521300e04d0daae",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+      },
+      {
+        "version": "1.2.92-dev",
+        "versionCode": 10292,
+        "sourceRevision": "ef69ee25342c9f59ed6fd137f03e38295a38b1fa",
+        "androidTree": "22e5b8f6073bb5947259fa51bb44a04c5aaf8d67",
+        "sha256": "a124f61920f09aa6ba5ae7becb14dcd267d05ad6365556478cd968a39c07e0b9",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "builtLocally": true,
+        "builtByHostedCi": false
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10288,
+        "installedPackageSha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "verifiedAtUtc": "2026-10-23T11:12:19.981238+00:00",
+        "addressedOtaCompleted": true
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:30.867863+00:00",
+        "completedAddressedOta": true,
+        "commandId": "74bd69d1-5b6c-42b5-b102-b3059be7dfaa",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10292,
+        "installedPackageSha256": "a124f61920f09aa6ba5ae7becb14dcd267d05ad6365556478cd968a39c07e0b9",
+        "packageProofObservedAtUtc": "2026-10-26T15:55:02.270793+00:00",
+        "proofScope": "PH011 addressed APK92 OTA plus actual package SHA; finite direct game-frame capture and fixture contact, not autonomous gameplay."
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:34.316120+00:00",
+        "completedAddressedOta": true,
+        "commandId": "6ab684dc-0ebc-46e4-ac7e-278ae9294098",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      }
+    ]
+  },
+  "localBuild": {
+    "sourceRevision": "ef69ee25342c9f59ed6fd137f03e38295a38b1fa",
+    "ordinary": {
+      "tests": 5184,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 12
+    },
+    "gpuPlanar": {
+      "tests": 2620,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 6
+    },
+    "configured": {
+      "dev": {
+        "tests": 1310,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1310,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "localTestsExecuted": 7786,
+    "localTestsSkipped": 18,
+    "newGithubActionsJobs": 0,
+    "localTestStatus": {
+      "id": 57276827866,
+      "context": "Sphere Local / Android unit tests",
+      "state": "success",
+      "createdAt": "2026-10-26T15:40:53Z",
+      "readbackVerified": true,
+      "targetUrl": "https://github.com/RootOne1337/sphere-platform/tree/ef69ee25342c9f59ed6fd137f03e38295a38b1fa/android"
+    },
+    "allSevenNativeLibrariesUnchanged": true,
+    "dependencyMetadataResolvedFromNormalRepositories": true,
+    "existingLintJarHashesUnchanged": true,
+    "signerPreserved": true,
+    "memoryGuardGiB": 12
+  },
+  "delivery": {
+    "addressedDevice": "auto-ph-011",
+    "versionCode": 10292,
+    "sourceRevision": "ef69ee25342c9f59ed6fd137f03e38295a38b1fa",
+    "apkSha256": "a124f61920f09aa6ba5ae7becb14dcd267d05ad6365556478cd968a39c07e0b9",
+    "installedPackageSha256": "a124f61920f09aa6ba5ae7becb14dcd267d05ad6365556478cd968a39c07e0b9",
+    "installedPackageProofObservedAtUtc": "2026-10-26T15:55:02.270793+00:00",
+    "ordinaryChannelUnchanged": true,
+    "fleetRollout": false,
+    "dataClears": 0,
+    "adbInstalls": 0,
+    "reboots": 0
+  },
+  "vpn": {
+    "allAppsExceptSphere": true,
+    "ownerUid": 10082,
+    "dualFamilyGuardVerified": true,
+    "ipv6Policy": "block",
+    "temporaryGuardRemoved": true,
+    "originalIpWindowOpened": false,
+    "nativeSession": "0e8039f3-650b-4e8a-bee2-d69bca2cb607",
+    "sealedProfileRevisionUnchanged": true,
+    "providerPeersCreated": 0,
+    "httpsAllConfirmed": true,
+    "sphereBypassDifferentEgress": true,
+    "gameDnsConfirmed": true
+  },
+  "capture": {
+    "width": 1920,
+    "height": 1080,
+    "scope": "Game client carnival scene; successful server login or playable world not established",
+    "gpuColorSelfTestObserved": true,
+    "gpuPlanarBridgeObserved": true,
+    "sameMainProcessTimingWindows": true,
+    "initObservationUtc": "2026-10-26T15:57:19.018575+00:00",
+    "gpuConversionMedianWindowMs": 31.222,
+    "planarCopyMedianWindowMs": 1.007,
+    "planarCopyTimingExcludesGpuConversion": true,
+    "sourceSamples": [
+      {
+        "observedAt": "2026-10-26T15:58:27.413645+00:00",
+        "captureFps": 44,
+        "renderFps": 29,
+        "encodedFps": 28,
+        "captured": 1534,
+        "rendered": 1130,
+        "idleRefresh": 2283,
+        "captureReadFailures": 0,
+        "encoderErrors": 0
+      },
+      {
+        "observedAt": "2026-10-26T15:58:57.422836+00:00",
+        "captureFps": 27,
+        "renderFps": 24,
+        "encodedFps": 24,
+        "captured": 2551,
+        "rendered": 1924,
+        "idleRefresh": 2285,
+        "captureReadFailures": 0,
+        "encoderErrors": 0
+      }
+    ],
+    "sourceSampleIntervalSeconds": 30.009191,
+    "newRenderedFramesInInterval": 794,
+    "idleRefreshFramesInInterval": 2,
+    "newRenderedFpsInInterval": 26.459,
+    "sourceClockMappedToReceiver": false
+  },
+  "receiver": {
+    "durationObservedSeconds": 20.016,
+    "decodedFrames": 520,
+    "decodedFpsDuringMonitor": 25.929,
+    "rgbObservationsDuringMonitor": 100,
+    "observationHzDuringMonitor": 4.996,
+    "decodedArrivalGaps": {
+      "scope": "unique_frame_recv_return_clock_not_android_capture",
+      "maxGapMs": 195.534,
+      "gapsOver250ms": 0
+    },
+    "receiverStats": {
+      "packetsReceived": 14029,
+      "packetsLost": 0,
+      "jitter": 1200
+    },
+    "route": {
+      "path": "nat",
+      "protocol": "udp",
+      "candidateTypes": [
+        "host",
+        "prflx"
+      ],
+      "addressScopes": [
+        "private",
+        "private"
+      ],
+      "evidence": "aiortc_1_15_nominated_pair_adapter",
+      "lanProven": false
+    },
+    "captureLifecycle": {
+      "requested": true,
+      "delivery": "capture_only",
+      "sourceReadinessConfirmed": true,
+      "directDeliveryAcks": 7,
+      "serverBootstrapBytesDiscarded": 0,
+      "serverBytesAfterHandover": 0,
+      "relayFramesDecoded": 0
+    },
+    "bounds": {
+      "decodedFrameSlots": 1,
+      "immutableRgbFrameSlots": 0,
+      "observationTailLimit": 64,
+      "inputReplay": false
+    },
+    "rgbTransform": "pilot_resize_256_square_rgb24_not_validated_model_preprocessing",
+    "duplicateOrReorderedPts": 0
+  },
+  "controlIdle": {
+    "nativeReady": true,
+    "nativeClosed": true,
+    "actions": 0,
+    "lifetimeMs": 200,
+    "aliveReceipts": 33,
+    "aliveRttMedianMs": 3.1333000224549323,
+    "aliveRttMaxMs": 18.862600001739338
+  },
+  "controlHold": {
+    "fixtureOnly": true,
+    "gameActions": 0,
+    "plannedDurationMs": 1200,
+    "plannedCorrectionIntervalMs": 200,
+    "actions": [
+      0,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    "downCount": 1,
+    "moveCount": 5,
+    "upCount": 1,
+    "appliedReceipts": 7,
+    "nativeClosed": true,
+    "nativeAppliedRttMedianMs": 5.703400005586445,
+    "nativeAppliedRttMaxMs": 7.811999996192753,
+    "maxHostScheduleLatenessMs": 19.682,
+    "actualAndroidContactDurationMeasured": false,
+    "inputToVisibleLatencyMeasured": false
+  },
+  "baseline": {
+    "evidence": "../native91/delivery.json",
+    "decodedFps": 8.744,
+    "rgbHz": 4.797,
+    "rgbaConversionMedianMs": 110.1765,
+    "decodedRateRatio": 2.965,
+    "sameDeviceResolutionAndSimilarGameScene": true,
+    "concurrentAbTest": false
+  },
+  "visuals": {
+    "directDecodedPng": "direct-game.png",
+    "directDecodedPngSha256": "8450182504125d814fb44b89e5db85e8ac504a283607a2dcc952895de984fa5d",
+    "originalAndroidPngVerified": true,
+    "originalAndroidPngSha256": "cea0d983ff822739f00fbab7ab578b76551ff59a5d1af756f0230ba6721cdad5",
+    "originalAndroidTemporaryFileCleanupConfirmed": true,
+    "orientationAndColorsVisuallyCompared": true,
+    "screenshotsAreDifferentInstants": true
+  },
+  "teardown": {
+    "nativeParticipantClosed": true,
+    "activeCaptureAfterChecks": false,
+    "gameForegroundRestored": true,
+    "modelStarted": false
+  },
+  "reconstruction": {
+    "apiPort": 3342,
+    "healthVerified": true,
+    "originAndCustomHeaderRequired": true,
+    "existingStateFilesUnchanged": 14,
+    "jobsResumed": 0,
+    "modelsPreloaded": 0
+  },
+  "autonomousNavigationAccepted": false,
+  "fullAndroidToModelLatencyMeasured": false,
+  "master1080p60Accepted": false,
+  "independentRouteLocalizationAccepted": false
+}

@@ -1,0 +1,455 @@
+{
+  "schema": "sphere-repeat-passes-and-latency-v1",
+  "date": "2026-10-30",
+  "physicalActions": 0,
+  "liveGameRouteCompleted": false,
+  "positiveIndependentSameRouteTest": false,
+  "webPairSelectorAdded": false,
+  "parallelH264DuringPilotAdded": false,
+  "automaticMapFusionAdded": false,
+  "recommendation": "one reference recording plus one optional independent manual validation pass",
+  "pnpComparison": {
+    "pairedFrames": 16,
+    "maximumRotationDifferenceDegrees": 0.04047483226813719,
+    "maximumCenterDifferenceInMedianSteps": 0.016072202075048454,
+    "stagesBefore": {
+      "path": ".local-pilot/route-descriptor-epnp-20261030-v2.json",
+      "sha256": "435c1b0167b36e16b274cc9f06c16efcddd1dbe74ad127f1a2654f4872bd4b7c",
+      "schema": "sphere-descriptor-stage-cost-v1",
+      "physicalActions": 0,
+      "poseAdmissionTest": false,
+      "sourceManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      "routeSha256": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+      "solver": "epnp",
+      "coldMatcherPerQuery": true,
+      "candidateLimit": 8,
+      "summary": [
+        {
+          "nativeThreads": 4,
+          "samples": 16,
+          "timings": {
+            "totalMs": {
+              "p50": 178.45299997134134,
+              "p95": 231.9057499698829
+            },
+            "extractMs": {
+              "p50": 59.864999959245324,
+              "p95": 75.40800000424497
+            },
+            "coarseMs": {
+              "p50": 49.25645003095269,
+              "p95": 59.512949985219166
+            },
+            "subsetsMs": {
+              "p50": 68.06795013835654,
+              "p95": 98.50087508675642
+            },
+            "pnpMs": {
+              "p50": 53.39925008593127,
+              "p95": 80.4924500407651
+            }
+          },
+          "rawPnpSolved": 16
+        }
+      ]
+    },
+    "stagesAfter": {
+      "path": ".local-pilot/route-descriptor-ap3p-20261030-v2.json",
+      "sha256": "b98ee3db3a65e11858d546241319ed620ab9c44db84828b37046ff002ae18055",
+      "schema": "sphere-descriptor-stage-cost-v1",
+      "physicalActions": 0,
+      "poseAdmissionTest": false,
+      "sourceManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      "routeSha256": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+      "solver": "ap3p",
+      "coldMatcherPerQuery": true,
+      "candidateLimit": 8,
+      "summary": [
+        {
+          "nativeThreads": 4,
+          "samples": 16,
+          "timings": {
+            "totalMs": {
+              "p50": 154.28485005395487,
+              "p95": 181.39455001801252
+            },
+            "extractMs": {
+              "p50": 60.12775003910065,
+              "p95": 65.0898749299813
+            },
+            "coarseMs": {
+              "p50": 49.584649968892336,
+              "p95": 56.942774972412735
+            },
+            "subsetsMs": {
+              "p50": 38.77130016917363,
+              "p95": 68.80150007782504
+            },
+            "pnpMs": {
+              "p50": 21.71065000584349,
+              "p95": 52.200074918800965
+            }
+          },
+          "rawPnpSolved": 16
+        }
+      ]
+    }
+  },
+  "fullReplayBefore": {
+    "path": ".local-pilot/route-entire-video-20261030-v3/result.json",
+    "sha256": "2d494d8821740877c4e7de69183069557fb31a22cff741491517e5ad4632aaa4",
+    "schema": "sphere-route-entire-video-http-check-v1",
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "closedLoop": false,
+    "syntheticSourceClock": false,
+    "latestOnly": true,
+    "referenceFramesExcluded": true,
+    "sourceHashes": {
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9"
+    },
+    "sourceUnchanged": true,
+    "observations": 420,
+    "skippedLate": 61,
+    "firstSeconds": 0.035,
+    "lastSeconds": 50.332,
+    "counts": {
+      "confirming": 8,
+      "localized": 409,
+      "unknown": 3
+    },
+    "planReasons": {
+      "walk_confirming_start": 2,
+      "walk_confirming_current_position": 2,
+      "walk_camera_relative_pursuit": 362,
+      "walk_relocalizing_neutral": 9,
+      "walk_relocalization_drift": 45
+    },
+    "cpuCoreSeconds": 37.75,
+    "wallSeconds": 50.88677760004066,
+    "peakSampledPrivateBytes": 138407936,
+    "replyMs": {
+      "p50": 25.6678499863483,
+      "p95": 175.18226001411665,
+      "maximum": 309.29160001687706
+    },
+    "expiredReplies": 8
+  },
+  "solverOnlyTrial": {
+    "path": ".local-pilot/route-ap3p-entire-video-20261030-v1/result.json",
+    "sha256": "87c07c50cbe440a2c95f9fd3f6886eb9fb19dfd07826e50cbee8b998f6c1d6f1",
+    "schema": "sphere-route-entire-video-http-check-v1",
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "closedLoop": false,
+    "syntheticSourceClock": false,
+    "latestOnly": true,
+    "referenceFramesExcluded": true,
+    "query": {
+      "referenceCaptureId": "9ff5f18ec9204151956d4a131951c3fa",
+      "queryCaptureId": "9ff5f18ec9204151956d4a131951c3fa",
+      "referenceVideoSha256": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416",
+      "queryVideoSha256": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416",
+      "queryManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      "distinctCaptureFiles": false,
+      "relation": "same_video_heldout",
+      "sameRouteVerified": false,
+      "independentGameplayConfirmed": false,
+      "fovCompatibility": "same_aspect_fov_unverified"
+    },
+    "maxSeconds": 55,
+    "sourceHashes": {
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\video.h264": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416"
+    },
+    "sourceUnchanged": true,
+    "observations": 435,
+    "skippedLate": 8,
+    "firstSeconds": 0.001,
+    "lastSeconds": 50.332,
+    "counts": {
+      "confirming": 2,
+      "localized": 433
+    },
+    "planReasons": {
+      "walk_confirming_start": 2,
+      "walk_confirming_current_position": 2,
+      "walk_camera_relative_pursuit": 400,
+      "walk_relocalizing_neutral": 9,
+      "walk_confirming_end": 2,
+      "walk_relocalization_budget": 20
+    },
+    "cpuCoreSeconds": 31.90625,
+    "wallSeconds": 50.91729250003118,
+    "peakSampledPrivateBytes": 139988992,
+    "replyMs": {
+      "p50": 22.624600096605718,
+      "p95": 131.65882003959268,
+      "maximum": 209.9006000207737
+    },
+    "expiredReplies": 0
+  },
+  "confidenceRecoveryTrial": {
+    "path": ".local-pilot/route-repeat-entire-video-20261030-v2/result.json",
+    "sha256": "53ed6ba56596afea8393da1df9f074c1991c4dff58a6cb0737473c2272009b39",
+    "schema": "sphere-route-entire-video-http-check-v1",
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "closedLoop": false,
+    "syntheticSourceClock": false,
+    "latestOnly": true,
+    "referenceFramesExcluded": true,
+    "query": {
+      "referenceCaptureId": "9ff5f18ec9204151956d4a131951c3fa",
+      "queryCaptureId": "9ff5f18ec9204151956d4a131951c3fa",
+      "referenceVideoSha256": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416",
+      "queryVideoSha256": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416",
+      "queryManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      "distinctCaptureFiles": false,
+      "relation": "same_video_heldout",
+      "sameRouteVerified": false,
+      "independentGameplayConfirmed": false,
+      "fovCompatibility": "same_aspect_fov_unverified"
+    },
+    "maxSeconds": 55,
+    "sourceHashes": {
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\video.h264": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416"
+    },
+    "sourceUnchanged": true,
+    "observations": 433,
+    "skippedLate": 16,
+    "firstSeconds": 0.001,
+    "lastSeconds": 50.332,
+    "counts": {
+      "confirming": 4,
+      "localized": 428,
+      "unknown": 1
+    },
+    "planReasons": {
+      "walk_confirming_start": 2,
+      "walk_confirming_current_position": 2,
+      "walk_camera_relative_pursuit": 393,
+      "walk_relocalizing_neutral": 14,
+      "walk_confirming_end": 2,
+      "walk_camera_trace_end_confirmed": 20
+    },
+    "cpuCoreSeconds": 30.96875,
+    "wallSeconds": 50.93684029998258,
+    "peakSampledPrivateBytes": 141029376,
+    "replyMs": {
+      "p50": 22.800599923357368,
+      "p95": 133.9989800006151,
+      "maximum": 198.72540002688766
+    },
+    "expiredReplies": 0
+  },
+  "finalReplay": {
+    "path": ".local-pilot/route-repeat-entire-video-20261030-age-v2/result.json",
+    "sha256": "fd2c7528581b0bb02dfbe34ad9c2df8de56007ecaf8fe35e566f219086b99d39",
+    "schema": "sphere-route-entire-video-http-check-v1",
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "closedLoop": false,
+    "syntheticSourceClock": false,
+    "latestOnly": true,
+    "referenceFramesExcluded": true,
+    "query": {
+      "referenceCaptureId": "9ff5f18ec9204151956d4a131951c3fa",
+      "queryCaptureId": "9ff5f18ec9204151956d4a131951c3fa",
+      "referenceVideoSha256": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416",
+      "queryVideoSha256": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416",
+      "queryManifestSha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      "distinctCaptureFiles": false,
+      "relation": "same_video_heldout",
+      "sameRouteVerified": false,
+      "independentGameplayConfirmed": false,
+      "fovCompatibility": "same_aspect_fov_unverified"
+    },
+    "maxSeconds": 55,
+    "runtimeSources": {
+      "motor_worker/route_localization.py": "e2733d248decd2ec038686409d542a279d1ef4d653ec9b05b9034358737d9427",
+      "motor_worker/route_tracking.py": "ed6a930f2f9a39d800be51802cf62fa6da84e33eaf7dd04dcabc65cba74bec46",
+      "motor_worker/walk_route.py": "57415215e5472dfcbe43e28c13b895e9ef4fc0e180d6aff822019a2e933630fb",
+      "motor_worker/route_reference_view.py": "536eca4813fbaae84d173038b4a6f166103cede1692a4a4fb9d6da692bd0f9cb",
+      "scripts/pilot/route_workspace.py": "9e7dde09407006d854c66f56feacf0b0216d8d91c82132caa70cee0001cdd99d",
+      "scripts/pilot/check_route_full_replay.py": "92aa25f4f7a82dc9b291384dc5aa678c0638efd993211714ff7ced2586869caa"
+    },
+    "runtimeUnchanged": true,
+    "sourceHashes": {
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\video.h264": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416"
+    },
+    "sourceUnchanged": true,
+    "observations": 436,
+    "skippedLate": 7,
+    "firstSeconds": 0.001,
+    "lastSeconds": 50.332,
+    "counts": {
+      "confirming": 2,
+      "localized": 434
+    },
+    "planReasons": {
+      "walk_confirming_start": 2,
+      "walk_confirming_current_position": 2,
+      "walk_camera_relative_pursuit": 404,
+      "walk_relocalizing_neutral": 6,
+      "walk_confirming_end": 2,
+      "walk_camera_trace_end_confirmed": 20
+    },
+    "cpuCoreSeconds": 32.4375,
+    "wallSeconds": 50.92062899994198,
+    "peakSampledPrivateBytes": 140197888,
+    "replyMs": {
+      "p50": 23.0891999672167,
+      "p95": 135.78347497968934,
+      "maximum": 179.2083999607712
+    },
+    "queryAgeMs": {
+      "p50": 27.411600050982088,
+      "p95": 140.2727749373298,
+      "maximum": 188.43259999994189
+    },
+    "ageBasis": "decoded_query_presentation_before_jpeg; excludes Android/browser delivery",
+    "expiredReplies": 0,
+    "expiredQueries": 0
+  },
+  "firstEndConfirmation": {
+    "seconds": 48.285,
+    "progress": 0.9998076016815285,
+    "phase": "arrived",
+    "reason": "walk_camera_trace_end_confirmed",
+    "inliers": 32
+  },
+  "stoppedPlansInFinalReplay": 0,
+  "otherRecording": {
+    "path": ".local-pilot/route-ap3p-other-recording-20261030-v2/result.json",
+    "sha256": "25adced9e202261d0d1513330d335c29c195224bd06ae43b9b9c033a79783969",
+    "schema": "sphere-route-entire-video-http-check-v1",
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "closedLoop": false,
+    "syntheticSourceClock": false,
+    "latestOnly": true,
+    "referenceFramesExcluded": false,
+    "query": {
+      "referenceCaptureId": "9ff5f18ec9204151956d4a131951c3fa",
+      "queryCaptureId": "438bb031abc844ab81e373a5b3341754",
+      "referenceVideoSha256": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416",
+      "queryVideoSha256": "085098e5a220180c633bb0e401a3cb8247dde3f25d194586c734498b06e3d212",
+      "queryManifestSha256": "3310a3ed9edf439f5f8877ef396ba5819bff68de82b3cd82aea3fafc2863f96f",
+      "distinctCaptureFiles": true,
+      "relation": "different_video_unlabelled",
+      "sameRouteVerified": false,
+      "independentGameplayConfirmed": false,
+      "fovCompatibility": "same_aspect_fov_unverified"
+    },
+    "maxSeconds": 10.0,
+    "sourceHashes": {
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+      ".local-pilot\\reconstruction-jobs\\b7bce94214db48e195dea1a2ac65faf2\\input\\manifest.json": "3310a3ed9edf439f5f8877ef396ba5819bff68de82b3cd82aea3fafc2863f96f",
+      ".local-pilot\\reconstruction-jobs\\b7bce94214db48e195dea1a2ac65faf2\\input\\video.h264": "085098e5a220180c633bb0e401a3cb8247dde3f25d194586c734498b06e3d212"
+    },
+    "sourceUnchanged": true,
+    "observations": 73,
+    "skippedLate": 50,
+    "firstSeconds": 0.0,
+    "lastSeconds": 9.896,
+    "counts": {
+      "unknown": 73
+    },
+    "planReasons": {
+      "walk_confirming_start": 73
+    },
+    "cpuCoreSeconds": 18.125,
+    "wallSeconds": 10.69434689998161,
+    "peakSampledPrivateBytes": 132857856,
+    "replyMs": {
+      "p50": 119.35660010203719,
+      "p95": 145.04589999560264,
+      "maximum": 171.42219992820174
+    },
+    "expiredReplies": 0
+  },
+  "frontendTests": {
+    "passed": 52,
+    "suites": 4,
+    "report": ".local-pilot/route-repeat-web-tests-20261030-v1.json",
+    "reactActWarningsPresent": true
+  },
+  "pythonTests": {
+    "passed": 164,
+    "skipped": 1,
+    "subtests": 63,
+    "report": ".local-pilot/route-repeat-regression-20261030-final.xml",
+    "skipReason": "optional video dependency required"
+  },
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "482b454f1c92a8bef4bd774b10ef749bf408539f7b88cf210555962c597e1314",
+    "source_sha_after": "482b454f1c92a8bef4bd774b10ef749bf408539f7b88cf210555962c597e1314",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 6.5,
+      "stop_ram_gib": 5.5,
+      "max_commit_percent": 85,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "probe": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "workerMatches": true,
+    "encoderWorkerMatches": true,
+    "newBundlePresent": true
+  },
+  "install": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:d700a5288c9e27e08c20ba9280aad2a533e1d91fc94eee71542e17bdfbc1fa61",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "apiReload": {
+    "oldPid": 14172,
+    "watchdogPid": 4444,
+    "physicalActions": 0,
+    "sourceSha": "e2733d248decd2ec038686409d542a279d1ef4d653ec9b05b9034358737d9427",
+    "outcome": "verified",
+    "newPid": 9492,
+    "existingAssetsUnchanged": true
+  },
+  "limits": [
+    "recorded future does not react to controls",
+    "same-route independent recording not supplied",
+    "no metric accuracy or obstacle avoidance demonstrated",
+    "age timing excludes actual browser and Android delivery"
+  ],
+  "research": [
+    "https://doi.org/10.1002/rob.21838",
+    "https://github.com/utiasASRL/vtr3",
+    "https://arxiv.org/abs/2603.12460",
+    "https://docs.opencv.org/4.x/d5/d1f/calib3d_solvePnP.html"
+  ]
+}

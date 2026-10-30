@@ -1,0 +1,105 @@
+import {fireEvent,render,screen} from '@testing-library/react';
+import RouteGeometryMap from '@/src/features/stream/RouteGeometryMap';
+const fills:string[]=[];
+beforeEach(()=>{
+  fills.length=0;
+  const context={setTransform:jest.fn(),clearRect:jest.fn(),globalAlpha:1,fillStyle:'',beginPath:jest.fn(),arc:jest.fn(),fill(){fills.push(String(this.fillStyle));}};
+  jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(context as never);
+});
+afterEach(()=>jest.restoreAllMocks());
+
+test('expiry hides the live pin without snapping the compass back to a different recorded heading',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[0,0,1],ticks_90k:9000,camera_to_world:[[-1,0,0,0],[0,1,0,0],[0,0,-1,1]]}];
+  const live={center:[0,0,.5],ticks_90k:0,camera_to_world:[[0,0,1,0],[0,1,0,0],[-1,0,0,.5]]};
+  const view=render(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={0} liveCamera={live} orientationCamera={live}/>);
+  const angle=screen.getByLabelText('Поворот схемы').getAttribute('data-angle-radians');
+  view.rerender(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={9000} orientationCamera={live}/>);
+  expect(screen.getByLabelText('Поворот схемы')).toHaveAttribute('data-angle-radians',angle);
+  expect(screen.queryByLabelText('Подтверждённое живое положение')).not.toBeInTheDocument();
+  expect(screen.getByText(/Поворот схемы сохранён/)).toBeInTheDocument();
+});
+
+test('live marker updates do not repaint thousands of depth-coloured landmarks',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[0,0,1],ticks_90k:9000,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,1]]}];
+  const points=[[0,0,2,240,120,50],[1,0,4,240,120,50]],view=render(<RouteGeometryMap cameras={cameras} points={points} liveCamera={cameras[0]}/>);
+  const count=fills.length;expect(count).toBeGreaterThan(0);
+  view.rerender(<RouteGeometryMap cameras={cameras} points={points} selectedTicks={9000} liveCamera={{...cameras[1],center:[.1,0,1]}}/>);
+  expect(fills).toHaveLength(count);expect(screen.getByLabelText('Подтверждённое живое положение')).toBeInTheDocument();
+  expect(screen.getByText(/цвет облака закреплён/)).toBeInTheDocument();
+});
+
+test('shows actual counts and explicitly reports gaps and unknown road scale',()=>{
+  render(<RouteGeometryMap cameras={[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:45000},
+    {center:[2,1,0],ticks_90k:200000}]} points={[[0,1,2,255,255,255],[1,1,1,1,1,1]]}/>);
+  expect(screen.getByRole('img',{name:'Проекция опорных точек и положений камеры'})).toBeInTheDocument();
+  expect(screen.getByText(/3 камер · 2 точек/)).toBeInTheDocument();
+  expect(screen.getByText(/Разрывы больше секунды не соединяются: 1/)).toBeInTheDocument();
+  expect(screen.getByText(/не доказывает положение дороги/)).toBeInTheDocument();
+});
+test('warns about the whole path without inventing an exact faulty section',()=>{
+  render(<RouteGeometryMap motionWarning cameras={[{center:[0,0,0],ticks_90k:0},
+    {center:[1,0,0],ticks_90k:45000}]} points={[]}/>);
+  expect(screen.getByRole('status')).toHaveTextContent('точные границы ошибки не установлены');
+});
+test('selects only source-backed camera timestamps by pointer, keyboard or slider',()=>{
+  const seek=jest.fn(),cameras=[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:45000},
+    {center:[2,1,0],ticks_90k:200000}];
+  const view=render(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={0} validTicks={new Set([0,200000])}
+    onSeekCamera={seek} sourcePreview={<div>Исходное видео</div>}/>);
+  expect(screen.getByText('Исходное видео')).toBeInTheDocument();
+  expect(screen.queryByRole('button',{name:/исходный кадр 2/i})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:/исходный кадр 3/i}));expect(seek).toHaveBeenLastCalledWith(200000);
+  fireEvent.keyDown(screen.getByRole('button',{name:/исходный кадр 1/i}),{key:'Enter'});expect(seek).toHaveBeenLastCalledWith(0);
+  fireEvent.change(screen.getByLabelText('Ракурс на схеме ориентиров'),{target:{value:'1'}});expect(seek).toHaveBeenCalledTimes(2);
+  fireEvent.change(screen.getByLabelText('Ракурс на схеме ориентиров'),{target:{value:'2'}});expect(seek).toHaveBeenLastCalledWith(200000);
+  view.rerender(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={100000} validTicks={new Set([0,200000])} onSeekCamera={seek}/>);
+  expect(screen.getByText(/разница с текущим кадром 0.61 с/)).toBeInTheDocument();
+  expect(screen.getByText(/Разрывы больше секунды не соединяются: 1/)).toBeInTheDocument();
+});
+test('without verified source binding map stays read-only',()=>{
+  render(<RouteGeometryMap cameras={[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:9000}]} points={[]} sourcePreview={<div>Не должен появиться</div>}/>);
+  expect(screen.getByText(/Связь с исходной записью не подтверждена/)).toBeInTheDocument();
+  expect(screen.queryByText('Не должен появиться')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Ракурс на схеме ориентиров')).not.toBeInTheDocument();
+});
+test('point density can be increased without inventing more 3D points',()=>{
+  const points=Array.from({length:6000},(_,i)=>[(i%50)/10,Math.floor(i/50)/10,0,255,255,255]);
+  const view=render(<RouteGeometryMap cameras={[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:9000}]} points={points}/>);
+  const cloud=()=>Number(screen.getByLabelText('Облако восстановленных ориентиров').getAttribute('data-point-count'));
+  const before=cloud();
+  fireEvent.click(screen.getByRole('checkbox',{name:'Больше точек'}));
+  const after=cloud();
+  expect(after).toBeGreaterThan(before);expect(after).toBeLessThanOrEqual(points.length+3);
+  expect(view.container.querySelectorAll('svg circle').length).toBeLessThan(10);
+});
+
+test('route colors stay distinct from depth and warning and the selected camera retains its real heading',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[0,0,1],ticks_90k:9000,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,1]]}];
+  const view=render(<RouteGeometryMap cameras={cameras} points={[[0,0,2,240,120,50],[1,0,4,240,120,50]]} motionWarning selectedTicks={0}/>);
+  expect(screen.getByText(/Оси первого ракурса/)).toBeInTheDocument();
+  expect(screen.getByLabelText('Цвет опорных точек')).toHaveValue('depth');
+  expect(screen.getByText(/Глубина вдоль взгляда/)).toBeInTheDocument();
+  expect(screen.getByLabelText('Направление взгляда выбранной камеры')).toBeInTheDocument();
+  expect(view.container.querySelector('line[stroke="#22d3ee"]')).toBeInTheDocument();
+  expect(view.container.querySelector('line[stroke="#fbbf24"]')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Цвет опорных точек'),{target:{value:'rgb'}});
+  expect(fills).toContain('rgb(240,120,50)');
+  expect(screen.queryByText(/Глубина вдоль взгляда/)).not.toBeInTheDocument();
+});
+
+test('a backwards camera turns the diagram up with independent manual rotation and reset',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[0,0,1],ticks_90k:9000,camera_to_world:[[-1,0,0,0],[0,1,0,0],[0,0,-1,1]]}];
+  render(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={9000}/>);
+  const group=screen.getByLabelText('Поворот схемы');
+  expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(Math.PI);
+  fireEvent.click(screen.getByRole('button',{name:'Повернуть карту вправо на 90 градусов'}));
+  expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(Math.PI/2);
+  fireEvent.click(screen.getByRole('button',{name:'Сброс поворота'}));
+  expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(Math.PI);
+  fireEvent.change(screen.getByLabelText('Ориентация карты'),{target:{value:'reference'}});
+  expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(0);
+});

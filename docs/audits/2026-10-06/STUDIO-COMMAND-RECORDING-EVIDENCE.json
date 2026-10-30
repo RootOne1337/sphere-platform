@@ -1,0 +1,152 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+  "apiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "textDigestMode": "sha256-after-CRLF-to-LF",
+  "binaryDigestMode": "sha256-raw",
+  "backlog": {
+    "accepted": 9,
+    "openCriteria": 41,
+    "wholeItemsClosedByThisStage": false
+  },
+  "secretsRawLogsPrivateConfigurationPublished": false,
+  "evidenceFiles": [
+    {
+      "file": "evidence/studio-command-recording/native-ui.json",
+      "bytesNormalized": 1021,
+      "sha256": "897e18aadfcbd297eac43cd6d13c942b74afbc1a3a0c70b030e189556b618eae"
+    },
+    {
+      "file": "evidence/studio-command-recording/remote-canary.json",
+      "bytesNormalized": 3470,
+      "sha256": "b91ece9e60ec92da5e0518948e6e4de67102420d9b593cc326b158c6de783eaf"
+    },
+    {
+      "file": "evidence/studio-command-recording/runtime-installation.json",
+      "bytesNormalized": 770,
+      "sha256": "e532c99703f053819e423d3f5e3c92dc91da5ce7578f688df52825f852d22b5c"
+    },
+    {
+      "file": "evidence/studio-command-recording/source-ci.json",
+      "bytesNormalized": 2793,
+      "sha256": "3dc8119c2a99f96c3d14fb147110b6ac031cb3192bde074e7339200f0484b97f"
+    },
+    {
+      "file": "evidence/studio-command-recording/source-tests.json",
+      "bytesNormalized": 504,
+      "sha256": "ac72ff00e226d6cc5713f1002810d6c8687d7d69011bdbec516a27373037680b"
+    },
+    {
+      "file": "evidence/studio-command-recording/ui-build.json",
+      "bytesNormalized": 494,
+      "sha256": "3d379fe44aa782597370a5543c43fdf6180a4e4c6e5803780ed46f86658e2e71"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "assets/studio-command-recording/remote-key-confirmed.jpg",
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "capture": "native-codex-browser",
+      "bytes": 105411,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "86674732b7ceac81133d0fe42cee61d9e3e50600ea014b135c0abb415ee04684"
+    },
+    {
+      "file": "assets/studio-command-recording/remote-search-text.jpg",
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "capture": "native-codex-browser",
+      "bytes": 97421,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "a8645c3c24b0d72c0134864a712141f99564d5fb9abc7c6cc23c9d9785e7d6e1"
+    },
+    {
+      "file": "assets/studio-command-recording/remote-task-completed-dark.jpg",
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "capture": "native-codex-browser",
+      "bytes": 96155,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "ad848288cbc5d7d479035d43aca26d7073e4e8ff044a8b132d7f434c1eaf7e16"
+    },
+    {
+      "file": "assets/studio-command-recording/workbench-light-390-details.jpg",
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "capture": "native-codex-browser",
+      "bytes": 48287,
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "1da889bc64b7597b01b1c68e7f9c950c7b1993e2dfde40c0a901645e34232d66"
+    },
+    {
+      "file": "assets/studio-command-recording/workbench-light-390.jpg",
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "capture": "native-codex-browser",
+      "bytes": 34542,
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "ea84cc80305e06b72a76316f3c60b99afeb2b39725364e07de0d6102b7945b65"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "file": "frontend/src/features/stream/controlObservation.ts",
+      "digestMode": "raw-git-blob",
+      "sha256": "948d220477cc5471c39d796fe8000b578141f3730d54619e1ff4132a4b2aa8a7"
+    },
+    {
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "file": "frontend/src/features/stream/AndroidNavigationBar.tsx",
+      "digestMode": "raw-git-blob",
+      "sha256": "14da72e73eb559e95bfeeac29e06ec9d4b330e0d376bf1668c557ad543bf2860"
+    },
+    {
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "file": "frontend/components/sphere/DeviceStream.tsx",
+      "digestMode": "raw-git-blob",
+      "sha256": "ba85561343d925476dff290503069188f72a2c9eb93e01f0a248e341fe852ccc"
+    },
+    {
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "file": "frontend/src/features/stream/SingleDeviceStream.tsx",
+      "digestMode": "raw-git-blob",
+      "sha256": "4ec37ab3219ecdbcea0be665baf3d98fd59863bb5f6d02bc9db7915233f50875"
+    },
+    {
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "file": "frontend/src/features/scripts/studio/recording.ts",
+      "digestMode": "raw-git-blob",
+      "sha256": "ab536e9e4772adb3b35469e4b463a4d4b7ecfb38e102c27f60fbdc47e9b02532"
+    },
+    {
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "file": "frontend/src/features/scripts/studio/DeviceWorkbench.tsx",
+      "digestMode": "raw-git-blob",
+      "sha256": "a515d4ff3c409e7ea6915bc862f4694d709bfde144c430691c6d03e9a8a427c1"
+    },
+    {
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+      "digestMode": "raw-git-blob",
+      "sha256": "9b1d1df97cbbea3113f024d8c272a26d2532cf497731ad7185c6a21179ea3bb3"
+    },
+    {
+      "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "5c72cedcb65ab261310f55c9646bfc440e2b1145e4f8ee01d207c4c0d6dc1039"
+    }
+  ]
+}

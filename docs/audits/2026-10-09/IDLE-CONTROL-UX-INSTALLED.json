@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T17:03:00.032407+00:00",
+  "scope": "UI-only installed finite wording/transport-disclosure/light-theme contrast acceptance. Idle reliability, frame latency and direct transport NOT accepted.",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+    "apiSourceRevision": "d720232e3164d278a7322a61a90ba111e205ae3c",
+    "uiContainer": {
+      "id": "bce05a6ec43b0fef913e499bd5e63261d98e0b11185e3d4d52d0aad6e50b3e62",
+      "imageId": "sha256:f30a661aea04c79758458f02ce73f6e58f9445232734916b5cc4e9360159864b",
+      "imageTag": "sphere-review-frontend:d70f55c6de36a01801af201ea4d6ca42bff53549",
+      "startedAt": "2026-10-09T16:58:35.324774492Z",
+      "status": "running"
+    },
+    "backendStartedAtUtc": "2026-10-09T15:17:26.705186134Z",
+    "otherContainersPreserved": 45,
+    "apkChanged": false,
+    "pilotApk": {
+      "device": "PH011",
+      "version": "1.2.49-dev",
+      "versionCode": 10249,
+      "scope": "Single selected device, not fleet inventory"
+    },
+    "schemaChanged": false,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "publicExactHostMapChanged": false,
+    "apiWsBootstrapRouteChanged": false,
+    "publicUrl": "https://sphere-agent-canary-20260927.ru.tuna.am",
+    "localUrl": "http://127.0.0.1:3015"
+  },
+  "delivery": {
+    "artifact": {
+      "source": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+      "runId": 37962183606,
+      "artifactId": 11632106632,
+      "zipBytes": 120882464,
+      "zipSha256": "31b88b8092f363748a98a4896b063aba1fecce1b89c2b51013bcccd11b7862bf",
+      "independentImageId": "sha256:fa321a1a5dc3cfc9b141dec05d3b549029db10761edfcb9eee5ad4166c5bd9d1",
+      "ciAdmission": {
+        "source": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+        "imageId": "sha256:fa321a1a5dc3cfc9b141dec05d3b549029db10761edfcb9eee5ad4166c5bd9d1",
+        "compressedBytes": 120879513,
+        "pages": 26,
+        "assets": 73,
+        "runId": 37962183606,
+        "runtimeInstalled": false
+      },
+      "artifactDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\idle-contrast-delivery-20261009-d70f55c6\\artifact",
+      "ciImageIdentityIndependentOfDownloadedReceipt": true,
+      "retainedZip": false
+    },
+    "installerReportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-d70f55c6de36-8de580fc",
+    "onlyUiImageAndBuildRemovalDelta": true,
+    "completeBaselineRoundtripVerified": true,
+    "resourceFindings": [],
+    "intermediateWordingInstall": {
+      "sourceRevision": "227a0c8460cdea04231eb889ebbdde9056c783a9",
+      "startedAtUtc": "2026-10-09T16:49:20.796957467Z",
+      "observation": "Correct idle wording verified; light-theme contrast defect found and corrected by final UI."
+    },
+    "duplicateDownloadZipsRemovedBytes": 241761341,
+    "artifactImagesAndReceiptsPreserved": true,
+    "dockerPrunePerformed": false
+  },
+  "ci": {
+    "exactSource": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+    "observedAtUtc": "2026-10-09T17:03:00.032407+00:00",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37962183606,
+        "headSha": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+        "name": "CI — Frontend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "",
+        "databaseId": 37962183591,
+        "headSha": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+        "name": "CI — Android",
+        "status": "in_progress"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37962183458,
+        "headSha": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+        "name": "Preview — Deploy",
+        "status": "completed"
+      },
+      {
+        "conclusion": "",
+        "databaseId": 37962183496,
+        "headSha": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+        "name": "CI — Backend",
+        "status": "in_progress"
+      }
+    ],
+    "frontendTests": 1950,
+    "frontendSuites": 139,
+    "typesPassed": true,
+    "productionBuildPassed": true,
+    "packagedPages": 26,
+    "packagedAssets": 73,
+    "scope": "Exact-source frontend CI successful; other CI statuses are this snapshot, not implicitly successful. No backend/APK code changed."
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "acceptedScope": [
+      "Public build identity",
+      "Accurate repeated idle-only warning",
+      "Readable light-theme control status/recovery button over video",
+      "Explicit server WebSocket transport disclosure",
+      "Loopback build identity and catalog22"
+    ],
+    "publicCanary": {
+      "device": "PH011",
+      "androidActionsSent": 0,
+      "sessionCount": 1,
+      "idleAutomaticReconciliationCount": 1,
+      "warningCategory": "idle_receipt_timeout",
+      "phaseAtFailure": "ready",
+      "offeredSequence": 12,
+      "acknowledgedSequence": 10,
+      "pendingReceipts": 2,
+      "oldestSequence": 11,
+      "oldestAction": "HEARTBEAT",
+      "oldestAgeMs": 512,
+      "deadlineAgeMs": 512,
+      "browserTickGapMs": 15,
+      "lastAckRttMs": 510,
+      "lastAckAgeMs": 258,
+      "timeSinceLastSendMs": 256,
+      "heldPointer": false,
+      "terminalPending": false,
+      "webSocketState": "OPEN",
+      "browserBufferedBytes": 0,
+      "viewerAtFirstExpandedObservation": {
+        "packets": 17,
+        "bytes": 169869,
+        "decoded": 13,
+        "drawn": 13,
+        "invalid": 0,
+        "decodeErrors": 0,
+        "renderErrors": 0
+      },
+      "readingsProvenance": "Transcribed from CUA tab10 expanded diagnostics observation on final d70 UI; saved subsequent AX is only a diff and does not contain the complete earlier snapshot.",
+      "result": "FAILED_IDLE_RELIABILITY; wording/contrast finite checks accepted. Static-screen frame drought is not measured steady FPS."
+    },
+    "idleAtIntermediate227": {
+      "lastAckRttMs": 526,
+      "deadlineAgeMs": 511,
+      "result": "FAILED_IDLE_RELIABILITY"
+    },
+    "warningsErrorsCapturedFinalPublicAndLoopback": [],
+    "cleanup": "Public switched to View; temporary public and loopback QA tabs closed; user builder tab untouched.",
+    "screenshot": "docs/audits/2026-10-09/assets/idle-control-ux/after.jpg",
+    "screenshotSha256": "d64828601dd24d7cca10d884dd7632c740224becbf653426acd265fd251ef11c",
+    "privateSubsequentAxDiff": ".local-pilot/direct-transport-review-20261009/idle-final.txt",
+    "privateSubsequentAxDiffSha256NormalizedLf": "e0dfe6ed785a10dcae81b76c7b797798a93d089b8cd585cbd0aa79442677b06b",
+    "grafanaIntermediate227": {
+      "dashboardExecuted": true,
+      "panelsPresent": true,
+      "warningsErrors": [],
+      "scope": "Loaded existing collection dashboard after same-host navigation; not new metric coverage."
+    }
+  },
+  "unauthenticatedHttp": {
+    "observedAtUtc": "2026-10-09T16:59:47.598288+00:00",
+    "scope": "Finite unauthenticated HTTP status only; no browser execution assertion",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "path": "/login",
+        "status": 200
+      },
+      {
+        "origin": "http://127.0.0.1:3015",
+        "path": "/api/observability/resources",
+        "status": 401
+      },
+      {
+        "origin": "http://127.0.0.1:3015",
+        "path": "/metrics",
+        "status": 404
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/login",
+        "status": 200
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/observability/resources",
+        "status": 401
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/metrics",
+        "status": 404
+      }
+    ]
+  },
+  "transportResearch": {
+    "evidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
+    "state": "PROPOSED_RESEARCH_PREPARED",
+    "implemented": false,
+    "proposal": "Native browser RTCPeerConnection to Android libwebrtc, direct video and input/native ACK, server-authenticated signaling, explicit coturn fallback.",
+    "exactAndroidArtifactChosen": false,
+    "portsTurnVpnOrOtaChanged": false
+  },
+  "remaining": {
+    "idleFailureCause": "UNKNOWN",
+    "latencyFixed": false,
+    "directTransportInstalled": false,
+    "resourceSoakAccepted": false,
+    "globalInputOwnershipAccepted": false,
+    "productAccepted": 9,
+    "productOpen": 41,
+    "legacyUnclosed": 7,
+    "wholePcStorageWriter": "UNKNOWN"
+  },
+  "frozenSourceAudit": "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md"
+}

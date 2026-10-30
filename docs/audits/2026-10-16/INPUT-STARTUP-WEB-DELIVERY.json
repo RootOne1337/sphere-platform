@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-16T02:56:54.260939+00:00",
+  "runtimeInstalled": true,
+  "scope": "UI982 installed with finite local two-client and delayed-READY acceptance; Tuna two-client soak failed due APK78 native abort. APK79 remains a candidate, not accepted.",
+  "runtime": {
+    "sourceRevision": "982b22408d941d6db8e10927bcdd2dc17664ba3c",
+    "apiSourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+    "apkSourceRevision": "589c455df86b7069020d3f02cf83a228baac00f0",
+    "uiContainer": {
+      "id": "070737b3f007098e7bc5d572956982777e0859087fc4f9aa29b7163877c7f737",
+      "imageId": "sha256:393cc549abbf676a4f042700ee5f02845dda3e9ce08754d635c46b3fdbe724ba",
+      "status": "running",
+      "health": "healthy"
+    },
+    "apiContainer": {
+      "id": "c587915e67f9c6d2f7b244592c9700f1dc088c911e24caae1df91f2c4f753ec1",
+      "imageId": "sha256:972f779f74376f2e0442828d0602e62ea7fff458310b0608a4fb693caeb7e3c8",
+      "status": "running",
+      "health": "healthy"
+    },
+    "health": [
+      {
+        "address": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "payload": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "address": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "payload": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+        }
+      },
+      {
+        "address": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "payload": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "address": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "payload": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+        }
+      }
+    ],
+    "apiAndApkReplaced": false,
+    "otherContainersPreserved": 45,
+    "otaCatalogPreserved": true,
+    "previousUiImagePreserved": true,
+    "installProof": {
+      "file": ".local-pilot/reviewed-web-install-982b22408d94-83cf7f0c/installed.json",
+      "sha256": "fcce271f525d572fdfe400d95e5774057aee796a6756607c24d8ad6e262acd06"
+    }
+  },
+  "sourceFix": {
+    "startupBudgetMs": 8000,
+    "openingHeartbeatMs": 500,
+    "readyHeartbeatMs": 250,
+    "receiptQueueCapacity": 32,
+    "maxOpeningReceiptsBeforeDeadline": 15,
+    "sharedActionReceiptMs": 1250,
+    "legacyActionReceiptMs": 500,
+    "commandReplay": false,
+    "originalRootReadyTimeoutCauseMeasured": false
+  },
+  "ci": {
+    "sourceRevision": "982b22408d941d6db8e10927bcdd2dc17664ba3c",
+    "frontend": {
+      "tests": 2511,
+      "passed": 2511,
+      "failures": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "suites": 172,
+      "success": true
+    },
+    "github": {
+      "id": 56489533109,
+      "context": "Sphere Local / Frontend regressions",
+      "state": "success",
+      "createdAt": "2026-10-16T02:30:58Z",
+      "readbackVerified": true,
+      "targetUrl": "https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.md"
+    },
+    "receiptProof": {
+      "file": ".local-pilot/local-ci/runs/20261016T022900Z-71f6a589/receipt.json",
+      "sha256": "fb7cd44cc8c50a768ed52335fe29cddecf35070c8bf315aaa585ab774581dfaf"
+    },
+    "linuxImageBuild": true,
+    "packagedPages": 26,
+    "packagedClientAssets": 72,
+    "localWebAdmissionTests": 31,
+    "archivesCreated": 0,
+    "hostedActionsStarted": false,
+    "completeCiMigrationAccepted": false,
+    "packageProof": {
+      "file": ".local-pilot/local-web-startup78-982b2240/receipt.json",
+      "sha256": "fd110756a8475009096380791e35c41bb8aeca2926272fa254bb704eb8fea7a4"
+    }
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "directFramesPresented": 1183,
+    "simultaneousClients": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-16T02:41:51.147Z",
+        "participants": 2,
+        "simultaneousRounds": 12,
+        "nativeNavigationAppliedEach": [
+          4,
+          4
+        ],
+        "survivorNavigationApplied": 5,
+        "framesPresentedEach": [
+          1183,
+          91
+        ],
+        "mainPeersEach": [
+          1,
+          1
+        ],
+        "serverInputCommands": 0,
+        "pageErrors": 0,
+        "ownedContextsClosed": 2,
+        "privateProof": {
+          "file": ".local-pilot/startup-budget-direct-system-input-local.private.json",
+          "sha256": "132d4a5c6a96d3aa28ebcd1d84638e461fb3795e5ec466102f5b6cfad2cd3882"
+        }
+      }
+    ],
+    "delayedReady": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-16T02:42:35.044Z",
+        "readyDelayMs": 7264.8,
+        "openingAfter6500Ms": true,
+        "nativeNavigationApplied": true,
+        "directPeerCount": 1,
+        "admissionOpenCount": 1,
+        "realRootStartupDelayed": false,
+        "pageErrors": 0,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/startup-budget-startup-delay-local.private.json",
+          "sha256": "7c51599ad2d67505aaf6f466723e3f0272f4e66d21c7205e7e11ba4ad6cd61f3"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-16T02:56:23.164Z",
+        "readyDelayMs": 7265.0,
+        "openingAfter6500Ms": true,
+        "nativeNavigationApplied": true,
+        "directPeerCount": 1,
+        "admissionOpenCount": 1,
+        "realRootStartupDelayed": false,
+        "pageErrors": 0,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/startup-budget-startup-delay-tunnel.private.json",
+          "sha256": "b0ef51a70a0865565224513c6731b5ec70b32ee046c12bd0b5551e7658df5961"
+        }
+      }
+    ],
+    "failedTwoClientRuns": [
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-16T02:46:18.176Z",
+        "accepted": false,
+        "reason": "Shared input/video soak failed",
+        "privateProof": {
+          "file": ".local-pilot/startup-budget-direct-system-input-tunnel.private.json",
+          "sha256": "27b692cd6873f4fe87bea444c02bfb5ea7e8b12d9ef8a1a458a6062a0452f7b5"
+        }
+      }
+    ],
+    "bothOriginsTwoClientAccepted": false
+  },
+  "ph030ReadOnly": {
+    "observerCreatedViewers": 0,
+    "observerCommandsSent": 0,
+    "samples": [
+      {
+        "browser": {
+          "received_at": "2026-10-16T02:56:43.204988+00:00",
+          "transport": "direct_webrtc",
+          "control_transport": "direct_webrtc",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_fps": 56.29693077994,
+          "direct_network_rtt_ms": 2,
+          "control_rtt_ms": 13,
+          "direct_attempts": 1,
+          "recovery_attempts": 0
+        },
+        "agentAt": "2026-10-16T02:56:43.995676+00:00",
+        "versionCode": 10278,
+        "nativeInput": {
+          "keyboard_unknown_total": 0,
+          "last_failure_age_ms": 2947398,
+          "input_failures_total": 0,
+          "last_startup_detail": "root_ready_timeout",
+          "keyboard_accepted_total": 0,
+          "startups_total": 2,
+          "startup_failures_total": 1,
+          "unknown_releases_total": 0,
+          "open_attempts_total": 3,
+          "open_rejections_total": 1,
+          "schema_version": 1,
+          "state": "ready",
+          "keyboard_refused_total": 0,
+          "scope": "agent_process",
+          "releases_total": 1,
+          "last_startup_detail_age_ms": 2947398,
+          "keyboard_commands_total": 0,
+          "last_failure": "native_startup_failed"
+        }
+      }
+    ],
+    "currentUserWebRevisionIndependentlyVerified": false
+  },
+  "apkEvidence": {
+    "path": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+    "sha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+    "completedUpdates": 4,
+    "exactInstalledHashes": 3,
+    "partialPackageProofDevices": 1,
+    "offlineNotUpdated": 17
+  },
+  "limits": [
+    "Tuna two-client soak failed on APK78: native RateUtilizationTracker SIGABRT at02:46:09UTC. APK79 mitigation is building, not runtime accepted.",
+    "Actual root startup delay is still unmeasured; controlled browser delay tests only cover the READY lifecycle.",
+    "Existing user tabs retain their previous JS until normal reload; PH030 user tab source was not forced or independently checked.",
+    "No 10-20-client load, physical network switch or full LAN/latency SLA accepted in this stage.",
+    "No new model, motor action executor, GPU benchmark or gameplay acceptance.",
+    "All-workflow automatic local CI migration is not claimed."
+  ]
+}

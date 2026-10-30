@@ -1,0 +1,23 @@
+{
+  "schema": "sphere-route011321-audit-evidence-index-v1",
+  "date": "2026-10-26",
+  "job": "8140c4bf1cce41819dda4c485fc11d80",
+  "clip": "737a9b9ee320415d9d47c6b11a00ef32",
+  "source_manifest_sha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+  "source_unchanged": true,
+  "physical_actions": 0,
+  "scripts": {
+    "measurement_private": "33f7f67d7741c938f94f07f6211a8c94594d6adbdea736ff3e540d6c1d75bf83",
+    "heldout_pose_private": "f2ae890583996d1f812e44276913eec3bd6a1151265cd4eb9d4656d0f4e360aa",
+    "projection_public": "d2e7d99e7d7c8ef2ca7bbbf26059266acb8af0a2a6ca8c8f457110eed9265de1",
+    "publish_private": "a21e3304650e6425389b3983c16beaef7394b12e20405f968fa92c32985b7f5a"
+  },
+  "files": {
+    "baseline.json": "284d15f1880951ad50bf2a86cf2eee27db32c41d3759546076e6168bfebb2b68",
+    "heldout-pose.json": "04c44bdff55e34c5e970edc35fb91a2be09116362cc62fbc8f05713400e564c0",
+    "heldout-projection-sheet.jpg": "857e9f2b7ef08ce32560ef74d509a6e6bdf6db676dd7909581d89155f766b43f",
+    "measurement.json": "2943aaf03a32124968ede5521d8c98f8915e194445e1a9cd077de3cca53b66db",
+    "projection.json": "441a9dd9f543c940cfda518f87fe162b6dcc96f26927e4b8a5b385a178bbec48",
+    "validation.json": "57fb4a82453b53252dfd512680d51bc935495d820efb2676530d567bfefe8086"
+  }
+}

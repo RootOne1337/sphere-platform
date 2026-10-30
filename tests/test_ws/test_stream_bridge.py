@@ -22,8 +22,10 @@ def mock_manager():
 
 
 @pytest.fixture
-def bridge(mock_manager):
-    return VideoStreamBridge(mock_manager)
+async def bridge(mock_manager):
+    instance = VideoStreamBridge(mock_manager)
+    yield instance
+    await instance.close()
 
 
 class TestVideoStreamBridgeInit:
@@ -31,9 +33,7 @@ class TestVideoStreamBridgeInit:
     def test_init_creates_empty_state(self, mock_manager):
         b = VideoStreamBridge(mock_manager)
         assert b.manager is mock_manager
-        assert b._queues == {}
-        assert b._viewer_sockets == {}
-        assert b._viewer_tasks == {}
+        assert b._viewers == {}
 
     def test_is_streaming_initially_false(self, bridge):
         assert bridge.is_streaming("device-1") is False
@@ -98,14 +98,6 @@ class TestRegisterUnregisterViewer:
         await bridge.register_viewer(device_id, viewer_ws, "sess-1")
         assert bridge.is_streaming(device_id)
 
-        # Cleanup background task
-        task = bridge._viewer_tasks.get(device_id)
-        if task:
-            task.cancel()
-            try:
-                await task
-            except (asyncio.CancelledError, Exception):
-                pass
 
     @pytest.mark.asyncio
     async def test_register_viewer_signals_agent_to_start(self, bridge, mock_manager):
@@ -120,13 +112,6 @@ class TestRegisterUnregisterViewer:
             "bitrate": 2_000_000,
         })
 
-        task = bridge._viewer_tasks.get(device_id)
-        if task:
-            task.cancel()
-            try:
-                await task
-            except (asyncio.CancelledError, Exception):
-                pass
 
     @pytest.mark.asyncio
     async def test_unregister_viewer_clears_state(self, bridge, mock_manager):
@@ -137,8 +122,7 @@ class TestRegisterUnregisterViewer:
         await bridge.unregister_viewer(device_id)
 
         assert bridge.is_streaming(device_id) is False
-        assert device_id not in bridge._viewer_sockets
-        assert device_id not in bridge._queues
+        assert device_id not in bridge._viewers
 
     @pytest.mark.asyncio
     async def test_get_drop_ratio_with_queue(self, bridge, mock_manager):
@@ -149,11 +133,3 @@ class TestRegisterUnregisterViewer:
         # Fresh queue — no drops
         ratio = bridge.get_drop_ratio(device_id)
         assert ratio == 0.0
-
-        task = bridge._viewer_tasks.get(device_id)
-        if task:
-            task.cancel()
-            try:
-                await task
-            except (asyncio.CancelledError, Exception):
-                pass

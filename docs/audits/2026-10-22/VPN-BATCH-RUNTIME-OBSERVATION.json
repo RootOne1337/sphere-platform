@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T21:06:23.161747+00:00",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "46dd02fff711c1667b44520b85290226b7155287",
+    "apiSourceRevision": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+    "uiImageId": "sha256:7fd4d52ec5402dae96b715d890f9f905e0ca1a4b5417423eb9de5f3ce0d238d0",
+    "apiImageId": "sha256:27e1f5659fa37e213f7bb8ad8d8bfefb740921c7b32a30b658cfdce388fcc2da"
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "VPN batch import, response-loss recovery and unknown runtime counters only",
+    "directFramesPresented": 0,
+    "deviceCommandsSent": 0,
+    "viewports": [
+      [
+        1440,
+        1000
+      ],
+      [
+        390,
+        844
+      ]
+    ]
+  },
+  "deliveryEvidence": "docs/audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.json",
+  "deliveryEvidenceSha256NormalizedLf": "9f222bafb8bed101015b20565f8b78cdc8d6c5057ab3b105e5b2cf783de6fd96",
+  "physicalVpnAccepted": false,
+  "apk84Installed": false,
+  "productionAccepted": false
+}

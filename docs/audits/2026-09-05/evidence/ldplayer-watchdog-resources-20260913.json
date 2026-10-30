@@ -1,0 +1,23 @@
+{
+  "cycles": [
+    {
+      "wall_seconds": 0.688,
+      "sampled_peak_process_tree_rss_mib": 123.75,
+      "repairs": 0
+    },
+    {
+      "wall_seconds": 0.968,
+      "sampled_peak_process_tree_rss_mib": 123.48,
+      "repairs": 0
+    },
+    {
+      "wall_seconds": 0.719,
+      "sampled_peak_process_tree_rss_mib": 124.25,
+      "repairs": 0
+    }
+  ],
+  "resident_daemon": false,
+  "normal_interval_seconds": 60,
+  "sampling_interval_ms": 25,
+  "limits": "RSS includes Python and child command processes; excludes shared Windows WMI provider, emulator and OS costs. Sampling may miss short peaks. Three healthy cycles on two local VMs, not a fleet benchmark."
+}

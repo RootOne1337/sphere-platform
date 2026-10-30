@@ -1,0 +1,756 @@
+{
+  "dag": {
+    "name": null,
+    "nodes": [
+      {
+        "id": "start",
+        "retry": 0,
+        "action": {
+          "type": "start"
+        },
+        "on_failure": null,
+        "on_success": "close_search_fixture",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "close_search_fixture",
+        "retry": 0,
+        "action": {
+          "type": "stop_app",
+          "package": "com.android.settings.intelligence",
+          "delay_ms": 300
+        },
+        "on_failure": null,
+        "on_success": "settings",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "settings",
+        "retry": 0,
+        "action": {
+          "type": "shell",
+          "command": "am start -a android.settings.SETTINGS"
+        },
+        "on_failure": null,
+        "on_success": "settings_settle",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "settings_settle",
+        "retry": 0,
+        "action": {
+          "ms": 1000,
+          "type": "sleep"
+        },
+        "on_failure": null,
+        "on_success": "focus_search",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "focus_search",
+        "retry": 0,
+        "action": {
+          "type": "tap_element",
+          "selector": "com.android.settings:id/search_action_bar",
+          "strategy": "id",
+          "timeout_ms": 4000
+        },
+        "on_failure": null,
+        "on_success": "search_settle",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "search_settle",
+        "retry": 0,
+        "action": {
+          "ms": 300,
+          "type": "sleep"
+        },
+        "on_failure": null,
+        "on_success": "assert_initial_empty",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "assert_initial_empty",
+        "retry": 0,
+        "action": {
+          "type": "assert",
+          "check": "text_equals",
+          "params": {
+            "value": "Поиск…",
+            "selector": "android:id/search_src_text",
+            "strategy": "id",
+            "timeout_ms": 4000
+          },
+          "message": "Settings fixture text did not match the expected stage"
+        },
+        "on_failure": null,
+        "on_success": "seed_clear",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "seed_clear",
+        "retry": 0,
+        "action": {
+          "text": "sphere-first-seed",
+          "type": "type_text",
+          "clear_first": false
+        },
+        "on_failure": null,
+        "on_success": "assert_seed",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "assert_seed",
+        "retry": 0,
+        "action": {
+          "type": "assert",
+          "check": "text_equals",
+          "params": {
+            "value": "sphere-first-seed",
+            "selector": "android:id/search_src_text",
+            "strategy": "id",
+            "timeout_ms": 4000
+          },
+          "message": "Settings fixture text did not match the expected stage"
+        },
+        "on_failure": null,
+        "on_success": "cursor_home",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "cursor_home",
+        "retry": 0,
+        "action": {
+          "type": "key_event",
+          "keycode": 122
+        },
+        "on_failure": null,
+        "on_success": "cursor_right",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "cursor_right",
+        "retry": 0,
+        "action": {
+          "type": "key_event",
+          "keycode": 22
+        },
+        "on_failure": null,
+        "on_success": "clear_focused",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "clear_focused",
+        "retry": 0,
+        "action": {
+          "type": "input_clear"
+        },
+        "on_failure": null,
+        "on_success": "assert_whole_empty",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "assert_whole_empty",
+        "retry": 0,
+        "action": {
+          "type": "assert",
+          "check": "text_equals",
+          "params": {
+            "value": "Поиск…",
+            "selector": "android:id/search_src_text",
+            "strategy": "id",
+            "timeout_ms": 4000
+          },
+          "message": "Settings fixture text did not match the expected stage"
+        },
+        "on_failure": null,
+        "on_success": "clear_empty",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "clear_empty",
+        "retry": 0,
+        "action": {
+          "type": "input_clear"
+        },
+        "on_failure": null,
+        "on_success": "assert_empty_repeat",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "assert_empty_repeat",
+        "retry": 0,
+        "action": {
+          "type": "assert",
+          "check": "text_equals",
+          "params": {
+            "value": "Поиск…",
+            "selector": "android:id/search_src_text",
+            "strategy": "id",
+            "timeout_ms": 4000
+          },
+          "message": "Settings fixture text did not match the expected stage"
+        },
+        "on_failure": null,
+        "on_success": "seed_replace",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "seed_replace",
+        "retry": 0,
+        "action": {
+          "text": "prefix-to-replace",
+          "type": "type_text",
+          "clear_first": false
+        },
+        "on_failure": null,
+        "on_success": "assert_replace_seed",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "assert_replace_seed",
+        "retry": 0,
+        "action": {
+          "type": "assert",
+          "check": "text_equals",
+          "params": {
+            "value": "prefix-to-replace",
+            "selector": "android:id/search_src_text",
+            "strategy": "id",
+            "timeout_ms": 4000
+          },
+          "message": "Settings fixture text did not match the expected stage"
+        },
+        "on_failure": null,
+        "on_success": "cursor_home_again",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "cursor_home_again",
+        "retry": 0,
+        "action": {
+          "type": "key_event",
+          "keycode": 122
+        },
+        "on_failure": null,
+        "on_success": "cursor_right_again",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "cursor_right_again",
+        "retry": 0,
+        "action": {
+          "type": "key_event",
+          "keycode": 22
+        },
+        "on_failure": null,
+        "on_success": "replace_with_clear_first",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "replace_with_clear_first",
+        "retry": 0,
+        "action": {
+          "text": "replacement-native",
+          "type": "type_text",
+          "clear_first": true
+        },
+        "on_failure": null,
+        "on_success": "assert_replacement",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "assert_replacement",
+        "retry": 0,
+        "action": {
+          "type": "assert",
+          "check": "text_equals",
+          "params": {
+            "value": "replacement-native",
+            "selector": "android:id/search_src_text",
+            "strategy": "id",
+            "timeout_ms": 4000
+          },
+          "message": "Settings fixture text did not match the expected stage"
+        },
+        "on_failure": null,
+        "on_success": "read_final_text",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "read_final_text",
+        "retry": 0,
+        "action": {
+          "type": "get_element_text",
+          "save_to": "final_search_text",
+          "selector": "android:id/search_src_text",
+          "strategy": "id",
+          "timeout_ms": 4000
+        },
+        "on_failure": null,
+        "on_success": "final_screenshot",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "final_screenshot",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "final_search_screenshot"
+        },
+        "on_failure": null,
+        "on_success": "home",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "home",
+        "retry": 0,
+        "action": {
+          "type": "key_event",
+          "keycode": 3
+        },
+        "on_failure": null,
+        "on_success": "end",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "end",
+        "retry": 0,
+        "action": {
+          "type": "end"
+        },
+        "on_failure": null,
+        "on_success": null,
+        "timeout_ms": 12000
+      }
+    ],
+    "version": "1.0",
+    "entry_node": "start",
+    "timeout_ms": 120000,
+    "description": null
+  },
+  "dagHash": "eb8864d121f89e3717374d2dda13c11e26d7d076507e2eed94ce4d196784315e",
+  "logs": [
+    {
+      "node_id": "start",
+      "action_type": "start",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "close_search_fixture",
+      "action_type": "stop_app",
+      "started_at": null,
+      "duration_ms": 302,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "settings",
+      "action_type": "shell",
+      "started_at": null,
+      "duration_ms": 113,
+      "success": true,
+      "error": null,
+      "output": "Starting: Intent { act=android.settings.SETTINGS }\n",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "settings_settle",
+      "action_type": "sleep",
+      "started_at": null,
+      "duration_ms": 1000,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "focus_search",
+      "action_type": "tap_element",
+      "started_at": null,
+      "duration_ms": 1253,
+      "success": true,
+      "error": null,
+      "output": "480,64",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "search_settle",
+      "action_type": "sleep",
+      "started_at": null,
+      "duration_ms": 301,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "assert_initial_empty",
+      "action_type": "assert",
+      "started_at": null,
+      "duration_ms": 1413,
+      "success": true,
+      "error": null,
+      "output": "true",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "seed_clear",
+      "action_type": "type_text",
+      "started_at": null,
+      "duration_ms": 161,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "assert_seed",
+      "action_type": "assert",
+      "started_at": null,
+      "duration_ms": 1750,
+      "success": true,
+      "error": null,
+      "output": "true",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "cursor_home",
+      "action_type": "key_event",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "cursor_right",
+      "action_type": "key_event",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "clear_focused",
+      "action_type": "input_clear",
+      "started_at": null,
+      "duration_ms": 1829,
+      "success": true,
+      "error": null,
+      "output": "{adapter=root-key-chord, field_verified=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "assert_whole_empty",
+      "action_type": "assert",
+      "started_at": null,
+      "duration_ms": 1129,
+      "success": true,
+      "error": null,
+      "output": "true",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "clear_empty",
+      "action_type": "input_clear",
+      "started_at": null,
+      "duration_ms": 102,
+      "success": true,
+      "error": null,
+      "output": "{adapter=root-key-chord, field_verified=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "assert_empty_repeat",
+      "action_type": "assert",
+      "started_at": null,
+      "duration_ms": 1132,
+      "success": true,
+      "error": null,
+      "output": "true",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "seed_replace",
+      "action_type": "type_text",
+      "started_at": null,
+      "duration_ms": 151,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "assert_replace_seed",
+      "action_type": "assert",
+      "started_at": null,
+      "duration_ms": 1127,
+      "success": true,
+      "error": null,
+      "output": "true",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "cursor_home_again",
+      "action_type": "key_event",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "cursor_right_again",
+      "action_type": "key_event",
+      "started_at": null,
+      "duration_ms": 1,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "replace_with_clear_first",
+      "action_type": "type_text",
+      "started_at": null,
+      "duration_ms": 416,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "assert_replacement",
+      "action_type": "assert",
+      "started_at": null,
+      "duration_ms": 1445,
+      "success": true,
+      "error": null,
+      "output": "true",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "read_final_text",
+      "action_type": "get_element_text",
+      "started_at": null,
+      "duration_ms": 1152,
+      "success": true,
+      "error": null,
+      "output": "replacement-native",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "final_screenshot",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 301,
+      "success": true,
+      "error": null,
+      "output": "{path=/sdcard/sphere_screenshot_1791294540156.png}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "home",
+      "action_type": "key_event",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "end",
+      "action_type": "end",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    }
+  ],
+  "startedAt": "2026-10-06T13:48:42.367448Z",
+  "finishedAt": "2026-10-06T13:48:57.615101Z",
+  "result": {
+    "success": true,
+    "node_logs": [
+      {
+        "node_id": "start",
+        "success": true,
+        "action_type": "start",
+        "duration_ms": 0
+      },
+      {
+        "node_id": "close_search_fixture",
+        "success": true,
+        "action_type": "stop_app",
+        "duration_ms": 302
+      },
+      {
+        "output": "Starting: Intent { act=android.settings.SETTINGS }\n",
+        "node_id": "settings",
+        "success": true,
+        "action_type": "shell",
+        "duration_ms": 113
+      },
+      {
+        "node_id": "settings_settle",
+        "success": true,
+        "action_type": "sleep",
+        "duration_ms": 1000
+      },
+      {
+        "output": "480,64",
+        "node_id": "focus_search",
+        "success": true,
+        "action_type": "tap_element",
+        "duration_ms": 1253
+      },
+      {
+        "node_id": "search_settle",
+        "success": true,
+        "action_type": "sleep",
+        "duration_ms": 301
+      },
+      {
+        "output": "true",
+        "node_id": "assert_initial_empty",
+        "success": true,
+        "action_type": "assert",
+        "duration_ms": 1413
+      },
+      {
+        "node_id": "seed_clear",
+        "success": true,
+        "action_type": "type_text",
+        "duration_ms": 161
+      },
+      {
+        "output": "true",
+        "node_id": "assert_seed",
+        "success": true,
+        "action_type": "assert",
+        "duration_ms": 1750
+      },
+      {
+        "node_id": "cursor_home",
+        "success": true,
+        "action_type": "key_event",
+        "duration_ms": 0
+      },
+      {
+        "node_id": "cursor_right",
+        "success": true,
+        "action_type": "key_event",
+        "duration_ms": 0
+      },
+      {
+        "output": "{adapter=root-key-chord, field_verified=false}",
+        "node_id": "clear_focused",
+        "success": true,
+        "action_type": "input_clear",
+        "duration_ms": 1829
+      },
+      {
+        "output": "true",
+        "node_id": "assert_whole_empty",
+        "success": true,
+        "action_type": "assert",
+        "duration_ms": 1129
+      },
+      {
+        "output": "{adapter=root-key-chord, field_verified=false}",
+        "node_id": "clear_empty",
+        "success": true,
+        "action_type": "input_clear",
+        "duration_ms": 102
+      },
+      {
+        "output": "true",
+        "node_id": "assert_empty_repeat",
+        "success": true,
+        "action_type": "assert",
+        "duration_ms": 1132
+      },
+      {
+        "node_id": "seed_replace",
+        "success": true,
+        "action_type": "type_text",
+        "duration_ms": 151
+      },
+      {
+        "output": "true",
+        "node_id": "assert_replace_seed",
+        "success": true,
+        "action_type": "assert",
+        "duration_ms": 1127
+      },
+      {
+        "node_id": "cursor_home_again",
+        "success": true,
+        "action_type": "key_event",
+        "duration_ms": 0
+      },
+      {
+        "node_id": "cursor_right_again",
+        "success": true,
+        "action_type": "key_event",
+        "duration_ms": 1
+      },
+      {
+        "node_id": "replace_with_clear_first",
+        "success": true,
+        "action_type": "type_text",
+        "duration_ms": 416
+      },
+      {
+        "output": "true",
+        "node_id": "assert_replacement",
+        "success": true,
+        "action_type": "assert",
+        "duration_ms": 1445
+      },
+      {
+        "output": "replacement-native",
+        "node_id": "read_final_text",
+        "success": true,
+        "action_type": "get_element_text",
+        "duration_ms": 1152
+      },
+      {
+        "output": "{path=/sdcard/sphere_screenshot_1791294540156.png}",
+        "node_id": "final_screenshot",
+        "success": true,
+        "action_type": "screenshot",
+        "duration_ms": 301
+      },
+      {
+        "node_id": "home",
+        "success": true,
+        "action_type": "key_event",
+        "duration_ms": 0
+      },
+      {
+        "node_id": "end",
+        "success": true,
+        "action_type": "end",
+        "duration_ms": 0
+      }
+    ],
+    "nodes_executed": 25
+  }
+}

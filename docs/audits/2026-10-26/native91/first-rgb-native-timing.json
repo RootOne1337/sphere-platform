@@ -1,0 +1,30 @@
+{
+  "atUtc": "2026-10-25T22:54:12.959348+00:00",
+  "agentVersionCode": 10291,
+  "colorStrideSelfTestPassed": true,
+  "currentMainPidOnly": true,
+  "windows": [
+    {
+      "samples": 40,
+      "convertMeanMs": 120.064,
+      "queueMeanMs": 0.196
+    },
+    {
+      "samples": 44,
+      "convertMeanMs": 110.697,
+      "queueMeanMs": 0.234
+    },
+    {
+      "samples": 45,
+      "convertMeanMs": 108.753,
+      "queueMeanMs": 0.194
+    },
+    {
+      "samples": 45,
+      "convertMeanMs": 109.656,
+      "queueMeanMs": 0.192
+    }
+  ],
+  "conversionMedianMs": 110.1765,
+  "fullAndroidToModelLatencyMeasured": false
+}

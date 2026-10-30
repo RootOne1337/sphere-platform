@@ -1,655 +1,383 @@
-<div align="center">
+# Sphere Platform
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/SPHERE-PLATFORM-00d4ff?style=for-the-badge&logo=satellite&logoColor=white">
-  <img alt="Sphere Platform" src="https://img.shields.io/badge/SPHERE-PLATFORM-0066cc?style=for-the-badge&logo=satellite&logoColor=white">
-</picture>
+**29 октября — усилена точность первой обработки.** Исправлены пересчёт
+центров пикселей OpenCV/COLMAP и ложные отказы экранной сетки; потерянные
+треки и разрывы исходника обрабатываются явно. Полная обработка `Kakaska228`:
+174/174 камер, 14 622 точки, 4096 runtime-опор; проверка на исходнике —
+225/233 подтверждены, чужая локация — 0/154. Живое A→B ещё не принято.
+[Проверки, привязки и ограничения](docs/audits/2026-10-29/SCAN-POINT-ACCURACY.md).
 
-### Enterprise Android Device Management & Automation Platform
+**29 октября — восстановление всего видео по непрерывным трекам.** Route-only
+обработка сопровождает реальные точки через все кадры и адаптивно выбирает
+ракурсы. `Kakaska228` восстановлена до конца: 174/174 камер, 14 642 точки,
+4096 runtime-ориентиров, без прежних обратных скачков. Исходник и старая
+попытка сохранены. Подготовка карты завершена; узнавание на исходном видео
+ещё даёт потери (210/233 подтверждены), живой A→B не принят.
+[Причины, эксперименты и ограничения](docs/audits/2026-10-29/KAKASKA228-RECOVERY.md).
 
-[![Version](https://img.shields.io/badge/version-4.7.0-00d4ff?style=flat-square)](VERSION)
-[![Tests](https://img.shields.io/badge/tests-1231_passed-00d4ff?style=flat-square&logo=pytest&logoColor=white)](tests/)
-[![Python](https://img.shields.io/badge/python-3.12-3776ab?style=flat-square&logo=python&logoColor=white)](backend/)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.9-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](android/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js&logoColor=white)](frontend/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white)](backend/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql&logoColor=white)](infrastructure/postgres/)
-[![Redis](https://img.shields.io/badge/Redis-7.2-DC382D?style=flat-square&logo=redis&logoColor=white)](infrastructure/redis/)
-[![Docker](https://img.shields.io/badge/Docker-Compose_V2-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
-[![CI Backend](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
-[![CI Android](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
+**29 октября — исправлен старт записи из эмулятора.** На 3015 установлен
+`record-focus-20261029-v2`: режим «только видео» выбран по умолчанию, уход
+фокуса во время проверки квоты не отменяет старт, чужой `pointercancel` не
+завершает запись. Причина неполного результата показана отдельно; библиотека
+допускает до 100 записей с прежней проверкой квоты. 955 stream-тестов и
+локальная сборка прошли. Для новой попытки обновите страницу до старта.
+[Причины, проверки и границы приёмки](docs/audits/2026-10-29/RECORDING-FOCUS-RECOVERY.md).
 
-**Управляй тысячами Android-устройств. В реальном времени. Без компромиссов.**
+**29 октября — карта-компас и живая консоль маршрута.** На 3015 установлен
+`route-compass-20261029-v1`: плавный поворот схемы вслед за взглядом камеры,
+ручной поворот и сброс; в «Направлении» рядом показаны карта, исходный кадр
+и живой результат. Новая запись по умолчанию запускает подготовку после
+успешного сохранения; отчёты остановленных проверок сохраняются локально.
+953 stream-теста, 99 Python-проверок, TypeScript и локальная сборка прошли.
+Повтор A → B в игре остаётся отдельной непроведённой приёмкой.
+[Поставка и точные ограничения](docs/audits/2026-10-29/ROUTE-COMPASS-LIVE-READINESS.md).
 
-[Документация](docs/) · [Web UI Guide](docs/web-ui-guide.md) · [API Reference](docs/api-reference.md) · [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) · [Deployment](docs/deployment.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+**29 октября — отбор последнего ракурса.** При подготовке PNG слишком близкий
+к концу регулярный кадр заменяется точным последним. На `fuflo228` хвостовые
+интервалы отбора стали 300/300 мс вместо 269/31 мс, исходные 915 кадров
+1920×1080 сохранены. Это исправление выборки, качество новых поз ещё не измерено.
+[Проверка на исходном видео](docs/audits/2026-10-29/ROUTE-TAIL-SAMPLING.md).
 
----
+**29 октября — ориентация карты и глубина ориентиров.** На 3015 установлен
+`map-frame-20261029-v1`: загрузчик сохраняет повороты камер, схема привязана
+к первому ракурсу и не отражает право/лево из-за знаков PCA. Путь бирюзовый;
+точки имеют режимы глубины, дистанции и RGB. Предупреждения о позах выделены
+отдельно. 943 stream-теста и локальная сборка прошли.
+[Проверка на настоящей записи](docs/audits/2026-10-29/ROUTE-MAP-FRAME-AND-DEPTH.md).
 
-</div>
+**29 октября — исправлена подготовка ориентиров по памяти.** На 3015 установлен
+`route-resource-fix-20261029-v1`; обработчик 3342 восстановлен. CPU-экспорт
+рассчитывает бюджет по размеру исходника (для `fuflo228` 6,25 ГиБ), вместо
+общего требования 12 ГиБ. Неполная карта показывает фактические интервалы;
+повторный экспорт пропущенных камер не запускается. Отдельная проверка
+123 камер заняла 106 с при пиковом commit 857 МиБ. Полный повтор маршрута
+в игре ещё не принят.
+[Причины, измерения и поставка](docs/audits/2026-10-29/ROUTE-PREPARATION-RESOURCES.md).
 
-## Что такое Sphere Platform?
+**28 октября — пеший пилот в студии маршрутов.** На 3015 установлен
+`walk-pilot-20261028-v2`: запись при управлении из эмулятора, подготовка карты,
+интерактивный просмотр и отдельный ограниченный тест аналогового стика.
+Исправлена несовместимость экстрактора между подготовкой и live-сервисом.
+Реальное повторение пути в игре ещё предстоит проверить.
+[Первый пеший тест](docs/operations/WALK-ROUTE-PILOT.md) ·
+[Поставка и ограничения](docs/audits/2026-10-28/WALK-PILOT-READINESS.md).
 
-Sphere Platform — production-grade система для **управления, мониторинга и автоматизации** крупных парков Android-устройств. H.264 видеостриминг в реальном времени, DAG-движок скриптов, pipeline-оркестратор, cron-планировщик, zero-touch provisioning 1000+ эмуляторов и защищённый VPN — всё в одной платформе.
+**28 октября — студия маршрутов и интерактивные ориентиры.** На 3015 установлен
+локальный веб `auto-geometry-20261028-v1`; схема связана с исходным H.264 по
+манифесту и времени кадра. Дополнительная схема открывается автоматически при
+выборе связанной записи, без ручной загрузки JSON. Для `fuflo228` к
+локальному заданию прикреплена геометрия на 123 камеры / 22 014 точек;
+исходная попытка на 54 камеры сохранена отдельно. Автономное прохождение
+маршрута пока не подтверждено.
+[Как пользоваться студией](docs/operations/ROUTE-STUDIO.md) ·
+[Фактическое состояние](docs/audits/2026-10-28/ROUTE-END-TO-END-STATUS.md).
 
-> **Для кого:** DevOps-команды, тестировочные фермы, мобильные фермы, автоматизация QA, enterprise fleet management.
+**Текущая локальная установка:** UI `route-temporal-20261029-v5` / API `1afdc529`.
+Записи об установках ниже и выше описывают последовательные исторические срезы.
 
----
+**27 октября — установлен UI35b60254:** выбор прохода перенесён также в режим
+«Направление», ошибки подготовки отображаются понятнее. Локально прошли2737
+frontend-тестов и HTTP-проверка пакета; браузерная приёмка открыта. Запись
+test228 сохранена; экспериментальное объединение камер ещё не доказывает
+надёжной навигации. [Диагностика](docs/audits/2026-10-27/TEST228-RECOVERY.md).
 
-## Возможности
+**27 октября — установлен UI219fc85b:** компактная студия маршрутов показывает
+состояние локального обработчика и ограничения качества источника; добавлены
+поиск записей и подтверждение удаления. Локальный CI:2732 теста. Устойчивые
+30 FPS и независимый живой проход ещё не подтверждены. [Проверки](docs/audits/2026-10-26/ROUTE-TRACE-PROJECTION-PREVIEW.md).
 
-<table>
-<tr>
-<td width="50%">
+**27 октября — установлен UI3022695b:** студия записи, сцены и ручной проверки
+направления доступна на основной странице потока. Прямое видео PH011 и новый
+интерфейс осмотрены; пользовательский повтор маршрута и реальная частота30 FPS
+ещё не приняты. [Проверки, ограничения и моторные эксперименты](docs/audits/2026-10-26/ROUTE-TRACE-PROJECTION-PREVIEW.md).
 
-### Управление флотом
-- Регистрация, группировка, тегирование **1000+ устройств**
-- Статус устройств в реальном времени через Redis
-- Bulk-операции на группы (перезагрузка, обновление, команды)
-- Zero-touch auto-enrollment для LDPlayer эмуляторов
+**26 октября — установлен веб60c0dc7a:** физические клавиши можно назначить
+зонам стика/транспорта на странице записи. Локальный CI2719 tests/types,
+Linux package26 страниц/72 assets;45 других контейнеров сохранены.
+Новая браузерная приёмка открыта; строка выше обозначает последний принятый
+браузерный срез. [Поставка](docs/audits/2026-10-26/motor-overlay/web-delivery.json).
 
-</td>
-<td width="50%">
+**26 октября — динамическая проверка3D-проекции:** отдельное локальное окно
+с512 исходными кадрами, панорамированием/масштабом схемы и показом отказов
+привязки. Более плотная169-view SfM-проба отклонена из-за скачка масштаба;
+исходная сцена сохранена. Это диагностический просмотр записи, не live-автопилот.
+[Проекция, графики и реальные границы](docs/audits/2026-10-26/ROUTE-TRACE-PROJECTION-PREVIEW.md).
 
-### H.264 Стриминг
-- **MediaProjection → MediaCodec → NAL-unit → WebSocket → WebCodecs**
-- SPS/PPS/IDR кэширование — мгновенный старт для нового viewer
-- Adaptive bitrate + frame drop при перегрузке
-- Persistent decoder — reconnect без чёрного экрана
+Для той же карты добавлено opt-in сопровождение3D-опор: те же167/177 подтверждений,
+медиана локализации111,70→8,20ms при p95=137,81ms. В отдельном read-only live-окне
+можно выбрать этот метод; полный цикл200ms и автономный повтор пока не приняты.
 
-</td>
-</tr>
-<tr>
-<td width="50%">
+**26 октября — проверка целеуказания моторным моделям.**360 offline-ответов
+NitroGen/P2P не подтвердили устойчивое следование нарисованной линии. Модели
+сохранены; условия нового теста, роль3D-ориентиров, динамики и ночного освещения
+зафиксированы в [отчёте](docs/audits/2026-10-26/MOTOR-ROUTE-CONDITIONING.md).
+Проверены четыре стиля подсказки; у NitroGen форма влияет на ответ, но навигация
+ещё не принята.
 
-### Автоматизация скриптов
-- DAG v7 — направленный ациклический граф действий
-- Wave/Batch исполнение по группам устройств
-- 9 типов шагов: `run_script`, `condition`, `parallel`, `http_request`...
-- Pipeline chaining — цепочки скриптов с условной логикой
+**26 октября — PH011 обновлён до APK92/10292.** GPU→I420 захват проверен на настоящем игровом экране1920×1080:25,929 decoded FPS и4,996 RGB-наблюдения/с, packet loss0. Android отдельно подтвердил26,459 новых rendered frames/s; это не один повтор cache. Один контакт1200ms с коррекциями200ms дал7/7 native APPLIED и CLOSED; VPN/исключение Sphere сохранены. Это конечная транспортная проверка, не готовая навигация ИИ. Новая браузерная приёмка ещё открыта. [Квитанция и пределы](docs/audits/2026-10-26/PH011-APK92-GPU-PLANAR-CAPTURE.md).
 
-</td>
-<td width="50%">
+Это последний срез с конечной браузерной приёмкой; более поздняя установленная
+поставка описана ниже и пока не прошла эту часть проверки.
 
-### Планировщик и Оркестратор
-- DB-backed Cron Scheduler (croniter + SKIP LOCKED)
-- Conflict policies: `skip` / `queue` / `cancel_previous`
-- Pipeline Executor — параллельные и последовательные шаги
-- Мгновенная диспетчеризация через Redis TaskQueue
+**Повтор маршрута с неточным стартом, 25 октября:** добавлен отдельный sparse-map
+локализатор и offline-проверка проекции пути без воспроизведения клавиш. На Route012
+после исключения132опорных кадров лишь7из157наблюдений дали подтверждённую привязку;
+автономный повтор не допущен. [Результаты](docs/audits/2026-10-25/ROUTE-RELOCALIZATION-ADMISSION.md) ·
+[Контракт локализации](docs/design/VISUAL-ROUTE-RELOCALIZATION.md).
 
-</td>
-</tr>
-<tr>
-<td width="50%">
+**Историческая проверка 25 октября:** локальный обработчик 3342 восстановлен из
+`f808b486`, отвечает с ожидаемым CORS и работает отдельным фоновым процессом.
+Для Route012 выполнены два варианта готового Spirula Studio 2026.10.16 на RX 9070:
+153 FullHD-ракурса, 142 зарегистрированы, две компоненты; обе полученные сетки
+отклонены из-за пропусков и деформаций. Добавлен offline-анализ кадров/пауз;
+новый формат видео не даст engine depth. [Прогон готового решения](docs/audits/2026-10-25/SPIRULA-TURNKEY-TRIAL.md) ·
+[Захват Android и данные для навигации](docs/design/ANDROID-CAPTURE-AND-NAVIGATION-EVIDENCE.md).
+Ранее исправлены скачки камер вперёд и пустой результат OpenMVS; прошли
+80 профильных Python-тестов. [Предыдущие опыты DA3](docs/audits/2026-10-25/NEURAL-CAMERA-REFINEMENT.md).
 
-### VPN-туннелирование
-- **AmneziaWG** — обфусцированный WireGuard
-- Per-device туннели с автоматическим IP-пулом
-- Self-healing + Kill Switch
-- Полный API для управления VPN-пирами
+**Поставка 25 октября — покрытие маршрута:** веб и локальный 3D-обработчик `49f8b12a`
+были установлены на портах 3015/3342. В маршруте 012 сохранены шесть дополнительных
+моделей участков: вместе они включают все 81 выбранный ракурс за 44,146 с. В вебе
+видны интервалы, исходные кадры, дефекты моделей и предупреждение о траектории камер.
+Это диагностические фрагменты; цельная навигационная карта ещё не принята.
+Прошли 115 Python-тестов и 2702 теста фронтенда; 45 других контейнеров сохранены.
+[Проверить участки](docs/operations/TEACHING-SURFACE-MODEL.md) ·
+[Повтор восьмиминутного маршрута: реальные границы](docs/design/LONG-ROUTE-TEACH-REPEAT.md) ·
+[Доставка и опыты](docs/audits/2026-10-25/ROUTE-COVERAGE-AND-LONG-REPEAT-LOCAL-DELIVERY.json).
 
-</td>
-<td width="50%">
+**Установлено25 октября — поверхности:** веб и локальный обработчик3D `43a2164f`,
+API `1afdc529`. В «Маршрут012» доступен сохранённый **фрагмент21–38/81камер**:
+99076треугольников,18текстурFullHD,14.3MB GLB; в Web добавлены текстуры,
+поверхности/нормали/каркас, камеры прохода, fullscreen и скачиваниеGLB.
+Полный81-кадровый mesh-кандидат отклонён из-за ложных перемычек и сохранён отдельно.
+101Python-тест,194frontend-suite/2697tests и проверка производственного пакета
+прошли;45других контейнеров и исходная Gaussian-сцена сохранены. Метрическая
+точность/навигация не приняты. Конечная визуальная проверка страницы остановлена
+физическимEscape пользователя; browser acceptance остаётся открытой.
+[Открыть и проверить модель](docs/operations/TEACHING-SURFACE-MODEL.md) ·
+[Квитанция](docs/audits/2026-10-25/ROUTE-SURFACE-FRAGMENT-LOCAL-DELIVERY.json).
 
-### Мониторинг и Безопасность
-- Prometheus + Grafana + Alertmanager
-- Структурированное логирование (structlog)
-- JWT + TOTP MFA + RBAC + Row-Level Security
-- Аудит-лог всех действий
+**Предыдущая поставка25 октября:** веб `91c30eca`, API `1afdc529`, локальный обработчик3D `714817c5`;
+Android/VPN в этой итерации не менялись. Для «Маршрут012» сохранены458исходных
+FullHD-кадров и восстановлены **все81выбранный ракурс**:432262гауссианы,
+30000итераций. Добавлены ограниченное связывание дальних кадров и профиль
+высокой детализации. На одинаковых9контрольных ракурсах PSNR вырос26.51→29.06dB,
+SSIM0.826→0.881; сравнения нативного рендера проверены.87Python-тестов/94subtests
+и193frontend-suite/2693tests прошли;45других контейнеров сохранены.
+Метрическая карта, коллизии, автономная навигация и конечная визуальная приёмка
+страницы в профиле пользователя остаются открытыми. [Рабочий процесс и пределы](docs/operations/TEACHING-DENSE-RECONSTRUCTION.md)
+· [Квитанция подробной сцены](docs/audits/2026-10-25/DENSE-RECONSTRUCTION-FULL-DETAIL-LOCAL-DELIVERY.json).
 
-</td>
-</tr>
-<tr>
-<td width="50%">
+**Предыдущий проверенный срез24 октября:** PH011 по последней проверенной доставке APK90/10290, веб `56605338`, API `1afdc529`. Транспортная раскладка проверена на Android fixture:803/803кадра, газ1805мс и руль1784мс с одним DOWN/UP. Ранее проверены190,215с игровой записи6026/6026кадров с параллельным относительным3D. Папочный browser export, master1080p, общая карта и автономный повтор ещё не приняты. [Доказательства](docs/audits/2026-10-24/WEB-TEACHING-VEHICLE-FOLLOWUP.json).
 
-### Нагрузочное тестирование
-- Фреймворк синтетических нагрузочных тестов (asyncio + websockets)
-- **1 024 виртуальных агента** на реальном бэкенде — FA 100%
-- 639 DAG-задач исполнены параллельно
-- HdrHistogram latency, Fleet Availability, HTML-отчёты
-- YAML-сценарии: quick, scalability (до 10 000), soak, spike
+Управление Android-парком: устройства, прямой экран и ввод, сценарии, оркестрация,
+VPN и диагностика в одном рабочем месте. Android APK исполняет операции на
+устройстве; веб служит клиентом, backend хранит состояния и координирует работу.
 
-</td>
-<td width="50%">
+Текущая работа ведётся в [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19),
+ветка `codex/enterprise-audit-20260905`. Исходники, успешно собранный артефакт,
+установленная версия и принятая функция — разные состояния.
 
-### API Key Authentication
-- Формат `sphr_{env}_{64hex}` — 256-bit энтропия
-- Приоритет API-ключа над JWT при наличии обоих
-- Пагинация до 5 000 записей на страницу
-- Оптимизировано для массовых операций
+[Начать установку](docs/operations/STARTUP.md#first-install) ·
+[Локальный pilot](docs/operations/LOCAL-PILOT.md) ·
+[Работы и ограничения](docs/operations/WORK-STATUS.md) ·
+[HTTP API](docs/api-endpoints.md)
 
-</td>
-</tr>
-<tr>
-<td width="50%">
+**Предыдущий этап24 октября — APK89 и запись маршрута.** APK1.2.89/10289 установлена только на PH011, хеш пакета проверен. Реальная browser-запись:1205/1205кадров,21,144с,56,94FPS; WASD удержан1206мс одним DOWN/UP, камера и кнопка независимы, CLOSED подтверждён. Это Android debug fixture, не игровой маршрут. Исправлены управление до записи и лимит2/5/10минут; подготовлен локальный DA3/Rerun3D preview. Единая карта, importer и автономный A→B ещё не приняты. [Инструкция](docs/operations/TEACHING-WEB.md) · [Квитанция](docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json).
 
-### Game Accounts & Sessions (v4.7)
-- Управление игровыми аккаунтами с автогенерацией ников
-- Трекинг сессий аккаунтов на устройствах
-- Привязка аккаунтов к конкретным устройствам
-- Мониторинг активных сессий в реальном времени
+**Предыдущий этап24 октября — worker0.8.1: подготовка keyboard teaching.** Read-only `.smp/.kmp`
+inspector нашёл26 bindings в referenced profile; macros не исполняются.303 motor
+tests/Ruff passed. На том этапе actor single-pointer: полный WASD+camera+jump ещё не
+готов. Уточнены1080p/320DPI,100% teach render и отдельная3D reconstruction/viewer.
+[Настройки, управление и границы визуализации](docs/audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md) ·
+[План3.6](docs/design/MOTOR-AI-PLATFORM.md#268-клавиатурный-teach-run-dpi-и-честная-визуализация).
 
-</td>
-<td width="50%">
+**Предыдущий этап24 октября — worker0.8.0: запись обучающего прохода.** Добавлены исходный H.264,
+журнал собственного ручного ввода, временная локальная панель и проверяемые пакеты
+последовательных ориентиров.295 motor tests/Ruff прошли; на PH011 все137 frames
+финального5-секундного read-only теста декодированы. На PH011 также подтверждены
+14/14 APPLIED двух жестов, один с удержанием3с; game screen отключён за AFK.
+Качественную запись можно готовить; реальный1080p60, low-render repeat и объезд не приняты.
+[Что реализовано и как проверить](docs/audits/2026-10-24/MOTOR-TEACHING080.md) ·
+[План3.5](docs/design/MOTOR-AI-PLATFORM.md#267-реализация080-и-допуск-обучающей-записи).
 
-### Event System & Automation (v4.7)
-- Event Triggers — автоматические реакции на события устройств
-- Device Events — полный таймлайн жизненного цикла устройств
-- Pipeline Settings — конфигурация пайплайнов через UI
-- Event Reactor + Orchestration Loop — background-автоматизация
+**Предыдущий срез23 октября — worker0.7.5: общий RGB и память ориентиров.** Один сохранённый вид
+без RGB занял107KB и распознался50/50 раз в новом capture epoch. Совместно работала
+P2P150M:74 ответа за~15с, без Android input.263 motor tests/Ruff прошли.
+Один ранний observer имел gap1,02с; A→B, объезд и полный latency SLA ещё открыты.
+Перед физическим прогоном после AFK нужен новый вход и восстановление маршрута.
+[Метод, измерения и ограничения](docs/audits/2026-10-23/MOTOR-ROUTE-VIEWS075.md) ·
+[План3.4](docs/design/MOTOR-AI-PLATFORM.md#265-первый-компонент075-и-короткий-практический-путь) ·
+[Методы навигации, миникарта и качество записи](docs/audits/2026-10-23/NAVIGATION-METHODS-CAPTURE-RESEARCH.md).
 
-</td>
-</tr>
-</table>
+**Предыдущий срез23 октября — worker0.7.4: perception отдельно от навигации.** YOLOE-26s FP32 на
+прямом PH011:125/75 свежих observations за25/15с, минимум5 в полной секунде;
+receiver age p95 около104/115мс. FP16 этого pipeline отклонён, качество препятствий
+ещё не принято; Android input0.241 motor tests/Ruff прошли.
+[Измерения и ограничения](docs/audits/2026-10-23/MOTOR-PERCEPTION074.md) ·
+[План3.2: общая навигация и память маршрутов](docs/design/MOTOR-AI-PLATFORM.md#26-опциональная-память-маршрутов-вместо-магической-стрелки).
 
----
+**23 октября, поздний срез — память возвращена, P2P действительно работает на5Гц.**
+После однократного reclaim чистого кеша WSL Windows commit снизился80,00→65,82GiB
+без перезапуска контейнеров. P2P150M на игровом потоке:124 ответа за~25с, минимум5
+в каждом полном секундном окне. Ввод выключен, автономная навигация не принята.
+Qwen0.8B/2B не прошли координатное grounding и obstacle qualification;231 motor tests
+прошли. [Результаты и ограничения](docs/audits/2026-10-23/MOTOR-MEMORY-RECOVERY073.md).
 
-## Архитектура
+**23 октября — PH011: APK88, отдельный AWG2 и проверка ходьбы.** Установленный SHA
+подтверждён; kernel rules исключают Sphere UID. После операторского обхода ограды
+конечный GPS/CV-контроллер прошёл590→582м на5,125Гц с непрерывным стиком.
+221 motor tests прошли. Прибытие и автоматический обход ещё не приняты; текущие
+нейросетевые опыты в том раннем срезе остановлены ресурсным guard до inference.
+[Результаты и границы](docs/audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.md) ·
+[Обновлённый план motor AI3.2](docs/design/MOTOR-AI-PLATFORM.md).
+
+## Возможности и текущая проверка
+
+| Область | Что есть | Что проверять перед расширением |
+| --- | --- | --- |
+| Устройства | Каталог, группы, локации, identity, состояние соединения, задания | Свежесть данных и доступность конкретного агента |
+| Экран и ввод | WebRTC, server fallback, диагностика маршрута, совместный ввод | Реальные кадры/ACK, смена сети и длительная нагрузка; сам ICE не доказывает управление |
+| Script Studio | Визуальный граф, версии, запись траекторий, запуск и отмена | Точность таймингов, смена владельца ввода и условия конкретного устройства |
+| Оркестрация | Задания, batches, расписания и pipelines | Подтверждённый terminal outcome отдельно от отправки команды |
+| VPN | Зашифрованный каталог, пакет до 100 `.conf`, версии, архив, Android runtime и оценка скорости | Встроенный provider и выборочный kill switch ещё проходят приёмку |
+| Моторный ИИ | Headless worker, прямые кадры/ввод, локальные модельные эксперименты | Универсальная навигация и игра без вмешательства пока не приняты |
+
+Точные версии APK и результаты по устройствам находятся в
+[машинном реестре](docs/operations/STATUS-REGISTRY.json). Последняя подтверждённая
+адресная установка — APK88 на PH030 и PH011 с независимой проверкой SHA. PH010/PH025
+остаются на APK85; 17 offline не обновлены.
+Полного production SLA для всех сетей и сценариев пока нет.
+
+## Что обновлено
+
+**23 октября — APK88 собран локально и установлен на PH030.**
+После настоящей перезагрузки VPN восстановился автоматически: проверены новый
+kernel boot ID, действующие маршруты, HTTPS и VPN-IP. После загрузки прошли
+прямое PC-видео, 5 RGB-наблюдений/с и непрерывный жест с подтверждённым освобождением.
+Новых GitHub jobs нет. VPN пока зависит от временного PC-шлюза до 24 октября
+00:08 UTC+5; телефонный браузер, ранний boot kill switch и прямой Android WAN
+остаются отдельной приёмкой.
+[Установка, перезагрузка и точные границы](docs/audits/2026-10-23/PH030-APK88-LOCAL-AUTOSTART.md).
+
+Ниже — предыдущие датированные этапы; их конечные состояния могли измениться.
+
+**PH030: VPN-интернет работает через ограниченный LAN-шлюз.** AWG2,
+все приложения кроме Sphere: HTTPS/DNS, отдельный внешний IP, блокировка при
+паузе и потере шлюза проверены. 15-минутное наблюдение сети прошло. Пользователь
+зашёл в игру; отдельная проверка стрима выявила ICE без ответов и блокировку
+ввода `root_handoff_unknown`. APK87 с исправлениями подготовлен к облачной
+проверке, ещё не установлен. Прямой WAN, независимость от ПК и общая VPN-приёмка
+остаются открытыми. [Результаты и ограничения](docs/audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.md).
+
+**APK85 собран в GitHub и установлен на четырёх online устройствах.** Полный
+Android CI и настроенная облачная сборка успешны; payload проверен после локальной
+переподписи прежним сертификатом. Версия и установленный SHA подтверждены на
+PH010/PH011/PH025/PH030. Память пользователя не освобождалась, эмуляторы не перезапускались.
+[Поставка, CI и экраны](docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md).
+
+**Исправление VPN-телеметрии установлено.** Основной WebSocket-цикл теперь
+принимает отчёты Android. Полный backend CI прошёл 4428 тестов; совпадение RPC/API
+и диагностика desktop/mobile проверены на установленном сайте.
+[Доставка и экраны](docs/audits/2026-10-22/VPN-STATUS-ROUTING-LIVE-DELIVERY.md).
+
+**Живой VPN-тест выявил дефект APK84.** Дополнительная packet mark мешала TCP/DNS
+тестового приложения на PH011; без неё трафик проходил. Управление Sphere
+сохранялось. Guard plan 4 в APK85 устраняет дополнительную mark. Локальный AWG1
+опыт прошёл 17 HTTP-ответов, pause/resume, аварийную изоляцию и cleanup; повторные
+TCP/DNS через внешний WG всё ещё нестабильны. Общая приёмка VPN остаётся открытой.
+[Новый конечный опыт](docs/audits/2026-10-22/VPN-APK85-MAIN-CANARY.md) ·
+[Первоначальный дефект](docs/audits/2026-10-22/VPN-APK84-MAIN-CANARY.md).
+
+**Предыдущая поставка 22 октября — VPN workspace и каталог.** Четыре вкладки,
+диагностика устройства, импорт, версии и архив проверены на desktop/mobile.
+Для каталога применена добавочная миграция, настроены независимое шифрование и
+ограниченный DB-login с RLS. Физические VPN этим обновлением не менялись.
+[Поставка и реальные скриншоты](docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.md).
+
+**Массовый импорт до 100 профилей установлен и проверен.** Предварительная
+проверка каждого файла, атомарное сохранение и восстановление по прежним ID
+при потере ответа. Поддерживаются `.conf` WG/AWG; прокси/ZIP/распределение по
+устройствам — отдельные этапы. Backend CI: 4422 passed; frontend: 2630.
+Вживую проверены ошибка файла №37, строка 100, rollback и потеря ответа без
+повторной записи. [Поставка и скриншоты](docs/audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.md),
+[контракт](docs/operations/VPN-PROFILES.md).
+
+**Расширение VPN-платформы.** Проработаны метрики UID, пулы, аренды выходов,
+proxy adapters и единый исполнитель для UI/скриптов/pipelines с учётом наших
+смежных VPN-репозиториев. [План и источники](docs/design/VPN-FLEET-CONTROL.md).
+
+## Как устроена система
 
 ```mermaid
-graph TB
-    subgraph Internet
-        USER[👤 Оператор / Браузер]
-    end
-
-    subgraph PROXY[Reverse Proxy]
-        NGINX[nginx<br/>TLS · Rate Limit · WS Upgrade]
-    end
-
-    subgraph CORE[Core Services]
-        BACKEND[⚡ FastAPI Backend<br/>:8000]
-        FRONTEND[🖥️ Next.js 15 Frontend<br/>:3000]
-        N8N[🔗 n8n Workflows<br/>:5678]
-    end
-
-    subgraph DATA[Data Layer]
-        PG[(PostgreSQL 15<br/>RLS · 19 таблиц)]
-        REDIS[(Redis 7.2<br/>PubSub · Cache · Queue)]
-    end
-
-    subgraph WS_LAYER[WebSocket Layer]
-        CM[ConnectionManager]
-        PSR[PubSubRouter]
-        SB[StreamBridge<br/>SPS/PPS Cache]
-    end
-
-    subgraph MONITORING[Observability]
-        PROM[Prometheus]
-        GRAF[Grafana]
-        ALERT[Alertmanager]
-    end
-
-    subgraph AGENTS[Device Agents]
-        ANDROID[📱 Android Agent<br/>Kotlin · H.264 · VPN]
-        PC[🖥️ PC Agent<br/>Python · ADB Bridge]
-    end
-
-    USER -->|HTTPS/WSS| NGINX
-    NGINX --> BACKEND
-    NGINX --> FRONTEND
-    NGINX --> N8N
-
-    BACKEND --> PG
-    BACKEND --> REDIS
-    BACKEND --> CM
-    CM --> PSR
-    CM --> SB
-
-    PSR -->|WSS| ANDROID
-    PSR -->|WSS| PC
-    SB -->|H.264 NAL| USER
-
-    BACKEND --> PROM
-    PROM --> GRAF
-    PROM --> ALERT
-
-    style BACKEND fill:#009688,color:#fff
-    style FRONTEND fill:#000,color:#fff
-    style PG fill:#4169E1,color:#fff
-    style REDIS fill:#DC382D,color:#fff
-    style ANDROID fill:#3DDC84,color:#fff
-    style NGINX fill:#009639,color:#fff
+flowchart LR
+    UI[Веб-клиент] --> API[Backend API]
+    API --> DB[(PostgreSQL)]
+    API --> R[Redis / состояние связи]
+    API <-->|Команды и результаты| APK[Android Agent]
+    UI <-->|Прямые кадры и ввод при доступном маршруте| APK
+    WORKER[Headless AI worker] <-->|Прямые кадры и ввод| APK
+    API --> PC[Агент станции / эмуляторы]
+    APK --> APPS[Приложения Android]
 ```
 
-### Потоки данных
+Управляющее соединение Sphere должно сохраняться при сбое прикладного VPN.
+Туннель выбранных приложений и сеть управления разделяются на уровне Android
+UID/сокетов; один список IP управляющего сервера это не заменяет.
+Подробнее: [архитектура](docs/architecture.md),
+[Android agent](docs/android-agent.md), [VPN/egress](docs/design/VPN-EGRESS-ARCHITECTURE.md).
 
-```mermaid
-sequenceDiagram
-    participant O as Оператор
-    participant F as Frontend
-    participant B as Backend
-    participant R as Redis
-    participant D as Device
+## Запуск и обновление
 
-    Note over O,D: 🔐 Аутентификация
-    O->>F: Логин (email + TOTP)
-    F->>B: POST /auth/login
-    B-->>F: JWT access + refresh
-    
-    Note over O,D: 📱 Управление устройством
-    O->>F: Открыть устройство
-    F->>B: GET /devices/{id}
-    B->>R: Кэш статуса (online/offline)
-    B-->>F: Device + Status
+1. Для нового окружения используйте [Startup](docs/operations/STARTUP.md#first-install).
+   Существующий pilot обновляется по [своему runbook](docs/operations/LOCAL-PILOT.md),
+   с сохранением env/volumes и проектных имён.
+2. Выберите согласованную ревизию кода, конфигурации и миграций. Текущая ветка
+   аудита отличается от `main`; обычный clone сам её не выбирает.
+3. Подготовьте PostgreSQL/Redis, bootstrap администратора и enrollment,
+   затем readiness API/веба. На Windows нужны PowerShell 7, Python 3.12,
+   Git и Docker Compose v2; детали инструментов — в [Development](docs/development.md).
+4. Установите APK под свою discovery identity и доверенный ключ. Чужой pilot APK
+   не заменяет сборку для вашей установки. [Параметры](docs/configuration.md).
+5. Проверьте новое устройство конечным безопасным заданием, свежим кадром и
+   восстановлением связи. Завершённый HTTP-запрос не равен исполнению на Android.
 
-    Note over O,D: 🎬 H.264 Стриминг
-    O->>F: Запустить стрим
-    F->>B: WS /ws/stream/{device_id}/view
-    B->>D: WS command: start_stream
-    D-->>B: NAL units (SPS→PPS→IDR→P-frames)
-    B->>B: StreamBridge кэширует SPS/PPS/IDR
-    B-->>F: Binary frames → WebCodecs decoder
+Для другой сети нужны доступный HTTPS/WSS ingress и signed discovery:
+[Remote pilot](docs/operations/REMOTE-PILOT.md).
 
-    Note over O,D: 📋 Выполнение скрипта
-    O->>F: Запустить DAG-скрипт
-    F->>B: POST /tasks
-    B->>R: Enqueue в TaskQueue
-    R-->>B: Dispatch
-    B->>D: WS command: EXECUTE_DAG
-    D-->>B: Результат шагов
-    B-->>F: SSE обновления статуса
-```
+## Проверки и поставка
 
-### Pipeline Orchestrator
+Frontend проверяется Jest/TypeScript и сборкой runtime с HTTP/assets probe.
+Backend — тестами, включая отдельные PostgreSQL/Redis, RLS реального login,
+миграции и перезапуск упакованного процесса. Android — unit/lint/build,
+разделением ordinary/release/canary и проверкой native ABI. Точные инструменты
+описаны в [Development](docs/development.md) и workflow-файлах репозитория.
 
-```mermaid
-graph LR
-    API[REST API] --> PS[PipelineService]
-    PS --> PE[PipelineExecutor]
-    
-    PE --> RS[run_script]
-    PE --> RP[run_pipeline]
-    PE --> HR[http_request]
-    PE --> CD[condition]
-    PE --> DL[delay]
-    PE --> PL[parallel]
-    PE --> SV[set_variable]
-    PE --> NT[notify]
-    PE --> AP[approval]
+Hosted CI можно запускать вручную; разовое включение не означает включённые
+постоянные автосборки. Для VPN-кандидата CI собирает закреплённый WG/AWG native
+provider с Android BOOTTIME/JNI patch. Тестовая CI-подпись не является подписью
+установленных агентов. Production/pilot install и реальные lifecycle/fault tests
+выполняются отдельно. Секреты и приватные конфиги не входят в отчёты/артефакты.
 
-    SE[SchedulerEngine] -->|croniter| PS
-    SE --> DB[(Schedule + Execution)]
+## Документация по задачам
 
-    style PE fill:#009688,color:#fff
-    style SE fill:#ff9800,color:#fff
-```
-
-### Agent Resilience (6-уровневая гарантия)
-
-```mermaid
-graph TD
-    BOOT[1. BootReceiver<br/>BOOT_COMPLETED] --> SERVICE
-    STICKY[2. START_STICKY<br/>OS auto-restart] --> SERVICE
-    SW[3. ServiceWatchdog<br/>AlarmManager 5 min] --> SERVICE
-    APP[4. Application.onCreate<br/>Watchdog scheduling] --> SERVICE
-    CW[5. ConfigWatchdog<br/>GitHub Raw polling] --> SERVICE
-    NET[6. NetworkChangeHandler<br/>Instant reconnect] --> SERVICE
-
-    SERVICE[SphereService<br/>Foreground + WebSocket]
-    SERVICE --> CB{Circuit Breaker<br/>10 failures?}
-    CB -->|Да| CW
-    CB -->|Нет| WS[WebSocket<br/>Reconnect]
-
-    style SERVICE fill:#3DDC84,color:#000
-    style CB fill:#ff5722,color:#fff
-```
-
-> Полная архитектурная документация: [docs/architecture.md](docs/architecture.md)
-
----
-
-## Быстрый старт
-
-### Требования
-
-| Компонент | Минимум | Рекомендуется |
-|-----------|---------|---------------|
-| Docker Desktop | 4.x+ (Compose V2) | Последняя версия |
-| RAM | 4 ГБ | 8+ ГБ |
-| CPU | 2 cores | 4+ cores |
-| Порты | 80, 443 | + 5432, 6379 (dev) |
-
-### Развёртывание одной командой
-
-```bash
-git clone https://github.com/RootOne1337/sphere-platform.git
-cd sphere-platform
-bash scripts/full-deploy.sh
-```
-
-> **Windows:** `powershell -ExecutionPolicy Bypass -File scripts\full-deploy.ps1`
->
-> Подробнее: **[Full Deploy Guide](FULL-DEPLOYMENT-GUIDE.md)** (15 секций, от нуля до продакшна)
-
-### 1 — Клонирование и настройка (ручной режим)
-
-```bash
-git clone https://github.com/RootOne1337/sphere-platform.git
-cd sphere-platform
-
-# Генерация секретов (.env.local)
-python scripts/generate_secrets.py
-```
-
-### 2 — Запуск
-
-```bash
-# 🔧 Разработка (hot-reload backend + frontend)
-docker compose -f docker-compose.yml \
-               -f docker-compose.full.yml \
-               -f docker-compose.override.yml up -d
-
-# 🚀 Продакшн
-docker compose -f docker-compose.yml \
-               -f docker-compose.production.yml up -d
-
-# ✅ Проверка статуса
-docker compose ps
-```
-
-### 3 — Инициализация
-
-```bash
-# Миграции базы данных
-docker compose exec backend alembic upgrade head
-
-# Создание суперадминистратора
-docker compose exec backend python scripts/create_admin.py
-```
-
-### 4 — Доступ к сервисам
-
-| Сервис | URL | Описание |
-|--------|-----|----------|
-| 🖥️ Web UI | `http://localhost` | Основной интерфейс |
-| 📖 Swagger | `http://localhost/api/v1/docs` | Интерактивная API-документация |
-| 📘 ReDoc | `http://localhost/api/v1/redoc` | Альтернативная API-документация |
-| 📊 Grafana | `http://localhost:3001` | Дашборды мониторинга |
-| 🔗 n8n | `http://localhost:5678` | No-code автоматизация |
-
----
-
-## Структура проекта
-
-```
-sphere-platform/
-│
-├── backend/                    # ⚡ FastAPI Backend (Python 3.12)
-│   ├── api/v1/                 #    REST-эндпоинты (22 модуля)
-│   ├── api/ws/                 #    WebSocket-маршруты (agent, stream, events)
-│   ├── core/                   #    Конфигурация, RBAC, JWT, зависимости
-│   ├── models/                 #    SQLAlchemy ORM (19 таблиц)
-│   ├── schemas/                #    Pydantic v2 request/response схемы
-│   ├── services/               #    Бизнес-логика (orchestrator, scheduler, vpn)
-│   ├── tasks/                  #    Background asyncio tasks
-│   ├── websocket/              #    ConnectionManager + PubSubRouter + StreamBridge
-│   └── monitoring/             #    Prometheus-метрики, healthcheck
-│
-├── frontend/                   # 🖥️ Next.js 15 App Router (React 19)
-│   ├── app/(auth)/             #    Авторизация
-│   ├── app/(dashboard)/        #    Dashboard, Devices, Scripts, Stream, VPN,
-│   │                           #    Tasks, Fleet, Monitoring, Orchestration
-│   ├── components/             #    shadcn/ui компоненты
-│   ├── hooks/                  #    TanStack Query v5 хуки
-│   └── lib/                    #    Axios, Zustand, H264Decoder
-│
-├── android/                    # 📱 Android Agent (Kotlin + Hilt)
-│   └── app/src/main/           #    Services, VPN, Streaming, ConfigWatchdog
-│
-├── pc-agent/                   # 🖥️ PC Agent (Python asyncio)
-│   └── modules/                #    ADB bridge, LDPlayer, telemetry
-│
-├── infrastructure/             # 🏗️ Инфраструктура
-│   ├── nginx/                  #    Reverse proxy + TLS
-│   ├── postgres/               #    Init SQL, RLS-политики
-│   ├── redis/                  #    Конфигурация Redis
-│   ├── monitoring/             #    Prometheus, Grafana, Alertmanager
-│   └── traefik/                #    Альтернативный reverse proxy
-│
-├── specs/                      # 📋 Технические спецификации (14 модулей)
-│   ├── TZ-00-Constitution/     #    Репозиторий, Docker, PostgreSQL, Redis, CI/CD
-│   ├── TZ-01-Auth-Service/     #    JWT, MFA, RBAC, API Keys, Audit
-│   ├── TZ-02-Device-Registry/  #    CRUD, Groups, Status, Bulk, Discovery
-│   ├── TZ-03-WebSocket-Layer/  #    ConnectionManager, PubSub, Backpressure
-│   ├── TZ-04-Script-Engine/    #    DAG Schema, CRUD, TaskQueue, Wave/Batch
-│   ├── TZ-05-H264-Streaming/   #    MediaProjection, MediaCodec, NAL, WebCodecs
-│   ├── TZ-06-VPN-AmneziaWG/    #    Config, Pool, Self-Healing, Kill Switch
-│   ├── TZ-07-Android-Agent/    #    Architecture, WebSocket, Commands, OTA
-│   ├── TZ-08-PC-Agent/         #    Architecture, LDPlayer, Telemetry, ADB
-│   ├── TZ-09-n8n-Integration/  #    Setup, DevicePool, ExecuteScript, Events
-│   ├── TZ-10-Web-Frontend/     #    Setup, Dashboard, Remote, VPN UI, Scripts
-│   ├── TZ-11-Monitoring/       #    Prometheus, Grafana, Alertmanager, Logging
-│   ├── TZ-12-Agent-Discovery/  #    Zero-touch provisioning plan
-│   └── TZ-12-Orchestrator/     #    Pipeline Engine, Scheduler, Events (5 SPLITs)
-│
-├── agent-config/               # ⚙️ Zero-touch provisioning конфигурации
-├── n8n-nodes/                  # 🔗 Кастомные n8n-ноды
-├── alembic/                    # 🗃️ Миграции базы данных
-├── tests/                      # 🧪 Тесты (94 файла, 1 231 тест)
-│   ├── auth/                   #    Аутентификация, MFA, JWT
-│   ├── devices/                #    CRUD устройств, bulk, discovery
-│   ├── vpn/                    #    VPN-пиры, пул IP, health
-│   ├── test_scripts/           #    Pipeline, Scheduler, DAG
-│   ├── test_ws/                #    WebSocket Connection Manager
-│   └── load/                   #    🔥 Нагрузочные тесты (32→10 000 агентов)
-│       ├── core/               #       VirtualAgent, AgentPool, Orchestrator
-│       ├── protocols/          #       WS/REST клиенты, H.264 эмулятор
-│       ├── scenarios/          #       6 бизнес-сценариев
-│       ├── config/             #       YAML-конфигурации нагрузки
-│       └── mock_server.py      #       Mock Sphere Platform
-├── scripts/                    # 🛠️ Утилиты и деплой-скрипты
-│   ├── full-deploy.sh          #    Полное развёртывание Linux/macOS (8 шагов)
-│   ├── full-deploy.ps1         #    Полное развёртывание Windows PowerShell
-│   ├── health-check.sh         #    Проверка здоровья всех сервисов
-│   ├── backup-database.sh      #    Бэкап PostgreSQL + Redis с ротацией
-│   ├── generate_secrets.py     #    Генерация криптографических секретов
-│   └── create_admin.py         #    Создание суперадминистратора
-│
-├── docs/                       # 📖 Документация проекта
-└── .github/                    # 🔄 CI/CD workflows
-```
-
----
-
-## Технологический стек
-
-```mermaid
-graph LR
-    subgraph Backend
-        PY[Python 3.12] --> FAST[FastAPI 0.115]
-        FAST --> SA[SQLAlchemy 2.0<br/>async]
-        FAST --> STRUCT[structlog]
-        SA --> PG[(PostgreSQL 15<br/>RLS)]
-        FAST --> RD[(Redis 7.2)]
-    end
-
-    subgraph Frontend
-        TS[TypeScript] --> NEXT[Next.js 15]
-        NEXT --> REACT[React 19]
-        REACT --> SHAD[shadcn/ui]
-        REACT --> TQ[TanStack Query v5]
-        REACT --> ZS[Zustand]
-    end
-
-    subgraph Mobile
-        KT[Kotlin] --> HILT[Hilt DI]
-        KT --> MC[MediaCodec<br/>H.264]
-        KT --> AWG[AmneziaWG]
-        KT --> OK[OkHttp3 WS]
-    end
-
-    subgraph Infra
-        DC[Docker Compose V2]
-        NG[nginx]
-        PROM[Prometheus]
-        GRAF[Grafana]
-        GHA[GitHub Actions]
-    end
-
-    style FAST fill:#009688,color:#fff
-    style NEXT fill:#000,color:#fff
-    style KT fill:#7F52FF,color:#fff
-    style PG fill:#4169E1,color:#fff
-    style RD fill:#DC382D,color:#fff
-```
-
-<details>
-<summary><b>Полная таблица технологий</b></summary>
-
-### Backend
-| Компонент | Технология | Назначение |
-|-----------|------------|------------|
-| Фреймворк | FastAPI 0.115+ | Async REST + WebSocket API |
-| ORM | SQLAlchemy 2.0 (async) | Data access layer |
-| БД | PostgreSQL 15 | Primary data store + RLS |
-| Кэш / Брокер | Redis 7.2 | PubSub, кэш, очередь задач |
-| Auth | JWT HS256 + TOTP MFA | Двухфакторная аутентификация |
-| Задачи | asyncio + Redis PubSub | Background task execution |
-| Метрики | Prometheus + structlog | Observability |
-| Миграции | Alembic | Schema version control |
-| Валидация | Pydantic v2 | Request/Response schemas |
-
-### Frontend
-| Компонент | Технология | Назначение |
-|-----------|------------|------------|
-| Фреймворк | Next.js 15.1 (App Router) | SSR + Client components |
-| UI библиотека | shadcn/ui + Radix UI | Accessible component library |
-| Стилизация | Tailwind CSS | Utility-first CSS |
-| Стейт (серверный) | TanStack Query v5 | Cache, sync, background refetch |
-| Стейт (клиентский) | Zustand | Lightweight state management |
-| Графы | @xyflow/react | DAG визуализация |
-| Декодер | WebCodecs API | H.264 hardware decode |
-
-### Android Agent
-| Компонент | Технология | Назначение |
-|-----------|------------|------------|
-| Язык | Kotlin (compileSdk 35) | Modern Android development |
-| DI | Hilt + WorkManager | Dependency injection + scheduled work |
-| Стриминг | MediaProjection + MediaCodec | H.264 hardware encoding |
-| VPN | AmneziaWG | Obfuscated WireGuard tunnels |
-| Транспорт | OkHttp3 WebSocket | Bidirectional communication |
-| Discovery | CloneDetector + ZeroTouchProvisioner | Auto-enrollment |
-| Resilience | ConfigWatchdog + ServiceWatchdog + CircuitBreaker | 6-level uptime |
-
-### Инфраструктура
-| Компонент | Технология | Назначение |
-|-----------|------------|------------|
-| Reverse Proxy | nginx | TLS termination, rate limiting |
-| Контейнеры | Docker Compose V2 | Service orchestration |
-| CI/CD | GitHub Actions | Automated testing + deployment |
-| Мониторинг | Prometheus + Grafana + Alertmanager | Full observability stack |
-| Tunnel | Serveo SSH | Dev environment tunneling |
-
-</details>
-
----
-
-## API обзор
-
-<details>
-<summary><b>REST API Endpoints (22 модуля)</b></summary>
-
-| Модуль | Базовый путь | Описание |
-|--------|-------------|----------|
-| Auth | `/api/v1/auth` | Логин, регистрация, refresh token, TOTP |
-| Users | `/api/v1/users` | CRUD пользователей, роли |
-| Devices | `/api/v1/devices` | CRUD устройств, статус, register |
-| Groups | `/api/v1/groups` | Группы устройств, тегирование |
-| Scripts | `/api/v1/scripts` | DAG-скрипты, версионирование |
-| Tasks | `/api/v1/tasks` | Создание задач, статус, результаты |
-| Batches | `/api/v1/batches` | Батч-задачи, wave-исполнение |
-| Bulk | `/api/v1/bulk` | Массовые операции на устройства |
-| Pipelines | `/api/v1/pipelines` | Pipeline CRUD, выполнение |
-| Schedules | `/api/v1/schedules` | Cron-расписания, конфликт-политики |
-| VPN | `/api/v1/vpn` | Управление WireGuard-пирами |
-| Streaming | `/api/v1/streaming` | H.264 стрим-сессии |
-| Discovery | `/api/v1/discovery` | Auto-enrollment, workstations |
-| Config | `/api/v1/config` | Agent конфигурация |
-| Updates | `/api/v1/updates` | OTA-обновления APK |
-| Audit | `/api/v1/audit` | Аудит-лог |
-| Logs | `/api/v1/logs` | Логи устройств |
-| Locations | `/api/v1/locations` | Геолокация устройств |
-| Monitoring | `/api/v1/monitoring` | Prometheus-метрики |
-| Health | `/api/v1/health` | Healthcheck endpoint |
-| n8n | `/api/v1/n8n` | n8n webhook integration |
-
-**WebSocket Endpoints:**
-
-| Путь | Описание |
-|------|----------|
-| `/ws/android/{device_id}` | Подключение Android-агента |
-| `/ws/agent/{agent_id}` | Подключение PC-агента |
-| `/ws/stream/{device_id}/view` | H.264 viewer (бинарные фреймы) |
-| `/ws/events` | Server-Sent Events (real-time updates) |
-
-</details>
-
-> Интерактивная документация: **Swagger UI** по адресу `/api/v1/docs`
-
----
-
-## Документация
-
-| Документ | Описание |
-|----------|----------|
-| 📐 [Architecture](docs/architecture.md) | Дизайн системы, потоки данных, компонентные диаграммы |
-| 📖 [API Reference](docs/api-reference.md) | REST-эндпоинты, схемы запросов/ответов |
-| 🚀 [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) | **Полный гайд развёртывания — от нуля до продакшна за 15 минут** |
-| 🚀 [Deployment Guide](docs/deployment.md) | Docker, продакшн, staging, tunnel setup |
-| ⚙️ [Configuration](docs/configuration.md) | Справочник переменных окружения |
-| 🔒 [Security](docs/security.md) | Auth, RBAC, шифрование, модель угроз |
-| 🛠️ [Developer Guide](docs/development.md) | Локальная настройка, тестирование, стандарты |
-| �️ [Web UI Guide](docs/web-ui-guide.md) | Полный гайд по веб-интерфейсу — все страницы, кнопки, модальные окна |
-| �📱 [Android Agent](docs/android-agent.md) | Сборка APK, развёртывание, обновления |
-| 🖥️ [PC Agent](docs/pc-agent.md) | Установка, ADB-мост, LDPlayer |
-| ⚙️ [Agent Config](agent-config/README.md) | Zero-touch provisioning |
-| 📋 [Technical Specs](specs/) | 14 модулей технических спецификаций (70+ SPLIT-документов) |
-| 📝 [ADR](docs/adr/) | Architecture Decision Records |
-| 🚨 [Runbooks](docs/runbooks/) | Процедуры реагирования на инциденты |
-| 🤝 [Contributing](CONTRIBUTING.md) | Руководство по контрибуции |
-| 🛡️ [Security Policy](SECURITY.md) | Процесс отчёта об уязвимостях |
-| 📰 [Changelog](CHANGELOG.md) | История релизов |
-| 🔥 [Load Testing](docs/load-test/) | Фреймворк нагрузочного тестирования (1 024 агента) |
-
----
+| Задача | Документ |
+| --- | --- |
+| Актуальное состояние и незакрытые требования | [WORK-STATUS](docs/operations/WORK-STATUS.md) · [STATUS-REGISTRY](docs/operations/STATUS-REGISTRY.json) |
+| Первая установка / локальный стенд | [Startup](docs/operations/STARTUP.md) · [Local pilot](docs/operations/LOCAL-PILOT.md) |
+| Удалённые устройства | [Remote pilot](docs/operations/REMOTE-PILOT.md) |
+| Android и агент станции | [Android](docs/android-agent.md) · [PC-agent](docs/pc-agent.md) |
+| Запись и версии сценариев | [Script Studio](docs/operations/SCRIPT-STUDIO.md) · [Script versions](docs/operations/SCRIPT-VERSIONS.md) |
+| Подтверждения исполнения | [Task control protocol](docs/security/task-control-protocol.md) |
+| VPN: профили / результаты операций | [VPN profiles](docs/operations/VPN-PROFILES.md) · [VPN outcomes](docs/operations/VPN-CONTROL-OUTCOMES.md) |
+| VPN: изоляция / пулы / метрики / интеграции | [Egress architecture](docs/design/VPN-EGRESS-ARCHITECTURE.md) · [Fleet control](docs/design/VPN-FLEET-CONTROL.md) |
+| Моторный ИИ и worker | [AI architecture](docs/design/MOTOR-AI-PLATFORM.md) · [Worker](docs/operations/MOTOR-WORKER.md) |
+| API для интеграций | [Endpoint catalog](docs/api-endpoints.md) · [OpenAPI](docs/openapi.json) |
+| История реализации и конечных проверок | [Аудиты](docs/audits/) · [Прежний README](docs/history/README-20261022.md) |
 
 ## Разработка
 
-```bash
-# Форк, клонирование, создание ветки
-git checkout -b feat/SPHERE-XXX-short-description
-
-# Установка pre-commit хуков (ruff, mypy, bandit)
-pre-commit install
-
-# Запуск тестов
-cd backend && pytest -x
-
-# Линтинг
-ruff check backend/
-mypy backend/ --ignore-missing-imports
-```
-
-Подробности о стандартах кода, стратегии ветвления и CI/CD — в [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
-
-<div align="center">
-
-### Статистика проекта
-
-| Метрика | Значение |
-|---------|----------|
-| ORM-моделей | 19 таблиц |
-| REST-модулей | 22 |
-| WebSocket-эндпоинтов | 4 |
-| Тестовых файлов | 94 (1 231 тест) |
-| Технических спецификаций | 14 модулей / 70+ документов |
-| Docker-сервисов | 10+ |
-| Алембик-миграций | 15+ |
-
----
-
-**MIT License** · Built with ❤️ by [RootOne1337](https://github.com/RootOne1337)
-
-</div>
+Начните с [Development](docs/development.md), [Contributing](CONTRIBUTING.md)
+и [Security](SECURITY.md). Изменения протоколов сопровождаются версиями контрактов,
+отрицательными проверками и отдельной записью о границах приёмки. Игровая логика
+остаётся в профилях/сценариях и сменяемых адаптерах.

@@ -1,0 +1,449 @@
+/** Finite WebRTC echo canary. RTT here is neither native input ACK nor video latency. */
+import { probeNetwork, type DirectProbeNetwork } from './directProbeNetwork';
+import { directProbeIceConfig, type DirectProbeIceProfile } from './directProbeIce';
+import { parseTurnReady } from './directProbeTurn';
+import { parseVideoBinding, readonlyVideoSdp, type DirectVideoBinding } from './directVideoProtocol';
+import { DirectVideoStatsSampler, preferLowVideoDelay, type DirectVideoStats } from './directVideoStats';
+import { DIRECT_CONTROL_PACKET_LIFETIME_MS, type DirectControlEndpoint } from './directPointerTransport';
+import { h264ReceiverOffer } from './h264ReceiverOffer';
+import { parseInputAvailability } from './inputAvailability';
+
+export interface DirectProbeResult {
+  state: 'gathering' | 'signaling' | 'connecting' | 'connected' | 'finished' | 'stopped' | 'failed';
+  samples: number[];
+  path: 'host' | 'nat' | 'relay' | 'unknown';
+  protocol: string | null;
+  reason: string | null;
+  iceProfile?: DirectProbeIceProfile;
+  network?: DirectProbeNetwork;
+  networkSampleAtMs?: number;
+  networkAgeAtStopMs?: number;
+  iceState?: RTCIceConnectionState;
+  controlChannelState?: 'connecting' | 'open' | 'closing' | 'closed' | 'failed';
+  controlChannelElapsedMs?: number;
+  videoBinding?: DirectVideoBinding;
+  videoStats?: DirectVideoStats;
+  /** Exact signaling nonce; never included in public diagnostic scalar samples. */
+  session?: string;
+}
+export function probePath(stats: RTCStatsReport): Pick<DirectProbeResult, 'path' | 'protocol'> {
+  let pair: RTCIceCandidatePairStats | undefined;
+  stats.forEach(value => {
+    if (value.type === 'transport' && value.selectedCandidatePairId) pair = stats.get(value.selectedCandidatePairId);
+  });
+  // An arbitrary succeeded pair is not evidence that the transport selected it.
+  if (!pair || pair.type !== 'candidate-pair') return { path: 'unknown', protocol: null };
+  const local = stats.get(pair.localCandidateId);
+  const remote = stats.get(pair.remoteCandidateId);
+  if (!local || !remote) return { path: 'unknown', protocol: null };
+  const types = [local.candidateType, remote.candidateType];
+  return { path: types.includes('relay') ? 'relay' : types.every(t => t === 'host') ? 'host'
+    : types.every(t => ['host', 'srflx', 'prflx'].includes(t)) ? 'nat' : 'unknown',
+  protocol: typeof local.protocol === 'string' ? local.protocol : null };
+}
+
+export function startDirectProbe(
+  url: string, token: string, report: (value: DirectProbeResult) => void,
+  options: { controlledStunUrl?: string; relayGrant?: boolean } = {},
+): () => void {
+  return startDirectSession(url, token, report, options);
+}
+
+export function startDirectVideoProbe(
+  url: string, token: string, report: (value: DirectProbeResult) => void,
+  options: { controlledStunUrl?: string; relayGrant?: boolean; historySession?: string; onTrack: (track: MediaStreamTrack) => void },
+): () => void {
+  return startDirectSession(url, token, report, options, options.onTrack);
+}
+
+/** Primary video has its own renewable grant; the finite diagnostic remains unchanged. */
+export function startDirectVideoSession(
+  url: string, token: string, report: (value: DirectProbeResult) => void,
+  options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
+    receiverSize?: { width: number; height: number };
+    onReceiver?: (receiver: RTCRtpReceiver) => void;
+    historySession?: string; controlSession?: string; sharedInput?: boolean; nativeKeys?: boolean; keyboard?: boolean; trickleIce?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    /** Actual recent presentation, independently bounded by the renderer watchdog. */
+    hasRecentVideoFrame?: () => boolean },
+): () => void {
+  return startDirectSession(url, token, report, options, options.onTrack, true);
+}
+
+function startDirectSession(
+  url: string, token: string, report: (value: DirectProbeResult) => void,
+  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean; nativeKeys?: boolean; keyboard?: boolean; trickleIce?: boolean;
+    onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    receiverSize?: { width: number; height: number };
+    onReceiver?: (receiver: RTCRtpReceiver) => void;
+    hasRecentVideoFrame?: () => boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
+): () => void {
+  const video = !!onVideoTrack;
+  if (options.historySession !== undefined && (!video || !/^[0-9a-f]{16}$/.test(options.historySession)))
+    throw new Error('invalid_history_session');
+  const iceConfig = directProbeIceConfig(options.controlledStunUrl);
+  let stopped = false;
+  if (options.relayGrant && options.controlledStunUrl) throw new Error('conflicting_ice_profiles');
+  let result: DirectProbeResult = { state: options.relayGrant ? 'signaling' : 'gathering', samples: [], path: 'unknown', protocol: null,
+    reason: null, iceProfile: options.relayGrant ? 'turn' : iceConfig.profile };
+  let peer: RTCPeerConnection | null = null;
+  let channel: RTCDataChannel | null = null;
+  let controlChannel: RTCDataChannel | null = null;
+  const controlListeners = new Set<(message: unknown) => void>();
+  let controlAvailability: unknown = null;
+  let ws: WebSocket | null = null;
+  let videoTrack: MediaStreamTrack | null = null;
+  let session: string | null = null;
+  let answered = false, offered = false;
+  let remoteSet = false, localCandidatesSent = 0, remoteCandidatesReceived = 0;
+  let signalingReady = false;
+  const localCandidates: RTCIceCandidateInit[] = [], remoteCandidates: RTCIceCandidateInit[] = [];
+  let sequence = 0;
+  let pending: { sequence: number; sent: number } | null = null;
+  let interval: ReturnType<typeof setInterval> | undefined;
+  let networkInterval: ReturnType<typeof setInterval> | undefined;
+  let renewalInterval: ReturnType<typeof setInterval> | undefined;
+  let phaseDeadline: ReturnType<typeof setTimeout> | undefined;
+  let disconnectDeadline: ReturnType<typeof setTimeout> | undefined;
+  let localCandidateDeadline: ReturnType<typeof setTimeout> | undefined;
+  let controlDeadline: ReturnType<typeof setTimeout> | undefined;
+  let statsInFlight = false, statsCalls = 0;
+  let renewal = 0;
+  const videoStats = new DirectVideoStatsSampler();
+  const startedAt = performance.now();
+  const emit = () => report({ ...result, samples: [...result.samples] });
+  const stop = (reason: string | null = null) => {
+    if (stopped) return;
+    stopped = true;
+    clearTimeout(deadline); clearTimeout(phaseDeadline); clearTimeout(disconnectDeadline);
+    clearTimeout(localCandidateDeadline); clearTimeout(controlDeadline);
+    if (interval) clearInterval(interval);
+    if (networkInterval) clearInterval(networkInterval);
+    if (renewalInterval) clearInterval(renewalInterval);
+    if (peer) { peer.onicegatheringstatechange = null; peer.onicecandidate = null; peer.onconnectionstatechange = null; peer.ontrack = null; }
+    if (videoTrack) { videoTrack.onended = null; try { videoTrack.stop(); } catch { /* Independent native cleanup. */ } }
+    if (channel) { channel.onopen = null; channel.onmessage = null; channel.onerror = null; channel.onclose = null; }
+    if (controlChannel) {
+      controlChannel.onopen = null; controlChannel.onmessage = null; controlChannel.onerror = null; controlChannel.onclose = null;
+      options.onControlChannel?.(null); controlListeners.clear(); controlAvailability = null;
+    }
+    if (ws) {
+      ws.onopen = null; ws.onmessage = null; ws.onerror = null; ws.onclose = null;
+      try { if (ws.readyState === WebSocket.OPEN) ws.send('{"type":"direct_probe_close"}'); }
+      catch { /* Signaling may disappear during cleanup; native TTL remains bounded. */ }
+      try { ws.close(); } catch { /* Close the local native resources independently. */ }
+    }
+    try { channel?.close(); } catch { /* Peer cleanup must still run. */ }
+    try { controlChannel?.close(); } catch { /* Independent control cleanup. */ }
+    try { peer?.close(); } catch { /* Timers and callbacks have already been retired. */ }
+    pending = null; localCandidates.length = remoteCandidates.length = 0;
+    result = { ...result, state: reason ? 'failed' : !live && result.samples.length === 20 ? 'finished' : 'stopped', reason,
+      networkAgeAtStopMs: result.networkSampleAtMs === undefined ? undefined :
+        Math.max(0, performance.now() - startedAt - result.networkSampleAtMs) }; emit();
+  };
+  let deadline = setTimeout(() => stop('probe_deadline'), 30_000);
+  const boundPhase = (reason: string, milliseconds: number) => {
+    clearTimeout(phaseDeadline);
+    phaseDeadline = setTimeout(() => stop(reason), milliseconds);
+  };
+  // A slow gathering/signaling phase must not masquerade as failed ICE connectivity.
+  // The 30-second overall lease is never extended by a phase transition.
+  boundPhase(options.relayGrant ? 'signaling_deadline' : 'gathering_deadline', 8_000);
+  const collectNetwork = async () => {
+    if (stopped || !peer || statsInFlight || !live && statsCalls >= 32) return;
+    statsInFlight = true; statsCalls++;
+    const iceState = peer.iceConnectionState, sampledAt = performance.now() - startedAt;
+    try {
+      const stats = await peer.getStats();
+      if (!stopped) {
+        result = { ...result, ...probePath(stats), network: probeNetwork(stats), ...(live ? { videoStats: videoStats.sample(stats) } : {}),
+          networkSampleAtMs: sampledAt, iceState }; emit();
+      }
+    } catch { /* Missing stats retain the previous sample or unknown. */ }
+    finally { statsInFlight = false; }
+  };
+  const gathered = (availableLocalCandidates = false) => {
+    if (stopped || offered || !peer || !availableLocalCandidates && peer.iceGatheringState !== 'complete') return;
+    const sdp = peer.localDescription?.sdp;
+    if (!sdp || new TextEncoder().encode(sdp).length > 32768) return stop('invalid_description');
+    if (video && !readonlyVideoSdp(sdp, true)) return stop('invalid_description');
+    if (availableLocalCandidates && !/^a=candidate:\S+\s+\d+\s+udp\s+\d+\s+\S+\s+\d+\s+typ\s+(?:host|srflx)\b/im.test(sdp)) return;
+    clearTimeout(localCandidateDeadline);
+    boundPhase('signaling_deadline', 8_000);
+    result.state = 'signaling'; emit();
+    offered = true;
+    if (options.relayGrant) {
+      if (!ws || ws.readyState !== WebSocket.OPEN || !session) return stop('missing_binding');
+      try { ws.send(JSON.stringify({ type: 'direct_probe_offer', sdp })); }
+      catch { stop('signaling_unavailable'); }
+    } else openSignaling(sdp);
+  };
+  const flushCandidates = () => {
+    if (!options.trickleIce || stopped || !offered || !signalingReady || ws?.readyState !== WebSocket.OPEN) return;
+    while (localCandidates.length && localCandidatesSent < 64) {
+      const ice = localCandidates.shift()!;
+      localCandidatesSent++;
+      try { ws.send(JSON.stringify({ type: 'direct_probe_candidate', ice })); }
+      catch { stop('signaling_unavailable'); return; }
+    }
+  };
+  const addCandidate = (ice: RTCIceCandidateInit) => {
+    if (stopped || !peer) return;
+    void peer.addIceCandidate(ice).catch(() => stop('invalid_ice_candidate'));
+  };
+  const openSignaling = (sdp?: string) => {
+    ws = new WebSocket(url);
+    ws.onopen = () => {
+      if (stopped || !ws) return;
+      try {
+        ws.send(JSON.stringify(video ? { token, protocol: live ? 'sphere-video-v1' : 'sphere-video-probe-v1', ...(options.relayGrant ? { relay: true } : {}),
+          ...(live && options.controlSession ? { control_session: options.controlSession } : {}),
+          ...(live && options.controlSession && options.sharedInput ? { shared_control: true } : {}),
+          ...(live && options.controlSession && options.sharedInput && options.keyboard ? { keyboard: true } : {}),
+          ...(live && options.trickleIce ? { trickle_ice: true } : {}),
+          ...(options.historySession ? { history_session: options.historySession } : {}) }
+          : options.relayGrant ? { token, protocol: 'sphere-probe-v2' } : { token }));
+        if (sdp) ws.send(JSON.stringify({ type: 'direct_probe_offer', sdp }));
+        signalingReady = true;
+        flushCandidates();
+      } catch { stop('signaling_unavailable'); }
+    };
+    ws.onmessage = event => {
+      if (stopped) return;
+      try {
+        if (typeof event.data !== 'string' || new TextEncoder().encode(event.data).length > 36864) throw Error();
+        const data = JSON.parse(event.data);
+        if (data.type === 'direct_probe_candidate' && live && options.trickleIce && session && answered) {
+          if (Object.keys(data).sort().join() !== 'ice,session_id,type' || data.session_id !== session
+            || !data.ice || Object.keys(data.ice).sort().join() !== 'candidate,sdpMLineIndex,sdpMid'
+            || typeof data.ice.candidate !== 'string' || data.ice.candidate.length > 2048
+            || typeof data.ice.sdpMid !== 'string' || !/^[A-Za-z0-9_-]{1,16}$/.test(data.ice.sdpMid)
+            || !Number.isSafeInteger(data.ice.sdpMLineIndex) || data.ice.sdpMLineIndex < 0 || data.ice.sdpMLineIndex > 7
+            || remoteCandidatesReceived >= 64) return stop('invalid_ice_candidate');
+          remoteCandidatesReceived++;
+          if (remoteSet) addCandidate(data.ice); else remoteCandidates.push(data.ice);
+          return;
+        }
+        if (options.relayGrant && !session) {
+          const ready = parseTurnReady(data, video ? 'sphere-video-probe-v1' : 'sphere-probe-v2');
+          if (!ready) return stop('invalid_ice_grant');
+          session = ready.session;
+          createPeer(ready.configuration);
+          return;
+        }
+        if (answered || !peer || Object.keys(data).sort().join() !== 'sdp,session_id,type'
+          || data.type !== 'direct_probe_answer' || !/^[0-9a-f]{32}$/.test(data.session_id)
+          || session !== null && data.session_id !== session
+          || typeof data.sdp !== 'string' || new TextEncoder().encode(data.sdp).length > 32768) throw Error();
+        if (video && !readonlyVideoSdp(data.sdp, false)) return stop('invalid_answer');
+        session = data.session_id;
+        result.session = session ?? undefined;
+        answered = true;
+        boundPhase('connection_deadline', 12_000);
+        void peer.setRemoteDescription({ type: 'answer', sdp: data.sdp }).then(() => {
+          if (stopped) return;
+          remoteSet = true;
+          remoteCandidates.splice(0).forEach(addCandidate);
+          if (result.state === 'signaling') { result.state = 'connecting'; emit(); }
+          collectNetwork(); networkInterval = setInterval(collectNetwork, live ? 5000 : 1000);
+        }).catch(() => stop('invalid_answer'));
+      } catch { stop('invalid_signal'); }
+    };
+    ws.onerror = () => stop('signaling_unavailable');
+    ws.onclose = event => stop(live && event.code === 4003 ? 'video_access_rejected' : 'signaling_closed');
+  };
+  const createPeer = (configuration: RTCConfiguration) => {
+    if (stopped || peer) return;
+    boundPhase('gathering_deadline', 8_000);
+    result.state = 'gathering';
+    try { peer = new RTCPeerConnection(configuration); }
+    catch { stop('webrtc_unavailable'); return; }
+    try {
+      channel = peer.createDataChannel(live ? 'sphere-video-v1' : video ? 'sphere-video-probe-v1' : 'sphere-probe-v1', { ordered: true });
+      if (live && options.controlSession && options.onControlChannel) {
+        if (!/^[0-9a-f]{16}$/.test(options.controlSession)) throw Error('invalid_control_session');
+        const direct = peer.createDataChannel(options.sharedInput ? 'sphere-control-v2' : 'sphere-control-v1',
+          { ordered: true, maxPacketLifeTime: DIRECT_CONTROL_PACKET_LIFETIME_MS });
+        controlChannel = direct;
+        const controlState = (state: NonNullable<DirectProbeResult['controlChannelState']>) => {
+          result = { ...result, controlChannelState: state, controlChannelElapsedMs: Math.max(0, performance.now() - startedAt) };
+        };
+        controlState('connecting');
+        let retired = false;
+        const retire = (reason: string) => {
+          if (retired) return;
+          retired = true; clearTimeout(controlDeadline);
+          controlState(reason === 'control_channel_closed' ? 'closed' : 'failed');
+          controlListeners.clear(); controlAvailability = null; options.onControlChannel?.(null);
+          // A closed SCTP channel cannot be reopened. Retire this exact media
+          // grant so LiveDirectVideo negotiates a fresh peer/channel and the
+          // server/native owner is released before another input OPEN.
+          // No queued touch is sent on the replacement transport.
+          stop(reason);
+        };
+        direct.onopen = () => {
+          if (stopped || retired) return;
+          if (!session) return retire('missing_binding');
+          clearTimeout(controlDeadline); controlState('open'); emit();
+          options.onControlChannel?.({ session, sharedInput: options.sharedInput === true,
+            nativeKeys: options.sharedInput === true && options.nativeKeys === true,
+            keyboard: options.sharedInput === true && options.keyboard === true,
+            get readyState() { return !stopped && !retired && direct.readyState === 'open' ? 1 : 0; },
+            get bufferedAmount() { return direct.bufferedAmount; },
+            capture: () => result.videoBinding ?? null,
+            availability: () => controlAvailability,
+            send: data => { if (retired || stopped || direct.readyState !== 'open') throw Error('direct_input_closed'); direct.send(data); },
+            listen: listener => {
+              if (stopped || retired) return () => {};
+              controlListeners.add(listener);
+              if (controlAvailability) listener(controlAvailability);
+              return () => { controlListeners.delete(listener); };
+            },
+          });
+        };
+        direct.onmessage = event => {
+          if (stopped || retired) return;
+          if (typeof event.data !== 'string' || new TextEncoder().encode(event.data).length > 1024) {
+            retire('invalid_control_message'); return;
+          }
+          try {
+            const message = JSON.parse(event.data);
+            if (options.sharedInput && message?.type === 'input_availability' && session) {
+              const epoch = result.videoBinding?.captureEpoch ?? message.capture_epoch;
+              const next = parseInputAvailability(message, session, epoch);
+              const prior = parseInputAvailability(controlAvailability, session, epoch);
+              if (!next || prior && next.revision <= prior.revision) return;
+              controlAvailability = message;
+            }
+            for (const listener of [...controlListeners]) listener(message);
+          } catch { retire('invalid_control_message'); }
+        };
+        direct.onerror = () => retire('control_channel_failed');
+        direct.onclose = () => retire('control_channel_closed');
+      }
+      if (video) {
+        const transceiver = peer.addTransceiver('video', { direction: 'recvonly' });
+        // Install an encoded consumer before offer/answer starts the receiver.
+        // Assigning it from ontrack can leave Chromium's already-created native
+        // decoder path playing while the worker sees no encoded frames.
+        if (options.onReceiver) options.onReceiver(transceiver.receiver);
+        peer.ontrack = event => {
+          if (stopped) { event.track.stop(); return; }
+          if (videoTrack || event.track.kind !== 'video') { event.track.stop(); return stop('invalid_video_track'); }
+          videoTrack = event.track;
+          if (live && event.receiver) preferLowVideoDelay(event.receiver);
+          videoTrack.onended = () => stop('video_track_ended');
+          try { onVideoTrack?.(videoTrack); } catch { stop('video_renderer_failed'); }
+        };
+      }
+    }
+    catch { stop('webrtc_unavailable'); return; }
+    peer.onicegatheringstatechange = () => gathered();
+    peer.onicecandidate = event => {
+      if (stopped || !live || !options.trickleIce || !event.candidate) return;
+      if (localCandidatesSent + localCandidates.length >= 64) return stop('candidate_limit');
+      const c = event.candidate;
+      if (!/^candidate:\S+\s+[12]\s+udp\s+/i.test(c.candidate)) return; // TCP stays in the bounded SDP batch.
+      // Bounded credentials/addresses live only in authenticated signaling.
+      if (c.candidate.length > 2048 || !c.sdpMid || c.sdpMLineIndex === null) return stop('invalid_ice_candidate');
+      localCandidates.push({ candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex });
+      // Begin ICE as soon as the first usable local candidate exists. Later
+      // host/reflexive candidates are preserved instead of discarded at2s.
+      gathered(true); flushCandidates();
+    };
+    peer.onconnectionstatechange = () => {
+      if (!peer || stopped) return;
+      if (['failed', 'closed'].includes(peer.connectionState)) return stop('peer_disconnected');
+      if (peer.connectionState === 'connected') {
+        clearTimeout(disconnectDeadline); disconnectDeadline = undefined;
+        void collectNetwork();
+      } else if (peer.connectionState === 'disconnected') {
+        // ICE can recover a brief connectivity loss on the same encrypted
+        // transport. Input retains its independent native/server deadlines;
+        // no media grant is renewed
+        // past its own authorization/lease by this short recovery window.
+        if (!live || result.state !== 'connected') return stop('peer_disconnected');
+        disconnectDeadline ??= setTimeout(() => stop('peer_disconnected'), 3000);
+      }
+    };
+    channel.onopen = () => {
+      if (stopped || !session) return stop('missing_binding');
+      clearTimeout(phaseDeadline);
+      result.state = 'connected'; emit();
+      if (live) {
+        // Media SCTP readiness is independent from input SCTP readiness. The
+        // eight-hour live lease cannot replace this bounded setup deadline.
+        if (controlChannel && controlChannel.readyState !== 'open') {
+          controlDeadline = setTimeout(() => {
+            if (stopped || controlChannel?.readyState === 'open') return;
+            result = { ...result, controlChannelState: 'failed',
+              controlChannelElapsedMs: Math.max(0, performance.now() - startedAt) };
+            stop('control_channel_deadline');
+          }, 6000);
+        }
+        clearTimeout(deadline);
+        deadline = setTimeout(() => stop('session_lifetime'), 8 * 3600_000);
+        renewalInterval = setInterval(() => {
+          if (stopped) return;
+          if (!ws || ws.readyState !== WebSocket.OPEN || ws.bufferedAmount > 1024) return stop('signaling_unavailable');
+          try { ws.send(JSON.stringify({ type: 'direct_video_keepalive', sequence: ++renewal })); }
+          catch { stop('signaling_unavailable'); }
+        }, 5000);
+      }
+      interval = setInterval(() => {
+        if (stopped) return;
+        if (pending) {
+          // Echo measures SCTP turnaround, not video health. A delayed reply
+          // must not discard a peer that is still presenting fresh video.
+          // Keep the one outstanding packet: no queue, retransmission, invented
+          // RTT or relaxation of input/authorization/ICE/renderer deadlines.
+          let presenting = false;
+          try { presenting = live && options.hasRecentVideoFrame?.() === true; } catch { /* Unknown is not progress. */ }
+          if (presenting && peer?.connectionState === 'connected') return;
+          return stop('echo_timeout');
+        }
+        if (!live && sequence >= 20) return stop();
+        if (!channel || channel.bufferedAmount > 1024) return stop('channel_backpressure');
+        pending = { sequence: ++sequence, sent: performance.now() };
+        try { channel.send(`${live ? 'SL1' : 'SP1'} ${session} ${sequence}`); } catch { stop('echo_send_failed'); }
+      }, live ? 5000 : 1000);
+    };
+    channel.onmessage = event => {
+      if (stopped) return;
+      if (video && !result.videoBinding) {
+        const binding = session ? parseVideoBinding(event.data, session) : null;
+        if (!binding) return stop('invalid_video_binding');
+        result = { ...result, videoBinding: binding }; emit(); return;
+      }
+      if (!pending || event.data !== `${live ? 'SL1' : 'SP1'} ${session} ${pending.sequence}`) return stop('invalid_echo');
+      result.samples.push(performance.now() - pending.sent);
+      if (result.samples.length > 20) result.samples.shift();
+      pending = null; emit();
+      // Live video has one periodic sampler. Sampling again after its echo can
+      // replace a useful frame interval with zero deltas from the same instant.
+      if (!live) void collectNetwork();
+    };
+    channel.onerror = () => stop('channel_failed');
+    channel.onclose = () => stop('channel_closed');
+    emit();
+    void peer.createOffer().then(offer => {
+      if (live && video && options.receiverSize) return h264ReceiverOffer(offer, options.receiverSize)
+        .then(prepared => { if (!stopped && peer) return peer.setLocalDescription(prepared); });
+      if (!stopped && peer) return peer.setLocalDescription(offer);
+    })
+      .then(() => {
+        gathered();
+        // Some mobile networks leave STUN gathering pending even though usable
+        // host candidates already exist. Offer the bounded collected batch once;
+        // a later gathering callback cannot open a second peer or duplicate SDP.
+        // No TURN credential/relay diagnostic is shortened by this local path.
+        if (live && !options.relayGrant && !stopped && !offered)
+          localCandidateDeadline = setTimeout(() => gathered(true), 2000);
+      }).catch(() => stop('offer_failed'));
+  };
+  emit();
+  try {
+    if (options.relayGrant) openSignaling();
+    else createPeer({ iceServers: iceConfig.iceServers, bundlePolicy: 'max-bundle' });
+  } catch { stop('webrtc_unavailable'); }
+  return () => stop();
+}

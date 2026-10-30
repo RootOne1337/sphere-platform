@@ -1,0 +1,52 @@
+'use client';
+import {useEffect,useRef,useState} from 'react';
+import {Gauge,RefreshCw} from 'lucide-react';
+import {api} from '@/lib/api';
+import {Button} from '@/components/ui/button';
+import {parseStreamQuality,type StreamQualitySnapshot} from './streamQuality';
+export type CaptureQuality={cadence_policy?:string;received_encoded_fps:number|null;received_bitrate_bps:number|null;max_media_gap_ms:number;
+  p95_media_gap_ms?:number|null;gaps_over_25ms?:number;gaps_over_50ms?:number;gaps_over_100ms?:number;cadence_60fps_confirmed?:boolean;
+  gaps_over_200ms:number;gaps_over_500ms:number;disk_queue_high_water_bytes:number;max_disk_write_ms:number;
+  cadence_30fps_confirmed:boolean;measured_seconds:number};
+export function TeachingCaptureSetup({deviceId,disabled,quality,onConfirmedTarget}:{deviceId:string;disabled:boolean;quality:CaptureQuality|null;onConfirmedTarget?:(fps:number|null)=>void}) {
+  const [busy,setBusy]=useState(false),[uncertain,setUncertain]=useState(false),[notice,setNotice]=useState('Профиль применяется только к выбранному Android. Другие устройства сохраняют свои настройки.');
+  const [snapshot,setSnapshot]=useState<StreamQualitySnapshot|null>(null);
+  const request=useRef<AbortController|null>(null);
+  useEffect(()=>()=>request.current?.abort(),[deviceId]);
+  const apply=async(read=false,fps=30)=>{
+    if(disabled||request.current||!read&&uncertain)return;
+    const controller=new AbortController();request.current=controller;setBusy(true);
+    try{
+      const path=`/streaming/${encodeURIComponent(deviceId)}/quality`;
+      const {data}=read?await api.get(path,{signal:controller.signal,timeout:12000}):await api.post(path,
+        {profile:'detail',max_fps:fps,max_bitrate_bps:24_000_000},{signal:controller.signal,timeout:12000});
+      if(controller.signal.aborted)return;
+      const result=parseStreamQuality(data);if(!result?.supported)throw Error('quality_not_confirmed');
+      if(!read&&(result.settings.profile!=='detail'||result.settings.max_fps!==fps||result.settings.max_bitrate_bps!==24_000_000))throw Error('quality_mismatch');
+      setUncertain(false);
+      setSnapshot(result);
+      onConfirmedTarget?.(result.active?.target_fps??null);
+      const a=result.active;
+      setNotice(a?`Android подтвердил ${a.width} × ${a.height}. Настройка и фактическая запись проверяются отдельно.`:'Android подтвердил настройки; активный поток сейчас не подтверждён.');
+    }catch{if(!controller.signal.aborted){setSnapshot(null);onConfirmedTarget?.(null);setUncertain(true);setNotice('Подтверждение не получено. Настройки могли примениться. Сначала прочитайте состояние; повтор автоматически не отправляется.');}}
+    finally{if(request.current===controller)request.current=null;if(!controller.signal.aborted)setBusy(false);}
+  };
+  return <section aria-label="Подготовка качественной съёмки" className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-4">
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="flex items-center gap-2 text-sm font-semibold"><Gauge size={17}/>Master capture · исходное разрешение</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">Полученный H.264 сохраняется без перекодирования и добавления кадров. Для съёмки: Full HD, рендер игры100%, стабильная камера.</p></div>
+    <div className="flex flex-wrap gap-2"><Button size="sm" disabled={disabled||busy||uncertain} onClick={()=>{void apply();}}>Съёмка · 30 FPS / 24 Мбит</Button><Button size="sm" variant="outline" disabled={disabled||busy||uncertain||!snapshot?.active||snapshot.active.source_fps<60||snapshot.active.codec_max_fps<60} onClick={()=>{void apply(false,60);}}>Съёмка · 60 FPS / 24 Мбит</Button><Button size="sm" variant="outline" disabled={disabled||busy} onClick={()=>{void apply(true);}} aria-label="Проверить настройки съёмки"><RefreshCw size={14}/></Button></div></div>
+    <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{notice}</p>
+    <p className="mt-1 text-xs text-muted-foreground">60 FPS доступно для запроса после проверки источника и кодека; фактическая частота определяется по сохранённым кадрам.</p>
+    {snapshot?.active&&<div aria-label="Настройки и ограничения источника" className="mt-3 grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
+      {[
+        ['Источник',`${snapshot.active.source_fps} FPS`],
+        ['Кодек',`до ${snapshot.active.codec_max_fps} FPS`],
+        ['Цель',`${snapshot.active.target_fps} FPS`],
+        ['Предел источника',`${(snapshot.active.max_bitrate_bps/1e6).toFixed(1)} Мбит/с`],
+        ['Текущая цель',`${(snapshot.active.target_bitrate_bps/1e6).toFixed(1)} Мбит/с`],
+        ['Адаптация',snapshot.active.adaptation==='webrtc'?'WebRTC':snapshot.active.adaptation==='legacy_queue'?'Очередь':'Источник'],
+      ].map(([label,value])=><div key={label} className="rounded-lg border border-border/70 bg-background/50 px-3 py-2 text-xs"><p className="text-muted-foreground">{label}</p><p className="mt-1 font-medium tabular-nums">{value}</p></div>)}
+    </div>}
+    {snapshot?.active&&snapshot.settings.max_bitrate_bps!==null&&snapshot.active.max_bitrate_bps<snapshot.settings.max_bitrate_bps&&<p className="mt-2 text-xs leading-5 text-amber-500">Запрошено до {(snapshot.settings.max_bitrate_bps/1e6).toFixed(1)} Мбит/с, но активный предел — {(snapshot.active.max_bitrate_bps/1e6).toFixed(1)} Мбит/с. Это ограничение источника; фактический битрейт и FPS видны в записи.</p>}
+    {quality&&<><div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs tabular-nums"><strong className={quality.cadence_policy==='rtp-30fps-gap50-v1'&&quality.cadence_30fps_confirmed?'text-emerald-500':'text-amber-500'}>{quality.received_encoded_fps?.toFixed(1)??'—'} FPS приёма · {quality.cadence_policy!=='rtp-30fps-gap50-v1'?'старая проверка ритма':quality.cadence_30fps_confirmed?'ритм 30 FPS подтверждён по RTP':'ровный ритм 30 FPS не подтверждён'}</strong>{quality.cadence_60fps_confirmed!==undefined&&<span className={quality.cadence_60fps_confirmed?'text-emerald-500':'text-muted-foreground'}>{quality.cadence_60fps_confirmed?'ритм 60 FPS подтверждён по RTP':'60 FPS не подтверждены'}</span>}<span>{quality.received_bitrate_bps==null?'—':(quality.received_bitrate_bps/1e6).toFixed(2)} Мбит/с</span><span>Интервал p95 {quality.p95_media_gap_ms==null?'—':`≤ ${quality.p95_media_gap_ms} мс`}</span><span>Макс. интервал {quality.max_media_gap_ms.toFixed(1)} мс</span><span>Интервалы &gt;25 мс: {quality.gaps_over_25ms??'—'} · &gt;50 мс: {quality.gaps_over_50ms??'—'}</span><span>Интервалы &gt;200 мс: {quality.gaps_over_200ms}</span><span>Пик очереди диска {(quality.disk_queue_high_water_bytes/1048576).toFixed(2)} МБ</span></div><p className="mt-2 text-xs leading-5 text-muted-foreground">По принятым меткам RTP: для 30 FPS требуется среднее не ниже 29,5 и отсутствие интервалов больше 50 мс; для 60 FPS — не ниже 59 и без интервалов больше 25 мс. Качество исходных пикселей и потери до кодирования не измеряются.</p></>}
+  </section>;
+}

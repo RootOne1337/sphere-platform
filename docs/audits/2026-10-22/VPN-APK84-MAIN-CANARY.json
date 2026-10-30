@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T10:41:52.227211+00:00",
+  "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+  "device": "auto-ph-011",
+  "android": 9,
+  "apkVersionCode": 10284,
+  "apkDeliveryEvidence": "docs/audits/2026-10-22/VPN-APK84-PH011-DELIVERY.json",
+  "apiSource": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+  "operationSessionId": "b41851a1-4975-489c-86bb-1dbe0b9a957b",
+  "selectedPackage": "com.sphereplatform.awgclientprobe",
+  "selectedUid": 10108,
+  "controlUid": 10082,
+  "steps": [
+    {
+      "step": "before",
+      "commandId": "f1488083-5ad8-43fc-bd82-d19eb9549d5c",
+      "phase": "IDLE",
+      "providerPid": 22801,
+      "sameControlSession": true,
+      "sessionId": null
+    },
+    {
+      "step": "apply",
+      "commandId": "fe479ae0-57a8-4bd9-beea-014fab4901dc",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 22801,
+      "sameControlSession": true,
+      "sessionId": "b41851a1-4975-489c-86bb-1dbe0b9a957b"
+    },
+    {
+      "step": "active",
+      "commandId": "660d7f11-408e-4c5e-bb33-8b6d594be996",
+      "phase": "HANDSHAKE_CONFIRMED",
+      "providerPid": 22801,
+      "sameControlSession": true,
+      "sessionId": "b41851a1-4975-489c-86bb-1dbe0b9a957b"
+    },
+    {
+      "step": "pause",
+      "commandId": "1ab996b5-e48e-4769-b423-146e74fb1989",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 22801,
+      "sameControlSession": true,
+      "sessionId": "b41851a1-4975-489c-86bb-1dbe0b9a957b"
+    },
+    {
+      "step": "resume",
+      "commandId": "7fbe57e1-cd36-4300-b490-18cb6c3e956c",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 22801,
+      "sameControlSession": true,
+      "sessionId": "b41851a1-4975-489c-86bb-1dbe0b9a957b"
+    },
+    {
+      "step": "resumed",
+      "commandId": "98c11ba9-5cdf-48b2-9915-a948633f5315",
+      "phase": "HANDSHAKE_CONFIRMED",
+      "providerPid": 22801,
+      "sameControlSession": true,
+      "sessionId": "b41851a1-4975-489c-86bb-1dbe0b9a957b"
+    },
+    {
+      "step": "disconnect",
+      "commandId": "ad0a8879-d0ec-49e8-b6c1-13a09c61a8ab",
+      "phase": "DISCONNECTED_CONFIRMED",
+      "providerPid": 22801,
+      "sameControlSession": true,
+      "sessionId": "b41851a1-4975-489c-86bb-1dbe0b9a957b"
+    }
+  ],
+  "allDeviceVpnCommandsThroughSphere": true,
+  "diagnosticFileStagingTransport": "local ADB; no VPN config/key file staged",
+  "configDelivery": "catalog-encrypted then operation-bound RSA/AES sealed RPC",
+  "serverProductionJournalClaimed": false,
+  "automaticPhysicalRetries": 0,
+  "offlineQueueUsed": false,
+  "baselineTcp": "uid=10108 connected=1 errno=0\nuid=10082 connected=1 errno=0\n",
+  "activeTcp": "uid=10108 connected=0 errno=110\nuid=10082 connected=1 errno=0\n",
+  "pausedTcp": "uid=10108 connected=0 errno=22\nuid=10082 connected=1 errno=0\n",
+  "resumedData": {
+    "unbound": "uid=10108 connected=0 errno=110\nsource=10.66.66.62\n",
+    "bound": "uid=10108 connected=0 errno=110\nsource=10.66.66.62\n",
+    "dns": "uid=10108 dnsAnswer=0 errno=110\n",
+    "alternate": "uid=10108 connected=0 errno=110\nsource=10.66.66.62\n"
+  },
+  "markExperiment": {
+    "scope": "Only diagnostic UID; UID blackhole/default and TUN-only filter retained",
+    "withoutMarkTcp": "uid=10108 connected=1 errno=0\nsource=10.66.66.62\n",
+    "withoutMarkDns": "uid=10108 dnsAnswer=1 errno=0\n",
+    "control": "uid=10082 connected=1 errno=0\nsource=172.16.1.4\n",
+    "originalRulesRestored": true,
+    "afterRestorationTcp": "uid=10108 connected=0 errno=110\nuid=10082 connected=1 errno=0\n",
+    "classification": "Packet-mark compatibility defect reproduced on this Android 9 emulator. Not an assertion about all Android kernels."
+  },
+  "cleanup": {
+    "atUtc": "2026-10-22T10:38:29.405055+00:00",
+    "record": {
+      "operationId": "b41851a1-4975-489c-86bb-1dbe0b9a957b",
+      "selectedUids": [
+        10108
+      ],
+      "ownerUid": 10082,
+      "phase": "RELEASED",
+      "interfaceName": "tun0",
+      "interfaceIndex": 19,
+      "ipv6": "tunnel",
+      "lastMutation": "RELEASING",
+      "planVersion": 3
+    },
+    "ownedRouteTableEmpty": true,
+    "ownedUidRuleRemoved": true,
+    "ownedFilterJumpRemoved": true,
+    "ownedMangleJumpRemoved": true,
+    "ownedTunAbsent": true,
+    "mainPidUnchanged": true,
+    "fixtureRetainedForApk85": true
+  },
+  "disconnectedTcp": "uid=10108 connected=1 errno=0\nuid=10082 connected=1 errno=0\n",
+  "profileArchived": true,
+  "gameTrafficChanged": false,
+  "hostVpnChanged": false,
+  "mainProcessPreserved": true,
+  "originalGuardPhysicalVpnAccepted": false,
+  "apk85FixSource": "79ba84f980f987d8d3429dbc082b07bf39bb2834",
+  "apk85CiRunId": 39764211758,
+  "apk85CiConclusionAtThisCheckpoint": null,
+  "apk85Installed": false,
+  "productionAccepted": false
+}

@@ -1,0 +1,536 @@
+{
+  "before": {
+    "at": "2026-09-13T17:02:30.337816+00:00",
+    "phase": "before",
+    "backend_workers": 4,
+    "requests": [
+      {
+        "index": 0,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.36
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.422
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.39
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.422
+      },
+      {
+        "index": 0,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 0,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.5
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.453
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.375
+      }
+    ],
+    "both_devices_answered_before_after": true,
+    "projection_not_started": true,
+    "independent_http_connections": true
+  },
+  "after": {
+    "at": "2026-09-13T17:09:12.850695+00:00",
+    "phase": "after",
+    "backend_workers": 4,
+    "requests": [
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.39
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 1.406
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.39
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.39
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.36
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.36
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.407
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.407
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.39
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.344
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.39
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.391
+      }
+    ],
+    "both_devices_answered_before_after": true,
+    "projection_not_started": true,
+    "independent_http_connections": true
+  },
+  "projection": {
+    "at": "2026-09-13T17:09:13.388465+00:00",
+    "backend_source": "1310016",
+    "apk_source": "fdd26c5",
+    "manual_permission_actions": 0,
+    "adb_mutations": 0,
+    "viewer_frame_delivery_claimed": false,
+    "devices": [
+      {
+        "index": 0,
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "start": {
+          "status": "start_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "started": {
+          "seconds": 0.625,
+          "active": true,
+          "projection": "MEDIA PROJECTION MANAGER (dumpsys media_projection)\nMedia Projection: \n(com.sphereplatform.agent.pilot.debug, uid=10081): TYPE_SCREEN_CAPTURE"
+        },
+        "keyframe": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "permission_dialog_not_resumed": true,
+        "stop": {
+          "status": "stop_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "stopped": {
+          "seconds": 0.594,
+          "active": false,
+          "projection": "MEDIA PROJECTION MANAGER (dumpsys media_projection)\nMedia Projection: \nnull"
+        },
+        "same_apk_pid": true
+      },
+      {
+        "index": 1,
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "start": {
+          "status": "start_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "started": {
+          "seconds": 0.625,
+          "active": true,
+          "projection": "MEDIA PROJECTION MANAGER (dumpsys media_projection)\nMedia Projection: \n(com.sphereplatform.agent.pilot.debug, uid=10072): TYPE_SCREEN_CAPTURE"
+        },
+        "keyframe": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "permission_dialog_not_resumed": true,
+        "stop": {
+          "status": "stop_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "stopped": {
+          "seconds": 1.156,
+          "active": false,
+          "projection": "MEDIA PROJECTION MANAGER (dumpsys media_projection)\nMedia Projection: \nnull"
+        },
+        "same_apk_pid": true
+      }
+    ],
+    "passed": true,
+    "both_devices_answered": true,
+    "no_active_projection_after_trial": true
+  },
+  "deployment": {
+    "at": "2026-09-13T17:08:27.668033+00:00",
+    "source_commit": "1310016e757b6d2e70dc57573d2689aaee097ca3",
+    "image_id": "sha256:caa791720db9038f31c59a51f57a9f16f1ae10d140f1db0a9f2337d5362c79a8",
+    "tag": "sphere-pilot-20260911-backend:1310016",
+    "route_sha256": "02527351c619ab4d61fe8c9f72caa0b55fe512f98b2beb265dcb68597d735978",
+    "context": "git archive tracked backend/alembic/agent-config/bootstrap scripts only",
+    "previous_backend_id": "11c89f2cdd242c64dbbc903d28fd90558a7444d7c14ecc1b567efe3e481922a0",
+    "backend_id": "67a1522899a12dbb15ef8b59b74fe99b679531a86d397d294df0937ce79b70ec",
+    "only_new_backend_recreated": true,
+    "catalog_bytes_preserved": true,
+    "latest_apk_download_hash_preserved": true,
+    "old_sphere_inspect_preserved": true
+  },
+  "runtime": {
+    "at": "2026-09-13T17:09:31.758186+00:00",
+    "healthy_services": 9,
+    "old_sphere_ids_images_states_mounts_preserved": true
+  },
+  "helper_correction": "First deployment comparison treated changing Docker Mounts array order as a mutation and rolled back only the new backend. Two read-only inspect snapshots reproduced the order-only difference. Sort by Destination; redeploy and recheck. The intervening probe on the rolled-back c2d412f image was not accepted as a fixed-build result.",
+  "video_frame_delivery_not_claimed": true
+}

@@ -1,0 +1,1033 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T16:24:59.399841+00:00",
+  "scope": "Read-only YOLOE26 precision and perception throughput; no geometry, route localization or motor navigation acceptance.",
+  "baseRevision": "fdc61dce853fe544427cd1d075ec68890823c71b",
+  "workerVersion": "0.7.4",
+  "motorTestsPassed": 241,
+  "ruffPassed": true,
+  "sourceArtifacts": {
+    "motor_worker/obstacles.py": "6cff42ba12821783ac8525632723ab511c17c4d381705fd180dfdfe2c86ca8bf",
+    "motor_worker/__init__.py": "b3c9995fe9acf6c1b368f3a662f4958973291818b9f530e9d99674d35efe467a",
+    "tests/test_motor_worker_obstacles.py": "0fea9ebad55e25a7504700ac738284f7f1f4d1bcb75630debef5335245b637b0"
+  },
+  "physicalActions": 0,
+  "productionAccepted": false,
+  "upstream": {
+    "runtime": "ultralytics8.4.184 isolated overlay, unchanged torch2.9.1+rocm7.2.1",
+    "model": "yoloe-26s-seg.pt",
+    "parameters": 15272852,
+    "assets": [
+      {
+        "file": "ultralytics-8.4.184-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/9f/a6/9f12ea1984a10838e5771c530b3072fcff8e671ca2ebbbcb15d08fff2be4/ultralytics-8.4.184-py3-none-any.whl",
+        "bytes": 1429044,
+        "sha256": "d04c80f27d335fe27a057dcf00f91c843b11f99d21e7b3017616959a523bfc8a"
+      },
+      {
+        "file": "yoloe-26s-seg.pt",
+        "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yoloe-26s-seg.pt",
+        "bytes": 31072171,
+        "sha256": "48f24206bc8680d60cbbfa296b0140da849669b9515058b72f5a945142df0654"
+      },
+      {
+        "file": "mobileclip2_b.ts",
+        "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/mobileclip2_b.ts",
+        "bytes": 253794476,
+        "sha256": "35d7f213e4d75f38514e4656ad3cb91158bd33e3805d8ac349f23b186f66982f"
+      }
+    ],
+    "clipSource": {
+      "commit": "7ffa84b3bfa40c42ecc1c77147a855e69cb2dd40",
+      "assets": [
+        {
+          "file": "__init__.py",
+          "bytes": 91,
+          "sha256": "d2cca6208f9414c645149c9372c7475f38cbb3e68d712b5e0a4fcd7ca8712575",
+          "blobSha1": "0c1e50cc1cfbadd9c3e21679d31112f2f5beab25"
+        },
+        {
+          "file": "bpe_simple_vocab_16e6.txt.gz",
+          "bytes": 1356917,
+          "sha256": "924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a",
+          "blobSha1": "7b5088a527f720063f044eb928eee315f63b2fc0"
+        },
+        {
+          "file": "clip.py",
+          "bytes": 9682,
+          "sha256": "0bdc735dd0beb1525f5c10aca6a7b4ce42db2c5d97ee20dd37c84bdeeaade98c",
+          "blobSha1": "13a1091e8b4d13b49b899876a22585bc5c33a88d"
+        },
+        {
+          "file": "model.py",
+          "bytes": 21375,
+          "sha256": "3cf2b52cbb546afac2fceee38a905ebff54a8bee996378f993475ca37b9ff538",
+          "blobSha1": "0832e37e63f0c9721fbd87529ef2e01e7e0eec87"
+        },
+        {
+          "file": "simple_tokenizer.py",
+          "bytes": 7035,
+          "sha256": "e6fb15f44623f0087bc9d0bc695b383c61966c7dda4d5cc09e5e9880c1406bab",
+          "blobSha1": "d3e735613c0219cc51407f1eaf3ebfe73d70856c"
+        }
+      ]
+    },
+    "licenseDeclaredByUpstream": "AGPL-3.0",
+    "bundledInApk": false,
+    "basePythonEnvironmentModified": false,
+    "autoInstallDisabled": true,
+    "inferenceNetworkOffline": true
+  },
+  "fixtureProbes": [
+    {
+      "label": "yoloe26-fixtures-r1",
+      "precision": "fp16",
+      "device": "RX9070",
+      "completed": true,
+      "reusedSameFreshScreenshotFromFirstProbe": false,
+      "ready": {
+        "ready": true,
+        "warmupSeconds": 18.32748969993554,
+        "labels": [
+          "fence",
+          "brick wall",
+          "building",
+          "tree",
+          "car",
+          "person",
+          "bench",
+          "trash can",
+          "pole",
+          "barrier",
+          "wooden kiosk"
+        ],
+        "gpu": "AMD Radeon RX 9070",
+        "torch": "2.9.1+rocm7.2.1",
+        "baseEnvironmentModified": false
+      },
+      "samples": [
+        {
+          "id": 1,
+          "objects": [
+            {
+              "label": "bench",
+              "confidence": 0.69580078125,
+              "xyxy": [
+                0.226171875,
+                0.0016059027777777777,
+                0.705859375,
+                0.13038194444444445
+              ]
+            },
+            {
+              "label": "bench",
+              "confidence": 0.45703125,
+              "xyxy": [
+                0.2890625,
+                0.016666666666666666,
+                0.5921875,
+                0.12604166666666666
+              ]
+            },
+            {
+              "label": "bench",
+              "confidence": 0.42431640625,
+              "xyxy": [
+                0.67421875,
+                0.0022569444444444442,
+                0.90859375,
+                0.16875
+              ]
+            },
+            {
+              "label": "bench",
+              "confidence": 0.346923828125,
+              "xyxy": [
+                0.3265625,
+                0.07100694444444444,
+                0.42578125,
+                0.12135416666666667
+              ]
+            },
+            {
+              "label": "bench",
+              "confidence": 0.2239990234375,
+              "xyxy": [
+                0.64921875,
+                0.002951388888888889,
+                0.83203125,
+                0.16006944444444443
+              ]
+            }
+          ],
+          "maskPixels": [
+            14020,
+            7718,
+            7535,
+            1062,
+            5287
+          ],
+          "wallMs": 110.54140003398061,
+          "rgbSha256": "3b5ecb6b65be86ae48990fa47103a5d90329fae635bdc66865dcec76b90d1121",
+          "case": "launcher_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 129.8318998888135
+        },
+        {
+          "id": 2,
+          "objects": [
+            {
+              "label": "bench",
+              "confidence": 0.175537109375,
+              "xyxy": [
+                0.134765625,
+                0.028993055555555557,
+                0.6328125,
+                0.11024305555555555
+              ]
+            }
+          ],
+          "maskPixels": [
+            8504
+          ],
+          "wallMs": 16.294899978674948,
+          "rgbSha256": "50bdb9904fb0d9a99890f939295aaf9f1fecc2c8b29db65ada1321fc7bd52a04",
+          "case": "fence_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 37.65940002631396
+        },
+        {
+          "id": 3,
+          "objects": [
+            {
+              "label": "bench",
+              "confidence": 0.33642578125,
+              "xyxy": [
+                0.7796875,
+                0.5097222222222222,
+                1.0,
+                0.7298611111111111
+              ]
+            }
+          ],
+          "maskPixels": [
+            9036
+          ],
+          "wallMs": 14.998500002548099,
+          "rgbSha256": "1b7373b44e7512b85e93b64e7af7d38fbdb123a37354d3e25bded0a7eee378b0",
+          "case": "market_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 35.148800001479685
+        },
+        {
+          "id": 4,
+          "objects": [
+            {
+              "label": "trash can",
+              "confidence": 1.0,
+              "xyxy": [
+                0.0,
+                0.17291666666666666,
+                0.73828125,
+                0.3888888888888889
+              ]
+            },
+            {
+              "label": "trash can",
+              "confidence": 1.0,
+              "xyxy": [
+                0.49453125,
+                0.21736111111111112,
+                1.0,
+                0.6076388888888888
+              ]
+            },
+            {
+              "label": "trash can",
+              "confidence": 1.0,
+              "xyxy": [
+                0.5515625,
+                0.39444444444444443,
+                1.0,
+                0.9541666666666667
+              ]
+            },
+            {
+              "label": "trash can",
+              "confidence": 1.0,
+              "xyxy": [
+                0.57421875,
+                0.4930555555555556,
+                0.98984375,
+                1.0
+              ]
+            },
+            {
+              "label": "wooden kiosk",
+              "confidence": 0.974609375,
+              "xyxy": [
+                0.8875,
+                0.725,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "label": "trash can",
+              "confidence": 0.55810546875,
+              "xyxy": [
+                0.02451171875,
+                0.5020833333333333,
+                0.13095703125,
+                0.6270833333333333
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.1871337890625,
+              "xyxy": [
+                0.9421875,
+                0.02309027777777778,
+                0.990625,
+                0.10277777777777777
+              ]
+            }
+          ],
+          "maskPixels": [
+            18331,
+            8044,
+            942,
+            1039,
+            4189,
+            1397,
+            800
+          ],
+          "wallMs": 16.4307999657467,
+          "rgbSha256": "f48981f3fd6275b3c1fb2bae8de855c35250575efb690a5d1584544160537f87",
+          "case": "fresh",
+          "historicalFixture": false,
+          "roundTripMs": 37.018700037151575
+        },
+        {
+          "id": 5,
+          "objects": [],
+          "maskPixels": [],
+          "wallMs": 13.64430005196482,
+          "rgbSha256": "2e842802bccef91cabd2671b83639739256aa5cda053b8f72b52d63c433a700c",
+          "case": "black",
+          "historicalFixture": false,
+          "roundTripMs": 34.21730000991374
+        },
+        {
+          "id": 6,
+          "objects": [],
+          "maskPixels": [],
+          "wallMs": 16.71369990799576,
+          "rgbSha256": "0b1143d74772541f8227f3c7a0213df70398adb1f8560b3e1bbe08841c0be6d2",
+          "case": "white",
+          "historicalFixture": false,
+          "roundTripMs": 42.35000000335276
+        }
+      ],
+      "childCleanupConfirmed": true,
+      "privateReceiptSha256": "2b7c8c7b6b901da610eb1e4f96c617afd33ee6762a2edc3020254583f0e3a921"
+    },
+    {
+      "label": "yoloe26-fp32-r2",
+      "precision": "fp32",
+      "device": "RX9070",
+      "completed": true,
+      "reusedSameFreshScreenshotFromFirstProbe": true,
+      "ready": {
+        "ready": true,
+        "warmupSeconds": 15.694603499956429,
+        "labels": [
+          "fence",
+          "brick wall",
+          "building",
+          "tree",
+          "car",
+          "person",
+          "bench",
+          "trash can",
+          "pole",
+          "barrier",
+          "wooden kiosk"
+        ],
+        "device": "cuda:0",
+        "precision": "fp32",
+        "gpu": "AMD Radeon RX 9070",
+        "torch": "2.9.1+rocm7.2.1",
+        "baseEnvironmentModified": false
+      },
+      "samples": [
+        {
+          "id": 1,
+          "objects": [
+            {
+              "label": "person",
+              "confidence": 0.6547028422355652,
+              "xyxy": [
+                0.6137102762858073,
+                0.8330921314380787,
+                0.6620371500651042,
+                0.9202028627748843
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.21874207258224487,
+              "xyxy": [
+                0.8880491256713867,
+                0.8322642008463542,
+                0.9375566482543946,
+                0.92122802734375
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.1786128431558609,
+              "xyxy": [
+                0.06303343772888184,
+                0.833167408130787,
+                0.11196539402008057,
+                0.9214771412037037
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.16407060623168945,
+              "xyxy": [
+                0.7508607864379883,
+                0.8326783921983507,
+                0.8000850677490234,
+                0.9208243476019965
+              ]
+            }
+          ],
+          "maskPixels": [
+            941,
+            958,
+            953,
+            964
+          ],
+          "wallMs": 90.14099999330938,
+          "rgbSha256": "3b5ecb6b65be86ae48990fa47103a5d90329fae635bdc66865dcec76b90d1121",
+          "case": "launcher_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 109.47519994806498
+        },
+        {
+          "id": 2,
+          "objects": [
+            {
+              "label": "person",
+              "confidence": 0.920573890209198,
+              "xyxy": [
+                0.4341301918029785,
+                0.39573692039207176,
+                0.5610852559407552,
+                0.9979781539351852
+              ]
+            },
+            {
+              "label": "fence",
+              "confidence": 0.2179412692785263,
+              "xyxy": [
+                0.0,
+                0.2885709974500868,
+                0.9803090413411458,
+                0.9968045835141782
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.19470880925655365,
+              "xyxy": [
+                0.49552125930786134,
+                0.29980858696831597,
+                0.5126620292663574,
+                0.39668248494466146
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.152553528547287,
+              "xyxy": [
+                0.37123285929361977,
+                0.3054695129394531,
+                0.38952709833780924,
+                0.4237336900499132
+              ]
+            }
+          ],
+          "maskPixels": [
+            11730,
+            141785,
+            313,
+            345
+          ],
+          "wallMs": 18.51659989915788,
+          "rgbSha256": "50bdb9904fb0d9a99890f939295aaf9f1fecc2c8b29db65ada1321fc7bd52a04",
+          "case": "fence_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 41.89059999771416
+        },
+        {
+          "id": 3,
+          "objects": [
+            {
+              "label": "person",
+              "confidence": 0.8581284284591675,
+              "xyxy": [
+                0.4497984886169434,
+                0.42190848456488717,
+                0.5308173179626465,
+                0.9965865523726852
+              ]
+            },
+            {
+              "label": "wooden kiosk",
+              "confidence": 0.5004372596740723,
+              "xyxy": [
+                0.2733310063680013,
+                0.0005927191840277777,
+                0.8108187357584635,
+                0.7427088419596354
+              ]
+            }
+          ],
+          "maskPixels": [
+            6576,
+            76722
+          ],
+          "wallMs": 19.6029000217095,
+          "rgbSha256": "1b7373b44e7512b85e93b64e7af7d38fbdb123a37354d3e25bded0a7eee378b0",
+          "case": "market_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 43.1144000031054
+        },
+        {
+          "id": 4,
+          "objects": [
+            {
+              "label": "person",
+              "confidence": 0.8887661099433899,
+              "xyxy": [
+                0.44703197479248047,
+                0.421614498562283,
+                0.5462276458740234,
+                0.9706701208043982
+              ]
+            },
+            {
+              "label": "bench",
+              "confidence": 0.18466827273368835,
+              "xyxy": [
+                0.5614535013834635,
+                0.4042672899034288,
+                0.6129709879557291,
+                0.4495046827528212
+              ]
+            },
+            {
+              "label": "bench",
+              "confidence": 0.18033166229724884,
+              "xyxy": [
+                0.563558832804362,
+                0.42947235107421877,
+                0.6234490712483723,
+                0.45214250352647567
+              ]
+            }
+          ],
+          "maskPixels": [
+            8006,
+            506,
+            293
+          ],
+          "wallMs": 17.85479998216033,
+          "rgbSha256": "f48981f3fd6275b3c1fb2bae8de855c35250575efb690a5d1584544160537f87",
+          "case": "fresh",
+          "historicalFixture": false,
+          "roundTripMs": 39.92090001702309
+        },
+        {
+          "id": 5,
+          "objects": [],
+          "maskPixels": [],
+          "wallMs": 17.086499952711165,
+          "rgbSha256": "2e842802bccef91cabd2671b83639739256aa5cda053b8f72b52d63c433a700c",
+          "case": "black",
+          "historicalFixture": false,
+          "roundTripMs": 37.94670000206679
+        },
+        {
+          "id": 6,
+          "objects": [],
+          "maskPixels": [],
+          "wallMs": 16.34370000101626,
+          "rgbSha256": "0b1143d74772541f8227f3c7a0213df70398adb1f8560b3e1bbe08841c0be6d2",
+          "case": "white",
+          "historicalFixture": false,
+          "roundTripMs": 37.78199991211295
+        }
+      ],
+      "childCleanupConfirmed": true,
+      "privateReceiptSha256": "cdeb2fa34e0d16bb0747cc0fbda80f595c631a59a71a3247b14bf1b875b387e5"
+    },
+    {
+      "label": "yoloe26-cpu-r3",
+      "precision": "fp32",
+      "device": "CPU",
+      "completed": true,
+      "reusedSameFreshScreenshotFromFirstProbe": true,
+      "ready": {
+        "ready": true,
+        "warmupSeconds": 53.63327360001858,
+        "labels": [
+          "fence",
+          "brick wall",
+          "building",
+          "tree",
+          "car",
+          "person",
+          "bench",
+          "trash can",
+          "pole",
+          "barrier",
+          "wooden kiosk"
+        ],
+        "device": "cpu",
+        "precision": "fp32",
+        "gpu": "AMD Radeon RX 9070",
+        "torch": "2.9.1+rocm7.2.1",
+        "baseEnvironmentModified": false
+      },
+      "samples": [
+        {
+          "id": 1,
+          "objects": [
+            {
+              "label": "person",
+              "confidence": 0.6547024250030518,
+              "xyxy": [
+                0.6137102762858073,
+                0.8330921314380787,
+                0.6620371500651042,
+                0.9202028627748843
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.21874204277992249,
+              "xyxy": [
+                0.8880491256713867,
+                0.8322642008463542,
+                0.9375566482543946,
+                0.92122802734375
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.1786128431558609,
+              "xyxy": [
+                0.06303343772888184,
+                0.833167408130787,
+                0.11196539402008057,
+                0.9214771412037037
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.16407035291194916,
+              "xyxy": [
+                0.7508607864379883,
+                0.8326783921983507,
+                0.8000850677490234,
+                0.9208243476019965
+              ]
+            }
+          ],
+          "maskPixels": [
+            941,
+            958,
+            953,
+            964
+          ],
+          "wallMs": 253.33320000208914,
+          "rgbSha256": "3b5ecb6b65be86ae48990fa47103a5d90329fae635bdc66865dcec76b90d1121",
+          "case": "launcher_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 272.0400000689551
+        },
+        {
+          "id": 2,
+          "objects": [
+            {
+              "label": "person",
+              "confidence": 0.9205737113952637,
+              "xyxy": [
+                0.4341302235921224,
+                0.39573694864908854,
+                0.5610852559407552,
+                0.9979782669632523
+              ]
+            },
+            {
+              "label": "fence",
+              "confidence": 0.2179417610168457,
+              "xyxy": [
+                0.0,
+                0.2885708279079861,
+                0.9803093592325847,
+                0.9968044704861111
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.19470612704753876,
+              "xyxy": [
+                0.49552125930786134,
+                0.29980858696831597,
+                0.5126620292663574,
+                0.39668248494466146
+              ]
+            },
+            {
+              "label": "person",
+              "confidence": 0.15255217254161835,
+              "xyxy": [
+                0.3712328910827637,
+                0.30546945642541956,
+                0.3895271301269531,
+                0.42373371830692996
+              ]
+            }
+          ],
+          "maskPixels": [
+            11730,
+            141785,
+            313,
+            345
+          ],
+          "wallMs": 156.6252000629902,
+          "rgbSha256": "50bdb9904fb0d9a99890f939295aaf9f1fecc2c8b29db65ada1321fc7bd52a04",
+          "case": "fence_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 179.55660005100071
+        },
+        {
+          "id": 3,
+          "objects": [
+            {
+              "label": "person",
+              "confidence": 0.8581284284591675,
+              "xyxy": [
+                0.4497984250386556,
+                0.4219083997938368,
+                0.5308173497517904,
+                0.9965865523726852
+              ]
+            },
+            {
+              "label": "wooden kiosk",
+              "confidence": 0.5004372596740723,
+              "xyxy": [
+                0.2733309745788574,
+                0.0005927191840277777,
+                0.8108187357584635,
+                0.7427087289315683
+              ]
+            }
+          ],
+          "maskPixels": [
+            6576,
+            76722
+          ],
+          "wallMs": 166.16019990760833,
+          "rgbSha256": "1b7373b44e7512b85e93b64e7af7d38fbdb123a37354d3e25bded0a7eee378b0",
+          "case": "market_fixture",
+          "historicalFixture": true,
+          "roundTripMs": 190.66659989766777
+        },
+        {
+          "id": 4,
+          "objects": [
+            {
+              "label": "person",
+              "confidence": 0.8887651562690735,
+              "xyxy": [
+                0.44703197479248047,
+                0.4216143572771991,
+                0.5462276458740234,
+                0.9706700077763311
+              ]
+            },
+            {
+              "label": "bench",
+              "confidence": 0.18466725945472717,
+              "xyxy": [
+                0.5614534378051758,
+                0.4042672899034288,
+                0.6129709243774414,
+                0.4495046827528212
+              ]
+            },
+            {
+              "label": "bench",
+              "confidence": 0.1803322434425354,
+              "xyxy": [
+                0.563558832804362,
+                0.42947235107421877,
+                0.6234490076700846,
+                0.45214250352647567
+              ]
+            }
+          ],
+          "maskPixels": [
+            8006,
+            506,
+            293
+          ],
+          "wallMs": 269.29690001998097,
+          "rgbSha256": "f48981f3fd6275b3c1fb2bae8de855c35250575efb690a5d1584544160537f87",
+          "case": "fresh",
+          "historicalFixture": false,
+          "roundTripMs": 293.6697999248281
+        },
+        {
+          "id": 5,
+          "objects": [],
+          "maskPixels": [],
+          "wallMs": 202.163300011307,
+          "rgbSha256": "2e842802bccef91cabd2671b83639739256aa5cda053b8f72b52d63c433a700c",
+          "case": "black",
+          "historicalFixture": false,
+          "roundTripMs": 226.1126000666991
+        },
+        {
+          "id": 6,
+          "objects": [],
+          "maskPixels": [],
+          "wallMs": 123.18009999580681,
+          "rgbSha256": "0b1143d74772541f8227f3c7a0213df70398adb1f8560b3e1bbe08841c0be6d2",
+          "case": "white",
+          "historicalFixture": false,
+          "roundTripMs": 146.20029996149242
+        }
+      ],
+      "childCleanupConfirmed": true,
+      "privateReceiptSha256": "9721ee534904d2b15476b7df8a0b09b59f42e6e9eb41ed9e178fff6bf71bf456"
+    }
+  ],
+  "liveProbes": [
+    {
+      "label": "yoloe26-live-r4",
+      "atUtc": "2026-10-23T16:12:54.227775+00:00",
+      "completed": true,
+      "pipeline": null,
+      "pipelineSha256": null,
+      "timing": {
+        "samples": 125,
+        "within250ms": 125,
+        "receiverAgeP95Ms": 103.53780002333224,
+        "averageHz": 4.9911901870430215,
+        "minPerFullSecond": 5,
+        "fullSecondWindows": 24,
+        "maxResultGapMs": 279.4492000248283,
+        "modelWallMedianMs": 18.682199995964766
+      },
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 9,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": false,
+        "dataChannelId": null,
+        "maxPacketLifeTimeMs": null,
+        "dataChannelOpened": false,
+        "nativeAdmissionConfirmed": false,
+        "actorAliveReceipts": 0,
+        "lastActorRttMs": null,
+        "participantClosedConfirmed": false,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0,
+        "availabilityState": null,
+        "rttTail": [],
+        "rttTailLimit": 64
+      },
+      "decodedFpsDuringMonitor": 31.831,
+      "nativeActions": 0,
+      "sceneAssessmentAdmitted": false,
+      "childCleanupConfirmed": true,
+      "privateReceiptSha256": "565755a9923e5cccfff826e6f2c5a35b7abf931587853270e892cfc64ea394d8"
+    },
+    {
+      "label": "yoloe26-bound-live-r5",
+      "atUtc": "2026-10-23T16:16:16.521381+00:00",
+      "completed": true,
+      "pipeline": {
+        "modelSha256": "48f24206bc8680d60cbbfa296b0140da849669b9515058b72f5a945142df0654",
+        "textEncoderSha256": "35d7f213e4d75f38514e4656ad3cb91158bd33e3805d8ac349f23b186f66982f",
+        "ultralytics": "8.4.184",
+        "torch": "2.9.1+rocm7.2.1",
+        "device": "cuda:0",
+        "precision": "fp32",
+        "classes": [
+          "fence",
+          "brick wall",
+          "building",
+          "tree",
+          "car",
+          "person",
+          "bench",
+          "trash can",
+          "pole",
+          "barrier",
+          "wooden kiosk"
+        ],
+        "transform": "RGB24-to-BGR-letterbox640",
+        "confidence": 0.15,
+        "maxDetections": 40
+      },
+      "pipelineSha256": "1b3e73e03d94ff164fb86424ed04bc433171160be87dc385d293e3258fa8e77d",
+      "timing": {
+        "samples": 75,
+        "within250ms": 75,
+        "receiverAgeP95Ms": 115.47269998118281,
+        "averageHz": 4.989054318205764,
+        "minPerFullSecond": 5,
+        "fullSecondWindows": 14,
+        "maxResultGapMs": 285.7533999485895,
+        "modelWallMedianMs": 20.109999924898148
+      },
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 5,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": false,
+        "dataChannelId": null,
+        "maxPacketLifeTimeMs": null,
+        "dataChannelOpened": false,
+        "nativeAdmissionConfirmed": false,
+        "actorAliveReceipts": 0,
+        "lastActorRttMs": null,
+        "participantClosedConfirmed": false,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0,
+        "availabilityState": null,
+        "rttTail": [],
+        "rttTailLimit": 64
+      },
+      "decodedFpsDuringMonitor": 31.363,
+      "nativeActions": 0,
+      "sceneAssessmentAdmitted": false,
+      "childCleanupConfirmed": true,
+      "privateReceiptSha256": "1573083b7d7e9e0347c0fc9d22389e3f57ce260bf17fb487b4494d7ec8a3eb43"
+    }
+  ],
+  "acceptance": {
+    "singleDeviceFreshPerception5HzReadOnly": true,
+    "fp16Pipeline": false,
+    "obstacleProvider": false,
+    "freeSpaceGeometry": false,
+    "roadNavigation": false,
+    "routeLocalization": false,
+    "learnedGoalNavigation": false,
+    "arrival": false,
+    "fleetCapacity": false,
+    "sourceCaptureToActionLatency": false
+  },
+  "frameStorage": {
+    "continuousArchiveEnabled": false,
+    "newPublicImages": 0,
+    "historicalFixturesUsedForTestingOnly": true
+  },
+  "limitations": [
+    "A detector label/box is not traversability, depth or dynamic collision clearance.",
+    "Fence score below default0.25; launcher has false person boxes.",
+    "FP16 failure observed only for this exact pipeline, not attributed to a specific kernel.",
+    "Model and inference pipeline fingerprints are separate; this contract does not attest semantic quality.",
+    "No goal encoder, route follower, camera or jump executor was added.",
+    "One observer runner required owned-process cleanup after its complete report; shutdown robustness not accepted."
+  ],
+  "cpuFp32Agreement": {
+    "sameLabelsAndObjectCountsAcrossSixCases": true,
+    "maxAbsConfidenceDifference": 2.682209014892578e-06,
+    "maxAbsNormalizedBoxDifference": 3.1789143883909077e-07
+  },
+  "ownedOuterProcessCleanup": {
+    "stoppedOwnedFinishedPilot": [
+      44576,
+      47196
+    ],
+    "receiptCompleted": true,
+    "modelProcessesRemaining": 0,
+    "reason": "Finite report was saved; outer asyncio runner did not exit after completion"
+  },
+  "additionalReceiverExitProbe": {
+    "success": false,
+    "failure": "video_or_control_setup_deadline",
+    "failurePhase": "monitoring",
+    "decodedFrames": 0,
+    "capture": null,
+    "remainingTasks": [],
+    "remainingThreads": [
+      {
+        "name": "MainThread",
+        "daemon": false
+      }
+    ],
+    "asyncioExitConfirmed": true
+  },
+  "finalWindowsMemory": {
+    "availableRamBytes": 10860240896,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 69305917440,
+    "commitLimitBytes": 101336473600,
+    "kernelPagedBytes": 10149765120,
+    "kernelNonpagedBytes": 5706858496,
+    "processCount": 439,
+    "handleCount": 1000100
+  }
+}

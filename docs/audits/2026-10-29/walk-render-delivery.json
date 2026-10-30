@@ -1,0 +1,64 @@
+{
+  "schema": "sphere-walk-render-check-v1",
+  "geometry": {
+    "cameras": 174,
+    "points": 14622,
+    "sha256": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a"
+  },
+  "physicalActions": 0,
+  "controlled": {
+    "durationSeconds": 8,
+    "targetUpdatesHz": 10,
+    "baseline": {
+      "reactP50Ms": 29.6,
+      "reactP95Ms": 41.2,
+      "reactMaxMs": 54.8,
+      "maxFrameGapMs": 316.7,
+      "over250Ms": 4,
+      "animationFrames": 72,
+      "svgCircles": 14764
+    },
+    "canvas": {
+      "reactP50Ms": 1,
+      "reactP95Ms": 10.6,
+      "reactMaxMs": 14.8,
+      "maxFrameGapMs": 33.3,
+      "over250Ms": 0,
+      "animationFrames": 479,
+      "svgCircles": 176
+    }
+  },
+  "exploratory": {
+    "baseline": {
+      "maxFrameGapMs": 283.5,
+      "over250Ms": 7
+    },
+    "canvasFirst": {
+      "maxFrameGapMs": 16.9,
+      "over250Ms": 0
+    },
+    "canvasConcurrentOtherWork": {
+      "maxFrameGapMs": 500,
+      "over250Ms": 1
+    }
+  },
+  "limits": [
+    "UI benchmark, not live Android end-to-end latency",
+    "One measured controlled pair, not a latency SLA",
+    "Real A-to-B repeat still not verified"
+  ],
+  "validation": {
+    "frontendTests": 69,
+    "pythonTests": 34,
+    "pythonSubtests": 5,
+    "tsc": "passed",
+    "productionBuild": "passed",
+    "sourceFingerprint": "92481a030111f746b18013c6055c1a6979a02b20e08d080881f668cee06e3467",
+    "installedImage": "sha256:815c72178dc9bb4cc8da82acd75aa70d09730933767a2d4a0f89a0e4bb957172",
+    "httpPages": 2,
+    "httpAssets": 31,
+    "recorderWorkerUnchanged": true,
+    "otherContainersPreserved": true,
+    "geometryAndSourcePreserved": true
+  }
+}

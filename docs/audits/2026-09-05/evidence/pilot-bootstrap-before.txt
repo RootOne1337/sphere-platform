@@ -1,0 +1,66 @@
+FFFFFFFF                                                                 [100%]
+================================== FAILURES ===================================
+____ test_shipped_seed_runs_and_device_is_visible_to_the_intended_operator ____
+tests\production\test_pilot_enrollment_bootstrap.py:37: in test_shipped_seed_runs_and_device_is_visible_to_the_intended_operator
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:32: in main
+    from backend.database.engine import Base, async_engine, async_session_maker
+E   ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\database\engine.py)
+_______ test_repeated_seed_reuses_one_key_without_printing_key_material _______
+tests\production\test_pilot_enrollment_bootstrap.py:54: in test_repeated_seed_reuses_one_key_without_printing_key_material
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:32: in main
+    from backend.database.engine import Base, async_engine, async_session_maker
+E   ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\database\engine.py)
+_ test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[revoked] __
+tests\production\test_pilot_enrollment_bootstrap.py:67: in test_retry_does_not_silently_reactivate_or_rebind_an_existing_key
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:32: in main
+    from backend.database.engine import Base, async_engine, async_session_maker
+E   ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\database\engine.py)
+_ test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[expired] __
+tests\production\test_pilot_enrollment_bootstrap.py:67: in test_retry_does_not_silently_reactivate_or_rebind_an_existing_key
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:32: in main
+    from backend.database.engine import Base, async_engine, async_session_maker
+E   ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\database\engine.py)
+_ test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[permissions] _
+tests\production\test_pilot_enrollment_bootstrap.py:67: in test_retry_does_not_silently_reactivate_or_rebind_an_existing_key
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:32: in main
+    from backend.database.engine import Base, async_engine, async_session_maker
+E   ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\database\engine.py)
+_ test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[organization] _
+tests\production\test_pilot_enrollment_bootstrap.py:67: in test_retry_does_not_silently_reactivate_or_rebind_an_existing_key
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:32: in main
+    from backend.database.engine import Base, async_engine, async_session_maker
+E   ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\database\engine.py)
+________ test_missing_key_is_a_bootstrap_failure_not_reported_success _________
+tests\production\test_pilot_enrollment_bootstrap.py:89: in test_missing_key_is_a_bootstrap_failure_not_reported_success
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:32: in main
+    from backend.database.engine import Base, async_engine, async_session_maker
+E   ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\database\engine.py)
+___ test_missing_operator_organization_does_not_create_an_unrelated_tenant ____
+tests\production\test_pilot_enrollment_bootstrap.py:99: in test_missing_operator_organization_does_not_create_an_unrelated_tenant
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:32: in main
+    from backend.database.engine import Base, async_engine, async_session_maker
+E   ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\database\engine.py)
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_shipped_seed_runs_and_device_is_visible_to_the_intended_operator
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_repeated_seed_reuses_one_key_without_printing_key_material
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[revoked]
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[expired]
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[permissions]
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[organization]
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_missing_key_is_a_bootstrap_failure_not_reported_success
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_missing_operator_organization_does_not_create_an_unrelated_tenant
+8 failed, 1 warning in 1.75s

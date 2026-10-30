@@ -1,0 +1,98 @@
+{
+  "observedAt": "2026-10-06T12:05:49.867479+00:00",
+  "workflows": [
+    {
+      "conclusion": "success",
+      "databaseId": 37458851911,
+      "headSha": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "jobs": [
+        {
+          "name": "Tests",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Production image bootstrap",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "RLS Policy Coverage",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Alembic Single Head",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37458851911",
+      "workflowName": "CI — Backend"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37458852117,
+      "headSha": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "jobs": [
+        {
+          "name": "Android tests and signed release smoke build",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37458852117",
+      "workflowName": "CI — Android"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37458852144,
+      "headSha": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "jobs": [
+        {
+          "name": "guard",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "skipped"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37458852144",
+      "workflowName": "Preview — Deploy"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37458852783,
+      "headSha": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37458852783",
+      "workflowName": "CI — Frontend"
+    }
+  ],
+  "allFourCompletedSuccess": true,
+  "previewDeploymentPerformed": false,
+  "sourceRevision": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb"
+}

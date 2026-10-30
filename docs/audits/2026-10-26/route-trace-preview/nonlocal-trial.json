@@ -1,0 +1,105 @@
+{
+  "scope": "NONLOCAL_CORRESPONDENCE_TRIAL_NOT_NAVIGATION",
+  "registered": 168,
+  "selected": 169,
+  "components": 1,
+  "points": 46100,
+  "meanReprojectionPx": 0.9159307205304658,
+  "newPairs": 700,
+  "sourceManifestSha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+  "temporal": {
+    "schema": "sphere-camera-temporal-audit-v1",
+    "views": 168,
+    "first_seconds": 0.0,
+    "last_seconds": 49.007,
+    "path_units": 40.77626018568719,
+    "endpoint_displacement_units": 7.671107118858682,
+    "median_step_units": 0.16380746625730833,
+    "max_step_units": 7.266807139288991,
+    "rapid_reversals": [
+      {
+        "view": 22,
+        "image": "00000065.png",
+        "seconds": 6.283
+      },
+      {
+        "view": 98,
+        "image": "00000296.png",
+        "seconds": 28.47
+      },
+      {
+        "view": 99,
+        "image": "00000299.png",
+        "seconds": 28.752
+      },
+      {
+        "view": 139,
+        "image": "00000419.png",
+        "seconds": 40.253
+      },
+      {
+        "view": 140,
+        "image": "00000426.png",
+        "seconds": 40.903
+      }
+    ],
+    "median_rate_units_per_second": 0.5747245649983485,
+    "speed_outliers": [
+      {
+        "view": 23,
+        "image": "00000069.png",
+        "seconds": 6.666,
+        "interval_seconds": 0.383,
+        "median_rate_ratio": 27.790633750171892
+      },
+      {
+        "view": 140,
+        "image": "00000426.png",
+        "seconds": 40.903,
+        "interval_seconds": 0.65,
+        "median_rate_ratio": 19.452280226174008
+      }
+    ],
+    "warning": "poses_require_temporal_review",
+    "heuristic_only": true,
+    "metric_scale": null,
+    "navigation_qualified": false,
+    "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+  },
+  "heldoutIndices": [
+    1,
+    22,
+    45,
+    68,
+    89,
+    112,
+    134,
+    156,
+    179,
+    200,
+    222,
+    245,
+    267,
+    289,
+    311,
+    332,
+    355,
+    378,
+    399,
+    422,
+    444,
+    466,
+    488,
+    510
+  ],
+  "sourceOverwritten": false,
+  "physicalActions": 0,
+  "gaussianTraining": false,
+  "elapsedSeconds": 347.7029999999795,
+  "adopted": false,
+  "rejectionReason": "temporal_jumps_and_reversals_remain_after_nonlocal_matches",
+  "privateScriptSha256": "18f390afa53394d10bbb4eafa1472b5771b5b9772977c631029a997bdbde9153",
+  "sourceDatabaseCopyMode": "SQLite backup API",
+  "sourceImagesCopyMode": "hardlinks read only by this trial",
+  "newModelDownloads": 0
+}

@@ -1,0 +1,1361 @@
+{
+  "observedAt": "2026-10-04T17:33:42.795146+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "source": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+  "diagnosticImplementationSource": "5e83e1cc6feb3504fdd1b8928aac7ec554af7f75",
+  "installedApi": {
+    "source": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+    "previousSource": "9716348018e60647dc749774acb00422d0f2cd08",
+    "observedAt": "2026-10-04T17:14:30.815083+00:00",
+    "containerId": "ec6723322cc9aec8560a3b06a37c6d22d4b602ad3b3f855892a189476c6394f0",
+    "imageId": "sha256:32b1173d05fa7e301e09481a92ca49f1e78e2a66dd6cad546f2b2d6323b7c0f5",
+    "ready": true,
+    "buildRevisionMatched": true,
+    "preservedContainers": 16,
+    "tunaPreserved": true,
+    "uiPreserved": true,
+    "apkChanged": false,
+    "otaCatalogPreserved": true,
+    "mountsPreserved": true,
+    "browserVerified": false,
+    "backendLogRotation": "20m x 5"
+  },
+  "installedUi": {
+    "source": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+    "previousSource": "9716348018e60647dc749774acb00422d0f2cd08",
+    "observedAt": "2026-10-04T17:14:45.126932+00:00",
+    "url": "http://127.0.0.1:3015",
+    "containerId": "a331484c6ef3e6433d9cbce1ef5f86fec452d8bd64009cd40217e20bf195b21b",
+    "imageId": "sha256:730240135af0e4a0bd5d1713c1ddd8c93f23c7e3af60f14b705d680bea2958b8",
+    "ready": true,
+    "preservedContainers": 16,
+    "onlyUiImageAndBuildArgumentChanged": true,
+    "apiPreserved": true,
+    "tunaPreserved": true,
+    "otaCatalogPreserved": true,
+    "browserVerified": false
+  },
+  "hostIncident": {
+    "preRebootToolObservation": {
+      "windowsFreeDiskBytes": 41000960,
+      "observedAtApprox": "2026-10-04T14:50:00Z",
+      "directKernelEnospcEvidenceObtained": false,
+      "ramObservedAt": "2026-10-04T14:57:23Z",
+      "totalRamBytes": 50668236800,
+      "availableRamBytes": 10095448064,
+      "osTotalVirtualBytes": 102267379712,
+      "osFreeVirtualBytes": 5070413824,
+      "actualPerfCommitCounterCaptured": false,
+      "wslWorkingSetBytes": 8992907264,
+      "wslPrivateBytes": 24907317248,
+      "memoryCompressionWorkingSetBytes": 10860617728,
+      "rawToolObservationSanitizedIntoThisReport": true
+    },
+    "lastBoot": "2026-10-04T16:39:32.500000Z",
+    "postRebootToolObservation": {
+      "observedAt": "2026-10-04T16:55:53Z",
+      "windowsFreeDiskBytes": 43978809344,
+      "totalRamBytes": 50668236800,
+      "availableRamBytes": 20599902208,
+      "committedBytes": 45958873088,
+      "commitLimitBytes": 95153381376,
+      "pagefileAllocatedBytes": 44484788224
+    },
+    "longTermRamLeakRootCause": "UNDETERMINED",
+    "windowsPagefileChangedByAgent": false,
+    "wslGlobalConfigurationChanged": false,
+    "otherWslDistributionsTerminated": false
+  },
+  "disk": {
+    "dockerVhdLogicalBytes": 234731077632,
+    "dockerVhdAllocatedBytes": 234731077632,
+    "dockerVhdSparseAttribute": false,
+    "vhdCompactionPerformed": false,
+    "dockerImageAccountingBefore": "199GB",
+    "dockerImageAccountingAfterScopedRetention": "195.9GB",
+    "dockerImageAndBuildCacheOverlap": true,
+    "buildCacheBefore": {
+      "records": 786,
+      "totalRecordSizeBytes": 86935621017,
+      "reclaimableRecordBytes": 86935621017,
+      "sharedRecordBytes": 81467565691,
+      "reclaimablePrivateRecordBytes": 5468055326
+    },
+    "dockerVolumesReportedBytesApprox": 7052000000,
+    "volumeDeletionPerformed": false,
+    "localPilotBytesAfterCleanup": 3978829989,
+    "junctionsFollowedForLocalInventory": false,
+    "containerLogDirectoriesKiB": 316236,
+    "apiAppStorageKiB": 197728,
+    "contextsCleanup": {
+      "contexts": 19,
+      "logicalBytesRemoved": 436241289,
+      "freeAfter": 559923200,
+      "currentBuildContextsPreserved": true
+    },
+    "nextCachesCleanup": {
+      "caches": 31,
+      "bytesRemoved": 8812332358,
+      "freeAfter": 9162141696,
+      "nodeModulesAndRuntimeBuildsPreserved": true
+    },
+    "imageCleanup": {
+      "finishedAt": "2026-10-04T17:01:29.384094+00:00",
+      "imageCount": 53,
+      "all46ContainerIdsImagesEpochsPreserved": true,
+      "dataVolumesPreserved": true,
+      "otherProjectsExcluded": true
+    },
+    "selectedImageLogicalBytesNotUnique": 10574108359
+  },
+  "memory": {
+    "earlierFiveMinuteWindow": {
+      "samples": 21,
+      "startedAt": "2026-10-04T16:59:26.6410489Z",
+      "finishedAt": "2026-10-04T17:04:34.2432412Z",
+      "commitFirstBytes": 46961168384,
+      "commitLastBytes": 47507779584,
+      "freeRamFirstBytes": 21015543808,
+      "freeRamLastBytes": 21357133824,
+      "topPrivateGrowth": [
+        {
+          "name": "browser",
+          "privateBytesDelta": 245145600,
+          "workingSetBytesDelta": 164876288
+        },
+        {
+          "name": "vmmemWSL",
+          "privateBytesDelta": 201502720,
+          "workingSetBytesDelta": -1639366656
+        },
+        {
+          "name": "ChatGPT",
+          "privateBytesDelta": 29564928,
+          "workingSetBytesDelta": 3248128
+        },
+        {
+          "name": "pwsh",
+          "privateBytesDelta": 27770880,
+          "workingSetBytesDelta": 48721920
+        },
+        {
+          "name": "svchost",
+          "privateBytesDelta": 7790592,
+          "workingSetBytesDelta": 20992000
+        },
+        {
+          "name": "Spotify",
+          "privateBytesDelta": 7639040,
+          "workingSetBytesDelta": 12599296
+        }
+      ],
+      "wsl": {
+        "name": "vmmemWSL",
+        "privateBytesDelta": 201502720,
+        "workingSetBytesDelta": -1639366656
+      },
+      "leakConclusion": "No long-term leak conclusion from five-minute window"
+    },
+    "currentFiniteWindow": {
+      "samples": 25,
+      "nominalIntervalSeconds": 30,
+      "startedAt": "2026-10-04T17:16:06.054245+00:00",
+      "finishedAt": "2026-10-04T17:28:06.056781+00:00",
+      "durationSeconds": 720.003,
+      "lastBoot": "2026-10-04T16:39:32.5000000Z",
+      "deviceCommandsSent": false,
+      "windowsBytes": {
+        "committedBytes": {
+          "first": 50915508224,
+          "last": 51389882368,
+          "minimum": 50846769152,
+          "maximum": 51389882368,
+          "delta": 474374144
+        },
+        "availableRamBytes": {
+          "first": 18526568448,
+          "last": 20745273344,
+          "minimum": 18526568448,
+          "maximum": 20857520128,
+          "delta": 2218704896
+        },
+        "freeDiskBytes": {
+          "first": 43639865344,
+          "last": 43634450432,
+          "minimum": 43624554496,
+          "maximum": 43643330560,
+          "delta": -5414912
+        },
+        "poolNonpagedBytes": {
+          "first": 2047832064,
+          "last": 2078081024,
+          "minimum": 2047832064,
+          "maximum": 2078081024,
+          "delta": 30248960
+        },
+        "poolPagedBytes": {
+          "first": 2315231232,
+          "last": 2323300352,
+          "minimum": 2314940416,
+          "maximum": 2323300352,
+          "delta": 8069120
+        }
+      },
+      "commitLimitBytes": 95153381376,
+      "totalRamBytes": 50668236800,
+      "sameEpochProcessChanges": [
+        {
+          "name": "browser",
+          "privateBytesDelta": 13053952,
+          "workingSetBytesDelta": -361201664,
+          "sameEpochProcesses": 23
+        },
+        {
+          "name": "Docker Desktop",
+          "privateBytesDelta": 8617984,
+          "workingSetBytesDelta": -27541504,
+          "sameEpochProcesses": 4
+        },
+        {
+          "name": "BlueStacksServices",
+          "privateBytesDelta": 3637248,
+          "workingSetBytesDelta": 5316608,
+          "sameEpochProcesses": 4
+        },
+        {
+          "name": "parsecd",
+          "privateBytesDelta": 2428928,
+          "workingSetBytesDelta": 6430720,
+          "sameEpochProcesses": 1
+        },
+        {
+          "name": "EpicOnlineServicesUserHelper",
+          "privateBytesDelta": 1863680,
+          "workingSetBytesDelta": -1040384,
+          "sameEpochProcesses": 2
+        },
+        {
+          "name": "Taskmgr",
+          "privateBytesDelta": 1802240,
+          "workingSetBytesDelta": -638976,
+          "sameEpochProcesses": 1
+        }
+      ],
+      "wslSameEpochProcessChanges": null,
+      "systemProcessChangesWithUnknownStartTime": [
+        {
+          "name": "vmmemWSL",
+          "samePid": true,
+          "startTimeAvailable": false,
+          "firstPrivateBytes": 10589396992,
+          "lastPrivateBytes": 10905628672,
+          "privateBytesDelta": 316231680,
+          "firstWorkingSetBytes": 7214428160,
+          "lastWorkingSetBytes": 7429963776,
+          "workingSetBytesDelta": 215535616,
+          "verifiedSameProcessEpoch": false
+        },
+        {
+          "name": "Memory Compression",
+          "samePid": true,
+          "startTimeAvailable": false,
+          "firstPrivateBytes": 5476352,
+          "lastPrivateBytes": 7061504,
+          "privateBytesDelta": 1585152,
+          "firstWorkingSetBytes": 2386620416,
+          "lastWorkingSetBytes": 3387838464,
+          "workingSetBytesDelta": 1001218048,
+          "verifiedSameProcessEpoch": false
+        }
+      ],
+      "linuxBytes": {
+        "MemTotal": {
+          "first": 24773992448,
+          "last": 24773992448,
+          "delta": 0
+        },
+        "MemAvailable": {
+          "first": 21558083584,
+          "last": 21502787584,
+          "delta": -55296000
+        },
+        "Buffers": {
+          "first": 1185988608,
+          "last": 1190879232,
+          "delta": 4890624
+        },
+        "Cached": {
+          "first": 4941991936,
+          "last": 4924841984,
+          "delta": -17149952
+        },
+        "SwapTotal": {
+          "first": 6442450944,
+          "last": 6442450944,
+          "delta": 0
+        },
+        "SwapFree": {
+          "first": 6403420160,
+          "last": 6398177280,
+          "delta": -5242880
+        },
+        "AnonPages": {
+          "first": 2073563136,
+          "last": 2124996608,
+          "delta": 51433472
+        }
+      },
+      "containers": {
+        "sphere-review-20261002-review-ui-1": {
+          "firstBytesApprox": 65892516,
+          "lastBytesApprox": 70674022,
+          "minimumBytesApprox": 65892516,
+          "maximumBytesApprox": 92452946,
+          "deltaBytesApprox": 4781506,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-backend-1": {
+          "firstBytesApprox": 598946611,
+          "lastBytesApprox": 617191834,
+          "minimumBytesApprox": 598946611,
+          "maximumBytesApprox": 618030694,
+          "deltaBytesApprox": 18245223,
+          "sameContainerId": true
+        },
+        "sphere-review-20261002-review-gateway-1": {
+          "firstBytesApprox": 3841982,
+          "lastBytesApprox": 3822060,
+          "minimumBytesApprox": 3801088,
+          "maximumBytesApprox": 3841982,
+          "deltaBytesApprox": -19922,
+          "sameContainerId": true
+        },
+        "sphere-observability-20260930-grafana-1": {
+          "firstBytesApprox": 369413325,
+          "lastBytesApprox": 390489702,
+          "minimumBytesApprox": 369413325,
+          "maximumBytesApprox": 393950003,
+          "deltaBytesApprox": 21076377,
+          "sameContainerId": true
+        },
+        "sphere-observability-20260930-prometheus-1": {
+          "firstBytesApprox": 57524879,
+          "lastBytesApprox": 57577308,
+          "minimumBytesApprox": 57524879,
+          "maximumBytesApprox": 58311311,
+          "deltaBytesApprox": 52429,
+          "sameContainerId": true
+        },
+        "sphere-tuna-canary": {
+          "firstBytesApprox": 24442307,
+          "lastBytesApprox": 24641536,
+          "minimumBytesApprox": 24117248,
+          "maximumBytesApprox": 24788337,
+          "deltaBytesApprox": 199229,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-frontend-1": {
+          "firstBytesApprox": 107059610,
+          "lastBytesApprox": 107688755,
+          "minimumBytesApprox": 106430464,
+          "maximumBytesApprox": 109890765,
+          "deltaBytesApprox": 629145,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-cloudflare-quick-1": {
+          "firstBytesApprox": 67004006,
+          "lastBytesApprox": 67004006,
+          "minimumBytesApprox": 66993521,
+          "maximumBytesApprox": 67129836,
+          "deltaBytesApprox": 0,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-public-gateway-1": {
+          "firstBytesApprox": 36563845,
+          "lastBytesApprox": 36469473,
+          "minimumBytesApprox": 36458988,
+          "maximumBytesApprox": 36595302,
+          "deltaBytesApprox": -94372,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-nginx-1": {
+          "firstBytesApprox": 42656072,
+          "lastBytesApprox": 42687529,
+          "minimumBytesApprox": 42656072,
+          "maximumBytesApprox": 42687529,
+          "deltaBytesApprox": 31457,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-n8n-1": {
+          "firstBytesApprox": 203318886,
+          "lastBytesApprox": 205206323,
+          "minimumBytesApprox": 203318886,
+          "maximumBytesApprox": 220620390,
+          "deltaBytesApprox": 1887437,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-minio-1": {
+          "firstBytesApprox": 123731968,
+          "lastBytesApprox": 124046541,
+          "minimumBytesApprox": 123731968,
+          "maximumBytesApprox": 124151398,
+          "deltaBytesApprox": 314573,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-postgres-1": {
+          "firstBytesApprox": 142920909,
+          "lastBytesApprox": 143654912,
+          "minimumBytesApprox": 142920909,
+          "maximumBytesApprox": 147744358,
+          "deltaBytesApprox": 734003,
+          "sameContainerId": true
+        },
+        "sphere-pilot-20260911-redis-1": {
+          "firstBytesApprox": 16326328,
+          "lastBytesApprox": 16368271,
+          "minimumBytesApprox": 16200499,
+          "maximumBytesApprox": 16389243,
+          "deltaBytesApprox": 41943,
+          "sameContainerId": true
+        },
+        "sphere-audit-20260905-redis": {
+          "firstBytesApprox": 8495563,
+          "lastBytesApprox": 8498708,
+          "minimumBytesApprox": 8364491,
+          "maximumBytesApprox": 8498708,
+          "deltaBytesApprox": 3145,
+          "sameContainerId": true
+        },
+        "sphere-audit-20260905-postgres": {
+          "firstBytesApprox": 60010004,
+          "lastBytesApprox": 60072919,
+          "minimumBytesApprox": 60010004,
+          "maximumBytesApprox": 60083405,
+          "deltaBytesApprox": 62915,
+          "sameContainerId": true
+        },
+        "sphere-tunnel": {
+          "firstBytesApprox": 4624220,
+          "lastBytesApprox": 4645192,
+          "minimumBytesApprox": 4615832,
+          "maximumBytesApprox": 4645192,
+          "deltaBytesApprox": 20972,
+          "sameContainerId": true
+        }
+      },
+      "allPreflightMeasurementsPassed": true,
+      "leakConclusion": "UNDETERMINED_LONG_TERM; finite observational window, not controlled heap/soak acceptance"
+    },
+    "finalReadOnlyPreflight": {
+      "observedAt": "2026-10-04T17:28:07.714474+00:00",
+      "system": "Windows",
+      "freeDiskBytes": 43634319360,
+      "deviceCommandsSent": false,
+      "mutationsPerformed": false,
+      "availableRamBytes": 20676620288,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 51481571328,
+      "commitLimitBytes": 95153381376,
+      "findings": [],
+      "buildAllowed": true
+    },
+    "backendPrometheusProcessRssSeriesPresent": false,
+    "prometheusSelfRssUsedAsBackendRss": false,
+    "sameEpochControlledOvernightSoakPerformed": false,
+    "ongoingBoundedObservation": {
+      "observedAt": "2026-10-04T17:32:56.7271383Z",
+      "samplesLimit": 241,
+      "intervalSeconds": 120,
+      "durationHours": 8,
+      "hidden": true,
+      "deviceCommandsSent": false,
+      "maximumSampleBytes": 262144,
+      "maximumSampleStorageBytes": 63176704,
+      "stopDiskBelowBytes": 536870912,
+      "scriptSha256": "28a8d986838bddb2d03c485a1b771786e6a9972f5670a659e568fc0784f06558",
+      "script": ".local-pilot/resource-recovery-20261004/capture-overnight-resource-window.py",
+      "status": "RUNNING_FIRST_COMPLETE_SAMPLE_VERIFIED",
+      "firstSampleAt": "2026-10-04T22:32:56.826123+05:00",
+      "acceptanceComplete": false
+    }
+  },
+  "buildProof": {
+    "apiImage": {
+      "source": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "image": "sphere-pilot-20260911-backend:c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "imageId": "sha256:32b1173d05fa7e301e09481a92ca49f1e78e2a66dd6cad546f2b2d6323b7c0f5",
+      "gitArchive": true
+    },
+    "frontendImages": {
+      "source": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "gitArchive": true,
+      "nodeMajor": 24,
+      "images": {
+        "builder": {
+          "name": "sphere-ui-inspection-recovery-web-tests:c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+          "id": "sha256:f8bd8949bfcf50fcbe484caf9c0949c92a2e7533a7933079ac58d28840f0d85d"
+        },
+        "runner": {
+          "name": "sphere-review-frontend:c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+          "id": "sha256:730240135af0e4a0bd5d1713c1ddd8c93f23c7e3af60f14b705d680bea2958b8"
+        }
+      }
+    },
+    "dependencyReuse": {
+      "source": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "differentRevisionArgsSameDependencyLayersAndConfig": true,
+      "npmCiCachedOnSecondTrial": true,
+      "manifestIndexIdsDifferBecauseAttestationsAreGeneratedPerBuild": true,
+      "imageSizesNotUniqueDiskUsage": {
+        "sphere-ui-inspection-recovery-web-tests:9716348018e60647dc749774acb00422d0f2cd08": {
+          "logicalImageBytes": 551398636,
+          "imageId": "sha256:c07586e952111252a083a7471967e8cb5d9d97675fa5d98d60dd66620002c43b"
+        },
+        "sphere-ui-inspection-recovery-web-tests:c1a6e79a75221c45a71160a21bc91c48b22ef5ae": {
+          "logicalImageBytes": 303371224,
+          "imageId": "sha256:f8bd8949bfcf50fcbe484caf9c0949c92a2e7533a7933079ac58d28840f0d85d"
+        }
+      }
+    },
+    "apiCases": 186,
+    "apiFailures": 0,
+    "apiErrors": 0,
+    "apiSkipped": 0,
+    "frontendCases": 1122,
+    "frontendSuites": 113,
+    "resourceGuardCases": 18,
+    "oldImageCleanupRegressionsFailedExpected": 3,
+    "sourceBindMountUsed": false,
+    "mypyFiles": 229,
+    "openApiOperations": 178,
+    "openApiPaths": 140,
+    "typescriptAndProductionBuildPassed": true,
+    "githubSourceWorkflows": [
+      {
+        "conclusion": "success",
+        "databaseId": 37219272975,
+        "headSha": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+        "status": "completed",
+        "updatedAt": "2026-10-04T17:06:52Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37219272975",
+        "workflowName": "Preview — Deploy"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37219273020,
+        "headSha": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+        "status": "completed",
+        "updatedAt": "2026-10-04T17:09:32Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37219273020",
+        "workflowName": "CI — Frontend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37219272979,
+        "headSha": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+        "status": "completed",
+        "updatedAt": "2026-10-04T17:20:11Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37219272979",
+        "workflowName": "CI — Android"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37219272976,
+        "headSha": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+        "status": "completed",
+        "updatedAt": "2026-10-04T17:22:50Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37219272976",
+        "workflowName": "CI — Backend"
+      }
+    ]
+  },
+  "nativeCaptureTrials": [
+    {
+      "startedAt": "2026-10-04T17:14:53.001127+00:00",
+      "finishedAt": "2026-10-04T17:15:15.269823+00:00",
+      "apiSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "cases": [
+        {
+          "device": "auto-ph-025",
+          "requestedAt": "2026-10-04T17:14:53.015408+00:00",
+          "status": 504,
+          "accepted": false,
+          "snapshotId": "392a23dfa7da4e3da868c23b0815f9f5",
+          "failedPhase": "display_before",
+          "serverElapsedMs": "16009",
+          "cleanupConfirmed": "false",
+          "durationSeconds": 16.045
+        },
+        {
+          "device": "auto-ph-010",
+          "requestedAt": "2026-10-04T17:15:09.060983+00:00",
+          "status": 200,
+          "accepted": true,
+          "nativeSize": [
+            960,
+            540
+          ],
+          "bytes": 230885,
+          "sha256": "501cad210cd5ca12d8bc6c7fd6a44beedd1765ee86530055b1e9ee36b1df5f17",
+          "pillowFullDecodePassed": true,
+          "androidServerFileHashMatched": true,
+          "cleanupConfirmed": true,
+          "snapshotId": "f1f49ec863e449c0b33bbdcbb89e87b7",
+          "serverElapsedMs": 6162,
+          "durationSeconds": 6.208
+        }
+      ],
+      "correlatedCases": [
+        {
+          "http_status": 504,
+          "elapsed_ms": 16009,
+          "phase": "display_before",
+          "failed_phase": "display_before",
+          "failed_rpc_index": 1,
+          "rpc_count": 2,
+          "completed_rpcs": 0,
+          "phase_elapsed_ms": {
+            "display_before": 8005,
+            "cleanup": 8004
+          },
+          "cleanup_confirmed": false,
+          "cleanup_failed": true,
+          "device": "auto-ph-025",
+          "snapshotId": "392a23dfa7da4e3da868c23b0815f9f5",
+          "distinctCommandIds": 2,
+          "socketWritesCompleted": 2,
+          "socketWritesFailed": 0,
+          "rpc": [
+            {
+              "screenshot_phase": "display_before",
+              "screenshot_rpc_index": 1,
+              "outcome": "timeout",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 7999,
+              "progress_count": 0,
+              "first_progress_ms": null,
+              "last_progress": null,
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "cleanup",
+              "screenshot_rpc_index": 2,
+              "outcome": "timeout",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 8000,
+              "progress_count": 0,
+              "first_progress_ms": null,
+              "last_progress": null,
+              "subscription_cleanup": "closed"
+            }
+          ]
+        },
+        {
+          "http_status": 200,
+          "elapsed_ms": 6162,
+          "phase": "complete",
+          "failed_phase": null,
+          "failed_rpc_index": null,
+          "rpc_count": 10,
+          "completed_rpcs": 10,
+          "phase_elapsed_ms": {
+            "display_before": 412,
+            "capture": 536,
+            "file_size": 374,
+            "android_digest": 589,
+            "chunk_copy": 935,
+            "chunk_read": 2294,
+            "display_after": 538,
+            "cleanup": 479
+          },
+          "cleanup_confirmed": true,
+          "cleanup_failed": false,
+          "device": "auto-ph-010",
+          "snapshotId": "f1f49ec863e449c0b33bbdcbb89e87b7",
+          "distinctCommandIds": 10,
+          "socketWritesCompleted": 10,
+          "socketWritesFailed": 0,
+          "rpc": [
+            {
+              "screenshot_phase": "display_before",
+              "screenshot_rpc_index": 1,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 410,
+              "progress_count": 2,
+              "first_progress_ms": 243,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "capture",
+              "screenshot_rpc_index": 2,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 532,
+              "progress_count": 2,
+              "first_progress_ms": 241,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "file_size",
+              "screenshot_rpc_index": 3,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 370,
+              "progress_count": 2,
+              "first_progress_ms": 244,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "android_digest",
+              "screenshot_rpc_index": 4,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 585,
+              "progress_count": 2,
+              "first_progress_ms": 585,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "chunk_copy",
+              "screenshot_rpc_index": 5,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 500,
+              "progress_count": 2,
+              "first_progress_ms": 395,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "chunk_read",
+              "screenshot_rpc_index": 6,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 1825,
+              "progress_count": 2,
+              "first_progress_ms": 243,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "chunk_copy",
+              "screenshot_rpc_index": 7,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 427,
+              "progress_count": 2,
+              "first_progress_ms": 243,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "chunk_read",
+              "screenshot_rpc_index": 8,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 463,
+              "progress_count": 2,
+              "first_progress_ms": 244,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "display_after",
+              "screenshot_rpc_index": 9,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 534,
+              "progress_count": 2,
+              "first_progress_ms": 255,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "cleanup",
+              "screenshot_rpc_index": 10,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 474,
+              "progress_count": 2,
+              "first_progress_ms": 241,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            }
+          ]
+        }
+      ],
+      "deviceInputSent": false
+    },
+    {
+      "startedAt": "2026-10-04T17:20:13.683807+00:00",
+      "finishedAt": "2026-10-04T17:20:17.505456+00:00",
+      "apiSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "cases": [
+        {
+          "device": "auto-ph-025",
+          "requestedAt": "2026-10-04T17:20:13.688032+00:00",
+          "status": 200,
+          "accepted": true,
+          "nativeSize": [
+            960,
+            540
+          ],
+          "bytes": 217083,
+          "sha256": "8f188fa056792d9d698a53fe7accf4002f2485092de4e2be4314fa8178ab9426",
+          "pillowFullDecodePassed": true,
+          "androidServerFileHashMatched": true,
+          "cleanupConfirmed": true,
+          "snapshotId": "018fab0050754d0ab07e2dcff4c2c730",
+          "serverElapsedMs": 3781,
+          "durationSeconds": 3.817
+        }
+      ],
+      "correlatedCases": [
+        {
+          "http_status": 200,
+          "elapsed_ms": 3781,
+          "phase": "complete",
+          "failed_phase": null,
+          "failed_rpc_index": null,
+          "rpc_count": 10,
+          "completed_rpcs": 10,
+          "phase_elapsed_ms": {
+            "display_before": 262,
+            "capture": 608,
+            "file_size": 252,
+            "android_digest": 240,
+            "chunk_copy": 474,
+            "chunk_read": 1424,
+            "display_after": 264,
+            "cleanup": 253
+          },
+          "cleanup_confirmed": true,
+          "cleanup_failed": false,
+          "device": "auto-ph-025",
+          "snapshotId": "018fab0050754d0ab07e2dcff4c2c730",
+          "distinctCommandIds": 10,
+          "socketWritesCompleted": 10,
+          "socketWritesFailed": 0,
+          "rpc": [
+            {
+              "screenshot_phase": "display_before",
+              "screenshot_rpc_index": 1,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 259,
+              "progress_count": 2,
+              "first_progress_ms": 163,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "capture",
+              "screenshot_rpc_index": 2,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 604,
+              "progress_count": 2,
+              "first_progress_ms": 163,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "file_size",
+              "screenshot_rpc_index": 3,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 249,
+              "progress_count": 2,
+              "first_progress_ms": 164,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "android_digest",
+              "screenshot_rpc_index": 4,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 237,
+              "progress_count": 2,
+              "first_progress_ms": 163,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "chunk_copy",
+              "screenshot_rpc_index": 5,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 233,
+              "progress_count": 2,
+              "first_progress_ms": 162,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "chunk_read",
+              "screenshot_rpc_index": 6,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 969,
+              "progress_count": 2,
+              "first_progress_ms": 423,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "chunk_copy",
+              "screenshot_rpc_index": 7,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 235,
+              "progress_count": 2,
+              "first_progress_ms": 161,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "chunk_read",
+              "screenshot_rpc_index": 8,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 447,
+              "progress_count": 2,
+              "first_progress_ms": 161,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "display_after",
+              "screenshot_rpc_index": 9,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 260,
+              "progress_count": 2,
+              "first_progress_ms": 166,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            },
+            {
+              "screenshot_phase": "cleanup",
+              "screenshot_rpc_index": 10,
+              "outcome": "completed",
+              "wait_phase": "await_result",
+              "published": true,
+              "live_only": true,
+              "elapsed_ms": 249,
+              "progress_count": 2,
+              "first_progress_ms": 164,
+              "last_progress": "running",
+              "subscription_cleanup": "closed"
+            }
+          ]
+        }
+      ],
+      "deviceInputSent": false
+    }
+  ],
+  "fleet": {
+    "initialReadback": {
+      "startedAt": "2026-10-04T17:16:24.529521+00:00",
+      "uiSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "apiSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "browserVerified": false,
+      "inputCommandsSent": false,
+      "baselineCohortPreserved": false,
+      "postApiRestartEpochsPreserved": false,
+      "heartbeatUnder60Seconds": true,
+      "finishedAt": "2026-10-04T17:17:24.910065+00:00",
+      "cohortCount": 14,
+      "preservedNeighbours": 16,
+      "apkChanged": false,
+      "tunaPreserved": true,
+      "otaPreserved": true,
+      "fleetGate": "FAILED",
+      "samples": [
+        {
+          "observedAt": "2026-10-04T17:16:24.570484+00:00",
+          "catalog": 19,
+          "onlineCount": 11,
+          "missingNames": [
+            "auto-ph-013",
+            "auto-ph-014",
+            "auto-ph-020"
+          ],
+          "changedEpochNames": [
+            "auto-ph-012",
+            "auto-ph-015",
+            "auto-ph-016",
+            "auto-ph-017",
+            "auto-ph-018",
+            "auto-ph-019",
+            "auto-ph-022",
+            "auto-ph-025",
+            "auto-ph-028"
+          ],
+          "maximumHeartbeatAgeSeconds": 26.877
+        },
+        {
+          "observedAt": "2026-10-04T17:16:34.610385+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [
+            "auto-ph-012",
+            "auto-ph-013",
+            "auto-ph-014",
+            "auto-ph-015",
+            "auto-ph-016",
+            "auto-ph-017",
+            "auto-ph-018",
+            "auto-ph-019",
+            "auto-ph-020",
+            "auto-ph-022",
+            "auto-ph-025",
+            "auto-ph-028"
+          ],
+          "maximumHeartbeatAgeSeconds": 25.114
+        },
+        {
+          "observedAt": "2026-10-04T17:16:44.625192+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [
+            "auto-ph-012",
+            "auto-ph-013",
+            "auto-ph-014",
+            "auto-ph-015",
+            "auto-ph-016",
+            "auto-ph-017",
+            "auto-ph-018",
+            "auto-ph-019",
+            "auto-ph-020",
+            "auto-ph-022",
+            "auto-ph-025",
+            "auto-ph-028"
+          ],
+          "maximumHeartbeatAgeSeconds": 28.694
+        },
+        {
+          "observedAt": "2026-10-04T17:16:54.648145+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [
+            "auto-ph-012",
+            "auto-ph-013",
+            "auto-ph-014",
+            "auto-ph-015",
+            "auto-ph-016",
+            "auto-ph-017",
+            "auto-ph-018",
+            "auto-ph-019",
+            "auto-ph-020",
+            "auto-ph-022",
+            "auto-ph-025",
+            "auto-ph-028"
+          ],
+          "maximumHeartbeatAgeSeconds": 29.732
+        },
+        {
+          "observedAt": "2026-10-04T17:17:04.670175+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [
+            "auto-ph-012",
+            "auto-ph-013",
+            "auto-ph-014",
+            "auto-ph-015",
+            "auto-ph-016",
+            "auto-ph-017",
+            "auto-ph-018",
+            "auto-ph-019",
+            "auto-ph-020",
+            "auto-ph-022",
+            "auto-ph-025",
+            "auto-ph-028"
+          ],
+          "maximumHeartbeatAgeSeconds": 25.179
+        },
+        {
+          "observedAt": "2026-10-04T17:17:14.694045+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [
+            "auto-ph-012",
+            "auto-ph-013",
+            "auto-ph-014",
+            "auto-ph-015",
+            "auto-ph-016",
+            "auto-ph-017",
+            "auto-ph-018",
+            "auto-ph-019",
+            "auto-ph-020",
+            "auto-ph-022",
+            "auto-ph-025",
+            "auto-ph-028"
+          ],
+          "maximumHeartbeatAgeSeconds": 28.763
+        },
+        {
+          "observedAt": "2026-10-04T17:17:24.718512+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [
+            "auto-ph-012",
+            "auto-ph-013",
+            "auto-ph-014",
+            "auto-ph-015",
+            "auto-ph-016",
+            "auto-ph-017",
+            "auto-ph-018",
+            "auto-ph-019",
+            "auto-ph-020",
+            "auto-ph-022",
+            "auto-ph-025",
+            "auto-ph-028"
+          ],
+          "maximumHeartbeatAgeSeconds": 29.857
+        }
+      ]
+    },
+    "separateRecoveryReadback": {
+      "startedAt": "2026-10-04T17:20:31.053467+00:00",
+      "uiSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "apiSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+      "browserVerified": false,
+      "inputCommandsSent": false,
+      "baselineCohortPreserved": true,
+      "postApiRestartEpochsPreserved": true,
+      "heartbeatUnder60Seconds": true,
+      "finishedAt": "2026-10-04T17:21:31.433003+00:00",
+      "cohortCount": 14,
+      "preservedNeighbours": 16,
+      "apkChanged": false,
+      "tunaPreserved": true,
+      "otaPreserved": true,
+      "fleetGate": "PASSED",
+      "samples": [
+        {
+          "observedAt": "2026-10-04T17:20:31.090375+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [],
+          "maximumHeartbeatAgeSeconds": 21.582
+        },
+        {
+          "observedAt": "2026-10-04T17:20:41.112975+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [],
+          "maximumHeartbeatAgeSeconds": 27.811
+        },
+        {
+          "observedAt": "2026-10-04T17:20:51.138803+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [],
+          "maximumHeartbeatAgeSeconds": 27.64
+        },
+        {
+          "observedAt": "2026-10-04T17:21:01.165861+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [],
+          "maximumHeartbeatAgeSeconds": 21.689
+        },
+        {
+          "observedAt": "2026-10-04T17:21:11.188266+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [],
+          "maximumHeartbeatAgeSeconds": 27.13
+        },
+        {
+          "observedAt": "2026-10-04T17:21:21.209938+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [],
+          "maximumHeartbeatAgeSeconds": 27.715
+        },
+        {
+          "observedAt": "2026-10-04T17:21:31.233049+00:00",
+          "catalog": 19,
+          "onlineCount": 14,
+          "missingNames": [],
+          "changedEpochNames": [],
+          "maximumHeartbeatAgeSeconds": 21.757
+        }
+      ]
+    },
+    "offlineOutsideAcceptance": 5,
+    "apkVersion": "1.2.44-dev",
+    "apkVersionCode": 10244,
+    "apkUpdated": false,
+    "normalOtaVersionCodeUnchanged": 10209,
+    "managedCanaryVersionCodeUnchanged": 10244,
+    "continuousUptimeClaimed": false,
+    "twentyToThirtyDeviceAcceptancePerformed": false
+  },
+  "acceptance": {
+    "ledgerSourceFixed": 34,
+    "ledgerUnclosed": 7,
+    "fleet32Admission": "NO-GO",
+    "browserVisual": "OPEN_URL_POLICY_BLOCKED",
+    "currentNativeDownloadHumanAccepted": false,
+    "noPcAgentOrAdb": true,
+    "durableArtifactUploadN01Closed": false,
+    "remainingHostFindings": [
+      "long-term RAM/heap attribution",
+      "VHD offline maintenance if needed",
+      "periodic owned build retention",
+      "remaining old container LogConfig rollout",
+      "host/worker metrics coverage",
+      "global server agent log quota/sweeper"
+    ]
+  },
+  "privateProvenance": [
+    {
+      "path": ".local-pilot/resource-recovery-20261004/installed.json",
+      "sha256": "8e889d680b5c525dcb3eef9357e6b8f75c2d67a9d791e3d76057f6f7867341d0",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/web-installed.json",
+      "sha256": "a51db1a4eaeb557fc6548de7f822bffd1302b02768beb4637ef0ff7a9a3db5ac",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/ci-source.json",
+      "sha256": "5b2936d2ed6fdd8fa973cf71d01ddbf4a959de96106ac0dfad4b525e0d6e3755",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/image-tests.xml",
+      "sha256": "c5046e98c6ac0bf85624d1286f8138e3d58a6c41563b273fa395ae4f67882b51",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/web-image-tests.json",
+      "sha256": "14bb14871a286d47ce182e6b0471f5b8c62b988bc328660484c7c121e64f742d",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/dependency-cache-reuse.json",
+      "sha256": "9d5db6710f5318ecb4117a4c1681c9c6ed321201296fa94638af9b590a19bc36",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/resource-window-summary.json",
+      "sha256": "31d1f1beab9fc8d12d40316b4e4b319b80b80ccaa13d8c04060ccc8fb0906f1e",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/readback.json",
+      "sha256": "aa6749d677135910ee3d9b33cf66a00ccabbb00e756dce922607ef653dce411c",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/recovery-readback.json",
+      "sha256": "0700a1731f58e6a3b1677fcbdb83eb0cc554873fd142eee634d8a55593a41746",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/live-screenshots.json",
+      "sha256": "5765bcdaa466fd781435fc12924e7fbff972b769e40ddb089e7ae83ee6317d3e",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/capture-correlation.json",
+      "sha256": "6c25d6b284db7a41c53ef3a1eb4c9e2ca55566ae9048ab15bfb395422edaf45a",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/remote-recovery-trial/live-screenshots.json",
+      "sha256": "fe72836a6a9dd09776524484da0490c61bb849a9d26accaaf5e3ad38bfa747de",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/resource-recovery-20261004/remote-recovery-trial/capture-correlation.json",
+      "sha256": "1b866d5ff4345503c25cacf0beb2e4399a7652a4d18f69a8e82e539d88b2e49a",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/capture-phase-20261004/context-cleanup.json",
+      "sha256": "d76d8c6215fadec558c876aaa993708e919c5e99e42d579601013b1925eb18d9",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/capture-phase-20261004/next-cache-cleanup.json",
+      "sha256": "cad0c2d4f528d22ab1a67b6b70c5f9b134b7a78bd11356fc1d47b12c7ae0726c",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/capture-phase-20261004/image-retention-result.json",
+      "sha256": "816dd838decc51335145b30bf80b5be09843db35b7acd7c7a0de46335af1b36b",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/capture-phase-20261004/resource-trend-summary.json",
+      "sha256": "17d5ba9de03aa294481cec849f5e23a190d7ea9d5e1e77287fd928cb83537d8f",
+      "contentsNotCommitted": true
+    }
+  ]
+}

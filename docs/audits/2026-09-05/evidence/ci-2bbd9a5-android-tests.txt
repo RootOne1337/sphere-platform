@@ -1,0 +1,9 @@
+Android PR run 34490836418, head 2bbd9a5ed03bd6e2da05917dce5b2f7b8d8d3f1d, attempt 1
+Task excerpts after the controlled discovery-test race correction; per-case counts come from the separate local XML summary.
+
+Build APK	Build debug APK	2026-09-10T14:44:53.4500691Z BUILD SUCCESSFUL in 2m 6s
+Build APK	Run unit tests	2026-09-10T14:46:01.6754903Z > Task :app:testEnterpriseDebugUnitTest
+Build APK	Run unit tests	2026-09-10T14:46:01.7743625Z > Task :app:testDevDebugUnitTest
+Build APK	Run unit tests	2026-09-10T14:46:18.7723184Z > Task :app:testDevReleaseUnitTest
+Build APK	Run unit tests	2026-09-10T14:46:19.5721998Z > Task :app:testEnterpriseReleaseUnitTest
+Build APK	Run unit tests	2026-09-10T14:47:16.2492135Z BUILD SUCCESSFUL in 2m 22s

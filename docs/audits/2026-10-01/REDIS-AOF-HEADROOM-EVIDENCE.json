@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-30T23:42:38.801351+00:00",
+  "scope": "isolated Redis persistence pressure, not fleet throughput or installed runtime rollout",
+  "source_fix": "eda41c7",
+  "counterexample": {
+    "source": "c547f5d",
+    "github_run": 36790270320,
+    "github_url": "https://github.com/RootOne1337/sphere-platform/actions/runs/36790270320",
+    "runtime_version": "7.2.16",
+    "config_digest": "sha256:dba89ec3fc9542f476086f4468763aeb23a45ef61ffcf6108ec5d2be5a82f182",
+    "container_bytes": 2147483648,
+    "removed": true,
+    "final_state": {
+      "Status": "exited",
+      "ExitCode": 137,
+      "OOMKilled": true
+    },
+    "after_fill": {
+      "used_memory": 872109392,
+      "used_memory_dataset": 535420640,
+      "mem_not_counted_for_evict": 335544320,
+      "mem_aof_buffer": 335544320,
+      "evicted_keys": 7401
+    }
+  },
+  "desktop_same_image_control": {
+    "identity": {
+      "reference": "redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048",
+      "config_digest": "sha256:dba89ec3fc9542f476086f4468763aeb23a45ef61ffcf6108ec5d2be5a82f182",
+      "ci_config_digest_matched": true,
+      "runtime_version": "7.2.16"
+    },
+    "reported_docker_image_id": "sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048",
+    "container_bytes": 3221225472,
+    "dataset_cap_bytes": 536870912,
+    "network": "none",
+    "published_ports": [],
+    "passed": true,
+    "removed": true,
+    "final_state": {
+      "Status": "running",
+      "ExitCode": 0,
+      "OOMKilled": false
+    },
+    "cgroup_peak": {
+      "bytes": 1493553152,
+      "source": "/sys/fs/cgroup/memory/memory.max_usage_in_bytes"
+    },
+    "persisted_key_count": 6531,
+    "marker_survived_restart": true,
+    "persistence_operations": [
+      "BGREWRITEAOF",
+      "BGSAVE"
+    ]
+  },
+  "source_validation": {
+    "rendered_profiles": 7,
+    "pytest_tests_passed": 8,
+    "dataset_eviction_persistence_settings_changed": false,
+    "container_ceiling_bytes": 3221225472,
+    "minimum_container_to_dataset_ratio": 6
+  },
+  "installed_pilot": {
+    "redis_container_bytes_read_back": 1610612736,
+    "redis_restarted_or_resized_by_this_fix": false
+  },
+  "limits": [
+    "Docker Desktop kernel peak is not the GitHub Linux peak",
+    "same immutable image config, different kernel/IO/host environment",
+    "no universal buffer/RSS bound or guarantee for 32 streams",
+    "GitHub Linux unchanged pressure probe accepted on eda41c7; installed rollout, slow consumers and fleet capacity remain separate"
+  ],
+  "github_linux_acceptance": {
+    "source": "eda41c75d0e468daa66108e1c282aa827a6c3078",
+    "run": 36791986031,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/36791986031",
+    "status": "completed",
+    "conclusion": "success",
+    "container_bytes": 3221225472,
+    "image_config_digest": "sha256:dba89ec3fc9542f476086f4468763aeb23a45ef61ffcf6108ec5d2be5a82f182",
+    "passed": true,
+    "removed": true,
+    "final_state": {
+      "Status": "running",
+      "ExitCode": 0,
+      "OOMKilled": false
+    },
+    "cgroup_peak": {
+      "bytes": 1599836160,
+      "source": "/sys/fs/cgroup/memory.peak"
+    },
+    "persisted_key_count": 6532,
+    "marker_survived_restart": true,
+    "backend_junit": {
+      "tests": 2145,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 15
+    }
+  },
+  "finalized_at": "2026-09-30T23:59:02.056222+00:00"
+}

@@ -1,0 +1,709 @@
+{
+  "schema": "sphere-walk-preflight-evidence-v1",
+  "date": "2026-10-30",
+  "physicalActions": 0,
+  "liveRouteCompleted": false,
+  "sources": {
+    "frontend/src/features/stream/walkCameraDrag.ts": "3c72b394949afc3b70d3559520cb58a49260751511530437c5274c6e45b8b72f",
+    "frontend/src/features/stream/teachingContacts.ts": "162e5ceb4fc6f7fdc7384b98df1fcd571387a747c4454ed35781f54e8d308007",
+    "frontend/src/features/stream/walkFrameEncoder.ts": "7159d8d37c94fb9a63b1222e2f97a3b9ba5a781849f3e938c420d79b70ceeb5f",
+    "frontend/src/features/stream/WalkingRoutePilot.tsx": "38b9f7ae7883904b60e2f5c4929bc91382541a86c51104dba961e36e354a18b9",
+    "motor_worker/walk_route.py": "3cb1eade911256ba6c8e7de8491b4dba1e1d9b78f514ef54567647923a588d26",
+    "scripts/pilot/check_walk_camera_loop.cjs": "13c3ab217872e3fc05a718224c77e747eef1f43b50695dc6e1cdbdb3d8ab6205",
+    "scripts/pilot/check_route_full_replay.py": "add7aee6c122e190c3004288e029b85cab8baf4660d360a99a923122299e2935"
+  },
+  "camera": {
+    "simulatedGame": true,
+    "actualTypeScriptClasses": true,
+    "baselinePassed": 6,
+    "baselineCases": 13,
+    "passed": 20,
+    "cases": [
+      {
+        "config": {
+          "gainX": 3,
+          "gainY": 4,
+          "visualMs": 60,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 3710,
+        "faultAtMs": null,
+        "finalAngularError": 0.06333250295522054,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.06333250295522054,
+          "mean": 0.06333250295522054
+        },
+        "cameraDowns": 2,
+        "moves": 52,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 3,
+          "gainY": 4,
+          "visualMs": 60,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 4610,
+        "faultAtMs": null,
+        "finalAngularError": 0.06716725044761375,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.06716725044761375,
+          "mean": 0.06716725044761396
+        },
+        "cameraDowns": 2,
+        "moves": 54,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 3,
+          "gainY": 4,
+          "visualMs": 160,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 4410,
+        "faultAtMs": null,
+        "finalAngularError": 0.03118640689384421,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.03118640689384421,
+          "mean": 0.03118640689384424
+        },
+        "cameraDowns": 2,
+        "moves": 59,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 3,
+          "gainY": 4,
+          "visualMs": 160,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 4710,
+        "faultAtMs": null,
+        "finalAngularError": 0.05983748409314402,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.05983748409314402,
+          "mean": 0.05983748409314411
+        },
+        "cameraDowns": 2,
+        "moves": 53,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 12,
+          "gainY": -8,
+          "visualMs": 60,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2610,
+        "faultAtMs": null,
+        "finalAngularError": 0.056352159691435984,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.056352159691435984,
+          "mean": 0.056352159691435845
+        },
+        "cameraDowns": 1,
+        "moves": 35,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 12,
+          "gainY": -8,
+          "visualMs": 60,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2860,
+        "faultAtMs": null,
+        "finalAngularError": 0.033561374253822614,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.033561374253822614,
+          "mean": 0.03356137425382268
+        },
+        "cameraDowns": 1,
+        "moves": 37,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 12,
+          "gainY": -8,
+          "visualMs": 160,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2830,
+        "faultAtMs": null,
+        "finalAngularError": 0.046208871096219885,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.046208871096219885,
+          "mean": 0.04620887109621999
+        },
+        "cameraDowns": 1,
+        "moves": 31,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 12,
+          "gainY": -8,
+          "visualMs": 160,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2860,
+        "faultAtMs": null,
+        "finalAngularError": 0.06454079252483137,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.06454079252483137,
+          "mean": 0.06454079252483153
+        },
+        "cameraDowns": 1,
+        "moves": 33,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": -6,
+          "gainY": 10,
+          "visualMs": 60,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 3010,
+        "faultAtMs": null,
+        "finalAngularError": 0.07613295268035905,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.07613295268035905,
+          "mean": 0.07613295268035895
+        },
+        "cameraDowns": 1,
+        "moves": 41,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": -6,
+          "gainY": 10,
+          "visualMs": 60,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 3010,
+        "faultAtMs": null,
+        "finalAngularError": 0.08101778531984835,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.08101778531984835,
+          "mean": 0.08101778531984821
+        },
+        "cameraDowns": 1,
+        "moves": 38,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": -6,
+          "gainY": 10,
+          "visualMs": 160,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 3310,
+        "faultAtMs": null,
+        "finalAngularError": 0.04278459698213958,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.04278459698213958,
+          "mean": 0.04278459698213951
+        },
+        "cameraDowns": 1,
+        "moves": 42,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": -6,
+          "gainY": 10,
+          "visualMs": 160,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 3530,
+        "faultAtMs": null,
+        "finalAngularError": 0.03941764135113919,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.03941764135113919,
+          "mean": 0.03941764135113921
+        },
+        "cameraDowns": 1,
+        "moves": 42,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "gap": [
+            1100,
+            350
+          ],
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 3660,
+        "faultAtMs": null,
+        "finalAngularError": 0.042644455613933846,
+        "neutralizations": 7,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.042644455613933846,
+          "mean": 0.04264445561393392
+        },
+        "cameraDowns": 2,
+        "moves": 45,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 160,
+          "slopPx": 16,
+          "yaw": -1.1,
+          "pitch": -0.4,
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 3530,
+        "faultAtMs": null,
+        "finalAngularError": 0.04924459480387049,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.04924459480387049,
+          "mean": 0.04924459480387059
+        },
+        "cameraDowns": 1,
+        "moves": 44,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 160,
+          "slopPx": 16,
+          "yaw": -1.1,
+          "pitch": 0.55,
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 3860,
+        "faultAtMs": null,
+        "finalAngularError": 0.05847891952398304,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.05847891952398304,
+          "mean": 0.058478919523983146
+        },
+        "cameraDowns": 1,
+        "moves": 53,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 160,
+          "slopPx": 16,
+          "yaw": 1.5,
+          "pitch": -0.4,
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 4230,
+        "faultAtMs": null,
+        "finalAngularError": 0.036448412855869756,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.036448412855869756,
+          "mean": 0.03644841285586983
+        },
+        "cameraDowns": 2,
+        "moves": 48,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 160,
+          "slopPx": 16,
+          "yaw": 1.5,
+          "pitch": 0.55,
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 4230,
+        "faultAtMs": null,
+        "finalAngularError": 0.0762183508770447,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.0762183508770447,
+          "mean": 0.07621835087704477
+        },
+        "cameraDowns": 1,
+        "moves": 55,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "yaw": 1.5,
+          "pitch": 0.55,
+          "noise": 0.004,
+          "descriptorMs": 130,
+          "fault": "frozen"
+        },
+        "terminal": "walk_camera_response_not_observed",
+        "alignedAtMs": null,
+        "faultAtMs": 2176,
+        "finalAngularError": 0.7658293161793076,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": null,
+        "cameraDowns": 1,
+        "moves": 46,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "yaw": 1.5,
+          "pitch": 0.55,
+          "noise": 0.004,
+          "descriptorMs": 130,
+          "fault": "reversed"
+        },
+        "terminal": "walk_camera_response_wrong_direction",
+        "alignedAtMs": null,
+        "faultAtMs": 2176,
+        "finalAngularError": 1.342752568788071,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": null,
+        "cameraDowns": 1,
+        "moves": 46,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "noise": 0.004,
+          "descriptorMs": 130,
+          "movingReference": true,
+          "durationMs": 50000
+        },
+        "terminal": null,
+        "alignedAtMs": 3910,
+        "faultAtMs": null,
+        "finalAngularError": 0.19494910607924928,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.3133376640220886,
+          "mean": 0.11761319979253336
+        },
+        "cameraDowns": 12,
+        "moves": 199,
+        "passed": true
+      }
+    ],
+    "runtimeSources": {
+      "walkCameraDrag.ts": "3c72b394949afc3b70d3559520cb58a49260751511530437c5274c6e45b8b72f",
+      "teachingContacts.ts": "162e5ceb4fc6f7fdc7384b98df1fcd571387a747c4454ed35781f54e8d308007",
+      "walkCamera.ts": "70da13467dbf8046b10d9fe3ebee4cf9193637ab207fcb8fe948f03ccc98fbf3"
+    }
+  },
+  "fullVideoReplays": [
+    {
+      "path": ".local-pilot/route-entire-video-20261030-v1/result.json",
+      "sha256": "bedadd6498b0ba8932e2ab27a5a6c0554b71c30f0d32bbfada59041fedeb3e8e",
+      "firstStop": {
+        "seconds": 45.633,
+        "reason": "walk_pose_or_corridor_unqualified"
+      },
+      "schema": "sphere-route-entire-video-http-check-v1",
+      "physicalActions": 0,
+      "independentGameplay": false,
+      "closedLoop": false,
+      "syntheticSourceClock": false,
+      "latestOnly": true,
+      "referenceFramesExcluded": true,
+      "sourceHashes": {
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9"
+      },
+      "sourceUnchanged": true,
+      "observations": 436,
+      "skippedLate": 14,
+      "firstSeconds": 0.001,
+      "lastSeconds": 50.332,
+      "counts": {
+        "confirming": 4,
+        "localized": 431,
+        "unknown": 1
+      },
+      "planReasons": {
+        "walk_confirming_start": 2,
+        "walk_confirming_current_position": 2,
+        "walk_camera_relative_pursuit": 386,
+        "walk_relocalizing_neutral": 5,
+        "walk_pose_or_corridor_unqualified": 41
+      },
+      "cpuCoreSeconds": 34.015625,
+      "wallSeconds": 50.88965849997476,
+      "peakSampledPrivateBytes": 137023488,
+      "replyMs": {
+        "p50": 22.876049915794283,
+        "p95": 138.90869994065724,
+        "maximum": 193.21029994171113
+      },
+      "expiredReplies": 0
+    },
+    {
+      "path": ".local-pilot/route-entire-video-20261030-v2/result.json",
+      "sha256": "aaa529261de11cdd4acccf559537a8068a6126628e48da85e54d36dac75e1e6b",
+      "firstStop": {
+        "seconds": 31.665,
+        "reason": "walk_relocalization_drift"
+      },
+      "schema": "sphere-route-entire-video-http-check-v1",
+      "physicalActions": 0,
+      "independentGameplay": false,
+      "closedLoop": false,
+      "syntheticSourceClock": false,
+      "latestOnly": true,
+      "referenceFramesExcluded": true,
+      "sourceHashes": {
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9"
+      },
+      "sourceUnchanged": true,
+      "observations": 429,
+      "skippedLate": 27,
+      "firstSeconds": 0.001,
+      "lastSeconds": 50.332,
+      "counts": {
+        "confirming": 6,
+        "localized": 421,
+        "unknown": 2
+      },
+      "planReasons": {
+        "walk_confirming_start": 2,
+        "walk_confirming_current_position": 2,
+        "walk_camera_relative_pursuit": 261,
+        "walk_relocalizing_neutral": 8,
+        "walk_relocalization_drift": 156
+      },
+      "cpuCoreSeconds": 36.21875,
+      "wallSeconds": 50.88749059999827,
+      "peakSampledPrivateBytes": 137797632,
+      "replyMs": {
+        "p50": 23.879999993368983,
+        "p95": 153.44249994959682,
+        "maximum": 245.52350002340972
+      },
+      "expiredReplies": 0
+    },
+    {
+      "path": ".local-pilot/route-entire-video-20261030-v3/result.json",
+      "sha256": "2d494d8821740877c4e7de69183069557fb31a22cff741491517e5ad4632aaa4",
+      "firstStop": {
+        "seconds": 44.781,
+        "reason": "walk_relocalization_drift"
+      },
+      "schema": "sphere-route-entire-video-http-check-v1",
+      "physicalActions": 0,
+      "independentGameplay": false,
+      "closedLoop": false,
+      "syntheticSourceClock": false,
+      "latestOnly": true,
+      "referenceFramesExcluded": true,
+      "sourceHashes": {
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+        ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9"
+      },
+      "sourceUnchanged": true,
+      "observations": 420,
+      "skippedLate": 61,
+      "firstSeconds": 0.035,
+      "lastSeconds": 50.332,
+      "counts": {
+        "confirming": 8,
+        "localized": 409,
+        "unknown": 3
+      },
+      "planReasons": {
+        "walk_confirming_start": 2,
+        "walk_confirming_current_position": 2,
+        "walk_camera_relative_pursuit": 362,
+        "walk_relocalizing_neutral": 9,
+        "walk_relocalization_drift": 45
+      },
+      "cpuCoreSeconds": 37.75,
+      "wallSeconds": 50.88677760004066,
+      "peakSampledPrivateBytes": 138407936,
+      "replyMs": {
+        "p50": 25.6678499863483,
+        "p95": 175.18226001411665,
+        "maximum": 309.29160001687706
+      },
+      "expiredReplies": 8
+    }
+  ],
+  "frontendTests": {
+    "passed": 155,
+    "failed": 0,
+    "suites": 15
+  },
+  "pythonTests": {
+    "passed": 146,
+    "skipped": 1,
+    "subtestsPassed": 50,
+    "junit": ".local-pilot/route-preflight-python-20261030-v1.xml"
+  },
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "295ba214c3b26aedbdc8ab65938b51a28f3eb1a37a3a31e5d972b785aa73b9fa",
+    "source_sha_after": "295ba214c3b26aedbdc8ab65938b51a28f3eb1a37a3a31e5d972b785aa73b9fa",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 6.5,
+      "stop_ram_gib": 5.5,
+      "max_commit_percent": 85,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "probe": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "workerMatches": true,
+    "encoderWorkerMatches": true,
+    "newBundlePresent": true
+  },
+  "install": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:424fda9d264bf83678c77f6b5d4f3e9134901d32c6e068aa649875b4a76c4318",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "apiReload": {
+    "oldPid": 8236,
+    "watchdogPid": 4444,
+    "physicalActions": 0,
+    "sourceSha": "3cb1eade911256ba6c8e7de8491b4dba1e1d9b78f514ef54567647923a588d26",
+    "outcome": "verified",
+    "newPid": 14172,
+    "existingAssetsUnchanged": true
+  },
+  "browserVisualAccepted": false,
+  "browserToolFailure": "failed to write kernel assets: os error 3",
+  "limits": [
+    "simulated camera plant, no gameplay response validation",
+    "saved-video queries are not independent gameplay",
+    "recorded playback does not stop on neutral commands",
+    "no metric route or obstacle guarantee",
+    "no hundreds-of-windows capacity result"
+  ]
+}

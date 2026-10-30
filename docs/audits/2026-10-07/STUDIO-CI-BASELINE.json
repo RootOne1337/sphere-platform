@@ -1,0 +1,40 @@
+{
+  "observedDateLocal": "2026-10-07",
+  "timezone": "Asia/Yekaterinburg",
+  "sourceRevision": "ce6e377318ed0756be7b3682a78aa99224c81b3b",
+  "backend": {
+    "runId": 37515230958,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37515230958",
+    "conclusion": "success",
+    "updatedAtUtc": "2026-10-06T19:15:18Z",
+    "passed": 3015,
+    "skipped": 37,
+    "warnings": 2,
+    "durationSeconds": 881.54
+  },
+  "frontend": {
+    "runId": 37515230790,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37515230790",
+    "conclusion": "success",
+    "testsPassed": 1686,
+    "suitesPassed": 133,
+    "standalonePages": 26,
+    "standaloneAssets": 73,
+    "browserHydrationVerified": false,
+    "backendExecutionVerified": false,
+    "portableImageArtifactUploaded": false
+  },
+  "android": {
+    "runId": 37515230791,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37515230791",
+    "conclusion": "success",
+    "updatedAtUtc": "2026-10-06T19:12:12Z",
+    "releaseSigning": "disposable CI smoke key, not OTA release key"
+  },
+  "runtimeInstalled": false,
+  "installedUi": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+  "installedApi": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "hostVolumeHealth": "Warning / Full Repair Needed",
+  "runtimeLedger": {"accepted": 9, "open": 41},
+  "nextSourceDelivery": "New reviewed image packaging is a separate unadmitted workflow change. This receipt does not attest its build, upload, deployment or visual acceptance."
+}

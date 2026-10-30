@@ -1,0 +1,76 @@
+FF..F..........FF                                                        [100%]
+================================== FAILURES ===================================
+_ test_full_deploy_renders_the_selected_installation_env_from_another_directory[both] _
+tests\deployment\test_full_deploy_env.py:72: in test_full_deploy_renders_the_selected_installation_env_from_another_directory
+    assert marker == ("selected-default" if mode == "default" else "selected-local")
+E   AssertionError: assert 'selected-default' == 'selected-local'
+E
+E     - selected-local
+E     + selected-default
+_ test_full_deploy_renders_the_selected_installation_env_from_another_directory[local] _
+tests\deployment\test_full_deploy_env.py:72: in test_full_deploy_renders_the_selected_installation_env_from_another_directory
+    assert marker == ("selected-default" if mode == "default" else "selected-local")
+E   AssertionError: assert 'missing' == 'selected-local'
+E
+E     - selected-local
+E     + missing
+_______ test_full_deploy_rejects_missing_installation_env_before_docker _______
+tests\deployment\test_full_deploy_env.py:83: in test_full_deploy_rejects_missing_installation_env_before_docker
+    assert result.returncode != 0, result.stdout
+E   AssertionError: {
+E       "name": "isolated-env-probe",
+E       "networks": {
+E         "default": {
+E           "name": "isolated-env-probe_default",
+E           "ipam": {}
+E         }
+E       },
+E       "services": {
+E         "probe": {
+E           "command": null,
+E           "entrypoint": null,
+E           "environment": {
+E             "MARKER": "missing"
+E           },
+E           "image": "busybox:latest",
+E           "networks": {
+E             "default": null
+E           }
+E         }
+E       }
+E     }
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...},\n      "image": "busybox:latest",\n      "networks": {\n        "default": null\n      }\n    }\n  }\n}', stderr='').returncode
+_ test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call[False] _
+tests\deployment\test_dev_launcher.py:120: in test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call
+    assert "--env-file" in call, call
+E   AssertionError: ['compose', '-f', 'C:\\Users\\dimas\\AppData\\Local\\Temp\\pytest-of-dimas\\pytest-93\\test_dev_launcher_uses_generat0...st-of-dimas\\pytest-93\\test_dev_launcher_uses_generat0\\checkout with spaces\\docker-compose.full.yml', 'config', ...]
+E   assert '--env-file' in ['compose', '-f', 'C:\\Users\\dimas\\AppData\\Local\\Temp\\pytest-of-dimas\\pytest-93\\test_dev_launcher_uses_generat0...st-of-dimas\\pytest-93\\test_dev_launcher_uses_generat0\\checkout with spaces\\docker-compose.full.yml', 'config', ...]
+_ test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call[True] _
+tests\deployment\test_dev_launcher.py:117: in test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call
+    assert result.returncode == 0, result.stdout + result.stderr
+E   AssertionError:
+E     \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
+E     \u2551          Sphere Platform \u2014 Dev Starter v1.0             \u2551
+E     \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d
+E
+E       \u25b6 \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u044e Docker Desktop...
+E       \u2713 Docker \u0437\u0430\u043f\u0443\u0449\u0435\u043d
+E       \u25b6 \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u044e .env \u0444\u0430\u0439\u043b...
+E       � .env ������ �� .env.example � ������� ������������ ��������� � ������� ������.
+E
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...������� .env ����...\n  � .env ������ �� .env.example � ������� ������������ ��������� � ������� ������.\n', stderr='').returncode
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_full_deploy_env.py::test_full_deploy_renders_the_selected_installation_env_from_another_directory[both]
+FAILED tests/deployment/test_full_deploy_env.py::test_full_deploy_renders_the_selected_installation_env_from_another_directory[local]
+FAILED tests/deployment/test_full_deploy_env.py::test_full_deploy_rejects_missing_installation_env_before_docker
+FAILED tests/deployment/test_dev_launcher.py::test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call[False]
+FAILED tests/deployment/test_dev_launcher.py::test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call[True]
+5 failed, 12 passed, 1 warning in 14.48s

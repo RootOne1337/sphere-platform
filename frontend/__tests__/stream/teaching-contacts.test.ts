@@ -1,0 +1,269 @@
+import { TeachingContacts, stickPoint, type TeachingInput } from '@/src/features/stream/teachingContacts';
+import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
+import {applyWalkingStick} from '@/src/features/stream/walkPilot';
+import {calibrateProfile,defaultTeachingProfile} from '@/src/features/stream/teachingKeymap';
+
+const binding={captureEpoch:'00112233-4455-6677-8899-aabbccddeeff',width:960,height:540};
+function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolean,neutralStick?:{x:number;y:number},recoverVideoGaps=false) {
+  const sent: Record<string,unknown>[]=[],journal:TeachingInput[]=[],states:string[]=[];
+  let listener:(v:unknown)=>void=()=>{};let fresh=true;
+  const endpoint:DirectControlEndpoint={session:'a'.repeat(32),sharedInput:true,readyState:1,bufferedAmount:0,
+    capture:()=>binding,send:raw=>sent.push(JSON.parse(raw)),listen:fn=>{listener=fn;return()=>{};}};
+  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt,idleFresh,neutralStick,recoverVideoGaps);
+  const envelope={session_id:endpoint.session,capture_epoch:binding.captureEpoch,contact_protocol:1,max_pointers:3,owner:'b'.repeat(32)};
+  const receipt=(fields:Record<string,unknown>)=>listener({type:'shared_input_status',...envelope,device_uptime_ms:1000,...fields});
+  const ready=()=>{listener({type:'touch_session',...envelope,frame_width:960,frame_height:540});receipt({sequence:0,gesture:0,action:4,pointer_id:-1,outcome:'ready'});};
+  const ack=()=>{const p=sent.at(-1)!;receipt({sequence:p.sequence,gesture:p.gesture,action:p.action,pointer_id:p.pointer_id??-1,outcome:p.action===4?'alive':'applied'});};
+  return {driver,sent,journal,states,ready,receipt,ack,stale:()=>{fresh=false;},resume:()=>{fresh=true;}};
+}
+beforeEach(()=>jest.useFakeTimers());afterEach(()=>{jest.clearAllTimers();jest.useRealTimers();});
+
+test('a short video gap centers the held stick and releases camera without retiring the foot owner',async()=>{
+  let idle=true;const center={x:100,y:350},f=fixture(undefined,()=>idle,center,true);f.ready();
+  f.driver.set(0,center);f.ack();f.driver.set(0,{x:100,y:320});f.ack();
+  const down=f.driver.cameraCommand({x:700,y:200},performance.now()+230,center);f.ack();await down;
+  f.stale();jest.advanceTimersByTime(25);expect(f.driver.isReady).toBe(true);expect(f.driver.isVideoPaused).toBe(true);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:2,x:100,y:350});f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1});f.ack();
+  expect(f.sent.some(r=>r.type==='touch_close')).toBe(false);expect(f.driver.hasContact(1)).toBe(false);
+  f.resume();jest.advanceTimersByTime(25);expect(f.driver.isVideoPaused).toBe(false);
+  f.driver.set(0,{x:100,y:320});f.ack();expect(f.sent.filter(r=>r.pointer_id===0&&r.action===0)).toHaveLength(1);
+  f.stale();idle=false;jest.advanceTimersByTime(25);expect(f.driver.failureReason).toBe('contact_video_stale');
+});
+
+test('an ACK arriving before the video watchdog cancels queued motion without closing the owner',()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();f.driver.set(0,center);f.ack();
+  f.driver.set(0,{x:100,y:320},performance.now()+200);
+  f.driver.set(0,{x:120,y:320},performance.now()+200);
+  f.stale();f.ack();
+  expect(f.driver.failureReason).toBeNull();expect(f.driver.isVideoPaused).toBe(true);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:2,x:100,y:350});f.ack();
+  expect(f.sent.some(r=>r.x===120)).toBe(false);
+  let acknowledged=Number(f.sent.at(-1)?.sequence??0);
+  for(let i=0;i<48;i++){
+    jest.advanceTimersByTime(25);
+    const last=f.sent.at(-1)!;
+    if(last.action===4&&Number(last.sequence)>acknowledged){acknowledged=Number(last.sequence);f.ack();}
+  }
+  expect(f.driver.isReady).toBe(true);expect(f.sent.some(r=>r.type==='touch_close')).toBe(false);
+  f.resume();jest.advanceTimersByTime(25);f.driver.set(0,{x:100,y:320},performance.now()+200);f.ack();
+  expect(f.sent.filter(r=>r.pointer_id===0&&r.action===0)).toHaveLength(1);
+});
+
+test('camera target is interpolated in small two-axis ACKed steps rather than one jump',async()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();
+  const down=f.driver.cameraCommand({x:700,y:200},performance.now()+230,center);f.ack();await down;
+  const turn=f.driver.cameraCommand({x:730,y:215},performance.now()+240,center);let last=f.sent.length;
+  for(let i=0;i<14;i++){jest.advanceTimersByTime(16);if(f.sent.length>last){last=f.sent.length;f.ack();}}
+  await expect(turn).resolves.toBe(true);
+  const moves=f.sent.filter(r=>r.pointer_id===1&&r.action===2);expect(moves.length).toBeGreaterThan(3);
+  let x=700,y=200;for(const move of moves){expect(Math.hypot(Number(move.x)-x,Number(move.y)-y)).toBeLessThanOrEqual(10);x=Number(move.x);y=Number(move.y);}
+  expect([x,y]).toEqual([730,215]);expect(f.driver.isReady).toBe(true);
+});
+
+test('stale RGB cancels pending smooth movement and sends only a release',async()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();
+  const down=f.driver.cameraCommand({x:700,y:200},performance.now()+230,center);f.ack();await down;
+  const turn=f.driver.cameraCommand({x:760,y:220},performance.now()+240,center);
+  f.stale();jest.advanceTimersByTime(25);await expect(turn).resolves.toBe(false);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1});f.ack();
+  const moves=f.sent.filter(r=>r.action===2).length;f.resume();jest.advanceTimersByTime(200);
+  expect(f.sent.filter(r=>r.action===2)).toHaveLength(moves);expect(f.driver.isReady).toBe(true);
+});
+
+test('a late ACK cannot flush an old queued decision even while new video is fresh',()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();f.driver.set(0,center);f.ack();
+  f.driver.set(0,{x:100,y:320},performance.now()+60);
+  f.driver.set(0,{x:120,y:320},performance.now()+60);
+  jest.advanceTimersByTime(80);f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:2,x:100,y:350});f.ack();
+  expect(f.sent.some(r=>r.x===120)).toBe(false);expect(f.driver.isReady).toBe(true);
+  f.driver.set(0,{x:120,y:320},performance.now()+100);expect(f.sent.at(-1)).toMatchObject({x:120,y:320});
+});
+test('neutral corrections retain one stick DOWN and allow a second held camera finger',async()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center);f.ready();
+  const profile=calibrateProfile(defaultTeachingProfile,binding,'stick',center);
+  applyWalkingStick(f.driver,profile,binding,[0,-.35]);f.ack();f.ack();
+  for(let i=0;i<12;i++){applyWalkingStick(f.driver,profile,binding,[0,0]);f.ack();applyWalkingStick(f.driver,profile,binding,[0,-.35]);f.ack();}
+  applyWalkingStick(f.driver,profile,binding,[0,0]);f.ack();
+  expect(f.sent.filter(e=>e.pointer_id===0&&e.action===0)).toHaveLength(1);
+  expect(f.sent.filter(e=>e.pointer_id===0&&e.action===1)).toHaveLength(0);
+  expect(f.driver.canCameraCommand(center)).toBe(true);
+  let reply=f.driver.cameraCommand({x:700,y:200},performance.now()+200,center);f.ack();await expect(reply).resolves.toBe(true);
+  reply=f.driver.cameraCommand({x:720,y:200},performance.now()+200,center);f.ack();await expect(reply).resolves.toBe(true);
+  reply=f.driver.cameraCommand(null,performance.now()+200,center);f.ack();await expect(reply).resolves.toBe(true);
+  expect(f.driver.hasContact(0)).toBe(true);
+  f.stale();jest.advanceTimersByTime(25);expect(f.driver.isReady).toBe(true);
+  f.driver.set(0,{x:100,y:320});expect(f.driver.failureReason).toBe('stale_contact');
+});
+test('automatic horizontal stroke waits for each native receipt and preserves Y exactly',async()=>{
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},720,performance.now()+230);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:0,x:700,y:200});
+  f.ack();expect(f.sent.filter(e=>e.action===2)).toHaveLength(0);
+  for(const x of [705,710,715,720]){
+    jest.advanceTimersByTime(24);expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,x,y:200});f.ack();
+  }
+  jest.advanceTimersByTime(24);expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1,x:720,y:200});
+  f.ack();await expect(stroke).resolves.toBe(true);expect(f.driver.isNeutral).toBe(true);
+});
+test('an expired camera permit cannot emit MOVE even when DOWN was applied',async()=>{
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200);
+  jest.advanceTimersByTime(210);f.ack();await expect(stroke).resolves.toBe(false);
+  expect(f.driver.failureReason).toBe('camera_stroke_expired');
+  expect(f.sent.filter(e=>e.type==='touch_contact_event'&&e.action===2)).toHaveLength(0);
+});
+test('stop cancels an unfinished stroke and a late ACK never continues it',async()=>{
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200);
+  void f.driver.close();await expect(stroke).resolves.toBe(false);f.ack();
+  expect(f.sent.filter(e=>e.type==='touch_contact_event')).toHaveLength(1);
+});
+test('automatic camera refuses a held stick or an overlong swipe',async()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();
+  await expect(f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200)).resolves.toBe(false);
+  f.driver.set(0,null);f.ack();
+  await expect(f.driver.horizontalStroke({x:700,y:200},800,performance.now()+200)).resolves.toBe(false);
+  expect(f.sent.filter(e=>e.pointer_id===1)).toHaveLength(0);
+});
+test('camera requires time for a real drag and Stop cancels already scheduled movement',async()=>{
+  const f=fixture();f.ready();
+  await expect(f.driver.horizontalStroke({x:700,y:200},720,performance.now()+100)).resolves.toBe(false);
+  expect(f.sent.filter(e=>e.type==='touch_contact_event')).toHaveLength(0);
+  const stroke=f.driver.horizontalStroke({x:700,y:200},720,performance.now()+230);f.ack();void f.driver.close();
+  jest.advanceTimersByTime(150);await expect(stroke).resolves.toBe(false);
+  expect(f.sent.filter(e=>e.action===2)).toHaveLength(0);
+});
+test('pixel rounding in a tiny drag cannot leave the gesture stuck between identical coordinates',async()=>{
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},702,performance.now()+230);f.ack();
+  for(let i=0;i<5;i++){
+    jest.advanceTimersByTime(24);
+    const last=f.sent.at(-1)!;
+    if(last.type==='touch_contact_event'&&f.journal.filter(e=>e.stage==='receipt').at(-1)?.sequence!==last.sequence)f.ack();
+  }
+  await expect(stroke).resolves.toBe(true);expect(f.driver.isNeutral).toBe(true);
+});
+test('W remains held while camera and action acquire independent contacts; one physical gesture',()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();
+  f.driver.set(1,{x:700,y:200});f.ack();f.driver.set(2,{x:850,y:450});f.ack();
+  f.driver.set(1,{x:750,y:210});f.ack();f.driver.set(2,null);f.ack();
+  const events=f.sent.filter(e=>e.type==='touch_contact_event');
+  expect(events.map(e=>[e.pointer_id,e.action])).toEqual([[0,0],[1,0],[2,0],[1,2],[2,1]]);
+  expect(events.every(e=>e.gesture===1)).toBe(true);expect(f.driver.isNeutral).toBe(false);
+});
+test('W direction corrections only emit MOVE; adjacent camera moves coalesce without dropping UP',()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});
+  f.driver.set(0,{x:110,y:350});f.driver.set(0,{x:120,y:350});f.driver.set(0,null);
+  f.ack();expect(f.sent.at(-1)).toMatchObject({action:2,x:120});f.ack();expect(f.sent.at(-1)).toMatchObject({action:1});f.ack();
+  expect(f.driver.isNeutral).toBe(true);expect(f.journal.filter(e=>e.stage==='receipt')).toHaveLength(3);
+});
+test('heartbeat extends hold without another DOWN and native release is required to complete',async()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();jest.advanceTimersByTime(325);
+  expect(f.sent.at(-1)).toMatchObject({type:'touch_event',action:4,gesture:1});f.ack();
+  const close=f.driver.close();expect(f.sent.at(-1)).toEqual({type:'touch_close'});
+  f.receipt({sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await expect(close).resolves.toBe(true);expect(f.journal.at(-1)?.outcome).toBe('closed');
+});
+
+test('closing a held control records native CANCEL time and preserves confirmed release on subsequent close',async()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();
+  const close=f.driver.close();f.receipt({sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed',device_uptime_ms:2500});
+  await expect(close).resolves.toBe(true);await expect(f.driver.close()).resolves.toBe(true);
+  expect(f.journal.at(-1)).toMatchObject({stage:'closed',outcome:'closed',device_uptime_ms:2500,cancelled_pointers:[0]});
+});
+
+test('unsolicited native CLOSED remains authoritative and never reopens a contact',async()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();
+  f.receipt({sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed',device_uptime_ms:3500});
+  expect(f.driver.isReady).toBe(false);await expect(f.driver.close()).resolves.toBe(true);
+  f.driver.set(0,{x:120,y:350});expect(f.sent.filter(e=>e.action===0)).toHaveLength(1);
+});
+test('lost frames revoke all contacts; unanswered close stays unknown and is never replayed',async()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();f.stale();jest.advanceTimersByTime(25);
+  expect(f.states).toContain('contact_video_stale');const close=f.driver.close();jest.advanceTimersByTime(2600);
+  await expect(close).resolves.toBe(false);expect(f.journal.at(-1)?.outcome).toBe('unknown');
+  f.driver.set(0,{x:100,y:350});expect(f.sent.filter(e=>e.action===0)).toHaveLength(1);
+});
+
+test('an empty pedestrian owner can wait through a short gap, but cannot send stale DOWN',()=>{
+  const f=fixture(undefined,()=>true);f.ready();f.stale();jest.advanceTimersByTime(325);
+  expect(f.sent.at(-1)).toMatchObject({action:4});f.ack();
+  expect(f.driver.isReady).toBe(true);expect(f.states).not.toContain('contact_video_stale');
+  f.driver.set(0,{x:100,y:350});
+  expect(f.driver.failureReason).toBe('stale_contact');
+  expect(f.sent.filter(e=>e.type==='touch_contact_event')).toHaveLength(0);
+});
+
+test('empty owner resumes only on new video and still closes when the idle allowance ends',()=>{
+  let allowed=true;const f=fixture(undefined,()=>allowed);f.ready();f.stale();jest.advanceTimersByTime(325);f.ack();
+  f.resume();f.driver.set(0,{x:100,y:350});f.ack();f.driver.set(0,null);f.ack();
+  f.stale();allowed=false;jest.advanceTimersByTime(25);
+  expect(f.driver.failureReason).toBe('contact_video_stale');expect(f.sent.at(-1)).toEqual({type:'touch_close'});
+});
+
+test('idle allowance never protects held or unconfirmed movement from stale video',()=>{
+  const f=fixture(undefined,()=>true);f.ready();f.driver.set(0,{x:100,y:350});
+  f.stale();jest.advanceTimersByTime(25);
+  expect(f.driver.failureReason).toBe('contact_video_stale');expect(f.sent.at(-1)).toEqual({type:'touch_close'});
+});
+test('legacy ready cannot masquerade as three-contact support',()=>{
+  const f=fixture();f.receipt({sequence:0,outcome:'ready',contact_protocol:undefined});
+  expect(f.states).toContain('contact_protocol_required');expect(f.driver.isReady).toBe(false);
+  expect(f.sent.filter(e=>e.type==='touch_contact_event')).toHaveLength(0);
+});
+
+test('unanswered applied receipt keeps its 500ms fence and reports ACK timeout separately',()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});jest.advanceTimersByTime(500);
+  expect(f.states).toContain('contact_ack_timeout');expect(f.sent.at(-1)?.type).toBe('touch_close');
+});
+
+test('missing READY keeps its six-second fence and does not pretend video was stale',()=>{
+  const f=fixture();jest.advanceTimersByTime(6000);
+  expect(f.states).toContain('contact_ready_timeout');expect(f.states).not.toContain('contact_video_stale');
+});
+test('wrong pointer receipt retires owner; no queued correction runs after uncertainty',()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.driver.set(0,{x:120,y:350});
+  f.receipt({sequence:1,gesture:1,action:0,pointer_id:1,outcome:'applied'});
+  expect(f.states).toContain('contact_receipt_unknown');expect(f.sent.at(-1)?.type).toBe('touch_close');
+  expect(f.sent.filter(e=>e.action===2)).toHaveLength(0);
+});
+test('old input queue is rejected rather than executed late',()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.driver.set(1,{x:700,y:200});jest.advanceTimersByTime(225);f.ack();
+  expect(f.states).toContain('stale_contact');expect(f.sent.at(-1)?.type).toBe('touch_close');
+});
+
+test('a neutral release queued behind a 350ms ACK remains legal when video goes stale',()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();
+  f.driver.set(0,center);f.ack();f.driver.set(0,{x:100,y:320});
+  f.stale();jest.advanceTimersByTime(350);f.ack();
+  expect(f.driver.isReady).toBe(true);
+  expect(f.sent.at(-1)).toMatchObject({action:2,pointer_id:0,x:100,y:350});f.ack();
+  expect(f.states).not.toContain('stale_contact');expect(f.driver.isVideoPaused).toBe(true);
+});
+
+test('a late ACK delivered before an overdue timer cannot authorize queued movement',()=>{
+  const observe=jest.fn(),f=fixture(observe);f.ready();
+  f.driver.set(0,{x:100,y:350});f.driver.set(0,{x:120,y:350});
+  const now=jest.spyOn(performance,'now').mockReturnValue(600);
+  try {
+    f.ack();
+    expect(f.states).toContain('contact_ack_timeout');
+    expect(f.sent.at(-1)?.type).toBe('touch_close');
+    expect(f.sent.filter(e=>e.action===2)).toHaveLength(0);
+    expect(observe).not.toHaveBeenCalled();
+  } finally { now.mockRestore(); }
+});
+
+test('RTT telemetry is measured from the command and cannot interrupt an applied receipt',()=>{
+  const observe=jest.fn(()=>{throw Error('optional_observer_failed');}),f=fixture(observe);f.ready();
+  f.driver.set(0,{x:100,y:350});jest.advanceTimersByTime(12);f.ack();
+  expect(f.driver.lastReceiptRttMs).toBe(12);expect(observe).toHaveBeenCalledWith(12);
+  f.driver.set(0,{x:120,y:350});f.ack();
+  expect(f.sent.at(-1)).toMatchObject({action:2,x:120});
+  expect(f.states).not.toContain('contact_ack_timeout');
+  expect(f.journal.filter(e=>e.stage==='receipt')).toHaveLength(2);
+});
+test('analog stick normalizes diagonal and Shift reduces amplitude without releasing',()=>{
+  expect(stickPoint(new Set(['KeyW']),{x:100,y:300},50)).toEqual({x:100,y:250});
+  expect(stickPoint(new Set(['KeyW']),{x:100,y:300},50,true)).toEqual({x:100,y:280});
+  expect(stickPoint(new Set(['KeyW','KeyS']),{x:100,y:300},50)).toBeNull();
+  expect(stickPoint(new Set(['KeyW','KeyD']),{x:100,y:300},50)).toEqual({x:135,y:265});
+});

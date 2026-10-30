@@ -1,0 +1,711 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-06T21:59:18.242135+00:00",
+  "observedDateLocal": "2026-10-07",
+  "timezone": "Asia/Yekaterinburg",
+  "sourceRevision": "b50d6ae2af537adb12a52503f0809ef565c0ba21",
+  "resizeImplementationRevision": "eb598a5",
+  "frontendRunId": 37535540138,
+  "frontendTests": 1692,
+  "frontendSuites": 133,
+  "backendTestsPassed": 3037,
+  "backendTestsSkipped": 37,
+  "backendSubtestsPassed": 55,
+  "backendCoveragePercent": 80.36,
+  "archiveInstallerMethods": 22,
+  "httpProbeTests": 18,
+  "freshTypesBuildPassed": true,
+  "exactSourceCi": [
+    {
+      "id": 37535540138,
+      "name": "CI — Frontend",
+      "head_sha": "b50d6ae2af537adb12a52503f0809ef565c0ba21",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37535540138",
+      "updated_at": "2026-10-06T21:44:02Z"
+    },
+    {
+      "id": 37535540188,
+      "name": "CI — Backend",
+      "head_sha": "b50d6ae2af537adb12a52503f0809ef565c0ba21",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37535540188",
+      "updated_at": "2026-10-06T21:56:49Z"
+    },
+    {
+      "id": 37535540323,
+      "name": "CI — Android",
+      "head_sha": "b50d6ae2af537adb12a52503f0809ef565c0ba21",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37535540323",
+      "updated_at": "2026-10-06T21:54:42Z"
+    }
+  ],
+  "image": {
+    "tag": "sphere-review-frontend:b50d6ae2af537adb12a52503f0809ef565c0ba21",
+    "id": "sha256:80b1c13b6d77c4a2d07b5afb9c961a0f8bfc4790b41ac234c368c0c1a2d53df7",
+    "os": "linux",
+    "architecture": "amd64"
+  },
+  "archive": {
+    "file": "image.tar.gz",
+    "bytes": 120838721,
+    "sha256": "5133f9595f3bb6099f072a470480b9aa29e7641d2674d2e7b1e3098f35b51ecc",
+    "maxExpandedBytes": 1073741824
+  },
+  "githubArtifact": {
+    "id": 11446332011,
+    "bytes": 120841672,
+    "zipSha256": "1cdeaa08d1c0fb326a6ce2cc8d6f565f83ec3fce82a1df372c16a15a47c66e32"
+  },
+  "probe": {
+    "loopbackOnly": true,
+    "readOnlyContainer": true,
+    "pages": [
+      {
+        "route": "/",
+        "status": 200,
+        "redirect": "next-flight"
+      },
+      {
+        "route": "/accounts",
+        "status": 200
+      },
+      {
+        "route": "/audit",
+        "status": 200
+      },
+      {
+        "route": "/dashboard",
+        "status": 200
+      },
+      {
+        "route": "/devices",
+        "status": 200
+      },
+      {
+        "route": "/discovery",
+        "status": 200
+      },
+      {
+        "route": "/event-triggers",
+        "status": 200
+      },
+      {
+        "route": "/events",
+        "status": 200
+      },
+      {
+        "route": "/fleet",
+        "status": 200
+      },
+      {
+        "route": "/groups",
+        "status": 200
+      },
+      {
+        "route": "/locations",
+        "status": 200
+      },
+      {
+        "route": "/login",
+        "status": 200
+      },
+      {
+        "route": "/logs",
+        "status": 200
+      },
+      {
+        "route": "/monitoring",
+        "status": 200
+      },
+      {
+        "route": "/orchestration",
+        "status": 200
+      },
+      {
+        "route": "/pipeline-settings",
+        "status": 200
+      },
+      {
+        "route": "/scripts",
+        "status": 200
+      },
+      {
+        "route": "/scripts/builder",
+        "status": 200
+      },
+      {
+        "route": "/sessions",
+        "status": 200
+      },
+      {
+        "route": "/settings",
+        "status": 200
+      },
+      {
+        "route": "/stream",
+        "status": 200
+      },
+      {
+        "route": "/tasks",
+        "status": 200
+      },
+      {
+        "route": "/updates",
+        "status": 200
+      },
+      {
+        "route": "/users",
+        "status": 200
+      },
+      {
+        "route": "/vpn",
+        "status": 200
+      },
+      {
+        "route": "/webhooks",
+        "status": 200
+      }
+    ],
+    "clientAssetsVerified": 73,
+    "browserHydrationVerified": false,
+    "backendExecutionVerified": false
+  },
+  "runtimeManifestId": "sha256:1ea416ef190c7fc46216aa6c2ade03bc83b66bbbc57fb42ac7015524e1c11729",
+  "runtimeStartedAtUtc": "2026-10-06T21:50:47.354001618Z",
+  "runtimeInstalled": true,
+  "otherContainersPreserved": 45,
+  "backendPreserved": true,
+  "onlyUiImageAndBuildRemovalDelta": true,
+  "apiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "apkChanged": false,
+  "otaCatalogSha256": "c22124909f08d2df6fd98048eb1c359da5d5c4ee73f0e1f9cc7427988e27d4d4",
+  "resourceFindingsAtInstall": [],
+  "installerBrowserVerifiedFlag": false,
+  "subsequentBrowserAcceptance": {
+    "route": "http://127.0.0.1:3015/scripts/builder",
+    "actualSourceBadge": "b50d6ae2",
+    "resizeCases": [
+      {
+        "case": "overview-1920",
+        "clientWidth": 1920,
+        "nodes": [
+          {
+            "id": "start-1",
+            "rect": {
+              "bottom": 472,
+              "height": 133,
+              "left": 901,
+              "right": 1157,
+              "top": 339,
+              "width": 256,
+              "x": 901,
+              "y": 339
+            }
+          },
+          {
+            "id": "end-1",
+            "rect": {
+              "bottom": 916,
+              "height": 133,
+              "left": 901,
+              "right": 1157,
+              "top": 783,
+              "width": 256,
+              "x": 901,
+              "y": 783
+            }
+          },
+          {
+            "id": "step_3f1c819c5a7a",
+            "rect": {
+              "bottom": 694,
+              "height": 133,
+              "left": 901,
+              "right": 1157,
+              "top": 561,
+              "width": 256,
+              "x": 901,
+              "y": 561
+            }
+          }
+        ],
+        "pane": {
+          "bottom": 1043,
+          "height": 831,
+          "left": 488,
+          "right": 1570,
+          "top": 212,
+          "width": 1082,
+          "x": 488,
+          "y": 212
+        },
+        "scrollWidth": 1920,
+        "title": {
+          "bottom": 138,
+          "height": 32,
+          "left": 332,
+          "right": 908,
+          "top": 106,
+          "width": 576,
+          "x": 332,
+          "y": 106
+        },
+        "transform": "transform: translate(401px, 115px) scale(1);",
+        "viewport": {
+          "height": 1080,
+          "width": 1920
+        },
+        "allThreeNodesInsideCanvas": true,
+        "noPageHorizontalOverflow": true
+      },
+      {
+        "case": "auto-overview-1280",
+        "clientWidth": 1280,
+        "nodes": [
+          {
+            "id": "start-1",
+            "rect": {
+              "bottom": 411.0485229492187,
+              "height": 91.04852294921876,
+              "left": 641.3743286132812,
+              "right": 816.6256103515625,
+              "top": 320,
+              "width": 175.25128173828125,
+              "x": 641.3743286132812,
+              "y": 320
+            }
+          },
+          {
+            "id": "end-1",
+            "rect": {
+              "bottom": 715,
+              "height": 91.04852294921876,
+              "left": 641.3743286132812,
+              "right": 816.6256103515625,
+              "top": 623.9514770507812,
+              "width": 175.25128173828125,
+              "x": 641.3743286132812,
+              "y": 623.9514770507812
+            }
+          },
+          {
+            "id": "step_3f1c819c5a7a",
+            "rect": {
+              "bottom": 563.0242919921875,
+              "height": 91.04855346679688,
+              "left": 641.3743286132812,
+              "right": 816.6256103515625,
+              "top": 471.9757385253906,
+              "width": 175.25128173828125,
+              "x": 641.3743286132812,
+              "y": 471.9757385253906
+            }
+          }
+        ],
+        "pane": {
+          "bottom": 763,
+          "height": 507,
+          "left": 488,
+          "right": 970,
+          "top": 256,
+          "width": 482,
+          "x": 488,
+          "y": 256
+        },
+        "scrollWidth": 1280,
+        "title": {
+          "bottom": 138,
+          "height": 32,
+          "left": 332,
+          "right": 789.359375,
+          "top": 106,
+          "width": 457.359375,
+          "x": 332,
+          "y": 106
+        },
+        "transform": "transform: translate(145.159px, 55.7851px) scale(0.684575);",
+        "viewport": {
+          "height": 800,
+          "width": 1280
+        },
+        "allThreeNodesInsideCanvas": true,
+        "noPageHorizontalOverflow": true
+      },
+      {
+        "case": "manual-zoom-1280",
+        "clientWidth": 1280,
+        "nodes": [
+          {
+            "id": "start-1",
+            "rect": {
+              "bottom": 391.3582153320313,
+              "height": 109.25820922851562,
+              "left": 623.8492431640625,
+              "right": 834.1507568359375,
+              "top": 282.1000061035156,
+              "width": 210.301513671875,
+              "x": 623.8492431640625,
+              "y": 282.1000061035156
+            }
+          },
+          {
+            "id": "end-1",
+            "rect": {
+              "bottom": 756.0999755859375,
+              "height": 109.2581787109375,
+              "left": 623.8492431640625,
+              "right": 834.1507568359375,
+              "top": 646.841796875,
+              "width": 210.301513671875,
+              "x": 623.8492431640625,
+              "y": 646.841796875
+            }
+          },
+          {
+            "id": "step_3f1c819c5a7a",
+            "rect": {
+              "bottom": 573.7291259765625,
+              "height": 109.25823974609376,
+              "left": 623.8492431640625,
+              "right": 834.1507568359375,
+              "top": 464.4708862304687,
+              "width": 210.301513671875,
+              "x": 623.8492431640625,
+              "y": 464.4708862304687
+            }
+          }
+        ],
+        "pane": {
+          "bottom": 763,
+          "height": 507,
+          "left": 488,
+          "right": 970,
+          "top": 256,
+          "width": 482,
+          "x": 488,
+          "y": 256
+        },
+        "scrollWidth": 1280,
+        "title": {
+          "bottom": 138,
+          "height": 32,
+          "left": 332,
+          "right": 789.359375,
+          "top": 106,
+          "width": 457.359375,
+          "x": 332,
+          "y": 106
+        },
+        "transform": "transform: translate(125.991px, 16.2421px) scale(0.82149);",
+        "viewport": {
+          "height": 800,
+          "width": 1280
+        },
+        "allThreeNodesInsideCanvas": true,
+        "noPageHorizontalOverflow": true
+      },
+      {
+        "case": "manual-retained-1920",
+        "clientWidth": 1920,
+        "nodes": [
+          {
+            "id": "start-1",
+            "rect": {
+              "bottom": 347.35821533203125,
+              "height": 109.25820922851562,
+              "left": 623.8492431640625,
+              "right": 834.1507568359375,
+              "top": 238.1000061035156,
+              "width": 210.301513671875,
+              "x": 623.8492431640625,
+              "y": 238.1000061035156
+            }
+          },
+          {
+            "id": "end-1",
+            "rect": {
+              "bottom": 712.0999755859375,
+              "height": 109.2581787109375,
+              "left": 623.8492431640625,
+              "right": 834.1507568359375,
+              "top": 602.841796875,
+              "width": 210.301513671875,
+              "x": 623.8492431640625,
+              "y": 602.841796875
+            }
+          },
+          {
+            "id": "step_3f1c819c5a7a",
+            "rect": {
+              "bottom": 529.7291259765625,
+              "height": 109.25823974609376,
+              "left": 623.8492431640625,
+              "right": 834.1507568359375,
+              "top": 420.4708862304687,
+              "width": 210.301513671875,
+              "x": 623.8492431640625,
+              "y": 420.4708862304687
+            }
+          }
+        ],
+        "pane": {
+          "bottom": 1043,
+          "height": 831,
+          "left": 488,
+          "right": 1570,
+          "top": 212,
+          "width": 1082,
+          "x": 488,
+          "y": 212
+        },
+        "scrollWidth": 1920,
+        "title": {
+          "bottom": 138,
+          "height": 32,
+          "left": 332,
+          "right": 908,
+          "top": 106,
+          "width": 576,
+          "x": 332,
+          "y": 106
+        },
+        "transform": "transform: translate(125.991px, 16.2421px) scale(0.82149);",
+        "viewport": {
+          "height": 1080,
+          "width": 1920
+        },
+        "allThreeNodesInsideCanvas": true,
+        "noPageHorizontalOverflow": true
+      },
+      {
+        "case": "auto-horizontal-1280",
+        "clientWidth": 1280,
+        "nodes": [
+          {
+            "id": "start-1",
+            "rect": {
+              "bottom": 538.8217163085938,
+              "height": 58.6434326171875,
+              "left": 520,
+              "right": 632.8776245117188,
+              "top": 480.17828369140625,
+              "width": 112.87762451171876,
+              "x": 520,
+              "y": 480.17828369140625
+            }
+          },
+          {
+            "id": "end-1",
+            "rect": {
+              "bottom": 538.8217163085938,
+              "height": 58.6434326171875,
+              "left": 825.1223754882812,
+              "right": 938,
+              "top": 480.17828369140625,
+              "width": 112.87762451171876,
+              "x": 825.1223754882812,
+              "y": 480.17828369140625
+            }
+          },
+          {
+            "id": "step_3f1c819c5a7a",
+            "rect": {
+              "bottom": 538.8217163085938,
+              "height": 58.6434326171875,
+              "left": 672.5611572265625,
+              "right": 785.4388427734375,
+              "top": 480.17828369140625,
+              "width": 112.877685546875,
+              "x": 672.5611572265625,
+              "y": 480.17828369140625
+            }
+          }
+        ],
+        "pane": {
+          "bottom": 763,
+          "height": 507,
+          "left": 488,
+          "right": 970,
+          "top": 256,
+          "width": 482,
+          "x": 488,
+          "y": 256
+        },
+        "scrollWidth": 1280,
+        "title": {
+          "bottom": 138,
+          "height": 32,
+          "left": 332,
+          "right": 789.359375,
+          "top": 106,
+          "width": 457.359375,
+          "x": 332,
+          "y": 106
+        },
+        "transform": "transform: translate(32px, 224.178px) scale(0.440928);",
+        "viewport": {
+          "height": 800,
+          "width": 1280
+        },
+        "allThreeNodesInsideCanvas": true,
+        "noPageHorizontalOverflow": true
+      },
+      {
+        "case": "auto-overview-390",
+        "clientWidth": 390,
+        "nodes": [
+          {
+            "id": "start-1",
+            "rect": {
+              "bottom": 1038.8861083984375,
+              "height": 78.8861083984375,
+              "left": 116.0795669555664,
+              "right": 267.92044830322266,
+              "top": 960,
+              "width": 151.84088134765625,
+              "x": 116.0795669555664,
+              "y": 960
+            }
+          },
+          {
+            "id": "end-1",
+            "rect": {
+              "bottom": 1288,
+              "height": 78.8861083984375,
+              "left": 116.0795669555664,
+              "right": 267.92044830322266,
+              "top": 1209.1138916015625,
+              "width": 151.84088134765625,
+              "x": 116.0795669555664,
+              "y": 1209.1138916015625
+            }
+          },
+          {
+            "id": "step_3f1c819c5a7a",
+            "rect": {
+              "bottom": 1163.443115234375,
+              "height": 78.8861083984375,
+              "left": 116.0795669555664,
+              "right": 267.92044830322266,
+              "top": 1084.5570068359375,
+              "width": 151.84088134765625,
+              "x": 116.0795669555664,
+              "y": 1084.5570068359375
+            }
+          }
+        ],
+        "pane": {
+          "bottom": 1336,
+          "height": 440,
+          "left": 0,
+          "right": 384,
+          "top": 896,
+          "width": 384,
+          "x": 0,
+          "y": 896
+        },
+        "scrollWidth": 390,
+        "title": {
+          "bottom": 138,
+          "height": 32,
+          "left": 68,
+          "right": 368,
+          "top": 106,
+          "width": 300,
+          "x": 68,
+          "y": 106
+        },
+        "transform": "transform: translate(116.08px, 64px) scale(0.593128);",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        },
+        "allThreeNodesInsideCanvas": true,
+        "noPageHorizontalOverflow": true
+      }
+    ],
+    "manualTransformRetainedExactly": true,
+    "testedDag": {
+      "nodeCount": 3,
+      "edgeCount": 2,
+      "entry_node": "start-1",
+      "on_success": {
+        "start-1": "step_3f1c819c5a7a",
+        "step_3f1c819c5a7a": "end-1",
+        "end-1": null
+      }
+    },
+    "jsonGraphRoundtripRoutesPreserved": true,
+    "serverValidation": {
+      "structureVerified": true,
+      "luaSafetyVerified": true,
+      "sha256": "18d4f96c4c0d831c7998a4579253ed8f73128991e5fa1f02caca9f03275aa0dd",
+      "actionParametersServerVerified": false,
+      "actionParametersLocallyVerified": true,
+      "androidExecutionVerified": false
+    },
+    "consoleWarningsOrErrorsObserved": 0,
+    "scriptPublished": false,
+    "taskLaunched": false,
+    "mobileCanvasBelowInitialFold": true,
+    "mobileScreenshotPaletteHiddenExplicitly": true,
+    "temporaryViewportOverrideReset": true,
+    "screenshots": [
+      {
+        "path": "docs/audits/2026-10-07/assets/studio-validation/resize-overview-1280.jpg",
+        "format": "JPEG returned by browser screenshot API; no re-encoding",
+        "bytes": 98668,
+        "sha256": "6f34550546dae06a783dfd5e8de55ad8fe8a9f5073a6f6e30ba53308b2c6d102",
+        "width": 1280,
+        "height": 800
+      },
+      {
+        "path": "docs/audits/2026-10-07/assets/studio-validation/resize-mobile-390.jpg",
+        "format": "JPEG returned by browser screenshot API; no re-encoding",
+        "bytes": 30950,
+        "sha256": "e6364069027c5086afcc9ffda6b4848c4eec7d2c11dedbb8cfab878be3862494",
+        "width": 390,
+        "height": 844
+      },
+      {
+        "path": "docs/audits/2026-10-07/assets/studio-validation/resize-desktop-1920.jpg",
+        "format": "JPEG returned by browser screenshot API; no re-encoding",
+        "bytes": 142234,
+        "sha256": "5c4e014c7667795f250f7ff878b59913c10fb285440f6b24c59e5e1f8dab7e34",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "historicalBackendFailure": {
+    "source": "439f910b81aa8d909fe0baf8e84352a4b9f68322",
+    "runId": 37529847401,
+    "attempt1": "one 20s PowerShell preservation-fixture process timeout; 3036 passed / 37 skipped / 55 subtests passed",
+    "attempt2Conclusion": "cancelled",
+    "rootCauseEstablished": false,
+    "newExactSourceRegressionPassedWithoutWeakeningTimeout": true
+  },
+  "historicalEvidence": [
+    "docs/audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json",
+    "docs/audits/2026-10-07/POSTBOOT-RECOVERY.md"
+  ],
+  "openAdmission": {
+    "productAccepted": 9,
+    "productOpen": 41,
+    "continuousInput": true,
+    "richRecorder": true,
+    "correlatedPlayback": true,
+    "fleetSoak": true,
+    "storageGrowthWriterUnknown": true,
+    "corruptionRootCauseUnknown": true,
+    "backendActionContractNotInstalled": true
+  }
+}

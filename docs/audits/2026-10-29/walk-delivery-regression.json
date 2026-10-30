@@ -1,0 +1,100 @@
+{
+  "schema": "sphere-walk-delivery-regression-v1",
+  "reports": [
+    {
+      "id": "22319dbf4bfa49e08ee327e1d04cd191",
+      "stop": "walk_start_outside_recorded_beginning",
+      "input": {
+        "applied": 0,
+        "events": 5,
+        "submitted": 0
+      },
+      "observations": 3,
+      "sourceAgeMs": 48.5
+    },
+    {
+      "id": "57d2006a90004b22814fc60ca4c33805",
+      "stop": "walk_start_outside_recorded_beginning",
+      "input": {
+        "applied": 0,
+        "events": 5,
+        "submitted": 0
+      },
+      "observations": 3,
+      "sourceAgeMs": 48.80000001192093
+    },
+    {
+      "id": "5a17879fe8d54c8db60fd94fa6e836b3",
+      "stop": "walk_start_outside_recorded_beginning",
+      "input": {
+        "applied": 0,
+        "events": 5,
+        "submitted": 0
+      },
+      "observations": 2,
+      "sourceAgeMs": 32.90000003576279
+    },
+    {
+      "id": "91860592428b4bf0add699f502792452",
+      "stop": "walk_start_outside_recorded_beginning",
+      "input": {
+        "applied": 0,
+        "events": 5,
+        "submitted": 0
+      },
+      "observations": 3,
+      "sourceAgeMs": 6.5
+    },
+    {
+      "id": "d799606b30104b9db41e26fed1e36301",
+      "stop": "walk_decision_expired",
+      "input": {
+        "applied": 13,
+        "events": 41,
+        "submitted": 13
+      },
+      "observations": 22,
+      "sourceAgeMs": 4.800000011920929
+    },
+    {
+      "id": "f8d684e5d5f940748a0b252618d269a6",
+      "stop": "walk_start_outside_recorded_beginning",
+      "input": {
+        "applied": 0,
+        "events": 5,
+        "submitted": 0
+      },
+      "observations": 3,
+      "sourceAgeMs": 64.19999998807907
+    },
+    {
+      "id": "ff1eb2d0bb344bf5bfc9e5ac2af8a9a4",
+      "stop": "walk_start_outside_recorded_beginning",
+      "input": {
+        "applied": 0,
+        "events": 5,
+        "submitted": 0
+      },
+      "observations": 2,
+      "sourceAgeMs": 17.30000001192093
+    }
+  ],
+  "lastAccepted": {
+    "elapsedMs": 5134.099999964237,
+    "ageMs": 75.09999996423721,
+    "inliers": 103,
+    "progress": 0.011928628007160155
+  },
+  "oldPermitExpiresMs": 5309.0,
+  "stopElapsedMs": 5314.599999964237,
+  "stopAfterPermitMs": 5.599999964237213,
+  "computeMs": {
+    "min": 8.624200010672212,
+    "median": 10.97559998743236,
+    "max": 154.80429999297485
+  },
+  "oldStartArc": 0.1338972887236289,
+  "newStartArc": 0.6389058138595936,
+  "units": "arbitrary_sfm_units",
+  "physicalActionsByAnalysis": 0
+}

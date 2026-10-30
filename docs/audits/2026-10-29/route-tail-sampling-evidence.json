@@ -1,0 +1,42 @@
+{
+  "outcome": "verified",
+  "physicalActions": 0,
+  "executionQualified": false,
+  "sourceUnchanged": true,
+  "originalFrames": 915,
+  "geometry": [
+    1920,
+    1080
+  ],
+  "oldSelectedViews": 123,
+  "newSelectedViews": 122,
+  "oldLastIntervals": [
+    0.269,
+    0.031
+  ],
+  "newLastIntervals": [
+    0.3,
+    0.3
+  ],
+  "sampling": {
+    "requested_interval_seconds": 0.25,
+    "final_close_neighbor_replaced_source_index": 913,
+    "first_source_index": 0,
+    "last_source_index": 914,
+    "minimum_interval_seconds": 0.25,
+    "quality_selection_applied": false,
+    "stationary_detection_applied": false
+  },
+  "lastSourceIndex": 914,
+  "sourceManifestSha256": "6600429df8f21fb079ca3c5256efa986ea702c6df9a9be984cf2a764639f7cd0",
+  "heldoutExcluded": true,
+  "sfmRerun": false,
+  "seconds": 19.67199999996228,
+  "date": "2026-10-29",
+  "timezone": "Asia/Yekaterinburg",
+  "tests": {
+    "browser_import_unittest": 20,
+    "reconstruction_pytest": 60
+  },
+  "configuredReconstructionRuntimeImport": "passed"
+}

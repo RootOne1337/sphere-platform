@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T10:21:30.965056+00:00",
+  "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+  "scope": "finite negative peer observation and limited collector recovery; no media/control acceptance",
+  "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+  "browser": {
+    "topology": "browser on main PC with VPN; PH030 on laptop without VPN",
+    "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+    "startedAtUtc": "2026-10-10T10:14:02.483Z",
+    "attempts": 1,
+    "profile": "public-stun",
+    "terminalReason": "connection_deadline",
+    "nativeAnswerReceived": true,
+    "echoReplies": 0,
+    "echoLimit": 20,
+    "rttMs": null,
+    "selectedPath": null,
+    "lastNetwork": {
+      "iceState": "checking",
+      "dtlsState": "connecting",
+      "localCandidates": 5,
+      "remoteCandidates": 2,
+      "pairs": 2,
+      "checkingPairs": 2,
+      "failedPairs": 0,
+      "succeededPairs": 0,
+      "requestsSent": 177,
+      "responsesReceived": 0,
+      "ageAtStopMs": 1000
+    },
+    "laptopBrowserTestPerformed": false,
+    "androidInputSent": false,
+    "mediaOrControlPathChanged": false
+  },
+  "agentAfterProbe": {
+    "observedAtUtc": "2026-10-10T10:16:14.254832+00:00",
+    "status": "offline",
+    "version": "1.2.50-dev",
+    "versionCode": 10250,
+    "lastHeartbeatUtc": "2026-10-10T10:14:44.465527Z",
+    "serverDisconnect": [
+      {
+        "timestamp": "2026-10-10T10:15:24.203277Z",
+        "level": "info",
+        "event": "android_ws.disconnected",
+        "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+        "close_code": 1005
+      }
+    ],
+    "nativeLogRead": {
+      "httpStatus": 503,
+      "nativeRowsReceived": 0,
+      "accepted": false
+    },
+    "disconnectCause": "UNKNOWN",
+    "probeCausedDisconnect": "UNDETERMINED"
+  },
+  "storage": {
+    "previousWindow": {
+      "observedAtUtc": "2026-10-10T10:19:52.092533+00:00",
+      "state": "stopped_without_terminal_receipt",
+      "pidPresent": false,
+      "completeSamples": 296,
+      "lastSampleUtc": "2026-10-10T10:04:43.044697+00:00",
+      "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+      "prefixBytes": 3851900,
+      "prefixSha256": "aa3cad28ab3f3bca30bc79c9e770e6eb08852c74fbc7c2e4f949356b92119b79",
+      "freeStartBytes": 46521065472,
+      "freeEndBytes": 47588077568,
+      "freeMinimumBytes": 36221018112,
+      "freeMaximumBytes": 48081645568,
+      "largestIntervals": [
+        {
+          "fromUtc": "2026-10-10T06:28:43.044698+00:00",
+          "toUtc": "2026-10-10T06:30:43.044683+00:00",
+          "freeDeltaBytes": 11805712384,
+          "pagefilesBefore": [
+            {
+              "Name": "C:\\pagefile.sys",
+              "AllocatedBaseSize": 48320,
+              "CurrentUsage": 208,
+              "PeakUsage": 297
+            }
+          ],
+          "pagefilesAfter": [
+            {
+              "Name": "C:\\pagefile.sys",
+              "AllocatedBaseSize": 48320,
+              "CurrentUsage": 208,
+              "PeakUsage": 297
+            }
+          ]
+        },
+        {
+          "fromUtc": "2026-10-10T06:16:43.045094+00:00",
+          "toUtc": "2026-10-10T06:18:43.044740+00:00",
+          "freeDeltaBytes": -2218278912,
+          "pagefilesBefore": [
+            {
+              "Name": "C:\\pagefile.sys",
+              "AllocatedBaseSize": 48320,
+              "CurrentUsage": 219,
+              "PeakUsage": 297
+            }
+          ],
+          "pagefilesAfter": [
+            {
+              "Name": "C:\\pagefile.sys",
+              "AllocatedBaseSize": 48320,
+              "CurrentUsage": 216,
+              "PeakUsage": 297
+            }
+          ]
+        },
+        {
+          "fromUtc": "2026-10-10T05:42:43.044916+00:00",
+          "toUtc": "2026-10-10T05:44:43.044643+00:00",
+          "freeDeltaBytes": 837668864,
+          "pagefilesBefore": [
+            {
+              "Name": "C:\\pagefile.sys",
+              "AllocatedBaseSize": 48320,
+              "CurrentUsage": 212,
+              "PeakUsage": 297
+            }
+          ],
+          "pagefilesAfter": [
+            {
+              "Name": "C:\\pagefile.sys",
+              "AllocatedBaseSize": 48320,
+              "CurrentUsage": 219,
+              "PeakUsage": 297
+            }
+          ]
+        },
+        {
+          "fromUtc": "2026-10-10T00:22:45.083988+00:00",
+          "toUtc": "2026-10-10T00:24:45.083998+00:00",
+          "freeDeltaBytes": -787546112,
+          "pagefilesBefore": [
+            {
+              "Name": "C:\\pagefile.sys",
+              "AllocatedBaseSize": 48320,
+              "CurrentUsage": 234,
+              "PeakUsage": 297
+            }
+          ],
+          "pagefilesAfter": [
+            {
+              "Name": "C:\\pagefile.sys",
+              "AllocatedBaseSize": 48320,
+              "CurrentUsage": 240,
+              "PeakUsage": 297
+            }
+          ]
+        }
+      ],
+      "writerAttribution": "UNDETERMINED",
+      "earlierStatusFileModified": false
+    },
+    "newWindow": {
+      "directoryName": "host-storage-limited-20261010T101952Z",
+      "status": {
+        "state": "running",
+        "pid": 43640,
+        "administrator": false,
+        "launchMode": "limited-unprivileged",
+        "vssAccessGuaranteed": false,
+        "startedUtc": "2026-10-10T10:19:52.233013+00:00",
+        "dueUtc": "2026-10-10T18:19:52.233013+00:00",
+        "samplesLimit": 241,
+        "samplesWritten": 1,
+        "intervalSeconds": 120,
+        "dockerEverySamples": 8,
+        "reportBudgetBytes": 16777216,
+        "sampleLimitBytes": 131072,
+        "reportBytes": 26900,
+        "cleanupPerformed": false,
+        "deviceCommandsSent": false,
+        "autostartConfigured": false,
+        "fullDirectoryScans": false,
+        "processIoIsWriterAttribution": false,
+        "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+        "lastSampleUtc": "2026-10-10T10:19:52.234371+00:00",
+        "freeDiskBytes": 49300525056
+      },
+      "process": {
+        "pid": 43640,
+        "creationUtc": "2026-10-10T10:19:52.0961480Z",
+        "commandMatched": true
+      },
+      "breakawayFromParentJob": true,
+      "detachedProcess": true
+    },
+    "coverageGap": {
+      "fromUtc": "2026-10-10T10:04:43.044697+00:00",
+      "toUtc": "2026-10-10T10:19:52.233013+00:00",
+      "covered": false
+    },
+    "administrator": false,
+    "systemSettingsChanged": false,
+    "fullSystemWriterAttributionAvailable": false
+  },
+  "acceptance": {
+    "channel": false,
+    "latency": false,
+    "directMedia": false,
+    "directControl": false,
+    "stableApkRelease": false
+  }
+}

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+- name: 📚 Документация и запуск
+  url: https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/README.md
+  about: Навигация по текущему аудиту, установка, APK и runbooks.
+- name: 🛡️ Приватное сообщение об уязвимости
+  url: https://github.com/RootOne1337/sphere-platform/security/advisories/new
+  about: Security report без публикации exploit, ключей и данных в issue.
