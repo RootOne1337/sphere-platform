@@ -12,8 +12,8 @@
     "last": "2026-10-30T23:22:22",
     "allClientVersionsMissing": true,
     "stopCounts": {
-      "walk_no_route_progress": 1,
-      "walk_manual_stop": 11
+      "walk_manual_stop": 11,
+      "walk_no_route_progress": 1
     },
     "legacyManualStopIncludesBlurAndHidden": true,
     "rawArchiveSha256": "a9c26fed277fbb8658ce0580cdf91f075ec44f3a0bf317a40081a2d65d9a88ec"
@@ -21,9 +21,9 @@
   "tests": {
     "frontend": {
       "success": true,
-      "passed": 132,
-      "suites": 12,
-      "sha256": "07b05b4b2cc264c551212101db1f006dea588c393b7783f5fec5f9f4ef20b5ae"
+      "passed": 133,
+      "suites": 13,
+      "sha256": "1e412f7301a02f0cc3d7c8ef9cb503522d7c33da64d0fca1e735bf24409fd0f2"
     },
     "python": {
       "passed": 155,
@@ -111,13 +111,13 @@
     }
   },
   "build": {
-    "path": ".local-pilot/walk-followup-build-20261030-v5b.json",
-    "sha256": "df4aaef724da4d325ed7029acc46820b5df4c83e1105e8e1d0fee26b1cfbfe8e",
+    "path": ".local-pilot/walk-followup-build-20261030-v5c.json",
+    "sha256": "1a74e5cac4e1a4aab7d2ae63cfc6169167d1fa57bdb889b1cba0a4e1e747bbfb",
     "value": {
       "exit_code": 0,
       "stopped_reason": null,
-      "source_sha_before": "f82cf1d222f53b2380d319b6cf707fc116e19000141c7c5ca72bb986a823ea38",
-      "source_sha_after": "f82cf1d222f53b2380d319b6cf707fc116e19000141c7c5ca72bb986a823ea38",
+      "source_sha_before": "630fb410acc3b9f352b8865c49d2b3bd5dbc22d70fb691027cfa671506a34f64",
+      "source_sha_after": "630fb410acc3b9f352b8865c49d2b3bd5dbc22d70fb691027cfa671506a34f64",
       "source_unchanged": true,
       "local_only": true,
       "installed": false,
@@ -133,7 +133,7 @@
     }
   },
   "probe": {
-    "path": ".local-pilot/walk-followup-image-20261030-v5/probe3.json",
+    "path": ".local-pilot/walk-followup-image-20261030-v5b/probe3.json",
     "sha256": "cdf4603114bba5c624e5a430c215115fbed817204d087fe89274106f8d1daed9",
     "value": {
       "outcome": "verified",
@@ -146,11 +146,11 @@
     }
   },
   "installation": {
-    "path": ".local-pilot/walk-followup-image-20261030-v5/install-receipt.json",
-    "sha256": "18a7eb1c6361f0f14b3822a5b48c11e29b9e2ab927073da3923d461c25cc793e",
+    "path": ".local-pilot/walk-followup-image-20261030-v5b/install-receipt.json",
+    "sha256": "8d0bd6bd4f6e7d986b5552dddb0affd2bd06ed741188fabfb9c990e0a492d6ec",
     "value": {
       "outcome": "verified",
-      "candidateImageId": "sha256:b51ef08224dc173352262f524b1ac9c07ea8710d98b3f50acadf6d46809058de",
+      "candidateImageId": "sha256:bbf94d0a1b268bb9e439d2538c0f8cc508805f877acf8a81578510778f2a2257",
       "physicalDeviceActions": 0,
       "pages": 2,
       "assets": 31,
@@ -177,7 +177,8 @@
     "one_active_job": true
   },
   "sourceHashes": {
-    "frontend/src/features/stream/TeachingWorkbench.tsx": "0ce22bbb16c4ef1553390028d349d7c545aa65a9924d5b90a920a5dcecc0af32",
+    "frontend/src/features/stream/TeachingWorkbench.tsx": "eee13ca730298debf5bed14f2a473cc97e65863497a21458d69de902f6d5ec57",
+    "frontend/src/features/stream/RecordedRouteFrame.tsx": "25006dc7e10c622b17381044000886bd518c71fa289ae876eefaf4950dc6eaf6",
     "frontend/src/features/stream/WalkingRoutePilot.tsx": "92e00003f21b3a6c86526e9c3f1d174f0625e5ca8f6924478a2b5a30411c3343",
     "frontend/src/features/stream/walkCameraDrag.ts": "4395ab905065de709ed87e002ac4122975c07b5bd57167f4d6aa5e924053fcec",
     "frontend/src/features/stream/walkPilot.ts": "8dad757c4077011a86bbae68bc707909c1bd61b4455bae032f14bc87605deb1b",

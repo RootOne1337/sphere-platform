@@ -15,7 +15,8 @@ test('new targets coalesce while the last verified frame stays visible with its 
   const calls=jest.mocked(readRecordedRouteFrame).mock.calls;expect(calls[1][3].aborted).toBe(false);
   view.rerender(<RecordedRouteFrame source={source} ticks={180000}/>);
   expect(calls[1][3].aborted).toBe(false);
-  await act(async()=>{pending.shift()!();});await screen.findByText('Опорный кадр записи · 1.000 с');
+  await act(async()=>{pending.shift()!();});expect(screen.getByText('Опорный кадр записи · 0.000 с')).toBeInTheDocument();
+  expect(screen.queryByText('Опорный кадр записи · 1.000 с')).not.toBeInTheDocument();
   await waitFor(()=>expect(readRecordedRouteFrame).toHaveBeenCalledTimes(3));
   await act(async()=>{pending.shift()!();});await screen.findByText('Опорный кадр записи · 2.000 с');
 });

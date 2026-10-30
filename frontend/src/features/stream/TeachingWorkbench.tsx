@@ -35,6 +35,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const user = useAuthStore(s => s.user);
   const [storageScope, setStorageScope] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle'); const phaseRef = useRef<Phase>('idle');
+  const walkOpening=useRef(false);
   const [notice, setNotice] = useState('Подключите поток и нажмите «Записать маршрут». По умолчанию управляйте игрой в эмуляторе.');
   const [native, setNative] = useState('Не открыт'); const [result, setResult] = useState<DirectProbeResult | null>(null);
   const [inputRtt,setInputRtt]=useState<number|null>(null);
@@ -101,7 +102,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     if (stopPromise.current) return stopPromise.current;
     if (!active(phaseRef.current)) return Promise.resolve();
     clearArmDeadline();
-    change('stopping'); keys.current.clear(); mouse.current = null;
+    walkOpening.current=false;change('stopping'); keys.current.clear(); mouse.current = null;
     stopPromise.current = (async () => {
       expectedOwnerClose.current=true;
       const confirmed = await controller.current?.close() ?? false;
@@ -136,7 +137,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       if(!active(phaseRef.current))return;
       // The pilot owns fresh-video, pose and native ACK deadlines. Losing
       // window focus is not a manual-input release or an operator stop.
-      if(phaseRef.current==='piloting')return;
+      if(phaseRef.current==='piloting'||walkOpening.current)return;
       if(keys.current.size || mouse.current !== null) { void stopCallback.current('window_focus_lost'); return; }
       if(externalActive.current && ['opening','arming','recording'].includes(phaseRef.current))return;
       // Embedded Rerun focuses its canvas at startup. Moving between documents
@@ -260,7 +261,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     const conn=connection.current,b=conn?.binding(),endpoint=conn?.endpoint(),p=profileRef.current;
     if(signal.aborted||readOnly||phaseRef.current!=='preview'||!conn?.fresh()||!attached.current||!b||!endpoint
       ||walkingCalibrationIssue(p,b)||!result||!['host','nat'].includes(result.path))throw Error('walk_input_not_ready');
-    stopPromise.current=null;change('opening');
+    stopPromise.current=null;walkOpening.current=true;change('opening');
     let released=false,decisionUntil=0,requestedMotion=false,appliedMotion=false,settle:(lease:WalkInputLease)=>void=()=>{};const stickSlew=new WalkStickSlew();
     const center=walkingStickTarget(p,b,[0,0]).center;
     const opened=new Promise<WalkInputLease>(resolve=>{settle=resolve;});
@@ -323,7 +324,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     const cancelled=()=>{settle(lease);void stopCallback.current();};
     signal.addEventListener('abort',cancelled,{once:true});
     if(signal.aborted)cancelled();
-    try{return await opened;}finally{if(signal.aborted)signal.removeEventListener('abort',cancelled);}
+    try{return await opened;}finally{walkOpening.current=false;if(signal.aborted)signal.removeEventListener('abort',cancelled);}
   };
   const record = async () => {
     const conn = connection.current, binding = conn?.binding(), endpoint = conn?.endpoint();

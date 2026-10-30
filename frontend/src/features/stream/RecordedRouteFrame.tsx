@@ -18,6 +18,9 @@ export function RecordedRouteFrame({source,ticks}:{source:RouteSource;ticks:numb
           if(index===null)throw Error('Время камеры не совпало с индексом исходника.');
           const scratch=document.createElement('canvas');
           await readRecordedRouteFrame(source,index,scratch,abort.signal);if(abort.signal.aborted)return;
+          // A slow superseded decode may finish after the user/live matcher
+          // has selected a newer reference. Do not flash it as the new answer.
+          if(next!==wanted.current)continue;
           target.width=scratch.width;target.height=scratch.height;target.getContext('2d')?.drawImage(scratch,0,0);
           done=next;setDisplayed(next);setNotice('Проверенный кадр исходного H.264');
         }catch(error){if(!abort.signal.aborted){failed=next;setNotice(error instanceof Error?error.message:'Опорный кадр недоступен.');}}

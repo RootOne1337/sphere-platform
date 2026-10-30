@@ -20,7 +20,7 @@ The surviving stage tails show maximum source callback gaps of 396.9 ms, JPEG pr
 
 ### Focus is not an operator stop
 
-Removed window-blur termination from `WalkingRoutePilot` and exempted the autonomous `piloting` phase in the parent `TeachingWorkbench`. Manual held-key/mouse release behavior is retained for manual control. A visible page with a fresh source can continue while the emulator has keyboard focus. A hidden document still closes input, with `walk_page_hidden` rather than `walk_manual_stop`; stream identity, freshness, native ACK and stop/deadline checks remain active.
+Removed window-blur termination from `WalkingRoutePilot` and exempted both autonomous native opening and the `piloting` phase in the parent `TeachingWorkbench`. Manual held-key/mouse release behavior is retained for manual control. A visible page with a fresh source can continue while the emulator has keyboard focus. A hidden document still closes input, with `walk_page_hidden` rather than `walk_manual_stop`; stream identity, freshness, native ACK and stop/deadline checks remain active. A workbench/lease integration test covers blur before READY, after READY and the distinction between camera and stick application receipts.
 
 ### No-progress monitoring uses applied input time
 
@@ -46,7 +46,7 @@ The map previously selected live heading when the 250 ms pose was fresh, then im
 
 `NavigationRouteContext` now keeps the last confirmed orientation for presentation. Expiry still removes the live-position pin; the map explains that the displayed orientation is held. It does not alternate to a different reference heading. This display state never supplies a localization result or input permit. Depth-colour painting also stays anchored while the pin expires.
 
-The source-image viewer remains a throttled reference comparison, up to one update per second, with its own displayed/requested timestamp. It is not the current input image or the controller's next target. A mismatch with the last displayed reference alone cannot prove that the follower is trying to return to that recorded camera.
+The source-image viewer remains a throttled reference comparison, up to one update per second, with its own displayed/requested timestamp. A completed superseded decode is no longer painted when a newer reference has been selected; the previous verified image and its actual timestamp remain visible until the latest requested image completes. It is not the current input image or the controller's next target. A mismatch with the last displayed reference alone cannot prove that the follower is trying to return to that recorded camera.
 
 ### Detect the open stale client before input starts
 
@@ -68,7 +68,7 @@ More MOVE updates on one held contact are continuous control; they are not repea
 
 ![Matched simulated controller comparison](walk-followup/camera-continuity-comparison.png)
 
-All **23 camera/contact scenarios** pass, including frozen/reversed response detection and short video gaps. Regression tests: **132 frontend tests in 12 suites**, **155 Python tests plus 60 subtests**, one optional-video-dependency skip. The subsequent cumulative-counter report test run also passed 10 tests and 5 subtests.
+All **23 camera/contact scenarios** pass, including frozen/reversed response detection and short video gaps. Final regression tests: **133 frontend tests in 13 suites**, **155 Python tests plus 60 subtests**, one optional-video-dependency skip. The subsequent cumulative-counter report test run also passed 10 tests and 5 subtests.
 
 ## Research checked
 
@@ -79,13 +79,13 @@ The implemented corrections address measured control/state faults. No learned ge
 
 ## Delivery and remaining acceptance
 
-Final frontend source fingerprint: `f82cf1d222f53b2380d319b6cf707fc116e19000141c7c5ca72bb986a823ea38`.
+Final frontend source fingerprint: `630fb410acc3b9f352b8865c49d2b3bd5dbc22d70fb691027cfa671506a34f64`.
 
-Image: `sphere-route-local:walk-followup-20261030-v5`, ID `sha256:b51ef08224dc173352262f524b1ac9c07ea8710d98b3f50acadf6d46809058de`. Probed two pages, 31 assets and both worker hashes before installing. The local review UI is healthy; other containers were preserved. The local processor was reloaded through its existing watchdog; source-video, geometry and navigation asset hashes were unchanged. Rollback frontend image: `sphere-route-local:walk-live-20261030-v2`.
+Image: `sphere-route-local:walk-followup-20261030-v5b`, ID `sha256:bbf94d0a1b268bb9e439d2538c0f8cc508805f877acf8a81578510778f2a2257`. Probed two pages, 31 assets and both worker hashes before installing. The local review UI is healthy; other containers were preserved. The local processor was reloaded through its existing watchdog; source-video, geometry and navigation asset hashes were unchanged. The immediately preceding compatible frontend image is `sphere-route-local:walk-followup-20261030-v5`.
 
 The first build was stopped by the build wrapper's 85% system-commit guard. A new bounded build retained one worker, a 1 GiB Node heap and at least 5.5 GiB available RAM, with a build-only 90% commit ceiling, and completed. Live-control and reconstruction resource guards were not changed. No unrelated application was closed and no cache or recording was deleted.
 
-Rollback requires a matching frontend and processor from `7c5fa377`; the previous frontend alone is intentionally rejected by the new live-start version contract.
+Rolling back the protocol change itself requires a matching frontend and processor from `7c5fa377`; the earlier v4 frontend alone is intentionally rejected by the new live-start version contract.
 
 The current user browser tab could not be inspected through the available browser tool: it returned a kernel-assets path error. Delivery was checked through unit/integration tests, the isolated camera plant, the production build and local HTTP/image receipts. No real game input was sent during this investigation. A smooth new live pass is still unverified.
 
