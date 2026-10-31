@@ -5,9 +5,9 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 393,
+    "DATED_EVIDENCE": 428,
     "DESIGN_SPECIFICATION": 90,
-    "OPERATING_GUIDE": 74,
+    "OPERATING_GUIDE": 77,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1713,7 +1713,147 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-27/SPEC1337-ALTERNATIVE-RECONSTRUCTION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-27/TEST228-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-28/ROUTE-END-TO-END-STATUS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-28/SEQUENCE-CROSS-CAPTURE-CHECK.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-28/WALK-PILOT-READINESS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/FIRST-RUN-AUTOMATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/KAKASKA228-LIVE-NO-MOVEMENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/KAKASKA228-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/RECORDED-CONTROL-REPLAY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/RECORDING-FOCUS-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/ROUTE-COMPASS-LIVE-READINESS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/ROUTE-MAP-FRAME-AND-DEPTH.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/ROUTE-PREPARATION-RESOURCES.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/ROUTE-TAIL-SAMPLING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/SCAN-POINT-ACCURACY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/WALK-CAMERA-DRAG-REGRESSION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/WALK-CAMERA-FEEDBACK-AND-COST.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/WALK-DELIVERY-AND-MIDROUTE-RESUME.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-29/WALK-INPUT-RENDER-STABILITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/LOCAL-WORKER-AND-DISK-GROWTH.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/PILOT-STORAGE-FULL-INVENTORY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/REPEAT-PASSES-AND-PNP-LATENCY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/WALK-BACKGROUND-VERIFICATION-EXPERIMENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/WALK-CONTINUITY-AND-FOCUS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/WALK-CONTINUOUS-CONTACTS-AND-REFERENCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/WALK-EXPIRY-AND-LIVE-MEMORY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/WALK-LIVE-STOPS-AND-CAPTURE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/WALK-PREFLIGHT-CLOSED-LOOP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/WALK-REALTIME-PIPELINE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-30/WALK-SMOOTH-CAMERA-AND-FRAME-GAPS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-31/SCOOTER-CONTROL-PRESET.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-31/VISUAL-TEACH-REPEAT-RESEARCH.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-31/WALK-CONTINUOUS-TURNS-AND-VIDEO-GAPS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-31/WALK-LONG-PASS-AND-VISIBILITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-31/WALK-RECOVERY-EXACT-FRAMES.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-01/DOCUMENTATION-ASSESSMENT.md",
       "role": "DATED_EVIDENCE"
     },
     {
@@ -1877,6 +2017,10 @@
       "role": "OPERATING_GUIDE"
     },
     {
+      "file": "docs/operations/DOCUMENTATION-WORKFLOW.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
       "file": "docs/operations/GROUP-HIERARCHY.md",
       "role": "OPERATING_GUIDE"
     },
@@ -1949,6 +2093,10 @@
       "role": "OPERATING_GUIDE"
     },
     {
+      "file": "docs/operations/ROUTE-STUDIO.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
       "file": "docs/operations/SCRIPT-CATALOG.md",
       "role": "OPERATING_GUIDE"
     },
@@ -1998,6 +2146,10 @@
     },
     {
       "file": "docs/operations/VPN-PROFILES.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/WALK-ROUTE-PILOT.md",
       "role": "OPERATING_GUIDE"
     },
     {

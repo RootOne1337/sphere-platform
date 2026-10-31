@@ -105,8 +105,8 @@ X-API-Key: sphr_<env>_<64hex>
 ```
 
 Tokens are obtained via the login endpoint and refreshed via `/auth/refresh`.
-API keys are created via `POST /api-keys` and have the format `sphr_{env}_{64hex}` (256-bit entropy).
-При одновременной передаче Bearer JWT и X-API-Key — API-ключ имеет приоритет.
+API keys are created via `POST /auth/api-keys` and have the format `sphr_{env}_{64hex}` (256-bit entropy).
+При использовании общего resolver API-ключ имеет приоритет; отдельные маршруты могут использовать другую зависимость или только Bearer.
 
 ### Error responses
 
@@ -129,29 +129,25 @@ API keys are created via `POST /api-keys` and have the format `sphr_{env}_{64hex
 POST /auth/login
 Content-Type: application/json
 
-{
-  "email": "admin@example.com",
-  "password": "securepassword",
-  "totp_code": "123456"    // required if MFA enabled
-}
+{ "email": "admin@example.com", "password": "example-password" }
 ```
 
-**Response 200:**
-```json
-{
-  "access_token": "eyJ...",
-  "token_type": "bearer",
-  "expires_in": 1800,
-  "user": {
-    "id": "uuid",
-    "email": "admin@example.com",
-    "role": "super_admin",
-    "org_id": "uuid"
-  }
-}
+If MFA is disabled, the response contains `access_token`, `token_type`, `expires_in`,
+`refresh_token` and `user`. If MFA is enabled, it returns `mfa_required: true` and
+`state_token` without an access token. Complete that challenge with:
+
+```http
+POST /auth/login/mfa
+Content-Type: application/json
+
+{ "state_token": "<state-token>", "code": "123456" }
 ```
 
-Refresh token is set as `HttpOnly; Secure; SameSite=None; Path=/` cookie `refresh_token`.
+Successful login also sets the HttpOnly `refresh_token` cookie at path `/`. Its
+transport policy is `Secure; SameSite=None` when `COOKIE_SECURE` is set or the
+request scheme is HTTPS; otherwise it is non-Secure with `SameSite=Lax`. The
+refresh token is also returned in the response body for fallback transport. Treat
+both the cookie and response as credentials. See [session boundaries](security/frontend-sessions.md).
 
 ---
 
@@ -159,16 +155,13 @@ Refresh token is set as `HttpOnly; Secure; SameSite=None; Path=/` cookie `refres
 
 ```http
 POST /auth/refresh
-Cookie: refresh_token=<refresh_token>
+Cookie: refresh_token=<refresh-token>
 ```
 
-**Response 200:**
-```json
-{
-  "access_token": "eyJ...",
-  "expires_in": 1800
-}
-```
+The backend rotates the refresh token and returns the same token response shape
+as a successful login. It accepts the cookie first, then `X-Refresh-Token`, then
+`{"refresh_token": "..."}` in the JSON body. A lost response does not prove that
+rotation did not occur; see [session boundaries](security/frontend-sessions.md).
 
 ---
 
@@ -192,32 +185,22 @@ cached data; see [AUD-48 and remaining session work](audits/2026-09-05/AUDIT-REP
 
 ### POST /auth/mfa/setup
 
-```http
-POST /auth/mfa/setup
-Authorization: Bearer <token>
-```
+Requires a Bearer-authenticated user. Returns `secret` and `qr_code` (base64 PNG);
+these are sensitive. The pending setup expires after five minutes. Setup alone
+does not enable MFA.
 
-**Response 200:**
-```json
-{
-  "secret": "BASE32SECRET",
-  "qr_uri": "otpauth://totp/Sphere:user@example.com?secret=BASE32SECRET&issuer=Sphere",
-  "backup_codes": ["xxxx-xxxx", "xxxx-xxxx"]
-}
-```
-
----
-
-### POST /auth/mfa/verify
+### POST /auth/mfa/verify-setup
 
 ```http
-POST /auth/mfa/verify
+POST /auth/mfa/verify-setup
 Authorization: Bearer <token>
+Content-Type: application/json
 
 { "code": "123456" }
 ```
 
-Returns `200 { "mfa_enabled": true }` on success.
+Success returns `200 {"message": "MFA enabled successfully"}`. `DELETE /auth/mfa`
+disables MFA for the authenticated user and returns `204`.
 
 ---
 
@@ -233,7 +216,6 @@ Authorization: Bearer <token>
 {
   "id": "uuid",
   "email": "user@example.com",
-  "username": "username",
   "role": "org_admin",
   "org_id": "uuid",
   "mfa_enabled": false,
@@ -249,40 +231,14 @@ Authorization: Bearer <token>
 
 ### GET /config/agent
 
-Получение конфигурации для агента. **Не требует авторизации** (soft-auth: если передан токен — используется `org_id` из JWT, иначе — конфиг по умолчанию).
-
-```http
-GET /config/agent
-```
-
-**Response 200:**
-```json
-{
-  "server": {
-    "wsUrl": "wss://sphere.example.com/ws",
-    "apiUrl": "https://sphere.example.com/api/v1",
-    "environment": "production"
-  },
-  "agent": {
-    "heartbeatIntervalMs": 30000,
-    "reconnectMaxRetries": 10,
-    "logLevel": "INFO"
-  },
-  "features": {
-    "autoRegister": true,
-    "autoUpdate": true,
-    "telemetryEnabled": true,
-    "vpnAutoConnect": false
-  },
-  "provisioning": {
-    "namingPattern": "sphere-{org}-{seq}",
-    "defaultTags": ["auto-registered"],
-    "defaultGroupId": null
-  }
-}
-```
-
-Конфигурация загружается из `agent-config/environments/{env}.json` и кэшируется в Redis (TTL 300 s).
+This endpoint may return base configuration without an API key. An optional
+`X-API-Key` (enrollment or device key) is validated and may enrich the response
+with organization-scoped data; it does not use a JWT to infer the organization.
+The response uses fields such as `server_url`, `ws_path`, `config_version`,
+`environment`, `config_poll_interval_seconds`, `features`, `enrollment_allowed`
+and optional `enrollment_api_key` and `org_id`. Enrollment credentials are
+sensitive and must not be published. Source of truth: [router](../backend/api/v1/config/router.py)
+and [schema](../backend/schemas/agent_config.py).
 
 ---
 
@@ -292,57 +248,29 @@ GET /config/agent
 
 ### POST /devices/register
 
-Идемпотентная авторегистрация устройства по composite fingerprint. При повторном вызове с тем же fingerprint возвращает существующее устройство.
+Requires an active enrollment API key with `device:register` in `X-API-Key`.
+Registration is scoped to the key's organization and accounts for both the
+fingerprint and optional instance binding; copying an APK fingerprint to a new
+VM does not necessarily identify the same device.
 
 ```http
 POST /devices/register
+X-API-Key: <enrollment-key>
 Content-Type: application/json
 
 {
-  "fingerprint": "a1b2c3d4e5f6...sha256hash",
-  "device_info": {
-    "model": "sdk_gphone64_x86_64",
-    "android_version": "13",
-    "sdk_version": 33,
-    "manufacturer": "Google",
-    "display": "TP1A.220624.014"
-  },
-  "agent_version": "1.2.0"
+  "fingerprint": "a1b2c3d4e5f6",
+  "model": "sdk_gphone64_x86_64",
+  "android_version": "13",
+  "device_type": "ldplayer"
 }
 ```
 
-**Response 200 (существующее устройство):**
-```json
-{
-  "device_id": "uuid",
-  "name": "sphere-dev-0042",
-  "is_new": false,
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "token_type": "bearer",
-  "expires_in": 1800
-}
-```
-
-**Response 201 (новое устройство):**
-```json
-{
-  "device_id": "uuid",
-  "name": "sphere-dev-0043",
-  "is_new": true,
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "token_type": "bearer",
-  "expires_in": 1800
-}
-```
-
-**Логика дедупликации:**
-- Поиск по `device.fingerprint @> '{"hash": "<fingerprint>"}'` (JSONB containment)
-- Если устройство найдено — обновляет `device_info`, генерирует новые токены
-- Если не найдено — создаёт устройство с авто-именем `sphere-{org_prefix}-{sequence}`
-
-**Не требует авторизации** (создаёт токены в процессе регистрации).
+The route returns `201` with `device_id`, `name`, `access_token`, opaque
+`refresh_token`, `expires_in`, `server_url`, `is_new` and optional binding and
+creation fields. `is_new` distinguishes a new record from re-enrollment. Do not
+publish either token. See the [registration schema](../backend/schemas/device_register.py)
+and [credential bootstrap](security/device-credential-bootstrap.md).
 
 ---
 
@@ -454,7 +382,7 @@ operator diagnosis steps are in the
 
 ---
 
-### PATCH /devices/{id}
+### PUT /devices/{id}
 
 Update device name, tags, or group.
 
@@ -488,83 +416,39 @@ Authorization: Bearer <token>
 
 **Response 200:**
 ```json
-{ "status": "rebooting", "device_id": "uuid" }
+{ "status": "reboot_initiated", "device_id": "uuid" }
 ```
+
+The response indicates an accepted agent receipt, not proof that reboot has completed.
 
 **Ошибки:**
 - `404` — устройство не найдено
 - `503` — агент оффлайн (нет WS-соединения)
 
-Timeout-fallback: устройство может перезагрузиться до ACK (3с grace period).
+A `504` without agent acknowledgement reports an unknown outcome; inspect the device before retrying.
 
 ---
 
 ### POST /devices/{id}/shell
 
-> Добавлено в v4.4.0
-
-Выполнение shell-команды на устройстве через WebSocket.
-
-```http
-POST /devices/{id}/shell
-Authorization: Bearer <token>
-
-{ "command": "adb shell getprop ro.build.display.id" }
-```
-
-**Response 200:**
-```json
-{
-  "exit_code": 0,
-  "stdout": "UP1A.231005.007",
-  "stderr": ""
-}
-```
-
-**Requires:** `device:command` permission.
-
----
+Requires `device:write` and an owned device. The live-only command accepts a
+`command` string (1–4096 characters), executes through the device agent, and returns
+`{"output": "..."}` for a completed result or `{"error": "..."}` for an agent
+failure. It is not a host-side `adb shell` invocation. A transport timeout does not
+prove that the command had no effect; inspect device state before retrying.
 
 ### POST /devices/{id}/logcat
 
-> Добавлено в v4.4.0
-
-Запрос на сбор logcat с устройства (UPLOAD_LOGCAT команда).
-
-```http
-POST /devices/{id}/logcat
-Authorization: Bearer <token>
-
-{ "lines": 1000, "filter": "SphereAgent" }
-```
-
-**Response 202:**
-```json
-{ "status": "collecting", "device_id": "uuid" }
-```
-
-Логи загружаются агентом и доступны через `GET /logs/{device_id}`.
-
----
+Requires `device:read`. The request accepts `lines` (1–10000, default 500) and
+`mode` (default `sphere`). The default requests Sphere logs; the returned object
+contains `logcat` on success or `error` on reported agent failure. It is a live
+request, not a `202` collection receipt.
 
 ### GET /devices/{id}/screenshot
 
-> Добавлено в v4.4.0
-
-Снятие скриншота устройства.
-
-```http
-GET /devices/{id}/screenshot
-Authorization: Bearer <token>
-```
-
-**Response 200:**
-```json
-{
-  "screenshot_url": "https://storage.example.com/screenshots/uuid.png",
-  "timestamp": "2026-03-04T10:00:00Z"
-}
-```
+This legacy endpoint is a stub that records a request in the cache and returns
+`status: screenshot_requested`; it does not return an image URL. For the manual
+original PNG contract see [Original Android PNG](#original-android-png).
 
 ---
 
@@ -586,35 +470,18 @@ Get real-time device status from Redis cache.
 
 ---
 
-## Bulk Actions — `/bulk`
+## Bulk Actions — `/devices/bulk`
 
-### POST /bulk/devices/action
-
-Execute bulk action on multiple devices.
-
-```http
-POST /bulk/devices/action
-Authorization: Bearer <token>
-
-{
-  "device_ids": ["uuid1", "uuid2"],
-  "action": "assign_group",
-  "params": { "group_id": "uuid" }
-}
-```
-
-**Supported actions:**
-
-| Action | Params | Description |
-|--------|--------|-------------|
-| `assign_group` | `group_id` | Move devices to group |
-| `remove_group` | — | Remove from current group |
-| `add_tag` | `tag` | Add tag to devices |
-| `remove_tag` | `tag` | Remove tag from devices |
-| `set_status` | `status` | Force-set status |
-| `reboot` | — | Send reboot command |
-
-**Requires:** `device:bulk_action` permission.
+`POST /devices/bulk/action` requires `device:write` and accepts 1–500 `device_ids`,
+`action` and optional `params`. The schema permits `reboot`, `connect_adb`,
+`disconnect_adb`, `set_group`, `set_tags` and `send_command`; `set_group` requires
+`group_id`, and `send_command` requires `command_type`. The response gives
+`total`, `succeeded`, `failed` and per-device `results`. Inspect each result.
+Reboot success means an agent receipt, not a finished reboot. `connect_adb`,
+`disconnect_adb` and `send_command` are cache-writing stubs, not proof of device
+execution. `DELETE /devices/bulk` requires `device:delete` and removes records
+from the active catalog while preserving history. See [schema](../backend/schemas/bulk.py)
+and [service](../backend/services/bulk_service.py).
 
 ---
 
@@ -915,88 +782,41 @@ Requires `vpn:read`; measured health coverage remains a separate open finding.
 
 ## Discovery — `/discovery`
 
-### POST /discovery/scan
-
-Trigger ADB device discovery on a connected PC Agent workstation.
-
-```http
-POST /discovery/scan
-
-{ "workstation_id": "uuid" }
-```
-
-**Response 200:**
-```json
-{
-  "devices": [
-    { "serial": "emulator-5554", "state": "device", "model": "sdk_gphone64_x86_64" },
-    { "serial": "192.168.1.100:5555", "state": "device", "model": "Pixel_6" }
-  ],
-  "workstation_id": "uuid",
-  "scanned_at": "2026-02-23T10:00:00Z"
-}
-```
+`POST /discovery/scan` requires `device:write`. The request requires `subnet` and
+`workstation_id`, and accepts `port_range`, `timeout_ms`, `auto_register`, and
+optional `group_id`. **`auto_register` defaults to true**; set it explicitly to
+`false` for a scan that must not create device records. The response reports
+`scanned`, `found`, `registered`, `devices` and `duration_ms`. A network scan
+and registration do not prove an Android agent is connected or ready for control.
+The server currently sends `discover_adb`, while the PC-agent dispatcher does not
+implement that command; failures can be converted to an empty result. An empty list
+therefore does not establish that no devices exist. See [PC agent](pc-agent.md) and
+[request and response schemas](../backend/schemas/discovery.py).
 
 ---
 
 ## Users — `/users`
 
-**Requires:** `user:read` or `user:write` permissions.
-
-### GET /users
-
-List users in the organization.
-
-### POST /users
-
-Create a new user (invite to org).
-
-```http
-{
-  "email": "newuser@example.com",
-  "username": "newuser",
-  "password": "TempPass123!",
-  "role": "device_manager"
-}
-```
-
-### PATCH /users/{id}
-
-Update user role or status.
-
-### DELETE /users/{id}
-
-Remove user from organization. Returns `204 No Content`.
+`GET /users` and `POST /users` require an administrator, organization owner or
+platform administrator. Creation uses `email`, `password` and `role`; it creates
+a user in the caller's organization. `PUT /users/{id}/role` changes a role subject
+to owner/platform-admin and target-role checks. `PATCH /users/{id}/deactivate`
+disables a user; self-deactivation and removal of the last active owner are
+blocked. There is no documented DELETE/reactivation route here. The full contract
+and receipt boundaries are in [user access](operations/USER-ACCESS.md).
 
 ---
 
-## API Keys — `/api-keys`
+## API Keys — `/auth/api-keys`
 
-### GET /api-keys
-
-List API keys for the current user.
-
-### POST /api-keys
-
-Create a new API key.
-
-```http
-{ "name": "CI/CD Pipeline", "expires_at": "2027-01-01T00:00:00Z" }
-```
-
-**Response 201:**
-```json
-{
-  "id": "uuid",
-  "name": "CI/CD Pipeline",
-  "key": "sk_live_xxxxxxxxxxxx",   // only shown once
-  "expires_at": "2027-01-01T00:00:00Z"
-}
-```
-
-### DELETE /api-keys/{id}
-
-Revoke an API key.
+`GET /auth/api-keys` lists organization keys without the raw secret and requires
+`api_key:read`. `POST /auth/api-keys` requires `api_key:write`; a request contains
+`name` and may specify `permissions`, `expires_at` and `key_type`. Delegated
+permissions must be held by the caller. The `201` response contains `id`, `name`,
+`key_prefix`, `raw_key`, `permissions`, `expires_at` and `created_at`; `raw_key`
+is displayed once and has the `sphr_{env}_{64hex}` format. Store it as a secret.
+`DELETE /auth/api-keys/{id}` requires `api_key:write` and returns `204` on success.
+See [schemas](../backend/schemas/auth.py) and [router](../backend/api/v1/auth/router.py).
 
 ---
 

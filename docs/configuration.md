@@ -30,8 +30,8 @@ python scripts/generate_secrets.py --output .env.generated
 | `POSTGRES_USER` | ✓ | `sphere` | PostgreSQL username |
 | `POSTGRES_PASSWORD` | ✓ | — | PostgreSQL password (32+ chars) |
 | `POSTGRES_URL` | ✓ | — | Full asyncpg connection URL |
-| `DB_POOL_SIZE` | | `20` | SQLAlchemy connection pool size |
-| `DB_MAX_OVERFLOW` | | `10` | Max overflow connections above pool_size |
+| `DB_POOL_SIZE` | | `10` | SQLAlchemy connection pool size |
+| `DB_MAX_OVERFLOW` | | `5` | Max overflow connections above pool_size |
 | `DB_POOL_TIMEOUT` | | `30` | Seconds to wait for a connection from pool |
 
 **Example:**
@@ -45,14 +45,12 @@ POSTGRES_URL=postgresql+asyncpg://sphere:super_secure_password_here@postgres:543
 
 ## Redis
 
-The shipped runtime Compose profiles now declare a **512 MiB dataset cap and a
-2048 MiB container ceiling**. The ceiling is not a memory reservation. It was
-raised after the isolated persistence probe OOMed at 1536 MiB. The 2048 MiB CI
-probe now passes its write/AOF/restart scenario, but the measured cgroup peak hit
-the ceiling; it is not a capacity result for streams. This source setting has not
-been rolled out to the existing local pilot. See the
-[memory contract and evidence](operations/REDIS-MEMORY.md); the separate preview
-template remains unvalidated.
+Base and production Compose declare a **512 MiB dataset cap and a 3072 MiB
+container ceiling**. The ceiling is not a memory reservation and the source
+configuration is not proof of an already running container's limit. Persistence
+and stream capacity must be verified against the workload and selected profile.
+See the [memory contract and evidence](operations/REDIS-MEMORY.md); the separate
+preview template remains unvalidated.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -153,7 +151,9 @@ print(Fernet.generate_key().decode())
 
 ## MinIO (S3-compatible storage)
 
-Used for storing screenshots and script output artifacts.
+S3-compatible service in Compose. Private task screenshot reads require separate
+configuration and a recorded storage key; Android capture alone does not imply
+an uploaded artifact. See [private screenshot reads](#private-task-screenshot-reads).
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -200,59 +200,69 @@ Consumed directly by `docker-compose.yml`:
 
 ---
 
-## Orchestration & Event System (v4.7)
+## Orchestration and task watchdog
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `ORCHESTRATION_LOOP_INTERVAL` | | `10` | Seconds between orchestration loop ticks |
-| `TASK_HEARTBEAT_TIMEOUT` | | `120` | Seconds before a task is considered stale |
-| `TASK_HEARTBEAT_CHECK_INTERVAL` | | `30` | Watchdog check interval in seconds |
-| `EVENT_REACTOR_ENABLED` | | `true` | Enable/disable the event reactor |
-| `EVENT_REACTOR_MAX_BATCH` | | `100` | Max events processed per reactor tick |
-| `NICK_GENERATOR_LOCALE` | | `en` | Locale for random nickname generation |
+Do not treat the former `ORCHESTRATION_LOOP_INTERVAL`, `TASK_HEARTBEAT_TIMEOUT`,
+`TASK_HEARTBEAT_CHECK_INTERVAL`, `EVENT_REACTOR_ENABLED`,
+`EVENT_REACTOR_MAX_BATCH` or `NICK_GENERATOR_LOCALE` table as supported environment
+configuration: these names are not consumed by the backend in this checkout.
+For current behavior inspect the relevant source and tests; for example, the task
+watchdog interval is a code constant in `backend/tasks/task_heartbeat_watchdog.py`,
+not a setting controlled by that former table.
 
 ---
 
-## Environment Matrix
+## Settings, Compose and frontend builds
 
-| Variable | Development | Staging | Production |
-|----------|-------------|---------|------------|
-| `DEBUG` | `true` | `false` | `false` |
-| `LOG_LEVEL` | `DEBUG` | `DEBUG` | `INFO` |
-| `ENVIRONMENT` | `development` | `staging` | `production` |
-| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | `60` | `30` |
-| `DB_POOL_SIZE` | `5` | `10` | `30` |
+The defaults in `backend/core/config.py` describe Settings when the process has
+no overriding value. A Compose env file supplies values for interpolation; it
+does not automatically forward every entry into a container. Inspect the
+`environment` entries in the selected overlays and verify the effective settings
+without exposing secrets. In particular, the full and production overlays do not
+explicitly forward `DB_POOL_SIZE` or `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`; an entry
+in a Compose env file alone is not evidence that the running backend uses it.
+Development bind mounts and explicitly supplied process environment may differ
+from the production image, which does not contain the checkout's env files.
+
+Frontend `NEXT_PUBLIC_*` values also depend on the selected build and deployment;
+an env edit or container restart does not by itself establish the values compiled
+into an existing browser bundle. Verify the built artifact and the actual ingress.
 
 ---
 
 ## Secret Rotation
 
-When rotating secrets:
+Plan rotation for the actual environment and all consumers; back up and test
+recovery in an isolated environment first. Avoid exposing secrets in logs,
+commands, Git or support artifacts. A Compose `restart` does **not** recreate a
+container with changed Compose environment, and editing an env file does not
+change an existing PostgreSQL role password.
 
-1. **JWT_SECRET_KEY** — All active sessions will be invalidated. Users must log in again.
-2. **VPN_KEY_ENCRYPTION_KEY** — Existing encrypted peer configs cannot be decrypted.
-   Re-provision all VPN peers after rotation.
-3. **POSTGRES_PASSWORD** — Update in `.env.local` and restart all services.
-4. **REDIS_PASSWORD** — Update in `.env.local` and restart all services.
+- **JWT signing key:** coordinate the change across API instances and plan for
+  sessions signed with the old key to stop validating. Test login and refresh.
+- **PostgreSQL:** change the credential in PostgreSQL through an approved procedure,
+  coordinate all connection URLs and dependent services, then recreate affected
+  containers with the selected Compose project and env. Check connectivity and
+  privileges; retain a tested rollback. Do not treat init variables as rotation.
+- **Redis:** coordinate the server authentication configuration and all clients,
+  then recreate affected containers as required. Verify authentication and recovery.
+- **Encrypted VPN profiles and account credentials:** retain the old keys needed
+  to decrypt existing data until a tested migration or re-encryption is complete.
+  Changing or dropping a key without that plan can make stored credentials unusable.
 
-**Rotation procedure:**
-```bash
-# Generate new secret
-NEW_SECRET=$(python -c "import secrets; print(secrets.token_hex(32))")
-
-# Update .env.local
-sed -i "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=${NEW_SECRET}/" .env.local
-
-# Rolling restart
-docker compose restart backend
-```
+The exact procedure and downtime depend on the deployment; this repository does
+not establish a zero-downtime rotation. See [startup](operations/STARTUP.md),
+[deployment](deployment.md), [credential keys](security/account-credentials.md)
+and [database recovery](runbooks/03-database-failure.md).
 
 ---
 
 ## Validation
 
-The `Settings` class (`backend/core/config.py`) validates all values at startup.
-Required fields with no default will cause a `ValidationError` with a clear message.
+The `Settings` class (`backend/core/config.py`) parses typed fields and runs its
+configured validators at startup. A missing required field can produce a
+`ValidationError`. This does not verify service availability, permissions,
+container environment propagation or the suitability of every configuration value.
 
 ```bash
 # Test configuration is valid before deploying
@@ -317,11 +327,17 @@ Configure `SCREENSHOT_STORAGE_ENDPOINT` as host:port, the server-only
 `SCREENSHOT_STORAGE_ACCESS_KEY` / `SCREENSHOT_STORAGE_SECRET_KEY`,
 `SCREENSHOT_STORAGE_SECURE` (default true), and `SCREENSHOT_STORAGE_REGION`
 (default us-east-1). Use a bucket-scoped read account for `sphere-screenshots`.
-The full Compose overlay forwards these optional settings. Restart backend
-workers after changing them. Empty configuration disables reads with HTTP503,
-without preventing task execution, login or manifest reads.
+The full Compose overlay forwards these optional settings. The production-only
+overlay does not explicitly forward them; full plus production has a different
+merged configuration. Inspect the selected file combination and provide the
+settings through an appropriate deployment mechanism. After changing container
+environment, recreate the affected container using the selected project and
+configuration; `restart` alone does not apply changed Compose environment.
+Verify the effective configuration without exposing credentials. Empty
+configuration disables reads with HTTP503, without preventing task execution,
+login or manifest reads.
 
 This does not enable Android DAG artifact uploads. The current action returns
 an Android-local path; that file is not a server screenshot until an upload is
-accepted and its key is recorded. The pilot's storage read configuration is
-currently disabled. [Task contracts, tests and remaining upload work](audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
+accepted and its key is recorded. A historical pilot observation recorded storage reads as disabled; check the
+selected deployment's actual configuration. [Task contracts, tests and remaining upload work](audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).

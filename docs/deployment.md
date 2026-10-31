@@ -12,9 +12,11 @@
 > на две user функции в дополнение к двум device-функциям:
 > [user auth и MFA cutover](security/user-auth-bootstrap.md),
 > [device credential runbook](security/device-credential-bootstrap.md).
-> Текущий head — `20260910_device_refresh_retry`: сохраняет существующие grants
+> Revision `20260910_device_refresh_retry` сохраняет существующие grants
 > и добавляет recoverable device rotation. [Rollout/rollback](security/device-refresh-recovery.md):
 > migration → все backend workers → APK. Полный runtime-role rollout этим не завершается.
+> Определяйте актуальные migration heads в выбранном checkout через
+> `alembic -c alembic/alembic.ini heads`.
 
 ## Table of Contents
 
@@ -52,10 +54,10 @@
 ```bash
 # Docker Engine 24+ with Compose Plugin 2.24.4+ (supports !reset overrides)
 docker --version          # >= 24.0
-docker compose version    # >= 2.20
+docker compose version    # >= 2.24.4
 
-# Python 3.11+ (for scripts / local dev)
-python --version          # >= 3.11
+# Python 3.12 for the documented startup/development workflow
+python --version          # 3.12
 
 # (Optional) GitHub CLI for releases
 gh --version
@@ -67,15 +69,11 @@ gh --version
 
 ### Quick Setup
 
-```bash
-# Generate all secrets automatically
-python scripts/generate_secrets.py
-# Creates .env.local with secure random values
-
-# Or copy and fill manually
-cp .env.example .env.local
-$EDITOR .env.local
-```
+Use [Startup](operations/STARTUP.md#first-install) for a new isolated installation.
+Without `--output`, `scripts/generate_secrets.py` prints secrets to stdout; with
+`--output` it overwrites the selected file. Do not run it against an existing
+configuration or publish its output. Generating a file does not rotate passwords
+or update a running database or container.
 
 ### Required Variables
 
@@ -101,30 +99,17 @@ VPN_KEY_ENCRYPTION_KEY=<Fernet.generate_key() output>
 
 ## 3. Development Stack
 
-Uses `docker-compose.override.yml` which enables:
-
-- Hot-reload for backend and frontend
-- Exposed DB and Redis ports for local tooling
-- Dev Dockerfiles (no multi-stage build)
-
-```bash
-# Start full dev stack
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.override.yml \
-  up -d --build
-
-# Monitor logs
-docker compose logs -f backend frontend
-
-# Stop
-docker compose down
-```
+The maintained first-install path is [Startup](operations/STARTUP.md#first-install).
+It selects base plus full for development, with explicit configuration, migrations,
+bootstrap and readiness. The separate `docker-compose.override.yml` is a dev-only
+overlay; do not assume it is part of a separately selected file combination. Always
+use the same project, env file and Compose files when inspecting an installation.
 
 ### Makefile shortcuts
 
 ```bash
-make up         # start dev stack
+make dev        # start infrastructure, not the full application stack
+make full       # start base + full application stack
 make down       # stop dev stack
 make logs       # tail all logs
 make migrate    # run alembic upgrade head
@@ -136,24 +121,11 @@ make lint       # ruff + mypy
 
 ## 4. Staging Stack
 
-Staging mirrors production but with debug logging and relaxed rate limits.
-
-```bash
-# Pull latest images / rebuild
-docker compose -f docker-compose.yml -f docker-compose.full.yml pull
-docker compose -f docker-compose.yml -f docker-compose.full.yml up -d --build
-
-# Environment: set ENVIRONMENT=staging in .env.local
-```
-
-Staging-specific settings in `.env.local`:
-
-```bash
-ENVIRONMENT=staging
-DEBUG=false
-LOG_LEVEL=DEBUG
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
-```
+There is no independent staging Compose file in this repository. Define an
+isolated project, configuration, images, roles, ingress and validation for the
+intended staging environment; setting `ENVIRONMENT=staging` alone does not make
+the development full overlay equivalent to production. See
+[configuration](configuration.md) and [Startup](operations/STARTUP.md).
 
 ---
 
@@ -161,21 +133,11 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
 
 ### 5.1 Single-Host Production
 
-```bash
-# Use production compose file
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.full.yml \
-  -f docker-compose.production.yml \
-  up -d --build
-
-# Production-specific settings
-ENVIRONMENT=production
-DEBUG=false
-LOG_LEVEL=INFO
-DB_POOL_SIZE=30
-DB_MAX_OVERFLOW=20
-```
+The production launcher uses base plus `docker-compose.production.yml`; the
+production override can also be applied last after the full overlay. Select and
+review the env file before deployment, provision the migration/runtime roles,
+and follow [Startup](operations/STARTUP.md) for the ordered bootstrap. Compose
+file validity alone is not authorization or acceptance to start a production stack.
 
 `docker-compose.production.yml` differences from dev:
 
@@ -252,40 +214,31 @@ From the repository root, use the repository's explicit Alembic configuration:
 `python -m alembic -c alembic/alembic.ini upgrade head`. In a container use the
 equivalent path for its working directory and the selected Compose stack.
 
-```bash
-# Apply all pending migrations
-docker compose exec backend alembic upgrade head
-
-# Check current revision
-docker compose exec backend alembic current
-
-# View migration history
-docker compose exec backend alembic history --verbose
-
-# Security revision 20260908_tenant_policies blocks downgrade.
-# Use a reviewed forward migration; encrypted credentials and VPN intents
-# have additional rollback constraints documented above.
-```
-
-### Migration after production deploy
+For example, from a prepared repository environment:
 
 ```bash
-# Always run migrations BEFORE restarting the application
-docker compose exec backend alembic upgrade head
-
-# Then restart backend workers
-docker compose restart backend celery-worker
+python -m alembic -c alembic/alembic.ini heads
 ```
+
+Run `current`, `history` or `upgrade` with the same explicit configuration only
+after selecting the correct database, credentials and maintenance procedure.
+Security revision `20260908_tenant_policies` blocks downgrade; use a reviewed
+forward migration or recovery plan.
+
+### Migration and application rollout
+
+Select the correct Compose project, env file and image. Use the explicit Alembic
+configuration and an authorized migration role; the [startup procedure](operations/STARTUP.md)
+describes one-off migration and bootstrap ordering. Read each revision's rollout and
+rollback constraints before changing a live environment. The Compose stacks in this
+repository do not define a `celery-worker` service. A restart is not proof that the
+new image, schema and external effects are compatible.
 
 ### Manual migrations (if needed)
 
-One-time SQL applied in v4.0:
-
-```sql
--- Required for VPN peer status tracking
-ALTER TABLE vpn_peers
-  ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'assigned';
-```
+Do not apply an old standalone `ALTER TABLE` in place of the selected revision's
+Alembic migration. Investigate a failed migration with the database runbook and
+reviewed migration-specific recovery plan.
 
 ---
 
@@ -358,75 +311,29 @@ Let's Encrypt via ACME HTTP challenge.
 
 ## 9. Scaling
 
-### Horizontal Scaling — Backend
-
-The FastAPI backend is stateless (all state in PostgreSQL + Redis).
-Scale with multiple replicas behind load balancer:
-
-```yaml
-# docker-compose.production.yml
-services:
-  backend:
-    deploy:
-      replicas: 4
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-```
-
-WebSocket sessions are coordinated via Redis Pub/Sub — no sticky sessions required.
-
-### Horizontal Scaling — Celery Workers
-
-```yaml
-services:
-  celery-worker:
-    deploy:
-      replicas: 8
-```
-
-```bash
-# Or scale at runtime (without recreating)
-docker compose up -d --scale celery-worker=8
-```
-
-### PostgreSQL Connection Pooling (PgBouncer)
-
-For production with many backend replicas, add PgBouncer:
-
-```yaml
-services:
-  pgbouncer:
-    image: bitnami/pgbouncer:latest
-    environment:
-      POSTGRESQL_HOST: postgres
-      POSTGRESQL_DATABASE: sphereplatform
-      PGBOUNCER_POOL_MODE: transaction
-      PGBOUNCER_MAX_CLIENT_CONN: 1000
-```
+The checked-in Compose configuration does not establish an accepted replica count,
+no-sticky-session guarantee or production scaling recipe. WebSocket ownership,
+background work, connection pools, Redis, ingress and device behavior need to be
+verified together under the intended topology and workload. Increasing worker or
+replica counts also increases database connection demand. There is no
+`celery-worker` service in the base, full or production Compose files. PgBouncer
+is not included in those stacks; its use and transaction-pooling compatibility
+require separate configuration and validation.
 
 ---
 
 ## 10. Updates & Rolling Deploys
 
-### Standard Update
+### Controlled update
 
-```bash
-# 1. Pull new code
-git pull origin main
-
-# 2. Re-build images
-docker compose -f docker-compose.yml -f docker-compose.full.yml build --no-cache
-
-# 3. Run migrations (BEFORE app restart)
-docker compose exec backend alembic upgrade head
-
-# 4. Restart with zero-downtime (one service at a time)
-docker compose up -d --no-deps backend
-docker compose up -d --no-deps celery-worker
-docker compose up -d --no-deps frontend
-```
+Identify the deployed versions, selected Compose project and data stores first.
+Review migrations and compatibility between the old and new API, agents and
+schema; plan the required maintenance window, recovery and acceptance. Use the
+specific installation's procedure, [Startup](operations/STARTUP.md), and
+[Local pilot](operations/LOCAL-PILOT.md) where applicable. A single-container
+Compose recreation can interrupt service; no zero-downtime guarantee follows from
+starting services one at a time. Verify actual image identity and readiness, then
+perform scoped user/device checks with known outcomes.
 
 ### Rollback
 
@@ -440,44 +347,24 @@ Do not disable RLS/startup checks to make an older image start.
 
 ## 11. Backup & Recovery
 
-### PostgreSQL Backup
+### Backup and isolated restore
 
-```bash
-# Daily backup
-docker compose exec postgres pg_dump \
-  -U sphere sphereplatform \
-  | gzip > "backups/sphereplatform-$(date +%Y%m%d).sql.gz"
+The repository does not establish that backups, an automated schedule, WAL
+archiving, or a recovery-time objective are configured for a particular install.
+Base Compose enables Redis AOF and uses a named volume; it does not establish that
+a host path named `volumes/redis_data/appendonly.aof` exists or is a consistent
+backup. Persistence across a restart is not disaster recovery. The legacy cron
+example referred to a non-existent `scripts/backup.sh`.
 
-# Restore
-gunzip < backups/sphereplatform-20260223.sql.gz \
-  | docker compose exec -T postgres \
-    psql -U sphere sphereplatform
-```
-
-### Automated backup with cron
-
-```cron
-# /etc/cron.d/sphere-backup
-0 2 * * * root /opt/sphere-platform/scripts/backup.sh >> /var/log/sphere-backup.log 2>&1
-```
-
-### Redis Backup
-
-Redis uses AOF persistence (`appendonly yes`). Data is preserved across restarts.
-For point-in-time recovery:
-
-```bash
-# Copy AOF file
-docker compose exec redis redis-cli BGREWRITEAOF
-cp volumes/redis_data/appendonly.aof backups/redis-$(date +%Y%m%d).aof
-```
-
-### Disaster Recovery RTO/RPO Targets
-
-| Metric | Target |
-|--------|--------|
-| RTO (Recovery Time Objective) | < 30 minutes |
-| RPO (Recovery Point Objective) | < 24 hours (with daily backups) / < 1 minute (with streaming replication) |
+Choose a backup procedure for the actual project and its PostgreSQL/Redis versions,
+volumes and credentials. Include application data, required encryption keys,
+roles/grants, OTA artifacts and device logs according to the installation's
+retention and recovery requirements. Validate backup integrity and perform a
+restore drill in a separate database and volume, never over the active installation.
+Reconcile schema, representative task receipts and external effects before any
+cutover. [Database recovery runbook](runbooks/03-database-failure.md) describes the
+checks. Measure and approve RTO/RPO from a real drill; no specific value is
+established by this repository.
 
 ---
 
@@ -499,22 +386,20 @@ These tasks are registered in `backend/main.py` startup lifecycle.
 
 | Endpoint | Auth | Expected Response |
 |----------|------|-------------------|
-| `GET /api/v1/health` | None | `{"status":"ok","checks":{...}}` |
-| `GET /api/v1/vpn/health` | Bearer token | `{"status":"ok"}` |
-| `GET /metrics` | Internal only | Prometheus text format |
+| `GET /api/v1/health/healthz` | Liveness | Process response; does not check dependencies |
+| `GET /api/v1/health/readyz` | Readiness | Checks PostgreSQL and Redis; `{"status":"ready"}` on success |
+| `GET /api/v1/health` | Static liveness | Does not prove dependencies or device operation |
+| `GET /api/v1/vpn/health` | Static VPN response | Does not prove a working tunnel |
 
-Docker compose health checks are defined for all services. Check status:
-
-```bash
-docker compose ps
-# All services should show: Up (healthy)
-```
+Inspect `ps --all` for the selected Compose project and check configured health
+probes for each service. Not every service necessarily has a health check, and a
+healthy container does not prove the user/device scenario.
 
 ### Readiness vs Liveness
 
-- **Liveness**: `GET /health` — returns 200 if process is alive
-- **Readiness**: `GET /health` with DB + Redis check — returns 200 only if
-  all dependencies are reachable (used by load balancer)
+- **Liveness**: `GET /api/v1/health/healthz` indicates a responding process.
+- **Readiness**: `GET /api/v1/health/readyz` checks PostgreSQL and Redis. It does
+  not establish successful device commands, video, VPN or the whole fleet.
 
 ---
 
@@ -522,30 +407,17 @@ docker compose ps
 
 ### Backend won't start
 
-```bash
-# Check logs
-docker compose logs backend --tail=50
-
-# Common causes:
-# - Missing .env.local → python scripts/generate_secrets.py
-# - DB not ready → docker compose up postgres -d && sleep 10
-# - Migration not run → docker compose exec backend alembic upgrade head
-```
+Use the selected project's bounded backend logs, inspect the specific failure,
+and follow the [backend outage runbook](runbooks/01-backend-outage.md). Do not
+generate new secrets, restart services or apply migrations blindly when an
+existing configuration, data store or unknown task outcomes may be present.
 
 ### Database connection errors
 
-```bash
-# Test connectivity
-docker compose exec backend python -c "
-from backend.database.engine import create_engine
-import asyncio
-asyncio.run(create_engine().connect())
-print('OK')
-"
-
-# Reset connection pool
-docker compose restart backend
-```
+See [PostgreSQL failure](runbooks/03-database-failure.md) for diagnosis using the
+selected database and role. `backend.database.engine` exposes the configured
+`engine`, not a `create_engine` factory. A restart can interrupt work and should
+follow an identified cause and an appropriate recovery decision.
 
 ### WebSocket connections failing
 
@@ -553,12 +425,13 @@ docker compose restart backend
 # Check nginx ws upgrade config
 grep "upgrade" infrastructure/nginx/nginx.conf
 
-# Check Redis pub/sub
-docker compose exec redis redis-cli PUBSUB CHANNELS "*"
-
 # Check backend WS logs
 docker compose logs backend | grep "websocket"
 ```
+
+Select the intended Compose files and project for these examples; Redis inspection
+also requires that installation's authentication. See the
+[backend outage runbook](runbooks/01-backend-outage.md).
 
 ### Tunnel Setup (Serveo SSH)
 
@@ -610,18 +483,12 @@ docker compose logs backend | grep "noop\|keepalive"
 
 ### Задачи (Tasks) возвращают 409 Conflict
 
-```bash
-# Проверить зависшие задачи
-docker compose exec postgres psql -U sphere sphereplatform \
-  -c "SELECT id, status, device_id, created_at FROM tasks
-      WHERE status IN ('queued', 'running', 'assigned')
-      ORDER BY created_at;"
-
-# Бэкенд автоматически протухает задачи если устройство оффлайн.
-# Для ручной отмены:
-docker compose exec postgres psql -U sphere sphereplatform \
-  -c "UPDATE tasks SET status='failed' WHERE id='<task_id>';"
-```
+Сопоставьте task/device identity, состояние, журналы и подтверждения отмены или
+завершения в правильной организации. Используйте предусмотренный приложением
+путь управления с учётом прав и протокола; timeout или потеря ответа сами по себе
+не подтверждают остановку действия на устройстве. Не меняйте статус задачи прямым
+`UPDATE`: это обходит доставку команды и может скрыть неизвестный исход.
+[Контракт управления задачами](security/task-control-protocol.md).
 
 ### VPN peer can't connect
 
@@ -640,11 +507,9 @@ docker compose logs backend | grep "vpn"
 
 ### High memory usage
 
-The source Compose Redis budget is 512 MiB dataset / 2048 MiB container after a
-1536 MiB isolated persistence probe was OOM-killed. The 2048 MiB isolated write,
-AOF and restart probe passes, but its cgroup peak reaches the ceiling; 32-stream
-capacity is not accepted. The existing pilot remains at 1536 MiB until a separately
-verified rollout.
+The source Compose Redis budget is 512 MiB dataset / 3072 MiB container; the
+configured source limit is not proof of the limit of an already running instance.
+Capacity and rollout acceptance depend on the actual workload and installation.
 Compare Redis RSS and the Docker ceiling as well as `used_memory`; persistence
 forks and buffers are not covered by the dataset number alone. See the
 [measured memory contract and rollout](operations/REDIS-MEMORY.md).

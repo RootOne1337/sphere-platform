@@ -20,13 +20,10 @@
 ```bash
 git clone https://github.com/RootOne1337/sphere-platform.git
 cd sphere-platform
-git switch codex/enterprise-audit-20260905
 ```
 
-Последняя команда переключает новый checkout на ветку текущего аудита из draft
-[PR #19](https://github.com/RootOne1337/sphere-platform/pull/19), ветка
-`codex/enterprise-audit-20260905`. Выбирайте revision явно; `main` и установленный
-pilot могут отличаться.
+Выберите нужную ветку или revision согласно задаче. `main`, рабочая ветка и
+установленный pilot могут отличаться; проверяйте их идентичность отдельно.
 
 **Новая установка:** следуйте [порядку bootstrap](operations/STARTUP.md#first-install).
 **Готовый pilot:** используйте его [отдельную инструкцию](operations/LOCAL-PILOT.md).

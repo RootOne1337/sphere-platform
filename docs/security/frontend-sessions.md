@@ -10,8 +10,9 @@ There is no frontend authentication bypass flag. A redirect alone is insufficien
 private hooks and streams must remain unmounted while navigation is pending.
 
 The access token lives in Zustand memory. The backend sets an HttpOnly refresh
-cookie; `sphere_refresh_token` in localStorage remains a fallback for environments
-where cookies are unavailable. This fallback is readable by JavaScript and is not
+cookie and also returns a refresh token in the response body. When present, the
+frontend stores it as `sphere_refresh_token` in localStorage for fallback transport,
+even when cookies are available. This copy is readable by JavaScript and is not
 equivalent to HttpOnly storage. Preventing XSS and reviewing credential exposure in
 other browser stores remain necessary.
 
@@ -24,8 +25,11 @@ undone by this browser check and still require server-side idempotency.
 Startup and concurrent 401 handlers share one refresh request per version, with a
 five-second transport timeout. Rotation preserves the version for the same user and
 organization. Each original request can retry at most once. A refresh returning a
-different identity fails closed. A genuine refresh failure clears the session and
-requires login; a failure from an old session cannot clear a newer one.
+different identity fails closed. A confirmed authentication rejection, malformed
+response or identity change clears the current session; a network failure, timeout,
+408, 429 or 5xx preserves the current identity and credentials while rejecting the
+operation. A later explicit request may try refresh again. A failure from an old
+session cannot clear a newer one.
 
 Each session/identity/role gets a distinct React Query client before its page is
 rendered. Unmount cancels queries and clears the retired client. A late completion
