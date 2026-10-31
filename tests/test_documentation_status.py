@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +14,7 @@ from scripts.check_documentation_status import (
     REGISTRY,
     ROOT,
     document_role,
+    git_index_paths,
     local_link_errors,
     normalized_hash,
     read_json,
@@ -445,6 +447,40 @@ class DocumentationStatusTests(unittest.TestCase):
                 "guide.md: missing local link: missing-before.md",
                 "guide.md: missing local link: missing-between.md",
                 "guide.md: missing local link: missing-after.md",
+            ])
+
+    def test_active_link_target_must_be_in_git_index(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / "guide.md").write_text("[file](generated.json)\n", encoding="utf-8")
+            (root / "generated.json").write_text("{}", encoding="utf-8")
+            subprocess.run(["git", "add", "guide.md"], cwd=root, check=True)
+            registry = {"authoritativeEntrypoints": ["guide.md"]}
+            inventory = {"documents": [{"file": "guide.md", "role": "CURRENT_ENTRYPOINT"}],
+                         "countsByRole": {"CURRENT_ENTRYPOINT": 1}}
+            self.assertIn("guide.md: local link target not in Git index: generated.json",
+                          validate_inventory(root, registry, inventory))
+            subprocess.run(["git", "add", "generated.json"], cwd=root, check=True)
+            self.assertEqual(validate_inventory(root, registry, inventory), [])
+            # A file remaining in the worktree after a staged removal is not in the next tree.
+            subprocess.run(["git", "rm", "--cached", "-q", "generated.json"], cwd=root, check=True)
+            self.assertTrue((root / "generated.json").exists())
+            self.assertIn("guide.md: local link target not in Git index: generated.json",
+                          validate_inventory(root, registry, inventory))
+
+    def test_indexed_directory_requires_an_indexed_descendant(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / "tracked-dir").mkdir()
+            (root / "local-dir").mkdir()
+            (root / "tracked-dir" / "file.txt").write_text("tracked", encoding="utf-8")
+            (root / "local-dir" / "generated.txt").write_text("local", encoding="utf-8")
+            (root / "guide.md").write_text("[root](./) [tracked](tracked-dir/) [local](local-dir/)\n", encoding="utf-8")
+            subprocess.run(["git", "add", "guide.md", "tracked-dir/file.txt"], cwd=root, check=True)
+            self.assertEqual(local_link_errors(root, "guide.md", git_index_paths(root)), [
+                "guide.md: local link target not in Git index: local-dir/",
             ])
 
     def test_receipt_hash_is_portable_between_windows_and_linux(self) -> None:

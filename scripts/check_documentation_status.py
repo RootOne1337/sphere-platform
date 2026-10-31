@@ -10,10 +10,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 from collections import Counter
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,8 +33,14 @@ def normalized_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
+def git_index_paths(root: Path) -> set[str]:
+    """Read paths in the Git index, including staged additions and excluding staged deletions."""
+    data = subprocess.check_output(["git", "ls-files", "--cached", "--full-name", "-z"], cwd=root)
+    return {p for p in data.decode("utf-8", errors="surrogateescape").split("\0") if p}
+
+
 def markdown_files(root: Path) -> list[str]:
-    files = subprocess.check_output(["git", "ls-files", "-z"], cwd=root).decode("utf-8").split("\0")
+    files = git_index_paths(root)
     return sorted({p for p in files if p.lower().endswith(".md")} | {p for p in SUPPLEMENTAL if (root / p).is_file()})
 
 
@@ -88,16 +95,25 @@ def markdown_navigation_text(text: str) -> str:
                   lambda match: re.sub(r"[^\n]", " ", match.group()), text)
 
 
-def local_link_errors(root: Path, file: str) -> list[str]:
+def indexed_parent_directories(indexed_paths: set[str]) -> set[str]:
+    return {str(parent) for entry in indexed_paths for parent in PurePosixPath(entry).parents}
+
+
+def local_link_errors(root: Path, file: str, indexed_paths: set[str] | None = None,
+                      indexed_directories: set[str] | None = None) -> list[str]:
     """Check inline local path targets, including encoded spaces and one balanced pair.
 
     Anchors and reference-style links are outside this bounded scanner's coverage.
     Fenced blocks and matched inline code spans are examples, not navigation;
-    this is not a complete Markdown parser.
+    this is not a complete Markdown parser. If supplied, indexed_paths also
+    requires every target to be represented in the Git index. A directory is
+    represented when at least one indexed descendant exists.
     """
     text = (root / file).read_text(encoding="utf-8-sig")
     text = markdown_navigation_text(text)
     errors = []
+    if indexed_paths is not None and indexed_directories is None:
+        indexed_directories = indexed_parent_directories(indexed_paths)
     for match in LINK.finditer(text):
         target = match[1].strip("<>")
         parts = urlsplit(target)
@@ -112,6 +128,15 @@ def local_link_errors(root: Path, file: str) -> list[str]:
             errors.append(f"{file}: local link escapes repository: {target}")
         elif not resolved.exists():
             errors.append(f"{file}: missing local link: {target}")
+        elif indexed_paths is not None:
+            lexical = Path(os.path.abspath((root / file).parent / path))
+            try:
+                relative = lexical.relative_to(root.resolve()).as_posix()
+            except ValueError:
+                errors.append(f"{file}: local link escapes repository: {target}")
+                continue
+            if relative not in indexed_paths and not (resolved.is_dir() and relative in (indexed_directories or set())):
+                errors.append(f"{file}: local link target not in Git index: {target}")
     return errors
 
 
@@ -480,6 +505,8 @@ def validate_inventory(root: Path, registry: dict, inventory: dict) -> list[str]
     records = inventory["documents"]
     files = [r["file"] for r in records]
     errors = []
+    indexed_paths = git_index_paths(root)
+    indexed_directories = indexed_parent_directories(indexed_paths)
     if len(files) != len(set(files)) or set(files) != set(markdown_files(root)):
         errors.append("Markdown inventory is incomplete, stale or duplicated; regenerate it")
     if inventory["countsByRole"] != dict(Counter(r["role"] for r in records)):
@@ -488,7 +515,7 @@ def validate_inventory(root: Path, registry: dict, inventory: dict) -> list[str]
         if record["role"] not in ROLES or record["role"] != document_role(record["file"], registry["authoritativeEntrypoints"]):
             errors.append(f"{record['file']}: incorrect documentation role")
         if record["role"] in {"CURRENT_ENTRYPOINT", "OPERATING_GUIDE"}:
-            errors.extend(local_link_errors(root, record["file"]))
+            errors.extend(local_link_errors(root, record["file"], indexed_paths, indexed_directories))
     return errors
 
 
