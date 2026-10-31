@@ -1,8 +1,8 @@
 # Android codec input: synthetic control и настоящий capture canary
 
-**Дата:** 1 октября 2026, Asia/Yekaterinburg. **Статус:** finite PH010 capture →
-encoder → wire и независимый decode проверены; remote smoothness и browser
-draw/input-to-visible acceptance ещё открыты.
+**Исторический срез 1 октября 2026, Asia/Yekaterinburg:** finite PH010 capture →
+encoder → wire и независимый decode были проверены; remote smoothness и browser
+draw/input-to-visible acceptance оставались открытыми. Это не наблюдение текущей установки.
 
 [Текущее состояние](CURRENT-STATE.md) · [Video cadence](VIDEO-CADENCE-CANARY.md) ·
 [Synthetic measurements](../audits/2026-10-01/PH010-CODEC-INPUT-EVIDENCE.json) ·
@@ -15,9 +15,11 @@ draw/input-to-visible acceptance ещё открыты.
 [Установка, реальные измерения и границы](../audits/2026-10-26/PH011-APK92-GPU-PLANAR-CAPTURE.md).
 В коде APK92 добавлен отдельный debug opt-in `SPHERE_STREAM_GPU_PLANAR_INPUT=true`.
 Ему требуются `SPHERE_STREAM_PLANAR_INPUT=true`, `SPHERE_DIRECT_TRANSPORT_CANARY=true`
-и **выключенный** `SPHERE_STREAM_GPU_BRIDGE`. Последний флаг обозначает старый
-EGL→OMX Surface путь. Прежний запрет смешивать Surface bridge и planar сохранён.
-Release-сборки с новым режимом отклоняются.
+и **выключенный** `SPHERE_STREAM_GPU_BRIDGE`. Это переменные **сборки**, а не
+переключатели уже установленного APK. Последний флаг обозначает старый EGL→OMX
+Surface путь. Gradle проверяет сочетание и отклоняет распознанные release-shaped
+tasks с canary; проверяйте фактические запрошенные задачи и артефакт, не считайте
+одну проверку имен всех возможных способов сборки доказательством release acceptance.
 
 Новый путь использует OES texture→WebRTC YuvConverter→компактные I420 planes→
 прежний planar encoder. До захвата проверяются цвета; после передачи плоскостей
@@ -91,13 +93,24 @@ source display FPS limit, реальную conversion cost и browser latency ga
 
 Исходник: [MediaCodecProbe.java](../../scripts/pilot/android/MediaCodecProbe.java).
 Сборка: [build_codec_probe.py](../../scripts/pilot/build_codec_probe.py), JDK 17+
-и установленный Android SDK. APK и Gradle dependencies не меняются.
+и установленный Android SDK. По умолчанию нужны `platforms/android-35/android.jar`
+и `build-tools/35.0.0/lib/d8.jar`; версии можно явно выбрать `--platform` и
+`--build-tools`. Helper запускает локальные `javac` и D8, создаёт родительский
+каталог и новый output-файл и печатает его размер и hashes; существующий output
+отвергается. При ошибке D8 частичный output может остаться: проверьте его и
+выберите новый путь. Сборка сама не устанавливает APK и не обращается к устройству.
+Параметры в угловых скобках — placeholders, не буквальная PowerShell-команда.
 
 ```powershell
 python scripts/pilot/build_codec_probe.py --sdk <sdk-directory> --java-home <jdk-directory> --output <fresh-directory>/probe.zip
 ```
 
-После проверки SHA256 доставленного, только собственного файла на тестовый Android:
+Дальнейшее — **отдельный запуск на явно выбранном принадлежащем владельцу тестовом
+устройстве**, а не часть сборщика. Сначала согласуйте простой/остановку теста и
+проверьте доступный management path и отсутствие другой критичной codec-нагрузки.
+Доставка и запуск файла меняют состояние устройства и расходуют codec/GPU/CPU;
+при нехватке ресурсов могут повлиять на другую работу. После сверки SHA256
+доставленного только собственного файла на тестовый Android:
 
 ```text
 CLASSPATH=/data/local/tmp/<owned-probe>.zip app_process /system/bin com.sphereplatform.audit.MediaCodecProbe inventory
@@ -106,8 +119,12 @@ CLASSPATH=/data/local/tmp/<owned-probe>.zip app_process /system/bin com.spherepl
 CLASSPATH=/data/local/tmp/<owned-probe>.zip app_process /system/bin com.sphereplatform.audit.MediaCodecProbe bench-planar OMX.google.h264.encoder
 ```
 
-Не добавлять host ADB / PC Agent как обязательную зависимость продукта. Для этого
-control использован существующий authenticated APK root SHELL. Проверены online,
+Ни сборщик, ни команды `app_process` не доставляют и не удаляют файл на устройстве;
+необходимые транспорт, проверка результата и очистка принадлежащих тесту файлов —
+отдельные действия. Не публикуйте payload path постоянно и не повторяйте команду
+после потерянного ответа до проверки состояния. Не добавлять host ADB / PC Agent
+как обязательную зависимость продукта. В историческом control использован
+существующий authenticated APK root SHELL. Тогда проверены online,
 version 10238 и `not_streaming` перед запуском; сторонние Activity и settings не
 менялись. Прямой временный LAN payload server оказался недоступен и был закрыт.
 Доставка прошла через одну временную exact diagnostic location существующего
@@ -116,13 +133,17 @@ gateway. Nginx configuration проверена до reload, затем исхо
 OTA catalog и tunnel endpoints не изменялись. Не публиковать диагностический путь
 постоянно. Unknown shell timeout требует reconciliation, а не повторного запуска.
 
-Каждый benchmark создаёт и освобождает собственный codec; отдельный callback
-thread, bounded collections, finite input/drain. API 28 `app_process` требует
+При штатном завершении benchmark пытается освободить созданные codec/EGL ресурсы;
+есть отдельный callback thread, ограниченные коллекции и измерительное/drain окна.
+Они не гарантируют общего wall-clock deadline, освобождения при аварии процесса
+или успешного native driver call. API 28 `app_process` требует
 подготовки main Looper даже с explicit callback Handler. Первые controls до этой
 поправки завершились JSON error и **не являются FPS measurements**. Ошибка JSON
-означает неуспех диагностики даже при нулевом process exit code.
+означает неуспех диагностики даже при нулевом process exit code. Проверяйте также
+ненулевой `error` callback результата bench и ошибки отдельных inventory entries;
+успешное завершение процесса само по себе не подтверждает замер или освобождение.
 
-## Установленное исправление: debug 1.2.39 / 10239
+## Историческая поставка: debug 1.2.39 / 10239, 1 октября
 
 **Source candidate 1.2.39 / 10239:** путь реализован под
 `SPHERE_STREAM_PLANAR_INPUT=true`, только debug artifact; одновременно включать
