@@ -58,7 +58,15 @@ RULES = (
          ("python -m scripts.check_documentation_status",)),
     Rule("CI and contribution", (".github/*", ".pre-commit-config.yaml", "pyproject.toml", "Makefile"),
          ("CONTRIBUTING.md", ".github/REPOSITORY-GUIDE.md")),
-    Rule("n8n integration", ("n8n-nodes/*",), ("docs/architecture.md", "docs/api-reference.md")),
+    Rule("Administration and integrations", (
+        "frontend/app/*/accounts/*", "frontend/app/*/sessions/*", "frontend/app/*/updates/*",
+        "frontend/app/*/users/*", "frontend/app/*/settings/*", "frontend/app/*/webhooks/*",
+        "frontend/app/*/event-triggers/*", "backend/api/v1/n8n/*", "backend/api/v1/event_triggers/*",
+        "backend/api/v1/game_accounts/*", "backend/api/v1/account_sessions/*", "backend/api/v1/users/*",
+        "backend/api/v1/updates/*", "backend/services/n8n_webhook_service.py",
+        "backend/services/webhook_service.py", "backend/services/event_reactor.py", "backend/models/webhook.py",
+        "backend/models/event_trigger.py", "backend/schemas/webhook.py", "backend/schemas/event_trigger.py",
+        "n8n-nodes/*"), ("docs/operations/USER-ADMIN-GUIDE.md", "docs/api-reference.md")),
 )
 
 
