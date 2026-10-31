@@ -274,7 +274,8 @@ def test_original_frame_preview_checks_hash_and_preserves_pixels(ready_job, bake
     (folder / name).write_bytes(raw)
     write_json(job / 'prepared/reconstruction-input.json', dict(images=[dict(image='images/' + name, png_sha256=hashlib.sha256(raw).hexdigest())]))
     calls = []
-    monkeypatch.setattr(service, 'source_model', lambda target: calls.append(target))
+    from scripts.pilot import prepare_route_workspace
+    monkeypatch.setattr(prepare_route_workspace, 'route_source_model', lambda target: calls.append(target))
     jpeg = jobs.source_preview(job, name)
     assert jpeg.startswith(b'\xff\xd8') and calls == [job]
     assert (folder / name).read_bytes() == raw

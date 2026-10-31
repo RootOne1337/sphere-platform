@@ -103,3 +103,13 @@ test('a backwards camera turns the diagram up with independent manual rotation a
   fireEvent.change(screen.getByLabelText('Ориентация карты'),{target:{value:'reference'}});
   expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(0);
 });
+
+test('experimental alternative is visibly unconfirmed while primary presentation remains unchanged',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:9000}];
+  const view=render(<RouteGeometryMap cameras={cameras} points={[]} diagnosticId="global-163-requires-review" selectedTicks={0} validTicks={new Set([0,9000])} onSeekCamera={jest.fn()} sourcePreview={<span>Исходное видео</span>}/>);
+  expect(screen.getByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).toHaveTextContent('global-163-requires-review');
+  expect(screen.getByText('Исходное видео')).toBeInTheDocument();
+  view.rerender(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={0} validTicks={new Set([0,9000])} onSeekCamera={jest.fn()} sourcePreview={<span>Исходное видео</span>}/>);
+  expect(screen.queryByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).not.toBeInTheDocument();
+  expect(screen.getByText('Карта прохода')).toBeInTheDocument();
+});

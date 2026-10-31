@@ -144,6 +144,58 @@ def model_assessment(rec, prepared, selected, source_start, source_end):
 
 
 def reconstruct(job, mask, steps, *, route_only=False):
+    """Own the optional telemetry child through completion/cancellation."""
+    from scripts.pilot.route_hud_workspace import start as start_hud
+    checkpoint(job)
+    capture=validate_browser(job/'input')
+    began=time.monotonic()
+    try:
+        hud_process=start_hud(job,capture)
+    except Exception:
+        # Telemetry is optional. An existing or unavailable sidecar must not
+        # prevent the independent route reconstruction from proceeding.
+        hud_process=None
+    try:
+        return _reconstruct(job,mask,steps,route_only=route_only)
+    finally:
+        if hud_process is not None:
+            failed = sys.exc_info()[0] is not None
+            if failed:
+                try:
+                    (job/'telemetry'/'CANCEL').touch(exist_ok=True)
+                except OSError:
+                    pass
+            while hud_process.poll() is None:
+                if failed or (job/'CANCEL').exists() or time.monotonic()-began>100:
+                    # Let the worker's five-second OCR timeout and cooperative
+                    # checkpoint release its own child before forcing it down.
+                    try:
+                        hud_process.wait(timeout=6)
+                    except subprocess.TimeoutExpired:
+                        try:
+                            hud_process.terminate()
+                            hud_process.wait(timeout=6)
+                        except subprocess.TimeoutExpired:
+                            try:
+                                hud_process.kill()
+                                hud_process.wait(timeout=6)
+                            except (OSError, subprocess.TimeoutExpired):
+                                pass
+                        except OSError:
+                            pass
+                    except OSError:
+                        pass
+                    break
+                try:
+                    hud_process.wait(timeout=.5)
+                except subprocess.TimeoutExpired:
+                    pass
+            from scripts.pilot.route_hud_workspace import settle_child
+            if hud_process.poll() is not None:
+                settle_child(job,cancelled=failed or (job/'CANCEL').exists())
+
+
+def _reconstruct(job, mask, steps, *, route_only=False):
     checkpoint(job)
     sys.path.insert(0, str(TOOLS / 'pycolmap-4.2.1'))
     state(job, 'verifying')

@@ -11,6 +11,7 @@ export const keyRoleNames: Record<TeachingKeyRole,string> = {forward:'Вперё
 export type TeachingProfile = {
   schema: 'sphere-touch-keymap-v1';
   mode: 'stick' | 'vehicle_buttons';
+  hudProfile?: 'black_russia_scooter_v1';
   stick_x: number; stick_y: number; radius: number; action_x: number; action_y: number;
   vehicle: Record<VehicleButton, PercentPoint>;
   /** Vehicle pedals on contact 0, horizontal joystick on 1, camera on 2. */

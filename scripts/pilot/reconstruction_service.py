@@ -46,7 +46,7 @@ LIMITS = {'manifest.json': 65536, 'frames.jsonl': 16 * 1024**2,
           'inputs.jsonl': 8 * 1024**2, 'COMPLETE': 1024, 'video.h264': 2**31}
 TERMINAL = {'complete', 'sparse_complete', 'failed', 'cancelled', 'quality_rejected', 'review_required', 'partial_scene'}
 IDENTITY = re.compile(r'^[0-9a-f]{32}$')
-ROUTE_CAMERA_PIPELINE = 'vehicle_geometry_v2'
+ROUTE_CAMERA_PIPELINE = 'vehicle_geometry_v3_hud'
 
 
 class AccessDenied(PermissionError):
@@ -112,6 +112,15 @@ class Jobs:
 
     def status(self, job):
         result = json.loads((job / 'state.json').read_text('utf-8'))
+        from scripts.pilot.route_hud_workspace import read_status as hud_status
+        telemetry=hud_status(job)
+        if telemetry is not None:
+            phase=telemetry.get('phase')
+            telemetry={**telemetry,'phase':'processing' if phase in {'pending','running'} else
+                       'failed' if phase in {'invalid','cancelled'} else phase}
+            if 'source_manifest_sha256' not in telemetry and (job/'input/manifest.json').is_file():
+                telemetry['source_manifest_sha256']=hashlib.sha256((job/'input/manifest.json').read_bytes()).hexdigest()
+            result['telemetry']=telemetry
         if (job / 'quality.json').is_file():
             result['quality'] = json.loads((job / 'quality.json').read_text('utf-8'))
         result['geometry_available'] = (job / 'geometry.json').is_file()

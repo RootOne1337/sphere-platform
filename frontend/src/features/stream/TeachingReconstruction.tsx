@@ -3,11 +3,23 @@ import dynamic from 'next/dynamic';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {Box,Loader2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {processingSurface,reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
+import {boundHudTelemetry,hudChart,processingSurface,reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import {listReconstructionLinks,readReconstructionLink,saveReconstructionLink,validReconstructionJob} from './reconstructionLink';
 import ReferenceComparison from './ReferenceComparison';
 import {cameraMotionRequiresReview,navigationErrorLabel,navigationPhaseLabel,routeCoverageLabel,prepareRoute as prepareRouteIntent,preparationError,preparationQuotaReached} from './routePreparation';
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
+export function HudSpeedCard({telemetry,sourceManifestSha}:{telemetry:ReconstructionState['telemetry'];sourceManifestSha:string|null}){
+  const data=boundHudTelemetry(telemetry,sourceManifestSha);if(!data)return null;
+  const chart=data.phase==='ready'?hudChart(data.samples):null;
+  const labels:Record<string,string>={processing:'Распознаём показания',failed:'Не удалось распознать показания',unavailable:'Показания недоступны',ready:'Показания игрового HUD'};
+  return <div className="max-w-lg rounded-lg border border-sky-500/25 bg-sky-500/5 p-3" aria-label="Скорость на записи">
+    <p className="text-sm font-medium">Скорость на записи</p>
+    <p role="status" className="mt-1 text-xs text-muted-foreground">{labels[data.phase]}{data.phase==='ready'&&` · принятых: ${data.accepted_count??'—'} · неизвестно: ${data.unknown_count??'—'}`}</p>
+    {chart&&<><p className="mt-1 text-xs">{chart.min}–{chart.max} км/ч · Показания игрового HUD</p><svg viewBox="0 0 300 100" role="img" aria-label="График показаний скорости; пропуски не соединены" className="mt-2 h-24 w-full">
+      {chart.segments.map((segment,i)=><g key={i}>{segment.length>1&&<polyline fill="none" stroke="currentColor" strokeWidth="1.5" points={segment.map(p=>`${p.x},${p.y}`).join(' ')}/>}{segment.map((p,j)=><circle key={j} cx={p.x} cy={p.y} r="1.5" fill="currentColor"/>)}</g>)}
+    </svg></>}
+  </div>;
+}
 const phases:Record<string,string>={uploading:'Передача сохранённой записи',starting:'Запуск обработчика',verifying:'Проверка исходника и освобождения ввода',extracting:'Извлечение кадров в исходном разрешении',features:'Поиск устойчивых визуальных признаков',matching:'Сопоставление соседних ракурсов',cameras:'Восстановление связанных камер',training:'Построение плотной Gaussian-сцены на GPU',complete:'Плотная сцена готова',failed:'Обработка остановлена',cancelled:'Задание отменено'};
 const reasons:Record<string,string>={no_connected_cameras_need_translation_and_overlap:'Не удалось связать камеры. Нужен проход с перемещением, перекрывающимися ракурсами и неподвижными деталями.',camera_quality_gate_failed:'Камеры восстановлены лишь частично или с большой ошибкой. Результат не принят как цельная сцена.',resource_guard:'Недостаточно ресурсов для безопасного продолжения.',worker_service_restarted:'Сервис был перезапущен. Исходная запись сохранена.',brush_failed_see_local_log:'Плотный рендер завершился с ошибкой. Камеры можно проверить отдельно.'};
 reasons.brush_timing_overflow='Brush завершился с ошибкой измерения времени GPU. Камеры и проверенные промежуточные результаты сохранены.';
@@ -61,7 +73,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   },[storageKey,clip]);
   useEffect(()=>{
     if(!job)return;let retired=false;let timer:ReturnType<typeof setTimeout>;const abort=new AbortController();
-    const poll=async()=>{try{const next=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json();if(retired)return;setStatus(next);setError(null);if(!terminalReconstruction(next))timer=setTimeout(()=>{void poll();},2500);}
+    const poll=async()=>{try{const next=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json();if(retired)return;setStatus(next);setError(null);if(!terminalReconstruction(next)||next.telemetry?.phase==='processing')timer=setTimeout(()=>{void poll();},2500);}
       catch(e){if(!retired){setError(e instanceof Error&&e.message==='job_not_found'?'Создание задания ещё не подтверждено. Можно продолжить подготовку с тем же идентификатором; обучение повторно не запускается.':`Локальный обработчик не ответил: ${e instanceof Error?e.message:'ошибка'}. Задание не повторялось.`);timer=setTimeout(()=>{void poll();},10000);}}};
     void poll();return()=>{retired=true;abort.abort();clearTimeout(timer);};
   },[job,refresh]);
@@ -136,6 +148,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       {status.phase==='uploading'&&!uploading&&<Button size="sm" onClick={()=>{void start();}}>Продолжить передачу</Button>}
       {terminalReconstruction(status)&&<Button variant="outline" size="sm" onClick={()=>{sessionStorage.removeItem(storageKey);setJob(null);setStatus(null);setError(null);}}>Новое отдельное задание</Button>}
     </div>}
+    <HudSpeedCard telemetry={status?.telemetry} sourceManifestSha={sourceManifestSha}/>
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     {preparationNotice&&preparationNotice.jobId===job?.id&&<p role="alert" className="text-sm text-destructive">{preparationNotice.message}</p>}
     {status?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.error]??status.error} Исходное видео не изменено.</p>}

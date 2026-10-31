@@ -28,6 +28,8 @@ RECIPE=('scripts/pilot/check_route_first_run.py','scripts/pilot/reconstruction_s
         'scripts/pilot/route_workspace.py','scripts/pilot/prepare_route_workspace.py',
         'scripts/pilot/route_video_tracks.py','scripts/pilot/route_motion_sampling.py',
         'scripts/pilot/route_masks.py','scripts/pilot/route_geometry_selection.py',
+        'scripts/pilot/route_hud_speed.py','scripts/pilot/route_hud_workspace.py',
+        'scripts/pilot/route_speed_consistency.py',
         'scripts/pilot/route_learned_recovery.py','scripts/pilot/route_reconstruction_resources.py',
         'scripts/pilot/learned_route_features.py','scripts/pilot/reconstruction_quality.py',
         'scripts/pilot/video_observations.py','scripts/pilot/camera_pixel_conventions.py',
