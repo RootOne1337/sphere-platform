@@ -148,6 +148,21 @@ Handlers, сеть и состояние сервера она не провер
 [OTA API](../../../tests/test_updates/test_updates_api.py),
 [OTA live delivery](../../../tests/production/test_ota_live_delivery.py).
 
+### Уточнение discovery
+
+При последующей сверке установлено, что `DiscoveryService` получает `PubSubRouter`,
+но вызывает `send_command_wait_result`, определённый у `PubSubPublisher`;
+исключение перехватывается и приводит к пустому результату. Независимо от этого
+команда `discover_adb` отсутствует в dispatcher PC Agent. В исследованных route и
+service не найдена явная проверка принадлежности workstation организации до
+попытки dispatch; фактическая межорганизационная доступность и работающий транспорт
+этим не установлены. Подробности и поведение формы — в
+[руководстве](../../operations/DEVICE-STREAM-GUIDE.md#поиск-discovery).
+
+Локально прошли 11 mock Jest-тестов UI и 9 тестов схемы `TestDiscoverRequestSchema`
+с синтетическим JWT secret и `--noconftest`. Сеть, PC Agent и реальное сканирование
+не запускались; результат тестов не исправляет выявленный источник несовместимости.
+
 ## VPN и n8n: оставшиеся зарегистрированные пути
 
 На `05594674` и меняющемся рабочем дереве сверены группы `/vpn` (**23 операции**)

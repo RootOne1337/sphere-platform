@@ -137,9 +137,14 @@ guide's generic `adb_exec`/serial envelope or automatic single-device selection.
 The bridge computes default instance ports as `5554 + index * 2`; verify the actual
 emulator configuration. The separate [ADBDiscovery module](../pc-agent/modules/adb_discovery.py)
 is not routed by the current dispatcher. The backend discovery service currently
-sends `discover_adb`, which this dispatcher also does not implement. An unsupported
+constructs `discover_adb`, which this dispatcher also does not implement. An unsupported
 command or transport failure can be converted by the backend into an empty list;
 therefore zero results do not prove a scan actually ran or that no devices exist.
+There is an earlier source-level mismatch: discovery obtains `PubSubRouter` but
+calls `send_command_wait_result`, which belongs to `PubSubPublisher`. The resulting
+exception is caught and becomes an empty list. The scan service also does not
+explicitly verify the requested workstation's organization before this attempted
+dispatch; this review does not establish a successful cross-tenant operation.
 See [device and stream workflows](operations/DEVICE-STREAM-GUIDE.md#поиск-discovery).
 End-to-end discovery and OS execution remain under audit; the command list is an
 implementation inventory, not proof of successful remote execution. Unknown command types now produce

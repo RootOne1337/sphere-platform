@@ -914,9 +914,13 @@ pair of inclusive ports (default 5554–5584). The response reports `scanned`,
 address count × port count, even when the agent returns no result; it is not a
 receipt proving every address/port was contacted. A network scan
 and registration do not prove an Android agent is connected or ready for control.
-The server currently sends `discover_adb`, while the PC-agent dispatcher does not
-implement that command; failures can be converted to an empty result. An empty list
-therefore does not establish that no devices exist. See [PC agent](pc-agent.md) and
+The service obtains `PubSubRouter` but calls an RPC method implemented by
+`PubSubPublisher`; the resulting exception can be converted to an empty result.
+The intended `discover_adb` command is also absent from the PC-agent dispatcher.
+No explicit workstation ownership check was found in the reviewed route/service;
+actual tenant isolation and deployed behavior were not tested. An empty list does
+not establish that a scan ran or no devices exist. See [PC agent](pc-agent.md),
+[operator workflow](operations/DEVICE-STREAM-GUIDE.md#поиск-discovery) and
 [request and response schemas](../backend/schemas/discovery.py).
 
 ---
