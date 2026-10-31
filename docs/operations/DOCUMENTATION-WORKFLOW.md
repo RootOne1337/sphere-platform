@@ -61,6 +61,9 @@ python -m scripts.documentation_impact --base origin/main --json
    `backend/requirements.txt`: `python -m scripts.export_api_docs`, затем
    `python -m scripts.export_api_docs --check`. Генератор не проверяет WebSocket,
    авторизацию, фактическую успешность вызовов или установленную версию.
+   `python -m unittest discover -s tests -p test_documentation_api_headings.py`
+   дополнительно сопоставляет HTTP-заголовки ручного справочника с сохранённой
+   схемой, но не подтверждает содержание разделов.
 4. После добавления или удаления Markdown обновите инвентарь командой
    `python -m scripts.check_documentation_status --write-inventory`, затем
    `python -m scripts.check_documentation_status`. Инвентарь использует

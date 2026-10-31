@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 437,
+    "DATED_EVIDENCE": 439,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 81,
     "PROJECT_POLICY": 7,
@@ -1857,6 +1857,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-11-01/API-REFERENCE-RECONCILIATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-11-01/DESIGN-SPECS-REVIEW.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1874,6 +1878,10 @@
     },
     {
       "file": "docs/audits/2026-11-01/OPS-RUNTIME-DETAIL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-01/SCOOTER-GEOMETRY-RECOVERY.md",
       "role": "DATED_EVIDENCE"
     },
     {

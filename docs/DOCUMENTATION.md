@@ -41,13 +41,20 @@
 python -m scripts.check_documentation_status
 python -m unittest discover -s tests -p test_documentation_status.py
 python -m unittest discover -s tests -p test_documentation_routes.py
+python -m unittest discover -s tests -p test_documentation_api_headings.py
+python -m unittest discover -s tests -p test_documentation_config_fields.py
 python -m unittest discover -s tests -p test_documentation_impact.py
 ```
 
 Проверка сверяет структуру реестра, закрытия и хеши связанных receipts,
 классификацию учтённых Git Markdown и некоторые локальные ссылки действующих
 документов. Тест маршрутов сверяет имена страниц App Router с таблицей Web UI;
-он не проверяет кнопки, поведение страниц или права. [Инвентарь](operations/DOCUMENT-INVENTORY.json) — классификация,
+он не проверяет кнопки, поведение страниц или права. Проверка HTTP-заголовков
+ручного справочника сверяет только перечисленные в них методы и пути с сохранённой
+OpenAPI-схемой: она не проверяет текст, запросы, авторизацию или runtime.
+Проверка конфигурации считывает имена полей Settings из синтаксического дерева
+без загрузки env и проверяет их упоминание в справочнике; значения и правильность
+применения она не подтверждает. [Инвентарь](operations/DOCUMENT-INVENTORY.json) — классификация,
 а не подтверждение содержания каждого файла. Сканер не проверяет смысл текста,
 фрагменты ссылок, внешние сайты, выполнение инструкций или состояние устройств.
 После добавления или удаления Markdown подготовьте файл к учёту Git и обновите

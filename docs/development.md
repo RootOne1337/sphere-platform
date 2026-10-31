@@ -82,6 +82,8 @@ python -m scripts.check_documentation_status
 python -m unittest discover -s tests -p 'test_documentation_status.py'
 python -m unittest discover -s tests -p 'test_documentation_impact.py'
 python -m unittest discover -s tests -p 'test_documentation_routes.py'
+python -m unittest discover -s tests -p 'test_documentation_api_headings.py'
+python -m unittest discover -s tests -p 'test_documentation_config_fields.py'
 python scripts/sync_action_contract.py --check
 ```
 
