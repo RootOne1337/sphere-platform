@@ -202,6 +202,30 @@ service/schema. Покрытие обозначает чтение method/path, 
 [UI hierarchy endpoint](../../../tests/production/test_ui_hierarchy_endpoint.py)
 и [direct probe capabilities](../../../tests/test_ws/test_direct_probe_capabilities.py).
 
+## Game accounts, account sessions, audit и device logs
+
+На `fb91e487` и изменявшемся рабочем дереве сопоставлены **20 зарегистрированных
+method/path**: 10 game accounts, 5 account sessions, 2 audit, 3 device logs.
+Сопоставление учитывает доступ, параметры схем, основные эффекты сервисов и
+статус ответа. Это не проверка всех конкурентных сценариев или работающей среды.
+
+| Область | Изученные источники и результаты |
+| --- | --- |
+| Game accounts — 10 | [router](../../../backend/api/v1/game_accounts/router.py), [schema](../../../backend/schemas/game_accounts.py), [service](../../../backend/services/game_account_service.py), [credentials](../../security/account-credentials.md). Read/write и отдельное credentials:read, list/stats/servers/create/import/get/patch/delete/assign/release. Неверный status игнорируется, неизвестная сортировка откатывается к created_at. Assign требует free и owned device; release снимает назначение, увеличивает total_sessions и устанавливает free/cooldown, но не доказывает завершение игры или отдельной session. Null в PATCH пропускается; переход в free снимает назначение. Delete возвращает source 204 при schema 200. |
+| Account sessions — 5 | [router](../../../backend/api/v1/account_sessions/router.py), [schema](../../../backend/schemas/account_sessions.py), [service](../../../backend/services/account_session_service.py), [Web](../../../frontend/app/%28dashboard%29/sessions/page.tsx). Особая граница: manual UI посылает только reason; схема подставляет два нулевых счётчика и три null, сервис присваивает их записи, потенциально перезаписывая прежние данные. Это описано и в [операторском руководстве](../../operations/USER-ADMIN-GUIDE.md). Только started_at/ended_at/created_at поддержаны для сортировки; неизвестные поля возвращаются к started_at. Отсутствие ответа не доказывает, что завершение не произошло. |
+| Audit — 2 | [router](../../../backend/api/v1/audit/router.py), [schema](../../../backend/schemas/audit.py), [query](../../../backend/services/audit_query.py), [investigation](../../operations/AUDIT-INVESTIGATION.md). `audit:read`, организация, валидированные интервалы и поисковые условия, общий фильтр для списка и CSV; экспорт ограничен 5000, не содержит произвольных old/new/meta. Проверка не устанавливает полноту самого журнала. |
+| Device logs — 3 | [router](../../../backend/api/v1/logs/router.py), [read schema](../../../backend/schemas/device_logs.py), [reader](../../../backend/services/device_log_reader.py), [upload](../../../backend/services/device_log_upload.py), [операторский контракт](../../operations/DEVICE-LOG-STORAGE.md). Upload проверяет device principal и ограничивает body 512 KiB; GET требует device:read и возвращает bounded tail с read metadata; DELETE требует device:delete. Handlers upload/delete возвращают 204 при OpenAPI 200. Удаление использует `ignore_errors=True`, потому 204 не доказывает удаление всех файлов. |
+
+Локально в `.venv-audit` проверены defaults `EndSessionRequest` для `manual` и
+верхняя граница `ReleaseAccountRequest.cooldown_minutes`: проверка прошла;
+сервис, DB и HTTP не вызывались. Найдены, но в этом проходе не запускались
+[account credentials](../../../tests/production/test_account_credentials.py),
+[audit investigation](../../../tests/production/test_audit_investigation.py),
+[log read budget](../../../tests/devices/test_log_read_budget.py),
+[log upload budget](../../../tests/devices/test_log_upload_budget.py). Сценарии
+записи существующих session-метрик и проверки реального удаления логов требуют
+отдельной проверки в изолированной среде.
+
 ## Проверки и остаток
 
 Машинное сравнение HTTP method/path во **всех заголовках** справочника с JSON,
