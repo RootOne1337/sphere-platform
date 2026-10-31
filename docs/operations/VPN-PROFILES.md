@@ -115,7 +115,10 @@ refs, блокирует повторный импорт и предлагает
 `persisted=true`, `apply_allowed=false`, `execution_confirmed=false`.
 Конфликт head/архив/UUID — 409. Отсутствие owned профиля — 404. Ошибка формата —
 422 без исходного секрета; слишком большой HTTP body — 413 (96 КиБ), конфиг ограничен
-64 КиБ. Отсутствие/повреждение key ring — 503 `vpn_profile_secrets_unavailable`.
+64 КиБ. На путях, которым требуется шифрование или расшифровка replay,
+отсутствие/повреждение key ring даёт 503 `vpn_profile_secrets_unavailable`.
+Чтение метаданных, import-status и batch preflight сами по себе key ring не проверяют:
+их успех не доказывает, что запись или replay с доступными ключами возможны.
 
 При потере ответа клиент считает исход неизвестным, очищает выбранный файл/сырой
 конфиг, блокирует второй POST и предлагает GET по прежнему UUID. **404 означает
@@ -149,8 +152,13 @@ append-only, поэтому массовое перешифрование не �
 и находятся в БД открыто; не вставлять туда приватные ключи/пароли. Публичные SQL
 проекции list/get/history/import-status не выбирают ciphertext. AuditLog записывает
 действие, actor, org, профиль/revision/request ID, не `.conf` или его fingerprint.
-HTTP decrypt/export/QR endpoint отсутствует. Чтение plaintext будущим provider потребует
-собственной авторизации и аудита; его ещё нет.
+HTTP decrypt/export/QR endpoint отсутствует. В исходниках есть внутренняя функция
+[`seal_revision`](../../backend/services/vpn/profile_delivery.py): она расшифровывает
+revision после проверки org и готовит шифрованный envelope для получателя. Сама функция
+не отправляет команду, не ведёт operation journal и не подтверждает применение; её
+контракт требует, чтобы вызывающий компонент связал получателя с операцией. По
+проверенным вызовам эта функция используется в тестах, а не подключена как готовый
+production executor. Любому будущему пути нужны собственные авторизация и аудит.
 
 При сетевом доступе обязателен TLS. На входных endpoints нельзя включать request-body
 logging, APM body capture или HTTP debug с конфигом. Успешный импорт не делает
@@ -181,10 +189,15 @@ permissive policy. Composite FK связывает org/profile, уникальн
 pool timeout 3 с, statement timeout 10 с, lock timeout 3 с. Вместе с основным pool
 число подключений надо учитывать при расчёте лимита PostgreSQL.
 
-На каждом запросе после JWT/RBAC и установки tenant context проверяются фактическая
+На каждом запросе каталога, который использует отдельную DB-сессию, после JWT/RBAC
+и установки tenant context проверяются фактическая
 роль соединения, RLS обеих таблиц и audit log, tenant и необходимые grants. Superuser,
 BYPASSRLS/CREATEROLE, владелец с неактивным RLS, отсутствующая миграция или права не
 дают работать каталогу. Проверка не кешируется как вечный признак «безопасной роли».
+Она проверяет перечисленные флаги и необходимые права, но не является полной
+проверкой состава политик, членства роли или отсутствия избыточных привилегий;
+эти условия отдельно проверяются при provisioning. Batch preflight не открывает
+catalog DB-сессию и не подтверждает её готовность, RLS или key ring.
 503 имеет ограниченный код `vpn_catalog_database_unavailable` либо
 `vpn_catalog_database_policy_unavailable`; DSN, SQL и driver error не возвращаются.
 Отдельный pool закрывается shutdown hook, SQL parameters не логируются.
@@ -221,6 +234,13 @@ BYPASSRLS/CREATEROLE, владелец с неактивным RLS, отсутс
 прежних devices/users/organizations/scripts/script_versions/tasks сохранились.
 После этого применена миграция и обновлены только API/UI. Секреты и резервная копия
 остаются в приватной области; off-host disaster recovery не подтверждён.
+
+Сверка исходников 1 ноября 2026: [profile router](../../backend/api/v1/vpn/profile_router.py),
+[catalog](../../backend/services/vpn/profile_catalog.py), [batch](../../backend/services/vpn/profile_batch.py),
+[crypto](../../backend/services/vpn/profile_secrets.py) и
+[catalog DB checks](../../backend/services/vpn/catalog_database.py). Это проверка
+source-контракта, не повторение исторических live-испытаний и не аттестация текущих
+ключей, ролей, настроек или физического VPN.
 
 Для локального пакета добавлен явный `package_local_backend --vpn-catalog`: он
 допускает только неизменённую `20261021_vpn_profiles` после точного предыдущего head,
