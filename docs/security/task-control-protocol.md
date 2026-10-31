@@ -1,8 +1,11 @@
 # DAG control identity and cancellation limits
 
 **20 September update (AUD-129, source only):** stop persists cancellation in SQL.
-QUEUED can finish locally (HTTP200); ASSIGNED/RUNNING return HTTP202 and remain
-active until a terminal DAG receipt. Network failure does not discard the intent.
+For `POST /tasks/{id}/stop`, QUEUED can finish locally (HTTP 200);
+ASSIGNED/RUNNING return HTTP 202 and remain active while awaiting a DAG result.
+The separate `DELETE /tasks/{id}` accepts QUEUED/ASSIGNED and returns HTTP 204
+for either: for ASSIGNED this acknowledges the saved intent, not a device stop.
+Once committed, a network failure does not discard the intent.
 This supersedes AUD-128's temporary HTTP503 contract. At that dated source review
 it was not yet installed on the pilot. [Historical evidence and rollout](../audits/2026-09-20/DURABLE-CANCELLATION.md).
 
@@ -13,6 +16,10 @@ remain separate from physical cancellation acceptance. The
 [current Task API](../api-reference.md#tasks--tasks) distinguishes HTTP200
 local QUEUED cancellation, HTTP202 pending device cancellation and independent
 context-preserving rerun; none certifies a remote device outcome by itself.
+If the HTTP response is lost, commit and cancellation outcome are unknown to the
+caller. Read back the task status and cancellation fields before deciding what to
+do; a repeated request can find a terminal task and return 409. Do not infer that
+the original request failed or that a device action is safe to repeat.
 
 The management WebSocket uses two identities for a DAG control:
 
@@ -60,7 +67,10 @@ Cancellation is cooperative. A checkpoint runs before each action/retry,
 including nested loop bodies; pause waits at that boundary until resume or cancel.
 A cancellation observed during the final action produces `success=false` with
 `CANCELLED`/`cancelled_by_user` and `cancelled=true`; the dispatcher persists a failed
-DAG wire receipt, which the backend stores as SQL CANCELLED.
+DAG wire receipt, which the backend normally stores as SQL CANCELLED, or TIMEOUT
+if a timeout request is also recorded. If execution finishes before cancellation
+reaches its checkpoint, its actual terminal receipt may instead yield COMPLETED or
+FAILED; an accepted stop is not a guarantee that CANCELLED will be the outcome.
 The separate control ACK still records acceptance only. The current synchronous,
 root or Lua action may continue until it returns. Checkpoint-to-action races are
 possible; root pipe flushes do not prove execution or shell exit status. Pause
@@ -114,8 +124,13 @@ the still-active run. Parallel native task children are rejected before admissio
 
 Remaining failure cases:
 
-- A process/root outcome reported as unknown remains active for reconciliation;
-  no automatic unlock or APK result ACK can discard that evidence.
+- In the reviewed handler, an active task with saved cancellation remains active
+  and its APK receipt remains unacknowledged when `result.error` exactly matches
+  `execution_outcome_unknown_after_restart`, `execution_interrupted_outcome_unknown`
+  or `Root command delivery outcome is unknown`. This is a narrow string match,
+  not a general classifier of all unknown side effects. Other error values or a
+  task without saved cancellation can follow the ordinary terminal-result path;
+  a terminal SQL status still does not prove physical effects stopped.
 - Ordinary watchdog timeout without a saved cancellation retains its older
   contract: TIMEOUT and best-effort stop do not prove physical termination.
 - Legacy pipeline `action` publication has no native terminal task receipt;
@@ -147,3 +162,11 @@ deliver a real control ACK through the backend handler after injected Redis/SQL
 failure; `test_cancellation_serialization.py` uses two concurrent DB sessions.
 These are runtime logic tests, not physical-device stop or emulator capacity
 measurements. See AUD-35–37 and AUD-40–44 in the [audit report](../audits/2026-09-05/AUDIT-REPORT.md).
+
+Source rechecked 1 November 2026: [task router](../../backend/api/v1/tasks/router.py),
+[task service](../../backend/services/task_service.py), [Android WS result handler](../../backend/api/ws/android/router.py),
+[`CommandDispatcher`](../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandDispatcher.kt),
+[`CommandJournal`](../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandJournal.kt)
+and [`DagRunner`](../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt).
+Historical tests were not rerun for this source review; installed versions, actual
+SQL/Redis behavior, process death and physical side effects were not measured.
