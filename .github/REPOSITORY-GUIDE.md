@@ -9,21 +9,21 @@ GitHub выбирает главный README в порядке `.github/` → �
 
 | Элемент | Назначение |
 | --- | --- |
-| [README](../README.md) и [обложка](../docs/assets/sphere-cover.svg) | Главный вход, состояние продукта и маршруты по документации |
+| [README](../README.md) | Главный вход и маршруты по документации |
 | [Issue forms](ISSUE_TEMPLATE/) | Баг, производительность/recovery, документация, функция и вопрос |
-| [Issue chooser](ISSUE_TEMPLATE/config.yml) | Переходы к документации, приватному security report и известным проблемам |
+| [Issue chooser](ISSUE_TEMPLATE/config.yml) | Переходы к репозиторию и приватному security report |
 | [PR template](pull_request_template.md) | Причина, итоговое поведение, evidence, rollout и residual risk |
 | [CODEOWNERS](CODEOWNERS) | Текущий владелец кода; не настройка required approvals |
-| [Workflows](workflows/) | Фактически исполняемые CI/deployment jobs |
+| [Workflows](workflows/) | Конфигурация CI/deployment jobs; фактические запуски проверяются отдельно |
 | [Инструкции проекта](instructions/1337.instructions.md) | Соглашения разработки |
 | [Архив описания первого PR](PR_develop_to_main.md) | Исторический контекст; не текущий template или readiness |
 
 ## Когда оформление становится доступно
 
-GitHub использует issue forms из default branch. Изменение файлов в draft PR
-не обновляет главное меню создания issues или главную страницу `main`.
-До merge просматривайте README в ветке PR и используйте структуру форм вручную.
-PR template также следует проверять после попадания в default branch.
+GitHub использует issue forms из default branch. Изменение файлов в другой ветке
+или PR не обновляет меню создания issues в default branch. До merge просматривайте
+README в ветке изменений и используйте структуру форм вручную. PR template также
+следует проверять после попадания в default branch.
 
 Обновление CODEOWNERS не означает включение branch protection. Rulesets, review
 requirements, workflows, релизы и публикация APK — отдельные операции.

@@ -26,7 +26,9 @@ The capture epoch changes on every capture start, including a same-size
 restart. The UUID in the JSON input offer and in the frame represents the
 same identity. Actual displayed width/height come from the decoded VideoFrame,
 not a trusted header assertion. Timestamp remains stream-relative; it is not
-browser wall-clock latency or an input execution timestamp.
+browser wall-clock latency or an input execution timestamp. The packager uses
+the difference between two `System.currentTimeMillis()` readings: it is not a
+monotonic clock or the encoder's presentation timestamp.
 
 Payload bound: **1 MiB**; v2 overhead: **30 bytes**, 16 more than v1. No
 screenshots, frame logs, history files or persistent per-frame objects are
@@ -72,8 +74,8 @@ compatibility remains. Normal queue recovery still waits for a true IDR.
 ## Browser output boundary
 
 [parseSphereFrame](../../frontend/lib/sphere-frame.ts) validates fixed header,
-length, version, flags, non-nil identity and safe nonnegative microsecond
-timestamp. It returns a view of the original NAL bytes; it does not clone a
+length, version and safe nonnegative microsecond timestamp; for v2 it also
+checks reserved flags and non-nil identity. It returns a view of the original NAL bytes; it does not clone a
 large access unit to extract metadata.
 
 [H264Decoder](../../frontend/lib/h264-decoder.ts) ties each submitted picture
@@ -92,20 +94,26 @@ copies prevent outside mutation of the cached identity.
 v1 produces no invented epoch and keeps the existing one-argument rendering
 callback. New v2 rendering optionally provides `{captureEpoch, frameWidth,
 frameHeight}`. This is local evidence for the displayed source, **not** an
-Android input ACK, owner lease or permission grant. Browser pointer handling
-does not yet consume this API; installed gestures remain discrete.
+Android input ACK, owner lease or permission grant. The current
+[DeviceStream](../../frontend/components/sphere/DeviceStream.tsx) uses the
+rendered capture binding in continuous-input admission. Actual availability
+depends on negotiated capabilities, authorization and the installed artifacts;
+source integration alone does not establish the behavior of a running viewer.
 
-## Acceptance still required
+## Initial 7 October acceptance boundary
 
 The fixed fixture, malformed bytes, configuration classification, queue pass
 through, same-size restart, late old output, failed rendering, mutation,
 reset/error/v1 transition and legacy decoder behavior have independent unit
 coverage. See [validation evidence](../audits/2026-10-07/VIDEO-CAPTURE-V2-EVIDENCE.json).
 
-Real Kotlin pipe/encoder acceptance, scoped server receipts, non-retrying
+At that checkpoint, real Kotlin pipe/encoder acceptance, scoped server receipts, non-retrying
 multiworker owner lease, browser pointermove/loss cleanup, recording semantics
-and latency/resource soak remain open. No live browser→server→APK→display
-acceptance is claimed; no runtime image or production agent is replaced.
+and latency/resource soak remained open. No live browser→server→APK→display
+acceptance was claimed and no runtime image or production agent was replaced
+by that checkpoint. Later work must be assessed using its own evidence and
+limitations; see [current work status](../operations/WORK-STATUS.md) and
+[continuous input server](CONTINUOUS-INPUT-SERVER.md).
 
 ## Subsequent exact-source CI and server component
 
@@ -114,7 +122,9 @@ preview). A separately flagged debug artifact also built, without installation;
 the earlier default APK was retained before overwriting Gradle's mutable output.
 See [exact CI and both artifact hashes](../audits/2026-10-08/VIDEO-CAPTURE-V2-CI.json).
 
-The subsequent [server lease/delivery component](CONTINUOUS-INPUT-SERVER.md)
-has independent real Redis and socket-fence unit acceptance. It has no public
-route/subscription integration yet. Neither addition enables pointermove on3015
-or substitutes for the remaining live Android/browser acceptance above.
+At the subsequent 8 October checkpoint the
+[server lease/delivery component](CONTINUOUS-INPUT-SERVER.md) had independent
+real Redis and socket-fence unit acceptance but not yet public route/subscription
+integration. Current source registers the runtime and handles continuous input
+in the [stream router](../../backend/api/ws/stream/router.py). These source and
+historical test results do not establish current installed runtime acceptance.

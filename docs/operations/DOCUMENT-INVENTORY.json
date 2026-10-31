@@ -5,8 +5,8 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 433,
-    "DESIGN_SPECIFICATION": 90,
+    "DATED_EVIDENCE": 437,
+    "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 80,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1853,11 +1853,27 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-11-01/ANDROID-DOCS-DETAIL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-01/DESIGN-SPECS-REVIEW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-11-01/DOCUMENTATION-ASSESSMENT.md",
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-11-01/DOMAIN-DOCS-DETAIL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-11-01/OPERATIONS-REVIEW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-01/OPS-RUNTIME-DETAIL.md",
       "role": "DATED_EVIDENCE"
     },
     {
@@ -1922,6 +1938,10 @@
     },
     {
       "file": "docs/design/MOTOR-AI-PLATFORM.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/README.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {

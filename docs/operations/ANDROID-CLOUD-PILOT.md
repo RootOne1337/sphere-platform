@@ -8,7 +8,8 @@
 SHA на четырёх online устройствах. Одноразовый secret удалён. Точные source/tree,
 сертификаты, SHA и границы: [квитанция поставки](../audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md).
 
-Полный `.github/workflows/ci-android.yml` по умолчанию работает как прежде.
+Репозиторий содержит полный workflow `.github/workflows/ci-android.yml`; наличие
+описания не подтверждает, что hosted Actions сейчас включены или что прогон прошёл.
 Режим `workflow_dispatch` с `package_only=true` и `validation_run=<run id>` вызывает
 отдельный reusable workflow упаковки. Проверенный полный прогон должен уже иметь
 успешный job `Android tests and signed release smoke build`; успех одной упаковки

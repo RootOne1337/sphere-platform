@@ -1,16 +1,20 @@
 # Changelog
 
-All notable changes to **Sphere Platform** are documented here.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Versioning follows [Semantic Versioning](https://semver.org/).
+This file preserves recorded changes and historical release notes for
+**Sphere Platform**. It is incomplete for later work; consult Git history and
+the [documentation catalogue](docs/README.md) for changes not listed here.
+The layout draws on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/);
+version headings alone do not establish that an artifact was released or deployed.
 
 ---
 
 ## [Unreleased] — updated 2026-09-28 (PR #19)
 
-This section records source and documentation changes; it does not indicate a
-production deployment or OTA publication. See the [current state](docs/operations/CURRENT-STATE.md)
-for the separate source, artifact, catalog, installed-device, and runtime evidence.
+This section is a snapshot updated on the stated date, not a complete inventory
+of later commits, a live installation status, or proof of a production deployment
+or OTA publication. Claims below about deployment and outstanding work are scoped
+to their recorded observations. See the [recorded state](docs/operations/CURRENT-STATE.md)
+for separate source, artifact, catalog, installed-device, and runtime evidence.
 
 - AUD-152: monitoring source no longer fabricates CPU/RAM trends or health for
   unprobed components. Unavailable data is labelled explicitly and failed

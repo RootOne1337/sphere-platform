@@ -18,14 +18,21 @@
 
 ```powershell
 python -m scripts.ldplayer_network --index 1 --vboxmanage 'C:/Program Files/ldplayer9box/VBoxManage.exe'
-python -m scripts.ldplayer_network --index 1 --vboxmanage 'C:/Program Files/ldplayer9box/VBoxManage.exe' --repair
 ```
 
-Первый вызов только диагностирует. Exit 0 означает наличие NAT-процесса выбранной
+Этот вызов только диагностирует. Exit 0 означает наличие NAT-процесса выбранной
 сети, 2 — его отсутствие, 1 — ошибка/несоответствие конфигурации. Это **не** проверка
 DNS, HTTPS, доступности backend или авторизации APK. Эти границы явно отражены в JSON.
 
-Второй вызов восстанавливает уже существующую сеть, только если NAT отсутствует:
+После проверки фактической установки и выбора конкретной VM ремонт запускается
+отдельно; `--repair` изменяет состояние её host-сети и может остановить выбранный
+осиротевший DHCP-процесс. Не добавляйте этот флаг к первичной диагностике автоматически.
+
+```powershell
+python -m scripts.ldplayer_network --index 1 --vboxmanage 'C:/Program Files/ldplayer9box/VBoxManage.exe' --repair
+```
+
+Ремонт восстанавливает уже существующую сеть, только если NAT отсутствует:
 
 1. Проверяет `leidian{index}`: running, первый интерфейс NAT network,
    `LdNatNetwork{index}`, кабель подключён.
@@ -80,10 +87,17 @@ JSON-файлом в доступном для записи каталоге, в
 
 ```powershell
 python -m scripts.ldplayer_watchdog --config C:/Sphere/station-network/config.json --check-config
+```
+
+Команда только проверяет конфигурацию, состояние и чтение host inventory.
+Установка ниже создаёт периодическую задачу и сразу запускает первый цикл;
+следующие циклы могут автоматически ремонтировать NAT для разрешённых индексов.
+Применяйте её отдельно после выбора станции и явного допуска такого поведения.
+
+```powershell
 ./scripts/Install-LDPlayerWatchdog.ps1 -ConfigPath C:/Sphere/station-network/config.json -PythonExecutable C:/Sphere/python/python.exe -TaskName Sphere-LDPlayer-workstation01
 ```
 
-Первая команда только проверяет конфигурацию, состояние и чтение host inventory.
 Установщик повторяет проверку и создаёт задачу текущего пользователя: скрытое окно,
 Limited, AtLogon и раз в минуту, IgnoreNew, максимум 5 минут на запуск. Пароль не
 сохраняется. Чужая задача с тем же именем/другим действием не перезаписывается.

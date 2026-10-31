@@ -1,13 +1,18 @@
 # Sphere fleet operations, observability, and media-plane architecture
 
 > **Status:** architecture and audit specification; most target capabilities below are not implemented yet.<br>
-> **Evidence cut:** 23 September 2026, current source branch `codex/enterprise-audit-20260905`.<br>
+> **Evidence cut:** 23 September 2026, then-current source branch `codex/enterprise-audit-20260905`.<br>
 > **Audience:** operator, backend / Android / frontend engineers, release owner, future AI-runtime owner.<br>
 > **Decision scope:** improve reliable operation and diagnosis of remote Android devices, emulators, streams, and future image consumers without turning the current pilot into an unmeasured distributed platform.
 
 [Documentation index](../README.md) · [Current pilot](../operations/LOCAL-PILOT.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Current live stream evidence](../audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [AI readiness](AI-READINESS.md) · [Support evidence form](../../SUPPORT.md)
 
 ## 1. How to read this document
+
+Source observations, runtime descriptions and open status in this architecture
+assessment are a 23 September snapshot, not a current deployment inventory. Later
+source changes and installations require separate evidence; use the current
+[documentation index](../README.md) and recorded [work status](../operations/WORK-STATUS.md).
 
 This document separates four kinds of statements. That separation is deliberate: a
 diagram of a target design is not evidence that the design is already running.
@@ -152,7 +157,7 @@ Implementation references: [Android dispatcher](../../android/app/src/main/kotli
 [Android WebSocket handler](../../backend/api/ws/android/router.py),
 [stream bridge](../../backend/websocket/stream_bridge.py),
 [video queue](../../backend/websocket/video_queue.py),
-[viewer page](../../frontend/app/(dashboard)/stream/[id]/page.tsx),
+[viewer page](../../frontend/app/%28dashboard%29/stream/%5Bid%5D/page.tsx),
 [DeviceStream](../../frontend/components/sphere/DeviceStream.tsx).
 
 ### 4.2 Current source audit findings

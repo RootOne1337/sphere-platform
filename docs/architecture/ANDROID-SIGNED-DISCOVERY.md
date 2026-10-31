@@ -33,8 +33,9 @@
 | `SPHERE_ENROLLMENT_KEY` | Отдельный локально подготовленный ключ; никогда не публикуется в JSON |
 
 Частичный signed build, неверный UUID/key или не-HTTPS source отклоняются Gradle.
-Enterprise flavor может получить enrollment key только при явно включённом signed
-mode; обычный enterprise provisioning не меняется. Для pilot dev build можно
+Оба flavor могут получить enrollment key через `SPHERE_ENROLLMENT_KEY` при сборке;
+configured bootstrap требует непустой ключ. Signed mode требует также валидные
+installation ID, публичный ключ и допустимые HTTPS источники. Для pilot dev build можно
 задать пустой `SPHERE_SERVER_URL`: подписанный документ предоставит management URL.
 
 ## Wire contract v1
@@ -95,9 +96,11 @@ Rollback выпускается с **большим** version number. Если �
 
 Concurrent callers объединяются в один текущий mirror cycle. Parent cancellation
 отменяет HTTP Calls; поздний callback не пишет cache или маршруты. `ConfigWatchdog`
-сохраняет свои generation/revision guards и не разрывает healthy WS из-за новой
-конфигурации. Registered APK запускает связь по сохранённым routes независимо от
-скорости fetch; JSON не запрашивается для каждой команды или видеокадра.
+сохраняет свои generation/revision guards. Если изменилось предпочтение маршрута,
+watchdog инициирует контролируемый reconnect даже при healthy WS; последний
+подтверждённый адрес остаётся кандидатом, а новый активируется только после `auth_ok`.
+Если изменился только резерв и предпочтение сохранилось, активный WS не прерывается.
+Registered APK запускает связь по сохранённым routes независимо от скорости fetch; JSON не запрашивается для каждой команды или видеокадра.
 
 ## Подготовка и публикация
 

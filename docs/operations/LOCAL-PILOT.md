@@ -448,7 +448,12 @@ crash buffers; capture освобождён после собственных о
 [Главная](../../README.md) · [Приёмка](PILOT-ACCEPTANCE.md) ·
 [Готовность](READINESS.md) · [Android](../android-agent.md)
 
-## Какая установка запущена
+## Историческая конфигурация пилота
+
+Следующие project name, адреса, набор сервисов, устройства и задача Windows
+описывают записанный pilot-срез, а не проверку работающей установки сейчас.
+Уточните фактические labels, адреса, идентичность и сохранённую конфигурацию
+перед любым действием. Не считайте старый счётчик устройств текущим inventory.
 
 Новый Compose project — **`sphere-pilot-20260911`**, из checkout
 `C:\Users\dimas\Documents\ChatGPT\sphere-platform`.
@@ -501,13 +506,22 @@ Backend нового стенда обновлён с исправлением A
 Секреты БД/Redis/n8n/MinIO — в `.local-pilot/pilot.env`; эти файлы игнорируются Git.
 Admin и enrollment key принадлежат одной организации `local-pilot-20260911`.
 
-На этой рабочей станции повторный запуск и статус выполняются из корня checkout:
+В описанной установке использовался локальный helper из `.local-pilot/`. Это
+не версионируемый файл: проверьте его наличие, проект и конфигурацию до применения;
+в другом окружении он может отсутствовать или иметь другое назначение. Следующая
+команда **запускает/изменяет сервисы**, а не только проверяет их состояние:
 
 ```powershell
 python .local-pilot/manage.py up -d --wait --wait-timeout 180
+```
+
+После отдельного выбора правильной установки состояние и ограниченные журналы
+можно просмотреть следующими командами; содержание локального `verify_runtime.py`
+также нужно оценить перед запуском:
+
+```powershell
 python .local-pilot/manage.py ps --all
 python .local-pilot/manage.py logs --since 10m --tail 100 backend
-python .local-pilot/verify_runtime.py
 ```
 
 Сгенерированный local helper фиксирует `--project-name`, `--project-directory`,

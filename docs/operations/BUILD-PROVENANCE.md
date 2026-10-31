@@ -14,8 +14,9 @@ Actions run ID. The default hosted archive admission remains separate.
    `python -m scripts.pilot.local_ci --sha <full-sha> --profiles frontend --node <node24-path> --publish`.
    The executor checks a detached source snapshot, the installed dependency lock,
    Jest results, transport/container probes and TypeScript. It posts
-   `Sphere Local / Frontend regressions` to that exact GitHub commit and reads the
-   status back. Production packaging is not implied by this status.
+   `Sphere Local / Frontend regressions` pending and final statuses to that exact
+   GitHub commit and reads them back. `--publish` writes to GitHub, including for
+   a failed run; production packaging is not implied by the status.
 2. Run `python -m scripts.pilot.package_local_web --source <full-sha> --execution <local-receipt-path>
    --output <fresh-.local-pilot-directory> --node <node24-path>` on one line.
    Packaging validates the successful local test report and its current GitHub
@@ -71,8 +72,10 @@ validates it at request time. Preview CI passes `github.sha` to both images and
 builds the backend from repository root with `backend/Dockerfile`, matching the
 Dockerfile's `COPY backend/`, `COPY alembic/`, and `COPY agent-config/` inputs.
 
-For a local production-image build from a clean checkout, pass the exact full
-commit SHA to Compose:
+For a local production-image build from a clean checkout, select the intended
+Compose project and env file first, then pass the exact full commit SHA to Compose.
+The example below invokes a real image build and uses Compose's default env-file
+selection; supply the installation's explicit `--env-file` when needed.
 
 ```powershell
 $env:BUILD_SHA = (git rev-parse HEAD).Trim()

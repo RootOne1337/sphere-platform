@@ -8,7 +8,8 @@
 
 1. Коммит находится в доверенной основной рабочей ветке. Полный backend-профиль
    [local_ci.py](../../scripts/pilot/local_ci.py) выполняется на отдельном Git snapshot с временными
-   PostgreSQL/Redis. Результат публикуется на точный SHA в GitHub через commit status API.
+   PostgreSQL/Redis. При `--publish` в GitHub на точный SHA отправляются pending
+   и затем итоговый commit status; это запись во внешнюю систему, в том числе при ошибке тестов.
 2. [package_local_backend.py](../../scripts/pilot/package_local_backend.py) проверяет успешную квитанцию,
    оригинальный JUnit, обязательные шаги, завершение временных сервисов и актуальный GitHub status.
 3. Родительский образ берётся из здорового установленного API. Все его упакованные файлы сверяются

@@ -63,7 +63,7 @@ Probe удаляет только созданный container/anonymous volume 
 Отсутствующий kernel peak counter отмечается `null`, а не нулевым потреблением.
 CI запускает эту проверку и сохраняет артефакты.
 
-## Текущая CI-проверка и live граница
+## Историческая CI-проверка и live граница
 
 На PR head `e635de8` unit/real-service suite завершился: **1 996 tests, 0 failures,
 0 errors, 15 skipped**. Последующий isolated Redis probe при лимите 1536 MiB
@@ -78,8 +78,9 @@ profiles; восемь regressions прошли. На PR head `bee9bc0` повт
 прошла: AOF rewrite, BGSAVE и restart successful, `OOMKilled=false`, 6,531 ключ
 сохранён. Однако kernel peak был ровно **2048 MiB**, то есть дошёл до лимита.
 Подтверждён именно этот bounded persistence сценарий; spare memory и 32 stream
-capacity не доказаны. Сохранённый live pilot остаётся на 1536 MiB до отдельного
-проверенного rollout; Compose-файлы не меняют запущенный контейнер.
+capacity не доказаны. На момент этого среза live pilot имел лимит 1536 MiB;
+фактический лимит текущего контейнера нужно проверять отдельно. Изменение
+Compose-файлов само по себе не меняет запущенный контейнер.
 
 ### Новый counterexample, 1 октября 2026
 

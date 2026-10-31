@@ -90,21 +90,26 @@ mount был `/app/backend/updates`, а OTA catalog сохранил 11 запи
 локального устройства также не доказывает доставку на удалённые LDPlayer, физические
 телефоны, устройства без root или иные эмуляторы.
 
-## Что сейчас доказано
+## Что было доказано в срезе 25 сентября
 
-| Слой | Текущее поведение и доказательство | Ограничение |
+Следующая таблица сохраняет исторические runtime и catalog observations; она не
+является readback текущей установки. Действующий исходный контракт проверки APK
+и рабочая инструкция приведены в [Android guide](../android-agent.md#6-ota-updates)
+и [адресном OTA](../operations/OTA-ADDRESSED-UPDATES.md).
+
+| Слой | Поведение и доказательство того среза | Ограничение |
 | --- | --- | --- |
 | Bootstrap/config | APK умеет проверять несколько HTTPS источников подписанной конфигурации; принятая конфигурация и версия сохраняются атомарно. См. [signed discovery](ANDROID-SIGNED-DISCOVERY.md). | Валидный локальный bootstrap предшествует config endpoint. Если в golden image остался отозванный или устаревший credential, клон получает 401 на повторной регистрации и не умеет безопасно обновить его из route-bound discovery; см. [AUD-172](../audits/2026-09-25/CLONED-ENROLLMENT-401.md). |
 | Management | Агент использует сохранённые management routes и допускает переключение только после target-bound `auth_ok`. | В текущем pilot подписанный manifest содержал один публичный tunnel route; рабочего независимого WAN ingress не было. |
 | Проверка OTA | `UpdateCheckWorker` запрашивает `/api/v1/updates/latest`; periodic check раз в 6 часов дополнен сетевой one-time проверкой при старте приложения и после первой авторизованной WS-связи. Запросы объединяются `KEEP`, reconnect/boot получают jitter до 120 секунд. | WorkManager не гарантирует точное время. Candidate 1.2.21 отсутствует в обычном OTA catalog; успешный check не создаёт запись релиза. Ошибки HTTP/auth или отсутствие сети задерживают проверку. |
 | Выбор релиза | Backend выбирает наибольший `version_code` по platform/flavor. Проверенный каталог содержит `android/dev` 1.2.9/10209 и `android-canary/dev` 1.2.19/10219. | Полноценного per-device/per-cohort rollout в `latest` нет; публикация максимума в `android/dev` затронет все соответствующие dev-агенты. |
-| Доставка APK | Клиент проверяет HTTPS, ограничивает URL тем же host, что и management server, ограничивает размер и проверяет SHA-256. При транспортном сбое делает ограниченный повтор через HTTP/1.1. Compose source теперь монтирует каталог OTA и APK в project-scoped named volume, сохраняемый при пересоздании контейнера в том же Compose project. | Нет независимого списка разрешённых artifact mirrors; смена tunnel/DNS меняет и control plane, и download path. Внешнее зеркало не пройдёт текущую same-host проверку. Один локальный том не переживает потерю host; смена project name требует миграции; file catalog также не даёт транзакционной конкурентности между backend workers/репликами. |
+| Доставка APK | Клиент проверяет HTTPS, ограничивает URL тем же host, что и management server, ограничивает размер и проверяет SHA-256. При транспортном сбое делает ограниченный повтор через HTTP/1.1. Compose source теперь монтирует каталог OTA и APK в project-scoped named volume, сохраняемый при пересоздании контейнера в том же Compose project. | Нет независимого списка разрешённых artifact mirrors; смена tunnel/DNS меняет и control plane, и download path. Внешнее зеркало не проходило тогдашнюю same-host проверку. Один локальный том не переживает потерю host; смена project name требует миграции; file catalog также не даёт транзакционной конкурентности между backend workers/репликами. |
 | Установка | На rooted pilot-эмуляторе root `pm install` сработал; при отказе есть PackageInstaller путь. После установки Android заменяет процесс, а агент стартует и заново авторизуется. | Без root/Device Owner/системной привилегии нельзя обещать бесшумную установку на любом обычном Android-телефоне. User-mediated PackageInstaller может требовать подтверждения. |
 | Runtime-подтверждение | Локальный canary 5554 обновлён `adb install -r` до 1.2.21/10221; package/signature совпали с прежней установкой, PID был стабилен 12 секунд, crash buffer пуст. 5556 оставлен на 1.2.19/10219. | Это install/start smoke, не OTA и не backend heartbeat/video acceptance. Нет свежего авторизованного aggregate, а версии и сертификаты удалённых устройств неизвестны. |
 
-Текущий проверенный release gap: обычный `android/dev` catalog содержит только
+В проверенном срезе 25 сентября release gap был таким: обычный `android/dev` catalog содержал только
 1.2.9/10209, а `android-canary/dev` — 1.2.19/10219; кандидат 1.2.21/10221 в
-каталоге отсутствует. APK запрашивает platform `android`, поэтому запись в отдельном
+каталоге отсутствовал. APK запрашивает platform `android`, поэтому запись в отдельном
 `android-canary` platform не является доступной заменой. GitHub Actions debug APK и
 изменение `sphere-agent-config` сами по себе не публикуют release в OTA catalog.
 `sphere-agent-config` — bootstrap/discovery configuration, не APK store.
@@ -177,9 +182,10 @@ the remote station. Do not add an unowned free tunnel as a production dependency
    because a new config endpoint is unreachable. Do not install unless the complete
    body passes size, digest, package/signature and monotonic-version checks.
 
-The current OTA client already verifies HTTPS, same-host policy, a bounded APK size,
-SHA-256, and has a bounded HTTP/1.1 retry. The proposed mirror support must replace
-the same-host rule with a **signed exact-origin allowlist**, never with arbitrary
+The current OTA client checks the HTTPS host and port against saved management
+routes, a bounded APK size, SHA-256 and downloaded package/version/SDK/current signer;
+it has a bounded HTTP/1.1 transport retry. This source behavior is not a production
+rollout or acceptance. The proposed mirror support must replace the management-origin rule with a **signed exact-origin allowlist**, never with arbitrary
 URLs. Android's package manager still verifies that an update can replace the
 installed package; including the signer digest in signed metadata makes the failure
 reason observable before installation.

@@ -94,6 +94,11 @@ publisher. Paths должны быть absolute. `state_dir` и private key за
 той же установки: он тоже проходит readiness/installation check. Не указывайте
 заглушку «для галочки»: это заблокирует публикацию.
 
+`--once` выполняет полноценный цикл, а не dry-run: он записывает локальное
+состояние, может обновить подписанный документ в GitHub и mirror, а при явно
+включённом recovery — перезапустить выбранный connector. Запускайте только
+для своей установки, когда эти изменения намеренно допущены.
+
 ```powershell
 python -m scripts.discovery_publisher --config C:/Sphere/private/publisher.json --once
 ```
@@ -112,11 +117,13 @@ python -m scripts.discovery_publisher --config C:/Sphere/private/publisher.json 
 
 Создаётся задача **текущего пользователя**, с ограниченными правами, без сохранённого
 пароля: раз в минуту и при logon, скрытое окно, IgnoreNew, execution limit 3 min.
+Установщик также сразу запускает зарегистрированную задачу: первый цикл может
+сразу выполнить публикацию и другие описанные выше действия.
 При совпавшем task name installer проверяет owner и точное действие перед заменой.
 Нужны вход пользователя в Windows и работающий Docker Desktop. Работа до logon и
 после host reboot в этом пилоте ещё не принята. Это не системная Windows-служба.
 
-Новый стенд использует `Sphere-Publisher-pilot-20260911` и ignored config
+В исторической установке использовались `Sphere-Publisher-pilot-20260911` и ignored config
 `.local-pilot/remote/publisher/config.json`. Signing key хранится отдельно с ACL
 в `.local-pilot/remote/discovery-private/`; исходные GitHub environment files не меняются.
 
@@ -135,10 +142,12 @@ version, URL, expiry, duration и точный publication scope. Проверя
 ```powershell
 Get-ScheduledTaskInfo -TaskName Sphere-Publisher-pilot-20260911
 Get-Content .local-pilot/remote/publisher/state/status.json
-Disable-ScheduledTask -TaskName Sphere-Publisher-pilot-20260911
 ```
 
-Disable прекращает будущие запуски; уже выполняющийся one-shot закончит цикл.
+Это примеры имён того стенда; сначала сверяйте фактические task name и пути.
+`Disable-ScheduledTask` изменяет расписание: применяйте его только к подтверждённой
+своей задаче, когда остановка нужна. Disable прекращает будущие запуски; уже
+выполняющийся one-shot закончит цикл.
 Для ремонта signing/source parameters сначала выключите writer и согласуйте
 новые параметры с APK. Не удаляйте bootstrap branch после merge config PR.
 

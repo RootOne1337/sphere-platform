@@ -13,9 +13,12 @@
 | Нужна помощь с настройкой | [Задать вопрос](https://github.com/RootOne1337/sphere-platform/issues/new?template=question.yml) |
 | Уязвимость, утечка ключа или чужих данных | [Приватное сообщение](SECURITY.md) |
 
-Формы GitHub появляются в меню после попадания в default branch. Пока изменения
-находятся в draft PR, можно открыть обычный issue по структуре ниже.
-Сначала проверьте [известные проблемы](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md).
+Формы GitHub появляются в меню после попадания в default branch. Если нужной формы
+там нет, можно открыть обычный issue по структуре ниже. Сначала проверьте
+[открытые issues](https://github.com/RootOne1337/sphere-platform/issues) и
+[реестр работ](docs/operations/WORK-STATUS.md); датированный
+[Fleet32 preflight](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md) сохраняет
+исторические критерии и не заменяет поиск текущих обращений.
 
 ## Что позволит найти сбой
 
