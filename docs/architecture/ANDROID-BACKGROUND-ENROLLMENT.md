@@ -93,8 +93,8 @@ device refresh и `auth_ok`, затем APK обновляется с прежн
 ## Дедлайн и отмена первичной регистрации (AUD-76)
 
 `DeviceRegistrationClient` больше не удерживает вызывающую coroutine до возвращения
-blocking `execute()`. Асинхронный Call получает отдельный timeout 10 s; coroutine
-budget охватывает ожидание dispatcher, headers и разбор success body. Отмена caller
+blocking `execute()`. Каждый асинхронный Call получает отдельный timeout 10 s;
+coroutine budget каждой попытки охватывает ожидание dispatcher, headers и разбор success body. Отмена caller
 отменяет именно этот Call. Общие WS client timeouts, pool и dispatcher не меняются.
 
 Callback закрывает response и возвращает только разобранные значения. Проверка
@@ -126,8 +126,13 @@ application interceptor может увидеть отменённый Call по
 **Границы:** срок 10 s не включает ожидание worker mutex, fingerprint/device IO,
 планирование Android или уже начатую синхронную запись preferences. AUD-77 ниже
 добавляет единый commit и fencing неотменённых ответов. Cancellation не отменяет
-начатый disk commit; idempotent receipt initial registration пока отсутствует. Резерв применяется
-к уже установленной связи; начальный registration вызов сам не перебирает endpoints.
+начатый disk commit; idempotent receipt initial registration пока отсутствует.
+Текущий `register()` пробует primary и настроенный отличающийся fallback: при
+`IOException`, HTTP 408 или 5xx переходит к следующему адресу, но не при 401/403,
+429 и других 4xx. Каждый адрес имеет отдельный 10-секундный HTTP budget, поэтому
+общий вызов может длиться дольше 10 секунд. Адреса должны вести в одну установку;
+после потери ответа предыдущий сервер мог уже выполнить регистрацию и ротацию.
+Повтор на fallback не доказывает, что предыдущая попытка не выполнилась.
 Реальные sockets/OS/keystore/process death/fleet latency остаются непроверенными.
 
 ## Сохранение регистрации и конкурирующие ответы (AUD-77)
@@ -172,9 +177,20 @@ response loss, cancellation, failed commit или отклонённого stale
 worker с прежним token/UUID сам по себе этого не обнаруживает. Нужен отдельный
 протокол восстановления initial enrollment, а не обещание, что локальный rollback
 отменил серверную rotation. Legacy static-key setup всё ещё пишет отдельными
-операциями. Marker, clone collisions, initial fallback traversal и аппаратные
+операциями. При явном HTTP 401 refresh `AuthTokenStore` пытается очистить только
+ещё актуальную пару credentials, чтобы guard мог повторить enrollment; успех
+очистки и повторной регистрации отдельно не гарантируется.
+Marker, clone collisions и аппаратные
 OS/network/fleet измерения также не закрыты.
 
 Контракт синхронного commit и асинхронного apply сверён с
 [Android SharedPreferences.Editor](https://developer.android.com/reference/android/content/SharedPreferences.Editor).
 Это основание для модели теста, а не доказательство всех гарантий keystore/OEM.
+
+Сверка source 1 ноября 2026: [registration client](../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/DeviceRegistrationClient.kt),
+[auto worker](../../android/app/src/main/kotlin/com/sphereplatform/agent/workers/AutoEnrollmentWorker.kt),
+[keepalive](../../android/app/src/main/kotlin/com/sphereplatform/agent/workers/KeepAliveWorker.kt),
+[guard](../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/InstanceRegistrationGuard.kt)
+и [registration recovery tests](../../android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/RegistrationRecoveryTest.kt).
+Исторические результаты тестов не перезапускались; установленный APK и реальные
+устройства не проверялись.

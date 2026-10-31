@@ -23,9 +23,12 @@
 
 ## 1. Решение для текущего проекта
 
-Master с уже запущенным и зарегистрированным APK не запрещён. Текущий APK v2
-сверяет сохранённый binding с ro.boot.serialno / ro.serialno и перед командным
-WebSocket повторно регистрируется, если VM serial изменился. Этот путь даёт отдельные
+Master с уже запущенным и зарегистрированным APK не запрещён. Текущий source v2
+использует ro.boot.serialno / ro.serialno для binding на x86/x86_64 или ранее
+сохранённом emulator source и перед командным WebSocket проверяет binding и
+регистрацию. Считанный binding кэшируется в процессе; проверка перед каждым WS не
+означает повторное чтение serial при каждой попытке. При обнаруженном изменении
+guard повторно регистрируется. Этот путь может дать отдельные
 карточки без переустановки, **если гипервизор выдаёт клонам разные стабильные serial**.
 
 Аудит обнаружил неполное применение этой защиты: при старте процесса одновременно
@@ -116,8 +119,8 @@ clone/reboot canary-тесты; отдельный station service по умол
 
 Для одного Android instance используются:
 
-- `instance_binding_version`: версия алгоритма, которой APK доказывает identity;
-- `instance_binding`: digest стабильного Android-native proof, не сырой serial;
+- `instance_binding_version`: версия алгоритма, которым APK формирует binding;
+- `instance_binding`: digest выбранного Android-native идентификатора, не сырой serial;
 - `device_id`: логическая запись, выданная backend; сам по себе это не источник
   уникальности клиента;
 - `boot_id`: новый ID при каждом Android boot, только для корреляции событий;
@@ -125,10 +128,15 @@ clone/reboot canary-тесты; отдельный station service по умол
 - необязательный `station_id`: диагностический атрибут, если конкретный оператор
   позже подключил интеграцию с гипервизором.
 
-Identity source не должен быть MAC, IP, ADB transport ID, портом, именем эмулятора,
+Список выше — целевая модель, а не утверждение, что все поля уже передаются всеми
+путями. Binding — не криптографическая аттестация устройства: копируемый или
+подменяемый идентификатор не доказывает уникальность VM. Identity source не должен быть MAC, IP, ADB transport ID, портом, именем эмулятора,
 UI index или значением игры. Backend хранит digest и provenance, а не сырые serial.
-Повторная регистрация одной binding идемпотентна; разные подтверждённые Android
-proof в одной организации получают разные device IDs.
+Повторная регистрация одного сопоставленного instance переиспользует device ID,
+но ротирует credentials. При первом повышении версии binding одна копия может
+сохранить прежнюю карточку; другие binding той же версии могут получить отдельные
+ID. Это поведение зависит от fingerprint, версии, порядка и серверной реализации,
+не доказывает уникальность или право собственности на Android identifier.
 
 ### 4.2 Поддержка старых и новых гипервизоров
 
@@ -137,7 +145,9 @@ proof в одной организации получают разные device 
 
 1. **Эмулятор:** доступный APK стабильный VM serial (`ro.boot.serialno`, затем
    `ro.serialno`) — только для проверенного сочетания эмулятора, версии и образа.
-   Это текущий v2 путь.
+   Это текущий v2 путь для классифицированного по ABI/сохранённому source emulator;
+   ARM-эмулятор без такого persisted source не следует автоматически считать
+   использующим serial: он может пойти по ветке Android ID.
 2. **Физический Android:** допустимый app-scoped/device-scoped Android identifier;
    его устойчивость проверяется после перезапуска и переустановки в соответствии с
    выбранной моделью. Непривилегированное приложение не должно рассчитывать на
@@ -428,3 +438,9 @@ APK, фактический clone, удалённый WebSocket, stream или g
 Внешние отчёты сообщества используются только как сигнал о типе возможной проблемы.
 Технические гарантии берутся из официальной документации и проверяются на точной
 версии LDPlayer/Android, установленной на станции.
+
+Сверка source 1 ноября 2026: [binding reader](../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/InstanceBindingReader.kt),
+[registration guard](../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/InstanceRegistrationGuard.kt),
+[registration service](../../backend/services/device_registration_service.py) и
+[instance identity tests](../../android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/InstanceIdentityTest.kt).
+Это статический проход, не новая проверка образов, уникальности serial, сети или устройств.
