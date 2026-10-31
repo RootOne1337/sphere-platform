@@ -7,7 +7,7 @@
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 439,
     "DESIGN_SPECIFICATION": 91,
-    "OPERATING_GUIDE": 81,
+    "OPERATING_GUIDE": 82,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -2098,6 +2098,10 @@
     },
     {
       "file": "docs/operations/MOTOR-WORKER.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/N8N-INTEGRATION.md",
       "role": "OPERATING_GUIDE"
     },
     {

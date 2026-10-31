@@ -36,6 +36,7 @@
 | --- | --- |
 | Среда и проверки | [Development](development.md), [Contributing](../CONTRIBUTING.md), [workflows CI](../.github/workflows/) |
 | HTTP API | [Генерируемый каталог](api-endpoints.md), [OpenAPI JSON](openapi.json), [пояснения](api-reference.md) |
+| n8n | [Текущие узлы и ограничения интеграции](operations/N8N-INTEGRATION.md) |
 | Архитектура и решения | [Architecture](architecture.md), [ADR](adr/README.md), [архитектурные документы](architecture/) |
 | Android и PC | [Android agent](android-agent.md), [протокол подключения](architecture/ANDROID-CONNECTION-PROTOCOL.md), [PC agent](pc-agent.md) |
 | Контракты и проектирование | [Протоколы](protocols/), [design](design/), [исходные спецификации](../specs/) |

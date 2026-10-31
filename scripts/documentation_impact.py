@@ -66,7 +66,7 @@ RULES = (
         "backend/api/v1/updates/*", "backend/services/n8n_webhook_service.py",
         "backend/services/webhook_service.py", "backend/services/event_reactor.py", "backend/models/webhook.py",
         "backend/models/event_trigger.py", "backend/schemas/webhook.py", "backend/schemas/event_trigger.py",
-        "n8n-nodes/*"), ("docs/operations/USER-ADMIN-GUIDE.md", "docs/api-reference.md")),
+        "n8n-nodes/*"), ("docs/operations/USER-ADMIN-GUIDE.md", "docs/operations/N8N-INTEGRATION.md", "docs/api-reference.md")),
 )
 
 
