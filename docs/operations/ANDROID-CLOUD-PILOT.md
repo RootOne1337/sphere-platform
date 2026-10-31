@@ -18,10 +18,14 @@ SHA на четырёх online устройствах. Одноразовый se
 ## Допуск исходников и native
 
 Упаковщик проверяет GitHub run/repository/workflow, точные Android/native-builder
-Git objects и неизменность полного build recipe. Исключение в сравнении recipe —
-только явный gate выбора `package_only`; сами шаги, проверки, варианты и native
-сборка должны совпадать. Изменение Android, builder или recipe требует нового
-полного CI. Dirty tracked components и посторонние файлы в Android source не принимаются.
+Git objects и совпадение job `build` в workflow CI. Из неё при сравнении исключается
+только явный gate выбора `package_only`; остальные шаги этой job должны совпадать.
+Это не сравнение каждого файла репозитория или всего reusable packaging workflow.
+Изменение Android, builder или проверяемой job требует нового полного CI. Проверка
+грязных tracked файлов охватывает Android, native builder и CI workflow; проверка
+неотслеживаемых файлов ограничена `android/app/src`.
+Успех указанной job проверяется для конкретного `run_attempt`; build и packaging
+могут относиться к разным commit SHA, если проверяемые компоненты и job совпадают.
 
 Артефакт `android-app-vpn-candidate-<tested source>` скачивается с проверкой
 GitHub SHA-256 и размера. После redirect GitHub Authorization не передаётся
@@ -51,16 +55,26 @@ URL отвергаются до записи. Значения маскирую�
 как данные с отдельными delimiters. Gradle cache upload отключён, build/configuration
 cache не используются. Ненастроенные CI smoke APK не заменяют настроенный pilot.
 
-После configured compile/test/lint проверяются реальные generated BuildConfig,
-application ID, source revision, canary flags и native contents итогового APK.
+После configured compile/test/lint скрипт сверяет значения в **generated
+BuildConfig.java**, включая application ID, source revision, три canary-флага и
+выключенный GPU bridge; содержимое трёх native-библиотек проверяется в APK.
+Это не независимый разбор manifest/DEX итогового APK и не проверка каждого флага:
+direct-transport flag здесь не проверяется отдельно. Инструкции ниже требуют
+дополнительной локальной проверки package/version/signature.
 Затем APK шифруется AES-256-GCM, ключ оборачивается RSA-OAEP-SHA256. Метаданные
 source/run/native/APK SHA связаны с ciphertext через AAD. В GitHub artifact идут
 **только ciphertext и квитанция**. Открытый настроенный APK, BuildConfig, signing
 private key и environment JSON в artifact paths не входят.
+Во время сборки enrollment credential присутствует в окружении и сгенерированном
+коде и может содержаться в настроенном APK. Шифрование загруженного артефакта не
+делает его открытое локальное содержимое безопасным для публикации или передачи;
+оно также не является доказательством отсутствия секретов в любом другом log/кэше.
 
 Оператор удаляет принадлежащий этому запуску одноразовый secret после подготовки
 настроек job либо после завершения/ошибки, сохраняя локальную квитанцию удаления.
 Не удалять одноимённую настройку без доказательства, что её создал этот запуск.
+В проверенном workflow нет автоматического шага удаления repository secret:
+удаление и подтверждение его результата остаются обязанностью оператора.
 
 ## Локальное завершение
 
@@ -82,3 +96,17 @@ recipient, неизменность env при отказе, CI source/job admis
 digest/native mismatch, zip traversal, AES receipt/ciphertext tamper и запрет
 перезаписи output. Это проверки механизма доставки; полный hosted pipeline и
 реальный APK фиксируются отдельными квитанциями после выполнения.
+
+На 1 ноября 2026 source-сверка выполнена по
+[CI workflow](../../.github/workflows/ci-android.yml),
+[packaging workflow](../../.github/workflows/package-android-pilot.yml),
+[packaging script](../../scripts/pilot/android_cloud_package.py) и
+[его тестам](../../tests/test_android_cloud_package.py). Проверенный путь создаёт
+debug pilot с последующей локальной переподписью; отдельный
+[tag release workflow](../../.github/workflows/release.yml) использует собственные
+production signing secrets и публикует enterprise APK. Наличие этих workflow
+не подтверждает существование секретов, доступность GitHub Actions, свежий run,
+совместимость signer с установленным APK или состояние OTA. Исторические прогоны
+выше не повторялись, реальные secrets и устройства не проверялись. Локально при
+source-сверке `python -B -m unittest tests.test_android_cloud_package -q` прошёл
+11 синтетических тестов; это не hosted build и не проверка установленного APK.
