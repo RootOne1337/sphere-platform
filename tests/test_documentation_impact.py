@@ -20,6 +20,20 @@ class ImpactRulesTests(unittest.TestCase):
         self.assertIn("docs/operations/DEVICE-CATALOG.md", areas["Device and fleet"]["reviewCandidates"])
         self.assertEqual(result["unmappedPaths"], ["misc/new.bin"])
 
+    def test_specific_domains_include_canonical_guides(self):
+        cases = {
+            "backend/services/group_service.py": "docs/operations/GROUP-HIERARCHY.md",
+            "frontend/app/(dashboard)/logs/page.tsx": "docs/operations/DEVICE-LOG-STORAGE.md",
+            "frontend/lib/store.ts": "docs/security/frontend-sessions.md",
+            "backend/tasks/task_heartbeat_watchdog.py": "docs/security/task-control-protocol.md",
+        }
+        for path, expected in cases.items():
+            with self.subTest(path=path):
+                result = analyze([path])
+                candidates = {doc for area in result["areas"] for doc in area["reviewCandidates"]}
+                self.assertIn(expected, candidates)
+                self.assertNotIn(path, result["unmappedPaths"])
+
     def test_generic_api_router_does_not_trigger_route_studio(self):
         result = analyze(["backend/api/v1/users/router.py"])
         self.assertNotIn("Script and route studio", [group["area"] for group in result["areas"]])

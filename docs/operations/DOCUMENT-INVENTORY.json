@@ -5,9 +5,9 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 428,
+    "DATED_EVIDENCE": 430,
     "DESIGN_SPECIFICATION": 90,
-    "OPERATING_GUIDE": 77,
+    "OPERATING_GUIDE": 81,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1857,6 +1857,14 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-11-01/USER-SECTIONS-COVERAGE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-01/WEB-COVERAGE-MATRIX.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/enterprise-audit-2026-02-23.md",
       "role": "DATED_EVIDENCE"
     },
@@ -2013,6 +2021,10 @@
       "role": "OPERATING_GUIDE"
     },
     {
+      "file": "docs/operations/DEVICE-STREAM-GUIDE.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
       "file": "docs/operations/DISCOVERY-PUBLISHER.md",
       "role": "OPERATING_GUIDE"
     },
@@ -2117,6 +2129,10 @@
       "role": "OPERATING_GUIDE"
     },
     {
+      "file": "docs/operations/TASKS-AND-ORCHESTRATION.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
       "file": "docs/operations/TEACHING-DENSE-RECONSTRUCTION.md",
       "role": "OPERATING_GUIDE"
     },
@@ -2130,6 +2146,10 @@
     },
     {
       "file": "docs/operations/USER-ACCESS.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/USER-ADMIN-GUIDE.md",
       "role": "OPERATING_GUIDE"
     },
     {
@@ -2150,6 +2170,10 @@
     },
     {
       "file": "docs/operations/WALK-ROUTE-PILOT.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/WEB-ENTRY-GUIDE.md",
       "role": "OPERATING_GUIDE"
     },
     {

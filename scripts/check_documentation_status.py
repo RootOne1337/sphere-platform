@@ -64,14 +64,39 @@ def make_inventory(root: Path, registry: dict) -> dict:
     }
 
 
+def markdown_navigation_text(text: str) -> str:
+    """Mask fenced blocks and matched inline code spans; not a full GFM parser."""
+    visible: list[str] = []
+    fence: tuple[str, int] | None = None
+    for line in text.splitlines(keepends=True):
+        if fence:
+            marker, length = fence
+            if re.fullmatch(rf"[ \t]*{re.escape(marker)}{{{length},}}[ \t]*", line.rstrip("\r\n")):
+                fence = None
+            visible.append("\n" if line.endswith("\n") else "")
+            continue
+        opening = re.match(r"^[ \t]*(`{3,}|~{3,})", line)
+        if opening:
+            fence = (opening.group(1)[0], len(opening.group(1)))
+            visible.append("\n" if line.endswith("\n") else "")
+        else:
+            visible.append(line)
+    text = "".join(visible)
+    # Delimiters must have equal run length. A single backtick inside a double
+    # span, for example, is content and must not end the span early.
+    return re.sub(r"(?<!`)(`+)(?!`)(?s:.*?)(?<!`)\1(?!`)",
+                  lambda match: re.sub(r"[^\n]", " ", match.group()), text)
+
+
 def local_link_errors(root: Path, file: str) -> list[str]:
     """Check inline local path targets, including encoded spaces and one balanced pair.
 
     Anchors and reference-style links are outside this bounded scanner's coverage.
-    Code fences are examples, not navigation.
+    Fenced blocks and matched inline code spans are examples, not navigation;
+    this is not a complete Markdown parser.
     """
     text = (root / file).read_text(encoding="utf-8-sig")
-    text = re.sub(r"(?ms)^\s*(`{3,}|~{3,})[^\n]*\n.*?^\s*\1\s*$", "", text)
+    text = markdown_navigation_text(text)
     errors = []
     for match in LINK.finditer(text):
         target = match[1].strip("<>")

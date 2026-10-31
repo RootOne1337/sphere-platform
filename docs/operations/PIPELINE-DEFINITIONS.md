@@ -2,7 +2,8 @@
 
 **Контракт проверен 3 октября 2026 (UTC+5).** API `cc28e9b`, review UI `5b20955`.
 [Доказательства F28](../audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) ·
-[Актуальное состояние](CURRENT-STATE.md) · [API](../api-endpoints.md).
+[Актуальное состояние](CURRENT-STATE.md) · [API](../api-endpoints.md) ·
+[Задания, запуски и расписания](TASKS-AND-ORCHESTRATION.md).
 
 ## Открытие и происхождение данных
 

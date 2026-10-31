@@ -409,6 +409,39 @@ class DocumentationStatusTests(unittest.TestCase):
             )
             self.assertEqual(local_link_errors(root, "docs/guide.md"), ["docs/guide.md: missing local link: missing.md"])
 
+    def test_link_scanner_ignores_inline_code_but_checks_adjacent_links(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "guide.md").write_text(
+                "[before](missing-before.md) `[inline](missing-inline.md)` "
+                "``code ` [inside](missing-code.md)`` [after](missing-after.md)\n"
+                "`unclosed [still checked](missing-real.md)\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(local_link_errors(root, "guide.md"), [
+                "guide.md: missing local link: missing-before.md",
+                "guide.md: missing local link: missing-after.md",
+                "guide.md: missing local link: missing-real.md",
+            ])
+
+    def test_link_scanner_accepts_longer_matching_fence_closers(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "guide.md").write_text(
+                "[before](missing-before.md)\n"
+                "```md\n[example](missing-code.md)\n````\n"
+                "[between](missing-between.md)\n"
+                "~~~~text\n[example](missing-other.md)\n~~~\n"
+                "[still code](missing-still-code.md)\n~~~~~\n"
+                "[after](missing-after.md)\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(local_link_errors(root, "guide.md"), [
+                "guide.md: missing local link: missing-before.md",
+                "guide.md: missing local link: missing-between.md",
+                "guide.md: missing local link: missing-after.md",
+            ])
+
     def test_receipt_hash_is_portable_between_windows_and_linux(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
