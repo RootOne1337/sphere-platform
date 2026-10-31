@@ -5,12 +5,13 @@ The audit is ongoing. A successful Python build or server-side regression does n
 prove LDPlayer/ADB execution, Windows service recovery or capacity for 10–64 emulators.
 See the [audit report](audits/2026-09-05/AUDIT-REPORT.md) for evidence and remaining work.
 
-13 September native update: a running LDPlayer instance lost its host NAT process
-while DHCP stayed alive. Both APKs now work after scoped network repair. The
-[network runbook](operations/LDPLAYER-NETWORK-RECOVERY.md) provides manual repair
-and a separate Windows scheduled watchdog, installed for pilot indices 0/1.
-It recovers NAT without requiring PC-agent/server connectivity; native automatic
-repair returned the second APK command in 108.12 s after fault. Its status is local;
+In a 13 September native observation, a running LDPlayer instance lost its host NAT
+process while DHCP stayed alive; both APKs worked after scoped network repair. The
+[network runbook](operations/LDPLAYER-NETWORK-RECOVERY.md) describes manual repair
+and a separate Windows scheduled watchdog, installed for pilot indices 0/1 at that
+time; no present service state is asserted here. The watchdog recovers NAT without
+requiring PC-agent/server connectivity; native automatic repair returned the second
+APK command in 108.12 s after fault. Its status is local;
 delivery of fresh station-network events through PC-agent to backend/UI is still open.
 
 ## Source and startup
@@ -127,9 +128,13 @@ ADB operations here target `127.0.0.1:<port>`; they do not implement the former
 guide's generic `adb_exec`/serial envelope or automatic single-device selection.
 The bridge computes default instance ports as `5554 + index * 2`; verify the actual
 emulator configuration. The separate [ADBDiscovery module](../pc-agent/modules/adb_discovery.py)
-is not routed by the current dispatcher. End-to-end discovery and OS execution
-remain under audit; the command list is an implementation inventory,
-not proof of successful remote execution. Unknown command types now produce
+is not routed by the current dispatcher. The backend discovery service currently
+sends `discover_adb`, which this dispatcher also does not implement. An unsupported
+command or transport failure can be converted by the backend into an empty list;
+therefore zero results do not prove a scan actually ran or that no devices exist.
+See [device and stream workflows](operations/DEVICE-STREAM-GUIDE.md#поиск-discovery).
+End-to-end discovery and OS execution remain under audit; the command list is an
+implementation inventory, not proof of successful remote execution. Unknown command types now produce
 `status: failed` with an `Unsupported command type` error (AUD-66), rather than
 the former false `completed`/null response. A command without an ID still has no
 correlated reply; unsupported commands do not invoke LDPlayer or ADB.

@@ -897,7 +897,7 @@ wss://yourdomain.com/ws/device/uuid?token=eyJ...
 
 **Message format (JSON text or binary for stream frames):**
 
-See [Architecture — WebSocket Architecture](architecture.md#6-websocket-architecture) for full message type reference.
+See [Architecture — WebSocket Architecture](architecture.md#6-websocket-architecture) for protocol-specific sources; this overview is not a complete wire-message reference.
 
 ---
 

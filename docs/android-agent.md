@@ -193,9 +193,9 @@ local JDK and SDK. The enterprise debug artifact is:
 
 | Variant | Application ID | Provisioning defaults |
 | --- | --- | --- |
-| Enterprise release | `com.sphereplatform.agent` | Blank server/key/device defaults; provision explicitly |
-| Enterprise debug | `com.sphereplatform.agent.debug` | Same enterprise defaults; debug is a distinct installed package |
-| Dev debug | `com.sphereplatform.agent.dev.debug` | Development defaults and HTTP permission in build configuration |
+| Enterprise release | `com.sphereplatform.agent` | Server/device defaults blank; an enrollment key and config URL can be injected explicitly at build time |
+| Enterprise debug | `com.sphereplatform.agent.debug` | Same enterprise flavor settings; debug is a distinct installed package |
+| Dev debug | `com.sphereplatform.agent.dev.debug` by default | Development server from build configuration; config URL and enrollment key are explicitly supplied, HTTP permitted |
 
 These packages have separate app storage. Installing another flavor is not a
 credential/journal migration. Release has shrinking/minification enabled; a
@@ -225,9 +225,11 @@ requires the production keystore and pinned signer fingerprint, and attaches the
 verified enterprise APK and SHA-256 checksum. Neither workflow proves installation,
 OTA delivery or runtime behavior on a physical/remote device.
 
-The current source candidate is `1.2.35 / 10235`. Local release packaging was
-verified with a disposable non-production certificate after confirming that a
-release task fails when signing inputs are absent. Those temporary APKs and the
+The source version is defined by [android/version.properties](../android/version.properties)
+and read by Gradle; it is not evidence of an installed APK or published channel.
+In the 28 September source snapshot the candidate was `1.2.35 / 10235`. At that
+point local release packaging was verified with a disposable non-production
+certificate after confirming that a release task fails when signing inputs are absent. Those temporary APKs and the
 keystore were removed; use only a production-signed artifact with the established
 certificate for in-place update. See the dated [release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md)
 for exact test/lint counts and the remaining OTA/device gates.
@@ -241,15 +243,24 @@ for exact test/lint counts and the remaining OTA/device gates.
 2. `sphere-agent-config.json` in shared external storage, app external files,
    then app internal files, subject to actual storage access.
 3. The HTTP configuration endpoint from `BuildConfig.CONFIG_URL`.
-4. `BuildConfig.DEFAULT_SERVER_URL` / `DEFAULT_API_KEY` fallbacks.
+4. `BuildConfig.DEFAULT_SERVER_URL` / `DEFAULT_API_KEY` fallbacks, only when signed
+   discovery is not configured.
+
+With configured signed discovery, HTTP discovery accepts a verified signed route
+set and does **not** fall back to unsigned HTTP or baked defaults when verification
+fails. Explicit managed configuration and local files still precede discovery.
+Signed or configured bootstrap requires an explicitly injected enrollment key;
+see [signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) for trust and
+build-time constraints.
 
 `SetupActivity` also supports manual setup and the `sphere://enroll` deep link.
 `AutoEnrollmentWorker` attempts discovery/registration in the background. Local
 files and setup therefore remain supported; no `res/values/config.xml` backend
 URL override is used by this configuration chain.
 
-Enterprise `CONFIG_URL` is set from `SPHERE_CONFIG_URL` at build time. Dev defaults
-read `SERVER_PUBLIC_URL` from the root `.env` and retain a development config URL.
+Enterprise and dev `CONFIG_URL` are set explicitly from `SPHERE_CONFIG_URL` at
+build time, otherwise blank. Dev's server default may read `SERVER_PUBLIC_URL` from
+the root `.env`; configured bootstrap values and enrollment keys are installation-specific.
 After AUD-73, HTTP discovery is a cancellable public request: no device credentials,
 10-second HTTP deadline and a 64-KiB response bound before parsing. Periodic/forced
 watchdog checks share one request; stop and local route changes invalidate its
@@ -297,10 +308,11 @@ Deploy compatible backend workers before enforcing explicit control targets in
 the APK. Preserve/migrate credentials and command receipts deliberately. See
 [the rollout contract](security/task-control-protocol.md) for mixed-version limits.
 
-Current pilot backend **`1310016`** routes REST start/stop/keyframe through the
-owning agent worker. Native start/stop effects pass on both Androids without
-manual consent. Viewer WebSocket/frame relay and stream status still require
-cross-worker repair; this is not complete browser video acceptance.
+In the historical pilot snapshot backend **`1310016`** routed REST start/stop/keyframe
+through the owning agent worker. Native start/stop effects passed on both Androids
+in that observation; viewer WebSocket/frame relay and stream status then required
+cross-worker repair. Those results do not establish the installed state or current
+browser video acceptance.
 [Server-side report](audits/2026-09-05/STREAM-CONTROL-ROUTING.md).
 
 ## 6. OTA Updates
@@ -314,25 +326,29 @@ not waited during native acceptance. Future builds need explicit artifact and
 metadata publication; local LATEST and Git commits alone do not release OTA.
 [Native evidence and remaining gates](audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
 
-`OTA_UPDATE` uses an `OtaUpdatePayload` with `download_url`, `version`, `sha256`
-and optional `force`. The current implementation validates an HTTPS URL whose
-host matches the management server, downloads up to 200 MiB and compares the
-SHA-256 digest. It then tries root `pm install` with a bounded wait, falling back
-to a `PackageInstaller` session.
+`OTA_UPDATE` uses `download_url`, `version`, `sha256`, a positive `version_code`
+and optional `force`. Before install, current source restricts download to an HTTPS
+origin matching a saved management route including port, limits the APK to 200 MiB,
+checks its SHA-256 and inspects the actual archive. `OtaApkVerifier` checks package
+identity, version name/code, supported minSdk, a version strictly newer than the
+installed package and equality of the current signer sets. `force` does not bypass
+these verifier checks. The guarded legacy signer fallback is limited to its explicit
+v2-only policy. Android's installer remains the final authority; signer rotation is
+a separate policy and acceptance, not implied by matching an ancestor certificate.
 
-The previous guide's application-level `APK_SIGNING_CERT_SHA256` check was not
-implemented in this APK service. A checksum from the same command is not an
-independent release signature. Package installation outcome, redirect/origin
-handling, version policy and durable installer sessions still need audit.
-Interrupted-file cleanup, HTTP cancellation, serialized attempts and orphan
-cleanup after process replacement are covered by AUD-107. The mutex serializes
-installer submission; it does not provide persistent exactly-once completion
-for asynchronous PackageInstaller sessions. A command ACK is not proof that the new APK booted and
-reconnected. The two-device pilot rollout above verifies that outcome for this
-compatible package/signing identity; it does not establish fleet-wide compatibility.
+The agent tries root `pm install`, then PackageInstaller when root installation is
+unavailable, and verifies installed version or reports that user action is required.
+A transport failure during download may retry once over HTTP/1.1; this is not an
+automatic repetition of a physical install. Checksum and signer matching do not
+alone establish trusted publishing, safe redirects, production rollout or recovery
+on every Android version. Interrupted-file cleanup, cancellation and serialized
+attempts are described in AUD-107. A command receipt is not proof that the new APK
+booted and reconnected; use the [addressed OTA runbook](operations/OTA-ADDRESSED-UPDATES.md)
+and fresh evidence from the target.
 
 Source: [OtaUpdateService](../android/app/src/main/kotlin/com/sphereplatform/agent/ota/OtaUpdateService.kt)
-and [payload](../android/app/src/main/kotlin/com/sphereplatform/agent/ota/OtaUpdatePayload.kt).
+[payload](../android/app/src/main/kotlin/com/sphereplatform/agent/ota/OtaUpdatePayload.kt),
+and [APK verifier](../android/app/src/main/kotlin/com/sphereplatform/agent/ota/OtaApkVerifier.kt).
 
 ## 7. Command Reference
 

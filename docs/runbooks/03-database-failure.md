@@ -42,7 +42,8 @@ SELECT version_num FROM alembic_version;
 
 ## Миграции
 
-Head на этом срезе — `20260910_device_refresh_retry`. Сверьте с текущим checkout и
+`20260910_device_refresh_retry` был head сентябрьского среза, а не утверждение
+о текущем checkout. Определите его heads командой
 `alembic -c alembic/alembic.ini heads`; `current` выполняйте с migration credentials
 в подготовленной среде. Failed migration и failed runtime SELECT — разные сбои.
 Часть migrations намеренно запрещает небезопасный downgrade. Подробности в

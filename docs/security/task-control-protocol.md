@@ -6,8 +6,8 @@ active until a terminal DAG receipt. Network failure does not discard the intent
 This supersedes AUD-128's temporary HTTP503 contract. At that dated source review
 it was not yet installed on the pilot. [Historical evidence and rollout](../audits/2026-09-20/DURABLE-CANCELLATION.md).
 
-**2 October clarification:** backend `5fcf18a` is now installed on the pilot;
-the historical rollout limits below do not identify today's deployment.
+**2 October 2026 observation:** backend `5fcf18a` was installed on the pilot at
+the time of that observation; it does not identify today's deployment.
 [Current revisions and mixed APK versions](../operations/CURRENT-STATE.md)
 remain separate from physical cancellation acceptance. The
 [current Task API](../api-reference.md#tasks--tasks) distinguishes HTTP200

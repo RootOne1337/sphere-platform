@@ -1,12 +1,9 @@
 # Architecture
 
-> **Архитектурный справочник и проектные схемы.** Прежняя метка v4.7 не является
-> текущей версией всей платформы. Действующий [реестр](operations/WORK-STATUS.md)
-> и [runtime](operations/CURRENT-STATE.md) сверены9октября; исторический срез21сентября:
-> [установленный pilot](operations/LOCAL-PILOT.md),
-> [реестр ограничений](audits/2026-09-20/FLEET32-PREFLIGHT.md),
-> [карта компонентов](../README.md). Исторические оценки масштаба и
-> проектные свойства ниже требуют проверки по текущим контрактам и runtime evidence.
+> **Architecture overview.** This page maps components and links to their
+> maintained contracts. Implementation, deployed versions and historical evidence
+> are separate; examples and acceptance claims require verification in the target
+> environment. [Documentation index](README.md) · [Recorded state](operations/CURRENT-STATE.md).
 
 ---
 
@@ -32,10 +29,10 @@
 
 ## 1. High-Level Overview
 
-Sphere Platform is structured as a **multi-tier, event-driven microservice monolith**:
-the backend is a single FastAPI process augmented with asyncio background tasks and a Redis-backed
-WebSocket pub/sub layer. This design avoids the operational overhead of microservices
-while retaining horizontal scalability through stateless API workers.
+Sphere Platform combines a FastAPI backend, web frontend, Android and PC agents,
+PostgreSQL and Redis. Background workers and WebSocket coordination are part of
+the backend design. The deployment topology and scalability require verification
+for the selected environment.
 
 ```
 ╔═══════════════════════════════════════════════════════════════╗
@@ -103,50 +100,28 @@ PostgreSQL  Redis     asyncio
 
 ### 2.2 Frontend (Next.js 15)
 
-| Route | Description |
-|-------|-------------|
-| `/login` | JWT login form with MFA support |
-| `/dashboard` | Fleet analytics: device count, VPN stats, system health |
-| `/devices` | Device list with real-time status, search, bulk actions |
-| `/scripts` | Script library + DAG builder (`@xyflow/react`) |
-| `/stream` | Device selection → H.264 WebCodecs decoder |
-| `/vpn` | Peer list, IP pool utilization, health, batch operations |
-| `/accounts` | Game accounts management with status tracking |
-| `/events` | Device events timeline and filtering |
-| `/sessions` | Account session monitoring |
-| `/event-triggers` | Automation trigger configuration UI |
-| `/pipeline-settings` | Per-pipeline settings editor |
-| `/fleet` | Real-time FleetMatrix device grid |
-| `/tasks` | Task listing with pagination and detail views |
-| `/audit` | Audit log viewer with AuditDrawer |
-| `/orchestration` | Pipeline visualization and execution |
+The App Router serves the operator interface. The complete source route inventory,
+including `/fleet` redirecting to `/groups`, is maintained in the
+[Web UI guide](web-ui-guide.md). Session and capability checks gate navigation and
+actions; they do not replace backend authorization. The installed frontend may
+not be the same revision as this source tree.
 
 ### 2.3 Android Agent
 
-The APK runs as a persistent foreground service:
-
-```
-SphereApp (Hilt Application)
-  └── SphereAgentService (Foreground Service)
-        ├── SphereWebSocketClient  ← commands in / events out
-        ├── CommandHandler         ← adb_exec, screenshot, stream_start/stop
-        ├── StreamingModule        ← MediaProjection → MediaCodec → WS binary
-        ├── SphereVpnManager       ← wg-quick tunnel lifecycle
-        └── KillSwitchManager      ← iptables SPHERE_KILLSWITCH chain
-```
+The Android application manages enrollment, connection, commands, capture and
+supported network operations. Available execution paths depend on the installed
+APK, device privileges, policy and supported capabilities. See the
+[Android agent guide](android-agent.md), [connection protocol](architecture/ANDROID-CONNECTION-PROTOCOL.md)
+and [VPN outcomes](operations/VPN-CONTROL-OUTCOMES.md). A captured frame or
+accepted command is not proof that an end-to-end user scenario completed.
 
 ### 2.4 PC Agent
 
-Python asyncio daemon:
-
-```
-agent/main.py
-  ├── WebSocketClient        ← JWT auth + command dispatch
-  ├── ADBBridge              ← adb shell exec, device list
-  ├── DiscoveryService       ← USB device enumeration
-  ├── LDPlayerManager        ← emulator lifecycle
-  └── TelemetryCollector     ← CPU/RAM/disk metrics → backend
-```
+The Python agent connects a workstation to the backend and provides its implemented
+host and emulator commands. Its dispatcher is the source of supported commands:
+[PC agent guide](pc-agent.md). In particular, the discovery UI's `discover_adb`
+request is not implemented by that dispatcher in the reviewed source; an empty
+result is not evidence that an ADB scan succeeded. [Limits](operations/DEVICE-STREAM-GUIDE.md).
 
 ---
 
@@ -154,60 +129,39 @@ agent/main.py
 
 ### 3.1 Authentication Flow
 
-```
-Client                   Backend              PostgreSQL       Redis
-  │                         │                     │               │
-  │─── POST /auth/login ───►│                     │               │
-  │                         │──── SELECT user ───►│               │
-  │                         │◄─── user row ────────│               │
-  │                         │  verify bcrypt hash  │               │
-  │                         │──── store refresh ──────────────────►│
-  │◄── access_token (30m) ──│                     │               │
-  │    refresh_token (7d)    │                     │               │
-  │                         │                     │               │
-  │─── POST /auth/refresh ─►│                     │               │
-  │   (HttpOnly cookie)      │──── lookup token ──────────────────►│
-  │◄── new access_token ────│                     │               │
-```
+Login checks the user's credentials and may require a separate MFA challenge.
+The access token is a JWT; the opaque refresh token is stored as a SHA-256 hash in
+PostgreSQL and rotated on use. The browser uses an HttpOnly cookie and retains a
+JavaScript-readable fallback when a refresh token is returned. Cookie attributes
+depend on configuration and request scheme. See [auth API](api-reference.md#auth--auth)
+and [frontend sessions](security/frontend-sessions.md).
 
 ### 3.2 Device Command Execution
 
-```
-Web UI          Backend API        Redis PubSub      Android Agent
-  │                  │                  │                  │
-  │─ POST /scripts/  │                  │                  │
-  │   {id}/execute ─►│                  │                  │
-  │                  │─ PUBLISH ────────►│                  │
-  │                  │  device:{id}:cmd  │                  │
-  │                  │                  │──── WS text ─────►│
-  │                  │                  │   {"cmd":"..."}    │
-  │                  │                  │                  │── execute
-  │                  │                  │◄─ WS text ────────│
-  │                  │                  │  {"result":"..."}  │
-  │                  │◄─ SUBSCRIBE ─────│                  │
-  │◄─ SSE progress ──│                  │                  │
-```
+A task or interactive request passes authentication and authorization, reaches the
+agent through the appropriate delivery path, and may produce a receipt and later
+result. The acknowledgement, terminal result and physical state are distinct.
+Unknown outcomes must not be retried as if failure were confirmed. See
+[task control](security/task-control-protocol.md), [Android connection](architecture/ANDROID-CONNECTION-PROTOCOL.md)
+and [device actions](operations/DEVICE-STREAM-GUIDE.md).
 
 ### 3.3 H.264 Streaming
 
-```
-Android Agent                             Backend              Browser
-     │                                       │                    │
-     │  MediaProjection capture              │                    │
-     │  → MediaCodec H.264 encode            │                    │
-     │─── WS binary (NAL units) ────────────►│                    │
-     │                                       │─ Redis PUBLISH ───►│ (via WS)
-     │                                       │  stream:{device_id} │
-     │                                       │                    │ WebCodecs
-     │                                       │                    │ VideoDecoder
-     │                                       │                    │ → canvas
-```
+Android captures and encodes video; the browser can receive it through available
+relay or direct transports. A source frame, transport delivery and decoded display
+are separate observations. Availability, rate and latency vary by source, APK,
+network and browser; no transport or frame-rate SLA follows from this diagram.
+See [stream actions](operations/DEVICE-STREAM-GUIDE.md) and
+[connection protocol](architecture/ANDROID-CONNECTION-PROTOCOL.md).
 
 ---
 
 ## 4. Database Schema
 
 ### Core Entity Relationships
+
+The following is an illustrative overview, not a migration or a complete schema.
+Use the current models and Alembic revisions for exact fields and constraints.
 
 ```
 organizations
@@ -254,7 +208,7 @@ organizations
 | `workstations` | UUID | `org_id` | PC Agent hosts |
 | `audit_logs` | UUID | `org_id` | Immutable audit trail |
 | `api_keys` | UUID | `user_id` | API key credentials |
-| `refresh_tokens` | UUID | `user_id` | JWT refresh tokens |
+| `refresh_tokens` | UUID | `user_id` | Hashed opaque user refresh tokens |
 | `pipelines` | UUID | `org_id` | Определения пайплайнов (steps, версионирование) |
 | `pipeline_runs` | UUID | `org_id` | История запусков пайплайнов |
 | `pipeline_batches` | UUID | `org_id` | Batch-группы устройств в run |
@@ -263,15 +217,11 @@ organizations
 
 ### Row-Level Security
 
-All tenant tables use PostgreSQL RLS policies:
-
-```sql
--- Example: devices table
-CREATE POLICY devices_isolation ON devices
-  USING (org_id = current_setting('app.current_org_id')::UUID);
-```
-
-The `tenant_middleware.py` sets `app.current_org_id` on every request from the JWT claim.
+Tenant isolation depends on the transaction-bound database context, the active
+policies and the database role's privileges; a privileged or owner role can change
+the guarantees. Authentication, middleware and `get_db()` alone do not prove that
+all paths are isolated. See the [PostgreSQL RLS contract](security/postgresql-rls.md)
+and the migration/runtime-role limitations described there.
 
 ---
 
@@ -279,594 +229,150 @@ The `tenant_middleware.py` sets `app.current_org_id` on every request from the J
 
 ### JWT Token Flow
 
-```
-Login ──► access_token (HS256, 30 min, in-memory)
-      ──► refresh_token (opaque UUID, 7 days, HttpOnly cookie → Redis)
-```
-
-Token claims:
-```json
-{
-  "sub": "user-uuid",
-  "org_id": "org-uuid",
-  "role": "org_admin",
-  "exp": 1234567890,
-  "jti": "unique-token-id"
-}
-```
+Access JWTs and opaque refresh tokens have different lifecycles. The refresh-token
+hash and revocation state are persisted in PostgreSQL; the browser cookie and
+JavaScript-readable fallback have different security properties. Token lifetime and
+cookie settings depend on configuration. The [session contract](security/frontend-sessions.md)
+describes refresh races, failure handling and logout boundaries.
 
 ### RBAC Permission Matrix
 
-| Permission | viewer | script_runner | device_manager | org_admin | org_owner | super_admin |
-|-----------|--------|---------------|----------------|-----------|-----------|-------------|
-| device:read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| device:write | | | ✓ | ✓ | ✓ | ✓ |
-| device:delete | | | | ✓ | ✓ | ✓ |
-| device:bulk_action | | | ✓ | ✓ | ✓ | ✓ |
-| script:read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| script:write | | | ✓ | ✓ | ✓ | ✓ |
-| script:execute | | ✓ | ✓ | ✓ | ✓ | ✓ |
-| vpn:read | ✓ | | ✓ | ✓ | ✓ | ✓ |
-| vpn:write | | | | ✓ | ✓ | ✓ |
-| vpn:mass_operation | | | | ✓ | ✓ | ✓ |
-| user:read | | | | ✓ | ✓ | ✓ |
-| user:write | | | | | ✓ | ✓ |
-| audit:read | | | | ✓ | ✓ | ✓ |
-| pipeline:read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| pipeline:write | | | ✓ | ✓ | ✓ | ✓ |
-| pipeline:execute | | ✓ | ✓ | ✓ | ✓ | ✓ |
-| schedule:read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| schedule:write | | | | ✓ | ✓ | ✓ |
+The effective role-to-permission mapping is defined by
+[backend/core/rbac.py](../backend/core/rbac.py); route dependencies and object/role
+checks additionally determine access. Use [user access](operations/USER-ACCESS.md)
+and [API reference](api-reference.md) for the relevant workflow. A client-side
+visibility gate is not authorization, and a static matrix cannot describe every
+route-specific restriction.
 
 ### MFA (TOTP)
 
-1. `POST /auth/mfa/setup` — generates TOTP secret, returns QR code URI
-2. User scans in Google Authenticator / Authy
-3. `POST /auth/mfa/verify` — validates 6-digit code, activates MFA
-4. Subsequent logins require `totp_code` field
+`POST /auth/mfa/setup` creates a pending setup and returns a secret and QR image;
+`POST /auth/mfa/verify-setup` confirms the code. Login for an MFA-enabled user
+returns a challenge which is completed through `POST /auth/login/mfa`. See
+[auth API](api-reference.md#auth--auth) and [operator guidance](operations/WEB-ENTRY-GUIDE.md).
 
 ---
 
 <a id="websocket-architecture"></a>
 ## 6. WebSocket Architecture
 
-### Connection Manager
-
-```
-Browser/Agent ──WS──► ConnectionManager
-                           │
-                           ├── device_connections: Dict[str, WebSocket]
-                           ├── org_connections: Dict[str, Set[WebSocket]]
-                           └── stream_sessions: Dict[str, Set[WebSocket]]
-```
-
-The `ConnectionManager` lives in-process. For multi-instance deployments, the
-`PubSubRouter` bridges across processes via Redis Pub/Sub.
-
-### Pub/Sub Channels
-
-| Channel Pattern | Publisher | Subscriber | Payload |
-|----------------|-----------|------------|---------|
-| `device:{id}:cmd` | API handler | Android Agent | JSON command |
-| `device:{id}:event` | Android Agent | API / frontend | JSON event |
-| `stream:{id}` | Android Agent | Browser(s) | Binary NAL unit |
-| `org:{id}:broadcast` | API handler | All org connections | JSON broadcast |
-| `discovery:{ws_id}` | PC Agent | API discovery handler | JSON device list |
-
-### Message Types
-
-```typescript
-// Inbound (from agent to backend)
-{ "type": "device.status", "data": { "status": "ONLINE", "battery": 87 } }
-{ "type": "command.result", "correlation_id": "...", "data": { "exit_code": 0, "stdout": "..." } }
-{ "type": "stream.frame", "data": <binary NAL unit> }
-
-// Outbound (from backend to agent)
-{ "type": "command.execute", "correlation_id": "...", "data": { "cmd": "adb shell ls" } }
-{ "type": "stream.start", "data": { "bitrate": 2000000, "fps": 30 } }
-{ "type": "stream.stop" }
-{ "type": "vpn.connect", "data": { "config_b64": "..." } }
-```
-
-### Backpressure
-
-- Slow consumer detector: if send buffer exceeds 1 MB, connection is forcibly closed
-- Frame drop policy: streaming frames are marked `DROPPABLE` — skipped if backlogged
-- Heartbeat interval: 30s ping, 60s max silence before disconnect
-
-### Non-Blocking Disconnect (v4.5)
-
-- `send_to_device()` / `send_bytes_to_device()` no longer call `disconnect()` on send failure —
-  they log the error and return `False`, preventing cascading disconnects
-- `ws.close()` wrapped in `asyncio.wait_for(timeout=3s)` — prevents hang on broken TCP
-- Heartbeat ping failure does NOT kill the heartbeat loop — waits for next cycle
-- Only heartbeat timeout (missing pong) triggers proper WS close
-
-### Stale Task Detection (v4.5)
-
-Task idempotency guard (`TaskService.create_task`) prevents duplicate QUEUED/RUNNING/ASSIGNED
-tasks per device+script. A task is considered **stale** when:
-1. **Device is offline** (not in Redis or status ≠ online/busy) — agent disconnected, task can never complete
-2. **Absolute safeguard: 24 hours** — protects against agent bugs (legitimate scripts may run for hours)
-
-Stale tasks are automatically moved to `TIMEOUT` status with a descriptive reason.
-Online devices with active tasks are never interrupted.
+The backend maintains authenticated connections for agents and viewers and uses
+Redis for cross-process coordination. Ownership, tenant boundaries, acknowledgements,
+backpressure and recovery depend on the particular channel; do not treat a
+conceptual channel name or a generic JSON example as the wire contract.
+See [Android connection protocol](architecture/ANDROID-CONNECTION-PROTOCOL.md),
+[continuous input](protocols/CONTINUOUS-INPUT-SERVER.md),
+[receipts](protocols/CONTINUOUS-INPUT-RECEIPTS.md) and the
+[WebSocket source](../backend/websocket/). A connection or published message does
+not establish that an Android action completed.
 
 ---
 
 ## 7. VPN Architecture
 
-AmneziaWG (AWG) — an obfuscated fork of WireGuard.
-
-### IP Pool
-
-```
-VPN_POOL_SUBNET = 10.100.0.0/16  (65 534 possible peers)
-
-Assignment:
-  1. POST /vpn/peers { device_id }
-  2. IpPoolManager.allocate() → next free IP from CIDR
-  3. AWGConfigGenerator.build_peer_config(pubkey, ip) → wg config
-  4. Config encrypted with Fernet(VPN_KEY_ENCRYPTION_KEY), stored in vpn_peers
-  5. PUT /vpn/peers/{id}/activate → config delivered to device via WS
-```
-
-### Kill Switch (Android)
-
-`KillSwitchManager` manages an `iptables` chain:
-
-```
-SPHERE_KILLSWITCH
-  ACCEPT  lo
-  ACCEPT  sphere0       ← VPN interface
-  ACCEPT  [vpn_server_endpoint]/32
-  DROP    all           ← blocks all non-VPN traffic
-```
-
-Enabled on VPN connect start, disabled on clean disconnect only.
-
-### Self-Healing Monitor
-
-`HealthMonitor` (APScheduler, 30s interval):
-- Checks `sphere0` interface via `ConnectivityManager`
-- Exponential backoff reconnect: `1s, 2s, 4s, 8s … 120s max`
-- After 3 failed reconnects: emits `vpn.error` event to backend
+VPN profiles, catalog state, provider/peer configuration and Android tunnel state
+are different concerns. Saved configuration and server-side health are not proof
+of device traffic isolation, kill-switch behavior or recovery after reboot. Use
+[VPN profiles](operations/VPN-PROFILES.md), [control outcomes](operations/VPN-CONTROL-OUTCOMES.md)
+and the [Android VPN observation](audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md)
+for concrete capabilities and evidence. The latter describes a dated experiment,
+not a current fleet guarantee.
 
 ---
 
 ## 8. Streaming Pipeline
 
-### Android Side
-
-```
-Screen capture (MediaProjection)
-  └──► Surface (InputSurface)
-         └──► MediaCodec (H.264 baseline, configurable bitrate)
-                └──► MediaCodec.Callback.onOutputBufferAvailable()
-                       └──► NAL unit framing (4-byte length prefix)
-                              └──► WebSocket.send(ByteString)
-```
-
-Configuration defaults:
-- Codec: `video/avc` (H.264 Baseline)
-- Bitrate: `2 Mbps` (configurable via `stream.start` command)
-- Frame rate: `30 fps`
-- I-frame interval: `1s`
-- Frame drop: enabled under backpressure (non-key frames dropped first)
-
-### Browser Side
-
-```
-WebSocket binary frame
-  └──► ArrayBuffer (NAL units)
-         └──► EncodedVideoChunk (WebCodecs API)
-                └──► VideoDecoder (H.264)
-                       └──► VideoFrame
-                              └──► canvas.drawImage()
-```
-
-### Backend Relay (StreamBridge)
-
-The backend acts as a relay with SPS/PPS/IDR caching:
-- Backend receives binary WS from agent → `StreamBridge` parses NAL unit types
-- SPS (Sequence Parameter Set) and PPS (Picture Parameter Set) NAL units are cached
-- Last IDR (keyframe) is cached for instant viewer initialization
-- When a new viewer connects: cached SPS → PPS → IDR sent immediately → instant playback
-- Subsequent frames forwarded as zero-copy relay (no transcoding, no buffering)
-- Viewer WebSocket ping every 10s to prevent idle timeout on reverse-proxy
-
-### Keepalive Strategy
-
-| Component | Interval | Purpose |
-|-----------|----------|---------|
-| Agent → Backend | Heartbeat 30s ping/pong | Detect agent disconnect |
-| Agent → Backend | Noop frame 10s | Prevent reverse-proxy idle timeout |
-| Backend → Viewer | WS ping 10s | Keep viewer connection alive |
-| Backend | `asyncio.wait_for(ws.close(), 3s)` | Non-blocking disconnect |
+Video capture, encoding, delivery and browser decoding are independently observable
+stages. The relay and direct paths have distinct setup, fallback and diagnostic
+conditions; cached metadata or a connected viewer does not guarantee a new frame,
+latency or frame rate. Settings are targets, not measurements. See the
+[device and stream guide](operations/DEVICE-STREAM-GUIDE.md),
+[Android connection protocol](architecture/ANDROID-CONNECTION-PROTOCOL.md),
+and [video cadence canary](operations/VIDEO-CADENCE-CANARY.md).
 
 ---
 
 <a id="script-engine--dag-execution"></a>
 ## 9. Script Engine & Task Queue
 
-### DAG Schema
-
-```json
-{
-  "nodes": [
-    { "id": "n1", "type": "action",    "data": { "cmd": "adb shell input tap 500 500" } },
-    { "id": "n2", "type": "condition", "data": { "expr": "result.exit_code == 0" } },
-    { "id": "n3", "type": "delay",     "data": { "ms": 1000 } },
-    { "id": "n4", "type": "loop",      "data": { "count": 5, "target_node": "n1" } }
-  ],
-  "edges": [
-    { "source": "n1", "target": "n2" },
-    { "source": "n2", "target": "n3", "condition": "true" },
-    { "source": "n3", "target": "n4" }
-  ]
-}
-```
-
-### Execution Flow
-
-```
-POST /scripts/{id}/execute
-  │
-  ├── Validate DAG (cycle detection, schema check)
-  ├── Create TaskBatch record (status=PENDING)
-  ├── Fan-out: for each device in target group
-  │     └── asyncio task: execute_dag(script, device_id)
-  │           ├── Walk DAG nodes topologically
-  │           ├── For each action node: send WS command, await result
-  │           ├── For each condition node: evaluate Python expr safely
-  │           ├── For each delay node: asyncio.sleep(ms)
-  │           └── Write Task result to DB
-  └── SSE stream: GET /tasks/{batch_id}/progress (events: task.complete, batch.done)
-```
-
-### Wave Execution
-
-Large device groups are split into **waves** to avoid overwhelming devices:
-- Default wave size: 50 devices
-- Inter-wave delay: 5s
-- Max parallel tasks per wave: configurable via `TASK_WAVE_CONCURRENCY`
+Script versions contain validated DAG data; Studio editing, server-side structural
+validation, publication, admission and execution are distinct stages. The
+validation response explicitly does not prove device execution or installed APK
+capabilities. Use the [Studio guide](operations/SCRIPT-STUDIO.md),
+[version contract](operations/SCRIPT-VERSIONS.md), [tasks and orchestration](operations/TASKS-AND-ORCHESTRATION.md)
+and [schemas](../backend/schemas/script.py) instead of a duplicated example.
+Broadcast and version-pinned launches have different admission conditions.
 
 ---
 
 ## 10. Multi-tenancy & Isolation
 
-Every API request carries an `org_id` extracted from the JWT. The
-`TenantMiddleware` sets the PostgreSQL session variable before any query:
-
-```python
-await conn.execute(
-    text("SET LOCAL app.current_org_id = :org_id"),
-    {"org_id": str(current_user.org_id)}
-)
-```
-
-RLS policies on every table enforce that queries only return rows matching
-`current_setting('app.current_org_id')`. This provides **database-level isolation**
-even if application-level checks are accidentally bypassed.
-
-Audit log entries capture `org_id`, `user_id`, action, resource, and remote IP for
-every mutating API call.
+Organization identity is established by the applicable authentication path; tenant
+context must be bound before data access and maintained across transaction
+boundaries. PostgreSQL RLS relies on policies, grants and a non-bypassing runtime
+role, not on a middleware statement alone. Coverage varies by path, role and
+migration state. See [RLS](security/postgresql-rls.md),
+[worker isolation](audits/2026-09-20/PIPELINE-RLS.md) and
+[authentication bootstrap](security/user-auth-bootstrap.md).
 
 ---
 
 ## 11. Observability
 
-### Metrics (Prometheus)
-
-| Metric | Type | Labels |
-|--------|------|--------|
-| `http_requests_total` | Counter | method, endpoint, status |
-| `http_request_duration_seconds` | Histogram | method, endpoint |
-| `websocket_connections_active` | Gauge | org_id |
-| `stream_bytes_sent_total` | Counter | device_id |
-| `stream_keyframe_ratio` | Gauge | device_id |
-| `vpn_pool_utilization` | Gauge | org_id |
-| `task_queue_depth` | Gauge | queue_name |
-| `pipeline_runs_total` | Counter | pipeline_id, status |
-| `pipeline_run_duration_seconds` | Histogram | pipeline_id |
-| `schedule_executions_total` | Counter | schedule_id, status |
-| `scheduler_tick_duration_seconds` | Histogram | — |
-
-Endpoint: `GET /metrics` (internal only, not exposed through nginx)
-
-### Logging (structlog)
-
-All logs are emitted as JSON:
-```json
-{
-  "timestamp": "2026-02-23T10:00:00Z",
-  "level": "info",
-  "event": "device.connected",
-  "device_id": "...",
-  "org_id": "...",
-  "request_id": "...",
-  "latency_ms": 12
-}
-```
-
-### Grafana Dashboards
-
-| Dashboard | File |
-|-----------|------|
-| Fleet Overview | `infrastructure/monitoring/grafana/dashboards/fleet-overview.json` |
-| VPN | `infrastructure/monitoring/grafana/dashboards/vpn.json` |
-| Android Agents | `infrastructure/monitoring/grafana/dashboards/android-agents.json` |
-| Performance | `infrastructure/monitoring/grafana/dashboards/performance.json` |
-
-### Alerting (Alertmanager)
-
-Alert rules defined in `infrastructure/monitoring/alert-rules.yml`:
-- `BackendDown` — backend unreachable for > 1 min
-- `HighErrorRate` — HTTP 5xx rate > 1% for 5 min
-- `VpnPoolExhausted` — pool utilization > 90%
-- `DeviceFleetOffline` — > 20% devices offline simultaneously
+Monitoring combines backend health, metrics, Prometheus and optional Grafana.
+Coverage, scrape configuration and deployed services vary by environment. Missing
+or stale measurements must not be interpreted as zero or as a healthy device.
+Consult the [observability guide](operations/OBSERVABILITY.md),
+[HTTP metrics](operations/HTTP-METRICS.md), [device logs](operations/DEVICE-LOG-STORAGE.md)
+and the source [monitoring configuration](../infrastructure/monitoring/).
 
 ---
 
 ## 12. Deployment Topology
 
-### Single-Host (Development / Small Production)
-
-```
-Host machine (8+ GB RAM, 4+ cores)
-  └── Docker Compose
-        ├── nginx          (port 80, 443)
-        ├── backend        (port 8000, internal)
-        ├── frontend       (port 3000, internal)
-        ├── n8n            (port 5678, internal)
-        ├── postgres       (port 5432, dev only)
-        ├── redis          (port 6379, dev only)
-        ├── tunnel         (Serveo SSH, optional)
-        ├── prometheus     (port 9090, internal)
-        ├── grafana        (port 3001, internal)
-        └── alertmanager   (port 9093, internal)
-```
-
-### Serveo SSH Tunnel (v4.5)
-
-Для разработки без статического IP используется Serveo SSH tunnel:
-
-```
-Internet                              Docker Host
-   │                                     │
-   │  HTTPS / WSS                        │
-   ▼                                     │
-serveo.net ──SSH reverse tunnel──► nginx:80 ──► backend:8000
-   │                                            frontend:3000
-   │
-   └── sphere.serveousercontent.com
-```
-
-- **Протокол:** SSH -N (no shell) с ServerAliveInterval=30
-- **Reconnect:** бесконечный цикл с 5с задержкой между попытками
-- **Healthcheck:** `pgrep ssh` для Docker оркестратора
-- **Причина:** Cloudflare Quick Tunnel дропал idle WebSocket через 5-50с
-
-### Multi-Host (Enterprise Production)
-
-```
-Load Balancer (HAProxy/AWS ALB)
-  │
-  ├── Backend cluster (N × FastAPI + Uvicorn)
-  │     shared: PostgreSQL (primary + replica)
-  │     shared: Redis Cluster (3 node minimum)
-  │
-  ├── Frontend CDN (Vercel / CloudFront)
-  │
-  ├── asyncio Task Workers (встроены в backend-процесс)
-  │
-  └── Monitoring stack (dedicated host)
-        Prometheus + Grafana + Alertmanager + Loki
-```
-
-> For deployment instructions see [docs/deployment.md](deployment.md).
+The repository provides Compose configurations and launchers for different
+contexts. The selected project, files, env, volumes, ingress and images determine
+what is actually running. Multi-host layouts, redundancy, scaling and zero-downtime
+are deployment designs requiring their own verification; they are not established
+by an example diagram. Follow [deployment](deployment.md), [startup](operations/STARTUP.md)
+and [readiness](operations/READINESS.md) for the selected environment.
 
 ---
 
 ## 13. Agent Discovery & Auto-Registration
 
-> Добавлено в v4.1.0 (TZ-12)
+Device enrollment uses a scoped enrollment credential and a fingerprint with an
+optional instance binding; copied identifiers or a copied APK do not prove a unique
+clone. Registration returns credentials, not a guarantee that the device is online
+or ready to execute. The optional-key configuration endpoint and the separately
+authorized registration route have different boundaries. The manual PC discovery
+path currently has the dispatcher limitation described in the
+[device guide](operations/DEVICE-STREAM-GUIDE.md).
 
-Модуль Agent Discovery решает проблему массового разворачивания агентов на LDPlayer-клонах:
-все клоны делят одни и те же `ANDROID_ID`, `Build.SERIAL` и MAC-адрес, что делает невозможной
-стандартную идентификацию. Решение — **composite fingerprint + zero-touch provisioning**.
-
-### 13.1 Архитектура
-
-```
-┌──────────────────────────────────────────────────────┐
-│                  agent-config/                         │
-│  environments/  schema/  tools/                       │
-│  (dev.json,     (v1/)   (batch_generate.py)           │
-│   staging.json,                                       │
-│   production.json)                                    │
-└──────────────────────┬───────────────────────────────┘
-                       │ загружается при старте
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│  Backend: GET /api/v1/config/agent                    │
-│  (soft-auth — без обязательной авторизации)           │
-│  AgentConfigService → Redis кэш (TTL 300s)           │
-└──────────────────────┬───────────────────────────────┘
-                       │ ServerConfig JSON
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│  Android Agent: ZeroTouchProvisioner                  │
-│  Source #6: HTTP Config Endpoint                      │
-│  1. Получить ServerConfig                             │
-│  2. Если autoRegister=true → зарегистрироваться       │
-└──────────────────────┬───────────────────────────────┘
-                       │ fingerprint + device_info
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│  Backend: POST /api/v1/devices/register               │
-│  DeviceRegistrationService:                           │
-│   - JSONB fingerprint search (дедупликация)           │
-│   - Авто-нейминг: sphere-{org_prefix}-{seq}          │
-│   - Генерация JWT access + refresh токенов            │
-│   - Возврат device_id + tokens → агент готов          │
-└──────────────────────────────────────────────────────┘
-```
-
-### 13.2 CloneDetector — Composite Fingerprint
-
-Android-агент вычисляет SHA-256 fingerprint из 7 компонентов:
-
-| # | Компонент | Описание | Clone-safe |
-|---|-----------|----------|------------|
-| 1 | `/proc/self/cgroup` hash | Уникален для каждого контейнера LDPlayer | ✓ |
-| 2 | `/proc/uptime` boot time | Время загрузки инстанса | ✓ |
-| 3 | `ActivityManager` task list hash | Набор запущенных задач | ✓ |
-| 4 | Allocated memory pages | Физическая раскладка памяти | ✓ |
-| 5 | `Build.DISPLAY` | Build fingerprint (shared на клонах) | ✗ |
-| 6 | Random UUID (fallback) | Генерируется при первом запуске | ✓ |
-| 7 | Canvas rendering hash | GPU fingerprint | ~ |
-
-Итоговый fingerprint: `SHA-256(component1 + component2 + ... + component7)`
-
-Даже на идентичных LDPlayer-клонах компоненты 1–4 гарантируют уникальность.
-
-### 13.3 Конфигурационный репозиторий
-
-Структура `agent-config/`:
-
-```
-agent-config/
-├── schema/v1/agent-config.schema.json   # JSON Schema валидации
-├── environments/
-│   ├── dev.json           # Локальная разработка (autoRegister: true)
-│   ├── staging.json       # Staging (autoRegister: true, restrictedMode)
-│   └── production.json    # Продакшн (autoRegister: false по умолчанию)
-├── tools/
-│   └── batch_generate.py  # Генератор batch-конфигов для массовых деплоев
-└── README.md
-```
-
-Конфигурация кэшируется в Redis (TTL = `AGENT_CONFIG_CACHE_TTL`, по умолчанию 300s).
-`AGENT_CONFIG_ENV` определяет активное окружение (dev / staging / production).
-
-### 13.4 Безопасность
-
-- **Soft-auth**: `GET /config/agent` доступен без токена, но rate-limited (10 req/min per IP)
-- **Fingerprint в JSONB**: позволяет эффективный поиск по `@>` оператору PostgreSQL
-- **Идемпотентная регистрация**: повторный вызов с тем же fingerprint возвращает существующее устройство
-- **JWT токены**: регистрация возвращает полноценную пару access/refresh, агент сразу готов к работе
-- **Нет секретов в конфиге**: agent-config не содержит ключей, только URL + policy флаги
+See [device bootstrap](security/device-credential-bootstrap.md),
+[Android bootstrap discovery](architecture/ANDROID-BOOTSTRAP-DISCOVERY.md),
+[discovery recovery](architecture/ANDROID-DISCOVERY-RECOVERY.md) and
+[registered API](api-endpoints.md).
 
 ---
 
 ## 14. Pipeline Orchestrator Engine
 
-> Добавлено в v4.2.0 (TZ-12 SPLIT-4)
-
-Pipeline Orchestrator объединяет скрипты, условия, HTTP-вызовы, задержки и уведомления
-в управляемые цепочки с персистенцией состояния и поддержкой вложенного запуска.
-
-### 14.1 Архитектура
-
-```
-REST API (/pipelines)
-  │
-  ├── PipelineService          ← CRUD, клонирование, версионирование
-  │     └── Pipeline ORM model ← steps (JSONB), status lifecycle: draft → active → archived
-  │
-  └── PipelineExecutor         ← движок исполнения
-        ├── StepRouter         ← маршрутизатор по step.type
-        │     ├── run_script   ← запуск DAG-скрипта через WS
-        │     ├── run_pipeline ← вложенный запуск Pipeline (рекурсия с лимитом)
-        │     ├── http_request ← HTTP-вызов внешнего API
-        │     ├── condition    ← if/else по выражению
-        │     ├── delay        ← asyncio.sleep()
-        │     ├── parallel     ← asyncio.gather() подшагов
-        │     ├── set_variable ← запись в контекст выполнения
-        │     ├── notify       ← webhook / email
-        │     └── approval     ← ручное подтверждение оператором
-        │
-        └── PipelineRun ORM    ← персистенция: state, step_results, timing
-              └── PipelineBatch ← группировка устройств в run
-```
-
-### 14.2 Модель данных
-
-| Таблица | Описание | Ключевые поля |
-|---------|----------|---------------|
-| `pipelines` | Определения пайплайнов | `name`, `steps` (JSONB), `status`, `version`, `org_id` |
-| `pipeline_runs` | Запуски | `pipeline_id`, `status`, `variables`, `step_results`, `started_at`, `finished_at` |
-| `pipeline_batches` | Batch группировка устройств | `run_id`, `device_ids`, `status` |
-
-### 14.3 Lifecycle пайплайна
-
-```
-draft ──(activate)──► active ──(archive)──► archived
-  ▲                     │
-  └──(clone)────────────┘
-```
-
-- **draft**: редактируемый, нельзя запустить
-- **active**: можно запускать (execute)
-- **archived**: только чтение, нельзя запустить
-
-### 14.4 Исполнение
-
-1. `POST /pipelines/{id}/execute` → создаёт `PipelineRun` (status=running)
-2. `PipelineExecutor` обходит steps последовательно (или parallel для `parallel` типа)
-3. Каждый step записывает результат в `step_results` JSONB
-4. При ошибке — run переходит в `failed`, context сохраняется для отладки
-5. `condition` step может разветвить поток на `on_true` / `on_false`
+Pipeline definitions, runs and batches are persisted separately. Supported step
+names and fields are defined by [pipeline schemas](../backend/schemas/pipeline.py),
+not by an illustrative step list. Admission, durable execution, child task results
+and cancellation are separate stages. See [pipeline definitions](operations/PIPELINE-DEFINITIONS.md),
+[tasks and orchestration](operations/TASKS-AND-ORCHESTRATION.md) and
+[task control](security/task-control-protocol.md).
 
 ---
 
 ## 15. Cron Scheduler
 
-> Добавлено в v4.2.0 (TZ-12 SPLIT-5)
-
-DB-backed планировщик для автоматического запуска пайплайнов по cron-расписанию
-с поддержкой таймзон и политик конфликтов.
-
-### 15.1 Архитектура
-
-```
-SchedulerEngine (фоновый asyncio-цикл, тик = 60с)
-  │
-  ├── SELECT ... WHERE enabled = true AND next_run_at <= NOW()
-  │   FOR UPDATE SKIP LOCKED   ← конкурентная безопасность
-  │
-  ├── Для каждого сработавшего Schedule:
-  │     ├── Проверка conflict_policy (skip / queue)
-  │     ├── Вызов PipelineExecutor.execute()
-  │     ├── Создание ScheduleExecution записи
-  │     └── Пересчёт next_run_at через croniter
-  │
-  └── ScheduleService  ← CRUD, валидация cron, toggle, dry-run
-        └── Schedule ORM model
-```
-
-### 15.2 Модель данных
-
-| Таблица | Описание | Ключевые поля |
-|---------|----------|---------------|
-| `schedules` | Определения расписаний | `cron_expression`, `timezone`, `pipeline_id`, `enabled`, `conflict_policy`, `next_run_at` |
-| `schedule_executions` | История срабатываний | `schedule_id`, `pipeline_run_id`, `status`, `triggered_at`, `finished_at` |
-
-### 15.3 Политики конфликтов
-
-| Policy | Поведение |
-|--------|-----------|
-| `skip` | Если предыдущий run ещё выполняется — пропустить текущий тик |
-| `queue` | Поставить в очередь и запустить после завершения текущего run |
-
-### 15.4 Зависимости
-
-- **croniter** — парсинг и итерация cron-выражений (включая 5-полевый формат)
-- **pytz** — поддержка IANA таймзон (Europe/Moscow, America/New_York, etc.)
-
-### 15.5 Безопасность
-
-- `FOR UPDATE SKIP LOCKED` предотвращает double-execute при горизонтальном масштабировании
-- Все расписания привязаны к `org_id` — RLS обеспечивает tenant-изоляцию
-- Валидация cron-выражений на уровне API (невалидный cron = 422)
+The scheduler stores definitions and execution records and supports multiple
+trigger forms and conflict policies. A scheduled or admitted run is not an
+execution receipt from a device. In the current UI newly created schedules are
+submitted active, and one-shot input is interpreted in UTC. Check the target,
+time and selected environment before saving; disabling a schedule does not stop
+already created tasks. [Operator workflow](operations/TASKS-AND-ORCHESTRATION.md)
+and [scheduler runtime evidence](audits/2026-09-20/SCHEDULER-RUNTIME.md).

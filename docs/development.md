@@ -75,9 +75,14 @@ Receipt об исполнении, принятие команды трансп�
 В отдельном virtualenv для lint установите `ruff` и `mypy`. Основные команды:
 
 ```bash
-python -m ruff check backend/ tests/ scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
+python -m ruff check backend/ tests/ scripts/check_documentation_status.py scripts/documentation_impact.py scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
 python -m mypy backend/ --ignore-missing-imports
 python scripts/check_rls.py
+python -m scripts.check_documentation_status
+python -m unittest discover -s tests -p 'test_documentation_status.py'
+python -m unittest discover -s tests -p 'test_documentation_impact.py'
+python -m unittest discover -s tests -p 'test_documentation_routes.py'
+python scripts/sync_action_contract.py --check
 ```
 
 Для тестов сначала подготовьте **изолированные** PG/Redis, test env и migrations
@@ -106,7 +111,9 @@ npm run type-check
 npm run build
 ```
 
-Это команды [текущего CI](../.github/workflows/ci-frontend.yml). Настройка dev proxy
+Это основные команды frontend job из [CI](../.github/workflows/ci-frontend.yml),
+но не все его проверки: workflow дополнительно проверяет action contract,
+standalone assets и сборку/admission упакованного образа. Настройка dev proxy
 и окружения — в [configuration](configuration.md). UI-изменения проверяйте в браузере:
 loading/error/empty, права пользователя, reconnect, отсутствие устаревших данных.
 Для стримов нужны новые decoded frames и освобождение capture после последнего viewer.
@@ -119,7 +126,9 @@ loading/error/empty, права пользователя, reconnect, отсут�
 ./gradlew.bat assembleDebug test
 ```
 
-В Bash используется `./gradlew assembleDebug test`. Debug artifact не равен
+В Bash используется `./gradlew assembleDebug test`. Это локальная базовая проверка,
+не полный набор Android CI: workflow отдельно запускает lint, release smoke builds,
+проверку подписей и дополнительные variant/canary checks. Debug artifact не равен
 подписанной pilot OTA-сборке. Настройки discovery/signing, установка и limitations —
 в [Android guide](android-agent.md) и [Local pilot](operations/LOCAL-PILOT.md).
 Не меняйте signing key при обновлении уже установленного APK.

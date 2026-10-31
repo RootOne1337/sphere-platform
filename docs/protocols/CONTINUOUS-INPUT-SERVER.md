@@ -1,14 +1,15 @@
 # Непрерывный ввод: серверный контракт владения и доставки
 
-## Действующее подключение, сверка 9 октября
+## Подключение в исходниках и историческая сверка 9 октября
 
 Контракт подключён в [startup](../../backend/websocket/startup.py) и
 [ContinuousRuntime](../../backend/websocket/continuous_runtime.py), включая
-relay_native_receipt и scoped delivery. Установленный APIbe803773 и PH011/APK10249
-имеют конечную [live приёмку](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-ACCEPTANCE.md).
+relay_native_receipt и scoped delivery. На проверенном стенде API `be803773` и PH011/APK10249
+имели конечную [live приёмку](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-ACCEPTANCE.md).
 Обычный viewer посылает MOVE до UP; recording сохраняет дискретный swipe.
-Idle native_receipt_timeout и общий арбитраж viewer/task/API остаются OPEN.
-[Текущий остаток](../operations/WORK-STATUS.md).
+Idle native_receipt_timeout и общий арбитраж viewer/task/API в том срезе оставались открытыми.
+Текущую установку и остаток проверяйте отдельно: [CURRENT-STATE](../operations/CURRENT-STATE.md),
+[WORK-STATUS](../operations/WORK-STATUS.md).
 
 ## Исторический компонентный checkpoint до integration
 
@@ -17,8 +18,8 @@ Idle native_receipt_timeout и общий арбитраж viewer/task/API ос�
 > и [текущее состояние](../operations/CURRENT-STATE.md) имеют отдельные результаты.
 
 Дата исторического checkpoint: **8 октября 2026**, Asia/Yekaterinburg. Статус: **проверенный отдельный
-source-компонент; не подключён к установленным WebSocket routes**. SF26-05
-остаётся OPEN; текущий веб3015 отправляет завершённый gesture после pointerup.
+source-компонент; не подключён к установленным WebSocket routes**. На этом checkpoint SF26-05 оставался OPEN; проверенный тогда веб3015 отправлял
+завершённый gesture после pointerup. Последующая интеграция указана выше.
 
 Продолжение [APK lifecycle](../audits/2026-10-07/CONTINUOUS-INPUT-APK-LIFECYCLE.md)
 и [capture frame v2](VIDEO-CAPTURE-V2.md). Результаты этого этапа:
@@ -38,9 +39,10 @@ UP. Redis обеспечивает одного continuous owner для device �
 APK socket session и capture epoch/size. Отправка до STARTUP0 от APK запрещена;
 факт Redis publication или завершения socket send readiness не создаёт.
 
-Ни startup hook, ни subscription, ни permission grant, ни browser endpoint
-этим компонентом не добавлены. Runtime capability остаётся выключена. Его
-нельзя вызвать из браузера через существующий discrete protocol.
+В границах **исторического компонентного checkpoint** отдельно тестируемый
+компонент не добавлял startup hook, subscription, permission grant или browser
+endpoint; capability тогда оставалась выключенной. Это не описание последующей
+интеграции, приведённой в начале документа.
 
 ## Доверие и последовательность подключения
 
@@ -65,8 +67,9 @@ APK socket session и capture epoch/size. Отправка до STARTUP0 от AP
    даже после auth expiry/fence. Key удаляется раньше TTL только по проверенному
    injector RELEASE3; неизвестный RELEASE6 оставляет fence.
 
-Это требования к следующему route integration. Текущие routes эти операции
-**ещё не вызывают**. Создание binding в unit test не проверяет настоящие JWT/RBAC.
+Это требования, сформулированные для последующей интеграции: на момент
+checkpoint routes ещё не вызывали эти операции. Создание binding в unit test
+само по себе не проверяет настоящие JWT/RBAC.
 
 ## Wire boundaries
 

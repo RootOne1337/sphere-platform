@@ -25,6 +25,12 @@ IDs, версии кода/APK, deployment project и набор Compose files. 
 те контейнеры. Не предполагайте имена `sphere_backend`, `sphere_postgres` или
 `celery_worker`; получайте inventory через Compose.
 
+Примеры ниже не передают `--env-file`: Compose может автоматически прочитать
+`.env`, но не выбирает `.env.local` по правилам PowerShell launcher. Если установка
+использует `.env.local` или другой файл, добавьте её фактический `--env-file` и
+project name ко всем командам. Проверьте выбор до диагностики; не печатайте
+полный `docker compose config`, который может содержать секреты.
+
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.full.yml config --services
 docker compose -f docker-compose.yml -f docker-compose.full.yml ps --all

@@ -10,7 +10,8 @@
 [Local pilot](LOCAL-PILOT.md): его env/порты/volumes отличаются. Следующие команды —
 для **отдельного нового checkout/Compose project**, без старой установки на тех же портах.
 
-Нужны Git, Python 3.12, Docker с Compose v2 и PowerShell 7. Сначала прочитайте
+Нужны Git, Python 3.12, Docker с Compose v2 и PowerShell 7; для production
+overlay нужен Compose 2.24.4 или новее. Сначала прочитайте
 [configuration](../configuration.md), выберите свободные host ports и постоянное
 имя project. `COMPOSE_PROJECT_NAME` разделяет ресурсы Compose, но сам по себе
 не устраняет конфликт опубликованных портов. Для production дополнительно нужны
@@ -20,11 +21,22 @@
 Из корня checkout в PowerShell:
 
 ```powershell
-# Пример имени отдельной новой установки, не существующего pilot.
+# Пример: сначала убедитесь, что проект с этим именем и его данные не существуют.
 $env:COMPOSE_PROJECT_NAME = 'sphere-sandbox'
+# Генератор перезаписывает файл: остановитесь, если есть любой прежний env.
+if ((Test-Path -LiteralPath .env.local) -or (Test-Path -LiteralPath .env)) {
+    throw 'Найдена существующая конфигурация; не создавайте новые секреты поверх неё.'
+}
 # Только в новой установке без прежних env/volumes:
 python scripts/generate_secrets.py --output .env.local
-# Перед запуском настройте .env.local по configuration guide.
+if ($LASTEXITCODE -ne 0) { throw 'Генерация конфигурации завершилась ошибкой.' }
+```
+
+Откройте созданный файл, настройте адреса и интеграции по
+[configuration](../configuration.md), затем убедитесь, что выбранный Compose
+project и порты принадлежат новой установке. После этого в той же PowerShell-сессии:
+
+```powershell
 ./scripts/full-deploy.ps1 -SkipSecrets
 ```
 
@@ -47,7 +59,12 @@ super_admin. [Подробности повторного bootstrap ниже](#�
 [Порядок приёмки](PILOT-ACCEPTANCE.md) · [Remote access](REMOTE-PILOT.md).
 
 Для Linux/Bash есть `scripts/full-deploy.sh`; его отличия и ограничения описаны
-ниже. Не переносите параметры PowerShell в Bash дословно.
+ниже. В частности, Bash launcher исполняет `.env.local` через shell `source`,
+а не передаёт его как `--env-file`: запускайте его только с доверенным файлом,
+подходящим для Bash. Он отличается от PowerShell wrapper и может разрешать
+значения Compose иначе; не переносите параметры и предположения о приоритете
+между ними дословно. Это ограничение исходного кода, а не подтверждение его
+безопасности для произвольного dotenv.
 
 ## Подготовка к повторному dev-start
 
@@ -243,10 +260,12 @@ DB failure не маскируется как предупреждение о н
 
 ## Существующая конфигурация при повторе (AUD-84)
 
-Если в установке есть `.env`, а `.env.local` отсутствует, full-deploy использует
-существующий `.env` и не генерирует новый затеняющий файл. Это действует также в
-headless/skip-secrets. При наличии `.env.local` он сохраняет приоритет; unattended
-повтор его не заменяет. Fresh generation происходит при отсутствии обоих files.
+Если в установке есть `.env`, а `.env.local` отсутствует, оба full-deploy launcher
+не генерируют новый затеняющий файл. Это действует также в headless/skip-secrets.
+PowerShell wrapper передаёт выбранный файл как `--env-file`; Bash не использует
+этот wrapper и при наличии `.env.local` исполняет его через `source` перед сборкой.
+Проверяйте фактическое разрешение переменных каждого launcher отдельно. Unattended
+повтор не заменяет `.env.local`; при отсутствии обоих files создаётся новый файл.
 
 Это защита выбора конфигурации, не ротация. Interactive overwrite `.env.local`
 остаётся явным отдельным действием; смена пароля в dotenv не меняет пароль уже
