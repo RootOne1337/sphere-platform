@@ -53,7 +53,8 @@ WebSocket-протоколы и не доказывает работоспосо
   доказательствами; [DOCUMENT-INVENTORY.json](operations/DOCUMENT-INVENTORY.json)
   классифицирует Markdown. Это не построчная аттестация всей документации.
 - [Аудиты и evidence](audits/) фиксируют результаты отдельных проверок в их время.
-  [Оценка документации](audits/2026-11-01/DOCUMENTATION-ASSESSMENT.md) и
+  [Оценка документации](audits/2026-11-01/DOCUMENTATION-ASSESSMENT.md),
+  [реестр проблем](audits/2026-11-01/FINDINGS-REGISTER.md),
   [карта покрытия Web](audits/2026-11-01/WEB-COVERAGE-MATRIX.md) и
   [реестр руководств](audits/2026-11-01/OPERATIONS-REVIEW.md) показывают
   границы сверки на исходном срезе.

@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 439,
+    "DATED_EVIDENCE": 440,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 82,
     "PROJECT_POLICY": 7,
@@ -1870,6 +1870,10 @@
     },
     {
       "file": "docs/audits/2026-11-01/DOMAIN-DOCS-DETAIL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-01/FINDINGS-REGISTER.md",
       "role": "DATED_EVIDENCE"
     },
     {
