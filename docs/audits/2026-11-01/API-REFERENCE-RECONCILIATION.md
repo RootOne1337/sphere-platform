@@ -248,6 +248,73 @@ installed backend или физического результата Android.
 в этом проходе не запускались; доступность PostgreSQL/Redis, race outcomes и
 физический stop не подтверждены.
 
+## Учёт всех маршрутов и оставшиеся области
+
+На снимке `9c7a6c5a` в `docs/openapi.json` насчитана **201 HTTP-операция**.
+Следующий подсчёт — сопоставление **групп**, названных в предыдущих разделах, со
+снимком; он не устанавливает, что каждая операция в группе независимо проверена
+по всем веткам, RBAC и последствиям. Пересечения не суммируются: операции
+представлены парами `(method, path)` в множестве. Например, sessions/audit и
+VPN упоминались в нескольких проходах, но каждый метод считается один раз.
+
+В группах, явно названных ранее, получилось 189 операций; ещё 9 относятся к ранее
+описанным частям health/streaming. **198 — групповой ориентир, не число полностью
+проверенных операций.** До данного прохода отдельно не были рассмотрены эти
+три operation:
+
+- `GET /api/v1/health/ready`;
+- `GET /api/v1/streaming/{device_id}/quality`;
+- `POST /api/v1/streaming/{device_id}/quality`.
+
+Воспроизводимый расчёт от корня репозитория (считает только зарегистрированные
+HTTP methods; не покрывает WebSocket и не делает вывод о качестве review):
+
+```python
+import json
+from pathlib import Path
+
+paths = json.loads(Path("docs/openapi.json").read_text(encoding="utf-8"))["paths"]
+methods = {"get", "post", "put", "patch", "delete", "options", "head", "trace"}
+ops = {(m.upper(), p) for p, entries in paths.items() for m in entries if m in methods}
+groups = {
+    "pipelines", "schedules", "pipeline-settings", "device-events", "event-triggers",
+    "account-sessions", "auth", "users", "updates", "config", "discovery", "vpn",
+    "n8n", "devices", "groups", "locations", "game-accounts", "audit", "logs",
+    "scripts", "tasks", "batches", "monitoring",
+}
+unreviewed = {
+    ("GET", "/api/v1/health/ready"),
+    ("GET", "/api/v1/streaming/{device_id}/quality"),
+    ("POST", "/api/v1/streaming/{device_id}/quality"),
+}
+grouped = {op for op in ops if op[1].removeprefix("/api/v1/").split("/")[0] in groups}
+partial = {op for op in ops if op[1].removeprefix("/api/v1/").split("/")[0]
+           in {"health", "streaming"} and op not in unreviewed}
+print("total", len(ops), "grouped", len(grouped), "partial", len(partial))
+print("not represented in prior groups:", sorted(ops - (grouped | partial)))
+```
+
+В текущем проходе отдельно прочитаны:
+
+- [GET /health/ready](../../../backend/main.py) и [HealthService](../../../backend/services/health_service.py):
+  legacy handler при неинициализированном Redis клиенте всё равно ставит `redis=ok`;
+  `/health/readyz` применяет отдельный сервис и считает такой клиент down. Локальная
+  проверка с подставным SQL и `redis=None` подтвердила 200-подобный return legacy
+  handler. Это не проверка настоящей БД, Redis или установленного API.
+- [GET/POST quality](../../../backend/api/v1/streaming/router.py),
+  [схема](../../../backend/schemas/stream_quality.py), [RPC service](../../../backend/services/stream_quality.py),
+  [операторский контракт](../../operations/DEVICE-STREAM-GUIDE.md): read/control
+  права, ownership, допустимые профиль/FPS/битрейт, тип результата, 409/502/503
+  и неизвестный исход после потери ответа. Результат не гарантирует FPS браузера.
+  Изолированный `pytest tests/test_stream_quality.py -q` с тестовым JWT secret:
+  **25 passed**, одно FastAPI deprecation warning; publisher в этих тестах заменён.
+
+Таким образом все 201 операции теперь **представлены группой или отдельно
+рассмотрены**, но это не эквивалент полной пооперационной верификации: старые
+групповые проходы не перечисляют доказательство для каждой ветки и не заменяют
+runtime, tests, проверку TLS/ingress, конкурентности, устройств и ошибок.
+Снимок может измениться после этого аудита; повторно запустите расчёт при drift.
+
 ## Проверки и остаток
 
 Машинное сравнение HTTP method/path во **всех заголовках** справочника с JSON,

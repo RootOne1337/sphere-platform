@@ -987,7 +987,10 @@ in this source; it is not a dependency report. `GET /health/healthz` is liveness
 returns component diagnostics and can return 503. `GET /health/build` exposes a
 validated build revision or `unknown`. These source contracts do not prove the
 health or identity of an installed environment. The separately registered
-`GET /health/ready` is described in [main.py](../backend/main.py).
+`GET /health/ready` in [main.py](../backend/main.py) uses a different implementation: when the Redis client is absent it still writes
+`redis: ok` to its checks without a ping. Thus its 200 does not establish Redis
+availability. `/health/readyz` uses `HealthService`, which reports an uninitialized
+Redis client as down. Neither source description establishes deployed readiness.
 
 ---
 
@@ -1480,9 +1483,18 @@ repeating. `GET /streaming/{device_id}/status` requires `stream:read` and observ
 the local stream bridge. In this handler `viewer_connected` mirrors `is_streaming`,
 not a separate viewer observation; when the bridge is absent, `drop_ratio` is 0.0,
 not evidence that no frames were lost. This source behavior does not establish
-the state of an installed runtime. Quality routes are separately listed in the
-[endpoint catalog](api-endpoints.md). The former `/streaming/start`, `/stop`, and
-`/sessions` paths are not registered in the checked-in snapshot.
+the state of an installed runtime.
+
+`GET /streaming/{device_id}/quality` requires `stream:read`; `POST` on the same
+path requires `stream:control`. Both require an owned device and use a live Android
+RPC. POST accepts `profile` (`auto`, `detail`, `economy`), optional `max_fps`
+(1–60) and `max_bitrate_bps` (100000–32000000); omitted fields take schema defaults.
+A validated `StreamQualitySnapshot` reports source settings and optional active
+limits, not measured browser performance. An unsupported agent or rejected setting
+can return 409; invalid receipts return 502, unavailable transport 503. A lost
+reply or transport error can follow an applied setting: re-read before retrying.
+See [stream operator guide](operations/DEVICE-STREAM-GUIDE.md). The former
+`/streaming/start`, `/stop`, and `/sessions` paths are not registered in the checked-in snapshot.
 
 ## Monitoring — `/monitoring`
 
