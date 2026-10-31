@@ -1,7 +1,8 @@
 # Доступ к credentials игровых аккаунтов
 
-Обновлено 6 сентября 2026. Это описание текущей защиты и её границ, не sign-off
-всего потока secrets. Findings: AUD-31 и AUD-32 в audit report.
+Исходные findings AUD-31 и AUD-32 относятся к аудиту 6 сентября 2026;
+сверка исходного кода выполнена 1 ноября 2026. Это описание реализованных путей
+и их границ, не sign-off развёртывания или всего потока secrets.
 
 Обычный `GET /api/v1/game-accounts/{id}` требует `account:read` и не возвращает
 поле password. Параметр `show_password=true` дополнительно требует отдельного
@@ -14,6 +15,27 @@ Viewer, script_runner и device_manager получают 403 при запрос
 а не удаление уже полученных копий из памяти клиента, browser extension, logs
 или файлов экспорта. Вызывающие клиенты не должны сохранять пароль в длительном
 query cache и обязаны очищать свои данные при смене пользователя/организации.
+
+## Web-интерфейс и раскрытие
+
+В проверенном исходном коде страница [`/accounts`](../../frontend/app/(dashboard)/accounts/page.tsx)
+получает обычный список без паролей. Кнопка глаза в карточке переключает только
+локальное отображение уже имеющегося `account.password`: запрос раскрытия она не
+отправляет. Поэтому по текущему контракту списка после нажатия отображается `—`,
+а не пароль. Это не проверка успешности reveal API. Экспортируемый хук
+[`useGameAccount`](../../frontend/lib/hooks/useGameAccounts.ts) поддерживает
+`showPassword`, но страница его не использует. Если другой клиент подключит хук с
+`showPassword=true`, результат хранится в React Query; HTTP `no-store` сам по себе
+этот кэш не очищает. [`SessionQueries`](../../frontend/app/providers.tsx) создаёт
+отдельный query client для identity/session и очищает прежний при размонтировании;
+это не доказывает немедленное удаление всех копий секрета из памяти браузера.
+
+В формах создания и редактирования пароль вводится как обычный видимый `text`,
+не как замаскированное поле. Несмотря на placeholder про автогенерацию при создании,
+кнопка требует непустой пароль; схема create/import также требует 1–500 символов.
+В редактировании пустое поле означает «не менять». Не считайте эти элементы
+подтверждением генерации или раскрытия пароля; UI и clipboard требуют отдельной
+проверки в установленной сборке.
 
 Текущий endpoint принимает пользовательский JWT через get_current_user. Наличие
 нового имени permission в scope catalog не добавляет API-key authentication этому
@@ -40,10 +62,13 @@ cryptography; authenticated JSON envelope version 1 содержит парол�
 
 Без ключа, при неверном ключе/повреждённом токене/неподдерживаемом envelope или
 legacy строке раскрытие возвращает общий 503. Обычные metadata reads работают.
-Dispatch не публикует команду и сохраняет задачу для повторной попытки; plaintext
-fallback отсутствует. Для валидной записи decrypt выполняется только при reveal
-или построении account variables для DAG. В команду идёт исходный пароль,
-а не encryption token; в новые task input_params он не копируется.
+При ошибке расшифровки до построения команды проверенный dispatch откатывает
+транзакцию и оставляет задачу для повторной попытки; plaintext fallback отсутствует.
+При построении account variables пароль расшифровывается даже если DAG не содержит
+соответствующего placeholder. Когда DAG содержит `{{account.password}}`, в
+отправляемую команду подставляется исходный пароль, а не encryption token; в новые
+task input_params эта подстановка не копируется. Проверка и rewrap в maintenance CLI
+также расшифровывают ciphertext.
 
 ## Первичное включение и перенос
 
@@ -93,9 +118,15 @@ sign-off всей БД. Exit 0 означает успешное заверше�
 Во время остановки writers добавьте новый ключ первым, сохранив старые ключи
 в key ring. Выполните `python -m backend.cli.account_credentials --apply --rotate`,
 затем проверьте весь scope с **одним новым ключом**. Только после этого удаляйте
-старые ключи из рабочих процессов. Отдельно сохраняйте необходимые старые ключи
-для зашифрованных backups согласно retention policy. Rotation повторно шифрует
-аутентифицированное значение; прерванный прогон безопасно запускается заново.
+старые ключи из рабочих процессов: проверка должна охватить все нужные организации
+и все видимые записи, а нулевой или неполный scan не доказывает завершение rotation.
+Запускайте проверку с одним новым ключом в отдельном maintenance process, не удаляя
+старые ключи из основного key ring до успешной проверки. Отдельно сохраняйте
+необходимые старые ключи для зашифрованных backups согласно retention policy.
+Rotation повторно шифрует аутентифицированное значение; прерванный прогон можно
+запустить заново с тем же полным набором ключей. При этом уже обработанные строки
+снова шифруются: повтор не сохраняет идентичность ciphertext и требует тех же
+условий остановки writers.
 
 Downgrade schema запрещён, если есть хотя бы одна encrypted строка: миграция не
 удаляет ciphertext и не возвращает plaintext автоматически. План rollback —
@@ -113,7 +144,7 @@ Envelope защищает от подмены идентичности, но н�
 
 Общий audit middleware логирует только mutating HTTP methods. Отдельный
 долговечный журнал reveal GET, retention/redaction, credential-bearing task DAG/cache,
-frontend query cleanup и весь поток export ещё требуют проверки.
+полная очистка клиентских копий и весь поток export ещё требуют проверки.
 
 AUD-33 устраняет подтверждённую запись raw/encoded пароля из Android `typeText`
 в Timber. File logger активен и в release, его содержимое включается в uploads.
@@ -129,3 +160,11 @@ Regression suite `tests/production/test_account_credentials.py` использу
 cancel, restart, CLI и rotation; `test_account_schema_migration.py` — upgrade/check/
 downgrade в rollback schema. `tests/test_account_cipher.py` — tampering, binding
 и key-ring contract. Реальный APK runtime этими тестами не подтверждается.
+
+Сверка опиралась на [`account_credentials.py`](../../backend/services/account_credentials.py),
+[`account_credential_migration.py`](../../backend/services/account_credential_migration.py),
+[`game_accounts` schemas](../../backend/schemas/game_accounts.py),
+[`game accounts router`](../../backend/api/v1/game_accounts/router.py) и
+[`task_service.py`](../../backend/services/task_service.py). Исторические тестовые
+результаты выше не запускались повторно при этой сверке; реальные ключи, база данных,
+браузер и устройства не проверялись.
