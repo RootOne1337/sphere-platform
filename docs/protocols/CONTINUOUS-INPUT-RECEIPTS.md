@@ -42,44 +42,56 @@ native receipt. Получающий worker проверяет **собстве�
 совпасть. Wrong owner/viewer session/epoch не меняет состояние и не освобождает
 device. Замена owner между lookup и Lua operation закрыта identity CAS.
 
-Проверка local snapshot не заменяет fresh auth/topology lifecycle caller.
-Будущая route integration обязана обработать replacement/disconnect между
-workers, permission revocation и callback lifetime. Настоящий JWT/RBAC handler
-или глобальная online-session topology этим компонентом **не проверены**.
+Проверка local snapshot сама по себе не заменяет fresh auth/topology lifecycle
+caller. В текущем source [stream router](../../backend/api/ws/stream/router.py)
+проверяет права и состояние устройства, а
+[runtime](../../backend/websocket/continuous_runtime.py) управляет viewer lifetime
+и пересылает scoped receipts. Это не подтверждает текущий runtime и не доказывает
+общий exactly-once ввод; см. [границы server protocol](CONTINUOUS-INPUT-SERVER.md).
 
 ## Атомарность и неизвестные исходы
 
 [Статический Lua](../../backend/websocket/continuous_lease.py) выполняет одним
 EVAL state transition и PUBLISH, без fallback/retry:
 
-Будущий handler вызывает `relay_native_receipt` один раз. Он не должен сначала
+Текущий runtime вызывает `relay_native_receipt` для сообщения один раз. Он не должен сначала
 вызвать старый local transition `store.receipt`, а затем повторить тот же READY
 через relay: преждевременный transition уже выведет owner из opening_sent.
 
 | Native receipt | Изменение authority |
 | --- | --- |
 | STARTUP0 injector | Opening_sent → ready только при свежем auth lease |
-| INPUT1/2/3 | Observation; не создаёт ready/release, sequence не выше опубликованной |
-| Failure4/5/6 | Fence closing; нет автоматического takeover |
+| INPUT1/2/3 | Наблюдение действия/heartbeat; не создаёт ready/release. Для relay sequence не выше опубликованной; direct имеет отдельный транспорт |
+| Startup5 от admission до native owner | При подтверждённом pre-owner refusal exact key удаляется; это отказ, не STARTUP0 и не RELEASE3 |
+| Другие Failure4/5/6 | Fence closing; нет автоматического takeover |
 | RELEASE3 injector | Exact owner key удаляется; known release публикуется тем же Lua |
 | RELEASE6 | Key остаётся, phase closing |
-| Нет viewer subscriber | Admission closing, без offline queue/replay |
+| Нет viewer subscriber | При ещё существующем matching authority — closing; без offline queue/replay. Для уже удалённого key это не подтверждает доставку cleanup |
 | Future/невозможный native input sequence | Fence без публикации невозможного успеха |
 
 PUBLISH>0 означает наличие подписчика, не browser delivery. Pub/Sub outage,
 viewer send failure или callback loss должны завершаться отдельным caller fence.
 Бюджеты сохранены: Redis/socket250ms, message2048B, доставка500ms, lease/auth1500ms,
-dedicated pool8/Retry0. Receipt deadline в браузере —500ms. Нет persistent
+dedicated pool8/Retry0. В текущем browser controller deadline обычного action —
+500ms, idle heartbeat и shared action — 1250ms, startup — 8000ms. Это разные
+ограничения ожидания, не обещание доставки или physical execution. Нет persistent
 receipt history, Redis Streams, org broadcast, frame storage или task-per-receipt.
 
 При timeout/cancellation после возможной публикации helper делает одну bounded
 fence attempt, не повторяет receipt publication. Cancellation возвращается
 caller. Outage или повторная cancellation могут помешать fence; TTL и native
 watchdog остаются обязательными. Authority key expiry **не доказывает** native
-release. Если identity уже исчезла до обработки позднего RELEASE, helper
-отвергает его: исторический owner из Redis заново не создаётся. Следующая
-интеграция должна явно решить known-reset/release reconciliation, не объявлять
-expired key доказательством cleanup.
+release. После известного `close` предусмотрен отдельный cleanup route: до 30s,
+не более восьми записей на device. Он может передать только точный authenticated
+RELEASE3 прежнему viewer после истечения authority, не восстанавливая её и не
+изменяя нового owner. Без подходящего route, при его истечении или иных identity/
+session receipt отвергается; наличие route не гарантирует доставку в браузер.
+
+Отдельно `touch_close` с `cancel_unstarted: true` может получить `touch_cancelled`
+только когда atomic delivery claim подтверждает, что отправка OPEN в APK socket
+ещё не началась. Это доказательство отсутствия начатой доставки, не native ACK;
+потерянный ответ Redis или отсутствие STARTUP сами по себе такого доказательства
+не дают. При неизвестной очистке сохраняется fence/неопределённость.
 
 Known RELEASE удаляет key до публикации. Поэтому `viewer_receipt` сопоставляет
 ответ с точным локальным lease, а не заново ищет отсутствующий key. Expiry
@@ -117,8 +129,18 @@ CI browser sourcea979bc9 подтвердил все четыре runs: frontend
 Android и backend. Новые receipt changes требуют собственного exact CI.
 Ни UI/API deploy, ни рабочий APK install этим этапом не выполнялись.
 
-Следующий обязательный шаг: один bounded receipt/agent subscriber на worker,
+На историческом checkpoint следующим шагом были один bounded receipt/agent subscriber на worker,
 startup/shutdown cleanup, transient probe offer и callback registry с limits,
 fresh authorization/revocation, затем viewer route и DeviceStream/Recorder.
 Окончательная приёмка — реальный browser→server→APK→render, known reset и
 local/remote latency/resource soak. Наличие helper не закрывает эти условия.
+
+## Граница source-сверки
+
+1 ноября 2026 сопоставлены [receipt helper](../../backend/websocket/continuous_receipts.py),
+[lease](../../backend/websocket/continuous_lease.py), [runtime](../../backend/websocket/continuous_runtime.py),
+[browser controller](../../frontend/src/features/stream/continuousPointer.ts) и
+[Android supervisor](../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/ContinuousTouchSupervisor.kt).
+Примеры regressions: [lease tests](../../tests/test_ws/test_continuous_lease.py) и
+[runtime tests](../../tests/test_ws/test_continuous_runtime.py). Исторические
+результаты выше не повторялись; реальный ввод, сети и устройства не проверялись.
