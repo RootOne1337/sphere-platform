@@ -151,8 +151,10 @@ token/UUID в памяти не доказывает пригодность refr
 `BootstrapOrganizationMissing` означает, что выбранная bootstrap org не создана;
 `EnrollmentConfigurationError` — неверный/missing config; `EnrollmentKeyConflict`
 — ключ отозван, истёк, принадлежит другой org или не имеет `device:register`.
-Проверьте выбранный env/config и `SPHERE_BOOTSTRAP_ORG_SLUG`, затем выполните
-явный enrollment CLI по [startup contract](../operations/STARTUP.md).
+Проверьте выбранный env/config и `SPHERE_BOOTSTRAP_ORG_SLUG`; при необходимости
+рассмотрите явный enrollment CLI по [startup contract](../operations/STARTUP.md)
+после проверки организации, состояния ключа и выбранной базы. CLI изменяет БД и
+не исправляет автоматически отсутствующую организацию или конфликтующий ключ.
 Не публикуйте raw key, его hash или config в incident report.
 
 `enrollment_bootstrap_ready` содержит key ID/org ID; сравните org с оператором.

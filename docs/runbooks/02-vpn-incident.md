@@ -34,15 +34,12 @@ an appropriately authorized database operator rather than bypassing RLS.
 ## Read-only diagnosis
 
 Use the deployment's authenticated ingress, not a presumed public backend port.
-`BASE_URL` below is the deployment origin and `TOKEN` belongs to an authorized
-operator; keep their actual values out of incident attachments.
-
-```bash
-curl --fail-with-body -H "Authorization: Bearer $TOKEN" \
-  "$BASE_URL/api/v1/vpn/peers"
-curl --fail-with-body -H "Authorization: Bearer $TOKEN" \
-  "$BASE_URL/api/v1/vpn/pool/stats"
-```
+Use `GET /api/v1/vpn/peers` and `GET /api/v1/vpn/pool/stats` with an operator
+session authorized for `vpn:read`. Both responses are scoped by the caller's
+organization for peer counts; use the access model above when reconciling global
+allocation. Avoid putting bearer tokens in shell history, command arguments,
+process listings or incident attachments; use the installation's approved
+credential-handling client.
 
 The routes are `/pool/stats` and `/peers`; the previous `/pool-stats` and
 `/peers/<device_id>/ip-lease` examples were not implemented endpoints. Assignment
@@ -88,13 +85,16 @@ key, matching PSK, matching server/client AWG parameters and actual router state
 A repeated successful assignment now returns the original PSK/configuration;
 it is not evidence that the tunnel has established a handshake.
 
-The implemented removal route is `DELETE /api/v1/vpn/revoke/<device_id>`, restricted
-to the authorized organization administrator. Removal deliberately disrupts that
+The implemented removal route is `DELETE /api/v1/vpn/revoke/<device_id>`, requiring
+`vpn:write` and scoped to the caller's organization. Removal deliberately disrupts that
 device's tunnel; use it only for a confirmed target under the incident's approved
-scope. Timeout, 403, 404, 500 and unconfirmed 202 preserve the peer
-and address. Only 200/204 are currently accepted as deletion confirmation. A
-generic 404 can indicate an incorrect proxy/route and is not authoritative proof
-of peer absence. A failed response must not be followed by manually returning the
+scope. For a tracked assigned peer, timeout and provider 403, 404, 500 or 202
+preserve the held intent and address; only provider responses 200/204 are accepted
+as deletion confirmation. The Sphere API itself responds 204 even if no matching
+peer row exists, without checking provider inventory. Its 204 alone is therefore
+not proof that an orphaned router peer is absent. A generic provider 404 can indicate
+an incorrect proxy/route and is not authoritative proof of peer absence. A failed
+or unknown outcome must not be followed by manually returning the
 address to Redis. REVOKING now persists before DELETE and releases SQL ownership
 only after deletion confirmation and commit. PROVISIONING persists before POST;
 unknown results retain their address. Retry of either pending state returns 409
