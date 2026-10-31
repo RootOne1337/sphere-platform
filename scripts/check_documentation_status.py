@@ -514,7 +514,7 @@ def validate_inventory(root: Path, registry: dict, inventory: dict) -> list[str]
     for record in records:
         if record["role"] not in ROLES or record["role"] != document_role(record["file"], registry["authoritativeEntrypoints"]):
             errors.append(f"{record['file']}: incorrect documentation role")
-        if record["role"] in {"CURRENT_ENTRYPOINT", "OPERATING_GUIDE"}:
+        if record["role"] in {"CURRENT_ENTRYPOINT", "OPERATING_GUIDE", "PROJECT_POLICY"}:
             errors.extend(local_link_errors(root, record["file"], indexed_paths, indexed_directories))
     return errors
 

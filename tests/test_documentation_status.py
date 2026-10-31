@@ -469,6 +469,36 @@ class DocumentationStatusTests(unittest.TestCase):
             self.assertIn("guide.md: local link target not in Git index: generated.json",
                           validate_inventory(root, registry, inventory))
 
+    def test_project_policy_links_are_checked_but_history_is_not(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".github").mkdir()
+            (root / "docs" / "history").mkdir(parents=True)
+            (root / "SECURITY.md").write_text("[missing](missing.md)\n", encoding="utf-8")
+            (root / ".github" / "guide.md").write_text("[local](../untracked.json)\n", encoding="utf-8")
+            (root / "docs" / "history" / "snapshot.md").write_text("[old](gone.md)\n", encoding="utf-8")
+            (root / "untracked.json").write_text("{}", encoding="utf-8")
+            subprocess.run(["git", "add", "SECURITY.md", ".github/guide.md", "docs/history/snapshot.md"],
+                           cwd=root, check=True)
+            registry = {"authoritativeEntrypoints": []}
+            inventory = {
+                "documents": [{"file": "SECURITY.md", "role": "PROJECT_POLICY"},
+                              {"file": ".github/guide.md", "role": "PROJECT_POLICY"},
+                              {"file": "docs/history/snapshot.md", "role": "DATED_EVIDENCE"}],
+                "countsByRole": {"PROJECT_POLICY": 2, "DATED_EVIDENCE": 1},
+            }
+            self.assertCountEqual(validate_inventory(root, registry, inventory), [
+                "SECURITY.md: missing local link: missing.md",
+                ".github/guide.md: local link target not in Git index: ../untracked.json",
+            ])
+            (root / "missing.md").write_text("ok", encoding="utf-8")
+            subprocess.run(["git", "add", "missing.md", "untracked.json"], cwd=root, check=True)
+            # New Markdown must also appear in the inventory.
+            inventory["documents"].append({"file": "missing.md", "role": "SUPPORTING_DOCUMENT"})
+            inventory["countsByRole"]["SUPPORTING_DOCUMENT"] = 1
+            self.assertEqual(validate_inventory(root, registry, inventory), [])
+
     def test_indexed_directory_requires_an_indexed_descendant(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
