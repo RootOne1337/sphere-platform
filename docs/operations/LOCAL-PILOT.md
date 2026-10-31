@@ -420,11 +420,13 @@ Serveo для нового pilot не принял тестовый SSH-ключ
 применён без restart. Redis и APK PID/crash buffers прежние, оба устройства online.
 [Изолированная OOM/persistence приёмка и ограничения](../audits/2026-09-20/REDIS-MEMORY.md).
 Поздний CI probe на PR head `e635de8` воспроизвёл OOM при параллельных AOF/write
-операциях в отдельном контейнере. Source Compose теперь задаёт 2048 MiB; новый
-все три isolated CI probe прошли без OOM. Cgroup peaks: 2.00, 1.49 и 1.84 GiB;
-худшее наблюдение остаётся потолком 2 GiB. **Этот pilot
-остаётся на 1536 MiB** до отдельного rollout и 32-stream acceptance.
-[AUD-143 evidence и статус](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
+операциях в отдельном контейнере. На следующем историческом срезе source Compose
+задавал 2048 MiB; три isolated CI probe прошли без OOM. Cgroup peaks: 2.00, 1.49
+и 1.84 GiB; худшее наблюдение достигло потолка 2 GiB. Тогда pilot оставался на
+1536 MiB; это не проверка текущего лимита. Позже другая CI probe при 2 GiB получила
+OOM. Текущий source budget и границы приёмки приведены в
+[Redis: память и сохранение](REDIS-MEMORY.md); реальный rollout и 32-stream
+acceptance проверяются отдельно. [AUD-143 evidence](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
 
 История 20 сентября: backend `85fb1ea`, frontend `03b161e`, APK 1.2.7 (`0f257fe`). [Приёмка нового APK](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md)
 подтверждает native OTA, команды/DAG/видео после обрывов и освобождение захвата.

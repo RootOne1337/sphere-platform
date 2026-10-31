@@ -731,14 +731,16 @@ standalone-сервер и четыре маршрута прошли HTTP-пр�
 из этого артефакта не собирался. Предупреждение Windows о trace-файле зафиксировано как
 остаточный риск. [Детали](../audits/2026-09-20/FRONTEND-STANDALONE.md).
 
-**P1 F32-32 / AUD-143:** isolated Redis probe воспроизвёл OOM при 1536 MiB. Три
+**Исторический срез P1 F32-32 / AUD-143:** isolated Redis probe воспроизвёл OOM при 1536 MiB. Три
 2048 MiB CI probes прошли concurrent write/AOF/BGSAVE и restart без OOM. В них
 сохранились 6,531, 6,531 и 6,532 ключа и marker. Пики составили
 2,147,483,648 bytes (лимит), 1,603,907,584 bytes (~1.49 GiB) и 1,974,636,544 bytes
 (~1.84 GiB); используем худшее наблюдение, а не предполагаемый запас от меньших
 повторов. Это закрывает воспроизведённый workload, но не доказывает
-запас для 32 streams; live pilot остался на 1536 MiB.
-[Причина и точное доказательство](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
+запас для 32 streams; тогда live pilot оставался на 1536 MiB. Позже CI probe
+при 2 GiB завершился OOM; фактический текущий лимит проверяется отдельно.
+[Причина и историческое доказательство](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) ·
+[Последующий counterexample и source budget](REDIS-MEMORY.md).
 
 **P0 F32-33 / AUD-144:** transfer-level OTA regression теперь имеет bounded retry:
 до fix разрыв HTTP body завершал единственную загрузку; после fix выполняется одна
@@ -760,8 +762,10 @@ backend restart без F5, projection освобождена, APK PID/crash buff
 **До Fleet32 остаются P0:** приёмка decoder под 32 потоками, сквозной preview profile,
 command/video budget, Redis pressure/recovery и достоверные метрики. [AUD-139](../audits/2026-09-20/REDIS-MEMORY.md)
 закрыл исходный memory mismatch, но [AUD-143](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md)
-выявил OOM на более тяжёлой конкурентной AOF нагрузке; 2 GiB теперь проходит этот
-isolation test. Три CI пика различались (1.49, 1.84 и 2.00 GiB), худший достигает потолка;
+выявил OOM на более тяжёлой конкурентной AOF нагрузке. Три исторических прогона
+при 2 GiB прошли, но последующий CI counterexample получил OOM; текущий source
+budget и границы приведены в [Redis: память и сохранение](REDIS-MEMORY.md).
+Три прежних CI пика различались (1.49, 1.84 и 2.00 GiB), худший достиг потолка;
 stream margin остаётся непроверенным.
 Политика buffers/eviction остаётся
 открытой. Native runtime-role RLS,

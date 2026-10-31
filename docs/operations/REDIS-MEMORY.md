@@ -1,12 +1,12 @@
 # Redis: память, сохранение и приёмка
 
-**Обновлено 1 октября 2026 · AUD-139 / AUD-143 и новый CI counterexample · live limit проверяется отдельно.**
+**Источник: конфигурация Compose в репозитории; наблюдения нагрузки ниже датированы. Фактический лимит установленного экземпляра проверяется отдельно.**
 
 [Readiness](READINESS.md) · [Fleet32](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Доказательства](../audits/2026-09-20/REDIS-MEMORY.md)
 
 ## Бюджет
 
-| Настройка | Source Compose profiles (не фактический runtime limit уже работающих контейнеров) |
+| Настройка | Base Compose и семь сочетаний из тестовой матрицы (не runtime limit установленного контейнера) |
 | --- | --- |
 | Redis `maxmemory` | 512 MiB, прежняя ёмкость |
 | Compose container memory limit | 3072 MiB |
@@ -18,6 +18,12 @@
 allocator, процесс, AOF/client buffers и charged filesystem cache. Это правило проекта, а не универсальная
 гарантия для любого числа clients/подписок. Проверяйте общий бюджет Docker VM и
 станции вместе с PostgreSQL, backend, браузером и эмуляторами.
+Семь сочетаний перечислены в [`MATRIX`](../../tests/deployment/test_redis_memory_budget.py):
+base, development, full, production, full-production, pilot и remote-pilot.
+Отдельный preview template в матрицу не входит: он задаёт лимит 128 MiB и не
+задаёт Redis `maxmemory`; эти параметры не следует считать пригодными для той
+же нагрузки или для существующего pilot. Для конкретного запуска нужно сверить
+итоговую конфигурацию выбранных файлов и фактические ограничения контейнера.
 
 `maxmemory` не ограничивает весь RSS/cgroup. Redis отдельно описывает память
 буферов, исключённую из eviction accounting: [Redis eviction](https://redis.io/docs/latest/develop/reference/eviction/).
@@ -34,8 +40,11 @@ Fork, fragmentation и объём записей требуют дополнит
 для сохранения бюджета при будущем recreate. Runtime update сам файл не меняет.
 
 После изменения независимо проверьте actual limit, неизменность Redis PID/start
-time, `PING`, API readiness и связь APK. Пароль передавайте внутри контейнера
-через `REDISCLI_AUTH`; не помещайте настоящий пароль в логи/командные аргументы.
+time, `PING`, API readiness и связь APK. Для `redis-cli` используйте
+`REDISCLI_AUTH` внутри контейнера, не записывая пароль в логи или аргументы CLI.
+Это не устраняет другие способы раскрытия: исходный Compose передаёт пароль
+Redis также в аргументе `--requirepass` и в окружении контейнера; доступ к
+конфигурации, инспекции и процессам необходимо ограничивать.
 
 Уменьшение лимита требует отдельной оценки текущей памяти: возврат к прежним
 128 MiB под заполненной БД способен немедленно вызвать OOM. Откат config commit
@@ -50,16 +59,23 @@ python -m pytest tests/deployment/test_redis_memory_budget.py -q
 python tests/containers/run_redis_memory_probe.py --evidence-dir redis-memory-evidence
 ```
 
-Первой команде нужны обычные синтетические test Settings, включая `JWT_SECRET_KEY`.
-Runtime probe создаёт собственный контейнер `sphere-redis-budget-*`, сеть `none`,
+Первая команда рендерит конфигурацию через Docker Compose с тестовыми значениями
+и без запуска стека. Для pytest могут понадобиться синтетические test Settings,
+включая `JWT_SECRET_KEY`. Runtime probe создаёт собственный контейнер `sphere-redis-budget-*`, сеть `none`,
 без host ports, существующих volumes и swap. Синтетические credentials берутся
-из Compose renderer. Он записывает 14 000 SET по 64 KiB, затем две такие же серии
+из Compose renderer; тестовый пароль передаётся в аргументе `redis-benchmark`.
+Probe может скачать image и потребляет ресурсы хоста, в том числе память и диск;
+запускайте его только в подходящем изолированном окружении с достаточным бюджетом.
+По умолчанию берётся tag из Compose; `SPHERE_AUDIT_REDIS_IMAGE` позволяет выбрать
+другой image. Для сравнения результатов фиксируйте image identity и окружение.
+Он записывает 14 000 SET по 64 KiB, затем две такие же серии
 одновременно с BGREWRITEAOF/BGSAVE, проверяет AOF/RDB status и restart. Сохранённый
 marker и число оставшихся ключей должны совпасть. Оставшиеся — потому что нагрузка
 намеренно превышает cache limit и вызывает eviction.
 
-Probe удаляет только созданный container/anonymous volume после проверки уникальной
-метки. Каталог evidence должен быть новым; повтор не перетирает предыдущий результат.
+Probe пытается удалить созданный container/anonymous volume после проверки уникальной
+метки; при аварийном завершении или ошибке Docker очистка не гарантируется. Каталог
+evidence должен быть новым; повтор не перетирает предыдущий результат.
 Отсутствующий kernel peak counter отмечается `null`, а не нулевым потреблением.
 CI запускает эту проверку и сохраняет артефакты.
 
@@ -73,8 +89,8 @@ CI запускает эту проверку и сохраняет артефа
 probe. Это подтверждённая нехватка headroom в этой нагрузочной точке, не live outage.
 
 Исторический source Compose budget повышен до **2048 MiB**, при прежних 512 MiB dataset.
-`test_redis_memory_budget.py` требует минимум 4× dataset для всех семи runtime
-profiles; восемь regressions прошли. На PR head `bee9bc0` повторная isolated probe
+На том историческом срезе admission rule составлял минимум 4× dataset для семи
+сочетаний; восемь regressions прошли. Текущий тест требует 6×. На PR head `bee9bc0` повторная isolated probe
 прошла: AOF rewrite, BGSAVE и restart successful, `OOMKilled=false`, 6,531 ключ
 сохранён. Однако kernel peak был ровно **2048 MiB**, то есть дошёл до лимита.
 Подтверждён именно этот bounded persistence сценарий; spare memory и 32 stream
@@ -122,8 +138,8 @@ source `eda41c7`, тот же image config. Unit/real-service suite: **2145 test
 passed, `OOMKilled=false`, own container удалён. Kernel `memory.peak` —
 **1599836160 B**, 6532 keys и marker survived restart. Это отдельное CI evidence;
 local kernel/IO peak не переносится на CI. Исходный OOM не стирается успешным
-повтором. Read-only installed pilot limit — **1610612736 B**
-(1536 MiB), прежний container start сохранён. Installed Redis этим source commit
+повтором. На срезе 1 октября read-only installed pilot limit составлял **1610612736 B**
+(1536 MiB), прежний container start сохранялся. Installed Redis этим source commit
 не перезапускался и не менял limit.
 
 ## Открытые ограничения
