@@ -112,6 +112,42 @@
 [event triggers](../../../tests/orchestrator/test_event_triggers_api.py) и
 [stream control](../../../tests/production/test_stream_control_routing.py).
 
+## Сверка auth, пользователей, discovery и OTA
+
+На `18fa932b` и меняющемся рабочем дереве исследованы все **29 описанных в
+OpenAPI method/path** в пяти группах; для наиболее важных приведены конкретные
+обработчики и сервисы. Права и эффекты извлечены из исходников, а не из одной
+схемы. Проверки live ingress, credentials, PostgreSQL/Redis и Android не проводили.
+
+| Область | Проверенные контракты и ограничения |
+| --- | --- |
+| Auth: 12 операций | [router](../../../backend/api/v1/auth/router.py), [schemas](../../../backend/schemas/auth.py), [auth service](../../../backend/services/auth_service.py), [dependencies](../../../backend/core/dependencies.py), [API key service](../../../backend/services/api_key_service.py): login/MFA, refresh/logout, profile/capabilities, MFA setup/verify/delete и key CRUD. Исправлен обязательный `is_active` в примере `/auth/me`, добавлен capabilities, уточнено что key list возвращает `is_active` записи (включая потенциально истёкшие) и defaults creation: пустые permissions, нет expires_at. Роль capabilities читается из БД; каждый маршрут авторизует своё действие. |
+| Users: 5 операций | [router](../../../backend/api/v1/users/router.py), [RBAC](../../../backend/core/rbac.py): list/create/get/role/deactivate, разрешённые роли и защита последнего владельца. Для `super_admin` application-level list filter снят; effective RLS и присутствие других tenants в реальном ответе здесь не установлены. Создание по-прежнему использует организацию вызывающего. |
+| Config: 1 операция | [router](../../../backend/api/v1/config/router.py), [schema](../../../backend/schemas/agent_config.py): optional X-API-Key, неиспользуемый fingerprint и риск исходного enrollment secret в unauthenticated base response; само live раскрытие не проверено. Поиск `min_agent_version` не подтвердил принудительный OTA. |
+| Discovery: 1 операция | [router](../../../backend/api/v1/discovery/router.py), [schema](../../../backend/schemas/discovery.py), [service](../../../backend/services/discovery_service.py), поиск dispatcher в [PC agent](../../../pc-agent): `device:write`, bounded subnet/ports и default `auto_register=true`; `scanned` вычисляется из размеров сети и диапазона портов, включая отсутствие успешного ответа агента, поэтому не является счётчиком доказанных попыток. Отсутствие `discover_adb` в PC-agent dispatcher — source observation, не live scan. |
+| OTA: 10 операций | [router](../../../backend/api/v1/updates/router.py), [Android authenticator](../../../backend/api/ws/android/router.py), [recovery service](../../../backend/services/device_ota_recovery.py): list/create/delete, agent latest/artifact, operator download и create/read/dispatch/revoke grant. Восстановление требует managed опубликованный SHA; wake/202 не доказывают установку. Внешний HTTPS release handler не загружает и не сверяет; отдельный operator download отказывается подменять внешний latest старым managed APK. |
+
+[AuthService.logout](../../../backend/services/auth_service.py) после проверки
+подписанного Bearer в router ищет переданный refresh по его hash; явного сравнения
+user/org этого refresh с Bearer principal в самом методе нет. Эффективные RLS и
+наличие эксплуатируемого обхода данным чтением не установлены; требуется отдельная
+проверка с изолированными пользователями и фактической DB ролью. Потеря ответа
+после токенной ротации/изменения и wake после grant не доказывают отказ операции.
+
+В `.venv-audit` прошла локальная Pydantic-проверка примера `UserResponse`,
+defaults `CreateAPIKeyRequest` и нормализации/defaults `DiscoverRequest`.
+Handlers, сеть и состояние сервера она не проверяет.
+
+Найдены релевантные tests, которые в этом проходе **не запускались**:
+[session rotation](../../../tests/production/test_session_rotation.py),
+[MFA consumption](../../../tests/production/test_mfa_consumption.py),
+[session capabilities](../../../tests/production/test_session_capabilities.py),
+[device registration](../../../tests/test_agent_discovery/test_device_register.py),
+[config endpoint](../../../tests/test_agent_discovery/test_config_endpoint.py),
+[discovery](../../../tests/discovery/test_discovery.py),
+[OTA API](../../../tests/test_updates/test_updates_api.py),
+[OTA live delivery](../../../tests/production/test_ota_live_delivery.py).
+
 ## Проверки и остаток
 
 Машинное сравнение HTTP method/path во **всех заголовках** справочника с JSON,

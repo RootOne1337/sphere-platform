@@ -221,10 +221,21 @@ Authorization: Bearer <token>
   "email": "user@example.com",
   "role": "org_admin",
   "org_id": "uuid",
+  "is_active": true,
   "mfa_enabled": false,
+  "last_login_at": null,
   "created_at": "2026-01-01T00:00:00Z"
 }
 ```
+
+---
+
+### GET /auth/capabilities
+
+Bearer-authenticated `GET /auth/capabilities` returns `user_id`, `org_id`, `role`
+and sorted `permissions` from the current database-backed user role, with
+`Cache-Control: no-store`. It is a snapshot for this session, not an authorization
+grant for a later operation; the target route performs its own check.
 
 ---
 
@@ -774,8 +785,12 @@ Requires `vpn:read`; measured health coverage remains a separate open finding.
 `POST /discovery/scan` requires `device:write`. The request requires `subnet` and
 `workstation_id`, and accepts `port_range`, `timeout_ms`, `auto_register`, and
 optional `group_id`. **`auto_register` defaults to true**; set it explicitly to
-`false` for a scan that must not create device records. The response reports
-`scanned`, `found`, `registered`, `devices` and `duration_ms`. A network scan
+`false` for a scan that must not create device records. The schema normalizes a
+network of at most 65,536 addresses, limits timeout to 100–5000 ms, and takes a
+pair of inclusive ports (default 5554–5584). The response reports `scanned`,
+`found`, `registered`, `devices` and `duration_ms`. `scanned` is calculated as
+address count × port count, even when the agent returns no result; it is not a
+receipt proving every address/port was contacted. A network scan
 and registration do not prove an Android agent is connected or ready for control.
 The server currently sends `discover_adb`, while the PC-agent dispatcher does not
 implement that command; failures can be converted to an empty result. An empty list
@@ -788,7 +803,11 @@ therefore does not establish that no devices exist. See [PC agent](pc-agent.md) 
 
 `GET /users` and `POST /users` require an administrator, organization owner or
 platform administrator. Creation uses `email`, `password` and `role`; it creates
-a user in the caller's organization. `PUT /users/{id}/role` changes a role subject
+a user in the caller's organization. For non-super-admins the list/detail is
+filtered to that organization; the handler's `super_admin` branch removes that
+application-level list filter. Effective database policies are deployment-dependent.
+`GET /users/{id}` reads a user subject to the same role and scope checks.
+`PUT /users/{id}/role` changes a role subject
 to owner/platform-admin and target-role checks. `PATCH /users/{id}/deactivate`
 disables a user; self-deactivation and removal of the last active owner are
 blocked. The deactivate handler returns `204` although OpenAPI declares `200`.
@@ -799,10 +818,12 @@ and receipt boundaries are in [user access](operations/USER-ACCESS.md).
 
 ## API Keys — `/auth/api-keys`
 
-`GET /auth/api-keys` lists organization keys without the raw secret and requires
-`api_key:read`. `POST /auth/api-keys` requires `api_key:write`; a request contains
+`GET /auth/api-keys` lists organization keys whose `is_active` is true, without
+the raw secret, and requires `api_key:read`. Expired entries can still have
+`is_active=true`; the list is not a proof that a key authenticates. `POST /auth/api-keys` requires `api_key:write`; a request contains
 `name` and may specify `permissions`, `expires_at` and `key_type`. Delegated
-permissions must be held by the caller. The `201` response contains `id`, `name`,
+permissions must be held by the caller; omitted permissions default to an empty
+list and omitted `expires_at` to no expiry. The `201` response contains `id`, `name`,
 `key_prefix`, `raw_key`, `permissions`, `expires_at` and `created_at`; `raw_key`
 is displayed once and has the `sphr_{env}_{64hex}` format. Store it as a secret.
 `DELETE /auth/api-keys/{id}` requires `api_key:write` and returns `204` in the
@@ -1249,8 +1270,37 @@ earlier unknown outcome.
 
 ## OTA release metadata — `/updates`
 
-`DELETE /updates/{release_id}` requires `super_admin`: the handler returns 204
-on deletion and 404 if absent, while OpenAPI declares 200. The release creation
+All paths in this section are relative to `/api/v1`. The checked-in handler
+uses a file-backed release catalog; its HTTP metadata does not establish the
+state of another deployment.
+
+- `GET /updates/` requires `device:read`, accepts optional `platform` and
+  `flavor`, and returns `releases` and `total`. `POST /updates/` requires
+  `super_admin` and returns 201 with registered metadata. For a managed artifact
+  the handler verifies file existence, size and SHA-256; for an external URL it
+  requires HTTPS but does not fetch or verify that external file.
+- `GET /updates/latest` reads `platform`, `flavor`, `version_code` and requires
+  an `X-API-Key` header. Its token is evaluated by the Android WebSocket
+  authenticator or the scoped OTA recovery path. It returns availability and
+  release metadata, not proof of installation. `GET /updates/artifacts/{sha256}`
+  uses a Bearer credential with those authentication paths and serves a published
+  managed artifact. These routes are distinct from the operator download below.
+- `GET /updates/downloads/latest` requires `device:read`, defaults to the
+  `android-canary/dev` channel and serves the latest managed APK. Missing channel
+  returns 404, an external latest artifact 409 and unavailable/invalid data 503.
+  The binary response includes private/no-store caching and SHA-256/version headers.
+- `POST /updates/recovery` requires `super_admin`, an owned active device, a
+  published managed SHA-256 and a duration of 60–3600 seconds. A committed grant
+  can return `wake_published` or `awaiting_connection`; neither establishes receipt
+  or install. `POST /updates/recovery/{device_id}/dispatch` requires the matching
+  `command_id`, returns 202 and re-wakes the same grant without extending it.
+  `GET /updates/recovery/{device_id}` requires `device:read` and returns state,
+  sanitized active grant and result history. `DELETE` requires `super_admin`,
+  optionally checks `command_id` and returns 204. Revocation does not establish
+  cancellation of an installation already underway. Re-read status after a lost
+  response instead of creating a duplicate grant.
+- `DELETE /updates/{release_id}` requires `super_admin`: the handler returns 204
+  on deletion and 404 if absent, while OpenAPI declares 200. The release creation
 schema accepts `version_name` up to 128 characters; the addressed recovery grant
 and frontend receipt validators cap it at 100. Names above 100 therefore cannot be
 assumed compatible with that workflow. See [publication](operations/OTA-PUBLICATION-AND-APK-CHECKS.md)
