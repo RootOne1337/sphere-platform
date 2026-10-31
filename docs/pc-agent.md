@@ -1,8 +1,9 @@
 # PC Agent
 
-Operator/developer guide checked against the audit branch on **9 September 2026**.
-The audit is ongoing. A successful Python build or server-side regression does not
-prove LDPlayer/ADB execution, Windows service recovery or capacity for 10–64 emulators.
+Operator/developer guide: source behavior was rechecked on **1 November 2026**
+against the working tree; the historical evidence below remains dated separately.
+This source review did not start an agent, service, emulator or network connection.
+A successful Python build or server-side regression does not prove LDPlayer/ADB execution, Windows service recovery or capacity for 10–64 emulators.
 See the [audit report](audits/2026-09-05/AUDIT-REPORT.md) for evidence and remaining work.
 
 In a 13 September native observation, a running LDPlayer instance lost its host NAT
@@ -96,6 +97,9 @@ and instance rows. Runtime needs the API-key function grants in the
 [credential runbook](security/device-credential-bootstrap.md). A key can address
 workstations in its own organization; this is not workstation hardware attestation.
 Open connections do not automatically close when their key is later revoked.
+The server closes failed first-message authentication with 4001, an auth timeout
+with 4003, and an unknown owned workstation with 4004. These close codes describe
+source branches, not evidence of a successful connection in a deployed environment.
 
 ## Runtime messages and commands
 
@@ -104,6 +108,10 @@ and matching existing instance metadata/serials. SQL commits before the topology
 cache write (`topology:workstation:<id>`, one-hour TTL). Redis failure can leave the
 cache stale while SQL has committed. `workstation_telemetry` caches the payload for
 120 seconds and publishes an organization event; it is not a durable event journal.
+That telemetry handler does not update the SQL `last_heartbeat_at`; the value set
+by registration should not be interpreted as a current heartbeat. The reporter
+uses `ldplayer_instances_running=0` when listing instances raises, so that field
+alone cannot distinguish no running instances from an enumeration failure.
 
 The dispatcher accepts `type`, `command_id` and `payload`, for example:
 
@@ -137,7 +145,10 @@ End-to-end discovery and OS execution remain under audit; the command list is an
 implementation inventory, not proof of successful remote execution. Unknown command types now produce
 `status: failed` with an `Unsupported command type` error (AUD-66), rather than
 the former false `completed`/null response. A command without an ID still has no
-correlated reply; unsupported commands do not invoke LDPlayer or ADB.
+correlated reply; unsupported commands do not invoke LDPlayer or ADB. A recognized
+command without `command_id` is still dispatched and can change the machine or
+emulator even though no correlated result will be sent. Do not rely on missing
+reply as evidence that an operation did not run.
 
 Success and error replies now include the `command_result` discriminator (AUD-64):
 
@@ -145,20 +156,54 @@ Success and error replies now include the `command_result` discriminator (AUD-64
 {"type":"command_result","command_id":"<command-uuid>","status":"completed","result":{"pong":true}}
 ```
 
-An execution exception uses `status: failed` and an `error` string. The backend
+An execution exception that reaches the dispatcher uses `status: failed` and an
+`error` string. Some lower-level operations intentionally catch failures instead:
+
+- `adb_devices` converts an `adb devices` exception into an empty list, which the
+  dispatcher can report as `completed`. An empty list does not prove there are no
+  devices or that enumeration succeeded.
+- `adb_sync` catches connection/disconnection errors and reports its in-memory
+  `connected` ports; a completed reply does not prove all requested connections
+  are healthy. The `connect` helper uses an output substring check and should not
+  be treated as an independent device-health test.
+- `ld_quit`, `ld_install_apk` and `ld_run_app` report success after the underlying
+  command returns successfully; they do not independently verify stopped process,
+  installed package identity or a running app. `ld_launch` additionally polls the
+  instance list, which is still not proof of application readiness. `ld_create`
+  selects a returned instance by name; duplicate names make that lookup ambiguous.
+- `adb_shell` rejects a specific set of characters and non-printable input; that
+  check is not a general shell safety or command-authorization guarantee. `ld_exec`
+  takes its command through `ldconsole` and does not use the ADB bridge's check.
+
+Treat command results as bounded observations from the process that handled them,
+not as an independently verified outcome. The backend
 publishes the payload to `sphere:agent:result:<workstation-id>:<command-id>`.
 During a rolling client upgrade it also accepts the older untyped terminal reply
 with a nonempty string command ID. Explicit telemetry and intermediate statuses
 are not results. Redis PubSub publication is not a durable receipt or execution ACK;
 there is no guarantee of recovery if the subscriber, connection or Redis is unavailable.
+Command errors and timeout logs may include process output or command arguments;
+do not embed credentials in command text or share unreviewed logs.
 
 ## Recovery, operations and verification
 
+The 1 November source review ran `tests/test_pc_client_recovery.py` in an isolated
+working directory with synthetic settings: **9 passed**, with one unrelated
+FastAPI deprecation warning. The tests replace WebSocket connections with in-process
+doubles. Additional isolated doubles confirmed that a failed ADB enumeration can
+produce a completed empty result, a recognized command without an ID is dispatched
+without a reply, and a queued item remains in the queue after the connection flag
+is cleared. No LDPlayer, ADB process, server, network or OS service was started.
+
 The main process starts the WS client, telemetry, a 15-second ADB sync loop and one
-initial topology task. That task waits one second; it is not a verified per-reconnect
-registration mechanism. The client marks itself connected after writing the auth
+initial topology task. That task waits one second and runs once; if the client is
+still disconnected, its send can be dropped. It is not a per-reconnect registration
+mechanism. The client marks itself connected after writing the auth
 frame; server auth is not yet confirmed. Its outgoing queue is bounded at 1000
 messages, drops sends while disconnected or full, and is not a durable result outbox.
+The queue object is retained across reconnects: an item whose send failed is removed,
+but other items queued before the disconnect can be sent on a later session. Their
+arrival then does not establish that the original requester still awaits them.
 
 AUD-65 makes either sender or receiver termination close the session and collect
 both transport tasks. Failed/cancelled auth writes clear connection state. Reconnect
