@@ -59,7 +59,16 @@ Prometheus, цели сбора, активные алерты и Grafana в т�
 | Время сбора | `scrape_duration_seconds` | Продолжительность HTTP scrape; не latency команд Android |
 | Измерений после фильтрации | `scrape_samples_post_metric_relabeling` | Объём последнего среза; не число устройств |
 | Ряды хранилища | `prometheus_tsdb_head_series` | Размер текущего TSDB head; не размер БД Sphere |
-| Потеря сбора | `SphereBackendMetricsUnavailable` | `up == 0` в течение минуты |
+| Потеря сбора | `SphereBackendMetricsUnavailable` | `up == 0` в течение минуты для обнаруженного target; исчезнувший target само это правило не обнаруживает |
+
+Метрики HTTP агрегируют только обнаруженные ряды job; исправный scrape не доказывает,
+что собраны все реплики. История ресурсов рассчитана для **одного** target: при
+нескольких targets её серверные запросы не объединяют контейнеры и не показывают
+совокупный расход. CPU — использованные ядра (CPU-секунды в секунду, `rate` за
+1 минуту), квота — ядра; память и её лимит отображаются в GiB, включая учтённый
+cgroup cache для расхода. Это не RSS процесса и не память хоста. Недоступные или
+неограниченные контроллеры не заменяются нулём. Детали и актуальный allowlist
+series определяются выбранным collection config, а не фактом наличия producer.
 
 Исторический пробел до rollout 30 сентября 18:09 UTC+5: backend имел четыре
 Gunicorn worker без multiprocess directory и отдавал registry выбранного worker.
@@ -207,7 +216,8 @@ Auth proxy задаёт фиксированного пользователя `s
 ## Изолированный Docker-стек
 
 Используется `infrastructure/monitoring/docker-compose.observability.yml`.
-Это отдельный Compose project, без Docker socket и host filesystem mounts.
+Это отдельный Compose project без Docker socket и mount корня host filesystem;
+конфигурация и provisioning подключаются отдельными read-only bind mounts.
 Он не пересоздаёт backend, Android, БД или туннели. Старый
 `docker-compose.monitoring.yml` не следует запускать вместо этого профиля:
 его старые версии, пароли по умолчанию, host ports и внешние receivers
@@ -233,7 +243,8 @@ Docker stdout/stderr ограничены тремя файлами по 10 MB �
 DB exporter, Windows host CPU, tunnel health, Loki и distributed tracing в этом
 этапе **не подключены**; их отсутствие не подменяется нулевыми графиками.
 
-Оба host ports привязаны к `127.0.0.1`: Prometheus `19090`, Grafana `13000`.
+По умолчанию оба host ports привязаны к `127.0.0.1`: Prometheus `19090`, Grafana
+`13000`; `OBS_PROMETHEUS_PORT` и `OBS_GRAFANA_PORT` могут менять номера.
 На loopback Prometheus доверяет процессам оператора. Не публикуйте эти ports
 наружу. Из серверной сети Prometheus может читать backend; Grafana находится
 только в сети tools. Auth proxy принимает только конкретный доверенный адрес
@@ -255,8 +266,9 @@ OBS_TOOLS_DYNAMIC_RANGE=<динамический pool внутри подсет
 ```
 
 В backend network должен существовать DNS alias `backend`, порт 8000. Настройте
-target явно при иной топологии. На текущем pilot это сеть
-`sphere-pilot-20260911_backend-net`. Адрес whitelist определяется по реальному
+target явно при иной топологии. В исторической pilot-конфигурации использовалась
+сеть `sphere-pilot-20260911_backend-net`; не считайте её текущей без проверки.
+Адрес whitelist определяется по реальному
 peer address; он может отличаться при переносе с Docker Desktop на VPS.
 Не расширяйте whitelist до всего Интернета ради устранения `invalid-ip`.
 Для Docker review используйте overlay
@@ -276,8 +288,8 @@ docker compose --env-file <private-env> -p sphere-observability -f infrastructur
 docker compose --env-file <private-env> -p sphere-observability -f infrastructure/monitoring/docker-compose.observability.yml up -d
 ```
 
-Server-only env Next показаны в `frontend/.env.example`. Для текущего локального
-preview AUTH API — `http://127.0.0.1:18080/api/v1/`, Prometheus —
+Server-only env Next показаны в `frontend/.env.example`. В историческом локальном
+preview AUTH API был `http://127.0.0.1:18080/api/v1/`, Prometheus —
 `http://127.0.0.1:19090/`, Grafana — `http://127.0.0.1:13000/`.
 Для Docker frontend используйте доступные ему service origins и точный trusted
 proxy address. Не переносите localhost values внутрь контейнера вслепую.
@@ -308,7 +320,7 @@ health, источник dashboard `sphere-prometheus`, provisioned UID
 удаляется, upstream Viewer создаётся сервером. Настройки чужого примера Editor
 в Sphere не применяются.
 
-Multi-worker профиль прошёл image acceptance и развёрнут в pilot 30 сентября
+Исторический multi-worker профиль прошёл image acceptance и развёрнут в pilot 30 сентября
 18:09 UTC+5 (`1ac06ac`); см. [runtime receipt](CURRENT-STATE.md).
 HTTP-rate/latency панели и алерты требуют отдельной проверки запросов и порогов,
 длительный resource budget ещё не принят. Следующий этап — структурированные

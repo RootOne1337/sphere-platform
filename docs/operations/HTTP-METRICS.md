@@ -17,12 +17,12 @@ Grafana имеет прежнюю отдельную проверку роли �
 
 | Панель | Измерение | Единица | Область |
 | --- | --- | --- | --- |
-| HTTP RPS | sum(rate(request counter[5m])) | запрос/с | job sphere-backend, все API workers |
+| HTTP RPS | sum(rate(request counter[5m])) | запрос/с | доступные серии job sphere-backend; все workers только при настроенном multiprocess exposition |
 | HTTP p95 | histogram_quantile(0.95, sum by(le)(rate(bucket[5m]))) | секунды | До response headers, без времени передачи тела |
 | Ошибки 5xx | rate серверных ответов 500–599 | запрос/с | Тот же job и окно |
 | Ответы 4xx | rate ответов 400–499 | запрос/с | В том числе штатные отказы авторизации; не автоматически авария |
 | Маршруты | topk(30, rate по method + endpoint) | запрос/с и секунды | Нормализованные route templates, до 30 строк |
-| Коды ответов | rate по status_code | запрос/с | Весь backend, независимо от выбранной строки |
+| Коды ответов | rate по status_code | запрос/с | Доступные серии job, независимо от выбранной строки |
 
 Сначала вычисляется `rate` каждого counter, затем агрегируются series. p95 —
 оценка по histogram buckets, не точный percentile отдельных сохранённых запросов.
@@ -34,9 +34,11 @@ Grafana имеет прежнюю отдельную проверку роли �
 producer middleware; build health endpoint входит в обычный HTTP traffic.
 
 Это не throughput видеокадров, не WebSocket latency, не длительность Android
-команды и не доказательство исправности сценария. Метрики самой страницы,
-проверок `/auth/me` и операторских запросов входят в HTTP traffic. При малой
-нагрузке их вклад заметен. Endpoint-доступность по отсутствующему traffic не выводится.
+команды и не доказательство исправности сценария. В счётчик входят запросы,
+дошедшие до backend middleware, включая `/auth/me` и другие не исключённые
+операторские API-запросы; они могут заметно влиять на малый traffic. Next.js
+страница и её `/api/observability/*` не измеряются этим backend middleware как
+отдельные запросы страницы. Endpoint-доступность по отсутствующему traffic не выводится.
 
 ## Ограниченный контракт
 
@@ -73,8 +75,9 @@ Rate вычисляется по существующим labels; при отс�
 | error | Ошибка источника, неправильная shape/label/number, превышение bounds | Затронутая панель скрывает значения; независимые могут работать |
 | stale | Нет свежего успешного scrape либо последний history point устарел | Текущие данные скрыты |
 
-Targets `sphere-backend` должны иметь health up и lastScrape не старше 45 секунд
-и не дальше 5 секунд в будущем. Ошибка/partial targets не маскируется под
+Наличие job и свежесть scrape не доказывают, что обнаружены все реплики или что
+их multiprocess registries корректно настроены. Targets `sphere-backend` должны
+иметь health up и lastScrape не старше 45 секунд и не дальше 5 секунд в будущем. Ошибка/partial targets не маскируется под
 здоровый collection. UI дополнительно проверяет возраст snapshot и lastScrape
 по клиентским часам. Заметный clock skew потребует синхронизации времени.
 Исторические пропуски разрывают линии SVG. На error refetch старый cached срез
@@ -93,13 +96,16 @@ UI tests проверяют drilldown, фильтр, разные состоян
 строки, отказ/восстановление и скрытие устаревших данных.
 
 1. Проверить `/api/v1/health/build` и UI stamp установленной сборки.
-2. Открыть `/monitoring` на 3015 с super-admin сессией, проверить настоящий
-   HTTP блок, route drilldown, time/window/scope, а затем collection/Grafana.
+2. Открыть `/monitoring` через ingress проверяемой установки с super-admin сессией,
+   проверить HTTP блок, route drilldown, time/window/scope, а затем collection/Grafana.
 3. При empty проверить scrape и наличие двух counter samples для rate.
    При idle p95 не заменять его нулём и не генерировать рабочую нагрузку автоматически.
 4. При error проверить private source logs; не экспортировать credentials.
-5. Обновление UI не требует APK или backend restart: используются существующие
-   агрегированные metrics producer и collection config.
+5. Для принятия новой UI-сборки отдельно сверить deployed image и доступность
+   совместимых backend producer и collection config. Одна замена UI не включает
+   отсутствующую instrumentation или scrape и не подтверждает rollout.
 
-CPU/RAM history, active tunnel inventory, полная карта endpoint inventory,
-HTTP alert thresholds и Android latency/FPS остаются отдельными задачами.
+В исходниках есть отдельная история cgroup ресурсов backend; её доступность и
+охват проверяются отдельно. История CPU/RAM всего хоста, active tunnel inventory,
+полная карта endpoint inventory, HTTP alert thresholds и Android latency/FPS
+остаются отдельными задачами.
