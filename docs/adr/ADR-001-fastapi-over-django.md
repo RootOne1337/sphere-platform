@@ -1,5 +1,13 @@
 # ADR-001 — Use FastAPI over Django for the Backend
 
+> Historical decision record: the status and date below are recorded metadata,
+> not deployment or capacity evidence. The current source creates a FastAPI app
+> and async SQLAlchemy engine, but the Celery process and performance assumptions
+> below are not a verified description of the current task dispatcher. See
+> [backend application](../../backend/main.py), [database engine](../../backend/database/engine.py)
+> and [task lifecycle](../operations/TASKS-AND-ORCHESTRATION.md). The app exposes
+> interactive API docs at `/api/docs` and `/api/redoc`, not the paths below.
+
 **Status:** Accepted  
 **Date:** 2024-01-15  
 **Deciders:** Backend Team Lead, CTO  
