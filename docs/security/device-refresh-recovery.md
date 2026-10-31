@@ -41,8 +41,14 @@ sequenceDiagram
 - Необязательный `X-Refresh-Request-Id`: UUID, созданный клиентом до первого запроса.
   При повторе той же операции сохраняется; для следующей ротации создаётся новый.
 - Без заголовка остаётся прежняя одноразовая ротация. Повтор исходного токена — 401.
-- Некорректный UUID — 422 до расходования credential. Другой token/ID, expired,
-  inactive или superseded credential — 401 без нового credential.
+- Некорректный UUID — 422 до расходования credential. Для **предыдущего** токена
+  повтор с отсутствующим или другим UUID возвращает 401. Неизвестный, expired,
+  inactive или superseded credential тоже возвращает 401 без нового credential.
+- **Текущий** действующий токен с новым UUID начинает следующую ротацию, а не
+  восстанавливает предыдущую; при этом прежнее окно recovery заменяется. Два
+  конкурентных запроса с одним исходным токеном и разными UUID не являются двумя
+  независимыми ротациями: после победителя второй использует уже предыдущий токен
+  и получает 401.
 - Ответ сохраняет `DeviceRegisterResponse`; новый protocol не меняет WS auth frame.
 
 Это не общий Idempotency-Key для всех API и не замена аутентификации. Proxy должен
@@ -116,6 +122,23 @@ pending ID через `apply()`. Если процесс упал до запи�
 регистрация или очистка, старый ответ не записывается. Возвращается текущее состояние
 credentials, а не устаревший token, захваченный до запроса.
 
+### Ошибки и повторная регистрация
+
+При явном HTTP 401 `AuthTokenStore` синхронно пытается удалить access/refresh,
+expiry и pending UUID, только если отклонённый refresh всё ещё является текущим.
+Device ID, instance binding и management routes сохраняются для возможного
+re-enrollment. Если другая регистрация уже заменила токены, её данные не удаляются.
+Ошибка `commit()` очистки возвращает `null`; успешную запись на диск в этом случае
+считать подтверждённой нельзя. Доступность enrollment credential и успешная повторная
+регистрация отдельно не гарантируются.
+
+Тайм-аут, транспортная ошибка, некорректный ответ и HTTP-ошибки, отличные от 401,
+переходят к сохранённому access token; ранее успешно сохранённый pending UUID
+остаётся для повтора. Если запись intent не удалась, HTTP не отправляется и
+сохранение UUID на диске не гарантируется. Сохранённый access token может уже истечь, и fallback не доказывает авторизацию на сервере. Внешняя отмена
+coroutine пробрасывается. Проверяйте подлинность и поведение ingress: подменённый
+или ошибочный 401 способен запустить очистку локальных credentials.
+
 ### Тайм-аут и остановка refresh (AUD-71)
 
 HTTP refresh использует асинхронный OkHttp `enqueue`. Собственный coroutine-дедлайн
@@ -172,7 +195,7 @@ backend может нормально ротировать, но восстан�
 - AUD-71: [4 failures / 1 control до fix](../audits/2026-09-05/evidence/android-refresh-cancellation-before-summary.txt).
   Восемь новых cases проверяют deadline/stop, поздний body, внешний timeout, 64
   ожидающих вызова и ошибочные ответы (JSON/size/missing rotation). Настоящий OkHttp
-  работает с interceptor/Source doubles без сети. Полный текущий набор —
+  работает с interceptor/Source doubles без сети. Снимок набора на дату аудита —
   [362 tests / 29 suites](../audits/2026-09-05/evidence/android-refresh-cancellation-summary.json).
 
 Тесты не заменяют actual Android process death/keystore/disk failure, APK↔server
@@ -192,3 +215,16 @@ WS reconnect передаёт в refresh тот же сохранённый prim
 переходе к следующему адресу. Все адреса должны обслуживать одну установку с общими
 identity/SQL/ключами. Lost-response retry через другой origin с реальным SQL commit
 проверен in-process ASGI; он не доказывает сетевую HA. [Настройка и границы](../architecture/ANDROID-SAVED-ROUTES.md).
+
+## Сверка с исходным кодом
+
+На 1 ноября 2026 поведение в этом руководстве сопоставлено с
+[`refresh_device`](../../backend/api/v1/devices/router.py),
+[`DeviceRegistrationService`](../../backend/services/device_registration_service.py) и
+[`AuthTokenStore`](../../android/app/src/main/kotlin/com/sphereplatform/agent/store/AuthTokenStore.kt).
+Примеры испытаний: [`RefreshRecoveryTest`](../../android/app/src/test/kotlin/com/sphereplatform/agent/store/RefreshRecoveryTest.kt)
+и [`SavedRouteFailoverTest`](../../android/app/src/test/kotlin/com/sphereplatform/agent/ws/SavedRouteFailoverTest.kt),
+[`AuthTokenStoreTest`](../../android/app/src/test/kotlin/com/sphereplatform/agent/store/AuthTokenStoreTest.kt)
+для очистки при 401 и [backend recovery tests](../../tests/production/test_device_refresh_recovery.py).
+Исторические результаты выше повторно не запускались; код и тестовые doubles не
+подтверждают установленную версию APK, ingress, фактические роли или runtime устройства.

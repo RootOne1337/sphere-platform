@@ -1,9 +1,11 @@
 # Device credentials: tenant discovery and runtime rollout
 
-Updated 10 September 2026. AUD-58 fixes opaque API-key and device-refresh tenant
-discovery under a non-owner PostgreSQL login. Full production rollout remains
-blocked by other unscoped auth/jobs and runtime-role provisioning. Tests use only
-the dedicated local PostgreSQL 15/Redis services and synthetic credentials.
+AUD-58 (10 September 2026) addressed opaque API-key and device-refresh tenant
+discovery under a non-owner PostgreSQL login. Its test evidence is a historical
+snapshot using dedicated local PostgreSQL 15/Redis services and synthetic credentials.
+Other bootstrap and worker paths have since received separate changes; consult the
+[RLS rollout guide](postgresql-rls.md#что-остаётся-блокером) for remaining work and
+verify the actual deployment rather than treating this snapshot as rollout evidence.
 
 ## Why registration and refresh failed
 
@@ -108,10 +110,13 @@ make PubSub notifications, Redis lock release or EventTrigger effects a durable 
 
 AUD-69/70 add [recoverable device refresh](device-refresh-recovery.md): a persisted
 operation UUID lets the client recover one unconsumed successor after lost commit/
-HTTP response. Legacy requests without that header still reject old-token replay. Re-enrollment preserves the device ID but rotates
-credentials; it does not promise identical responses. A retained enrollment key
-can re-enroll a matching fingerprint; device attestation/proof of possession and
-enrollment-key retirement remain separate work. User email/MFA/refresh bootstrap
+HTTP response. Legacy requests without that header still reject old-token replay.
+Re-enrollment of the matched existing device preserves its ID and rotates credentials;
+instance-binding version and value may instead cause rejection or a separate device
+identity, as implemented in [`DeviceRegistrationService`](../../backend/services/device_registration_service.py).
+Re-enrollment does not promise identical responses. A retained enrollment key
+can re-enroll a matching fingerprint subject to those binding rules; device
+attestation/proof of possession and enrollment-key retirement remain separate work. User email/MFA/refresh bootstrap
 is covered separately by [AUD-62 and its rollout contract](user-auth-bootstrap.md).
 Global jobs, full APK runtime and 10–64 emulator load remain unverified here.
 
