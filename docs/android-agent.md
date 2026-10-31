@@ -12,7 +12,7 @@ crash isolation и явную очистку. Внешний WG даёт нес�
 [Конечный физический опыт](audits/2026-10-22/VPN-APK85-MAIN-CANARY.md) ·
 [Физический опыт APK84](audits/2026-10-22/VPN-APK84-MAIN-CANARY.md) ·
 [Поставка APK84](audits/2026-10-22/VPN-APK84-PH011-DELIVERY.md) ·
-[Текущие UI/API и устройства](operations/STATUS-REGISTRY.json).
+[Реестр наблюдений UI/API и устройств](operations/STATUS-REGISTRY.json).
 
 Если локальная память не допускает Android build, проверен отдельный ручной
 [путь облачной упаковки](operations/ANDROID-CLOUD-PILOT.md): полный CI остаётся
@@ -436,8 +436,9 @@ is broken; test connection and video delivery separately.
 Codec backpressure, buffer copying, encoder recovery, viewer churn and device
 permission/background transitions remain open runtime work. No verified FPS,
 bitrate capacity, per-device RAM/CPU, battery usage or 10–64-emulator host capacity
-is available from this audit. Start the future load matrix with idle connections,
-then DAG actions, then selected concurrent streams; retain per-device and host
+is established as a general fleet guarantee by this audit. Historical per-device
+frame measurements above remain specific to their dated trials. Start the future
+load matrix with idle connections, then DAG actions, then selected concurrent streams; retain per-device and host
 measurements plus failure/reconnect timings.
 
 ### Stream and crash diagnostics (25 September 2026)
@@ -446,8 +447,14 @@ The current source adds Android capture, encoder-surface, MediaCodec output,
 intentional FPS-throttle, and local WebSocket-queue counters to the periodic
 heartbeat. The authenticated operator endpoint
 `GET /api/v1/devices/{id}/stream-diagnostics` returns only the latest validated
-snapshot. Redis retains that small snapshot for 24 hours; the API marks it stale
-after 75 seconds without a fresh heartbeat. Version 1 agents remain readable,
+snapshot. The configured Redis TTL is 24 hours, not a guarantee that a snapshot
+survives Redis loss, eviction or explicit clearing. The API requires online/busy
+presence with a heartbeat no older than 75 seconds and a snapshot no older than
+75 seconds for `active_report`. With a fresh heartbeat and no snapshot it returns
+`not_streaming`; with an old snapshot or stale/missing presence and a snapshot it
+returns `stale`; without fresh presence or snapshot it returns `unavailable`.
+These are server interpretations of reports, not proof of capture, delivery or
+rendering. Version 1 agents remain readable,
 but have no capture/surface counters. See the
 [evidence, field semantics, and acceptance limits](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md).
 
@@ -523,7 +530,7 @@ Evidence: [loop before](audits/2026-09-05/evidence/android-loop-before.txt),
 [controls before](audits/2026-09-05/evidence/android-control-boundaries-before.txt),
 [full suite after](audits/2026-09-05/evidence/android-control-boundaries-after.txt).
 
-The combined backend/PC/local-service/deployment suite last passed **1334 tests**,
+The historical combined backend/PC/local-service/deployment snapshot passed **1334 tests**,
 with **69.31%** backend coverage. It includes 453 PostgreSQL/Redis cases and
 15 new post-auth Android runtime-role cases (AUD-61). JVM/MockWebServer and isolated PostgreSQL/Redis
 checks exercise real runtime logic but replace device/network boundaries.
@@ -535,16 +542,20 @@ unverified. Track the latest PR checks on the actual revision; a build or unit
 suite alone does not close these requirements.
 
 
-### Fleet reconnect policy (AUD-67)
+### Fleet reconnect policy (AUD-67 and later source)
 
 The first retry now waits 1–2 seconds with independent equal jitter; exponential
 windows cap at 15–30 seconds. Clean server closes also enter a retry window instead
 of reconnecting immediately. Stop and forced reconnect retain their existing wake
-channel. These limits describe retry scheduling, not command latency or a recovery
-SLO. Three new tests execute the real client loop/backoff with socket doubles and
-virtual time; the suite contained 347 tests at AUD-67, 354 at AUD-70 and 362 at AUD-71. Older APK builds retain their
-old policy until updated. A secondary endpoint and LAN-first discovery are separate
-work; jitter alone is not a backup channel.
+channel. Current source also opens a 60-second circuit after ten consecutive
+transport failures; short authenticated sessions retain retry debt until a
+60-second stable transport window, whereas authentication rejection has a separate
+path. Forced reconnect can wake the loop. These limits describe retry scheduling,
+not command latency or a recovery SLO. Three new tests execute the real client
+loop/backoff with socket doubles and virtual time; the suite contained 347 tests at
+AUD-67, 354 at AUD-70 and 362 at AUD-71. Older APK builds retain their
+old policy until updated. Saved secondary routes were added later in AUD-74 below;
+jitter alone is not a backup channel or proof of network failover.
 
 
 ## Refresh recovery after response loss (AUD-69/70)
@@ -559,8 +570,9 @@ Seven new memory/disk/HTTP-boundary cases pass; the suite at AUD-70 was **354 te
 suites**. This is not a physical process-death/keystore test. Deploy migration and
 all backend workers before APK; preserve app data and signing identity. Older
 servers do not guarantee response recovery. The feature does not recover an
-already-lost legacy rotation, initial enrollment, expired refresh credentials or a
-second server route.
+already-lost legacy rotation, initial enrollment or expired refresh credentials.
+The saved-route mechanism added later can retry an uncertain refresh on another
+configured route to the same backend installation; see AUD-74 below.
 
 ## Refresh deadlines and cancellation (AUD-71)
 
@@ -573,8 +585,8 @@ for recovery on the next attempt. The shared WS client's timeouts are unchanged.
 
 Eight new JVM cases cover a hung request, stop, late body, outer timeout, 64 parallel
 callers with one cancelled waiter, and malformed/oversized/incomplete responses.
-Initial reproduction: four failures and one passing control; current enterprise
-debug suite: **362 tests / 29 suites**. These are real OkHttp calls with synthetic
+Initial reproduction: four failures and one passing control; the AUD-71 enterprise
+debug snapshot contained **362 tests / 29 suites**. These are real OkHttp calls with synthetic
 interceptors/bodies, without sockets or a hardware fleet. Waiting for the mutex and
 blocked preference/keystore IO are not bounded by an HTTP deadline. Physical Android
 network/OS behavior remains unmeasured; see the
@@ -586,8 +598,9 @@ Transport open now sends only the token. The APK becomes connected and starts re
 replay only after `auth_ok` with the current device ID and numeric protocol version
 1. The 20-second WS deadline includes waiting for this acknowledgement; a silent
 server cannot leave the APK apparently connected. Invalid acknowledgements and
-application data arriving before auth do not reach command execution. Auth close
-codes keep their immediate token-refresh path. Ended generations are invalidated
+application data arriving before auth do not reach command execution. Auth rejection
+invalidates the cached access-token expiry and enters a separate retry path; it does
+not guarantee immediate refresh or success. Ended generations are invalidated
 before backoff, including late callback races before coroutine cleanup runs.
 
 The backend emits the acknowledgement after identity/tenant/device checks and
@@ -595,8 +608,8 @@ before publishing the socket to command producers. It confirms authentication,
 not readiness of every dependency or SQL commitment of a task result.
 
 Initial baseline: 10 failures / 2 controls in 12 new JVM cases, 5 failures / 3
-controls in eight non-owner SQL/ASGI cases. The completed Android set adds four
-callback/binary regressions: **378 tests / 30 suites** pass. Prior lifecycle tests
+controls in eight non-owner SQL/ASGI cases. The AUD-72 Android snapshot adds four
+callback/binary regressions: **378 tests / 30 suites** passed. Prior lifecycle tests
 now establish server acknowledgement before testing an active channel.
 
 Deploy **all backend workers before APK**, preserving app data and signing identity.
@@ -634,8 +647,8 @@ Both addresses must belong to the same installation and credential/task state.
 One extra URL does not supply a second backend, database or command protocol.
 [Configuration examples, rollout, pinning and persistence limits](architecture/ANDROID-SAVED-ROUTES.md).
 
-**426 JVM tests / 32 suites**, including **27 new route regressions**, pass with
-isolated HTTP/WS doubles. Three new PostgreSQL/ASGI cases cover optional config and
+The AUD-74 snapshot reports **426 JVM tests / 32 suites**, including **27 new
+route regressions**, with isolated HTTP/WS doubles. Three new PostgreSQL/ASGI cases cover optional config and
 lost refresh response recovery across origins; two Python cases exercise the real
 fleet config generator. These results do not establish physical OS behavior,
 network recovery latency, APK resource use or fleet capacity.

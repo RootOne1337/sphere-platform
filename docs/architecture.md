@@ -74,7 +74,7 @@ PostgreSQL  Redis     asyncio
 | VPN | `api/v1/vpn/` | Peer management, IP pool, health |
 | Streaming | `api/v1/streaming/` | Stream session lifecycle |
 | Monitoring | `api/v1/monitoring/` | Health, metrics, pool stats |
-| Audit | `api/v1/audit/` | Immutable audit log queries |
+| Audit | `api/v1/audit/` | Audit log queries; integrity depends on database roles and policy |
 | Tasks | `backend/tasks/` | Фоновые asyncio-задачи |
 | Services | `backend/services/` | Бизнес-логика (discovery, VPN, streaming, orchestrator, scheduler) |
 | Orchestrator | `backend/services/orchestrator/` | PipelineService, PipelineExecutor, 9 StepHandler-ов |
@@ -206,7 +206,7 @@ organizations
 | `task_batches` | UUID | `org_id` | Wave/batch execution sets |
 | `vpn_peers` | UUID | `org_id` | WG peer configs |
 | `workstations` | UUID | `org_id` | PC Agent hosts |
-| `audit_logs` | UUID | `org_id` | Immutable audit trail |
+| `audit_logs` | UUID | `org_id` | Audit records; protection depends on effective role and policies |
 | `api_keys` | UUID | `user_id` | API key credentials |
 | `refresh_tokens` | UUID | `user_id` | Hashed opaque user refresh tokens |
 | `pipelines` | UUID | `org_id` | Определения пайплайнов (steps, версионирование) |
@@ -325,6 +325,13 @@ or stale measurements must not be interpreted as zero or as a healthy device.
 Consult the [observability guide](operations/OBSERVABILITY.md),
 [HTTP metrics](operations/HTTP-METRICS.md), [device logs](operations/DEVICE-LOG-STORAGE.md)
 and the source [monitoring configuration](../infrastructure/monitoring/).
+
+The source [`GET /api/v1/streaming/{device_id}/status`](../backend/api/v1/streaming/router.py)
+sets `viewer_connected` from `is_streaming`; when no bridge is available it uses a
+`drop_ratio` of zero. Neither value independently proves a connected viewer or
+absence of frame loss. The separate device stream-diagnostics endpoint reports a
+bounded, freshness-checked agent snapshot, not browser rendering. Validate the
+deployed revision and actual telemetry before drawing runtime conclusions.
 
 ---
 
