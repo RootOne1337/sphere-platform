@@ -202,7 +202,8 @@ Content-Type: application/json
 ```
 
 Success returns `200 {"message": "MFA enabled successfully"}`. `DELETE /auth/mfa`
-disables MFA for the authenticated user and returns `204`.
+disables MFA for the authenticated user and returns `204` in the handler; the
+checked-in OpenAPI declaration lists `200`.
 
 ---
 
@@ -237,10 +238,16 @@ This endpoint may return base configuration without an API key. An optional
 `X-API-Key` (enrollment or device key) is validated and may enrich the response
 with organization-scoped data; it does not use a JWT to infer the organization.
 An invalid supplied key returns 401. The handler accepts `X-Agent-Fingerprint` but
-does not use it to select or authorize this response.
+does not use it to select or authorize this response. **Source exposure boundary:**
+when file configuration contains `enrollment_api_key`, the handler includes that
+credential in its base response even without an API key. Treat the response as
+sensitive and restrict access at the deployment boundary. Whether any installed
+environment is externally reachable or contains such a key is not established here.
 The response uses fields such as `server_url`, `ws_path`, `config_version`,
 `environment`, `config_poll_interval_seconds`, `features`, `enrollment_allowed`
-and optional `enrollment_api_key` and `org_id`. Enrollment credentials are
+and optional `enrollment_api_key` and `org_id`. The schema describes `min_agent_version` as
+forcing OTA, but a source search for that field found no such enforcement consumer;
+the field is not proof of forced update. Enrollment credentials are
 sensitive and must not be published. Source of truth: [router](../backend/api/v1/config/router.py)
 and [schema](../backend/schemas/agent_config.py).
 
@@ -296,6 +303,16 @@ for nullable fields. Presence availability and timestamp do not prove device act
 
 `connected_since` is nullable and starts at the first accepted pong of the current
 WebSocket session; it is cleared when that session is marked offline.
+
+---
+
+### GET /devices/me
+
+Requires `X-API-Key`; the optional `X-Device-Id` selects the device within the
+key's organization. Despite the handler docstring promising 404, the source
+returns `200` with `null` when no device is resolved; its broad exception handler
+also covers lookup failures, so `null` does not prove the device is absent.
+This is source behavior, not a measurement of an installed deployment.
 
 ---
 
@@ -774,7 +791,8 @@ platform administrator. Creation uses `email`, `password` and `role`; it creates
 a user in the caller's organization. `PUT /users/{id}/role` changes a role subject
 to owner/platform-admin and target-role checks. `PATCH /users/{id}/deactivate`
 disables a user; self-deactivation and removal of the last active owner are
-blocked. There is no documented DELETE/reactivation route here. The full contract
+blocked. The deactivate handler returns `204` although OpenAPI declares `200`.
+There is no documented DELETE/reactivation route here. The full contract
 and receipt boundaries are in [user access](operations/USER-ACCESS.md).
 
 ---
@@ -787,7 +805,8 @@ and receipt boundaries are in [user access](operations/USER-ACCESS.md).
 permissions must be held by the caller. The `201` response contains `id`, `name`,
 `key_prefix`, `raw_key`, `permissions`, `expires_at` and `created_at`; `raw_key`
 is displayed once and has the `sphr_{env}_{64hex}` format. Store it as a secret.
-`DELETE /auth/api-keys/{id}` requires `api_key:write` and returns `204` on success.
+`DELETE /auth/api-keys/{id}` requires `api_key:write` and returns `204` in the
+handler, although OpenAPI declares `200`.
 See [schemas](../backend/schemas/auth.py) and [router](../backend/api/v1/auth/router.py).
 
 ---
@@ -923,13 +942,20 @@ optional timestamp condition и только выключает новые admis
 
 POST /pipelines/{id}/run принимает `device_id` UUID и `input_params` object.
 POST /pipelines/{id}/run-batch принимает `device_ids`, `group_id`, `device_tags`,
-`input_params`, `wave_size`, `wave_delay_seconds`. 201 подтверждает созданный
-intent, а не завершение Android-действия. Steps фиксируются в run snapshot.
+`input_params`, `wave_size`, `wave_delay_seconds`. Service объединяет выбранные
+устройства и сразу создаёт `QUEUED` run для каждого; параметры волн сохраняются в
+`wave_config`, но их применение для задержки admission в исследованном backend не
+обнаружено. Не рассчитывайте на поэтапный запуск только по этим полям. `201`
+подтверждает созданный intent, а не завершение Android-действия. Steps фиксируются
+в run snapshot; повтор после потери ответа может создать новый run или batch.
 
 GET /pipelines/runs принимает `pipeline_id`, `device_id`, `status`,
 `active_only`, `page`, `per_page`; состояние выполнения читается по run_id.
-Pause/resume/cancel возвращают новый сохранённый receipt, не разрешение на
-blind replay при неизвестном результате. Input_schema пока сохраняется как
+Pause/resume/cancel возвращают сохранённое состояние, не подтверждение физической
+остановки. Pause допускается для RUNNING/WAITING, resume — для PAUSED; при ещё
+занятом executor или неизвестном исходе шага resume возвращает 409. Cancel может
+оставаться незавершённым, пока активный child не завершён. После неизвестного
+ответа перечитайте run перед повтором. Input_schema пока сохраняется как
 описание, без валидации входа исполнителем; глобальные max_retries пока не
 реализуют повтор всей цепочки. [Ограничения и восстановление](operations/PIPELINE-DEFINITIONS.md).
 
@@ -950,7 +976,9 @@ and [service](../backend/services/scheduler/schedule_service.py) define the sour
   `interval_seconds` (60–86400), `one_shot_at`, and at least one device selector:
   `device_ids`, `group_id`, or `device_tags`. For `script`/`pipeline` targets the
   corresponding ID is required. Parameters are `input_params`, not `variables`.
-  A successful `201` returns `ScheduleResponse`, including `is_active`,
+  For cron, an unrecognized timezone falls back to UTC in the calculation; verify
+  the intended IANA timezone and returned `next_fire_at`. A successful `201` returns
+  `ScheduleResponse`, including `is_active`,
   `next_fire_at`, `last_fired_at` and `total_runs`.
 - `GET /schedules/{id}` reads; `PATCH /schedules/{id}` partially changes; `DELETE`
   returns `204` and deactivates the schedule rather than deleting the row.
@@ -962,7 +990,8 @@ and [service](../backend/services/scheduler/schedule_service.py) define the sour
   and batch identifiers. There is no registered `POST /schedules/{id}/dry-run`.
 
 A saved schedule or requested fire is not evidence that a scheduler is running,
-that a target was reached, or that the resulting task completed.
+that a target was reached, or that the resulting task completed. After a lost
+mutation response, read back the schedule and execution history before retrying.
 
 ## Game Accounts — `/game-accounts`
 
@@ -995,8 +1024,9 @@ the owned pipeline is checked. Optional JSON object `input_params_template`,
 zero hourly limit means no limit. `GET /event-triggers/{id}` reads the rule,
 `PATCH /event-triggers/{id}` updates it, and `DELETE /event-triggers/{id}` hard
 removes it with 204. `POST /event-triggers/{id}/toggle?active=true` requires an
-explicit query boolean. A stored rule does not prove event delivery or pipeline
-execution. See [router](../backend/api/v1/event_triggers/router.py) and
+explicit query boolean. The PATCH handler skips fields explicitly set to null;
+null therefore does not clear the description. A stored rule does not prove event
+delivery or pipeline execution; after an uncertain mutation read back the rule. See [router](../backend/api/v1/event_triggers/router.py) and
 [schema](../backend/schemas/event_trigger.py).
 
 ## Pipeline Settings — `/pipeline-settings`
@@ -1009,7 +1039,11 @@ requires `pipeline:write` and partially updates settings. The four `POST
 accept `{"enabled": true|false}` and require `pipeline:write`. There is no
 registered `POST /pipeline-settings` or `DELETE /pipeline-settings/{id}`. Status,
 servers and nickname routes are listed in the [router](../backend/api/v1/pipeline_settings/router.py).
-Persisting settings does not prove automation has run.
+`GET /pipeline-settings/status` also calls `get_or_create` and commits. Its
+`registrations_completed`, `registrations_failed` and `bans_detected` are schema
+defaults of zero in this handler, not measured completed/failed/ban counters. The
+nickname check requires `pipeline:read`; generation requires `pipeline:write`. Persisting
+settings does not prove automation has run. Re-read settings after an uncertain write.
 
 ## Account Sessions — `/account-sessions`
 
@@ -1019,7 +1053,11 @@ Reads require `session:read`; changes require `session:write`. `GET
 `ended_at`, `end_reason` and `meta`, not the old `status`/`metadata` fields.
 `POST /account-sessions` requires `account_id` and `device_id`; `GET
 /account-sessions/{id}` reads one. `POST /account-sessions/{id}/end` requires a
-JSON `end_reason` (for example `manual`); the method is POST, not PUT. See
+JSON `end_reason` (one of `completed`, `banned`, `captcha`, `error`, `manual`,
+`rotation`, `timeout`, `device_offline`); the method is POST, not PUT. A missing or
+already ended owned active session returns 404; 404 following a lost response does
+not establish which attempt ended it. Re-read the session. An unrecognized list
+`end_reason` is ignored by the service rather than producing an empty result. See
 [router](../backend/api/v1/account_sessions/router.py) and
 [schema](../backend/schemas/account_sessions.py). A database record does not prove
 that a real game login or logout occurred.
@@ -1032,8 +1070,11 @@ Reads require `event:read`, writes `event:write`. `GET /device-events` filters b
 Items contain `occurred_at`, `data`, `severity` and `processed` rather than the old
 `payload` example. `GET /device-events/{id}` reads one and `GET
 /device-events/stats` gives aggregate counts. `POST /device-events` creates an
-event; `POST /device-events/{id}/processed` returns 204 in the handler although the
-snapshot declares 200. Marking processed is an application record, not proof of a
+event with required `device_id` and `event_type`, optional `severity` (default
+`info`), `message`, `data` and related IDs. An unrecognized list `severity` is
+ignored by the service rather than producing an empty result. `POST
+/device-events/{id}/processed` returns 204 in the handler although the snapshot
+declares 200. Marking processed is an application record, not proof of a
 device-side action. See [router](../backend/api/v1/device_events/router.py).
 
 ---
@@ -1206,6 +1247,18 @@ earlier unknown outcome.
 
 ---
 
+## OTA release metadata — `/updates`
+
+`DELETE /updates/{release_id}` requires `super_admin`: the handler returns 204
+on deletion and 404 if absent, while OpenAPI declares 200. The release creation
+schema accepts `version_name` up to 128 characters; the addressed recovery grant
+and frontend receipt validators cap it at 100. Names above 100 therefore cannot be
+assumed compatible with that workflow. See [publication](operations/OTA-PUBLICATION-AND-APK-CHECKS.md)
+and [addressed OTA](operations/OTA-ADDRESSED-UPDATES.md). A metadata response does
+not prove device installation.
+
+---
+
 ## Streaming — `/streaming`
 
 The registered controls are `POST /streaming/{device_id}/start`, `/stop`, and
@@ -1213,7 +1266,10 @@ The registered controls are `POST /streaming/{device_id}/start`, `/stop`, and
 command. Their `*_requested` receipt does not confirm agent execution, frame receipt
 or browser playback. A transport error may leave delivery unknown; reconcile before
 repeating. `GET /streaming/{device_id}/status` requires `stream:read` and observes
-the local stream bridge. Quality routes are separately listed in the
+the local stream bridge. In this handler `viewer_connected` mirrors `is_streaming`,
+not a separate viewer observation; when the bridge is absent, `drop_ratio` is 0.0,
+not evidence that no frames were lost. This source behavior does not establish
+the state of an installed runtime. Quality routes are separately listed in the
 [endpoint catalog](api-endpoints.md). The former `/streaming/start`, `/stop`, and
 `/sessions` paths are not registered in the checked-in snapshot.
 

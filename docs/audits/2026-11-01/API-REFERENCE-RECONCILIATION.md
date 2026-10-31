@@ -54,6 +54,64 @@
 [иерархия групп](../../../tests/production/test_group_hierarchy.py). Их наличие —
 не результат запуска этого прохода; здесь интеграционные тесты не запускали.
 
+## Дополнительная сверка orchestration и соседних маршрутов
+
+На исходном срезе `c8c35253` и меняющемся рабочем дереве сопоставлены все
+**47 зарегистрированных method/path** в шести группах со схемой, обработчиками,
+основными схемами запросов и применимыми фрагментами сервисов. Это не означает
+подтверждение всех ветвей кода, конкурентных транзакций или живого исполнения:
+
+| Область | Охват и существенные границы |
+| --- | --- |
+| Pipeline: 13 операций | [Router](../../../backend/api/v1/pipelines/router.py), [schema](../../../backend/schemas/pipeline.py), [service](../../../backend/services/orchestrator/pipeline_service.py): CRUD/toggle, list/detail runs, run/run-batch и pause/resume/cancel. `run-batch` сохраняет настройки волн, но сразу создаёт `QUEUED` run для каждого выбранного устройства; глобальный поиск по backend не выявил их применения pipeline executor для задержки admission. Не обещаем поэтапную подачу. Cancel может ожидать child, resume возвращает 409 при занятом executor или неизвестном исходе; потерянный ответ не разрешает слепой повтор. |
+| Schedules: 8 операций | [Router](../../../backend/api/v1/schedules/router.py), [schema](../../../backend/schemas/schedule.py), [service](../../../backend/services/scheduler/schedule_service.py): list/create/get/patch/delete, toggle, fire-now, executions. Неизвестный timezone в расчёте cron приводит к UTC fallback; fire-now меняет `next_fire_at`, сам по себе не доказывает запуск. Применение различных конфликтных политик и пограничных timezone на работающем scheduler не воспроизводилось. |
+| Pipeline settings: 10 операций | [Router](../../../backend/api/v1/pipeline_settings/router.py), [schema](../../../backend/schemas/pipeline_settings.py): GET/PATCH, четыре toggle, status/servers, nick generate/check. Оба GET settings и status вызывают get-or-create с commit. Status-поля `registrations_completed`, `registrations_failed`, `bans_detected` в данном handler не заполняются и получают schema defaults 0; считать их измеренными счётчиками нельзя. |
+| Device events: 5 операций | [Router](../../../backend/api/v1/device_events/router.py), [schema](../../../backend/schemas/device_events.py), [service](../../../backend/services/device_event_service.py): stats/list/create/get/processed. Неизвестный severity-фильтр игнорируется сервисом. Handler processed отдаёт 204 при декларации 200 в snapshot. Проверка создаваемого события и связанных идентификаторов в работающей среде не проводилась. |
+| Event triggers: 6 операций | [Router](../../../backend/api/v1/event_triggers/router.py), [schema](../../../backend/schemas/event_trigger.py): CRUD и toggle. При PATCH явный null игнорируется, в том числе для description; `active` задаётся query. Создание правила не является доказательством запуска. |
+| Account sessions: 5 операций | [Router](../../../backend/api/v1/account_sessions/router.py), [schema](../../../backend/schemas/account_sessions.py), [service](../../../backend/services/account_session_service.py): stats/list/start/get/end. Недопустимый фильтр end_reason молча игнорируется; end требует известную причину и возвращает 404 для отсутствующей или уже завершённой активной сессии. Операция записи не доказывает logout в игре. |
+
+Ручной осмотр create session/event не обнаружил в соответствующих service-методах
+явной проверки принадлежности связанных UUID организации. Эффективные RLS,
+ограничения базы и внешние защиты этим осмотром не проверены: это открытый вопрос
+для отдельной проверки, не подтверждение обхода изоляции.
+
+## Дополнительные расхождения API и исходников
+
+- [GET /config/agent](../../../backend/api/v1/config/router.py): при наличии
+  `enrollment_api_key` в загруженной конфигурации он включается в базовый ответ
+  без предъявления API-ключа. Это риск раскрытия credential при доступном endpoint;
+  состояние фактического файла, ingress и развёрнутой среды не проверяли. Schema
+  описывает `min_agent_version` как принудительный OTA, но поиск поля в коде не
+  выявил соответствующего потребителя; enforcement не подтверждён.
+- [GET /devices/me](../../../backend/api/v1/devices/router.py): docstring обещает
+  404 при отсутствии устройства, но handler с валидным ключом возвращает 200/null
+  при неразрешённом device и перехватывает ошибки lookup. Null не доказывает отсутствие.
+- [DELETE /auth/mfa и DELETE /auth/api-keys/{id}](../../../backend/api/v1/auth/router.py),
+  [PATCH /users/{id}/deactivate](../../../backend/api/v1/users/router.py),
+  [DELETE /updates/{id}](../../../backend/api/v1/updates/router.py): snapshot
+  декларирует 200, явный `Response` в каждом handler возвращает 204. Это разница
+  source/schema, не проверка HTTP в deployment. Аналогичные 200/204 для game-account
+  delete и device-event processed перечислены выше.
+- [Release schema](../../../backend/api/v1/updates/router.py) допускает
+  `version_name` до 128 символов; [recovery grant](../../../backend/services/device_ota_recovery.py)
+  и [frontend validator](../../../frontend/src/features/updates/recovery.ts)
+  ограничивают его 100. Совместимость длинного имени с адресным OTA не гарантирована.
+- [GET /streaming/{id}/status](../../../backend/api/v1/streaming/router.py):
+  `viewer_connected` равен `is_streaming`, а отсутствие bridge даёт `drop_ratio=0`;
+  это не независимое подтверждение зрителя или отсутствия потерь. Runtime не исследовался.
+
+Локально в `.venv-audit` проверена Pydantic-валидация выбранных примеров
+`CreatePipelineRequest`, `RunPipelineBatchRequest`, `UpdateEventTriggerRequest`,
+`EndSessionRequest` и `CreateDeviceEventRequest`: проверка прошла. Она касается
+только форм запросов, не вызывает handlers и не подтверждает приведённые эффекты.
+
+Найдены, но в этом проходе не запускались: [pipeline admission](../../../tests/production/test_pipeline_admission.py),
+[pipeline recovery](../../../tests/production/test_pipeline_recovery.py),
+[pipeline cancellation](../../../tests/production/test_pipeline_cancel_intent.py),
+[scheduler runtime](../../../tests/production/test_scheduler_runtime.py),
+[event triggers](../../../tests/orchestrator/test_event_triggers_api.py) и
+[stream control](../../../tests/production/test_stream_control_routing.py).
+
 ## Проверки и остаток
 
 Машинное сравнение HTTP method/path во **всех заголовках** справочника с JSON,

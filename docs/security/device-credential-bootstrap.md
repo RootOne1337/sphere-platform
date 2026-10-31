@@ -12,6 +12,13 @@ Device refresh similarly locates a device by the hash of its opaque refresh toke
 The tenant policies deny these initial unscoped SELECTs. Correct credentials thus
 returned 401 with a real runtime role even though privileged integration tests passed.
 
+The separate [`GET /api/v1/config/agent`](../../backend/api/v1/config/router.py)
+can include the configured `enrollment_api_key` in its response without an
+`X-API-Key`. Treat the response as potentially containing a registration
+credential; verify the actual endpoint and ingress protections without logging the
+secret. Tenant-discovery function restrictions do not protect a key exposed by an
+independently reachable HTTP endpoint.
+
 [Before evidence](../audits/2026-09-05/evidence/device-bootstrap-before.txt): seven
 failures and six negative controls. The initial concurrent HTTP cases used a
 one-connection pool; the retained regressions additionally use three connections
