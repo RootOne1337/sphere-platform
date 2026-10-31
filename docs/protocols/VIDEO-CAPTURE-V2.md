@@ -4,9 +4,12 @@ Initial checkpoint: **source canary, not installed on 3015**, 7 October 2026.
 Later integration and installation are tracked in
 [CURRENT-STATE](../operations/CURRENT-STATE.md) and
 [live integration](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-INTEGRATION.md).
-This extends the existing v1 H.264 envelope without changing the NAL payload,
+This extends the existing relay v1 H.264 envelope without changing the NAL payload,
 encoding, bitrate, dimensions or aspect ratio. It is a prerequisite for
 continuous input; it does not enable continuous input by itself.
+The byte layout below describes the WebSocket relay envelope, not every video
+transport. Direct video uses a separate negotiated peer and capture binding; its
+metadata and media delivery cannot be inferred from this relay header.
 
 ## Exact bytes
 
@@ -22,13 +25,16 @@ inserted into the encoded access unit.
 | 14–29 | 16 bytes | Non-nil capture UUID, network byte order |
 | 30 onward | bytes | Original H.264 Annex-B access unit |
 
-The capture epoch changes on every capture start, including a same-size
-restart. The UUID in the JSON input offer and in the frame represents the
+When capture geometry is available and the canary is enabled, a new capture session
+gets a new random epoch on each start, including a same-size restart. If geometry
+is unavailable, `StreamingManagerImpl` has no input session/epoch and falls back
+to v1 packets even with the canary flag. The UUID in the JSON input offer and in the v2 frame represents the
 same identity. Actual displayed width/height come from the decoded VideoFrame,
 not a trusted header assertion. Timestamp remains stream-relative; it is not
 browser wall-clock latency or an input execution timestamp. The packager uses
 the difference between two `System.currentTimeMillis()` readings: it is not a
-monotonic clock or the encoder's presentation timestamp.
+monotonic clock or the encoder's presentation timestamp. A wall-clock correction
+can make the difference negative; the browser parser rejects such a packet.
 
 Payload bound: **1 MiB**; v2 overhead: **30 bytes**, 16 more than v1. No
 screenshots, frame logs, history files or persistent per-frame objects are
@@ -68,7 +74,9 @@ be scanned as SPS/PPS/IDR.
 Recognized truncated, wrong-size, nil-epoch, reserved-flag or oversized v2
 envelopes have no trusted keyframe/configuration classification. This is a
 classifier boundary, **not a new ingress rejection endpoint**: an unknown
-packet may still traverse transport, where the browser rejects it. Raw Annex-B
+packet may still traverse transport, where the browser rejects it. The server
+classifier does not validate timestamps; the browser additionally enforces a safe
+nonnegative microsecond value. Classification does not prove browser acceptance. Raw Annex-B
 compatibility remains. Normal queue recovery still waits for a true IDR.
 
 ## Browser output boundary
@@ -99,6 +107,11 @@ Android input ACK, owner lease or permission grant. The current
 rendered capture binding in continuous-input admission. Actual availability
 depends on negotiated capabilities, authorization and the installed artifacts;
 source integration alone does not establish the behavior of a running viewer.
+For direct video, capture identity is separately parsed from a session-bound
+[`SV1` binding](../../frontend/src/features/stream/directVideoProtocol.ts); the
+Android encoded-viewer path uses encoder presentation timestamps. Do not parse
+direct RTP as this 30-byte WebSocket header or treat an advertised direct binding
+as proof of decoding or display.
 
 ## Initial 7 October acceptance boundary
 
@@ -128,3 +141,15 @@ real Redis and socket-fence unit acceptance but not yet public route/subscriptio
 integration. Current source registers the runtime and handles continuous input
 in the [stream router](../../backend/api/ws/stream/router.py). These source and
 historical test results do not establish current installed runtime acceptance.
+
+## Source review boundary
+
+On 1 November 2026 the relay contract was compared with
+[`FramePackager`](../../android/app/src/main/kotlin/com/sphereplatform/agent/streaming/FramePackager.kt),
+[`StreamingManagerImpl`](../../android/app/src/main/kotlin/com/sphereplatform/agent/streaming/StreamingManagerImpl.kt),
+[`frames.py`](../../backend/websocket/frames.py),
+[`sphere-frame.ts`](../../frontend/lib/sphere-frame.ts) and
+[`h264-decoder.ts`](../../frontend/lib/h264-decoder.ts). Relevant existing tests
+include [FramePackagerTest](../../android/app/src/test/kotlin/com/sphereplatform/agent/streaming/FramePackagerTest.kt)
+and [sphere-frame.test](../../frontend/__tests__/stream/sphere-frame.test.ts); they
+were not rerun here. No installed APK, browser, network or device was checked.
