@@ -1,6 +1,6 @@
 # Разработка Sphere
 
-**Сверено 21 сентября 2026.** [Каталог](README.md) · [Contributing](../CONTRIBUTING.md) · [Архитектура](architecture.md)
+**Команды и версии CI сверены по исходникам 1 ноября 2026.** [Каталог](README.md) · [Contributing](../CONTRIBUTING.md) · [Архитектура](architecture.md)
 
 ## Среда
 
@@ -31,6 +31,11 @@ cd sphere-platform
 явного project/env. `start-dev.ps1` предназначен для уже подготовленного стека.
 
 ## Backend и PC-agent
+
+Перед созданием окружения проверьте `python --version`: команда ниже должна
+использовать именно Python 3.12. Если `python` указывает на другую версию,
+запустите установленный интерпретатор 3.12 по его явному пути; одно имя `python`
+не выбирает нужную версию автоматически.
 
 ```bash
 python -m venv .venv
@@ -72,7 +77,10 @@ Receipt об исполнении, принятие команды трансп�
 
 ### Проверки backend
 
-В отдельном virtualenv для lint установите `ruff` и `mypy`. Основные команды:
+В активированном virtualenv после установки зависимостей выше используйте
+закреплённые в `backend/requirements.txt` `ruff` и `mypy`. CI для lint также
+устанавливает backend dependencies целиком: одни инструменты без типов зависимостей
+могут скрыть ошибки. Основные команды:
 
 ```bash
 python -m ruff check backend/ tests/ scripts/check_documentation_status.py scripts/documentation_impact.py scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
@@ -92,6 +100,9 @@ python scripts/sync_action_contract.py --check
 Без `SPHERE_RUN_INTEGRATION=1` реальные DB cases пропускаются. Фактический coverage
 gate — 65% backend; это не гарантия достаточного покрытия каждого компонента.
 `tests/load` не входит в обычную regression suite.
+Цель `make test` в текущем Makefile отличается от CI: она включает `tests/load`
+и задаёт `--cov-fail-under=80`. Не считайте её эквивалентом CI или безопасной
+заменой изолированной подготовки нагрузочного стенда.
 
 После изменения HTTP routes, в настроенной тестовой среде:
 
