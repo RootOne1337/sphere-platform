@@ -2,14 +2,35 @@
 
 > Датированные статусы и проверки ниже относятся к своим срезам, а не к текущей установке. Сверяйте [записанное состояние](../operations/CURRENT-STATE.md) и [открытые работы](../operations/WORK-STATUS.md).
 
-**Следующий source-этап10255:** bounded native ICE/progress reports добавлены
+**Исторический source-этап10255:** bounded native ICE/progress reports добавлены
 в общий journal последних10 сеансов. Это подготовленный source; установленный
 APK54 и API/UI6ee не обновлялись этим изменением.
 [Протокол и границы](../audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md).
 
 **Исторический срез 11 октября 2026:** UI/API `6ee80c1f` установлены на обоих адресах с29 одинаковыми assets. PH010 обновлён до10254 с проверкой installed SHA и завершённого OTA-command; ещё шесть проверенных машин используют10253, PH019/PH025 —10252. PH030 выключен. Primary WebRTC включён, но PH010/PH011 в тех проверках не открыли ICE-пару и использовали резерв. APK54 поддерживал прямые касания; API в том срезе ещё не разрешал их. Кандидат API/UI `e9af9e60` прошёл полные CI, установка остановлена до загрузки образа из-за C: `Full Repair Needed`. [Фактическая доставка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Блокировка и условия проверки](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
 
-**Новое наблюдение:** PH01054 получил41 server-fallback кадр без ошибок и подтверждённую команду Home. Native ICE сообщил237 запросов и0 ответов; конкретная причина потери пути не установлена. Последующий source сохраняет browser ICE aggregates в прежней ограниченной истории10 сеансов и показывает отдельный маршрут касаний. Это ещё не установленная telemetry; native progress остаётся отдельным локальным логом. Исторические echo/NAT результаты ниже не заменяют текущий маршрут и не измеряют полную задержку картинки.
+**Историческое наблюдение 11 октября:** PH01054 получил41 server-fallback кадр без ошибок и подтверждённую команду Home. Native ICE сообщил237 запросов и0 ответов; конкретная причина потери пути не установлена. Последующий source сохраняет browser ICE aggregates в прежней ограниченной истории10 сеансов и показывает отдельный маршрут касаний. Это не доказательство telemetry в нынешней установке. Исторические echo/NAT результаты ниже не заменяют текущий маршрут и не измеряют полную задержку картинки.
+
+## Сверка source и операторская граница на 1 ноября 2026
+
+[`direct-probe-capabilities`](../../backend/api/v1/direct_probe/router.py) —
+снимок допуска, а не создание peer или проверка связи. Он учитывает включённые
+server flags, allowlist, доступность runtime и, для video/input, текущие status/
+agent version. Наличие в ответе `turn` означает проверенную конфигурацию URL и
+secret, а не достижимый или безопасно развёрнутый TURN. Успешный echo, открытый
+DataChannel, выбранная ICE-пара и декодированный/показанный кадр — разные
+наблюдения; ни одно само по себе не подтверждает готовность native input.
+
+[`/ws/direct-probe/{device_id}`](../../backend/api/ws/direct/router.py) отдельно
+аутентифицирует пользователя, проверяет device/org и `stream:read`, mode flags и
+продление; для shared control дополнительно требуется `stream:control`. Direct
+input также проходит отдельную проверку владения и состояния в
+[continuous input contract](../protocols/CONTINUOUS-INPUT-SERVER.md).
+В source имеются отдельные server/Android leases, но их наличие или capability не
+сертифицирует фактическую сетевую топологию, конфигурацию сервера, физическое
+освобождение ввода либо все security-требования раздела 7. Для оператора актуален
+[device and stream guide](../operations/DEVICE-STREAM-GUIDE.md); установленную
+версию и фактические разрешения надо проверять отдельно.
 
 **Дата первоначального исследования:** 9 октября 2026; уточнение сетевых источников 11 октября. Последующая разработка разрешена пользователем. Конечный echo/read-only canary развился в ограниченный primary-video pilot и source прямых касаний. Срезы ниже датированы и описывают прежние этапы. RTT не является задержкой изображения.
 
@@ -357,11 +378,20 @@ mailbox сохраняет monotonic sequence и immutable capture binding. Nati
 | Task/recorder/inspector | Подтверждённая передача единого input ownership; не второй независимый owner |
 | Close transport | Bounded cleanup; отдельный known/unknown native release |
 
-Существующие deadline 500 ms и native watchdog 1500 ms не повышаются ради
-маскировки проблемы. Prototype может предложить новый versioned budget только
-с обоснованными latency/loss measurements и native safety review.
+Ранние proposal-бюджеты 500 ms / 1500 ms не являются универсальными сроками всех
+нынешних режимов: source browser controller различает action, idle/shared и startup.
+Текущие конкретные значения и границы — в
+[receipt contract](../protocols/CONTINUOUS-INPUT-RECEIPTS.md); они не SLA и не
+основание скрывать неизвестный результат.
 
-## 7. Server authority при прямом input
+## 7. Проектные требования к server authority при прямом input
+
+Следующие абзацы — целевая security-модель исследования, а не описание доказанного
+формата текущего grant. В проверенных signaling/runtime/Android lease путях не
+подтверждена отдельная подписанная application-grant схема со всеми перечисленными
+полями. Фактические проверки и источники указаны в начале документа; каждое новое
+утверждение о подписи, audience, привязке SDP или TURN policy требует отдельной
+проверки реализации и развёртывания.
 
 Direct connectivity не даёт права управлять устройством. Grant выдаётся только
 после существующих organization/device/RBAC checks и согласования единого owner.
@@ -503,7 +533,7 @@ text или native receipt между transport generations. Старый сер
 * Measured latency, video quality, cost, CPU/RSS/disk limits и browser compatibility.
 * Общий frame/action correlation для playback/recorder и visual assertions.
 
-**Итог статуса:** primary media реализован и установлен как ограниченный pilot;
+**Исторический итог на 11 октября:** primary media реализован и установлен как ограниченный pilot;
 source прямых касаний и подписанный APK 54 подготовлены. Установка direct input,
 живые native ACK, текущий ближайший маршрут и production acceptance требуют
 отдельных квитанций. SF26-05 / EP-020 / EP-029 остаются OPEN в полном scope.
