@@ -356,6 +356,13 @@ a host path named `volumes/redis_data/appendonly.aof` exists or is a consistent
 backup. Persistence across a restart is not disaster recovery. The legacy cron
 example referred to a non-existent `scripts/backup.sh`.
 
+The separate [backup-database.sh](../scripts/backup-database.sh) does exist, but
+its hard-coded container names, unverified Redis snapshot and automatic deletion
+make it unsuitable as an unreviewed recovery procedure. Its own space-separated
+`--dir`/`--keep` examples are ignored by the parser. See the specific
+[script limitations](runbooks/03-database-failure.md#ограничения-существующего-backup-скрипта)
+before considering it; no backup or restore was executed as part of this review.
+
 Choose a backup procedure for the actual project and its PostgreSQL/Redis versions,
 volumes and credentials. Include application data, required encryption keys,
 roles/grants, OTA artifacts and device logs according to the installation's
@@ -433,40 +440,21 @@ Select the intended Compose files and project for these examples; Redis inspecti
 also requires that installation's authentication. See the
 [backend outage runbook](runbooks/01-backend-outage.md).
 
-### Tunnel Setup (Serveo SSH)
+### Tunnel and remote ingress
 
-Serveo используется как SSH tunnel для проброса HTTPS/WSS трафика без
-статического IP-адреса. Заменяет Cloudflare Quick Tunnel, который дропал
-idle WebSocket через 5-50 секунд.
+The legacy `docker-compose.tunnel.yml` is not a standalone deployment recipe:
+its `tunnel` service depends on `nginx`, which that file does not define, and it
+hard-codes an external network name. Its Dockerfile copies a private SSH key into
+the image; its entrypoint disables strict host-key checking. Do not infer a valid
+or secure route from its fixed example hostname or a historical health response.
+The separate `start-dev.ps1 -Tunnel` path has different behavior and is not covered
+by the normal startup readiness contract.
 
-```bash
-# 1. Сгенерировать SSH-ключ
-mkdir -p infrastructure/tunnel/keys
-ssh-keygen -t ed25519 -f infrastructure/tunnel/keys/id_ed25519 -N ""
-
-# 2. Зарегистрировать ключ для кастомного субдомена
-# Перейти на https://console.serveo.net → Add SSH Key → ваш публичный ключ
-
-# 3. Запустить tunnel
-docker compose -f docker-compose.tunnel.yml up -d
-
-# 4. Проверить
-curl https://sphere.serveousercontent.com/api/v1/health
-# → {"status":"ok","version":"4.5.0"}
-```
-
-**Переменные окружения (.env):**
-
-```bash
-SERVER_PUBLIC_URL=https://sphere.serveousercontent.com
-CORS_EXTRA_ORIGINS=https://sphere.serveousercontent.com
-```
-
-**Agent config (sphere-agent-config repo):**
-
-```json
-{ "server_url": "https://sphere.serveousercontent.com" }
-```
+For an existing installation, first establish its selected ingress and project.
+See [remote pilot](operations/REMOTE-PILOT.md) and [startup boundaries](operations/STARTUP.md);
+their historical observations do not establish current provider access or a
+working tunnel. Publishing a new address or starting a connector changes external
+routing and requires its own reviewed plan and post-change verification.
 
 ### H264 стрим не работает (чёрный экран)
 

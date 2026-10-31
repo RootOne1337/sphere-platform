@@ -56,9 +56,11 @@ Workflow [Documentation advisory](../../.github/workflows/documentation-advisory
 работает только на `pull_request` и показывает кандидатов в GitHub Actions job
 summary. Он не пишет комментарии в PR, не запрашивает права записи и не обновляет
 документацию. Для GitHub API нужны `pull-requests: read`, для checkout —
-`contents: read`; токен не сохраняется в Git config. Выполняются только скрипт и
-карта правил из checkout базового commit, а не код PR; отдельный checkout PR-head
-используется только для проверки его SHA. Поэтому новые правила из самого PR
+`contents: read`; токен не сохраняется в Git config. В job `advisory` выполняются
+скрипт и карта правил из checkout базового commit; отдельный checkout PR-head
+используется там только для проверки его SHA. Отдельный job `tests` запускает тесты
+из PR-head с правом `contents: read` и без сохранения checkout-учётных данных;
+он не является выполнением кода из доверенной базы. Новые правила подсказчика
 начнут применяться после попадания в базовую ветку. При первом включении, если
 скрипта ещё нет в base commit, summary явно сообщает о неполном результате.
 
