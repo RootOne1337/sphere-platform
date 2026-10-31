@@ -14,3 +14,8 @@ def test_missing_views_and_false_reverse_motion_trigger_automatic_repair():
     assert needs_repair(geometry([0,1,2,3]),5)
     assert needs_repair(geometry([0,1,2,1,2,3]),6)
     assert needs_repair(geometry([0,1,2,3,4,34,35]),7)
+
+
+def test_full_count_with_collapsed_points_cannot_skip_repair():
+    assert needs_repair(geometry([0,1,2,3,4]),5,conditioning=dict(passed=False))
+    assert not needs_repair(geometry([0,1,2,3,4]),5,conditioning=dict(passed=True))

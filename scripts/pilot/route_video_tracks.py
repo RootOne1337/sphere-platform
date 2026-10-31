@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
-from scripts.pilot.route_masks import excluded_rectangles
+from scripts.pilot.route_masks import capture_exclusions
 from scripts.pilot.camera_pixel_conventions import tracking_points_to_colmap
 from scripts.pilot.video_observations import track_source_points
 
@@ -26,7 +26,8 @@ def shared_track_pairs(previous, current):
                        if int(identity) in lookup],dtype=np.uint32).reshape(-1,2)
 
 
-def build_video_track_database(job, prepared, source_database, output, check, *, max_lag=8, progress=None):
+def build_video_track_database(job, prepared, source_database, output, check, *, max_lag=8, progress=None,
+                               wide_tracking=False):
     import cv2
     import numpy as np
     import pycolmap as p
@@ -46,7 +47,7 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
     # observation budget, independent of the ordinary stream's resolution.
     scale=min(1.,1280/max(width,height));size=(round(width*scale),round(height*scale));cv2.setNumThreads(2)
     mask=np.full((size[1],size[0]),255,dtype='uint8');mask[:int(size[1]*.2)]=0
-    for x1,y1,x2,y2 in excluded_rectangles(control.get('mask','none')):
+    for x1,y1,x2,y2 in capture_exclusions(control.get('mask','none'),getattr(capture,'manifest',{})):
         mask[int(y1*size[1]):int(y2*size[1]),int(x1*size[0]):int(x2*size[0])]=0
     with sqlite3.connect(source_database.resolve().as_uri()+'?mode=ro',uri=True) as src:
         with sqlite3.connect(output) as dst:src.backup(dst)
@@ -71,7 +72,8 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
                                gapSeconds=(row['relative_ticks_90k']-previous_tick)/90000))
             points=np.empty((0,2),dtype='float32');ids=np.empty(0,dtype='int64');history=[]
         if previous is not None and len(points):
-            moved,good=track_source_points(previous,gray,points,tolerance=.75)
+            moved,good=track_source_points(previous,gray,points,tolerance=.75,
+                window=31 if wide_tracking else 21,levels=4 if wide_tracking else 3)
             points=moved[good];ids=ids[good]
             inside=(points[:,0]>=5)&(points[:,0]<size[0]-5)&(points[:,1]>=5)&(points[:,1]<size[1]-5)
             points=points[inside];ids=ids[inside]
@@ -103,6 +105,7 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
         observations=sum(counts),trackIdentities=next_id,pairs=pairs,seconds=time.monotonic()-began,
         trackingResolution=list(size),maxCorners=2000,forwardBackwardPixels=.75,descriptorsGenerated=False,
         pixelCoordinates='colmap_corner_centers_after_resize_v1',
+        lkWindow=31 if wide_tracking else 21,lkPyramidLevels=4 if wide_tracking else 3,
         sourceGapLimitSeconds=.25,trackingBreaks=breaks,
         sourceModified=False,posesInterpolated=False,physicalActions=0)
     write_json(output.with_suffix('.tracks.json'),report)

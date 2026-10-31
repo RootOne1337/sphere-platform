@@ -27,6 +27,9 @@ FILES=('manifest.json','frames.jsonl','inputs.jsonl','video.h264','COMPLETE')
 RECIPE=('scripts/pilot/check_route_first_run.py','scripts/pilot/reconstruction_service.py','scripts/pilot/reconstruct_route.py',
         'scripts/pilot/route_workspace.py','scripts/pilot/prepare_route_workspace.py',
         'scripts/pilot/route_video_tracks.py','scripts/pilot/route_motion_sampling.py',
+        'scripts/pilot/route_masks.py','scripts/pilot/route_geometry_selection.py',
+        'scripts/pilot/route_learned_recovery.py','scripts/pilot/route_reconstruction_resources.py',
+        'scripts/pilot/learned_route_features.py','scripts/pilot/reconstruction_quality.py',
         'scripts/pilot/video_observations.py','scripts/pilot/camera_pixel_conventions.py',
         'scripts/pilot/export_route_localization.py','scripts/pilot/route_landmark_builder.py',
         'motor_worker/browser_teach.py','motor_worker/route_localization.py')

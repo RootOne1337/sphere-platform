@@ -14,9 +14,10 @@ from scripts.pilot.atomic_json import write_json
 from scripts.pilot.route_motion_audit import audit
 
 
-def needs_repair(geometry, selected):
+def needs_repair(geometry, selected, *, conditioning=None):
     motion = audit(geometry)
-    return (len(geometry['cameras']) < selected or bool(motion['rapid_reversals'])
+    return (conditioning is not None and conditioning.get('passed') is not True
+            or len(geometry['cameras']) < selected or bool(motion['rapid_reversals'])
             or bool(motion['speed_outliers']))
 
 

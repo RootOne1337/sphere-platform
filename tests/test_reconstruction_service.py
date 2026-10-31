@@ -16,7 +16,7 @@ from scripts.pilot import reconstruction_service as service
 @pytest.fixture
 def jobs(tmp_path, monkeypatch):
     monkeypatch.setattr(service, 'collect', lambda _: {})
-    monkeypatch.setattr(service, 'evaluate', lambda _: [])
+    monkeypatch.setattr(service, 'evaluate', lambda *args,**kwargs: [])
     return service.Jobs(tmp_path / 'jobs', tmp_path / 'python.exe')
 
 
@@ -276,6 +276,7 @@ def test_http_origin_host_capability_and_cors(jobs):
     try:
         with urllib.request.urlopen(request('/health', Origin='http://127.0.0.1:3015')) as response:
             assert response.headers['Access-Control-Allow-Origin'] == 'http://127.0.0.1:3015'
+            assert json.load(response)['route_camera_pipeline']=='vehicle_geometry_v2'
         for headers in ({'Origin': 'https://evil.example'}, {'Host': 'evil.example:3342'}, {'X-Sphere-Reconstruction': ''}):
             with pytest.raises(urllib.error.HTTPError) as exc:
                 urllib.request.urlopen(request('/health', **headers))

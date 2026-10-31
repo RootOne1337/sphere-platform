@@ -43,14 +43,19 @@ def digest(path):
         return hashlib.file_digest(file, 'sha256').hexdigest()
 
 
-def checkpoint(job):
+def checkpoint(job, *, learned=False):
     if (job / 'CANCEL').exists():
         raise RuntimeError('cancelled')
     snapshot = collect(ROOT)
-    findings = evaluate(snapshot)
+    from scripts.pilot.route_reconstruction_resources import profile,findings as route_findings
+    control=json.loads((job/'control.json').read_bytes()) if (job/'control.json').is_file() else {}
+    budget=profile(job,route_only=control.get('route_only') is True and not learned)
+    findings = route_findings(snapshot,budget,evaluate_fn=evaluate)
     if findings:
         if job.is_dir():
-            write_json(job / 'resource-refusal.json', dict(snapshot=snapshot, findings=findings))
+            refusal=dict(snapshot=snapshot, findings=findings)
+            if budget is not None:refusal['profile']=budget
+            write_json(job / 'resource-refusal.json', refusal)
         raise RuntimeError('resource_guard')
 
 
@@ -58,16 +63,16 @@ def state(job, phase, **details):
     write_json(job / 'state.json', dict(phase=phase, updated_at=time.time(), **details))
 
 
-def masked_inputs(prepared, mode):
+def masked_inputs(prepared, mode, *, manifest=None):
     """Keep original RGB; a separate documented exclusion mask precedes SfM.
 
     This fixed game preset excludes HUD and the usual third-person avatar. It
     does not detect arbitrary moving players/cars and is never a collision mask.
     """
     from PIL import Image, ImageDraw
-    from scripts.pilot.route_masks import excluded_rectangles
+    from scripts.pilot.route_masks import capture_exclusions
 
-    rectangles = excluded_rectangles(mode)
+    rectangles = capture_exclusions(mode, manifest or {})
     if not rectangles:
         return None
     folder = prepared / 'masks'
@@ -116,11 +121,34 @@ def model_geometry(rec, prepared):
                 source_manifest_sha256=provenance['source_manifest_sha256'])
 
 
+def model_assessment(rec, prepared, selected, source_start, source_end):
+    """Assess a measured component before allowing its camera count to rank it."""
+    from scripts.pilot.route_geometry_selection import evaluate_candidate
+
+    geometry = model_geometry(rec, prepared)
+    try:
+        condition = sparse_condition([camera['center'] for camera in geometry['cameras']],
+                                     [point.xyz for point in rec.points3D.values()])
+    except ValueError:
+        condition = dict(passed=False, reason='sparse_geometry_invalid')
+    intrinsic = geometry['cameras'][0]['intrinsics'] if geometry['cameras'] else {}
+    try:
+        calibration = pinhole_condition(*(intrinsic[key] for key in ('width','height','fx','fy')))
+    except (ValueError,KeyError):
+        calibration = dict(passed=False, physical_calibration_verified=False)
+    report = evaluate_candidate(geometry, selected=selected, points=rec.num_points3D(),
+        reprojection_px=rec.compute_mean_reprojection_error(), conditioning=condition,
+        intrinsics_condition=calibration, source_start=source_start, source_end=source_end)
+    report.update(conditioning=condition,intrinsics_condition=calibration)
+    return geometry, report
+
+
 def reconstruct(job, mask, steps, *, route_only=False):
     checkpoint(job)
     sys.path.insert(0, str(TOOLS / 'pycolmap-4.2.1'))
     state(job, 'verifying')
     capture = validate_browser(job / 'input')
+    vehicle=(capture.manifest.get('config',{}).get('profile') or {}).get('mode')=='vehicle_buttons'
     duration = capture.frames[-1]['relative_ticks_90k'] / 90000
     if duration < 5:
         raise RuntimeError('clip_too_short_minimum_5_seconds')
@@ -139,7 +167,7 @@ def reconstruct(job, mask, steps, *, route_only=False):
     images = list((prepared / 'images').glob('*.png'))
     if len(images) < 10:
         raise RuntimeError('insufficient_selected_views')
-    masks = masked_inputs(prepared, mask)
+    masks = masked_inputs(prepared, mask, manifest=capture.manifest)
     checkpoint(job)
     import pycolmap as p
 
@@ -184,11 +212,12 @@ def reconstruct(job, mask, steps, *, route_only=False):
             p.Database.open(skeleton).close()
             p.import_images(skeleton,prepared/'images',camera_mode=p.CameraMode.SINGLE,options=reader)
             tracks=build_video_track_database(job,prepared,skeleton,database,lambda:checkpoint(job),
+                wide_tracking=vehicle,
                 progress=lambda done,total:state(job,'features',method='source_video_corner_tracks',selected_views=len(images),completed_items=done,total_items=total))
             pair_file=prepared/'video-track-pairs.txt'
             pair_file.write_text(''.join(row['first']+' '+row['second']+'\n' for row in tracks['pairs']),encoding='ascii')
             state(job,'matching',selected_views=len(images),method='video_tracks_geometric_verification')
-            verify_pairs(database,pair_file,token)
+            verify_pairs(database,pair_file,token,filter_stationary=True)
             write_json(prepared/'features.json',dict(method='source_video_corner_tracks',sourceFrames=tracks['decodedFrames'],
                 observations=tracks['observations'],pairs=len(tracks['pairs']),seconds=tracks['seconds'],
                 neuralModelLoaded=False,geometric_verification_complete=True))
@@ -213,6 +242,7 @@ def reconstruct(job, mask, steps, *, route_only=False):
         sparse.mkdir()
         options = p.IncrementalPipelineOptions(num_threads=4, random_seed=17,
                                                max_runtime_seconds=600, max_num_models=4,
+                                               ignore_watermarks=True,
                                                structure_less_registration_fallback=False,
                                                ba_refine_sensor_from_rig=False)
         models = p.incremental_mapping(database, prepared / 'images', sparse,
@@ -223,9 +253,34 @@ def reconstruct(job, mask, steps, *, route_only=False):
     if aborted:
         raise RuntimeError(aborted[0])
     checkpoint(job)
-    if not models:
+    from scripts.pilot.route_geometry_selection import candidate_rank
+    source_start=capture.frames[0]['relative_ticks_90k']/90000
+    source_end=capture.frames[-1]['relative_ticks_90k']/90000
+    candidates=[]
+    for identity, model in models.items():
+        _, assessment=model_assessment(model,prepared,len(images),source_start,source_end)
+        candidates.append((model,dict(assessment,model=identity)))
+    write_json(job/'geometry-candidates.json',dict(schema='sphere-geometry-candidates-v1',
+        models=[report for _,report in candidates],source_start_seconds=source_start,
+        source_end_seconds=source_end,execution_qualified=False))
+    rec=max(candidates,key=lambda row:candidate_rank(row[1]))[0] if candidates else None
+    recovery=None
+    if rec is not None:
+        first_geometry,first_assessment=model_assessment(rec,prepared,len(images),source_start,source_end)
+        # Preserve inspectable evidence even if a later optional model load is
+        # refused. This unsealed first pass never authorizes navigation.
+        write_json(job/'geometry.json',first_geometry)
+        write_json(job/'quality.json',dict(registered=rec.num_reg_images(),selected=len(images),
+            coverage=rec.num_reg_images()/len(images),points=rec.num_points3D(),
+            mean_reprojection_px=rec.compute_mean_reprojection_error(),components=len(models),
+            conditioning=first_assessment['conditioning'],intrinsics_condition=first_assessment['intrinsics_condition'],
+            selection=first_assessment,first_pass_only=True))
+    if route_only and (rec is None or not model_assessment(rec,prepared,len(images),source_start,source_end)[1]['route_admissible']):
+        from scripts.pilot.route_learned_recovery import recover_with_learned
+        rec,recovery=recover_with_learned(job,prepared,rec,len(images),source_start,source_end,reader,
+            lambda:checkpoint(job,learned=True),lambda phase,done=0,total=0:state(job,phase,selected_views=len(images),completed_items=done,total_items=total))
+    if rec is None:
         raise RuntimeError('no_connected_cameras_need_translation_and_overlap')
-    rec = max(models.values(), key=lambda model: model.num_reg_images())
     if learned and .7 <= rec.num_reg_images() / len(images) < 1 and rec.num_points3D() >= 300:
         initial_condition = sparse_condition(
             [image.cam_from_world().inverse().translation for image in rec.images.values() if image.has_pose],
@@ -238,7 +293,8 @@ def reconstruct(job, mask, steps, *, route_only=False):
     geometry = model_geometry(rec, prepared)
     temporal_repair = None
     from scripts.pilot.route_temporal_repair import needs_repair, repair_temporally
-    if learned and needs_repair(geometry,len(images)):
+    initial_assessment=model_assessment(rec,prepared,len(images),source_start,source_end)[1]
+    if learned and needs_repair(geometry,len(images),conditioning=initial_assessment['conditioning']):
         # Keep the baseline for inspection even if bounded repair is inconclusive.
         # Resource/cancellation fences still terminate the whole task.
         try:
@@ -256,12 +312,17 @@ def reconstruct(job, mask, steps, *, route_only=False):
                    points=rec.num_points3D(), mean_reprojection_px=error, components=len(models))
     if temporal_repair is not None:
         quality['temporal_repair']=temporal_repair
-    quality['conditioning'] = sparse_condition(
-        [camera['center'] for camera in geometry['cameras']],
-        [point.xyz for point in rec.points3D.values()])
-    intrinsics = geometry['cameras'][0]['intrinsics']
-    quality['intrinsics_condition'] = pinhole_condition(intrinsics['width'], intrinsics['height'],
-                                                        intrinsics['fx'], intrinsics['fy'])
+    if recovery is not None:
+        # Full rejected-candidate audits remain in learned-recovery/result.json;
+        # the sealed quality receipt has a fixed 64 KiB budget.
+        quality['learned_recovery']={key:recovery.get(key) for key in
+            ('schema','accepted','reason','error_code','seconds','device','max_features','chosen_model')}
+        quality['learned_recovery']['candidate_count']=len(recovery.get('models',[]))
+        if recovery.get('accepted'):
+            quality['components']=len(recovery['models'])
+    quality['selection']=model_assessment(rec,prepared,len(images),source_start,source_end)[1]
+    quality['conditioning'] = quality['selection']['conditioning']
+    quality['intrinsics_condition'] = quality['selection']['intrinsics_condition']
     write_json(job / 'quality.json', quality)
     if rec.num_reg_images() < 10 or coverage < .7 or rec.num_points3D() < 300 or not math.isfinite(error) or error > 3:
         raise RuntimeError('camera_quality_gate_failed')
@@ -269,6 +330,8 @@ def reconstruct(job, mask, steps, *, route_only=False):
         raise RuntimeError('camera_geometry_degenerate')
     if not quality['intrinsics_condition']['passed']:
         raise RuntimeError('camera_intrinsics_degenerate')
+    if route_only and not quality['selection']['route_admissible']:
+        raise RuntimeError('camera_quality_gate_failed')
     # A largest component is not a claim that discarded views are connected.
     target = prepared / 'sparse' / '0'
     target.mkdir(parents=True)

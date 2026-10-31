@@ -65,9 +65,9 @@ def prepare(job, attempt):
         raise ValueError('route_camera_motion_requires_review')
     capture = validate_browser(job/'input')
     width, height = capture.geometry
-    from scripts.pilot.route_masks import excluded_rectangles, WATERMARK
+    from scripts.pilot.route_masks import capture_exclusions, WATERMARK
     control = checked_json(job/'control.json') if (job/'control.json').exists() else {}
-    excluded = excluded_rectangles(control.get('mask', 'none')) or (WATERMARK,)
+    excluded = capture_exclusions(control.get('mask', 'none'), capture.manifest) or (WATERMARK,)
     profile = RouteViewProfile(str(uuid.uuid4()), width, height, (0., 0., 1., 1.), excluded)
     write_json(folder/'state.json', dict(phase='features'))
     receipt = export(model, job/'prepared/reconstruction-input.json', job/'prepared/images',

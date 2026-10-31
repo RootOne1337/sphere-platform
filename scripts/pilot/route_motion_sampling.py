@@ -3,16 +3,16 @@ from __future__ import annotations
 
 import time
 
-from scripts.pilot.route_masks import excluded_rectangles
+from scripts.pilot.route_masks import capture_exclusions
 from scripts.pilot.video_observations import track_source_points
 
 
-def select_motion_rows(frames, motion, *, max_images=240):
+def select_motion_rows(frames, motion, *, max_images=240, vehicle=False):
     """Deterministic bounded selection; scores are pixels, never metres or poses."""
     if len(frames)<2 or not 2<=max_images<=240:
         raise ValueError('motion_sampling_budget')
     duration=frames[-1]['relative_ticks_90k']/90000
-    threshold,minimum,maximum=20.,.12,max(.5,duration/200)
+    threshold,minimum,maximum=20.,.12,max(.2 if vehicle else .5,duration/200)
     for _ in range(20):
         selected,travel=[frames[0]],0.
         for row in frames[1:]:
@@ -31,7 +31,7 @@ def select_motion_rows(frames, motion, *, max_images=240):
         if len(selected)<=max_images:
             return frozenset(row['index'] for row in selected),dict(method='source-optical-motion-v1',
                 views=len(selected),motionThresholdPixels=threshold,minSeconds=minimum,maxSeconds=maximum,
-                metricScaleKnown=False,posesUsed=False,sourceFrames=len(frames))
+                metricScaleKnown=False,posesUsed=False,sourceFrames=len(frames),vehicleOverlap=vehicle)
         threshold*=1.25;minimum*=1.1;maximum*=1.1
     raise ValueError('motion_sampling_budget')
 
@@ -43,7 +43,7 @@ def sample_video(capture, mask_mode, check, progress=None):
 
     width,height=capture.geometry;scale=min(1.,480/max(width,height));size=(round(width*scale),round(height*scale))
     mask=np.full((size[1],size[0]),255,dtype='uint8')
-    for x1,y1,x2,y2 in excluded_rectangles(mask_mode):
+    for x1,y1,x2,y2 in capture_exclusions(mask_mode,capture.manifest):
         mask[int(y1*size[1]):int(y2*size[1]),int(x1*size[0]):int(x2*size[0])]=0
     previous=None;motion={};decoded=0;began=checked=time.monotonic();cv2.setNumThreads(2)
     for row,frame in decoded_browser(capture):
@@ -60,7 +60,8 @@ def sample_video(capture, mask_mode, check, progress=None):
                 if good.sum()>=15:motion[row['index']]=float(np.median(np.linalg.norm(moved-points[:,0],axis=1)[good]))
         previous=gray;decoded+=1
     if decoded!=len(capture.frames):raise ValueError('motion_sampling_decode')
-    indices,report=select_motion_rows(capture.frames,motion)
+    vehicle=(capture.manifest.get('config',{}).get('profile') or {}).get('mode')=='vehicle_buttons'
+    indices,report=select_motion_rows(capture.frames,motion,vehicle=vehicle)
     report.update(decodedFrames=decoded,seconds=time.monotonic()-began,trackingResolution=list(size),
                   scoresMeasured=len(motion),sourceModified=False)
     return indices,report

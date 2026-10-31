@@ -36,6 +36,7 @@ from scripts.pilot.reconstruct_surface import (
 )
 from scripts.pilot.reconstruction_quality import export_interval
 from scripts.pilot.resource_guard import collect, evaluate
+from scripts.pilot.route_reconstruction_resources import profile as route_resource_profile,findings as route_resource_findings
 from scripts.pilot.route_motion_audit import audit as audit_camera_motion
 from scripts.pilot.route_workspace import RouteWorkspaces
 from scripts.pilot.surface_asset import MAX_BYTES, MAX_FACES, validate_glb
@@ -45,6 +46,7 @@ LIMITS = {'manifest.json': 65536, 'frames.jsonl': 16 * 1024**2,
           'inputs.jsonl': 8 * 1024**2, 'COMPLETE': 1024, 'video.h264': 2**31}
 TERMINAL = {'complete', 'sparse_complete', 'failed', 'cancelled', 'quality_rejected', 'review_required', 'partial_scene'}
 IDENTITY = re.compile(r'^[0-9a-f]{32}$')
+ROUTE_CAMERA_PIPELINE = 'vehicle_geometry_v2'
 
 
 class AccessDenied(PermissionError):
@@ -426,7 +428,7 @@ class Jobs:
                 write_json(path / 'state.json', dict(phase='failed', error='upload_idle_30_minutes'))
         if any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
             raise ValueError('one_active_job_only')
-        if evaluate(collect(ROOT)):
+        if route_resource_findings(collect(ROOT),route_resource_profile(job,route_only=body.get('route_only') is True,uploading=True),evaluate_fn=evaluate):
             raise ValueError('resource_guard')
         job.mkdir()
         (job / 'input').mkdir()
@@ -457,7 +459,7 @@ class Jobs:
             return status
         if any(not (job / 'input' / name).is_file() for name in LIMITS):
             raise ValueError('source_files_missing')
-        if evaluate(collect(ROOT)):
+        if route_resource_findings(collect(ROOT),route_resource_profile(job,route_only=control.get('route_only') is True),evaluate_fn=evaluate):
             raise ValueError('resource_guard')
         # Durable one-shot intent precedes process creation. Ambiguity is failure.
         with (job / 'START').open('x') as file:
@@ -483,6 +485,8 @@ class Jobs:
 
     def monitor(self, job, process):
         deadline = time.monotonic() + 2400
+        control = json.loads((job/'control.json').read_text('utf-8'))
+        budget=route_resource_profile(job,route_only=control.get('route_only') is True)
         while process.poll() is None:
             time.sleep(3)
             reason = None
@@ -492,7 +496,7 @@ class Jobs:
                 reason = 'worker_timeout'
             elif (job / 'worker.log').stat().st_size > 32 * 1024**2:
                 reason = 'worker_log_quota'
-            elif evaluate(collect(ROOT)):
+            elif route_resource_findings(collect(ROOT),budget,evaluate_fn=evaluate):
                 reason = 'resource_guard'
             if reason:
                 # Own known PID only; also terminate the own Brush child on Windows.
@@ -588,7 +592,8 @@ def handler(jobs, origin, port):
                 self.allowed()
                 parts = self.path.strip('/').split('/')
                 if method == 'GET' and parts == ['health']:
-                    self.reply(200, dict(service='sphere-reconstruction-v1', one_active_job=True))
+                    self.reply(200, dict(service='sphere-reconstruction-v1', one_active_job=True,
+                                         route_camera_pipeline=ROUTE_CAMERA_PIPELINE))
                     return
                 with jobs.lock:
                     if method == 'POST' and parts == ['jobs']:

@@ -19,3 +19,13 @@ def test_large_motion_cannot_exceed_the_declared_camera_budget():
     assert len(selected)<=120 and min(selected)==0 and max(selected)==1799
     with pytest.raises(ValueError,match='motion_sampling_score'):
         select_motion_rows(rows,{1:float('nan')})
+
+
+def test_vehicle_keeps_temporal_overlap_even_when_static_hud_reduces_median_flow():
+    rows=[dict(index=i,relative_ticks_90k=i*3600) for i in range(901)]
+    old,_=select_motion_rows(rows,{})
+    vehicle,report=select_motion_rows(rows,{},vehicle=True)
+    assert len(vehicle)>len(old) and len(vehicle)<=240
+    assert min(vehicle)==0 and max(vehicle)==900
+    assert max(b-a for a,b in zip(sorted(vehicle),sorted(vehicle)[1:]))*3600/90000<=.24
+    assert report['vehicleOverlap'] is True and report['posesUsed'] is False

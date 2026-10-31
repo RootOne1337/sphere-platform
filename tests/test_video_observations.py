@@ -32,3 +32,16 @@ def test_nonfinite_lk_point_is_removed_before_backward_opencv_call():
     with patch('cv2.calcOpticalFlowPyrLK',side_effect=flow):
         _,good=track_source_points(gray,gray,points,tolerance=.75)
     assert good.tolist()==[False,True]
+
+
+def test_offline_wide_pyramid_still_requires_measured_forward_and_reverse_tracks():
+    import pytest
+    gray=np.zeros((60,80),np.uint8);points=np.array([[30,30]],np.float32)
+    response=(points.reshape(-1,1,2),np.ones((1,1),np.uint8),None)
+    with patch('cv2.calcOpticalFlowPyrLK',return_value=response) as lk:
+        _,good=track_source_points(gray,gray,points,tolerance=.75,window=31,levels=4)
+    assert good.tolist()==[True] and lk.call_count==2
+    assert all(call.kwargs['winSize']==(31,31) and call.kwargs['maxLevel']==4 for call in lk.call_args_list)
+    for kwargs in (dict(window=101),dict(levels=10),dict(window=True)):
+        with pytest.raises(ValueError,match='pyramid_budget'):
+            track_source_points(gray,gray,points,tolerance=.75,**kwargs)
