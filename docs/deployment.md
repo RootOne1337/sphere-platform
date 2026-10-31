@@ -355,12 +355,19 @@ before considering it; no backup or restore was executed as part of this review.
 
 Choose a backup procedure for the actual project and its PostgreSQL/Redis versions,
 volumes and credentials. Include application data, required encryption keys,
-roles/grants, OTA artifacts and device logs according to the installation's
-retention and recovery requirements. Validate backup integrity and perform a
-restore drill in a separate database and volume, never over the active installation.
-Reconcile schema, representative task receipts and external effects before any
-cutover. [Database recovery runbook](runbooks/03-database-failure.md) describes the
-checks. Measure and approve RTO/RPO from a real drill; no specific value is
+roles/grants, the separate n8n database if used, OTA catalog and artifacts, device
+logs, and any configured screenshot object store according to the installation's
+retention and recovery requirements. Compose's `minio_data` is independent of
+PostgreSQL and is not necessarily the configured screenshot endpoint; OTA may use
+a bind mount, `ota_data`, or an external HTTPS source depending on the setup.
+Named volumes and database dumps do not prove a coordinated backup or restore.
+Validate integrity and perform a restore drill in separate databases, volumes and
+object storage, isolated from active writers and devices, never over the active
+installation. Reconcile catalog/artifact hashes, representative object references,
+schema, task receipts and external effects before any cutover.
+[Database recovery runbook](runbooks/03-database-failure.md) describes the
+source mapping and checks; no object-store or OTA recovery is established by this
+static review. Measure and approve RTO/RPO from a real drill; no specific value is
 established by this repository.
 
 ---
