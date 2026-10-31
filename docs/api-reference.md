@@ -112,6 +112,14 @@ API keys are created via `POST /auth/api-keys` and have the format `sphr_{env}_{
 
 ### Error responses
 
+The OpenAPI snapshot does not declare every explicit handler error. For example,
+`GET /health/readyz` and `/health/full` can return 503, native screenshot can
+return 429/502/503/504, and device stream-session history can return 503 even
+where those statuses are absent from the corresponding schema response map.
+This is a source/declaration comparison, not a claim that any deployment returned
+those responses. The [status audit](audits/2026-11-01/API-REFERENCE-RECONCILIATION.md)
+separates conditional errors from success responses.
+
 | Code | Meaning |
 |------|---------|
 | `401` | Missing or invalid token |

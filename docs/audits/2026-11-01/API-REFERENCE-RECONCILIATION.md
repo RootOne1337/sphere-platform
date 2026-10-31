@@ -315,6 +315,68 @@ print("not represented in prior groups:", sorted(ops - (grouped | partial)))
 runtime, tests, проверку TLS/ingress, конкурентности, устройств и ошибок.
 Снимок может измениться после этого аудита; повторно запустите расчёт при drift.
 
+## Сверка явных HTTP статусов с OpenAPI
+
+Снимок `7ccce6ec` и менявшееся рабочее дерево. Read-only
+[AST-скрипт](check_http_statuses.py) сопоставляет operationId с именем Python
+handler и каноническим путём из `docs/openapi.json`; собирает прямой
+`return Response/JSONResponse(status_code=...)`, явно заданный
+`response.status_code` и прямой `raise HTTPException`, если код отсутствует в
+response map. Результат — **кандидаты**, не runtime тест и не доказательство
+недоступности остальных ответов. Запуск из корня:
+
+```text
+python docs/audits/2026-11-01/check_http_statuses.py
+python docs/audits/2026-11-01/check_http_statuses.py --json
+```
+
+[Сохранённый вывод --json](HTTP-STATUS-CANDIDATES.json) относится к этому срезу:
+201 operation в snapshot, 197 однозначно сопоставлены, 4 пропущены из-за
+повторяющихся имён handlers; одно выражение статуса не удалось статически
+разрешить. Найдено **79 строк-кандидатов** (9 явных 204, 2 условных 503 в
+Response и 68 прямых HTTPException; некоторые повторяются в разных ветвях),
+70 уникальных сочетаний method/path/status/kind в 48 маршрутах. Повторный запуск
+совпал с сохранённым JSON; отдельно проверены распознавание константы HTTP_204,
+условного выражения `200 if ... else 202` и неразрешённого `exc.status_code`. Само отсутствие
+ошибочного статуса в OpenAPI не означает, что операция всегда возвращает ошибку.
+
+Вручную подтверждены ранее задокументированные успехи, где handler возвращает
+204, а OpenAPI содержит 200:
+
+| Handler method/path | Источник |
+| --- | --- |
+| DELETE `/auth/mfa`; DELETE `/auth/api-keys/{key_id}` | [auth router](../../../backend/api/v1/auth/router.py) |
+| POST `/device-events/{event_id}/processed` | [device events router](../../../backend/api/v1/device_events/router.py) |
+| DELETE `/game-accounts/{account_id}` | [game accounts router](../../../backend/api/v1/game_accounts/router.py) |
+| POST `/logs/upload`; DELETE `/logs/{device_id}` | [logs router](../../../backend/api/v1/logs/router.py) |
+| DELETE `/n8n/webhooks/{webhook_id}` | [n8n router](../../../backend/api/v1/n8n/router.py) |
+| DELETE `/updates/{release_id}` | [updates router](../../../backend/api/v1/updates/router.py) |
+| PATCH `/users/{user_id}/deactivate` | [users router](../../../backend/api/v1/users/router.py) |
+
+Дополнительно вручную подтверждены **условные** статусы, отсутствующие в map
+снимка: `/health/readyz` и `/health/full` возвращают 503 при отказе проверок;
+legacy `/health/ready` может выбросить 503 при ошибках проверяемых зависимостей;
+[native screenshot](../../../backend/api/v1/devices/router.py) имеет явные
+429/502/503/504; `GET /devices/{device_id}/stream-sessions` — 503 при
+недоступной истории. Здесь 200 остаётся возможным и не ошибочен: речь о
+неполной декларации альтернативных результатов, а не замене 200 на 503.
+Другие HTTPException в JSON оставлены кандидатами для дополнительного обзора.
+Справочник уточняет неполноту response map, но генерируемая схема/код не менялись.
+
+Четыре не сопоставленные автоматически операции вручную найдены в router и имеют
+соответствующий объявленный обычный успех: GET `/game-accounts/servers` 200,
+GET `/pipeline-settings/servers` 200, POST `/n8n/tasks` 201 и POST `/tasks` 201.
+Это не ручная проверка всех их error paths. Не вычисленное выражение относится
+к повторному выбросу ранее полученного HTTPException при native screenshot; оно
+зависит от upstream и не считается самостоятельным найденным статусом.
+
+Ограничения метода: обработчики/функции без стандартного operationId остаются
+несопоставленными; AST не вычисляет зависимости `Depends`, вызываемые сервисы,
+исключения middleware, изменяемые окружением/ingress ответы, динамические статусы,
+содержимое `default` и фактически пройденные ветки. Совпадение пары имён не
+заменяет проверку реализации. В тестовом приложении или production запросы не
+отправлялись; наличие кандидатной строки требует последующей ручной проверки.
+
 ## Проверки и остаток
 
 Машинное сравнение HTTP method/path во **всех заголовках** справочника с JSON,
