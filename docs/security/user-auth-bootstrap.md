@@ -1,8 +1,9 @@
 # User authentication with a non-owner PostgreSQL role
 
-Updated 9 September 2026, AUD-62. Login, user refresh, logout and MFA now establish
-the tenant before accessing user/refresh rows under RLS. This closes the tested
-HTTP bootstrap paths; global jobs and production role provisioning remain open.
+AUD-62 (9 September 2026) added tenant discovery for login, user refresh, logout and
+MFA before access to user/refresh rows under RLS. This closes the tested historical
+HTTP bootstrap paths; deployment, role provisioning and remaining worker paths require
+separate verification. Source was rechecked on 1 November 2026.
 
 ## Failure and corrected contract
 
@@ -31,6 +32,19 @@ Refresh/logout retain SELECT FOR UPDATE and a refreshed snapshot for token
 consumption. Refresh reloads the user and rejects inactive or moved identities;
 the old token cannot follow its user into another organization. Token issuance
 commits SQL before returning credentials; fresh pooled Sessions stay unscoped.
+The refresh router chooses cookie first, then `X-Refresh-Token`, then JSON body;
+it does not fall through after a rejected nonempty credential. A lost response after
+commit may leave the client holding the consumed token: the one-winner row lock is
+not a lost-response recovery protocol. See [frontend session boundaries](frontend-sessions.md).
+
+Logout decodes the Bearer with expiry verification disabled; it requires a valid
+signature and `sub`, `jti`, `type` and an accessible `exp`, but does not check
+that the type is `access`. It separately looks up the cookie or header refresh
+token and does not compare the Bearer subject/tenant with that refresh token's owner.
+Its 204 and cookie
+deletion are also possible without a usable Bearer, without proving SQL revocation.
+Nor does a single-token revoke remove a refresh family. See the
+[router](../../backend/api/v1/auth/router.py) and [service](../../backend/services/auth_service.py).
 
 Email is not a secret. A database caller with EXECUTE can discover the organization
 of a guessed active email. This is a deliberate metadata disclosure to the backend

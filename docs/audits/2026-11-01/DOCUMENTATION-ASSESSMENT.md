@@ -133,6 +133,7 @@ API, но полный файл около 1,49 МБ в ответе стран�
 | Область | Что выяснено и где продолжать |
 | --- | --- |
 | Enrollment и доступ | Ответ `config/agent` может включать настроенный enrollment key без `X-API-Key`; выяснить состав файла и реальную защиту ingress. [Контракт](../../configuration.md#agent-configuration), [сверка API](API-REFERENCE-RECONCILIATION.md). |
+| Выход и refresh | Logout не сопоставляет subject Bearer с владельцем отдельно переданного refresh token; нужен доступ к самому refresh token. Возможность эксплуатации и защиту ingress отдельно не проверяли. [Контракт сессий](../../security/frontend-sessions.md). |
 | Восстановление | Существующий backup script не подтверждает свежий Redis snapshot и выполняет удаление при ротации; базы, OTA и object storage требуют отдельного согласованного backup и drill. [Runbook](../../runbooks/03-database-failure.md). |
 | Сессии и расписания | Ручное завершение сессии может перезаписать показатели нулями/null; пустой выбор устройств в редакторе расписания может оставить старые цели. [Сессии](../../operations/USER-ADMIN-GUIDE.md), [расписания](../../operations/TASKS-AND-ORCHESTRATION.md). |
 | Интеграция n8n | Узлы расходятся с backend по авторизации, регистрации webhook и подписи; сам реестр не доказывает доставку. [Руководство](../../operations/N8N-INTEGRATION.md). |
