@@ -24,7 +24,7 @@
 | Устройства, группы и локации | [Каталог](operations/DEVICE-CATALOG.md), [устройства и поток](operations/DEVICE-STREAM-GUIDE.md), [группы](operations/GROUP-HIERARCHY.md), [локации](operations/LOCATION-HIERARCHY.md) |
 | Сценарии и оркестрация | [Script Studio](operations/SCRIPT-STUDIO.md), [задания и оркестрация](operations/TASKS-AND-ORCHESTRATION.md), [каталог](operations/SCRIPT-CATALOG.md), [версии](operations/SCRIPT-VERSIONS.md), [pipelines](operations/PIPELINE-DEFINITIONS.md) |
 | Видео и ввод | [Протокол continuous input](protocols/CONTINUOUS-INPUT-SERVER.md), [результаты ввода](protocols/CONTINUOUS-INPUT-RECEIPTS.md), [запись траекторий](operations/POINTER-PATH-RECORDING.md) |
-| VPN | [Профили](operations/VPN-PROFILES.md), [результаты управления](operations/VPN-CONTROL-OUTCOMES.md) |
+| VPN | [VPN в Web](operations/VPN-WEB-GUIDE.md), [Профили](operations/VPN-PROFILES.md), [результаты управления](operations/VPN-CONTROL-OUTCOMES.md) |
 | Обучающая запись и маршруты | [Teaching в web](operations/TEACHING-WEB.md), [Route Studio](operations/ROUTE-STUDIO.md), [пилот маршрута](operations/WALK-ROUTE-PILOT.md), [Motor Worker](operations/MOTOR-WORKER.md) |
 
 [Карта Web UI](web-ui-guide.md) содержит маршруты и основные действия,

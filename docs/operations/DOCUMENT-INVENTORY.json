@@ -7,7 +7,7 @@
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 437,
     "DESIGN_SPECIFICATION": 91,
-    "OPERATING_GUIDE": 80,
+    "OPERATING_GUIDE": 81,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -2194,6 +2194,10 @@
     },
     {
       "file": "docs/operations/VPN-PROFILES.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/VPN-WEB-GUIDE.md",
       "role": "OPERATING_GUIDE"
     },
     {

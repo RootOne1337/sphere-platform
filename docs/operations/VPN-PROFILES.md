@@ -9,6 +9,7 @@ API `cd2431e2`, миграция `20261021_vpn_profiles`, отдельные DB-
 Последние известные границы и свидетельства — в [рабочем статусе](WORK-STATUS.md).
 Точная [квитанция доставки](../audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.json) и
 [скриншоты](../audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.md).
+Операторские действия во всех четырёх вкладках: [VPN в Web](VPN-WEB-GUIDE.md).
 Связанные документы: [архитектура и этапы](../design/VPN-EGRESS-ARCHITECTURE.md),
 [результаты VPN-команд](VPN-CONTROL-OUTCOMES.md),
 [проверки этого этапа](../audits/2026-10-21/VPN-CATALOG-NATIVE-CANDIDATE.json).

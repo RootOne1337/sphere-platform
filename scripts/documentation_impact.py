@@ -45,7 +45,7 @@ RULES = (
     Rule("Tasks and orchestration", ("frontend/app/*/tasks/*", "frontend/app/*/orchestration/*", "frontend/app/*/pipeline-settings/*", "backend/api/v1/tasks/*", "backend/api/v1/pipelines/*", "backend/tasks/*"),
          ("docs/operations/TASKS-AND-ORCHESTRATION.md", "docs/operations/PIPELINE-DEFINITIONS.md", "docs/security/task-control-protocol.md")),
     Rule("VPN", ("*vpn*", "*VPN*", "*Vpn*", "*wireguard*", "*WireGuard*"),
-         ("docs/operations/VPN-PROFILES.md", "docs/operations/VPN-CONTROL-OUTCOMES.md")),
+         ("docs/operations/VPN-WEB-GUIDE.md", "docs/operations/VPN-PROFILES.md", "docs/operations/VPN-CONTROL-OUTCOMES.md")),
     Rule("Android agent", ("android/*", "agent-config/*"),
          ("docs/android-agent.md", "docs/operations/ANDROID-CLOUD-PILOT.md")),
     Rule("PC agent", ("pc-agent/*",), ("docs/pc-agent.md",)),

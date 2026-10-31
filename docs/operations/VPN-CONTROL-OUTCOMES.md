@@ -1,6 +1,7 @@
 # VPN control: targets, receipts and recovery
 
 Updated: 2026-10-21. Scope: the existing `/vpn` page and REST control contracts.
+For the four-tab operator workflow see [VPN in Web](VPN-WEB-GUIDE.md).
 The new [app-scoped VPN design](../design/VPN-EGRESS-ARCHITECTURE.md) adds a bounded
 profile inspector and truthful provider capabilities in source. Android root
 activation/reconnect and global firewall enable are quarantined before side effects.
@@ -58,9 +59,10 @@ from the mock-provider regression suite.
 
 ## Why kill switch currently reports unsupported
 
-The route's `EventPublisher` is still a no-op. The Android dispatcher supports
-`VPN_CONNECT`, `VPN_DISCONNECT`, and `VPN_RECONNECT`; this route sends a separate
-legacy `vpn_killswitch` envelope. Replacing the no-op with a generic pub/sub
+The route's `EventPublisher` is still a no-op. The Android dispatcher recognizes
+`VPN_CONNECT`, `VPN_DISCONNECT`, and `VPN_RECONNECT`, but recognition does not
+prove execution: the legacy manager gates connect/reconnect. This route uses a
+separate legacy `vpn_killswitch` envelope. Replacing the no-op with a generic pub/sub
 publisher would not establish protocol compatibility or execution receipts.
 
 `KillSwitchService.supported` therefore requires an explicit

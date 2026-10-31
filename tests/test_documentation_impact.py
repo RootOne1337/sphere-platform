@@ -26,6 +26,7 @@ class ImpactRulesTests(unittest.TestCase):
             "frontend/app/(dashboard)/logs/page.tsx": "docs/operations/DEVICE-LOG-STORAGE.md",
             "frontend/lib/store.ts": "docs/security/frontend-sessions.md",
             "backend/tasks/task_heartbeat_watchdog.py": "docs/security/task-control-protocol.md",
+            "frontend/app/(dashboard)/vpn/page.tsx": "docs/operations/VPN-WEB-GUIDE.md",
         }
         for path, expected in cases.items():
             with self.subTest(path=path):
