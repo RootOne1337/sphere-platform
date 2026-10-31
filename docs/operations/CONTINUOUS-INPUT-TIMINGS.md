@@ -1,6 +1,6 @@
 # Серверные тайминги непрерывного управления
 
-[Реестр работ](WORK-STATUS.md) · [Текущая установка](CURRENT-STATE.md) ·
+[Реестр работ](WORK-STATUS.md) · [Датированные наблюдения](CURRENT-STATE.md) ·
 [Prometheus](OBSERVABILITY.md) · [Исходная проверка](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md)
 
 **В срезе 10 октября UI639b6ad5/API369654a0 сохраняли серверные измерения; текущую установку нужно проверить отдельно.**
@@ -40,7 +40,8 @@ Hashes/schema/Compose/container fences сохранены; 19 finite host tests 
 `outcome` имеет только три значения: `returned`, `raised`, `cancelled`.
 `returned` — завершение coroutine с любым обычным результатом, включая None,
 rejected и UNKNOWN. Это **не** статус выполнения Android. `raised` не раскрывает
-класс или текст исключения. Cancellation сохраняется, native cleanup продолжается.
+класс или текст исключения. Декоратор не подавляет cancellation; отдельное
+подтверждение native cleanup по одному значению outcome получить нельзя.
 
 Buckets в секундах: 0.001, 0.01, 0.025, 0.05, 0.1, 0.25, 0.4, 0.5,
 1.0 и +Inf. Границы около 250/500ms позволяют увидеть долю медленных
@@ -56,7 +57,9 @@ Histogram обновляется в существующем потоке; до�
 Ошибки clocks/metrics пропускают измерение без изменения original result/error/cancel.
 Неизмеренная или некорректная duration не заменяется нулём.
 
-Production multiprocess collector суммирует histogram workers. Завершённый worker
+При настроенном production multiprocess registry collector суммирует histogram workers.
+Это не подтверждает наличие всех реплик в Prometheus или корректность конфигурации
+конкретного контейнера. Завершённый worker
 оставляет cumulative histogram history внутри существующего master lifecycle;
 следуйте [политике метрик](OBSERVABILITY.md), не удаляйте mmap live worker вручную.
 Конечная four-process fixture проверяет aggregate count/sum/buckets и замену
@@ -64,11 +67,24 @@ worker; она не заменяет нагрузочный CPU/RSS/disk soak.
 
 ## Чтение после подтверждённой установки
 
-Проверьте source revision контейнера, свежесть scrape и наличие активности.
-Пустая серия означает отсутствие наблюдаемого ряда; она не доказывает здоровье.
+Проверьте source revision контейнера, фактически используемый collection config,
+свежесть scrape, присутствие нужных histogram families и наличие активности.
+В опубликованном [`collection/prometheus.yml`](../../infrastructure/monitoring/collection/prometheus.yml)
+правило `metric_relabel_configs` оставляет только перечисленные имена и **не включает**
+`sphere_continuous_stage_duration_seconds_*`. Поэтому в этом профиле следующие
+PromQL-запросы не получат новые samples этой histogram даже при успешном scrape
+и работающем producer. `up=1` этого не доказывает. Отдельная установка могла
+использовать другой или изменённый config; снимки 9–10 октября не подтверждают
+текущую конфигурацию. Проверяйте отдельно наличие и границы сбора; не изменяйте
+настройку или работающий сборщик без отдельной процедуры и проверки её последствий.
+
+Histogram с метками появляется при соответствующих наблюдениях; пустой ряд также
+возможен из-за отсутствия activity, серии, scrape или при исключении relabeling.
+Он не доказывает здоровье. `rate(...[5m])` требует достаточно samples, а
+агрегирование ниже объединяет только серии job, доступные выбранному Prometheus.
 Для короткой canary сохраните delta count/sum/buckets до и после; при малом числе
-измерений percentile ненадёжен. Метрики общие для workers и не идентифицируют
-конкретный viewer или sequence.
+измерений percentile ненадёжен; отдельно учитывайте reset counters и смену
+контейнера/target. Метрики не идентифицируют конкретный viewer или sequence.
 
 Частота наблюдаемых coroutine завершений (это не RPS input):
 
@@ -78,7 +94,7 @@ sum by (stage, outcome) (
 )
 ```
 
-При достаточной выборке — p95 локальной inclusive duration:
+При достаточной выборке и доступных buckets — оценка p95 локальной inclusive duration:
 
 ```promql
 histogram_quantile(0.95,
@@ -87,6 +103,12 @@ histogram_quantile(0.95,
   )
 )
 ```
+
+Это оценка по bucket boundaries, не точный percentile отдельных операций. Если
+квантиль попадает в последний bucket `+Inf`, Prometheus возвращает границу
+предыдущего, то есть здесь **1 секунду**; это не доказывает, что хвост не превышал
+1 секунду. Смотрите распределение bucket/count и не интерпретируйте 1 секунду как
+измеренный максимум. [Правила histogram_quantile](https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile).
 
 Доля observations дольше 250ms по stage/outcome:
 
@@ -102,7 +124,8 @@ histogram_quantile(0.95,
 )
 ```
 
-Нулевой знаменатель остаётся NaN/unknown; не подставляйте zero/healthy.
+Результат — доля, не проценты; для процентов умножьте на 100. Нулевой знаменатель
+остаётся NaN/unknown, отсутствие серии — пустым результатом; не подставляйте zero/healthy.
 Не складывайте эти значения с browser RTT и не трактуйте их как input-to-picture.
 
 ## Следующая конечная проверка SF26-05
