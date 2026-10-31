@@ -24,9 +24,11 @@ Offline в UI, нет Redis presence, WS закрыт, auth отклонён и 
    одновременно, пока сервер ещё восстанавливается.
 3. Для одного устройства определите сохранённый server URL, device ID, состояние
    сервиса и category последнего отказа. Credentials не включайте в evidence.
-4. Сопоставьте WS close codes: 4001/4003/4004 связаны с auth/device lookup, 4008 —
-   heartbeat; network/handshake failure отдельно. Коды помогают локализации, но
-   проверка actual server logs определяет причину.
+4. Сопоставьте WS close codes и reason: 4001 может означать отказ auth или ошибку
+   чтения первого сообщения, 4003 — timeout первого сообщения, 4004 — неверный
+   либо недоступный device ID, 4008 — heartbeat timeout. 4009 в исходниках означает
+   замещение соединения, а не само по себе отказ credentials. Коды зависят от WS
+   маршрута; для локализации проверяйте фактические server logs и версию APK.
 5. Проверьте источник CONFIG_URL и доступность текущего endpoint отдельно. GitHub
    outage сам по себе не требует нового enrollment, если сохранённый адрес работает.
 
@@ -35,11 +37,16 @@ Offline в UI, нет Redis presence, WS закрыт, auth отклонён и 
 APK retry после AUD-67 имеет jitter: первое окно 1–2 s, cap 15–30 s; clean server
 close тоже проходит через delay. Circuit cooldown — 60 s после десяти network
 failures. Handshake timeout — 20 s. Это policy windows, а не SLA восстановления.
-Backend application heartbeat задан 30 s и проверяет age >45 s на цикле; Android
-watchdog использует 90 s без application ping. Нельзя считать номинальный threshold
-точным wall-clock временем обнаружения. Старые APK имеют другую reconnect policy.
+Backend application heartbeat задан 30 s и проверяет возраст последнего ответа
+агента >45 s на цикле; `keepalive_ack` также обновляет этот таймер транспорта, но
+не записывает presence/telemetry. Полный `pong` вызывает их обновление; оно может
+не сохраниться при ошибке Redis или смене владельца сессии. Живой keepalive сам
+по себе не подтверждает online. Android watchdog использует 90 s без application
+ping. Нельзя считать номинальный threshold точным wall-clock временем обнаружения.
+Старые APK имеют другую reconnect policy.
 
-ConfigWatchdog: первая проверка через 5 s, затем 120 s connected / 60 s disconnected.
+ConfigWatchdog: при настроенном endpoint первая HTTP-проверка через 5 s после
+обработки локальных кандидатов, затем 120 s connected / 60 s disconnected.
 После AUD-73 запрос имеет 10 s HTTP deadline; повторные сигналы используют активную
 проверку, stop отменяет её. На старом APK device JWT ошибочно попадал в `X-API-Key`
 config-запроса и давал `401`. Проверьте версию APK и публичный `GET /api/v1/config/agent`
@@ -48,9 +55,12 @@ config-запроса и давал `401`. Проверьте версию APK �
 с `X-API-Key`. Проверяйте endpoint и защиту ingress, не сохраняйте полный ответ
 в инциденте и не публикуйте credential. Отдельный routes-only gateway не доказывает
 защищённость прямого backend endpoint.
-После AUD-74 discovery сохраняет пару кандидатов, не заменяя активный маршрут
-и не прерывая подтверждённый WS. Переключение принимается по `auth_ok` нужного
-устройства. Отсутствующий/null fallback в ответе сохраняет прежний резерв.
+Discovery сохраняет пару кандидатов. Изменение предпочитаемого маршрута в текущем
+коде вызывает контролируемый reconnect даже при действующем WS; прежний маршрут
+остаётся кандидатом, а выбор нового подтверждается `auth_ok` нужного устройства.
+Обновление только резерва без изменения предпочтения не прерывает активный WS.
+В legacy discovery отсутствующий/null fallback сохраняет прежний резерв; поведение
+подписанного конфигурационного ответа описано отдельно.
 [Точный контракт discovery](../architecture/ANDROID-DISCOVERY-RECOVERY.md).
 Enterprise CONFIG_URL может быть пуст: уже сохранённые маршруты продолжают
 перебираться без discovery. При старте сервиса route-only MDM/локальный файл

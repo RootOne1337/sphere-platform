@@ -23,8 +23,13 @@ PostgreSQL now owns held IPs, including PROVISIONING and REVOKING intents, with 
 global unique index. `VPN_POOL_SUBNET` defaults to `10.100.0.0/16`; allocation is
 bounded to IPv4 /16 or smaller. The legacy Redis sorted sets `vpn:ip_pool:<org_id>`
 are no longer consulted for assignment/release. Their contents are diagnostic
-history, not evidence that an address is free. Pool stats use SQL and report
-global capacity/free addresses and the caller organization's held addresses.
+history, not evidence that an address is free. Pool stats use SQL: capacity is
+derived from the configured subnet, while the free count subtracts the held
+addresses visible to the database session; allocated counts are scoped to the
+caller's organization. With a tenant-restricted RLS runtime, other organizations'
+rows may be invisible, so the reported free count is not proof of global free
+addresses. The global unique index is a separate collision guard; reconcile with
+an appropriately authorized database operator rather than bypassing RLS.
 
 ## Read-only diagnosis
 
@@ -71,8 +76,10 @@ GROUP BY tunnel_ip
 HAVING count(*) > 1;
 ```
 
-This query does not modify peers and cannot prove that the provider has no
-orphaned peers absent from PostgreSQL. Reconcile both inventories.
+This query does not modify peers. Its result is limited by the operator session's
+row visibility and cannot prove that another tenant or the provider has no
+conflicting or orphaned peers. Reconcile both inventories under the deployment's
+approved access model.
 
 ## Recovery decisions
 

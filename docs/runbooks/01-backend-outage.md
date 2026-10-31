@@ -31,6 +31,13 @@ OOMKilled, RestartCount и health state через `docker inspect`. Exit 137 с
 не доказывает OOM; нужен OOMKilled/host evidence. В отчёт достаточно этих полей,
 полный inspect содержит environment и не нужен.
 
+`/api/v1/health/readyz` в исходниках обращается к PostgreSQL и Redis через
+`HealthService` и считает неинициализированный Redis-клиент недоступным. Успешный
+ответ не доказывает миграции, права или доставку команд. Не подменяйте его legacy
+`/api/v1/health/ready`: при `redis=None` тот обработчик пропускает `ping`, но
+всё равно указывает `redis=ok`. В базовом nginx `/health` проксируется именно на
+этот legacy endpoint; для своей установки проверьте фактический ingress и путь.
+
 ## Выбор восстановления
 
 - Ошибка конфигурации/миграции: исправить конкретную причину по логам, затем
