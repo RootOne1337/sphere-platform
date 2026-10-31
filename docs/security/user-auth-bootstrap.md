@@ -53,7 +53,11 @@ GRANT EXECUTE ON FUNCTION sphere_auth.user_login_org(text),
 ```
 
 Replace `sphere_runtime` with the separately provisioned runtime login. These are
-additional to the device/API-key function grants. Missing grants fail closed;
+additional to the device/API-key function grants and cover only these user-auth
+lookups. The current worker discovery functions have separate privileges and
+disclose work/tenant IDs to authorized callers; review their scoped requirements
+in [the RLS rollout guide](postgresql-rls.md#что-остаётся-блокером).
+Missing grants fail closed;
 never add a privileged application-engine fallback. Review function ownership,
 schema ownership and any operator FORCE RLS policies before rollout. This audit
 applied the migration and grants only in its isolated PostgreSQL database.

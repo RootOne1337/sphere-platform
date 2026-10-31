@@ -14,7 +14,18 @@
 отменяют FORCE RLS через ALTER и переходят в owner-role через SET ROLE.
 Проверено и удаление всех синтетических строк через TRUNCATE с последующим rollback.
 Production startup теперь отклоняет эти права, privileged membership, неактивный
-RLS и отсутствие политик. Development сообщает предупреждение.
+RLS и отсутствие политик у проверенных видимых таблиц. При распознанной
+небезопасной конфигурации все окружения, кроме точного `ENVIRONMENT=production`,
+получают предупреждение; ошибка соединения или самого SQL-запроса не обязана
+превращаться в предупреждение.
+
+Это только проверка предпосылок: [`startup_checks.py`](../../backend/core/startup_checks.py)
+ищет видимые в `search_path` таблицы с именами из metadata, проверяет активность
+RLS, владение/членство, TRUNCATE и наличие хотя бы одной политики. Он не проверяет
+предикаты политик и не сопоставляет полный список найденных таблиц с metadata:
+успех guard не подтверждает все таблицы, корректность grants или изоляцию tenant.
+Атрибут `CREATEROLE`, право создания объектов в схемах и все возможные привилегии
+также требуют отдельного review роли.
 
 В схеме, обновлённой до `20260906_account_ciphertext`, 15 таблиц имели включённый
 RLS без политик. Non-owner роль не могла прочитать даже свои devices/users/organizations
@@ -36,7 +47,8 @@ startup на полной схеме и migration/operator behavior. Прове�
 
 ## Политики миграции
 
-Все 28 mapped tables, включая обе M2M-таблицы, входят в frozen inventory миграции.
+Все 28 mapped tables исторического этапа, включая обе M2M-таблицы, входят в
+frozen inventory миграции `20260908_tenant_policies`.
 `organizations` изолируется по `id`, обычные таблицы — по `org_id`. Ассоциация
 доступна только при принадлежности **обоих** концов текущей организации.
 Внешний ключ сам по себе не защищает прямой SELECT/INSERT в M2M.
@@ -52,6 +64,18 @@ UPDATE/DELETE запреты действуют даже при дополнит
 Записи с NULL org_id не доступны tenant runtime; платформенный аудит до выбора
 организации требует отдельного контролируемого пути. Это ограничение ещё нужно
 согласовать с auth/bootstrap, а не выдавать приложению BYPASSRLS.
+
+Последующая [`20261021_vpn_profiles`](../../alembic/versions/20261021_vpn_profiles.py)
+добавляет ещё две таблицы и отдельный inventory: `vpn_profiles` и
+`vpn_profile_revisions`. Для обеих задан tenant boundary; revisions имеют
+отдельные SELECT/INSERT policies и restrictive запреты UPDATE/DELETE. Составной
+FK `(org_id, profile_id)` связывает revision с профилем той же организации.
+Статический `scripts/check_rls.py` сверяет модель с **обоими** inventories;
+в этом checkout он находит 30 имён таблиц. Это не проверка применённой схемы,
+прав SQL-роли, содержимого policies или изоляции работающего deployment.
+Каталог VPN использует отдельный [`VPN_PROFILE_POSTGRES_URL`](../operations/VPN-PROFILES.md)
+и собственные проверки подключённой роли; это не переключение остальных API и jobs
+на эту роль.
 
 Tenant setting приводится к UUID; индексируемый столбец org_id не приводится к
 text. Отсутствующее/пустое значение закрывает доступ, неверный UUID вызывает ошибку.
@@ -87,9 +111,10 @@ savepoint helper отклоняет: rollback savepoint мог бы убрать
 оставив внешнюю транзакцию активной. Привязывайте до begin_nested(); повторная
 привязка того же tenant и rollback вложенной транзакции проверены.
 
-Обычный `get_db()` остаётся unscoped. Auth/bootstrap и глобальные jobs ещё требуют
-перевода на эти границы. Middleware лишь инициализирует request state и не задаёт
-контекст PostgreSQL. Проверка helper напрямую не подтверждает все ASGI/worker пути.
+Обычный `get_db()` сам по себе остаётся unscoped. Для конкретных auth/bootstrap
+и worker путей есть отдельные исправления и проверки ниже; остальные пути требуют
+своей проверки. Middleware лишь инициализирует request state и не задаёт контекст
+PostgreSQL. Проверка helper напрямую не подтверждает все ASGI/worker пути.
 
 Основание реализации: [SessionEvents.after_begin](https://docs.sqlalchemy.org/en/20/orm/events.html#sqlalchemy.orm.SessionEvents.after_begin)
 и [asyncio events через sync_session](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#using-events-with-the-asyncio-extension).
@@ -146,10 +171,9 @@ SQLite unit adapter `set_config` поддерживает SQL-вызов, но �
 
 ## Migration и rollback
 
-Из корня репозитория, под отдельной migration-role и с проверенным search_path:
+Из корня репозитория можно выполнить **только статическую сверку имён**:
 
 ```bash
-python -m alembic -c alembic/alembic.ini upgrade head
 python scripts/check_rls.py
 ```
 
@@ -157,6 +181,15 @@ python scripts/check_rls.py
 включая Table() без org_id. Она не подменяет PostgreSQL tests. Новая таблица
 требует новой reviewed migration и обновления ссылки на inventory; применённую
 миграцию не следует редактировать задним числом.
+
+`alembic upgrade head` изменяет базу: `alembic/env.py` берёт адрес из
+`Settings.POSTGRES_URL`, а не выбирает migration-role автоматически. Прежде чем
+применять миграции в своей среде, отдельно определите точную БД, credentials,
+текущий revision и доступность проверенного восстановления, согласуйте остановку
+несовместимых writers и проверьте действия на изолированной копии. Порядок и
+ограничения launcher — в [Startup](../operations/STARTUP.md); он не создаёт
+разделённые роли и grants. По статическому графу этого checkout head —
+`20261021_vpn_profiles`; это не проверка revision установленной БД.
 
 Старые `infrastructure/postgres/rls_policies.sql` и `audit_log_policies.sql`
 теперь явно завершаются ошибкой с указанием Alembic, чтобы старый deployment script
@@ -174,18 +207,27 @@ upgrade не должен отмечаться как применённая rev
    PostgreSQL bootstrap user; production guard должен отклонить такой запуск.
 2. Проверить остальные auth callers и provisioning. User JWT, device credentials,
    Android WS и user login/refresh/logout/MFA исправлены в AUD-57–62.
-   Runtime требует explicit EXECUTE на четыре функции; их owner/DDL/grants защищаются
-   отдельно, приложение не должно наследовать права владельца. В явно привязанных Session восстановление
+   Четыре функции user/device credential lookup требуют отдельного USAGE/EXECUTE;
+   их owner/DDL/grants защищаются отдельно, приложение не должно наследовать права владельца.
+   Это не полный перечень функций для workers. В явно привязанных Session восстановление
    после смены транзакции исправлено в AUD-55; unscoped callers ещё нужно перевести.
-3. Перевести глобальную enumeration и фоновые scheduler/orchestrator/VPN/audit
-   jobs на проверенные границы организации (HTTP audit writer исправлен отдельно
-   в AUD-56). Проверить разрешённые операции через
+3. Проверить глобальную enumeration и фоновые scheduler/orchestrator/VPN/audit
+   jobs на границах организации (HTTP audit writer исправлен отдельно в AUD-56).
+   В текущем коде уже используются ограниченные `sphere_auth.due_batch_admissions()`,
+   `pipeline_work(text)`, `task_dispatch_work(text,uuid)`, `schedule_work(uuid)`
+   и `watchdog_work(integer,integer,uuid)`: migrations отзывают PUBLIC EXECUTE,
+   а доверенной worker-роли нужны соответствующие отдельные grants. Функции
+   раскрывают пары идентификаторов работы/tenant и требуют защищённого owner;
+   [перечень и порядок проверки](../operations/STARTUP.md#worker-discovery-под-ограниченной-ролью-postgresql).
+   Их наличие не доказывает перенос остальных jobs или готовность установки.
+   Проверить разрешённые операции через
    фактические ASGI/worker пути, конкурентность, rollback и повторное использование
    соединений под runtime credentials. Текущие SQL policy tests этого не заменяют.
 4. Проверить cross-tenant FK ссылки обычных таблиц, изменение организации
    родительской записи и конкурентные изменения связей. Равенство row.org_id
-   не гарантирует принадлежность каждого FK; эта миграция явно защищает оба
-   конца только двух M2M-таблиц.
+   не гарантирует принадлежность каждого FK; миграция 20260908 явно проверяет оба
+   конца двух M2M-таблиц, а более поздний VPN revision использует отдельный
+   составной tenant FK. Это не доказательство корректности остальных связей.
 5. Проверить планы/latency на целевой нагрузке. Сохранена форма сравнения с UUID
    индексом, но benchmark PostgreSQL и 10–64 APK не проводился.
 

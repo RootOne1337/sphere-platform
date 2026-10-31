@@ -74,6 +74,9 @@ GRANT EXECUTE ON FUNCTION sphere_auth.api_key_org(text),
 ```
 
 Do not grant CREATE, function ownership, table ownership or BYPASSRLS to runtime.
+These two function grants cover device/API-key lookup only; user authentication
+and background work have separate requirements in the
+[RLS rollout guide](postgresql-rls.md#что-остаётся-блокером).
 Missing grants fail closed; they must not trigger an application fallback to a
 privileged engine. Migration ownership must be able to read `public.api_keys` and
 `public.devices` across tenants. Existing operator FORCE RLS/ownership rules need
