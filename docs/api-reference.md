@@ -617,14 +617,22 @@ See [the operator workflow and failure contract](operations/SCRIPT-VERSIONS.md).
 `POST /api/v1/scripts/validate`, право `script:read`, тело `{ "dag": <DAG 1.0> }`.
 После обычной проверки пользователя/организации сервер нормализует DAG тем же
 `DAGScript`, что create/update, проверяет уникальные ID, маршруты, достижимость и
-Lua safety. Возвращает `schema_version=1`, `dag`, `dag_hash` (SHA256), `node_count`,
-`action_types`, `scope=structure-routes-lua-safety`, `device_execution_verified=false`.
+Lua safety и опубликованные правила параметров действий. Возвращает `schema_version=1`,
+`dag`, `dag_hash` (SHA256), `node_count`, `action_types`,
+`scope=structure-routes-lua-safety`, `action_contract_version=1.0`,
+`action_parameters_verified=true`, `device_execution_verified=false`.
 Ошибки DAG дают 422 с location/type/message без исходных input/context.
 Проверка не создаёт сценарий, версию, task или команду Android; доступность селектора,
 разрешения APK, побочные эффекты и совместимость runtime этим ответом не проверены.
 Сохранение использует существующие create/update и optimistic guard
 `expected_current_version_id`; 409 требует разрешения конфликта оператором.
 [Аудит и этапы Studio](audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md).
+
+### GET /scripts/action-contract
+
+Requires `script:read`, returns the versioned published action parameter contract
+with `Cache-Control: no-store`. Its receipt explicitly marks device execution and
+installed APK capabilities as unverified; validation does not prove either.
 
 ### GET /scripts/catalog — metadata-only list
 
@@ -697,13 +705,17 @@ Authorization: Bearer <token>
 
 ### Update, rollback and archive
 
-`PUT /scripts/{id}` accepts metadata and an optional DAG; a DAG update creates
-a new immutable version. It also accepts `expected_current_version_id`.
+`PUT /scripts/{id}` accepts metadata and an optional DAG. A changed normalized
+DAG creates a new immutable version; an identical DAG hash does not create one,
+though metadata may still change. Omitted or null description is not applied.
+The optional `expected_current_version_id` protects the selected baseline; it is
+not an idempotency key for the whole mutation.
 
 `POST /scripts/{id}/versions/{version_id}/rollback` creates a **new** version
 with the selected historical DAG; existing versions and tasks remain unchanged.
 Opt-in body: `{"expected_current_version_id":"<current-version-uuid>"}`.
-Legacy callers may omit the body; a supplied body requires the condition.
+Legacy callers may omit the body; a supplied body requires the condition. A
+rollback is a new version, so reconcile an unknown response before repeating it.
 
 `DELETE /scripts/{id}?expected_current_version_id=<current-version-uuid>` archives
 the script and returns 204 after commit. History is retained; this does not cancel
@@ -1341,8 +1353,10 @@ full filtered tenant history before pagination; counts are server reports.
 Accepts `script_id`, `device_id`, optional `account_id`, `priority` (1–10,
 default 5) and `webhook_url`. Returns 201 with the committed task. Execution
 admission validates script version/device/account ownership and current work;
-creation does not acknowledge physical device execution. The handler commits before
-reloading the response; a lost response or later read failure can follow a commit.
+creation does not acknowledge physical device execution. The active duplicate
+check is scoped to device and pinned version, not an idempotency key; a later
+request can create another task after the earlier task becomes terminal. The
+handler commits before reloading the response; a lost response or later read failure can follow a commit.
 Reconcile the task before submitting another execution.
 
 ### GET /tasks/{id}
@@ -1350,8 +1364,10 @@ Reconcile the task before submitting another execution.
 Returns task identity, lifecycle timestamps, result, error and input parameters.
 Related read routes are `/{id}/logs` (stored node logs), `/{id}/progress`
 (Redis progress), `/{id}/live-logs` (Redis node entries) and `/{id}/screenshots`
-(a structured manifest described below). A Redis progress snapshot does not
-prove current physical execution; stored result fields retain their reported scope.
+(a structured manifest described below). When no progress key exists the handler
+returns zero/default fields; this does not prove zero work. An empty live log similarly means no entries were observed,
+not that no execution occurred. Redis progress and stored result fields retain
+their respective observation scopes.
 
 ### POST /tasks/{id}/rerun
 
@@ -1385,7 +1401,8 @@ It does not redirect clients to MinIO or expose storage credentials.
 Absent tasks/keys/objects return 404; invalid raster content returns 422;
 unconfigured or unavailable storage returns 503. Configure the optional
 [server storage read account](configuration.md#private-task-screenshot-reads).
-Pilot reads remain disabled. Android DAG screenshot upload is still open (N01):
+A historical pilot observation recorded reads as disabled; check the selected
+deployment's actual settings. Android DAG screenshot upload is still open (N01):
 its local file path is not a stored object key.
 
 ### DELETE /tasks/{id}

@@ -226,6 +226,28 @@ method/path**: 10 game accounts, 5 account sessions, 2 audit, 3 device logs.
 записи существующих session-метрик и проверки реального удаления логов требуют
 отдельной проверки в изолированной среде.
 
+## Scripts и tasks: источники, версии и управление
+
+На `3ccac757` и менявшемся рабочем дереве изучены **22 зарегистрированных
+method/path**: 11 `/scripts` и 11 `/tasks`. Сверялись OpenAPI, handlers, схемы,
+основные ветви сервиса и действующие руководства. Это не доказательство работы
+installed backend или физического результата Android.
+
+| Область | Сверенные источники и пределы |
+| --- | --- |
+| Scripts: 11 операций | [router](../../../backend/api/v1/scripts/router.py), [schemas](../../../backend/schemas/script.py), [service](../../../backend/services/script_service.py), [action parameters](../../../backend/schemas/action_parameters.py), [versions guide](../../operations/SCRIPT-VERSIONS.md), [catalog guide](../../operations/SCRIPT-CATALOG.md). Read/write, validate/action-contract/catalog, create/read/update/archive и version history/rollback. Исправлено утверждение: PUT с тем же нормализованным DAG hash не создаёт новую version, хотя metadata может измениться. Документированы текущие поля parameter-validation receipt и отдельный read-only action contract. Expected-current — условие на просмотренную версию, а не idempotency key; rollback создаёт новую version. |
+| Tasks: 11 операций | [router](../../../backend/api/v1/tasks/router.py), [schema](../../../backend/schemas/task.py), [service](../../../backend/services/task_service.py), [task protocol](../../security/task-control-protocol.md). Проверены list/create/detail/rerun/delete/stop, stored logs, progress/live logs и screenshot manifest/content. Отсутствие Redis progress key даёт нули, а не подтверждение нулевой работы; повтор create/rerun может создать новую задачу после terminal. QUEUED stop и ASSIGNED/RUNNING cancellation имеют разные receipts, terminal device outcome — отдельное свидетельство. |
+| Artifact status | [private screenshot configuration](../../configuration.md#private-task-screenshot-reads), [task artifact audit](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md). Утверждение о выключенных pilot reads помечено как историческое; текущие settings/deployment не исследовались. Локальный путь Android не доказывает загрузку в объектное хранилище. |
+
+Локально в `.venv-audit` с временным тестовым JWT secret выполнено
+`python -m pytest tests/test_scripts/test_action_parameters.py tests/test_scripts/test_draft_validation.py -q`:
+**125 passed**, одно FastAPI deprecation warning. Это локальные проверки схем,
+валидатора и изолированного ASGI с подставными зависимостями, без команд устройств.
+Тесты [script version workflow](../../../tests/production/test_script_version_workflow.py)
+и [durable task cancellation](../../../tests/production/test_durable_task_cancellation.py)
+в этом проходе не запускались; доступность PostgreSQL/Redis, race outcomes и
+физический stop не подтверждены.
+
 ## Проверки и остаток
 
 Машинное сравнение HTTP method/path во **всех заголовках** справочника с JSON,
