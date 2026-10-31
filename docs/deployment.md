@@ -75,25 +75,17 @@ Without `--output`, `scripts/generate_secrets.py` prints secrets to stdout; with
 configuration or publish its output. Generating a file does not rotate passwords
 or update a running database or container.
 
-### Required Variables
+### Configuration sources
 
-All variables are documented in [configuration.md](configuration.md).
-Development/bootstrap example only; this shared PostgreSQL role is not safe for production runtime. See the [RLS rollout blockers](security/postgresql-rls.md) before separating migration/runtime credentials:
-
-```bash
-POSTGRES_USER=sphere
-POSTGRES_PASSWORD=<32+ chars random>
-POSTGRES_URL=postgresql+asyncpg://sphere:<pass>@postgres:5432/sphereplatform
-
-REDIS_PASSWORD=<32+ chars random>
-REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-
-JWT_SECRET_KEY=<64+ chars random>
-
-WG_SERVER_PUBLIC_KEY=<base64 WireGuard public key>
-WG_SERVER_ENDPOINT=vpn.yourdomain.com:51820
-VPN_KEY_ENCRYPTION_KEY=<Fernet.generate_key() output>
-```
+Use [configuration.md](configuration.md) for required values, Settings defaults,
+and integration-specific secrets. `.env.example` is a template, not a runnable
+secret set. The full and production overlays construct `POSTGRES_URL` and
+`REDIS_URL` from Compose interpolation values rather than forwarding those URL
+entries directly. An env file used for interpolation does not automatically pass
+all of its values to the backend; examine the selected overlays and effective
+sources without exposing secrets. The common PostgreSQL bootstrap user in these
+overlays is not a safe production runtime role; see
+[RLS rollout blockers](security/postgresql-rls.md).
 
 ---
 
@@ -107,15 +99,18 @@ use the same project, env file and Compose files when inspecting an installation
 
 ### Makefile shortcuts
 
-```bash
-make dev        # start infrastructure, not the full application stack
-make full       # start base + full application stack
-make down       # stop dev stack
-make logs       # tail all logs
-make migrate    # run alembic upgrade head
-make test       # run pytest suite
-make lint       # ruff + mypy
-```
+`make dev` calls Compose without explicit `-f`; in this checkout the default
+override adds backend and frontend, so it is not infrastructure-only. `make full`
+explicitly selects base + full and runs `up -d` without waiting for readiness.
+`make logs` follows backend logs only. `make down` again uses Compose's default
+file selection and removes selected-project containers and networks: confirm the
+project and files before using it. `make migrate` runs Alembic against its effective
+host configuration and changes that database; it is not a read-only probe.
+
+`make setup` checks for `.env.local` but does not check whether `.env` already
+belongs to an installation before generating `.env.local`. Do not use it to
+generate replacement credentials over an existing installation. See the
+[startup contract](operations/STARTUP.md) for explicit env selection and readiness.
 
 ---
 
@@ -147,6 +142,13 @@ file validity alone is not authorization or acceptance to start a production sta
 - Image-defined application command and user, without development source/cache mounts
 - Named volumes for data persistence
 
+Production Compose constructs `SERVER_PUBLIC_URL` from `SERVER_HOSTNAME`; the
+frontend declares public URLs at container runtime, whereas `NEXT_PUBLIC_*`
+values used in a built browser bundle also depend on build inputs. A restarted
+container alone does not prove the bundle uses the intended API/WS origin.
+The image's command specifies four Gunicorn workers; the template's
+`WEB_CONCURRENCY` does not by itself override that production command.
+
 Keep the production override last. It uses Compose `!reset` to clear inherited
 ports, source mounts, development commands and root-user overrides, including
 when an existing script still includes `docker-compose.full.yml` before it.
@@ -164,26 +166,24 @@ Do not rely on the removed development bind mounts for production persistence.
 
 Before deploying to production:
 
-- [ ] All secrets are unique and > 32 characters
+- [ ] Independent secrets meet the actual consumer's format and security requirements
 - [ ] `JWT_SECRET_KEY` is unique per environment
 - [ ] `VPN_KEY_ENCRYPTION_KEY` is stored in a secrets manager (not just .env)
 - [ ] SSL certificates are valid and auto-renewing
 - [ ] Database backups are configured and tested
-- [ ] Firewall rules: only ports 80, 443 exposed
+- [ ] Firewall and ingress rules cover all published container ports and the intended administration/VPN paths
 - [ ] Rate limiting tuned for expected traffic
 - [ ] Grafana alerting recipients configured
-- [ ] `SENTRY_DSN` set if using Sentry
+- [ ] Any external error-monitoring integration is provisioned and verified separately
 
-### 5.3 Firewall Rules (UFW example)
+### 5.3 Ingress and firewall
 
-```bash
-ufw default deny incoming
-ufw allow 22/tcp    # SSH (restrict to known IPs)
-ufw allow 80/tcp    # HTTP (nginx → HTTPS redirect)
-ufw allow 443/tcp   # HTTPS
-ufw allow 51820/udp # WireGuard VPN
-ufw enable
-```
+Design access rules around the actual published ports, Docker networking, SSH
+recovery path and the separately operated VPN router. Base Compose also publishes
+n8n and MinIO ports; production overrides here do not remove them. Review the
+effective host firewall and external reachability before making changes; enabling
+a generic deny policy remotely can interrupt administration. Restrict exposure
+and verify the actual network path rather than assuming a fixed port list.
 
 ---
 
@@ -277,35 +277,25 @@ are not automatically moved. [Current admin outcome contract](operations/STARTUP
 
 ### Option A: nginx with Let's Encrypt (Certbot)
 
-```bash
-# Install certbot
-apt install certbot python3-certbot-nginx
+Base Compose runs nginx in a container, mounts a named certificate volume and
+starts a separate certbot renewal loop. Its nginx entrypoint creates a temporary
+one-day self-signed certificate if the configured certificate is missing; a
+running nginx does not establish a trusted certificate. Host `certbot --nginx`
+does not by itself configure this container or its selected volume.
 
-# Obtain certificate
-certbot --nginx -d yourdomain.com -d www.yourdomain.com
-
-# Auto-renewal (verify with dry run)
-certbot renew --dry-run
-```
-
-Update `infrastructure/nginx/nginx.conf`:
-
-```nginx
-server {
-    listen 443 ssl http2;
-    ssl_certificate     /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-    ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
-    ssl_session_cache   shared:SSL:10m;
-    add_header Strict-Transport-Security "max-age=63072000" always;
-}
-```
+The legacy `scripts/init_ssl.sh` sources `.env`, stops nginx and launches a
+standalone container with the literal volume name `certbot-data`. Base Compose
+declares a project-scoped volume without an explicit name, so these may be
+different volumes. Do not assume the script provisions the selected nginx or that
+renewal reloads it. Establish and review a certificate issuance, volume,
+renewal and reload procedure for the actual project, then verify externally.
 
 ### Option B: Traefik with ACME
 
-See `infrastructure/traefik/` for the Traefik-based alternative with automatic
-Let's Encrypt via ACME HTTP challenge.
+The separate `infrastructure/traefik/` example configures Cloudflare DNS challenge,
+not an HTTP challenge. Its separate network, Docker discovery, credentials,
+certificate persistence and ingress need their own deployment and verification;
+the example alone does not establish a working route.
 
 ---
 
@@ -375,28 +365,41 @@ established by this repository.
 
 ---
 
-## 11.5 Background Tasks (v4.7)
+## 11.5 Background Tasks
 
-The backend runs several asyncio background tasks that start automatically:
+The source registers several background tasks during backend lifespan; running
+and successful work depend on startup, settings, credentials and dependencies:
 
 | Task | Module | Interval | Description |
 |------|--------|----------|-------------|
-| Orchestration Loop | `backend/tasks/orchestration_loop.py` | `ORCHESTRATION_LOOP_INTERVAL` (10s) | Periodic orchestration tick — checks pending pipelines |
-| Task Heartbeat Watchdog | `backend/tasks/task_heartbeat_watchdog.py` | `TASK_HEARTBEAT_CHECK_INTERVAL` (30s) | Marks stale tasks as failed after `TASK_HEARTBEAT_TIMEOUT` |
-| Event Reactor | `backend/services/event_reactor.py` | On-demand | Processes device events and fires matching triggers |
+| Orchestration engine | `backend/tasks/orchestration_loop.py` | 10 s code constant | Processes enabled registration/farming settings; its unscoped DB path needs runtime-role verification |
+| Task watchdog | `backend/tasks/task_heartbeat_watchdog.py` | 60 s code constant | Expires overdue undelivered queued tasks; delivered tasks receive a stop intent and await a terminal device receipt |
+| Event Reactor | `backend/services/event_reactor.py` | On demand | Called from event/task paths; not a separately registered periodic worker |
 
-These tasks are registered in `backend/main.py` startup lifecycle.
+The former `ORCHESTRATION_LOOP_INTERVAL`, `TASK_HEARTBEAT_CHECK_INTERVAL` and
+`TASK_HEARTBEAT_TIMEOUT` names are not consumed by these sources. The watchdog
+reads `TASK_STALE_BUFFER_SECONDS` and `TASK_QUEUED_STALE_MINUTES` from the backend
+process environment; setting them only in a Compose interpolation file does not
+forward them through the full or production overlays. Other workers also exist;
+see [orchestration operations](operations/TASKS-AND-ORCHESTRATION.md) and the
+[RLS rollout constraints](security/postgresql-rls.md).
 
 ---
 
 ## 12. Health Checks
 
-| Endpoint | Auth | Expected Response |
+| Endpoint | Purpose | Expected Response |
 |----------|------|-------------------|
 | `GET /api/v1/health/healthz` | Liveness | Process response; does not check dependencies |
 | `GET /api/v1/health/readyz` | Readiness | Checks PostgreSQL and Redis; `{"status":"ready"}` on success |
 | `GET /api/v1/health` | Static liveness | Does not prove dependencies or device operation |
 | `GET /api/v1/vpn/health` | Static VPN response | Does not prove a working tunnel |
+
+The health handlers above are public in application code except `/api/v1/vpn/health`,
+which requires `vpn:read`; a deployment ingress may impose additional restrictions.
+The legacy `/api/v1/health/ready` is different from `/readyz`: it can report
+`redis=ok` when no Redis client exists. Base nginx `/health` proxies to that legacy
+handler. See [backend outage](runbooks/01-backend-outage.md).
 
 Inspect `ps --all` for the selected Compose project and check configured health
 probes for each service. Not every service necessarily has a health check, and a
@@ -480,18 +483,9 @@ docker compose logs backend | grep "noop\|keepalive"
 
 ### VPN peer can't connect
 
-```bash
-# Check peer config exists
-curl -H "Authorization: Bearer <token>" \
-     http://localhost/api/v1/vpn/peers
-
-# Check WireGuard interface on server
-wg show sphere0
-
-# Check client config was delivered
-# Look for vpn.connect event in backend logs
-docker compose logs backend | grep "vpn"
-```
+Use the [VPN incident runbook](runbooks/02-vpn-incident.md) with the selected
+ingress and actual router. The backend does not establish that a local interface
+named `sphere0` exists or that an API response proves configuration reached Android.
 
 ### High memory usage
 
@@ -502,18 +496,11 @@ Compare Redis RSS and the Docker ceiling as well as `used_memory`; persistence
 forks and buffers are not covered by the dataset number alone. See the
 [measured memory contract and rollout](operations/REDIS-MEMORY.md).
 
-```bash
-# Check per-container memory
-docker stats --no-stream
-
-# PostgreSQL: check for slow queries
-docker compose exec postgres psql -U sphere sphereplatform \
-  -c "SELECT pid, now()-query_start AS dur, query FROM pg_stat_activity
-      WHERE state='active' ORDER BY dur DESC LIMIT 10;"
-
-# Redis: check memory
-docker compose exec redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli INFO memory'
-```
+Use the selected project's container inventory and bounded metrics. The
+[database runbook](runbooks/03-database-failure.md) avoids assuming a database
+role and excludes query text, which may contain sensitive data. Redis inspection
+requires the selected installation's authentication; avoid printing passwords or
+full connection strings.
 
 ### Windows configuration selection (AUD-80)
 
@@ -528,11 +515,12 @@ certify full startup, legacy branches or deployment roles/migrations.
 ### Immutable image bootstrap tools (AUD-81)
 
 The production backend image ships the two administrative CLIs used by full-deploy:
-`scripts/create_admin.py` and `scripts/seed_enrollment_key.py`. A separate backend CI
+`scripts/create_admin.py` and `scripts/seed_enrollment_key.py`; the image also
+packages two reviewed script-metadata maintenance CLIs. A separate backend CI
 job builds that Dockerfile and executes four CLI/migration/user probes without
 network, source mounts or a writable root filesystem. The probe validates packaged
 entry points; SQL initialization, migration privileges and rollout order still
-require their own acceptance. Unrelated scripts are not included.
+require their own acceptance. The image does not copy the entire scripts directory.
 
 ### Full-deploy phase contract (AUD-82)
 
