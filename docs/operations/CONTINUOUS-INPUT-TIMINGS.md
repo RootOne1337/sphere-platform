@@ -3,7 +3,7 @@
 [Реестр работ](WORK-STATUS.md) · [Текущая установка](CURRENT-STATE.md) ·
 [Prometheus](OBSERVABILITY.md) · [Исходная проверка](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md)
 
-**Установленные UI639b6ad5/API369654a0 сохраняют серверные измерения.**
+**В срезе 10 октября UI639b6ad5/API369654a0 сохраняли серверные измерения; текущую установку нужно проверить отдельно.**
 [Последняя доставка и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 Повторное automatic idle recovery, точный native RELEASE/fresh-viewer gate после
 unknown pointer loss и гонки navigation/capture исправлены.1996frontend tests прошли.
@@ -108,8 +108,8 @@ histogram_quantile(0.95,
 ## Следующая конечная проверка SF26-05
 
 1. Проверить актуальный admitted source/runtime receipt и freshness `/metrics`;
-   установленный API369654a0 и последний canary receipt указаны выше. Исторический
-   d720232e не является текущей установкой. Не подменять отсутствие activity нулём.
+   API369654a0 и соответствующий canary receipt — исторический срез выше.
+   Актуальную установку и совместимость проверяйте заново. Не подменять отсутствие activity нулём.
 2. На одном разрешённом тестовом viewer начать Control без DOWN/UP/text/record/run.
    Сохранить time window, browser oldest heartbeat/actual ACK RTT/tick/buffer,
    server histogram deltas и resource observation freshness.

@@ -41,7 +41,7 @@ heartbeat и reconnect, а локальный Android через него пер
 27 сентября повторили Serveo/443 в отдельном pilot-only контейнере: fingerprint
 снова совпал с официальным, но без ключа и с новым эфемерным ключом SSH ответил
 `Permission denied`. Указанный оператором остановленный старый `sphere-tunnel`
-не запускали и не использовали. Резервного Serveo ingress сейчас **нет**.
+не запускали и не использовали. На момент этой проверки резервного Serveo ingress **не было**.
 Второй pilot-only Quick Tunnel с `--protocol http2` прошёл HTTPS/WSS preflight;
 адресный PH013 10230 подтвердил `UPDATE_CONFIG`, затем auth и heartbeat через
 HTTP/2, но WSS закрылся ровно через 40,001 с. Следующий сеанс на прежнем QUIC
@@ -66,8 +66,9 @@ control ping отключён только на management WSS; JSON heartbeat �
 остановки процесса возвращал `503`; его нельзя считать резервом. Действующий
 Cloudflare connector и signed config не менялись.
 
-Не включайте все profiles как якобы готовый резерв. Для текущего стенда включён
-только `quick`; два постоянных profiles — подготовка для следующего этапа.
+Не включайте все profiles как якобы готовый резерв. В описанном сентябрьском
+срезе стенда использовался только `quick`; два постоянных profiles были подготовкой
+для следующего этапа. Состояние любого сегодняшнего стенда проверяется отдельно.
 
 `public-gateway` сохраняет публичный `Host` для backend, но передаёт запросы на
 отдельный внутренний listener `nginx:8081`. Это важно для named-hostname профилей:
@@ -144,9 +145,10 @@ autossh и keepalive. Существующие туннели других ус�
 
 Quick Tunnel выдаёт URL после запуска connector. Для нового адреса необходимо
 согласовать public JSON, backend public URL/CORS и выпустить новый signed version.
-В signed APK management адрес менять или пересобирать APK не требуется. Автоматическая
-публикация нового URL после connector restart включена через
-[host publisher](DISCOVERY-PUBLISHER.md) на новом стенде; Windows logon требуется.
+В signed APK management адрес менять или пересобирать APK не требуется. В
+сентябрьском срезе автоматическую публикацию нового URL после connector restart
+обеспечивал [host publisher](DISCOVERY-PUBLISHER.md); Windows logon требовался.
+Наличие и работоспособность publisher на конкретном стенде нужно проверить отдельно.
 Для другой установки он готовится отдельно. GitHub rollout остаётся медленным; сохранённый
 Quick Tunnel APK нельзя раздавать большому парку как постоянную сборку.
 [Официальные ограничения](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/).

@@ -376,7 +376,10 @@ WireGuard public key, а не private key. Разные X25519 clamping-пред
 освобождения, этот helper не разрешает массовое назначение одного клиентского профиля:
 одинаковый WG-ключ на нескольких устройствах вызывает переключение endpoint у peer.
 
-Остаются реальный `VpnService`/consent/revoke/socket protection, DNS/IPv6/boot,
-долговременный server operation journal, delivery и приёмка полного WS/media/input.
-`VPN_CONNECT`/`VPN_RECONNECT` и глобальный kill switch основного нового Android-кода
-пока заблокированы. Физическая приёмка этих операций остаётся отдельной от установленного каталога UI/API.
+В исходниках присутствует gated [`AppScopedVpnService`](../../android/app/src/main/kotlin/com/sphereplatform/agent/vpn/AppScopedVpnService.kt);
+его наличие и датированные canary не являются общей production-приёмкой. Consent,
+revoke, socket protection, DNS/IPv6/boot, долговременный server operation journal,
+delivery и полный WS/media/input требуют отдельных проверок для выбранной среды.
+Legacy `VPN_CONNECT`/`VPN_RECONNECT` и глобальный kill switch имеют отдельные
+ограничения; статус маршрута и фактическое применение проверяйте по
+[контракту результатов](VPN-CONTROL-OUTCOMES.md) и соответствующим наблюдениям.

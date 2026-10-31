@@ -64,12 +64,13 @@ legacy `vpn_killswitch` envelope. Replacing the no-op with a generic pub/sub
 publisher would not establish protocol compatibility or execution receipts.
 
 `KillSwitchService.supported` therefore requires an explicit
-`supports_killswitch = True` capability from a compatible publisher. The installed
-no-op publisher has that capability set to false. Owned requests receive one
+`supports_killswitch = True` capability from a compatible publisher. The publisher
+wired in the reviewed source has that capability set to false. Owned requests receive one
 `unsupported` outcome per target, and no envelope is sent. There is no claim
 that this control is production ready. Actual Android VPN integration remains
-separate work. The user has now authorized that work; the 21 October source
-preflight/quarantine step begins it without claiming an installed VPN provider.
+separate work. The 21 October source preflight/quarantine step did not itself
+prove an installed VPN provider. Verify the deployed revision and current scope
+separately before operating it.
 
 ## Rotation is a two-stage provider operation
 

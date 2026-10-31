@@ -8,7 +8,7 @@
 [APK/video audit](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md) ·
 [Android guide](../android-agent.md)
 
-## Актуальный follow-up: lifecycle ownership, APK 1.2.40
+## Исторический follow-up 1 октября: lifecycle ownership, APK 1.2.40
 
 Configured APK 10240 установлен адресными OTA PH010/PH025. Новый codec callback
 fence и release-before-consumer подтверждены 13 regression tests; полные debug

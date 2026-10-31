@@ -40,7 +40,7 @@ def markdown_files(root: Path) -> list[str]:
 def document_role(file: str, entrypoints: list[str]) -> str:
     if file in entrypoints or file == "docs/operations/WORK-STATUS.md":
         return "CURRENT_ENTRYPOINT"
-    if file.startswith("docs/audits/") or file.endswith("04-EXECUTION-REPORT.md") or "ANALYSIS-FARMING" in file:
+    if file.startswith(("docs/audits/", "docs/history/")) or file.endswith("04-EXECUTION-REPORT.md") or "ANALYSIS-FARMING" in file:
         return "DATED_EVIDENCE"
     if file.startswith(("specs/", "docs/specs/", "docs/design/", "docs/load-test/")) or file.endswith("AI-READINESS.md"):
         return "DESIGN_SPECIFICATION"

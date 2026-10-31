@@ -9,9 +9,10 @@
 schema availability from `/api/docs`: the local gateway returned404 for the
 root schema URL during the9October documentation review.
 
-**12 October installed schema:** UI/API `ed9d54d0` serve both 3015 and Tuna.
-The running API's canonical schema matches the committed JSON: 185 HTTP operations,
-147 paths. This includes authenticated exact-channel APK download at
+**Historical schema observation, 12 October 2026:** UI/API `ed9d54d0` served 3015 and Tuna at that time.
+The then-running API schema matched the then-committed JSON: 185 HTTP operations,
+147 paths. This does not identify the current installation or current snapshot.
+That snapshot included authenticated exact-channel APK download at
 `GET /api/v1/updates/downloads/latest`; `platform=android-canary&flavor=dev`
 is the default. The response is a binary APK with private/no-store caching,
 download filename and Range support. Operator `device:read` is required;
@@ -571,8 +572,10 @@ skip behavior for invalid/missing/foreign devices is retained.
 ## Scripts — `/scripts`
 
 Existing version workflows were reviewed against `d2846ef` on 2 October 2026;
-draft validation was added in `561d08a`. The current API/UI installation is
-`eb7a7c26` (6 October 2026, 07:35 UTC), including the separate metadata catalog.
+draft validation was added in `561d08a`. In the recorded 6 October 2026, 07:35 UTC
+observation, API/UI `eb7a7c26` included the separate metadata catalog. This is a
+historical installation; consult [current state](operations/CURRENT-STATE.md) and
+verify the deployment separately.
 All routes require an authenticated principal and enforce organization scope.
 Read operations require `script:read`, mutations `script:write`; task/batch submission
 checks `script:execute` separately.

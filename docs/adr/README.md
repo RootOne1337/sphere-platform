@@ -4,6 +4,9 @@ This directory contains Architecture Decision Records (ADRs) for Sphere Platform
 
 An ADR documents an architecturally significant decision: the context that led to it,
 the options considered, the decision made, and the consequences.
+The dates and status labels below are metadata from the records, not independent
+proof of a current deployment or a revalidated decision. Check the current code
+and related operational contracts before relying on an old ADR.
 
 ## Index
 

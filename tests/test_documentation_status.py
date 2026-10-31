@@ -12,6 +12,7 @@ from scripts.check_documentation_status import (
     INVENTORY,
     REGISTRY,
     ROOT,
+    document_role,
     local_link_errors,
     normalized_hash,
     read_json,
@@ -408,6 +409,10 @@ class DocumentationStatusTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(local_link_errors(root, "docs/guide.md"), ["docs/guide.md: missing local link: missing.md"])
+
+    def test_history_snapshots_are_not_operating_guides(self) -> None:
+        self.assertEqual(document_role("docs/history/README-20261022.md", []), "DATED_EVIDENCE")
+        self.assertEqual(document_role("docs/operations/STARTUP.md", []), "OPERATING_GUIDE")
 
     def test_link_scanner_ignores_inline_code_but_checks_adjacent_links(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

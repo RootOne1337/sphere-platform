@@ -5,9 +5,9 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 431,
+    "DATED_EVIDENCE": 433,
     "DESIGN_SPECIFICATION": 90,
-    "OPERATING_GUIDE": 81,
+    "OPERATING_GUIDE": 80,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1857,6 +1857,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-11-01/OPERATIONS-REVIEW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-11-01/SECURITY-DOCUMENTATION-COVERAGE.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1966,7 +1970,7 @@
     },
     {
       "file": "docs/history/README-20261022.md",
-      "role": "OPERATING_GUIDE"
+      "role": "DATED_EVIDENCE"
     },
     {
       "file": "docs/load-test/01-ARCHITECTURE.md",
