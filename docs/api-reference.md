@@ -710,6 +710,34 @@ user permission dependency; preview is blocked when `ENVIRONMENT=production` and
 `DEBUG=false`. Preview may return sensitive configuration and must be protected.
 Gateway or other deployment controls must be verified separately.
 
+### VPN profile catalog and runtime observations
+
+These catalog operations do **not** apply a tunnel. Reads require `vpn:read`;
+imports, revisions, archives and preflight require `vpn:write`. Metadata is
+organization-scoped and does not include stored configuration ciphertext or keys;
+metadata such as endpoint and package IDs can still be sensitive.
+
+| Request | Source contract |
+| --- | --- |
+| `GET /vpn/providers` | Provider capabilities; not proof of device compatibility. |
+| `POST /vpn/profile-preflight` | Inspect one supplied profile without saving or probing the network; maximum request body 96 KiB. |
+| `GET /vpn/profiles` | Paged catalog with `page`, `page_size`, `include_archived`, `search`. |
+| `POST /vpn/profiles` | Save encrypted profile using client `request_id`; returns a persistence receipt, `apply_allowed=false`, `execution_confirmed=false`. |
+| `GET /vpn/profiles/imports/{request_id}` | Read an owned import receipt; 404 only means not observed in that SQL snapshot. |
+| `POST /vpn/profiles/batch/preflight` | Inspect 1–100 unique request IDs; body capped at 4 MiB, no save or application. |
+| `POST /vpn/profiles/batch` | Save valid items in one transaction with per-item request IDs; response receipts preserve input order. |
+| `POST /vpn/profiles/batch/status` | Read receipts for 1–100 unique IDs with `vpn:read`; null does not prove cancellation or failed write. |
+| `GET /vpn/profiles/{id}` and `/revisions` | Read metadata or paged immutable revision metadata. |
+| `POST /vpn/profiles/{id}/revisions` | Save a new revision using `request_id` and `expected_revision`. |
+| `POST /vpn/profiles/{id}/archive` | Archive with `expected_revision`; does not disconnect an existing tunnel. |
+| `GET /vpn/runtime` | Paged owned-device Android observation; accepts `page`, `page_size`, `search`, `group_id`. `fresh`, `stale`, `unknown` describe bounded sample/session evidence, not independent proof of end-to-end traffic. |
+
+A timed-out import can still commit. Reconcile the same request IDs and do not
+infer failure from a missing snapshot; raw profile data and metadata must be
+handled as sensitive. The full schemas,
+idempotency and operational limitations are in [VPN profiles](operations/VPN-PROFILES.md)
+and [VPN Web guide](operations/VPN-WEB-GUIDE.md).
+
 ### GET /vpn/peers
 
 Optional filters are `status` and `device_id`. Returns an array of peers owned by
@@ -777,6 +805,38 @@ The current response is a static service status (`status: ok`,
 `checks.vpn_service.status: ok`). It does not probe router reachability or
 publish latency. Do not use it as a transport readiness or SLA measurement.
 Requires `vpn:read`; measured health coverage remains a separate open finding.
+
+---
+
+## n8n integration — `/n8n`
+
+Webhook registry routes use `get_current_user` (Bearer user dependency); the
+investigated router does not add a separate permission check to their CRUD. Tenant
+ownership is checked against the current user. Effective database policies and
+deployment access controls must also be verified.
+
+| Request | Source contract |
+| --- | --- |
+| `POST /n8n/webhooks` | `name`, HTTP(S) `url`, nonempty `events`; optional `tags` and `secret`. Returns 201 and the plaintext secret once; only its hash is stored. |
+| `GET /n8n/webhooks` | `{items,total}` for active registrations only. Disabled records disappear from this list but are not deleted. |
+| `GET /n8n/webhooks/{id}` | Owned detail; the secret is not returned. |
+| `PATCH /n8n/webhooks/{id}` | Changes `name`, `events`, `tags`, `is_active`; a known owned ID can be re-enabled. URL and secret are not patch fields. |
+| `DELETE /n8n/webhooks/{id}` | Deletes an owned registration. The handler returns 204 while the current OpenAPI declaration lists 200. |
+| `POST /n8n/tasks` | Requires `script:execute`; `device_id`, `script_id`, optional `priority`, `webhook_url`. Returns a 201 task identity/status, not physical execution. |
+| `GET /n8n/tasks/{id}` | Uses `get_current_user` with an owned task check; returns id, status, device_id, script_id. The router does not separately declare `script:read` here. |
+
+A repository search found no call to the registry service's `dispatch_event` in
+backend source. Registration therefore does not establish an active event delivery
+path. If that service is invoked, its signing key is the UTF-8 bytes of the hex
+SHA-256 digest of the issued secret, rather than the raw secret; see the
+[operator guide](operations/USER-ADMIN-GUIDE.md#вебхуки--webhooks).
+
+The per-task `webhook_url` is a **separate callback mechanism**: the task result
+handler starts an in-process delivery with retries, without passing a signing
+secret. Its payload uses `event_type: task.completed` even when `success=false`;
+consumers must inspect `success`. Callback delivery or processing is not durable
+or confirmed by the task receipt. After a lost task-create response, reconcile
+before creating another task. Avoid placing secrets in URLs or logs.
 
 ---
 

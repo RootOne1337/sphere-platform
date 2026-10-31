@@ -148,6 +148,33 @@ Handlers, сеть и состояние сервера она не провер
 [OTA API](../../../tests/test_updates/test_updates_api.py),
 [OTA live delivery](../../../tests/production/test_ota_live_delivery.py).
 
+## VPN и n8n: оставшиеся зарегистрированные пути
+
+На `05594674` и меняющемся рабочем дереве сверены группы `/vpn` (**23 операции**)
+и `/n8n` (**7 операций**) по зарегистрированному OpenAPI, router и указанным
+service/schema. Покрытие обозначает чтение method/path, основных permissions,
+параметров и видимых эффектов, а не исчерпывающее воспроизведение каждой ветки.
+Изменён [ручной справочник](../../api-reference.md).
+
+| Область | Источники и границы |
+| --- | --- |
+| VPN catalog: 10 операций | [profile router](../../../backend/api/v1/vpn/profile_router.py), [input bounds](../../../backend/api/v1/vpn/profile_input.py), [schema](../../../backend/schemas/vpn/catalog.py), [batch schema](../../../backend/schemas/vpn/bulk_profiles.py), [batch service](../../../backend/services/vpn/profile_batch.py), [operator contract](../../operations/VPN-PROFILES.md). `vpn:read/write`; single/batch preflight, import/status, list/detail/history, append и archive. `persisted` не означает применение; status `null`/404 не исключает поздний commit. Batch до 100 уникальных request ID, 4 MiB, единая транзакция. |
+| VPN runtime и capabilities: 3 операции | [runtime router](../../../backend/api/v1/vpn/runtime_router.py), [runtime schema](../../../backend/schemas/vpn/runtime.py), [router](../../../backend/api/v1/vpn/router.py): providers/read, runtime/read, profile-preflight/write. Метка freshness относится к времени выборки и текущей WS-сессии, не подтверждает сквозной трафик или применённый профиль. |
+| VPN admin/peers/control: 10 операций | [router](../../../backend/api/v1/vpn/router.py), [control contract](../../operations/VPN-CONTROL-OUTCOMES.md). Сверены keypair/preview, assign/revoke/bulk, health/peers/pool/rotate/killswitch; часть sender-результатов — unsupported/unknown, provider response не подтверждает Android. У admin-обработчиков не объявлена отдельная user permission dependency; effective ingress здесь не исследован. |
+| n8n registry: 5 операций | [router](../../../backend/api/v1/n8n/router.py), [schema](../../../backend/schemas/webhook.py), [service](../../../backend/services/n8n_webhook_service.py): CRUD требует get_current_user, но не отдельный require_permission; список показывает только активные записи, GET/PATCH по owned ID работают и с выключенными. Delete handler даёт 204, OpenAPI декларирует 200. Plain secret выдаётся при создании; для HMAC используется hex SHA-256 секрета как UTF-8 ключ. В backend не найден вызов dispatch_event, поэтому подписка/доставка по этому реестру не подтверждена. |
+| n8n task bridge: 2 операции | [router](../../../backend/api/v1/n8n/router.py), [task service](../../../backend/services/task_service.py), [callback service](../../../backend/services/webhook_service.py): create требует `script:execute`, poll использует get_current_user и owned ID без отдельного `script:read`. Task callback отличается от registry: передаётся без signing secret, event_type остаётся task.completed и при success=false. Это in-process delivery, не проверка результата получателя и не durable outbox. |
+
+Проверка в `.venv-audit`: `python -m pytest
+ tests/vpn/test_profile_preflight.py::test_valid_config_is_never_an_activation_or_secret_receipt -q`
+с временным тестовым JWT secret — **1 passed**, одно FastAPI deprecation warning.
+Тест запрещает внешние DNS/subprocess вызовы и проверяет preflight, а не live VPN.
+Отдельная локальная проверка `N8nWebhookService._sign` с тестовой строкой
+подтвердила использование UTF-8 hex digest вместо raw secret; сеть не вызывалась.
+Другие найденные [n8n API tests](../../../tests/n8n/test_n8n_api.py),
+[VPN batch tests](../../../tests/vpn/test_profile_batch.py) и
+[VPN runtime tests](../../../tests/production/test_vpn_app_runtime.py) здесь не
+запускались; внешний webhook receiver, БД и Android не изменялись.
+
 ## Проверки и остаток
 
 Машинное сравнение HTTP method/path во **всех заголовках** справочника с JSON,
