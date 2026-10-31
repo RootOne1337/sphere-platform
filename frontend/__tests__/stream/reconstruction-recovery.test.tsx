@@ -1,13 +1,13 @@
 import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {TeachingReconstruction} from '@/src/features/stream/TeachingReconstruction';
-import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
-import {listReconstructionLinks,readReconstructionLink,saveReconstructionLink} from '@/src/features/stream/reconstructionLink';
+import {reconstructionRequest,ReconstructionResponseError,uploadReconstruction} from '@/src/features/stream/reconstructionClient';
+import {automaticReconstructionStopped,ensureAutomaticReconstructionLink,listReconstructionLinks,readReconstructionLink,saveReconstructionLink,stopAutomaticReconstruction} from '@/src/features/stream/reconstructionLink';
 jest.mock('next/dynamic',()=>()=>function Placeholder(){return null;});
-jest.mock('@/src/features/stream/reconstructionLink',()=>({readReconstructionLink:jest.fn(async()=>null),listReconstructionLinks:jest.fn(async()=>[]),saveReconstructionLink:jest.fn(async()=>{}),validReconstructionJob:(value:unknown)=>!!value}));
+jest.mock('@/src/features/stream/reconstructionLink',()=>({readReconstructionLink:jest.fn(async()=>null),listReconstructionLinks:jest.fn(async()=>[]),saveReconstructionLink:jest.fn(async()=>{}),ensureAutomaticReconstructionLink:jest.fn(),automaticReconstructionStopped:jest.fn(async()=>false),stopAutomaticReconstruction:jest.fn(async()=>{}),validReconstructionJob:(value:unknown)=>!!value}));
 jest.mock('@/src/features/stream/reconstructionClient',()=>({
   ...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn(),uploadReconstruction:jest.fn(),
 }));
-afterEach(()=>{sessionStorage.clear();jest.clearAllMocks();jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);});
+afterEach(()=>{sessionStorage.clear();jest.clearAllMocks();jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);jest.mocked(automaticReconstructionStopped).mockResolvedValue(false);});
 test('a recording marked HUD-free retains the avatar mask and 30000 iterations',async()=>{
   const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>null} complete hudHidden onBusyChange={()=>{}}/>);
   expect(screen.getByRole('button',{name:'Подготовить ориентиры'})).toBeInTheDocument();
@@ -33,7 +33,9 @@ test('one-button route preparation creates a sparse-only automatic pipeline',asy
 test('a newly finalized recording can prepare once automatically but a recovered intent never creates another job',async()=>{
   Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'});
   jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);
-  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'failed'})} as Response);
+  const auto={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  jest.mocked(ensureAutomaticReconstructionLink).mockResolvedValue(auto);
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{if(path.startsWith('/jobs/'))throw new ReconstructionResponseError(404,'job_not_found');return {json:async()=>({phase:'failed'})} as Response;});
   const consumed=jest.fn(),folder={} as FileSystemDirectoryHandle,props={clip:'c'.repeat(32),scope:'d'.repeat(32),folder:()=>folder,complete:true,onBusyChange:()=>{},autoPrepare:true,onAutoPrepareConsumed:consumed};
   const first=render(<TeachingReconstruction {...props}/>);
   await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[0]==='/jobs')).toHaveLength(1));
@@ -58,6 +60,102 @@ test('a recovered job blocks new control until its state is actually confirmed',
   confirm({json:async()=>({phase:'failed',error:'worker_service_restarted'})});
   await waitFor(()=>expect(busy).toHaveBeenLastCalledWith(false));
   view.unmount();
+});
+
+test('automatic creation retries the same durable intent only after another confirmed 404',async()=>{
+  const job={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  jest.mocked(readReconstructionLink).mockResolvedValue(job);jest.mocked(listReconstructionLinks).mockResolvedValue([job]);
+  let posts=0;
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{
+    if(path==='/jobs'){if(++posts===1)throw new ReconstructionResponseError(409,'resource_guard');return {json:async()=>({phase:'failed'})} as Response;}
+    throw new ReconstructionResponseError(404,'job_not_found');
+  });
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete autoPrepare onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(posts).toBe(2),{timeout:4000});
+  const calls=jest.mocked(reconstructionRequest).mock.calls.filter(([path])=>path==='/jobs');
+  expect(calls.map(call=>JSON.parse(String(call[2]?.body)))).toEqual([expect.objectContaining({id:job.id,key:job.key,...job.creation}),expect.objectContaining({id:job.id,key:job.key,...job.creation})]);
+  view.unmount();
+});
+
+test('ambiguous create followed by processing status never sends start or repeats create',async()=>{
+  const job={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'avatar' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  jest.mocked(readReconstructionLink).mockResolvedValue(job);jest.mocked(listReconstructionLinks).mockResolvedValue([job]);
+  let gets=0;
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{
+    if(path==='/jobs')throw Error('network_timeout');
+    if(++gets===1)throw new ReconstructionResponseError(404,'job_not_found');
+    return {json:async()=>({phase:'matching'})} as Response;
+  });
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete autoPrepare onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(gets).toBeGreaterThanOrEqual(2),{timeout:4000});
+  expect(jest.mocked(reconstructionRequest).mock.calls.filter(([path])=>path==='/jobs')).toHaveLength(1);
+  expect(jest.mocked(reconstructionRequest).mock.calls.filter(([path])=>path.endsWith('/start'))).toHaveLength(0);
+  view.unmount();
+});
+
+test('an incomplete upload is resumed but a job already processing is not started again',async()=>{
+  const job={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  jest.mocked(readReconstructionLink).mockResolvedValue(job);jest.mocked(listReconstructionLinks).mockResolvedValue([job]);
+  const oldLocks=Object.getOwnPropertyDescriptor(navigator,'locks');
+  Object.defineProperty(navigator,'locks',{configurable:true,value:{request:async(_name:string,options:{ifAvailable?:boolean;signal?:AbortSignal},fn:(lock:object)=>unknown)=>{if(options.ifAvailable&&options.signal)throw new DOMException('Invalid Web Locks options','NotSupportedError');return fn({});}}});
+  let gets=0;jest.mocked(uploadReconstruction).mockResolvedValue();
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{
+    expect(path).toBe(`/jobs/${job.id}`);gets++;
+    return {json:async()=>({phase:gets>=3?'matching':'uploading'})} as Response;
+  });
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete autoPrepare onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(gets).toBeGreaterThanOrEqual(3));
+  expect(uploadReconstruction).toHaveBeenCalledTimes(1);
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(([, , init])=>init?.method!=='POST')).toBe(true);
+  view.unmount();if(oldLocks)Object.defineProperty(navigator,'locks',oldLocks);else Reflect.deleteProperty(navigator,'locks');
+});
+
+test('a recording without automatic intent never starts preparation by itself',async()=>{
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'failed'})} as Response);
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete autoPrepare={false} onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Подготовить ориентиры'})).toBeEnabled());
+  expect(ensureAutomaticReconstructionLink).not.toHaveBeenCalled();expect(reconstructionRequest).not.toHaveBeenCalled();view.unmount();
+});
+test('legacy ambiguous job_not_found 409 is not treated as confirmed absence',async()=>{
+  const job={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  jest.mocked(readReconstructionLink).mockResolvedValue(job);jest.mocked(listReconstructionLinks).mockResolvedValue([job]);
+  jest.mocked(reconstructionRequest).mockRejectedValue(new ReconstructionResponseError(409,'job_not_found'));
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete autoPrepare onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalled());
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(([, , init])=>init?.method!=='POST')).toBe(true);view.unmount();
+});
+test('confirmed missing legacy job allows explicit sparse recovery using the original capability',async()=>{
+  const job={id:'a'.repeat(32),key:'b'.repeat(64)};
+  jest.mocked(readReconstructionLink).mockResolvedValue(job);jest.mocked(listReconstructionLinks).mockResolvedValue([job]);
+  jest.mocked(reconstructionRequest).mockImplementation(async(path,_job,init)=>{
+    if(path==='/jobs'&&init?.method==='POST')return {json:async()=>({phase:'failed'})} as Response;
+    throw new ReconstructionResponseError(404,'job_not_found');
+  });
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete autoPrepare onBusyChange={()=>{}}/>);
+  const button=await screen.findByRole('button',{name:'Подготовить ориентиры'});
+  await waitFor(()=>expect(button).toBeEnabled());fireEvent.click(button);
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path==='/jobs')).toBe(true));
+  const request=jest.mocked(reconstructionRequest).mock.calls.find(([path])=>path==='/jobs')!;
+  expect(JSON.parse(String(request[2]?.body))).toMatchObject({id:job.id,key:job.key,mask:'game',steps:30000,prepare_route:true,route_only:true});
+  view.unmount();
+});
+test('queued automatic intent can be durably stopped and is not restarted after remount',async()=>{
+  const job={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  jest.mocked(readReconstructionLink).mockResolvedValue(job);jest.mocked(listReconstructionLinks).mockResolvedValue([job]);
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{
+    if(path==='/jobs')throw new ReconstructionResponseError(409,'resource_guard');
+    throw new ReconstructionResponseError(404,'job_not_found');
+  });
+  const props={clip:'c'.repeat(32),scope:'d'.repeat(32),folder:()=>({} as FileSystemDirectoryHandle),complete:true,autoPrepare:true,onBusyChange:()=>{}};
+  const first=render(<TeachingReconstruction {...props}/>);
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path==='/jobs')).toBe(true));
+  fireEvent.click(screen.getByRole('button',{name:'Остановить ожидание'}));
+  await waitFor(()=>expect(stopAutomaticReconstruction).toHaveBeenCalledWith(expect.anything(),job));
+  first.unmount();jest.clearAllMocks();jest.mocked(automaticReconstructionStopped).mockResolvedValue(true);
+  const second=render(<TeachingReconstruction {...props}/>);
+  await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalled());
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(([, , init])=>init?.method!=='POST')).toBe(true);
+  expect(screen.queryByRole('button',{name:'Остановить ожидание'})).not.toBeInTheDocument();second.unmount();
 });
 
 test('a fresh job is not polled before POST creation is acknowledged',async()=>{

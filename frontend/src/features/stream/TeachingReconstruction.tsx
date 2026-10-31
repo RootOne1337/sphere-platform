@@ -3,8 +3,8 @@ import dynamic from 'next/dynamic';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {Box,Loader2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {boundHudTelemetry,hudChart,processingSurface,reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
-import {listReconstructionLinks,readReconstructionLink,saveReconstructionLink,validReconstructionJob} from './reconstructionLink';
+import {boundHudTelemetry,hudChart,processingSurface,reconstructionRequest,ReconstructionResponseError,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
+import {automaticReconstructionStopped,ensureAutomaticReconstructionLink,listReconstructionLinks,readReconstructionLink,saveReconstructionLink,stopAutomaticReconstruction,validReconstructionJob} from './reconstructionLink';
 import ReferenceComparison from './ReferenceComparison';
 import {cameraMotionRequiresReview,navigationErrorLabel,navigationPhaseLabel,routeCoverageLabel,prepareRoute as prepareRouteIntent,preparationError,preparationQuotaReached} from './routePreparation';
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
@@ -44,11 +44,13 @@ reasons.learned_matching_timeout='Сопоставление ракурсов д
 reasons.reference_evaluation_failed='Не удалось завершить проверку рендера по исходным ракурсам. Качество не подтверждено.';
 export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=false,onBusyChange,onRouteChange,visible=true,sourceManifestSha=null,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,alternativeCameraCount=null,autoPrepare=false,onAutoPrepareConsumed}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;hudHidden?:boolean;onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean;sourceManifestSha?:string|null;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;alternativeCameraCount?:number|null;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[status,setStatus]=useState<ReconstructionState|null>(null),[error,setError]=useState<string|null>(null);
+  const [confirmedMissing,setConfirmedMissing]=useState(false);
   const [attempts,setAttempts]=useState<ReconstructionJob[]>([]),[switchingAttempt,setSwitchingAttempt]=useState(false);
   const [preparationNotice,setPreparationNotice]=useState<{jobId:string;message:string}|null>(null),[quotaJob,setQuotaJob]=useState<string|null>(null);
   const [mask,setMask]=useState(hudHidden?'avatar':'game'),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
   const autoAttempted=useRef(false);
+  const autoStopped=useRef(false);
   const [recovering,setRecovering]=useState(true);const folderRef=useRef(folder);folderRef.current=folder;
   const [refresh,setRefresh]=useState(0),[surfaceStarting,setSurfaceStarting]=useState(false);
   const [firstView,setFirstView]=useState(0),[viewCount,setViewCount]=useState(18);
@@ -57,9 +59,10 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const selectedModel=models.find(item=>(item.id??'legacy')===selectedFragment&&item.available)??models.find(item=>item.available);
   const workingSurface=status?processingSurface(status):undefined;
   const storageKey=`sphere-reconstruction-${scope}-${clip}`;
-  const busy=recovering||uploading||surfaceStarting||switchingAttempt||!!job&&(!status||!terminalReconstruction(status));
+  const busy=recovering||uploading||surfaceStarting||switchingAttempt||!!job&&(!status?!confirmedMissing:!terminalReconstruction(status));
   useEffect(()=>{onBusyChange(busy);},[busy,onBusyChange]);
   useEffect(()=>{onRouteChange?.(job);},[job,onRouteChange]);
+  useEffect(()=>{autoStopped.current=false;setConfirmedMissing(false);},[job?.id]);
   useEffect(()=>()=>{uploadAbort.current?.abort();onBusyChange(false);},[onBusyChange]);
   useEffect(()=>{
     let retired=false;setRecovering(true);
@@ -67,19 +70,64 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       const source=folderRef.current();let saved=source?await readReconstructionLink(source,clip):null;
       if(!saved){const previous=JSON.parse(sessionStorage.getItem(storageKey)??'null');if(validReconstructionJob(previous)){saved=previous;if(source)await saveReconstructionLink(source,clip,saved);}}
       const available=source?await listReconstructionLinks(source,clip):saved?[saved]:[];
+      if(!saved&&available.length===1&&available[0].creation)saved=available[0];
       if(!retired){setAttempts(available);if(saved)setJob(current=>current??saved);setRecovering(false);}
     })().catch(()=>{if(!retired){setError('Не удалось восстановить локальную ссылку на сцену. Исходная запись сохранена.');setRecovering(false);}});
     return()=>{retired=true;};
   },[storageKey,clip]);
   useEffect(()=>{
     if(!job)return;let retired=false;let timer:ReturnType<typeof setTimeout>;const abort=new AbortController();
-    const poll=async()=>{try{const next=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json();if(retired)return;setStatus(next);setError(null);if(!terminalReconstruction(next)||next.telemetry?.phase==='processing')timer=setTimeout(()=>{void poll();},2500);}
-      catch(e){if(!retired){setError(e instanceof Error&&e.message==='job_not_found'?'Создание задания ещё не подтверждено. Можно продолжить подготовку с тем же идентификатором; обучение повторно не запускается.':`Локальный обработчик не ответил: ${e instanceof Error?e.message:'ошибка'}. Задание не повторялось.`);timer=setTimeout(()=>{void poll();},10000);}}};
+    let delay=1000;
+    const poll=async()=>{try{
+      const source=folderRef.current();
+      if(job.creation&&source&&(autoStopped.current||await automaticReconstructionStopped(source,job)))autoStopped.current=true;
+      const automatic=!!job.creation&&autoPrepare&&complete&&!autoStopped.current;
+      let next:ReconstructionState;
+      try{next=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json();if(!retired)setConfirmedMissing(false);}
+      catch(e){
+        if(e instanceof ReconstructionResponseError&&e.status===404&&!retired)setConfirmedMissing(true);
+        if(!automatic||!source||!(e instanceof ReconstructionResponseError)||e.status!==404)throw e;
+        // Only a confirmed absence permits repeating the same durable POST.
+        if(retired||autoStopped.current||await automaticReconstructionStopped(source,job))return;
+        setConfirmedMissing(false);
+        try{next=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:job.id,key:job.key,...job.creation}),signal:abort.signal})).json();}
+        catch(createError){if(createError instanceof ReconstructionResponseError&&createError.status===409&&['resource_guard','one_active_job_only'].includes(createError.message)&&!retired)setConfirmedMissing(true);throw createError;}
+      }
+      if(retired)return;setStatus(next);setError(null);if(next.phase!=='uploading')delay=1000;
+      if(automatic&&source&&next.phase==='uploading'){
+        if(!navigator.locks)throw Error('reconstruction_lock_unavailable');
+        await navigator.locks.request(`sphere-reconstruction-upload-${job.id}`,{ifAvailable:true},async lock=>{
+          if(!lock||retired||autoStopped.current||await automaticReconstructionStopped(source,job))return;
+          const before=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json() as ReconstructionState;
+          if(before.phase!=='uploading'){if(!retired)setStatus(before);return;}
+          setUploading(true);uploadAbort.current=abort;
+          try{
+            await uploadReconstruction(source,job,(bytes,total)=>setProgress(`${(bytes/1048576).toFixed(1)} / ${(total/1048576).toFixed(1)} МБ`),abort.signal);
+            const confirmed=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json() as ReconstructionState;
+            if(!retired&&!autoStopped.current&&confirmed.phase==='uploading'&&!await automaticReconstructionStopped(source,job)){
+              next=await(await reconstructionRequest(`/jobs/${job.id}/start`,job,{method:'POST',body:'{}',signal:abort.signal})).json();
+              if(!retired)setStatus(next);
+            }else next=confirmed;
+          }finally{uploadAbort.current=null;if(!retired)setUploading(false);}
+        });
+      }
+      if(!retired&&(!terminalReconstruction(next)||next.telemetry?.phase==='processing'))timer=setTimeout(()=>{void poll();},2500);
+    }catch(e){if(!retired){
+      if(autoStopped.current){setError('Автоматическая подготовка остановлена. Состояние задания проверяется.');if(!(e instanceof ReconstructionResponseError&&e.status===404))timer=setTimeout(()=>{void poll();},10000);return;}
+      const fatal=e instanceof ReconstructionResponseError&&[400,403,422].includes(e.status)||e instanceof ReconstructionResponseError&&e.status===409&&!['job_not_found','resource_guard','one_active_job_only','upload_offset_mismatch_read_offsets_before_retry'].includes(e.message)||e instanceof DOMException&&e.name==='NotFoundError'||e instanceof Error&&['source_file_quota','invalid_worker_offset','reconstruction_lock_unavailable'].includes(e.message);
+      if(fatal&&job.creation&&folderRef.current()){autoStopped.current=true;await stopAutomaticReconstruction(folderRef.current()!,job).catch(()=>{});}
+      const message=e instanceof Error?e.message:'нет ответа';
+      setError(fatal?`Подготовка остановлена: ${message}. Запись сохранена.`:
+        message==='resource_guard'?'Недостаточно ресурсов. Подготовка продолжится автоматически, когда они освободятся.':
+        message==='one_active_job_only'?'Другая обработка ещё выполняется. Подготовка продолжится автоматически после её завершения.':
+        `Подготовка ожидает локальный обработчик: ${message}. Проверяем то же задание.`);
+      if(!fatal){timer=setTimeout(()=>{void poll();},delay);delay=Math.min(delay*2,30000);}
+    }}};
     void poll();return()=>{retired=true;abort.abort();clearTimeout(timer);};
-  },[job,refresh]);
+  },[job,refresh,autoPrepare,complete]);
   const start=async(routeOnly=false)=>{
-    const source=folder();if(!source||uploadAbort.current)return;
-    const controller=new AbortController();uploadAbort.current=controller;setUploading(true);setError(null);
+    const source=folder();if(!source||uploadAbort.current||job?.creation)return;
+    const controller=new AbortController();uploadAbort.current=controller;setConfirmedMissing(false);setUploading(true);setError(null);
     let pending:ReconstructionJob|null=job;
     try{
       const next=job??{id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
@@ -107,13 +155,20 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     autoAttempted.current=true;
     // A recovered link belongs to an existing intent, including an ambiguous
     // start. Only new completed recordings may create an automatic attempt.
-    if(!job&&!attempts.length)void start(true);
+    if(!job&&!attempts.length){const source=folderRef.current()!;setUploading(true);
+      void ensureAutomaticReconstructionLink(source,clip,hudHidden?'avatar':'game').then(next=>{if(next){setJob(next);setAttempts([next]);sessionStorage.setItem(storageKey,JSON.stringify(next));}}).catch(e=>setError(`Не удалось сохранить автоматическую подготовку: ${e instanceof Error?e.message:'ошибка'}. Запись сохранена.`)).finally(()=>setUploading(false));}
     onAutoPrepareConsumed?.();
-  },[autoPrepare,recovering,complete,job,attempts,onAutoPrepareConsumed]);
+  },[autoPrepare,recovering,complete,job,attempts,onAutoPrepareConsumed,clip,hudHidden,storageKey]);
   const cancel=async()=>{
-    uploadAbort.current?.abort();if(!job)return;
+    if(job?.creation)autoStopped.current=true;uploadAbort.current?.abort();if(!job)return;
+    if(job.creation&&folderRef.current())try{await stopAutomaticReconstruction(folderRef.current()!,job);}catch{setError('Не удалось сохранить остановку подготовки. Проверьте локальное хранилище.');return;}
     const surface=status?processingSurface(status):undefined;
     try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/${surface?(surface.id?`fragments/${surface.id}/cancel`:'surface/cancel'):'cancel'}`,job,{method:'POST',body:'{}'})).json());setRefresh(n=>n+1);}catch{setError('Отмена не подтверждена. Состояние проверяется; управление остаётся заблокировано.');setRefresh(n=>n+1);}
+  };
+  const stopWaiting=async()=>{
+    const source=folderRef.current();if(!job?.creation||!source)return;autoStopped.current=true;
+    try{await stopAutomaticReconstruction(source,job);setError(confirmedMissing?'Ожидание подготовки остановлено.':'Ожидание остановлено; проверяем, было ли задание создано.');setRefresh(n=>n+1);}
+    catch{setError('Не удалось сохранить остановку подготовки. Проверьте локальное хранилище.');}
   };
   const startSurface=async()=>{
     if(!job||surfaceStarting)return;setSurfaceStarting(true);setError(null);
@@ -131,9 +186,10 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const surfaceLabels:Record<string,string>={starting:'Подготовка 3D-модели',preparing:'Проверка камер и оригинальных кадров',densifying:'Многовидовое восстановление глубины',meshing:'Построение треугольных поверхностей',baking:'Проекция фотографий на видимые поверхности',ready:'Текстурированная 3D-модель сохранена',review_required:'Пробная модель сохранена · проверьте поверхности визуально',failed:'Построение модели остановлено',cancelled:'Построение модели отменено'};
   return <section aria-label="Построение плотной 3D-сцены" className="space-y-4 rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-card to-sky-500/5 p-5">
     <div className="flex items-start gap-3"><Box className="mt-1 text-emerald-400" size={24}/><div><h4 className="text-lg font-semibold">Сцена из записанного прохода</h4><p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">Оригинальные кадры → связанные камеры → визуальная сцена и отдельная модель поверхностей. Сохранённый результат можно вращать, изучать в каркасе и смотреть из ракурсов прохода. Обработка идёт на этом ПК, отдельно от Android.</p></div></div>
+    {job?.creation&&!status&&!autoStopped.current&&<Button variant="outline" onClick={()=>{void stopWaiting();}}>Остановить ожидание</Button>}
     {(attempts.length>1||!job&&attempts.length>0)&&<label className="block max-w-lg text-sm">Сохранённые попытки реконструкции<select aria-label="Сохранённая попытка реконструкции" className="mt-1 block w-full rounded-lg border border-input bg-background p-2" value={job?.id??''} disabled={busy||!folder()} onChange={e=>{void selectAttempt(e.target.value);}}>{!job&&<option value="">Новое задание</option>}{attempts.map((item,index)=><option key={item.id} value={item.id}>Попытка {index+1} · {item.id.slice(0,8)}</option>)}</select><span className="mt-1 block text-xs text-muted-foreground">Выбор открывает сохранённый результат без повторной обработки.</span></label>}
     {!status&&<div className="flex flex-wrap items-end gap-4">
-      <div className="w-full"><Button disabled={!complete||uploading||recovering} onClick={()=>{void start(true);}}>Подготовить ориентиры</Button><p className="mt-2 text-xs text-muted-foreground">Одна обработка: исходное видео → камеры и точки → карта для живой проверки. Плотный 3D-рендер для движения не требуется.</p></div>
+      <div className="w-full"><Button disabled={!complete||busy||!!job?.creation} onClick={()=>{void start(true);}}>Подготовить ориентиры</Button><p className="mt-2 text-xs text-muted-foreground">Одна обработка: исходное видео → камеры и точки → карта для живой проверки. Плотный 3D-рендер для движения не требуется.</p></div>
       <details className="w-full rounded-lg border p-3"><summary className="cursor-pointer text-xs">Дополнительные настройки и визуальная 3D-сцена</summary><div className="mt-3 flex flex-wrap items-end gap-4">
       <label className="text-sm">Маска записи<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={mask} onChange={e=>setMask(e.target.value)}><option value="game">HUD и персонаж в центре</option><option value="avatar">Персонаж · HUD уже скрыт</option><option value="none">Без маски · свободный вид от первого лица</option></select></label>
       <label className="text-sm">Качество обработки<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={steps} onChange={e=>setSteps(Number(e.target.value))}><option value={3000}>Проба · 3 000 шагов</option><option value={5000}>Стандарт · 5 000 шагов</option><option value={10000}>Детальнее · 10 000 шагов</option><option value={30000}>Высокая детализация · 30 000 шагов</option></select></label>

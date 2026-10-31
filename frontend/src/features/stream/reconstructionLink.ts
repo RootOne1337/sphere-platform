@@ -5,11 +5,14 @@ const attemptPrefix='reconstruction-attempt-';
 const idPattern=/^[0-9a-f]{32}$/;
 const attemptPattern=/^reconstruction-attempt-([0-9a-f]{32})\.json$/;
 const maxAttempts=200;
+const sameCreation=(a:ReconstructionJob,b:ReconstructionJob)=>a.creation===undefined&&b.creation===undefined||!!a.creation&&!!b.creation&&a.creation.mask===b.creation.mask&&a.creation.steps===b.creation.steps&&a.creation.prepare_route===b.creation.prepare_route&&a.creation.route_only===b.creation.route_only;
 
 export function validReconstructionJob(value:unknown):value is ReconstructionJob {
   if(!value||typeof value!=='object')return false;
   const job=value as ReconstructionJob;
-  return typeof job.id==='string'&&idPattern.test(job.id)&&typeof job.key==='string'&&/^[0-9a-f]{64}$/.test(job.key);
+  const c=job.creation;
+  return typeof job.id==='string'&&idPattern.test(job.id)&&typeof job.key==='string'&&/^[0-9a-f]{64}$/.test(job.key)
+    &&(c===undefined||!!c&&typeof c==='object'&&(c.mask==='avatar'||c.mask==='game')&&Number.isInteger(c.steps)&&c.steps>=1&&c.steps<=1000000&&c.prepare_route===true&&c.route_only===true);
 }
 
 async function readLink(folder:FileSystemDirectoryHandle,clip:string,fileName:string):Promise<ReconstructionJob|null> {
@@ -47,7 +50,7 @@ export async function listReconstructionLinks(folder:FileSystemDirectoryHandle,c
     const job=await readLink(folder,clip,fileName);
     if(!job)continue;
     const previous=jobs.get(job.id);
-    if(previous&&previous.key!==job.key)throw Error('reconstruction_link_conflict');
+    if(previous&&(previous.key!==job.key||!sameCreation(previous,job)))throw Error('reconstruction_link_conflict');
     jobs.set(job.id,job);
     if(jobs.size>maxAttempts)throw Error('reconstruction_attempt_quota');
   }
@@ -64,7 +67,7 @@ async function archiveLink(folder:FileSystemDirectoryHandle,clip:string,job:Reco
   const fileName=`${attemptPrefix}${job.id}.json`;
   const saved=await readLink(folder,clip,fileName);
   if(saved) {
-    if(saved.key!==job.key)throw Error('reconstruction_link_conflict');
+    if(saved.key!==job.key||!sameCreation(saved,job))throw Error('reconstruction_link_conflict');
     return;
   }
   await writeLink(folder,clip,job,fileName);
@@ -78,7 +81,7 @@ export async function saveReconstructionLink(folder:FileSystemDirectoryHandle,cl
   const save=async()=>{
     const known=await listReconstructionLinks(folder,clip);
     const same=known.find(item=>item.id===job.id);
-    if(same&&same.key!==job.key)throw Error('reconstruction_link_conflict');
+    if(same&&(same.key!==job.key||!sameCreation(same,job)))throw Error('reconstruction_link_conflict');
     if(!same&&known.length>=maxAttempts)throw Error('reconstruction_attempt_quota');
     const current=await readReconstructionLink(folder,clip);
     if(current)await archiveLink(folder,clip,current);
@@ -93,4 +96,31 @@ export async function saveReconstructionLink(folder:FileSystemDirectoryHandle,cl
     if(current&&current.id!==job.id)throw Error('reconstruction_lock_unavailable');
     await save();
   }
+}
+
+/** Atomically bind one automatic intent to a recording; never replace an old attempt. */
+export async function ensureAutomaticReconstructionLink(folder:FileSystemDirectoryHandle,clip:string,mask:'avatar'|'game'):Promise<ReconstructionJob|null> {
+  if(!idPattern.test(clip))throw Error('reconstruction_link_binding');
+  if(typeof navigator==='undefined'||!navigator.locks)throw Error('reconstruction_lock_unavailable');
+  return navigator.locks.request(`sphere-reconstruction-${clip}`,async()=>{
+    const current=await readReconstructionLink(folder,clip),known=await listReconstructionLinks(folder,clip);
+    if(current)return current;
+    if(known.length)return known.length===1&&known[0].creation?known[0]:null;
+    const job:ReconstructionJob={id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join(''),creation:{mask,steps:30000,prepare_route:true,route_only:true}};
+    await archiveLink(folder,clip,job);await writeLink(folder,clip,job,name);
+    return job;
+  });
+}
+
+export async function automaticReconstructionStopped(folder:FileSystemDirectoryHandle,job:ReconstructionJob):Promise<boolean> {
+  if(!validReconstructionJob(job))throw Error('reconstruction_link_binding');
+  try {const f=await(await folder.getFileHandle(`reconstruction-auto-stopped-${job.id}.json`)).getFile();
+    if(f.size>1024)throw Error('reconstruction_stop_invalid');
+    const marker=JSON.parse(await f.text());if(marker.id!==job.id||marker.stopped!==true)throw Error('reconstruction_stop_invalid');return true;
+  } catch(error){if(error instanceof DOMException&&error.name==='NotFoundError')return false;throw error;}
+}
+export async function stopAutomaticReconstruction(folder:FileSystemDirectoryHandle,job:ReconstructionJob) {
+  if(!validReconstructionJob(job))throw Error('reconstruction_link_binding');
+  const writable=await(await folder.getFileHandle(`reconstruction-auto-stopped-${job.id}.json`,{create:true})).createWritable();
+  try{await writable.write(JSON.stringify({id:job.id,stopped:true}));await writable.close();}catch(error){await writable.abort().catch(()=>{});throw error;}
 }

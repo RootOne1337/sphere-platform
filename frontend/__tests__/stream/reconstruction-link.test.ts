@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import {listReconstructionLinks,readReconstructionLink,saveReconstructionLink} from '@/src/features/stream/reconstructionLink';
+import {automaticReconstructionStopped,ensureAutomaticReconstructionLink,listReconstructionLinks,readReconstructionLink,saveReconstructionLink,stopAutomaticReconstruction} from '@/src/features/stream/reconstructionLink';
 const clip='a'.repeat(32),job={id:'b'.repeat(32),key:'c'.repeat(64)};
 beforeEach(()=>{Object.defineProperty(globalThis,'navigator',{configurable:true,value:{locks:{request:async(_name:string,callback:()=>Promise<void>)=>callback()}}});});
 function memoryFolder(){
@@ -18,6 +18,21 @@ test('a saved scene capability survives a new component session without changing
   expect(await readReconstructionLink(folder,clip)).toEqual(job);
   expect(files.get('video.h264')).toBe('original-video');
   expect([...files.keys()]).toEqual(['video.h264',`reconstruction-attempt-${job.id}.json`,'reconstruction-link.json']);
+});
+test('automatic intent retains its creation options and identity across reloads and durable cancellation',async()=>{
+  const {folder,files}=memoryFolder();
+  const first=await ensureAutomaticReconstructionLink(folder,clip,'avatar');
+  expect(first?.creation).toEqual({mask:'avatar',steps:30000,prepare_route:true,route_only:true});
+  expect(await readReconstructionLink(folder,clip)).toEqual(first);
+  expect(await ensureAutomaticReconstructionLink(folder,clip,'game')).toEqual(first);
+  expect(await automaticReconstructionStopped(folder,first!)).toBe(false);
+  await stopAutomaticReconstruction(folder,first!);
+  expect(await automaticReconstructionStopped(folder,first!)).toBe(true);
+  expect(files.get('video.h264')).toBe('original-video');
+});
+test('automatic intent does not replace a legacy job',async()=>{
+  const {folder}=memoryFolder();await saveReconstructionLink(folder,clip,job);
+  expect(await ensureAutomaticReconstructionLink(folder,clip,'game')).toEqual(job);
 });
 test('a legacy link and a new attempt remain selectable after switching back',async()=>{
   const {folder,files}=memoryFolder(),next={id:'e'.repeat(32),key:'f'.repeat(64)};

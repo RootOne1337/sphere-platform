@@ -1,6 +1,6 @@
 export const reconstructionBase = 'http://127.0.0.1:3342';
 export const reconstructionFiles = ['manifest.json','frames.jsonl','inputs.jsonl','video.h264','COMPLETE'] as const;
-export type ReconstructionJob = {id:string; key:string};
+export type ReconstructionJob = {id:string; key:string; creation?:{mask:'avatar'|'game';steps:number;prepare_route:true;route_only:true}};
 export type NavigationState = {phase:string;id?:string;error?:string|null;executionQualified?:false;resourceProfile?:{kind:string;minRamGiB:number};summary?:{cameras:number;landmarks:number;first_seconds?:number;last_seconds?:number;source_coverage?:{recording_start_seconds:number;recording_end_seconds:number;uncovered_start_seconds:number;uncovered_end_seconds:number;endpoints_observed:boolean};camera_trace_only:true;map_support:{all_reference_neighborhoods_supported:boolean;unobserved_intervals?:{start_seconds:number;end_seconds:number}[]}}};
 export type SceneAppearance = {state:'unverified'|'passed'|'rejected';mean_psnr?:number;mean_ssim?:number;min_psnr?:number;min_ssim?:number;views?:{image:string;psnr:number;ssim:number}[]};
 export type SurfaceState = {visual_review?:{state:'issues_found'|'limited_preview';issues:string[]};id?:string;fragment?:{first_view:number;view_count:number};phase:string;error?:string;available?:boolean;views?:number;total_views?:number;result?:{sha256:string;bytes:number;triangles:number;vertices:number;textures:number;texture_pixels:number;source_images:string[];mesh_faces:number;unknown_faces:number;seconds:number}};

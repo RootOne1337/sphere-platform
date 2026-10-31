@@ -276,7 +276,9 @@ def test_http_origin_host_capability_and_cors(jobs):
     try:
         with urllib.request.urlopen(request('/health', Origin='http://127.0.0.1:3015')) as response:
             assert response.headers['Access-Control-Allow-Origin'] == 'http://127.0.0.1:3015'
-            assert json.load(response)['route_camera_pipeline']=='vehicle_geometry_v3_hud'
+            health=json.load(response)
+            assert health['route_camera_pipeline']=='vehicle_geometry_v3_hud'
+            assert health['creation_recovery_contract']=='confirmed_absence_v1'
         for headers in ({'Origin': 'https://evil.example'}, {'Host': 'evil.example:3342'}, {'X-Sphere-Reconstruction': ''}):
             with pytest.raises(urllib.error.HTTPError) as exc:
                 urllib.request.urlopen(request('/health', **headers))
@@ -286,10 +288,26 @@ def test_http_origin_host_capability_and_cors(jobs):
         assert exc.value.code == 403
         with urllib.request.urlopen(request('/jobs/' + job.name, **{'X-Job-Key': 'b' * 64})) as response:
             assert json.load(response)['phase'] == 'uploading'
+        before={p.relative_to(jobs.folder):p.read_bytes() for p in jobs.folder.rglob('*') if p.is_file()}
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(request('/jobs/' + job.name, **{'X-Job-Key': 'f' * 64}))
+        assert exc.value.code == 403
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(request('/jobs/' + 'c' * 32))
+        assert exc.value.code == 403
         with pytest.raises(urllib.error.HTTPError) as exc:
             urllib.request.urlopen(request('/jobs/' + 'c' * 32, **{'X-Job-Key': 'b' * 64}))
-        assert exc.value.code == 409
+        assert exc.value.code == 404
         assert json.load(exc.value) == {'error': 'job_not_found'}
+        assert not jobs.path('c' * 32).exists()
+        assert before=={p.relative_to(jobs.folder):p.read_bytes() for p in jobs.folder.rglob('*') if p.is_file()}
+        partial=jobs.path('d' * 32);partial.mkdir();(partial/'partial.txt').write_bytes(b'keep')
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(request('/jobs/' + partial.name, **{'X-Job-Key': 'b' * 64}))
+        assert exc.value.code == 409
+        assert json.load(exc.value) == {'error':'job_not_found'}
+        assert sorted(p.name for p in partial.iterdir())==['partial.txt']
+        assert (partial/'partial.txt').read_bytes()==b'keep'
     finally:
         server.shutdown()
         server.server_close()
@@ -309,6 +327,37 @@ def test_file_sharing_denial_is_not_reported_as_lost_job_credentials(jobs,monkey
         with pytest.raises(urllib.error.HTTPError) as exc:urllib.request.urlopen(request)
         assert exc.value.code==503
         assert json.load(exc.value)=={'error':'local_file_unavailable_inspect_job_status'}
+    finally:
+        server.shutdown();server.server_close();thread.join(3)
+
+
+def test_http_resource_refusal_missing_then_same_creation_is_idempotent(jobs,monkeypatch):
+    calls=[]
+    def gate(*_args,**_kwargs):
+        calls.append(1)
+        return ['resource_guard'] if len(calls)==1 else []
+    monkeypatch.setattr(service,'route_resource_findings',gate)
+    server=ThreadingHTTPServer(('127.0.0.1',0),service.handler(jobs,'http://127.0.0.1:3015',3342))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    base=f'http://127.0.0.1:{server.server_port}'
+    identity,key='e'*32,'b'*64
+    body=json.dumps(dict(id=identity,key=key,mask='game',steps=30000,prepare_route=True,route_only=True)).encode()
+    headers={'Host':'127.0.0.1:3342','X-Sphere-Reconstruction':'1','Content-Type':'application/json'}
+    def post():return urllib.request.Request(base+'/jobs',data=body,headers=headers,method='POST')
+    def get():return urllib.request.Request(base+'/jobs/'+identity,headers={**headers,'X-Job-Key':key})
+    try:
+        with pytest.raises(urllib.error.HTTPError) as exc:urllib.request.urlopen(post())
+        assert exc.value.code==409 and json.load(exc.value)=={'error':'resource_guard'}
+        with pytest.raises(urllib.error.HTTPError) as exc:urllib.request.urlopen(get())
+        assert exc.value.code==404 and json.load(exc.value)=={'error':'job_not_found'}
+        assert not jobs.path(identity).exists()
+        with urllib.request.urlopen(post()) as response:assert json.load(response)['phase']=='uploading'
+        with urllib.request.urlopen(post()) as response:assert json.load(response)['phase']=='uploading'
+        with urllib.request.urlopen(get()) as response:assert json.load(response)['phase']=='uploading'
+        assert len(calls)==2
+        control=json.loads((jobs.path(identity)/'control.json').read_text())
+        assert control['mask']=='game' and control['steps']==30000 and control['route_only'] is True
+        assert not (jobs.path(identity)/'START').exists()
     finally:
         server.shutdown();server.server_close();thread.join(3)
 

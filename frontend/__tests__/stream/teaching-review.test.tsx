@@ -19,7 +19,7 @@ function file(data:Uint8Array):File {
     text:async()=>new TextDecoder().decode(data),slice:(a:number,b:number)=>file(data.slice(a,b))} as unknown as File;
 }
 
-async function library() {
+async function library(prepareAfterRecording?:boolean) {
   const files=new Map<string,Uint8Array>();
   const unit=new Uint8Array([0,0,0,1,0x67,0x42,0xe0,0x1f,0,0,0,1,0x65,1]);
   const frames=encode([0,1].map(index=>JSON.stringify({index,offset:index*unit.length,bytes:unit.length,
@@ -28,7 +28,7 @@ async function library() {
   for(const row of rows)row.sha256=await hash(unit);
   const index=encode(rows.map(row=>JSON.stringify(row)).join('\n')),journal=encode('');
   const video=new Uint8Array([...unit,...unit]);
-  const manifest=encode({schema:'sphere-browser-teaching-v2',id,started_at_ms:1793012400000,config:{title:'Маршрут 011321'},
+  const manifest=encode({schema:'sphere-browser-teaching-v2',id,started_at_ms:1793012400000,config:{title:'Маршрут 011321',...(prepareAfterRecording===undefined?{}:{prepare_after_recording:prepareAfterRecording})},
     complete:true,release_confirmed:true,frames:2,files:{'video.h264':{bytes:video.length},
       'frames.jsonl':{bytes:index.length,sha256:await hash(index)},'inputs.jsonl':{bytes:0,sha256:await hash(journal)}}});
   for(const [name,bytes] of Object.entries({'manifest.json':manifest,'frames.jsonl':index,'inputs.jsonl':journal,
@@ -52,7 +52,7 @@ beforeEach(()=>{
   Object.defineProperty(globalThis,'TextEncoder',{configurable:true,value:TextEncoder});
   Object.defineProperty(globalThis,'TextDecoder',{configurable:true,value:TextDecoder});
   Object.defineProperty(crypto,'subtle',{configurable:true,value:webcrypto.subtle});
-  jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockImplementation(()=>({drawImage:draw,clearRect:clear}) as never);
+  jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockImplementation(()=>({drawImage:draw,clearRect:clear,setTransform:jest.fn(),beginPath:jest.fn(),arc:jest.fn(),fill:jest.fn()}) as never);
   Object.defineProperty(globalThis,'EncodedVideoChunk',{configurable:true,value:class {timestamp:number;constructor(args:{timestamp:number}){this.timestamp=args.timestamp;}}});
   Object.defineProperty(globalThis,'VideoDecoder',{configurable:true,value:class {
     static isConfigSupported=async()=>({supported:true});decodeQueueSize=0;
@@ -90,6 +90,16 @@ test('the shared source is verified and cannot be relabeled as a newly selected 
   expect(changed.mock.calls.some(([value])=>value?.clip===other)).toBe(false);
 });
 afterEach(()=>{jest.mocked(TeachingReconstruction).mockReset().mockImplementation(()=> <></>);jest.mocked(reconstructionRequest).mockReset();jest.restoreAllMocks();});
+
+test.each([true,false,undefined])('selected verified recording restores only its declared automatic intent: %s',async declared=>{
+  await library(declared);
+  jest.mocked(TeachingReconstruction).mockImplementation(props=><div data-testid="auto-intent">{String(props.autoPrepare)}</div>);
+  const props={selected:id,refresh:0,onSelect:jest.fn(),storageScope:scope,visible:false};
+  const first=render(<TeachingReview {...props}/>);
+  expect(await screen.findByTestId('auto-intent')).toHaveTextContent(String(declared===true));first.unmount();
+  const reloaded=render(<TeachingReview {...props}/>);
+  expect(await screen.findByTestId('auto-intent')).toHaveTextContent(String(declared===true));reloaded.unmount();
+});
 
 test('selected camera seeks the verified source and updates the adjacent original-frame viewer',async()=>{
   const {manifest}=await library();

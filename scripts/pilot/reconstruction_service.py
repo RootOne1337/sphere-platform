@@ -602,7 +602,8 @@ def handler(jobs, origin, port):
                 parts = self.path.strip('/').split('/')
                 if method == 'GET' and parts == ['health']:
                     self.reply(200, dict(service='sphere-reconstruction-v1', one_active_job=True,
-                                         route_camera_pipeline=ROUTE_CAMERA_PIPELINE))
+                                         route_camera_pipeline=ROUTE_CAMERA_PIPELINE,
+                                         creation_recovery_contract='confirmed_absence_v1'))
                     return
                 with jobs.lock:
                     if method == 'POST' and parts == ['jobs']:
@@ -611,6 +612,14 @@ def handler(jobs, origin, port):
                     if len(parts) < 2 or parts[0] != 'jobs':
                         raise ValueError('unknown_endpoint')
                     job = jobs.path(parts[1])
+                    # Only a genuinely absent directory is a retryable creation
+                    # absence. A partial directory without control.json remains
+                    # ambiguous and must not invite a repeated POST.
+                    if method == 'GET' and len(parts) == 2 and not os.path.lexists(job):
+                        if not re.fullmatch(r'[0-9a-f]{64}', self.headers.get('X-Job-Key', '')):
+                            raise AccessDenied('job_capability_required')
+                        self.reply(404, {'error': 'job_not_found'})
+                        return
                     control = jobs.authorize(job, self.headers.get('X-Job-Key', ''))
                     if method == 'GET' and len(parts) == 2:
                         self.reply(200, jobs.status(job))
