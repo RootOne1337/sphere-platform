@@ -48,8 +48,8 @@ python -m unittest discover -s tests -p test_documentation_impact.py
 
 Проверка сверяет структуру реестра, закрытия и хеши связанных receipts,
 классификацию учтённых Git Markdown и некоторые локальные inline-ссылки документов
-ролей `CURRENT_ENTRYPOINT`, `OPERATING_GUIDE` и `PROJECT_POLICY`. Это не проверка
-YAML issue forms и документов других ролей. Тест маршрутов сверяет имена
+ролей `CURRENT_ENTRYPOINT`, `OPERATING_GUIDE`, `PROJECT_POLICY` и `ADR`. Это не проверка
+YAML issue forms и документов других ролей, в том числе `DATED_EVIDENCE`. Тест маршрутов сверяет имена
 страниц App Router с таблицей Web UI; он не проверяет кнопки, поведение страниц или права. Проверка HTTP-заголовков
 ручного справочника сверяет только перечисленные в них методы и пути с сохранённой
 OpenAPI-схемой: она не проверяет текст, запросы, авторизацию или runtime.

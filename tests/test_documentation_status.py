@@ -499,6 +499,31 @@ class DocumentationStatusTests(unittest.TestCase):
             inventory["countsByRole"]["SUPPORTING_DOCUMENT"] = 1
             self.assertEqual(validate_inventory(root, registry, inventory), [])
 
+    def test_adr_links_are_checked_without_enforcing_historical_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / "docs" / "adr").mkdir(parents=True)
+            (root / "docs" / "history").mkdir()
+            (root / "docs" / "adr" / "decision.md").write_text(
+                "[missing](missing.json) [untracked](untracked.json)\n", encoding="utf-8")
+            (root / "docs" / "adr" / "untracked.json").write_text("{}", encoding="utf-8")
+            (root / "docs" / "history" / "receipt.md").write_text("[historical](removed.json)\n", encoding="utf-8")
+            subprocess.run(["git", "add", "docs/adr/decision.md", "docs/history/receipt.md"], cwd=root, check=True)
+            registry = {"authoritativeEntrypoints": []}
+            inventory = {
+                "documents": [{"file": "docs/adr/decision.md", "role": "ADR"},
+                              {"file": "docs/history/receipt.md", "role": "DATED_EVIDENCE"}],
+                "countsByRole": {"ADR": 1, "DATED_EVIDENCE": 1},
+            }
+            self.assertCountEqual(validate_inventory(root, registry, inventory), [
+                "docs/adr/decision.md: missing local link: missing.json",
+                "docs/adr/decision.md: local link target not in Git index: untracked.json",
+            ])
+            (root / "docs" / "adr" / "missing.json").write_text("{}", encoding="utf-8")
+            subprocess.run(["git", "add", "docs/adr/missing.json", "docs/adr/untracked.json"], cwd=root, check=True)
+            self.assertEqual(validate_inventory(root, registry, inventory), [])
+
     def test_indexed_directory_requires_an_indexed_descendant(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

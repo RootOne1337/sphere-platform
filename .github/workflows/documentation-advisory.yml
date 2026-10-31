@@ -54,5 +54,7 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - name: Test documentation advisory with isolated fake responses
-        run: python -m unittest discover -s tests -p 'test_documentation_pr_advisory.py'
+      - name: Validate documentation inventory and links
+        run: python -m scripts.check_documentation_status
+      - name: Run documentation tests
+        run: python -m unittest discover -s tests -p 'test_documentation*.py'
