@@ -11,6 +11,26 @@ Idle native_receipt_timeout и общий арбитраж viewer/task/API в т
 Текущую установку и остаток проверяйте отдельно: [CURRENT-STATE](../operations/CURRENT-STATE.md),
 [WORK-STATUS](../operations/WORK-STATUS.md).
 
+### Границы текущего source (сверка 1 ноября 2026)
+
+[`/ws/stream/{device_id}`](../../backend/api/ws/stream/router.py) проверяет
+`stream:read` при входе и свежую `stream:control` для открытия/продолжения ввода.
+Перед `touch_open`/`touch_direct_open` и при периодической проверке он также
+ищет задачи устройства в `ASSIGNED`/`RUNNING`; известная активная задача блокирует
+ввод. Это не атомарная серверная транзакция владения всеми видами ввода: состояние
+может измениться после SQL-проверки, а QUEUED сам по себе этой проверкой не блокирует.
+На Android [`DeviceInputOwnership`](../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/DeviceInputOwnership.kt)
+и [`DagRunner`](../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt)
+дополнительно разделяют владение task, continuous и discrete input и сохраняют
+fence при неизвестной очистке. Реализация и версия установленного APK важны;
+это не доказательство всеобщего арбитража других процессов или физических действий.
+
+`capture_only` — отдельный режим просмотра: этот socket не выдаёт команды ввода.
+Для direct-ввода `touch_direct_open` привязан к проверенному peer/session наряду
+с agent/viewer identity. Обрыв или ошибка публикации не доказывают, что событие
+не дошло до устройства; повторять неопределённый ввод как новую операцию нельзя.
+Source и исторические тесты не являются live-приёмкой текущей сети/устройств.
+
 ## Исторический компонентный checkpoint до integration
 
 > Исторический checkpoint отдельного компонента до подключения routes.
@@ -33,8 +53,9 @@ timeout5s и pool50. Для live touch такой повтор может исп
 сообщение текущему устройству, не сохраняя конкретный APK socket prepared
 команды. Новый компонент отделяет эти границы от legacy команд.
 
-Он принимает DOWN/MOVE/UP отдельными публикациями: MOVE не ждёт последующего
-UP. Redis обеспечивает одного continuous owner для device между workers.
+Для relay он принимает DOWN/MOVE/UP отдельными публикациями: MOVE не ждёт
+последующего UP. Direct peer имеет отдельный транспорт; Redis остаётся authority
+для допуска и продления. Redis обеспечивает одного continuous owner для device между workers.
 Команда связана с server-issued nonce, tenant/user, viewer worker/session,
 APK socket session и capture epoch/size. Отправка до STARTUP0 от APK запрещена;
 факт Redis publication или завершения socket send readiness не создаёт.
@@ -49,9 +70,12 @@ endpoint; capability тогда оставалась выключенной. Э�
 1. Viewer route проверяет действующий JWT, user/org/device ownership и RBAC.
    Он формирует `LeaseBinding` из доверенных server identities. Поля owner,
    user, org, worker и APK session не принимаются от браузера.
-2. Browser `touch_open` передаёт только epoch и размер **показанного** кадра.
-   До acquire route обязан сопоставить их с текущим APK offer и успешно
-   rendered v2 frame; совпадение размеров само по себе недостаточно.
+2. Browser `touch_open` передаёт epoch и размер кадра. Штатный
+   [frontend controller](../../frontend/src/features/stream/continuousPointer.ts)
+   требует совпадения с успешно показанным v2 frame. Сервер перед acquire
+   сопоставляет эти значения со свежим APK offer и текущей agent session, но не
+   имеет независимого доказательства фактической отрисовки в браузере: это клиентская
+   граница, а не проверенная сервером гарантия. Одних размеров недостаточно.
 3. Store генерирует случайный owner32hex и атомарно приобретает device key.
    Busy не заменяет прежнего владельца. Даже re-tenanting device использует
    тот же глобальный key, а не два независимых ключа разных организаций.
@@ -65,7 +89,10 @@ endpoint; capability тогда оставалась выключенной. Э�
    Замена соединения во время Redis await не получает старую команду.
 7. На завершении закрывается admission. Close может отправить одну отмену
    даже после auth expiry/fence. Key удаляется раньше TTL только по проверенному
-   injector RELEASE3; неизвестный RELEASE6 оставляет fence.
+   injector RELEASE3; неизвестный RELEASE6 оставляет fence. Исключения: допустимый
+   `cancel_unstarted` при доказанном отсутствии начатой socket delivery и
+   подтверждённый admission refusal до захвата native owner также удаляют key;
+   они не являются native RELEASE.
 
 Это требования, сформулированные для последующей интеграции: на момент
 checkpoint routes ещё не вызывали эти операции. Создание binding в unit test
@@ -79,9 +106,11 @@ JSON integers, nil/noncanonical UUID и несуществующие actions.
 
 | Browser message | Допустимые поля кроме type |
 | --- | --- |
+| `touch_probe` | отсутствуют |
 | `touch_open` | capture_epoch, frame_width, frame_height |
+| `touch_direct_open` | capture_epoch, frame_width, frame_height, direct_session |
 | `touch_event` | sequence, gesture, action, x, y |
-| `touch_close` | отсутствуют |
+| `touch_close` | отсутствуют либо `cancel_unstarted: true` |
 
 Action0/1/2/3/4 = DOWN/UP/MOVE/CANCEL/HEARTBEAT, как в APK canary. Sequence
 1…2147483647 возрастает; пропуски допускаются, повтор и обратный порядок
@@ -111,10 +140,13 @@ metadata passthrough или offline queue. Receiver проверяет теку�
 | Redis operation/socket send | 250ms на одну попытку каждого этапа |
 | Redis pool | не более8 connections на worker |
 | Envelope | не более2048 UTF-8 bytes |
-| Stored state | один короткий hash device, TTL1500ms, без trajectories/frames |
+| Stored state | lease hash устройства, TTL1500ms; отдельный bounded cleanup route до 30s / 8 записей, без trajectories/frames |
 
-Event обновляет lease, **не authorization**. Отдельный `authorize` обновляет
-auth, **не lease**: серверная проверка прав не удерживает умерший viewer.
+Event обновляет lease, **не authorization**. Для relay отдельный `authorize`
+обновляет auth, **не lease**. Direct `authorize_direct` обновляет auth и lease
+при публикации нового grant; его peer/topology и права также перепроверяются.
+Не переносите relay-семантику на direct. Продление само по себе не доказывает
+здоровый injector, доставку ввода или отображённый кадр.
 После обнаруженного expiry/failure owner нельзя resurrect. Отсутствующий key,
 Redis restart или TTL не доказывают завершение Android helper; native watchdog
 и ownership/fence остаются независимыми обязательными границами.
@@ -176,7 +208,7 @@ runs: Android, frontend, backend и preview. Backend3268passed/37skipped/
 push/PR, frontend, backend и preview:
 [точная приёмка предыдущего source](../audits/2026-10-08/VIDEO-CAPTURE-V2-CI.json).
 
-Следующая поставка должна подключить subscriptions и transient scoped receipts
+На историческом checkpoint следующая поставка должна была подключить subscriptions и transient scoped receipts
 между workers; fresh authorization cadence/revocation; DAG/manual exclusion
 на сервере; failure/shutdown cleanup; browser pointermove/coalescing/backpressure
 и blur/visibility/lostpointercapture; recorder trajectory/uncertainty. Browser
