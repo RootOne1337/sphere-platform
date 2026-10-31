@@ -43,7 +43,13 @@ production configuration. Compose does not forward an independently supplied
 `POSTGRES_URL` in the full or production overlay: both construct the URL from
 `POSTGRES_USER` and `POSTGRES_PASSWORD`. Test URL compatibility of provisioned
 credentials without exposing them; PostgreSQL init values do not rotate an
-existing database role.
+existing database role. For a newly initialized official PostgreSQL container,
+`POSTGRES_USER` is the bootstrap superuser; these overlays also interpolate that
+same name into the backend URL. Production startup rejects a superuser, BYPASSRLS,
+table ownership and other unsafe RLS prerequisites. Provision a separate runtime
+role and supply its URL through an explicit effective backend environment override;
+do not assume this Compose combination alone completes the role split. See
+[PostgreSQL RLS and startup limits](security/postgresql-rls.md).
 
 ---
 
@@ -62,8 +68,11 @@ preview template remains unvalidated.
 | `REDIS_URL` | Deployment-dependent | `redis://localhost:6379/0` | Redis URL; full/production Compose construct it from `REDIS_PASSWORD` |
 
 The backend model does not enforce a 32-character password minimum. Use a strong
-independent secret appropriate to the deployment. Full/production Compose build
-`REDIS_URL` rather than forwarding a separately supplied URL.
+independent secret appropriate to the deployment. Backend clients connect using
+`REDIS_URL`; `REDIS_PASSWORD` alone does not supply a password to those clients.
+Full/production Compose build `REDIS_URL` from it rather than forwarding a
+separately supplied URL. For direct host startup, replace the placeholders in
+both the password and URL fields consistently without printing their values.
 
 ---
 
@@ -138,7 +147,7 @@ alone does not validate the credentials or permissions.
 |----------|----------|---------|-------------|
 | `DEBUG` | | `false` | Enable debug mode (NEVER true in production) |
 | `LOG_LEVEL` | | `INFO` | Logging level: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
-| `ENVIRONMENT` | | `development` | `development`, `staging`, `production` |
+| `ENVIRONMENT` | | `development` | Environment name; production-specific startup enforcement checks the exact value `production` |
 | `SERVER_PUBLIC_URL` | Deployment-dependent | `http://10.0.2.2:8000` | Backend public URL exposed to agents; production overlay constructs it from `SERVER_HOSTNAME` |
 | `COOKIE_SECURE` | | `false` | Forces secure refresh cookies; HTTPS detected on the request also enables `Secure` |
 | `DEV_SKIP_AUTH` | | `false` | JWT bypass for development; never enable in production |
@@ -147,7 +156,11 @@ alone does not validate the credentials or permissions.
 nginx (default `sphere.example.com`), and the production overlay interpolates
 it into public URLs. Extra CORS origins use the separate process environment
 variable `CORS_EXTRA_ORIGINS`. The source does not make the JWT bypass safe by
-checking `ENVIRONMENT`; production Compose explicitly forces it off.
+checking `ENVIRONMENT`; production Compose explicitly forces it off. Settings
+accepts `ENVIRONMENT` as a string, not an enum: only exact `production` activates
+the production branch of the DB-role startup check. The full overlay defaults to
+production only when `ENVIRONMENT` is absent or empty; the supplied template sets
+`development`, which selects its development/reload command.
 
 ---
 
@@ -267,7 +280,10 @@ without another effective source. Conversely, full/production explicitly set
 an absent value can become empty instead of falling back to Settings; empty
 integer headers fail typed validation. Full passes screenshot settings;
 production alone does not. Full followed by production may retain full's
-environment entries that the latter does not override.
+environment entries that the latter does not override. Full interpolates
+`WEB_CONCURRENCY` into its Gunicorn command; production resets that command and
+the image CMD explicitly uses four workers. Supplying `WEB_CONCURRENCY` only via
+the production env file does not change that explicit `--workers 4` argument.
 
 The Compose URL strings interpolate credentials directly. Check compatibility
 with URL syntax and each consumer before changing them, without exposing the
@@ -285,6 +301,13 @@ network, access, image identity or migrations are correct.
 `SERVER_PUBLIC_URL` is the backend URL advertised to agents; `SPHERE_CONFIG_URL`
 in the template is a separate Android build input, not a Settings field. Neither
 an example hostname nor an APK build input proves agent connectivity.
+`AGENT_CONFIG_ENV` defaults to `development` independently of `ENVIRONMENT`;
+the router falls back to `ENVIRONMENT` only if the former is empty. Full does
+not explicitly forward this field, while production sets it. If the selected
+agent-config file contains `enrollment_api_key`, the current `/config/agent`
+handler includes it in the base response even without an API key. Treat that
+file and endpoint as sensitive and verify effective ingress controls; source
+alone does not establish whether a deployed endpoint exposes a credential.
 
 ### Direct transport and diagnostic gates
 
@@ -309,6 +332,25 @@ The allowlist and TURN URLs are complex Pydantic Settings values; when supplied
 through environment variables, use JSON arrays. Other admission, runtime and
 frontend build gates still apply. See [direct transport design](design/BROWSER-DIRECT-TRANSPORT.md)
 for operational boundaries.
+
+---
+
+## Readiness and deployment profiles
+
+The full and production overlay healthchecks target `/api/v1/health/readyz`.
+In source, that check probes PostgreSQL and Redis and accepts component status
+`ok` or `degraded`; an uninitialized Redis client is down. The Redis probe records
+the `ping()` result but bases status on latency if no exception is raised, without
+requiring that result to be truthy. A 200 is therefore not a latency SLO or proof
+of migrations, RBAC, Android or ingress. The older
+`/api/v1/health/ready` is a different handler and reports `redis: ok` if its
+Redis client is absent, without a ping. Verify the endpoint selected by the
+actual deployment rather than substituting the legacy route. See [API reference](api-reference.md#health--health).
+
+Local pilot overlays use a separate project, ports and explicit development
+settings; production forces production settings. The mere name of a profile or
+an env file does not prove which Compose files, images, credentials or values are
+running. Do not render resolved secret-bearing Compose output into shared logs.
 
 ---
 
@@ -382,8 +424,9 @@ The full Compose overlay passes `DEV_SKIP_AUTH=false` when the variable is absen
 or empty (AUD-86). Previously it passed an empty string, which prevented Settings
 from loading even with a freshly generated installation configuration. Explicit
 `true` remains a development option; the production overlay forces `false`.
-Backend boolean validation remains strict. Generated configuration still requires
-operator-supplied addresses/integration values; this fix does not validate the whole
+Backend boolean parsing accepts Pydantic boolean forms such as `true`/`false`,
+`1`/`0` and `yes`/`no`; invalid or empty values fail validation. Generated
+configuration still requires operator-supplied addresses/integration values; this fix does not validate the whole
 installation. [Startup contract](operations/STARTUP.md).
 
 ## PostgreSQL initialization identity
