@@ -175,6 +175,33 @@ service/schema. Покрытие обозначает чтение method/path, 
 [VPN runtime tests](../../../tests/production/test_vpn_app_runtime.py) здесь не
 запускались; внешний webhook receiver, БД и Android не изменялись.
 
+## Устройства, команды, группы и локации
+
+На `eb1ee551` и в изменявшемся рабочем дереве сопоставлены **38 method/path**:
+24 `/devices` (включая bulk и direct-probe), 7 `/groups`, 7 `/locations`.
+Проверены зарегистрированная схема, используемые зависимости в обработчиках и
+основные ветви сервисов, перечисленные ниже. Это не проверка каждой ошибки,
+взаимодействия компонентов в сети или физического исполнения команд.
+
+| Область | Источники и результаты |
+| --- | --- |
+| Device CRUD и статусы | [device router](../../../backend/api/v1/devices/router.py), [schema](../../../backend/schemas/devices.py), [service](../../../backend/services/device_service.py), [status cache](../../../backend/services/device_status_cache.py). PUT с `group_id=null` не очищает membership; непустой group ID заменяет группы. DELETE — soft retirement с очисткой device refresh credentials, не уничтожение истории и не физический stop. Неизвестный legacy status игнорируется при листинге. |
+| Fleet и viewers | [router](../../../backend/api/v1/devices/router.py), [status schema](../../../backend/schemas/device_status.py), [cache](../../../backend/services/device_status_cache.py), [viewers](../../../backend/services/device_viewers.py). `/devices/status/bulk` и `/status/fleet`: `online` и `busy` раздельно, отсутствующие cache records считаются offline; при отсутствии клиента Redis этот счётчик не доказывает offline. Основной `/devices` при недоступном presence использует unknown, а его online включает busy. Viewer pulse — регистрация/наблюдение, не доказательство воспроизведения. |
+| Команды, capture и diagnostics | [device router](../../../backend/api/v1/devices/router.py), [bulk service](../../../backend/services/bulk_service.py), [direct probe router](../../../backend/api/v1/direct_probe/router.py). `connect` и старый GET screenshot — cache stubs; reboot может вернуть 200/error, успешный receipt не равен завершению; таймаут не исключает эффект. Shell/logcat возвращают output или error, probe capabilities не доказывают reachability. Native capture и UI hierarchy не воспроизводились на устройстве. |
+| Device registration/refresh | [router](../../../backend/api/v1/devices/router.py), [registration service](../../../backend/services/device_registration_service.py), [bootstrap contract](../../security/device-credential-bootstrap.md). Refresh читает отдельную device cookie; same request UUID и старый токен позволяют восстановить один ещё не потреблённый successor в описанной исходной ветке. Это не доказывает успешную recovery в развёрнутой среде. |
+| Groups | [router](../../../backend/api/v1/groups/router.py), [schema](../../../backend/schemas/groups.py), [service](../../../backend/services/group_service.py). CRUD/move/tags и permissions проверены по коду; фильтр `GET /devices?group_id=…` не делает отдельного lookup существования target, поэтому прежнее обобщение про 404 для любого чужого group ID удалено. |
+| Locations | [router](../../../backend/api/v1/locations/router.py), [schema](../../../backend/schemas/locations.py), [service](../../../backend/services/location_service.py). Проверены CRUD, conditional update/delete, additive assignment и removal с `device:read/write/delete`; детали конкурентности и фактическая SQL isolation остались за пределами этого прохода. |
+
+Локальная проверка `DeviceStatusCache(None).get_fleet_summary` на искусственном ID
+подтвердила null observation и offline aggregate без Redis; валидация
+`UpdateDeviceRequest` подтвердила принятие null group, семантика ненулевого
+присваивания исследована по service. Сеть, DB и устройства не вызывались. Найдены,
+но в этом проходе не запускались [bulk retirement](../../../tests/production/test_device_bulk_retirement.py),
+[device refresh recovery](../../../tests/production/test_device_refresh_recovery.py),
+[location hierarchy](../../../tests/production/test_location_hierarchy.py),
+[UI hierarchy endpoint](../../../tests/production/test_ui_hierarchy_endpoint.py)
+и [direct probe capabilities](../../../tests/test_ws/test_direct_probe_capabilities.py).
+
 ## Проверки и остаток
 
 Машинное сравнение HTTP method/path во **всех заголовках** справочника с JSON,

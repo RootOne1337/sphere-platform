@@ -303,8 +303,9 @@ and [credential bootstrap](security/device-credential-bootstrap.md).
 
 Requires `device:read`. Query parameters are `status` (legacy stored status),
 `group_id`, `location_id`, `type`, `search`, `live_status`, `page` and `per_page`
-(maximum 5000). There is no `tag` query parameter on this route. For the distinction
-between stored and live state see [device catalog](operations/DEVICE-CATALOG.md).
+(maximum 5000). Unrecognized legacy `status` values are ignored by the service;
+they do not filter the result by status. There is no `tag` query parameter on this
+route. For the distinction between stored and live state see [device catalog](operations/DEVICE-CATALOG.md).
 
 `200` is a `DeviceListResponse` with `items`, `total`, `page`, `per_page`, `pages`,
 and coverage fields `scope_total`, `status_counts`, `presence_available`, `as_of`.
@@ -382,7 +383,8 @@ operator diagnosis steps are in the
 
 ### PUT /devices/{id}
 
-Update device name, tags, or group.
+Requires `device:write`. Update device name, tags, or group. A non-null `group_id`
+replaces current group memberships; omitted or null `group_id` leaves them unchanged.
 
 ```http
 PUT /devices/{id}
@@ -395,7 +397,10 @@ Authorization: Bearer <token>
 
 ### DELETE /devices/{id}
 
-Delete a device. Returns `204 No Content`.
+Retire the device from active inventory and return `204 No Content`. The handler
+preserves the record and referenced history, sets offline and clears device refresh
+credentials; this response does not prove that an already-running physical action
+stopped. Tenant-owned detail retrieval may still find the inactive record.
 
 **Requires:** `device:delete` permission.
 
@@ -405,7 +410,7 @@ Delete a device. Returns `204 No Content`.
 
 > Добавлено в v4.4.0
 
-Отправка команды перезагрузки устройства через WebSocket Command Manager.
+Требует `device:write`; отправляет команду через WebSocket Command Manager.
 
 ```http
 POST /devices/{id}/reboot
@@ -417,7 +422,9 @@ Authorization: Bearer <token>
 { "status": "reboot_initiated", "device_id": "uuid" }
 ```
 
-The response indicates an accepted agent receipt, not proof that reboot has completed.
+The shown `reboot_initiated` response indicates an accepted agent receipt, not
+proof that reboot has completed. The handler can also return HTTP 200 with an
+`error` object when the agent reports failure; inspect the body.
 
 **Ошибки:**
 - `404` — устройство не найдено
@@ -442,6 +449,11 @@ Requires `device:read`. The request accepts `lines` (1–10000, default 500) and
 contains `logcat` on success or `error` on reported agent failure. It is a live
 request, not a `202` collection receipt.
 
+### POST /devices/{id}/connect
+
+Requires `device:write` and an assigned workstation. This is a cache-writing
+stub returning 204; it is not confirmation that ADB connected.
+
 ### GET /devices/{id}/screenshot
 
 Requires `device:read`. This legacy endpoint is a stub that records a request in the cache and returns
@@ -458,6 +470,31 @@ A cache read is an observation, not proof that a command completed.
 
 ---
 
+### Device observation and agent refresh
+
+- `POST /devices/status/bulk` requires `device:read`, accepts 1–500 string
+  `device_ids`, and filters them to owned IDs. `GET /devices/status/fleet` uses
+  the active owned inventory. Both return counters from the status cache. In these
+  aggregates `online` and `busy` are separate; missing cache entries contribute
+  to `offline`. A missing Redis client can therefore produce an offline count
+  without confirming devices are offline. This differs from `GET /devices`, whose
+  online count includes busy and whose unavailable presence is reported as unknown.
+- `POST /devices/{id}/viewers` requires `device:read` and a 32-character lowercase
+  hexadecimal session ID plus optional boolean `active`. It updates a card-viewer
+  lease and reports availability/counts; this is not proof of stream playback.
+- `GET /devices/{id}/stream-sessions` and `/direct-probe-capabilities` require
+  `stream:read` and an owned active device. History may return 503 if unavailable;
+  capability admission is not proof of relay reachability or device acceptance.
+- `POST /devices/refresh` uses the device `refresh_token` cookie, not the user
+  refresh endpoint, and returns the rotated device credentials in the response
+  body. It accepts an optional `X-Refresh-Request-Id` UUID. Persist the request ID
+  before sending: source allows recovery of one unconsumed successor
+  with the same original token and ID; a missing/different ID or later rotation
+  cannot recover that prior reply. Keep both token and response secret. See
+  [device credential bootstrap](security/device-credential-bootstrap.md).
+
+---
+
 ## Bulk Actions — `/devices/bulk`
 
 `POST /devices/bulk/action` requires `device:write` and accepts 1–500 `device_ids`,
@@ -465,19 +502,24 @@ A cache read is an observation, not proof that a command completed.
 `disconnect_adb`, `set_group`, `set_tags` and `send_command`; `set_group` requires
 `group_id`, and `send_command` requires `command_type`. The response gives
 `total`, `succeeded`, `failed` and per-device `results`. Inspect each result.
-Reboot success means an agent receipt, not a finished reboot. `connect_adb`,
+Per-item failures do not necessarily mean no side effect: a lost reboot receipt
+leaves the result unknown. Reboot success means an agent receipt, not a finished
+reboot. `connect_adb`,
 `disconnect_adb` and `send_command` are cache-writing stubs, not proof of device
 execution. `DELETE /devices/bulk` requires `device:delete` and removes records
 from the active catalog while preserving history. See [schema](../backend/schemas/bulk.py)
-and [service](../backend/services/bulk_service.py).
+and [service](../backend/services/bulk_service.py). `DELETE /devices/bulk` returns
+`{ "deleted": N }` for active owned records retired; malformed, foreign and
+already-inactive IDs are not counted. A count alone does not stop physical actions.
 
 ---
 
 ## Groups — `/groups`
 
 Updated 2 October 2026. Paths below are relative to `/api/v1` and match the
-[router](../backend/api/v1/groups/router.py). Requests require the current
-organization and the listed permission; foreign group IDs return404.
+[router](../backend/api/v1/groups/router.py). Requests use the current
+organization and listed permission. Group mutations reject a foreign target with
+404; the device-list group filter does not separately establish group existence.
 
 | Request | Permission | Result |
 |---|---|---|
