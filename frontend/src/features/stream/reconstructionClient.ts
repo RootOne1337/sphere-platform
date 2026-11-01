@@ -4,13 +4,15 @@ export type ReconstructionJob = {id:string; key:string; creation?:{mask:'avatar'
 export type NavigationState = {phase:string;id?:string;error?:string|null;executionQualified?:false;resourceProfile?:{kind:string;minRamGiB:number};summary?:{cameras:number;landmarks:number;first_seconds?:number;last_seconds?:number;source_coverage?:{recording_start_seconds:number;recording_end_seconds:number;uncovered_start_seconds:number;uncovered_end_seconds:number;endpoints_observed:boolean};camera_trace_only:true;map_support:{all_reference_neighborhoods_supported:boolean;unobserved_intervals?:{start_seconds:number;end_seconds:number}[]}}};
 export type SceneAppearance = {state:'unverified'|'passed'|'rejected';mean_psnr?:number;mean_ssim?:number;min_psnr?:number;min_ssim?:number;views?:{image:string;psnr:number;ssim:number}[]};
 export type SurfaceState = {visual_review?:{state:'issues_found'|'limited_preview';issues:string[]};id?:string;fragment?:{first_view:number;view_count:number};phase:string;error?:string;available?:boolean;views?:number;total_views?:number;result?:{sha256:string;bytes:number;triangles:number;vertices:number;textures:number;texture_pixels:number;source_images:string[];mesh_faces:number;unknown_faces:number;seconds:number}};
-export type HudTelemetry = {phase:string;accepted_count?:number;unknown_count?:number;selected_count?:number;source_manifest_sha256?:string;units?:string;samples?:{ticks_90k:number;hud_kmh:number|null}[]};
+export type HudTelemetry = {phase:string;accepted_count?:number;unknown_count?:number;selected_count?:number;source_manifest_sha256?:string;units?:string;samples?:{ticks_90k:number;hud_kmh:number|null;gap_before?:boolean}[]};
 export type ReconstructionState = {telemetry?:HudTelemetry;completed_items?:number;total_items?:number;navigation?:NavigationState;camera_motion?:{warning:string|null;rapid_reversals?:number;speed_outliers?:number;heuristic_only?:boolean;navigation_qualified:false};phase:string; error?:string; geometry_available?:boolean; sparse_available?:boolean; dense_available?:boolean; dense_partial_available?:boolean; surface?:SurfaceState|null; fragments?:SurfaceState[]; surface_supported?:boolean; appearance?:SceneAppearance; checkpoint?:{steps:number;target_steps:number;partial:true}; quality?:{registered:number; selected:number; coverage:number; points:number; mean_reprojection_px:number; components?:number}; result?:{ply_sha256:string; ply_bytes:number}};
 export function boundHudTelemetry(telemetry:HudTelemetry|undefined,sourceManifestSha:string|null|undefined):HudTelemetry|undefined {
   return sourceManifestSha && telemetry?.source_manifest_sha256===sourceManifestSha && ['ready','processing','failed','unavailable'].includes(telemetry.phase) ? telemetry : undefined;
 }
 export function hudChart(samples:HudTelemetry['samples']) {
   if(!Array.isArray(samples)||samples.length>601||samples.some((s,i)=>!Number.isSafeInteger(s.ticks_90k)||s.ticks_90k<0||(i>0&&s.ticks_90k<=samples[i-1].ticks_90k)||(s.hud_kmh!==null&&(typeof s.hud_kmh!=='number'||!Number.isFinite(s.hud_kmh)||s.hud_kmh<0))))return null;
+  const hasContinuity=samples.some(s=>s.gap_before!==undefined);
+  if(hasContinuity&&samples.some(s=>typeof s.gap_before!=='boolean'))return null;
   const accepted=samples.filter((s):s is {ticks_90k:number;hud_kmh:number}=>s.hud_kmh!==null);
   if(!accepted.length)return null;
   const min=Math.min(...accepted.map(s=>s.hud_kmh)),max=Math.max(...accepted.map(s=>s.hud_kmh));
@@ -18,7 +20,10 @@ export function hudChart(samples:HudTelemetry['samples']) {
   const segments:{x:number;y:number}[][]=[];let previous:number|null=null;
   for(const sample of samples){
     if(sample.hud_kmh===null){previous=null;continue;}
-    if(previous===null||sample.ticks_90k-previous>18000)segments.push([]);
+    // Bucket spacing grows with clip length. The source-bound bucket builder
+    // explicitly reports missing observations; spacing alone is a gap only
+    // for the legacy unbucketed telemetry contract.
+    if(previous===null||sample.gap_before===true||(!hasContinuity&&sample.ticks_90k-previous>18000))segments.push([]);
     segments[segments.length-1].push({x:10+280*(sample.ticks_90k-start)/span,y:90-80*sample.hud_kmh/top});previous=sample.ticks_90k;
   }
   return {min,max,segments};

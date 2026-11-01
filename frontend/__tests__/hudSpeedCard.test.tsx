@@ -27,6 +27,13 @@ test('rejects oversized and malformed charts',()=>{
   expect(hudChart([{ticks_90k:1,hud_kmh:1},{ticks_90k:1,hud_kmh:2}])).toBeNull();
   expect(hudChart(Array.from({length:601},(_,i)=>({ticks_90k:i,hud_kmh:1})))?.segments[0]).toHaveLength(601);
 });
+test('decimated long recordings preserve observed continuity without joining actual source gaps',()=>{
+  const samples=[0,90000,180000,270000,360000].map((ticks_90k,i)=>({ticks_90k,hud_kmh:20+i,gap_before:i===3}));
+  expect(hudChart(samples)?.segments.map(s=>s.length)).toEqual([3,2]);
+  expect(hudChart(samples.map((s,i)=>i===1?{...s,hud_kmh:null}:s))?.segments.map(s=>s.length)).toEqual([1,1,2]);
+  expect(hudChart([{ticks_90k:0,hud_kmh:20,gap_before:false},{ticks_90k:90000,hud_kmh:21}])).toBeNull();
+  expect(hudChart([{ticks_90k:0,hud_kmh:20,gap_before:'false' as unknown as boolean}])).toBeNull();
+});
 test('scooter preset persists a recognized HUD profile and invalid profiles fall back',()=>{
   const geometry={width:1920,height:1080},profile=blackRussiaScooterProfile(geometry);
   expect(profile.hudProfile).toBe('black_russia_scooter_v1');
