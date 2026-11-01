@@ -9,7 +9,14 @@ import uuid
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
-from scripts.pilot.route_workspace import ID, ROOT, checked_json, resource_checkpoint, route_resource_profile
+from scripts.pilot.route_resource_monitor import TaskResourceMonitor
+from scripts.pilot.route_workspace import (
+    ID,
+    ROOT,
+    checked_json,
+    resource_checkpoint,
+    route_resource_profile,
+)
 
 
 def source_endpoint_coverage(frames, first_seconds, last_seconds):
@@ -52,39 +59,56 @@ def prepare(job, attempt):
     folder = job/'navigation'/attempt
     if checked_json(folder/'intent.json')['id'] != attempt:
         raise ValueError('route_intent_missing')
+    task_folder = folder.resolve(strict=True)
     profile_budget = route_resource_profile(job)
-    bounded = lambda target: resource_checkpoint(target, profile=profile_budget)
-    bounded(folder)
-    sys.path.insert(0, str(ROOT/'.local-pilot/reconstruction-tools/pycolmap-4.2.1'))
-    cv2.setNumThreads(2)
-    model = route_source_model(job)
-    geometry_raw = (job/'geometry.json').read_bytes()
-    geometry = json.loads(geometry_raw)
-    motion = audit(geometry)
-    if motion['rapid_reversals'] or motion['speed_outliers']:
-        raise ValueError('route_camera_motion_requires_review')
-    capture = validate_browser(job/'input')
-    width, height = capture.geometry
-    from scripts.pilot.route_masks import capture_exclusions, WATERMARK
-    control = checked_json(job/'control.json') if (job/'control.json').exists() else {}
-    excluded = capture_exclusions(control.get('mask', 'none'), capture.manifest) or (WATERMARK,)
-    profile = RouteViewProfile(str(uuid.uuid4()), width, height, (0., 0., 1., 1.), excluded)
-    write_json(folder/'state.json', dict(phase='features'))
-    receipt = export(model, job/'prepared/reconstruction-input.json', job/'prepared/images',
-        folder/'route.json', profile=profile, world_revision=str(uuid.uuid4()), checkpoint_fn=bounded)
-    receipt['source_coverage'] = source_endpoint_coverage(capture.frames, receipt['first_seconds'], receipt['last_seconds'])
-    receipt['geometry_sha256'] = hashlib.sha256(geometry_raw).hexdigest()
-    if route_source_model(job) != model:
-        raise ValueError('route_source_changed')
-    if hashlib.sha256((job/'geometry.json').read_bytes()).hexdigest() != receipt['geometry_sha256']:
-        raise ValueError('route_source_changed')
-    write_json(folder/'receipt.json', receipt)
-    supported = (receipt['map_support']['all_reference_neighborhoods_supported']
-                 and receipt['map_support']['all_reference_intervals_observed']
-                 and receipt['source_coverage']['endpoints_observed'])
-    write_json(folder/'state.json', dict(phase='ready' if supported else 'rejected',
-        error=None if supported else 'route_map_has_unobserved_sections',
-        cameraTraceOnly=True, executionQualified=False))
+    # One preparation owns one volume proof. Every callback still reads fresh
+    # native RAM/commit/disk; a monitor never survives this call or feeds live
+    # sessions. Its context closes/reaps its own probe on every exit path.
+    with TaskResourceMonitor(ROOT) as monitor:
+        def bounded(target):
+            if Path(target).resolve() != task_folder or folder.resolve() != task_folder:
+                raise RuntimeError('route_resource_task_mismatch')
+            # Check before sampling so cancellation cannot start a health probe.
+            if (job/'CANCEL').exists() or (folder/'CANCEL').exists():
+                raise RuntimeError('cancelled')
+            snapshot = monitor.sample()
+            if (job/'CANCEL').exists() or (folder/'CANCEL').exists():
+                raise RuntimeError('cancelled')
+            resource_checkpoint(target, profile=profile_budget, snapshot=snapshot)
+
+        bounded(folder)
+        sys.path.insert(0, str(ROOT/'.local-pilot/reconstruction-tools/pycolmap-4.2.1'))
+        cv2.setNumThreads(2)
+        model = route_source_model(job)
+        geometry_raw = (job/'geometry.json').read_bytes()
+        geometry = json.loads(geometry_raw)
+        motion = audit(geometry)
+        if motion['rapid_reversals'] or motion['speed_outliers']:
+            raise ValueError('route_camera_motion_requires_review')
+        capture = validate_browser(job/'input')
+        width, height = capture.geometry
+        from scripts.pilot.route_masks import WATERMARK, capture_exclusions
+        control = checked_json(job/'control.json') if (job/'control.json').exists() else {}
+        excluded = capture_exclusions(control.get('mask', 'none'), capture.manifest) or (WATERMARK,)
+        profile = RouteViewProfile(str(uuid.uuid4()), width, height, (0., 0., 1., 1.), excluded)
+        write_json(folder/'state.json', dict(phase='features'))
+        receipt = export(model, job/'prepared/reconstruction-input.json', job/'prepared/images',
+            folder/'route.json', profile=profile, world_revision=str(uuid.uuid4()), checkpoint_fn=bounded)
+        bounded(folder)
+        receipt['source_coverage'] = source_endpoint_coverage(capture.frames, receipt['first_seconds'], receipt['last_seconds'])
+        receipt['geometry_sha256'] = hashlib.sha256(geometry_raw).hexdigest()
+        if route_source_model(job) != model:
+            raise ValueError('route_source_changed')
+        if hashlib.sha256((job/'geometry.json').read_bytes()).hexdigest() != receipt['geometry_sha256']:
+            raise ValueError('route_source_changed')
+        bounded(folder)
+        write_json(folder/'receipt.json', receipt)
+        supported = (receipt['map_support']['all_reference_neighborhoods_supported']
+                     and receipt['map_support']['all_reference_intervals_observed']
+                     and receipt['source_coverage']['endpoints_observed'])
+        write_json(folder/'state.json', dict(phase='ready' if supported else 'rejected',
+            error=None if supported else 'route_map_has_unobserved_sections',
+            cameraTraceOnly=True, executionQualified=False))
 
 
 def main():
@@ -102,7 +126,7 @@ def main():
         allowed = {'resource_guard', 'cancelled', 'route_camera_motion_requires_review',
                    'route_map_has_unobserved_sections', 'sparse_export_time_quota', 'route_source_changed',
                    'camera_intrinsics_degenerate', 'sparse_receipt_invalid', 'sparse_source_changed',
-                   'sparse_source_missing_or_symlink', 'sparse_quality_gate_failed'}
+                   'sparse_source_missing_or_symlink', 'sparse_quality_gate_failed', 'route_resource_task_mismatch'}
         reason = str(exc) if str(exc) in allowed else 'route_preparation_failed_inspect_local_log'
         write_json(job/'navigation'/args.attempt/'state.json', dict(phase='failed', error=reason))
         raise

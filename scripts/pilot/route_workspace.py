@@ -70,10 +70,17 @@ def route_resource_profile(job, kind='features'):
                 modelLoaded=False, maxCommitPercent=85)
 
 
-def resource_checkpoint(folder, *, profile=None):
+def resource_checkpoint(folder, *, profile=None, snapshot=None):
+    """Evaluate fresh counters; preparation may supply its task-owned snapshot.
+
+    Other callers retain the existing fresh full collection. A supplied snapshot
+    never changes the profile, cancellation, volume or absolute commit gates.
+    """
     if (folder/'CANCEL').exists():
         raise RuntimeError('cancelled')
-    snapshot = collect(ROOT)
+    snapshot = collect(ROOT) if snapshot is None else snapshot
+    if type(snapshot) is not dict:
+        raise ValueError('route_resource_snapshot')
     minimum = 12 if profile is None else profile['minRamGiB']
     floor = 4.75 if profile is not None and profile.get('kind') == 'route_live' else 6
     if not isinstance(minimum, (int, float)) or isinstance(minimum, bool) or not floor <= minimum <= 16:
