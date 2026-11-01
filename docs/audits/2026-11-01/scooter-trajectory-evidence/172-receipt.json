@@ -1,0 +1,29 @@
+{
+  "initial_ram": 8852951040,
+  "initial_commit": 20679151616,
+  "stages": [
+    {
+      "stage": "prepare",
+      "exit": 0,
+      "stop": null,
+      "seconds": 8.03200000000652
+    },
+    {
+      "stage": "match",
+      "exit": 0,
+      "stop": null,
+      "seconds": 11.031000000075437
+    },
+    {
+      "stage": "map",
+      "exit": 0,
+      "stop": null,
+      "seconds": 102.67199999990407
+    }
+  ],
+  "admission_stop": null,
+  "seconds": 121.84400000004098,
+  "min_ram": 7737221120,
+  "min_commit": 18507431936,
+  "inputs_unchanged": true
+}

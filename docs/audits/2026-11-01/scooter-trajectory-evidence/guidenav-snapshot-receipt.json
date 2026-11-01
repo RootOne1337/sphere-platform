@@ -1,0 +1,91 @@
+{
+  "commit": "c94abf7ffcc1ab5eda54fec648117d6f2b41f431",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 7758,
+      "sha256": "11e3c902d7192809ca2b1543a6e376c4a3e2a7316368805df6cccc3f9a8fd3d7"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1069,
+      "sha256": "212a002256b4674ddf624b8da69b4c9993365d57e50e9bc068b0fd0ec430ab71"
+    },
+    {
+      "path": "requirements.txt",
+      "bytes": 732,
+      "sha256": "5e5483f55e6761d6537a7d814f961e3327262a22a17850ab282170e44cd04f85"
+    },
+    {
+      "path": "docs/SETUP.md",
+      "bytes": 5332,
+      "sha256": "52c9c40d544d49cf4e4779922d26899f06b43de2916cf4d3bc208e7cd78ddc0a"
+    },
+    {
+      "path": "config/models.yaml",
+      "bytes": 202,
+      "sha256": "39a337fe46a46e458057d9ec368f71c0317ca4431bd07f9e6e8eb9aa9bfc7d2d"
+    },
+    {
+      "path": "config/robots.yaml",
+      "bytes": 1017,
+      "sha256": "90a4a25002c2e2dcb02c8e675c44587683168f64a890ee273830a102b4fcdbf3"
+    },
+    {
+      "path": "guidenav/navigate.py",
+      "bytes": 37044,
+      "sha256": "20d2c2eb871a0a782418b3e6d4db54d1b8f0a4af6910b6a7b25b9fe11815c5bb"
+    },
+    {
+      "path": "guidenav/parser.py",
+      "bytes": 6213,
+      "sha256": "0baae9534ef5b230f52a0976bfd78709482e5c4526e0d74ba34db9e9a5122a41"
+    },
+    {
+      "path": "guidenav/match_to_control/control.py",
+      "bytes": 5476,
+      "sha256": "02c14f24142dca9747bd46f10dc02cfc058f10d9a5084b7dd12d41b019e7e2f1"
+    },
+    {
+      "path": "guidenav/match_to_control/feature_match.py",
+      "bytes": 2876,
+      "sha256": "772b691354eb257447e9b910766387af13e303f2642edc578400481fa3e7ffa2"
+    },
+    {
+      "path": "guidenav/place_recognition/bayesian_querier.py",
+      "bytes": 5074,
+      "sha256": "981454c8fe41b5e78f9d38da293090b8246d351312da416d044e22b4b3fec19d"
+    },
+    {
+      "path": "guidenav/place_recognition/sliding_window_querier.py",
+      "bytes": 1032,
+      "sha256": "8867562f78aa1af1a3d4fb42fa04155cb0d0032ca60a8bb9e0dc0c4aa9346682"
+    },
+    {
+      "path": "guidenav/place_recognition/gallery_db.py",
+      "bytes": 2022,
+      "sha256": "b45288437a798ce1653b96d64ebcb213fefb7363ba4b53efe31ebe682b0310d2"
+    },
+    {
+      "path": "guidenav/place_recognition/feature_extractor.py",
+      "bytes": 1409,
+      "sha256": "c3041b45378c53ef1cf7b1b1ff356b03d3e1514e4c0d76af16eab9f281f656d8"
+    },
+    {
+      "path": "guidenav/models/pr_models/cosplace.py",
+      "bytes": 884,
+      "sha256": "738c153fdcefe60eb8cb432db8b9bbfed13f31721ded1bab06a520f13f020043"
+    },
+    {
+      "path": "guidenav/utils.py",
+      "bytes": 4043,
+      "sha256": "23c57c9ff1a816850407808b353a4ad6a74b8292f78d3bdfaa3eebc53d8aaa6f"
+    },
+    {
+      "path": "sensor/build_topomap.py",
+      "bytes": 12108,
+      "sha256": "e0eeeabcf62cd348d4b95ac2c3482f62a1c7e7d76f8f82822532852be51e95fa"
+    }
+  ],
+  "total_bytes": 94291.0
+}

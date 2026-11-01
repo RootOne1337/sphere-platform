@@ -1,0 +1,361 @@
+{
+  "models": {
+    "source": {
+      "model_assessment": {
+        "schema": "sphere-route-geometry-selection-v1",
+        "registered": 166,
+        "selected": 166,
+        "coverage": 1.0,
+        "points": 15247,
+        "reprojection_px": 1.1967589923502693,
+        "scene_admissible": true,
+        "route_admissible": false,
+        "scene_reasons": [],
+        "route_reasons": [
+          "route_camera_reversals",
+          "route_camera_speed_outliers"
+        ],
+        "source_coverage": {
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "missing_start_seconds": 0.0,
+          "missing_end_seconds": 0.0,
+          "max_observed_gap_seconds": 0.266,
+          "endpoints_observed": true,
+          "all_intervals_observed": true,
+          "endpoint_limit_seconds": 1.0,
+          "interval_limit_seconds": 1.0
+        },
+        "poses_interpolated": false,
+        "navigation_qualified": false,
+        "execution_qualified": false,
+        "conditioning": {
+          "near_camera_points": 0,
+          "near_camera_fraction": 0.0,
+          "camera_span_units": 10.778485168203337,
+          "passed": true
+        },
+        "intrinsics_condition": {
+          "passed": true,
+          "focal_ratio": 1.0,
+          "horizontal_fov_degrees": 115.63186499720054,
+          "vertical_fov_degrees": 83.57979295233123,
+          "physical_calibration_verified": false
+        },
+        "motion": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 166,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 49.579807576853185,
+          "endpoint_displacement_units": 4.794277960368671,
+          "median_step_units": 0.22317856719503382,
+          "max_step_units": 4.289771443026079,
+          "median_rate_units_per_second": 1.0640683312355765,
+          "warning": "poses_require_temporal_review",
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+          "rapid_reversals_count": 25,
+          "speed_outliers_count": 2
+        }
+      },
+      "actual_reprojection": {
+        "front_observations": 109475,
+        "all_observations": 109475,
+        "behind": 0,
+        "mean_px": 1.2263757933930217,
+        "median_px": 0.7549105894169957,
+        "p95_px": 3.70806245199326
+      },
+      "hud": {
+        "edges": 125,
+        "fit_count": 65,
+        "test_count": 60,
+        "test_median_abs_log": 0.6026316972701182,
+        "test_factor4": 5
+      },
+      "camera_params": [
+        604.171514438519,
+        960.0,
+        540.0
+      ],
+      "motion_whole166": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 166,
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "path_units": 49.579807576853185,
+        "endpoint_displacement_units": 4.794277960368671,
+        "median_step_units": 0.22317856719503382,
+        "max_step_units": 4.289771443026079,
+        "median_rate_units_per_second": 1.0640683312355765,
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+        "rapid_reversals_count": 25,
+        "speed_outliers_count": 2
+      },
+      "motion_original163": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 163,
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "path_units": 49.57588121378824,
+        "endpoint_displacement_units": 4.794277960368671,
+        "median_step_units": 0.2297563169738638,
+        "max_step_units": 4.289771443026079,
+        "median_rate_units_per_second": 1.0624769223899713,
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+        "rapid_reversals_count": 25,
+        "speed_outliers_count": 2
+      }
+    },
+    "GP": {
+      "model_assessment": {
+        "schema": "sphere-route-geometry-selection-v1",
+        "registered": 166,
+        "selected": 166,
+        "coverage": 1.0,
+        "points": 15247,
+        "reprojection_px": 1.1967589923502693,
+        "scene_admissible": true,
+        "route_admissible": false,
+        "scene_reasons": [],
+        "route_reasons": [
+          "route_camera_reversals",
+          "route_camera_speed_outliers"
+        ],
+        "source_coverage": {
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "missing_start_seconds": 0.0,
+          "missing_end_seconds": 0.0,
+          "max_observed_gap_seconds": 0.266,
+          "endpoints_observed": true,
+          "all_intervals_observed": true,
+          "endpoint_limit_seconds": 1.0,
+          "interval_limit_seconds": 1.0
+        },
+        "poses_interpolated": false,
+        "navigation_qualified": false,
+        "execution_qualified": false,
+        "conditioning": {
+          "near_camera_points": 0,
+          "near_camera_fraction": 0.0,
+          "camera_span_units": 60.49927046532423,
+          "passed": true
+        },
+        "intrinsics_condition": {
+          "passed": true,
+          "focal_ratio": 1.0,
+          "horizontal_fov_degrees": 115.63186499720054,
+          "vertical_fov_degrees": 83.57979295233123,
+          "physical_calibration_verified": false
+        },
+        "motion": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 166,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 124.98001976437878,
+          "endpoint_displacement_units": 57.788484301175686,
+          "median_step_units": 0.43738264021730894,
+          "max_step_units": 9.313067774407763,
+          "median_rate_units_per_second": 2.0849978365660737,
+          "warning": "poses_require_temporal_review",
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+          "rapid_reversals_count": 22,
+          "speed_outliers_count": 3
+        }
+      },
+      "actual_reprojection": {
+        "front_observations": 109084,
+        "all_observations": 109475,
+        "behind": 391,
+        "mean_px": 7.044821468156949,
+        "median_px": 1.976121203119098,
+        "p95_px": 16.17347844398577
+      },
+      "hud": {
+        "edges": 125,
+        "fit_count": 65,
+        "test_count": 60,
+        "test_median_abs_log": 1.6833904121726586,
+        "test_factor4": 37
+      },
+      "camera_params": [
+        604.171514438519,
+        960.0,
+        540.0
+      ],
+      "motion_whole166": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 166,
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "path_units": 124.98001976437878,
+        "endpoint_displacement_units": 57.788484301175686,
+        "median_step_units": 0.43738264021730894,
+        "max_step_units": 9.313067774407763,
+        "median_rate_units_per_second": 2.0849978365660737,
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+        "rapid_reversals_count": 22,
+        "speed_outliers_count": 3
+      },
+      "motion_original163": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 163,
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "path_units": 124.9643348764642,
+        "endpoint_displacement_units": 57.788484301175686,
+        "median_step_units": 0.45160141778030227,
+        "max_step_units": 9.313067774407763,
+        "median_rate_units_per_second": 2.071212067020884,
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+        "rapid_reversals_count": 21,
+        "speed_outliers_count": 3
+      }
+    },
+    "fixedRBA": {
+      "model_assessment": {
+        "schema": "sphere-route-geometry-selection-v1",
+        "registered": 166,
+        "selected": 166,
+        "coverage": 1.0,
+        "points": 15049,
+        "reprojection_px": 5.434755025094679e+151,
+        "scene_admissible": false,
+        "route_admissible": false,
+        "scene_reasons": [
+          "camera_reprojection_invalid_or_large"
+        ],
+        "route_reasons": [
+          "route_camera_reversals",
+          "route_camera_speed_outliers"
+        ],
+        "source_coverage": {
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "missing_start_seconds": 0.0,
+          "missing_end_seconds": 0.0,
+          "max_observed_gap_seconds": 0.266,
+          "endpoints_observed": true,
+          "all_intervals_observed": true,
+          "endpoint_limit_seconds": 1.0,
+          "interval_limit_seconds": 1.0
+        },
+        "poses_interpolated": false,
+        "navigation_qualified": false,
+        "execution_qualified": false,
+        "conditioning": {
+          "near_camera_points": 0,
+          "near_camera_fraction": 0.0,
+          "camera_span_units": 60.937293436215455,
+          "passed": true
+        },
+        "intrinsics_condition": {
+          "passed": true,
+          "focal_ratio": 1.0,
+          "horizontal_fov_degrees": 115.63186499720054,
+          "vertical_fov_degrees": 83.57979295233123,
+          "physical_calibration_verified": false
+        },
+        "motion": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 166,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 128.67385801264743,
+          "endpoint_displacement_units": 57.79703344601322,
+          "median_step_units": 0.44992325387779003,
+          "max_step_units": 9.52385183895595,
+          "median_rate_units_per_second": 2.2173248722396015,
+          "warning": "poses_require_temporal_review",
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+          "rapid_reversals_count": 22,
+          "speed_outliers_count": 2
+        }
+      },
+      "actual_reprojection": {
+        "front_observations": 108887,
+        "all_observations": 109079,
+        "behind": 192,
+        "mean_px": 12.998895098304507,
+        "median_px": 1.91909809631992,
+        "p95_px": 16.966209669544472
+      },
+      "hud": {
+        "edges": 125,
+        "fit_count": 65,
+        "test_count": 60,
+        "test_median_abs_log": 1.6661190846064446,
+        "test_factor4": 36
+      },
+      "camera_params": [
+        604.171514438519,
+        960.0,
+        540.0
+      ],
+      "motion_whole166": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 166,
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "path_units": 128.67385801264743,
+        "endpoint_displacement_units": 57.79703344601322,
+        "median_step_units": 0.44992325387779003,
+        "max_step_units": 9.52385183895595,
+        "median_rate_units_per_second": 2.2173248722396015,
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+        "rapid_reversals_count": 22,
+        "speed_outliers_count": 2
+      },
+      "motion_original163": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 163,
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "path_units": 128.66746142887135,
+        "endpoint_displacement_units": 57.79703344601322,
+        "median_step_units": 0.4656491019443877,
+        "max_step_units": 9.52385183895595,
+        "median_rate_units_per_second": 2.1870906766514415,
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+        "rapid_reversals_count": 21,
+        "speed_outliers_count": 2
+      }
+    }
+  },
+  "note": "Derived compact summary. Motion event arrays reduced to counts; see source hash and source file."
+}

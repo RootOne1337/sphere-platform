@@ -1,0 +1,386 @@
+{
+  "method": "Manually inspected conservative sample polygons on six real frames, not an automatic sky segmentation; red polygon for suspected sky, cyan polygon facade comparison. Regions left unclassified elsewhere. Full polygons exclude stars and any underlying pixels. No live/production application.",
+  "median_camera_step_units": 0.22317856719503384,
+  "frames": [
+    {
+      "source_index": 26,
+      "image": "00000026.png",
+      "candidate_sky_sample_polygons": [
+        [
+          [
+            1000,
+            15
+          ],
+          [
+            1270,
+            15
+          ],
+          [
+            1270,
+            320
+          ],
+          [
+            1000,
+            320
+          ]
+        ]
+      ],
+      "facade_reference_polygon": [
+        [
+          550,
+          140
+        ],
+        [
+          830,
+          140
+        ],
+        [
+          830,
+          450
+        ],
+        [
+          550,
+          450
+        ]
+      ],
+      "excluded_image_fraction": 0.039991319444444444,
+      "database_2d_features": 3364,
+      "2d_features_inside_sky_sample": 325,
+      "2d_features_remaining": 3039,
+      "3d_observations_total": 1318,
+      "sky_interior": {
+        "count": 2,
+        "depth_units_median": 1.7535023513479568,
+        "depth_in_median_step_median": 7.856947794702823,
+        "max_track_angle_deg_median": 2.001405654885035,
+        "max_track_angle_deg_p10": 1.5315114357514772,
+        "reprojection_px_median": 1.9216078595465316,
+        "reprojection_px_p95": 2.2618160391590565,
+        "track_views_median": 5.5
+      },
+      "facade_reference": {
+        "count": 139,
+        "depth_units_median": 0.0909042112545857,
+        "depth_in_median_step_median": 0.4073160447129553,
+        "max_track_angle_deg_median": 3.219176850265877,
+        "max_track_angle_deg_p10": 2.151008227862388,
+        "reprojection_px_median": 0.41471276421228376,
+        "reprojection_px_p95": 2.7438305170588673,
+        "track_views_median": 6.0
+      },
+      "other_3d_observations": 1177
+    },
+    {
+      "source_index": 54,
+      "image": "00000054.png",
+      "candidate_sky_sample_polygons": [
+        [
+          [
+            750,
+            15
+          ],
+          [
+            1240,
+            15
+          ],
+          [
+            1240,
+            300
+          ],
+          [
+            750,
+            300
+          ]
+        ]
+      ],
+      "facade_reference_polygon": [
+        [
+          320,
+          100
+        ],
+        [
+          650,
+          100
+        ],
+        [
+          650,
+          450
+        ],
+        [
+          320,
+          450
+        ]
+      ],
+      "excluded_image_fraction": 0.06772087191358024,
+      "database_2d_features": 3294,
+      "2d_features_inside_sky_sample": 352,
+      "2d_features_remaining": 2942,
+      "3d_observations_total": 514,
+      "sky_interior": {
+        "count": 0
+      },
+      "facade_reference": {
+        "count": 0
+      },
+      "other_3d_observations": 514
+    },
+    {
+      "source_index": 92,
+      "image": "00000092.png",
+      "candidate_sky_sample_polygons": [
+        [
+          [
+            320,
+            10
+          ],
+          [
+            1300,
+            10
+          ],
+          [
+            1300,
+            250
+          ],
+          [
+            320,
+            250
+          ]
+        ]
+      ],
+      "facade_reference_polygon": [
+        [
+          1450,
+          160
+        ],
+        [
+          1530,
+          160
+        ],
+        [
+          1530,
+          350
+        ],
+        [
+          1450,
+          350
+        ]
+      ],
+      "excluded_image_fraction": 0.11401475694444445,
+      "database_2d_features": 2736,
+      "2d_features_inside_sky_sample": 551,
+      "2d_features_remaining": 2185,
+      "3d_observations_total": 48,
+      "sky_interior": {
+        "count": 0
+      },
+      "facade_reference": {
+        "count": 0
+      },
+      "other_3d_observations": 48
+    },
+    {
+      "source_index": 300,
+      "image": "00000300.png",
+      "candidate_sky_sample_polygons": [
+        [
+          [
+            320,
+            10
+          ],
+          [
+            1000,
+            10
+          ],
+          [
+            1000,
+            280
+          ],
+          [
+            320,
+            280
+          ]
+        ]
+      ],
+      "facade_reference_polygon": [
+        [
+          1160,
+          200
+        ],
+        [
+          1400,
+          200
+        ],
+        [
+          1400,
+          410
+        ],
+        [
+          1160,
+          410
+        ]
+      ],
+      "excluded_image_fraction": 0.08900028935185185,
+      "database_2d_features": 3703,
+      "2d_features_inside_sky_sample": 500,
+      "2d_features_remaining": 3203,
+      "3d_observations_total": 635,
+      "sky_interior": {
+        "count": 0
+      },
+      "facade_reference": {
+        "count": 75,
+        "depth_units_median": 4.476659526630281,
+        "depth_in_median_step_median": 20.05864444285175,
+        "max_track_angle_deg_median": 2.4711563175497986,
+        "max_track_angle_deg_p10": 1.6248866276147036,
+        "reprojection_px_median": 1.2674023319903245,
+        "reprojection_px_p95": 3.751923029948859,
+        "track_views_median": 5.0
+      },
+      "other_3d_observations": 560
+    },
+    {
+      "source_index": 550,
+      "image": "00000550.png",
+      "candidate_sky_sample_polygons": [
+        [
+          [
+            780,
+            10
+          ],
+          [
+            1050,
+            10
+          ],
+          [
+            1050,
+            250
+          ],
+          [
+            780,
+            250
+          ]
+        ]
+      ],
+      "facade_reference_polygon": [
+        [
+          1200,
+          150
+        ],
+        [
+          1450,
+          150
+        ],
+        [
+          1450,
+          360
+        ],
+        [
+          1200,
+          360
+        ]
+      ],
+      "excluded_image_fraction": 0.03149643132716049,
+      "database_2d_features": 3483,
+      "2d_features_inside_sky_sample": 142,
+      "2d_features_remaining": 3341,
+      "3d_observations_total": 131,
+      "sky_interior": {
+        "count": 2,
+        "depth_units_median": 7.288205662905409,
+        "depth_in_median_step_median": 32.65638701110716,
+        "max_track_angle_deg_median": 5.058774802886161,
+        "max_track_angle_deg_p10": 5.050871492572714,
+        "reprojection_px_median": 4.65389087336073,
+        "reprojection_px_p95": 4.772135305038985,
+        "track_views_median": 3.0
+      },
+      "facade_reference": {
+        "count": 0
+      },
+      "other_3d_observations": 129
+    },
+    {
+      "source_index": 801,
+      "image": "00000801.png",
+      "candidate_sky_sample_polygons": [
+        [
+          [
+            330,
+            10
+          ],
+          [
+            650,
+            10
+          ],
+          [
+            650,
+            140
+          ],
+          [
+            330,
+            140
+          ]
+        ],
+        [
+          [
+            800,
+            10
+          ],
+          [
+            1200,
+            10
+          ],
+          [
+            1200,
+            140
+          ],
+          [
+            800,
+            140
+          ]
+        ]
+      ],
+      "facade_reference_polygon": [
+        [
+          800,
+          250
+        ],
+        [
+          1150,
+          250
+        ],
+        [
+          1150,
+          495
+        ],
+        [
+          800,
+          495
+        ]
+      ],
+      "excluded_image_fraction": 0.045612461419753086,
+      "database_2d_features": 4096,
+      "2d_features_inside_sky_sample": 73,
+      "2d_features_remaining": 4023,
+      "3d_observations_total": 1483,
+      "sky_interior": {
+        "count": 0
+      },
+      "facade_reference": {
+        "count": 818,
+        "depth_units_median": 1.620177630155625,
+        "depth_in_median_step_median": 7.259557449975766,
+        "max_track_angle_deg_median": 13.69891556675815,
+        "max_track_angle_deg_p10": 7.141415595207987,
+        "reprojection_px_median": 0.7906613533824112,
+        "reprojection_px_p95": 3.748216156593005,
+        "track_views_median": 29.0
+      },
+      "other_3d_observations": 665
+    }
+  ],
+  "interpretation": "3D depth, angle, reprojection all derived from disputed same SfM geometry, not true depth or independent scene truth; brightness/near-star labels are hypotheses. Counts refer to final triangulated observations, not independent features.",
+  "approved_for_application": false,
+  "feature_source_correction": "Database keypoints from targeted-gap-v2 SIFT+LightGlue precise-HUD-mask with 4096 per-image cap, not unmasked raw detections and not the separate 1024-cap production recovery. See provenance.json for detector rerun, database, unique raw/verified matches and same-model reciprocal 3D point2D indices."
+}

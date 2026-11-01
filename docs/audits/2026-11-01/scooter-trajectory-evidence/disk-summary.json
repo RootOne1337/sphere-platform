@@ -1,0 +1,113 @@
+{
+  "status": "experiment_complete_route_rejected",
+  "method": "DISK_depth_LightGlue_disk",
+  "master_dimensions": [
+    1920,
+    1080
+  ],
+  "feature_analysis_dimensions": [
+    640,
+    360
+  ],
+  "comparison": "practical feature pipeline plus analysis-resolution change, not single-factor A/B",
+  "GPU": {
+    "gpu_seconds": 63.59299999999348,
+    "peak_gpu_reserved_GiB": 2.314453125,
+    "peak_gpu_allocated_GiB": 2.158801555633545,
+    "minimum_global_gpu_free_GiB": 13.21759033203125,
+    "minimum_host_available_RAM_GiB": 5.187511444091797,
+    "sparse_cache_MiB": 67.12860488891602
+  },
+  "CPU": {
+    "wall_seconds": 16.063000000081956,
+    "max_threads": 4,
+    "guard_stop": null,
+    "gpu_released_before_start": true
+  },
+  "features": {
+    "views": 166,
+    "keypoint_observations": 133999,
+    "raw_match_observations": 273585,
+    "quota_after_original_mask": 1024,
+    "keypoints_per_image": {
+      "min": 423,
+      "median": 799.0,
+      "max": 1024
+    },
+    "descriptor_rows_in_COLMAP": 0,
+    "verified_pairs": {
+      "raw": 811,
+      "verified_nonempty": 764,
+      "all_verification_records": 811
+    }
+  },
+  "geometry": {
+    "registered": 166,
+    "selected": 166,
+    "coverage": 1.0,
+    "points": 4475,
+    "reprojection_px": 1.2871100100945976,
+    "scene_admissible": true,
+    "route_admissible": false,
+    "route_reasons": [
+      "route_camera_reversals",
+      "route_camera_speed_outliers"
+    ],
+    "source_coverage": {
+      "first_seconds": 0.0,
+      "last_seconds": 35.493,
+      "missing_start_seconds": 0.0,
+      "missing_end_seconds": 0.0,
+      "max_observed_gap_seconds": 0.266,
+      "endpoints_observed": true,
+      "all_intervals_observed": true,
+      "endpoint_limit_seconds": 1.0,
+      "interval_limit_seconds": 1.0
+    }
+  },
+  "temporal": {
+    "rapid_reversals": 39,
+    "speed_outliers": 10
+  },
+  "shared_focal_px": 606.9779771224652,
+  "cheirality": {
+    "triangulated_observations": 31970,
+    "behind_camera": 0
+  },
+  "direct_E_vs_global_R": {
+    "tested_adjacent_intervals": 165,
+    "estimated": 165,
+    "median_disagreement_deg": 0.40152244589997405,
+    "p95_disagreement_deg": 8.50689038649525,
+    "over_10deg": 7
+  },
+  "HUD_same_125_edges": {
+    "edges": 125,
+    "fit_count": 65,
+    "test_count": 60,
+    "test_median_abs_log": 0.7024213424168357,
+    "test_factor4": 5
+  },
+  "limitations": [
+    "E and SfM use same source/matches and estimated shared focal, not independent pose truth. HUD 125 edges are same-video posthoc, fit65/test60 for scale. GPU matching method and resolution differ from SIFT baseline.",
+    "Same-source internal geometric checks do not establish independent pose truth.",
+    "One temporary offline GPU phase is not per-window cost for 100 live windows."
+  ],
+  "independent_pose_holdout": false,
+  "source_master_unchanged": true,
+  "raw_DISK_graph_unchanged_after_CPU": true,
+  "previous_profiles_unchanged": true,
+  "executionQualified": false,
+  "source_modified": false,
+  "primary_modified": false,
+  "published": false,
+  "physicalActions": 0,
+  "reports": {
+    ".local-pilot\\scooter-disk-lg-20261101-v3\\result.json": "e7f31f2fbe5ace5d4a7ac3378d2f78ba4b1922b6a2ae848195f88bbb8a6b7579",
+    ".local-pilot\\scooter-disk-lg-20261101-v3\\features.json": "6a8259aa9a26e0985917616a6a7ff20f86e194bc912186b4d55afc69b99f1e6d",
+    ".local-pilot\\scooter-disk-lg-20261101-v3\\sealed-master-integrity.json": "62c468c6730254539276dd5d437c1c387e322fea66dcd0f3cd095595f20a002a",
+    ".local-pilot\\scooter-disk-cpu-20261101\\report.json": "899bc1dd9beabff2a73a016538b50002630923ac8a2ff062a2ead154f128222f",
+    ".local-pilot\\scooter-disk-cpu-20261101\\assessment.json": "4580ab5c160aa056fdc7e51bce570e671a305059ed390a0c69286298f678658d",
+    ".local-pilot\\scooter-disk-cpu-20261101\\receipt.json": "0d2807e70393a8e88a14a9180c054608bff3567f4c49e139353580803fc55cde"
+  }
+}

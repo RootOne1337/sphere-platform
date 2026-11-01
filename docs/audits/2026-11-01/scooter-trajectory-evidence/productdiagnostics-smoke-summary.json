@@ -1,0 +1,60 @@
+[
+  {
+    "model": "SIFT166",
+    "seconds": 1.6922431000275537,
+    "status": "complete",
+    "summary": {
+      "min": 40,
+      "median": 382.0,
+      "p10": 95.0,
+      "count_under_6": 0,
+      "count_under_15": 0
+    },
+    "unchanged": true,
+    "hashes_before": {
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\cameras.bin": "e10041b6bb0fb81d67475f8f0d0567bb942e0944f574b1db930c2a27a2b8c11f",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\frames.bin": "59aa381e12b831227426b9841cb104b6f707cbf2909d4da78cfa3e44870f7a8d",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\images.bin": "2e9b18de8d5756c18a361f035ed0fb82069a790b7322cfbebfe00ca84f6051fc",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\points3D.bin": "596162f2859f3fadea88b27e8ce96756bdd8fbf756035833df187239ae9322ad",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\geometry-0.json": "a4cddab78876cef9183ec5beea94e6c7739e02173652ca4f0243f7e19aba9933"
+    },
+    "hashes_after": {
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\cameras.bin": "e10041b6bb0fb81d67475f8f0d0567bb942e0944f574b1db930c2a27a2b8c11f",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\frames.bin": "59aa381e12b831227426b9841cb104b6f707cbf2909d4da78cfa3e44870f7a8d",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\images.bin": "2e9b18de8d5756c18a361f035ed0fb82069a790b7322cfbebfe00ca84f6051fc",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\points3D.bin": "596162f2859f3fadea88b27e8ce96756bdd8fbf756035833df187239ae9322ad",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+      ".local-pilot\\scooter-targeted-gap-20261101-v2\\geometry-0.json": "a4cddab78876cef9183ec5beea94e6c7739e02173652ca4f0243f7e19aba9933"
+    }
+  },
+  {
+    "model": "DISK166",
+    "seconds": 0.5815282000694424,
+    "status": "complete",
+    "summary": {
+      "min": 1,
+      "median": 111.0,
+      "p10": 19.0,
+      "count_under_6": 8,
+      "count_under_15": 15
+    },
+    "unchanged": true,
+    "hashes_before": {
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\cameras.bin": "372d308d98663e05fc640f7aad2f61e1aa3d7bbf1ce53e0d1097b9e085f4febc",
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\frames.bin": "ad77513e2e61fbe62deeb22c99b65b203ac442d433cbeb5274cbb8ee98de2545",
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\images.bin": "0e4a41c6146512081794d385cb68a4ea1396b0abb6462872ec9eb7832b0e2488",
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\points3D.bin": "8943f15b0e316a4b00aee5c915614499fe551a4cf73874402ad990d16f24d830",
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+      ".local-pilot\\scooter-disk-cpu-20261101\\geometry-0.json": "ab818d06d3dd8a6717673f77996a99ae6d5e7ffba05cf3193399917824eee427"
+    },
+    "hashes_after": {
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\cameras.bin": "372d308d98663e05fc640f7aad2f61e1aa3d7bbf1ce53e0d1097b9e085f4febc",
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\frames.bin": "ad77513e2e61fbe62deeb22c99b65b203ac442d433cbeb5274cbb8ee98de2545",
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\images.bin": "0e4a41c6146512081794d385cb68a4ea1396b0abb6462872ec9eb7832b0e2488",
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\points3D.bin": "8943f15b0e316a4b00aee5c915614499fe551a4cf73874402ad990d16f24d830",
+      ".local-pilot\\scooter-disk-cpu-20261101\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+      ".local-pilot\\scooter-disk-cpu-20261101\\geometry-0.json": "ab818d06d3dd8a6717673f77996a99ae6d5e7ffba05cf3193399917824eee427"
+    }
+  }
+]

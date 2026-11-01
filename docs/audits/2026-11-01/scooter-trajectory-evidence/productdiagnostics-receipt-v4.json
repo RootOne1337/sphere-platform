@@ -1,0 +1,25 @@
+{
+  "schema": "observation-checkpoint-v1",
+  "files_sha256": {
+    "scripts/pilot/reconstruct_route.py": "ace9d9f50c70569b95e79d860b436d2a66695a8123f34c4b227b20bec4c5ba47",
+    "scripts/pilot/route_learned_recovery.py": "907ca1d31ea14c96fcb1bc5ca45829556c45a9841bd2a2cc78f45edd5da1f50a",
+    "scripts/pilot/route_observation_support.py": "d8477f50d559b40113ecc697281a485c165a0212330ef3a69c1132873585b314",
+    "tests/test_observation_checkpoint.py": "2c33baefb0a5e33cab333a631cf26262d168d4d325fa8b1bd1b93169c0ec44fb",
+    "tests/test_route_observation_support.py": "6a4111b864ccf92f2154c2a301992968f2a6b55d1ca8fb7d90c913db571090c2",
+    "tests/test_route_learned_recovery.py": "c2a5d3d3a43691827cb23d87ba329f62ccd47ec639e135c5d99d335c4fe5d19c",
+    "tests/test_route_only_recovery_pipeline.py": "269f8e910576ffac1b79cdbe6959a016320b71c52d166b881cbbc9971a68b683"
+  },
+  "test_command": "Python313 -m pytest --noconftest tests/test_observation_checkpoint.py tests/test_route_observation_support.py tests/test_reconstruct_route.py tests/test_reconstruction_quality.py tests/test_route_learned_recovery.py tests/test_route_only_recovery_pipeline.py -q",
+  "tests_passed": 54,
+  "tests_skipped": 1,
+  "actual_production_callback_smoke_sha256": "6c13704c0cb57269e08477547bf8835fd785398f7e5c0db17dfefc1e627d0519",
+  "smoke_status": "complete",
+  "smoke_seconds": 3.086374400067143,
+  "smoke_calls": {
+    "full": 1,
+    "native_memory": 1022
+  },
+  "smoke_input_unchanged": true,
+  "scope": "synthetic isolated control, default heavy profile; actual SIFT model read only; no solver or GPU; no deployment",
+  "volume_policy": "full collect first, refresh after at most 3 seconds from refresh start; native memory and disk on every call, plus cancellation; cached volume health only between refreshes"
+}

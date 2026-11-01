@@ -1,0 +1,10 @@
+{
+  "schema": "combined-tests-observed-v1",
+  "provenance": "Parent agent observed tool result; raw log was not saved",
+  "suites": 9,
+  "passed": 120,
+  "skipped": 1,
+  "subtests_passed": 9,
+  "seconds": 6.43,
+  "note": "Observed result as reported by parent; tests are not added to overlapping individual runs."
+}

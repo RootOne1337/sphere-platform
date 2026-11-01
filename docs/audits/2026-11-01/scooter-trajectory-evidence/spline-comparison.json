@@ -1,0 +1,963 @@
+{
+  "baseline_w0": {
+    "hud": {
+      "edges": 125,
+      "ids": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        74,
+        75,
+        76,
+        77,
+        78,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        145,
+        146,
+        147,
+        148,
+        149
+      ],
+      "ratio_p90_p10": 7.559080168949048,
+      "fit_count": 65,
+      "test_count": 60,
+      "fit_median": 0.054602066846237064,
+      "test_median_abs_log": 0.6489279394278384,
+      "test_factor4": 5
+    },
+    "motion_whole166": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 166,
+      "first_seconds": 0.0,
+      "last_seconds": 35.493,
+      "path_units": 47.09076340892351,
+      "endpoint_displacement_units": 4.797689679355289,
+      "median_step_units": 0.21818228947883406,
+      "max_step_units": 3.1405070737692737,
+      "rapid_reversals": [
+        {
+          "view": 17,
+          "image": "00000092.png",
+          "seconds": 3.535
+        },
+        {
+          "view": 26,
+          "image": "00000145.png",
+          "seconds": 5.582
+        },
+        {
+          "view": 34,
+          "image": "00000187.png",
+          "seconds": 7.301
+        },
+        {
+          "view": 46,
+          "image": "00000257.png",
+          "seconds": 9.958
+        },
+        {
+          "view": 47,
+          "image": "00000263.png",
+          "seconds": 10.159
+        },
+        {
+          "view": 48,
+          "image": "00000269.png",
+          "seconds": 10.407
+        },
+        {
+          "view": 49,
+          "image": "00000275.png",
+          "seconds": 10.607
+        },
+        {
+          "view": 51,
+          "image": "00000287.png",
+          "seconds": 11.055
+        },
+        {
+          "view": 52,
+          "image": "00000293.png",
+          "seconds": 11.255
+        },
+        {
+          "view": 56,
+          "image": "00000316.png",
+          "seconds": 12.119
+        },
+        {
+          "view": 60,
+          "image": "00000340.png",
+          "seconds": 12.969
+        },
+        {
+          "view": 66,
+          "image": "00000371.png",
+          "seconds": 14.303
+        },
+        {
+          "view": 67,
+          "image": "00000377.png",
+          "seconds": 14.519
+        },
+        {
+          "view": 102,
+          "image": "00000539.png",
+          "seconds": 21.583
+        },
+        {
+          "view": 103,
+          "image": "00000544.png",
+          "seconds": 21.834
+        },
+        {
+          "view": 108,
+          "image": "00000572.png",
+          "seconds": 22.914
+        },
+        {
+          "view": 111,
+          "image": "00000590.png",
+          "seconds": 23.595
+        },
+        {
+          "view": 112,
+          "image": "00000596.png",
+          "seconds": 23.812
+        },
+        {
+          "view": 116,
+          "image": "00000621.png",
+          "seconds": 24.691
+        },
+        {
+          "view": 117,
+          "image": "00000626.png",
+          "seconds": 24.892
+        },
+        {
+          "view": 128,
+          "image": "00000689.png",
+          "seconds": 27.236
+        },
+        {
+          "view": 129,
+          "image": "00000694.png",
+          "seconds": 27.468
+        },
+        {
+          "view": 134,
+          "image": "00000722.png",
+          "seconds": 28.551
+        },
+        {
+          "view": 136,
+          "image": "00000734.png",
+          "seconds": 28.984
+        }
+      ],
+      "median_rate_units_per_second": 1.062779094834813,
+      "speed_outliers": [
+        {
+          "view": 129,
+          "image": "00000694.png",
+          "seconds": 27.468,
+          "interval_seconds": 0.232,
+          "median_rate_ratio": 12.737048072556675
+        },
+        {
+          "view": 130,
+          "image": "00000700.png",
+          "seconds": 27.668,
+          "interval_seconds": 0.2,
+          "median_rate_ratio": 10.248856151836424
+        }
+      ],
+      "warning": "poses_require_temporal_review",
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "motion_common163": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 163,
+      "first_seconds": 0.0,
+      "last_seconds": 35.493,
+      "path_units": 47.08673652386334,
+      "endpoint_displacement_units": 4.797689679355289,
+      "median_step_units": 0.2297907171065135,
+      "max_step_units": 3.1405070737692737,
+      "rapid_reversals": [
+        {
+          "view": 17,
+          "image": "00000092.png",
+          "seconds": 3.535
+        },
+        {
+          "view": 26,
+          "image": "00000145.png",
+          "seconds": 5.582
+        },
+        {
+          "view": 34,
+          "image": "00000187.png",
+          "seconds": 7.301
+        },
+        {
+          "view": 46,
+          "image": "00000257.png",
+          "seconds": 9.958
+        },
+        {
+          "view": 47,
+          "image": "00000263.png",
+          "seconds": 10.159
+        },
+        {
+          "view": 48,
+          "image": "00000269.png",
+          "seconds": 10.407
+        },
+        {
+          "view": 49,
+          "image": "00000275.png",
+          "seconds": 10.607
+        },
+        {
+          "view": 51,
+          "image": "00000287.png",
+          "seconds": 11.055
+        },
+        {
+          "view": 52,
+          "image": "00000293.png",
+          "seconds": 11.255
+        },
+        {
+          "view": 56,
+          "image": "00000316.png",
+          "seconds": 12.119
+        },
+        {
+          "view": 60,
+          "image": "00000340.png",
+          "seconds": 12.969
+        },
+        {
+          "view": 66,
+          "image": "00000371.png",
+          "seconds": 14.303
+        },
+        {
+          "view": 67,
+          "image": "00000377.png",
+          "seconds": 14.519
+        },
+        {
+          "view": 99,
+          "image": "00000539.png",
+          "seconds": 21.583
+        },
+        {
+          "view": 100,
+          "image": "00000544.png",
+          "seconds": 21.834
+        },
+        {
+          "view": 105,
+          "image": "00000572.png",
+          "seconds": 22.914
+        },
+        {
+          "view": 108,
+          "image": "00000590.png",
+          "seconds": 23.595
+        },
+        {
+          "view": 109,
+          "image": "00000596.png",
+          "seconds": 23.812
+        },
+        {
+          "view": 113,
+          "image": "00000621.png",
+          "seconds": 24.691
+        },
+        {
+          "view": 114,
+          "image": "00000626.png",
+          "seconds": 24.892
+        },
+        {
+          "view": 125,
+          "image": "00000689.png",
+          "seconds": 27.236
+        },
+        {
+          "view": 126,
+          "image": "00000694.png",
+          "seconds": 27.468
+        },
+        {
+          "view": 131,
+          "image": "00000722.png",
+          "seconds": 28.551
+        },
+        {
+          "view": 133,
+          "image": "00000734.png",
+          "seconds": 28.984
+        }
+      ],
+      "median_rate_units_per_second": 1.0442943597520644,
+      "speed_outliers": [
+        {
+          "view": 126,
+          "image": "00000694.png",
+          "seconds": 27.468,
+          "interval_seconds": 0.232,
+          "median_rate_ratio": 12.962502665084918
+        },
+        {
+          "view": 127,
+          "image": "00000700.png",
+          "seconds": 27.668,
+          "interval_seconds": 0.2,
+          "median_rate_ratio": 10.430268020146116
+        }
+      ],
+      "warning": "poses_require_temporal_review",
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    }
+  },
+  "models": {
+    "spline-0.5": {
+      "report": {
+        "spacing_seconds": 0.5,
+        "knots": 74,
+        "points": 2000,
+        "cameras": 166,
+        "initial_center_fit_rms": 0.142882422325171,
+        "baseline_w0_train": {
+          "observations": 13493,
+          "mean_px": 1.3021517776563298,
+          "median_px": 0.9846562401936886,
+          "p95_px": 3.3760817504297123,
+          "behind": 0
+        },
+        "baseline_w0_heldout": {
+          "observations": 4132,
+          "mean_px": 2.100339745017967,
+          "median_px": 1.578664370127159,
+          "p95_px": 5.159242033873777,
+          "behind": 0
+        },
+        "train": {
+          "observations": 13493,
+          "mean_px": 3.856902760683727,
+          "median_px": 1.504948657008983,
+          "p95_px": 13.62033874131372,
+          "behind": 0
+        },
+        "heldout": {
+          "observations": 4132,
+          "mean_px": 9.475921550285562,
+          "median_px": 2.6559212358640494,
+          "p95_px": 39.008996347462286,
+          "behind": 1
+        },
+        "anchor_distance_before": 4.963256237487536,
+        "anchor_distance_after": 4.963256237487536,
+        "first_center_error": 0.0,
+        "rotation_and_intrinsics_fixed": true,
+        "objective": "actual training 2D reprojection only, soft_l1 f_scale=2px; exact first-camera and anchor-radius gauge; no HUD or velocity prior",
+        "gauge_dependency": "eliminated anchor spline control depends on other controls active at anchor",
+        "nfev": 500,
+        "status": 0,
+        "message": "The maximum number of function evaluations is exceeded.",
+        "elapsed_s": 36.625,
+        "function_calls": 12668,
+        "converged": false,
+        "accepted": false,
+        "warning": "Baseline geometry used all observations before this split. Held out here only, not an independent capture; spline parameterization regularizes poses."
+      },
+      "eval": {
+        "hud": {
+          "edges": 125,
+          "ids": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            74,
+            75,
+            76,
+            77,
+            78,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            145,
+            146,
+            147,
+            148,
+            149
+          ],
+          "ratio_p90_p10": 12.69330523543353,
+          "fit_count": 65,
+          "test_count": 60,
+          "fit_median": 0.03801801287379442,
+          "test_median_abs_log": 0.452556253662488,
+          "test_factor4": 0
+        },
+        "motion_whole166": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 166,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 27.46746276486744,
+          "endpoint_displacement_units": 4.815120501289798,
+          "median_step_units": 0.14933152047442888,
+          "max_step_units": 0.8323167278327409,
+          "rapid_reversals": [
+            {
+              "view": 16,
+              "image": "00000086.png",
+              "seconds": 3.318
+            },
+            {
+              "view": 19,
+              "image": "00000102.png",
+              "seconds": 3.952
+            },
+            {
+              "view": 22,
+              "image": "00000121.png",
+              "seconds": 4.65
+            },
+            {
+              "view": 104,
+              "image": "00000550.png",
+              "seconds": 22.083
+            },
+            {
+              "view": 106,
+              "image": "00000561.png",
+              "seconds": 22.498
+            },
+            {
+              "view": 136,
+              "image": "00000734.png",
+              "seconds": 28.984
+            }
+          ],
+          "median_rate_units_per_second": 0.7436338974592777,
+          "speed_outliers": [],
+          "warning": "poses_require_temporal_review",
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+        },
+        "motion_common163": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 163,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 27.464469101241182,
+          "endpoint_displacement_units": 4.815120501289798,
+          "median_step_units": 0.15967031296553255,
+          "max_step_units": 0.8323167278327409,
+          "rapid_reversals": [
+            {
+              "view": 16,
+              "image": "00000086.png",
+              "seconds": 3.318
+            },
+            {
+              "view": 19,
+              "image": "00000102.png",
+              "seconds": 3.952
+            },
+            {
+              "view": 22,
+              "image": "00000121.png",
+              "seconds": 4.65
+            },
+            {
+              "view": 101,
+              "image": "00000550.png",
+              "seconds": 22.083
+            },
+            {
+              "view": 103,
+              "image": "00000561.png",
+              "seconds": 22.498
+            },
+            {
+              "view": 133,
+              "image": "00000734.png",
+              "seconds": 28.984
+            }
+          ],
+          "median_rate_units_per_second": 0.7352009635686909,
+          "speed_outliers": [],
+          "warning": "poses_require_temporal_review",
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+        }
+      }
+    },
+    "spline-1.0": {
+      "report": {
+        "spacing_seconds": 1.0,
+        "knots": 39,
+        "points": 2000,
+        "cameras": 166,
+        "initial_center_fit_rms": 0.21257876017298796,
+        "baseline_w0_train": {
+          "observations": 13493,
+          "mean_px": 1.3021517776563298,
+          "median_px": 0.9846562401936886,
+          "p95_px": 3.3760817504297123,
+          "behind": 0
+        },
+        "baseline_w0_heldout": {
+          "observations": 4132,
+          "mean_px": 2.100339745017967,
+          "median_px": 1.578664370127159,
+          "p95_px": 5.159242033873777,
+          "behind": 0
+        },
+        "train": {
+          "observations": 13493,
+          "mean_px": 4.973964305168595,
+          "median_px": 1.9137700201258534,
+          "p95_px": 17.977633311691967,
+          "behind": 3
+        },
+        "heldout": {
+          "observations": 4132,
+          "mean_px": 10.98187768376426,
+          "median_px": 3.356783063479763,
+          "p95_px": 45.310173922843234,
+          "behind": 2
+        },
+        "anchor_distance_before": 4.963256237487536,
+        "anchor_distance_after": 4.963256237487536,
+        "first_center_error": 0.0,
+        "rotation_and_intrinsics_fixed": true,
+        "objective": "actual training 2D reprojection only, soft_l1 f_scale=2px; exact first-camera and anchor-radius gauge; no HUD or velocity prior",
+        "gauge_dependency": "eliminated anchor spline control depends on other controls active at anchor",
+        "nfev": 500,
+        "status": 0,
+        "message": "The maximum number of function evaluations is exceeded.",
+        "elapsed_s": 33.32799999997951,
+        "function_calls": 10620,
+        "converged": false,
+        "accepted": false,
+        "warning": "Baseline geometry used all observations before this split. Held out here only, not an independent capture; spline parameterization regularizes poses."
+      },
+      "eval": {
+        "hud": {
+          "edges": 125,
+          "ids": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            74,
+            75,
+            76,
+            77,
+            78,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            145,
+            146,
+            147,
+            148,
+            149
+          ],
+          "ratio_p90_p10": 10.12543234267749,
+          "fit_count": 65,
+          "test_count": 60,
+          "fit_median": 0.02864711941705307,
+          "test_median_abs_log": 0.5321150874805558,
+          "test_factor4": 9
+        },
+        "motion_whole166": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 166,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 23.425360582658364,
+          "endpoint_displacement_units": 4.817289453229941,
+          "median_step_units": 0.1394427795123258,
+          "max_step_units": 0.35478700392540247,
+          "rapid_reversals": [],
+          "median_rate_units_per_second": 0.6728816862478267,
+          "speed_outliers": [],
+          "warning": null,
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+        },
+        "motion_common163": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 163,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 23.422746207800625,
+          "endpoint_displacement_units": 4.817289453229941,
+          "median_step_units": 0.1446228643774782,
+          "max_step_units": 0.35478700392540247,
+          "rapid_reversals": [],
+          "median_rate_units_per_second": 0.6638267950578379,
+          "speed_outliers": [],
+          "warning": null,
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+        }
+      }
+    }
+  },
+  "caveat": "Same-video HUD post hoc fit/test; 2D observations held out only from this optimization, baseline used all. Motion heuristics do not establish truth."
+}
