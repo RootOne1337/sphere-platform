@@ -1,8 +1,8 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { webcrypto } from 'node:crypto';
 import { TextDecoder, TextEncoder } from 'node:util';
-import { TeachingReview } from '@/src/features/stream/TeachingReview';
+import { TeachingReview, chooseReviewGeometry } from '@/src/features/stream/TeachingReview';
 import { TeachingReconstruction } from '@/src/features/stream/TeachingReconstruction';
 import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
 jest.mock('@/src/features/stream/TeachingReconstruction',()=>({TeachingReconstruction:jest.fn(()=>null)}));
@@ -146,7 +146,7 @@ test('a saved alternative opens automatically from the linked job without a file
   const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,
     cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
   jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?
-    {alternatives:[{id:'improved-v1',cameras:2,points:1}]}:scene}) as Response);
+    {preferredAlternativeId:'improved-v1',alternatives:[{id:'improved-v1',cameras:2,points:1}]}:scene}) as Response);
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
   jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
@@ -179,11 +179,94 @@ test('the current prepared map takes precedence over a stale experimental geomet
   fireEvent.change(select,{target:{value:'primary'}});
   await screen.findByText('Текущая подготовленная карта связана с исходной записью.');
 });
+test('recommendation is explicit and never overrides operator or an accepted primary',()=>{
+  const items=[{id:'old',cameras:163,points:5544},{id:'new',cameras:163,points:15041}];
+  expect(chooseReviewGeometry(items,'new',false,null)).toBe('new');
+  expect(chooseReviewGeometry(items,undefined,false,null)).toBeNull();
+  expect(chooseReviewGeometry(items,'missing',false,null)).toBeNull();
+  expect(chooseReviewGeometry(items,'new',null,null)).toBeNull();
+  expect(chooseReviewGeometry(items,'new',true,null)).toBe('primary');
+  expect(chooseReviewGeometry(items,'new',true,'old')).toBe('old');
+  expect(chooseReviewGeometry(items,'new',false,'removed')).toBeNull();
+});
+test('refresh reads the updated list but preserves the manual choice',async()=>{
+  const {manifest}=await library(),source=await hash(manifest),job={id:'c'.repeat(32),key:'d'.repeat(64)};
+  const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,
+    cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
+  const preferred='new';
+  let listCalls=0,releaseRefresh:()=>void=()=>{};
+  const refreshGate=new Promise<void>(resolve=>{releaseRefresh=resolve;});
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?
+    (await (++listCalls===2?refreshGate:Promise.resolve()),{preferredAlternativeId:preferred,alternatives:[{id:'old',cameras:163,points:5544},{id:'new',label:'Новая диагностика',cameras:163,points:15041}]}):
+    path===`/jobs/${job.id}`?{navigation:{phase:'review'},geometry_available:false}:scene}) as Response);
+  function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
+  jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
+  render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await screen.findByText('Сохранённая экспериментальная схема связана с исходной записью.');
+  const select=screen.getByLabelText('Сохранённая схема ориентиров');expect(select).toHaveValue('new');
+  await waitFor(()=>expect(screen.getByText(/Источник схемы: Новая диагностика · new · 163 камер · 15041 точек/)).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button',{name:'Обновить результаты'}));
+  await waitFor(()=>expect(listCalls).toBe(2));
+  fireEvent.change(select,{target:{value:'old'}});
+  await waitFor(()=>expect(screen.getByText(/Источник схемы: экспериментальная схема · old · 163 камер · 5544 точек/)).toBeInTheDocument());
+  const before=jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[0].endsWith('/geometry-alternatives/old')).length;
+  releaseRefresh();
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[0].endsWith('/geometry-alternatives/old')).length).toBeGreaterThan(before));
+  expect(select).toHaveValue('old');
+});
+test('a recommended alternative from another source cannot open',async()=>{
+  await library();const job={id:'c'.repeat(32),key:'d'.repeat(64)};
+  const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:'f'.repeat(64),
+    cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?
+    {preferredAlternativeId:'other',alternatives:[{id:'other',cameras:2,points:1}]}:path===`/jobs/${job.id}`?
+    {navigation:{phase:'review'},geometry_available:false}:scene}) as Response);
+  function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
+  jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
+  render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await screen.findByText('Схема не прошла проверку привязки или недоступна.');
+  expect(screen.queryByRole('button',{name:/исходный кадр 2/i})).not.toBeInTheDocument();
+});
+test('deselect clears the diagnostic map and late geometry cannot restore it',async()=>{
+  const {manifest}=await library(),source=await hash(manifest),job={id:'c'.repeat(32),key:'d'.repeat(64)};
+  const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,
+    cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
+  let geometryCalls=0,listCalls=0,release:()=>void=()=>{};const pending=new Promise<void>(resolve=>{release=resolve;});
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>{
+    if(path.endsWith('/geometry-alternatives')){listCalls++;return {preferredAlternativeId:'preferred',alternatives:[{id:'preferred',cameras:2,points:1}]};}
+    if(path===`/jobs/${job.id}`)return {navigation:{phase:'review'},geometry_available:false};
+    if(++geometryCalls===2)await pending;return scene;
+  }}) as Response);
+  function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
+  jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
+  render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await screen.findByText('Сохранённая экспериментальная схема связана с исходной записью.');
+  expect(screen.getByText(/Источник схемы:/)).toBeInTheDocument();
+  expect(screen.getByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Сохранённая схема ориентиров'),{target:{value:''}});
+  expect(screen.queryByLabelText('Проекция опорных точек и положений камеры')).not.toBeInTheDocument();
+  expect(screen.queryByText(/Источник схемы:/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Сохранённая схема ориентиров'),{target:{value:'preferred'}});
+  await waitFor(()=>expect(geometryCalls).toBe(2));
+  fireEvent.change(screen.getByLabelText('Сохранённая схема ориентиров'),{target:{value:''}});
+  expect(screen.queryByLabelText('Проекция опорных точек и положений камеры')).not.toBeInTheDocument();
+  expect(screen.queryByText(/Источник схемы:/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).not.toBeInTheDocument();
+  await act(async()=>{release();await pending;});
+  expect(screen.queryByLabelText('Проекция опорных точек и положений камеры')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Обновить результаты'}));
+  await waitFor(()=>expect(listCalls).toBe(2));
+  await screen.findByText('Выберите схему.');
+  expect(screen.getByLabelText('Сохранённая схема ориентиров')).toHaveValue('');
+  expect(geometryCalls).toBe(2);
+  expect(screen.queryByLabelText('Проекция опорных точек и положений камеры')).not.toBeInTheDocument();
+});
 test('switching the linked reconstruction clears a previously shown alternate',async()=>{
   const {manifest}=await library(),source=await hash(manifest),first={id:'c'.repeat(32),key:'d'.repeat(64)},second={id:'e'.repeat(32),key:'f'.repeat(64)};
   const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,
     cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
-  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.startsWith(`/jobs/${second.id}`)?{alternatives:[]}:path.endsWith('/geometry-alternatives')?{alternatives:[{id:'improved-v1',cameras:2,points:1}]}:scene}) as Response);
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.startsWith(`/jobs/${second.id}`)?{alternatives:[]}:path.endsWith('/geometry-alternatives')?{preferredAlternativeId:'improved-v1',alternatives:[{id:'improved-v1',cameras:2,points:1}]}:scene}) as Response);
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){
     React.useEffect(()=>{props.onRouteChange?.(first);},[props.onRouteChange]);
     return <button onClick={()=>props.onRouteChange?.(second)}>Другая реконструкция</button>;

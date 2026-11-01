@@ -26,7 +26,7 @@ from scripts.pilot.route_cpu_runtime import initialize_route_cpu_runtime
 LIVE_CPU_RUNTIME = initialize_route_cpu_runtime()
 
 from scripts.pilot.atomic_json import write_json
-from scripts.pilot.alternative_geometry import alternative, list_alternatives
+from scripts.pilot.alternative_geometry import alternative, alternative_catalog
 from scripts.pilot.reconstruct_surface import (
     SURFACE_TERMINAL,
     source_model,
@@ -603,7 +603,8 @@ def handler(jobs, origin, port):
                 if method == 'GET' and parts == ['health']:
                     self.reply(200, dict(service='sphere-reconstruction-v1', one_active_job=True,
                                          route_camera_pipeline=ROUTE_CAMERA_PIPELINE,
-                                         creation_recovery_contract='confirmed_absence_v1'))
+                                         creation_recovery_contract='confirmed_absence_v1',
+                                         alternative_catalog_contract='source_bound_review_v1'))
                     return
                 with jobs.lock:
                     if method == 'POST' and parts == ['jobs']:
@@ -631,7 +632,7 @@ def handler(jobs, origin, port):
                         from scripts.pilot.route_walk_reports import store_walk_report
                         self.reply(200, store_walk_report(job, json.loads(self.body(512*1024))))
                     elif method == 'GET' and parts[2:] == ['geometry-alternatives']:
-                        self.reply(200, {'alternatives': list_alternatives(job)})
+                        self.reply(200, alternative_catalog(job))
                     elif method == 'GET' and len(parts) == 4 and parts[2] == 'geometry-alternatives':
                         body, _ = alternative(job, parts[3])
                         self.reply(200, body)

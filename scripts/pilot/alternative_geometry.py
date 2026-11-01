@@ -39,8 +39,13 @@ def alternative(job: Path, identity: str):
             or not isinstance(parsed.get('cameras'), list) or not 2 <= len(parsed['cameras']) <= 240
             or not isinstance(parsed.get('points'), list) or len(parsed['points']) > 60000):
         raise ValueError('alternative_geometry_invalid')
-    return body, {'id': identity, 'cameras': len(parsed['cameras']), 'points': len(parsed['points']),
-                  'scope': 'diagnostic', 'executionQualified': False}
+    info = {'id': identity, 'cameras': len(parsed['cameras']), 'points': len(parsed['points']),
+            'scope': 'diagnostic', 'executionQualified': False}
+    label = receipt.get('label')
+    if (isinstance(label, str) and 0 < len(label) <= 120
+            and all(ord(char) >= 32 and ord(char) != 127 for char in label)):
+        info['label'] = label
+    return body, info
 
 
 def list_alternatives(job: Path):
@@ -63,3 +68,35 @@ def list_alternatives(job: Path):
             # Damaged alternatives are never silently used as valid geometry.
             continue
     return result
+
+
+def alternative_catalog(job: Path):
+    """An explicit source-bound review choice is never navigation admission.
+
+    Missing, stale or damaged recommendations cannot silently select the first
+    result, the largest point cloud or a result from a different source.
+    """
+    items = list_alternatives(job)
+    catalog = {'alternatives': items, 'preferredAlternativeId': None}
+    selection = job / 'alternative-selection.json'
+    try:
+        if (selection.is_symlink() or not selection.is_file()
+                or not selection.resolve(strict=True).is_relative_to(job.resolve(strict=True))
+                or selection.stat().st_size > 4096):
+            return catalog
+        record = json.loads(selection.read_text('utf-8'))
+        if (not isinstance(record, dict) or record.get('schema') != 'sphere-alternative-selection-v1'
+                or record.get('scope') != 'DIAGNOSTIC_ONLY'
+                or record.get('execution_qualified') is not False
+                or not isinstance(record.get('id'), str)
+                or record['id'] not in {item['id'] for item in items}):
+            return catalog
+        body, _ = alternative(job, record['id'])
+        parsed = json.loads(body)
+        if (record.get('source_manifest_sha256') == parsed['source_manifest_sha256']
+                and record.get('geometry_sha256') == hashlib.sha256(body).hexdigest()):
+            catalog['preferredAlternativeId'] = record['id']
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        # This optional review hint cannot make an otherwise valid list fail.
+        pass
+    return catalog

@@ -7,7 +7,7 @@ import unittest
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
-from scripts.pilot.alternative_geometry import alternative, list_alternatives
+from scripts.pilot.alternative_geometry import alternative, list_alternatives, alternative_catalog
 from scripts.pilot.reconstruction_service import Jobs, handler
 
 
@@ -55,6 +55,54 @@ class AlternativeGeometryTests(unittest.TestCase):
         (self.folder / 'receipt.json').write_text(json.dumps(self.receipt), encoding='utf-8')
         self.assertEqual(list_alternatives(self.job), [])
 
+    def write_preference(self, **changes):
+        record = {'schema': 'sphere-alternative-selection-v1', 'id': 'improved-v1',
+                  'scope': 'DIAGNOSTIC_ONLY', 'execution_qualified': False,
+                  'source_manifest_sha256': self.digest,
+                  'geometry_sha256': hashlib.sha256(self.body).hexdigest()}
+        record.update(changes)
+        (self.job / 'alternative-selection.json').write_text(json.dumps(record), encoding='utf-8')
+
+    def test_explicit_bound_review_preference_and_human_label(self):
+        self.receipt['label'] = 'Поворот: дополнительные исходные кадры'
+        (self.folder / 'receipt.json').write_text(json.dumps(self.receipt), encoding='utf-8')
+        self.write_preference()
+        result = alternative_catalog(self.job)
+        self.assertEqual(result['preferredAlternativeId'], 'improved-v1')
+        self.assertEqual(result['alternatives'][0]['label'], self.receipt['label'])
+        self.assertFalse(result['alternatives'][0]['executionQualified'])
+
+    def test_no_preference_does_not_choose_the_only_or_largest_result(self):
+        result = alternative_catalog(self.job)
+        self.assertEqual(len(result['alternatives']), 1)
+        self.assertIsNone(result['preferredAlternativeId'])
+
+    def test_stale_cross_source_or_qualified_preference_never_selects(self):
+        for changes in ({'id': 'missing'}, {'source_manifest_sha256': '0' * 64},
+                        {'geometry_sha256': '0' * 64}, {'execution_qualified': True},
+                        {'scope': 'NAVIGATION'}, {'schema': 'other'}):
+            with self.subTest(changes=changes):
+                self.write_preference(**changes)
+                result = alternative_catalog(self.job)
+                self.assertIsNone(result['preferredAlternativeId'])
+                self.assertEqual(len(result['alternatives']), 1)
+
+    def test_damaged_preference_or_geometry_does_not_make_a_recommendation(self):
+        preference = self.job / 'alternative-selection.json'
+        for body in ('broken', '[]', 'x' * 4097):
+            preference.write_text(body, encoding='utf-8')
+            self.assertIsNone(alternative_catalog(self.job)['preferredAlternativeId'])
+        self.write_preference()
+        (self.folder / 'geometry.json').write_bytes(self.body + b' ')
+        self.assertEqual(alternative_catalog(self.job), {'alternatives': [], 'preferredAlternativeId': None})
+
+    def test_unusable_label_does_not_change_bound_geometry(self):
+        for label in ('bad\nlabel', 'x' * 121, 1):
+            with self.subTest(label=label):
+                self.receipt['label'] = label
+                (self.folder / 'receipt.json').write_text(json.dumps(self.receipt), encoding='utf-8')
+                self.assertNotIn('label', alternative(self.job, 'improved-v1')[1])
+
     def test_http_access_requires_the_existing_job_capability(self):
         identity, key = 'a' * 32, 'b' * 64
         root = self.job / 'jobs'
@@ -67,6 +115,11 @@ class AlternativeGeometryTests(unittest.TestCase):
         (job / 'control.json').write_text(json.dumps({'key_sha256': hashlib.sha256(key.encode()).hexdigest()}), encoding='utf-8')
         import shutil
         shutil.copytree(self.job / 'alternatives', job / 'alternatives')
+        preference = {'schema': 'sphere-alternative-selection-v1', 'id': 'improved-v1',
+                      'scope': 'DIAGNOSTIC_ONLY', 'execution_qualified': False,
+                      'source_manifest_sha256': self.digest,
+                      'geometry_sha256': hashlib.sha256(self.body).hexdigest()}
+        (job / 'alternative-selection.json').write_text(json.dumps(preference), encoding='utf-8')
         server = ThreadingHTTPServer(('127.0.0.1', 0), handler(jobs, 'http://127.0.0.1:3015', 0))
         port = server.server_address[1]
         server.RequestHandlerClass = handler(jobs, 'http://127.0.0.1:3015', port)
@@ -85,6 +138,7 @@ class AlternativeGeometryTests(unittest.TestCase):
         status, raw = get(path, key)
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(raw)['alternatives'][0]['id'], 'improved-v1')
+        self.assertEqual(json.loads(raw)['preferredAlternativeId'], 'improved-v1')
         self.assertEqual(get(path + '/improved-v1', key), (200, self.body))
 
 
