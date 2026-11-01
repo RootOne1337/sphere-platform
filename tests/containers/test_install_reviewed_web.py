@@ -26,6 +26,64 @@ def config():
 
 
 class InstallTests(unittest.TestCase):
+    def test_frozen_install_without_environment_metadata_does_not_guess_env_file(self):
+        self.assertEqual(installer.compose_prefix({}), ["docker", "compose", "--project-name", installer.PROJECT])
+
+    def test_explicit_environment_metadata_remains_private_and_mandatory(self):
+        key = "com.docker.compose.project.environment_file"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            private = root / ".local-pilot"
+            private.mkdir()
+            env = private / "explicit.env"
+            env.write_text("FAKE_SECRET=preserved\n")
+            outside = root / "outside.env"
+            outside.write_text("")
+            with patch.object(installer, "ROOT", root), patch.object(installer, "PRIVATE", private):
+                self.assertEqual(installer.compose_prefix({key: str(env)}),
+                                 ["docker", "compose", "--project-name", installer.PROJECT, "--env-file", str(env)])
+                for invalid in (str(outside), str(private / "missing.env"), "", None):
+                    with self.subTest(invalid=invalid), self.assertRaises((ValueError, OSError)):
+                        installer.compose_prefix({key: invalid})
+
+    def test_resolved_baseline_without_env_label_reaches_plan_without_mutation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            private = root / ".local-pilot"
+            private.mkdir()
+            artifact = private / "artifact"
+            artifact.mkdir()
+            compose = private / "baseline.json"
+            compose.write_text("{}")
+            old = config()
+            old["services"]["review-ui"]["environment"]["FAKE_SECRET"] = "literal-$value-${name}"
+            new = copy.deepcopy(old)
+            new["services"]["review-ui"]["image"] = TAG
+            before = {installer.UI: {"id": "old-ui", "imageId": "old-image", "imageTag": "previous:image"}}
+            current = {"Id": "old-ui", "Config": {"Env": [f"{key}={value}" for key, value in
+                old["services"]["review-ui"]["environment"].items()], "Labels": {
+                "com.docker.compose.project": installer.PROJECT, "com.docker.compose.service": "review-ui",
+                "com.docker.compose.project.config_files": str(compose)}}}
+            calls = []
+
+            def command(args, **kwargs):
+                calls.append(args)
+                self.assertNotIn("--env-file", args)
+                self.assertEqual(args[-3:], ["config", "--format", "json"])
+                return json.dumps(new if args.count("--file") == 2 else old)
+
+            with patch.object(installer, "ROOT", root), patch.object(installer, "PRIVATE", private), \
+                    patch.object(installer, "admit_candidate", return_value={"imageTag": TAG, "imageId": IMAGE_ID,
+                        "runId": 123, "archiveBytes": 0}), patch.object(installer, "collect", return_value={}), \
+                    patch.object(installer, "evaluate", return_value=[]), patch.object(installer, "snapshot", return_value=before), \
+                    patch.object(installer, "inspect", return_value=current), patch.object(installer, "command", side_effect=command), \
+                    patch.object(installer, "catalog_hash", return_value="catalog-digest"):
+                result = installer.execute(artifact, SOURCE, IMAGE_ID, apply=False, local_execution=True)
+            self.assertFalse(result["runtimeInstalled"])
+            self.assertEqual(len(calls), 3)  # Read baseline, roundtrip, candidate; never load/up/stop.
+            frozen = json.loads((Path(result["reportDirectory"]) / "baseline.json").read_text())
+            self.assertEqual(frozen["services"]["review-ui"]["environment"]["FAKE_SECRET"], "literal-$$value-$${name}")
+
     def test_frozen_compose_preserves_literal_dollars_and_uses_one_baseline(self):
         old = config()
         old["services"]["review-ui"]["environment"]["FAKE_SECRET"] = "literal-$value-${name}"

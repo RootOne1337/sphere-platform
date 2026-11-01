@@ -50,6 +50,22 @@ def inspect(name: str) -> dict[str, Any]:
     return data[0]
 
 
+def compose_prefix(labels: dict[str, Any]) -> list[str]:
+    """Reuse explicit environment metadata; frozen installs may have none.
+
+    A resolved baseline already contains its environment values. Do not invent
+    an env-file path when its previous Compose invocation did not supply one.
+    The complete baseline roundtrip and runtime environment checks still apply.
+    """
+    prefix = ["docker", "compose", "--project-name", PROJECT]
+    key = "com.docker.compose.project.environment_file"
+    if key in labels:
+        value = labels[key]
+        require(isinstance(value, str) and bool(value), "Invalid Compose environment file metadata")
+        prefix += ["--env-file", str(private_path(Path(value)))]
+    return prefix
+
+
 def snapshot() -> dict[str, dict[str, Any]]:
     names = command(["docker", "ps", "--all", "--format", "{{.Names}}"])
     names = [name for name in names.splitlines() if name]
@@ -196,8 +212,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
     require(1 <= len(config_files) <= 64 and all(config_files)
             and len(set(config_files)) == len(config_files), "Unexpected Compose inventory")
     files = [private_path(Path(name)) for name in config_files]
-    env_file = private_path(Path(labels["com.docker.compose.project.environment_file"]))
-    cmd = ["docker", "compose", "--project-name", PROJECT, "--env-file", str(env_file)]
+    cmd = compose_prefix(labels)
     prefix = list(cmd)
     for file in files:
         cmd += ["--file", str(file)]
