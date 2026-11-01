@@ -64,8 +64,13 @@ def select_spatially_diverse(landmarks, matrices, K, limit, width=960, height=54
                         unprojectable_count=len(unprojectable))
 
 
-def triangulate(observations, pixels, matrices, K):
+def triangulate(observations, pixels, matrices, K, *, rejected=None):
     import numpy as np
+
+    def refuse(reason):
+        if rejected is not None:
+            rejected[reason] += 1
+        return None
 
     rows, centers = [], []
     inverse = np.linalg.inv(K)
@@ -76,19 +81,21 @@ def triangulate(observations, pixels, matrices, K):
         centers.append(-ext[:, :3].T @ ext[:, 3])
     _, _, vh = np.linalg.svd(rows, full_matrices=False)
     if abs(vh[-1, 3]) < 1e-8:
-        return None
+        return refuse('homogeneous_point_at_infinity')
     xyz = vh[-1, :3]/vh[-1, 3]
     if not np.isfinite(xyz).all():
-        return None
+        return refuse('nonfinite_triangulated_point')
     for image, index in observations:
         camera = matrices[image][:, :3]@xyz+matrices[image][:, 3]
         projected = K@camera
-        if camera[2] <= 1e-5 or np.linalg.norm(projected[:2]/projected[2]-pixels[image][index]) > 3:
-            return None
+        if camera[2] <= 1e-5:
+            return refuse('nonpositive_depth')
+        if np.linalg.norm(projected[:2]/projected[2]-pixels[image][index]) > 3:
+            return refuse('reprojection_over_3px')
     rays = xyz-np.asarray(centers)
     rays /= np.maximum(np.linalg.norm(rays, axis=1, keepdims=True), 1e-8)
     if np.min(rays@rays.T) > np.cos(np.deg2rad(1.)):
-        return None
+        return refuse('parallax_under_1_degree')
     return xyz
 
 
@@ -132,11 +139,17 @@ def build(observations, matrices, K, *, checkpoint):
         tracks[find(key)].append(key)
     pixels = [v[0] for v in observations]
     valid, rejected = [], 0
+    rejection_reasons = defaultdict(int)
     for track in tracks.values():
-        if len(track) < 3 or len({image for image, _ in track}) != len(track):
+        if len(track) < 3:
+            rejection_reasons['fewer_than_3_observations'] += 1
             rejected += 1
             continue
-        xyz = triangulate(track, pixels, matrices, K)
+        if len({image for image, _ in track}) != len(track):
+            rejection_reasons['repeated_image_in_track'] += 1
+            rejected += 1
+            continue
+        xyz = triangulate(track, pixels, matrices, K, rejected=rejection_reasons)
         if xyz is None:
             rejected += 1
             continue
@@ -145,4 +158,5 @@ def build(observations, matrices, K, *, checkpoint):
         valid.append((len(track), tuple(float(v) for v in xyz), samples[medoid], tuple(sorted(image for image, _ in track))))
     valid.sort(key=lambda row: -row[0])
     return valid, dict(tracks=len(tracks), accepted=len(valid), rejected=rejected,
+                      rejection_reasons=dict(sorted(rejection_reasons.items())),
                       min_views=3, max_error_px=3, min_parallax_degrees=1, runtime_features_rebuilt=True)
