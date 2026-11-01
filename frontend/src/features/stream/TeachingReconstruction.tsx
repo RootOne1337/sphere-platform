@@ -27,6 +27,7 @@ reasons.brush_system_timing_build_required='Совместимый локаль�
 phases.complete='Реконструкция рассчитана · базовая проверка ракурсов пройдена';
 phases.sparse_complete='Камеры и опорные точки рассчитаны';
 phases.motion_sampling='Выбор опорных кадров по движению изображения';
+phases.image_route_indexing='Подготовка индекса изображений маршрута';
 phases.temporal_tracking='Автоматическая проверка точек по промежуточным кадрам видео';
 phases.temporal_verification='Проверка связей после удаления ложных совпадений';
 phases.temporal_cameras='Автоматическое восстановление траектории по непрерывным трекам';

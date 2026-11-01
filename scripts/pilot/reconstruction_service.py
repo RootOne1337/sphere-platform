@@ -87,6 +87,10 @@ class Jobs:
         # OpenCV/extractor runtime. The heavy reconstruction interpreter can
         # have a different GPU stack and is deliberately kept separate.
         self.navigation = RouteWorkspaces(folder, Path(sys.executable))
+        from scripts.pilot.image_route_workspace import settle_interrupted
+        for job in folder.iterdir():
+            if job.is_dir() and not job.is_symlink():
+                settle_interrupted(job)
         # An interrupted job cannot be silently resumed or retrained on restart.
         for path in folder.glob('*/state.json'):
             if json.loads(path.read_text('utf-8'))['phase'] not in TERMINAL:
@@ -112,6 +116,10 @@ class Jobs:
 
     def status(self, job):
         result = json.loads((job / 'state.json').read_text('utf-8'))
+        from scripts.pilot.image_route_workspace import read_status as image_review_status
+        image_review = image_review_status(job)
+        if image_review is not None:
+            result['image_route_review'] = image_review
         from scripts.pilot.route_hud_workspace import read_status as hud_status
         telemetry=hud_status(job)
         if telemetry is not None:
@@ -601,10 +609,16 @@ def handler(jobs, origin, port):
                 self.allowed()
                 parts = self.path.strip('/').split('/')
                 if method == 'GET' and parts == ['health']:
-                    self.reply(200, dict(service='sphere-reconstruction-v1', one_active_job=True,
-                                         route_camera_pipeline=ROUTE_CAMERA_PIPELINE,
-                                         creation_recovery_contract='confirmed_absence_v1',
-                                         alternative_catalog_contract='source_bound_review_v1'))
+                    with jobs.lock:
+                        live = jobs.navigation.live
+                        live_active = bool(live and jobs.navigation.clock() < live['deadline'])
+                        self.reply(200, dict(service='sphere-reconstruction-v1', one_active_job=True,
+                                             route_camera_pipeline=ROUTE_CAMERA_PIPELINE,
+                                             creation_recovery_contract='confirmed_absence_v1',
+                                             image_route_review_contract='source_bound_offline_v1',
+                                             image_route_preparation_contract='bounded_cpu_before_sfm_v1',
+                                             alternative_catalog_contract='source_bound_review_v1',
+                                             live_session_active=live_active))
                     return
                 with jobs.lock:
                     if method == 'POST' and parts == ['jobs']:
@@ -636,6 +650,12 @@ def handler(jobs, origin, port):
                     elif method == 'GET' and len(parts) == 4 and parts[2] == 'geometry-alternatives':
                         body, _ = alternative(job, parts[3])
                         self.reply(200, body)
+                    elif method == 'GET' and parts[2:] == ['image-route-review']:
+                        from scripts.pilot.image_route_review import read_image_route_review
+                        if not os.path.lexists(job / 'image-route-review'):
+                            self.reply(404, {'error': 'image_route_review_not_found'})
+                        else:
+                            self.reply(200, read_image_route_review(job))
                     elif method == 'POST' and parts[2:] == ['navigation', 'prepare']:
                         body = json.loads(self.body(1024))
                         current = jobs.navigation.current(job)

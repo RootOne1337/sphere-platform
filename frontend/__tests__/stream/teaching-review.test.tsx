@@ -4,8 +4,10 @@ import { webcrypto } from 'node:crypto';
 import { TextDecoder, TextEncoder } from 'node:util';
 import { TeachingReview, chooseReviewGeometry } from '@/src/features/stream/TeachingReview';
 import { TeachingReconstruction } from '@/src/features/stream/TeachingReconstruction';
+import ImageRouteReview from '@/src/features/stream/ImageRouteReview';
 import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
 jest.mock('@/src/features/stream/TeachingReconstruction',()=>({TeachingReconstruction:jest.fn(()=>null)}));
+jest.mock('@/src/features/stream/ImageRouteReview',()=>({__esModule:true,default:jest.fn(()=>null)}));
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
 
 const id='a'.repeat(32),scope='b'.repeat(32);
@@ -89,7 +91,7 @@ test('the shared source is verified and cannot be relabeled as a newly selected 
   await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(null));
   expect(changed.mock.calls.some(([value])=>value?.clip===other)).toBe(false);
 });
-afterEach(()=>{jest.mocked(TeachingReconstruction).mockReset().mockImplementation(()=> <></>);jest.mocked(reconstructionRequest).mockReset();jest.restoreAllMocks();});
+afterEach(()=>{jest.mocked(TeachingReconstruction).mockReset().mockImplementation(()=> <></>);jest.mocked(ImageRouteReview).mockClear();jest.mocked(reconstructionRequest).mockReset();jest.restoreAllMocks();});
 
 test.each([true,false,undefined])('selected verified recording restores only its declared automatic intent: %s',async declared=>{
   await library(declared);
@@ -155,6 +157,12 @@ test('a saved alternative opens automatically from the linked job without a file
   expect(screen.getByText(/Сохранённая экспериментальная схема связана/)).toBeInTheDocument();
   const props=jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0];
   expect(props.alternativeCameraCount).toBe(2);
+  const imageProps=jest.mocked(ImageRouteReview).mock.calls.at(-1)![0];
+  expect(imageProps.job).toEqual(job);
+  expect(imageProps.manifestSha).toBe(source);
+  expect([...imageProps.frames]).toEqual([[0,0],[1,90000]]);
+  act(()=>imageProps.onSeek(0));
+  expect(screen.getByLabelText('Время записанного прохода')).toHaveValue('0');
   expect(jest.mocked(reconstructionRequest).mock.calls.map(call=>call[0])).toEqual([
     `/jobs/${job.id}/geometry-alternatives`,`/jobs/${job.id}`,`/jobs/${job.id}/geometry-alternatives/improved-v1`]);
 });

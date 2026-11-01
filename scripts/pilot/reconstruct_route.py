@@ -196,6 +196,12 @@ def reconstruct(job, mask, steps, *, route_only=False):
     from scripts.pilot.route_hud_workspace import start as start_hud
     checkpoint(job)
     capture=validate_browser(job/'input')
+    # The image index is useful even if the independent global SfM later fails.
+    # Run it serially in the small CPU runtime, without granting route input.
+    from scripts.pilot.image_route_workspace import run_optional as prepare_image_review
+    state(job, 'image_route_indexing')
+    prepare_image_review(job, mask, check=make_observation_checkpoint(job))
+    checkpoint(job)  # A service-restart cancellation must not continue to SfM.
     began=time.monotonic()
     try:
         hud_process=start_hud(job,capture)
