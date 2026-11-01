@@ -73,12 +73,90 @@ def test_full_count_collapsed_route_runs_recovery_even_when_learned_dense_is_dis
     assert (job/'geometry-candidates.json').is_file()
 
 
+def test_compatible_components_are_reassessed_and_sealed_before_loading_learned_fallback(tmp_path,monkeypatch):
+    from scripts.pilot import route_component_merge, route_learned_recovery
+    job,calls=setup_pipeline(tmp_path,monkeypatch)
+    baseline=sys.modules['pycolmap'].incremental_mapping()[0]
+    monkeypatch.setattr(sys.modules['pycolmap'],'incremental_mapping',lambda *a,**k:{0:baseline,1:baseline})
+    merged=SimpleNamespace(num_reg_images=lambda:12,num_points3D=lambda:650,
+        compute_mean_reprojection_error=lambda:.9,
+        write=lambda _:calls.append('write_model'),export_PLY=lambda _:calls.append('write_points'))
+    original=pipeline.model_assessment
+    assessed=[]
+    def assessment(model,*a,**k):
+        assessed.append(model)
+        if model is merged:
+            geometry,report=original(baseline,*a,**k)
+            return geometry,{**report,'route_admissible':True,'scene_admissible':True,'conditioning':dict(passed=True)}
+        return original(model,*a,**k)
+    monkeypatch.setattr(pipeline,'model_assessment',assessment)
+    def merge(*a,**k):
+        calls.append('component_merge')
+        return merged,dict(schema='sphere-route-component-merge-v1',accepted=True,attempts=[{}],source_modified=False)
+    monkeypatch.setattr(route_component_merge,'merge_components',merge)
+    monkeypatch.setattr(route_learned_recovery,'recover_with_learned',lambda *a,**k:pytest.fail('accepted observed union must not start learned fallback'))
+    pipeline.reconstruct(job,'game',30000,route_only=True)
+    assert calls==['component_merge','write_model','write_points','sealed']
+    assert merged in assessed
+    quality=json.loads((job/'quality.json').read_text())
+    assert quality['component_merge']['accepted'] and quality['components']==1 and quality['source_components']==2
+
+
 def test_unsuccessful_recovery_cannot_seal_collapsed_baseline(tmp_path,monkeypatch):
     job,calls=setup_pipeline(tmp_path,monkeypatch,accepted=False)
     with pytest.raises(RuntimeError,match='camera_geometry_degenerate'):
         pipeline.reconstruct(job,'game',30000,route_only=True)
     assert calls==['recovery']
     assert not (job/'sparse-receipt.json').exists()
+
+
+def test_endpoint_resection_reassesses_partial_route_after_database_stages(tmp_path,monkeypatch):
+    from scripts.pilot import route_endpoint_resection, route_learned_recovery
+    job,calls=setup_pipeline(tmp_path,monkeypatch)
+    baseline=sys.modules['pycolmap'].incremental_mapping()[0]
+    baseline.num_reg_images=lambda:10
+    completed=SimpleNamespace(num_reg_images=lambda:12,num_points3D=lambda:650,
+        compute_mean_reprojection_error=lambda:.9,
+        write=lambda _:calls.append('write_model'),export_PLY=lambda _:calls.append('write_points'))
+    original=pipeline.model_assessment
+    assessed=[]
+    def assessment(model,*a,**k):
+        assessed.append(model)
+        geometry,report=original(baseline,*a,**k)
+        return geometry,{**report,'route_admissible':True,'scene_admissible':True,
+            'conditioning':dict(passed=True),'registered':model.num_reg_images()}
+    monkeypatch.setattr(pipeline,'model_assessment',assessment)
+    monkeypatch.setattr(route_learned_recovery,'recover_with_learned',lambda *a,**k:pytest.fail('admissible partial route needs no learned fallback'))
+    def endpoints(*a,**k):
+        assert a[2] is baseline and a[3]==12
+        calls.append('endpoint_resection')
+        return completed,dict(schema='sphere-endpoint-resection-v1',accepted=True,
+            namespace='ENDPOINT_LK',further_original_db_matching=False,
+            poses_interpolated=False,execution_qualified=False,frames=[dict(accepted=True)]*2)
+    monkeypatch.setattr(route_endpoint_resection,'repair_endpoints',endpoints)
+    pipeline.reconstruct(job,'game',30000,route_only=True)
+    assert calls==['endpoint_resection','write_model','write_points','sealed']
+    assert assessed[-1] is completed
+    quality=json.loads((job/'quality.json').read_text())
+    assert quality['registered']==12 and quality['endpoint_resection']['added_views']==2
+    assert quality['endpoint_resection']['further_original_db_matching'] is False
+
+
+def test_endpoint_resource_failure_never_seals_a_route(tmp_path,monkeypatch):
+    from scripts.pilot import route_endpoint_resection
+    job,calls=setup_pipeline(tmp_path,monkeypatch)
+    baseline=sys.modules['pycolmap'].incremental_mapping()[0]
+    baseline.num_reg_images=lambda:10
+    original=pipeline.model_assessment
+    def assessment(*a,**k):
+        geometry,report=original(*a,**k)
+        return geometry,{**report,'route_admissible':True,'scene_admissible':True}
+    monkeypatch.setattr(pipeline,'model_assessment',assessment)
+    def refused(*a,**k):raise RuntimeError('resource_guard')
+    monkeypatch.setattr(route_endpoint_resection,'repair_endpoints',refused)
+    with pytest.raises(RuntimeError,match='resource_guard'):
+        pipeline.reconstruct(job,'game',30000,route_only=True)
+    assert not calls and not (job/'sparse-receipt.json').exists()
 
 
 def test_refused_optional_model_load_keeps_first_pass_evidence(tmp_path,monkeypatch):

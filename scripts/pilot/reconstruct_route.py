@@ -374,6 +374,7 @@ def _reconstruct(job, mask, steps, *, route_only=False):
     rec=winner[0] if winner else None
     cached_assessment=(winner[1],winner[2]) if winner else None
     recovery=None
+    component_merge=None
     if rec is not None:
         first_geometry,first_assessment=cached_assessment
         # Preserve inspectable evidence even if a later optional model load is
@@ -384,6 +385,17 @@ def _reconstruct(job, mask, steps, *, route_only=False):
             mean_reprojection_px=rec.compute_mean_reprojection_error(),components=len(models),
             conditioning=first_assessment['conditioning'],intrinsics_condition=first_assessment['intrinsics_condition'],
             selection=first_assessment,first_pass_only=True))
+    if route_only and len(models)>1 and (rec is None or not cached_assessment[1]['route_admissible']):
+        # Native mapping may return overlapping reconstructions of one route.
+        # Check their actual camera/observation identities before loading an
+        # additional learned matcher or dropping an already recovered prefix.
+        from scripts.pilot.route_component_merge import merge_components
+        rec,component_merge=merge_components(job,prepared,models,rec,len(images),source_start,source_end,
+            lambda:checkpoint(job),
+            lambda _phase,done,total:state(job,'cameras',method='compatible_component_merge',selected_views=len(images),completed_items=done,total_items=total),
+            assessment_check=observation_check)
+        if component_merge.get('accepted'):
+            cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
     if route_only and (rec is None or not cached_assessment[1]['route_admissible']):
         from scripts.pilot.route_learned_recovery import recover_with_learned
         rec,recovery=recover_with_learned(job,prepared,rec,len(images),source_start,source_end,reader,
@@ -419,13 +431,35 @@ def _reconstruct(job, mask, steps, *, route_only=False):
             temporal_repair=dict(accepted=False,reason='temporal_repair_inconclusive',errorType=type(failure).__name__)
         cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
         geometry=cached_assessment[0]
+    endpoint_resection=None
+    if route_only and rec.num_reg_images()<len(images):
+        # All matching against the original database must finish first. New
+        # endpoint observations have a separate, recorded ENDPOINT_LK namespace.
+        from scripts.pilot.route_endpoint_resection import repair_endpoints
+        rec,endpoint_resection=repair_endpoints(job,prepared,rec,len(images),source_start,source_end,
+            lambda:checkpoint(job),
+            lambda _phase,done,total:state(job,'cameras',method='endpoint_resection',selected_views=len(images),completed_items=done,total_items=total),
+            assessment_check=observation_check)
+        if endpoint_resection.get('accepted'):
+            cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
+            geometry=cached_assessment[0]
     write_json(job / 'geometry.json', geometry)
     coverage = rec.num_reg_images() / len(images)
     error = rec.compute_mean_reprojection_error()
     quality = dict(registered=rec.num_reg_images(), selected=len(images), coverage=coverage,
                    points=rec.num_points3D(), mean_reprojection_px=error, components=len(models))
+    if component_merge is not None:
+        quality['component_merge']={key:component_merge.get(key) for key in ('schema','accepted','reason','chosen','seconds','source_modified')}
+        quality['component_merge']['attempts']=len(component_merge.get('attempts',[]))
+        if component_merge.get('accepted'):
+            quality['source_components']=len(models)
+            quality['components']=1
     if temporal_repair is not None:
         quality['temporal_repair']=temporal_repair
+    if endpoint_resection is not None:
+        quality['endpoint_resection']={key:endpoint_resection.get(key) for key in
+            ('schema','accepted','reason','namespace','further_original_db_matching','poses_interpolated','execution_qualified')}
+        quality['endpoint_resection']['added_views']=sum(bool(frame.get('accepted')) for frame in endpoint_resection.get('frames',[])) if endpoint_resection.get('accepted') else 0
     if recovery is not None:
         # Full rejected-candidate audits remain in learned-recovery/result.json;
         # the sealed quality receipt has a fixed 64 KiB budget.

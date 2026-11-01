@@ -22,6 +22,12 @@ from motor_worker.policy import epoch_valid, finite
 from motor_worker.protocol import ProtocolError, integer, message
 from motor_worker.teach_capture import MAX_UNIT, MIB, nal_types
 
+WORKER_INPUT_CLOCK = "worker_message_received_performance_timeOrigin_plus_now"
+# Older video-only recordings can journal the initial idle handshake before
+# asynchronous OPFS arm() creates its worker timestamp. This is a bounded
+# compatibility window for idle/release metadata, never for touch actions.
+LEGACY_IDLE_INPUT_PREROLL_MS = 100
+
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
@@ -148,13 +154,32 @@ def validate_browser(directory):
 def validate_browser_inputs(capture):
     width, height = capture.geometry
     start, end = (capture.manifest[key] for key in ("started_at_ms", "finalized_at_ms"))
-    pending, held, last_sequence, native_at, previous_at, closed = None, {}, 0, 0, start, False
+    clock = capture.manifest.get("clock")
+    worker_clock = isinstance(clock, dict) and clock.get("input") == WORKER_INPUT_CLOCK
+    if worker_clock and clock.get("source_input") != "page_performance_timeOrigin_plus_now":
+        raise ProtocolError("browser_teach_input_clock")
+    idle_preroll = (not worker_clock and capture.manifest["schema"] == "sphere-browser-teaching-v2"
+                    and capture.manifest["config"].get("input_capture") == "external_unobserved")
+    lower = max(0, start - LEGACY_IDLE_INPUT_PREROLL_MS) if idle_preroll else start
+    pending, held, last_sequence, native_at, previous_at, closed = None, {}, 0, 0, lower, False
+    source_previous = 0
     current_gesture = 0
     for event in capture.inputs:
         at = event.get("at_ms")
         stage = event.get("stage")
         if closed or not finite(at, previous_at, end) or stage not in {"submitted", "receipt", "closed"}:
             raise ProtocolError("browser_teach_input_order")
+        if at < start:
+            heartbeat = (stage in {"submitted", "receipt"} and event.get("action") == 4
+                         and event.get("pointer_id") == -1 and event.get("gesture") == 0)
+            release = (stage == "closed" and not held and event.get("cancelled_pointers", []) == [])
+            if not idle_preroll or not (heartbeat or release):
+                raise ProtocolError("browser_teach_input_order")
+        if worker_clock:
+            source_at = event.get("source_at_ms")
+            if not finite(source_at, source_previous, 2**53-1):
+                raise ProtocolError("browser_teach_source_input_order")
+            source_previous = source_at
         previous_at = at
         sequence, action, pointer, gesture = (event.get(key) for key in ("sequence", "action", "pointer_id", "gesture"))
         if not all(type(value) is int for value in (sequence, action, pointer, gesture)):

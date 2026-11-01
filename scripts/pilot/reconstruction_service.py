@@ -617,6 +617,7 @@ def handler(jobs, origin, port):
                                              creation_recovery_contract='confirmed_absence_v1',
                                              image_route_review_contract='source_bound_offline_v1',
                                              image_route_preparation_contract='bounded_cpu_before_sfm_v1',
+                                             browser_teach_input_clock_contract='idle_preroll100_worker_receipt_v1',
                                              alternative_catalog_contract='source_bound_review_v1',
                                              live_session_active=live_active))
                     return

@@ -20,10 +20,10 @@ class MemoryFile {
   async createWritable(){return{write:async(value:ArrayBuffer|string)=>{this.data=Buffer.concat([this.data,typeof value==='string'?Buffer.from(value):Buffer.from(new Uint8Array(value))]);},close:async()=>{}};}
   async getFile(){const bytes=this.data;return{size:bytes.length,arrayBuffer:async()=>Uint8Array.from(bytes).buffer};}
 }
-function fixture(){
-  const root=new Folder(),messages:Record<string,unknown>[]=[];let at=1000;
+function fixture(origin=1000000){
+  const root=new Folder(),messages:Record<string,unknown>[]=[];let at=1000,storageGate:Promise<void>|null=null;
   const context=vm.createContext({crypto:webcrypto,TextEncoder,Uint8Array,ArrayBuffer,Set,Map,JSON,Promise,
-    performance:{timeOrigin:1000000,now:()=>at},navigator:{storage:{getDirectory:async()=>root}},
+    performance:{timeOrigin:origin,now:()=>at},navigator:{storage:{getDirectory:async()=>{if(storageGate)await storageGate;return root;}}},
     postMessage:(m:Record<string,unknown>)=>messages.push(m),self:{}});
   vm.runInContext(fs.readFileSync(path.join(process.cwd(),'public/teaching-recorder.worker.js'),'utf8'),context);
   vm.runInContext('transformer={sendKeyFrameRequest:()=>Promise.resolve()}',context);
@@ -31,8 +31,78 @@ function fixture(){
   const frame=(ticks:number,key=true,metadata:Record<string,unknown>={})=>context.frame({type:key?'key':'delta',data:Uint8Array.from(key?[0,0,0,1,103,66,0,31,0,0,1,104,1,0,0,1,101,9]:[0,0,0,1,65,9]).buffer,
     getMetadata:()=>({mimeType:'video/H264',width:960,height:540,rtpTimestamp:ticks,synchronizationSource:777,...metadata})});
   const folder=async()=>root.getDirectoryHandle('sphere-teaching-'+config.storage_scope).then(f=>f.getDirectoryHandle(config.id));
-  return{root,messages,context,config,frame,folder,advance:()=>{at+=200;}};
+  return{root,messages,context,config,frame,folder,advance:()=>{at+=200;},setNow:(value:number)=>{at=value;},
+    holdStorage:()=>{let release!:()=>void;storageGate=new Promise<void>(resolve=>{release=resolve;});return release;}};
 }
+
+test('message arrival clocks enclose early page heartbeat while OPFS and command execution are delayed',async()=>{
+  const f=fixture(),release=f.holdStorage();
+  // A page and its worker have distinct timeOrigin values. Their epoch-relative
+  // performance timestamps describe the same clock, but emission != receipt.
+  let pageNow=1495;
+  const page=vm.createContext({performance:{timeOrigin:999500,now:()=>pageNow}});
+  const sourceStamp=()=>vm.runInContext('performance.timeOrigin+performance.now()',page) as number;
+  const event={sequence:1,gesture:0,action:4,pointer_id:-1};
+  f.context.self.onmessage({data:{type:'arm',config:{...f.config,input_capture:'external_unobserved'}}});
+  await Promise.resolve();
+  const submitted={...event,stage:'submitted',at_ms:sourceStamp()};
+  f.setNow(1001);f.context.self.onmessage({data:{type:'input',event:submitted}});
+  pageNow=1498;
+  const receipt={...event,stage:'receipt',at_ms:sourceStamp(),outcome:'alive',device_uptime_ms:618759230};
+  f.setNow(1002);f.context.self.onmessage({data:{type:'input',event:receipt}});
+  pageNow=1503;
+  const closed={stage:'closed',at_ms:sourceStamp(),sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed',device_uptime_ms:618759243,cancelled_pointers:[]};
+  f.setNow(1004);f.context.self.onmessage({data:{type:'input',event:closed}});
+  f.setNow(1020);release();await vm.runInContext('command',f.context);
+  f.setNow(1030);f.frame(90000);f.setNow(1060);f.frame(93000,false);
+  f.setNow(1070);f.context.self.onmessage({data:{type:'stop',confirmed:true}});
+  await vm.runInContext('command',f.context);
+  const dir=await f.folder(),manifest=JSON.parse((dir.entries.get('manifest.json') as MemoryFile).data.toString());
+  const rows=(dir.entries.get('inputs.jsonl') as MemoryFile).data.toString().trim().split('\n').map(line=>JSON.parse(line));
+  const frames=(dir.entries.get('frames.jsonl') as MemoryFile).data.toString().trim().split('\n').map(line=>JSON.parse(line));
+  expect(manifest).toMatchObject({complete:true,started_at_ms:1001000,worker_ready_at_ms:1001020,finalized_at_ms:1001070});
+  expect(manifest.clock).toMatchObject({input:'worker_message_received_performance_timeOrigin_plus_now',source_input:'page_performance_timeOrigin_plus_now'});
+  expect(rows.map(row=>row.at_ms)).toEqual([1001001,1001002,1001004]);
+  expect(rows.map(row=>row.source_at_ms)).toEqual([submitted.at_ms,receipt.at_ms,closed.at_ms]);
+  expect(rows[0].source_at_ms).toBeLessThan(manifest.started_at_ms);
+  expect(rows.every(row=>row.at_ms>=manifest.started_at_ms&&row.at_ms<=manifest.finalized_at_ms)).toBe(true);
+  expect(frames.map(row=>row.worker_observed_at_ms)).toEqual([1001030,1001060]);
+  expect(frames.map(row=>row.relative_ticks_90k)).toEqual([0,3000]);
+  expect(rows[1].device_uptime_ms).toBe(618759230);
+  expect(submitted).not.toHaveProperty('source_at_ms');
+  expect(dir.entries.has('COMPLETE')).toBe(true);
+});
+
+test.each(['source','worker-input','worker-frame','worker-finalize'])('never clamps a %s clock rollback into a completed recording',async kind=>{
+  const f=fixture();await f.context.arm(f.config);
+  f.setNow(1002);f.frame(90000);
+  const event={sequence:1,gesture:0,action:4,pointer_id:-1};
+  f.setNow(1003);f.context.input({...event,stage:'submitted',at_ms:1001003});
+  if(kind==='worker-frame') {f.setNow(1001);f.frame(93000,false);}
+  f.setNow(kind==='worker-input'?1002:1004);
+  f.context.input({...event,stage:'receipt',at_ms:kind==='source'?1001002:1001004,outcome:'alive',device_uptime_ms:1000});
+  f.setNow(1005);f.context.input({stage:'closed',at_ms:1001005,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  if(kind==='worker-finalize')f.setNow(1001);
+  await f.context.stop(true,null);
+  const dir=await f.folder(),manifest=JSON.parse((dir.entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.complete).toBe(false);expect(manifest.failure).toBe('browser_clock_regressed');
+  expect(dir.entries.has('COMPLETE')).toBe(false);
+  if(kind==='source'||kind==='worker-input') {
+    const rows=(dir.entries.get('inputs.jsonl') as MemoryFile).data.toString().trim().split('\n').map(line=>JSON.parse(line));
+    expect(rows.some(row=>row.stage==='receipt')).toBe(false);
+  }
+});
+
+test('Date wall-clock rollback does not change the declared performance recording clock',async()=>{
+  const f=fixture();await f.context.arm(f.config);f.frame(90000);
+  vm.runInContext('Date.now=()=>-100000',f.context);
+  f.setNow(1200);f.frame(108000,false);
+  f.context.input({stage:'closed',at_ms:1001200,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await f.context.stop(true,null);
+  const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.complete).toBe(true);
+  expect(manifest).toMatchObject({started_at_ms:1001000,finalized_at_ms:1001200});
+});
 
 test('external capture heartbeat is emitted only while encoded frames arrive',async()=>{
   const f=fixture();

@@ -36,6 +36,85 @@ def encode(value):
 
 
 class BrowserTeachTests(unittest.TestCase):
+    def idle_inputs(self):
+        self.manifest["config"]["input_capture"] = "external_unobserved"
+        self.inputs = [
+            dict(stage="submitted", at_ms=994.6, sequence=1, gesture=0, action=4, pointer_id=-1),
+            dict(stage="receipt", at_ms=999.1, sequence=1, gesture=0, action=4, pointer_id=-1,
+                 outcome="alive", device_uptime_ms=100),
+            dict(stage="closed", at_ms=1011.2, sequence=0, gesture=0, action=3, pointer_id=-1,
+                 outcome="closed", device_uptime_ms=101, cancelled_pointers=[]),
+        ]
+
+    def test_legacy_external_idle_preroll_imports_real_video_without_rewriting_timestamps(self):
+        self.idle_inputs()
+        self.seal()
+        before={p.name:digest(p.read_bytes()) for p in self.source.iterdir()}
+        capture=validate_browser(self.source)
+        self.assertEqual([row['at_ms'] for row in capture.inputs],[994.6,999.1,1011.2])
+        self.assertEqual(inspect_browser(self.source)['frames'],16)
+        self.assertEqual(before,{p.name:digest(p.read_bytes()) for p in self.source.iterdir()})
+
+    def test_legacy_preroll_keeps_strict_age_order_receipt_and_release_boundaries(self):
+        for case in ('old','backward','wrong_receipt','pending','no_closed','v1'):
+            with self.subTest(case=case):
+                self.idle_inputs()
+                self.manifest['schema']='sphere-browser-teaching-v2'
+                if case=='old':
+                    self.inputs[0]['at_ms']=899.9
+                if case=='backward':
+                    self.inputs[1]['at_ms']=994.5
+                if case=='wrong_receipt':
+                    self.inputs[1]['outcome']='applied'
+                if case=='pending':
+                    self.inputs.pop(1)
+                if case=='no_closed':
+                    self.inputs.pop()
+                if case=='v1':
+                    self.manifest['schema']='sphere-browser-teaching-v1'
+                self.seal()
+                with self.assertRaises(ProtocolError):
+                    validate_browser(self.source)
+
+    def test_legacy_preroll_never_admits_touch_actions_before_recording(self):
+        self.manifest['config']['input_capture']='external_unobserved'
+        self.inputs[0]['at_ms']=994.6
+        self.inputs[1]['at_ms']=999.1
+        self.seal()
+        with self.assertRaisesRegex(ProtocolError,'browser_teach_input_order'):
+            validate_browser(self.source)
+
+    def test_worker_receipt_clock_preserves_raw_page_time_and_has_no_preroll_allowance(self):
+        self.idle_inputs()
+        self.manifest['clock']=dict(input='worker_message_received_performance_timeOrigin_plus_now',
+                                    source_input='page_performance_timeOrigin_plus_now')
+        for event,received in zip(self.inputs,(1002,1003,1012)):
+            event['source_at_ms']=event['at_ms']
+            event['at_ms']=received
+        self.seal()
+        capture=validate_browser(self.source)
+        self.assertEqual([row['source_at_ms'] for row in capture.inputs],[994.6,999.1,1011.2])
+        for case in ('before_arm','source_rollback','missing_source','invalid_source','wrong_clock'):
+            with self.subTest(case=case):
+                self.idle_inputs()
+                self.manifest['clock']['source_input']='page_performance_timeOrigin_plus_now'
+                for event,received in zip(self.inputs,(1002,1003,1012)):
+                    event['source_at_ms']=event['at_ms']
+                    event['at_ms']=received
+                if case=='before_arm':
+                    self.inputs[0]['at_ms']=999.9
+                if case=='source_rollback':
+                    self.inputs[1]['source_at_ms']=994.5
+                if case=='missing_source':
+                    self.inputs[0].pop('source_at_ms')
+                if case=='invalid_source':
+                    self.inputs[0]['source_at_ms']=True
+                if case=='wrong_clock':
+                    self.manifest['clock']['source_input']='unknown'
+                self.seal()
+                with self.assertRaises(ProtocolError):
+                    validate_browser(self.source)
+
     def test_explicit_motion_selection_extracts_exact_real_frames_and_keeps_input_immutable(self):
         before={p.name:digest(p.read_bytes()) for p in self.source.iterdir()}
         selected=frozenset({0,4,9,15});output=self.parent/'motion-selected'

@@ -4,6 +4,7 @@ let transformer, recording = null, command = Promise.resolve(), observedFrames =
 let externalCapture = false, lastEncodedHeartbeat = 0;
 const encode = new TextEncoder();
 const stamp = () => performance.timeOrigin + performance.now();
+const validStamp = value => Number.isFinite(value) && value >= 0 && value <= Number.MAX_SAFE_INTEGER;
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');
 function nalTypes(bytes) {
   const found = new Set();
@@ -31,11 +32,12 @@ function enqueue(r, bytes, write) {
   return true;
 }
 function frame(value) {
+  const receivedAt = stamp();
   observedFrames++;
-  if (stamp() - lastEncodedHeartbeat >= (externalCapture?100:200)) {
+  if (receivedAt - lastEncodedHeartbeat >= (externalCapture?100:200)) {
     const meta = value.getMetadata();
     if (value.data.byteLength && meta.mimeType?.toLowerCase() === 'video/h264' && Number.isInteger(meta.rtpTimestamp)) {
-      lastEncodedHeartbeat = stamp();
+      lastEncodedHeartbeat = receivedAt;
       postMessage({ type: 'encoded_heartbeat',receivedAtMs:lastEncodedHeartbeat });
     }
   }
@@ -47,7 +49,9 @@ function frame(value) {
   }
   const r = recording;
   if (!r?.accept) return;
-  if (r.started && stamp() - r.startedAt >= r.config.max_duration_ms || r.frames >= r.config.max_frames) { limit(r, 'duration_or_frame_limit'); return; }
+  if (!validStamp(receivedAt) || receivedAt < r.at || receivedAt < r.lastFrameAt) { failure(r, 'browser_clock_regressed'); return; }
+  r.lastFrameAt = receivedAt;
+  if (r.started && receivedAt - r.startedAt >= r.config.max_duration_ms || r.frames >= r.config.max_frames) { limit(r, 'duration_or_frame_limit'); return; }
   const meta = value.getMetadata();
   const knownGeometry = meta.width === r.config.width && meta.height === r.config.height;
   // Chromium reports 0x0 for delta frames. Only an already bound SPS/IDR may
@@ -70,10 +74,10 @@ function frame(value) {
   }
   if (!r.started) {
     if (!(types.has(5) && types.has(7) && types.has(8))) {
-      if (stamp() - r.at > 10000) failure(r, 'idr_headers_timeout');
+      if (receivedAt - r.at > 10000) failure(r, 'idr_headers_timeout');
       return;
     }
-    r.started = true; r.startedAt = stamp(); r.ssrc = meta.synchronizationSource; r.firstRtp = r.lastRtp = timestamp; r.ticks = 0;
+    r.started = true; r.startedAt = receivedAt; r.ssrc = meta.synchronizationSource; r.firstRtp = r.lastRtp = timestamp; r.ticks = 0;
     postMessage({ type: 'recording', id: r.id });
   } else {
     const delta = (timestamp - r.lastRtp + 0x100000000) % 0x100000000;
@@ -85,15 +89,15 @@ function frame(value) {
   }
   const data = value.data.slice(0), offset = r.bytes;
   const index = { index: r.frames, offset, bytes: size, rtp_timestamp: timestamp, relative_ticks_90k: r.ticks,
-    worker_observed_at_ms: stamp(), geometry_reported: knownGeometry, key: types.has(5), seekable: types.has(5) && types.has(7) && types.has(8), sha256: null };
+    worker_observed_at_ms: receivedAt, geometry_reported: knownGeometry, key: types.has(5), seekable: types.has(5) && types.has(7) && types.has(8), sha256: null };
   if (!enqueue(r, size, async () => {
     index.sha256 = await hash(data); await r.video.write(data);
     await r.index.write(encode.encode(JSON.stringify(index) + '\n'));
   })) return;
   r.bytes += size; r.frames++;
   if (r.frames % 300 === 0) void transformer.sendKeyFrameRequest().catch(() => {});
-  if (r.frames % 30 === 0 || stamp()-r.lastProgressAt>=1000) {
-    r.lastProgressAt=stamp();postMessage({ type: 'progress', frames: r.frames, bytes: r.bytes, seconds: r.ticks / 90000,
+  if (r.frames % 30 === 0 || receivedAt-r.lastProgressAt>=1000) {
+    r.lastProgressAt=receivedAt;postMessage({ type: 'progress', frames: r.frames, bytes: r.bytes, seconds: r.ticks / 90000,
       capture_quality:quality(r) });
   }
 }
@@ -111,8 +115,9 @@ function quality(r) {
     cadence_60fps_confirmed:seconds>=3&&fps>=59&&r.gaps25===0,
     source_render_quality_verified:false,android_capture_latency_known:false};
 }
-async function arm(config) {
+async function arm(config, receivedAt = stamp()) {
   if (!transformer || recording) throw Error('recorder_already_used');
+  if (!validStamp(receivedAt)) throw Error('invalid_recorder_clock');
   if (!config || !/^[0-9a-f]{32}$/.test(config.id) || !/^[0-9a-f]{32}$/.test(config.storage_scope)
     || !Number.isInteger(config.width) || !Number.isInteger(config.height)
     || config.width < 1 || config.height < 1 || config.width > 8192 || config.height > 8192) throw Error('invalid_recording_config');
@@ -129,23 +134,33 @@ async function arm(config) {
   try { await library.getDirectoryHandle(config.id); throw Error('recording_exists'); }
   catch (error) { if (error.name !== 'NotFoundError') throw error; }
   const directory = await library.getDirectoryHandle(config.id, { create: true });
-  const r = recording = { id: config.id, config, directory, at: stamp(), accept: false, started: false,
+  const r = recording = { id: config.id, config, directory, at: receivedAt, accept: false, started: false,
     frames: 0, bytes: 0, events: 0, inputBytes: 0, pending: new Map(), closed: false,
+    lastInputAt: receivedAt, lastFrameAt: receivedAt, lastSourceInputAt: null,
     queued: 0, queuedBytes: 0, queueHighWater:0,maxWriteMs:0,maxGapTicks:0,gaps25:0,gaps50:0,gaps100:0,gaps200:0,gaps500:0,
     gapHistogram:new Uint32Array(1001),lastProgressAt:0,
     tail: Promise.resolve(), failure: null };
   const create = async name => (await directory.getFileHandle(name, { create: true })).createWritable();
   r.video = await create('video.h264'); r.index = await create('frames.jsonl'); r.input = await create('inputs.jsonl');
+  r.readyAt = stamp();
+  if (!validStamp(r.readyAt) || r.readyAt < r.at) throw Error('browser_clock_regressed');
   r.accept = true;
   postMessage({ type: 'armed', id: r.id });
   void transformer.sendKeyFrameRequest().catch(() => {});
 }
-function input(event) {
+function input(event, receivedAt = stamp()) {
   const r = recording;
   if (!r || r.stopping) return;
-  if (!event || !['submitted','receipt','closed'].includes(event.stage) || !Number.isFinite(event.at_ms)
+  if (!event || !['submitted','receipt','closed'].includes(event.stage) || !validStamp(event.at_ms)
     || !Number.isSafeInteger(event.sequence) || !Number.isSafeInteger(event.gesture)
     || !Number.isSafeInteger(event.action) || !Number.isSafeInteger(event.pointer_id)) { failure(r, 'invalid_input_journal'); return; }
+  if (!validStamp(receivedAt) || receivedAt < r.lastInputAt
+    || r.lastSourceInputAt !== null && event.at_ms < r.lastSourceInputAt) { failure(r, 'browser_clock_regressed'); return; }
+  // Page emission and worker receipt are different observations. File-system
+  // setup/command queues may finish after both. Keep the page timestamp intact
+  // rather than clamping it to a later worker start or pretending it was an ACK.
+  event = { ...event, source_at_ms: event.at_ms, at_ms: receivedAt };
+  r.lastInputAt = receivedAt; r.lastSourceInputAt = event.source_at_ms;
   if (event.cancelled_pointers !== undefined && (event.stage !== 'closed' || !Array.isArray(event.cancelled_pointers)
     || event.cancelled_pointers.length > 3 || new Set(event.cancelled_pointers).size !== event.cancelled_pointers.length
     || event.cancelled_pointers.some(id => !Number.isInteger(id) || id < 0 || id > 2)
@@ -177,12 +192,15 @@ async function stop(confirmed, reason) {
     const file = await read(name); files[name] = { bytes: file.size, sha256: await hash(await file.arrayBuffer()) };
   }
   files['video.h264'] = { bytes: (await read('video.h264')).size, integrity: 'sha256_per_access_unit_in_frames_jsonl' };
+  const finalizedAt = stamp();
+  if (!validStamp(finalizedAt) || finalizedAt < r.at || finalizedAt < r.lastInputAt || finalizedAt < r.lastFrameAt) r.failure ||= 'browser_clock_regressed';
   const manifest = { schema: 'sphere-browser-teaching-v2', id: r.id, config: r.config,
-    started_at_ms: r.at, finalized_at_ms: stamp(), frames: r.frames, events: r.events, files,
+    started_at_ms: r.at, worker_ready_at_ms: r.readyAt, finalized_at_ms: finalizedAt, frames: r.frames, events: r.events, files,
     media_duration_ticks_90k: r.ticks ?? 0, ended_at_limit: r.limit ?? null,
     observed_encoded_frames: observedFrames,
     capture_quality:quality(r),
     clock: { media: 'rtp_90000_relative', browser: 'performance_timeOrigin_plus_now',
+      input: 'worker_message_received_performance_timeOrigin_plus_now', source_input: 'page_performance_timeOrigin_plus_now',
       native: 'android_uptime_ms_in_receipts', android_to_browser_mapping: null },
     complete: !r.failure, failure: r.failure, release_confirmed: confirmed && r.closed };
   const write = async (name, text) => { const f = await (await r.directory.getFileHandle(name,{create:true})).createWritable(); await f.write(text); await f.close(); };
@@ -192,13 +210,15 @@ async function stop(confirmed, reason) {
   postMessage({ type: 'finalized', id: r.id, manifest });
 }
 self.onmessage = ({ data }) => {
+  // Capture arrival before waiting for an earlier command or OPFS promises.
+  const receivedAt = stamp();
   command = command.then(async () => {
-    if (data?.type === 'arm') await arm(data.config);
-    else if (data?.type === 'input') input(data.event);
+    if (data?.type === 'arm') await arm(data.config, receivedAt);
+    else if (data?.type === 'input') input(data.event, receivedAt);
     else if (data?.type === 'stop') await stop(data.confirmed === true, data.reason);
     else if (data?.type === 'external_capture') { externalCapture = data.enabled === true; lastEncodedHeartbeat = 0; }
   }).catch(error => {
-    const known=['recorder_already_used','invalid_recording_config','invalid_recording_budget','recording_library_limit','recording_exists'];
+    const known=['recorder_already_used','invalid_recording_config','invalid_recording_budget','recording_library_limit','recording_exists','invalid_recorder_clock','browser_clock_regressed'];
     const reason=known.includes(error?.message)?error.message:error?.name==='QuotaExceededError'?'recording_storage_full':['NotAllowedError','SecurityError'].includes(error?.name)?'recording_storage_denied':recording?'recorder_command_failed':'recorder_start_failed';
     if(recording)failure(recording,reason);else postMessage({type:'failed',reason});
   });
