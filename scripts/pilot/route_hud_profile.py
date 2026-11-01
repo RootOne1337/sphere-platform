@@ -7,12 +7,16 @@ Unknown glyphs and source gaps stay unknown; old OCR acceptance is unchanged.
 from __future__ import annotations
 
 import bisect
+import copy
 import functools
 import hashlib
 import json
 import math
+import os
 import re
+import threading
 import time
+from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,6 +26,8 @@ BANK_PATH = Path(__file__).with_name('black_russia_speed_font_v1.json')
 MAX_GAP_TICKS = 18000
 MAX_ROWS = 36000
 HEX = re.compile(r'^[0-9a-f]{64}$')
+_DISPLAY_CACHE = OrderedDict()
+_DISPLAY_CACHE_LOCK = threading.Lock()
 
 
 def _sha(path):
@@ -207,6 +213,11 @@ def prepare_speed_reference(job, *, checkpoint=None, max_seconds=90):
     folder.mkdir()
     created = []
     try:
+        intent = folder / 'intent.json'
+        created.append(intent)
+        write_json(intent, dict(schema='sphere-hud-speed-reference-intent-v1',
+                               source_manifest_sha256=before['manifest.json'],
+                               font_sha256=BANK_SHA256))
         rows = []
         for meta, frame in decoded_browser(capture):
             check()
@@ -310,3 +321,109 @@ def load_speed_reference(job):
     if any(_sha(job / 'input' / name) != value for name, value in expected.items()):
         raise ValueError('speed_reference_source_changed')
     return SpeedReference(tuple(r['ticks_90k'] for r in rows), tuple(r['speed_kmh'] for r in rows), receipt)
+
+
+def _display_fingerprint(job):
+    for folder in (job, job / 'input', job / 'vehicle-speed-reference'):
+        if folder.is_symlink() or not folder.resolve(strict=True).is_relative_to(job.resolve(strict=True)):
+            raise ValueError('speed_display_path')
+    names = ('input/manifest.json', 'input/video.h264', 'input/frames.jsonl',
+             'input/inputs.jsonl', 'input/COMPLETE', 'vehicle-speed-reference/profile.json',
+             'vehicle-speed-reference/receipt.json', 'vehicle-speed-reference/COMPLETE',
+             'vehicle-speed-reference/intent.json')
+    # Reconstruction progress changes frequently, but cannot invalidate an
+    # already sealed speed artifact and force full-video hashing every poll.
+    if not (job / 'vehicle-speed-reference/COMPLETE').exists():
+        names += ('state.json',)
+    result = []
+    for name in names:
+        path = job / name
+        if not os.path.lexists(path):
+            result.append((name, 'missing'))
+            continue
+        if path.is_symlink() or not path.is_file():
+            raise ValueError('speed_display_file')
+        item = path.stat()
+        result.append((name, item.st_size, item.st_mtime_ns, item.st_ctime_ns, item.st_ino))
+    return tuple(result)
+
+
+def _display_samples(reference):
+    """At most 512 first-observation buckets; unknowns and gaps stay visible."""
+    size = max(1, math.ceil(len(reference.ticks) / 512))
+    result, previous = [], None
+    for index in range(0, len(reference.ticks), size):
+        ticks = reference.ticks[index:index + size]
+        values = reference.speeds[index:index + size]
+        gap = previous is not None and ticks[0] - previous > MAX_GAP_TICKS
+        gap |= any(b - a > MAX_GAP_TICKS for a, b in zip(ticks, ticks[1:]))
+        result.append(dict(ticks_90k=ticks[0], hud_kmh=None if gap or any(v is None for v in values) else values[0],
+                           gap_before=bool(gap)))
+        previous = ticks[-1]
+    return result
+
+
+def _read_display_uncached(job):
+    manifest_sha = _sha(job / 'input/manifest.json')
+    folder = job / 'vehicle-speed-reference'
+    intent = None
+    if (folder / 'intent.json').exists():
+        intent = _json(folder / 'intent.json', 65536)
+        if (intent.get('schema') != 'sphere-hud-speed-reference-intent-v1'
+                or intent.get('source_manifest_sha256') != manifest_sha
+                or intent.get('font_sha256') != BANK_SHA256):
+            raise ValueError('speed_display_intent')
+    if not (folder / 'COMPLETE').exists():
+        # An explicitly bound in-flight builder is different from a damaged
+        # completed artifact. Neither may fall through to old ready telemetry.
+        state = _json(job / 'state.json', 65536)
+        if intent is not None and state.get('phase') == 'vehicle_speed_reference':
+            return dict(phase='processing', source_manifest_sha256=manifest_sha)
+        raise ValueError('speed_display_incomplete')
+    reference = load_speed_reference(job)
+    if reference is None:
+        raise ValueError('speed_display_missing')
+    receipt = reference.receipt
+    if receipt['source_hashes']['manifest.json'] != manifest_sha:
+        raise ValueError('speed_display_changed')
+    accepted = receipt['accepted_count']
+    return dict(phase='ready', accepted_count=accepted, unknown_count=len(reference.ticks) - accepted,
+                selected_count=len(reference.ticks), units='game_hud_kmh',
+                source_manifest_sha256=manifest_sha, samples=_display_samples(reference))
+
+
+def read_display_status(job):
+    """Cached UI summary only; never a control or navigation authority.
+
+    A present invalid fast artifact refuses instead of hiding behind the old
+    Tesseract result. Hashes are checked on a cache miss, not on every UI poll.
+    """
+    job = Path(job).absolute()
+    if not os.path.lexists(job / 'vehicle-speed-reference'):
+        return None
+    try:
+        before = _display_fingerprint(job)
+        key = str(job)
+        with _DISPLAY_CACHE_LOCK:
+            cached = _DISPLAY_CACHE.get(key)
+            if cached is not None and cached[0] == before:
+                _DISPLAY_CACHE.move_to_end(key)
+                return copy.deepcopy(cached[1])
+        try:
+            result = _read_display_uncached(job)
+        except (OSError, ValueError, TypeError, KeyError, OverflowError):
+            result = dict(phase='invalid')
+            manifest = job / 'input/manifest.json'
+            if manifest.is_file() and not manifest.is_symlink() and manifest.stat().st_size <= 65536:
+                result['source_manifest_sha256'] = _sha(manifest)
+        after = _display_fingerprint(job)
+        if before != after:
+            return dict(phase='invalid')
+        with _DISPLAY_CACHE_LOCK:
+            _DISPLAY_CACHE[key] = (after, copy.deepcopy(result))
+            _DISPLAY_CACHE.move_to_end(key)
+            while len(_DISPLAY_CACHE) > 32:
+                _DISPLAY_CACHE.popitem(last=False)
+        return result
+    except (OSError, ValueError, TypeError, KeyError):
+        return dict(phase='invalid')

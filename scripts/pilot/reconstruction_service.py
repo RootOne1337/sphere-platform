@@ -49,6 +49,16 @@ IDENTITY = re.compile(r'^[0-9a-f]{32}$')
 ROUTE_CAMERA_PIPELINE = 'vehicle_geometry_v3_hud'
 
 
+def route_worker_creationflags(route_only):
+    """Lower only this owned CPU batch on Windows; live/API and dense stay as-is."""
+    if sys.platform != 'win32':
+        return 0
+    flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+    if route_only is True:
+        flags |= getattr(subprocess, 'BELOW_NORMAL_PRIORITY_CLASS', 0)
+    return flags
+
+
 class AccessDenied(PermissionError):
     """Origin/capability denial, distinct from Windows file sharing failures."""
 
@@ -121,7 +131,10 @@ class Jobs:
         if image_review is not None:
             result['image_route_review'] = image_review
         from scripts.pilot.route_hud_workspace import read_status as hud_status
-        telemetry=hud_status(job)
+        from scripts.pilot.route_hud_profile import read_display_status as fast_hud_status
+        telemetry=fast_hud_status(job)
+        if telemetry is None:
+            telemetry=hud_status(job)
         if telemetry is not None:
             phase=telemetry.get('phase')
             telemetry={**telemetry,'phase':'processing' if phase in {'pending','running'} else
@@ -490,7 +503,7 @@ class Jobs:
                 command.append('--route-only')
             process = subprocess.Popen(command,
                      cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
-                     creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+                     creationflags=route_worker_creationflags(control.get('route_only') is True))
         except Exception:
             write_json(job / 'state.json', dict(phase='failed', error='worker_start_not_confirmed'))
             raise
@@ -621,6 +634,7 @@ def handler(jobs, origin, port):
                                              alternative_catalog_contract='source_bound_review_v1',
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
                                              route_resource_monitor_contract='task_volume30_fresh_native_v1',
+                                             hud_speed_reference_contract='source_bound_font_display_v1',
                                              live_session_active=live_active))
                     return
                 with jobs.lock:

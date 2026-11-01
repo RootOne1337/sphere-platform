@@ -155,3 +155,81 @@ def test_cancel_and_ineligible_source_never_create_profile(source_job):
     with pytest.raises(InterruptedError):
         hud.prepare_speed_reference(job)
     assert not (job / 'vehicle-speed-reference').exists()
+
+
+def test_display_ready_cache_is_defensive_and_ignores_unrelated_job_progress(source_job, monkeypatch):
+    job, _ = source_job
+    hud._DISPLAY_CACHE.clear()
+    hud.prepare_speed_reference(job)
+    first = hud.read_display_status(job)
+    assert first['phase'] == 'ready' and first['selected_count'] == 3
+    assert first['accepted_count'] + first['unknown_count'] == 3
+    assert first['source_manifest_sha256'] == hud._sha(job / 'input/manifest.json')
+    first['samples'][0]['hud_kmh'] = 999
+    monkeypatch.setattr(hud, 'load_speed_reference', lambda _: pytest.fail('full-video validation repeated on warm poll'))
+    assert hud.read_display_status(job)['samples'][0]['hud_kmh'] == 0
+    (job / 'state.json').write_text('{"phase":"matching","completed_items":4}')
+    assert hud.read_display_status(job)['phase'] == 'ready'
+
+
+@pytest.mark.parametrize('name', ['input/manifest.json', 'input/video.h264', 'input/frames.jsonl',
+                                  'input/inputs.jsonl', 'input/COMPLETE', 'vehicle-speed-reference/profile.json',
+                                  'vehicle-speed-reference/receipt.json', 'vehicle-speed-reference/COMPLETE',
+                                  'vehicle-speed-reference/intent.json'])
+def test_display_cache_invalidates_any_source_or_artifact_tampering(source_job, name):
+    job, _ = source_job
+    hud._DISPLAY_CACHE.clear()
+    hud.prepare_speed_reference(job)
+    assert hud.read_display_status(job)['phase'] == 'ready'
+    path = job / name
+    path.write_bytes(path.read_bytes() + b'x')
+    assert hud.read_display_status(job)['phase'] == 'invalid'
+    assert 'samples' not in hud.read_display_status(job)
+
+
+def test_display_summary_never_hides_unknown_buckets_or_unobserved_gaps():
+    reference = hud.SpeedReference(tuple(i * 9000 for i in range(1202)),
+                                   tuple(None if i == 1 else 80. for i in range(1202)), {})
+    rows = hud._display_samples(reference)
+    assert len(rows) <= 512 and rows[0]['hud_kmh'] is None
+    rows = hud._display_samples(hud.SpeedReference((0, 18001), (20., 20.), {}))
+    assert rows[1]['gap_before'] and rows[1]['hud_kmh'] is None
+
+
+def test_display_absence_inflight_and_corrupt_presence_have_distinct_states(source_job):
+    job, _ = source_job
+    hud._DISPLAY_CACHE.clear()
+    assert hud.read_display_status(job) is None
+    folder = job / 'vehicle-speed-reference'
+    folder.mkdir()
+    assert hud.read_display_status(job)['phase'] == 'invalid'
+    (folder / 'intent.json').write_text(json.dumps(dict(schema='sphere-hud-speed-reference-intent-v1',
+        source_manifest_sha256=hud._sha(job / 'input/manifest.json'), font_sha256=hud.BANK_SHA256)))
+    (job / 'state.json').write_text('{"phase":"vehicle_speed_reference"}')
+    assert hud.read_display_status(job)['phase'] == 'processing'
+    (job / 'state.json').write_text('{"phase":"failed"}')
+    assert hud.read_display_status(job)['phase'] == 'invalid'
+
+
+@pytest.mark.parametrize('fast,expected', [({'phase': 'ready', 'selected_count': 857}, 'ready'),
+                                          ({'phase': 'invalid'}, 'failed'),
+                                          (None, 'ready')])
+def test_jobs_status_prefers_fast_and_only_missing_fast_uses_legacy(tmp_path, monkeypatch, fast, expected):
+    from scripts.pilot import reconstruction_service as service
+    from scripts.pilot import route_hud_workspace
+    monkeypatch.setattr(service, 'collect', lambda _: {})
+    monkeypatch.setattr(service, 'evaluate', lambda *a, **k: [])
+    jobs = service.Jobs(tmp_path / 'jobs', tmp_path / 'python.exe')
+    jobs.create(dict(id='a' * 32, key='b' * 64, mask='game', steps=3000))
+    job = jobs.path('a' * 32)
+    (job / 'input/manifest.json').write_text('{}')
+    monkeypatch.setattr(hud, 'read_display_status', lambda _: fast)
+    def legacy(_):
+        if fast is not None:
+            pytest.fail('present fast artifact must not fall back to old OCR')
+        return {'phase': 'ready', 'selected_count': 286}
+    monkeypatch.setattr(route_hud_workspace, 'read_status', legacy)
+    result = jobs.status(job)['telemetry']
+    assert result['phase'] == expected
+    if fast is not None and expected == 'ready':
+        assert result['selected_count'] == 857

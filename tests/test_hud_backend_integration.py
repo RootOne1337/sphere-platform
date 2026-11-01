@@ -2,6 +2,7 @@
 import hashlib
 import json
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
@@ -9,6 +10,11 @@ from scripts.pilot import check_route_first_run as first_run
 from scripts.pilot import reconstruct_route as route
 from scripts.pilot import reconstruction_service as service
 from scripts.pilot import route_hud_workspace as hud
+
+
+def legacy_capture():
+    return SimpleNamespace(manifest={'config': {}},
+                           frames=[{'relative_ticks_90k': 0}, {'relative_ticks_90k': 450000}])
 
 
 @pytest.mark.parametrize(('raw', 'public'), [
@@ -39,7 +45,7 @@ def test_jobs_status_has_no_telemetry_for_walking_or_absent_sidecar(tmp_path, mo
 
 def test_optional_hud_start_failure_does_not_break_route(tmp_path, monkeypatch):
     monkeypatch.setattr(route, 'checkpoint', lambda _: None)
-    monkeypatch.setattr(route, 'validate_browser', lambda _: object())
+    monkeypatch.setattr(route, 'validate_browser', lambda _: legacy_capture())
     def fail(*args):
         raise OSError('sensitive stderr')
     monkeypatch.setattr(hud, 'start', fail)
@@ -59,7 +65,7 @@ def test_cpu_guard_runs_before_any_hud_child(tmp_path, monkeypatch):
 def test_failed_route_cancels_owned_hud_and_preserves_failure(tmp_path, monkeypatch):
     (tmp_path/'telemetry').mkdir()
     monkeypatch.setattr(route, 'checkpoint', lambda _: None)
-    monkeypatch.setattr(route, 'validate_browser', lambda _: object())
+    monkeypatch.setattr(route, 'validate_browser', lambda _: legacy_capture())
     class Child:
         def __init__(self): self.done = False; self.waits = []
         def poll(self): return 0 if self.done else None
@@ -84,7 +90,7 @@ def test_unresponsive_hud_child_is_terminated_then_killed(tmp_path, monkeypatch)
     (tmp_path/'telemetry').mkdir()
     (tmp_path/'CANCEL').touch()
     monkeypatch.setattr(route, 'checkpoint', lambda _: None)
-    monkeypatch.setattr(route, 'validate_browser', lambda _: object())
+    monkeypatch.setattr(route, 'validate_browser', lambda _: legacy_capture())
     class Child:
         def __init__(self): self.done = False; self.actions = []
         def poll(self): return 0 if self.done else None

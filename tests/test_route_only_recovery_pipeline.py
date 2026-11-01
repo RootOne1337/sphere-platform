@@ -74,19 +74,25 @@ def test_full_count_collapsed_route_runs_recovery_even_when_learned_dense_is_dis
 
 
 def test_declared_vehicle_hud_is_prepared_before_visual_mapping(tmp_path,monkeypatch):
-    from scripts.pilot import route_hud_profile
+    from scripts.pilot import image_route_workspace, route_hud_profile, route_hud_workspace
     job,calls=setup_pipeline(tmp_path,monkeypatch)
     capture=pipeline.validate_browser(job/'input')
     capture.manifest['config'].update(hud_hidden_declared=False)
     capture.manifest['config']['profile']['hudProfile']='black_russia_scooter_v1'
+    capture.geometry=(1920,1080)
     monkeypatch.setattr(pipeline,'make_observation_checkpoint',lambda *a,**k:lambda:None)
     def prepare(_job,*,checkpoint):
         assert not (_job/'prepared').exists()
         checkpoint()
         calls.append('speed_reference')
     monkeypatch.setattr(route_hud_profile,'prepare_speed_reference',prepare)
+    monkeypatch.setattr(route_hud_workspace,'start',lambda *a,**k:pytest.fail('fast preset must not spawn slow OCR'))
+    def index(*a,**k):
+        assert calls==['speed_reference']
+        calls.append('image_index')
+    monkeypatch.setattr(image_route_workspace,'run_optional',index)
     pipeline.reconstruct(job,'game',30000,route_only=True)
-    assert calls==['speed_reference','recovery','write_model','write_points','sealed']
+    assert calls==['speed_reference','image_index','recovery','write_model','write_points','sealed']
 
 
 def test_compatible_components_are_reassessed_and_sealed_before_loading_learned_fallback(tmp_path,monkeypatch):

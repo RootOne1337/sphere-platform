@@ -228,6 +228,9 @@ def _reconstruct_with_telemetry(job, mask, steps, *, route_only=False):
     from scripts.pilot.route_hud_workspace import start as start_hud
     checkpoint(job)
     capture=validate_browser(job/'input')
+    if capture.frames[-1]['relative_ticks_90k']/90000 < 5:
+        raise RuntimeError('clip_too_short_minimum_5_seconds')
+    fast_speed=_prepare_vehicle_speed_reference(job,capture)
     # The image index is useful even if the independent global SfM later fails.
     # Run it serially in the small CPU runtime, without granting route input.
     from scripts.pilot.image_route_workspace import run_optional as prepare_image_review
@@ -236,7 +239,7 @@ def _reconstruct_with_telemetry(job, mask, steps, *, route_only=False):
     checkpoint(job)  # A service-restart cancellation must not continue to SfM.
     began=time.monotonic()
     try:
-        hud_process=start_hud(job,capture)
+        hud_process=None if fast_speed else start_hud(job,capture)
     except Exception:
         # Telemetry is optional. An existing or unavailable sidecar must not
         # prevent the independent route reconstruction from proceeding.
@@ -281,6 +284,21 @@ def _reconstruct_with_telemetry(job, mask, steps, *, route_only=False):
                 settle_child(job,cancelled=failed or (job/'CANCEL').exists())
 
 
+def _prepare_vehicle_speed_reference(job, capture):
+    from scripts.pilot.route_hud_profile import _eligible, load_speed_reference, prepare_speed_reference
+    if not _eligible(capture):
+        return False
+    # Make the speed chart available before image indexing/SfM. A completed
+    # fast profile does not need a second, slow OCR sidecar for the same preset.
+    state(job,'vehicle_speed_reference')
+    if (job/'vehicle-speed-reference').exists():
+        load_speed_reference(job)
+    else:
+        prepare_speed_reference(job,checkpoint=make_observation_checkpoint(job))
+    checkpoint(job)
+    return True
+
+
 def _reconstruct(job, mask, steps, *, route_only=False):
     checkpoint(job)
     sys.path.insert(0, str(TOOLS / 'pycolmap-4.2.1'))
@@ -290,19 +308,6 @@ def _reconstruct(job, mask, steps, *, route_only=False):
     duration = capture.frames[-1]['relative_ticks_90k'] / 90000
     if duration < 5:
         raise RuntimeError('clip_too_short_minimum_5_seconds')
-    if (vehicle and capture.manifest['config'].get('hud_hidden_declared') is False
-            and capture.manifest['config']['profile'].get('hudProfile') == 'black_russia_scooter_v1'):
-        # Observe the original speed display before SfM; never infer pedal
-        # presses or convert this HUD unit into a metric world calibration.
-        from scripts.pilot.route_hud_profile import load_speed_reference, prepare_speed_reference
-        state(job, 'vehicle_speed_reference')
-        if (job/'vehicle-speed-reference').exists():
-            load_speed_reference(job)  # Reuse only a completely source-bound artifact.
-        else:
-            # The per-frame callback uses fresh native memory counters while
-            # throttling the expensive Windows volume-health subprocess.
-            prepare_speed_reference(job, checkpoint=make_observation_checkpoint(job))
-        checkpoint(job)
     state(job, 'extracting', source_frames=len(capture.frames))
     prepared = job / 'prepared'
     selected_indices=None
