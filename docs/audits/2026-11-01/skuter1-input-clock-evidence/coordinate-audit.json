@@ -1,0 +1,56 @@
+{
+  "native_camera": {
+    "width": 1920,
+    "height": 1080,
+    "params": [
+      601.5647540123381,
+      960.0,
+      540.0
+    ]
+  },
+  "prepared_png_shapes_height_width": {
+    "0": [
+      1080,
+      1920
+    ],
+    "10": [
+      1080,
+      1920
+    ],
+    "43": [
+      1080,
+      1920
+    ],
+    "844": [
+      1080,
+      1920
+    ],
+    "856": [
+      1080,
+      1920
+    ]
+  },
+  "analysis_width_height": [
+    960,
+    540
+  ],
+  "cv960_to_colmap1920": "2*p + 1",
+  "colmap1920_to_cv960": "(q - 1)/2",
+  "colmap1920_to_cv1920": "q - 0.5",
+  "cv960_K": {
+    "f": 300.78237700616904,
+    "cx": 479.5,
+    "cy": 269.5
+  },
+  "no_critical_coordinate_scale_error_found": true,
+  "tracked_sift_limitations": "fixed manually assigned scale/orientation does not reproduce keypoint detector; zero matches is inconclusive",
+  "physical_calibration_verified": false,
+  "script_sha256": {
+    "loop-correspondence-probe.py": "9bbf2ce2ccddd460b9d7da876db1a5d519654fb27617c2ea940e4f9035530b79",
+    "loop-landmark-sift.py": "90056681e1ebc5fd666e64ce35e6717a116021b9ff7f4b6095c6325bc7cb6362",
+    "loop-landmark-target-sift.py": "9cdd67bb0f4463fa5ac6b084d63522d10b02e2f3d59d0e3587da743e4d55c36b",
+    "loop-direct-lk.py": "2153fe814a8544bbfe91f8836f731ce1a7375a409bf8bcb138d6950299243bda",
+    "lightglue-loop-worker.py": "5ac1adafe5e6465409d14dcbf7f6c406b736178880daafb9fc5d8e2184c451a4",
+    "lightglue-relative-audit.py": "f0836b8b2e66f64af98377aa6a57416ad2016b288f44d3fbd7125cf19582ec4c"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "health": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true,
+    "route_camera_pipeline": "vehicle_geometry_v3_hud",
+    "creation_recovery_contract": "confirmed_absence_v1",
+    "image_route_review_contract": "source_bound_offline_v1",
+    "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+    "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+    "alternative_catalog_contract": "source_bound_review_v1",
+    "live_session_active": false
+  },
+  "snapshot": {
+    "observedAt": "2026-11-01T09:33:42.109680+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 36115435520,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "availableRamBytes": 7454310400,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 78900473856,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 10791149568,
+    "kernelNonpagedBytes": 5159948288,
+    "processCount": 464,
+    "handleCount": 681054,
+    "memoryMeasurement": "GetPerformanceInfo"
+  },
+  "budget": {
+    "kind": "route_reconstruction_cpu",
+    "minRamGiB": 6.0,
+    "minDiskGiB": 20.0,
+    "maxCommitPercent": 90,
+    "hostReserveGiB": 4.0,
+    "taskReserveGiB": 2.0,
+    "sourceVideoBytes": 38563488,
+    "sourceSizeKnown": true,
+    "uploading": false,
+    "modelLoaded": false
+  },
+  "findings": [],
+  "light_findings": [],
+  "active_jobs": []
+}

@@ -1,0 +1,66 @@
+{
+  "schema": "skuter-input-order-diagnosis-v1",
+  "job": "6a77040681d142ec97d51831a22785fb",
+  "source_manifest_title": "skuter1",
+  "input_capture": "external_unobserved",
+  "validator_result": "ProtocolError: browser_teach_input_order",
+  "first_failing_row_one_based": 1,
+  "timestamps_ms": {
+    "manifest_start": 1793488297238.7,
+    "manifest_finalized": 1793488334384.2,
+    "first_frame_worker_observed": 1793488297608.8,
+    "last_frame_worker_observed": 1793488334248
+  },
+  "events": [
+    {
+      "row": 1,
+      "stage": "submitted",
+      "at_ms": 1793488297233.3,
+      "relative_to_manifest_start_ms": -5.4,
+      "action": 4,
+      "outcome": null
+    },
+    {
+      "row": 2,
+      "stage": "receipt",
+      "at_ms": 1793488297237.8,
+      "relative_to_manifest_start_ms": -0.9,
+      "action": 4,
+      "outcome": "alive"
+    },
+    {
+      "row": 3,
+      "stage": "closed",
+      "at_ms": 1793488297249.9,
+      "relative_to_manifest_start_ms": 11.2,
+      "action": 3,
+      "outcome": "closed"
+    }
+  ],
+  "journal_strictly_increasing": true,
+  "frame_count": 857,
+  "source_hashes": {
+    "COMPLETE": {
+      "bytes": 87,
+      "sha256": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475"
+    },
+    "frames.jsonl": {
+      "bytes": 231886,
+      "sha256": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12"
+    },
+    "inputs.jsonl": {
+      "bytes": 408,
+      "sha256": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb"
+    },
+    "manifest.json": {
+      "bytes": 3244,
+      "sha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc"
+    },
+    "video.h264": {
+      "bytes": 38563488,
+      "sha256": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce"
+    }
+  },
+  "evidence": "Page input and worker manifest use performance.timeOrigin plus performance.now; worker sets recording start after asynchronous OPFS setup. Event time precedes manifest start, but journal ordering and release are intact; scheduling versus cross-context clock offset not independently isolated.",
+  "raw_inputs_modified": false
+}

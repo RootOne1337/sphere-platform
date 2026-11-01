@@ -1,0 +1,100 @@
+{
+  "files": [
+    {
+      "file": "motor_worker/browser_teach.py",
+      "baseline": {},
+      "current": {},
+      "increased": {}
+    },
+    {
+      "file": "scripts/pilot/check_route_first_run.py",
+      "baseline": {
+        "E701": 12,
+        "E702": 11,
+        "I001": 1
+      },
+      "current": {
+        "E701": 12,
+        "E702": 11,
+        "I001": 1
+      },
+      "increased": {}
+    },
+    {
+      "file": "scripts/pilot/reconstruct_route.py",
+      "baseline": {
+        "E701": 1,
+        "I001": 4
+      },
+      "current": {
+        "E701": 1,
+        "I001": 4
+      },
+      "increased": {}
+    },
+    {
+      "file": "scripts/pilot/reconstruction_service.py",
+      "baseline": {
+        "E402": 9,
+        "E701": 1,
+        "I001": 2
+      },
+      "current": {
+        "E402": 9,
+        "E701": 1,
+        "I001": 2
+      },
+      "increased": {}
+    },
+    {
+      "file": "scripts/pilot/route_component_merge.py",
+      "baseline": {},
+      "current": {},
+      "increased": {}
+    },
+    {
+      "file": "scripts/pilot/route_endpoint_resection.py",
+      "baseline": {},
+      "current": {},
+      "increased": {}
+    },
+    {
+      "file": "tests/test_motor_browser_teach.py",
+      "baseline": {
+        "E702": 1
+      },
+      "current": {
+        "E702": 1
+      },
+      "increased": {}
+    },
+    {
+      "file": "tests/test_route_component_merge.py",
+      "baseline": {},
+      "current": {},
+      "increased": {}
+    },
+    {
+      "file": "tests/test_route_endpoint_resection.py",
+      "baseline": {},
+      "current": {},
+      "increased": {}
+    },
+    {
+      "file": "tests/test_route_only_recovery_pipeline.py",
+      "baseline": {
+        "E701": 2,
+        "E702": 8,
+        "I001": 2
+      },
+      "current": {
+        "E701": 2,
+        "E702": 8,
+        "I001": 2
+      },
+      "increased": {}
+    }
+  ],
+  "no_increased_rule_counts": true,
+  "note": "Counts by rule only, not whole-project lint acceptance; mypy 3.13 runner crashed during type serialization."
+}

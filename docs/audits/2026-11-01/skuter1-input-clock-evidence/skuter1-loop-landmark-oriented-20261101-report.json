@@ -1,0 +1,104 @@
+{
+  "method": "source SIFT at actual tracked observations 8/16/24 x four cardinal orientations; target cached 960 RootSIFT; mutual distinct-point ratio .75; fundamental and heldout fixedK PnP",
+  "pairs": [
+    {
+      "head": 0,
+      "tail": 856,
+      "head_landmarks": 582,
+      "tail_sift_features": 545,
+      "mutual_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 0,
+      "tail": 850,
+      "head_landmarks": 582,
+      "tail_sift_features": 546,
+      "mutual_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 0,
+      "tail": 844,
+      "head_landmarks": 582,
+      "tail_sift_features": 549,
+      "mutual_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 10,
+      "tail": 856,
+      "head_landmarks": 584,
+      "tail_sift_features": 545,
+      "mutual_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 10,
+      "tail": 844,
+      "head_landmarks": 584,
+      "tail_sift_features": 549,
+      "mutual_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 43,
+      "tail": 844,
+      "head_landmarks": 647,
+      "tail_sift_features": 549,
+      "mutual_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 43,
+      "tail": 850,
+      "head_landmarks": 647,
+      "tail_sift_features": 546,
+      "mutual_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 43,
+      "tail": 856,
+      "head_landmarks": 647,
+      "tail_sift_features": 545,
+      "mutual_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    }
+  ],
+  "source_model_db_unchanged": true,
+  "seconds": 3.719000000040978,
+  "execution_qualified": false
+}
