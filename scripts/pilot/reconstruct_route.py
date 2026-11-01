@@ -37,6 +37,8 @@ from scripts.pilot.route_loop_completion import complete_partial
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / '.local-pilot/reconstruction-tools'
 BRUSH_SHA = 'b68e3e9cf052d51bf3ee30776fa5a364de7f2ba13b58443128ff797bb7bcfcd6'
+_TASK_RESOURCES = None
+_TASK_RESOURCE_JOB = None
 
 
 def digest(path):
@@ -60,11 +62,23 @@ def _checkpoint_snapshot(job, snapshot, *, learned=False):
 def checkpoint(job, *, learned=False):
     if (job / 'CANCEL').exists():
         raise RuntimeError('cancelled')
-    _checkpoint_snapshot(job, collect(ROOT), learned=learned)
+    if _TASK_RESOURCES is not None and Path(job).resolve() != _TASK_RESOURCE_JOB:
+        raise RuntimeError('route_resource_task_mismatch')
+    snapshot = _TASK_RESOURCES.sample() if _TASK_RESOURCES is not None else collect(ROOT)
+    _checkpoint_snapshot(job, snapshot, learned=learned)
 
 
 def make_observation_checkpoint(job, *, learned=False):
-    """Fresh native RAM/disk on each call; volume health refreshed every 3s."""
+    """Fresh RAM/disk; task-owned route volume proof or legacy 3s refresh."""
+    monitor = _TASK_RESOURCES
+    if monitor is not None:
+        if Path(job).resolve() != _TASK_RESOURCE_JOB:
+            raise RuntimeError('route_resource_task_mismatch')
+        def task_check():
+            if (job/'CANCEL').exists():
+                raise RuntimeError('cancelled')
+            _checkpoint_snapshot(job, monitor.sample(), learned=learned)
+        return task_check
     from scripts.pilot.resource_guard import windows_memory
     snapshot = None
     refreshed = None
@@ -192,6 +206,24 @@ def model_assessment(rec, prepared, selected, source_start, source_end, *, check
 
 
 def reconstruct(job, mask, steps, *, route_only=False):
+    """Keep a volume proof inside one CPU route task, never across jobs."""
+    global _TASK_RESOURCES, _TASK_RESOURCE_JOB
+    if _TASK_RESOURCES is not None:
+        raise RuntimeError('route_resource_task_already_active')
+    if not route_only:
+        return _reconstruct_with_telemetry(job,mask,steps,route_only=False)
+    from scripts.pilot.route_resource_monitor import TaskResourceMonitor
+    with TaskResourceMonitor(ROOT) as monitor:
+        _TASK_RESOURCES=monitor
+        _TASK_RESOURCE_JOB=Path(job).resolve()
+        try:
+            return _reconstruct_with_telemetry(job,mask,steps,route_only=True)
+        finally:
+            _TASK_RESOURCES=None
+            _TASK_RESOURCE_JOB=None
+
+
+def _reconstruct_with_telemetry(job, mask, steps, *, route_only=False):
     """Own the optional telemetry child through completion/cancellation."""
     from scripts.pilot.route_hud_workspace import start as start_hud
     checkpoint(job)

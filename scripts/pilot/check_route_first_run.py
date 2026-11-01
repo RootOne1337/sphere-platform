@@ -36,6 +36,7 @@ RECIPE=('scripts/pilot/check_route_first_run.py','scripts/pilot/reconstruction_s
         'scripts/pilot/image_route_workspace.py','motor_worker/image_route_sequence.py',
         'motor_worker/image_route_relative.py',
         'scripts/pilot/route_learned_recovery.py','scripts/pilot/route_reconstruction_resources.py',
+        'scripts/pilot/resource_guard.py','scripts/pilot/route_resource_monitor.py',
         'scripts/pilot/learned_route_features.py','scripts/pilot/reconstruction_quality.py',
         'scripts/pilot/video_observations.py','scripts/pilot/camera_pixel_conventions.py',
         'scripts/pilot/export_route_localization.py','scripts/pilot/route_landmark_builder.py',

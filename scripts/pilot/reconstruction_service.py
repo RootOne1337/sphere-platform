@@ -620,6 +620,7 @@ def handler(jobs, origin, port):
                                              browser_teach_input_clock_contract='idle_preroll100_worker_receipt_v1',
                                              alternative_catalog_contract='source_bound_review_v1',
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
+                                             route_resource_monitor_contract='task_volume30_fresh_native_v1',
                                              live_session_active=live_active))
                     return
                 with jobs.lock:
