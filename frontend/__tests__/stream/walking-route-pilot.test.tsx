@@ -160,20 +160,26 @@ test('unknown release fences vehicle restart even when the map and stream stay r
 test('vehicle held decisions bridge5Hz corrections with150ms compute, then neutralize after450ms despite fresh video',async()=>{
   jest.useFakeTimers();let now=1000;jest.spyOn(performance,'now').mockImplementation(()=>now);
   const f=vehicleFixture(),original=jest.mocked(reconstructionRequest).getMockImplementation()!;
-  let observations=0;
+  const pending:(()=>void)[]=[];
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const response=await original(...args);
     if(!args[0].endsWith('/observe'))return response;
-    if(++observations>=4)return new Promise<Response>(()=>{});
     const value=await response.json();value.computeMs=150;
-    await new Promise(resolve=>setTimeout(resolve,200)); //150ms compute +50ms transport.
-    return {json:async()=>value} as Response;
+    // Explicit replies make the transport schedule independent of Node's
+    // nested Promise/timer scheduling. The real pilot/watchdogs still run.
+    return new Promise<Response>(resolve=>pending.push(()=>resolve({json:async()=>value} as Response)));
   });
   try{
-    f.startVehicle();await act(async()=>{await Promise.resolve();});
-    for(let i=0;i<13;i++){now+=50;await act(async()=>{await jest.advanceTimersByTimeAsync(50);});fresh();}
+    f.startVehicle();await act(async()=>{await jest.advanceTimersByTimeAsync(0);});
+    for(let reply=0;reply<3;reply++){
+      for(let tick=0;tick<4;tick++){now+=50;await act(async()=>{await jest.advanceTimersByTimeAsync(50);});fresh();}
+      expect(pending).toHaveLength(1);
+      await act(async()=>{pending.shift()!();await jest.advanceTimersByTimeAsync(0);});
+    }
     expect(f.vehicleLease.setVehicle).toHaveBeenCalledTimes(3);
     expect(f.vehicleLease.neutral).not.toHaveBeenCalled();
+    // Leave the fourth observation unanswered while raw presentation remains
+    // fresh. This expires the last approved command, not the source frame.
     for(let i=0;i<11;i++){now+=50;await act(async()=>{await jest.advanceTimersByTimeAsync(50);});fresh();}
     expect(f.vehicleLease.neutral).toHaveBeenCalled();
     expect(f.vehicleLease.close).not.toHaveBeenCalled();
