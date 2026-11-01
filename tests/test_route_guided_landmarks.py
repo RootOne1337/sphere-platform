@@ -54,7 +54,7 @@ def test_known_curve_retains_true_measured_tracks_without_editing_inputs():
     assert "landmark_provenance" not in report and len(json.dumps(report)) < 65536
 
 
-def test_repeated_facade_descriptor_alias_is_rejected_before_union():
+def test_repeated_facade_global_winner_is_rejected_without_promoting_runner_up():
     data = fixture()
     for view, (pixels, descriptors) in enumerate(data[0]):
         descriptors = descriptors.copy()
@@ -73,20 +73,19 @@ def test_repeated_facade_descriptor_alias_is_rejected_before_union():
     assert raw[0][0].trainIdx == 4
     proof = []
     rows, report = run(data, provenance=proof)
-    assert report["matching"]["epipolar_rejected_proposals"] > 0
-    item = next(p for p in proof if p["observations"] == [[0, 0], [1, 0], [2, 0]])
-    np.testing.assert_allclose(rows[item["candidate_index"]][1], data[3][0], atol=1e-7)
-    assert all(all(feature != 4 for _, feature in p["observations"]) for p in proof)
+    assert report["matching"]["epipolar_rejected_global_winners"] > 0
+    assert not any(p["observations"] == [[0, 0], [1, 0], [2, 0]] for p in proof)
+    assert not any(np.linalg.norm(np.array(row[1]) - data[3][0]) < 1e-6 for row in rows)
 
 
-def test_ratio_requires_two_epipolar_candidates_not_just_one_plausible_match():
+def test_ratio_requires_two_global_descriptor_candidates():
     data = fixture()
     observations = [(p[:1], d[:1]) for p, d in data[0]]
     rows, report = builder.build(observations, data[1], data[2], checkpoint=lambda: None)
     assert not rows and report["matching"].get("descriptor_proposals", 0) == 0
 
 
-def test_spatially_unique_candidate_without_second_on_epipolar_line_refuses_ratio():
+def test_valid_global_ratio_does_not_require_ambiguity_competitor_on_epipolar_line():
     k = fixture()[2]
     poses = fixture()[1]
     f = builder._fundamental(poses[0], poses[1], np.linalg.inv(k), 1e-12)
@@ -97,7 +96,53 @@ def test_spatially_unique_candidate_without_second_on_epipolar_line_refuses_rati
     selected = builder._directed(
         pixels, descriptors, pixels, descriptors, f, checkpoint=lambda: None, counts=counts
     )
-    assert selected == {} and counts["fewer_than_two_epipolar_candidates"] == 2
+    assert set(selected) == {0, 1}
+    assert counts["global_descriptor_gate_passed_queries"] == 2
+    assert counts["epipolar_checked_global_winners"] == 2
+
+
+def test_failed_original_ratio_cannot_be_rescued_by_a_single_geometric_candidate():
+    data = fixture()
+    f = builder._fundamental(data[1][0], data[1][1], np.linalg.inv(data[2]), 1e-12)
+    query = np.zeros((1, 128), np.float32)
+    query[0, 0] = 1
+    target = np.zeros((2, 128), np.float32)
+    for row, angle in enumerate((0.10, 0.11)):
+        target[row, :2] = [np.cos(angle), np.sin(angle)]
+    counts = Counter()
+    selected = builder._directed(
+        np.array([[20.0, 20.0]]),
+        query,
+        np.array([[20.0, 20.0], [20.0, 60.0]]),
+        target,
+        f,
+        checkpoint=lambda: None,
+        counts=counts,
+    )
+    assert selected == {} and counts["global_ratio_rejected_queries"] == 1
+    assert counts["epipolar_checked_global_winners"] == 0
+
+
+def test_valid_original_ratio_with_off_epipolar_winner_never_promotes_second():
+    data = fixture()
+    f = builder._fundamental(data[1][0], data[1][1], np.linalg.inv(data[2]), 1e-12)
+    query = np.zeros((1, 128), np.float32)
+    query[0, 0] = 1
+    target = np.zeros((2, 128), np.float32)
+    for row, angle in enumerate((0.05, 0.30)):
+        target[row, :2] = [np.cos(angle), np.sin(angle)]
+    counts = Counter()
+    selected = builder._directed(
+        np.array([[20.0, 20.0]]),
+        query,
+        np.array([[20.0, 60.0], [20.0, 20.0]]),
+        target,
+        f,
+        checkpoint=lambda: None,
+        counts=counts,
+    )
+    assert selected == {} and counts["global_descriptor_gate_passed_queries"] == 1
+    assert counts["epipolar_rejected_global_winners"] == 1
 
 
 def test_mutual_ratio_and_absolute_descriptor_distance_stay_strict():
@@ -106,7 +151,7 @@ def test_mutual_ratio_and_absolute_descriptor_distance_stay_strict():
     data[0][1][1][:, 127] = 1  # Every row has an exact tie and is far away.
     rows, report = run(data)
     assert not rows
-    assert report["matching"]["descriptor_rejected_queries"] > 0
+    assert report["matching"]["global_ratio_rejected_queries"] > 0
 
 
 def test_exact_reverse_refuses_a_forward_match_owned_by_a_closer_other_detection():
@@ -120,7 +165,7 @@ def test_exact_reverse_refuses_a_forward_match_owned_by_a_closer_other_detection
     assert report["matching"]["nonreciprocal_matches_rejected"] > 0
 
 
-def test_top_eight_is_bounded_and_does_not_search_unexamined_geometry_candidates():
+def test_global_two_is_bounded_and_does_not_search_unexamined_geometry_candidates():
     data = fixture()
     f = builder._fundamental(data[1][0], data[1][1], np.linalg.inv(data[2]), 1e-12)
     query = np.zeros((1, 128), np.float32)
@@ -133,8 +178,8 @@ def test_top_eight_is_bounded_and_does_not_search_unexamined_geometry_candidates
     selected = builder._directed(
         np.array([[20.0, 20.0]]), query, pixels_b, target, f, checkpoint=lambda: None, counts=counts
     )
-    assert not selected and counts["descriptor_proposals"] == 8
-    assert counts["epipolar_rejected_proposals"] == 8
+    assert not selected and counts["descriptor_proposals"] == 2
+    assert counts["epipolar_rejected_global_winners"] == 1
 
 
 def test_conflicting_triangle_is_deterministic_and_never_duplicates_an_image():
