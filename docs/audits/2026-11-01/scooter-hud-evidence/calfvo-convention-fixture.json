@@ -1,0 +1,18 @@
+{
+  "fixture": "passed",
+  "upstream_functions": "training_utils.py average_SE3 and recover_trajectory extracted unchanged via AST",
+  "relative_pose_formula": "inv(T_world_camera_i) @ T_world_camera_j",
+  "composition": "T_world_camera_j = T_world_camera_i @ T_i_j",
+  "colmap_cam_from_world": "R_cw = R_wc.T, t_cw = -R_cw @ t_wc",
+  "quaternion": "pycolmap XYZW converted to COLMAP text WXYZ and back",
+  "projection": "x=f X/Z+cx; y=f Y/Z+cy; positive Z; pycolmap agrees",
+  "fixture_max_pixel_error": 0.0,
+  "candidate_frames": 901,
+  "candidate_first_identity": true,
+  "candidate_tick_strict_increasing": true,
+  "max_candidate_vs_upstream_reaggregation_abs": 0.0,
+  "max_rotation_orthogonality_frobenius_error": 3.25050449211628e-05,
+  "rotation_determinant_min": 0.9999999239221324,
+  "rotation_determinant_max": 1.0000279765817628,
+  "limitations": "This proves algebra and adapter mechanics for a synthetic CV camera, not that model output axes match the game camera or that inferred poses are accurate. CROCO/DINO training includes heterogeneous datasets; no independently measured game-camera extrinsics. Intrinsics and mask are separate unresolved assumptions."
+}

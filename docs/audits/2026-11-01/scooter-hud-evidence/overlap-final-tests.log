@@ -1,0 +1,19 @@
+test_budget_and_priority_are_deterministic (test_route_overlap_sampling.OverlapSamplingTests.test_budget_and_priority_are_deterministic) ... ok
+test_cancellation_propagates (test_route_overlap_sampling.OverlapSamplingTests.test_cancellation_propagates) ... ok
+test_impossible_support_is_unresolved_at_adjacent_frames (test_route_overlap_sampling.OverlapSamplingTests.test_impossible_support_is_unresolved_at_adjacent_frames) ... ok
+test_invalid_inputs_do_not_get_silently_repaired (test_route_overlap_sampling.OverlapSamplingTests.test_invalid_inputs_do_not_get_silently_repaired) ... ok
+test_invalid_quotas_and_timestamps_fail_before_measurement (test_route_overlap_sampling.OverlapSamplingTests.test_invalid_quotas_and_timestamps_fail_before_measurement) ... ok
+test_measures_only_real_indices_and_preserves_endpoints (test_route_overlap_sampling.OverlapSamplingTests.test_measures_only_real_indices_and_preserves_endpoints) ... ok
+test_run_cancellation_precedes_source_access (test_route_overlap_sampling.OverlapSamplingTests.test_run_cancellation_precedes_source_access) ... ok
+test_run_refuses_before_reading_when_memory_is_low (test_route_overlap_sampling.OverlapSamplingTests.test_run_refuses_before_reading_when_memory_is_low) ... ok
+test_run_refuses_when_commit_headroom_is_low (test_route_overlap_sampling.OverlapSamplingTests.test_run_refuses_when_commit_headroom_is_low) ... ok
+test_actual_outlier_binding_selects_inner_real_frames (test_route_overlap_sampling.PoseGapPlanningTests.test_actual_outlier_binding_selects_inner_real_frames) ... ok
+test_adjacent_and_empty_flags_never_claim_repair (test_route_overlap_sampling.PoseGapPlanningTests.test_adjacent_and_empty_flags_never_claim_repair) ... ok
+test_budget_and_nonuniform_ticks_are_deterministic (test_route_overlap_sampling.PoseGapPlanningTests.test_budget_and_nonuniform_ticks_are_deterministic) ... ok
+test_image_names_are_not_interpreted_as_source_indices (test_route_overlap_sampling.PoseGapPlanningTests.test_image_names_are_not_interpreted_as_source_indices) ... ok
+test_invalid_binding_flags_indices_ticks_and_types_fail_closed (test_route_overlap_sampling.PoseGapPlanningTests.test_invalid_binding_flags_indices_ticks_and_types_fail_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.116s
+
+OK

@@ -1,0 +1,7 @@
+{
+  "source": ".local-pilot/scooter-local-mask-pad-20261101/contact-sheet.jpg",
+  "asset": "docs/audits/2026-11-01/assets/scooter-hud-mask-pad.jpg",
+  "sha256": "fbc2c9e703813b8df729363d88950fe8269b21e1a00582fc6c1c30c6aa2aea10",
+  "bytes": 587071,
+  "caption": "Original exclusion red, added 6px HUD shape margin yellow; uncovered mirrors remain unknown."
+}

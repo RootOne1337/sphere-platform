@@ -1,0 +1,214 @@
+{
+  "checked": [
+    {
+      "index": 0,
+      "seconds": 0.0,
+      "x": 292.4,
+      "y": 342.7,
+      "visual_region": "facade/window boundary",
+      "prior_allowed": false,
+      "candidate_excludes": false
+    },
+    {
+      "index": 0,
+      "seconds": 0.0,
+      "x": 1052.7,
+      "y": 518.6,
+      "visual_region": "distant street edge",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 0,
+      "seconds": 0.0,
+      "x": 1281.1,
+      "y": 523.0,
+      "visual_region": "distant street edge",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 102,
+      "seconds": 3.952,
+      "x": 795.1,
+      "y": 553.4,
+      "visual_region": "distant street edge",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 102,
+      "seconds": 3.952,
+      "x": 1460.5,
+      "y": 427.1,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 207,
+      "seconds": 7.977,
+      "x": 674.2,
+      "y": 554.6,
+      "visual_region": "distant curb/roadside",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 207,
+      "seconds": 7.977,
+      "x": 783.4,
+      "y": 552.8,
+      "visual_region": "distant road",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 207,
+      "seconds": 7.977,
+      "x": 1543.2,
+      "y": 340.1,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 311,
+      "seconds": 11.903,
+      "x": 826.8,
+      "y": 545.8,
+      "visual_region": "distant road edge",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 311,
+      "seconds": 11.903,
+      "x": 1340.3,
+      "y": 409.1,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 414,
+      "seconds": 15.85,
+      "x": 834.1,
+      "y": 530.9,
+      "visual_region": "distant road edge",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 414,
+      "seconds": 15.85,
+      "x": 1377.8,
+      "y": 540.6,
+      "visual_region": "curb/roadside",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 492,
+      "seconds": 19.639,
+      "x": 964.3,
+      "y": 587.9,
+      "visual_region": "curb",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 492,
+      "seconds": 19.639,
+      "x": 1403.8,
+      "y": 561.0,
+      "visual_region": "curb/roadside",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 590,
+      "seconds": 23.595,
+      "x": 903.5,
+      "y": 525.6,
+      "visual_region": "distant roadway",
+      "prior_allowed": true,
+      "candidate_excludes": true
+    },
+    {
+      "index": 590,
+      "seconds": 23.595,
+      "x": 1399.8,
+      "y": 430.3,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 700,
+      "seconds": 27.668,
+      "x": 1124.5,
+      "y": 631.8,
+      "visual_region": "road",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 700,
+      "seconds": 27.668,
+      "x": 1386.6,
+      "y": 392.4,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 801,
+      "seconds": 31.631,
+      "x": 1237.2,
+      "y": 691.2,
+      "visual_region": "curb",
+      "prior_allowed": false,
+      "candidate_excludes": false
+    },
+    {
+      "index": 801,
+      "seconds": 31.631,
+      "x": 1275.4,
+      "y": 409.6,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 900,
+      "seconds": 35.493,
+      "x": 672.0,
+      "y": 441.7,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 900,
+      "seconds": 35.493,
+      "x": 1163.8,
+      "y": 526.5,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    },
+    {
+      "index": 900,
+      "seconds": 35.493,
+      "x": 1411.6,
+      "y": 469.6,
+      "visual_region": "facade",
+      "prior_allowed": true,
+      "candidate_excludes": false
+    }
+  ],
+  "prior_allowed_count": 21,
+  "candidate_masked_count": 1,
+  "interpretation": "Manual qualitative screen labels only; point-centered test not a segmentation ground truth."
+}

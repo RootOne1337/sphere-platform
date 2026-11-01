@@ -1,0 +1,611 @@
+{
+  "ocr-receipt.json": {
+    "source": ".local-pilot/scooter-hud-20261101/ocr-receipted-step3.csv.receipt.json",
+    "source_sha256": "1bd66edf8580fbaedf012c7743cec7a1181ccabf7feba48b18c284488dad9ae7",
+    "versioned_sha256": "1bd66edf8580fbaedf012c7743cec7a1181ccabf7feba48b18c284488dad9ae7",
+    "bytes": 636
+  },
+  "camera-hud-consistency.json": {
+    "source": ".local-pilot/scooter-fusion-20261101/speed-consistency-step3.json",
+    "source_sha256": "2a037016336515206c4b2c00a215f0e6d8530de8c3bfdbef0886badb7e583eb6",
+    "versioned_sha256": "2a037016336515206c4b2c00a215f0e6d8530de8c3bfdbef0886badb7e583eb6",
+    "bytes": 80630
+  },
+  "rotation-audit.json": {
+    "source": ".local-pilot/scooter-yaw-20261101/report.json",
+    "source_sha256": "f0c9c670a67b32cb009df068a5734cd8df3fe12dbbd7c722f8df3d7c3ab37396",
+    "versioned_sha256": "20b7bfec694def091c240fa364870679a199ad82771bc7b346e481d2ab4dc011",
+    "bytes": 11338
+  },
+  "rotation-frame-binding.json": {
+    "source": ".local-pilot/scooter-yaw-20261101/binding.json",
+    "source_sha256": "ad84fafae7547a4b4b164c861b1eab1945fc6d44dca3210c0dc7612ed8677f11",
+    "versioned_sha256": "db0d405edf99d192c2f97e5cdb0e263cf3b15a7c5e1d2c9938066a2679c93b62",
+    "bytes": 41042
+  },
+  "intrinsics-comparison.json": {
+    "source": ".local-pilot/scooter-intrinsics-20261101/comparison.json",
+    "source_sha256": "ef8dfe087dcede0f7f279b8243c6faa170775a50cce81697760b8f130a6d019e",
+    "versioned_sha256": "ee14366a476500fa0afbcc3cc31ffe0067585fe316315c6d78058cc45eabc85d",
+    "bytes": 16212
+  },
+  "bidirectional-comparison.json": {
+    "source": ".local-pilot/scooter-intrinsics-20261101/bidirectional/comparison.json",
+    "source_sha256": "ecd0154693f7496f659324a7166a0f80bcd569567a6fe4ede32f7708233c4698",
+    "versioned_sha256": "4faa4f64ad5a98d54138fd440107e9822ddf0a7a7dd70a464a89cbca50fb73c2",
+    "bytes": 4661
+  },
+  "overlap-report.json": {
+    "source": ".local-pilot/scooter-overlap-20261101/report.json",
+    "source_sha256": "426994ca4cbd228870d60ae9eb4b9e0d45dc4549d95abdede180ce35cc19524d",
+    "versioned_sha256": "2eb51acfd40b846a478a3ba6347f89bb6153de02f5b2ae652e4c1d62640a284d",
+    "bytes": 127049
+  },
+  "denser-hud-comparison.json": {
+    "source": ".local-pilot/scooter-overlap-20261101/reconstruction/hud-comparison.json",
+    "source_sha256": "8b412d8994200fd11fd686563c02e69dc70c13466c24195a7695f9551dae9243",
+    "versioned_sha256": "e9d8b0ef053cbf867afa932e6eaf0f043014c3beb4ab80ff0e7dfc935631246b",
+    "bytes": 4459
+  },
+  "denser-model-report.json": {
+    "source": ".local-pilot/scooter-overlap-20261101/reconstruction/report.json",
+    "source_sha256": "569aee18b65628f375d092b654500bc0491433a5a38ba4270a11ca17f50b21fc",
+    "versioned_sha256": "221f683dc2c2a4c7f8f89eb14fbd8dc2f92ddba8826533e7936429fe03fbfe0c",
+    "bytes": 9853
+  },
+  "denser-common-view-audit.json": {
+    "source": ".local-pilot/scooter-overlap-20261101/reconstruction/common-view-audit.json",
+    "source_sha256": "5ee4dead0f16e465f4cbe959701c39f78ee2a6729a0d67e87e6b613b6a48eed5",
+    "versioned_sha256": "c57eb8276953f2a135e99d6f277be42d60b723f40ab9b0161dc69e1852da6343",
+    "bytes": 10322
+  },
+  "calfvo-research.json": {
+    "source": ".local-pilot/scooter-yaw-20261101/calfvo-research.json",
+    "source_sha256": "29a7deb149244ab8b77c6ef8d40f5414b7018ead985c893a81bac34dabc61726",
+    "versioned_sha256": "8f18396ae41cc9c4e78bb2af9f4c60d309e611b6f477d4322091fce194461a22",
+    "bytes": 6615
+  },
+  "calfvo-core-preflight.json": {
+    "source": ".local-pilot/scooter-yaw-20261101/calfvo-core-meta-preflight.json",
+    "source_sha256": "22676f3d673d7b18274ecec533141f7ec501347b4e1b501000387476faf4a19f",
+    "versioned_sha256": "6efcead9d830ee89dbd07aff46d8dd9cbf4a1684d302514406b96fc10ba93a18",
+    "bytes": 4119
+  },
+  "build.json": {
+    "source": ".local-pilot/scooter-hud-build-20261101-v3.json",
+    "source_sha256": "be22bc3f853426b8d6bd95d9ab926590c1d65c5f2b737618a187c489be380971",
+    "versioned_sha256": "e26627c1b302d60f035adc2dde94e722e07fd48f5bfc2d365088e126cc99a9c3",
+    "bytes": 646
+  },
+  "install.json": {
+    "source": ".local-pilot/scooter-hud-image-20261101-v2/install-receipt.json",
+    "source_sha256": "3c8367983351d9c18172408aa9a93a82a14f664e97f85a6e7419deaef0283437",
+    "versioned_sha256": "323e608f329e5c7f94acef3a02756ba66f22e2070624e38b6875e55de4edba3d",
+    "bytes": 703
+  },
+  "api-reload.json": {
+    "source": ".local-pilot/scooter-hud-20261101/runtime-reload.json",
+    "source_sha256": "011730c5b37b9b54ed91bebbdde41d75db2d01481fe3ec3d40f27d1962aa7755",
+    "versioned_sha256": "3f70bee9590ca47edaad6f7798e552b14d0cb864fef10166dc1b0c4ecf2df2cc",
+    "bytes": 330
+  },
+  "final-source-check.json": {
+    "source": ".local-pilot/scooter-hud-20261101/final-source-check.json",
+    "source_sha256": "78d323cab9d19b8f8793f2a06c66a43afebefaa2c1ca25000dd2fe9d94fcb359",
+    "versioned_sha256": "0cc5ec57a22e423844f1f93ec8635157a6efa16e17f47ecc4b826672475b0133",
+    "bytes": 1180
+  },
+  "backend-tests.json": {
+    "source": ".local-pilot/scooter-hud-20261101/backend-tests.json",
+    "source_sha256": "d2b72703ca56583897a19954cbbd8b45cd18cbacf6298686575ef68a0ebe568b",
+    "versioned_sha256": "ac851cee0e0de6fc4d0dbac7e8fee0879e4c3ebd47bd6dbe4069cfc3a3c3344b",
+    "bytes": 4135
+  },
+  "calfvo-stream-loader-receipt.json": {
+    "source": ".local-pilot/scooter-yaw-20261101/calfvo-stream-receipt.json",
+    "source_sha256": "fb61b9f8e0b276b0e6ec9b0413c20527bb91e56512cb18528b610a990987d016",
+    "versioned_sha256": "43b88b4d05fa1b59a46ba963821a96c41cad3cbe991c8977532f7a32aa3c7bfd",
+    "bytes": 4550
+  },
+  "calfvo-full-result.json": {
+    "source": ".local-pilot/scooter-calfvo-full-20261101/result.json",
+    "source_sha256": "c716ed0b0e03784309f35dcf6376a8a078a4a80796aa5e1fc7965eee635d3ea5",
+    "versioned_sha256": "2329ade978184f3b049f7c09d18e1792e20676fa39de3eafa0a1343b3a22f392",
+    "bytes": 1136
+  },
+  "calfvo-full-process.json": {
+    "source": ".local-pilot/scooter-calfvo-full-20261101/process-receipt.json",
+    "source_sha256": "88bd67edfc9f92b28d59796f07d8a219cb1ceeb7a2b1839b49a1a0b7ab84d1b4",
+    "versioned_sha256": "88bd67edfc9f92b28d59796f07d8a219cb1ceeb7a2b1839b49a1a0b7ab84d1b4",
+    "bytes": 1634
+  },
+  "calfvo-full-comparison.json": {
+    "source": ".local-pilot/scooter-calfvo-full-20261101/comparison.json",
+    "source_sha256": "3ccdfc84167456d46e766f037a2ae230769644eaf6be370d1b4f5ce399cfde01",
+    "versioned_sha256": "04c8f3494ebba94f625796b5680da5be0f209ffc966d0906b03de9423b55f116",
+    "bytes": 3445
+  },
+  "calfvo-triangulation-heldout.json": {
+    "source": ".local-pilot/scooter-calfvo-triangulation-20261101-normalized/common-heldout.json",
+    "source_sha256": "b4b59b9ceb805e00ab370d36ed3c7a2771d18d78e3f24f10af469c6a4957d804",
+    "versioned_sha256": "b56eb2f9a481b666ac5992ad85ec307703cdb0a9d84bf0f6658b58a5dab1e457",
+    "bytes": 1081
+  },
+  "recovery-tests.json": {
+    "source": ".local-pilot/reconstruction-recovery-receipt-20261101.json",
+    "source_sha256": "f9dc277c2831fa1f6f8c884e7aa057bcd138638e0f124bf5a516dadbe8114b21",
+    "versioned_sha256": "f9dc277c2831fa1f6f8c884e7aa057bcd138638e0f124bf5a516dadbe8114b21",
+    "bytes": 2272
+  },
+  "final-backend-tests.json": {
+    "source": ".local-pilot/scooter-hud-20261101/final-backend-tests.json",
+    "source_sha256": "280ee1bb252f007c191b185023c9c00afbf50261ad97bdda4d0fec68382758c8",
+    "versioned_sha256": "27a5a783ffda48ac9f539b0bb89e8703fd5e43ef2087a9af63a6df8b9fcfce38",
+    "bytes": 856
+  },
+  "final-build.json": {
+    "source": ".local-pilot/scooter-hud-build-20261101-v4.json",
+    "source_sha256": "d6f77368783c32e11e6e0c14930ac11f24fe90cfea7b560e4c1496e231871791",
+    "versioned_sha256": "f5a378aefec2d6fb48f94fc4a6d47cd924e77365e1ea91633f2638ca5ef57b82",
+    "bytes": 646
+  },
+  "final-install.json": {
+    "source": ".local-pilot/scooter-recovery-image-20261101/install-receipt.json",
+    "source_sha256": "2ae81b0e903e976e994fdc8819e64f245a9e52cd196d8be073812c981439761a",
+    "versioned_sha256": "35878dc1b51548363f80c0221edb4b1515303111cdc3fa6b2dfbaebc2004fe69",
+    "bytes": 703
+  },
+  "final-api-reload.json": {
+    "source": ".local-pilot/scooter-hud-20261101/runtime-reload-recovery.json",
+    "source_sha256": "dae63f69d178a7239737d4a0b81f78712de22a0e86e1141f03914000ded02f32",
+    "versioned_sha256": "8e43609fd3ce271cb6f9a8992c6b0b772212a837a84e9ef88a20ce547d1b2c3b",
+    "bytes": 389
+  },
+  "final-api-contract-check.json": {
+    "source": ".local-pilot/scooter-hud-20261101/runtime-contract-check.json",
+    "source_sha256": "42a5ab7271c41ca5f268c089790868fcf7774504c30fa79a06c8a1e08e88aa87",
+    "versioned_sha256": "0e29f6f192c896ecb78f19c68e317cdae7cc1810e0bc9bf6d93a97d26d7e83f0",
+    "bytes": 189
+  },
+  "mask-control-sky-summary.json": {
+    "source": ".local-pilot/scooter-control-ablation-20261101/summary.json",
+    "source_sha256": "5ff3c2347f30b556b63b540382f33cafec316fabab734d0be0dc8be4c4f6f317",
+    "additional_sources": [
+      {
+        "path": ".local-pilot/scooter-precise-hud-20261101/mask-report.json",
+        "sha256": "f01a1cba9da7a0fc32a74942fcb69c6efd08d2eec15e8eabad4274fd17c60c26"
+      },
+      {
+        "path": ".local-pilot/scooter-local-mask-20261101/report.json",
+        "sha256": "3f4449bbdcda90fff2337bcbd9ab018055aa03f1c88def400b5808ceb3236842"
+      },
+      {
+        "path": ".local-pilot/scooter-semantic-sky-20261101/report.json",
+        "sha256": "1e08439c487a4b8db0a6bbc5f6e57a6c446565775625de523f839f31f58cda3c"
+      },
+      {
+        "path": ".local-pilot/scooter-semantic-sky-20261101/spatial-audit.json",
+        "sha256": "0a6f469a9e73642a45264646db1a8d2fcbdb6222d8429c57bb68a6a4a2236088"
+      }
+    ],
+    "versioned_sha256": "b00675fd9f3cb94ce6e768537490f3a07edbe5adf35ee8bb4e2b82b2cdc55faf",
+    "bytes": 4338,
+    "derivation": "compact summary; original detailed receipts remain local"
+  },
+  "lightglue-memory-summary.json": {
+    "source": ".local-pilot/scooter-lightglue-memory-20261101/report.json",
+    "source_sha256": "a9b17e149c74243db2a42bafa3e4fd3678019e7780c732452b19bb8a2b1bca70",
+    "additional_sources": [
+      {
+        "path": ".local-pilot/scooter-precise-hud-20261101/reconstruction/receipt.json",
+        "sha256": "61456e2eb5b01fa69e2bb3a34e52fa2afb26bf0c36de6c5debce7052d1ab61b1"
+      },
+      {
+        "path": ".local-pilot/scooter-precise-hud-20261101/reconstruction/partial-feature-audit.json",
+        "sha256": "dc74670818055e104cade3ce96011cf5a5f7291a28e3a034eb9d7702cae9a02d"
+      },
+      {
+        "path": ".local-pilot/scooter-pair-stream-20261101/partial-audit.json",
+        "sha256": "4e91682c0cdd7767a2f87628286f94d6f7dbb3a816a2231d341e5df62a208705"
+      },
+      {
+        "path": ".local-pilot/scooter-stage-isolation-20261101/waiting-receipt.json",
+        "sha256": "c61ffbffe3ba2f93acc959fc237b5ad7d5cc64eee3f2f87bde65e76927750a06"
+      }
+    ],
+    "versioned_sha256": "b6125f297f3b0d7f1950e3e3b649c493b91da8a59bc8c22a9ae840cd5e579d1f",
+    "bytes": 3452,
+    "derivation": "compact summary; original detailed receipts remain local"
+  },
+  "final-backend-tests.log": {
+    "source": ".local-pilot/scooter-hud-20261101/final-backend-tests.log",
+    "source_sha256": "46f64ede848904d7ef7ab1011ef5676f284814521bb8e2e4e215d01b831fdf94",
+    "versioned_sha256": "46f64ede848904d7ef7ab1011ef5676f284814521bb8e2e4e215d01b831fdf94",
+    "bytes": 527
+  },
+  "frontend-hud-tests.log": {
+    "source": ".local-pilot/scooter-hud-20261101/frontend-tests.log",
+    "source_sha256": "8257fa193dadd6f66ece584b2544d9a3ed60ca954de3c4c4154e0f99e2a29678",
+    "versioned_sha256": "8257fa193dadd6f66ece584b2544d9a3ed60ca954de3c4c4154e0f99e2a29678",
+    "bytes": 1040
+  },
+  "stage1-feature-summary.json": {
+    "source": ".local-pilot/scooter-stage-isolation-20261101/stage1-receipt.json",
+    "source_sha256": "41bf4edafdb28c1d531ab4127f5cb1b045252a323aad292bdc0351ca694ff1cb",
+    "additional_sources": [
+      {
+        "path": ".local-pilot/scooter-stage-isolation-20261101/stage1-watchdog.json",
+        "sha256": "60a92f9abf1da1d7fa0b3e5af927fbb0a33007e545e4f3a8590a6c81dded5328"
+      }
+    ],
+    "versioned_sha256": "01f584bc70133078dee1f7b05c974669c346f5da8878b0373f743616c8e12a2e",
+    "bytes": 2836,
+    "derivation": "compact summary; detailed source receipts retained locally"
+  },
+  "stage1-watchdog.json": {
+    "source": ".local-pilot/scooter-stage-isolation-20261101/stage1-watchdog.json",
+    "source_sha256": "60a92f9abf1da1d7fa0b3e5af927fbb0a33007e545e4f3a8590a6c81dded5328",
+    "versioned_sha256": "60a92f9abf1da1d7fa0b3e5af927fbb0a33007e545e4f3a8590a6c81dded5328",
+    "bytes": 415
+  },
+  "stage2-complete.json": {
+    "source": ".local-pilot/scooter-stage-isolation-20261101/stage2-receipt.json",
+    "source_sha256": "fd37dd36ef86df526b3e77ea68a38f130b2ab4be70470063f06ea9ade7408f08",
+    "versioned_sha256": "fd37dd36ef86df526b3e77ea68a38f130b2ab4be70470063f06ea9ade7408f08",
+    "bytes": 2592
+  },
+  "stage2-watchdog.json": {
+    "source": ".local-pilot/scooter-stage-isolation-20261101/stage2-watchdog.json",
+    "source_sha256": "c0370f250c5b24b531910c26f2a982ac9daeb5f80c75f6316b00bc0068ed7a06",
+    "versioned_sha256": "c0370f250c5b24b531910c26f2a982ac9daeb5f80c75f6316b00bc0068ed7a06",
+    "bytes": 416
+  },
+  "graph-verification.json": {
+    "source": ".local-pilot/scooter-stage-verify-map-20261101/verification.json",
+    "source_sha256": "c91c024ae6b1b8d0bc2813bc3609e225fab1324f61f056c6b9f1990f7b01d046",
+    "versioned_sha256": "c91c024ae6b1b8d0bc2813bc3609e225fab1324f61f056c6b9f1990f7b01d046",
+    "bytes": 91
+  },
+  "incremental-timeout.json": {
+    "source": ".local-pilot/scooter-stage-verify-map-20261101/receipt.json",
+    "source_sha256": "2d751417d43011cfa2919f198be327a7aa9c8fe2084865eee62f30aea9ae1a9a",
+    "versioned_sha256": "2d751417d43011cfa2919f198be327a7aa9c8fe2084865eee62f30aea9ae1a9a",
+    "bytes": 276
+  },
+  "global-f960-report.json": {
+    "source": ".local-pilot/scooter-stage-global-20261101/report.json",
+    "source_sha256": "67245420286b83fc2ab8ac47d7c382bf2e620dd0e83798105fcb40d73f9d4ca9",
+    "versioned_sha256": "67245420286b83fc2ab8ac47d7c382bf2e620dd0e83798105fcb40d73f9d4ca9",
+    "bytes": 5413
+  },
+  "global-f960-receipt.json": {
+    "source": ".local-pilot/scooter-stage-global-20261101/receipt.json",
+    "source_sha256": "acf60864c28a068d27f110954cfca8832e99a7b1b77da51059424f3eb40baa8e",
+    "versioned_sha256": "acf60864c28a068d27f110954cfca8832e99a7b1b77da51059424f3eb40baa8e",
+    "bytes": 216
+  },
+  "global-f960-comparison.json": {
+    "source": ".local-pilot/scooter-stage-global-20261101/comparison.json",
+    "source_sha256": "5311ec6cf016382ae5a72bd874fc5e849f539605dbf6949f254e4746c587ed6c",
+    "versioned_sha256": "5311ec6cf016382ae5a72bd874fc5e849f539605dbf6949f254e4746c587ed6c",
+    "bytes": 9154
+  },
+  "global-f960-figure-receipt.json": {
+    "source": ".local-pilot/scooter-stage-global-20261101/figure-receipt.json",
+    "source_sha256": "54c58e3d2978464313d802a3cfe7c253e9848aa867ddbbd9378ee8820d0c45b1",
+    "versioned_sha256": "54c58e3d2978464313d802a3cfe7c253e9848aa867ddbbd9378ee8820d0c45b1",
+    "bytes": 1148
+  },
+  "global-f603-report.json": {
+    "source": ".local-pilot/scooter-stage-global-focal-20261101/report.json",
+    "source_sha256": "fba11e08ca0a0a9637f5cd4872af2eef5e9d5bbf26d81071b7f117862f7da3ec",
+    "versioned_sha256": "fba11e08ca0a0a9637f5cd4872af2eef5e9d5bbf26d81071b7f117862f7da3ec",
+    "bytes": 5226
+  },
+  "global-f603-receipt.json": {
+    "source": ".local-pilot/scooter-stage-global-focal-20261101/receipt.json",
+    "source_sha256": "84bd3e680e132060fc1cc7e75e244519b8925d9d98b58f2b09c97e76bfec39db",
+    "versioned_sha256": "84bd3e680e132060fc1cc7e75e244519b8925d9d98b58f2b09c97e76bfec39db",
+    "bytes": 204
+  },
+  "global-f603-comparison.json": {
+    "source": ".local-pilot/scooter-stage-global-focal-20261101/comparison-stage-global.json",
+    "source_sha256": "5f63d3cecef792ca1f1e0b719eec1a76fea314de0d2b50f5b9053decf25d049d",
+    "versioned_sha256": "5f63d3cecef792ca1f1e0b719eec1a76fea314de0d2b50f5b9053decf25d049d",
+    "bytes": 10225
+  },
+  "global-f603-figure-receipt.json": {
+    "source": ".local-pilot/scooter-stage-global-focal-20261101/figure-receipt.json",
+    "source_sha256": "e15ec56ebc35611f0d51bfcd10b8df65f9b87396c3894fbe0dc43caf262069ad",
+    "versioned_sha256": "e15ec56ebc35611f0d51bfcd10b8df65f9b87396c3894fbe0dc43caf262069ad",
+    "bytes": 1157
+  },
+  "global-f603-publish-receipt.json": {
+    "source": ".local-pilot/scooter-stage-global-focal-20261101/publish-receipt.json",
+    "source_sha256": "24b3497a98b6772527c1a23c8b3299cfc290056711d84a177c05cb5c6899cdb0",
+    "versioned_sha256": "24b3497a98b6772527c1a23c8b3299cfc290056711d84a177c05cb5c6899cdb0",
+    "bytes": 2643
+  },
+  "calfvo-convention-fixture.json": {
+    "source": ".local-pilot/scooter-calfvo-convention-audit-20261101/fixture.json",
+    "source_sha256": "8034bf163f13e7e1f1c585e0434d9567f4640e408491526f63c7ac5f2dc509a1",
+    "versioned_sha256": "8034bf163f13e7e1f1c585e0434d9567f4640e408491526f63c7ac5f2dc509a1",
+    "bytes": 1193
+  },
+  "parallax-audit.json": {
+    "source": ".local-pilot/scooter-parallax-audit-20261101/report.json",
+    "source_sha256": "0fb66d100e5e0f92bdd8749bf10ed42270a542eeebcd2d7e2926404c06b2ea73",
+    "versioned_sha256": "0fb66d100e5e0f92bdd8749bf10ed42270a542eeebcd2d7e2926404c06b2ea73",
+    "bytes": 7923
+  },
+  "mask-pad-report.json": {
+    "source": ".local-pilot/scooter-local-mask-pad-20261101/report.json",
+    "source_sha256": "af4162a04aa4bf6a02478afce8bfb78339ae4f735165b466abe8f20d7328e44e",
+    "versioned_sha256": "af4162a04aa4bf6a02478afce8bfb78339ae4f735165b466abe8f20d7328e44e",
+    "bytes": 6123
+  },
+  "mask-pad-receipt.json": {
+    "source": ".local-pilot/scooter-local-mask-pad-20261101/receipt.json",
+    "source_sha256": "40da530e3d92867761144c872458a1e3b2ffb80ce3608a85499fa02394ad171f",
+    "versioned_sha256": "40da530e3d92867761144c872458a1e3b2ffb80ce3608a85499fa02394ad171f",
+    "bytes": 1182
+  },
+  "dark-sky-report.json": {
+    "source": ".local-pilot/scooter-dark-sky-20261101/report.json",
+    "source_sha256": "d08b7ed9b43dbc0f6d15cece2d5278cff9227cefa677cb781d1a4c3c42088ee4",
+    "versioned_sha256": "d08b7ed9b43dbc0f6d15cece2d5278cff9227cefa677cb781d1a4c3c42088ee4",
+    "bytes": 5870
+  },
+  "dark-sky-landmark-check.json": {
+    "source": ".local-pilot/scooter-dark-sky-20261101/landmark-check.json",
+    "source_sha256": "31cd28c4f0ff27e2a8de5c0ec4a60abaa94d0306c10fc9c48b5909f1220c1f16",
+    "versioned_sha256": "31cd28c4f0ff27e2a8de5c0ec4a60abaa94d0306c10fc9c48b5909f1220c1f16",
+    "bytes": 4887
+  },
+  "frontend-combined-tests.log": {
+    "source": ".local-pilot/scooter-hud-20261101/frontend-combined-tests.log",
+    "source_sha256": "8eb6cb1b6cdff92de474debaa6ac23e1fe26b20682e223c1d30b1c7c33626e62",
+    "versioned_sha256": "8eb6cb1b6cdff92de474debaa6ac23e1fe26b20682e223c1d30b1c7c33626e62",
+    "bytes": 1153
+  },
+  "frontend-combined-tests-summary.json": {
+    "source": ".local-pilot/scooter-hud-20261101/frontend-combined-tests.json",
+    "source_sha256": "a2dd908a707448fa2f2fde5599a0eda3c29742a1ba13f57695dbc3656bbddd01",
+    "additional_sources": [
+      {
+        "path": ".local-pilot/scooter-hud-20261101/frontend-combined-tests.log",
+        "sha256": "8eb6cb1b6cdff92de474debaa6ac23e1fe26b20682e223c1d30b1c7c33626e62"
+      }
+    ],
+    "versioned_sha256": "90e889d2082bb81114c3f552aab8289a6a9d93f9b963c0dfe6023722daf406ed",
+    "bytes": 184,
+    "derivation": "compact summary; detailed source receipts retained locally"
+  },
+  "mask-pad-figure-receipt.json": {
+    "source": ".local-pilot/scooter-local-mask-pad-20261101/contact-sheet.jpg",
+    "source_sha256": "fbc2c9e703813b8df729363d88950fe8269b21e1a00582fc6c1c30c6aa2aea10",
+    "additional_sources": [],
+    "versioned_sha256": "c833e2165cf76cbc20b4296c696a9a0645fe8d3233197ac265f53a66f5fccad1",
+    "bytes": 365,
+    "derivation": "compact summary; detailed source receipts retained locally"
+  },
+  "skuter1-manifest-scan.json": {
+    "source": ".local-pilot/reconstruction-jobs/1198590c508340838befe8e1bbea7360/input/manifest.json",
+    "source_sha256": "d70864eee802ead1e7666ff31a047ee3a8fb567cfc8b0f6f4c000179807429a9",
+    "additional_sources": [
+      {
+        "path": ".local-pilot/reconstruction-jobs/24c36740539b4e1c8fc6c0ae12ecd7b4/input/manifest.json",
+        "sha256": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/35ef07fe96824ffc81bc0906cf08dd69/input/manifest.json",
+        "sha256": "d2f8df0458ab29783fd3c745e5c929e39063834287582ea4501146e7b621edb9"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/38f24ff879a341b7a508729c6a7d58b8/input/manifest.json",
+        "sha256": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/4fb278ec735145a5872cf7fd44d1ed9b/input/manifest.json",
+        "sha256": "ca28894d898bf88e7d9a8e7fe0639a1e0e3df49849f95abaa4c70bdb48a635b4"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/5f77587f2f7a464e862bb0b61d0d786b/input/manifest.json",
+        "sha256": "b4974cd56baef5ac1a8c780b43032796e96ec690fd152d4146e449d83df72cce"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/619ba4c5f4b54b8db88c330f29dc6cfc/input/manifest.json",
+        "sha256": "07bce887d9dff37b9572283f5eb375a40c2eb5dfef723e191f08bf81901ddcc3"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/input/manifest.json",
+        "sha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/b1b7e4dc0ee24e42be13e80293cf5bd8/input/manifest.json",
+        "sha256": "0f79e89fb520823b51cb3916b14ed17174fbc8f1e9af21687d72e0952e9a416e"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/b7bce94214db48e195dea1a2ac65faf2/input/manifest.json",
+        "sha256": "3310a3ed9edf439f5f8877ef396ba5819bff68de82b3cd82aea3fafc2863f96f"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/b861ac82fcd64425bc583b37f620ba2a/input/manifest.json",
+        "sha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/c667f86cc9de4a378fb12e5269981a6e/input/manifest.json",
+        "sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417"
+      },
+      {
+        "path": ".local-pilot/reconstruction-jobs/f7dc528660854681b4dc8fe257c7fa09/input/manifest.json",
+        "sha256": "6600429df8f21fb079ca3c5256efa986ea702c6df9a9be984cf2a764639f7cd0"
+      }
+    ],
+    "versioned_sha256": "5db96da811ef251f471a6b65317c971a2bb9794d3418ea5f75543e36e5465bbf",
+    "bytes": 2760,
+    "derivation": "compact summary; detailed source receipts retained locally"
+  },
+  "capture-source-inventory.json": {
+    "source": ".local-pilot/scooter-hud-20261101/capture-source-inventory.json",
+    "source_sha256": "0f9de582923224daaf500dd2e3e43d704cc7849576b94282e928904e4dd5b630",
+    "versioned_sha256": "0f9de582923224daaf500dd2e3e43d704cc7849576b94282e928904e4dd5b630",
+    "bytes": 670
+  },
+  "wsl-cache-reclaim.json": {
+    "source": ".local-pilot/scooter-stage-isolation-20261101/wsl-cache-reclaim.json",
+    "source_sha256": "d1d1e3f3836a807eee65dc3755a579f1faa5b8c88dbb8f02873912f73a5127dd",
+    "versioned_sha256": "d1d1e3f3836a807eee65dc3755a579f1faa5b8c88dbb8f02873912f73a5127dd",
+    "bytes": 7304
+  },
+  "jump-forensics.json": {
+    "source": ".local-pilot/scooter-jump-forensics-20261101/report.json",
+    "source_sha256": "d533b5be6713ff11f7616f4fcc2bdd409e0f5beb92984d770c759886e0184ab0",
+    "versioned_sha256": "d533b5be6713ff11f7616f4fcc2bdd409e0f5beb92984d770c759886e0184ab0",
+    "bytes": 18684
+  },
+  "jump-flow-comparison.json": {
+    "source": ".local-pilot/scooter-jump-forensics-20261101/flow-summary.json",
+    "source_sha256": "67002c90b8f49212d90f4cf2829938a24a8e9311084e85f9e74af4d6c56723d8",
+    "versioned_sha256": "67002c90b8f49212d90f4cf2829938a24a8e9311084e85f9e74af4d6c56723d8",
+    "bytes": 3791
+  },
+  "jump-adjacent.json": {
+    "source": ".local-pilot/scooter-jump-adjacent-20261101/report.json",
+    "source_sha256": "f8c0575d6c23fcb88f6e2dba7849a703ea2301ae08d319d0030dd6d10b0fa6d5",
+    "versioned_sha256": "f8c0575d6c23fcb88f6e2dba7849a703ea2301ae08d319d0030dd6d10b0fa6d5",
+    "bytes": 9115
+  },
+  "targeted-gap-report.json": {
+    "source": ".local-pilot/scooter-targeted-gap-20261101-v2/report.json",
+    "source_sha256": "240a53978f3e44a4e9ecbaf35121ccbb6062885ef9977e3289461fba451078eb",
+    "versioned_sha256": "240a53978f3e44a4e9ecbaf35121ccbb6062885ef9977e3289461fba451078eb",
+    "bytes": 5778
+  },
+  "targeted-gap-comparison.json": {
+    "source": ".local-pilot/scooter-targeted-gap-20261101-v2/comparison.json",
+    "source_sha256": "914c8d9de0f5bf1670fe6ed01ab8c31981b008a707c41e805dc1bb435943133d",
+    "versioned_sha256": "914c8d9de0f5bf1670fe6ed01ab8c31981b008a707c41e805dc1bb435943133d",
+    "bytes": 10549
+  },
+  "targeted-gap-local-comparison.json": {
+    "source": ".local-pilot/scooter-targeted-gap-20261101-v2/gap-comparison.json",
+    "source_sha256": "1c85c88f2468e0777253fcd32e88accd480959a864c635950f5ee0ea0192cc9b",
+    "versioned_sha256": "1c85c88f2468e0777253fcd32e88accd480959a864c635950f5ee0ea0192cc9b",
+    "bytes": 3516
+  },
+  "targeted-gap-graph-preservation.json": {
+    "source": ".local-pilot/scooter-targeted-gap-20261101-v2/graph-preservation.json",
+    "source_sha256": "eba49fc514c54fa1820f565e878b34e55a05c8155a0b141088f12a9f91ce3e22",
+    "versioned_sha256": "eba49fc514c54fa1820f565e878b34e55a05c8155a0b141088f12a9f91ce3e22",
+    "bytes": 302
+  },
+  "targeted-gap-receipt.json": {
+    "source": ".local-pilot/scooter-targeted-gap-20261101-v2/receipt.json",
+    "source_sha256": "a5954c126d8aab207191bcf40d2ed9d45c765fa9801c2913a1d17988307b72c2",
+    "versioned_sha256": "a5954c126d8aab207191bcf40d2ed9d45c765fa9801c2913a1d17988307b72c2",
+    "bytes": 577
+  },
+  "targeted-gap-prepare-receipt.json": {
+    "source": ".local-pilot/scooter-targeted-gap-20261101-v2/prepare-receipt.json",
+    "source_sha256": "5d155a764ed020a0ebf6b1ff3a9332b316fbe9e4ef7d1d2d3aa3958018526c05",
+    "versioned_sha256": "5d155a764ed020a0ebf6b1ff3a9332b316fbe9e4ef7d1d2d3aa3958018526c05",
+    "bytes": 1380
+  },
+  "targeted-gap-match-receipt.json": {
+    "source": ".local-pilot/scooter-targeted-gap-20261101-v2/match-receipt.json",
+    "source_sha256": "a095916334562f38f949ba1d6c388816469f9e67e11d1325dd41188ff7900d26",
+    "versioned_sha256": "a095916334562f38f949ba1d6c388816469f9e67e11d1325dd41188ff7900d26",
+    "bytes": 4877
+  },
+  "targeted-gap-figure-receipt.json": {
+    "source": ".local-pilot/scooter-targeted-gap-20261101-v2/figure-receipt.json",
+    "source_sha256": "95cfcb8468a84ebc68778ae87fc69eceaa37df233f4c506df356b0ad232d0d53",
+    "versioned_sha256": "95cfcb8468a84ebc68778ae87fc69eceaa37df233f4c506df356b0ad232d0d53",
+    "bytes": 1153
+  },
+  "auto-gap-plan.json": {
+    "source": ".local-pilot/scooter-hud-20261101/auto-gap-plan.json",
+    "source_sha256": "c5e159d23df82f5086cabcda2910fb9400200d3eebddbca22b1fda40f3655525",
+    "versioned_sha256": "c5e159d23df82f5086cabcda2910fb9400200d3eebddbca22b1fda40f3655525",
+    "bytes": 3103
+  },
+  "overlap-final-tests.json": {
+    "source": ".local-pilot/scooter-hud-20261101/overlap-final-tests.json",
+    "source_sha256": "84809bf114a6aceff03e45a0de814fa307ca26a0904a5e03e65360d62113378e",
+    "versioned_sha256": "84809bf114a6aceff03e45a0de814fa307ca26a0904a5e03e65360d62113378e",
+    "bytes": 451
+  },
+  "overlap-final-tests.log": {
+    "source": ".local-pilot/scooter-hud-20261101/overlap-final-tests.log",
+    "source_sha256": "440e7a239ca235313efe7ef2fc972a6078b4b32a550e369aca51cdf194509264",
+    "versioned_sha256": "440e7a239ca235313efe7ef2fc972a6078b4b32a550e369aca51cdf194509264",
+    "bytes": 2342
+  },
+  "calfvo-reverse-comparison.json": {
+    "source": ".local-pilot/scooter-calfvo-reverse-20261101/comparison.json",
+    "source_sha256": "813a02a28049b8c42d695abf8c4ab923807d8fc2e5f6079431f37267d53ade18",
+    "versioned_sha256": "813a02a28049b8c42d695abf8c4ab923807d8fc2e5f6079431f37267d53ade18",
+    "bytes": 3111
+  },
+  "calfvo-reverse-result.json": {
+    "source": ".local-pilot/scooter-calfvo-reverse-20261101/result.json",
+    "source_sha256": "358ef8adef1af5c791a9f76c16a583791928e738c06ebe8fcebd0b5b4691e530",
+    "versioned_sha256": "358ef8adef1af5c791a9f76c16a583791928e738c06ebe8fcebd0b5b4691e530",
+    "bytes": 1424
+  },
+  "calfvo-reverse-process.json": {
+    "source": ".local-pilot/scooter-calfvo-reverse-20261101/process-receipt.json",
+    "source_sha256": "d850d2c097e9fbb5540bfb131e05a73a77b1f82b0aad9bf850e25b72ce5d0035",
+    "versioned_sha256": "d850d2c097e9fbb5540bfb131e05a73a77b1f82b0aad9bf850e25b72ce5d0035",
+    "bytes": 348
+  },
+  "calfvo-reverse-input-before.json": {
+    "source": ".local-pilot/scooter-calfvo-reverse-20261101/input-hash-before.json",
+    "source_sha256": "98832aa9664ae88af71aba965b970fb4d438557503b6197a0aec29d7c508619b",
+    "versioned_sha256": "98832aa9664ae88af71aba965b970fb4d438557503b6197a0aec29d7c508619b",
+    "bytes": 623
+  },
+  "calfvo-reverse-input-after.json": {
+    "source": ".local-pilot/scooter-calfvo-reverse-20261101/input-hash-after.json",
+    "source_sha256": "98832aa9664ae88af71aba965b970fb4d438557503b6197a0aec29d7c508619b",
+    "versioned_sha256": "98832aa9664ae88af71aba965b970fb4d438557503b6197a0aec29d7c508619b",
+    "bytes": 623
+  },
+  "hud-heading-report.json": {
+    "source": ".local-pilot/scooter-hud-heading-20261101/report.json",
+    "source_sha256": "0a7c5e7135eb5510e7ce34f434d4bf4df612eff2177df48a39fb47b8ddf6cece",
+    "versioned_sha256": "0a7c5e7135eb5510e7ce34f434d4bf4df612eff2177df48a39fb47b8ddf6cece",
+    "bytes": 1736
+  },
+  "hud-heading-receipt.json": {
+    "source": ".local-pilot/scooter-hud-heading-20261101/receipt.json",
+    "source_sha256": "980c1ed1e02185316bcbf3c47b649ebf21714d4011bcb3ceb2050e6d6bd2ec84",
+    "versioned_sha256": "980c1ed1e02185316bcbf3c47b649ebf21714d4011bcb3ceb2050e6d6bd2ec84",
+    "bytes": 1994
+  },
+  "hud-heading-intervals.json": {
+    "source": ".local-pilot/scooter-hud-heading-20261101/intervals.json",
+    "source_sha256": "d27d7ccbf51dcb6180cace0988878de060e9a1a5900524e0c664319c22cbbc69",
+    "versioned_sha256": "d27d7ccbf51dcb6180cace0988878de060e9a1a5900524e0c664319c22cbbc69",
+    "bytes": 91961
+  },
+  "hud-heading-segments.json": {
+    "source": ".local-pilot/scooter-hud-heading-20261101/segments.json",
+    "source_sha256": "cefc3c431a51b1e7b210b094bb0b82794bee2926d0be225e8c411507095d26e7",
+    "versioned_sha256": "cefc3c431a51b1e7b210b094bb0b82794bee2926d0be225e8c411507095d26e7",
+    "bytes": 23491
+  },
+  "hud-headings.csv": {
+    "source": ".local-pilot/scooter-hud-heading-20261101/headings.csv",
+    "source_sha256": "bd5f0cac4a656bf9e12572876105f68a9773daa09597bb00d48351ee4db7b236",
+    "versioned_sha256": "bd5f0cac4a656bf9e12572876105f68a9773daa09597bb00d48351ee4db7b236",
+    "bytes": 63050
+  },
+  "hud-heading-figure-receipt.json": {
+    "source": ".local-pilot/scooter-hud-heading-20261101/figure-receipt.json",
+    "source_sha256": "5e8c1f331d45f8b34e2e2f3151725ba217f9354619838db8df8bad6d6d3b65e1",
+    "versioned_sha256": "5e8c1f331d45f8b34e2e2f3151725ba217f9354619838db8df8bad6d6d3b65e1",
+    "bytes": 687
+  }
+}

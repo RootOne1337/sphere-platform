@@ -1,0 +1,126 @@
+{
+  "date": "2026-11-01",
+  "scope": "diagnostic_same_video_not_ground_truth",
+  "control": {
+    "views": 123,
+    "points": 22014,
+    "mean_reprojection_px": 0.9686237089418779,
+    "feature_cap": 4096,
+    "raw_pairs": 596,
+    "mask": "bottom_22_percent",
+    "source_summary": {
+      "control": {
+        "gray_median_of_means": 120.64532262731481,
+        "gray_median_of_medians": 122.0,
+        "variants": {
+          "control_original": {
+            "excluded": 0.22037037037037038,
+            "median_candidates": 6021.5,
+            "median_laplacian_var": 384.91250353043336,
+            "median_allowed_brightness": 120.43318982581155,
+            "1024": 1024.0,
+            "4096": 4096.0,
+            "occupancy1024": 11.0,
+            "occupancy4096": 12.0,
+            "maxshare1024": 0.31494140625,
+            "maxshare4096": 0.205078125
+          },
+          "game_generic": {
+            "excluded": 0.6350766782407408,
+            "median_candidates": 3434.5,
+            "median_laplacian_var": 529.31668311348,
+            "median_allowed_brightness": 115.00251352905029,
+            "1024": 1024.0,
+            "4096": 3434.5,
+            "occupancy1024": 10.0,
+            "occupancy4096": 11.0,
+            "maxshare1024": 0.29248046875,
+            "maxshare4096": 0.21735170102762308
+          },
+          "vehicle": {
+            "excluded": 0.7021759259259259,
+            "median_candidates": 3036.0,
+            "median_laplacian_var": 622.9730330568934,
+            "median_allowed_brightness": 121.13428237862065,
+            "1024": 1024.0,
+            "4096": 3036.0,
+            "occupancy1024": 10.0,
+            "occupancy4096": 11.0,
+            "maxshare1024": 0.3447265625,
+            "maxshare4096": 0.32669800637054097
+          },
+          "none": {
+            "excluded": 0.0,
+            "median_candidates": 8192.0,
+            "median_laplacian_var": 401.6254557936888,
+            "median_allowed_brightness": 120.64532262731481,
+            "1024": 1024.0,
+            "4096": 4096.0,
+            "occupancy1024": 12.0,
+            "occupancy4096": 12.0,
+            "maxshare1024": 0.29150390625,
+            "maxshare4096": 0.19384765625
+          }
+        }
+      },
+      "scooter": {
+        "gray_median_of_means": 58.88642578125,
+        "gray_median_of_medians": 58.0,
+        "variants": {
+          "game_generic": {
+            "excluded": 0.6350766782407408,
+            "median_candidates": 2813.5,
+            "median_laplacian_var": 476.78474139202723,
+            "median_allowed_brightness": 57.343505064721384,
+            "1024": 1024.0,
+            "4096": 2813.5,
+            "occupancy1024": 11.0,
+            "occupancy4096": 11.0,
+            "maxshare1024": 0.2236328125,
+            "maxshare4096": 0.23010179488174176
+          },
+          "vehicle": {
+            "excluded": 0.7021759259259259,
+            "median_candidates": 2132.0,
+            "median_laplacian_var": 205.94682467792472,
+            "median_allowed_brightness": 55.57492778123219,
+            "1024": 1024.0,
+            "4096": 2132.0,
+            "occupancy1024": 10.0,
+            "occupancy4096": 11.0,
+            "maxshare1024": 0.37744140625,
+            "maxshare4096": 0.36325256894831515
+          }
+        }
+      }
+    }
+  },
+  "mask": {
+    "baseline_excluded_fraction": 0.7021759259259259,
+    "coarse_excluded_fraction": 0.5195833333333333,
+    "local_excluded_median": 0.24021412037037038,
+    "local_all_foreground_unknown": true,
+    "sampled_frames": 10,
+    "note": "Local shape mask leaves visible mirrors uncovered; rejected for matching."
+  },
+  "semantic_sky": {
+    "model_revision": "489d5cd81a0b59fab9b7ea758d3548ebe99677da",
+    "sampled_frames": 10,
+    "threshold": 0.9,
+    "argmax_sky_fraction_range": [
+      0.0,
+      0.16184172453703705
+    ],
+    "highconf_sky_fraction_range": [
+      0.0,
+      0.004600694444444445
+    ],
+    "zero_highconf_frames": 6,
+    "sift_detected_before": 35641,
+    "sift_detected_after": 35633,
+    "lower_half_newly_excluded_pixels": 0,
+    "accepted": false,
+    "source_unchanged": true,
+    "note": "SegFormer threshold result is not ground-truth semantic annotation."
+  }
+}

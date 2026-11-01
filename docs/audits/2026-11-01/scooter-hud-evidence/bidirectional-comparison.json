@@ -1,0 +1,147 @@
+{
+  "note": "descriptive within the shared input; seed is not temporal traversal control or independent ground truth; no interpolation",
+  "components": {
+    "early": {
+      "registered": 71,
+      "coverage": {
+        "first_seconds": 3.318,
+        "last_seconds": 18.771,
+        "missing_start_seconds": 3.318,
+        "missing_end_seconds": 16.722,
+        "max_observed_gap_seconds": 0.266,
+        "endpoints_observed": false,
+        "all_intervals_observed": true,
+        "endpoint_limit_seconds": 1.0,
+        "interval_limit_seconds": 1.0
+      },
+      "points": 4229,
+      "reprojection_px": 1.2058919329581315,
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 71,
+        "first_seconds": 3.318,
+        "last_seconds": 18.771,
+        "path_units": 24.651955808003592,
+        "endpoint_displacement_units": 7.778866682193572,
+        "median_step_units": 0.22748444780866492,
+        "max_step_units": 1.5308675630140998,
+        "rapid_reversals": [
+          {
+            "view": 15,
+            "image": "00000166.png",
+            "seconds": 6.449
+          },
+          {
+            "view": 32,
+            "image": "00000263.png",
+            "seconds": 10.159
+          },
+          {
+            "view": 33,
+            "image": "00000269.png",
+            "seconds": 10.407
+          },
+          {
+            "view": 34,
+            "image": "00000275.png",
+            "seconds": 10.607
+          },
+          {
+            "view": 35,
+            "image": "00000280.png",
+            "seconds": 10.823
+          },
+          {
+            "view": 36,
+            "image": "00000287.png",
+            "seconds": 11.055
+          },
+          {
+            "view": 37,
+            "image": "00000293.png",
+            "seconds": 11.255
+          },
+          {
+            "view": 38,
+            "image": "00000300.png",
+            "seconds": 11.487
+          }
+        ],
+        "median_rate_units_per_second": 1.0448010792757723,
+        "speed_outliers": [],
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "conditioning": {
+        "near_camera_points": 2,
+        "near_camera_fraction": 0.0004729250413809411,
+        "camera_span_units": 12.45187737680261,
+        "passed": true
+      },
+      "eligible_hud_intervals": 60,
+      "hud_ratio_p90_p10": 27.46748047392889,
+      "interval_count": 70
+    },
+    "late": {
+      "registered": 70,
+      "coverage": {
+        "first_seconds": 20.271,
+        "last_seconds": 35.242,
+        "missing_start_seconds": 20.271,
+        "missing_end_seconds": 0.2510000000000048,
+        "max_observed_gap_seconds": 0.2510000000000012,
+        "endpoints_observed": false,
+        "all_intervals_observed": true,
+        "endpoint_limit_seconds": 1.0,
+        "interval_limit_seconds": 1.0
+      },
+      "points": 3474,
+      "reprojection_px": 0.801310826370462,
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 70,
+        "first_seconds": 20.271,
+        "last_seconds": 35.242,
+        "path_units": 11.487214386841295,
+        "endpoint_displacement_units": 10.615629155973714,
+        "median_step_units": 0.17489755343911145,
+        "max_step_units": 0.42468069235269656,
+        "rapid_reversals": [
+          {
+            "view": 37,
+            "image": "00000713.png",
+            "seconds": 28.134
+          },
+          {
+            "view": 38,
+            "image": "00000718.png",
+            "seconds": 28.351
+          }
+        ],
+        "median_rate_units_per_second": 0.8117607999638293,
+        "speed_outliers": [],
+        "warning": null,
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 10.617206278087753,
+        "passed": true
+      },
+      "eligible_hud_intervals": 51,
+      "hud_ratio_p90_p10": 1.3195086255767499,
+      "interval_count": 69
+    }
+  },
+  "overlap": {
+    "shared_cameras": 0,
+    "sim3": "unavailable: fewer than 3 common cameras"
+  }
+}
