@@ -1,7 +1,8 @@
 import {act,fireEvent,render,screen,waitFor} from '@testing-library/react';
-import {WalkingRoutePilot} from '@/src/features/stream/WalkingRoutePilot';
+import {WalkingRoutePilot,VehicleRoutePilot} from '@/src/features/stream/WalkingRoutePilot';
 import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
 import type {WalkInputLease} from '@/src/features/stream/walkPilot';
+import type {VehicleInputLease,VehiclePlan} from '@/src/features/stream/vehiclePilot';
 import {TeachingContacts,type TeachingInput} from '@/src/features/stream/teachingContacts';
 import {saveRouteDebugReport} from '@/src/features/stream/routeDebugStorage';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
@@ -33,6 +34,152 @@ afterEach(()=>jest.restoreAllMocks());
 const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding} assetsReady input={{issue:null,open}} observerBusy={false} onBusyChange={busy} {...extra}/>);
 function fresh(){act(()=>frames.shift()!(performance.now(),{} as VideoFrameCallbackMetadata));}
 function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить проход'}));}
+
+function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(value:Record<string,unknown>)=>Record<string,unknown>;assetsReady?:boolean}={}){
+  const vehicleLease:VehicleInputLease={...lease,setVehicle:jest.fn(),neutral:jest.fn(),drag2:jest.fn(async()=>true)};
+  const vehicleOpen=jest.fn(async()=>vehicleLease),starts:Record<string,unknown>[]=[];
+  let id='',cap=15,duration=300;
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(path,j,init)=>{
+    if(path.endsWith('/vehicle-start')){
+      const body=JSON.parse(String(init?.body));starts.push(body);id=body.id;cap=body.maxSpeedKmh;duration=body.maxSeconds;
+      const value={phase:'observing',id,job:job.id,physicalActions:0,mode:'vehicle_camera_trace_v1',maxSeconds:duration,startMode:body.startMode,
+        cameraFollowsBodyConfirmed:true,hudProfile:body.hudProfile,clientVersion:'vehicle_live_v1',
+        cameraTracking:true,cameraControl:'continuous_drag_v1',motionProtocol:'applied_vehicle_v1',maxSpeedKmh:cap};
+      return {json:async()=>options.start?options.start(value):value} as Response;
+    }
+    const response=await original(path,j,init);
+    if(!path.endsWith('/observe'))return response;
+    const value=await response.json();delete value.walk;value.id=id;
+    const plan:VehiclePlan={schema:'sphere-vehicle-plan-v1',phase:'following',reason:'vehicle_camera_relative_pursuit',
+      pedal:'throttle',steering:.2,progressFraction:.4,maxSteering:.35,maxSpeedKmh:cap,maxSeconds:duration,maxDecisionAgeMs:450,maxAnswerHoldMs:350,
+      groundRoute:false,executionQualified:false,cameraBodyAssumption:true,targetSpeedKmh:Math.min(cap,12),observedSpeedKmh:10,
+      speedAccepted:true,targetViewCamera:null};
+    value.vehicle=options.plan?options.plan(plan):plan;
+    return {json:async()=>value} as Response;
+  });
+  const rendered=render(<VehicleRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding}
+    assetsReady={options.assetsReady!==false} preparationIssue="Основная обработка остановлена: resource_guard. Диагностическая схема не заменяет ориентиры."
+    input={{issue:null,hudProfile:'black_russia_scooter_v1',open:vehicleOpen}} observerBusy={false} onBusyChange={busy}/>);
+  const startVehicle=()=>{fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));fireEvent.click(screen.getByRole('button',{name:'Запустить транспорт'}));};
+  return {vehicleLease,vehicleOpen,starts,startVehicle,...rendered};
+}
+
+test('vehicle mode uses a separate opt-in contract, capped speed and held pedal while fixed camera never drags',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);const f=vehicleFixture();f.startVehicle();
+  await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledWith({pedal:'throttle',steering:.2}));
+  expect(f.starts[0]).toMatchObject({clientVersion:'vehicle_live_v1',cameraFollowsBodyConfirmed:true,vehicleCameraAssumptionConfirmed:true,
+    hudProfile:'black_russia_scooter_v1',maxSpeedKmh:15,startMode:'recognized_route',cameraTracking:true});
+  expect(f.vehicleLease.set).not.toHaveBeenCalled();expect(f.vehicleLease.drag2).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Скорость транспорта по последнему ответу')).toHaveTextContent('10 км/ч');
+  expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path.endsWith('/walk-start'))).toBe(false);
+  fireEvent.click(screen.getByRole('button',{name:'Стоп транспорта · Esc'}));await screen.findByText('Освобождение: CLOSED');
+});
+
+test('the actual failed-source shape cannot promote diagnostic173 into a vehicle input lease',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);const f=vehicleFixture({assetsReady:false});fresh();
+  fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
+  expect(screen.getByText(/Диагностическая схема не заменяет ориентиры/)).toBeInTheDocument();
+  expect(f.vehicleOpen).not.toHaveBeenCalled();expect(f.starts).toHaveLength(0);
+});
+
+test('an unknown speed is coast with zero steering and visibly unknown, never synthesized zero kmh',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const f=vehicleFixture({plan:p=>({...p,phase:'waiting',reason:'vehicle_speed_unknown',pedal:'coast',steering:0,
+    observedSpeedKmh:null,targetSpeedKmh:null,speedAccepted:false})});f.startVehicle();
+  await waitFor(()=>expect(f.vehicleLease.neutral).toHaveBeenCalled());expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Скорость транспорта по последнему ответу')).toHaveTextContent('не подтверждён');
+  expect(screen.getByLabelText('Скорость транспорта по последнему ответу')).not.toHaveTextContent('0 км/ч');
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
+test('a service changing the requested speed cap is rejected before Android input opens',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const f=vehicleFixture({start:s=>({...s,maxSpeedKmh:30})});f.startVehicle();
+  await screen.findByText('Освобождение: CLOSED');expect(f.vehicleOpen).not.toHaveBeenCalled();
+  expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();
+});
+test('a vehicle start with another job or unconfirmed camera-body assumption cannot open input',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const f=vehicleFixture({start:s=>({...s,job:'f'.repeat(32),cameraFollowsBodyConfirmed:false})});f.startVehicle();
+  await screen.findByText('Освобождение: CLOSED');expect(f.vehicleOpen).not.toHaveBeenCalled();
+});
+
+test('a vehicle plan exceeding its negotiated cap cannot acquire movement authority',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const f=vehicleFixture({plan:p=>({...p,targetSpeedKmh:16})});f.startVehicle();
+  await screen.findByText('Освобождение: CLOSED');expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();
+  expect(f.vehicleLease.close).toHaveBeenCalled();
+});
+
+test('changing a vehicle speed cap revokes the previous physical-scene confirmation',()=>{
+  const f=vehicleFixture();fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeEnabled();
+  fireEvent.change(screen.getByLabelText('Предел скорости транспорта'),{target:{value:'5'}});
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
+  expect(f.vehicleOpen).not.toHaveBeenCalled();
+});
+test('a30minute vehicle budget is explicit and changing it revokes consent',async()=>{
+  const f=vehicleFixture();fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));
+  fireEvent.change(screen.getByLabelText('Предел времени транспорта'),{target:{value:'1800'}});
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));fireEvent.click(screen.getByRole('button',{name:'Запустить транспорт'}));
+  await waitFor(()=>expect(f.vehicleOpen).toHaveBeenCalled());expect(f.starts[0].maxSeconds).toBe(1800);
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
+test('changing calibrated vehicle controls revokes the previous confirmation',()=>{
+  const f=vehicleFixture();fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeEnabled();
+  f.rerender(<VehicleRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding} assetsReady
+    input={{issue:null,hudProfile:'black_russia_scooter_v1',revision:'different-pedals',open:f.vehicleOpen}} observerBusy={false} onBusyChange={busy}/>);
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
+  expect(f.vehicleOpen).not.toHaveBeenCalled();
+});
+
+test('an explicit mid-route vehicle restart uses a new session and reacquires current position after confirmed closure',async()=>{
+  let now=1000,count=0;jest.spyOn(performance,'now').mockImplementation(()=>now);
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=>`${(++count===1?'c':'d').repeat(32)}`});
+  const f=vehicleFixture();f.startVehicle();await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalled());
+  fireEvent.click(screen.getByRole('button',{name:'Стоп транспорта · Esc'}));await screen.findByText('Освобождение: CLOSED');
+  now=1100;fresh();fireEvent.click(screen.getByRole('button',{name:'Запустить транспорт'}));
+  await waitFor(()=>expect(f.vehicleOpen).toHaveBeenCalledTimes(2));
+  expect(f.starts[0].id).not.toBe(f.starts[1].id);expect(f.starts[1].startMode).toBe('recognized_route');
+  expect(f.starts[1].maxSpeedKmh).toBe(15);
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
+test('unknown release fences vehicle restart even when the map and stream stay ready',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);const f=vehicleFixture();f.vehicleLease.close=jest.fn(async()=>false);f.startVehicle();
+  await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalled());
+  fireEvent.click(screen.getByRole('button',{name:'Стоп транспорта · Esc'}));await screen.findByText('Освобождение: UNKNOWN');
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();expect(f.vehicleOpen).toHaveBeenCalledTimes(1);
+});
+
+test('vehicle held decisions bridge5Hz corrections with150ms compute, then neutralize after450ms despite fresh video',async()=>{
+  jest.useFakeTimers();let now=1000;jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const f=vehicleFixture(),original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  let observations=0;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);
+    if(!args[0].endsWith('/observe'))return response;
+    if(++observations>=4)return new Promise<Response>(()=>{});
+    const value=await response.json();value.computeMs=150;
+    await new Promise(resolve=>setTimeout(resolve,200)); //150ms compute +50ms transport.
+    return {json:async()=>value} as Response;
+  });
+  try{
+    f.startVehicle();await act(async()=>{await Promise.resolve();});
+    for(let i=0;i<13;i++){now+=50;await act(async()=>{await jest.advanceTimersByTimeAsync(50);});fresh();}
+    expect(f.vehicleLease.setVehicle).toHaveBeenCalledTimes(3);
+    expect(f.vehicleLease.neutral).not.toHaveBeenCalled();
+    for(let i=0;i<11;i++){now+=50;await act(async()=>{await jest.advanceTimersByTimeAsync(50);});fresh();}
+    expect(f.vehicleLease.neutral).toHaveBeenCalled();
+    expect(f.vehicleLease.close).not.toHaveBeenCalled();
+    fireEvent.keyDown(window,{code:'Escape'});await act(async()=>{await Promise.resolve();});
+  }finally{f.unmount();jest.useRealTimers();}
+});
 
 test('focusing the visible emulator does not terminate autonomous input or claim operator stop',async()=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);

@@ -41,6 +41,11 @@ class WalkFrameArchive:
             poseState=pose.state,poseReason=pose.reason,inliers=pose.inliers,center=pose.center,rotation=pose.rotation,
             segment=pose.segment,method=method,computeMs=compute_ms,
             plan=None if plan is None else {k:plan.get(k) for k in ('phase','reason','stick','progressFraction','motionActive','motionSeconds')})
+        if plan is not None and plan.get('schema') == 'sphere-vehicle-plan-v1':
+            row['plan'] = {key: plan.get(key) for key in (
+                'schema', 'phase', 'reason', 'pedal', 'steering', 'progressFraction',
+                'motionActive', 'motionSeconds', 'targetSpeedKmh', 'observedSpeedKmh',
+                'speedAccepted', 'maxSpeedKmh', 'targetViewCamera', 'maxDecisionAgeMs', 'maxAnswerHoldMs')}
         self.rows.append((raw,row));self.bytes+=len(raw)
         while len(self.rows)>self.MAX_FRAMES or self.bytes>self.MAX_BYTES-64*1024:
             self.bytes-=len(self.rows.pop(0)[0])

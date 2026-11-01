@@ -19,6 +19,7 @@ import type {ReconstructionJob} from './reconstructionClient';
 import type {RouteSource} from './routeSource';
 import {applyWalkingStick,WalkStickSlew,walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget,type WalkInputLease} from './walkPilot';
 import {defaultWalkingProfile,blackRussiaScooterProfile,loadTeachingProfile,saveTeachingProfile,teachingProfileKey} from './teachingProfileStorage';
+import {VehicleContacts,vehicleCalibrationIssue,vehicleCameraIssue,vehicleSteeringTarget,type VehicleInputLease} from './vehiclePilot';
 
 type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'piloting' | 'arming' | 'recording' | 'stopping' | 'finished';
 const newId = () => crypto.randomUUID().replaceAll('-', '');
@@ -26,6 +27,7 @@ const active = (phase: Phase) => ['opening','controlling','piloting','arming','r
 const inputEnabled = (phase: Phase) => phase === 'controlling' || phase === 'recording';
 const stopReasons: Record<string,string> = { page_hidden: 'страница скрыта', window_focus_lost: 'окно потеряло фокус', input_focus_lost: 'фокус управления потерян при удержании', connection_closed: 'соединение закрыто', video_stalled: 'нет свежих кадров', pointer_cancelled: 'касание отменено', keyframe_start_timeout: 'ключевой кадр не получен за 12 секунд' };
 Object.assign(stopReasons,{contact_video_stale:'ввод остановлен: видеокадр старше 250 мс',contact_channel_closed:'канал ввода закрыт',contact_ack_timeout:'Android не подтвердил команду за 500 мс',contact_ready_timeout:'Android не подтвердил готовность ввода за 6 секунд'});
+stopReasons.vehicle_manual_override='транспорт остановлен для ручного управления';
 stopReasons.native_closed_unexpectedly='Android завершил сеанс ввода. Управление выключено';
 Object.assign(stopReasons,{encoded_geometry_or_codec_changed:'изменился размер или кодек входящего H.264',recorder_worker_failed:'сбой обработчика записи',recording_write_failed:'не удалось записать данные в хранилище браузера',capture_renewal_unconfirmed:'сервер не подтвердил продление видеосеанса',release_unknown:'освобождение ввода не подтверждено'});
 Object.assign(stopReasons,{recording_library_limit:'в библиотеке уже 100 записей; сохраните нужные в архив перед освобождением места',recording_storage_full:'закончилась квота хранилища браузера',recording_storage_denied:'браузер запретил доступ к хранилищу',recording_exists:'запись с таким идентификатором уже существует',finalization_unconfirmed:'завершение записи не подтверждено'});
@@ -86,6 +88,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const armDeadline=useRef<ReturnType<typeof setTimeout>|null>(null);
   const clearArmDeadline=()=>{if(armDeadline.current!==null)clearTimeout(armDeadline.current);armDeadline.current=null;};
   const expectedOwnerClose = useRef(false), ownerGeneration = useRef(0);
+  const pilotInterrupt=useRef<((reason:string)=>void)|null>(null);
   const stopCallback = useRef<(reason?: string) => Promise<void>>(async () => {});
   const change = (value: Phase) => { phaseRef.current = value; setPhase(value); };
   useEffect(() => {
@@ -257,51 +260,61 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     stopPromise.current = null; change('opening');
     try { openInput('control',conn); } catch { void stop('contact_protocol_unavailable'); }
   };
-  const openWalkInput = async (signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease> => {
+  const openPilotInput = async (signal:AbortSignal,journal:(event:TeachingInput)=>void,vehicleMode=false):Promise<WalkInputLease|VehicleInputLease> => {
     const conn=connection.current,b=conn?.binding(),endpoint=conn?.endpoint(),p=profileRef.current;
     if(signal.aborted||readOnly||phaseRef.current!=='preview'||!conn?.fresh()||!attached.current||!b||!endpoint
-      ||walkingCalibrationIssue(p,b)||!result||!['host','nat'].includes(result.path))throw Error('walk_input_not_ready');
+      ||(vehicleMode?vehicleCalibrationIssue(p,b):walkingCalibrationIssue(p,b))||!result||!['host','nat'].includes(result.path))throw Error(vehicleMode?'vehicle_input_not_ready':'walk_input_not_ready');
+    let interrupted:string|null=null;
+    pilotInterrupt.current=vehicleMode?reason=>{interrupted=reason;}:null;
     stopPromise.current=null;walkOpening.current=true;change('opening');
     let released=false,decisionUntil=0,requestedMotion=false,appliedMotion=false,settle:(lease:WalkInputLease)=>void=()=>{};const stickSlew=new WalkStickSlew();
-    const center=walkingStickTarget(p,b,[0,0]).center;
+    const center=vehicleMode?vehicleSteeringTarget(p,b,0).center:walkingStickTarget(p,b,[0,0]).center;
+    const cameraIssue=()=>vehicleMode?vehicleCameraIssue(p,b):walkingCameraIssue(p,b);
+    let vehicleContacts:VehicleContacts|null=null;
     const opened=new Promise<WalkInputLease>(resolve=>{settle=resolve;});
-    const lease:WalkInputLease={
+    const lease:VehicleInputLease={
       active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady
         &&(conn.fresh()||conn.idleInputFresh?.()===true)&&!signal.aborted,
-      failure:()=>control.failureReason,
+      failure:()=>interrupted??control.failureReason,
       sourceHealth:()=>conn.sourceHealth?.()??null,
       paused:()=>control.isVideoPaused,
-      neutral:()=>{requestedMotion=false;stickSlew.next([0,0],performance.now());control.neutralize();},
+      neutral:()=>{requestedMotion=false;stickSlew.next([0,0],performance.now());vehicleContacts?.neutral(performance.now());control.neutralize();},
       translating:()=>lease.active()&&conn.fresh()&&requestedMotion&&appliedMotion&&performance.now()<decisionUntil,
-      permit:until=>{if(!Number.isFinite(until)||until-performance.now()>250)throw Error('walk_decision_expired');decisionUntil=until;},
-      canLook:()=>control.canCameraCommand(walkingStickTarget(p,b,[0,0]).center),
+      permit:until=>{if(!Number.isFinite(until)||until-performance.now()>(vehicleMode?350:250))throw Error(vehicleMode?'vehicle_decision_expired':'walk_decision_expired');decisionUntil=until;},
+      canLook:()=>control.canCameraCommand(center),
       cameraLimits:p.look?{min:Math.max(-.25,(Math.min(b.width,b.height)*.05-fromPercent(p.look,b).x)/Math.min(b.width,b.height)),
         max:Math.min(.25,(b.width-1-Math.min(b.width,b.height)*.05-fromPercent(p.look,b).x)/Math.min(b.width,b.height)),
         minY:Math.max(-.25,.05-fromPercent(p.look,b).y/Math.min(b.width,b.height)),
         maxY:Math.min(.25,(b.height-1)/Math.min(b.width,b.height)-.05-fromPercent(p.look,b).y/Math.min(b.width,b.height))}:undefined,
       drag2:(fraction,notAfter)=>{
-        if(!lease.active()||walkingCameraIssue(p,b)||!p.look||fraction&&[fraction.x,fraction.y].some(v=>!Number.isFinite(v)||Math.abs(v)>.250001))return Promise.resolve(false);
+        if(!lease.active()||cameraIssue()||!p.look||fraction&&[fraction.x,fraction.y].some(v=>!Number.isFinite(v)||Math.abs(v)>.250001))return Promise.resolve(false);
         const origin=fromPercent(p.look,b),short=Math.min(b.width,b.height),margin=short*.05;
         const point=fraction===null?null:{x:Math.max(Math.ceil(margin),Math.min(Math.floor(b.width-1-margin),origin.x+Math.round(fraction.x*short))),
           y:Math.max(Math.ceil(margin),Math.min(Math.floor(b.height-1-margin),origin.y+Math.round(fraction.y*short)))};
-        return control.cameraCommand(point,notAfter,walkingStickTarget(p,b,[0,0]).center);
+        return control.cameraCommand(point,notAfter,center);
       },
       drag:(fraction,notAfter)=>{
-        if(!lease.active()||walkingCameraIssue(p,b)||!p.look||fraction!==null&&(!Number.isFinite(fraction)||Math.abs(fraction)>.250001))return Promise.resolve(false);
+        if(!lease.active()||cameraIssue()||!p.look||fraction!==null&&(!Number.isFinite(fraction)||Math.abs(fraction)>.250001))return Promise.resolve(false);
         const origin=fromPercent(p.look,b),short=Math.min(b.width,b.height),margin=short*.05;
         const point=fraction===null?null:{x:Math.max(Math.ceil(margin),Math.min(Math.floor(b.width-1-margin),origin.x+Math.round(fraction*short))),y:origin.y};
-        return control.cameraCommand(point,notAfter,walkingStickTarget(p,b,[0,0]).center);
+        return control.cameraCommand(point,notAfter,center);
       },
       look:(fraction,notAfter)=>{
-        if(!lease.active()||walkingCameraIssue(p,b)||!p.look||!Number.isFinite(fraction)||Math.abs(fraction)>.04||!control.isNeutral)return Promise.resolve(false);
+        if(!lease.active()||cameraIssue()||!p.look||!Number.isFinite(fraction)||Math.abs(fraction)>.04||!control.isNeutral)return Promise.resolve(false);
         const origin=fromPercent(p.look,b),x=origin.x+Math.round(fraction*Math.min(b.width,b.height));
         return control.horizontalStroke(origin,x,notAfter);
       },
       set:vector=>{
+        if(vehicleMode)throw Error('vehicle_native_mode_required');
         if(!lease.active())throw Error('walk_native_closed');
         if(Math.hypot(...vector)>0&&!conn.fresh())throw Error('contact_video_stale');
         const sent=stickSlew.next(vector,performance.now());requestedMotion=Math.hypot(...sent)>.001;
         applyWalkingStick({hasContact:id=>control.hasContact(id),set:(id,point)=>control.set(id,point,decisionUntil)},p,b,sent);
+      },
+      setVehicle:command=>{
+        if(!vehicleMode||!vehicleContacts||!lease.active())throw Error('vehicle_native_closed');
+        if((command.pedal!=='coast'||command.steering!==0)&&!conn.fresh())throw Error('contact_video_stale');
+        vehicleContacts.apply(command,performance.now(),decisionUntil);requestedMotion=command.pedal==='throttle';
       },
       close:async()=>{await stopCallback.current();return released;},
     };
@@ -310,23 +323,27 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       if(event.stage==='closed'){released=event.outcome==='closed';appliedMotion=false;}
       if(event.stage==='receipt'&&event.outcome==='applied'&&event.pointer_id===0){
         if(event.action===1)appliedMotion=false;
-        else if(event.action===0||event.action===2)appliedMotion=typeof event.x==='number'&&typeof event.y==='number'&&(event.x!==center.x||event.y!==center.y);
+        else if(event.action===0||event.action===2){const gas=vehicleMode?fromPercent(p.vehicle.forward,b):null;
+          appliedMotion=typeof event.x==='number'&&typeof event.y==='number'&&(gas?event.x===gas.x&&event.y===gas.y:event.x!==center.x||event.y!==center.y);}
       }
     },(state,reason)=>{
       if(generation!==ownerGeneration.current||connection.current!==conn)return;
       conn.observeControl?.(state==='failed'?'fenced':state,reason);
-      setNative(state==='ready'?'READY · пеший тест':state==='closed'?'CLOSED · освобождено':state);
+      setNative(state==='ready'?(vehicleMode?'READY · транспорт':'READY · пеший тест'):state==='closed'?'CLOSED · освобождено':state);
       if(state==='ready'&&phaseRef.current==='opening'&&!signal.aborted){change('piloting');settle(lease);}
       if(['failed','closed','closing'].includes(state))settle(lease);
       if(state==='failed')queueMicrotask(()=>{void stopCallback.current(reason??'walk_native_closed');});
       if(state==='closed'&&active(phaseRef.current)&&phaseRef.current!=='stopping'&&!expectedOwnerClose.current)queueMicrotask(()=>{void stopCallback.current('walk_native_closed');});
-    },rtt=>conn.observeControl?.('ready',undefined,rtt),()=>conn.idleInputFresh?.()===true,walkingStickTarget(p,b,[0,0]).center,true);
+    },rtt=>conn.observeControl?.('ready',undefined,rtt),()=>conn.idleInputFresh?.()===true,center,true,vehicleMode?'vehicle':'walking');
+    if(vehicleMode)vehicleContacts=new VehicleContacts(control,p,b);
     controller.current=control;
     const cancelled=()=>{settle(lease);void stopCallback.current();};
     signal.addEventListener('abort',cancelled,{once:true});
     if(signal.aborted)cancelled();
     try{return await opened;}finally{walkOpening.current=false;if(signal.aborted)signal.removeEventListener('abort',cancelled);}
   };
+  const openWalkInput=(signal:AbortSignal,journal:(event:TeachingInput)=>void)=>openPilotInput(signal,journal);
+  const openVehicleInput=(signal:AbortSignal,journal:(event:TeachingInput)=>void)=>openPilotInput(signal,journal,true) as Promise<VehicleInputLease>;
   const record = async () => {
     const conn = connection.current, binding = conn?.binding(), endpoint = conn?.endpoint();
     if (readOnly || !storageScope || !['preview','controlling'].includes(phaseRef.current) || !conn?.fresh() || !binding || !endpoint || !attached.current) return;
@@ -379,6 +396,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const key = (event: React.KeyboardEvent, down: boolean) => {
     if (event.code === 'Escape') { event.preventDefault(); void stop(); return; }
     const role=teachingRole(event.code,profileRef.current);
+    if(down&&role&&phaseRef.current==='piloting'&&pilotInterrupt.current){event.preventDefault();pilotInterrupt.current('vehicle_manual_override');void stop('vehicle_manual_override');return;}
     if (!inputEnabled(phaseRef.current) || externalActive.current || !role) return;
     event.preventDefault(); if (event.repeat || keys.current.has(event.code) === down) return;
     const binding=connection.current?.binding(), mapping=profileRef.current;
@@ -435,7 +453,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const workflow=[
     {mode:'capture' as const,label:'1 · Запись',detail:'Покажите путь в игре',status:phase==='recording'?'Идёт запись':chosenClip?`Выбрано: ${chosenClip.title}`:'Ожидает запись'},
     {mode:'review' as const,label:'2 · Сцена',detail:'Проверьте запись и ориентиры',status:navigationJob?'Связана с записью':'Выберите проход'},
-    {mode:'live' as const,label:'3 · Направление',detail:'Сверьте путь с живым кадром',status:'Наблюдение / пеший тест'},
+    {mode:'live' as const,label:'3 · Направление',detail:'Сверьте путь с живым кадром',status:'Наблюдение / ходьба / транспорт'},
   ];
   return <div ref={host} className="space-y-4" aria-label="Запись учебного маршрута">
     <section className="overflow-hidden rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-card to-emerald-500/5 p-4 sm:p-5">
@@ -459,7 +477,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     <div hidden={workspaceMode==='review'} className="space-y-4">
     {workspaceMode==='capture'&&<details className="group rounded-xl border border-sky-500/20 bg-sky-500/5"><summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><span>Качество исходной записи</span><span className="text-xs font-normal text-muted-foreground">{captureQuality?.received_encoded_fps!=null?`${captureQuality.received_encoded_fps.toFixed(1)} FPS по записи`:'Профиль и фактические FPS · открыть настройки'}</span></summary><TeachingCaptureSetup key={`${deviceId}:${sessionVersion}`} deviceId={deviceId} disabled={readOnly||active(phase)||exportBusy} quality={captureQuality} onConfirmedTarget={setCaptureTargetFps}/></details>}
     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">{workspaceMode==='live'?'Повторный проход':'Обучение маршруту'}</p><h2 className="mt-1 text-xl font-semibold">{workspaceMode==='live'?'Сверка с живым экраном':'Покажите путь один раз'}</h2><p className="mt-2 max-w-3xl text-sm text-muted-foreground">{workspaceMode==='live'?'Выберите проход. Наблюдение показывает линию без ввода; отдельный «Пеший тест» включает ограниченное управление стиком.':externalRecording?'Запишите видео, управляя в эмуляторе. Внешние нажатия недоступны журналу Sphere.':'Подготовьте игру с клавиатуры, включите запись и покажите маршрут. Видео и подтверждённые касания сохраняются вместе.'}</p></div><StreamQualityControl deviceId={deviceId} readOnly={readOnly || active(phase)} /></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">{workspaceMode==='live'?'Повторный проход':'Обучение маршруту'}</p><h2 className="mt-1 text-xl font-semibold">{workspaceMode==='live'?'Сверка с живым экраном':'Покажите путь один раз'}</h2><p className="mt-2 max-w-3xl text-sm text-muted-foreground">{workspaceMode==='live'?'Выберите проход. Наблюдение показывает линию без ввода; отдельные тесты ходьбы и транспорта включают ограниченное управление после подтверждения.':externalRecording?'Запишите видео, управляя в эмуляторе. Внешние нажатия недоступны журналу Sphere.':'Подготовьте игру с клавиатуры, включите запись и покажите маршрут. Видео и подтверждённые касания сохраняются вместе.'}</p></div><StreamQualityControl deviceId={deviceId} readOnly={readOnly || active(phase)} /></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric icon={<Wifi size={15} />} label="Транспорт" value={result ? `${result.path==='host'||result.path==='nat'?'Напрямую':result.path==='relay'?'Ретранслятор':'Путь уточняется'} · ${result.state}` : 'Не подключён'} /><Metric icon={<Keyboard size={15} />} label="Нативный ввод" value={`${native}${inputRtt===null?'':` · ACK ${inputRtt.toFixed(1)} мс`}`} /><Metric icon={<Video size={15} />} label="Записано" value={`${progress.seconds.toFixed(1)} с · ${progress.frames} кадров · ${(progress.bytes/1048576).toFixed(1)} МБ`} /></div>
       {result?.videoStats&&<><div aria-label="Фактические параметры приёма" className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground"><span>{result.videoStats.width??'—'} × {result.videoStats.height??'—'}</span><span>{result.videoStats.fps?.toFixed(1)??'—'} FPS приёма</span><span>{result.videoStats.bitrateBps==null?'—':(result.videoStats.bitrateBps/1e6).toFixed(2)} Мбит/с</span><span title="RTT выбранной пары ICE; это не задержка нажатия">RTC RTT {result.videoStats.networkRttMs?.toFixed(1)??'—'} мс</span><span title="Среднее время в буфере приёма за последний интервал">Буфер приёма {result.videoStats.jitterBufferMs?.toFixed(1)??'—'} мс</span><span title="Среднее время декодирования за последний интервал">Декодирование {result.videoStats.decodeMs?.toFixed(1)??'—'} мс</span></div><p className="mt-1 text-[11px] text-muted-foreground">Это метрики браузерного приёма; полная задержка Android → экран и нажатия здесь не измеряется.</p></>}
     </section>
@@ -473,6 +491,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           onBlur={() => { if (keys.current.size || mouse.current !== null) void stop('input_focus_lost'); }}
           onPointerDown={e => {
             const pos = point(e), b = connection.current?.binding(); if (!pos || !b) return;
+            if(e.button===0&&phaseRef.current==='piloting'&&pilotInterrupt.current){e.preventDefault();pilotInterrupt.current('vehicle_manual_override');void stop('vehicle_manual_override');return;}
             if (calibrate && !active(phase)) {
               setProfile(p => calibrateProfile(p,b,calibrate,pos)); setCalibrate(null); return;
             }
@@ -492,10 +511,13 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         {calibrate&&<p className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/95 px-3 py-2 text-sm text-primary">Укажите {calibrationNames[calibrate]}. Это только калибровка.</p>}
         </div>
         {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Стик для пешего теста</p><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>{setProfile(p=>({...p,mode:'stick'}));chooseCalibration('stick');}}>Указать центр пешего стика</Button><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>chooseCalibration('look')}>Указать область поворота камеры</Button><label>Радиус, % короткой стороны <input aria-label="Радиус пешего стика" type="number" className="ml-2 w-16 rounded border bg-background p-1" value={profile.radius} min={1} max={20} step={.5} disabled={active(phase)} onChange={e=>{const n=Number(e.target.value);if(n>=1&&n<=20)setProfile(p=>({...p,radius:n}));}}/></label></div><p className="text-muted-foreground">По умолчанию стик — слева внизу, камера — справа от центра. Положения и радиус сохраняются для этого устройства, аккаунта и разрешения. При необходимости укажите свои точки: это не отправляет касание в игру. Палец камеры перемещается плавно по двум осям, в пределах 25% короткой стороны от начала свайпа. Прыжок не управляется.</p></div>}
-        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) && !externalActive.current ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{phase==='piloting'?'Пеший тест · стик управляется алгоритмом':externalActive.current ? 'Управление в эмуляторе · нажатия не записываются' : inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
+        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) && !externalActive.current ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{phase==='piloting'?(profile.mode==='vehicle_buttons'?'Транспорт · газ и руль по свежим кадрам':'Пеший тест · стик управляется алгоритмом'):externalActive.current ? 'Управление в эмуляторе · нажатия не записываются' : inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
+        {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Транспорт · калибровка</p><Button size="sm" variant="outline" disabled={readOnly||!ready||!binding||active(phase)} onClick={()=>{if(binding){setBindingTarget(null);setCalibrate(null);setProfile(p=>blackRussiaScooterProfile(binding,p));}}}>Настроить скутер · педали и стик</Button><p className="text-muted-foreground">Профиль Black Russia выбирается явно; его применение не отправляет касания. Проверьте педали и центр стика перед поездкой.</p></div>}
       </section>
-      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} sourceRecording={routeSource?.clip===clip&&routeSource.scope===storageScope?routeSource:null} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'} onReview={()=>{void switchMode('review');}} walkInput={{open:openWalkInput,cameraIssue:walkingCameraIssue(profile,binding??null),issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для пешего теста нужен прямой поток.':walkingCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}/>}
+      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} sourceRecording={routeSource?.clip===clip&&routeSource.scope===storageScope?routeSource:null} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'} onReview={()=>{void switchMode('review');}}
+        walkInput={{open:openWalkInput,revision:JSON.stringify(profile),cameraIssue:walkingCameraIssue(profile,binding??null),issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для пешего теста нужен прямой поток.':walkingCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}
+        vehicleInput={{open:openVehicleInput,revision:JSON.stringify(profile),hudProfile:'black_russia_scooter_v1',cameraIssue:vehicleCameraIssue(profile,binding??null),issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для транспорта нужен прямой поток.':vehicleCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}/>}
       <aside hidden={workspaceMode==='live'} className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <h3 className="font-semibold">Подготовка маршрута</h3>
         <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>

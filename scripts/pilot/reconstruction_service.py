@@ -619,6 +619,7 @@ def handler(jobs, origin, port):
                                              image_route_preparation_contract='bounded_cpu_before_sfm_v1',
                                              browser_teach_input_clock_contract='idle_preroll100_worker_receipt_v1',
                                              alternative_catalog_contract='source_bound_review_v1',
+                                             vehicle_control_contract='attached_camera_hud_binary_hold_v1',
                                              live_session_active=live_active))
                     return
                 with jobs.lock:
@@ -678,6 +679,13 @@ def handler(jobs, origin, port):
                         if not same and any(jobs.active(p) for p in jobs.folder.iterdir() if p.is_dir()):
                             raise ValueError('one_active_job_only')
                         self.reply(200, jobs.navigation.start_walk(job, body))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'vehicle-start']:
+                        body = json.loads(self.body(1024))
+                        live = jobs.navigation.live_status()
+                        same = type(body) is dict and live.get('id') == body.get('id') and live.get('job') == job.name
+                        if not same and any(jobs.active(p) for p in jobs.folder.iterdir() if p.is_dir()):
+                            raise ValueError('one_active_job_only')
+                        self.reply(200, jobs.navigation.start_vehicle(job, body))
                     elif method == 'POST' and parts[2:] == ['navigation', 'replay-start']:
                         body=json.loads(self.body(1024))
                         live=jobs.navigation.live_status()

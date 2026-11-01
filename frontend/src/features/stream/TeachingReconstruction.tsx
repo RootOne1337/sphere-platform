@@ -28,6 +28,7 @@ phases.complete='Реконструкция рассчитана · базова
 phases.sparse_complete='Камеры и опорные точки рассчитаны';
 phases.motion_sampling='Выбор опорных кадров по движению изображения';
 phases.image_route_indexing='Подготовка индекса изображений маршрута';
+phases.vehicle_speed_reference='Подготовка показаний скорости для транспорта';
 phases.temporal_tracking='Автоматическая проверка точек по промежуточным кадрам видео';
 phases.temporal_verification='Проверка связей после удаления ложных совпадений';
 phases.temporal_cameras='Автоматическое восстановление траектории по непрерывным трекам';
@@ -80,9 +81,14 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     if(!job)return;let retired=false;let timer:ReturnType<typeof setTimeout>;const abort=new AbortController();
     let delay=1000;
     const poll=async()=>{try{
+      // The explicit initial upload owns its AbortController. Its new durable
+      // intent may already be rendered, but readback must not race that write.
+      if(uploadAbort.current&&uploadAbort.current!==abort){timer=setTimeout(()=>{void poll();},500);return;}
       const source=folderRef.current();
       if(job.creation&&source&&(autoStopped.current||await automaticReconstructionStopped(source,job)))autoStopped.current=true;
-      const automatic=!!job.creation&&autoPrepare&&complete&&!autoStopped.current;
+      // A creation record is an already authorized durable continuation. The
+      // checkbox controls creating a NEW automatic intent, not recovering one.
+      const automatic=!!job.creation&&complete&&!autoStopped.current;
       let next:ReconstructionState;
       try{next=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json();if(!retired)setConfirmedMissing(false);}
       catch(e){
@@ -126,19 +132,30 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     }}};
     void poll();return()=>{retired=true;abort.abort();clearTimeout(timer);};
   },[job,refresh,autoPrepare,complete]);
-  const start=async(routeOnly=false)=>{
-    const source=folder();if(!source||uploadAbort.current||job?.creation)return;
+  const start=async(routeOnly=false,candidateJob?:ReconstructionJob)=>{
+    const source=folder();if(!source||uploadAbort.current||!candidateJob&&job?.creation)return;
     const controller=new AbortController();uploadAbort.current=controller;setConfirmedMissing(false);setUploading(true);setError(null);
-    let pending:ReconstructionJob|null=job;
+    let pending:ReconstructionJob|null=null;
     try{
-      const next=job??{id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
-      await saveReconstructionLink(source,clip,next);pending=next;setAttempts(await listReconstructionLinks(source,clip));sessionStorage.setItem(storageKey,JSON.stringify(next));
-      const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...next,mask,steps,prepare_route:true,route_only:routeOnly}),signal:controller.signal})).json();setStatus(created);setJob(next);
+      const next=candidateJob??job??{id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
+      // saveReconstructionLink confirms immutable OLD + NEW attempt links
+      // before replacing the current pointer. No HTTP precedes this commit.
+      await saveReconstructionLink(source,clip,next);pending=next;autoStopped.current=false;
+      setStatus(null);setJob(next);setAttempts(await listReconstructionLinks(source,clip));sessionStorage.setItem(storageKey,JSON.stringify(next));
+      const options=next.creation??{mask,steps,prepare_route:true,route_only:routeOnly};
+      const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:next.id,key:next.key,...options}),signal:controller.signal})).json();setStatus(created);
       if(created.phase!=='uploading')return;
       await uploadReconstruction(source,next,(bytes,total)=>setProgress(`${(bytes/1048576).toFixed(1)} / ${(total/1048576).toFixed(1)} МБ`),controller.signal);
       const started=await(await reconstructionRequest(`/jobs/${next.id}/start`,next,{method:'POST',body:'{}',signal:controller.signal})).json();setStatus(started);
     }catch(e){if(pending){setJob(pending);setError(`Запуск не подтверждён: ${e instanceof Error?e.message:'нет ответа'}. Проверяем существующее задание; повторного запуска нет.`);}else setError('Не удалось сохранить ссылку на новое задание. Обработка не запускалась; прежняя попытка и исходная запись сохранены.');}
     finally{uploadAbort.current=null;setUploading(false);}
+  };
+  const retryPreparation=()=>{
+    if(!job||!status||!['failed','cancelled'].includes(status.phase)||busy||!complete||!folder()||uploadAbort.current)return;
+    const next:ReconstructionJob={id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join(''),
+      creation:{mask:hudHidden?'avatar':'game',steps:30000,prepare_route:true,route_only:true}};
+    if(next.id===job.id||attempts.some(item=>item.id===next.id)){setError('Не удалось создать отдельную попытку. Прежняя запись и результат сохранены.');return;}
+    void start(true,next);
   };
   const selectAttempt=async(id:string)=>{
     const source=folder(),selected=attempts.find(item=>item.id===id);
@@ -203,7 +220,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       {busy&&!['pending_auto_prepare','preparing','features'].includes(status.navigation?.phase??'')&&<Button variant="outline" size="sm" onClick={()=>{void cancel();}}>Отменить обработку</Button>}
       {['pending_auto_prepare','preparing','features'].includes(status.navigation?.phase??'')&&<span className="text-xs text-muted-foreground">Подготовка ориентиров выполняется отдельно; её состояние обновляется автоматически.</span>}
       {status.phase==='uploading'&&!uploading&&<Button size="sm" onClick={()=>{void start();}}>Продолжить передачу</Button>}
-      {terminalReconstruction(status)&&<Button variant="outline" size="sm" onClick={()=>{sessionStorage.removeItem(storageKey);setJob(null);setStatus(null);setError(null);}}>Новое отдельное задание</Button>}
+      {['failed','cancelled'].includes(status.phase)?<Button variant="outline" size="sm" disabled={busy||!complete||!folder()} onClick={retryPreparation}>Повторить подготовку записи</Button>:terminalReconstruction(status)&&<Button variant="outline" size="sm" onClick={()=>{sessionStorage.removeItem(storageKey);setJob(null);setStatus(null);setError(null);}}>Новое отдельное задание</Button>}
     </div>}
     <HudSpeedCard telemetry={status?.telemetry} sourceManifestSha={sourceManifestSha}/>
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}

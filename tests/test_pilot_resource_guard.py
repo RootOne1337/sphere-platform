@@ -54,16 +54,81 @@ def test_unsupported_platform_is_not_a_success():
     assert guard.evaluate(healthy() | {"system": "Darwin"}) == ["unsupported_host"]
 
 
-def test_windows_counter_timeout_remains_unavailable(monkeypatch, tmp_path):
+def test_windows_volume_timeout_preserves_fresh_native_memory_but_still_refuses_volume(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
     monkeypatch.setattr(guard.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(guard.shutil, 'disk_usage', lambda _: SimpleNamespace(free=30 * guard.GIB))
+    finished = False
     def timeout(command, **kwargs):
+        nonlocal finished
         assert kwargs["timeout"] == 10 and command[0] == "powershell.exe"
+        finished = True
         raise subprocess.TimeoutExpired(command, 10)
+    def memory():
+        assert finished
+        return {key: healthy()[key] for key in ('availableRamBytes', 'totalRamBytes', 'committedBytes', 'commitLimitBytes')}
     monkeypatch.setattr(guard.subprocess, "run", timeout)
+    monkeypatch.setattr(guard, 'windows_memory', memory)
     snapshot = guard.collect(tmp_path)
     assert snapshot["collectionError"] == "TimeoutExpired"
-    assert "memory_measurement_unavailable" in guard.evaluate(snapshot)
+    assert snapshot['collectionErrors'] == [{'component': 'volume', 'errorType': 'TimeoutExpired'}]
+    assert snapshot['availableRamBytes'] == 12 * guard.GIB
+    assert snapshot['memoryMeasurement'] == 'GetPerformanceInfo'
+    assert 'memoryObservedAt' in snapshot and 'volumeObservedAt' not in snapshot
+    assert guard.evaluate(snapshot) == ['volume_health_unavailable']
     assert snapshot["deviceCommandsSent"] is False and snapshot["mutationsPerformed"] is False
+
+
+@pytest.mark.parametrize('stdout', ['not-json', '[]', 'x' * 8193, None])
+def test_invalid_volume_response_never_erases_fresh_native_measurements(monkeypatch, tmp_path, stdout):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(guard.platform, 'system', lambda: 'Windows')
+    monkeypatch.setattr(guard.shutil, 'disk_usage', lambda _: SimpleNamespace(free=30 * guard.GIB))
+    monkeypatch.setattr(guard.subprocess, 'run', lambda *a, **k: SimpleNamespace(stdout=stdout))
+    monkeypatch.setattr(guard, 'windows_memory', lambda: {key: healthy()[key]
+        for key in ('availableRamBytes', 'totalRamBytes', 'committedBytes', 'commitLimitBytes')})
+    snapshot = guard.collect(tmp_path)
+    assert guard.evaluate(snapshot) == ['volume_health_unavailable']
+    assert snapshot['collectionErrors'][0]['component'] == 'volume'
+    assert snapshot['committedBytes'] == 45 * guard.GIB
+
+
+def test_independent_volume_and_native_failures_are_both_reported_without_stale_fallback(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(guard.platform, 'system', lambda: 'Windows')
+    monkeypatch.setattr(guard.shutil, 'disk_usage', lambda _: SimpleNamespace(free=30 * guard.GIB))
+    def volume(*a, **k):
+        raise subprocess.TimeoutExpired(['powershell.exe'], 10)
+    def memory():
+        raise OSError('sensitive internal detail must not be copied')
+    monkeypatch.setattr(guard.subprocess, 'run', volume)
+    monkeypatch.setattr(guard, 'windows_memory', memory)
+    snapshot = guard.collect(tmp_path)
+    assert snapshot['collectionErrors'] == [dict(component='volume', errorType='TimeoutExpired'),
+                                             dict(component='memory', errorType='OSError')]
+    assert guard.evaluate(snapshot) == ['memory_measurement_unavailable',
+                                       'commit_measurement_unavailable', 'volume_health_unavailable']
+    assert 'sensitive' not in str(snapshot)
+
+
+def test_disk_failure_is_independent_and_cannot_suppress_memory_or_volume_health(monkeypatch, tmp_path):
+    import json
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(guard.platform, 'system', lambda: 'Windows')
+    def disk(_):
+        raise OSError('unavailable')
+    monkeypatch.setattr(guard.shutil, 'disk_usage', disk)
+    monkeypatch.setattr(guard.subprocess, 'run', lambda *a, **k: SimpleNamespace(stdout=json.dumps(healthy())))
+    monkeypatch.setattr(guard, 'windows_memory', lambda: {key: healthy()[key]
+        for key in ('availableRamBytes', 'totalRamBytes', 'committedBytes', 'commitLimitBytes')})
+    snapshot = guard.collect(tmp_path)
+    assert guard.evaluate(snapshot) == ['disk_measurement_unavailable']
+    assert snapshot['collectionErrors'] == [dict(component='disk', errorType='OSError')]
+    assert 'memoryObservedAt' in snapshot and 'volumeObservedAt' in snapshot
 
 
 def test_linux_memavailable_and_kib_units(monkeypatch, tmp_path):

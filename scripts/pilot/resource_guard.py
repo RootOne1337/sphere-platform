@@ -126,26 +126,49 @@ def admitted_findings(findings: list[str], *, allow_degraded_volume: bool = Fals
 
 def collect(path: Path) -> dict:
     snapshot = {"observedAt": datetime.now(timezone.utc).isoformat(),
-                "system": platform.system(), "freeDiskBytes": shutil.disk_usage(path).free,
+                "system": platform.system(),
                 "deviceCommandsSent": False, "mutationsPerformed": False}
+
+    def failed(component, error):
+        # Stable types identify the failed subsystem without leaking arbitrary
+        # subprocess output, command lines, paths or environment contents.
+        kind = type(error).__name__
+        snapshot.setdefault('collectionError', kind)  # Legacy receipt readers.
+        snapshot.setdefault('collectionErrors', []).append(dict(component=component, errorType=kind))
+
     try:
-        if snapshot["system"] == "Windows":
+        snapshot['freeDiskBytes'] = shutil.disk_usage(path).free
+        snapshot['diskObservedAt'] = datetime.now(timezone.utc).isoformat()
+    except OSError as error:
+        failed('disk', error)
+    if snapshot["system"] == "Windows":
+        try:
             response = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive",
                                        "-Command", WINDOWS_VOLUME_COMMAND], check=True,
                                       capture_output=True, text=True, timeout=10,
+                                      creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0),
                                       env=os.environ | {"SPHERE_RESOURCE_GUARD_PATH": str(path)})
-            if len(response.stdout) > 8192:
-                raise ValueError("Oversized memory response")
+            if not isinstance(response.stdout, str) or len(response.stdout) > 8192:
+                raise ValueError("Invalid volume response")
             data = json.loads(response.stdout.lstrip("\ufeff"))
             if not isinstance(data, dict):
-                raise ValueError("Invalid memory response")
+                raise ValueError("Invalid volume response")
             snapshot.update({key: data.get(key) for key in ["volumeHealthStatus", "volumeOperationalStatus"]})
-            # Measure once, after the short-lived volume probe exits. Measuring
-            # inside its CIM/PowerShell process includes avoidable probe overhead.
-            # A failed native read remains unavailable; never reuse old values.
+            snapshot['volumeObservedAt'] = datetime.now(timezone.utc).isoformat()
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            failed('volume', error)
+        # Volume discovery can time out independently of RAM availability.
+        # Always take this fresh native sample after the probe has exited or
+        # been reaped by subprocess.run, including its failure path. Never
+        # substitute PowerShell counters or any previous memory snapshot.
+        try:
             snapshot.update(windows_memory())
             snapshot['memoryMeasurement'] = 'GetPerformanceInfo'
-        elif snapshot["system"] == "Linux":
+            snapshot['memoryObservedAt'] = datetime.now(timezone.utc).isoformat()
+        except (OSError, ValueError) as error:
+            failed('memory', error)
+    elif snapshot["system"] == "Linux":
+        try:
             values = {}
             for line in Path("/proc/meminfo").read_text().splitlines():
                 key, value = line.split(":", 1)
@@ -153,9 +176,10 @@ def collect(path: Path) -> dict:
                     values[key] = int(value.split()[0]) * 1024
             snapshot.update(totalRamBytes=values.get("MemTotal"),
                             availableRamBytes=values.get("MemAvailable"))
-    except (OSError, ValueError, subprocess.SubprocessError) as error:
-        # Do not print arbitrary process output, command lines or environment.
-        snapshot["collectionError"] = type(error).__name__
+            snapshot['memoryObservedAt'] = datetime.now(timezone.utc).isoformat()
+        except (OSError, ValueError) as error:
+            failed('memory', error)
+    snapshot['collectionCompletedAt'] = datetime.now(timezone.utc).isoformat()
     return snapshot
 
 

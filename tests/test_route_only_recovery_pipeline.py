@@ -73,6 +73,22 @@ def test_full_count_collapsed_route_runs_recovery_even_when_learned_dense_is_dis
     assert (job/'geometry-candidates.json').is_file()
 
 
+def test_declared_vehicle_hud_is_prepared_before_visual_mapping(tmp_path,monkeypatch):
+    from scripts.pilot import route_hud_profile
+    job,calls=setup_pipeline(tmp_path,monkeypatch)
+    capture=pipeline.validate_browser(job/'input')
+    capture.manifest['config'].update(hud_hidden_declared=False)
+    capture.manifest['config']['profile']['hudProfile']='black_russia_scooter_v1'
+    monkeypatch.setattr(pipeline,'make_observation_checkpoint',lambda *a,**k:lambda:None)
+    def prepare(_job,*,checkpoint):
+        assert not (_job/'prepared').exists()
+        checkpoint()
+        calls.append('speed_reference')
+    monkeypatch.setattr(route_hud_profile,'prepare_speed_reference',prepare)
+    pipeline.reconstruct(job,'game',30000,route_only=True)
+    assert calls==['speed_reference','recovery','write_model','write_points','sealed']
+
+
 def test_compatible_components_are_reassessed_and_sealed_before_loading_learned_fallback(tmp_path,monkeypatch):
     from scripts.pilot import route_component_merge, route_learned_recovery
     job,calls=setup_pipeline(tmp_path,monkeypatch)

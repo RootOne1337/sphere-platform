@@ -2,6 +2,7 @@ import type { DirectControlEndpoint } from './directPointerTransport';
 import type { DirectVideoBinding } from './directVideoProtocol';
 
 export type TeachingPoint = { x: number; y: number };
+export type TeachingContactLayout = 'walking' | 'vehicle';
 export type TeachingInput = { stage: 'submitted' | 'receipt' | 'closed'; at_ms: number;
   sequence: number; gesture: number; action: number; pointer_id: number; x?: number; y?: number;
   outcome?: string; device_uptime_ms?: number; cancelled_pointers?: number[] };
@@ -34,13 +35,14 @@ export class TeachingContacts {
   private cameraRequest:((applied:boolean)=>void)|null=null;
   private videoPaused=false;
   private cameraTarget:{point:TeachingPoint;deadline:number;at:number;timer:ReturnType<typeof setTimeout>|null}|null=null;
-  private stroke: {id:1;origin:TeachingPoint;target:TeachingPoint;deadline:number;phase:'down'|'move'|'up';
+  private stroke: {id:1|2;origin:TeachingPoint;target:TeachingPoint;deadline:number;phase:'down'|'move'|'up';
     step:number;lastEdgeAt:number;timer:ReturnType<typeof setTimeout>|null;finish:(applied:boolean)=>void}|null=null;
   constructor(private endpoint: DirectControlEndpoint, private binding: DirectVideoBinding,
     private fresh: () => boolean, private journal: (event: TeachingInput) => void,
     private state: (state: 'opening' | 'ready' | 'closing' | 'closed' | 'failed', reason?: string) => void,
     private observedRtt?: (milliseconds: number) => void,
-    private idleFresh?:()=>boolean,private neutralStick?:TeachingPoint,private recoverVideoGaps=false) {
+    private idleFresh?:()=>boolean,private neutralStick?:TeachingPoint,private recoverVideoGaps=false,
+    private contactLayout:TeachingContactLayout='walking') {
     if (!endpoint.sharedInput || endpoint.readyState !== 1) throw Error('shared_input_required');
     this.timer = setInterval(() => this.tick(), 25);
     this.remove = endpoint.listen(value => this.receipt(value));
@@ -55,25 +57,27 @@ export class TeachingContacts {
   get failureReason() { return this.failure; }
   get isVideoPaused(){return this.videoPaused;}
   get isNeutral() { return !this.desired.size && !this.held.size && !this.pending && !this.queue.length; }
+  private get steeringId():0|1 { return this.contactLayout==='vehicle'?1:0; }
+  private get cameraId():1|2 { return this.contactLayout==='vehicle'?2:1; }
   hasContact(id: number) { return this.desired.has(id); }
   private centeredStick(center:TeachingPoint|undefined=this.neutralStick){
-    const p=this.desired.get(0);
-    return !this.held.has(0)&&!p||!!center&&!!p&&this.held.has(0)&&p.x===center.x&&p.y===center.y;
+    const p=this.desired.get(this.steeringId);
+    return !this.held.has(this.steeringId)&&!p||!!center&&!!p&&this.held.has(this.steeringId)&&p.x===center.x&&p.y===center.y;
   }
   canCameraCommand(center:TeachingPoint){
     return this.isReady&&!this.pending&&!this.queue.length&&!this.stroke&&!this.cameraRequest
-      &&(this.centeredStick(center)||this.recoverVideoGaps&&this.held.has(0))
-      &&![...this.held].some(id=>id!==0&&id!==1)&&!this.desired.has(2);
+      &&(this.centeredStick(center)||this.recoverVideoGaps&&this.held.has(this.steeringId))
+      &&(this.contactLayout==='vehicle'||![...this.held].some(id=>id!==0&&id!==1)&&!this.desired.has(2));
   }
   /** Exactly one fresh edge. No delayed waveform or old MOVE is queued. */
   cameraCommand(point:TeachingPoint|null,notAfter:number,center:TeachingPoint):Promise<boolean>{
     if(!this.canCameraCommand(center)||point&&(!this.fresh()||!Number.isFinite(notAfter)||performance.now()>=notAfter||notAfter-performance.now()>250))return Promise.resolve(false);
-    const before=this.desired.get(1);
+    const before=this.desired.get(this.cameraId);
     if(!point&&!before||point&&before&&point.x===before.x&&point.y===before.y)return Promise.resolve(true);
     return new Promise(resolve=>{this.cameraRequest=resolve;
       if(this.recoverVideoGaps&&point&&before&&Math.hypot(point.x-before.x,point.y-before.y)>8){
         this.cameraTarget={point:{...point},deadline:notAfter,at:performance.now(),timer:null};this.advanceCamera();
-      }else this.set(1,point,notAfter);
+      }else this.set(this.cameraId,point,notAfter);
       if(!this.isReady){this.cameraRequest?.(false);this.cameraRequest=null;}});
   }
   private advanceCamera(){
@@ -84,21 +88,21 @@ export class TeachingContacts {
         if(!this.fresh()&&this.recoverVideoGaps&&this.idleFresh?.())this.videoPaused=true;
         this.neutralize();return;
       }
-      const from=this.desired.get(1);if(!from){this.neutralize();return;}
+      const from=this.desired.get(this.cameraId);if(!from){this.neutralize();return;}
       const dx=path.point.x-from.x,dy=path.point.y-from.y,length=Math.hypot(dx,dy);
       const dt=Math.min(.04,Math.max(.016,(performance.now()-path.at)/1000));path.at=performance.now();
       const scale=Math.min(1,Math.min(this.binding.width,this.binding.height)*.45*dt/length);
-      this.set(1,{x:Math.round(from.x+dx*scale),y:Math.round(from.y+dy*scale)},path.deadline);
+      this.set(this.cameraId,{x:Math.round(from.x+dx*scale),y:Math.round(from.y+dy*scale)},path.deadline);
     },16);
   }
   horizontalStroke(origin:TeachingPoint,targetX:number,notAfter:number):Promise<boolean> {
-    if(!this.isReady||!this.isNeutral||this.stroke||this.hasContact(1)||!this.fresh()||performance.now()>=notAfter
+    if(!this.isReady||!this.isNeutral||this.stroke||this.hasContact(this.cameraId)||!this.fresh()||performance.now()>=notAfter
       ||!Number.isFinite(notAfter)||notAfter-performance.now()>250||notAfter-performance.now()<170||!Number.isInteger(targetX)||targetX===origin.x
       ||Math.abs(targetX-origin.x)>Math.min(this.binding.width,this.binding.height)*.04+1)return Promise.resolve(false);
     return new Promise(resolve=>{
-      this.stroke={id:1,origin:{...origin},target:{x:targetX,y:origin.y},deadline:notAfter,phase:'down',
+      this.stroke={id:this.cameraId,origin:{...origin},target:{x:targetX,y:origin.y},deadline:notAfter,phase:'down',
         step:0,lastEdgeAt:performance.now(),timer:null,finish:resolve};
-      this.set(1,origin);
+      this.set(this.cameraId,origin);
       if(!this.isReady){this.stroke?.finish(false);this.stroke=null;}
     });
   }
@@ -112,9 +116,9 @@ export class TeachingContacts {
       if(stroke.step<4){
         stroke.phase='move';stroke.step++;
         const point={x:Math.round(stroke.origin.x+(stroke.target.x-stroke.origin.x)*stroke.step/4),y:stroke.origin.y};
-        if(this.desired.get(1)?.x===point.x){this.advanceStroke();return;}
-        this.set(1,point);
-      }else{stroke.phase='up';this.set(1,null);}
+        if(this.desired.get(stroke.id)?.x===point.x){this.advanceStroke();return;}
+        this.set(stroke.id,point);
+      }else{stroke.phase='up';this.set(stroke.id,null);}
     };
     // Native ACK means submission, not a rendered game frame. Space movement
     // over several frames instead of collapsing DOWN/MOVE/UP into one tap.
@@ -148,12 +152,12 @@ export class TeachingContacts {
     this.queue=this.queue.filter(edge=>this.isNeutralEdge(edge));
     for(const id of [0,1,2]){
       if(!this.held.has(id)){this.desired.delete(id);continue;}
-      if(id===0&&this.neutralStick)this.set(0,this.neutralStick);
+      if(id===this.steeringId&&this.neutralStick)this.set(this.steeringId,this.neutralStick);
       else this.set(id,null);
     }
     this.pump();
   }
-  private isNeutralEdge(edge:Edge){return edge.action===1||edge.id===0&&edge.action===2&&!!this.neutralStick
+  private isNeutralEdge(edge:Edge){return edge.action===1||edge.id===this.steeringId&&edge.action===2&&!!this.neutralStick
     &&edge.point.x===this.neutralStick.x&&edge.point.y===this.neutralStick.y;}
   private send(value: object) {
     const current = this.endpoint.capture();
@@ -222,7 +226,7 @@ export class TeachingContacts {
     catch { this.fail('contact_journal_failed'); return; }
     if (pending.action === 1) this.held.delete(pending.pointer_id);
     this.pending = null;
-    if(pending.pointer_id===1&&this.cameraRequest){
+    if(pending.pointer_id===this.cameraId&&this.cameraRequest){
       const path=this.cameraTarget;
       if(path&&(pending.x!==path.point.x||pending.y!==path.point.y))this.advanceCamera();
       else{this.cameraTarget=null;const done=this.cameraRequest;this.cameraRequest=null;done(true);}
@@ -243,7 +247,7 @@ export class TeachingContacts {
     if (this.ended) return;
     const empty=!this.queue.length&&(!this.pending||this.pending.action===4)
       &&(!this.desired.size&&!this.held.size||!!this.neutralStick&&this.centeredStick()
-        &&![...this.held].some(id=>id!==0)&&![...this.desired.keys()].some(id=>id!==0));
+        &&![...this.held].some(id=>id!==this.steeringId)&&![...this.desired.keys()].some(id=>id!==this.steeringId));
     if(!this.fresh()){
       if(this.recoverVideoGaps&&this.idleFresh?.()){
         if(!this.videoPaused){this.videoPaused=true;this.neutralize();}

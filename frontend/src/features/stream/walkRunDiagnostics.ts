@@ -44,15 +44,15 @@ export function boundedWalkSummary<T extends {observations:unknown[];nativeInput
   return result;
 }
 
-export function walkInputSummary(events:TeachingInput[]) {
-  const motion=(event:TeachingInput)=>event.pointer_id===0&&(event.action===0||event.action===2);
+export function walkInputSummary(events:TeachingInput[],motionContacts:readonly number[]=[0]) {
+  const motion=(event:TeachingInput)=>motionContacts.includes(event.pointer_id)&&(event.action===0||event.action===2);
   return {submitted:events.filter(event=>event.stage==='submitted'&&motion(event)).length,
     applied:events.filter(event=>event.stage==='receipt'&&motion(event)&&event.outcome==='applied').length};
 }
 
 /** Contact 1 belongs to the camera in the foot pilot, not to walking motion. */
-export function walkCameraInputSummary(events:TeachingInput[]) {
-  const camera=events.filter(event=>event.pointer_id===1),downs=new Map<number,TeachingInput>();
+export function walkCameraInputSummary(events:TeachingInput[],cameraContact:1|2=1) {
+  const camera=events.filter(event=>event.pointer_id===cameraContact),downs=new Map<number,TeachingInput>();
   let strokesApplied=0,lastDistancePx:number|null=null,lastDurationMs:number|null=null;
   for(const event of camera){
     if(event.stage==='submitted'&&event.action===0)downs.set(event.gesture,event);

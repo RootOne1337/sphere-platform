@@ -1,15 +1,15 @@
-import { TeachingContacts, stickPoint, type TeachingInput } from '@/src/features/stream/teachingContacts';
+import { TeachingContacts, stickPoint, type TeachingInput, type TeachingContactLayout } from '@/src/features/stream/teachingContacts';
 import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 import {applyWalkingStick} from '@/src/features/stream/walkPilot';
 import {calibrateProfile,defaultTeachingProfile} from '@/src/features/stream/teachingKeymap';
 
 const binding={captureEpoch:'00112233-4455-6677-8899-aabbccddeeff',width:960,height:540};
-function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolean,neutralStick?:{x:number;y:number},recoverVideoGaps=false) {
+function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolean,neutralStick?:{x:number;y:number},recoverVideoGaps=false,layout:TeachingContactLayout='walking') {
   const sent: Record<string,unknown>[]=[],journal:TeachingInput[]=[],states:string[]=[];
   let listener:(v:unknown)=>void=()=>{};let fresh=true;
   const endpoint:DirectControlEndpoint={session:'a'.repeat(32),sharedInput:true,readyState:1,bufferedAmount:0,
     capture:()=>binding,send:raw=>sent.push(JSON.parse(raw)),listen:fn=>{listener=fn;return()=>{};}};
-  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt,idleFresh,neutralStick,recoverVideoGaps);
+  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt,idleFresh,neutralStick,recoverVideoGaps,layout);
   const envelope={session_id:endpoint.session,capture_epoch:binding.captureEpoch,contact_protocol:1,max_pointers:3,owner:'b'.repeat(32)};
   const receipt=(fields:Record<string,unknown>)=>listener({type:'shared_input_status',...envelope,device_uptime_ms:1000,...fields});
   const ready=()=>{listener({type:'touch_session',...envelope,frame_width:960,frame_height:540});receipt({sequence:0,gesture:0,action:4,pointer_id:-1,outcome:'ready'});};
@@ -17,6 +17,46 @@ function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolea
   return {driver,sent,journal,states,ready,receipt,ack,stale:()=>{fresh=false;},resume:()=>{fresh=true;}};
 }
 beforeEach(()=>jest.useFakeTimers());afterEach(()=>{jest.clearAllTimers();jest.useRealTimers();});
+
+test('vehicle gas, steering and camera retain independent contacts under one ACKed owner',async()=>{
+  const center={x:100,y:350},gas={x:900,y:470},f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center);f.ack();f.driver.set(1,{x:115,y:350});f.ack();
+  f.driver.set(0,gas);f.ack();
+  const down=f.driver.cameraCommand({x:700,y:200},performance.now()+230,center);f.ack();await expect(down).resolves.toBe(true);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:2,action:0});
+  for(let i=0;i<4;i++){
+    f.driver.set(0,gas);f.driver.set(1,{x:116+i,y:350});f.ack();
+    const turn=f.driver.cameraCommand({x:704+i,y:202},performance.now()+230,center);f.ack();await expect(turn).resolves.toBe(true);
+  }
+  expect(f.sent.filter(e=>e.pointer_id===0&&e.action===0)).toHaveLength(1);
+  expect(f.sent.filter(e=>e.pointer_id===1&&e.action===0)).toHaveLength(1);
+  expect(f.sent.filter(e=>e.pointer_id===2&&e.action===0)).toHaveLength(1);
+  expect(f.driver.isReady).toBe(true);
+});
+
+test('vehicle stale video releases the pedal and camera while centering the SAME steering contact',async()=>{
+  const center={x:100,y:350},gas={x:900,y:470},f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center);f.ack();f.driver.set(1,{x:120,y:350});f.ack();f.driver.set(0,gas);f.ack();
+  const camera=f.driver.cameraCommand({x:700,y:200},performance.now()+200,center);f.ack();await camera;
+  f.stale();jest.advanceTimersByTime(25);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:1});f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,...center});f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:2,action:1});f.ack();
+  expect(f.driver.hasContact(0)).toBe(false);expect(f.driver.hasContact(1)).toBe(true);expect(f.driver.hasContact(2)).toBe(false);
+  f.resume();jest.advanceTimersByTime(25);
+  expect(f.sent.filter(e=>e.pointer_id===0&&e.action===0)).toHaveLength(1);
+  expect(f.sent.filter(e=>e.pointer_id===1&&e.action===0)).toHaveLength(1);
+  expect(f.driver.isReady).toBe(true);
+});
+
+test('a late vehicle steering ACK cannot flush an expired gas decision',()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center);f.ack();f.driver.set(1,{x:120,y:350},performance.now()+50);
+  f.driver.set(0,{x:900,y:470},performance.now()+50);
+  jest.advanceTimersByTime(60);f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,...center});f.ack();
+  expect(f.sent.filter(e=>e.pointer_id===0&&e.action===0)).toHaveLength(0);
+});
 
 test('a short video gap centers the held stick and releases camera without retiring the foot owner',async()=>{
   let idle=true;const center={x:100,y:350},f=fixture(undefined,()=>idle,center,true);f.ready();

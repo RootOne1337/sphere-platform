@@ -12,6 +12,7 @@ export function routeReadinessIssue(source:ReconstructionState|null,assets:Navig
   if(assets?.phase==='ready')return null;
   if(!assets)return 'Проверяем состояние обработки выбранной записи…';
   if(['pending_auto_prepare','preparing','features'].includes(assets.phase))return 'Запись обрабатывается автоматически. Карта ориентиров ещё строится.';
+  if(source?.phase==='failed'&&source.error==='resource_guard')return 'Подготовка остановлена из-за нехватки ресурсов. Исходная запись сохранена: откройте «Сцена» и повторите подготовку записи. Диагностическая схема не заменяет подготовленные ориентиры.';
   const quality=source?.quality,coverage=quality?` Восстановлено ${quality.registered} из ${quality.selected} ракурсов.`:'';
   if(assets.error==='route_camera_motion_requires_review'||cameraMotionRequiresReview(source?.camera_motion))return `Автоматическая подготовка остановлена: восстановленная траектория содержит подозрительные скачки.${coverage} Исходное видео сохранено; требуется восстановление геометрии, а не повторное нажатие подготовки.`;
   if(assets.error)return `Карта не готова: ${navigationErrorLabel(assets.error)}.${coverage} Исходное видео сохранено.`;

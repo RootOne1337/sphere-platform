@@ -20,7 +20,7 @@ export type WalkInputLease={active():boolean;failure?():string|null;sourceHealth
   drag?(fraction:number|null,notAfter:number):Promise<boolean>;
   drag2?(point:{x:number;y:number}|null,notAfter:number):Promise<boolean>;
   cameraLimits?:{min:number;max:number;minY?:number;maxY?:number};close():Promise<boolean>};
-export type WalkInputControl={issue:string|null;cameraIssue?:string|null;open(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>};
+export type WalkInputControl={issue:string|null;cameraIssue?:string|null;revision?:string;open(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>};
 /** No input owner exists yet: a short presentation gap may recover before open. */
 export function waitForFreshWalkSource(fresh:()=>boolean,signal:AbortSignal):Promise<boolean>{
   if(signal.aborted)return Promise.resolve(false);

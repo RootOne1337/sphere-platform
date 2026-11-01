@@ -10,6 +10,19 @@ beforeEach(()=>{
   jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn()} as never);
 });
 afterEach(()=>jest.restoreAllMocks());
+test('the vehicle panel keeps failed skuter1 diagnostic geometry behind readiness and offers the source recovery path',async()=>{
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'failed',error:'resource_guard',geometry_available:true,
+    sparse_available:false,dense_available:false,quality:{registered:144,selected:173,points:10000,coverage:144/173,mean_reprojection_px:1.2},
+    navigation:{phase:'not_prepared'}})} as Response);
+  const open=jest.fn(),review=jest.fn();
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}
+    onReview={review} vehicleInput={{issue:null,hudProfile:'black_russia_scooter_v1',open}}/>);
+  fireEvent.click(screen.getByRole('button',{name:'Транспорт · газ и руль'}));
+  await waitFor(()=>expect(screen.getAllByText(/Диагностическая схема не заменяет подготовленные ориентиры/).length).toBeGreaterThan(0));
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('button',{name:'Открыть подготовку записи'}));expect(review).toHaveBeenCalledTimes(1);
+  expect(open).not.toHaveBeenCalled();expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);
+});
 test('the walking panel shows the actual failed automatic stage and never opens input or retries it',async()=>{
   jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'sparse_complete',sparse_available:true,
     quality:{registered:88,selected:99,coverage:88/99,points:11188,mean_reprojection_px:1.14},

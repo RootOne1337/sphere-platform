@@ -98,7 +98,7 @@ test('workflow switches to a focused live view without losing capture setup',()=
   expect(screen.getByRole('heading',{name:'Сверка с живым экраном'})).toBeInTheDocument();
   expect(screen.getByLabelText('Живая проверка направления')).toBeInTheDocument();
   expect(screen.queryByRole('heading',{name:'Подготовка маршрута'})).not.toBeInTheDocument();
-  expect(screen.getByText('Наблюдение / пеший тест')).toBeInTheDocument();
+  expect(screen.getByText('Наблюдение / ходьба / транспорт')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:/1 · Запись/}));
   expect(screen.getByLabelText('Название')).toHaveValue('Ночной маршрут');
   expect(screen.getByRole('heading',{name:'Подготовка маршрута'})).toBeInTheDocument();

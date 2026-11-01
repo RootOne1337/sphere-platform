@@ -363,6 +363,79 @@ class RouteWorkspaces:
                                                 camera_control=camera_control,reference_rotations=views,max_seconds=max_seconds)
             self.live['deadline'] = self.clock()+max_seconds
             self.live['observation_limit']=max_seconds*30
+
+    def start_vehicle(self, job, body):
+        """Separate speed-observed, attached-camera vehicle planner.
+
+        The ready-map gate and all source bindings are retained. Plans alone
+        cannot acquire Android input or promote an observer or pedestrian run.
+        """
+        from motor_worker.route_reference_view import reference_rotations
+        from motor_worker.vehicle_route import VehicleRouteFollower
+        from scripts.pilot.route_hud_profile import load_speed_reference
+
+        required = {'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed',
+                    'vehicleCameraAssumptionConfirmed', 'cameraFollowsBodyConfirmed',
+                    'hudProfile', 'maxSpeedKmh', 'cameraTracking', 'cameraControl', 'clientVersion'}
+        if (type(body) is not dict or not required <= body.keys()
+                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds'}
+                or body.get('vehicleCameraAssumptionConfirmed') is not True
+                or body.get('cameraFollowsBodyConfirmed') is not True
+                or body.get('hudProfile') != 'black_russia_scooter_v1'
+                or type(body.get('maxSpeedKmh')) is not int or not 1 <= body['maxSpeedKmh'] <= 30
+                or body.get('cameraTracking') is not True
+                or body.get('cameraControl') != 'continuous_drag_v1'
+                or body.get('clientVersion') != 'vehicle_live_v1'
+                or body.get('startMode', 'beginning') not in {'beginning', 'recognized_route'}
+                or 'maxSeconds' in body and (type(body['maxSeconds']) is not int or not 60 <= body['maxSeconds'] <= 1800)
+                or type(body.get('diagnosticFrames', False)) is not bool):
+            raise ValueError('vehicle_explicit_confirmation_required')
+        manifest = checked_json(job / 'input/manifest.json')
+        profile = manifest.get('config', {}).get('profile', {})
+        if (type(profile) is not dict or profile.get('mode') != 'vehicle_buttons'
+                or profile.get('steering') != 'stick' or profile.get('hudProfile') != body['hudProfile']):
+            raise ValueError('vehicle_source_profile_mismatch')
+        request = {key: body[key] for key in ('id', 'captureEpoch', 'width', 'height', 'sceneConfirmed')}
+        settings = {key: body.get(key, False if key == 'diagnosticFrames' else 'beginning')
+                    for key in ('startMode', 'maxSpeedKmh', 'diagnosticFrames', 'hudProfile')}
+        settings['maxSeconds'] = body.get('maxSeconds')
+        self._expire()
+        if self.live and self.live['id'] == request['id']:
+            if 'vehicle' not in self.live:
+                raise ValueError('vehicle_observer_cannot_be_promoted')
+            if self.live.get('vehicle_settings') != settings:
+                raise ValueError('vehicle_settings_changed')
+        reference = load_speed_reference(job)
+        if reference is None:
+            raise ValueError('vehicle_source_speed_not_prepared')
+        self.start_live(job, request)
+        try:
+            if 'vehicle' not in self.live:
+                route = self.live['tracker'].route
+                views = reference_rotations(job / 'geometry.json', route, self.live['geometry_sha256'])
+                budget = body.get('maxSeconds', min(1800, max(180,
+                    math.ceil((route.source_seconds[-1] - route.source_seconds[0]) * 5 + 30))))
+                self.live['vehicle'] = VehicleRouteFollower(route, reference, clock=self.clock,
+                    reference_rotations=views, start_mode=settings['startMode'],
+                    max_seconds=budget, max_speed_kmh=body['maxSpeedKmh'])
+                self.live['vehicle_settings'] = settings
+                self.live['deadline'] = self.clock() + budget
+                self.live['observation_limit'] = budget * 30
+                self.live['motion_protocol'] = 'applied_vehicle_v1'
+                if body.get('diagnosticFrames'):
+                    from scripts.pilot.walk_diagnostics import WalkFrameArchive
+                    self.live['frame_archive'] = WalkFrameArchive(job, body['id'], clock=self.clock,
+                        geometry_sha256=self.live['geometry_sha256'], capture_epoch=body['captureEpoch'])
+            return dict(self.live_status(), mode='vehicle_camera_trace_v1', physicalActions=0,
+                        maxSeconds=self.live['vehicle'].max_seconds, maxSpeedKmh=body['maxSpeedKmh'],
+                        startMode=settings['startMode'], cameraTracking=True,
+                        cameraControl='continuous_drag_v1', cameraFollowsBodyConfirmed=True,
+                        hudProfile=body['hudProfile'], observationProtocol='jpeg_binary_v1',
+                        motionProtocol='applied_vehicle_v1', clientVersion='vehicle_live_v1')
+        except BaseException:
+            self.retired[body['id']] = self.clock() + 600
+            self.live = None
+            raise
     def start_replay(self,job,body):
         """The real pose/planner path, with a separate recorded-input protocol.
 
@@ -401,7 +474,7 @@ class RouteWorkspaces:
                 or type(body['sequence']) is not int or body['sequence'] <= self.live['sequence']
                 or body['sequence'] > 1000000):
             raise ValueError('route_observation_not_bound')
-        if self.live.get('motion_protocol')=='applied_stick_v1' and 'motionActive' not in body:
+        if self.live.get('motion_protocol') in {'applied_stick_v1', 'applied_vehicle_v1'} and 'motionActive' not in body:
             raise ValueError('walk_motion_feedback_required')
         if type(raw) is not bytes or not 100 <= len(raw) <= 384*1024:
             raise ValueError('route_jpeg_quota')
@@ -444,7 +517,17 @@ class RouteWorkspaces:
             result['walk'] = session['walk'].observe(pose,motion_active=body.get('motionActive'))
             result['walk']['motionActive']=body.get('motionActive')
             result['walk']['motionSeconds']=session['walk'].motion_seconds
+        if 'vehicle' in session:
+            from scripts.pilot.route_hud_profile import read_live_speed
+            speed = read_live_speed(image, epoch=session['epoch'], sequence=body['sequence'],
+                received_at=now, jpeg_sha256=result['jpegSha256'])
+            speed = {**speed, 'source_rgb_sha256': pose.source_rgb_sha256}
+            result['vehicle'] = session['vehicle'].observe(pose, speed, motion_active=body.get('motionActive'))
+            result['vehicle']['motionActive'] = body.get('motionActive')
+            result['vehicle']['motionSeconds'] = session['vehicle'].motion_seconds
+            result['speedObservation'] = speed
+            result['computeMs'] = (self.clock() - now) * 1000
         if session.get('frame_archive'):
-            session['frame_archive'].offer(raw,sequence=body['sequence'],pose=pose,plan=result.get('walk'),
+            session['frame_archive'].offer(raw,sequence=body['sequence'],pose=pose,plan=result.get('walk', result.get('vehicle')),
                 method=result['method'],compute_ms=elapsed)
         return result

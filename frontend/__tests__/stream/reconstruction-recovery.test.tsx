@@ -236,17 +236,77 @@ test('a saved reconstruction attempt can be reopened without starting another jo
 test('a failed new capability save sends no POST and keeps the prior attempt selectable',async()=>{
   const clip='c'.repeat(32),scope='d'.repeat(32),folder={} as FileSystemDirectoryHandle;
   const first={id:'a'.repeat(32),key:'b'.repeat(64)};
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'});
   (readReconstructionLink as jest.Mock).mockResolvedValueOnce(first);
   (listReconstructionLinks as jest.Mock).mockResolvedValueOnce([first]);
   (saveReconstructionLink as jest.Mock).mockRejectedValueOnce(Error('disk_write_failed'));
   (reconstructionRequest as jest.Mock).mockResolvedValue({json:async()=>({phase:'failed'})});
   const view=render(<TeachingReconstruction clip={clip} scope={scope} folder={()=>folder} complete onBusyChange={()=>{}}/>);
-  fireEvent.click(await screen.findByRole('button',{name:'Новое отдельное задание'}));
-  fireEvent.click(screen.getByRole('button',{name:'Построить 3D-сцену'}));
+  fireEvent.click(await screen.findByRole('button',{name:'Повторить подготовку записи'}));
   await screen.findByText(/Не удалось сохранить ссылку на новое задание/);
-  expect(screen.getByRole('combobox',{name:'Сохранённая попытка реконструкции'})).toBeEnabled();
+  expect(screen.getByRole('button',{name:'Повторить подготовку записи'})).toBeEnabled();
+  expect(jest.mocked(saveReconstructionLink).mock.calls.at(-1)?.[2].id).not.toBe(first.id);
   expect((reconstructionRequest as jest.Mock).mock.calls.some(([, , init])=>init?.method==='POST')).toBe(false);
   view.unmount();
+});
+
+test('one terminal retry durably saves a distinct sparse intent then uploads the SAME recording and starts once',async()=>{
+  const clip='c'.repeat(32),scope='d'.repeat(32),folder={} as FileSystemDirectoryHandle;
+  const old={id:'a'.repeat(32),key:'b'.repeat(64)},events:string[]=[];
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'});
+  jest.mocked(readReconstructionLink).mockResolvedValue(old);jest.mocked(listReconstructionLinks).mockResolvedValue([old]);
+  jest.mocked(saveReconstructionLink).mockImplementation(async(_folder,_clip,next)=>{
+    events.push('durable');expect(next.id).not.toBe(old.id);jest.mocked(listReconstructionLinks).mockResolvedValue([old,next]);
+  });
+  let nextPhase='uploading';jest.mocked(uploadReconstruction).mockImplementation(async()=>{events.push('upload');});
+  jest.mocked(reconstructionRequest).mockImplementation(async(path,j,init)=>{
+    if(path==='/jobs'){expect(events[0]).toBe('durable');events.push('create');return {json:async()=>({phase:'uploading'})} as Response;}
+    if(path.endsWith('/start')){events.push('start');nextPhase='matching';return {json:async()=>({phase:'matching'})} as Response;}
+    return {json:async()=>({phase:j?.id===old.id?'failed':nextPhase,error:j?.id===old.id?'resource_guard':undefined})} as Response;
+  });
+  const view=render(<TeachingReconstruction clip={clip} scope={scope} folder={()=>folder} complete onBusyChange={()=>{}}/>);
+  const retry=await screen.findByRole('button',{name:'Повторить подготовку записи'});fireEvent.click(retry);fireEvent.click(retry);
+  await waitFor(()=>expect(events).toEqual(['durable','create','upload','start']));
+  expect(jest.mocked(uploadReconstruction).mock.calls[0][0]).toBe(folder);
+  const creation=jest.mocked(reconstructionRequest).mock.calls.find(([path])=>path==='/jobs')!;
+  expect(JSON.parse(String(creation[2]?.body))).toMatchObject({id:'e'.repeat(32),prepare_route:true,route_only:true,steps:30000});
+  expect(jest.mocked(saveReconstructionLink)).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('combobox',{name:'Сохранённая попытка реконструкции'})).toHaveValue('e'.repeat(32));
+  view.unmount();
+});
+
+test('a lost retry start response reads the NEW intent and never repeats create or start',async()=>{
+  const old={id:'a'.repeat(32),key:'b'.repeat(64)},folder={} as FileSystemDirectoryHandle;
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'});
+  jest.mocked(readReconstructionLink).mockResolvedValue(old);jest.mocked(listReconstructionLinks).mockResolvedValue([old]);
+  let started=false;
+  jest.mocked(saveReconstructionLink).mockImplementation(async(_folder,_clip,next)=>{jest.mocked(listReconstructionLinks).mockResolvedValue([old,next]);});
+  jest.mocked(uploadReconstruction).mockResolvedValue();
+  jest.mocked(reconstructionRequest).mockImplementation(async(path,j)=>{
+    if(path==='/jobs')return {json:async()=>({phase:'uploading'})} as Response;
+    if(path.endsWith('/start')){started=true;throw Error('lost_start_response');}
+    return {json:async()=>({phase:j?.id===old.id?'cancelled':started?'matching':'uploading'})} as Response;
+  });
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>folder} complete autoPrepare={false} onBusyChange={()=>{}}/>);
+  fireEvent.click(await screen.findByRole('button',{name:'Повторить подготовку записи'}));
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path===`/jobs/${'e'.repeat(32)}`)).toBe(true),{timeout:2000});
+  expect(jest.mocked(reconstructionRequest).mock.calls.filter(([path])=>path==='/jobs')).toHaveLength(1);
+  expect(jest.mocked(reconstructionRequest).mock.calls.filter(([path])=>path.endsWith('/start'))).toHaveLength(1);
+  expect(jest.mocked(saveReconstructionLink)).toHaveBeenCalledTimes(1);view.unmount();
+});
+
+test('terminal retry cannot run without the original OPFS source and is absent for unconfirmed processing',async()=>{
+  const old={id:'a'.repeat(32),key:'b'.repeat(64)};
+  jest.mocked(readReconstructionLink).mockResolvedValue(old);jest.mocked(listReconstructionLinks).mockResolvedValue([old]);
+  sessionStorage.setItem(`sphere-reconstruction-${'d'.repeat(32)}-${'c'.repeat(32)}`,JSON.stringify(old));
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'failed',error:'resource_guard'})} as Response);
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>null} complete onBusyChange={()=>{}}/>);
+  expect(await screen.findByRole('button',{name:'Повторить подготовку записи'})).toBeDisabled();
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>call[2]?.method!=='POST')).toBe(true);view.unmount();
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'matching'})} as Response);
+  const next=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalled());
+  expect(screen.queryByRole('button',{name:'Повторить подготовку записи'})).not.toBeInTheDocument();next.unmount();
 });
 
 test('camera-motion rejection disables repeated route preparation on the scene page',async()=>{

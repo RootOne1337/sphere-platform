@@ -258,6 +258,19 @@ def _reconstruct(job, mask, steps, *, route_only=False):
     duration = capture.frames[-1]['relative_ticks_90k'] / 90000
     if duration < 5:
         raise RuntimeError('clip_too_short_minimum_5_seconds')
+    if (vehicle and capture.manifest['config'].get('hud_hidden_declared') is False
+            and capture.manifest['config']['profile'].get('hudProfile') == 'black_russia_scooter_v1'):
+        # Observe the original speed display before SfM; never infer pedal
+        # presses or convert this HUD unit into a metric world calibration.
+        from scripts.pilot.route_hud_profile import load_speed_reference, prepare_speed_reference
+        state(job, 'vehicle_speed_reference')
+        if (job/'vehicle-speed-reference').exists():
+            load_speed_reference(job)  # Reuse only a completely source-bound artifact.
+        else:
+            # The per-frame callback uses fresh native memory counters while
+            # throttling the expensive Windows volume-health subprocess.
+            prepare_speed_reference(job, checkpoint=make_observation_checkpoint(job))
+        checkpoint(job)
     state(job, 'extracting', source_frames=len(capture.frames))
     prepared = job / 'prepared'
     selected_indices=None
