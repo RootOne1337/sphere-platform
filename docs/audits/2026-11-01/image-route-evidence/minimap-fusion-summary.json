@@ -1,0 +1,57 @@
+{
+  "raw_world": {
+    "queries": 100,
+    "hits_within_0_6s": 70,
+    "high_score_wrong_over_2s": 8,
+    "unknown": 2
+  },
+  "raw_fused": {
+    "queries": 100,
+    "hits_within_0_6s": 83,
+    "high_score_wrong_over_2s": 1,
+    "unknown": 2
+  },
+  "dp_world_forward": {
+    "queries": 100,
+    "known": 43,
+    "unknown": 57,
+    "same_video_hit_within_0_6s": 35,
+    "same_video_wrong_over_2s": 0,
+    "resets_including_start": 3,
+    "denominator": "all 100 queries including unknown"
+  },
+  "dp_fused_forward": {
+    "queries": 100,
+    "known": 44,
+    "unknown": 56,
+    "same_video_hit_within_0_6s": 42,
+    "same_video_wrong_over_2s": 0,
+    "resets_including_start": 3,
+    "denominator": "all 100 queries including unknown"
+  },
+  "dp_world_reverse": {
+    "queries": 100,
+    "known": 42,
+    "unknown": 58,
+    "same_video_hit_within_0_6s": 32,
+    "same_video_wrong_over_2s": 2,
+    "resets_including_start": 3,
+    "denominator": "all 100 queries including unknown"
+  },
+  "dp_fused_reverse": {
+    "queries": 100,
+    "known": 42,
+    "unknown": 58,
+    "same_video_hit_within_0_6s": 39,
+    "same_video_wrong_over_2s": 1,
+    "resets_including_start": 3,
+    "denominator": "all 100 queries including unknown"
+  },
+  "aux_checked_pairs": 800,
+  "aux_valid_pairs": 728,
+  "aux_unknown_pairs": 72,
+  "decoded_source_frames": 901,
+  "same_video_only": true,
+  "not_calibrated": true,
+  "no_action": true
+}

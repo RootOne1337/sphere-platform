@@ -1,0 +1,27 @@
+{
+  "schema": "causal-sequence-beam-v1",
+  "parameters": {
+    "min_score": 0.35,
+    "peak_radius_seconds": 0.6,
+    "max_frame_age": 0.25,
+    "max_observation_gap": 0.5,
+    "max_reference_speed": 5.0,
+    "reference_slack_seconds": 0.6,
+    "max_seen_sources": 4096,
+    "log_margin": 0.2,
+    "emission_scale": 3.0,
+    "weak_emission": -0.5
+  },
+  "admission": "fresh distinct source SHA, increasing source sequence/receipt, monotonic now; .25s max age",
+  "transition": "all N states, abs(reference delta)<=5*receipt_dt+.6, both directions; O(N) sliding-window maxima",
+  "emission": "checked score>=.35: +3score; weak checked: -.5; unchecked/excluded: 0 neutral",
+  "confirmation": ">=3 consecutive distinct checked-good source frames along compatible Viterbi ancestry, bounded32",
+  "decision": "current best must be checked-good; all-state separated runner log margin>=.2; NMS +/-.6 reference seconds",
+  "unchecked": "Never count neutral nodes as confirming sources. confidence_gap/uncalibrated_confidence None when runner unchecked. All-state runner still competes in margin gate.",
+  "normalization": "Normalized exp(max-product log states), not calibrated probability or a sum-product posterior",
+  "reset": "fresh accepted observation gap>.5s resets all scores/ancestry; malformed arguments reset; stale/replay does not advance scores",
+  "freeze": "Parameters fixed before first run; no outcome-dependent tuning",
+  "module_sha256": "b50388781b6b9e0cf52161ca80221c0fd235f9b5419085e9e3365181fef5a5e1",
+  "tests_sha256": "89a94c44fdc21730fe54460998ec287b1b5304436ec6807b9bfb71f58a3f5e9a",
+  "evaluator_sha256": "e0fbf615a778c70d46808df1c47a3a83aa2eb4f6fbd2b83f072a45d7cde17930"
+}

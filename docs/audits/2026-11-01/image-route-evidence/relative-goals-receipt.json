@@ -1,0 +1,12 @@
+{
+  "source_hashes_unchanged": true,
+  "exit": 0,
+  "stop": null,
+  "initial_ram": 9067802624,
+  "initial_commit": 23011762176,
+  "min_ram": 8850149376,
+  "min_commit": 22775250944,
+  "seconds": 4.625,
+  "owned_direct_child_only": true,
+  "no_gpu_or_actions": true
+}

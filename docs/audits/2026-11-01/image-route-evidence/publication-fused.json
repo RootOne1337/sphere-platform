@@ -1,0 +1,18 @@
+{
+  "status": "offline_fused_review_published",
+  "samples": 100,
+  "references": 169,
+  "bytes": 29345,
+  "review_sha256": "cb3d6d28a5e7fe151629dde6f6933ce6784b7b61b5b61ee9c10cb667c0ce2e4d",
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "evidence_sources": [
+    "world_features",
+    "black_russia_minimap"
+  ],
+  "independent_repeat": false,
+  "previous_world_review_preserved": true,
+  "previous_assets_unchanged": true,
+  "geometry_or_navigation_changed": false,
+  "physical_actions": 0,
+  "execution_qualified": false
+}
