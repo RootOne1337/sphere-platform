@@ -102,6 +102,15 @@ def test_changed_rgb_cannot_be_rebound_to_original_video(tmp_path,monkeypatch):
     assert not (prepared/'learned-recovery/database.db').exists()
 
 
+@pytest.mark.parametrize('reason', ['cancelled','resource_guard'])
+def test_evaluate_propagates_diagnostic_check_failure(tmp_path,monkeypatch,reason):
+    job,prepared=setup_source(tmp_path)
+    candidate=model();setup_native(monkeypatch,{0:candidate})
+    def check():raise RuntimeError(reason)
+    with pytest.raises(RuntimeError,match=reason):
+        recovery._evaluate(candidate,prepared,14,0,6.5,check=check)
+
+
 def test_success_uses_isolated_identical_source_and_cpu_budget(tmp_path, monkeypatch):
     job, prepared = setup_source(tmp_path)
     candidate = model()
@@ -110,6 +119,10 @@ def test_success_uses_isolated_identical_source_and_cpu_budget(tmp_path, monkeyp
     assert chosen is candidate and report['accepted']
     assert report['baseline'] is None
     assert report['models'][0]['route_admissible']
+    # This synthetic model has no reciprocal observation API: a missing
+    # diagnostic is invalid, while the existing admission rule is unchanged.
+    assert report['models'][0]['observation_support']['status'] == 'invalid'
+    assert report['models'][0]['observation_support']['admission_effect'] == 'none'
     assert seen['matcher_options']['device'] == 'cpu'
     assert seen['matcher_options']['max_features'] == 1024
     assert seen['options']['num_threads'] == 2

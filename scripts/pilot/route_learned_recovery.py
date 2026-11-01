@@ -79,9 +79,10 @@ def _link_workspace(job, prepared, folder, selected):
     return source_hash
 
 
-def _evaluate(model, prepared, selected, source_start, source_end):
+def _evaluate(model, prepared, selected, source_start, source_end, *, check=None):
     from scripts.pilot.reconstruct_route import model_geometry
     from scripts.pilot.reconstruction_quality import pinhole_condition, sparse_condition
+    from scripts.pilot.route_observation_support import compact_observation_support, observation_support
 
     geometry = None
     try:
@@ -100,11 +101,12 @@ def _evaluate(model, prepared, selected, source_start, source_end):
                                     reprojection_px=None, conditioning={}, intrinsics_condition={},
                                     source_start=source_start, source_end=source_end)
         report['evaluation_error_type'] = type(error).__name__
+    report['observation_support'] = compact_observation_support(observation_support(model, geometry['cameras'] if geometry else [], check=check))
     return geometry, report
 
 
 def recover_with_learned(job, prepared, baseline, selected, source_start, source_end,
-                         reader, check, progress):
+                         reader, check, progress, *, assessment_check=None):
     """Return ``(chosen_model, report)``; cancellation/resource refusals propagate.
 
     The installed pinned matcher runs with 1024 features. Its own
@@ -144,6 +146,15 @@ def recover_with_learned(job, prepared, baseline, selected, source_start, source
         if reasons:
             raise RuntimeError(reasons[0])
 
+    def bounded_assessment():
+        if assessment_check is None:
+            return bounded()
+        assessment_check()
+        if time.monotonic() - began > TOTAL_SECONDS:
+            raise RuntimeError('learned_recovery_timeout')
+        if reasons:
+            raise RuntimeError(reasons[0])
+
     def watch():
         while not finished.wait(2):
             try:
@@ -169,7 +180,7 @@ def recover_with_learned(job, prepared, baseline, selected, source_start, source
             thread = threading.Thread(target=watch, daemon=True)
             thread.start()
             if baseline is not None:
-                _, report['baseline'] = _evaluate(baseline, prepared, selected, source_start, source_end)
+                _, report['baseline'] = _evaluate(baseline, prepared, selected, source_start, source_end, check=bounded_assessment)
             bounded()
             progress('features', 0, selected)
             extract_and_match(ROOT, folder, folder / 'database.db', reader, token, bounded,
@@ -188,7 +199,7 @@ def recover_with_learned(job, prepared, baseline, selected, source_start, source
             eligible = []
             for index, (identity, model) in enumerate(models.items()):
                 bounded()
-                geometry, candidate = _evaluate(model, folder, selected, source_start, source_end)
+                geometry, candidate = _evaluate(model, folder, selected, source_start, source_end, check=bounded_assessment)
                 report['models'].append(dict(model=str(identity), **candidate))
                 if geometry is not None:
                     write_json(folder / f'geometry-{index}.json', geometry)

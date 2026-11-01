@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -43,10 +44,7 @@ def digest(path):
         return hashlib.file_digest(file, 'sha256').hexdigest()
 
 
-def checkpoint(job, *, learned=False):
-    if (job / 'CANCEL').exists():
-        raise RuntimeError('cancelled')
-    snapshot = collect(ROOT)
+def _checkpoint_snapshot(job, snapshot, *, learned=False):
     from scripts.pilot.route_reconstruction_resources import profile,findings as route_findings
     control=json.loads((job/'control.json').read_bytes()) if (job/'control.json').is_file() else {}
     budget=profile(job,route_only=control.get('route_only') is True and not learned)
@@ -57,6 +55,54 @@ def checkpoint(job, *, learned=False):
             if budget is not None:refusal['profile']=budget
             write_json(job / 'resource-refusal.json', refusal)
         raise RuntimeError('resource_guard')
+
+
+def checkpoint(job, *, learned=False):
+    if (job / 'CANCEL').exists():
+        raise RuntimeError('cancelled')
+    _checkpoint_snapshot(job, collect(ROOT), learned=learned)
+
+
+def make_observation_checkpoint(job, *, learned=False):
+    """Fresh native RAM/disk on each call; volume health refreshed every 3s."""
+    from scripts.pilot.resource_guard import windows_memory
+    snapshot = None
+    refreshed = None
+    def check():
+        nonlocal snapshot, refreshed
+        if (job / 'CANCEL').exists():
+            raise RuntimeError('cancelled')
+        now = time.monotonic()
+        if snapshot is None or refreshed is None or now - refreshed >= 3:
+            try:
+                current = collect(ROOT)
+            except (OSError, ValueError):
+                current = {'system': platform.system()}
+            _checkpoint_snapshot(job, current, learned=learned)
+            snapshot = current
+            refreshed = now
+            return
+        current = dict(snapshot)
+        # Never inherit memory/disk counters when a fresh measurement fails.
+        for key in ('freeDiskBytes', 'availableRamBytes', 'totalRamBytes',
+                    'committedBytes', 'commitLimitBytes'):
+            current.pop(key, None)
+        try:
+            current['freeDiskBytes'] = shutil.disk_usage(ROOT).free
+            if current.get('system') == 'Windows':
+                current.update(windows_memory())
+            elif current.get('system') == 'Linux':
+                values = {}
+                for line in Path('/proc/meminfo').read_text().splitlines():
+                    key, value = line.split(':', 1)
+                    if key in {'MemTotal', 'MemAvailable'}:
+                        values[key] = int(value.split()[0]) * 1024
+                current.update(totalRamBytes=values.get('MemTotal'),
+                               availableRamBytes=values.get('MemAvailable'))
+        except (OSError, ValueError, IndexError, TypeError):
+            pass
+        _checkpoint_snapshot(job, current, learned=learned)
+    return check
 
 
 def state(job, phase, **details):
@@ -121,9 +167,10 @@ def model_geometry(rec, prepared):
                 source_manifest_sha256=provenance['source_manifest_sha256'])
 
 
-def model_assessment(rec, prepared, selected, source_start, source_end):
+def model_assessment(rec, prepared, selected, source_start, source_end, *, check=None):
     """Assess a measured component before allowing its camera count to rank it."""
     from scripts.pilot.route_geometry_selection import evaluate_candidate
+    from scripts.pilot.route_observation_support import compact_observation_support, observation_support
 
     geometry = model_geometry(rec, prepared)
     try:
@@ -139,7 +186,8 @@ def model_assessment(rec, prepared, selected, source_start, source_end):
     report = evaluate_candidate(geometry, selected=selected, points=rec.num_points3D(),
         reprojection_px=rec.compute_mean_reprojection_error(), conditioning=condition,
         intrinsics_condition=calibration, source_start=source_start, source_end=source_end)
-    report.update(conditioning=condition,intrinsics_condition=calibration)
+    report.update(conditioning=condition,intrinsics_condition=calibration,
+                  observation_support=compact_observation_support(observation_support(rec, geometry['cameras'], check=check)))
     return geometry, report
 
 
@@ -308,17 +356,20 @@ def _reconstruct(job, mask, steps, *, route_only=False):
     from scripts.pilot.route_geometry_selection import candidate_rank
     source_start=capture.frames[0]['relative_ticks_90k']/90000
     source_end=capture.frames[-1]['relative_ticks_90k']/90000
+    observation_check=make_observation_checkpoint(job)
     candidates=[]
     for identity, model in models.items():
-        _, assessment=model_assessment(model,prepared,len(images),source_start,source_end)
-        candidates.append((model,dict(assessment,model=identity)))
+        geometry, assessment=model_assessment(model,prepared,len(images),source_start,source_end,check=observation_check)
+        candidates.append((model,geometry,dict(assessment,model=identity)))
     write_json(job/'geometry-candidates.json',dict(schema='sphere-geometry-candidates-v1',
-        models=[report for _,report in candidates],source_start_seconds=source_start,
+        models=[report for _,_,report in candidates],source_start_seconds=source_start,
         source_end_seconds=source_end,execution_qualified=False))
-    rec=max(candidates,key=lambda row:candidate_rank(row[1]))[0] if candidates else None
+    winner=max(candidates,key=lambda row:candidate_rank(row[2])) if candidates else None
+    rec=winner[0] if winner else None
+    cached_assessment=(winner[1],winner[2]) if winner else None
     recovery=None
     if rec is not None:
-        first_geometry,first_assessment=model_assessment(rec,prepared,len(images),source_start,source_end)
+        first_geometry,first_assessment=cached_assessment
         # Preserve inspectable evidence even if a later optional model load is
         # refused. This unsealed first pass never authorizes navigation.
         write_json(job/'geometry.json',first_geometry)
@@ -327,10 +378,12 @@ def _reconstruct(job, mask, steps, *, route_only=False):
             mean_reprojection_px=rec.compute_mean_reprojection_error(),components=len(models),
             conditioning=first_assessment['conditioning'],intrinsics_condition=first_assessment['intrinsics_condition'],
             selection=first_assessment,first_pass_only=True))
-    if route_only and (rec is None or not model_assessment(rec,prepared,len(images),source_start,source_end)[1]['route_admissible']):
+    if route_only and (rec is None or not cached_assessment[1]['route_admissible']):
         from scripts.pilot.route_learned_recovery import recover_with_learned
         rec,recovery=recover_with_learned(job,prepared,rec,len(images),source_start,source_end,reader,
-            lambda:checkpoint(job,learned=True),lambda phase,done=0,total=0:state(job,phase,selected_views=len(images),completed_items=done,total_items=total))
+            lambda:checkpoint(job,learned=True),lambda phase,done=0,total=0:state(job,phase,selected_views=len(images),completed_items=done,total_items=total),
+            assessment_check=make_observation_checkpoint(job,learned=True))
+        cached_assessment=None
     if rec is None:
         raise RuntimeError('no_connected_cameras_need_translation_and_overlap')
     if learned and .7 <= rec.num_reg_images() / len(images) < 1 and rec.num_points3D() >= 300:
@@ -342,10 +395,12 @@ def _reconstruct(job, mask, steps, *, route_only=False):
         if initial_condition['passed'] and not initial_motion['rapid_reversals'] and not initial_motion['speed_outliers']:
             state(job, 'matching', selected_views=len(images), method='anchored-loop-completion')
             rec = complete_partial(ROOT, prepared, database, rec, lambda: checkpoint(job))
-    geometry = model_geometry(rec, prepared)
+            cached_assessment=None
+    if cached_assessment is None:
+        cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
+    geometry,initial_assessment = cached_assessment
     temporal_repair = None
     from scripts.pilot.route_temporal_repair import needs_repair, repair_temporally
-    initial_assessment=model_assessment(rec,prepared,len(images),source_start,source_end)[1]
     if learned and needs_repair(geometry,len(images),conditioning=initial_assessment['conditioning']):
         # Keep the baseline for inspection even if bounded repair is inconclusive.
         # Resource/cancellation fences still terminate the whole task.
@@ -356,7 +411,8 @@ def _reconstruct(job, mask, steps, *, route_only=False):
             if str(failure) in {'resource_guard','cancelled'}:
                 raise
             temporal_repair=dict(accepted=False,reason='temporal_repair_inconclusive',errorType=type(failure).__name__)
-        geometry=model_geometry(rec,prepared)
+        cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
+        geometry=cached_assessment[0]
     write_json(job / 'geometry.json', geometry)
     coverage = rec.num_reg_images() / len(images)
     error = rec.compute_mean_reprojection_error()
@@ -372,7 +428,7 @@ def _reconstruct(job, mask, steps, *, route_only=False):
         quality['learned_recovery']['candidate_count']=len(recovery.get('models',[]))
         if recovery.get('accepted'):
             quality['components']=len(recovery['models'])
-    quality['selection']=model_assessment(rec,prepared,len(images),source_start,source_end)[1]
+    quality['selection']=cached_assessment[1]
     quality['conditioning'] = quality['selection']['conditioning']
     quality['intrinsics_condition'] = quality['selection']['intrinsics_condition']
     write_json(job / 'quality.json', quality)
