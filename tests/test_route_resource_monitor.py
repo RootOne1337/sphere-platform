@@ -283,6 +283,24 @@ def test_linux_uses_fresh_linux_collection_and_never_creates_windows_probe(host,
     assert len(calls) == 2 and not host.commands
 
 
+def test_owned_probe_requests_explicit_normal_priority_instead_of_inheriting_batch_priority(host, tmp_path, monkeypatch):
+    monkeypatch.setattr(monitor.subprocess, 'CREATE_NO_WINDOW', 0x08000000, raising=False)
+    monkeypatch.setattr(monitor.subprocess, 'NORMAL_PRIORITY_CLASS', 0x20, raising=False)
+    host.outcomes.append(HEALTHY)
+    with monitor.TaskResourceMonitor(tmp_path, clock=host.clock) as task:
+        task.sample()
+    assert host.commands[0][1]['creationflags'] == 0x08000020
+
+
+def test_optional_windows_flag_constants_have_a_zero_fallback(host, tmp_path, monkeypatch):
+    monkeypatch.delattr(monitor.subprocess, 'CREATE_NO_WINDOW', raising=False)
+    monkeypatch.delattr(monitor.subprocess, 'NORMAL_PRIORITY_CLASS', raising=False)
+    host.outcomes.append(HEALTHY)
+    with monitor.TaskResourceMonitor(tmp_path, clock=host.clock) as task:
+        task.sample()
+    assert host.commands[0][1]['creationflags'] == 0
+
+
 def test_native_volume_api_uses_mount_root_and_guid_not_drive_letter_cache(monkeypatch, tmp_path):
     def mount(path, buffer, size):
         assert path == str(tmp_path)

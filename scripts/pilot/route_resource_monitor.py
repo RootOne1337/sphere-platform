@@ -117,7 +117,11 @@ class TaskResourceMonitor:
                 process = subprocess.Popen(
                     ['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', resource_guard.WINDOWS_VOLUME_COMMAND],
                     stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0),
+                    # A CPU batch parent can run BelowNormal. The tiny health
+                    # probe must not inherit that lower priority and starve
+                    # behind the very work whose health it is measuring.
+                    creationflags=(getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+                                   | getattr(subprocess, 'NORMAL_PRIORITY_CLASS', 0)),
                     env=os.environ | {'SPHERE_RESOURCE_GUARD_PATH': str(self.root)})
                 self._process = process
             try:

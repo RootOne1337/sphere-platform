@@ -87,6 +87,51 @@ def test_start_needs_all_files_and_exclusive_intent(jobs, monkeypatch):
         jobs.start(job, control)
 
 
+@pytest.mark.parametrize('platform,route_only,expected', [
+    ('win32', True, 0x08004000), ('win32', False, 0x08000000),
+    ('win32', 'true', 0x08000000), ('linux', True, 0), ('linux', False, 0)])
+def test_only_explicit_windows_cpu_route_worker_gets_below_normal_priority(monkeypatch, platform, route_only, expected):
+    monkeypatch.setattr(service.sys, 'platform', platform)
+    monkeypatch.setattr(service.subprocess, 'CREATE_NO_WINDOW', 0x08000000, raising=False)
+    monkeypatch.setattr(service.subprocess, 'BELOW_NORMAL_PRIORITY_CLASS', 0x4000, raising=False)
+    assert service.route_worker_creationflags(route_only) == expected
+
+
+def test_cpu_worker_priority_flag_falls_back_without_changing_dense_default(monkeypatch):
+    monkeypatch.setattr(service.sys, 'platform', 'win32')
+    monkeypatch.delattr(service.subprocess, 'CREATE_NO_WINDOW', raising=False)
+    monkeypatch.delattr(service.subprocess, 'BELOW_NORMAL_PRIORITY_CLASS', raising=False)
+    assert service.route_worker_creationflags(True) == 0
+    assert service.route_worker_creationflags(False) == 0
+
+
+@pytest.mark.parametrize('route_only,expected', [(True, 0x08004000), (False, 0x08000000)])
+def test_job_start_passes_priority_only_to_its_owned_cpu_child(jobs, monkeypatch, route_only, expected):
+    from types import SimpleNamespace
+
+    jobs.create(dict(id='a' * 32, key='b' * 64, mask='game', steps=3000,
+                     prepare_route=route_only, route_only=route_only))
+    job = jobs.path('a' * 32)
+    control = jobs.authorize(job, 'b' * 64)
+    for name in service.LIMITS:
+        jobs.upload(job, name, 0, b'x')
+    monkeypatch.setattr(service.sys, 'platform', 'win32')
+    monkeypatch.setattr(service.subprocess, 'CREATE_NO_WINDOW', 0x08000000, raising=False)
+    monkeypatch.setattr(service.subprocess, 'BELOW_NORMAL_PRIORITY_CLASS', 0x4000, raising=False)
+    monkeypatch.setattr(jobs, 'status', lambda path: {'phase': json.loads((path / 'state.json').read_bytes())['phase']})
+    observed = []
+    process = SimpleNamespace(poll=lambda: None)
+    def popen(command, **kwargs):
+        observed.append((command, kwargs))
+        return process
+    monkeypatch.setattr(service.subprocess, 'Popen', popen)
+    monkeypatch.setattr(service.threading, 'Thread', lambda **_: SimpleNamespace(start=lambda: None))
+    jobs.start(job, control)
+    assert observed[0][1]['creationflags'] == expected
+    assert ('--route-only' in observed[0][0]) is route_only
+    assert jobs.processes[job.name] is process
+
+
 def test_restart_fails_interrupted_and_preserves_input(jobs):
     job = create(jobs)
     jobs.upload(job, 'video.h264', 0, b'raw')
