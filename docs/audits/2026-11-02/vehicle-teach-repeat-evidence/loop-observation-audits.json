@@ -1,0 +1,80 @@
+{
+  "0": {
+    "registered": 146,
+    "points": 10126,
+    "reprojection": {
+      "count": 66954,
+      "mean": 1.063711336253509,
+      "median": 0.7930167772312453,
+      "p95": 2.9078475933217356,
+      "maximum": 3.9987930007193984,
+      "le2": 56270,
+      "le4": 66954
+    },
+    "duplicateImageGroups": 8004,
+    "extraImageObservations": 9126,
+    "duplicateGroupDiameterPx": {
+      "count": 8004,
+      "mean": 1.4457069625138232,
+      "median": 0.0,
+      "p95": 5.009622319176977,
+      "maximum": 7.019335986580832,
+      "le2": 5180,
+      "le4": 6820
+    },
+    "duplicateGroupsExactlyCoincident": 4624,
+    "duplicateGroupsUnderQuarterPixel": 4665,
+    "nonpositiveDepth": 0,
+    "nonreciprocal": 0
+  },
+  "1": {
+    "registered": 43,
+    "points": 3109,
+    "reprojection": {
+      "count": 14145,
+      "mean": 0.8991857618150886,
+      "median": 0.641203529822349,
+      "p95": 2.612212565236023,
+      "maximum": 3.9995755903527255,
+      "le2": 12549,
+      "le4": 14145
+    },
+    "duplicateImageGroups": 739,
+    "extraImageObservations": 811,
+    "duplicateGroupDiameterPx": {
+      "count": 739,
+      "mean": 1.50354822669186,
+      "median": 0.0,
+      "p95": 5.055164980322781,
+      "maximum": 6.650741711842573,
+      "le2": 470,
+      "le4": 627
+    },
+    "duplicateGroupsExactlyCoincident": 396,
+    "duplicateGroupsUnderQuarterPixel": 402,
+    "nonpositiveDepth": 0,
+    "nonreciprocal": 0
+  },
+  "published": {
+    "registered": 173,
+    "points": 9987,
+    "reprojection": {
+      "count": 74404,
+      "mean": 0.9788888775557185,
+      "median": 0.7709857587462614,
+      "p95": 2.5641441293759617,
+      "maximum": 4.410290223880208,
+      "le2": 65660,
+      "le4": 74394
+    },
+    "duplicateImageGroups": 0,
+    "extraImageObservations": 0,
+    "duplicateGroupDiameterPx": {
+      "count": 0
+    },
+    "duplicateGroupsExactlyCoincident": 0,
+    "duplicateGroupsUnderQuarterPixel": 0,
+    "nonpositiveDepth": 0,
+    "nonreciprocal": 0
+  }
+}

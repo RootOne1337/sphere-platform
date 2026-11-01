@@ -1,0 +1,227 @@
+{
+  "schema": "sphere-minimap-observation-evidence-v1",
+  "resultSHA": "90de0bf1196da4d8beaa2417c63b77576da76310d9ab71fb1fc137cb120dd58c",
+  "experimentSourceSHA": "a631300357cb13b001caf07040fe125da8e054c1a6cb3d0bbc339fbdc4ea9661",
+  "counts": {
+    "samples": 159,
+    "verified": 152,
+    "unique": 93,
+    "imageVerifiedAndWithin1SourceSecond": 147,
+    "imageVerifiedButOver2SourceSeconds": 3,
+    "baseline3DUnknown": 66
+  },
+  "weak4to5p5": [
+    {
+      "source_index": 109,
+      "seconds": 4.082,
+      "state": "verified_ambiguous",
+      "reference_source_index": 83,
+      "source_time_difference_seconds": 0.847,
+      "center_displacement_crop_px": [
+        -1.713314034758497,
+        -5.9108598581041605
+      ],
+      "rotation_degrees": 0.38375833520448704,
+      "scale": 0.9893623023600473,
+      "inliers": 13,
+      "median_residual_px": 0.48193819196313753,
+      "baseline3DState": "unknown",
+      "actualWorldPoseErrorKnown": false
+    },
+    {
+      "source_index": 116,
+      "seconds": 4.314,
+      "state": "verified_unique",
+      "reference_source_index": 115,
+      "source_time_difference_seconds": 0.03399999999999981,
+      "center_displacement_crop_px": [
+        -0.23116134413997713,
+        -0.004558418606620762
+      ],
+      "rotation_degrees": -0.08110176130268744,
+      "scale": 1.000528643405218,
+      "inliers": 80,
+      "median_residual_px": 0.1781400035486163,
+      "baseline3DState": "unknown",
+      "actualWorldPoseErrorKnown": false
+    },
+    {
+      "source_index": 122,
+      "seconds": 4.531,
+      "state": "verified_unique",
+      "reference_source_index": 121,
+      "source_time_difference_seconds": 0.03399999999999981,
+      "center_displacement_crop_px": [
+        -0.15511541108378424,
+        -0.2105787115951614
+      ],
+      "rotation_degrees": -0.049854550451672267,
+      "scale": 0.9998070729913527,
+      "inliers": 73,
+      "median_residual_px": 0.2993682971722949,
+      "baseline3DState": "unknown",
+      "actualWorldPoseErrorKnown": false
+    },
+    {
+      "source_index": 128,
+      "seconds": 4.763,
+      "state": "verified_unique",
+      "reference_source_index": 127,
+      "source_time_difference_seconds": 0.032999999999999474,
+      "center_displacement_crop_px": [
+        -0.19383265025682306,
+        -0.24184008389062228
+      ],
+      "rotation_degrees": 0.724560432779751,
+      "scale": 1.0008075406286643,
+      "inliers": 58,
+      "median_residual_px": 0.44119235345541896,
+      "baseline3DState": "unknown",
+      "actualWorldPoseErrorKnown": false
+    },
+    {
+      "source_index": 135,
+      "seconds": 4.996,
+      "state": "verified_unique",
+      "reference_source_index": 134,
+      "source_time_difference_seconds": 0.03300000000000036,
+      "center_displacement_crop_px": [
+        -0.06500178225701347,
+        -0.5075202211904468
+      ],
+      "rotation_degrees": 0.45616166398566854,
+      "scale": 1.0019857565300638,
+      "inliers": 115,
+      "median_residual_px": 0.3500567073623068,
+      "baseline3DState": "unknown",
+      "actualWorldPoseErrorKnown": false
+    },
+    {
+      "source_index": 141,
+      "seconds": 5.245,
+      "state": "verified_unique",
+      "reference_source_index": 139,
+      "source_time_difference_seconds": 0.08199999999999985,
+      "center_displacement_crop_px": [
+        -0.4840341214546271,
+        -0.738298589209677
+      ],
+      "rotation_degrees": 1.7378246037949714,
+      "scale": 1.0014278693519973,
+      "inliers": 55,
+      "median_residual_px": 0.6571784016686041,
+      "baseline3DState": "unknown",
+      "actualWorldPoseErrorKnown": false
+    }
+  ],
+  "aliasesOver2SourceSeconds": [
+    {
+      "source_index": 57,
+      "seconds": 2.272,
+      "state": "verified_ambiguous",
+      "reference_source_index": 824,
+      "source_time_difference_seconds": 33.116,
+      "center_displacement_crop_px": [
+        -3.861929292182012,
+        -10.636156967681217
+      ],
+      "rotation_degrees": 37.72054458725622,
+      "scale": 0.9983561985333097,
+      "inliers": 11,
+      "median_residual_px": 0.3159987712035424,
+      "baseline3DState": "localized",
+      "actualWorldPoseErrorKnown": false
+    },
+    {
+      "source_index": 421,
+      "seconds": 16.533,
+      "state": "verified_ambiguous",
+      "reference_source_index": 498,
+      "source_time_difference_seconds": 3.3439999999999976,
+      "center_displacement_crop_px": [
+        9.382438948602214,
+        27.474093208995185
+      ],
+      "rotation_degrees": -17.54828341640799,
+      "scale": 1.002276032627222,
+      "inliers": 26,
+      "median_residual_px": 0.6888790152588384,
+      "baseline3DState": "localized",
+      "actualWorldPoseErrorKnown": false
+    },
+    {
+      "source_index": 767,
+      "seconds": 32.845,
+      "state": "verified_ambiguous",
+      "reference_source_index": 710,
+      "source_time_difference_seconds": 2.747,
+      "center_displacement_crop_px": [
+        -7.933491171003027,
+        -28.194261325119825
+      ],
+      "rotation_degrees": 27.55033272007676,
+      "scale": 1.0024292107745807,
+      "inliers": 18,
+      "median_residual_px": 0.6032610505957259,
+      "baseline3DState": "localized",
+      "actualWorldPoseErrorKnown": false
+    }
+  ],
+  "syntheticErrors": [
+    {
+      "sourcePerturbation": {
+        "dx": 8,
+        "dy": -6,
+        "angle": 0
+      },
+      "center_error_px": 0.011081888451919727,
+      "yaw_error_degrees": -0.025705950745106065,
+      "scale_error": -0.0001427894181283973,
+      "corner_error_px": 0.045781755359962914,
+      "samePixelsNotIndependentGameplay": true
+    },
+    {
+      "sourcePerturbation": {
+        "dx": 0,
+        "dy": 0,
+        "angle": 10
+      },
+      "center_error_px": 0.19591489660216432,
+      "yaw_error_degrees": 0.023274211187384708,
+      "scale_error": 0.00010309913037831464,
+      "corner_error_px": 0.1994344275873697,
+      "samePixelsNotIndependentGameplay": true
+    },
+    {
+      "sourcePerturbation": {
+        "dx": 6,
+        "dy": 4,
+        "angle": -10
+      },
+      "center_error_px": 0.2882015741567638,
+      "yaw_error_degrees": -0.09911333866887162,
+      "scale_error": -0.0026345240845312423,
+      "corner_error_px": 0.3905829777756126,
+      "samePixelsNotIndependentGameplay": true
+    }
+  ],
+  "compute_ms": {
+    "p50": 138.17220006603748,
+    "p95": 264.0211599413305,
+    "maximum": 447.71229999605566
+  },
+  "evaluation": "All159queryindicesexactlymatch3Dholdout; all173trainingindicesexcluded. Source time used only AFTER image-only measurement.",
+  "centerDisplacementMeaning": "Relative pixel displacement of fixed player-center under query->reference affine. Not game/world coordinates.",
+  "actualCameraBodyMapCalibrationVerified": false,
+  "actualGamePoseErrorKnown": false,
+  "queryIndicesDisjointFromReferences": true,
+  "temporalIndependenceClaimed": false,
+  "independentGameplaySession": false,
+  "controlPromotion": false,
+  "physicalActions": 0,
+  "rawSourceUnchanged": true,
+  "resourceChecks": 67,
+  "resourceFindings": 0,
+  "maxVolumeProofAgeMs": 9655.999999959022,
+  "peakSampledPrivateMiB": 184.51953125
+}

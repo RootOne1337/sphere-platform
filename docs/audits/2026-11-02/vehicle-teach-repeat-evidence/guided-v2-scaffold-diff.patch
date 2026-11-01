@@ -1,0 +1,72 @@
+--- v1/worker.py
++++ v2/worker.py
+@@ -54,7 +54,10 @@
+ def guided_adapter(observations,matrices,K,*,checkpoint):
+  for pixels,descriptors in observations:
+   feature_array_hashes.append(dict(pixels=hashlib.sha256(pixels.tobytes()).hexdigest(),descriptors=hashlib.sha256(descriptors.tobytes()).hexdigest(),count=len(pixels)))
++ builder_began=time.perf_counter();guard_before=callback_wall;calls_before=callback_calls;io_before=evidence_io_wall
+  rows,report=guided_builder.build(observations,matrices,K,checkpoint=checkpoint,provenance=proof)
++ builder_elapsed=time.perf_counter()-builder_began;guard_elapsed=callback_wall-guard_before
++ report['offline_builder_timing']=dict(wallSeconds=builder_elapsed,resourceCallbackCalls=callback_calls-calls_before,resourceCallbackWallSeconds=guard_elapsed,evidenceIoWallSeconds=evidence_io_wall-io_before,wallExcludingResourceCallbacks=max(0.,builder_elapsed-guard_elapsed),isRealtimeBenchmark=False)
+  candidate_rows.extend(rows)
+  return rows,report
+ 
+@@ -81,23 +84,35 @@
+     python=sys.executable,cpuAffinity=[0,1],opencvThreads=cv.getNumThreads(),runtime=runtime,
+     sameRecording=True,independentGameplay=False,closedLoop=False,executionQualified=False,
+     featureProfile=route_resource_profile(JOB),queryProfile=route_resource_profile(JOB,'live')))
+-resources=[];phase='export';phase_began=time.monotonic();peak=private_bytes()
++resources=[];next_evidence_at=0.;callback_calls=0;callback_wall=0.;evidence_io_wall=0.;callback_phases={};phase='export';phase_began=time.monotonic();peak=private_bytes()
+ with TaskResourceMonitor(ROOT) as monitor:
+  def checkpoint(_target):
+-  global peak
+-  if (OUT/'CANCEL').exists():raise RuntimeError('cancelled')
+-  limit=300 if phase=='export' else 120
+-  if time.monotonic()-phase_began>limit:raise RuntimeError('phase_wall_limit')
+-  snap=monitor.sample();budget=route_resource_profile(JOB) if phase=='export' else route_resource_profile(JOB,'live')
+-  findings=evaluate(snap,min_ram_gib=budget['minRamGiB'],min_disk_gib=budget.get('minDiskGiB',20),max_commit_percent=budget['maxCommitPercent'])
+-  if snap.get('commitLimitBytes',0)-snap.get('committedBytes',0)<budget['minRamGiB']*2**30:findings.append('absolute_commit_headroom_low')
+-  usage=private_bytes();peak=max(peak,usage)
+-  if usage>1.5*2**30:findings.append('owned_private_memory_cap')
+-  if resources and len(resources)>4096:raise RuntimeError('resource_sample_quota')
+-  resources.append(dict(phase=phase,elapsed=time.monotonic()-began,snapshot=snap,privateBytes=usage,findings=findings))
+-  if findings:raise RuntimeError('resource_guard:'+','.join(findings))
+-  write_json(OUT/'progress.json',dict(phase=phase,elapsedSeconds=time.monotonic()-began,phaseSeconds=time.monotonic()-phase_began,
+-      availableRamGiB=snap['availableRamBytes']/2**30,privateGiB=usage/2**30))
++  global peak,next_evidence_at,callback_calls,callback_wall,evidence_io_wall
++  callback_began=time.perf_counter();callback_calls+=1
++  phase_metrics=callback_phases.setdefault(phase,dict(calls=0,wallSeconds=0.))
++  phase_metrics['calls']+=1
++  try:
++   if (OUT/'CANCEL').exists():raise RuntimeError('cancelled')
++   limit=300 if phase=='export' else 120
++   if time.monotonic()-phase_began>limit:raise RuntimeError('phase_wall_limit')
++   snap=monitor.sample();budget=route_resource_profile(JOB) if phase=='export' else route_resource_profile(JOB,'live')
++   findings=evaluate(snap,min_ram_gib=budget['minRamGiB'],min_disk_gib=budget.get('minDiskGiB',20),max_commit_percent=budget['maxCommitPercent'])
++   if snap.get('commitLimitBytes',0)-snap.get('committedBytes',0)<budget['minRamGiB']*2**30:findings.append('absolute_commit_headroom_low')
++   usage=private_bytes();peak=max(peak,usage)
++   if usage>1.5*2**30:findings.append('owned_private_memory_cap')
++   evidence_now=time.monotonic()
++   if evidence_now>=next_evidence_at:
++    if resources and len(resources)>4096:raise RuntimeError('resource_sample_quota')
++    io_began=time.perf_counter();next_evidence_at=evidence_now+.5
++    try:
++     resources.append(dict(phase=phase,elapsed=time.monotonic()-began,snapshot=snap,privateBytes=usage,findings=findings))
++     write_json(OUT/'progress.json',dict(phase=phase,elapsedSeconds=time.monotonic()-began,phaseSeconds=time.monotonic()-phase_began,
++       availableRamGiB=snap['availableRamBytes']/2**30,privateGiB=usage/2**30,callbackCalls=callback_calls,callbackWallSeconds=callback_wall,evidenceSamples=len(resources)))
++    finally:evidence_io_wall+=time.perf_counter()-io_began
++   if findings:raise RuntimeError('resource_guard:'+','.join(findings))
++  finally:
++   elapsed=time.perf_counter()-callback_began;callback_wall+=elapsed;phase_metrics['wallSeconds']+=elapsed
++
+  try:
+   checkpoint(OUT)
+   receipt=export(MODEL,JOB/'prepared/reconstruction-input.json',JOB/'prepared/images',OUT/'route.json',
+@@ -121,6 +136,7 @@
+   print(json.dumps(dict(phase='localization_complete',report=report,summary={k:v for k,v in summary.items() if k!='agreements'})),flush=True)
+  finally:
+   save('resource-samples.json',resources)
++  save('callback-metrics.json',dict(callbackCalls=callback_calls,cumulativeGuardWallSeconds=callback_wall,evidenceIoWallSeconds=evidence_io_wall,guardWallExcludingEvidenceIo=max(0.,callback_wall-evidence_io_wall),byPhase=callback_phases,persistedSamples=len(resources),maxEvidenceRateHz=2.,checksStillEveryCallback=True,isRealtimeBenchmark=False))
+   source_after=binding()
+   recipe_after={name:sha(ROOT/name) for name in recipe_names}
+   save('runtime-source-preservation.json',dict(before=recipe_before,after=recipe_after,unchanged=recipe_before==recipe_after))

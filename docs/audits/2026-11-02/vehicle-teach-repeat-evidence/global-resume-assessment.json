@@ -1,0 +1,229 @@
+{
+  "schema": "sphere-route-geometry-selection-v1",
+  "registered": 172,
+  "selected": 173,
+  "coverage": 0.9942196531791907,
+  "points": 6360,
+  "reprojection_px": 0.8451680500917464,
+  "scene_admissible": true,
+  "route_admissible": false,
+  "scene_reasons": [],
+  "route_reasons": [
+    "route_camera_reversals",
+    "route_camera_speed_outliers"
+  ],
+  "source_coverage": {
+    "first_seconds": 0.0,
+    "last_seconds": 36.903,
+    "missing_start_seconds": 0.0,
+    "missing_end_seconds": 0.0,
+    "max_observed_gap_seconds": 0.441,
+    "endpoints_observed": true,
+    "all_intervals_observed": true,
+    "endpoint_limit_seconds": 1.0,
+    "interval_limit_seconds": 1.0
+  },
+  "motion": {
+    "schema": "sphere-camera-temporal-audit-v1",
+    "views": 172,
+    "first_seconds": 0.0,
+    "last_seconds": 36.903,
+    "path_units": 26.6104269793683,
+    "endpoint_displacement_units": 0.1304403322792206,
+    "median_step_units": 0.07598679934532,
+    "max_step_units": 7.392616849565459,
+    "rapid_reversals": [
+      {
+        "view": 56,
+        "image": "00000321.png",
+        "seconds": 11.966
+      },
+      {
+        "view": 57,
+        "image": "00000327.png",
+        "seconds": 12.199
+      },
+      {
+        "view": 122,
+        "image": "00000621.png",
+        "seconds": 25.773
+      },
+      {
+        "view": 123,
+        "image": "00000625.png",
+        "seconds": 26.031
+      },
+      {
+        "view": 127,
+        "image": "00000643.png",
+        "seconds": 26.922
+      },
+      {
+        "view": 129,
+        "image": "00000652.png",
+        "seconds": 27.392
+      }
+    ],
+    "median_rate_units_per_second": 0.3636682088224719,
+    "speed_outliers": [
+      {
+        "view": 2,
+        "image": "00000010.png",
+        "seconds": 0.441,
+        "interval_seconds": 0.441,
+        "median_rate_ratio": 46.095047923028766
+      },
+      {
+        "view": 58,
+        "image": "00000332.png",
+        "seconds": 12.4,
+        "interval_seconds": 0.201,
+        "median_rate_ratio": 13.394757777453524
+      },
+      {
+        "view": 117,
+        "image": "00000600.png",
+        "seconds": 24.772,
+        "interval_seconds": 0.215,
+        "median_rate_ratio": 19.121239415810116
+      }
+    ],
+    "warning": "poses_require_temporal_review",
+    "heuristic_only": true,
+    "metric_scale": null,
+    "navigation_qualified": false,
+    "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+  },
+  "poses_interpolated": false,
+  "navigation_qualified": false,
+  "execution_qualified": false,
+  "conditioning": {
+    "near_camera_points": 0,
+    "near_camera_fraction": 0.0,
+    "camera_span_units": 10.569040512833501,
+    "passed": true
+  },
+  "intrinsics_condition": {
+    "passed": true,
+    "focal_ratio": 1.0,
+    "horizontal_fov_degrees": 109.11286988542953,
+    "vertical_fov_degrees": 76.63448726520014,
+    "physical_calibration_verified": false
+  },
+  "observation_support": {
+    "status": "complete",
+    "schema": "sphere-observation-support-v1",
+    "summary": {
+      "min": 5,
+      "median": 219.5,
+      "p10": 56.0,
+      "count_under_6": 1,
+      "count_under_15": 2
+    },
+    "summary_measure": "reprojection_le_4px",
+    "track_observations": 46091,
+    "execution_qualified": false,
+    "admission_effect": "none",
+    "caveat": "In-sample diagnostic; counts do not certify camera pose or navigation.",
+    "frame_count": 172,
+    "worst_frames": [
+      {
+        "image": "00000000.png",
+        "ticks_90k": 0,
+        "raw_eligible_tracks": 5,
+        "positive_depth_inside": 5,
+        "reprojection_le_4px": 5,
+        "occupied_grid_4x4": 2
+      },
+      {
+        "image": "00000327.png",
+        "ticks_90k": 1097910,
+        "raw_eligible_tracks": 29,
+        "positive_depth_inside": 29,
+        "reprojection_le_4px": 12,
+        "occupied_grid_4x4": 3
+      },
+      {
+        "image": "00000157.png",
+        "ticks_90k": 527580,
+        "raw_eligible_tracks": 17,
+        "positive_depth_inside": 17,
+        "reprojection_le_4px": 17,
+        "occupied_grid_4x4": 1
+      },
+      {
+        "image": "00000163.png",
+        "ticks_90k": 546930,
+        "raw_eligible_tracks": 20,
+        "positive_depth_inside": 20,
+        "reprojection_le_4px": 19,
+        "occupied_grid_4x4": 3
+      },
+      {
+        "image": "00000595.png",
+        "ticks_90k": 2210130,
+        "raw_eligible_tracks": 24,
+        "positive_depth_inside": 24,
+        "reprojection_le_4px": 19,
+        "occupied_grid_4x4": 3
+      },
+      {
+        "image": "00000268.png",
+        "ticks_90k": 897480,
+        "raw_eligible_tracks": 22,
+        "positive_depth_inside": 22,
+        "reprojection_le_4px": 21,
+        "occupied_grid_4x4": 2
+      },
+      {
+        "image": "00000153.png",
+        "ticks_90k": 511020,
+        "raw_eligible_tracks": 28,
+        "positive_depth_inside": 28,
+        "reprojection_le_4px": 27,
+        "occupied_grid_4x4": 2
+      },
+      {
+        "image": "00000222.png",
+        "ticks_90k": 741690,
+        "raw_eligible_tracks": 27,
+        "positive_depth_inside": 27,
+        "reprojection_le_4px": 27,
+        "occupied_grid_4x4": 3
+      },
+      {
+        "image": "00000217.png",
+        "ticks_90k": 722160,
+        "raw_eligible_tracks": 35,
+        "positive_depth_inside": 35,
+        "reprojection_le_4px": 31,
+        "occupied_grid_4x4": 3
+      },
+      {
+        "image": "00000516.png",
+        "ticks_90k": 1866870,
+        "raw_eligible_tracks": 45,
+        "positive_depth_inside": 45,
+        "reprojection_le_4px": 41,
+        "occupied_grid_4x4": 4
+      },
+      {
+        "image": "00000148.png",
+        "ticks_90k": 493020,
+        "raw_eligible_tracks": 44,
+        "positive_depth_inside": 44,
+        "reprojection_le_4px": 44,
+        "occupied_grid_4x4": 3
+      },
+      {
+        "image": "00000228.png",
+        "ticks_90k": 762660,
+        "raw_eligible_tracks": 47,
+        "positive_depth_inside": 47,
+        "reprojection_le_4px": 45,
+        "occupied_grid_4x4": 2
+      }
+    ],
+    "worst_frames_truncated": true
+  }
+}

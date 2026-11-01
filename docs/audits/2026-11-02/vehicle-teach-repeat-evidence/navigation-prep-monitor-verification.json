@@ -1,0 +1,25 @@
+{
+  "scope": "NAV_PREPARATION_TASK_RESOURCE_MONITOR_ONLY",
+  "files": {
+    "scripts\\pilot\\prepare_route_workspace.py": "ebb3c05b64bba75ca0d4390cbb6ef941bae0898fffbd8be6c07bbb4683c16bba",
+    "scripts\\pilot\\route_workspace.py": "e0d76a8f2d210ec380c07b59ffe9e4c22ad572db6df1abe36fd6969fd3104d1c",
+    "tests\\test_nav_preparation_resource_monitor.py": "2eeba3a68774cebddb23c3fd80dee6d20ac724f52d6ee62040cbf73eae77e530"
+  },
+  "testsPassed": 127,
+  "subtestsPassed": 16,
+  "testSeconds": 2.06,
+  "newFocusedTests": 23,
+  "testLogSHA": "6fb03f689b2fc964ee46c484b05ddc1b4b81326ed3feca3846c7e46eb7887fc1",
+  "physicalActions": 0,
+  "actualPreparationJobsStarted": 0,
+  "resourceProfilesChanged": false,
+  "volumeProofTTLSeconds": 30,
+  "liveCollectionUnchanged": true,
+  "defaultCheckpointFullCollectionUnchanged": true,
+  "callbackTargetResolvedToCapturedAttemptBeforeSampling": true,
+  "cancellationScopes": [
+    "job",
+    "attempt"
+  ],
+  "cleanup": "task-owned monitor context closes on success, rejection, cancellation and exceptions"
+}

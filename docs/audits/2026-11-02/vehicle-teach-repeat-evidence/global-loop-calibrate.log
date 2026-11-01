@@ -1,0 +1,6 @@
+I20261102 01:16:55.136589  1768 view_graph_calibration.cc:398] Calibrating view graph with 672 pairs
+I20261102 01:16:55.136693  1768 view_graph_calibration.cc:135] Upgraded 0 / 672 pairs to calibrated through cross-validation
+I20261102 01:16:55.149027  1768 view_graph_calibration.cc:332] 0 cameras rejected in view graph calibration
+I20261102 01:16:55.158667  1768 view_graph_calibration.cc:494] Invalid / total number of two-view geometry: 93 / 672
+I20261102 01:16:55.159110  1768 view_graph_calibration.cc:145] Re-estimating relative poses for 579 pairs
+I20261102 01:17:04.902006  1768 sfm.cc:811] View graph calibration completed successfully

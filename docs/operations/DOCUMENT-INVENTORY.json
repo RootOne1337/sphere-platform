@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 449,
+    "DATED_EVIDENCE": 450,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 82,
     "PROJECT_POLICY": 7,
@@ -1934,6 +1934,10 @@
     },
     {
       "file": "docs/audits/2026-11-01/scooter-trajectory-evidence/joint-ba-readme.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-02/VEHICLE-TEACH-REPEAT.md",
       "role": "DATED_EVIDENCE"
     },
     {

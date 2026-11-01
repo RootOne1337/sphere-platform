@@ -1,0 +1,23 @@
+{
+  "scope": "TASK_SCOPED_VOLUME_HEALTH_PROOF_WITH_FRESH_MEMORY",
+  "physicalActions": 0,
+  "files": {
+    "scripts/pilot/route_resource_monitor.py": "a1d54fd6ab27c1e08ff14f4d82f1d7ec04dd1c5d8b5147b4d5dfeba975135bd5",
+    "tests/test_route_resource_monitor.py": "96e6a15d83f2aa4f08c27e1d7f1cf7409bbd2bba7cb1116533226bb90300e228"
+  },
+  "testsPassed": 73,
+  "testsLogSha256": "239127170414e3fe3260e2a92dd2bd10b826762f16a4693975694d0fd5b453c6",
+  "smokeSha256": "0cab1ea097d8750d58f7166a7cb7d95303f695904423469b32a3f385831663b3",
+  "globalCache": false,
+  "thresholdsChanged": false,
+  "volumeProofTtlSeconds": 30,
+  "volumeProbeIntervalSeconds": 10,
+  "probeTimeoutSeconds": 10,
+  "memoryReused": false,
+  "identity": "Win32 actual volume GUID plus resolved path, changes latched",
+  "integration": "Call sample at every native resource checkpoint, not only each30svolumecheck",
+  "sourceDocs": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumepathnamew",
+    "https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumenameforvolumemountpointw"
+  ]
+}

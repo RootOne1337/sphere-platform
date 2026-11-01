@@ -1,0 +1,3 @@
+{"profile": "frontend", "step": "action-contract", "state": "started"}
+{"profile": "frontend", "step": "jest", "state": "started"}
+{"runId": "20261101T203006Z-55c0f188", "sha": "1b68f20d7aa44cfb57a9005173fb6a946ad96d93", "state": "error", "profiles": {"frontend": "failure"}}

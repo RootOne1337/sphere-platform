@@ -1,0 +1,61 @@
+{
+  "schema": "sphere-vehicle-turn-final-check-v1",
+  "inputHashes": {
+    "manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475"
+  },
+  "sourceUnchanged": true,
+  "health": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true,
+    "route_camera_pipeline": "vehicle_geometry_v3_hud",
+    "creation_recovery_contract": "confirmed_absence_v1",
+    "image_route_review_contract": "source_bound_offline_v1",
+    "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+    "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+    "alternative_catalog_contract": "source_bound_review_v1",
+    "vehicle_control_contract": "attached_camera_hud_binary_hold_v1",
+    "route_resource_monitor_contract": "task_volume30_fresh_native_v1",
+    "hud_speed_reference_contract": "source_bound_font_display_v1",
+    "live_session_active": false
+  },
+  "uiStatus": 200,
+  "uiBytes": 32404,
+  "primaryState": "failed",
+  "primaryError": "resource_guard",
+  "cancelPreserved": true,
+  "navigationActive": false,
+  "catalog": {
+    "alternatives": [
+      {
+        "id": "components-169-diagnostic",
+        "cameras": 169,
+        "points": 9987,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "Скутер: объединённые фрагменты (диагностика)"
+      },
+      {
+        "id": "fixed-k-fused-173-supported-diagnostic",
+        "cameras": 173,
+        "points": 20556,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "Совместная геометрия · 173 ракурса · 20 556 точек"
+      },
+      {
+        "id": "full-173-endpoints-diagnostic",
+        "cameras": 173,
+        "points": 9987,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "Полный временной охват · 173 ракурса"
+      }
+    ],
+    "preferredAlternativeId": "fixed-k-fused-173-supported-diagnostic"
+  },
+  "physicalActions": 0
+}

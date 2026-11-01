@@ -1,0 +1,220 @@
+{
+  "schema": "sphere-skuter1-same-record-holdout-outcome-v1",
+  "scope": "same_recording_exact_reference_frame_holdout_not_independent_gameplay",
+  "model_source": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\track-filter-ba-20261102-v2\\supported-3view-20261102-v1\\model",
+  "query_count": 159,
+  "localized_count": 63,
+  "localized_fraction": 0.39622641509433965,
+  "confirming_count": 30,
+  "unknown_count": 66,
+  "all_173_reference_indices_excluded": true,
+  "referenceRGBExcluded": 0,
+  "queryTimeRange": [
+    0.001,
+    36.686
+  ],
+  "mapReady": false,
+  "readinessFailure": "route_map_has_unobserved_sections",
+  "weakReferenceNeighborhoods": [
+    {
+      "reference": 19,
+      "source_index": 108,
+      "seconds": 4.049,
+      "landmarks": 9,
+      "neighbor_landmarks": 21
+    },
+    {
+      "reference": 20,
+      "source_index": 115,
+      "seconds": 4.28,
+      "landmarks": 9,
+      "neighbor_landmarks": 14
+    },
+    {
+      "reference": 21,
+      "source_index": 121,
+      "seconds": 4.497,
+      "landmarks": 8,
+      "neighbor_landmarks": 15
+    },
+    {
+      "reference": 22,
+      "source_index": 127,
+      "seconds": 4.73,
+      "landmarks": 8,
+      "neighbor_landmarks": 14
+    },
+    {
+      "reference": 23,
+      "source_index": 134,
+      "seconds": 4.963,
+      "landmarks": 12,
+      "neighbor_landmarks": 15
+    },
+    {
+      "reference": 24,
+      "source_index": 139,
+      "seconds": 5.163,
+      "landmarks": 12,
+      "neighbor_landmarks": 15
+    },
+    {
+      "reference": 25,
+      "source_index": 143,
+      "seconds": 5.312,
+      "landmarks": 4,
+      "neighbor_landmarks": 17
+    },
+    {
+      "reference": 26,
+      "source_index": 148,
+      "seconds": 5.478,
+      "landmarks": 13,
+      "neighbor_landmarks": 19
+    }
+  ],
+  "localizedInliers": {
+    "count": 63,
+    "minimum": 24,
+    "median": 69.0,
+    "p95": 150.0,
+    "maximum": 156
+  },
+  "localizedInliersAtLeast80": 28,
+  "localizedMedianReprojectionPx": {
+    "count": 63,
+    "minimum": 0.05565932423752815,
+    "median": 0.3748265470743422,
+    "p95": 0.8205584004496081,
+    "maximum": 1.1931929690917773
+  },
+  "localizedCrossTrackUnits": {
+    "count": 63,
+    "minimum": 0.0004143229002219808,
+    "median": 0.004464542577245419,
+    "p95": 0.03187036981651819,
+    "maximum": 0.06427585892610917
+  },
+  "localizedProgressUnits": {
+    "count": 63,
+    "minimum": 0.0,
+    "median": 43.547635587298686,
+    "p95": 74.94809243030699,
+    "maximum": 74.94824304490017
+  },
+  "adjacentLocalizedSteps": {
+    "count": 59,
+    "distanceUnits": {
+      "count": 59,
+      "minimum": 1.103528367434762e-05,
+      "median": 0.26134117768650506,
+      "p95": 0.4722949623021611,
+      "maximum": 0.4831888079555822
+    },
+    "rotationDegrees": {
+      "count": 59,
+      "minimum": 0.0005215473929072443,
+      "median": 1.9297926753879437,
+      "p95": 12.63359612550127,
+      "maximum": 20.342658023871145
+    },
+    "negativeProgressSteps": 5,
+    "largestRotationSteps": [
+      {
+        "from_seconds": 20.661,
+        "to_seconds": 20.943,
+        "dt": 0.28200000000000003,
+        "distance_units": 0.27144948083767245,
+        "rotation_degrees": 20.342658023871145,
+        "progress_delta_units": 0.27307532023014147
+      },
+      {
+        "from_seconds": 20.361,
+        "to_seconds": 20.661,
+        "dt": 0.3000000000000007,
+        "distance_units": 0.40129016153063035,
+        "rotation_degrees": 18.072511986412263,
+        "progress_delta_units": 0.4169749132747782
+      },
+      {
+        "from_seconds": 15.701,
+        "to_seconds": 16.035,
+        "dt": 0.33399999999999963,
+        "distance_units": 0.47680454353529106,
+        "rotation_degrees": 17.097997411175847,
+        "progress_delta_units": 0.47482197012615757
+      }
+    ]
+  },
+  "slowQueries": [
+    {
+      "source_index": 334,
+      "seconds": 12.482,
+      "compute_ms": 303.54170000646263,
+      "state": "unknown",
+      "reason": "route_pose_discontinuity"
+    },
+    {
+      "source_index": 358,
+      "seconds": 13.618,
+      "compute_ms": 3056.458300095983,
+      "state": "confirming",
+      "reason": "relative_camera_pose_not_clearance_or_arrival"
+    },
+    {
+      "source_index": 658,
+      "seconds": 27.721,
+      "compute_ms": 1506.4471999648958,
+      "state": "confirming",
+      "reason": "relative_camera_pose_not_clearance_or_arrival"
+    }
+  ],
+  "proofs": [
+    {
+      "file": "localization/overlay-1.png",
+      "source_index": 51,
+      "seconds": 2.056,
+      "pose": "localized",
+      "inliers": 88
+    },
+    {
+      "file": "localization/overlay-2.png",
+      "source_index": 57,
+      "seconds": 2.272,
+      "pose": "localized",
+      "inliers": 66
+    },
+    {
+      "file": "localization/overlay-3.png",
+      "source_index": 62,
+      "seconds": 2.473,
+      "pose": "localized",
+      "inliers": 48
+    },
+    {
+      "file": "localization/overlay-4.png",
+      "source_index": 69,
+      "seconds": 2.703,
+      "pose": "localized",
+      "inliers": 41
+    }
+  ],
+  "sourceUnchanged": true,
+  "peakSampledPrivateBytes": 189181952,
+  "independentGameplay": false,
+  "clock": "source_PTS_synthetic_receiver_clock; compute_only_timing_not_full_delivery",
+  "closedLoop": false,
+  "physicalActions": 0,
+  "executionQualified": false,
+  "productionApiTouched": false,
+  "nearReferenceDistanceSeconds": {
+    "median": 0.066,
+    "maximum": 0.132,
+    "queriesBeyond150ms": 0,
+    "scope": "all684nonreferenceSourceFrames"
+  },
+  "canonicalProbeRecoveryCandidates": 3,
+  "productionRecoveryCandidates": 8,
+  "parametersTunedAfterResults": false,
+  "matplotlibAvailable": false
+}

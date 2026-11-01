@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "runId": "20261101T203006Z-55c0f188",
+  "startedAt": "2026-11-01T20:30:06.970879+00:00",
+  "state": "error",
+  "source": {
+    "sha": "1b68f20d7aa44cfb57a9005173fb6a946ad96d93",
+    "tree": "c9fcf0f22897e1da7377a361e724184b008c10db",
+    "trustedRef": "refs/heads/codex/enterprise-audit-20260905",
+    "repository": "RootOne1337/sphere-platform"
+  },
+  "executorSha256": "0707af71ea05ba3b80d7a564774d7a2cd7972cc2d613e0e43a4309fff651acc4",
+  "profiles": {
+    "frontend": {
+      "state": "failure",
+      "startedAt": "2026-11-01T20:30:14.656046+00:00",
+      "steps": [
+        {
+          "name": "action-contract",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 0.093,
+          "logBytes": 36,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-01T20:30:15.089348+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 37688619008,
+            "diskObservedAt": "2026-11-01T20:30:15.089348+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-01T20:30:16.549594+00:00",
+            "availableRamBytes": 11483807744,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 77437378560,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11031982080,
+            "kernelNonpagedBytes": 5276475392,
+            "processCount": 476,
+            "handleCount": 709525,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-01T20:30:16.549594+00:00",
+            "collectionCompletedAt": "2026-11-01T20:30:16.549594+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        },
+        {
+          "name": "jest",
+          "exitCode": 1,
+          "timedOut": false,
+          "elapsedSeconds": 132.297,
+          "logBytes": 169278,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-01T20:30:16.647140+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 37687558144,
+            "diskObservedAt": "2026-11-01T20:30:16.647662+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-01T20:30:17.932285+00:00",
+            "availableRamBytes": 11420450816,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 77522599936,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11032043520,
+            "kernelNonpagedBytes": 5278195712,
+            "processCount": 476,
+            "handleCount": 709533,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-01T20:30:17.932285+00:00",
+            "collectionCompletedAt": "2026-11-01T20:30:17.932285+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        }
+      ],
+      "packagingVerified": false,
+      "nodeVersion": "v24.22.1",
+      "dependencies": {
+        "lockSha256": "d04493d745f1d6200a51e7c0a661a9a5feda0552225bd4d01b3490f9455cfc78",
+        "installedManifestSha256": "6df90657826862e17a0829227b1246183eda98fc334c3172681569527a2b127f",
+        "installedPackages": 880,
+        "optionalPackagesAbsent": 49,
+        "contentIntegrityAttested": false
+      },
+      "reason": "step_failed:jest",
+      "tests": {
+        "tests": 2999,
+        "passed": 2998,
+        "failures": 1,
+        "failedSuites": 1,
+        "skipped": 0,
+        "suites": 224,
+        "success": false
+      },
+      "finishedAt": "2026-11-01T20:32:30.238643+00:00",
+      "elapsedSeconds": 135.582,
+      "githubPending": {
+        "id": 57793560578,
+        "context": "Sphere Local / Frontend regressions",
+        "state": "pending",
+        "createdAt": "2026-11-01T20:30:11Z",
+        "readbackVerified": true,
+        "targetUrl": null
+      },
+      "github": {
+        "id": 57793634459,
+        "context": "Sphere Local / Frontend regressions",
+        "state": "failure",
+        "createdAt": "2026-11-01T20:32:29Z",
+        "readbackVerified": true,
+        "targetUrl": null
+      }
+    }
+  },
+  "rawLogsUploaded": false,
+  "productionPackagingAccepted": false,
+  "publicForkJobsAccepted": false,
+  "workflowMode": "maintainer-local-executor",
+  "volumeExceptionRequested": false,
+  "retentionBeforeRun": {
+    "retainedRuns": 10,
+    "retainedBytes": 11401869,
+    "removedRuns": [],
+    "maxRuns": 10,
+    "maxBytes": 268435456
+  },
+  "resourcePreflight": {
+    "observedAt": "2026-11-01T20:30:06.972017+00:00",
+    "system": "Windows",
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "freeDiskBytes": 37762912256,
+    "diskObservedAt": "2026-11-01T20:30:07.011844+00:00",
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "volumeObservedAt": "2026-11-01T20:30:08.302148+00:00",
+    "availableRamBytes": 11816124416,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 77152866304,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 11026227200,
+    "kernelNonpagedBytes": 5269229568,
+    "processCount": 476,
+    "handleCount": 709299,
+    "memoryMeasurement": "GetPerformanceInfo",
+    "memoryObservedAt": "2026-11-01T20:30:08.302682+00:00",
+    "collectionCompletedAt": "2026-11-01T20:30:08.302682+00:00",
+    "findings": []
+  },
+  "checkoutRemoved": true,
+  "finishedAt": "2026-11-01T20:32:34.893394+00:00",
+  "retentionAfterRun": {
+    "retainedRuns": 10,
+    "retainedBytes": 12800016,
+    "removedRuns": [
+      "20261026T165423Z-372c7646"
+    ],
+    "maxRuns": 10,
+    "maxBytes": 268435456
+  }
+}

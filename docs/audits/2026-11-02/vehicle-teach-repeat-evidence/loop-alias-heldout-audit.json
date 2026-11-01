@@ -1,0 +1,114 @@
+{
+  "schema": "sphere-exact-xy-alias-holdout-audit-v1",
+  "scope": "same_source_constraints_not_independent_ground_truth",
+  "rowMapSHA256": "777923669a856afc5d719f3d9d244958b30f19df9bf5df35d0813461a7183ec9",
+  "pairs": [
+    {
+      "pair": "loop-1-171.npz",
+      "npzSHA256": "aa4509235b73fb441da149e27df4d701e619125a4b9981be7bb18f3bcbaa5fd7",
+      "originalTrainRows": 53,
+      "originalHeldRows": 18,
+      "uniquePhysicalTrainPairs": 50,
+      "uniquePhysicalHeldPairs": 18,
+      "heldPhysicalPairsAliasingTrain": 2,
+      "cleanPhysicalHeldPairs": 16,
+      "originalHeldRowsAliasingTrain": 2,
+      "leakedPhysicalPairIndices": [
+        [
+          440,
+          2267
+        ],
+        [
+          530,
+          2350
+        ]
+      ]
+    },
+    {
+      "pair": "loop-1-173.npz",
+      "npzSHA256": "0f84e3637275f4bb7c37350b65405877a3db745f0cc21fb0f2a50d7a174fe335",
+      "originalTrainRows": 55,
+      "originalHeldRows": 26,
+      "uniquePhysicalTrainPairs": 52,
+      "uniquePhysicalHeldPairs": 25,
+      "heldPhysicalPairsAliasingTrain": 1,
+      "cleanPhysicalHeldPairs": 24,
+      "originalHeldRowsAliasingTrain": 1,
+      "leakedPhysicalPairIndices": [
+        [
+          530,
+          2335
+        ]
+      ]
+    },
+    {
+      "pair": "loop-15-160.npz",
+      "npzSHA256": "c4c5f3c89654e0c08de9b7d158debc165f4073a9282971f442887e04db8fc34d",
+      "originalTrainRows": 27,
+      "originalHeldRows": 12,
+      "uniquePhysicalTrainPairs": 27,
+      "uniquePhysicalHeldPairs": 12,
+      "heldPhysicalPairsAliasingTrain": 3,
+      "cleanPhysicalHeldPairs": 9,
+      "originalHeldRowsAliasingTrain": 3,
+      "leakedPhysicalPairIndices": [
+        [
+          1024,
+          1529
+        ],
+        [
+          1097,
+          1703
+        ],
+        [
+          1146,
+          1956
+        ]
+      ]
+    },
+    {
+      "pair": "loop-20-155.npz",
+      "npzSHA256": "b00ad2998ead214cbdda976538ee3961138f78794484a162ee163f00aa8a30ec",
+      "originalTrainRows": 1,
+      "originalHeldRows": 0,
+      "uniquePhysicalTrainPairs": 1,
+      "uniquePhysicalHeldPairs": 0,
+      "heldPhysicalPairsAliasingTrain": 0,
+      "cleanPhysicalHeldPairs": 0,
+      "originalHeldRowsAliasingTrain": 0,
+      "leakedPhysicalPairIndices": []
+    },
+    {
+      "pair": "loop-3-169.npz",
+      "npzSHA256": "04a6e3aec804ed17745d1fb2f25e67d5dfdf1f3a7c75f7a62cd2a625114dca52",
+      "originalTrainRows": 49,
+      "originalHeldRows": 19,
+      "uniquePhysicalTrainPairs": 47,
+      "uniquePhysicalHeldPairs": 19,
+      "heldPhysicalPairsAliasingTrain": 1,
+      "cleanPhysicalHeldPairs": 18,
+      "originalHeldRowsAliasingTrain": 1,
+      "leakedPhysicalPairIndices": [
+        [
+          1342,
+          2266
+        ]
+      ]
+    },
+    {
+      "pair": "loop-8-165.npz",
+      "npzSHA256": "dba2eaf0ac7548a24cc5014d2fec07e1df18b9bd13db2b52a44d406ab3085059",
+      "originalTrainRows": 60,
+      "originalHeldRows": 24,
+      "uniquePhysicalTrainPairs": 59,
+      "uniquePhysicalHeldPairs": 24,
+      "heldPhysicalPairsAliasingTrain": 0,
+      "cleanPhysicalHeldPairs": 24,
+      "originalHeldRowsAliasingTrain": 0,
+      "leakedPhysicalPairIndices": []
+    }
+  ],
+  "trainingRowsRewritten": false,
+  "modelSolveLaunched": false,
+  "sourceModified": false
+}

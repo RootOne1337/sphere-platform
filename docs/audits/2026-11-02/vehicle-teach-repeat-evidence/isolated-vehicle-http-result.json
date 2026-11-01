@@ -1,0 +1,93 @@
+{
+  "schema": "sphere-isolated-recorded-production-vehicle-http-v1",
+  "status": "completed",
+  "reason": "source_ended",
+  "refusal": null,
+  "vehicleStarted": true,
+  "observations": 277,
+  "poses": {
+    "confirming": 28,
+    "unknown": 75,
+    "localized": 174
+  },
+  "planPhases": {
+    "waiting": 25,
+    "following": 21,
+    "stopped": 231
+  },
+  "planReasons": {
+    "vehicle_confirming_position": 22,
+    "vehicle_fresh_pose_required": 1,
+    "vehicle_confirming_current_position": 2,
+    "vehicle_continuous_pursuit": 21,
+    "vehicle_progress_discontinuity": 231
+  },
+  "pedalSuggestions": {
+    "coast": 259,
+    "throttle": 9,
+    "brake": 9
+  },
+  "steeringNonzeroSuggestions": 21,
+  "freshFollowingSuggestions": 21,
+  "expiredQueries": 3,
+  "expiredDecisionLeasesAtAnswer": 0,
+  "replyMs": {
+    "p50": 24.655699962750077,
+    "p95": 160.05826001055533,
+    "maximum": 290.12169991619885
+  },
+  "queryAgeMs": {
+    "p50": 30.26929998304695,
+    "p95": 165.96661994699386,
+    "maximum": 296.5671999845654
+  },
+  "encodeMs": {
+    "p50": 3.6700000055134296,
+    "p95": 5.319060012698173,
+    "maximum": 12.535199988633394
+  },
+  "computeMs": {
+    "p50": 15.71379997767508,
+    "p95": 155.18875999841833,
+    "maximum": 281.45110001787543
+  },
+  "sourceFrames": 857,
+  "referenceSourceFrames": 173,
+  "referenceFramesExcludedDuringDecode": 173,
+  "cadenceExcluded": 346,
+  "lateFramesSkipped": 61,
+  "firstDeliveredSeconds": 0.001,
+  "lastDeliveredSeconds": 36.802,
+  "wallSeconds": 39.39736249996349,
+  "playbackWallSeconds": 36.94976560003124,
+  "cpuCoreSeconds": 22.578125,
+  "peakSampledPrivateBytes": 121520128,
+  "regularCandidates": 3,
+  "recoveryCandidates": 8,
+  "opencvThreads": 4,
+  "cpuAffinity": [
+    0,
+    1
+  ],
+  "blasThreads": 1,
+  "stopResult": {
+    "phase": "closed",
+    "physicalActions": 0,
+    "diagnostics": null
+  },
+  "serverClosed": true,
+  "fixtureCleanup": "exact_owned_files_removed",
+  "sourceUnchanged": true,
+  "physicalActions": 0,
+  "independentGameplay": false,
+  "closedLoop": false,
+  "syntheticPoseClock": false,
+  "sourceTimeSentToLocalizer": false,
+  "motionFeedbackAlwaysFalse": true,
+  "arrivalProven": false,
+  "executionQualified": false,
+  "production3342Touched": false,
+  "fullAndroidLatencyKnown": false,
+  "ageBasis": "decoded_frame_presentation_before_JPEG_and_HTTP; excludes_Android/browser_delivery",
+  "rowsReceivedAfterReplayDeadline": 0
+}

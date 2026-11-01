@@ -1,0 +1,31 @@
+{
+  "command": [
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\motor-worker-venv\\Scripts\\python.exe",
+    "-B",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-measured-anchors-20261102-v1\\worker.py",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\track-filter-ba-20261102-v2\\supported-3view-20261102-v1\\model"
+  ],
+  "exitCode": 0,
+  "reason": null,
+  "wallSeconds": 72.17136419995222,
+  "cpuAffinity": [
+    0,
+    1
+  ],
+  "childTreeMemoryCapGiB": 2,
+  "logQuotaMiB": 8,
+  "outerWallSeconds": 450,
+  "initial": {
+    "availableRamBytes": 8380817408,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 82571223040,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 11299856384,
+    "kernelNonpagedBytes": 5353058304,
+    "processCount": 474,
+    "handleCount": 713118
+  },
+  "minAvailableRamGiB": 7.075042724609375,
+  "logSha256": "b65c5b3b17dc968e8c604ae672e1f9e9291ecf1baacda027bd6bcedb1a30c44e",
+  "physicalActions": 0
+}
