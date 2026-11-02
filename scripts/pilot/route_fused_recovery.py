@@ -162,6 +162,7 @@ def _mask_context(job, prepared, bindings, check):
                 ROOT / "scripts/pilot/learned_route_features.py",
                 ROOT / "scripts/pilot/route_masks.py",
                 ROOT / "scripts/pilot/route_native_track_policy.py",
+                ROOT / "scripts/pilot/route_intrinsics_prior.py",
             )
         },
     )
@@ -954,6 +955,13 @@ def recover_fused(
             or _hash(COLMAP, bounded) != COLMAP_SHA256
         ):
             raise RuntimeError("fused_native_unavailable")
+        base_assessment = (
+            model_assessment(baseline, prepared, selected, source_start, source_end, check=bounded)[
+                1
+            ]
+            if baseline is not None
+            else None
+        )
         sift, pairs, heldouts = _build_sift(
             prepared, prepared / "database.db", folder, rows, bounded, progress
         )
@@ -964,6 +972,23 @@ def recover_fused(
             image_bindings={Path(row["image"]).name: row["png_sha256"] for row in rows},
             check=bounded,
         )
+        # Only a validated estimate from this source/row namespace can supply
+        # a numerical initializer. Native verification runs AFTER this change.
+        from scripts.pilot.route_intrinsics_prior import initialize_intrinsics
+
+        prior = initialize_intrinsics(
+            folder / "database.db",
+            baseline,
+            base_assessment,
+            rows,
+            source_manifest_sha256=bindings["input/manifest.json"],
+            reconstruction_input_sha256=bindings[
+                (prepared / "reconstruction-input.json").relative_to(job).as_posix()
+            ],
+            seal=_seal_database,
+            check=bounded,
+        )
+        write_json(folder / "intrinsics-prior.json", prior)
         names = {row["videoImageId"]: row["name"] for row in namespace["images"]}
         with closing(sqlite3.connect(folder / "database.db")) as database:
             pair_names = [
@@ -1042,6 +1067,8 @@ def recover_fused(
                 "0",
                 "--GlobalMapper.ba_ceres_use_gpu",
                 "0",
+                "--GlobalMapper.ba_refine_focal_length",
+                "1",
                 "--GlobalMapper.refine_sensor_from_rig",
                 "0",
                 "--GlobalMapper.track_intra_image_consistency_threshold",
@@ -1100,13 +1127,6 @@ def recover_fused(
         geometry, assessment = model_assessment(
             rec, prepared, selected, source_start, source_end, check=bounded
         )
-        base_assessment = (
-            model_assessment(baseline, prepared, selected, source_start, source_end, check=bounded)[
-                1
-            ]
-            if baseline is not None
-            else None
-        )
         target = folder / "model"
         target.mkdir()
         rec.write(target)
@@ -1139,6 +1159,12 @@ def recover_fused(
             native_track_audit=audit,
             heldout_clean_matches=sum(row["clean"] for row in heldout_report["pairs"]),
             heldout_admission_effect="none",
+            intrinsics_prior=dict(
+                path="intrinsics-prior.json",
+                sha256=_hash(folder / "intrinsics-prior.json", bounded),
+                applied=prior["applied"],
+                physical_calibration_verified=False,
+            ),
         )
         report["source_manifest_sha256"] = _hash(job / "input/manifest.json", bounded)
         report["reconstruction_input_sha256"] = _hash(

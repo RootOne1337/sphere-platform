@@ -9,6 +9,7 @@ def test_first_run_proof_covers_the_fused_engine_and_native_reference_policy():
     assert {
         'scripts/pilot/route_fused_recovery.py',
         'scripts/pilot/route_native_track_policy.py',
+        'scripts/pilot/route_intrinsics_prior.py',
         'scripts/pilot/route_native_landmarks.py',
     } <= set(first_run.RECIPE)
     assert len(first_run.RECIPE) == len(set(first_run.RECIPE))

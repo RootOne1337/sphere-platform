@@ -33,6 +33,7 @@ RECIPE=('scripts/pilot/check_route_first_run.py','scripts/pilot/reconstruction_s
         'scripts/pilot/route_hud_profile.py','scripts/pilot/black_russia_speed_font_v1.json',
         'scripts/pilot/route_component_merge.py','scripts/pilot/route_endpoint_resection.py',
         'scripts/pilot/route_fused_recovery.py','scripts/pilot/route_native_track_policy.py',
+        'scripts/pilot/route_intrinsics_prior.py',
         'scripts/pilot/route_native_landmarks.py',
         'scripts/pilot/image_route_builder.py','scripts/pilot/image_route_review.py',
         'scripts/pilot/image_route_workspace.py','motor_worker/image_route_sequence.py',

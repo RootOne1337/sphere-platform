@@ -575,7 +575,12 @@ def test_successful_engine_uses_existing_admission_and_seals_native_bundle_witho
     )
     assert masks["supplied_mask_producer"] == "unknown_hash_bound_pixels"
     assert masks["detector_footer_exclusion_y"] == 0.975
-    assert len(masks["producer_sources"]) == 4
+    assert len(masks["producer_sources"]) == 5
+    assert report["intrinsics_prior"]["applied"] is False
+    assert report["intrinsics_prior"]["physical_calibration_verified"] is False
+    assert (
+        global_arguments[global_arguments.index("--GlobalMapper.ba_refine_focal_length") + 1] == "1"
+    )
     boundaries = json.loads((prepared / "fused-recovery/database-boundaries.json").read_bytes())[
         "boundaries"
     ]
