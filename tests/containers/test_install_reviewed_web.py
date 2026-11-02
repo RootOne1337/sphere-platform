@@ -7,8 +7,9 @@ import sys
 import tarfile
 import tempfile
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.pilot import install_reviewed_web as installer  # noqa: E402
@@ -26,6 +27,122 @@ def config():
 
 
 class InstallTests(unittest.TestCase):
+    def mocked_hosted_install(self, *, deferred=None, findings=None):
+        """Exercise execute through healthy installation; every command is fake."""
+        with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+            root = Path(temporary).resolve()
+            private = root / '.local-pilot'
+            artifact = private / 'artifact'
+            artifact.mkdir(parents=True)
+            compose = private / 'baseline.json'
+            compose.write_text('{}')
+            old = config()
+            new = copy.deepcopy(old)
+            new['services']['review-ui']['image'] = TAG
+            before = {installer.UI: {'id': 'old-ui', 'imageId': 'old-image', 'imageTag': 'previous:image'}}
+            after = {installer.UI: {'id': 'new-ui', 'imageId': IMAGE_ID, 'imageTag': TAG}}
+            labels = {'com.docker.compose.project': installer.PROJECT,
+                      'com.docker.compose.service': 'review-ui',
+                      'com.docker.compose.project.config_files': str(compose)}
+            current = {'Id': 'old-ui', 'Config': {'Env': ['API_URL=http://backend:8000'], 'Labels': labels}}
+            installed = {'Id': 'new-ui', 'Image': IMAGE_ID, 'State': {'Health': {'Status': 'healthy'}}}
+            calls = []
+
+            def command(args, **kwargs):
+                calls.append(args)
+                if args[-3:] == ['config', '--format', 'json']:
+                    return json.dumps(new if args.count('--file') == 2 else old)
+                if args[:3] == ['docker', 'image', 'load']:
+                    return 'loaded'
+                if args[:3] == ['docker', 'image', 'inspect']:
+                    return json.dumps([{'Id': IMAGE_ID}])
+                if args[-1:] == ['review-ui'] and 'up' in args:
+                    return 'installed'
+                self.fail(f'Unexpected command in mocked install: {args}')
+
+            patches = {
+                'ROOT': root, 'PRIVATE': private,
+                'admit_candidate': MagicMock(return_value={'imageTag': TAG, 'imageId': IMAGE_ID,
+                                                          'runId': 123, 'archiveBytes': 100}),
+                'bounded_json': MagicMock(return_value={'runId': 123}),
+                'check_ci': MagicMock(), 'collect': MagicMock(return_value={}),
+                'evaluate': MagicMock(return_value=findings or []),
+                'snapshot': MagicMock(side_effect=[before, before, before, after]),
+                'inspect': MagicMock(side_effect=[current, current, installed]),
+                'command': MagicMock(side_effect=command),
+                'catalog_hash': MagicMock(return_value='catalog-digest'),
+                'loaded_image_id': MagicMock(return_value=IMAGE_ID),
+            }
+            for name, value in patches.items():
+                stack.enter_context(patch.object(installer, name, value))
+            retention = stack.enter_context(patch('scripts.pilot.reviewed_artifact_retention.post_install',
+                return_value={'state': 'completed', 'archivesRemoved': 2, 'imagesRemoved': 1}))
+            response = MagicMock()
+            response.__enter__.return_value.status = 200
+            stack.enter_context(patch.object(installer.urllib.request, 'urlopen', return_value=response))
+            options = {} if deferred is None else {'defer_cache_retention': deferred}
+            if findings:
+                with self.assertRaisesRegex(ValueError, 'Host not admitted'):
+                    installer.execute(artifact, SOURCE, IMAGE_ID, apply=True, **options)
+                result = None
+            else:
+                result = installer.execute(artifact, SOURCE, IMAGE_ID, apply=True, **options)
+                receipt = json.loads((Path(result['reportDirectory']) / 'installed.json').read_text('utf8'))
+                self.assertEqual(receipt, result)
+            return result, calls, retention, patches, root
+
+    def test_hosted_deferred_retention_preserves_admission_load_install_and_previous_image(self):
+        result, calls, retention, mocks, root = self.mocked_hosted_install(deferred=True)
+        retention.assert_not_called()
+        self.assertEqual(result['cacheRetention'], {'state': 'deferred', 'reason': 'operator_requested',
+            'archivesRemoved': 0, 'imagesRemoved': 0, 'previousImagePreserved': True})
+        self.assertTrue(result['runtimeInstalled'])
+        self.assertTrue(result['cacheRetentionDeferred'])
+        mocks['admit_candidate'].assert_called_once()
+        mocks['check_ci'].assert_called_once()
+        self.assertEqual(mocks['collect'].call_count, 3)
+        self.assertEqual(mocks['evaluate'].call_count, 3)
+        mocks['loaded_image_id'].assert_called_once()
+        self.assertEqual(sum(args[:3] == ['docker', 'image', 'load'] for args in calls), 1)
+        self.assertEqual(sum('up' in args for args in calls), 1)
+
+    def test_hosted_retention_default_is_unchanged(self):
+        result, _calls, retention, _mocks, root = self.mocked_hosted_install()
+        retention.assert_called_once_with(root, SOURCE, 'old-image')
+        self.assertFalse(result['cacheRetentionDeferred'])
+        self.assertEqual(result['cacheRetention']['state'], 'completed')
+
+    def test_deferred_retention_cannot_bypass_resource_admission_or_mutate_images(self):
+        _result, calls, retention, mocks, _root = self.mocked_hosted_install(
+            deferred=True, findings=['commit_headroom_low'])
+        retention.assert_not_called()
+        mocks['admit_candidate'].assert_called_once()
+        mocks['check_ci'].assert_called_once()
+        self.assertEqual(len(calls), 3)
+        self.assertTrue(all(args[-3:] == ['config', '--format', 'json'] for args in calls))
+        mocks['loaded_image_id'].assert_not_called()
+
+    def test_deferred_retention_does_not_bypass_hosted_ci_admission(self):
+        with patch.object(installer, 'private_path', return_value=Path('unused')), \
+                patch.object(installer, 'admit_candidate', return_value={'imageId': IMAGE_ID}), \
+                patch.object(installer, 'bounded_json', return_value={}), \
+                patch.object(installer, 'check_ci', side_effect=ValueError('CI run not admitted')), \
+                patch.object(installer, 'collect') as collect, patch.object(installer, 'command') as command, \
+                patch('scripts.pilot.reviewed_artifact_retention.post_install') as retention:
+            with self.assertRaisesRegex(ValueError, 'CI run not admitted'):
+                installer.execute(Path('unused'), SOURCE, IMAGE_ID, apply=True, defer_cache_retention=True)
+        collect.assert_not_called()
+        command.assert_not_called()
+        retention.assert_not_called()
+
+    def test_cli_explicitly_passes_cache_retention_deferral(self):
+        args = ['installer', '--artifact', 'unused', '--source', SOURCE,
+                '--expected-image-id', IMAGE_ID, '--apply', '--defer-cache-retention']
+        with patch.object(sys, 'argv', args), patch.object(installer, 'execute', return_value={}) as execute, \
+                patch('builtins.print'):
+            self.assertEqual(installer.main(), 0)
+        self.assertTrue(execute.call_args.kwargs['defer_cache_retention'])
+
     def test_frozen_install_without_environment_metadata_does_not_guess_env_file(self):
         self.assertEqual(installer.compose_prefix({}), ["docker", "compose", "--project-name", installer.PROJECT])
 
@@ -281,12 +398,13 @@ class InstallTests(unittest.TestCase):
             self.assertTrue(exception["volumeExceptionApplied"])
 
     def test_self_reported_image_id_cannot_replace_independent_ci_admission(self):
-        with patch.object(installer, "private_path", return_value=Path("unused")), \
-                patch.object(installer, "admit", return_value={"imageId": "sha256:" + "c" * 64}), \
-                patch.object(installer, "command") as command:
-            with self.assertRaisesRegex(ValueError, "independent CI admission"):
-                installer.execute(Path("unused"), SOURCE, IMAGE_ID, apply=True)
-            command.assert_not_called()
+        for deferred in (False, True):
+            with self.subTest(deferred=deferred), patch.object(installer, "private_path", return_value=Path("unused")), \
+                    patch.object(installer, "admit", return_value={"imageId": "sha256:" + "c" * 64}), \
+                    patch.object(installer, "command") as command:
+                with self.assertRaisesRegex(ValueError, "independent CI admission"):
+                    installer.execute(Path("unused"), SOURCE, IMAGE_ID, apply=True, defer_cache_retention=deferred)
+                command.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -192,7 +192,9 @@ def admit_candidate(artifact: Path, source: str, local_execution: bool) -> dict[
 
 
 def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
-            *, allow_degraded_volume: bool = False, local_execution: bool = False) -> dict[str, Any]:
+            *, allow_degraded_volume: bool = False, local_execution: bool = False,
+            defer_cache_retention: bool = False) -> dict[str, Any]:
+    require(type(defer_cache_retention) is bool, "Cache retention deferral must be an explicit boolean")
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image digest")
     artifact = private_path(artifact)
     admitted = admit_candidate(artifact, source, local_execution)
@@ -243,7 +245,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
             "previousComposeFileCount": len(files), "candidateComposeFileCount": 2,
             "completeBaselineRoundtripVerified": True,
             "otaCatalogSha256": ota_hash, "reportDirectory": str(output), "runtimeInstalled": False,
-            "admissionMode": "maintainer-local-executor" if local_execution else "hosted-actions"}
+            "admissionMode": "maintainer-local-executor" if local_execution else "hosted-actions",
+            "cacheRetentionDeferred": defer_cache_retention}
     write(output / "plan.json", plan)
     if not apply:
         return plan
@@ -277,9 +280,14 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
             require(response.status == 200, "Gateway UI readiness failed")
         result = plan | {"runtimeInstalled": True, "loadedImageId": runtime_id, "installedUi": after[UI],
                          "otherContainersPreserved": len(before) - 1, "browserVerified": False}
-        from scripts.pilot.reviewed_artifact_retention import post_install
-        result["cacheRetention"] = (post_install(ROOT, source, before[UI]["imageId"]) if not local_execution else
-                                    {"state": "not-run", "archivesCreated": 0, "previousImagePreserved": True})
+        if local_execution:
+            result["cacheRetention"] = {"state": "not-run", "archivesCreated": 0, "previousImagePreserved": True}
+        elif defer_cache_retention:
+            result["cacheRetention"] = {"state": "deferred", "reason": "operator_requested",
+                                        "archivesRemoved": 0, "imagesRemoved": 0, "previousImagePreserved": True}
+        else:
+            from scripts.pilot.reviewed_artifact_retention import post_install
+            result["cacheRetention"] = post_install(ROOT, source, before[UI]["imageId"])
         write(output / "installed.json", result)
         return result
     except Exception:
@@ -307,10 +315,13 @@ def main() -> int:
                         help="Admit an existing local image against full local CI and packaged probes; no Actions identity")
     parser.add_argument("--allow-degraded-volume", action="store_true",
                         help="Explicit operator exception for the measured volume warning only")
+    parser.add_argument("--defer-cache-retention", action="store_true",
+                        help="Preserve historical caches/images by deferring post-install retention only")
     args = parser.parse_args()
     try:
         print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.apply,
-                                 allow_degraded_volume=args.allow_degraded_volume, local_execution=args.local_execution)))
+                                 allow_degraded_volume=args.allow_degraded_volume, local_execution=args.local_execution,
+                                 defer_cache_retention=args.defer_cache_retention)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2
