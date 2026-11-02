@@ -185,7 +185,7 @@ test('the current prepared map takes precedence over a stale experimental geomet
     cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
   jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?
     {alternatives:[{id:'old-experiment',cameras:2,points:1}]}:path===`/jobs/${job.id}`?
-    {navigation:{phase:'ready'},geometry_available:true}:scene}) as Response);
+    {source_manifest_sha256:source,navigation:{phase:'ready'},geometry_available:true}:scene}) as Response);
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
   jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
@@ -218,7 +218,7 @@ test('refresh reads the updated list but preserves the manual choice',async()=>{
   const refreshGate=new Promise<void>(resolve=>{releaseRefresh=resolve;});
   jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?
     (await (++listCalls===2?refreshGate:Promise.resolve()),{preferredAlternativeId:preferred,alternatives:[{id:'old',cameras:163,points:5544},{id:'new',label:'Новая диагностика',cameras:163,points:15041}]}):
-    path===`/jobs/${job.id}`?{navigation:{phase:'review'},geometry_available:false}:scene}) as Response);
+    path===`/jobs/${job.id}`?{source_manifest_sha256:source,navigation:{phase:'review'},geometry_available:false}:scene}) as Response);
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
   jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
@@ -235,12 +235,12 @@ test('refresh reads the updated list but preserves the manual choice',async()=>{
   expect(select).toHaveValue('old');
 });
 test('a recommended alternative from another source cannot open',async()=>{
-  await library();const job={id:'c'.repeat(32),key:'d'.repeat(64)};
+  const {manifest}=await library(),source=await hash(manifest),job={id:'c'.repeat(32),key:'d'.repeat(64)};
   const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:'f'.repeat(64),
     cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
   jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?
     {preferredAlternativeId:'other',alternatives:[{id:'other',cameras:2,points:1}]}:path===`/jobs/${job.id}`?
-    {navigation:{phase:'review'},geometry_available:false}:scene}) as Response);
+    {source_manifest_sha256:source,navigation:{phase:'review'},geometry_available:false}:scene}) as Response);
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
   jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
@@ -254,7 +254,7 @@ test('deselect clears the diagnostic map and late geometry cannot restore it',as
   let geometryCalls=0,listCalls=0,release:()=>void=()=>{};const pending=new Promise<void>(resolve=>{release=resolve;});
   jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>{
     if(path.endsWith('/geometry-alternatives')){listCalls++;return {preferredAlternativeId:'preferred',alternatives:[{id:'preferred',cameras:2,points:1}]};}
-    if(path===`/jobs/${job.id}`)return {navigation:{phase:'review'},geometry_available:false};
+    if(path===`/jobs/${job.id}`)return {source_manifest_sha256:source,navigation:{phase:'review'},geometry_available:false};
     if(++geometryCalls===2)await pending;return scene;
   }}) as Response);
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
@@ -286,7 +286,7 @@ test('switching the linked reconstruction clears a previously shown alternate',a
   const {manifest}=await library(),source=await hash(manifest),first={id:'c'.repeat(32),key:'d'.repeat(64)},second={id:'e'.repeat(32),key:'f'.repeat(64)};
   const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,
     cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
-  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.startsWith(`/jobs/${second.id}`)?{alternatives:[]}:path.endsWith('/geometry-alternatives')?{preferredAlternativeId:'improved-v1',alternatives:[{id:'improved-v1',cameras:2,points:1}]}:scene}) as Response);
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.startsWith(`/jobs/${second.id}`)?{source_manifest_sha256:source,alternatives:[]}:path.endsWith('/geometry-alternatives')?{preferredAlternativeId:'improved-v1',alternatives:[{id:'improved-v1',cameras:2,points:1}]}:scene}) as Response);
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){
     React.useEffect(()=>{props.onRouteChange?.(first);},[props.onRouteChange]);
     return <button onClick={()=>props.onRouteChange?.(second)}>Другая реконструкция</button>;
@@ -419,7 +419,7 @@ test('a hidden archive mounts no image-review poller; opening starts it and clos
   jest.mocked(ImageRouteReview).mockImplementation(props=><ActualImageReview {...props}/>);
   jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{
     if(path.endsWith('/image-route-review'))throw new ReconstructionResponseError(404,'image_review_not_ready');
-    return {json:async()=>path.endsWith('/geometry-alternatives')?{preferredAlternativeId:'preferred',alternatives:[{id:'preferred',cameras:2,points:1}]}:path===`/jobs/${job.id}`?{phase:'matching',geometry_available:false,navigation:{phase:'not_prepared'}}:scene} as Response;
+    return {json:async()=>path.endsWith('/geometry-alternatives')?{preferredAlternativeId:'preferred',alternatives:[{id:'preferred',cameras:2,points:1}]}:path===`/jobs/${job.id}`?{phase:'matching',source_manifest_sha256:source,geometry_available:false,navigation:{phase:'not_prepared'}}:scene} as Response;
   });
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
   jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);

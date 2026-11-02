@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { exportTeachingFolder, type ExportProgress } from './teachingExport';
 import { TeachingReconstruction } from './TeachingReconstruction';
+import {assertReconstructionSource,routeRecordingIdentity} from './routeSourceBinding';
 import type {ReconstructionJob} from './reconstructionClient';
 import {teachingCaptureMetrics} from './teachingCaptureMetrics';
 import { renameTeachingLabel, seekTeachingSecond } from './teachingMetadata';
@@ -224,10 +225,11 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
       const items=data.alternatives.filter((v:unknown):v is Alternative=>!!v&&typeof v==='object'&&typeof (v as {id?:unknown}).id==='string'&&/^[a-z0-9][a-z0-9-]{0,47}$/.test((v as {id:string}).id)&&(v as {id:string}).id!=='primary'&&Number.isSafeInteger((v as {cameras?:unknown}).cameras)&&Number.isSafeInteger((v as {points?:unknown}).points)&&(v as Alternative).cameras>=0&&(v as Alternative).points>=0&&((v as Alternative).label===undefined||typeof (v as Alternative).label==='string'&&(v as Alternative).label!.length<=128));
       // An admitted current map must not be hidden by an older experiment.
       const status=await reconstructionRequest(`/jobs/${linkedJob.id}`,linkedJob,{signal:request.signal}).then(r=>r.json()).catch(()=>null);
+      assertReconstructionSource(status,sourceManifestSha);
       const primary=status===null?null:status?.navigation?.phase==='ready'&&status?.geometry_available===true;
       const available=status?.geometry_available===true;
       if(!retired){const choice=chooseReviewGeometry(items,data.preferredAlternativeId,primary,manualAlternative.current,available);setPrimaryAvailable(available);setPrimaryReady(primary===true);setPrimaryMotionWarning(cameraMotionRequiresReview(status?.camera_motion));setAlternatives(items);if(manualAlternative.current==='__file__'){setAlternativeStatus('Схема из файла связана с выбранной записью.');return;}setAlternativeId(choice);if(choice)setGeometryRefresh(v=>v+1);if(!choice){importGeneration.current++;setImportedGeometry(null);}setAlternativeStatus(choice?'Загружаем выбранную схему…':manualAlternative.current===''?'Выберите схему.':manualAlternative.current!==null?'Выбранная схема больше недоступна. Выберите другую.':primary===null?'Не удалось подтвердить состояние основной карты. Выберите схему вручную.':items.length?'Выберите экспериментальную схему: рекомендация отсутствует.':'Дополнительных схем для этой реконструкции нет.');}
-    })().catch(()=>{if(!retired)setAlternativeStatus('Не удалось проверить дополнительные схемы. Обычная реконструкция остаётся доступной.');});
+    })().catch(error=>{if(!retired){setAlternatives([]);setAlternativeId(null);setImportedGeometry(null);setLoadedGeometryIdentity(null);setAlternativeStatus(error instanceof Error?error.message:'Не удалось проверить дополнительные схемы.');}});
     return()=>{retired=true;request.abort();};
   },[visible,linkedJob,sourceManifestSha,rows,alternativesRefresh]);
   useEffect(()=>{
@@ -295,6 +297,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
     {selected&&sourceManifestSha&&rows.length>0&&<section className="min-w-0 overflow-hidden rounded-xl border border-border bg-background/35" aria-label="Единый просмотр выбранного результата">
       <header className="space-y-3 border-b border-border p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h4 className="font-semibold">Маршрут, ориентиры и исходные кадры</h4>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">Один выбранный результат для схемы и 3D; время синхронизировано с исходным видео.</p></div><Button size="sm" variant="outline" disabled={!linkedJob} onClick={()=>setAlternativesRefresh(value=>value+1)}>Обновить результаты</Button></div>
+        {linkedJob&&<p aria-label="Запись и обработка выбранной схемы" className="break-words text-xs font-medium text-cyan-600 dark:text-cyan-400">{routeRecordingIdentity(selectedRecord?.title,selected,linkedJob.id)}</p>}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end"><label className="min-w-0 flex-1 space-y-1 text-xs"><span>Результат восстановления</span>
           <select aria-label="Сохранённая схема ориентиров" value={choiceId??''} onChange={event=>chooseGeometry(event.target.value)} className="block h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm">
             <option value="">Выберите результат</option>{primaryAvailable&&<option value="primary">{primaryReady?'Основная подготовленная карта':'Основная реконструкция · проверка'}</option>}

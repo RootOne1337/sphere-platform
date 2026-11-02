@@ -1,4 +1,4 @@
-import {act,render,screen,waitFor} from '@testing-library/react';
+import {act,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {webcrypto} from 'node:crypto';
 import {TextDecoder,TextEncoder} from 'node:util';
 import {NavigationRouteContext} from '@/src/features/stream/NavigationRouteContext';
@@ -15,10 +15,51 @@ const data={schema:'sphere-recovered-scene-v1',source_manifest_sha256:manifestSh
 beforeEach(()=>{
   Object.defineProperty(globalThis,'TextEncoder',{configurable:true,value:TextEncoder});Object.defineProperty(globalThis,'TextDecoder',{configurable:true,value:TextDecoder});
   Object.defineProperty(crypto,'subtle',{configurable:true,value:webcrypto.subtle});jest.clearAllMocks();
+  jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
+});
+afterEach(()=>jest.restoreAllMocks());
+
+test('delayed catalog cannot flash primary; preferred beats point count and manual choice survives metadata refresh',async()=>{
+  const raw=new TextEncoder().encode(JSON.stringify(data));let release:()=>void=()=>{};
+  const pending=new Promise<void>(resolve=>{release=resolve;});
+  jest.mocked(reconstructionRequest).mockImplementation(async path=>({json:async()=>{
+    if(path.endsWith('/geometry-alternatives')){await pending;return {preferredAlternativeId:'preferred',alternatives:[{id:'preferred',cameras:173,label:'Сохранённая 173'},{id:'larger',cameras:240,label:'Другая 240'}]};}
+    return {source_manifest_sha256:manifestSha};
+  },arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);
+  const props={job,source,recordingTitle:'skuter1',assetsReady:false,observation:null};
+  const view=render(<NavigationRouteContext {...props}/>);
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.some(call=>call[0].endsWith('/geometry'))).toBe(true));
+  expect(screen.queryByText('source-frame-0')).not.toBeInTheDocument();
+  await act(async()=>{release();});await screen.findByText('source-frame-0');
+  expect(screen.getByLabelText('Схема для живой проверки')).toHaveValue('preferred');
+  expect(screen.getByLabelText('Запись и обработка живой карты')).toHaveTextContent('Запись: skuter1 · видео dddddddd · обработка aaaaaaaa');
+  fireEvent.change(screen.getByLabelText('Схема для живой проверки'),{target:{value:'larger'}});await screen.findByText('source-frame-0');
+  const reads=jest.mocked(reconstructionRequest).mock.calls.length;
+  view.rerender(<NavigationRouteContext {...props} source={{...source}} assetsReady/>);
+  await act(async()=>{await Promise.resolve();});
+  expect(screen.getByLabelText('Схема для живой проверки')).toHaveValue('larger');expect(reconstructionRequest).toHaveBeenCalledTimes(reads);
+});
+
+test('same camera counts cannot carry old choices or late geometry into another job identity',async()=>{
+  const nextJob={id:'1'.repeat(32),key:'2'.repeat(64)},raw=new TextEncoder().encode(JSON.stringify(data));
+  let release:()=>void=()=>{};const gate=new Promise<void>(resolve=>{release=resolve;});let waitOld=false;
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?
+    {preferredAlternativeId:'saved',alternatives:[{id:'saved',label:path.includes(nextJob.id)?'zaezd888 · 173':'skuter1 · 173',cameras:173}]}:{source_manifest_sha256:manifestSha},
+    arrayBuffer:async()=>{if(waitOld&&!path.includes(nextJob.id))await gate;return Uint8Array.from(raw).buffer;}}) as Response);
+  const view=render(<NavigationRouteContext job={job} source={source} recordingTitle="skuter1" assetsReady={false} observation={null}/>);
+  await screen.findByText('source-frame-0');waitOld=true;
+  fireEvent.change(screen.getByLabelText('Схема для живой проверки'),{target:{value:'primary'}});
+  view.rerender(<NavigationRouteContext job={nextJob} source={source} recordingTitle="zaezd888" assetsReady={false} observation={null}/>);
+  expect(screen.queryByRole('option',{name:/skuter1/})).not.toBeInTheDocument();expect(screen.queryByText('source-frame-0')).not.toBeInTheDocument();
+  await screen.findByRole('option',{name:/zaezd888/});await screen.findByText('source-frame-0');
+  await act(async()=>{release();});
+  expect(screen.getByLabelText('Запись и обработка живой карты')).toHaveTextContent('обработка 11111111');
+  expect(screen.getByLabelText('Схема для живой проверки')).toHaveValue('saved');
+  expect(screen.queryByRole('option',{name:/skuter1/})).not.toBeInTheDocument();
 });
 test('the saved map, source frame and stream share one view while a live pin is bound to the exact geometry',async()=>{
   const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
-  jest.mocked(reconstructionRequest).mockImplementation(async path=>({json:async()=>({alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);
+  jest.mocked(reconstructionRequest).mockImplementation(async()=>({json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);
   const props={job,source,assetsReady:true,comparison:<div>live-frame</div>};
   const view=render(<NavigationRouteContext {...props} observation={null}/>);
   await screen.findByText('source-frame-0');expect(screen.getByText('live-frame')).toBeInTheDocument();
@@ -36,7 +77,7 @@ test('the saved map, source frame and stream share one view while a live pin is 
 });
 test('a source mismatch never displays the unrelated map or a live pin',async()=>{
   const raw=new TextEncoder().encode(JSON.stringify({...data,source_manifest_sha256:'0'.repeat(64)}));
-  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({alternatives:[]}),arrayBuffer:async()=>raw.buffer} as Response);
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),arrayBuffer:async()=>raw.buffer} as Response);
   render(<NavigationRouteContext job={job} source={source} assetsReady observation={null} comparison={<div>live-frame</div>}/>);
   await screen.findByText(/Геометрия относится к другой записи/);
   expect(screen.queryByLabelText('Обзор ориентиров и камер')).not.toBeInTheDocument();expect(screen.getByText('live-frame')).toBeInTheDocument();
@@ -44,7 +85,7 @@ test('a source mismatch never displays the unrelated map or a live pin',async()=
 
 test('a short display gap retains only a labelled past measurement, never a fresh live pin',async()=>{
   const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
-  jest.mocked(reconstructionRequest).mockImplementation(async()=>({json:async()=>({alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);
+  jest.mocked(reconstructionRequest).mockImplementation(async()=>({json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);
   const props={job,source,assetsReady:true,busy:true};
   const view=render(<NavigationRouteContext {...props} observation={null}/>);
   await screen.findByText('source-frame-0');

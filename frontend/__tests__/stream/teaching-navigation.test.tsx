@@ -10,6 +10,22 @@ beforeEach(()=>{
   jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn()} as never);
 });
 afterEach(()=>jest.restoreAllMocks());
+
+test('a ready response for another recording cannot enable control or publish its camera counts',async()=>{
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'sparse_complete',source_manifest_sha256:'f'.repeat(64),geometry_available:true,
+    quality:{registered:83,selected:163},navigation:{phase:'ready'}})} as Response);
+  const clip='c'.repeat(32),scope='d'.repeat(32),open=jest.fn();
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}
+    clip={clip} scope={scope} clips={[{id:clip,title:'skuter1',complete:true,frames:1}]}
+    sourceRecording={{clip,scope,manifestSha:'a'.repeat(64),rows:[],folder:{} as FileSystemDirectoryHandle}}
+    vehicleInput={{issue:null,hudProfile:'black_russia_scooter_v1',open}}/>);
+  await screen.findAllByText(/Задание относится к другой записи/);
+  expect(screen.getByLabelText('Выбранная запись и обработка направления')).toHaveTextContent('Запись: skuter1 · видео cccccccc · обработка aaaaaaaa');
+  fireEvent.click(screen.getByRole('button',{name:'Транспорт · газ и руль'}));
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();expect(open).not.toHaveBeenCalled();
+  expect(screen.queryByText(/83.*163/)).not.toBeInTheDocument();
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
+});
 test.each([
   [403,'Нет доступа к заданию выбранной записи'],
   [404,'Связанное задание не найдено в обработчике'],
@@ -28,7 +44,7 @@ test('the vehicle panel keeps failed skuter1 diagnostic geometry behind readines
   render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}
     onReview={review} vehicleInput={{issue:null,hudProfile:'black_russia_scooter_v1',open}}/>);
   fireEvent.click(screen.getByRole('button',{name:'Транспорт · газ и руль'}));
-  await waitFor(()=>expect(screen.getAllByText(/Диагностическая схема не заменяет подготовленные ориентиры/).length).toBeGreaterThan(0));
+  await waitFor(()=>expect(screen.getAllByText(/У предыдущей попытки сохранён ресурсный отказ/).length).toBeGreaterThan(0));
   expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
   fireEvent.click(screen.getByRole('button',{name:'Открыть подготовку записи'}));expect(review).toHaveBeenCalledTimes(1);
   expect(open).not.toHaveBeenCalled();expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);

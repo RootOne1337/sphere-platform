@@ -1,4 +1,4 @@
-import {fireEvent,render,screen,waitFor,within} from '@testing-library/react';
+import {act,fireEvent,render,screen,waitFor,within} from '@testing-library/react';
 import {TeachingReconstruction} from '@/src/features/stream/TeachingReconstruction';
 import {reconstructionRequest,uploadReconstruction,type ReconstructionState} from '@/src/features/stream/reconstructionClient';
 import {ensureAutomaticReconstructionLink,listReconstructionLinks,readReconstructionLink,saveReconstructionLink} from '@/src/features/stream/reconstructionLink';
@@ -60,10 +60,27 @@ test('camera rejection is visible and cannot be hidden behind advanced controls 
   expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
 });
 test('compact readiness cannot be green or claim prepared from an unbound ready response',async()=>{
-  status={...status,source_manifest_sha256:null};render(<TeachingReconstruction {...props}/>);
-  await screen.findByText(/Основная попытка: 36\/36 камер.*22.*000 точек.*0.90 px/);
+  const changed=jest.fn();status={...status,source_manifest_sha256:null};render(<TeachingReconstruction {...props} onRouteChange={changed}/>);
+  await screen.findByText(/Задание относится к другой записи/);
+  expect(screen.queryByText(/Основная попытка:/)).not.toBeInTheDocument();
   expect(screen.queryByRole('button',{name:'Карта подготовлена'})).not.toBeInTheDocument();
   expect(screen.getByRole('button',{name:'Проверить состояние'})).toBeEnabled();
+  expect(changed.mock.calls.every(([job])=>job===null)).toBe(true);
+});
+
+test('a retry of the same capture cannot borrow ready status before its own deferred reply',async()=>{
+  const next={id:'1'.repeat(32),key:'2'.repeat(64)},changed=jest.fn();let release:(value:ReconstructionState)=>void=()=>{};
+  const pending=new Promise<ReconstructionState>(resolve=>{release=resolve;});
+  jest.mocked(reconstructionRequest).mockImplementation(async path=>({json:async()=>path===`/jobs/${next.id}`?pending:status}) as Response);
+  const view=render(<TeachingReconstruction {...props} onRouteChange={changed}/>);
+  await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(saved));
+  jest.mocked(readReconstructionLink).mockResolvedValue(next);jest.mocked(listReconstructionLinks).mockResolvedValue([saved,next]);
+  view.rerender(<TeachingReconstruction {...props} processingJobId={next.id} onRouteChange={changed}/>);
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.some(call=>call[0]===`/jobs/${next.id}`)).toBe(true));
+  expect(changed).toHaveBeenLastCalledWith(null);expect(changed.mock.calls.some(([job])=>job?.id===next.id)).toBe(false);
+  expect(screen.queryByRole('button',{name:'Карта подготовлена'})).not.toBeInTheDocument();
+  await act(async()=>{release(status);});
+  await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(next));
 });
 test('the chosen geometry is portaled into the single viewer even when primary geometry is unavailable',async()=>{
   status={phase:'quality_rejected',source_manifest_sha256:manifest,geometry_available:false};

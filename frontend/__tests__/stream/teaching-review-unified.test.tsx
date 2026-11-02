@@ -94,7 +94,7 @@ test('switching result clears both views immediately; loading and late responses
 });
 test('a changed reconstruction job never renders even one stale geometry under the new job id',async()=>{
   const {source,read}=await setup();const next=source.geometry(144,2000);
-  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.startsWith(`/jobs/${nextJob.id}`)?path.endsWith('/geometry-alternatives')?{alternatives:[]}:path.endsWith('/geometry')?next:{phase:'quality_rejected',geometry_available:true,navigation:{phase:'not_prepared'}}:read(path)}) as Response);
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.startsWith(`/jobs/${nextJob.id}`)?path.endsWith('/geometry-alternatives')?{alternatives:[]}:path.endsWith('/geometry')?next:{phase:'quality_rejected',source_manifest_sha256:source.manifestSha,geometry_available:true,navigation:{phase:'not_prepared'}}:read(path)}) as Response);
   render(<TeachingReview {...base}/>);await waitFor(()=>expect(screen.getByTestId('map-choice')).toHaveAttribute('data-count','173'));
   const start=jest.mocked(TeachingReconstruction).mock.calls.length;fireEvent.click(screen.getByRole('button',{name:'Другая попытка'}));
   expect(screen.queryByTestId('map-choice')).not.toBeInTheDocument();

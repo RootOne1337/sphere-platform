@@ -26,8 +26,17 @@ test('unknown preparation outcome is reconciled with the same intent',async()=>{
 });
 
 test('a confirmed memory refusal is not presented as an unknown execution',()=>{
-  expect(preparationError(new ReconstructionResponseError(409,'resource_guard'))).toMatch(/Не хватает ресурсов/);
+  expect(preparationError(new ReconstructionResponseError(409,'resource_guard'))).toMatch(/Ресурсная проверка новой задачи/);
   expect(preparationError(Error('network_result_unknown'))).toMatch(/Ответ не подтверждён/);
+});
+
+test('a historical reconstruction refusal does not claim RAM is low now or grant a ready map',()=>{
+  const source={phase:'failed',error:'resource_guard'};
+  const issue=routeReadinessIssue(source,{phase:'not_prepared'});
+  expect(issue).toContain('У предыдущей попытки');
+  expect(issue).toContain('не проверка свободной ОЗУ сейчас');
+  expect(issue).toContain('Карта управления этой попытки не создана');
+  expect(routeReadinessIssue(source,{phase:'ready'})).toBeNull();
 });
 
 test('partial source coverage displays measured ranges without claiming interpolated cameras',()=>{
