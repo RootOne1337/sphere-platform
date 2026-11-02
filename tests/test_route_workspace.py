@@ -371,7 +371,7 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.assertEqual(result['jpegSha256'],hashlib.sha256(encoded).hexdigest())
         self.assertEqual(result['pose']['state'],'unknown')
         self.assertEqual(result['framesArchived'],0)
-        self.assertEqual(result['verificationPolicy'],'pnp-ap3p-continuous-image-support-temporal-v5')
+        self.assertEqual(result['verificationPolicy'],'pnp-ap3p-continuous-image-support-source-time-motion-v6')
         self.assertEqual(result['geometrySha256'],hashlib.sha256(b'{}').hexdigest())
         self.assertEqual(result['physicalActions'],0)
         self.assertFalse(result['executionQualified'])

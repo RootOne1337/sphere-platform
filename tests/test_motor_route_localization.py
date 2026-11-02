@@ -321,6 +321,74 @@ class SparseLocalizationTests(unittest.TestCase):
         self.center = self.np.array([2., .15, 25.])
         self.assertEqual(self.observe().reason, "route_pose_discontinuity")
 
+    def motion_route(self, positions, seconds):
+        count = len(positions)
+        return replace(self.route, camera_trace=tuple((0., 0., float(z)) for z in positions),
+            source_seconds=tuple(map(float, seconds)), landmark_views=(tuple(range(count)),)*240,
+            source_frame_indices=tuple(range(count)),
+            reference_rgb_sha256=tuple(hashlib.sha256(str(z).encode()).hexdigest() for z in range(count)))
+
+    def test_motion_envelope_does_not_change_when_reference_segments_are_subdivided(self):
+        positions, seconds = [0., 1., 3., 6., 10.], [0., 1., 2., 3., 4.]
+        coarse = self.tracker(self.motion_route(positions, seconds))
+        dense_positions, dense_seconds = [], []
+        for a, b, t0, t1 in zip(positions, positions[1:], seconds, seconds[1:]):
+            dense_positions.extend((a, (a+b)/2))
+            dense_seconds.extend((t0, (t0+t1)/2))
+        dense = self.tracker(self.motion_route([*dense_positions, positions[-1]], [*dense_seconds, seconds[-1]]))
+        for progress in (.5, 1.25, 3., 6.4, 9.8):
+            for dt in (.05, .2, .4):
+                with self.subTest(progress=progress, dt=dt):
+                    self.assertAlmostEqual(coarse._motion_limit(progress, dt), dense._motion_limit(progress, dt), places=10)
+
+    def test_motion_envelope_uses_local_acceleration_and_does_not_borrow_a_distant_fast_section(self):
+        tracker = self.tracker(self.motion_route([0., 1., 2., 4., 8., 12.], range(6)))
+        self.assertAlmostEqual(tracker._motion_limit(.5, .2), .25)
+        self.assertAlmostEqual(tracker._motion_limit(6., .2), 1.)
+        self.assertLess(tracker._motion_limit(.5, .2), tracker._motion_limit(6., .2))
+
+    def test_stationary_preroll_does_not_permanently_prevent_departure(self):
+        tracker = self.tracker(self.motion_route([0., 0., 0., 0., 1., 2., 3.], range(7)))
+        self.assertAlmostEqual(tracker._motion_limit(0., .2), .25)
+        self.assertEqual(tracker.last_diagnostic['motionReferenceSeconds'], 3.)
+        self.assertLessEqual(len(tracker.reference_times), 256)
+        self.assertEqual(len(tracker.reference_speeds), len(tracker.reference_times)-1)
+
+    def test_nonfinite_reference_speed_cannot_disable_the_motion_gate(self):
+        route = self.motion_route([0., 1., 2.], [0., self.np.nextafter(0., 1.), 1.])
+        with self.assertRaisesRegex(ProtocolError, 'route_reference_speed_invalid'):
+            self.tracker(route)
+
+    def test_recorded_local_speed_can_continue_after_global_median_step_would_reject_it(self):
+        positions = [0., .05, .1, .15, .2, .25, .3, .35, .4, .45, .5, 1.2, 1.9, 2.6]
+        route = self.motion_route(positions, self.np.arange(len(positions))*.2)
+        self.localizer = self.tracker(route)
+        self.localizer._features = lambda frame: self.features()
+        self.rotation = self.np.eye(3)
+        self.center = self.np.array([0., 0., 1.2])
+        for _ in range(3):
+            pose = self.observe()
+        self.assertEqual(pose.state, 'localized')
+        self.assertLess(self.np.median(self.localizer.lengths)*5*.2, .7)
+        self.center = self.np.array([0., 0., 1.9])
+        pose = self.observe()
+        self.assertEqual(pose.state, 'localized')
+        self.assertGreater(pose.inliers, 100)
+        self.np.testing.assert_allclose(pose.center, self.center, atol=1e-5)
+
+    def test_source_speed_envelope_still_rejects_a_large_jump_with_verified_correspondences(self):
+        positions = [0., .05, .1, .15, .2, .25, .3, .35, .4, .45, .5, 1.2, 1.9, 2.6]
+        self.localizer = self.tracker(self.motion_route(positions, self.np.arange(len(positions))*.2))
+        self.localizer._features = lambda frame: self.features()
+        self.rotation = self.np.eye(3)
+        self.center = self.np.array([0., 0., 1.2])
+        for _ in range(3):
+            self.observe()
+        self.center = self.np.array([0., 0., 2.6])
+        pose = self.observe()
+        self.assertEqual(pose.reason, 'route_pose_discontinuity')
+        self.assertFalse(pose.polyline_px)
+
     def test_far_outside_corridor_does_not_yield_projected_guidance(self):
         self.localizer._solve = lambda *args: (self.np.array([30., 0., 0.]), self.np.eye(3), 30, 0.)
         result = self.observe()

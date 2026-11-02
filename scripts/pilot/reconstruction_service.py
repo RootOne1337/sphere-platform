@@ -26,6 +26,7 @@ from scripts.pilot.route_owned_process import spawn_owned
 # process; original environment is restored before launching offline workers.
 LIVE_CPU_RUNTIME = initialize_route_cpu_runtime()
 
+from motor_worker.route_localization import PNP_VERIFICATION_POLICY
 from scripts.pilot.atomic_json import write_json
 from scripts.pilot.alternative_geometry import alternative, alternative_catalog
 from scripts.pilot.reconstruct_surface import (
@@ -746,6 +747,7 @@ def handler(jobs, origin, port):
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
                                              route_resource_monitor_contract='task_volume30_fresh_native_v1',
                                              route_reactivity_contract='gray_reuse_owned_supervision_v1',
+                                             route_pose_verification_policy=PNP_VERIFICATION_POLICY,
                                              hud_speed_reference_contract='source_bound_font_display_v1',
                                              fused_recovery_contract='gated_cpu_native_v1',
                                              fused_recovery_enabled=os.environ.get('SPHERE_EXPERIMENTAL_FUSED_RECOVERY') == '1',

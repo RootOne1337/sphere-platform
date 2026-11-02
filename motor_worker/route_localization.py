@@ -22,7 +22,7 @@ from motor_worker.protocol import ProtocolError, message
 SIZE = (960, 540)
 # Changes to the runtime pose gate are tracked separately from the descriptor
 # format: runtime solver/gate changes do not invalidate compatible descriptors.
-PNP_VERIFICATION_POLICY = 'pnp-ap3p-continuous-image-support-temporal-v5'
+PNP_VERIFICATION_POLICY = 'pnp-ap3p-continuous-image-support-source-time-motion-v6'
 COARSE_SEARCH_POLICY = 'flann_4tree_64checks_exact_subset_pnp_v1'
 MAX_POINTS = 4096
 MAX_VIEWS = 256
@@ -352,6 +352,15 @@ class RouteLocalizer:
         self.trace = np.asarray(route.camera_trace, np.float64)
         self.lengths = np.linalg.norm(np.diff(self.trace, axis=0), axis=1)
         self.cumulative = np.r_[0, np.cumsum(self.lengths)]
+        # At most 256 reference views. Motion rates belong to source time,
+        # independent of how densely reconstruction selected its keyframes.
+        self.reference_times = np.asarray(route.source_seconds, np.float64)
+        with np.errstate(over='ignore', divide='ignore', invalid='ignore'):
+            self.reference_speeds = self.lengths / np.diff(self.reference_times)
+        if not np.isfinite(self.reference_speeds).all():
+            raise ProtocolError('route_reference_speed_invalid')
+        self.reference_times.setflags(write=False)
+        self.reference_speeds.setflags(write=False)
         fx, fy, cx, cy = route.intrinsics
         self.K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], np.float64)
         self.mask = feature_mask(route.profile)
@@ -436,6 +445,25 @@ class RouteLocalizer:
         nearest=self._nearest(self.previous[0])
         return None if nearest is None else nearest[0]
 
+    def _motion_limit(self, progress, dt):
+        """Local recorded camera-speed envelope, not metric vehicle velocity.
+
+        A fixed half-second source neighborhood admits local acceleration;
+        a fixed 25% tolerance covers variation without making the entire route
+        use its fastest section. The existing 0.2 s observation-noise horizon
+        stays independent of keyframe spacing. Paused progress resolves to its
+        last recorded time, so a preroll cannot permanently prevent departure.
+        This limit cannot qualify correspondences, a stale image or a turn.
+        """
+        np = self.np
+        at = float(np.interp(progress, self.cumulative, self.reference_times))
+        nearby = (self.reference_times[:-1] <= at+.5) & (self.reference_times[1:] >= at-.5)
+        speed = float(np.max(self.reference_speeds[nearby], initial=0.))
+        limit = speed*max(dt, .2)*1.25
+        self.last_diagnostic.update(motionReferenceSeconds=at, motionObservedSourceSpeed=speed,
+                                    motionLimitUnits=limit)
+        return limit
+
     def _rank_proposals(self, proposals):
         """Disambiguate verified aliases only with an already confirmed fresh pose.
 
@@ -448,7 +476,7 @@ class RouteLocalizer:
             old_center,old_rotation,old_progress,old_time=self.previous
             dt=self.last_received-old_time
             if 0<dt<=.5:
-                limit=trace_step_scale(self.lengths)*5*max(dt,.2)
+                limit=self._motion_limit(old_progress,dt)
                 consistent=[]
                 for proposal in proposals:
                     center,rotation,count=proposal[:3]
@@ -625,8 +653,9 @@ class RouteLocalizer:
             old_center, old_rotation, old_progress, old_time = self.previous
             dt = frame.received_at-old_time
             turn = float(self.np.arccos(self.np.clip((self.np.trace(rotation@old_rotation.T)-1)/2, -1, 1)))
-            if (self.np.linalg.norm(center-old_center) > corridor*max(dt, .2)
-                    or abs(progress-old_progress) > corridor*max(dt, .2) or turn > 1.05):
+            motion_limit = self._motion_limit(old_progress, dt)
+            if (self.np.linalg.norm(center-old_center) > motion_limit
+                    or abs(progress-old_progress) > motion_limit or turn > 1.05):
                 return result("route_pose_discontinuity")
         projected = self._project(center, rotation, segment)
         if not self._fresh(frame):
