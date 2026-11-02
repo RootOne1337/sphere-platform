@@ -7,7 +7,7 @@
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 454,
     "DESIGN_SPECIFICATION": 91,
-    "OPERATING_GUIDE": 90,
+    "OPERATING_GUIDE": 91,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -2286,6 +2286,10 @@
     },
     {
       "file": "docs/operations/migration-2026-11-02/AGENT-AND-VPN-REJOIN.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/ANDROID-EMULATORS.md",
       "role": "OPERATING_GUIDE"
     },
     {

@@ -4,6 +4,7 @@
 param(
     [Parameter(Mandatory=$true)][string]$Destination,
     [switch]$IncludeImages,
+    [switch]$IncludeAllDockerVolumes,
     [switch]$SkipCodex,
     [switch]$SkipBrowserData,
     [string]$BrowserProfile = (Join-Path $env:LOCALAPPDATA 'Yandex\YandexBrowser\User Data\Default'),
@@ -22,7 +23,7 @@ $sameVolume = [IO.Path]::GetPathRoot($target) -eq [IO.Path]::GetPathRoot($root)
 if ($sameVolume -and -not $AllowSameVolume) { throw 'Only C: staging was selected. Choose the attached SSD, or explicitly -AllowSameVolume for a rehearsal.' }
 if ($Plan) {
     Write-Output "Plan: capture source, host settings, pilot databases/volumes, route inputs/SQLite and essential private configuration into $target"
-    Write-Output "Include Codex: $(-not $SkipCodex); include browser origin data: $(-not $SkipBrowserData); include images: $($IncludeImages.IsPresent); include models/old APKs: $($IncludeModelsAndOldApks.IsPresent)"
+    Write-Output "Include Codex: $(-not $SkipCodex); include browser origin data: $(-not $SkipBrowserData); include images: $($IncludeImages.IsPresent); include all Docker volumes: $($IncludeAllDockerVolumes.IsPresent); include models/old APKs: $($IncludeModelsAndOldApks.IsPresent)"
     Write-Output 'No files or Docker resources were changed.'
     return
 }
@@ -46,6 +47,9 @@ try {
     Invoke-Python -Script 'capture_workspace.py' -Arguments @((Join-Path $target 'source'))
     Invoke-Python -Script 'backup_data.py' -Arguments @((Join-Path $target 'data'))
     Invoke-Python -Script 'backup_verify.py' -Arguments @((Join-Path $target 'data'))
+    if ($IncludeAllDockerVolumes) {
+        Invoke-Python -Script 'backup_other_volumes.py' -Arguments @((Join-Path $target 'all-docker-volumes'))
+    }
     Invoke-Python -Script 'backup_routes_essential.py' -Arguments @((Join-Path $target 'routes-essential'))
     Invoke-Python -Script 'backup_verify_selected.py' -Arguments @((Join-Path $target 'routes-essential'))
     Invoke-Python -Script 'backup_routes_sqlite.py' -Arguments @((Join-Path $target 'routes-sqlite'))
@@ -76,6 +80,7 @@ try {
         SchemaVersion=1; CreatedAtUtc=[DateTime]::UtcNow.ToString('o'); Private=$true
         DifferentLogicalVolume=(-not $sameVolume); IncludeCodex=(-not $SkipCodex)
         IncludeImages=$IncludeImages.IsPresent; LocalProfile=$profile
+        IncludeAllDockerVolumes=$IncludeAllDockerVolumes.IsPresent
         BrowserOriginCaptured=$browserCaptured
         CodexIntegrityWarnings=$codexWarnings
         ApplicationConsistentCutover=$false

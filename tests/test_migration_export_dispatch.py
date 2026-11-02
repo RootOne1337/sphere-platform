@@ -17,7 +17,7 @@ def test_export_dispatches_matching_profiles_and_flags(tmp_path, full, skip_brow
     end = original.index('Push-Location $root', start)
     mock = '''function Invoke-Python([string]$Script, [string[]]$Arguments) {
     @{Script=$Script; Arguments=@($Arguments)} | ConvertTo-Json -Compress | Add-Content -LiteralPath $env:MIGRATION_DISPATCH_LOG
-    if ($Script -in @('capture_workspace.py','backup_data.py','backup_routes_essential.py','backup_routes_sqlite.py','backup_selected_files.py','backup_development_records.py','backup_codex.py')) {
+    if ($Script -in @('capture_workspace.py','backup_data.py','backup_routes_essential.py','backup_routes_sqlite.py','backup_selected_files.py','backup_development_records.py','backup_codex.py','backup_other_volumes.py')) {
         New-Item -ItemType Directory -Path $Arguments[0] -Force | Out-Null
     }
     if ($Script -eq 'backup_routes_sqlite.py') { '{"entries":[]}' | Set-Content -LiteralPath (Join-Path $Arguments[0] 'manifest.json') }
@@ -41,7 +41,7 @@ def test_export_dispatches_matching_profiles_and_flags(tmp_path, full, skip_brow
     args = ['powershell', '-NoProfile', '-File', str(exporter), '-Destination', str(destination),
             '-AllowSameVolume', '-BrowserProfile', str(browser_profile), '-BrowserBucket', '123']
     if full:
-        args.extend(['-IncludeModelsAndOldApks', '-IncludeImages'])
+        args.extend(['-IncludeModelsAndOldApks', '-IncludeImages', '-IncludeAllDockerVolumes'])
     if skip_browser:
         args.append('-SkipBrowserData')
     subprocess.run(args, check=True, capture_output=True, text=True, env=env)
@@ -56,4 +56,8 @@ def test_export_dispatches_matching_profiles_and_flags(tmp_path, full, skip_brow
     else:
         assert commands['backup_browser_origin.py'] == ['--profile', str(browser_profile), '--bucket', '123',
                                                          str(destination / 'browser-origin')]
+    if full:
+        assert commands['backup_other_volumes.py'] == [str(destination / 'all-docker-volumes')]
+    else:
+        assert 'backup_other_volumes.py' not in commands
     assert (destination / 'CAPTURE-RECEIPT.json').is_file()

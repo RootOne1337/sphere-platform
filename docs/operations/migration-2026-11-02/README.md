@@ -75,6 +75,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/migration/export-to-
 
 `-IncludeImages` дополнительно сохраняет точные работающие Docker images;
 `-IncludeModelsAndOldApks` включает большой профиль с прежними APK и моделями.
+`-IncludeAllDockerVolumes` дополнительно архивирует **все** текущие Docker volumes,
+включая остановленные другие проекты, мониторинг, кэши и тестовые копии. Размер
+может существенно вырасти; их app-consistent restore не проверен. Без этого
+флага не следует считать сохранёнными данные других Docker-проектов.
 `-SkipCodex` или `-SkipBrowserData` — осознанное исключение этих данных.
 `-Plan` показывает состав без записи. Архивы закрытые: используйте личный
 защищённый накопитель. Скрипты устанавливают private ACL на NTFS; SHA-256 проверяет
@@ -105,6 +109,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/migration/export-to-
 Перед окончательным переносом нужен согласованный финальный cutover; браузер и
 Codex следует окончательно сохранить после полного закрытия. RAID и копия на
 том же C: не защищают от стирания этого диска при переустановке.
+
+**Сами Android-эмуляторы — отдельный большой слой.** В нынешнем
+`C:\LDPlayer\LDPlayer9\vms` обнаружено около 24,54 GiB, в
+`C:\Users\dimas\.android\avd` — около 18,46 GiB. Это гостевые Android-диски,
+установленные приложения и их локальные данные/identity. Они не входят в
+компактный серверный пакет и не восстанавливаются из PostgreSQL. Для их
+сохранения на SSD используйте отдельную команду после штатного закрытия VM:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/migration/export-android-emulators.ps1 -Export -Destination E:\SphereAndroid-20261102
+```
+
+`-IncludeAvd` добавляет AVD. Скрипт сам не останавливает устройства и откажет,
+если экземпляры работают. Подробности, размеры и восстановление в новые VM:
+[ANDROID-EMULATORS.md](ANDROID-EMULATORS.md).
 
 ## 3. Скачать код и подключить прежние данные
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Capture a live pilot snapshot. Output contains credentials: protect it as a secret."""
+"""Capture pilot data; PostgreSQL must run, other containers may be stopped.
+
+Output contains credentials. Independent component captures are not an atomic snapshot.
+"""
 import hashlib
 import json
 import os
@@ -44,6 +47,20 @@ def protect_directory(out):
         out.chmod(0o700)
 
 
+def container_states(require_postgres_running=False):
+    result = {}
+    for name in CONTAINERS:
+        container = f'sphere-pilot-20260911-{name}-1'
+        state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', container],
+                               capture_output=True, text=True, check=True).stdout.strip()
+        if state not in {'true', 'false'}:
+            raise ValueError(f'Cannot determine container state: {container}')
+        result[container] = state == 'true'
+        if name == 'postgres' and require_postgres_running and state != 'true':
+            raise SystemExit(f'PostgreSQL must be running for pg_dump: {container}')
+    return result
+
+
 def main():
     if len(sys.argv) != 2:
         raise SystemExit("Usage: python scripts/migration/backup_data.py NEW_OUTPUT_DIRECTORY")
@@ -58,15 +75,11 @@ def main():
     for suffix in VOLUMES:
         if subprocess.run(['docker', 'volume', 'inspect', PREFIX + suffix], capture_output=True).returncode:
             raise SystemExit(f'Missing source volume: {PREFIX + suffix}')
-    for name in CONTAINERS:
-        container = f'sphere-pilot-20260911-{name}-1'
-        state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', container],
-                               capture_output=True, text=True, check=True).stdout.strip()
-        if state != 'true':
-            raise SystemExit(f'Source container is not running: {container}')
+    states_before = container_states(require_postgres_running=True)
     out.mkdir(parents=False, exist_ok=False)
     protect_directory(out)
-    manifest = {"version": 1, "created_utc": datetime.now(timezone.utc).isoformat(), "artifacts": []}
+    manifest = {"version": 1, "created_utc": datetime.now(timezone.utc).isoformat(),
+                "container_states_before": states_before, "artifacts": []}
     pg = "sphere-pilot-20260911-postgres-1"
     try:
         for db in ("postgres", "sphereplatform", "n8n"):
@@ -82,12 +95,14 @@ def main():
             run_to_file(["docker", "run", "--rm", "--network", "none", "--mount",
                          f"type=volume,src={volume},dst=/data,readonly", "alpine:latest",
                          "tar", "czf", "-", "-C", "/data", "."], p)
-            add(manifest, p, "docker-volume", volume, "live file copy; application consistency not guaranteed")
+            add(manifest, p, "docker-volume", volume,
+                "file copy; container states are observations, not proof that all writers were stopped")
         # Container inspect contains secrets, including N8N_ENCRYPTION_KEY; never print it.
         p = out / "container-configs-sensitive.json"
         ids = [f"sphere-pilot-20260911-{name}-1" for name in CONTAINERS]
         run_to_file(["docker", "inspect", *ids], p)
         add(manifest, p, "sensitive-container-config", "pilot containers", "live inspect; contains credentials")
+        manifest['container_states_after'] = container_states()
         (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         print(f"Created {len(manifest['artifacts'])} artifacts in {out}; contains secrets.")
     except Exception:

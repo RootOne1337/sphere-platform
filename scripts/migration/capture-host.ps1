@@ -50,7 +50,7 @@ New-Item -ItemType Directory -Path $taskDir | Out-Null
 foreach ($task in $tasks) {
     $safe = $task.TaskName -replace '[^\w.-]', '_'
     Export-ScheduledTask -TaskName $task.TaskName -TaskPath $task.TaskPath |
-        Set-Content -LiteralPath (Join-Path $taskDir "$safe.xml") -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $taskDir "$safe.xml") -Encoding Unicode
 }
 Save-PrivateJson 'scheduled-task-info.json' @($tasks | Select-Object TaskName,TaskPath,State,Actions,Principal,Settings)
 Save-PrivateJson 'network-adapters.json' @(Get-NetAdapter | Select-Object Name,InterfaceDescription,Status,MacAddress,LinkSpeed)
@@ -79,10 +79,10 @@ foreach ($relative in @('.env','.env.local','.env.production','.admin-credential
 $privateConfig = Join-Path $target 'runtime-bind-config'
 New-Item -ItemType Directory -Path $privateConfig | Out-Null
 $mapping = @()
-$runningIds = @(& docker ps -q)
-if ($LASTEXITCODE -eq 0 -and $runningIds.Count -gt 0) {
-    $containers = @((& docker inspect @runningIds) | ConvertFrom-Json)
-    $containers | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath (Join-Path $target 'running-container-inspect.private.json') -Encoding utf8
+$containerIds = @(& docker ps -aq)
+if ($LASTEXITCODE -eq 0 -and $containerIds.Count -gt 0) {
+    $containers = @((& docker inspect @containerIds) | ConvertFrom-Json)
+    $containers | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath (Join-Path $target 'all-container-inspect.private.json') -Encoding utf8
     $index = 0
     foreach ($container in $containers) {
         $composeFiles = [string]$container.Config.Labels.'com.docker.compose.project.config_files'
