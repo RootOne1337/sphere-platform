@@ -53,6 +53,11 @@ flowchart LR
 
 ## Начало работы
 
+**Переустановка Windows или перенос на SSD:** используйте
+[проверенный запуск и восстановление](docs/operations/migration-2026-11-02/README.md).
+Там описаны автоматическая пустая установка, закрытый экспорт данных и отдельный
+импорт прежних баз, маршрутов и настроек. Код и private данные хранятся раздельно.
+
 Выберите сценарий до запуска: **новый изолированный стенд**, **разработка** или
 работа с уже существующей установкой. Их конфигурация, порты и данные могут
 отличаться.
@@ -65,7 +70,7 @@ flowchart LR
 2. Склонируйте репозиторий и выберите нужную ветку или revision:
 
    ```powershell
-   git clone https://github.com/RootOne1337/sphere-platform.git
+   git clone --branch codex/enterprise-audit-20260905 --single-branch https://github.com/RootOne1337/sphere-platform.git
    cd sphere-platform
    ```
 

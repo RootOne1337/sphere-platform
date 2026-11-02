@@ -5,9 +5,9 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 452,
+    "DATED_EVIDENCE": 454,
     "DESIGN_SPECIFICATION": 91,
-    "OPERATING_GUIDE": 82,
+    "OPERATING_GUIDE": 90,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1713,11 +1713,19 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-27/FUFLO228-OVERLAP-RECONSTRUCTION-EXPERIMENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-27/SPEC1337-ALTERNATIVE-RECONSTRUCTION.md",
       "role": "DATED_EVIDENCE"
     },
     {
       "file": "docs/audits/2026-10-27/TEST228-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-27/VISUAL-REPEAT-AND-MOTOR-DIRECTION.md",
       "role": "DATED_EVIDENCE"
     },
     {
@@ -2275,6 +2283,38 @@
     {
       "file": "docs/operations/WORK-STATUS.md",
       "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/AGENT-AND-VPN-REJOIN.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/BROWSER-LOCAL-DATA.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/CODEX-HISTORY-RECOVERY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/DATA-RECOVERY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/INFRASTRUCTURE-RESTORE.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/README.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/SOURCE-HANDOFF.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/migration-2026-11-02/WEB-COVERAGE.md",
+      "role": "OPERATING_GUIDE"
     },
     {
       "file": "docs/pc-agent.md",

@@ -1,0 +1,135 @@
+{
+  "observed_at_utc": "2026-11-02T15:42:53.032530+00:00",
+  "restore_login_http": 200,
+  "restore_password_verified": true,
+  "source_login_or_refresh_performed": false,
+  "details": {
+    "devices": {
+      "source": {
+        "status": 200,
+        "count": 21,
+        "total": 21,
+        "complete": true
+      },
+      "restore": {
+        "status": 200,
+        "count": 21,
+        "total": 21,
+        "complete": true
+      },
+      "identity_sets_match": true,
+      "compared_fields_match": true,
+      "missing_ids": 0,
+      "extra_ids": 0,
+      "changed_records": 0
+    },
+    "groups": {
+      "source": {
+        "status": 200,
+        "count": 1
+      },
+      "restore": {
+        "status": 200,
+        "count": 1
+      },
+      "identity_sets_match": true,
+      "compared_fields_match": true,
+      "missing_ids": 0,
+      "extra_ids": 0,
+      "changed_records": 0
+    },
+    "locations": {
+      "source": {
+        "status": 200,
+        "count": 0
+      },
+      "restore": {
+        "status": 200,
+        "count": 0
+      },
+      "identity_sets_match": true,
+      "compared_fields_match": true,
+      "missing_ids": 0,
+      "extra_ids": 0,
+      "changed_records": 0
+    },
+    "scripts": {
+      "source": {
+        "status": 200,
+        "count": 61,
+        "total": 61,
+        "complete": true
+      },
+      "restore": {
+        "status": 200,
+        "count": 61,
+        "total": 61,
+        "complete": true
+      },
+      "identity_sets_match": true,
+      "compared_fields_match": true,
+      "missing_ids": 0,
+      "extra_ids": 0,
+      "changed_records": 0
+    },
+    "vpn_profiles": {
+      "source": {
+        "status": 200,
+        "count": 10,
+        "total": 10,
+        "complete": true
+      },
+      "restore": {
+        "status": 200,
+        "count": 10,
+        "total": 10,
+        "complete": true
+      },
+      "identity_sets_match": true,
+      "compared_fields_match": true,
+      "missing_ids": 0,
+      "extra_ids": 0,
+      "changed_records": 0
+    }
+  },
+  "me": {
+    "source_http": 200,
+    "restore_http": 200,
+    "same_user_id": true,
+    "same_org_id": true
+  },
+  "script_detail_comparison": {
+    "source_restore_http_200_pairs": 61,
+    "failed_pairs": 0,
+    "full_response_changed": 2,
+    "includes_dag": true,
+    "scope": "all scripts in 200-item catalog page; catalog total verified",
+    "top_level_changed_fields": {
+      "versions": 2
+    },
+    "version_id_sets_mismatch": 0,
+    "version_changed_fields": {},
+    "interpretation": "Two responses differed only by version array order; version ID sets and all fields, including DAG, match when compared by ID."
+  },
+  "browser_local_route_inventory": {
+    "origin": "http://127.0.0.1:3015",
+    "browser": "Yandex Browser Default profile",
+    "origin_bucket_relative": "File System/616",
+    "bucket_file_count": 577,
+    "bucket_bytes": 571203339,
+    "teaching_scope_roots": 1,
+    "record_directories": 23,
+    "record_dirs_with_four_source_files": 23,
+    "record_dirs_with_complete_marker": 14,
+    "record_dirs_without_complete_marker": 9,
+    "method": "Read-only replay of current Chromium LevelDB journal metadata, without CRC/full LevelDB engine or content/hash validation; point-in-time live profile.",
+    "limitations": "Not proof of valid completed recordings, identity with reconstructed jobs, or presence in a particular IAB profile; must preserve the complete offline profile/storage with consistent metadata and separately validate/export.",
+    "job_video_hash_comparison": {
+      "job_videos_checked": 14,
+      "matching_one_or_more_archived_files": 13,
+      "no_matching_archived_file": 1,
+      "multiple_matching_archived_files": 0,
+      "method": "size and SHA-256; no video bytes or identities reported; no job/record binding validation"
+    }
+  }
+}

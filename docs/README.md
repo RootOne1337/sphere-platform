@@ -10,6 +10,7 @@
 
 | Задача | Документ |
 | --- | --- |
+| Переустановить Windows, развернуть пустую базу или импортировать данные с SSD | [Запуск и перенос](operations/migration-2026-11-02/README.md) |
 | Подготовить новое окружение | [Startup](operations/STARTUP.md), [конфигурация](configuration.md), [deployment](deployment.md) |
 | Работать с существующим локальным стендом | [Local pilot](operations/LOCAL-PILOT.md), [review gateway](operations/REVIEW-GATEWAY.md) |
 | Подключить удалённые устройства | [Remote pilot](operations/REMOTE-PILOT.md), [Android cloud pilot](operations/ANDROID-CLOUD-PILOT.md) |

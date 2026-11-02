@@ -16,6 +16,9 @@
 .admin-credentials
 # Локальные APK, логи, bootstrap и runtime evidence; Docker не читает .gitignore.
 .local-pilot/
+/target/
+/output/
+.playwright-cli/
 # Generated reviewed CI images must never re-enter a later build context.
 reviewed-backend/
 frontend/reviewed-web/
@@ -23,6 +26,7 @@ frontend/reviewed-web/
 # Node.js (фронтенд зависимости ставятся ВНУТРИ контейнера)
 frontend/node_modules
 frontend/.next
+frontend/.next*/
 n8n-nodes/node_modules
 
 # Python кэш
@@ -33,6 +37,7 @@ __pycache__
 .mypy_cache
 .ruff_cache
 .venv
+.venv*/
 
 # Docker volumes и данные
 postgres_data

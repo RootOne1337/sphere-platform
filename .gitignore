@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 .venv/
+.venv-*/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
@@ -12,6 +13,7 @@ htmlcov/
 # Node
 node_modules/
 .next/
+.next-*/
 dist/
 build/
 
@@ -87,6 +89,7 @@ task_result*.json
 data/
 reports/
 /updates/
+/target/
 
 # Docs trash (временные/ad-hoc файлы в docs/)
 docs/XPath.txt
