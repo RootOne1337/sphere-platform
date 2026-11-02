@@ -1,0 +1,14 @@
+{
+  "step": "package",
+  "source": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "exitCode": 0,
+  "reason": null,
+  "seconds": 113.26599999994505,
+  "minAvailableRamGiB": 7.226295471191406,
+  "minFreeCommitGiB": 13.2076416015625,
+  "samples": 227,
+  "logSha256": "e4f2034cae058f5a5ecb00c36f6e33a7c34d5969837f3136fb3362b68c694406",
+  "archivesCreated": 0,
+  "remoteDockerCpuLimitClaimed": false,
+  "productionUiInstalled": false
+}

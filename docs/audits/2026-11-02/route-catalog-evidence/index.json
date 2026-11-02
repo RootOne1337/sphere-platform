@@ -1,0 +1,91 @@
+{
+  "schema": "sphere-route-catalog-evidence-index-v1",
+  "files": [
+    {
+      "file": "api-reload.json",
+      "bytes": 2566,
+      "sha256": "ef78882ec6c056be287ad70fb35c8bb3040a2bed129a246209da6c8ffebc56d6"
+    },
+    {
+      "file": "backend-final-tests.txt",
+      "bytes": 178,
+      "sha256": "c3d615110cb1fb0cf75dac563d72c24eb8c590329258740becb258bb4d98fc3c"
+    },
+    {
+      "file": "browser-evidence.json",
+      "bytes": 6747,
+      "sha256": "e1f050aff194395d98a8d5f982ff7b949f5a31977ab289aa735f2ac8963d82eb"
+    },
+    {
+      "file": "browser-receipt.json",
+      "bytes": 5175,
+      "sha256": "7787e1d2980365edb22bf9ed04ce58839b2e460041fb6e8f449b649d21a409f4"
+    },
+    {
+      "file": "build-binding.json",
+      "bytes": 467,
+      "sha256": "c252b7451f697131a32db62fda0665e31b76cbee0c78d7887f13464e09cdaa11"
+    },
+    {
+      "file": "catalog-desktop.png",
+      "bytes": 104891,
+      "sha256": "8c4c44e341c54df64581e980f1e57214b8fe6909372a3fce5b8864ead08302e0"
+    },
+    {
+      "file": "catalog-mobile.png",
+      "bytes": 88871,
+      "sha256": "1f717d2c59a328ed5a6b05d210624ac0b3dbf8e18c1d7f3fc950a555fbbe011e"
+    },
+    {
+      "file": "ci-guard.json",
+      "bytes": 438,
+      "sha256": "7bff1a435fe034841832dca64a6c50e3d5ae5c2345e3fff23ed3c97613534a8a"
+    },
+    {
+      "file": "delivery.json",
+      "bytes": 2297,
+      "sha256": "403fd099aa980b99a4bf85994609b191e32ea6c7ff221dce322470759a788b99"
+    },
+    {
+      "file": "frontend-ci.json",
+      "bytes": 12916,
+      "sha256": "4663c8ec5c1a53630d67bec088fd17f24aa529396f5bd9d6da880336802b71ce"
+    },
+    {
+      "file": "http-readback.json",
+      "bytes": 4602,
+      "sha256": "75b2b7e9c4b32c69062da38cb4b9f8c4e399861bd4725d4291a06aee1f45400d"
+    },
+    {
+      "file": "image-admission.json",
+      "bytes": 1218,
+      "sha256": "badb4096bd174c0534cd35a2fe6052eb15af5025cb0a02cb3c720a119b0b5d73"
+    },
+    {
+      "file": "independent-image-verification.json",
+      "bytes": 776,
+      "sha256": "427044a1d5197674d68e7957ac1f73f503b5ac64888f2e4c787a2d70e0a060de"
+    },
+    {
+      "file": "installed.json",
+      "bytes": 1942,
+      "sha256": "a270b30d68815d8c4a35bd2df1c2691f6f4c61a1b1a833920dc4732f470c7009"
+    },
+    {
+      "file": "package-guard.json",
+      "bytes": 442,
+      "sha256": "939adb47d1724e77872b16176ca3e55c25ef7539dc8bc0016087cd7cc52c4af2"
+    },
+    {
+      "file": "runtime-preservation.json",
+      "bytes": 1568,
+      "sha256": "8c76f6786b3bb753bfc0ed17bb094dfcdf34c09b50883de209c5e3c3329057b4"
+    },
+    {
+      "file": "source-bound-status.json",
+      "bytes": 1502,
+      "sha256": "595e89a158c7ccd9617d3164e536ba68eab89c41e124ebcd627be0d45f8ecb04"
+    }
+  ],
+  "totalBytes": 236596
+}
