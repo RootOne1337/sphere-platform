@@ -1,0 +1,31 @@
+{
+  "runId": 41454423270,
+  "jobId": 125307365119,
+  "sourceRevision": "60e7f6ffdab4265d3b838aa8ca1320e003289419",
+  "image": {
+    "source": "60e7f6ffdab4265d3b838aa8ca1320e003289419",
+    "imageId": "sha256:5288835ba424dcdae75e28786134f8e8c7f0bd69ef1411285c345dd9fa943c4a",
+    "compressedBytes": 110910143,
+    "pages": 26,
+    "assets": 72,
+    "runId": 41454423270,
+    "runtimeInstalled": false
+  },
+  "log": {
+    "command": [
+      "gh",
+      "run",
+      "view",
+      "41454423270",
+      "--repo",
+      "RootOne1337/sphere-platform",
+      "--job",
+      "125307365119",
+      "--log"
+    ],
+    "bytes": 397692,
+    "sha256": "425dd97c7ea43a8e6d92ebc5c766d06c834a2bf09e8b2b1e7730a4a5be1feef0",
+    "seconds": 3.10999999998603
+  },
+  "source": "authenticated_github_job_log_not_downloaded_receipt"
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "sphere-automatic-fused-implementation-check-v1",
+  "tests": {
+    "passed": 179,
+    "skipped": 1,
+    "seconds": 10.39,
+    "runtime": "cpython3.12.12-pycolmap4.2.1",
+    "raw_console_separately_persisted": false
+  },
+  "ruff": "passed",
+  "diff_check": "passed",
+  "default_enabled": false,
+  "explicit_environment_opt_in": "SPHERE_EXPERIMENTAL_FUSED_RECOVERY=1",
+  "physical_actions": 0,
+  "source_sha256": {
+    "scripts/pilot/route_fused_recovery.py": "ce0cb8e5f9cb915e5a56712cf15ca2467aa02ac3393f5b1359115416ca778d3e",
+    "scripts/pilot/route_native_track_policy.py": "939787a72aad5bab76d978cd6f70afae7aa0487fc2d0be5749c86f05da04f65e",
+    "scripts/pilot/reconstruct_route.py": "8026343ce58f704e7a938a86353e33a8f0ab0c6dc3373073e07560ee68335a0d",
+    "scripts/pilot/route_masks.py": "e40eb4efe1ddb07d8801ed9b3e0ea2e39f02d90815ee91c2306b179960d17217",
+    "tests/test_route_fused_recovery.py": "c71e59f9381dd3192e0d53ff12e375ce44d6e6706bdf5c37b863c5bf1f3e4876",
+    "tests/test_route_native_track_policy.py": "4511e76b1b870c7659f167fb8606c9cdc0099b790edcb2c8c89159ada5447591",
+    "tests/test_route_masks.py": "fcb965af6211a0b1446bdc2304c9be1a5f5f28d1a948f15bfbf7b87e666a8e48",
+    "tests/test_route_only_recovery_pipeline.py": "acc5e6471bc2e2ee59273919f5e2ea0e0d749b36e6133e7e91da82a38b03ecb3"
+  },
+  "native_boundaries": "explicit_connection_close_and_WAL_checkpoint_before_child_and_hash",
+  "qualified_for_autopilot": false
+}
