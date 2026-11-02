@@ -34,6 +34,17 @@ test('pending initial upload may lack a source SHA, but never inherits an unboun
 test.each(['pending_auto_prepare', 'preparing', 'features'])('navigation phase %s keeps calculation in progress', phase => {
   expect(projectTeachingCatalogStatus(state({navigation: {phase}}), sha, job.id, checkedAt).preparation?.phase).toBe('processing');
 });
+test.each(['temporal_tracking','temporal_verification','temporal_cameras'])('source-bound temporal phase %s remains a valid processing status without navigation admission',async phase=>{
+  const actual=state({phase,navigation:{phase:'not_prepared'}});
+  const projected=projectTeachingCatalogStatus(actual,sha,job.id,checkedAt);
+  expect(projected.preparation).toMatchObject({phase:'processing',jobId:job.id});
+  expect(projected.navigation?.phase).toBe('not_prepared');
+  jest.mocked(reconstructionRequest).mockResolvedValue(response(actual));
+  const read=await readTeachingCatalogStatus(record());
+  expect(read.preparation?.phase).toBe('processing');expect(read.preparation?.reason).not.toBe('catalog_status_invalid');
+  expect(teachingCatalogPresentation({...record(),...read},{nowMs:Date.now()}).mapForReview).toBe(false);
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
+});
 test.each(['failed', 'quality_rejected', 'cancelled'] as const)('terminal phase %s is preserved without creating a retry', phase => {
   const projected = projectTeachingCatalogStatus(state({phase, error: 'resource_guard'}), sha, job.id, checkedAt);
   expect(projected.preparation?.phase).toBe(phase === 'cancelled' ? 'cancelled' : 'failed');

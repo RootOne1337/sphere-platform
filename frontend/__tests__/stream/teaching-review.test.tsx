@@ -5,7 +5,7 @@ import { TextDecoder, TextEncoder } from 'node:util';
 import { TeachingReview, chooseReviewGeometry } from '@/src/features/stream/TeachingReview';
 import { TeachingReconstruction } from '@/src/features/stream/TeachingReconstruction';
 import ImageRouteReview from '@/src/features/stream/ImageRouteReview';
-import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
+import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
 jest.mock('@/src/features/stream/TeachingReconstruction',()=>({TeachingReconstruction:jest.fn(()=>null)}));
 jest.mock('@/src/features/stream/ImageRouteReview',()=>({__esModule:true,default:jest.fn(()=>null)}));
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
@@ -15,6 +15,8 @@ const encode=(value:unknown)=>new TextEncoder().encode(typeof value==='string'?v
 const hash=async(data:Uint8Array)=>Buffer.from(await webcrypto.subtle.digest('SHA-256',Uint8Array.from(data).buffer)).toString('hex');
 const missing=()=>new DOMException('missing','NotFoundError');
 const draw=jest.fn(),clear=jest.fn();
+const openCatalog=async()=>{const button=screen.queryByRole('button',{name:'Сменить запись'})??await screen.findByRole('button',{name:'Сменить запись'});fireEvent.click(button);};
+const openArchive=async()=>{const summary=await screen.findByText('Название, экспорт и диагностика');if(!summary.closest('details')?.open)fireEvent.click(summary);};
 
 function file(data:Uint8Array):File {
   return {size:data.length,arrayBuffer:async()=>Uint8Array.from(data).buffer,
@@ -73,6 +75,7 @@ beforeEach(()=>{
 test('search filters the local list and deletion requires an explicit second action',async()=>{
   const {remove}=await library();const onSelect=jest.fn();
   render(<TeachingReview selected={id} refresh={0} onSelect={onSelect} storageScope={scope}/>);
+  await openCatalog();await openArchive();
   await screen.findByRole('button',{name:'Открыть запись «Маршрут 011321»'});
   fireEvent.change(screen.getByLabelText('Найти запись'),{target:{value:'нет такого'}});
   expect(screen.getByText('Записи не найдены')).toBeInTheDocument();
@@ -97,7 +100,7 @@ test('the shared source is verified and cannot be relabeled as a newly selected 
   await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(null));
   expect(changed.mock.calls.some(([value])=>value?.clip===other)).toBe(false);
 });
-afterEach(()=>{jest.mocked(TeachingReconstruction).mockReset().mockImplementation(()=> <></>);jest.mocked(ImageRouteReview).mockClear();jest.mocked(reconstructionRequest).mockReset();jest.restoreAllMocks();});
+afterEach(()=>{jest.mocked(TeachingReconstruction).mockReset().mockImplementation(()=> <></>);jest.mocked(ImageRouteReview).mockReset().mockImplementation(()=>null);jest.mocked(reconstructionRequest).mockReset();jest.restoreAllMocks();});
 
 test.each([true,false,undefined])('selected verified recording restores only its declared automatic intent: %s',async declared=>{
   await library(declared);
@@ -135,6 +138,7 @@ test('selected camera seeks the verified source and updates the adjacent origina
 test('a selected local geometry file opens the matching route and rejects other recordings',async()=>{
   const {manifest}=await library(),source=await hash(manifest);
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await openArchive();
   fireEvent.click(await screen.findByText('Открыть геометрию из файла'));
   const picker=await screen.findByLabelText('Выбрать geometry.json для выбранной записи');
   const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,
@@ -163,6 +167,8 @@ test('a saved alternative opens automatically from the linked job without a file
   expect(screen.getByText(/Сохранённая экспериментальная схема связана/)).toBeInTheDocument();
   const props=jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0];
   expect(props.alternativeCameraCount).toBe(2);
+  await openArchive();
+  await waitFor(()=>expect(ImageRouteReview).toHaveBeenCalled());
   const imageProps=jest.mocked(ImageRouteReview).mock.calls.at(-1)![0];
   expect(imageProps.job).toEqual(job);
   expect(imageProps.manifestSha).toBe(source);
@@ -218,11 +224,11 @@ test('refresh reads the updated list but preserves the manual choice',async()=>{
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
   await screen.findByText('Сохранённая экспериментальная схема связана с исходной записью.');
   const select=screen.getByLabelText('Сохранённая схема ориентиров');expect(select).toHaveValue('new');
-  await waitFor(()=>expect(screen.getByText(/Источник схемы: Новая диагностика · new · 163 камер · 15041 точек/)).toBeInTheDocument());
+  await waitFor(()=>expect(screen.getByLabelText('Источник геометрии всех просмотров')).toHaveTextContent(/Новая диагностика.*2 камер.*1 точек/));
   fireEvent.click(screen.getByRole('button',{name:'Обновить результаты'}));
   await waitFor(()=>expect(listCalls).toBe(2));
   fireEvent.change(select,{target:{value:'old'}});
-  await waitFor(()=>expect(screen.getByText(/Источник схемы: экспериментальная схема · old · 163 камер · 5544 точек/)).toBeInTheDocument());
+  await waitFor(()=>expect(screen.getByLabelText('Источник геометрии всех просмотров')).toHaveTextContent(/Дополнительная реконструкция.*2 камер.*1 точек/));
   const before=jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[0].endsWith('/geometry-alternatives/old')).length;
   releaseRefresh();
   await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[0].endsWith('/geometry-alternatives/old')).length).toBeGreaterThan(before));
@@ -255,18 +261,18 @@ test('deselect clears the diagnostic map and late geometry cannot restore it',as
   jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
   await screen.findByText('Сохранённая экспериментальная схема связана с исходной записью.');
-  expect(screen.getByText(/Источник схемы:/)).toBeInTheDocument();
-  expect(screen.getByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).toBeInTheDocument();
+  expect(screen.getByLabelText('Источник геометрии всех просмотров')).toHaveTextContent('Дополнительная реконструкция');
+  expect(screen.getByText(/Это результат для проверки геометрии/)).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Сохранённая схема ориентиров'),{target:{value:''}});
   expect(screen.queryByLabelText('Проекция опорных точек и положений камеры')).not.toBeInTheDocument();
-  expect(screen.queryByText(/Источник схемы:/)).not.toBeInTheDocument();
-  expect(screen.queryByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Источник геометрии всех просмотров')).toHaveTextContent('Результат не выбран');
+  expect(screen.queryByText(/Это результат для проверки геометрии/)).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Сохранённая схема ориентиров'),{target:{value:'preferred'}});
   await waitFor(()=>expect(geometryCalls).toBe(2));
   fireEvent.change(screen.getByLabelText('Сохранённая схема ориентиров'),{target:{value:''}});
   expect(screen.queryByLabelText('Проекция опорных точек и положений камеры')).not.toBeInTheDocument();
-  expect(screen.queryByText(/Источник схемы:/)).not.toBeInTheDocument();
-  expect(screen.queryByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Источник геометрии всех просмотров')).toHaveTextContent('Результат не выбран');
+  expect(screen.queryByText(/Это результат для проверки геометрии/)).not.toBeInTheDocument();
   await act(async()=>{release();await pending;});
   expect(screen.queryByLabelText('Проекция опорных точек и положений камеры')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Обновить результаты'}));
@@ -314,6 +320,7 @@ test('review decodes and navigates the sealed source, then renames without chang
   const {files,manifest}=await library();const marker=files.get('COMPLETE'),video=files.get('video.h264');
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
   await waitFor(()=>expect(draw).toHaveBeenCalled());
+  await openCatalog();await openArchive();
   expect(screen.getByRole('button',{name:'Открыть запись «Маршрут 011321»'})).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Вперёд 1 с →'}));
   await waitFor(()=>expect(screen.getByRole('slider',{name:'Время записанного прохода'})).toHaveValue('1'));
@@ -352,6 +359,7 @@ test('queue processing protects its source from deletion while another recording
   const onSelect=jest.fn();
   render(<TeachingReview selected={id} refresh={0} onSelect={onSelect} storageScope={scope} manageAutomaticPreparation={false}
     processingQueue={{scope,activeClip:id,items:[{clip:id,jobId:'e'.repeat(32),phase:'processing',updatedAt:Date.now()}]}}/>);
+  await openCatalog();await openArchive();
   await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeDisabled());
   const another=await screen.findByRole('button',{name:'Открыть запись «Другой спокойный проход»'});
   expect(another).toBeEnabled();fireEvent.click(another);
@@ -362,6 +370,7 @@ test('a queue from another account cannot bind its job or block the selected sou
   await library(true);
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope} manageAutomaticPreparation={false}
     processingQueue={{scope:'c'.repeat(32),activeClip:id,items:[{clip:id,jobId:'e'.repeat(32),phase:'processing',updatedAt:Date.now()}]}}/>);
+  await openArchive();
   await waitFor(()=>expect(jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0].processingJobId).toBeUndefined());
   await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeEnabled());
 });
@@ -370,6 +379,7 @@ test('processing that begins after delete confirmation opens still fences the de
   const {remove}=await library(true),onSelect=jest.fn();
   const props={selected:id,refresh:0,onSelect,storageScope:scope,manageAutomaticPreparation:false};
   const view=render(<TeachingReview {...props}/>);
+  await openArchive();
   await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeEnabled());
   fireEvent.click(screen.getByRole('button',{name:'Удалить выбранный локальный материал'}));
   expect(screen.getByRole('button',{name:'Удалить навсегда'})).toBeEnabled();
@@ -391,6 +401,7 @@ test('a late ready result for an old job cannot freshen navigation for a differe
   });
   const props={selected:id,refresh:0,onSelect:jest.fn(),storageScope:scope,manageAutomaticPreparation:false};
   const view=render(<TeachingReview {...props}/>);
+  await openCatalog();
   await screen.findByRole('button',{name:/Карта для проверки 1/});
   now+=100;
   view.rerender(<TeachingReview {...props} processingQueue={{scope,activeClip:id,items:[{clip:id,jobId:newJobId,phase:'processing',updatedAt:now}]}}/>);
@@ -400,4 +411,33 @@ test('a late ready result for an old job cannot freshen navigation for a differe
   expect(screen.getByRole('button',{name:/Карта для проверки 0/})).toBeInTheDocument();
   expect(screen.queryByRole('button',{name:'Открыть карту'})).not.toBeInTheDocument();
   expect(jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0].processingJobId).toBe(newJobId);
+});
+test('a hidden archive mounts no image-review poller; opening starts it and closing cancels its scheduled retry',async()=>{
+  const {manifest}=await library(),source=await hash(manifest),job={id:'c'.repeat(32),key:'d'.repeat(64)};
+  const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
+  const ActualImageReview=jest.requireActual<typeof import('@/src/features/stream/ImageRouteReview')>('@/src/features/stream/ImageRouteReview').default;
+  jest.mocked(ImageRouteReview).mockImplementation(props=><ActualImageReview {...props}/>);
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{
+    if(path.endsWith('/image-route-review'))throw new ReconstructionResponseError(404,'image_review_not_ready');
+    return {json:async()=>path.endsWith('/geometry-alternatives')?{preferredAlternativeId:'preferred',alternatives:[{id:'preferred',cameras:2,points:1}]}:path===`/jobs/${job.id}`?{phase:'matching',geometry_available:false,navigation:{phase:'not_prepared'}}:scene} as Response;
+  });
+  function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
+  jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
+  render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await screen.findByText('Сохранённая экспериментальная схема связана с исходной записью.');
+  const reads=()=>jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[0].endsWith('/image-route-review')).length;
+  expect(ImageRouteReview).not.toHaveBeenCalled();expect(reads()).toBe(0);
+  jest.useFakeTimers();
+  try{
+    const summary=screen.getByText('Название, экспорт и диагностика');
+    await act(async()=>{fireEvent.click(summary);await jest.advanceTimersByTimeAsync(0);});
+    await waitFor(()=>expect(reads()).toBe(1));
+    expect(jest.mocked(ImageRouteReview).mock.calls.at(-1)![0]).toMatchObject({job,manifestSha:source,visible:true});
+    await act(async()=>{fireEvent.click(summary);await jest.advanceTimersByTimeAsync(0);});
+    expect(summary.closest('details')).not.toHaveAttribute('open');
+    await act(async()=>{await jest.advanceTimersByTimeAsync(5000);});
+    expect(reads()).toBe(1);
+    await act(async()=>{fireEvent.click(summary);await jest.advanceTimersByTimeAsync(0);});
+    await waitFor(()=>expect(reads()).toBe(2));
+  }finally{jest.useRealTimers();}
 });

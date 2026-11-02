@@ -4,7 +4,7 @@ import type {TeachingLibraryRecord} from './teachingLibrary';
 import type {TeachingCatalogEntry,TeachingCatalogPreparationPhase,TeachingCatalogNavigationPhase} from './teachingCatalog';
 
 export type TeachingCatalogStatus=Pick<TeachingCatalogEntry,'preparation'|'navigation'|'statusCheckedAt'>;
-const phases=new Set(['uploading','starting','verifying','extracting','motion_sampling','image_route_indexing','vehicle_speed_reference','features','matching','cameras','training','evaluating','complete','sparse_complete','partial_scene','review_required','quality_rejected','failed','cancelled']);
+const phases=new Set(['uploading','starting','verifying','extracting','motion_sampling','temporal_tracking','temporal_verification','temporal_cameras','image_route_indexing','vehicle_speed_reference','features','matching','cameras','training','evaluating','complete','sparse_complete','partial_scene','review_required','quality_rejected','failed','cancelled']);
 const terminal=new Set(['complete','sparse_complete','partial_scene','review_required','quality_rejected','failed','cancelled']);
 const navPhases=new Set<TeachingCatalogNavigationPhase>(['not_prepared','pending_auto_prepare','preparing','features','ready','failed','rejected','cancelled']);
 const safeReason=(value:unknown)=>typeof value==='string'&&/^[a-z0-9_]{1,160}$/.test(value)?value:undefined;

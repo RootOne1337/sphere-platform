@@ -1,19 +1,20 @@
 /** Diagnostic projection only: neither road surface nor metric trajectory. */
-export type RouteMapCamera = {center:number[];ticks_90k:number;camera_to_world?:number[][]};
+export type RouteMapIntrinsics={width:number;height:number;fx:number;fy:number;cx:number;cy:number};
+export type RouteMapCamera = {center:number[];ticks_90k:number;camera_to_world?:number[][];image?:string;intrinsics?:RouteMapIntrinsics};
 export function routeSourceMatches(recorded:string|null|undefined,reconstructed:string|null|undefined):boolean {
   return typeof recorded==='string'&&/^[0-9a-f]{64}$/.test(recorded)&&recorded===reconstructed;
 }
-export type ImportedRouteGeometry={cameras:RouteMapCamera[];points:number[][]};
+export type ImportedRouteGeometry={cameras:RouteMapCamera[];points:number[][];source_manifest_sha256?:string;camera_path_units?:number};
 /** Strictly bind imported diagnostic geometry to the selected source index. */
 export function readImportedRouteGeometry(value:unknown,sourceSha:string|null,ticks:ReadonlySet<number>):ImportedRouteGeometry {
   if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Некорректный файл геометрии.');
-  const geometry=value as {schema?:unknown;source_manifest_sha256?:unknown;cameras?:unknown;points?:unknown};
+  const geometry=value as {schema?:unknown;source_manifest_sha256?:unknown;cameras?:unknown;points?:unknown;camera_path_units?:unknown};
   if(geometry.schema!=='sphere-recovered-scene-v1'||typeof geometry.source_manifest_sha256!=='string'||!routeSourceMatches(sourceSha,geometry.source_manifest_sha256))throw Error('Геометрия относится к другой записи или не содержит проверенную привязку.');
   if(!Array.isArray(geometry.cameras)||geometry.cameras.length<2||geometry.cameras.length>240||!Array.isArray(geometry.points)||geometry.points.length>60000)throw Error('Размер геометрии не поддерживается.');
   let last=-1;
   const cameras:RouteMapCamera[]=geometry.cameras.map((item:unknown)=>{
     if(!item||typeof item!=='object')throw Error('Некорректная камера.');
-    const camera=item as {center?:unknown;ticks_90k?:unknown;camera_to_world?:unknown};
+    const camera=item as {center?:unknown;ticks_90k?:unknown;camera_to_world?:unknown;image?:unknown;intrinsics?:unknown};
     if(!Array.isArray(camera.center)||camera.center.length!==3||camera.center.some(n=>typeof n!=='number'||!Number.isFinite(n))||typeof camera.ticks_90k!=='number'||!Number.isSafeInteger(camera.ticks_90k)||camera.ticks_90k<=last||!ticks.has(camera.ticks_90k))throw Error('Время или координаты камеры не совпадают с исходной записью.');
     const result:RouteMapCamera={center:[...camera.center],ticks_90k:camera.ticks_90k};
     if(camera.camera_to_world!==undefined){
@@ -21,13 +22,27 @@ export function readImportedRouteGeometry(value:unknown,sourceSha:string|null,ti
       if(!routeCameraFrame(result))throw Error('Некорректная ориентация восстановленной камеры.');
       result.camera_to_world=result.camera_to_world.map(row=>[...row]);
     }
+    if(camera.image!==undefined){
+      if(typeof camera.image!=='string'||!/^\d{8}\.png$/.test(camera.image))throw Error('Некорректное имя исходного ракурса.');
+      result.image=camera.image;
+    }
+    if(camera.intrinsics!==undefined){
+      if(!camera.intrinsics||typeof camera.intrinsics!=='object'||Array.isArray(camera.intrinsics))throw Error('Некорректные параметры камеры.');
+      const k=camera.intrinsics as Record<keyof RouteMapIntrinsics,unknown>;
+      if(['width','height','fx','fy','cx','cy'].some(key=>typeof k[key as keyof RouteMapIntrinsics]!=='number'||!Number.isFinite(k[key as keyof RouteMapIntrinsics]))
+        ||!Number.isSafeInteger(k.width)||!Number.isSafeInteger(k.height)||(k.width as number)<=0||(k.height as number)<=0||(k.width as number)>16384||(k.height as number)>16384
+        ||(k.fx as number)<=0||(k.fy as number)<=0||(k.fx as number)>1e8||(k.fy as number)>1e8||Math.abs(k.cx as number)>1e8||Math.abs(k.cy as number)>1e8)throw Error('Некорректные параметры камеры.');
+      result.intrinsics={width:k.width as number,height:k.height as number,fx:k.fx as number,fy:k.fy as number,cx:k.cx as number,cy:k.cy as number};
+    }
     last=camera.ticks_90k;return result;
   });
   const points:number[][]=geometry.points.map((point:unknown)=>{
     if(!Array.isArray(point)||point.length!==6||point.some(n=>typeof n!=='number'||!Number.isFinite(n)))throw Error('Некорректные точки геометрии.');
     return [...point];
   });
-  return {cameras,points};
+  if(geometry.camera_path_units!==undefined&&(typeof geometry.camera_path_units!=='number'||!Number.isFinite(geometry.camera_path_units)||geometry.camera_path_units<0))throw Error('Некорректная длина пути камеры.');
+  return {cameras,points,source_manifest_sha256:geometry.source_manifest_sha256,
+    camera_path_units:geometry.camera_path_units as number|undefined};
 }
 /** Select a real reference only; no interpolation through unobserved intervals. */
 export function nearestRouteCamera(cameras:RouteMapCamera[],ticks:number|null):number|null {

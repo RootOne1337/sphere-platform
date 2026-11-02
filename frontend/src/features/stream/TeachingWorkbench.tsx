@@ -469,7 +469,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     </section>
     <TeachingLocalWorker/>
     <div className="space-y-4">
-    <div aria-label="Панель записи" className="sticky top-16 z-30 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur">
+    <div hidden={workspaceMode==='review'} aria-label="Панель записи" className="sticky top-16 z-30 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur">
       <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:w-auto lg:flex-wrap">
       <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || !storageScope || active(phase) || phase === 'connecting'} onClick={() => { if(workspaceMode==='review')setWorkspaceMode('capture');void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
       <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || phase !== 'preview' || !ready || !!calibrate || !!bindingTarget || !!mappingIssue} onClick={enableControl}><Keyboard size={15} className="mr-2 shrink-0" />Включить управление</Button>
@@ -553,7 +553,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     </div>
     </div>
     <TeachingProcessingQueue scope={storageScope} refresh={refresh} paused={readOnly||active(phase)||phase==='connecting'} onSnapshot={queueChanged}/>
-    <fieldset hidden={workspaceMode!=='review'} disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} onRouteChange={routeChanged} onClipsChange={clipsChanged} onSourceChange={setRouteSource} visible={workspaceMode==='review'} autoPrepare={autoPrepare?.clip===clip&&autoPrepare.scope===storageScope&&!active(phase)} onAutoPrepareConsumed={consumedAutoPrepare} manageAutomaticPreparation={false} processingQueue={processingQueue?.scope===storageScope?processingQueue:null}/></fieldset>
+    <fieldset hidden={workspaceMode!=='review'} disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} onRouteChange={routeChanged} onClipsChange={clipsChanged} onSourceChange={setRouteSource} visible={workspaceMode==='review'} autoPrepare={autoPrepare?.clip===clip&&autoPrepare.scope===storageScope&&!active(phase)} onAutoPrepareConsumed={consumedAutoPrepare} manageAutomaticPreparation={false} processingQueue={processingQueue?.scope===storageScope?processingQueue:null} onOpenNavigation={()=>{void switchMode('live');}}/></fieldset>
     <p className="flex items-center gap-2 text-xs text-muted-foreground"><Download size={14} />Материал содержит только явно записанный проход. Он ещё не доказывает повторение маршрута ИИ.</p>
   </div>;
 }
