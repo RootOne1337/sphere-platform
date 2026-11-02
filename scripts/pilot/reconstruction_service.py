@@ -730,6 +730,9 @@ def handler(jobs, origin, port):
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
                                              route_resource_monitor_contract='task_volume30_fresh_native_v1',
                                              hud_speed_reference_contract='source_bound_font_display_v1',
+                                             fused_recovery_contract='gated_cpu_native_v1',
+                                             fused_recovery_enabled=os.environ.get('SPHERE_EXPERIMENTAL_FUSED_RECOVERY') == '1',
+                                             native_reference_contract='offline_unqualified_v1',
                                              live_session_active=live_active))
                     return
                 with jobs.lock:

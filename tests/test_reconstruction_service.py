@@ -575,7 +575,12 @@ def test_rejected_reference_views_are_bound_and_images_cannot_escape(jobs):
         jobs.reference_image(job, 0, 'source')
 
 
-def test_http_origin_host_capability_and_cors(jobs):
+@pytest.mark.parametrize('fused_opt_in', [None, '1', '0'])
+def test_http_origin_host_capability_and_cors(jobs, monkeypatch, fused_opt_in):
+    if fused_opt_in is None:
+        monkeypatch.delenv('SPHERE_EXPERIMENTAL_FUSED_RECOVERY', raising=False)
+    else:
+        monkeypatch.setenv('SPHERE_EXPERIMENTAL_FUSED_RECOVERY', fused_opt_in)
     job = create(jobs)
     server = ThreadingHTTPServer(('127.0.0.1', 0), service.handler(jobs, 'http://127.0.0.1:3015', 3342))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -593,6 +598,9 @@ def test_http_origin_host_capability_and_cors(jobs):
             assert health['creation_recovery_contract']=='confirmed_absence_v1'
             assert health['route_lifecycle_contract']=='owned_serial_handoff_v1'
             assert health['job_source_binding_contract']=='manifest_sha256_status_v1'
+            assert health['fused_recovery_contract']=='gated_cpu_native_v1'
+            assert health['fused_recovery_enabled'] is (fused_opt_in == '1')
+            assert health['native_reference_contract']=='offline_unqualified_v1'
         for headers in ({'Origin': 'https://evil.example'}, {'Host': 'evil.example:3342'}, {'X-Sphere-Reconstruction': ''}):
             with pytest.raises(urllib.error.HTTPError) as exc:
                 urllib.request.urlopen(request('/health', **headers))
