@@ -47,6 +47,52 @@ def test_detail_profile_is_preserved_and_does_not_relax_exclusive_execution(jobs
         create(jobs, 'c' * 32)
 
 
+def test_status_manifest_binding_is_absent_then_tracks_actual_uploaded_bytes(jobs):
+    job = create(jobs)
+    assert jobs.status(job)['source_manifest_sha256'] is None
+    raw = b'{"capture":"first"}'
+    jobs.upload(job, 'manifest.json', 0, raw)
+    assert jobs.status(job)['source_manifest_sha256'] == hashlib.sha256(raw).hexdigest()
+    (job/'input/manifest.json').write_bytes(b'{"capture":"changed"}')
+    assert jobs.status(job)['source_manifest_sha256'] != hashlib.sha256(raw).hexdigest()
+    assert jobs.status(job)['source_manifest_sha256'] == hashlib.sha256(
+        (job/'input/manifest.json').read_bytes()).hexdigest()
+
+
+def test_catalog_manifest_quota_does_not_read_oversized_source(jobs, monkeypatch):
+    job = create(jobs)
+    manifest = job/'input/manifest.json'
+    manifest.write_bytes(b'x'*(service.LIMITS['manifest.json']+1))
+    original_open = Path.open
+    def bounded_open(path, *args, **kwargs):
+        if path == manifest:
+            pytest.fail('oversized manifest must not be read for catalog status')
+        return original_open(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'open', bounded_open)
+    assert jobs.status(job)['source_manifest_sha256'] is None
+
+
+def test_catalog_manifest_growing_during_read_remains_bounded(jobs, monkeypatch):
+    import io
+
+    job = create(jobs)
+    manifest = job/'input/manifest.json'
+    manifest.write_bytes(b'{}')
+    original_open = Path.open
+    read_sizes = []
+    class Grew(io.BytesIO):
+        def read(self, size=-1):
+            read_sizes.append(size)
+            return super().read(size)
+    def changed_open(path, *args, **kwargs):
+        if path == manifest:
+            return Grew(b'x'*(service.LIMITS['manifest.json']+1))
+        return original_open(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'open', changed_open)
+    assert jobs.status(job)['source_manifest_sha256'] is None
+    assert read_sizes == [service.LIMITS['manifest.json']+1]
+
+
 @pytest.mark.parametrize('steps', [True, 30000.0, '30000', 30001, None])
 def test_non_admitted_training_budget_is_refused_before_job_creation(jobs, steps):
     with pytest.raises(ValueError, match='invalid_processing_options'):
@@ -125,6 +171,7 @@ def test_job_start_passes_priority_only_to_its_owned_cpu_child(jobs, monkeypatch
         observed.append((command, kwargs))
         return process
     monkeypatch.setattr(service.subprocess, 'Popen', popen)
+    monkeypatch.setattr(service, 'spawn_owned', popen)
     monkeypatch.setattr(service.threading, 'Thread', lambda **_: SimpleNamespace(start=lambda: None))
     jobs.start(job, control)
     assert observed[0][1]['creationflags'] == expected
@@ -138,6 +185,226 @@ def test_restart_fails_interrupted_and_preserves_input(jobs):
     restarted = service.Jobs(jobs.folder, jobs.python)
     assert restarted.status(job)['phase'] == 'failed'
     assert (job / 'input/video.h264').read_bytes() == b'raw'
+
+
+def test_restart_signals_live_worker_and_fences_its_late_completion(jobs):
+    """A real tiny child observes cancellation; its last write cannot undo it."""
+    import subprocess
+    import time
+
+    job = create(jobs)
+    jobs.upload(job, 'video.h264', 0, b'immutable source')
+    service.write_json(job/'state.json', dict(phase='matching'))
+    # Image indexing has already finished, so its restart settlement is not
+    # responsible for signalling this still-running reconstruction worker.
+    (job/'image-route-workspace').mkdir()
+    service.write_json(job/'image-route-workspace/state.json', dict(phase='ready'))
+    originals = {name: (job/name).read_bytes() for name in ('control.json', 'input/video.h264')}
+    code = (
+        "import sys,time,json;from pathlib import Path;from scripts.pilot.atomic_json import write_json;p=Path(sys.argv[1]);"
+        "(p/'child-ready').touch();deadline=time.monotonic()+5\n"
+        "while not (p/'CANCEL').exists() and time.monotonic()<deadline:time.sleep(.01)\n"
+        "if not (p/'CANCEL').exists():sys.exit(2)\n"
+        "(p/'cancel-observed').touch()\n"
+        "while not (p/'allow-late-write').exists() and time.monotonic()<deadline:time.sleep(.01)\n"
+        "if not (p/'allow-late-write').exists():sys.exit(3)\n"
+        "write_json(p/'state.json',{'phase':'sparse_complete'})"
+    )
+    child = subprocess.Popen([sys._base_executable, '-B', '-c', code, str(job)],
+                             creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    try:
+        deadline = time.monotonic()+5
+        while not (job/'child-ready').exists() and time.monotonic()<deadline:
+            time.sleep(.01)
+        assert (job/'child-ready').exists()
+        restarted = service.Jobs(jobs.folder, jobs.python)
+        (job/'allow-late-write').touch()
+        assert child.wait(timeout=5) == 0
+        assert (job/'cancel-observed').exists()
+        assert json.loads((job/'state.json').read_bytes())['phase'] == 'sparse_complete'
+        assert restarted.status(job)['error'] == 'worker_service_restarted'
+        assert restarted.status(job)['phase'] == 'failed'
+        assert originals == {name: (job/name).read_bytes() for name in originals}
+    finally:
+        if child.poll() is None:
+            child.kill()
+            child.wait(timeout=5)
+
+
+def test_restart_does_not_touch_existing_terminal_job_or_cancel(jobs):
+    job = create(jobs)
+    service.write_json(job/'state.json', dict(phase='failed', error='original_failure'))
+    (job/'CANCEL').write_bytes(b'original cancel marker')
+    paths = ('state.json', 'control.json', 'CANCEL')
+    before = {name: ((job/name).read_bytes(), (job/name).stat().st_mtime_ns) for name in paths}
+    service.Jobs(jobs.folder, jobs.python)
+    assert before == {name: ((job/name).read_bytes(), (job/name).stat().st_mtime_ns) for name in paths}
+    assert not (job/'service-interrupted.json').exists()
+
+
+def test_terminal_worker_keeps_serial_slot_through_automatic_handoff(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    jobs.create(dict(id='a'*32, key='b'*64, mask='game', steps=3000, prepare_route=True, route_only=True))
+    job = jobs.path('a'*32)
+    for name in service.LIMITS:
+        jobs.upload(job, name, 0, b'x')
+    process = SimpleNamespace(poll=lambda: 0)
+    monkeypatch.setattr(service, 'spawn_owned', lambda *a, **k: process)
+    monkeypatch.setattr(service.threading, 'Thread', lambda **k: SimpleNamespace(start=lambda: None))
+    jobs.start(job, jobs.authorize(job, 'b'*64))
+    service.write_json(job/'state.json', dict(phase='sparse_complete'))
+    service.write_json(job/'sparse-receipt.json', dict(placeholder=True))
+    # The child has exited, but the monitor has not yet completed its handoff.
+    with pytest.raises(ValueError, match='one_active_job_only'):
+        create(jobs, 'c'*32)
+    calls = []
+    def prepare(target, body):
+        assert target.name in jobs.processes
+        with pytest.raises(ValueError, match='one_active_job_only'):
+            create(jobs, 'c'*32)
+        calls.append((target, body))
+    monkeypatch.setattr(jobs.navigation, 'prepare', prepare)
+    jobs.monitor(job, process)
+    assert len(calls) == 1
+    assert job.name not in jobs.processes
+    assert not (job/'route-pipeline-refusal.json').exists()
+
+
+@pytest.mark.parametrize('reason', ['resource_guard', 'worker_timeout', 'worker_log_quota'])
+def test_guard_after_sparse_receipt_settles_auto_navigation(jobs, monkeypatch, reason):
+    from types import SimpleNamespace
+
+    jobs.create(dict(id='a'*32, key='b'*64, mask='game', steps=3000, prepare_route=True))
+    job = jobs.path('a'*32)
+    service.write_json(job/'state.json', dict(phase='training'))
+    service.write_json(job/'sparse-receipt.json', dict(placeholder=True))
+    (job/'worker.log').touch()
+    process = SimpleNamespace(poll=lambda: None)
+    jobs.processes[job.name] = process
+    monkeypatch.setattr(service.time, 'sleep', lambda _: None)
+    monkeypatch.setattr(jobs, '_stop_worker', lambda _: None)
+    monkeypatch.setattr(jobs.navigation, 'prepare', lambda *a, **k: pytest.fail('guard must not start export'))
+    if reason == 'resource_guard':
+        monkeypatch.setattr(service, 'route_resource_findings', lambda *a, **k: ['ram_low'])
+    elif reason == 'worker_timeout':
+        from itertools import chain, repeat
+        ticks = chain((0,), repeat(2401))
+        monkeypatch.setattr(service.time, 'monotonic', lambda: next(ticks))
+    else:
+        stat = Path.stat
+        monkeypatch.setattr(Path, 'stat', lambda path, *a, **k: SimpleNamespace(st_size=33*1024**2)
+                            if path == job/'worker.log' else stat(path, *a, **k))
+    jobs.monitor(job, process)
+    navigation = jobs.status(job)['navigation']
+    assert navigation['phase'] == 'not_prepared'
+    assert navigation['error'] == reason
+    assert job.name not in jobs.processes
+
+
+def test_cancel_at_worker_exit_wins_over_sparse_completion(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    jobs.create(dict(id='a'*32, key='b'*64, mask='game', steps=3000, prepare_route=True))
+    job = jobs.path('a'*32)
+    service.write_json(job/'state.json', dict(phase='sparse_complete'))
+    service.write_json(job/'sparse-receipt.json', dict(placeholder=True))
+    (job/'CANCEL').touch()
+    monkeypatch.setattr(jobs.navigation, 'prepare', lambda *a, **k: pytest.fail('cancelled export'))
+    jobs.monitor(job, SimpleNamespace(poll=lambda: 0))
+    assert jobs.status(job)['phase'] == 'cancelled'
+    assert jobs.status(job)['navigation']['phase'] != 'pending_auto_prepare'
+
+
+def test_log_launch_failure_releases_slot_and_keeps_one_shot_intent(jobs, monkeypatch):
+    job = create(jobs)
+    for name in service.LIMITS:
+        jobs.upload(job, name, 0, b'x')
+    (job/'worker.log').touch()
+    monkeypatch.setattr(service.subprocess, 'Popen', lambda *a, **k: pytest.fail('log failure precedes launch'))
+    with pytest.raises(FileExistsError):
+        jobs.start(job, jobs.authorize(job, 'b'*64))
+    assert job.name not in jobs.processes
+    assert jobs.status(job)['phase'] == 'failed'
+    assert (job/'START').exists()
+    create(jobs, 'c'*32)
+
+
+def test_thread_launch_failure_stops_owned_worker_and_releases_slot(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    job = create(jobs)
+    for name in service.LIMITS:
+        jobs.upload(job, name, 0, b'x')
+    events = []
+    process = SimpleNamespace(poll=lambda: None, stop=lambda timeout: events.append('stopped'),
+                              close=lambda: events.append('closed'))
+    monkeypatch.setattr(service, 'spawn_owned', lambda *a, **k: process)
+    class FailedThread:
+        def __init__(self, **kwargs): pass
+        def start(self): raise RuntimeError('thread unavailable')
+    monkeypatch.setattr(service.threading, 'Thread', FailedThread)
+    with pytest.raises(RuntimeError, match='thread unavailable'):
+        jobs.start(job, jobs.authorize(job, 'b'*64))
+    assert events == ['stopped', 'closed']
+    assert job.name not in jobs.processes
+    assert jobs.status(job)['error'] == 'worker_start_not_confirmed'
+    create(jobs, 'c'*32)
+
+
+@pytest.mark.parametrize('cancelled', [False, True])
+def test_forced_stop_settles_only_unfinished_diagnostic_sidecars(jobs, monkeypatch, cancelled):
+    from types import SimpleNamespace
+
+    job = create(jobs)
+    service.write_json(job/'state.json', dict(phase='image_route_indexing'))
+    for directory, phase in (('image-route-workspace', 'running'), ('telemetry', 'ready')):
+        (job/directory).mkdir()
+        service.write_json(job/directory/'state.json', dict(phase=phase))
+    completed = (job/'telemetry/state.json').read_bytes()
+    (job/'worker.log').touch()
+    if cancelled:
+        (job/'CANCEL').touch()
+    monkeypatch.setattr(service.time, 'sleep', lambda _: None)
+    monkeypatch.setattr(jobs, '_stop_worker', lambda _: None)
+    monkeypatch.setattr(service, 'route_resource_findings', lambda *a, **k: ['ram_low'])
+    jobs.monitor(job, SimpleNamespace(poll=lambda: None))
+    state = json.loads((job/'image-route-workspace/state.json').read_bytes())
+    assert state == dict(phase='cancelled' if cancelled else 'failed',
+                         error='cancelled' if cancelled else 'resource_guard')
+    assert (job/'telemetry/state.json').read_bytes() == completed
+
+
+def test_automatic_export_refusal_keeps_resource_cause(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    jobs.create(dict(id='a'*32, key='b'*64, mask='game', steps=3000, prepare_route=True))
+    job = jobs.path('a'*32)
+    service.write_json(job/'state.json', dict(phase='sparse_complete'))
+    service.write_json(job/'sparse-receipt.json', dict(placeholder=True))
+    def refused(*args, **kwargs):
+        raise RuntimeError('resource_guard')
+    monkeypatch.setattr(jobs.navigation, 'prepare', refused)
+    jobs.monitor(job, SimpleNamespace(poll=lambda: 0))
+    assert jobs.status(job)['navigation']['error'] == 'resource_guard'
+    assert jobs.status(job)['navigation']['phase'] == 'not_prepared'
+
+
+def test_cancellation_while_waiting_for_handoff_lock_wins(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    jobs.create(dict(id='a'*32, key='b'*64, mask='game', steps=3000, prepare_route=True))
+    job = jobs.path('a'*32)
+    service.write_json(job/'state.json', dict(phase='sparse_complete'))
+    service.write_json(job/'sparse-receipt.json', dict(placeholder=True))
+    class CancelBeforeHandoff:
+        def __enter__(self): (job/'CANCEL').touch()
+        def __exit__(self, *args): pass
+    jobs.lock = CancelBeforeHandoff()
+    monkeypatch.setattr(jobs.navigation, 'prepare', lambda *a, **k: pytest.fail('cancel wins'))
+    jobs.monitor(job, SimpleNamespace(poll=lambda: 0))
+    assert jobs.status(job)['phase'] == 'cancelled'
+    assert jobs.status(job)['navigation']['phase'] != 'pending_auto_prepare'
 
 
 def test_automatic_route_preparation_is_observable_and_restart_does_not_repeat(jobs, monkeypatch):
@@ -324,6 +591,8 @@ def test_http_origin_host_capability_and_cors(jobs):
             health=json.load(response)
             assert health['route_camera_pipeline']=='vehicle_geometry_v3_hud'
             assert health['creation_recovery_contract']=='confirmed_absence_v1'
+            assert health['route_lifecycle_contract']=='owned_serial_handoff_v1'
+            assert health['job_source_binding_contract']=='manifest_sha256_status_v1'
         for headers in ({'Origin': 'https://evil.example'}, {'Host': 'evil.example:3342'}, {'X-Sphere-Reconstruction': ''}):
             with pytest.raises(urllib.error.HTTPError) as exc:
                 urllib.request.urlopen(request('/health', **headers))

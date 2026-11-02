@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from scripts.pilot.route_cpu_runtime import initialize_route_cpu_runtime
+from scripts.pilot.route_owned_process import spawn_owned
 
 # Initialize before any local module may import NumPy. This affects only this
 # process; original environment is restored before launching offline workers.
@@ -104,7 +105,13 @@ class Jobs:
         # An interrupted job cannot be silently resumed or retrained on restart.
         for path in folder.glob('*/state.json'):
             if json.loads(path.read_text('utf-8'))['phase'] not in TERMINAL:
-                write_json(path, dict(phase='failed', error='worker_service_restarted', updated_at=time.time()))
+                # The detached child may still be inside a native call. Signal
+                # its checkpoint before settling state, and retain a separate
+                # fence which a late child state write cannot erase.
+                (path.parent / 'CANCEL').touch(exist_ok=True)
+                interrupted = dict(phase='failed', error='worker_service_restarted', updated_at=time.time())
+                write_json(path.parent / 'service-interrupted.json', interrupted)
+                write_json(path, interrupted)
         for path in [*folder.glob('*/surface/state.json'), *folder.glob('*/fragments/*/state.json')]:
             if json.loads(path.read_text('utf-8'))['phase'] not in SURFACE_TERMINAL:
                 (path.parent / 'CANCEL').touch(exist_ok=True)
@@ -125,7 +132,23 @@ class Jobs:
         return self.folder / identity
 
     def status(self, job):
-        result = json.loads((job / 'state.json').read_text('utf-8'))
+        fence = job/'service-interrupted.json'
+        result = json.loads((fence if fence.is_file() else job/'state.json').read_text('utf-8'))
+        # The catalog can bind a job to the currently selected recording without
+        # loading its video. During upload, absent/partial manifests cannot make
+        # a complete recording's expected digest match accidentally.
+        result['source_manifest_sha256'] = None
+        manifest = job/'input/manifest.json'
+        try:
+            if (not manifest.is_symlink() and not manifest.parent.is_symlink()
+                    and not manifest.parent.is_junction() and manifest.is_file()
+                    and 0 < manifest.stat().st_size <= LIMITS['manifest.json']):
+                with manifest.open('rb') as file:
+                    raw = file.read(LIMITS['manifest.json']+1)
+                if 0 < len(raw) <= LIMITS['manifest.json']:
+                    result['source_manifest_sha256'] = hashlib.sha256(raw).hexdigest()
+        except OSError:
+            pass
         from scripts.pilot.image_route_workspace import read_status as image_review_status
         image_review = image_review_status(job)
         if image_review is not None:
@@ -273,7 +296,7 @@ class Jobs:
     def active(self, job):
         state = self.status(job)
         live = self.navigation.live_status()
-        return (state['phase'] not in TERMINAL or any(item['phase'] not in SURFACE_TERMINAL
+        return (job.name in self.processes or state['phase'] not in TERMINAL or any(item['phase'] not in SURFACE_TERMINAL
                 for item in [state['surface'], *state['fragments']] if item)
                 or self.navigation.preparing(job) or live.get('job') == job.name)
 
@@ -494,26 +517,85 @@ class Jobs:
         # Durable one-shot intent precedes process creation. Ambiguity is failure.
         with (job / 'START').open('x') as file:
             file.write(str(time.time()))
-        write_json(job / 'state.json', dict(phase='starting', updated_at=time.time()))
-        log = (job / 'worker.log').open('xb')
+        # This slot includes process launch, terminal child writes, and the
+        # serial automatic-navigation handoff, not merely a running PID.
+        self.processes[job.name] = None
+        process = None
         try:
+            write_json(job / 'state.json', dict(phase='starting', updated_at=time.time()))
             command = [str(self.python), '-m', 'scripts.pilot.reconstruct_route',
                      '--job', str(job), '--mask', control['mask'], '--steps', str(control['steps'])]
             if control.get('route_only', False):
                 command.append('--route-only')
-            process = subprocess.Popen(command,
-                     cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
-                     creationflags=route_worker_creationflags(control.get('route_only') is True))
+            with (job / 'worker.log').open('xb') as log:
+                process = spawn_owned(command,
+                         cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
+                         creationflags=route_worker_creationflags(control.get('route_only') is True))
+            if hasattr(process, 'ownership'):
+                write_json(job/'worker-ownership.json', process.ownership)
+            self.processes[job.name] = process
+            threading.Thread(target=self.monitor, args=(job, process), daemon=True).start()
         except Exception:
-            write_json(job / 'state.json', dict(phase='failed', error='worker_start_not_confirmed'))
+            try:
+                if process is not None and process.poll() is None:
+                    self._stop_worker(process)
+            finally:
+                if process is not None and hasattr(process, 'close'):
+                    process.close()
+                self.processes.pop(job.name, None)
+                write_json(job / 'state.json', dict(phase='cancelled' if (job/'CANCEL').exists() else 'failed',
+                                                   error='worker_start_not_confirmed'))
+                write_json(job/'route-pipeline-refusal.json', dict(error='worker_start_not_confirmed'))
             raise
-        finally:
-            log.close()
-        self.processes[job.name] = process
-        threading.Thread(target=self.monitor, args=(job, process), daemon=True).start()
         return self.status(job)
 
+    @staticmethod
+    def _stop_worker(process):
+        # The Windows lifetime job includes venv and native descendants before
+        # the first child instruction. No PID lookup or process-name kill.
+        if hasattr(process, 'stop'):
+            process.stop(timeout=15)
+        else:
+            process.kill()
+            process.wait(15)
+
+    @staticmethod
+    def _settle_sidecars(job, *, cancelled, error):
+        # Forced tree termination cannot run the Python parents' finally
+        # blocks. Settle only their existing unfinished diagnostic states.
+        for directory in ('image-route-workspace', 'telemetry'):
+            path = job/directory/'state.json'
+            try:
+                if (path.is_symlink() or path.parent.is_symlink() or not path.is_file()
+                        or path.stat().st_size > 65536):
+                    continue
+                if json.loads(path.read_text('utf-8')).get('phase') in {'pending', 'running'}:
+                    write_json(path, dict(phase='cancelled' if cancelled else 'failed', error=error))
+            except (OSError, ValueError, TypeError):
+                # A malformed optional sidecar cannot undo the main terminal
+                # outcome or launch another task.
+                continue
+
     def monitor(self, job, process):
+        try:
+            self._monitor_worker(job, process)
+        except Exception:
+            cancelled = (job/'CANCEL').exists()
+            try:
+                if process.poll() is None:
+                    (job/'CANCEL').touch(exist_ok=True)
+                    self._stop_worker(process)
+            finally:
+                write_json(job/'state.json', dict(phase='cancelled' if cancelled else 'failed',
+                                                 error='worker_monitor_failed'))
+                write_json(job/'route-pipeline-refusal.json', dict(error='worker_monitor_failed'))
+                self._settle_sidecars(job, cancelled=cancelled, error='worker_monitor_failed')
+        finally:
+            if hasattr(process, 'close'):
+                process.close()
+            self.processes.pop(job.name, None)
+
+    def _monitor_worker(self, job, process):
         deadline = time.monotonic() + 2400
         control = json.loads((job/'control.json').read_text('utf-8'))
         budget=route_resource_profile(job,route_only=control.get('route_only') is True)
@@ -529,15 +611,17 @@ class Jobs:
             elif route_resource_findings(collect(ROOT),budget,evaluate_fn=evaluate):
                 reason = 'resource_guard'
             if reason:
-                # Own known PID only; also terminate the own Brush child on Windows.
-                if os.name == 'nt':
-                    subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
-                                   capture_output=True, timeout=15, check=False)
-                else:
-                    process.kill()
-                process.wait(15)
+                (job/'CANCEL').touch(exist_ok=True)
+                self._stop_worker(process)
                 write_json(job / 'state.json', dict(phase='cancelled' if reason == 'cancelled' else 'failed', error=reason))
+                write_json(job/'route-pipeline-refusal.json', dict(error=reason))
+                self._settle_sidecars(job, cancelled=reason == 'cancelled', error=reason)
                 return
+        if (job/'CANCEL').exists():
+            write_json(job/'state.json', dict(phase='cancelled', error='cancelled'))
+            write_json(job/'route-pipeline-refusal.json', dict(error='cancelled'))
+            self._settle_sidecars(job, cancelled=True, error='cancelled')
+            return
         if self.status(job)['phase'] not in TERMINAL:
             write_json(job / 'state.json', dict(phase='failed', error='worker_exited_without_completion'))
         control = json.loads((job/'control.json').read_text('utf-8'))
@@ -545,12 +629,21 @@ class Jobs:
         if (control.get('prepare_route') is True
                 and (final['phase'] in {'complete', 'sparse_complete'} or final['phase'] == 'failed' and final['sparse_available'])):
             with self.lock:
-                if not any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
+                if (job/'CANCEL').exists():
+                    write_json(job/'state.json', dict(phase='cancelled', error='cancelled'))
+                    write_json(job/'route-pipeline-refusal.json', dict(error='cancelled'))
+                elif not any(self.active(p) for p in self.folder.iterdir() if p.is_dir() and p != job):
                     identity = hashlib.sha256((job.name+':initial-route').encode()).hexdigest()[:32]
                     try:
                         self.navigation.prepare(job, dict(id=identity))
-                    except (ValueError, RuntimeError):
-                        write_json(job/'route-pipeline-refusal.json', dict(error='route_preparation_not_started'))
+                    except (ValueError, RuntimeError) as error:
+                        reason = str(error) if str(error) in {'resource_guard', 'cancelled',
+                            'route_camera_recovery_required', 'route_preparation_attempt_quota',
+                            'route_workspace_busy'} else 'route_preparation_not_started'
+                        if reason == 'cancelled' or (job/'CANCEL').exists():
+                            reason = 'cancelled'
+                            write_json(job/'state.json', dict(phase='cancelled', error=reason))
+                        write_json(job/'route-pipeline-refusal.json', dict(error=reason))
                 else:
                     write_json(job/'route-pipeline-refusal.json', dict(error='route_preparation_busy'))
 
@@ -628,6 +721,8 @@ def handler(jobs, origin, port):
                         self.reply(200, dict(service='sphere-reconstruction-v1', one_active_job=True,
                                              route_camera_pipeline=ROUTE_CAMERA_PIPELINE,
                                              creation_recovery_contract='confirmed_absence_v1',
+                                             route_lifecycle_contract='owned_serial_handoff_v1',
+                                             job_source_binding_contract='manifest_sha256_status_v1',
                                              image_route_review_contract='source_bound_offline_v1',
                                              image_route_preparation_contract='bounded_cpu_before_sfm_v1',
                                              browser_teach_input_clock_contract='idle_preroll100_worker_receipt_v1',

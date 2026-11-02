@@ -240,7 +240,11 @@ def test_image_review_precedes_sfm_and_survives_its_refusal(tmp_path, monkeypatc
     calls = []
     monkeypatch.setattr(route, "checkpoint", lambda _: None)
     monkeypatch.setattr(route, "make_observation_checkpoint", lambda _: lambda: None)
-    monkeypatch.setattr(route, "validate_browser", lambda _: object())
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(route, "validate_browser", lambda _: SimpleNamespace(
+        frames=[dict(relative_ticks_90k=5*90000)]))
+    monkeypatch.setattr(route, "_prepare_vehicle_speed_reference", lambda *args: False)
 
     def prepare(job, mask, **kwargs):
         calls.append("index")

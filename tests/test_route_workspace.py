@@ -197,6 +197,126 @@ class RouteWorkspaceTests(unittest.TestCase):
         process.assert_not_called()
         guard.assert_not_called()
 
+    def test_restart_signals_live_exporter_and_fences_late_ready_write(self):
+        import subprocess
+        import sys
+        import time
+
+        folder = self.job/'navigation'/self.identity
+        folder.mkdir(parents=True)
+        (self.job/'navigation/active.json').write_text(json.dumps(dict(id=self.identity)))
+        (folder/'state.json').write_text('{"phase":"features"}')
+        original_input = (self.job/'input/manifest.json').read_bytes()
+        code = (
+            "import sys,time;from pathlib import Path;from scripts.pilot.atomic_json import write_json;p=Path(sys.argv[1]);"
+            "(p/'child-ready').touch();deadline=time.monotonic()+5\n"
+            "while not (p/'CANCEL').exists() and time.monotonic()<deadline:time.sleep(.01)\n"
+            "if not (p/'CANCEL').exists():sys.exit(2)\n"
+            "(p/'cancel-observed').touch()\n"
+            "while not (p/'allow-late-write').exists() and time.monotonic()<deadline:time.sleep(.01)\n"
+            "if not (p/'allow-late-write').exists():sys.exit(3)\n"
+            "write_json(p/'state.json',{'phase':'ready'})"
+        )
+        child = subprocess.Popen([sys._base_executable, '-B', '-c', code, str(folder)],
+                                 creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        try:
+            deadline = time.monotonic()+5
+            while not (folder/'child-ready').exists() and time.monotonic()<deadline:
+                time.sleep(.01)
+            self.assertTrue((folder/'child-ready').exists())
+            restarted = RouteWorkspaces(self.root, self.workspace.python)
+            (folder/'allow-late-write').touch()
+            self.assertEqual(child.wait(timeout=5), 0)
+            self.assertTrue((folder/'cancel-observed').exists())
+            self.assertFalse((self.job/'CANCEL').exists())  # The completed source job is preserved.
+            self.assertEqual(restarted.status(self.job)['error'], 'route_service_restarted')
+            self.assertEqual(restarted.status(self.job)['phase'], 'failed')
+            self.assertEqual(restarted.prepare(self.job, dict(id=self.identity))['phase'], 'failed')
+            self.assertEqual((self.job/'input/manifest.json').read_bytes(), original_input)
+        finally:
+            if child.poll() is None:
+                child.kill()
+                child.wait(timeout=5)
+
+    def test_export_slot_remains_busy_until_monitor_finishes_terminal_child(self):
+        from types import SimpleNamespace
+
+        folder = self.job/'navigation'/self.identity
+        folder.mkdir(parents=True)
+        (self.job/'navigation/active.json').write_text(json.dumps(dict(id=self.identity)))
+        (folder/'state.json').write_text('{"phase":"ready"}')
+        process = SimpleNamespace(poll=lambda: 0)
+        self.workspace.processes[self.job.name] = process
+        self.assertTrue(self.workspace.preparing(self.job))
+        self.workspace._monitor(folder, process)
+        self.assertFalse(self.workspace.preparing(self.job))
+        self.assertNotIn(self.job.name, self.workspace.processes)
+
+    def test_cancel_at_export_exit_wins_over_child_ready(self):
+        from types import SimpleNamespace
+
+        folder = self.job/'navigation'/self.identity
+        folder.mkdir(parents=True)
+        (self.job/'navigation/active.json').write_text(json.dumps(dict(id=self.identity)))
+        (folder/'state.json').write_text('{"phase":"ready"}')
+        (self.job/'CANCEL').touch()
+        self.workspace._monitor(folder, SimpleNamespace(poll=lambda: 0))
+        self.assertEqual(self.workspace.status(self.job)['phase'], 'cancelled')
+        self.assertEqual(self.workspace.status(self.job)['error'], 'cancelled')
+
+    def test_thread_start_failure_stops_and_reaps_owned_exporter(self):
+        from types import SimpleNamespace
+
+        events = []
+        process = SimpleNamespace(poll=lambda: None,
+                                  stop=lambda timeout: events.append('stopped'),
+                                  close=lambda: events.append('closed'))
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'), \
+             patch('scripts.pilot.route_workspace.spawn_owned', return_value=process), \
+             patch('scripts.pilot.route_workspace.threading.Thread') as thread:
+            thread.return_value.start.side_effect = RuntimeError('thread unavailable')
+            with self.assertRaisesRegex(RuntimeError, 'thread unavailable'):
+                self.workspace.prepare(self.job, dict(id=self.identity))
+        self.assertEqual(events, ['stopped', 'closed'])
+        self.assertNotIn(self.job.name, self.workspace.processes)
+        self.assertEqual(self.workspace.status(self.job)['phase'], 'failed')
+        self.assertEqual(self.workspace.status(self.job)['error'], 'route_start_not_confirmed')
+
+    def test_pointer_write_failure_settles_new_intent_and_preserves_old_map(self):
+        from scripts.pilot import route_workspace as module
+
+        self.attach_fixture_map()
+        self.workspace.stop_live(self.job, dict(id='d'*32))
+        link = self.job/'navigation/active.json'
+        before = link.read_bytes()
+        write = module.write_json
+        def blocked_pointer(path, value):
+            if path == link:
+                raise PermissionError('owned pointer temporarily unavailable')
+            write(path, value)
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'), \
+             patch('scripts.pilot.route_workspace.write_json', side_effect=blocked_pointer), \
+             patch('scripts.pilot.route_workspace.spawn_owned') as launch:
+            with self.assertRaises(PermissionError):
+                self.workspace.prepare(self.job, dict(id='f'*32))
+        launch.assert_not_called()
+        self.assertEqual(link.read_bytes(), before)
+        self.assertEqual(self.workspace.status(self.job)['phase'], 'ready')
+        self.assertNotIn(self.job.name, self.workspace.processes)
+        with patch('scripts.pilot.route_workspace.spawn_owned') as launch:
+            result = self.workspace.prepare(self.job, dict(id='f'*32))
+        self.assertEqual(result['phase'], 'failed')
+        launch.assert_not_called()  # A lost reply reads the failed intent; no retry.
+
+    def test_terminal_export_attempt_is_unchanged_on_restart(self):
+        folder = self.job/'navigation'/self.identity
+        folder.mkdir(parents=True)
+        (folder/'state.json').write_text('{"phase":"rejected","error":"original"}')
+        (folder/'CANCEL').write_bytes(b'original')
+        before = {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in folder.iterdir()}
+        RouteWorkspaces(self.root, self.workspace.python)
+        self.assertEqual(before, {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in folder.iterdir()})
+
     def test_stop_before_start_retires_the_intent_so_late_start_cannot_resurrect_it(self):
         self.assertEqual(self.workspace.stop_live(self.job,dict(id=self.identity))['phase'],'closed')
         with self.assertRaisesRegex(ValueError,'retired'):

@@ -22,6 +22,7 @@ from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
 from scripts.pilot.resource_guard import collect, evaluate
+from scripts.pilot.route_owned_process import spawn_owned
 
 ROOT = Path(__file__).resolve().parents[2]
 ID = re.compile(r'^[0-9a-f]{32}$')
@@ -113,9 +114,13 @@ class RouteWorkspaces:
         self.folder, self.python, self.clock = folder, python, clock
         self.live = None
         self.retired = {}
+        self.processes = {}
         for state in folder.glob('*/navigation/*/state.json'):
             if checked_json(state)['phase'] not in TERMINAL:
-                write_json(state, dict(phase='failed', error='route_service_restarted'))
+                (state.parent/'CANCEL').touch(exist_ok=True)
+                interrupted = dict(phase='failed', error='route_service_restarted')
+                write_json(state.parent/'service-interrupted.json', interrupted)
+                write_json(state, interrupted)
 
     def current(self, job):
         if job.is_symlink() or not job.resolve().is_relative_to(self.folder.resolve()) or (job/'navigation').is_symlink():
@@ -136,7 +141,7 @@ class RouteWorkspaces:
         if folder is None:
             return dict(phase='not_prepared', executionQualified=False,
                         resourceProfile=route_resource_profile(job))
-        result = dict(checked_json(folder/'state.json'), id=folder.name, executionQualified=False,
+        result = dict(self._attempt_state(folder), id=folder.name, executionQualified=False,
                       resourceProfile=route_resource_profile(job))
         if result['phase'] == 'ready' and not (folder/'receipt.json').is_file():
             return dict(result, phase='rejected', error='route_receipt_missing')
@@ -162,7 +167,13 @@ class RouteWorkspaces:
         return result
 
     def preparing(self, job):
-        return self.status(job)['phase'] not in TERMINAL | {'not_prepared'}
+        return (job.name in self.processes
+                or self.status(job)['phase'] not in TERMINAL | {'not_prepared'})
+
+    @staticmethod
+    def _attempt_state(folder):
+        fence = folder/'service-interrupted.json'
+        return checked_json(fence if fence.is_file() else folder/'state.json')
 
     def prepare(self, job, body):
         self._expire()
@@ -173,7 +184,7 @@ class RouteWorkspaces:
         folder = job/'navigation'/identity
         if folder.exists():
             # Repeated intent reads its own outcome; never repeat a lost start.
-            return dict(checked_json(folder/'state.json'), id=identity, executionQualified=False)
+            return dict(self._attempt_state(folder), id=identity, executionQualified=False)
         current = self.status(job)
         if current.get('error') == 'route_map_has_unobserved_sections':
             summary = current.get('summary', {})
@@ -189,36 +200,77 @@ class RouteWorkspaces:
         profile = route_resource_profile(job)
         resource_checkpoint(job, profile=profile)
         folder.mkdir(parents=True)
-        write_json(folder/'intent.json', dict(id=identity, scope='READ_ONLY_ROUTE_ASSETS', physicalActions=0,
-                                           resourceProfile=profile))
-        write_json(folder/'state.json', dict(phase='preparing'))
-        write_json(job/'navigation/active.json', dict(id=identity))
-        with (folder/'worker.private.log').open('xb') as log:
-            try:
-                process = subprocess.Popen([str(self.python), '-m', 'scripts.pilot.prepare_route_workspace',
+        process = None
+        self.processes[job.name] = None
+        try:
+            write_json(folder/'intent.json', dict(id=identity, scope='READ_ONLY_ROUTE_ASSETS', physicalActions=0,
+                                               resourceProfile=profile))
+            write_json(folder/'state.json', dict(phase='preparing'))
+            write_json(job/'navigation/active.json', dict(id=identity))
+            with (folder/'worker.private.log').open('xb') as log:
+                process = spawn_owned([str(self.python), '-m', 'scripts.pilot.prepare_route_workspace',
                     '--job', str(job), '--attempt', identity], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
                     creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-            except Exception:
-                write_json(folder/'state.json', dict(phase='failed', error='route_start_not_confirmed'))
-                raise
-        threading.Thread(target=self._monitor, args=(folder, process, profile), daemon=True).start()
+            if hasattr(process, 'ownership'):
+                write_json(folder/'worker-ownership.json', process.ownership)
+            self.processes[job.name] = process
+            threading.Thread(target=self._monitor, args=(folder, process, profile), daemon=True).start()
+        except Exception:
+            try:
+                if process is not None and process.poll() is None:
+                    self._stop_process(process)
+            finally:
+                if process is not None and hasattr(process, 'close'):
+                    process.close()
+                self.processes.pop(job.name, None)
+                write_json(folder/'state.json', dict(phase='cancelled' if (job/'CANCEL').exists() else 'failed',
+                                                    error='route_start_not_confirmed'))
+            raise
         return self.status(job)
 
     def _monitor(self, folder, process, profile=None):
+        try:
+            self._monitor_process(folder, process, profile)
+        except Exception:
+            try:
+                if process.poll() is None:
+                    self._stop_process(process)
+            finally:
+                write_json(folder/'state.json', dict(phase='cancelled' if (folder/'CANCEL').exists()
+                                                    or (folder.parent.parent/'CANCEL').exists() else 'failed',
+                                                    error='route_monitor_failed'))
+        finally:
+            if hasattr(process, 'close'):
+                process.close()
+            self.processes.pop(folder.parent.parent.name, None)
+
+    @staticmethod
+    def _stop_process(process):
+        if hasattr(process, 'stop'):
+            process.stop(timeout=10)
+        else:
+            process.kill()
+            process.wait(10)
+
+    def _monitor_process(self, folder, process, profile=None):
         deadline = time.monotonic()+330
         while process.poll() is None:
             time.sleep(3)
             try:
+                if (folder.parent.parent/'CANCEL').exists():
+                    raise RuntimeError('cancelled')
                 resource_checkpoint(folder, profile=profile)
                 if time.monotonic() > deadline:
                     raise RuntimeError('route_preparation_timeout')
                 if (folder/'worker.private.log').stat().st_size > 8*1024**2:
                     raise RuntimeError('route_log_quota')
             except RuntimeError as exc:
-                process.kill()  # This CPU exporter has no child executables.
-                process.wait(10)
-                write_json(folder/'state.json', dict(phase='failed', error=str(exc)))
+                self._stop_process(process)
+                write_json(folder/'state.json', dict(phase='cancelled' if str(exc) == 'cancelled' else 'failed', error=str(exc)))
                 return
+        if (folder/'CANCEL').exists() or (folder.parent.parent/'CANCEL').exists():
+            write_json(folder/'state.json', dict(phase='cancelled', error='cancelled'))
+            return
         if checked_json(folder/'state.json')['phase'] not in TERMINAL:
             write_json(folder/'state.json', dict(phase='failed', error='route_export_not_confirmed'))
 
