@@ -12,7 +12,7 @@ export function routeReadinessIssue(source:ReconstructionState|null,assets:Navig
   if(assets?.phase==='ready')return null;
   if(!assets)return 'Проверяем состояние обработки выбранной записи…';
   if(['pending_auto_prepare','preparing','features'].includes(assets.phase))return 'Запись обрабатывается автоматически. Карта ориентиров ещё строится.';
-  if(source?.phase==='failed'&&source.error==='resource_guard')return 'Подготовка остановлена из-за нехватки ресурсов. Исходная запись сохранена: откройте «Сцена» и повторите подготовку записи. Диагностическая схема не заменяет подготовленные ориентиры.';
+  if(source?.phase==='failed'&&source.error==='resource_guard')return 'Подготовка остановлена из-за нехватки ресурсов. Исходная запись сохранена: откройте «Библиотека» и повторите подготовку записи. Диагностическая схема не заменяет подготовленные ориентиры.';
   const quality=source?.quality,coverage=quality?` Восстановлено ${quality.registered} из ${quality.selected} ракурсов.`:'';
   if(assets.error==='route_camera_motion_requires_review'||cameraMotionRequiresReview(source?.camera_motion))return `Автоматическая подготовка остановлена: восстановленная траектория содержит подозрительные скачки.${coverage} Исходное видео сохранено; требуется восстановление геометрии, а не повторное нажатие подготовки.`;
   if(assets.error)return `Карта не готова: ${navigationErrorLabel(assets.error)}.${coverage} Исходное видео сохранено.`;
@@ -54,11 +54,11 @@ export function preparationError(error:unknown):string {
   if(error instanceof ReconstructionResponseError) {
     if(error.message==='resource_guard')return 'Не хватает ресурсов по профилю этой задачи: новая подготовка не началась. Предыдущий результат карты показан отдельно; исходная запись сохранена.';
     if(error.message==='route_camera_recovery_required')return 'Сохранённая модель пропустила часть записи. Повторный экспорт не восстановит камеры; откройте восстановление из исходного видео.';
-    if(preparationQuotaReached(error))return 'Исчерпан лимит попыток для этой сцены. Повторные запуски не исправят ошибку траектории; откройте «Сцена» для диагностики.';
-    if(error.message==='route_camera_motion_requires_review')return 'Траектория камер требует проверки. Откройте «Сцена»: карта для направления пока не подготовлена.';
-    if(error.message==='camera_intrinsics_degenerate')return 'Расчёт дал некорректные параметры камеры. Откройте «Сцена»; исходная запись сохранена.';
+    if(preparationQuotaReached(error))return 'Исчерпан лимит попыток для этой сцены. Повторные запуски не исправят ошибку траектории; откройте «Библиотека» для диагностики.';
+    if(error.message==='route_camera_motion_requires_review')return 'Траектория камер требует проверки. Откройте «Библиотека»: карта для направления пока не подготовлена.';
+    if(error.message==='camera_intrinsics_degenerate')return 'Расчёт дал некорректные параметры камеры. Откройте «Библиотека»; исходная запись сохранена.';
     if(error.message==='one_active_job_only'||error.message==='route_workspace_busy')return 'Другая обработка ещё выполняется. Дождитесь её завершения.';
-    if(error.message==='surface_completed_source_required'||error.message==='job_file_unavailable')return 'Камеры и исходная сцена ещё не прошли проверку. Откройте «Сцена» и проверьте причину.';
+    if(error.message==='surface_completed_source_required'||error.message==='job_file_unavailable')return 'Камеры и исходная сцена ещё не прошли проверку. Откройте «Библиотека» и проверьте причину.';
   }
   return 'Ответ не подтверждён. Проверьте состояние этого же задания; повторного запуска нет.';
 }
