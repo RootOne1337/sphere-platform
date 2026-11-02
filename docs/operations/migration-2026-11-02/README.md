@@ -214,3 +214,10 @@ login. Восстановление: обе базы/роли/volumes, стар�
 Полный состав данных, отдельные 85 Docker volumes и неохваченные другие проекты:
 [DATA-RECOVERY.md](DATA-RECOVERY.md). Браузерные данные:
 [BROWSER-LOCAL-DATA.md](BROWSER-LOCAL-DATA.md).
+
+При публикации GitHub сообщил о 166 dependency alerts в **default branch main**
+(8 critical, 71 high, 71 moderate, 16 low). Это не результат сканирования
+текущей рабочей ветки и не проверка эксплуатируемости; необходима отдельная
+актуализация: [Dependabot alerts](https://github.com/RootOne1337/sphere-platform/security/dependabot).
+На миграционном commit прошли GitHub documentation tests/advisory; advisory на
+этом большом PR ограничен trusted-base/changed-file scope и не заменяет полный CI.

@@ -214,9 +214,9 @@ try {
     Invoke-Compose @('config','--quiet')
     if ($BackendImage) {
         Write-Output 'Reusing the explicitly selected local images; source equivalence is not established by this option.'
-        & docker image tag $BackendImage "${project}-backend:fresh"
+        & docker image tag $BackendImage "${project}-backend:$($sourceRevision.Substring(0,12))"
         if ($LASTEXITCODE -ne 0) { throw 'Cannot tag selected backend image.' }
-        & docker image tag $FrontendImage "${project}-frontend:fresh"
+        & docker image tag $FrontendImage "${project}-frontend:$($sourceRevision.Substring(0,12))"
         if ($LASTEXITCODE -ne 0) { throw 'Cannot tag selected frontend image.' }
     } else {
         Write-Output 'Building new images; progress is in the private build logs.'
