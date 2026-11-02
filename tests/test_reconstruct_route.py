@@ -1,8 +1,51 @@
 """Mask placement precedes feature extraction and keeps original pixels intact."""
 import hashlib
 import json
+import sys
+from types import SimpleNamespace
 
 import pytest
+
+
+@pytest.mark.parametrize('route_only', [True, False])
+def test_isolated_decoder_is_available_to_hud_before_image_indexing_or_sfm(
+        tmp_path, monkeypatch, route_only):
+    """The GPU venv need not install av: setup owns it in the native tools path."""
+    from scripts.pilot import image_route_workspace, reconstruct_route, route_hud_profile
+
+    tools = tmp_path/'tools'
+    isolated = tools/'pycolmap-4.2.1'
+    isolated.mkdir(parents=True)
+    decoder = isolated/'av.py'
+    decoder.write_text("ISOLATED_DECODER_FIXTURE = True\n", encoding='utf-8')
+    calls = []
+    monkeypatch.setattr(sys, 'path', list(sys.path))
+    monkeypatch.delitem(sys.modules, 'av', raising=False)
+    monkeypatch.setattr(reconstruct_route, 'TOOLS', tools)
+    monkeypatch.setattr(reconstruct_route, 'checkpoint', lambda _: None)
+    monkeypatch.setattr(reconstruct_route, 'state', lambda *a, **k: None)
+    monkeypatch.setattr(reconstruct_route, 'validate_browser', lambda _: SimpleNamespace(
+        frames=[{'relative_ticks_90k': 10*90000}]))
+    monkeypatch.setattr(route_hud_profile, '_eligible', lambda _: True)
+
+    def hud(_job, *, checkpoint):
+        import av
+        assert av.ISOLATED_DECODER_FIXTURE
+        assert av.__file__ == str(decoder)
+        checkpoint()
+        calls.append('hud_decoder')
+
+    monkeypatch.setattr(route_hud_profile, 'prepare_speed_reference', hud)
+    monkeypatch.setattr(image_route_workspace, 'run_optional', lambda *a, **k: calls.append('image_index'))
+    monkeypatch.setattr(reconstruct_route, '_reconstruct', lambda *a, **k: calls.append('sfm'))
+    try:
+        reconstruct_route._reconstruct_with_telemetry(tmp_path, 'game', 30000, route_only=route_only)
+        assert calls == ['hud_decoder', 'image_index', 'sfm']
+        reconstruct_route.initialize_reconstruction_tools()
+        assert sys.path.count(str(isolated)) == 1
+    finally:
+        # A private Python-only fixture must not outlive its temporary folder.
+        sys.modules.pop('av', None)
 
 
 def test_sparse_only_seals_before_finishing_without_starting_dense(tmp_path, monkeypatch):

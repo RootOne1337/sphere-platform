@@ -41,6 +41,20 @@ _TASK_RESOURCES = None
 _TASK_RESOURCE_JOB = None
 
 
+def initialize_reconstruction_tools():
+    """Make the already installed offline decoder/native tools importable.
+
+    setup_reconstruction installs PyAV alongside pinned pycolmap, outside the
+    GPU interpreter's site-packages. HUD and image indexing decode source video
+    before SfM, so they need this path before their first decoder import too.
+    This only initializes this worker's module search path; no package install
+    or native/GPU module load is performed here.
+    """
+    directory = str(TOOLS / 'pycolmap-4.2.1')
+    if directory not in sys.path:
+        sys.path.insert(0, directory)
+
+
 def digest(path):
     with path.open('rb') as file:
         return hashlib.file_digest(file, 'sha256').hexdigest()
@@ -225,6 +239,7 @@ def reconstruct(job, mask, steps, *, route_only=False):
 
 def _reconstruct_with_telemetry(job, mask, steps, *, route_only=False):
     """Own the optional telemetry child through completion/cancellation."""
+    initialize_reconstruction_tools()
     from scripts.pilot.route_hud_workspace import start as start_hud
     checkpoint(job)
     capture=validate_browser(job/'input')
@@ -301,7 +316,7 @@ def _prepare_vehicle_speed_reference(job, capture):
 
 def _reconstruct(job, mask, steps, *, route_only=False):
     checkpoint(job)
-    sys.path.insert(0, str(TOOLS / 'pycolmap-4.2.1'))
+    initialize_reconstruction_tools()
     state(job, 'verifying')
     capture = validate_browser(job / 'input')
     vehicle=(capture.manifest.get('config',{}).get('profile') or {}).get('mode')=='vehicle_buttons'
@@ -841,7 +856,7 @@ def retry_dense(job, attempt):
         path = prepared / image['image']
         if not path.resolve().is_relative_to(prepared.resolve()) or digest(path) != image['png_sha256']:
             raise RuntimeError('dense_retry_image_changed')
-    sys.path.insert(0, str(TOOLS / 'pycolmap-4.2.1'))
+    initialize_reconstruction_tools()
     import numpy as np
     import pycolmap as p
 
