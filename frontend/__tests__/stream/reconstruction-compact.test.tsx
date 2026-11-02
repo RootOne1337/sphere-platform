@@ -43,7 +43,7 @@ test('compact mode has one workflow card and keeps Gaussian controls collapsed w
 test('a failed job is not automatically retried; the explicit retry remains under saved attempts',async()=>{
   status={phase:'failed',source_manifest_sha256:manifest,error:'resource_guard'};
   render(<TeachingReconstruction {...props}/>);
-  await screen.findByText('Недостаточно ресурсов для безопасного продолжения. Исходное видео сохранено.');
+  await screen.findByText('У этой попытки сохранён прежний ресурсный отказ. Это не замер памяти сейчас. Исходное видео сохранено.');
   expect(screen.queryByRole('button',{name:'Повторить подготовку записи'})).not.toBeInTheDocument();
   expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
   fireEvent.click(screen.getByRole('button',{name:'Попытки и повторная обработка'}));
@@ -100,6 +100,8 @@ test('a failed new attempt visibly offers the previous source-bound result witho
   fireEvent.click(within(card).getByRole('button',{name:'Открыть сохранённый результат · 6a770406'}));
   await waitFor(()=>expect(saveReconstructionLink).toHaveBeenCalledWith(folder,clip,previous));
   await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(previous));
+  await screen.findByText('У этой попытки сохранён прежний ресурсный отказ. Это не замер памяти сейчас. Исходное видео сохранено.');
+  expect(screen.queryByText(/Недостаточно ресурсов для безопасного продолжения/)).not.toBeInTheDocument();
   expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
 });
 test('the chosen geometry is portaled into the single viewer even when primary geometry is unavailable',async()=>{
