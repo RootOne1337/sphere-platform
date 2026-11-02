@@ -5,6 +5,7 @@ import argparse
 import copy
 import hashlib
 import json
+import math
 import re
 import subprocess
 import sys
@@ -24,6 +25,72 @@ ROOT = Path(__file__).resolve().parents[2]
 PRIVATE = ROOT / ".local-pilot"
 PROJECT = "sphere-review-20261002"
 UI = f"{PROJECT}-review-ui-1"
+GIB = 1024**3
+
+
+def resource_profile(bounded: bool) -> dict[str, Any]:
+    """Admission budgets, not per-importer Docker memory enforcement."""
+    profile = {"kind": "bounded_ui_install_v1" if bounded else "default_install_v1",
+               "minRamGiB": 4, "minDiskGiB": 20, "maxCommitPercent": 90 if bounded else 85,
+               "daemonImporterHardBound": False}
+    if bounded:
+        profile.update(minAbsoluteCommitGiB=4, healthyVolumeRequired=True)
+    else:
+        profile["usesUnmodifiedPlatformResourceGuard"] = True
+    return profile
+
+
+def resource_findings(host: dict[str, Any], bounded: bool) -> list[str]:
+    if not bounded:
+        return evaluate(host)
+    findings = evaluate(host, min_ram_gib=4, min_disk_gib=20, max_commit_percent=90)
+    if host.get("system") != "Windows":
+        findings.append("bounded_ui_windows_counters_required")
+    used, limit = host.get("committedBytes"), host.get("commitLimitBytes")
+    if type(used) is not int or type(limit) is not int or not 0 <= used <= limit or limit <= 0:
+        if "commit_measurement_unavailable" not in findings:
+            findings.append("commit_measurement_unavailable")
+    elif limit - used < 4 * GIB and "commit_headroom_low" not in findings:
+        findings.append("commit_headroom_low")
+    return findings
+
+
+def bounded_ui_caps(current: dict[str, Any], baseline: dict[str, Any], candidate: dict[str, Any]) -> dict[str, int]:
+    """Require existing effective caps and the same fully resolved UI service."""
+    require(isinstance(current.get("Config"), dict) and isinstance(current.get("HostConfig"), dict),
+            "Bounded UI effective resource caps missing or exceeded")
+    labels = current["Config"].get("Labels", {})
+    require(isinstance(labels, dict), "Wrong bounded UI owner")
+    require(labels.get("com.docker.compose.project") == PROJECT
+            and labels.get("com.docker.compose.service") == "review-ui", "Wrong bounded UI owner")
+    host = current.get("HostConfig", {})
+    memory, swap, cpu = (host.get(key) for key in ("Memory", "MemorySwap", "NanoCpus"))
+    require(type(memory) is int and 0 < memory <= GIB
+            and type(swap) is int and memory <= swap <= 2 * GIB
+            and type(cpu) is int and 0 < cpu <= 10**9, "Bounded UI effective resource caps missing or exceeded")
+    old, new = baseline["services"]["review-ui"], candidate["services"]["review-ui"]
+    expected = copy.deepcopy(new)
+    expected["image"] = old["image"]
+    if "build" in old:
+        expected["build"] = old["build"]
+    require(expected == old, "Bounded UI candidate configuration changed")
+
+    def byte_count(value: Any) -> int:
+        require(type(value) is int or type(value) is str and value.isdigit(), "Unresolved UI memory cap")
+        return int(value)
+
+    resolved_memory = byte_count(old.get("mem_limit"))
+    declared_swap = old.get("memswap_limit")
+    resolved_swap = byte_count(declared_swap) if declared_swap is not None else 2 * resolved_memory
+    if resolved_swap == 0:  # Docker treats an explicit zero as unset.
+        resolved_swap = 2 * resolved_memory
+    cpus = old.get("cpus")
+    require(type(cpus) in (int, float, str), "Unresolved UI CPU cap")
+    cpus = float(cpus)
+    require(math.isfinite(cpus) and 0 < cpus <= 1
+            and cpu == round(cpus * 10**9) and memory == resolved_memory and swap == resolved_swap,
+            "Bounded UI effective and resolved resource caps differ")
+    return {"memoryBytes": memory, "memorySwapBytes": swap, "nanoCpus": cpu}
 
 
 def command(args: list[str], *, timeout: int = 30) -> str:
@@ -193,8 +260,11 @@ def admit_candidate(artifact: Path, source: str, local_execution: bool) -> dict[
 
 def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
             *, allow_degraded_volume: bool = False, local_execution: bool = False,
-            defer_cache_retention: bool = False) -> dict[str, Any]:
+            defer_cache_retention: bool = False, bounded_ui_resources: bool = False) -> dict[str, Any]:
     require(type(defer_cache_retention) is bool, "Cache retention deferral must be an explicit boolean")
+    require(type(bounded_ui_resources) is bool, "Bounded UI resources must be an explicit boolean")
+    require(not bounded_ui_resources or not allow_degraded_volume,
+            "Bounded UI resources require a healthy volume; degraded-volume exception is incompatible")
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image digest")
     artifact = private_path(artifact)
     admitted = admit_candidate(artifact, source, local_execution)
@@ -202,7 +272,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
     if not local_execution:
         check_ci(bounded_json(artifact / "receipt.json", 256 * 1024))
     host = collect(ROOT)
-    findings = evaluate(host)
+    findings = resource_findings(host, bounded_ui_resources)
     admission_findings = admitted_findings(findings, allow_degraded_volume=allow_degraded_volume)
     before = snapshot()
     current = inspect(UI)
@@ -235,6 +305,9 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
     candidate_cmd = frozen_cmd + ["--file", str(override)]
     candidate = json.loads(command(candidate_cmd + ["config", "--format", "json"]))
     validate_delta(old, candidate, admitted["imageTag"])
+    caps = bounded_ui_caps(current, old, candidate) if bounded_ui_resources else None
+    profile = resource_profile(bounded_ui_resources)
+    resource_checks = [{"stage": "planning", "snapshot": host, "findings": findings, "uiCaps": caps}]
     ota_hash = catalog_hash()
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
             "archiveBytes": admitted["archiveBytes"], "previousUi": before[UI], "containerCount": len(before),
@@ -246,13 +319,28 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
             "completeBaselineRoundtripVerified": True,
             "otaCatalogSha256": ota_hash, "reportDirectory": str(output), "runtimeInstalled": False,
             "admissionMode": "maintainer-local-executor" if local_execution else "hosted-actions",
-            "cacheRetentionDeferred": defer_cache_retention}
+            "cacheRetentionDeferred": defer_cache_retention,
+            "resourceProfile": profile, "resourceChecks": resource_checks}
     write(output / "plan.json", plan)
     if not apply:
         return plan
     require(not admission_findings, "Host not admitted; no image loaded or runtime stopped")
-    require(not admitted_findings(evaluate(collect(ROOT)), allow_degraded_volume=allow_degraded_volume),
-            "Host changed before image load")
+    def fresh_resources(stage: str) -> list[str]:
+        fresh = collect(ROOT)
+        checked = resource_findings(fresh, bounded_ui_resources)
+        fresh_caps = None
+        if bounded_ui_resources:
+            live_ui = inspect(UI)
+            require(live_ui["Id"] == before[UI]["id"], "UI changed during bounded resource check")
+            fresh_caps = bounded_ui_caps(live_ui, old, candidate)
+            require(fresh_caps == caps, "Bounded UI resource caps changed during installation")
+        evidence = {"stage": stage, "snapshot": fresh, "findings": checked, "uiCaps": fresh_caps,
+                    "resourceProfile": profile}
+        resource_checks.append(evidence)
+        write(output / f"resource-{stage}.json", evidence)
+        return admitted_findings(checked, allow_degraded_volume=allow_degraded_volume)
+
+    require(not fresh_resources("before-load"), "Host changed before image load")
     preserved(before, snapshot())
     if not local_execution:
         command(["docker", "image", "load", "--input", str(artifact / "image.tar.gz")], timeout=180)
@@ -262,8 +350,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
         runtime_id = admitted["imageId"]
     else:
         runtime_id = loaded_image_id(artifact, image, admitted["imageId"])
-    require(not admitted_findings(evaluate(collect(ROOT)), allow_degraded_volume=allow_degraded_volume),
-            "Host changed before UI replacement")
+    require(not fresh_resources("before-swap"), "Host changed before UI replacement")
     preserved(before, snapshot())
     require(inspect(UI)["Id"] == before[UI]["id"], "UI changed before replacement")
     write(output / "intent.json", {"sourceRevision": source, "beforeUi": before[UI], "imageId": image["Id"]})
@@ -317,11 +404,14 @@ def main() -> int:
                         help="Explicit operator exception for the measured volume warning only")
     parser.add_argument("--defer-cache-retention", action="store_true",
                         help="Preserve historical caches/images by deferring post-install retention only")
+    parser.add_argument("--bounded-ui-resources", action="store_true",
+                        help="Opt in to the Windows UI-only admission budget; not a Docker importer hard limit")
     args = parser.parse_args()
     try:
         print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.apply,
                                  allow_degraded_volume=args.allow_degraded_volume, local_execution=args.local_execution,
-                                 defer_cache_retention=args.defer_cache_retention)))
+                                 defer_cache_retention=args.defer_cache_retention,
+                                 bounded_ui_resources=args.bounded_ui_resources)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2
