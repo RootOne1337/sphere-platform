@@ -77,7 +77,7 @@ export default function ReconstructedScene({job,status,sourceManifestSha=null,se
       let controls:InstanceType<typeof OrbitControls>;
       try{controls=new OrbitControls(camera,renderer.domElement);}catch(e){renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();throw e;}
       controls.enableDamping=true;controls.screenSpacePanning=true;
-      const objects: {dispose:()=>void}[]=[];const points=geometry.points;let observer:ResizeObserver|undefined;
+      const objects: {dispose:()=>void}[]=[];const points=geometry.points;const observer=new ResizeObserver(()=>resize());
       dispose=()=>{pointObject.current=null;lineObject.current=null;reset.current=()=>{};wholeRoute.current=()=>{};recordedView.current=()=>{};styleRef.current=()=>{};observer?.disconnect();renderer.setAnimationLoop(null);controls.dispose();for(const object of objects)object.dispose();renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();};
       if(points.length){
         const buffer=new THREE.BufferGeometry();buffer.setAttribute('position',new THREE.Float32BufferAttribute(points.flatMap(p=>p.slice(0,3)),3));
@@ -115,7 +115,7 @@ export default function ReconstructedScene({job,status,sourceManifestSha=null,se
       const initial=ticksRef.current!==null&&validTicks.has(ticksRef.current)?nearestRouteCamera(geometry.cameras,ticksRef.current)??0:0;
       setRecordedIndex(initial);fromRecording(initial);
       const resize=()=>{const k=geometry.cameras[0]?.intrinsics,aspect=k?k.width/k.height:16/9;const width=Math.min(element.clientWidth,element.clientHeight*aspect),height=width/aspect;renderer.setSize(width,height);camera.aspect=aspect;project();};
-      observer=new ResizeObserver(resize);observer.observe(element);resize();
+      observer.observe(element);resize();
       renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
       setDetails(`${geometry.cameras.length} камер · ${points.length.toLocaleString('ru')} опорных точек · путь камеры ${geometry.camera_path_units.toFixed(2)} усл. ед.`);
       if(representation==='surface'&&latestStatus.current.surface?.available){
