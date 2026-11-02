@@ -1,0 +1,28 @@
+{
+  "schema": "sphere-route-reactivity-public-evidence-v1",
+  "textHashConvention": "UTF-8 LF text; PNG raw bytes; embedded private source hashes retain original producer bytes",
+  "physicalActions": 0,
+  "executionQualified": false,
+  "files": [
+    {
+      "name": "historical-reactivity-summary.json",
+      "bytes": 8924,
+      "sha256": "2b2c2aa0fe1876d3836a73544bd9fde2fa2c49084351b22c7bb8f3f7a31291eb"
+    },
+    {
+      "name": "paired-compute-summary.json",
+      "bytes": 2618,
+      "sha256": "edf82e72f3cfee093adfb5f229dd4daa1874a2d21cf7a116f3abd7e0ecf84749"
+    },
+    {
+      "name": "paired-latency.png",
+      "bytes": 127513,
+      "sha256": "c089222236447f11728f8d2e2a91cf40cd36b85fd2a4825016dde053369d5653"
+    },
+    {
+      "name": "preparation-monitor-verification.json",
+      "bytes": 1988,
+      "sha256": "479bfe7f6320ce2511cc97067aad928e32228d45ec86eec5e243d317d46c317e"
+    }
+  ]
+}
