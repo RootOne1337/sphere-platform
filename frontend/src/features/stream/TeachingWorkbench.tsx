@@ -20,6 +20,8 @@ import type {RouteSource} from './routeSource';
 import {applyWalkingStick,WalkStickSlew,walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget,type WalkInputLease} from './walkPilot';
 import {defaultWalkingProfile,blackRussiaScooterProfile,loadTeachingProfile,saveTeachingProfile,teachingProfileKey} from './teachingProfileStorage';
 import {VehicleContacts,vehicleCalibrationIssue,vehicleCameraIssue,vehicleSteeringTarget,type VehicleInputLease} from './vehiclePilot';
+import {TeachingProcessingQueue} from './TeachingProcessingQueue';
+import type {TeachingQueueSnapshot} from './teachingQueue';
 
 type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'piloting' | 'arming' | 'recording' | 'stopping' | 'finished';
 const newId = () => crypto.randomUUID().replaceAll('-', '');
@@ -64,6 +66,11 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [clipChoices,setClipChoices]=useState<TeachingClipChoice[]>([]);
   const [routeSource,setRouteSource]=useState<RouteSource|null>(null);
   const [prepareAfterRecording,setPrepareAfterRecording]=useState(true),[autoPrepare,setAutoPrepare]=useState<{clip:string;scope:string}|null>(null);
+  const [processingQueue,setProcessingQueue]=useState<TeachingQueueSnapshot|null>(null);
+  const queueChanged=useCallback((snapshot:TeachingQueueSnapshot)=>{
+    setProcessingQueue(snapshot);
+    setAutoPrepare(current=>current&&current.scope===snapshot.scope&&snapshot.items.some(item=>item.clip===current.clip&&item.jobId&&['waiting','uploading','processing','ready','failed','cancelled','stopped'].includes(item.phase))?null:current);
+  },[]);
   const consumedAutoPrepare=useCallback(()=>setAutoPrepare(null),[]);
   const routeChanged=useCallback((job:ReconstructionJob|null,sourceClip:string|null,scope:string|null)=>setNavigationBinding(job&&sourceClip&&scope?{job,clip:sourceClip,scope}:null),[]);
   const clipsChanged=useCallback((items:TeachingClipChoice[])=>setClipChoices(items),[]);
@@ -452,7 +459,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   },[phase,autoPrepare,clip,storageScope]);
   const workflow=[
     {mode:'capture' as const,label:'1 · Запись',detail:'Покажите путь в игре',status:phase==='recording'?'Идёт запись':chosenClip?`Выбрано: ${chosenClip.title}`:'Ожидает запись'},
-    {mode:'review' as const,label:'2 · Сцена',detail:'Проверьте запись и ориентиры',status:navigationJob?'Связана с записью':'Выберите проход'},
+    {mode:'review' as const,label:'2 · Библиотека',detail:'Записи, обработка и карты проходов',status:navigationJob?'Связана с записью':'Выберите проход'},
     {mode:'live' as const,label:'3 · Направление',detail:'Сверьте путь с живым кадром',status:'Наблюдение / ходьба / транспорт'},
   ];
   return <div ref={host} className="space-y-4" aria-label="Запись учебного маршрута">
@@ -539,13 +546,14 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         <p className="text-xs leading-5 text-muted-foreground">Кнопки калибруйте до отключения HUD. Флажок сохраняет пометку в материале; он не скрывает интерфейс игры и не вырезает надписи из видео.</p>
         <p className="text-xs leading-5 text-muted-foreground">Перед качественным проходом: 1920 × 1080, рендер игры100%, стабильная камера. Сохраните одинаковые FOV и режим камеры для записи и повторения; DPI сам по себе не улучшает3D. Сначала подтвердите реальные30 FPS по записи.</p>
         <label className="block space-y-1 text-sm"><span>Предел записи</span><select className={field} value={minutes} disabled={active(phase)} onChange={e=>setMinutes(Number(e.target.value))}><option value={2}>2 минуты · до 512 МБ</option><option value={5}>5 минут · до 2 ГБ</option><option value={10}>10 минут · до 2 ГБ</option></select></label>
-        <p className="text-xs leading-5 text-muted-foreground">При достижении предела запись сохраняется с освобождением ввода. До 20 материалов в этом браузере. Экспортируйте нужные записи перед очисткой данных браузера.</p>
+        <p className="text-xs leading-5 text-muted-foreground">При достижении предела запись сохраняется с освобождением ввода. До 100 материалов в этом браузере. Экспортируйте нужные записи перед очисткой данных браузера.</p>
       </aside>
     </div>
     {workspaceMode==='capture'&&<TeachingScenePreview video={video} deviceId={deviceId} ready={ready} controlActive={active(phase)} />}
     </div>
     </div>
-    <fieldset hidden={workspaceMode!=='review'} disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} onRouteChange={routeChanged} onClipsChange={clipsChanged} onSourceChange={setRouteSource} visible={workspaceMode==='review'} autoPrepare={autoPrepare?.clip===clip&&autoPrepare.scope===storageScope&&!active(phase)} onAutoPrepareConsumed={consumedAutoPrepare}/></fieldset>
+    <TeachingProcessingQueue scope={storageScope} refresh={refresh} paused={readOnly||active(phase)||phase==='connecting'} onSnapshot={queueChanged}/>
+    <fieldset hidden={workspaceMode!=='review'} disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} onRouteChange={routeChanged} onClipsChange={clipsChanged} onSourceChange={setRouteSource} visible={workspaceMode==='review'} autoPrepare={autoPrepare?.clip===clip&&autoPrepare.scope===storageScope&&!active(phase)} onAutoPrepareConsumed={consumedAutoPrepare} manageAutomaticPreparation={false} processingQueue={processingQueue?.scope===storageScope?processingQueue:null}/></fieldset>
     <p className="flex items-center gap-2 text-xs text-muted-foreground"><Download size={14} />Материал содержит только явно записанный проход. Он ещё не доказывает повторение маршрута ИИ.</p>
   </div>;
 }

@@ -12,7 +12,7 @@ export function validReconstructionJob(value:unknown):value is ReconstructionJob
   const job=value as ReconstructionJob;
   const c=job.creation;
   return typeof job.id==='string'&&idPattern.test(job.id)&&typeof job.key==='string'&&/^[0-9a-f]{64}$/.test(job.key)
-    &&(c===undefined||!!c&&typeof c==='object'&&(c.mask==='avatar'||c.mask==='game')&&Number.isInteger(c.steps)&&c.steps>=1&&c.steps<=1000000&&c.prepare_route===true&&c.route_only===true);
+    &&(c===undefined||!!c&&typeof c==='object'&&['none','avatar','game'].includes(c.mask)&&Number.isInteger(c.steps)&&c.steps>=1&&c.steps<=1000000&&c.prepare_route===true&&c.route_only===true);
 }
 
 async function readLink(folder:FileSystemDirectoryHandle,clip:string,fileName:string):Promise<ReconstructionJob|null> {
@@ -99,14 +99,15 @@ export async function saveReconstructionLink(folder:FileSystemDirectoryHandle,cl
 }
 
 /** Atomically bind one automatic intent to a recording; never replace an old attempt. */
-export async function ensureAutomaticReconstructionLink(folder:FileSystemDirectoryHandle,clip:string,mask:'avatar'|'game'):Promise<ReconstructionJob|null> {
+export async function ensureAutomaticReconstructionLink(folder:FileSystemDirectoryHandle,clip:string,mask:'none'|'avatar'|'game',candidate?:ReconstructionJob):Promise<ReconstructionJob|null> {
   if(!idPattern.test(clip))throw Error('reconstruction_link_binding');
+  if(candidate&&(!validReconstructionJob(candidate)||!candidate.creation||candidate.creation.mask!==mask))throw Error('reconstruction_link_binding');
   if(typeof navigator==='undefined'||!navigator.locks)throw Error('reconstruction_lock_unavailable');
   return navigator.locks.request(`sphere-reconstruction-${clip}`,async()=>{
     const current=await readReconstructionLink(folder,clip),known=await listReconstructionLinks(folder,clip);
     if(current)return current;
     if(known.length)return known.length===1&&known[0].creation?known[0]:null;
-    const job:ReconstructionJob={id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join(''),creation:{mask,steps:30000,prepare_route:true,route_only:true}};
+    const job:ReconstructionJob=candidate??{id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join(''),creation:{mask,steps:30000,prepare_route:true,route_only:true}};
     await archiveLink(folder,clip,job);await writeLink(folder,clip,job,name);
     return job;
   });

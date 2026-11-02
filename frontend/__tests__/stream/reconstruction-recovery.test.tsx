@@ -1,6 +1,6 @@
 import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {TeachingReconstruction} from '@/src/features/stream/TeachingReconstruction';
-import {reconstructionRequest,ReconstructionResponseError,uploadReconstruction} from '@/src/features/stream/reconstructionClient';
+import {reconstructionRequest,ReconstructionResponseError,uploadReconstruction,type ReconstructionJob} from '@/src/features/stream/reconstructionClient';
 import {automaticReconstructionStopped,ensureAutomaticReconstructionLink,listReconstructionLinks,readReconstructionLink,saveReconstructionLink,stopAutomaticReconstruction} from '@/src/features/stream/reconstructionLink';
 jest.mock('next/dynamic',()=>()=>function Placeholder(){return null;});
 jest.mock('@/src/features/stream/reconstructionLink',()=>({readReconstructionLink:jest.fn(async()=>null),listReconstructionLinks:jest.fn(async()=>[]),saveReconstructionLink:jest.fn(async()=>{}),ensureAutomaticReconstructionLink:jest.fn(),automaticReconstructionStopped:jest.fn(async()=>false),stopAutomaticReconstruction:jest.fn(async()=>{}),validReconstructionJob:(value:unknown)=>!!value}));
@@ -19,6 +19,7 @@ test('a recording marked HUD-free retains the avatar mask and 30000 iterations',
 });
 test('one-button route preparation creates a sparse-only automatic pipeline',async()=>{
   Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'});
+  jest.mocked(ensureAutomaticReconstructionLink).mockImplementation(async(_source,_clip,_mask,candidate)=>candidate!);
   (reconstructionRequest as jest.Mock).mockResolvedValue({json:async()=>({phase:'failed'})});
   const folder={} as FileSystemDirectoryHandle;
   const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>folder} complete onBusyChange={()=>{}}/>);
@@ -27,6 +28,7 @@ test('one-button route preparation creates a sparse-only automatic pipeline',asy
   await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalled());
   const request=(reconstructionRequest as jest.Mock).mock.calls.find(([path])=>path==='/jobs');
   expect(JSON.parse(String(request[2].body))).toMatchObject({prepare_route:true,route_only:true});
+  expect(jest.mocked(saveReconstructionLink).mock.calls[0][2].creation).toMatchObject({prepare_route:true,route_only:true});
   view.unmount();
 });
 
@@ -337,4 +339,74 @@ test('scene retains confirmed route preparation refusal after a status poll',asy
   expect(button).toBeDisabled();
   expect((reconstructionRequest as jest.Mock).mock.calls.filter(([, , init])=>init?.method==='POST')).toHaveLength(1);
   view.unmount();
+});
+test('a new manual sparse intent preserves the selected none mask durably before HTTP',async()=>{
+  const events:string[]=[];
+  jest.mocked(ensureAutomaticReconstructionLink).mockImplementation(async(_folder,_clip,_mask,candidate)=>{events.push('intent');return candidate!;});
+  jest.mocked(saveReconstructionLink).mockImplementation(async(_folder,_clip,next)=>{expect(next.creation).toEqual({mask:'none',steps:30000,prepare_route:true,route_only:true});events.push('durable');});
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{if(path==='/jobs')events.push('create');return {json:async()=>({phase:'failed'})} as Response;});
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Подготовить ориентиры'})).toBeEnabled());
+  fireEvent.change(screen.getByRole('combobox',{name:'Маска записи'}),{target:{value:'none'}});
+  fireEvent.click(screen.getByRole('button',{name:'Подготовить ориентиры'}));
+  await waitFor(()=>expect(events).toEqual(['intent','durable','create']));view.unmount();
+  jest.mocked(saveReconstructionLink).mockResolvedValue();
+});
+test('transient auto intent persistence retries the same id and consumes only after durable confirmation',async()=>{
+  const candidates:ReconstructionJob[]=[];let committed=false;
+  jest.mocked(ensureAutomaticReconstructionLink).mockImplementation(async(_folder,_clip,_mask,candidate)=>{
+    candidates.push(candidate!);if(candidates.length===1)throw Error('close_unconfirmed');committed=true;return candidate!;
+  });
+  jest.mocked(reconstructionRequest).mockImplementation(async()=>{expect(committed).toBe(true);return {json:async()=>({phase:'failed'})} as Response;});
+  const consumed=jest.fn(()=>expect(committed).toBe(true));
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete autoPrepare onAutoPrepareConsumed={consumed} onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(candidates).toHaveLength(1));expect(consumed).not.toHaveBeenCalled();
+  await waitFor(()=>expect(consumed).toHaveBeenCalledTimes(1),{timeout:2500});
+  expect(candidates[1]).toBe(candidates[0]);view.unmount();
+});
+test('queue-owned selected views are read-only and long processing does not lock browsing',async()=>{
+  const saved={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  jest.mocked(readReconstructionLink).mockResolvedValue(saved);jest.mocked(listReconstructionLinks).mockResolvedValue([saved]);
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'matching'})} as Response);
+  const busy=jest.fn(),view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete autoPrepare manageAutomaticPreparation={false} onBusyChange={busy}/>);
+  await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalled());
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
+  expect(ensureAutomaticReconstructionLink).not.toHaveBeenCalled();expect(busy).toHaveBeenLastCalledWith(false);view.unmount();
+});
+test('a background durable intent is read back by id without remounting or starting the selected scene',async()=>{
+  const saved={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}},route=jest.fn();
+  jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);
+  const props={clip:'c'.repeat(32),scope:'d'.repeat(32),folder:()=>({} as FileSystemDirectoryHandle),complete:true,manageAutomaticPreparation:false,onBusyChange:()=>{},onRouteChange:route};
+  const view=render(<TeachingReconstruction {...props}/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Подготовить ориентиры'})).toBeEnabled());
+  jest.mocked(readReconstructionLink).mockResolvedValue(saved);jest.mocked(listReconstructionLinks).mockResolvedValue([saved]);
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'matching'})} as Response);
+  view.rerender(<TeachingReconstruction {...props} processingJobId={saved.id}/>);
+  await waitFor(()=>expect(route).toHaveBeenLastCalledWith(saved));
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);view.unmount();
+});
+test('continue transfer works for an existing durable creation without allocating a replacement',async()=>{
+  const saved={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  jest.mocked(readReconstructionLink).mockResolvedValue(saved);jest.mocked(listReconstructionLinks).mockResolvedValue([saved]);
+  let started=false;
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{if(path.endsWith('/start'))started=true;return {json:async()=>({phase:started?'matching':'uploading'})} as Response;});
+  jest.mocked(uploadReconstruction).mockResolvedValue();jest.mocked(saveReconstructionLink).mockResolvedValue();
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete manageAutomaticPreparation={false} onBusyChange={()=>{}}/>);
+  fireEvent.click(await screen.findByRole('button',{name:'Продолжить передачу'}));
+  await waitFor(()=>expect(uploadReconstruction).toHaveBeenCalledTimes(1));
+  await waitFor(()=>expect(started).toBe(true));
+  expect(jest.mocked(saveReconstructionLink).mock.calls[0][2]).toBe(saved);
+  expect(ensureAutomaticReconstructionLink).not.toHaveBeenCalled();view.unmount();
+});
+test('the explicit new-attempt action creates a distinct durable sparse intent only after a terminal result',async()=>{
+  const saved={id:'a'.repeat(32),key:'b'.repeat(64),creation:{mask:'game' as const,steps:30000,prepare_route:true as const,route_only:true as const}};
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'});
+  jest.mocked(readReconstructionLink).mockResolvedValue(saved);jest.mocked(listReconstructionLinks).mockResolvedValue([saved]);jest.mocked(saveReconstructionLink).mockResolvedValue();
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'quality_rejected'})} as Response);
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete manageAutomaticPreparation={false} onBusyChange={()=>{}}/>);
+  fireEvent.click(await screen.findByRole('button',{name:'Новое отдельное задание'}));
+  fireEvent.click(await screen.findByRole('button',{name:'Подготовить ориентиры'}));
+  await waitFor(()=>expect(saveReconstructionLink).toHaveBeenCalled());
+  expect(jest.mocked(saveReconstructionLink).mock.calls[0][2]).toMatchObject({id:'e'.repeat(32),creation:{mask:'game',prepare_route:true,route_only:true}});
+  expect(ensureAutomaticReconstructionLink).not.toHaveBeenCalled();view.unmount();
 });

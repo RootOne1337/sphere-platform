@@ -10,6 +10,16 @@ beforeEach(()=>{
   jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn()} as never);
 });
 afterEach(()=>jest.restoreAllMocks());
+test.each([
+  [403,'Нет доступа к заданию выбранной записи'],
+  [404,'Связанное задание не найдено в обработчике'],
+] as const)('a %s metadata refusal is not described as a stopped local service',async(status,label)=>{
+  jest.mocked(reconstructionRequest).mockRejectedValue(new ReconstructionResponseError(status,'job_not_found'));
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}/>);
+  await waitFor(()=>expect(screen.getAllByText(new RegExp(label)).length).toBeGreaterThan(0));
+  expect(screen.queryByText('Локальный обработчик должен быть запущен на этом компьютере.')).not.toBeInTheDocument();
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>call[2]?.method!=='POST')).toBe(true);
+});
 test('the vehicle panel keeps failed skuter1 diagnostic geometry behind readiness and offers the source recovery path',async()=>{
   jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'failed',error:'resource_guard',geometry_available:true,
     sparse_available:false,dense_available:false,quality:{registered:144,selected:173,points:10000,coverage:144/173,mean_reprojection_px:1.2},

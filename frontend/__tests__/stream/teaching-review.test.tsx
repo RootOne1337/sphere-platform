@@ -13,7 +13,7 @@ jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActu
 const id='a'.repeat(32),scope='b'.repeat(32);
 const encode=(value:unknown)=>new TextEncoder().encode(typeof value==='string'?value:JSON.stringify(value));
 const hash=async(data:Uint8Array)=>Buffer.from(await webcrypto.subtle.digest('SHA-256',Uint8Array.from(data).buffer)).toString('hex');
-const missing=()=>Object.assign(Error('missing'),{name:'NotFoundError'});
+const missing=()=>new DOMException('missing','NotFoundError');
 const draw=jest.fn(),clear=jest.fn();
 
 function file(data:Uint8Array):File {
@@ -31,22 +31,28 @@ async function library(prepareAfterRecording?:boolean) {
   const index=encode(rows.map(row=>JSON.stringify(row)).join('\n')),journal=encode('');
   const video=new Uint8Array([...unit,...unit]);
   const manifest=encode({schema:'sphere-browser-teaching-v2',id,started_at_ms:1793012400000,config:{title:'Маршрут 011321',...(prepareAfterRecording===undefined?{}:{prepare_after_recording:prepareAfterRecording})},
-    complete:true,release_confirmed:true,frames:2,files:{'video.h264':{bytes:video.length},
+    complete:true,release_confirmed:true,frames:2,events:0,files:{'video.h264':{bytes:video.length},
       'frames.jsonl':{bytes:index.length,sha256:await hash(index)},'inputs.jsonl':{bytes:0,sha256:await hash(journal)}}});
   for(const [name,bytes] of Object.entries({'manifest.json':manifest,'frames.jsonl':index,'inputs.jsonl':journal,
     'video.h264':video,'COMPLETE':encode({manifest_sha256:await hash(manifest)})}))files.set(name,bytes);
-  const folder={getFileHandle:async(name:string,options?:{create?:boolean})=>{
-    if(!files.has(name)){if(!options?.create)throw missing();files.set(name,new Uint8Array());}
-    return {getFile:async()=>file(files.get(name)!),createWritable:async()=>{
+  const makeFolder=(contents:Map<string,Uint8Array>)=>({entries:async function*(){for(const name of contents.keys())yield [name,{kind:'file',name}];},getFileHandle:async(name:string,options?:{create?:boolean})=>{
+    if(!contents.has(name)){if(!options?.create)throw missing();contents.set(name,new Uint8Array());}
+    return {getFile:async()=>file(contents.get(name)!),createWritable:async()=>{
       let bytes=new Uint8Array();return {write:async(raw:string)=>{bytes=encode(raw);},
-        close:async()=>{files.set(name,bytes);},abort:async()=>{}};
+        close:async()=>{contents.set(name,bytes);},abort:async()=>{}};
     }};
-  }};
+  }});
+  const folder=makeFolder(files),folders=new Map([[id,folder]]);
   const remove=jest.fn(async()=>{});
-  const clips={values:async function*(){yield {kind:'directory',name:id};},getDirectoryHandle:async(name:string)=>{if(name!==id)throw missing();return folder;},removeEntry:remove};
+  const clips={entries:async function*(){for(const name of folders.keys())yield [name,{kind:'directory',name}];},getDirectoryHandle:async(name:string)=>{if(!folders.has(name))throw missing();return folders.get(name);},removeEntry:remove};
   const root={getDirectoryHandle:async(name:string)=>{if(name!=='sphere-teaching-'+scope)throw missing();return clips;}};
   Object.defineProperty(navigator,'storage',{configurable:true,value:{getDirectory:async()=>root}});
-  return {files,manifest,remove};
+  const addClip=async(otherId:string,title:string)=>{
+    const copy=new Map(files),data=JSON.parse(new TextDecoder().decode(manifest));data.id=otherId;data.config.title=title;
+    const otherManifest=encode(data);copy.set('manifest.json',otherManifest);copy.set('COMPLETE',encode({manifest_sha256:await hash(otherManifest)}));
+    folders.set(otherId,makeFolder(copy));return {files:copy,manifest:otherManifest};
+  };
+  return {files,manifest,remove,addClip};
 }
 
 beforeEach(()=>{
@@ -67,11 +73,11 @@ beforeEach(()=>{
 test('search filters the local list and deletion requires an explicit second action',async()=>{
   const {remove}=await library();const onSelect=jest.fn();
   render(<TeachingReview selected={id} refresh={0} onSelect={onSelect} storageScope={scope}/>);
-  await screen.findByRole('button',{name:/Маршрут 011321.*aaaaaaaa/});
-  fireEvent.change(screen.getByLabelText('Поиск по названию или идентификатору'),{target:{value:'нет такого'}});
-  expect(screen.getByText('По этому запросу записи не найдены.')).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Поиск по названию или идентификатору'),{target:{value:'011321'}});
-  expect(screen.getByRole('button',{name:/Маршрут 011321.*aaaaaaaa/})).toBeInTheDocument();
+  await screen.findByRole('button',{name:'Открыть запись «Маршрут 011321»'});
+  fireEvent.change(screen.getByLabelText('Найти запись'),{target:{value:'нет такого'}});
+  expect(screen.getByText('Записи не найдены')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Найти запись'),{target:{value:'011321'}});
+  expect(screen.getByRole('button',{name:'Открыть запись «Маршрут 011321»'})).toBeInTheDocument();
   await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeEnabled());
   fireEvent.click(screen.getByRole('button',{name:'Удалить выбранный локальный материал'}));
   expect(remove).not.toHaveBeenCalled();
@@ -308,12 +314,12 @@ test('review decodes and navigates the sealed source, then renames without chang
   const {files,manifest}=await library();const marker=files.get('COMPLETE'),video=files.get('video.h264');
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
   await waitFor(()=>expect(draw).toHaveBeenCalled());
-  expect(screen.getByRole('button',{name:/Маршрут 011321.*aaaaaaaa/})).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Открыть запись «Маршрут 011321»'})).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Вперёд 1 с →'}));
   await waitFor(()=>expect(screen.getByRole('slider',{name:'Время записанного прохода'})).toHaveValue('1'));
   fireEvent.change(screen.getByLabelText('Название сохранённого маршрута'),{target:{value:'Переулок · ночь'}});
   fireEvent.click(screen.getByRole('button',{name:'Сохранить название'}));
-  await screen.findByRole('button',{name:/Переулок · ночь.*aaaaaaaa/});
+  await screen.findByRole('button',{name:'Открыть запись «Переулок · ночь»'});
   expect(JSON.parse(new TextDecoder().decode(files.get('label.json'))).title).toBe('Переулок · ночь');
   expect(files.get('manifest.json')).toBe(manifest);expect(files.get('COMPLETE')).toBe(marker);expect(files.get('video.h264')).toBe(video);
 });
@@ -321,15 +327,77 @@ test('review decodes and navigates the sealed source, then renames without chang
 test('search can find a recording older than the newest twenty without deleting it',async()=>{
   const items=Array.from({length:25},(_,n)=>({id:n.toString(16).padStart(32,'0'),title:`Маршрут ${n}`,at:1000+n}));
   const root={getDirectoryHandle:async()=>({
-    values:async function*(){for(const item of items)yield {kind:'directory',name:item.id};},
+    entries:async function*(){for(const item of items)yield [item.id,{kind:'directory',name:item.id}];},
     getDirectoryHandle:async(name:string)=>{const item=items.find(row=>row.id===name)!;return {getFileHandle:async(fileName:string)=>{
       if(fileName!=='manifest.json')throw missing();
-      return {getFile:async()=>file(encode({schema:'sphere-browser-teaching-v2',id:item.id,started_at_ms:item.at,complete:true,frames:10,config:{title:item.title}}))};
+      return {getFile:async()=>file(encode({schema:'sphere-browser-teaching-v2',id:item.id,started_at_ms:item.at,complete:false,frames:10,events:0,config:{title:item.title}}))};
     }};},
   })};
   Object.defineProperty(navigator,'storage',{configurable:true,value:{getDirectory:async()=>root}});
   render(<TeachingReview selected={null} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
-  await screen.findByText('Показано 25 из 25');
-  fireEvent.change(screen.getByLabelText('Поиск по названию или идентификатору'),{target:{value:'Маршрут 0'}});
-  expect(screen.getByRole('button',{name:/Маршрут 0.*Готов/})).toBeInTheDocument();
+  await screen.findByText(/Найдено 25 из 25 прочитанных записей/);
+  fireEvent.change(screen.getByLabelText('Найти запись'),{target:{value:'Маршрут 0'}});
+  expect(screen.getByRole('button',{name:'Открыть запись «Маршрут 0»'})).toBeInTheDocument();
+});
+
+test('the account queue job is passed to the inspector without enabling a second automatic owner',async()=>{
+  await library(true);const jobId='e'.repeat(32);
+  render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope} visible={false}
+    manageAutomaticPreparation={false} processingQueue={{scope,activeClip:id,items:[{clip:id,jobId,phase:'processing',updatedAt:Date.now()}]}}/>);
+  await waitFor(()=>expect(jest.mocked(TeachingReconstruction)).toHaveBeenCalledWith(expect.objectContaining({clip:id,processingJobId:jobId,manageAutomaticPreparation:false}),undefined));
+});
+
+test('queue processing protects its source from deletion while another recording remains selectable',async()=>{
+  const {addClip,remove}=await library(true),other='f'.repeat(32);await addClip(other,'Другой спокойный проход');
+  const onSelect=jest.fn();
+  render(<TeachingReview selected={id} refresh={0} onSelect={onSelect} storageScope={scope} manageAutomaticPreparation={false}
+    processingQueue={{scope,activeClip:id,items:[{clip:id,jobId:'e'.repeat(32),phase:'processing',updatedAt:Date.now()}]}}/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeDisabled());
+  const another=await screen.findByRole('button',{name:'Открыть запись «Другой спокойный проход»'});
+  expect(another).toBeEnabled();fireEvent.click(another);
+  expect(onSelect).toHaveBeenCalledWith(other);expect(remove).not.toHaveBeenCalled();
+});
+
+test('a queue from another account cannot bind its job or block the selected source',async()=>{
+  await library(true);
+  render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope} manageAutomaticPreparation={false}
+    processingQueue={{scope:'c'.repeat(32),activeClip:id,items:[{clip:id,jobId:'e'.repeat(32),phase:'processing',updatedAt:Date.now()}]}}/>);
+  await waitFor(()=>expect(jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0].processingJobId).toBeUndefined());
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeEnabled());
+});
+
+test('processing that begins after delete confirmation opens still fences the destructive action',async()=>{
+  const {remove}=await library(true),onSelect=jest.fn();
+  const props={selected:id,refresh:0,onSelect,storageScope:scope,manageAutomaticPreparation:false};
+  const view=render(<TeachingReview {...props}/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeEnabled());
+  fireEvent.click(screen.getByRole('button',{name:'Удалить выбранный локальный материал'}));
+  expect(screen.getByRole('button',{name:'Удалить навсегда'})).toBeEnabled();
+  view.rerender(<TeachingReview {...props} processingQueue={{scope,activeClip:id,items:[{clip:id,jobId:'e'.repeat(32),phase:'processing',updatedAt:Date.now()}]}}/>);
+  expect(screen.getByRole('button',{name:'Удалить навсегда'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('button',{name:'Удалить навсегда'}));
+  expect(remove).not.toHaveBeenCalled();expect(onSelect).not.toHaveBeenCalledWith(null);
+});
+
+test('a late ready result for an old job cannot freshen navigation for a different job now processing in the queue',async()=>{
+  const {files,manifest}=await library(true),oldJob={id:'c'.repeat(32),key:'d'.repeat(64)},newJobId='e'.repeat(32),source=await hash(manifest);
+  files.set('reconstruction-link.json',encode({schema:'sphere-local-reconstruction-link-v1',clip:id,job:oldJob}));
+  let now=Date.now(),reads=0,release:()=>void=()=>{};
+  jest.spyOn(Date,'now').mockImplementation(()=>now);
+  const gate=new Promise<void>(resolve=>{release=resolve;});
+  jest.mocked(reconstructionRequest).mockImplementation(async()=>{
+    if(++reads>1)await gate;
+    return {json:async()=>({phase:'sparse_complete',source_manifest_sha256:source,navigation:{phase:'ready'},geometry_available:true})} as Response;
+  });
+  const props={selected:id,refresh:0,onSelect:jest.fn(),storageScope:scope,manageAutomaticPreparation:false};
+  const view=render(<TeachingReview {...props}/>);
+  await screen.findByRole('button',{name:/Карта для проверки 1/});
+  now+=100;
+  view.rerender(<TeachingReview {...props} processingQueue={{scope,activeClip:id,items:[{clip:id,jobId:newJobId,phase:'processing',updatedAt:now}]}}/>);
+  await waitFor(()=>expect(reads).toBeGreaterThanOrEqual(2));
+  now+=100;
+  await act(async()=>{release();await gate;await new Promise<void>(resolve=>setTimeout(resolve,0));});
+  expect(screen.getByRole('button',{name:/Карта для проверки 0/})).toBeInTheDocument();
+  expect(screen.queryByRole('button',{name:'Открыть карту'})).not.toBeInTheDocument();
+  expect(jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0].processingJobId).toBe(newJobId);
 });

@@ -5,7 +5,12 @@ import { exportTeachingFolder, type ExportProgress } from './teachingExport';
 import { TeachingReconstruction } from './TeachingReconstruction';
 import type {ReconstructionJob} from './reconstructionClient';
 import {teachingCaptureMetrics} from './teachingCaptureMetrics';
-import { readTeachingLabel, renameTeachingLabel, seekTeachingSecond, teachingDate } from './teachingMetadata';
+import { renameTeachingLabel, seekTeachingSecond } from './teachingMetadata';
+import {readTeachingLibrary,type TeachingLibraryRecord} from './teachingLibrary';
+import {readTeachingCatalogStatuses,type TeachingCatalogStatus} from './teachingCatalogStatus';
+import {TeachingRecordingCatalog} from './TeachingRecordingCatalog';
+import {teachingCatalogPresentation,type TeachingCatalogEntry} from './teachingCatalog';
+import type {TeachingQueueSnapshot} from './teachingQueue';
 import {exactRecordedFrame,readImportedRouteGeometry,type ImportedRouteGeometry} from './routeMapProjection';
 import RouteGeometryMap from './RouteGeometryMap';
 import ImageRouteReview from './ImageRouteReview';
@@ -13,7 +18,7 @@ import {reconstructionRequest} from './reconstructionClient';
 import type {RouteSource} from './routeSource';
 
 type Row = { index: number; offset: number; bytes: number; relative_ticks_90k: number; key: boolean; seekable?: boolean; sha256: string; worker_observed_at_ms: number };
-type Clip = { id: string; title: string; createdAt: number; complete: boolean; frames: number; failure: string | null; hudHidden:boolean;prepareAfterRecording:boolean };
+type Clip = TeachingLibraryRecord;
 type Alternative = {id:string;cameras:number;points:number;label?:string};
 export function chooseReviewGeometry(items:Alternative[], preferred:unknown, primary:boolean|null, manual:string|null):string|null {
   if(manual!==null)return manual==='primary'?(primary===true?'primary':null):items.some(item=>item.id===manual)?manual:null;
@@ -22,6 +27,7 @@ export function chooseReviewGeometry(items:Alternative[], preferred:unknown, pri
   return typeof preferred==='string'&&items.some(item=>item.id===preferred)?preferred:null;
 }
 export type TeachingClipChoice = Pick<Clip,'id'|'title'|'complete'|'frames'>;
+const emptyClips:Clip[]=[];
 const names = ['video.h264','frames.jsonl','inputs.jsonl','manifest.json','COMPLETE'];
 const digest = async (buffer: ArrayBuffer) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)), v => v.toString(16).padStart(2,'0')).join('');
 export function h264Codec(data: Uint8Array): string | null {
@@ -32,12 +38,16 @@ export function h264Codec(data: Uint8Array): string | null {
   }
   return null;
 }
-export function TeachingReview({ selected, refresh, onSelect, storageScope, onBusyChange,onRouteChange,onClipsChange,onSourceChange,visible=true,autoPrepare=false,onAutoPrepareConsumed }: { selected: string | null; refresh: number; onSelect: (id: string | null) => void; storageScope: string | null; onBusyChange?: (busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null,clip:string|null,scope:string|null)=>void;onClipsChange?:(clips:TeachingClipChoice[])=>void;onSourceChange?:(source:RouteSource|null)=>void;visible?:boolean;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void }) {
+export function TeachingReview({ selected, refresh, onSelect, storageScope, onBusyChange,onRouteChange,onClipsChange,onSourceChange,visible=true,autoPrepare=false,onAutoPrepareConsumed,manageAutomaticPreparation=true,processingQueue=null }: { selected: string | null; refresh: number; onSelect: (id: string | null) => void; storageScope: string | null; onBusyChange?: (busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null,clip:string|null,scope:string|null)=>void;onClipsChange?:(clips:TeachingClipChoice[])=>void;onSourceChange?:(source:RouteSource|null)=>void;visible?:boolean;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void;manageAutomaticPreparation?:boolean;processingQueue?:TeachingQueueSnapshot|null }) {
   useEffect(()=>{onRouteChange?.(null,selected,storageScope);},[selected,storageScope,onRouteChange]);
   const [linkedJob,setLinkedJob]=useState<ReconstructionJob|null>(null);
   const routeChanged=useCallback((job:ReconstructionJob|null)=>{setLinkedJob(job);onRouteChange?.(job,selected,storageScope);},[onRouteChange,selected,storageScope]);
-  const [clips,setClips]=useState<Clip[]>([]),[error,setError]=useState<string|null>(null);
+  const [libraryState,setLibraryState]=useState<{scope:string|null;records:Clip[]}>({scope:null,records:[]}),[error,setError]=useState<string|null>(null);
+  const clips=libraryState.scope===storageScope?libraryState.records:emptyClips;
   const [libraryTruncated,setLibraryTruncated]=useState(false);
+  const [libraryLoading,setLibraryLoading]=useState(true),[statusRefreshing,setStatusRefreshing]=useState(false);
+  const [catalogState,setCatalogState]=useState<{scope:string|null;items:Record<string,TeachingCatalogStatus>}>({scope:null,items:{}});
+  const [catalogNow,setCatalogNow]=useState(Date.now);
   useEffect(()=>{onClipsChange?.(clips);},[clips,onClipsChange]);
   const [rows,setRows]=useState<Row[]>([]),[inputs,setInputs]=useState<Record<string,unknown>[]>([]),[position,setPosition]=useState(0);
   const [sourceManifestSha,setSourceManifestSha]=useState<string|null>(null),[previewCanvas,setPreviewCanvas]=useState<HTMLCanvasElement|null>(null);
@@ -50,7 +60,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   const alternativeJob=useRef<string|null>(null);
   const [primaryAvailable,setPrimaryAvailable]=useState(false);
   const [localRefresh,setLocalRefresh]=useState(0),[decoding,setDecoding]=useState(false);
-  const [search,setSearch]=useState(''),[deleteConfirm,setDeleteConfirm]=useState(false),[deleting,setDeleting]=useState(false);
+  const [deleteConfirm,setDeleteConfirm]=useState(false),[deleting,setDeleting]=useState(false);
   const deleteInFlight=useRef(false);
   const [exporting,setExporting]=useState(false),[exportProgress,setExportProgress]=useState<ExportProgress|null>(null),[exportNotice,setExportNotice]=useState<string|null>(null);
   const [processing,setProcessing]=useState(false);
@@ -71,31 +81,47 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
     return()=>clearTimeout(timer);
   },[playing,decoding,position,rows]);
   useEffect(()=>{
-    let retired=false;
-    void(async()=>{
-      if(!navigator.storage?.getDirectory || !storageScope || !/^[0-9a-f]{32}$/.test(storageScope)) return;
-      const root=await navigator.storage.getDirectory();
-      let library:FileSystemDirectoryHandle;
-      try {library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);} catch {return;}
-      const found:Clip[]=[];let examined=0;
-      const iterable=library as FileSystemDirectoryHandle & { values(): AsyncIterableIterator<FileSystemHandle> };
-      let truncated=false;
-      for await(const entry of iterable.values()) {
-        if(++examined>100) {truncated=true;break;}
-        if(entry.kind!=='directory'||!/^[0-9a-f]{32}$/.test(entry.name)) continue;
-        const folder=await library.getDirectoryHandle(entry.name);
-        try {
-          const file=await(await folder.getFileHandle('manifest.json')).getFile();if(file.size>65536)continue;
-          const bytes=await file.arrayBuffer(),manifest=JSON.parse(new TextDecoder().decode(bytes));
-          if(!['sphere-browser-teaching-v1','sphere-browser-teaching-v2'].includes(manifest.schema)||manifest.id!==entry.name)continue;
-          found.push({id:entry.name,title:await readTeachingLabel(folder,entry.name,bytes)??String(manifest.config?.title??'Маршрут').slice(0,128),createdAt:Number(manifest.started_at_ms)||0,complete:manifest.complete===true,
-            frames:Number(manifest.frames),failure:manifest.failure,hudHidden:manifest.config?.hud_hidden_declared===true,prepareAfterRecording:manifest.config?.prepare_after_recording===true});
-        } catch { found.push({id:entry.name,title:'Прерванная запись',createdAt:0,complete:false,frames:0,failure:'manifest_missing',hudHidden:false,prepareAfterRecording:false}); }
-      }
-      if(!retired){setClips(found.sort((a,b)=>b.createdAt-a.createdAt||a.id.localeCompare(b.id)));setLibraryTruncated(truncated);}
-    })().catch(()=>{if(!retired)setError('Не удалось прочитать локальную библиотеку браузера.');});
-    return()=>{retired=true;};
+    const request=new AbortController();setLibraryLoading(true);setLibraryState({scope:storageScope,records:[]});setLibraryTruncated(false);
+    if(!storageScope||!/^[0-9a-f]{32}$/.test(storageScope)){setLibraryLoading(false);return;}
+    void readTeachingLibrary(storageScope,{signal:request.signal}).then(library=>{
+      if(!request.signal.aborted){setLibraryState({scope:storageScope,records:library.records});setLibraryTruncated(library.truncated);}
+    }).catch(()=>{if(!request.signal.aborted)setError('Не удалось прочитать локальную библиотеку браузера.');})
+      .finally(()=>{if(!request.signal.aborted)setLibraryLoading(false);});
+    return()=>request.abort();
   },[refresh,localRefresh,storageScope]);
+  const queueItems=processingQueue?.scope===storageScope?processingQueue.items:[];
+  const queueRevision=queueItems.map(item=>`${item.clip}:${item.jobId??''}:${item.phase}`).join('|');
+  useEffect(()=>{
+    setCatalogState({scope:storageScope,items:{}});
+    if(!visible||!storageScope||!clips.length){setStatusRefreshing(false);return;}
+    const request=new AbortController();let timer:ReturnType<typeof setTimeout>;
+    const poll=async()=>{
+      setStatusRefreshing(true);
+      try{
+        const prioritized=[...clips].sort((a,b)=>Number(b.id===selected)-Number(a.id===selected));
+        const items=await readTeachingCatalogStatuses(prioritized,request.signal);
+        if(!request.signal.aborted){setCatalogState({scope:storageScope,items});setCatalogNow(Date.now());}
+      }catch{/* An aborted read cannot replace the next account or selection. */}
+      finally{if(!request.signal.aborted){setStatusRefreshing(false);timer=setTimeout(()=>{void poll();},15000);}}
+    };
+    void poll();return()=>{request.abort();clearTimeout(timer);};
+  },[clips,visible,storageScope,selected,queueRevision]);
+  useEffect(()=>{const timer=setInterval(()=>setCatalogNow(Date.now()),5000);return()=>clearInterval(timer);},[]);
+  const catalogEntries:TeachingCatalogEntry[]=clips.map(record=>{
+    const status=catalogState.scope===storageScope?catalogState.items[record.id]:undefined;
+    const queued=queueItems.find(item=>item.clip===record.id);
+    const useQueue=queued&&(!status?.statusCheckedAt||queued.updatedAt>status.statusCheckedAt
+      ||['waiting','persisting','uploading','processing'].includes(queued.phase)&&queued.jobId!==status.preparation?.jobId);
+    return {id:record.id,title:record.title,createdAt:record.createdAt,frames:record.frames,durationSeconds:record.durationSeconds,
+      deviceId:record.deviceId,controlMode:record.controlMode,hudProfile:record.hudProfile,hudHidden:record.hudHidden,
+      sourceState:record.sourceState,sourceFailure:record.sourceFailure,...status,
+      ...(useQueue?{preparation:{phase:queued.phase,reason:queued.reason,jobId:queued.jobId,updatedAt:queued.updatedAt},navigation:{phase:'not_prepared' as const},
+        statusCheckedAt:queued.updatedAt}:{}),
+    };
+  });
+  const selectedQueue=queueItems.find(item=>item.clip===selected);
+  const selectedProcessing=!!selectedQueue&&['waiting','persisting','uploading','processing'].includes(selectedQueue.phase)
+    ||catalogEntries.some(record=>record.id===selected&&!!record.preparation&&['waiting','persisting','uploading','processing'].includes(record.preparation.phase));
   useEffect(()=>{setLabel(clips.find(c=>c.id===selected)?.title??'');},[clips,selected]);
   useEffect(()=>{
     const current=++generation.current;importGeneration.current++;manualAlternative.current=null;alternativeJob.current=null;setLoadedSourceKey(null);setRows([]);setInputs([]);setPosition(0);setSourceManifestSha(null);setImportedGeometry(null);setImportError(null);setLinkedJob(null);setAlternatives([]);setAlternativeId(null);setAlternativeStatus('');directory.current=null;setError(null);
@@ -215,13 +241,15 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
     }catch(e){if(current===generation.current&&request===importGeneration.current)setImportError(e instanceof Error?e.message:'Не удалось прочитать геометрию.');}
   };
   const sourceViewer=(setCanvas:(canvas:HTMLCanvasElement|null)=>void,imported=false)=><div className="space-y-2 rounded-xl border border-border bg-background/60 p-3"><p className="text-xs font-medium">Исходный кадр · {((rows[position]?.relative_ticks_90k??0)/90000).toFixed(3)} с {decoding?'· декодирование':''}</p><canvas ref={setCanvas} aria-label={imported?'Исходный кадр импортированной схемы':'Исходный кадр выбранной точки'} className="aspect-video w-full rounded-lg bg-black"/><label className="block text-xs text-muted-foreground">Время исходной записи<input aria-label={imported?'Время записи импортированной схемы':'Время записи рядом со схемой'} type="range" min={0} max={Math.max(0,rows.length-1)} value={position} disabled={exporting} className="mt-2 w-full accent-emerald-400" onChange={e=>{setPlaying(false);setPosition(Number(e.target.value));}}/></label><p className="text-xs text-muted-foreground">Это кадр из сохранённого H.264; между восстановленными камерами новое положение не достраивается.</p></div>;
-  const needle=search.trim().toLocaleLowerCase();
-  const shown=needle?clips.filter(c=>c.title.toLocaleLowerCase().includes(needle)||c.id.includes(needle)):clips;
-  return <section aria-label="Просмотр записанных маршрутов" className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
-    <div><h3 className="text-lg font-semibold">Записанные проходы</h3><p className="mt-1 text-sm text-muted-foreground">Локальная библиотека этого браузера. Кадры проверяются по SHA-256; время получения кадра не равно времени его захвата Android.</p></div>
-    {!clips.length?<p className="text-sm text-muted-foreground">Сохранённых материалов пока нет.</p>:<div className="space-y-2"><div className="flex flex-wrap items-end justify-between gap-2"><label className="block min-w-0 flex-1 space-y-1 text-xs text-muted-foreground"><span>Поиск по названию или идентификатору</span><input className="w-full max-w-md rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" value={search} onChange={e=>setSearch(e.target.value)} /></label><span className="text-xs text-muted-foreground">Показано {shown.length} из {clips.length}</span></div>{shown.length?<div className="grid max-h-72 gap-2 overflow-auto sm:grid-cols-2 xl:grid-cols-3">{shown.map(c=><Button key={c.id} aria-pressed={selected===c.id} className="h-auto min-w-0 flex-col items-start gap-1 whitespace-normal py-3 text-left" disabled={exporting||processing||renaming||deleting} variant={selected===c.id?'default':'outline'} onClick={()=>onSelect(c.id)}><span className="max-w-full break-words">{c.title}</span><span className="text-xs opacity-75">{teachingDate(c.createdAt)} · {c.id.slice(0,8)} · {c.complete?'Готов':'Неполный'} · {c.frames} кадров</span></Button>)}</div>:<p className="text-sm text-muted-foreground">По этому запросу записи не найдены.</p>}</div>}
-    {libraryTruncated&&<p role="status" className="text-xs text-amber-500">Проверены первые 100 элементов библиотеки. Часть записей может не отображаться; исходные материалы не удалены.</p>}
+  const selectedRecord=catalogEntries.find(record=>record.id===selected);
+  const selectedStatus=selectedRecord?teachingCatalogPresentation(selectedRecord,{nowMs:catalogNow}):null;
+  return <section aria-label="Просмотр записанных маршрутов" className="min-w-0 space-y-5 rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <TeachingRecordingCatalog entries={catalogEntries} selectedId={selected} onSelect={onSelect}
+      onReload={()=>setLocalRefresh(value=>value+1)} loading={libraryLoading} refreshing={statusRefreshing}
+      disabled={exporting||processing||renaming||deleting} truncated={libraryTruncated} nowMs={catalogNow}/>
+    {selectedRecord&&<header className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4" aria-label="Выбранный маршрут"><div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-cyan-300">Выбранная запись</p><h3 className="mt-1 break-words text-lg font-semibold">{selectedRecord.title}</h3><p className="mt-2 text-xs text-muted-foreground">{selectedStatus?.source.label} · {selectedStatus?.reconstruction.label} · {selectedStatus?.navigation.label}</p></div><Button size="sm" variant="outline" disabled={exporting||processing||renaming||deleting} onClick={()=>onSelect(null)}>Закрыть запись</Button></header>}
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
+    {selected&&storageScope&&loadedSourceKey===`${storageScope}:${selected}`&&rows.length>0&&clips.some(c=>c.id===selected)&&<TeachingReconstruction key={selected} clip={selected} scope={storageScope} folder={()=>directory.current} complete={!exporting&&!deleting&&!!clips.find(c=>c.id===selected)?.complete} hudHidden={clips.find(c=>c.id===selected)?.hudHidden} onBusyChange={setProcessing} onRouteChange={routeChanged} visible={visible} sourceManifestSha={sourceManifestSha} selectedTicks={rows[position]?.relative_ticks_90k??null} onSeekCamera={seekCamera} validTicks={validTicks} sourcePreview={sourceViewer(setPreviewCanvas)} alternativeCameraCount={importedGeometry?.cameras.length??null} manageAutomaticPreparation={manageAutomaticPreparation} processingJobId={selectedQueue?.jobId} autoPrepare={autoPrepare||clips.find(c=>c.id===selected)?.prepareAfterRecording===true} onAutoPrepareConsumed={onAutoPrepareConsumed}/>}
     {capture&&rows.length>0&&<div aria-label="Измеренное качество сохранённой записи" className="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-[1fr_240px]"><div className="flex flex-wrap gap-x-6 gap-y-2 text-xs tabular-nums"><strong className={capture.cadence30Confirmed?'text-emerald-500':'text-amber-500'}>{capture.fps?.toFixed(2)??'—'} средних FPS</strong><span>{capture.cadence60Confirmed?'Ритм 60 FPS подтверждён по RTP':'60 FPS не подтверждены'}</span><span>{capture.bitrateBps==null?'—':(capture.bitrateBps/1e6).toFixed(2)} Мбит/с</span><span>Интервалы p95 {capture.p95GapMs?.toFixed(1)??'—'} мс · max {capture.maxGapMs?.toFixed(1)??'—'} мс</span><span>Интервалы &gt;25 мс: {capture.gaps25} · &gt;50 мс: {capture.gaps50} · &gt;200 мс: {capture.gaps200} · &gt;1 с: {capture.gaps1000}</span><p className="w-full text-muted-foreground">{capture.cadence30Confirmed?'Средняя частота записи не ниже 29,5 FPS, интервалов длиннее 50 мс нет.':'Ровный ритм 30 FPS не подтверждён. Для восстановления используются только реально записанные кадры.'} Качество рендера игры и полная задержка Android по этим данным неизвестны.</p></div><div><p className="mb-1 text-[10px] text-muted-foreground">Интервалы кадров по ходу записи, мс · график ограничен 100 мс</p><svg viewBox="0 0 240 60" className="h-16 w-full" role="img" aria-label="График интервалов видеокадров"><line x1={0} y1={50} x2={240} y2={50} stroke="currentColor" opacity={.2}/><polyline fill="none" stroke="currentColor" className="text-cyan-500" strokeWidth={1.5} points={capture.chart.map((n,i)=>`${i*240/Math.max(1,capture.chart.length-1)},${55-Math.min(100,n)*.5}`).join(' ')}/></svg></div></div>}
     {selected&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="min-w-0 space-y-3"><div ref={view} className="max-h-[75dvh] overflow-auto rounded-xl bg-black"><canvas ref={canvas} className="block h-auto max-w-none" style={{width:`${zoom*100}%`}} aria-label="Записанный видеокадр" /></div>
       <div aria-label="Просмотр маршрута по исходным кадрам" className="flex flex-wrap gap-2"><Button variant="outline" disabled={!rows.length||decoding||exporting||processing||position===0} onClick={()=>{setPlaying(false);setPosition(at=>seekTeachingSecond(rows,at,-1));}}>← Назад 1 с</Button><Button variant="outline" disabled={!rows.length||exporting||processing} onClick={()=>{if(position>=rows.length-1)setPosition(0);setPlaying(value=>!value);}}>{playing?'Приостановить просмотр':'Пройти по записи'}</Button><Button variant="outline" disabled={!rows.length||decoding||exporting||processing||position>=rows.length-1} onClick={()=>{setPlaying(false);setPosition(at=>seekTeachingSecond(rows,at,1));}}>Вперёд 1 с →</Button><select aria-label="Увеличение исходного кадра" value={zoom} className="rounded-lg border border-input bg-background px-2 text-sm" onChange={e=>setZoom(Number(e.target.value))}><option value={1}>Вписать</option><option value={1.5}>150%</option><option value={2}>200%</option><option value={3}>300%</option></select><Button variant="outline" onClick={()=>{const promise=view.current?.requestFullscreen?.();promise?.catch(()=>setError('Полноэкранный просмотр недоступен.'));}}>На весь экран</Button></div>
@@ -233,10 +261,10 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         {exporting&&exportProgress&&<p role="status" className="text-xs text-muted-foreground">{exportProgress.stage==='verify'?'Проверка сохранённого видео':'Копирование видео'} · {(exportProgress.bytes/1048576).toFixed(1)} / {(exportProgress.total/1048576).toFixed(1)} МБ</p>}
         {exportNotice&&<p role="status" className="break-all text-xs text-muted-foreground">{exportNotice}</p>}
         <details><summary className="cursor-pointer text-sm">Отдельные файлы и диагностика</summary><div className="mt-2 flex flex-wrap gap-2">{names.map(name=><Button disabled={exporting||deleting} size="sm" variant="outline" key={name} onClick={()=>{void download(name);}}>{name}</Button>)}</div></details>
-        {!deleteConfirm?<Button disabled={exporting||processing||deleting} variant="ghost" className="text-destructive" onClick={()=>setDeleteConfirm(true)}>Удалить выбранный локальный материал</Button>:<div role="group" aria-label="Подтверждение удаления записи" className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3"><p className="text-xs leading-5 text-muted-foreground">Локальная запись и связанные с ней ссылки будут удалены из этого браузера. Если нужен архив, сначала сохраните пакет в папку.</p><div className="flex flex-wrap gap-2"><Button size="sm" variant="destructive" disabled={deleting} onClick={()=>{void(async()=>{if(deleteInFlight.current)return;deleteInFlight.current=true;setDeleting(true);try{if(!storageScope||!/^[0-9a-f]{32}$/.test(storageScope)||!/^[0-9a-f]{32}$/.test(selected))throw Error();const root=await navigator.storage.getDirectory();const library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);await library.removeEntry(selected,{recursive:true});onSelect(null);setLocalRefresh(v=>v+1);}catch{setError('Удаление не подтверждено. Проверьте библиотеку перед повтором.');}finally{deleteInFlight.current=false;setDeleting(false);setDeleteConfirm(false);}})();}}>{deleting?'Удаление…':'Удалить навсегда'}</Button><Button size="sm" variant="outline" disabled={deleting} onClick={()=>setDeleteConfirm(false)}>Отмена</Button></div></div>}
+        {!deleteConfirm?<Button disabled={exporting||processing||deleting||selectedProcessing} variant="ghost" className="text-destructive" onClick={()=>setDeleteConfirm(true)}>Удалить выбранный локальный материал</Button>:<div role="group" aria-label="Подтверждение удаления записи" className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3"><p className="text-xs leading-5 text-muted-foreground">Локальная запись и связанные с ней ссылки будут удалены из этого браузера. Если нужен архив, сначала сохраните пакет в папку.</p><div className="flex flex-wrap gap-2"><Button size="sm" variant="destructive" disabled={deleting||selectedProcessing} onClick={()=>{void(async()=>{if(deleteInFlight.current||selectedProcessing)return;deleteInFlight.current=true;setDeleting(true);try{if(!storageScope||!/^[0-9a-f]{32}$/.test(storageScope)||!/^[0-9a-f]{32}$/.test(selected))throw Error();const root=await navigator.storage.getDirectory();const library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);await library.removeEntry(selected,{recursive:true});onSelect(null);setLocalRefresh(v=>v+1);}catch{setError('Удаление не подтверждено. Проверьте библиотеку перед повтором.');}finally{deleteInFlight.current=false;setDeleting(false);setDeleteConfirm(false);}})();}}>{deleting?'Удаление…':'Удалить навсегда'}</Button><Button size="sm" variant="outline" disabled={deleting} onClick={()=>setDeleteConfirm(false)}>Отмена</Button></div></div>}
       </div></div>}
     {selected&&sourceManifestSha&&rows.length>0&&<section className="space-y-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4"><div><h4 className="font-medium">Схема ориентиров и исходная запись</h4><p className="mt-1 text-xs leading-5 text-muted-foreground">Связанная сохранённая схема открывается вместе с выбранной записью. Нажмите на камеру, чтобы увидеть исходный кадр.</p></div><Button size="sm" variant="outline" disabled={!linkedJob} onClick={()=>setAlternativesRefresh(v=>v+1)}>Обновить результаты</Button><p role="status" className="text-xs text-muted-foreground">{alternativeStatus||'Если схема ещё не построена, подготовьте ориентиры ниже.'}</p>{(alternatives.length>0||primaryAvailable)&&<label className="block text-xs">Сохранённая схема<select aria-label="Сохранённая схема ориентиров" value={alternativeId??''} onChange={e=>{const choice=e.target.value;manualAlternative.current=choice;if(!choice){importGeneration.current++;setImportedGeometry(null);setImportError(null);setAlternativeStatus('Выберите схему.');}setAlternativeId(choice||null);}} className="ml-2 rounded-lg border bg-background p-2"><option value="">Выберите схему</option>{primaryAvailable&&<option value="primary">Текущая подготовленная карта</option>}{alternatives.map(item=><option key={item.id} value={item.id}>{item.label||'Экспериментальная схема'} · {item.id} · {item.cameras} камер · {item.points} точек</option>)}</select></label>}{alternativeId&&<p className="text-xs">Источник схемы: {alternativeId==='primary'?'основная карта':`${alternatives.find(item=>item.id===alternativeId)?.label||'экспериментальная схема'} · ${alternativeId} · ${alternatives.find(item=>item.id===alternativeId)?.cameras??'—'} камер · ${alternatives.find(item=>item.id===alternativeId)?.points??'—'} точек`}</p>}{importError&&<p role="alert" className="text-xs text-destructive">{importError}</p>}{importedGeometry&&<RouteGeometryMap cameras={importedGeometry.cameras} points={importedGeometry.points} motionWarning={!!alternativeId&&alternativeId!=='primary'} diagnosticId={alternativeId&&alternativeId!=='primary'?alternativeId:undefined} selectedTicks={rows[position]?.relative_ticks_90k??null} onSeekCamera={seekCamera} validTicks={validTicks} sourcePreview={sourceViewer(setImportedCanvas,true)}/>}<details><summary className="cursor-pointer text-xs text-muted-foreground">Открыть геометрию из файла</summary><label className="mt-2 block text-xs font-medium">Выбрать файл геометрии<input aria-label="Выбрать geometry.json для выбранной записи" type="file" accept=".json,application/json" className="mt-2 block w-full text-xs file:mr-3 file:rounded-md file:border file:bg-background file:px-3 file:py-2 file:text-foreground" onChange={e=>{const file=e.currentTarget.files?.[0];e.currentTarget.value='';if(file)void importGeometry(file);}}/></label><p className="mt-2 text-xs text-muted-foreground">Ручной импорт доступен до закрытия страницы. Исходная запись и файл не изменяются.</p></details></section>}
     {selected&&storageScope&&sourceManifestSha&&loadedSourceKey===`${storageScope}:${selected}`&&<ImageRouteReview key={`${storageScope}:${selected}:${sourceManifestSha}`} job={linkedJob} manifestSha={sourceManifestSha} frames={sourceFrames} refresh={alternativesRefresh} visible={visible} onSeek={seekCamera}/>}
-    {selected&&storageScope&&loadedSourceKey===`${storageScope}:${selected}`&&rows.length>0&&clips.some(c=>c.id===selected)&&<TeachingReconstruction key={selected} clip={selected} scope={storageScope} folder={()=>directory.current} complete={!exporting&&!deleting&&!!clips.find(c=>c.id===selected)?.complete} hudHidden={clips.find(c=>c.id===selected)?.hudHidden} onBusyChange={setProcessing} onRouteChange={routeChanged} visible={visible} sourceManifestSha={sourceManifestSha} selectedTicks={rows[position]?.relative_ticks_90k??null} onSeekCamera={seekCamera} validTicks={validTicks} sourcePreview={sourceViewer(setPreviewCanvas)} alternativeCameraCount={importedGeometry?.cameras.length??null} autoPrepare={autoPrepare||clips.find(c=>c.id===selected)?.prepareAfterRecording===true} onAutoPrepareConsumed={onAutoPrepareConsumed}/>}
+
   </section>;
 }

@@ -7,6 +7,7 @@ import {boundHudTelemetry,hudChart,processingSurface,reconstructionRequest,Recon
 import {automaticReconstructionStopped,ensureAutomaticReconstructionLink,listReconstructionLinks,readReconstructionLink,saveReconstructionLink,stopAutomaticReconstruction,validReconstructionJob} from './reconstructionLink';
 import ReferenceComparison from './ReferenceComparison';
 import {cameraMotionRequiresReview,navigationErrorLabel,navigationPhaseLabel,routeCoverageLabel,prepareRoute as prepareRouteIntent,preparationError,preparationQuotaReached} from './routePreparation';
+import {newAutomaticReconstruction,queueWait} from './teachingQueue';
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
 export function HudSpeedCard({telemetry,sourceManifestSha}:{telemetry:ReconstructionState['telemetry'];sourceManifestSha:string|null}){
   const data=boundHudTelemetry(telemetry,sourceManifestSha);if(!data)return null;
@@ -44,7 +45,7 @@ reasons.lightglue_source_mismatch='Версия локального инстр�
 reasons.lightglue_gpu_unavailable='GPU для сопоставления ракурсов недоступен. Запись сохранена.';
 reasons.learned_matching_timeout='Сопоставление ракурсов достигло лимита времени. Промежуточные материалы сохранены.';
 reasons.reference_evaluation_failed='Не удалось завершить проверку рендера по исходным ракурсам. Качество не подтверждено.';
-export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=false,onBusyChange,onRouteChange,visible=true,sourceManifestSha=null,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,alternativeCameraCount=null,autoPrepare=false,onAutoPrepareConsumed}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;hudHidden?:boolean;onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean;sourceManifestSha?:string|null;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;alternativeCameraCount?:number|null;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void}) {
+export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=false,onBusyChange,onRouteChange,visible=true,sourceManifestSha=null,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,alternativeCameraCount=null,autoPrepare=false,onAutoPrepareConsumed,manageAutomaticPreparation=true,processingJobId}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;hudHidden?:boolean;onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean;sourceManifestSha?:string|null;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;alternativeCameraCount?:number|null;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void;manageAutomaticPreparation?:boolean;processingJobId?:string}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[status,setStatus]=useState<ReconstructionState|null>(null),[error,setError]=useState<string|null>(null);
   const [confirmedMissing,setConfirmedMissing]=useState(false);
   const [attempts,setAttempts]=useState<ReconstructionJob[]>([]),[switchingAttempt,setSwitchingAttempt]=useState(false);
@@ -52,6 +53,8 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const [mask,setMask]=useState(hudHidden?'avatar':'game'),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
   const autoAttempted=useRef(false);
+  const autoCandidate=useRef<ReconstructionJob|null>(null);
+  const explicitNewAttempt=useRef(false);
   const autoStopped=useRef(false);
   const [recovering,setRecovering]=useState(true);const folderRef=useRef(folder);folderRef.current=folder;
   const [refresh,setRefresh]=useState(0),[surfaceStarting,setSurfaceStarting]=useState(false);
@@ -62,7 +65,8 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const workingSurface=status?processingSurface(status):undefined;
   const storageKey=`sphere-reconstruction-${scope}-${clip}`;
   const busy=recovering||uploading||surfaceStarting||switchingAttempt||!!job&&(!status?!confirmedMissing:!terminalReconstruction(status));
-  useEffect(()=>{onBusyChange(busy);},[busy,onBusyChange]);
+  const interactionBusy=manageAutomaticPreparation?busy:uploading||surfaceStarting||switchingAttempt;
+  useEffect(()=>{onBusyChange(interactionBusy);},[interactionBusy,onBusyChange]);
   useEffect(()=>{onRouteChange?.(job);},[job,onRouteChange]);
   useEffect(()=>{autoStopped.current=false;setConfirmedMissing(false);},[job?.id]);
   useEffect(()=>()=>{uploadAbort.current?.abort();onBusyChange(false);},[onBusyChange]);
@@ -73,10 +77,10 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       if(!saved){const previous=JSON.parse(sessionStorage.getItem(storageKey)??'null');if(validReconstructionJob(previous)){saved=previous;if(source)await saveReconstructionLink(source,clip,saved);}}
       const available=source?await listReconstructionLinks(source,clip):saved?[saved]:[];
       if(!saved&&available.length===1&&available[0].creation)saved=available[0];
-      if(!retired){setAttempts(available);if(saved)setJob(current=>current??saved);setRecovering(false);}
+      if(!retired){setAttempts(available);if(saved)setJob(current=>processingJobId&&saved?.id===processingJobId?saved:current??saved);setRecovering(false);}
     })().catch(()=>{if(!retired){setError('Не удалось восстановить локальную ссылку на сцену. Исходная запись сохранена.');setRecovering(false);}});
     return()=>{retired=true;};
-  },[storageKey,clip]);
+  },[storageKey,clip,processingJobId]);
   useEffect(()=>{
     if(!job)return;let retired=false;let timer:ReturnType<typeof setTimeout>;const abort=new AbortController();
     let delay=1000;
@@ -88,7 +92,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       if(job.creation&&source&&(autoStopped.current||await automaticReconstructionStopped(source,job)))autoStopped.current=true;
       // A creation record is an already authorized durable continuation. The
       // checkbox controls creating a NEW automatic intent, not recovering one.
-      const automatic=!!job.creation&&complete&&!autoStopped.current;
+      const automatic=manageAutomaticPreparation&&!!job.creation&&complete&&!autoStopped.current;
       let next:ReconstructionState;
       try{next=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json();if(!retired)setConfirmedMissing(false);}
       catch(e){
@@ -131,22 +135,35 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       if(!fatal){timer=setTimeout(()=>{void poll();},delay);delay=Math.min(delay*2,30000);}
     }}};
     void poll();return()=>{retired=true;abort.abort();clearTimeout(timer);};
-  },[job,refresh,autoPrepare,complete]);
+  },[job,refresh,autoPrepare,complete,manageAutomaticPreparation]);
   const start=async(routeOnly=false,candidateJob?:ReconstructionJob)=>{
-    const source=folder();if(!source||uploadAbort.current||!candidateJob&&job?.creation)return;
+    const source=folder();if(!source||uploadAbort.current)return;
     const controller=new AbortController();uploadAbort.current=controller;setConfirmedMissing(false);setUploading(true);setError(null);
     let pending:ReconstructionJob|null=null;
     try{
-      const next=candidateJob??job??{id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
+      let next=candidateJob??job;
+      if(!next&&routeOnly){
+        autoCandidate.current??={...newAutomaticReconstruction(mask as 'none'|'avatar'|'game'),creation:{mask:mask as 'none'|'avatar'|'game',steps,prepare_route:true,route_only:true}};
+        next=explicitNewAttempt.current?autoCandidate.current:await ensureAutomaticReconstructionLink(source,clip,autoCandidate.current.creation!.mask,autoCandidate.current);
+        if(!next)throw Error('reconstruction_attempt_selection_required');
+      }
+      next??={id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
       // saveReconstructionLink confirms immutable OLD + NEW attempt links
       // before replacing the current pointer. No HTTP precedes this commit.
       await saveReconstructionLink(source,clip,next);pending=next;autoStopped.current=false;
+      explicitNewAttempt.current=false;
       setStatus(null);setJob(next);setAttempts(await listReconstructionLinks(source,clip));sessionStorage.setItem(storageKey,JSON.stringify(next));
-      const options=next.creation??{mask,steps,prepare_route:true,route_only:routeOnly};
-      const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:next.id,key:next.key,...options}),signal:controller.signal})).json();setStatus(created);
-      if(created.phase!=='uploading')return;
-      await uploadReconstruction(source,next,(bytes,total)=>setProgress(`${(bytes/1048576).toFixed(1)} / ${(total/1048576).toFixed(1)} МБ`),controller.signal);
-      const started=await(await reconstructionRequest(`/jobs/${next.id}/start`,next,{method:'POST',body:'{}',signal:controller.signal})).json();setStatus(started);
+      const launch=async()=>{
+        if(controller.signal.aborted)throw new DOMException('Aborted','AbortError');
+        const options=next.creation??{mask,steps,prepare_route:true,route_only:routeOnly};
+        const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:next.id,key:next.key,...options}),signal:controller.signal})).json();setStatus(created);
+        if(created.phase!=='uploading')return;
+        await uploadReconstruction(source,next,(bytes,total)=>setProgress(`${(bytes/1048576).toFixed(1)} / ${(total/1048576).toFixed(1)} МБ`),controller.signal);
+        const confirmed=await(await reconstructionRequest(`/jobs/${next.id}`,next,{signal:controller.signal})).json() as ReconstructionState;
+        if(confirmed.phase!=='uploading'){setStatus(confirmed);return;}
+        const started=await(await reconstructionRequest(`/jobs/${next.id}/start`,next,{method:'POST',body:'{}',signal:controller.signal})).json();setStatus(started);
+      };
+      if(navigator.locks)await navigator.locks.request(`sphere-reconstruction-upload-${next.id}`,{signal:controller.signal},launch);else await launch();
     }catch(e){if(pending){setJob(pending);setError(`Запуск не подтверждён: ${e instanceof Error?e.message:'нет ответа'}. Проверяем существующее задание; повторного запуска нет.`);}else setError('Не удалось сохранить ссылку на новое задание. Обработка не запускалась; прежняя попытка и исходная запись сохранены.');}
     finally{uploadAbort.current=null;setUploading(false);}
   };
@@ -163,20 +180,36 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     setSwitchingAttempt(true);setError(null);
     try{
       await saveReconstructionLink(source,clip,selected);
+      explicitNewAttempt.current=false;autoCandidate.current=null;
       sessionStorage.setItem(storageKey,JSON.stringify(selected));
       setStatus(null);setJob(selected);
     }catch{setError('Не удалось выбрать сохранённую попытку. Предыдущие ссылки и исходная запись сохранены.');}
     finally{setSwitchingAttempt(false);}
   };
   useEffect(()=>{
-    if(!autoPrepare||autoAttempted.current||recovering||!complete||!folderRef.current())return;
+    if(!manageAutomaticPreparation||!autoPrepare||autoAttempted.current||recovering||!complete||!folderRef.current())return;
     autoAttempted.current=true;
     // A recovered link belongs to an existing intent, including an ambiguous
     // start. Only new completed recordings may create an automatic attempt.
-    if(!job&&!attempts.length){const source=folderRef.current()!;setUploading(true);
-      void ensureAutomaticReconstructionLink(source,clip,hudHidden?'avatar':'game').then(next=>{if(next){setJob(next);setAttempts([next]);sessionStorage.setItem(storageKey,JSON.stringify(next));}}).catch(e=>setError(`Не удалось сохранить автоматическую подготовку: ${e instanceof Error?e.message:'ошибка'}. Запись сохранена.`)).finally(()=>setUploading(false));}
-    onAutoPrepareConsumed?.();
-  },[autoPrepare,recovering,complete,job,attempts,onAutoPrepareConsumed,clip,hudHidden,storageKey]);
+    if(job||attempts.length){onAutoPrepareConsumed?.();return;}
+    const source=folderRef.current()!,request=new AbortController();let retired=false;setUploading(true);
+    const mask=hudHidden?'avatar':'game';autoCandidate.current??=newAutomaticReconstruction(mask);
+    void(async()=>{
+      for(let attempt=0;attempt<3;attempt++){
+        try{
+          const next=await ensureAutomaticReconstructionLink(source,clip,mask,autoCandidate.current!);
+          if(retired)return;
+          if(next){setUploading(false);setJob(next);setAttempts([next]);sessionStorage.setItem(storageKey,JSON.stringify(next));onAutoPrepareConsumed?.();}
+          return;
+        }catch(error){
+          if(retired)return;
+          if(attempt===2){setError(`Не удалось сохранить автоматическую подготовку: ${error instanceof Error?error.message:'ошибка'}. Запись сохранена.`);return;}
+          await queueWait(1000*(attempt+1),request.signal);
+        }
+      }
+    })().catch(()=>{}).finally(()=>{if(!retired)setUploading(false);});
+    return()=>{retired=true;request.abort();};
+  },[autoPrepare,recovering,complete,job,attempts,onAutoPrepareConsumed,clip,hudHidden,storageKey,manageAutomaticPreparation]);
   const cancel=async()=>{
     if(job?.creation)autoStopped.current=true;uploadAbort.current?.abort();if(!job)return;
     if(job.creation&&folderRef.current())try{await stopAutomaticReconstruction(folderRef.current()!,job);}catch{setError('Не удалось сохранить остановку подготовки. Проверьте локальное хранилище.');return;}
@@ -220,7 +253,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       {busy&&!['pending_auto_prepare','preparing','features'].includes(status.navigation?.phase??'')&&<Button variant="outline" size="sm" onClick={()=>{void cancel();}}>Отменить обработку</Button>}
       {['pending_auto_prepare','preparing','features'].includes(status.navigation?.phase??'')&&<span className="text-xs text-muted-foreground">Подготовка ориентиров выполняется отдельно; её состояние обновляется автоматически.</span>}
       {status.phase==='uploading'&&!uploading&&<Button size="sm" onClick={()=>{void start();}}>Продолжить передачу</Button>}
-      {['failed','cancelled'].includes(status.phase)?<Button variant="outline" size="sm" disabled={busy||!complete||!folder()} onClick={retryPreparation}>Повторить подготовку записи</Button>:terminalReconstruction(status)&&<Button variant="outline" size="sm" onClick={()=>{sessionStorage.removeItem(storageKey);setJob(null);setStatus(null);setError(null);}}>Новое отдельное задание</Button>}
+      {['failed','cancelled'].includes(status.phase)?<Button variant="outline" size="sm" disabled={busy||!complete||!folder()} onClick={retryPreparation}>Повторить подготовку записи</Button>:terminalReconstruction(status)&&<Button variant="outline" size="sm" onClick={()=>{explicitNewAttempt.current=true;autoCandidate.current=null;sessionStorage.removeItem(storageKey);setJob(null);setStatus(null);setError(null);}}>Новое отдельное задание</Button>}
     </div>}
     <HudSpeedCard telemetry={status?.telemetry} sourceManifestSha={sourceManifestSha}/>
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}

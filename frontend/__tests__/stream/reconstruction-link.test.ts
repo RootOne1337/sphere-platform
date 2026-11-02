@@ -92,3 +92,23 @@ test('corrupt or oversized metadata cannot become a new job',async()=>{
   files.set('reconstruction-link.json',JSON.stringify({schema:'sphere-local-reconstruction-link-v1',clip,job:{...job,key:'short'}}));
   await expect(readReconstructionLink(folder,clip)).rejects.toThrow('reconstruction_link_binding');
 });
+test('an explicit candidate survives an ambiguous archive close and is reused with its exact options',async()=>{
+  const {folder,files}=memoryFolder(),candidate={...job,creation:{mask:'none' as const,steps:5000,prepare_route:true as const,route_only:true as const}};
+  const get=folder.getFileHandle.bind(folder);let fail=true;
+  folder.getFileHandle=async(name,options)=>{
+    const file=await get(name,options);if(name!==`reconstruction-attempt-${job.id}.json`)return file;
+    return {...file,createWritable:async()=>{
+      const writer=await file.createWritable();return {...writer,close:async()=>{await writer.close();if(fail){fail=false;throw Error('close_unconfirmed');}}};
+    }} as FileSystemFileHandle;
+  };
+  await expect(ensureAutomaticReconstructionLink(folder,clip,'none',candidate)).rejects.toThrow('close_unconfirmed');
+  expect(await ensureAutomaticReconstructionLink(folder,clip,'none',candidate)).toEqual(candidate);
+  expect(await listReconstructionLinks(folder,clip)).toEqual([candidate]);
+  expect(files.get('video.h264')).toBe('original-video');
+});
+test('an invalid or differently masked candidate is rejected before writing metadata',async()=>{
+  const {folder,files}=memoryFolder(),before=new Map(files);
+  await expect(ensureAutomaticReconstructionLink(folder,clip,'game',{...job,creation:{mask:'avatar',steps:30000,prepare_route:true,route_only:true}})).rejects.toThrow('reconstruction_link_binding');
+  await expect(ensureAutomaticReconstructionLink(folder,clip,'game',job)).rejects.toThrow('reconstruction_link_binding');
+  expect(files).toEqual(before);
+});
