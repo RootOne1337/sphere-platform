@@ -83,7 +83,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const resultsIdentity=JSON.stringify([scope,clip,job?.id,job?.key,sourceManifestSha]);
   const priorResults=savedResults?.identity===resultsIdentity?savedResults.items:[];
   const mayInspectPrior=!!job&&!!sourceManifestSha&&visible&&attempts.length>1&&!!status
-    &&['failed','cancelled','quality_rejected','review_required','partial_scene'].includes(status.phase)&&status.navigation?.phase!=='ready';
+    &&terminalReconstruction(status)&&status.navigation?.phase!=='ready';
   useEffect(()=>{
     if(!mayInspectPrior||!job||!sourceManifestSha)return;
     const abort=new AbortController();let retired=false;

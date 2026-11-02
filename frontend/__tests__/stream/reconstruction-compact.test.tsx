@@ -104,6 +104,28 @@ test('a failed new attempt visibly offers the previous source-bound result witho
   expect(screen.queryByText(/Недостаточно ресурсов для безопасного продолжения/)).not.toBeInTheDocument();
   expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
 });
+test.each(['sparse_complete','complete'])('a newer %s attempt with rejected navigation retains an explicit prior result choice',async phase=>{
+  const current={id:'f303'.padEnd(32,'0'),key:'8'.repeat(64)},previous={id:'6a770406'.padEnd(32,'0'),key:'9'.repeat(64)},changed=jest.fn();
+  status={phase,source_manifest_sha256:manifest,geometry_available:true,quality:{registered:173,selected:173,coverage:1,points:10630,mean_reprojection_px:1.1},navigation:{phase:'rejected',error:'route_map_has_unobserved_sections'}};
+  jest.mocked(readReconstructionLink).mockResolvedValue(current);jest.mocked(listReconstructionLinks).mockResolvedValue([current,previous]);
+  jest.mocked(reconstructionRequest).mockImplementation(async path=>({json:async()=>path===`/jobs/${previous.id}`?
+    {phase:'failed',source_manifest_sha256:manifest,error:'resource_guard',geometry_available:true,navigation:{phase:'not_prepared'}}:
+    path===`/jobs/${previous.id}/geometry-alternatives`?{preferredAlternativeId:'saved-173',alternatives:[{id:'saved-173',label:'Полный сохранённый проход',cameras:173,points:20556}]}:
+    path.endsWith('/geometry-alternatives')?{alternatives:[]}:status}) as Response);
+  const view=render(<TeachingReconstruction {...props} onRouteChange={changed}/>);
+  const card=await screen.findByRole('region',{name:'Сохранённые результаты предыдущих попыток'});
+  expect(card).toHaveTextContent(/173 камер.*20.*556 точек/);
+  expect(card).toHaveTextContent('Это схема для просмотра. Она не означает, что карта движения подготовлена.');
+  expect(screen.getByText(/Основная попытка: 173\/173 камер.*10.*630 точек/)).toBeInTheDocument();
+  expect(saveReconstructionLink).not.toHaveBeenCalled();expect(changed).toHaveBeenLastCalledWith(current);
+  expect(screen.queryByRole('button',{name:'Карта подготовлена'})).not.toBeInTheDocument();expect(view.container.innerHTML).not.toContain(previous.key);
+  fireEvent.click(within(card).getByRole('button',{name:'Открыть сохранённый результат · 6a770406'}));
+  await waitFor(()=>expect(saveReconstructionLink).toHaveBeenCalledWith(folder,clip,previous));
+  await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(previous));
+  expect(screen.queryByRole('button',{name:'Карта подготовлена'})).not.toBeInTheDocument();
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
+});
+
 test('the chosen geometry is portaled into the single viewer even when primary geometry is unavailable',async()=>{
   status={phase:'quality_rejected',source_manifest_sha256:manifest,geometry_available:false};
   const target=document.createElement('div');document.body.appendChild(target);
