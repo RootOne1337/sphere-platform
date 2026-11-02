@@ -8,8 +8,15 @@ mandatory global check cannot be bypassed by optical flow. Map geometry is fixed
 
 from __future__ import annotations
 
-from motor_worker.route_localization import SIZE, RouteLocalizer, extract_features
+import time
+
 from motor_worker.protocol import ProtocolError
+from motor_worker.route_localization import (
+    SIZE,
+    RouteLocalizer,
+    extract_gray_features,
+    prepare_feature_gray,
+)
 
 
 class AnchoredRouteLocalizer(RouteLocalizer):
@@ -50,14 +57,17 @@ class AnchoredRouteLocalizer(RouteLocalizer):
         return None
 
     def _features(self, frame):
-        cv, np = self.cv, self.np
-        rgb = np.frombuffer(frame.rgb24, np.uint8).reshape(frame.height, frame.width, 3)
-        self._gray = cv.resize(cv.cvtColor(rgb, cv.COLOR_RGB2GRAY), SIZE, interpolation=cv.INTER_AREA)
+        began = time.perf_counter()
+        self._gray = prepare_feature_gray(frame)
+        self.last_diagnostic['featurePreparationMs'] = (time.perf_counter()-began)*1000
         # Descriptor extraction is deferred until a global check is necessary.
         return (), ()
 
     def _extract(self):
-        return extract_features(self._frame, self.mask)
+        began = time.perf_counter()
+        result = extract_gray_features(self._gray, self.mask)
+        self.last_diagnostic['featureExtractionMs'] = (time.perf_counter()-began)*1000
+        return result
 
     def _solve_descriptors(self):
         # A similar facade may crowd the correct place out of the three-vote
@@ -117,7 +127,10 @@ class AnchoredRouteLocalizer(RouteLocalizer):
         may_track = (self._anchors is not None and self.confirmations >= 3
                      and age is not None and 0 < age < self.MAX_DESCRIPTOR_AGE)
         self.last_diagnostic.update(descriptorAgeSeconds=age, mandatoryGlobalCheck=not may_track)
+        began = time.perf_counter()
         solved = self._flow() if may_track else None
+        if may_track:
+            self.last_diagnostic['flowPnPMs'] = (time.perf_counter()-began)*1000
         if solved is not None:
             self.last_diagnostic["method"] = "map_anchored_flow"
         else:

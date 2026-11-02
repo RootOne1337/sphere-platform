@@ -105,19 +105,31 @@ def feature_mask(profile):
     return cv.erode(mask, np.ones((17, 17), np.uint8), borderType=cv.BORDER_CONSTANT, borderValue=0)
 
 
-def extract_features(frame, mask):
-    """Identical teaching/query extraction resolution and descriptor transform."""
+def prepare_feature_gray(frame):
+    """The single canonical RGB-to-SIFT image transform, also reused by LK."""
     import cv2 as cv
     import numpy as np
 
     rgb = np.frombuffer(frame.rgb24, np.uint8).reshape(frame.height, frame.width, 3)
-    gray = cv.resize(cv.cvtColor(rgb, cv.COLOR_RGB2GRAY), SIZE, interpolation=cv.INTER_AREA)
+    return cv.resize(cv.cvtColor(rgb, cv.COLOR_RGB2GRAY), SIZE, interpolation=cv.INTER_AREA)
+
+
+def extract_gray_features(gray, mask):
+    """Extract from the current canonical gray image without another RGB copy."""
+    import cv2 as cv
+    import numpy as np
+
     points, desc = cv.SIFT_create(nfeatures=2048, contrastThreshold=.0066667, edgeThreshold=10).detectAndCompute(gray, mask)
     if desc is None:
         return np.empty((0, 2)), np.empty((0, 128), np.float32)
     desc = np.sqrt(desc/np.maximum(desc.sum(axis=1, keepdims=True), 1e-8))
     desc /= np.maximum(np.linalg.norm(desc, axis=1, keepdims=True), 1e-8)
     return np.float64([p.pt for p in points]), desc.astype(np.float32)
+
+
+def extract_features(frame, mask):
+    """Identical teaching/query extraction resolution and descriptor transform."""
+    return extract_gray_features(prepare_feature_gray(frame), mask)
 
 
 def inlier_spatial_support(points):
@@ -348,22 +360,32 @@ class RouteLocalizer:
         self.recent_confirmed_sources = []
         self.previous, self.retired = None, False
         self._proposal_index = None
+        self.last_diagnostic = {}
 
     def _fresh(self, frame):
         now = self.clock()
         return finite(now, 0, float("inf")) and 0 <= now-frame.received_at <= .25
 
     def _features(self, frame):
-        return extract_features(frame, self.mask)
+        began = time.perf_counter()
+        gray = prepare_feature_gray(frame)
+        self.last_diagnostic['featurePreparationMs'] = (time.perf_counter()-began)*1000
+        began = time.perf_counter()
+        features = extract_gray_features(gray, self.mask)
+        self.last_diagnostic['featureExtractionMs'] = (time.perf_counter()-began)*1000
+        return features
 
     def _solve(self, pixels, descriptors):
-        cv, np = self.cv, self.np
+        np = self.np
+        self.last_diagnostic['queryFeatures'] = len(pixels)
         if len(pixels) < 24:
             return None
         # Coarse votes only select covisible reference neighborhoods. Ambiguous
         # repeated descriptors cannot directly become pose correspondences.
+        began = time.perf_counter()
         coarse = self._coarse_matches(descriptors)
         votes = coarse_reference_votes(coarse,self.visibility)
+        self.last_diagnostic['coarseSearchMs'] = (time.perf_counter()-began)*1000
         candidates = []
         for _ in range(self.candidate_limit):
             at = int(np.argmax(votes))
@@ -377,12 +399,16 @@ class RouteLocalizer:
         recent = self._recent_reference_candidate()
         if recent is not None and all(abs(recent-at)>1 for at in candidates):
             candidates.append(recent)
+        self.last_diagnostic['candidateReferenceIndices'] = list(candidates)
         proposals = []
+        began = time.perf_counter()
         for at in candidates:
             indices = np.flatnonzero(np.any(self.visibility[max(0, at-1):at+2], axis=0))
             proposal = self._solve_subset(pixels, descriptors, indices)
             if proposal is not None:
                 proposals.append(proposal)
+        self.last_diagnostic['candidateMatchPnPMs'] = (time.perf_counter()-began)*1000
+        self.last_diagnostic['verifiedCandidateCount'] = len(proposals)
         if not proposals:
             return None
         return self._rank_proposals(proposals)
@@ -548,6 +574,7 @@ class RouteLocalizer:
         return tuple(output)
 
     def observe(self, frame, *, episode_id, goal_revision, scene):
+        self.last_diagnostic = dict(method='not_attempted')
         if type(frame) is not PolicyFrame or type(scene) is not str or scene not in {"active", "menu", "unknown", "disconnected"}:
             raise ProtocolError("invalid_route_localization_observation")
         source_sha = hashlib.sha256(frame.rgb24).hexdigest()

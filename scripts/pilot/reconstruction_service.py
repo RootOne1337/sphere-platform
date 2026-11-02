@@ -596,11 +596,27 @@ class Jobs:
             self.processes.pop(job.name, None)
 
     def _monitor_worker(self, job, process):
-        deadline = time.monotonic() + 2400
         control = json.loads((job/'control.json').read_text('utf-8'))
         budget=route_resource_profile(job,route_only=control.get('route_only') is True)
+        if control.get('route_only') is True:
+            from scripts.pilot.route_resource_monitor import TaskResourceMonitor
+
+            # CPU route reconstruction already uses task-scoped volume proof
+            # inside its worker. Keep its supervisor equally bounded; native
+            # RAM/commit/disk remain fresh without per-pass PowerShell startup.
+            with TaskResourceMonitor(ROOT) as monitor:
+                self._monitor_owned_worker(job, process, budget, monitor=monitor)
+        else:
+            self._monitor_owned_worker(job, process, budget)
+
+    def _monitor_owned_worker(self, job, process, budget, *, monitor=None):
+        deadline = time.monotonic() + 2400
         while process.poll() is None:
             time.sleep(3)
+            if monitor is not None and process.poll() is not None:
+                # The finished sparse model must reach automatic preparation
+                # before unrelated later resource pressure can reject it.
+                break
             reason = None
             if (job / 'CANCEL').exists():
                 reason = 'cancelled'
@@ -608,7 +624,7 @@ class Jobs:
                 reason = 'worker_timeout'
             elif (job / 'worker.log').stat().st_size > 32 * 1024**2:
                 reason = 'worker_log_quota'
-            elif route_resource_findings(collect(ROOT),budget,evaluate_fn=evaluate):
+            elif route_resource_findings(monitor.sample() if monitor is not None else collect(ROOT),budget,evaluate_fn=evaluate):
                 reason = 'resource_guard'
             if reason:
                 (job/'CANCEL').touch(exist_ok=True)

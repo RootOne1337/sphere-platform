@@ -7,7 +7,13 @@ from dataclasses import replace
 
 from motor_worker.landmarks import RouteViewProfile
 from motor_worker.policy import PolicyFrame
-from motor_worker.route_localization import SparseRoute, pipeline_id
+from motor_worker.route_localization import (
+    SparseRoute,
+    extract_features,
+    extract_gray_features,
+    pipeline_id,
+    prepare_feature_gray,
+)
 from motor_worker.route_tracking import AnchoredRouteLocalizer
 
 AVAILABLE = all(importlib.util.find_spec(m) for m in ("cv2", "numpy"))
@@ -79,6 +85,44 @@ class AnchoredTrackingTests(unittest.TestCase):
         self.assertGreater(pose.inliers, 100)
         self.np.testing.assert_allclose(pose.center, center, atol=.04)
         self.assertLessEqual(len(self.tracker._anchors[2]), 256)
+
+    def test_reused_hd_gray_has_exactly_the_same_keypoints_and_rootsift(self):
+        # The stored descriptor contract must not change merely to save a
+        # redundant 1080p color conversion on descriptor/recovery frames.
+        image = self.np.random.default_rng(17).integers(0, 256, (1080, 1920, 3), self.np.uint8)
+        frame = PolicyFrame(EPOCH, 1, self.now, 1920, 1080, image.tobytes())
+        expected = extract_features(frame, self.tracker.mask)
+        actual = extract_gray_features(prepare_feature_gray(frame), self.tracker.mask)
+        self.assertGreater(len(expected[0]), 24)
+        for first, second in zip(expected, actual):
+            self.np.testing.assert_array_equal(first, second)
+
+    def test_descriptor_frame_prepares_rgb_only_once_and_drops_the_gray_afterwards(self):
+        from unittest.mock import patch
+        from motor_worker.route_localization import RouteLocalizer
+
+        self.tracker._extract = AnchoredRouteLocalizer._extract.__get__(self.tracker)
+        observed_gray = []
+
+        def extract(gray, mask):
+            self.assertIs(gray, self.tracker._gray)
+            observed_gray.append(gray.shape)
+            return extract_gray_features(gray, mask)
+
+        with patch('motor_worker.route_tracking.extract_gray_features', side_effect=extract), \
+                patch.object(self.cv, 'cvtColor', wraps=self.cv.cvtColor) as convert, \
+                patch.object(self.cv, 'resize', wraps=self.cv.resize) as resize, \
+                patch.object(RouteLocalizer, '_solve', return_value=None):
+            pose, _ = self.observe()
+        self.assertEqual(pose.state, 'unknown')
+        self.assertEqual(observed_gray, [(540, 960)])
+        self.assertEqual(convert.call_count, 1)
+        self.assertEqual(resize.call_count, 1)
+        for field in ('featurePreparationMs', 'featureExtractionMs'):
+            self.assertGreaterEqual(self.tracker.last_diagnostic[field], 0)
+            self.assertTrue(self.np.isfinite(self.tracker.last_diagnostic[field]))
+        self.assertIsNone(self.tracker._gray)
+        self.assertIsNone(self.tracker._frame)
 
     def test_repeated_rgb_discards_anchors_and_requires_fresh_confirmation(self):
         self.confirm()

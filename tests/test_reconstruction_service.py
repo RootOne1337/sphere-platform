@@ -437,6 +437,117 @@ def test_sparse_receipt_allows_one_automatic_preparation_after_dense_failure(job
     assert jobs.status(job)['sparse_available'] is True
 
 
+def test_cpu_route_finishing_during_supervisor_sleep_reaches_automatic_export(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    from scripts.pilot import route_resource_monitor
+
+    jobs.create(dict(id='a'*32, key='b'*64, mask='game', steps=3000,
+                     prepare_route=True, route_only=True))
+    job = jobs.path('a'*32)
+    service.write_json(job/'state.json', dict(phase='extracting'))
+    child = SimpleNamespace(returncode=None)
+    child.poll = lambda: child.returncode
+    events, calls = [], []
+
+    class Monitor:
+        def __init__(self, root):
+            assert root == service.ROOT
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            events.append('monitor_closed')
+
+        def sample(self):
+            pytest.fail('finished CPU child must not take a later resource sample')
+
+    def finish(_seconds):
+        child.returncode = 0
+        service.write_json(job/'state.json', dict(phase='sparse_complete'))
+        service.write_json(job/'sparse-receipt.json', dict(placeholder=True))
+
+    monkeypatch.setattr(route_resource_monitor, 'TaskResourceMonitor', Monitor)
+    monkeypatch.setattr(service, 'collect', lambda _: pytest.fail('CPU route must not use full collector'))
+    monkeypatch.setattr(service.time, 'sleep', finish)
+    monkeypatch.setattr(jobs.navigation, 'prepare', lambda target, body: calls.append((target, body)))
+    jobs.monitor(job, child)
+    assert len(calls) == 1 and calls[0][0] == job
+    assert jobs.status(job)['phase'] == 'sparse_complete'
+    assert not (job/'CANCEL').exists()
+    assert not (job/'route-pipeline-refusal.json').exists()
+    assert events == ['monitor_closed']
+
+
+def test_cpu_route_supervisor_retains_fresh_guard_and_owned_monitor_cleanup(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    from scripts.pilot import resource_guard, route_resource_monitor
+
+    jobs.create(dict(id='a'*32, key='b'*64, mask='game', steps=3000,
+                     prepare_route=True, route_only=True))
+    job = jobs.path('a'*32)
+    service.write_json(job/'state.json', dict(phase='extracting'))
+    (job/'worker.log').touch()
+    child = SimpleNamespace(returncode=None)
+    child.poll = lambda: child.returncode
+    events = []
+    healthy = dict(system='Windows', freeDiskBytes=30*2**30,
+                   availableRamBytes=16*2**30, totalRamBytes=48*2**30,
+                   committedBytes=60*2**30, commitLimitBytes=96*2**30,
+                   volumeHealthStatus='Healthy', volumeOperationalStatus=['OK'])
+    snapshots = [healthy, dict(healthy, availableRamBytes=1*2**30)]
+
+    class Monitor:
+        def __init__(self, _root):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            events.append('monitor_closed')
+
+        def sample(self):
+            events.append('sample')
+            return snapshots.pop(0)
+
+    def stop(_process):
+        child.returncode = -1
+        events.append('child_stopped')
+
+    monkeypatch.setattr(route_resource_monitor, 'TaskResourceMonitor', Monitor)
+    monkeypatch.setattr(service, 'collect', lambda _: pytest.fail('CPU route must not use full collector'))
+    monkeypatch.setattr(service, 'evaluate', resource_guard.evaluate)
+    monkeypatch.setattr(service.time, 'sleep', lambda _: None)
+    monkeypatch.setattr(jobs, '_stop_worker', stop)
+    monkeypatch.setattr(jobs.navigation, 'prepare', lambda *a, **k: pytest.fail('guard must prevent export'))
+    jobs.monitor(job, child)
+    assert jobs.status(job)['phase'] == 'failed'
+    assert jobs.status(job)['error'] == 'resource_guard'
+    assert json.loads((job/'route-pipeline-refusal.json').read_bytes())['error'] == 'resource_guard'
+    assert events == ['sample', 'sample', 'child_stopped', 'monitor_closed']
+
+
+def test_dense_supervision_keeps_original_full_collector(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    from scripts.pilot import route_resource_monitor
+
+    job = create(jobs)
+    (job/'worker.log').touch()
+    calls = []
+    monkeypatch.setattr(route_resource_monitor, 'TaskResourceMonitor', lambda _: pytest.fail('dense profile changed'))
+    monkeypatch.setattr(service.time, 'sleep', lambda _: None)
+    monkeypatch.setattr(service, 'collect', lambda target: calls.append(target) or {})
+    monkeypatch.setattr(service, 'route_resource_findings', lambda *a, **k: ['ram_low'])
+    monkeypatch.setattr(jobs, '_stop_worker', lambda _: None)
+    jobs.monitor(job, SimpleNamespace(poll=lambda: None))
+    assert calls == [service.ROOT]
+    assert jobs.status(job)['error'] == 'resource_guard'
+
+
 def test_sparse_receipt_does_not_restart_preparation_after_service_restart(jobs):
     jobs.create(dict(id='a' * 32, key='b' * 64, mask='none', steps=30000, prepare_route=True))
     job = jobs.path('a' * 32)

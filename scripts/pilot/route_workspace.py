@@ -264,13 +264,31 @@ class RouteWorkspaces:
             process.wait(10)
 
     def _monitor_process(self, folder, process, profile=None):
+        from scripts.pilot.route_resource_monitor import TaskResourceMonitor
+
+        # The export worker already owns its own volume proof. Its supervisor
+        # must also scope recurring health checks to this process lifetime,
+        # rather than launch a synchronous PowerShell discovery every 3 s.
+        # Native RAM/commit/disk remain fresh on every sample; no proof is
+        # shared across workers, and close reaps a pending owned probe.
+        with TaskResourceMonitor(ROOT) as monitor:
+            self._monitor_owned_process(folder, process, profile, monitor)
+
+    def _monitor_owned_process(self, folder, process, profile, monitor):
         deadline = time.monotonic()+330
         while process.poll() is None:
             time.sleep(3)
+            # A child may have finished during the supervisor interval. Do
+            # not spend another health probe or replace its terminal result
+            # with a refusal caused by unrelated later host pressure.
+            if process.poll() is not None:
+                break
             try:
                 if (folder.parent.parent/'CANCEL').exists():
                     raise RuntimeError('cancelled')
-                resource_checkpoint(folder, profile=profile)
+                if (folder/'CANCEL').exists():
+                    raise RuntimeError('cancelled')
+                resource_checkpoint(folder, profile=profile, snapshot=monitor.sample())
                 if time.monotonic() > deadline:
                     raise RuntimeError('route_preparation_timeout')
                 if (folder/'worker.private.log').stat().st_size > 8*1024**2:

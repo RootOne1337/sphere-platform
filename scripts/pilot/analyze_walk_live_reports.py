@@ -8,6 +8,11 @@ from pathlib import Path
 import statistics
 import zipfile
 
+if __package__:
+    from scripts.pilot.route_reactivity import summarize_reactivity
+else:  # Preserve direct-script CLI invocation as well as python -m.
+    from route_reactivity import summarize_reactivity
+
 
 def analyze(archive, since):
     result=[]
@@ -30,7 +35,8 @@ def analyze(archive, since):
                 poseReasons=dict(collections.Counter(x.get('poseReason') for x in obs)),
                 applied=r['inputSummary']['applied'],timings=timings,
                 stageCounts=dict(collections.Counter(x['stage'] for x in stages)),stageDataIsTailOnly=True,
-                clientVersion=r.get('clientVersion'),nativeTimelinePresent='nativeInputs' in r))
+                clientVersion=r.get('clientVersion'),nativeTimelinePresent='nativeInputs' in r,
+                reactivity=summarize_reactivity(r)))
     return sorted(result,key=lambda r:r['localTime'])
 
 
