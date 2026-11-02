@@ -100,6 +100,15 @@ test('the shared source is verified and cannot be relabeled as a newly selected 
   await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(null));
   expect(changed.mock.calls.some(([value])=>value?.clip===other)).toBe(false);
 });
+
+test('an attempt with no geometry still displays the actual saved source beside the empty result',async()=>{
+  await library();render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await screen.findByRole('button',{name:'Смотреть исходное видео'});
+  expect(screen.getByLabelText('Исходный кадр сохранённой записи')).toBeInTheDocument();
+  await waitFor(()=>expect(draw).toHaveBeenCalled());
+  fireEvent.click(screen.getByRole('button',{name:'Смотреть исходное видео'}));
+  expect(screen.getByLabelText('Записанный видеокадр')).toBeVisible();
+});
 afterEach(()=>{jest.mocked(TeachingReconstruction).mockReset().mockImplementation(()=> <></>);jest.mocked(ImageRouteReview).mockReset().mockImplementation(()=>null);jest.mocked(reconstructionRequest).mockReset();jest.restoreAllMocks();});
 
 test.each([true,false,undefined])('selected verified recording restores only its declared automatic intent: %s',async declared=>{

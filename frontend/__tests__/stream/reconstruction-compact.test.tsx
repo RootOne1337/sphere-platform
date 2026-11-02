@@ -82,6 +82,26 @@ test('a retry of the same capture cannot borrow ready status before its own defe
   await act(async()=>{release(status);});
   await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(next));
 });
+
+test('a failed new attempt visibly offers the previous source-bound result without changing it automatically',async()=>{
+  const previous={id:'6a770406'.padEnd(32,'0'),key:'9'.repeat(64)},changed=jest.fn();
+  status={phase:'failed',source_manifest_sha256:manifest,error:"No module named 'av'",geometry_available:false,navigation:{phase:'not_prepared'}};
+  jest.mocked(listReconstructionLinks).mockResolvedValue([saved,previous]);
+  jest.mocked(reconstructionRequest).mockImplementation(async path=>({json:async()=>path===`/jobs/${previous.id}`?
+    {phase:'failed',source_manifest_sha256:manifest,error:'resource_guard',geometry_available:true,quality:{registered:144,selected:173,points:9529,mean_reprojection_px:1.2},navigation:{phase:'not_prepared'}}:
+    path===`/jobs/${previous.id}/geometry-alternatives`?{preferredAlternativeId:'saved-173',alternatives:[{id:'saved-173',label:'Полный сохранённый проход',cameras:173,points:20556}]}:
+    path.endsWith('/geometry-alternatives')?{alternatives:[]}:status}) as Response);
+  const view=render(<TeachingReconstruction {...props} onRouteChange={changed}/>);
+  const card=await screen.findByRole('region',{name:'Сохранённые результаты предыдущих попыток'});
+  expect(screen.getByRole('alert')).toHaveTextContent('Не запустился декодер видео. Это ошибка обработчика. Исходное видео сохранено.');
+  expect(card).toHaveTextContent(/173 камер.*20.*556 точек/);expect(card).toHaveTextContent('Это схема для просмотра. Она не означает, что карта движения подготовлена.');
+  expect(saveReconstructionLink).not.toHaveBeenCalled();expect(changed).toHaveBeenLastCalledWith(saved);
+  expect(view.container.innerHTML).not.toContain(previous.key);expect(screen.queryByRole('button',{name:'Карта подготовлена'})).not.toBeInTheDocument();
+  fireEvent.click(within(card).getByRole('button',{name:'Открыть сохранённый результат · 6a770406'}));
+  await waitFor(()=>expect(saveReconstructionLink).toHaveBeenCalledWith(folder,clip,previous));
+  await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(previous));
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
+});
 test('the chosen geometry is portaled into the single viewer even when primary geometry is unavailable',async()=>{
   status={phase:'quality_rejected',source_manifest_sha256:manifest,geometry_available:false};
   const target=document.createElement('div');document.body.appendChild(target);

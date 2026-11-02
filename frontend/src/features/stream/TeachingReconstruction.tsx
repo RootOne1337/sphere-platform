@@ -10,6 +10,7 @@ import ReferenceComparison from './ReferenceComparison';
 import {cameraMotionRequiresReview,navigationErrorLabel,navigationPhaseLabel,routeCoverageLabel,prepareRoute as prepareRouteIntent,preparationError,preparationQuotaReached} from './routePreparation';
 import {newAutomaticReconstruction,queueWait} from './teachingQueue';
 import {assertReconstructionSource,routeSourceMismatch} from './routeSourceBinding';
+import {readSavedRouteResults,type SavedRouteResult} from './savedRouteResults';
 import {CompactReconstructionWorkflow,type ReconstructionWorkflowAction} from './CompactReconstructionWorkflow';
 import type {SceneGeometrySelection} from './sceneGeometrySelection';
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
@@ -28,6 +29,7 @@ export function HudSpeedCard({telemetry,sourceManifestSha}:{telemetry:Reconstruc
 const phases:Record<string,string>={uploading:'Передача сохранённой записи',starting:'Запуск обработчика',verifying:'Проверка исходника и освобождения ввода',extracting:'Извлечение кадров в исходном разрешении',features:'Поиск устойчивых визуальных признаков',matching:'Сопоставление соседних ракурсов',cameras:'Восстановление связанных камер',training:'Построение плотной Gaussian-сцены на GPU',complete:'Плотная сцена готова',failed:'Обработка остановлена',cancelled:'Задание отменено'};
 const reasons:Record<string,string>={no_connected_cameras_need_translation_and_overlap:'Не удалось связать камеры. Нужен проход с перемещением, перекрывающимися ракурсами и неподвижными деталями.',camera_quality_gate_failed:'Камеры восстановлены лишь частично или с большой ошибкой. Результат не принят как цельная сцена.',resource_guard:'Недостаточно ресурсов для безопасного продолжения.',worker_service_restarted:'Сервис был перезапущен. Исходная запись сохранена.',brush_failed_see_local_log:'Плотный рендер завершился с ошибкой. Камеры можно проверить отдельно.'};
 reasons.brush_timing_overflow='Brush завершился с ошибкой измерения времени GPU. Камеры и проверенные промежуточные результаты сохранены.';
+reasons["No module named 'av'"]='Не запустился декодер видео. Это ошибка обработчика.';
 reasons.brush_system_timing_build_required='Совместимый локальный движок плотной сцены ещё не подготовлен. Запись и восстановленные камеры сохранены.';
 phases.complete='Реконструкция рассчитана · базовая проверка ракурсов пройдена';
 phases.sparse_complete='Камеры и опорные точки рассчитаны';
@@ -57,6 +59,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const setStatus=useCallback((value:ReconstructionState|null,owner:ReconstructionJob|null=job)=>{if(value)assertReconstructionSource(value,sourceManifestSha,true);setStoredStatus(value);setStatusIdentity(owner?`${owner.id}:${owner.key}`:null);},[job,sourceManifestSha]);
   const [confirmedMissing,setConfirmedMissing]=useState(false);
   const [attempts,setAttempts]=useState<ReconstructionJob[]>([]),[switchingAttempt,setSwitchingAttempt]=useState(false);
+  const [savedResults,setSavedResults]=useState<{identity:string;items:SavedRouteResult[]}|null>(null);
   const [preparationNotice,setPreparationNotice]=useState<{jobId:string;message:string}|null>(null),[quotaJob,setQuotaJob]=useState<string|null>(null);
   const [mask,setMask]=useState(hudHidden?'avatar':'game'),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
@@ -77,6 +80,18 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const interactionBusy=manageAutomaticPreparation?busy:uploading||surfaceStarting||switchingAttempt;
   useEffect(()=>{onBusyChange(interactionBusy);},[interactionBusy,onBusyChange]);
   const sourceBound=!sourceManifestSha||status?.source_manifest_sha256===sourceManifestSha;
+  const resultsIdentity=JSON.stringify([scope,clip,job?.id,job?.key,sourceManifestSha]);
+  const priorResults=savedResults?.identity===resultsIdentity?savedResults.items:[];
+  const mayInspectPrior=!!job&&!!sourceManifestSha&&visible&&attempts.length>1&&!!status
+    &&['failed','cancelled','quality_rejected','review_required','partial_scene'].includes(status.phase)&&status.navigation?.phase!=='ready';
+  useEffect(()=>{
+    if(!mayInspectPrior||!job||!sourceManifestSha)return;
+    const abort=new AbortController();let retired=false;
+    void readSavedRouteResults(attempts,job.id,sourceManifestSha,abort.signal).then(items=>{
+      if(!retired)setSavedResults({identity:resultsIdentity,items});
+    }).catch(()=>{/* The selected attempt and original recording remain unchanged. */});
+    return()=>{retired=true;abort.abort();};
+  },[mayInspectPrior,resultsIdentity,attempts,job,sourceManifestSha]);
   useEffect(()=>{onRouteChange?.(sourceBound?job:null);},[job,sourceBound,onRouteChange]);
   useEffect(()=>{autoStopped.current=false;setConfirmedMissing(false);},[job?.id]);
   useEffect(()=>()=>{uploadAbort.current?.abort();onBusyChange(false);},[onBusyChange]);
@@ -286,6 +301,14 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
         {error&&<p role="alert" className="text-destructive">{error}</p>}
         {preparationNotice&&preparationNotice.jobId===job?.id&&<p role="alert" className="text-destructive">{preparationNotice.message}</p>}
         {status?.error&&<p role="alert" className="text-destructive">{reasons[status.error]??status.error} Исходное видео сохранено.</p>}
+        {mayInspectPrior&&priorResults.length>0&&<section aria-label="Сохранённые результаты предыдущих попыток" className="space-y-2 rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-3">
+          <p className="font-medium">Предыдущий результат этой записи сохранён</p><p>Новая попытка не заменила его. Можно открыть результат без повторной обработки.</p>
+          {priorResults.map(item=><div key={item.job.id} className="space-y-1 border-t border-border pt-2">
+            <p>Попытка {item.job.id.slice(0,8)} · {item.label}{item.cameras!==null?` · ${item.cameras} камер`:''}{item.points!==null?` · ${item.points.toLocaleString('ru')} точек`:''}</p>
+            <p className="text-muted-foreground">{item.kind==='map'?'Сохранённая карта подготовлена для проверки; автономный проезд не подтверждён.':item.kind==='diagnostic'?'Это схема для просмотра. Она не означает, что карта движения подготовлена.':'Геометрия доступна для просмотра; готовность карты движения проверяется отдельно.'}</p>
+            <Button size="sm" variant="outline" disabled={busy||!folder()} onClick={()=>{void selectAttempt(item.job.id);}}>Открыть сохранённый результат · {item.job.id.slice(0,8)}</Button>
+          </div>)}
+        </section>}
         {status?.navigation?.error&&<p role="status" className="text-amber-600 dark:text-amber-400">Карта: {navigationErrorLabel(status.navigation.error)}.</p>}
         {cameraMotionRequiresReview(status?.camera_motion)&&<p role="status" className="text-amber-600 dark:text-amber-400">Траектория камер требует проверки. Движение по этой версии карты выключено.</p>}
         {status?.dense_partial_available&&status.checkpoint&&<p role="status">Промежуточный рендер: {status.checkpoint.steps}/{status.checkpoint.target_steps} итераций. Расчёт ещё не завершён.</p>}
