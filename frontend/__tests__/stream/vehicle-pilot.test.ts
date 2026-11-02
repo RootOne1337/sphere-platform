@@ -49,8 +49,20 @@ test('pedal transitions release before the next button while steering remains on
   const pedal=f.events.filter(e=>e.id===0);
   expect(pedal).toEqual([{id:0,point:null},{id:0,point:{x:1581,y:957}}]);
   f.events.length=0;f.controller.apply({pedal:'coast',steering:0},1100,1300);
-  expect(f.events.find(e=>e.id===1)).toEqual({id:1,point:{x:288,y:885}});
+  expect(f.events.find(e=>e.id===1)!.point!.x).toBeGreaterThan(288);
   expect(f.events.at(-1)).toEqual({id:0,point:null});
+});
+
+test('straightening while driving ramps steering; explicit neutral still resets immediately',()=>{
+  const f=driver();
+  for(let at=1000;at<=1300;at+=20)f.controller.apply({pedal:'throttle',steering:.35},at,at+200);
+  const before=f.events.filter(e=>e.id===1).at(-1)!.point!.x;
+  f.events.length=0;f.controller.apply({pedal:'throttle',steering:0},1320,1500);
+  const after=f.events.find(e=>e.id===1)!.point!.x;
+  expect(after).toBeGreaterThan(288);expect(before-after).toBeLessThanOrEqual(4);
+  f.controller.neutral(1340);f.events.length=0;
+  f.controller.apply({pedal:'throttle',steering:.35},1360,1500);
+  expect(f.events.find(e=>e.id===1)!.point!.x).toBeLessThan(288+.03*129.6);
 });
 test('an expired or malformed vehicle decision cannot activate a pedal',()=>{
   const f=driver();

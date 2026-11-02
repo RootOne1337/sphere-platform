@@ -120,6 +120,72 @@ test('a late ACK cannot flush an old queued decision even while new video is fre
   expect(f.sent.some(r=>r.x===120)).toBe(false);expect(f.driver.isReady).toBe(true);
   f.driver.set(0,{x:120,y:320},performance.now()+100);expect(f.sent.at(-1)).toMatchObject({x:120,y:320});
 });
+
+test('a fresh newer same-point permit renews only the unsent MOVE behind a slow ACK',()=>{
+  const center={x:100,y:350},target={x:120,y:350},f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center,200);f.driver.set(1,target,200);
+  const originalDown={...f.sent.at(-1)};
+  jest.advanceTimersByTime(100);f.driver.set(1,target,350);
+  // No command or pending ACK identity is replaced by renewing a queued edge.
+  expect(f.sent.at(-1)).toEqual(originalDown);
+  jest.advanceTimersByTime(120);f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,...target});f.ack();
+  expect(f.sent.filter(row=>row.pointer_id===1&&row.action===0)).toHaveLength(1);
+  expect(f.driver.isReady).toBe(true);
+});
+
+test('latest steering coalesces obsolete unsent MOVEs across a queued gas edge behind a slow ACK',()=>{
+  const center={x:100,y:350},oldTarget={x:115,y:350},target={x:125,y:350},gas={x:900,y:470};
+  const f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center,200);const down={...f.sent.at(-1)};
+  f.driver.set(1,oldTarget,200);f.driver.set(0,gas,200);
+  jest.advanceTimersByTime(20);f.driver.set(1,target,200);
+  jest.advanceTimersByTime(80);f.driver.set(1,target,350);f.driver.set(0,gas,350);
+  expect(f.sent.at(-1)).toEqual(down);
+  jest.advanceTimersByTime(120);f.ack();
+  // Preserve the other pointer's DOWN order; never execute its obsolete
+  // preceding steering target or replace the already submitted DOWN.
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:0,...gas});f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,...target});f.ack();
+  expect(f.sent.some(row=>row.pointer_id===1&&row.x===oldTarget.x)).toBe(false);
+  expect(f.sent.filter(row=>row.action===0)).toHaveLength(2);expect(f.driver.isReady).toBe(true);
+});
+
+test('MOVE coalescing never crosses the same pointer UP or new DOWN boundary',()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center,200);f.driver.set(1,{x:110,y:350},200);
+  f.driver.set(1,null,200);f.driver.set(1,center,200);f.driver.set(1,{x:120,y:350},200);
+  const expected=[{action:2,x:110},{action:1,x:110},{action:0,x:100},{action:2,x:120}];
+  for(const event of expected){f.ack();expect(f.sent.at(-1)).toMatchObject({pointer_id:1,...event});}
+  f.ack();expect(f.driver.isReady).toBe(true);
+});
+
+test('a fresh latest steering target cannot renew an expired different-pointer gas edge',()=>{
+  const center={x:100,y:350},gas={x:900,y:470},f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center,200);f.driver.set(1,{x:110,y:350},200);f.driver.set(0,gas,80);
+  jest.advanceTimersByTime(20);f.driver.set(1,{x:120,y:350},200);
+  jest.advanceTimersByTime(80);f.driver.set(1,{x:120,y:350},350);
+  jest.advanceTimersByTime(20);f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,...center});
+  expect(f.sent.some(row=>row.pointer_id===0&&row.action===0)).toBe(false);
+});
+
+test('repeated timer ticks with the same permit cannot renew queued edge age',()=>{
+  const center={x:100,y:350},target={x:120,y:350},f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center,350);f.driver.set(1,target,350);
+  for(let i=0;i<11;i++){jest.advanceTimersByTime(20);f.driver.set(1,target,350);}
+  f.ack();expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,...center});
+  expect(f.sent.some(row=>row.pointer_id===1&&row.x===target.x)).toBe(false);
+});
+
+test('a stale source cannot renew a same-point queue even with a later deadline',()=>{
+  const center={x:100,y:350},target={x:120,y:350},f=fixture(undefined,()=>true,center,true,'vehicle');f.ready();
+  f.driver.set(1,center,200);f.driver.set(1,target,200);
+  jest.advanceTimersByTime(100);f.stale();f.driver.set(1,target,350);f.resume();
+  jest.advanceTimersByTime(120);f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,...center});
+  expect(f.sent.some(row=>row.pointer_id===1&&row.x===target.x)).toBe(false);
+});
 test('neutral corrections retain one stick DOWN and allow a second held camera finger',async()=>{
   const center={x:100,y:350},f=fixture(undefined,()=>true,center);f.ready();
   const profile=calibrateProfile(defaultTeachingProfile,binding,'stick',center);

@@ -72,7 +72,9 @@ export class VehicleContacts {
   neutral(now:number){this.pedal='coast';this.slew.next([0,0],now);}
   apply(command:VehicleCommand,now:number,notAfter:number){
     if(!['coast','throttle','brake'].includes(command.pedal)||!Number.isFinite(notAfter)||notAfter<=now||notAfter-now>350)throw Error('vehicle_decision_expired');
-    const steering=this.slew.next([command.steering,0],now)[0];
+    // Returning to straight while driving is an ordinary steering correction.
+    // A genuine safety neutral uses neutral() and centers immediately instead.
+    const steering=this.slew.next([command.steering,0],now,false)[0];
     const {center,target}=vehicleSteeringTarget(this.profile,this.geometry,steering);
     if(Math.abs(steering)>=.001&&!this.control.hasContact(1))this.control.set(1,center,notAfter);
     if(Math.abs(steering)>=.001||this.control.hasContact(1))this.control.set(1,target,notAfter);

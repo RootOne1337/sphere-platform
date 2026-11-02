@@ -76,3 +76,18 @@ test('a mapped movement key is an explicit vehicle override, not a second native
   expect(mockLease?.failure?.()).toBe('vehicle_manual_override');
   await act(async()=>{await mockLease?.close();});view.unmount();
 });
+
+test('one admitted vehicle target ramps between replies and expiry cannot restart gas from a renewed permit alone',async()=>{
+  const {view}=await driveFixture();
+  // Fixture submits exactly one target; extra steering MOVEs must come from
+  // the bounded actuator loop, not fabricated localization replies.
+  await waitFor(()=>expect(sent.filter(e=>e.pointer_id===1&&e.action===2).length).toBeGreaterThanOrEqual(3));
+  expect(sent.filter(e=>e.pointer_id===0&&e.action===0)).toHaveLength(1);
+  expect(sent.filter(e=>e.pointer_id===1&&e.action===0)).toHaveLength(1);
+  await waitFor(()=>expect(sent.some(e=>e.pointer_id===0&&e.action===1)).toBe(true));
+  mockLease!.permit!(performance.now()+250);
+  await act(async()=>{await new Promise(resolve=>setTimeout(resolve,60));});
+  expect(sent.filter(e=>e.pointer_id===0&&e.action===0)).toHaveLength(1);
+  expect(mockLease!.translating!()).toBe(false);
+  await act(async()=>{await mockLease?.close();});view.unmount();
+});

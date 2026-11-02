@@ -77,10 +77,10 @@ export function applyWalkingStick(control:{hasContact(id:number):boolean;set(id:
  * the server's previous desired vector. Neutralization itself is immediate. */
 export class WalkStickSlew {
   private vector:[number,number]=[0,0];private at:number|null=null;
-  next(target:[number,number],now:number):[number,number]{
+  next(target:[number,number],now:number,immediateNeutral=true):[number,number]{
     if(!Number.isFinite(now)||this.at!==null&&now<this.at||target.some(v=>!Number.isFinite(v))||Math.hypot(...target)>.350001)throw Error('walk_stick_not_calibrated_or_bounded');
     const dt=this.at===null?.05:Math.min(.1,(now-this.at)/1000);this.at=now;
-    if(Math.hypot(...target)<.001){this.vector=[0,0];return [0,0];}
+    if(immediateNeutral&&Math.hypot(...target)<.001){this.vector=[0,0];return [0,0];}
     const delta=[target[0]-this.vector[0],target[1]-this.vector[1]],length=Math.hypot(...delta),scale=length?Math.min(1,dt*1.2/length):0;
     this.vector=[this.vector[0]+delta[0]*scale,this.vector[1]+delta[1]*scale];return [...this.vector];
   }

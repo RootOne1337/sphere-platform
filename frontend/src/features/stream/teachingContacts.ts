@@ -130,14 +130,37 @@ export class TeachingContacts {
       || !Number.isInteger(point.y) || point.x < 0 || point.y < 0 || point.x >= this.binding.width || point.y >= this.binding.height)) {
       this.fail('invalid_contact'); return;
     }
+    if(notAfter!==undefined&&!Number.isFinite(notAfter)){this.fail('invalid_contact');return;}
     const before = this.desired.get(id);
-    if (!before && !point || before && point && before.x === point.x && before.y === point.y) return;
+    if (!before && !point) return;
+    if(before&&point&&before.x===point.x&&before.y===point.y){
+      // A NEW admitted plan can retain the same rounded target while an older
+      // edge is still waiting behind an ACK. Renew only that UNSENT edge:
+      // already submitted event/ACK identity is immutable. Timer interpolation
+      // repeats the same deadline and therefore cannot refresh its queue age.
+      const now=performance.now();
+      if(notAfter!==undefined&&notAfter>now&&this.fresh()){
+        for(let i=this.queue.length-1;i>=0;i--){const edge=this.queue[i];if(edge.id!==id)continue;
+          if(edge.action!==1&&edge.point.x===point.x&&edge.point.y===point.y
+              &&edge.notAfter!==undefined&&notAfter>edge.notAfter){edge.notAfter=notAfter;edge.at=now;}
+          break;
+        }
+      }
+      return;
+    }
     if (point) this.desired.set(id, point); else this.desired.delete(id);
     const edge: Edge = { id, action: point ? before ? 2 : 0 : 1, point: point ?? before!, at: performance.now(),notAfter };
-    if(notAfter!==undefined&&!Number.isFinite(notAfter)){this.fail('invalid_contact');return;}
-    const previous = this.queue.at(-1);
-    if (edge.action === 2 && previous?.action === 2 && previous.id === id) this.queue[this.queue.length - 1] = edge;
-    else this.queue.push(edge);
+    if(edge.action===2){
+      // Only the latest unsent position matters within this held gesture.
+      // Other fingers may have interleaved edges; keep their order and their
+      // own deadlines, but do not let an obsolete MOVE block a fresh target.
+      // DOWN/UP are gesture boundaries and are never removed or crossed.
+      for(let i=this.queue.length-1;i>=0;i--){const queued=this.queue[i];if(queued.id!==id)continue;
+        if(queued.action!==2)break;
+        this.queue.splice(i,1);
+      }
+    }
+    this.queue.push(edge);
     if (this.queue.length > 8) { this.fail('contact_queue_full'); return; }
     this.pump();
   }

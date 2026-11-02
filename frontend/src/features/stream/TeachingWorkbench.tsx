@@ -21,6 +21,8 @@ import {applyWalkingStick,WalkStickSlew,walkingCalibrationIssue,walkingCameraIss
 import {defaultWalkingProfile,blackRussiaScooterProfile,loadTeachingProfile,saveTeachingProfile,teachingProfileKey} from './teachingProfileStorage';
 import {VehicleContacts,vehicleCalibrationIssue,vehicleCameraIssue,vehicleSteeringTarget,type VehicleInputLease} from './vehiclePilot';
 import {TeachingProcessingQueue} from './TeachingProcessingQueue';
+import {PilotCommandLoop} from './pilotCommandLoop';
+import type {VehicleCommand} from './vehiclePilot';
 import type {TeachingQueueSnapshot} from './teachingQueue';
 
 type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'piloting' | 'arming' | 'recording' | 'stopping' | 'finished';
@@ -278,6 +280,8 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     const center=vehicleMode?vehicleSteeringTarget(p,b,0).center:walkingStickTarget(p,b,[0,0]).center;
     const cameraIssue=()=>vehicleMode?vehicleCameraIssue(p,b):walkingCameraIssue(p,b);
     let vehicleContacts:VehicleContacts|null=null;
+    let commandLoop:PilotCommandLoop<{stick:[number,number]}|{vehicle:VehicleCommand}>|null=null;
+    const neutral=()=>{requestedMotion=false;stickSlew.next([0,0],performance.now());vehicleContacts?.neutral(performance.now());control.neutralize();};
     const opened=new Promise<WalkInputLease>(resolve=>{settle=resolve;});
     const lease:VehicleInputLease={
       active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady
@@ -285,7 +289,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       failure:()=>interrupted??control.failureReason,
       sourceHealth:()=>conn.sourceHealth?.()??null,
       paused:()=>control.isVideoPaused,
-      neutral:()=>{requestedMotion=false;stickSlew.next([0,0],performance.now());vehicleContacts?.neutral(performance.now());control.neutralize();},
+      neutral:()=>{if(commandLoop)commandLoop.pause();else neutral();},
       translating:()=>lease.active()&&conn.fresh()&&requestedMotion&&appliedMotion&&performance.now()<decisionUntil,
       permit:until=>{if(!Number.isFinite(until)||until-performance.now()>(vehicleMode?350:250))throw Error(vehicleMode?'vehicle_decision_expired':'walk_decision_expired');decisionUntil=until;},
       canLook:()=>control.canCameraCommand(center),
@@ -315,15 +319,14 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         if(vehicleMode)throw Error('vehicle_native_mode_required');
         if(!lease.active())throw Error('walk_native_closed');
         if(Math.hypot(...vector)>0&&!conn.fresh())throw Error('contact_video_stale');
-        const sent=stickSlew.next(vector,performance.now());requestedMotion=Math.hypot(...sent)>.001;
-        applyWalkingStick({hasContact:id=>control.hasContact(id),set:(id,point)=>control.set(id,point,decisionUntil)},p,b,sent);
+        commandLoop!.update({stick:[...vector]},decisionUntil);
       },
       setVehicle:command=>{
         if(!vehicleMode||!vehicleContacts||!lease.active())throw Error('vehicle_native_closed');
         if((command.pedal!=='coast'||command.steering!==0)&&!conn.fresh())throw Error('contact_video_stale');
-        vehicleContacts.apply(command,performance.now(),decisionUntil);requestedMotion=command.pedal==='throttle';
+        commandLoop!.update({vehicle:{...command}},decisionUntil);
       },
-      close:async()=>{await stopCallback.current();return released;},
+      close:async()=>{commandLoop?.close();await stopCallback.current();return released;},
     };
     const generation=ownerGeneration.current;
     const control=new TeachingContacts(endpoint,b,conn.fresh,event=>{journal(event);
@@ -338,13 +341,20 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       conn.observeControl?.(state==='failed'?'fenced':state,reason);
       setNative(state==='ready'?(vehicleMode?'READY · транспорт':'READY · пеший тест'):state==='closed'?'CLOSED · освобождено':state);
       if(state==='ready'&&phaseRef.current==='opening'&&!signal.aborted){change('piloting');settle(lease);}
-      if(['failed','closed','closing'].includes(state))settle(lease);
+      if(['failed','closed','closing'].includes(state)){commandLoop?.close();settle(lease);}
       if(state==='failed')queueMicrotask(()=>{void stopCallback.current(reason??'walk_native_closed');});
       if(state==='closed'&&active(phaseRef.current)&&phaseRef.current!=='stopping'&&!expectedOwnerClose.current)queueMicrotask(()=>{void stopCallback.current('walk_native_closed');});
     },rtt=>conn.observeControl?.('ready',undefined,rtt),()=>conn.idleInputFresh?.()===true,center,true,vehicleMode?'vehicle':'walking');
     if(vehicleMode)vehicleContacts=new VehicleContacts(control,p,b);
+    commandLoop=new PilotCommandLoop({maxHoldMs:vehicleMode?350:250,ready:()=>lease.active(),fresh:()=>conn.fresh(),neutral,
+      failure:error=>{void stopCallback.current(error instanceof Error?error.message:'pilot_command_failed');},
+      apply:(command,now,notAfter)=>{
+        if('vehicle' in command){vehicleContacts!.apply(command.vehicle,now,notAfter);requestedMotion=command.vehicle.pedal==='throttle';}
+        else{const sent=stickSlew.next(command.stick,now);requestedMotion=Math.hypot(...sent)>.001;
+          applyWalkingStick({hasContact:id=>control.hasContact(id),set:(id,point)=>control.set(id,point,notAfter)},p,b,sent);}
+      }});
     controller.current=control;
-    const cancelled=()=>{settle(lease);void stopCallback.current();};
+    const cancelled=()=>{commandLoop?.close();settle(lease);void stopCallback.current();};
     signal.addEventListener('abort',cancelled,{once:true});
     if(signal.aborted)cancelled();
     try{return await opened;}finally{walkOpening.current=false;if(signal.aborted)signal.removeEventListener('abort',cancelled);}
