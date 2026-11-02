@@ -425,6 +425,7 @@ def _reconstruct(job, mask, steps, *, route_only=False):
     cached_assessment=(winner[1],winner[2]) if winner else None
     recovery=None
     component_merge=None
+    fused_recovery=None
     if rec is not None:
         first_geometry,first_assessment=cached_assessment
         # Preserve inspectable evidence even if a later optional model load is
@@ -445,6 +446,21 @@ def _reconstruct(job, mask, steps, *, route_only=False):
             lambda _phase,done,total:state(job,'cameras',method='compatible_component_merge',selected_views=len(images),completed_items=done,total_items=total),
             assessment_check=observation_check)
         if component_merge.get('accepted'):
+            cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
+    if route_only and (rec is None or not cached_assessment[1]['route_admissible']):
+        # One CPU candidate combines temporal measurements and independently
+        # verified SIFT associations before considering a model-heavy fallback.
+        # It never requires a HUD and never edits the first-pass evidence.
+        from scripts.pilot.route_fused_recovery import experimental_enabled,recover_fused
+        fused_recovery=dict(schema='sphere-fused-route-recovery-v1',enabled=experimental_enabled(),
+            attempted=False,accepted=False,reason='fused_unqualified_default_disabled')
+        if fused_recovery['enabled']:
+            rec,fused_recovery=recover_fused(job,prepared,rec,len(images),source_start,source_end,
+                lambda:checkpoint(job),
+                lambda phase,done,total:state(job,phase,method='fused_observation_global_sfm',
+                    selected_views=len(images),completed_items=done,total_items=total),
+                assessment_check=observation_check)
+        if fused_recovery.get('accepted'):
             cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
     if route_only and (rec is None or not cached_assessment[1]['route_admissible']):
         from scripts.pilot.route_learned_recovery import recover_with_learned
@@ -504,6 +520,11 @@ def _reconstruct(job, mask, steps, *, route_only=False):
         if component_merge.get('accepted'):
             quality['source_components']=len(models)
             quality['components']=1
+    if fused_recovery is not None:
+        quality['fused_recovery']={key:fused_recovery.get(key) for key in
+            ('schema','enabled','attempted','accepted','reason','seconds','source_modified','poses_manually_edited','closure_forced','matcher')}
+        if fused_recovery.get('accepted'):
+            quality['components']=1
     if temporal_repair is not None:
         quality['temporal_repair']=temporal_repair
     if endpoint_resection is not None:
@@ -533,7 +554,9 @@ def _reconstruct(job, mask, steps, *, route_only=False):
     # A largest component is not a claim that discarded views are connected.
     target = prepared / 'sparse' / '0'
     target.mkdir(parents=True)
-    rec.write(target)
+    from scripts.pilot.route_fused_recovery import copy_frozen_model_if_current
+    if not copy_frozen_model_if_current(job,prepared,rec,target,check=observation_check):
+        rec.write(target)
     rec.export_PLY(prepared / 'sparse' / 'points.ply')
     finish_sparse(job, prepared, geometry, quality, mask, masks, steps, route_only=route_only)
 

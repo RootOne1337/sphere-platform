@@ -2,8 +2,7 @@ import pytest
 
 from scripts.pilot.route_masks import capture_exclusions, excluded_rectangles
 
-
-VEHICLE = dict(config=dict(profile=dict(mode='vehicle_buttons')))
+VEHICLE = dict(config=dict(profile=dict(mode='vehicle_buttons', hudProfile='black_russia_scooter_v1')))
 
 
 def excluded(point, rectangles):
@@ -34,3 +33,14 @@ def test_walking_and_explicit_unmasked_capture_keep_existing_policy():
     assert capture_exclusions('none', VEHICLE) == ()
     with pytest.raises(ValueError):
         capture_exclusions('unknown', VEHICLE)
+
+
+@pytest.mark.parametrize('profile', [{}, {'hudProfile': 'another_game_v1'}])
+def test_unidentified_vehicle_does_not_inherit_black_russia_hud_rectangles(profile):
+    manifest = dict(config=dict(profile=dict(mode='vehicle_buttons', **profile)))
+    rectangles = capture_exclusions('game', manifest)
+    assert rectangles == excluded_rectangles('avatar')
+    assert not excluded((.16, .29), rectangles)
+    assert not excluded((.9, .435), rectangles)
+    assert excluded((.5, .85), rectangles)
+    assert capture_exclusions('none', manifest) == ()

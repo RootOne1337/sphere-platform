@@ -32,6 +32,8 @@ RECIPE=('scripts/pilot/check_route_first_run.py','scripts/pilot/reconstruction_s
         'scripts/pilot/route_speed_consistency.py',
         'scripts/pilot/route_hud_profile.py','scripts/pilot/black_russia_speed_font_v1.json',
         'scripts/pilot/route_component_merge.py','scripts/pilot/route_endpoint_resection.py',
+        'scripts/pilot/route_fused_recovery.py','scripts/pilot/route_native_track_policy.py',
+        'scripts/pilot/route_native_landmarks.py',
         'scripts/pilot/image_route_builder.py','scripts/pilot/image_route_review.py',
         'scripts/pilot/image_route_workspace.py','motor_worker/image_route_sequence.py',
         'motor_worker/image_route_relative.py',
@@ -46,6 +48,11 @@ RECIPE=('scripts/pilot/check_route_first_run.py','scripts/pilot/reconstruction_s
 def digest(path):
     with path.open('rb') as source:
         return hashlib.file_digest(source,'sha256').hexdigest()
+
+
+def recipe_options():
+    from scripts.pilot.route_fused_recovery import experimental_enabled
+    return {'experimental_fused_recovery': experimental_enabled()}
 
 
 def stop_unfinished(jobs, job):
@@ -76,9 +83,11 @@ def run(source,output,worker,*,timeout=900):
         raise RuntimeError('resource_guard')
     before={name:digest(source/name) for name in FILES}
     recipe={name:digest(ROOT/name) for name in RECIPE}
+    options=recipe_options()
     output.mkdir()
     write_json(output/'intent.json',dict(scope='ISOLATED_WEB_HTTP_FIRST_RUN',sourceHashes=before,
-               recipeSourceHashes=recipe,worker=str(worker.relative_to(ROOT)),mask=mask,physicalActions=0))
+               recipeSourceHashes=recipe,recipeOptions=options,
+               worker=str(worker.relative_to(ROOT)),mask=mask,physicalActions=0))
     jobs=Jobs(output/'jobs',worker)
     server=BoundedServer(('127.0.0.1',0),BaseHTTPRequestHandler)
     port=server.server_address[1]
@@ -86,7 +95,8 @@ def run(source,output,worker,*,timeout=900):
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     identity=secrets.token_hex(16);key=secrets.token_hex(32);job=jobs.path(identity)
     operations=[];phases=[];started=time.monotonic();current=None
-    result=dict(outcome='unknown',physicalActions=0,sourceHashes=before,recipeSourceHashes=recipe,mask=mask)
+    result=dict(outcome='unknown',physicalActions=0,sourceHashes=before,
+                recipeSourceHashes=recipe,recipeOptions=options,mask=mask)
 
     def request(method,path,body=None,*,authenticated=True,headers=None,raw=False):
         fields={'X-Sphere-Reconstruction':'1','Origin':'http://127.0.0.1:3015',**(headers or {})}
@@ -148,7 +158,8 @@ def run(source,output,worker,*,timeout=900):
                 or geometry['source_manifest_sha256']!=before['manifest.json']
                 or receipt['geometry_sha256']!=hashlib.sha256(geometry_raw).hexdigest()
                 or any(digest(job/'input'/name)!=before[name] or digest(source/name)!=before[name] for name in FILES)
-                or {name:digest(ROOT/name) for name in RECIPE}!=recipe):
+                or {name:digest(ROOT/name) for name in RECIPE}!=recipe
+                or recipe_options()!=options):
             raise RuntimeError('first_run_acceptance_mismatch')
         expected=hashlib.sha256((identity+':initial-route').encode()).hexdigest()[:32]
         if (navigation.name!=expected or len(list((job/'navigation').glob('*/intent.json')))!=1

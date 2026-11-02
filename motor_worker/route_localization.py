@@ -32,6 +32,8 @@ MAX_BYTES = 4 * 1024 * 1024
 # shorter intervals are traversable or that the camera trace follows the road.
 MAX_REFERENCE_INTERVAL_SECONDS = 1.0
 MIN_TRACE_STEP_UNITS = 1e-6
+NATIVE_REFERENCE_FAMILY = 'native_colmap_rootsift_q512_l2_v1'
+NATIVE_REFERENCE_EXPORT_VERSION = 'exact_point3d_sift_suffix_v1'
 
 
 def trace_step_scale(lengths):
@@ -79,6 +81,17 @@ def pipeline_id():
         contrast=.0066667, edge=10, descriptor="rootsift", ratio=.75,
         min_inliers=20, inlier_fraction=.5, ransac_px=3, mask_margin=8, covisibility_candidates=3,
     ), sort_keys=True).encode()).hexdigest()
+
+
+def native_reference_pipeline_id():
+    """One explicit measured-reference family with the unchanged query path."""
+    return hashlib.sha256(json.dumps(dict(query_pipeline_sha256=pipeline_id(),
+        descriptor_family=NATIVE_REFERENCE_FAMILY, export_version=NATIVE_REFERENCE_EXPORT_VERSION),
+        sort_keys=True).encode()).hexdigest()
+
+
+def supported_route_pipeline(value):
+    return value == pipeline_id() or value == native_reference_pipeline_id()
 
 
 def feature_mask(profile):
@@ -310,7 +323,7 @@ class RouteLocalizer:
 
         if (type(diagnostic_partial_map) is not bool or type(candidate_limit) is not int or not 3 <= candidate_limit <= 8
                 or type(route) is not SparseRoute or not all(epoch_valid(v) for v in
-                (capture_epoch, episode_id, goal_revision)) or route.pipeline_sha256 != pipeline_id()):
+                (capture_epoch, episode_id, goal_revision)) or not supported_route_pipeline(route.pipeline_sha256)):
             raise ProtocolError("invalid_route_localizer_binding")
         if not diagnostic_partial_map:
             support = map_support(route)

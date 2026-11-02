@@ -9,7 +9,8 @@ from scripts.pilot import reconstruct_route as pipeline
 
 
 def setup_pipeline(tmp_path,monkeypatch,*,accepted=True):
-    from scripts.pilot import route_learned_recovery,route_motion_sampling,route_video_tracks,learned_route_features
+    from scripts.pilot import route_fused_recovery,route_learned_recovery,route_motion_sampling,route_video_tracks,learned_route_features
+    monkeypatch.setenv('SPHERE_EXPERIMENTAL_FUSED_RECOVERY','1')
     job=tmp_path/'job';job.mkdir();calls=[]
     baseline=SimpleNamespace(num_reg_images=lambda:12,num_points3D=lambda:500,
                              compute_mean_reprojection_error=lambda:1.)
@@ -54,8 +55,58 @@ def setup_pipeline(tmp_path,monkeypatch,*,accepted=True):
         calls.append('recovery')
         return (candidate if accepted else baseline),dict(accepted=accepted,models=[{}],reason='checked')
     monkeypatch.setattr(route_learned_recovery,'recover_with_learned',recover)
+    monkeypatch.setattr(route_fused_recovery,'recover_fused',lambda _job,_prepared,rec,*args,**kwargs:(rec,dict(accepted=False,reason='fixture_no_candidate')))
     monkeypatch.setattr(pipeline,'finish_sparse',lambda *args,**kwargs:calls.append('sealed'))
     return job,calls
+
+
+def test_unqualified_fused_candidate_is_default_disabled_without_new_ui_switch(tmp_path,monkeypatch):
+    from scripts.pilot import route_fused_recovery
+    job,calls=setup_pipeline(tmp_path,monkeypatch)
+    monkeypatch.delenv('SPHERE_EXPERIMENTAL_FUSED_RECOVERY')
+    monkeypatch.setattr(route_fused_recovery,'recover_fused',lambda *a,**k:pytest.fail('unqualified candidate must stay default off'))
+    pipeline.reconstruct(job,'game',30000,route_only=True)
+    assert calls==['recovery','write_model','write_points','sealed']
+    status=json.loads((job/'quality.json').read_bytes())['fused_recovery']
+    assert status['enabled'] is False and status['attempted'] is False and status['accepted'] is False
+
+
+def test_automatic_fused_candidate_precedes_heavy_fallback_and_uses_same_admission(tmp_path,monkeypatch):
+    from scripts.pilot import route_fused_recovery,route_learned_recovery
+    job,calls=setup_pipeline(tmp_path,monkeypatch)
+    baseline=sys.modules['pycolmap'].incremental_mapping()[0]
+    recovered=SimpleNamespace(num_reg_images=lambda:12,num_points3D=lambda:700,
+        compute_mean_reprojection_error=lambda:.7,
+        write=lambda _:calls.append('write_model'),export_PLY=lambda _:calls.append('write_points'))
+    original=pipeline.model_assessment
+    def assess(rec,*args,**kwargs):
+        geometry,report=original(rec,*args,**kwargs)
+        if rec is recovered:
+            report.update(route_admissible=True,scene_admissible=True,conditioning=dict(passed=True))
+        return geometry,report
+    monkeypatch.setattr(pipeline,'model_assessment',assess)
+    def recover(_job,_prepared,rec,*args,**kwargs):
+        assert rec is baseline
+        calls.append('fused_recovery')
+        return recovered,dict(accepted=True,schema='sphere-fused-route-recovery-v1',source_modified=False)
+    monkeypatch.setattr(route_fused_recovery,'recover_fused',recover)
+    monkeypatch.setattr(route_learned_recovery,'recover_with_learned',lambda *a,**k:pytest.fail('admitted fused candidate must not launch heavy fallback'))
+    pipeline.reconstruct(job,'game',30000,route_only=True)
+    assert calls==['fused_recovery','write_model','write_points','sealed']
+    quality=json.loads((job/'quality.json').read_bytes())
+    assert quality['fused_recovery']['accepted'] and quality['components']==1
+
+
+def test_fused_resource_failure_preserves_baseline_without_loading_heavy_fallback(tmp_path,monkeypatch):
+    from scripts.pilot import route_fused_recovery,route_learned_recovery
+    job,calls=setup_pipeline(tmp_path,monkeypatch)
+    def refused(*args,**kwargs):raise RuntimeError('resource_guard')
+    monkeypatch.setattr(route_fused_recovery,'recover_fused',refused)
+    monkeypatch.setattr(route_learned_recovery,'recover_with_learned',lambda *a,**k:pytest.fail('resource refusal must propagate'))
+    with pytest.raises(RuntimeError,match='resource_guard'):
+        pipeline.reconstruct(job,'game',30000,route_only=True)
+    assert not calls and (job/'geometry.json').is_file()
+    assert json.loads((job/'quality.json').read_bytes())['first_pass_only']
 
 
 def test_full_count_collapsed_route_runs_recovery_even_when_learned_dense_is_disabled(tmp_path,monkeypatch):

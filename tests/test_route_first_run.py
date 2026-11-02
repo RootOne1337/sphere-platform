@@ -3,6 +3,26 @@ import pytest
 from scripts.pilot import check_route_first_run as first_run
 
 
+def test_first_run_proof_covers_the_fused_engine_and_native_reference_policy():
+    # A result produced before a solver/track/export policy edit cannot serve
+    # as first-run evidence for that edited implementation.
+    assert {
+        'scripts/pilot/route_fused_recovery.py',
+        'scripts/pilot/route_native_track_policy.py',
+        'scripts/pilot/route_native_landmarks.py',
+    } <= set(first_run.RECIPE)
+    assert len(first_run.RECIPE) == len(set(first_run.RECIPE))
+
+
+def test_first_run_receipt_distinguishes_default_and_experimental_recipes(monkeypatch):
+    monkeypatch.delenv('SPHERE_EXPERIMENTAL_FUSED_RECOVERY', raising=False)
+    assert first_run.recipe_options() == {'experimental_fused_recovery': False}
+    monkeypatch.setenv('SPHERE_EXPERIMENTAL_FUSED_RECOVERY', '1')
+    assert first_run.recipe_options() == {'experimental_fused_recovery': True}
+    monkeypatch.setenv('SPHERE_EXPERIMENTAL_FUSED_RECOVERY', 'true')
+    assert first_run.recipe_options() == {'experimental_fused_recovery': False}
+
+
 def setup_scope(tmp_path,monkeypatch):
     monkeypatch.setattr(first_run,'ROOT',tmp_path)
     monkeypatch.setattr(first_run,'collect',lambda _:pytest.fail('preflight must precede resource work'))

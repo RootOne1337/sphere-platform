@@ -30,4 +30,8 @@ def capture_exclusions(mode, manifest):
     profile = (manifest.get('config') or {}).get('profile') or {}
     if mode == 'none' or profile.get('mode') != 'vehicle_buttons':
         return base
+    if profile.get('hudProfile') != 'black_russia_scooter_v1':
+        # Pedal mode alone cannot identify a game's HUD layout. Keep only the
+        # central foreground/footer exclusion until a calibrated preset exists.
+        return excluded_rectangles('avatar')
     return (*VEHICLE_HUD, VEHICLE_BODY, VEHICLE_MIRROR, WATERMARK) if mode == 'game' else (VEHICLE_BODY, VEHICLE_MIRROR, WATERMARK)

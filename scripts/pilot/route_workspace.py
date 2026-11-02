@@ -161,8 +161,19 @@ class RouteWorkspaces:
                     or support.get('all_reference_intervals_observed') is not True
                     or coverage.get('endpoints_observed') is not True):
                 return dict(result, phase='rejected', error='route_map_has_unobserved_sections')
-            from motor_worker.route_localization import pipeline_id
-            if receipt.get('pipeline_sha256') != pipeline_id():
+            from motor_worker.route_localization import native_reference_pipeline_id, pipeline_id
+            if receipt.get('pipeline_sha256') == native_reference_pipeline_id():
+                from scripts.pilot.route_native_landmarks import validate_reference_receipt
+                try:
+                    validate_reference_receipt(receipt, folder, source_sha256=digest_file(job/'input/manifest.json'),
+                                               source_index_sha256=digest_file(job/'prepared/reconstruction-input.json'))
+                except (OSError, ValueError, TypeError, KeyError):
+                    return dict(result, phase='rejected', error='route_native_reference_invalid')
+                # Exact measured binding is not runtime localization evidence.
+                # This family is offline-only until a reviewed qualification
+                # contract exists; map support/point count cannot promote it.
+                return dict(result, phase='rejected', error='route_native_reference_unqualified')
+            elif receipt.get('pipeline_sha256') != pipeline_id() or 'native_reference' in receipt:
                 return dict(result, phase='rejected', error='route_feature_runtime_mismatch')
         return result
 
