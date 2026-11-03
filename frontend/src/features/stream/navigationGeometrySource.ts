@@ -1,4 +1,4 @@
-import type {NavigationPreparationSource,NavigationState} from './reconstructionClient';
+import type {NavigationMapSource,NavigationPreparationSource,NavigationState} from './reconstructionClient';
 
 /** A source-validated view is not by itself a prepared navigation map. */
 export type NavigationGeometrySelection={alternativeId:string|null;geometry_sha256:string;label:string;cameras:number;points:number};
@@ -19,10 +19,18 @@ export function navigationReadyForGeometry(assets:NavigationState|null,selection
   if(assets?.phase!=='ready')return false;
   if(assets.source){
     const source=assets.source;
-    return !!selection&&sha.test(source.geometry_sha256)&&source.geometry_sha256===selection.geometry_sha256
+    return !!selection&&(source.alternativeId===null||typeof source.alternativeId==='string'&&alternative.test(source.alternativeId))
+      &&sha.test(source.geometry_sha256)&&source.geometry_sha256===selection.geometry_sha256
       &&source.alternativeId===selection.alternativeId&&['legacy_sparse','reference_lk'].includes(source.runtime_family);
   }
   return !hasSourceView||selection?.alternativeId===null;
+}
+
+/** Freeze only the validated public binding, never catalog metadata or arbitrary status fields. */
+export function navigationExpectedSource(assets:NavigationState|null,selection:NavigationGeometrySelection|null,hasSourceView:boolean):NavigationMapSource|undefined {
+  if(!navigationReadyForGeometry(assets,selection,hasSourceView)||!assets?.source)return undefined;
+  const {alternativeId,geometry_sha256,runtime_family}=assets.source;
+  return {alternativeId,geometry_sha256,runtime_family};
 }
 
 export const navigationGeometryIdentity=(source:NavigationGeometrySelection|null)=>source?JSON.stringify([source.alternativeId,source.geometry_sha256]):null;

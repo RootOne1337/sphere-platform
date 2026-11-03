@@ -1,6 +1,6 @@
 import {act,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {WalkingRoutePilot,VehicleRoutePilot} from '@/src/features/stream/WalkingRoutePilot';
-import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
+import {reconstructionRequest,ReconstructionResponseError,type NavigationMapSource} from '@/src/features/stream/reconstructionClient';
 import type {WalkInputLease} from '@/src/features/stream/walkPilot';
 import type {VehicleInputLease,VehiclePlan} from '@/src/features/stream/vehiclePilot';
 import {TeachingContacts,type TeachingInput} from '@/src/features/stream/teachingContacts';
@@ -35,7 +35,7 @@ const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job
 function fresh(){act(()=>frames.shift()!(performance.now(),{} as VideoFrameCallbackMetadata));}
 function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить проход'}));}
 
-function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(value:Record<string,unknown>)=>Record<string,unknown>;assetsReady?:boolean}={}){
+function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(value:Record<string,unknown>)=>Record<string,unknown>;assetsReady?:boolean;expectedSource?:NavigationMapSource}={}){
   const vehicleLease:VehicleInputLease={...lease,setVehicle:jest.fn(),neutral:jest.fn(),drag2:jest.fn(async()=>true)};
   const vehicleOpen=jest.fn(async()=>vehicleLease),starts:Record<string,unknown>[]=[];
   let id='',cap=15,duration=300;
@@ -59,17 +59,47 @@ function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(v
     return {json:async()=>value} as Response;
   });
   const rendered=render(<VehicleRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding}
-    assetsReady={options.assetsReady!==false} preparationIssue="Основная обработка остановлена: resource_guard. Диагностическая схема не заменяет ориентиры."
+    assetsReady={options.assetsReady!==false} expectedSource={options.expectedSource} preparationIssue="Основная обработка остановлена: resource_guard. Диагностическая схема не заменяет ориентиры."
     input={{issue:null,hudProfile:'black_russia_scooter_v1',open:vehicleOpen}} observerBusy={false} onBusyChange={busy}/>);
   const startVehicle=()=>{fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));fireEvent.click(screen.getByRole('button',{name:'Запустить транспорт'}));};
   return {vehicleLease,vehicleOpen,starts,startVehicle,...rendered};
 }
+
+const expectedSource:NavigationMapSource={alternativeId:'retained-173',geometry_sha256:'f'.repeat(64),runtime_family:'reference_lk'};
+test.each([403,409] as const)('a walking source mismatch %s is fenced before any input lease opens',async(status)=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(path,j,init)=>{
+    if(path.endsWith('/walk-start'))throw new ReconstructionResponseError(status,'route_start_source_changed');
+    return original(path,j,init);
+  });
+  view({expectedSource});start();await screen.findByText('Освобождение: CLOSED');
+  const call=jest.mocked(reconstructionRequest).mock.calls.find(([path])=>path.endsWith('/walk-start'))!;
+  expect(JSON.parse(String(call[2]?.body)).expectedSource).toEqual(expectedSource);
+  expect(open).not.toHaveBeenCalled();expect(lease.set).not.toHaveBeenCalled();
+  expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path.endsWith('/observe'))).toBe(false);
+});
+
+test.each([403,409] as const)('a vehicle source mismatch %s is fenced before pedals or input owner open',async(status)=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const f=vehicleFixture({expectedSource}),original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(path,j,init)=>{
+    if(path.endsWith('/vehicle-start'))throw new ReconstructionResponseError(status,'route_start_source_changed');
+    return original(path,j,init);
+  });
+  f.startVehicle();await screen.findByText('Освобождение: CLOSED');
+  const call=jest.mocked(reconstructionRequest).mock.calls.find(([path])=>path.endsWith('/vehicle-start'))!;
+  expect(JSON.parse(String(call[2]?.body)).expectedSource).toEqual(expectedSource);
+  expect(f.vehicleOpen).not.toHaveBeenCalled();expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();
+  expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path.endsWith('/observe'))).toBe(false);
+});
 
 test('vehicle mode uses a separate opt-in contract, capped speed and held pedal while fixed camera never drags',async()=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);const f=vehicleFixture();f.startVehicle();
   await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledWith({pedal:'throttle',steering:.2}));
   expect(f.starts[0]).toMatchObject({clientVersion:'vehicle_live_v1',cameraFollowsBodyConfirmed:true,vehicleCameraAssumptionConfirmed:true,
     hudProfile:'black_russia_scooter_v1',maxSpeedKmh:15,startMode:'recognized_route',cameraTracking:true});
+  expect(f.starts[0]).not.toHaveProperty('expectedSource');
   expect(f.vehicleLease.set).not.toHaveBeenCalled();expect(f.vehicleLease.drag2).not.toHaveBeenCalled();
   expect(screen.getByLabelText('Скорость транспорта по последнему ответу')).toHaveTextContent('10 км/ч');
   expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path.endsWith('/walk-start'))).toBe(false);

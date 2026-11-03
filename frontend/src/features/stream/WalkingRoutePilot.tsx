@@ -3,7 +3,7 @@ import {useEffect,useRef,useState,type RefObject,type ReactNode} from 'react';
 import {Car,Footprints,Square,Download} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import Image from 'next/image';
-import {reconstructionRequest,type ReconstructionJob} from './reconstructionClient';
+import {reconstructionRequest,type ReconstructionJob,type NavigationMapSource} from './reconstructionClient';
 import {freshNavigationFrame,navigationReply,type LiveRouteObservation} from './routeNavigation';
 import {WalkLivePreview,type WalkPreviewFrame} from './WalkLivePreview';
 import {WalkFrameEncoder} from './walkFrameEncoder';
@@ -41,10 +41,11 @@ type PilotProps={
   job:ReconstructionJob|null;clip:string|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;
   binding:Binding|null;assetsReady:boolean;input:WalkInputControl;observerBusy:boolean;onBusyChange:(busy:boolean)=>void;
   onObservation?:(observation:LiveRouteObservation|null)=>void;renderView?:(view:ReactNode)=>ReactNode;
-  scope?:string|null;preparationIssue?:string|null;mode?:'foot'|'vehicle';
+  scope?:string|null;preparationIssue?:string|null;mode?:'foot'|'vehicle';expectedSource?:NavigationMapSource;
 };
-export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot'}:PilotProps) {
+export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot',expectedSource}:PilotProps) {
   const vehicleMode=mode==='vehicle';
+  const expectedSourceIdentity=expectedSource?JSON.stringify([expectedSource.alternativeId,expectedSource.geometry_sha256,expectedSource.runtime_family]):null;
   const reasonLabel=(reason:string)=>vehicleMode?(vehicleReasonLabel(reason)??(reason.startsWith('vehicle_')?`Транспорт: ${reason}`:walkReasonLabel(reason))):walkReasonLabel(reason);
   const [confirmed,setConfirmed]=useState(false),[busy,setBusy]=useState(false),[saveFrames,setSaveFrames]=useState(true);
   const [startMode,setStartMode]=useState<StartMode>('recognized_route');
@@ -173,7 +174,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   };
   stopRef.current=stop;
   useEffect(()=>()=>{void stopRef.current('walk_stream_changed');},[]);
-  useEffect(()=>{setConfirmed(false);void stopRef.current('walk_stream_changed');},[job?.id,job?.key,clip,binding?.captureEpoch,binding?.width,binding?.height,input.revision]);
+  useEffect(()=>{setConfirmed(false);void stopRef.current('walk_stream_changed');},[job?.id,job?.key,clip,binding?.captureEpoch,binding?.width,binding?.height,input.revision,expectedSourceIdentity]);
   useEffect(()=>{if(binding?.captureEpoch)setRelease('none');},[binding?.captureEpoch]);
   useEffect(()=>{
     recent.current={sequence:0,at:0};setPreviewFrame(null);const element=video.current;
@@ -239,7 +240,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     const signal=active.abort.signal,alive=()=>run.current===active&&!signal.aborted;
     try{
       const state=await(await reconstructionRequest(`/jobs/${job.id}/navigation/${vehicleMode?'vehicle-start':'walk-start'}`,job,{method:'POST',signal,
-        body:JSON.stringify({id:active.id,clientVersion:vehicleMode?'vehicle_live_v1':'walk_live_v8',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,
+        body:JSON.stringify({id:active.id,clientVersion:vehicleMode?'vehicle_live_v1':'walk_live_v8',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,...(expectedSource?{expectedSource}:{}),
           ...(vehicleMode?{vehicleCameraAssumptionConfirmed:true,cameraFollowsBodyConfirmed:true,hudProfile:(input as VehicleInputControl).hudProfile,maxSpeedKmh,maxSeconds:durationSeconds}:{footCameraAssumptionConfirmed:true}),
           diagnosticFrames:saveFrames,startMode:active.startMode,cameraTracking:vehicleMode||!!active.camera,...(vehicleMode||active.camera?{cameraControl:'continuous_drag_v1'}:{})})})).json();
       if(!alive())return;

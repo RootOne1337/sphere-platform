@@ -16,7 +16,7 @@ import {saveRouteDebugReport} from './routeDebugStorage';
 import {RouteDebugArchive} from './RouteDebugArchive';
 import {RecordedControlReplay} from './RecordedControlReplay';
 import {assertReconstructionSource,routeSourceMismatch,routeRecordingIdentity} from './routeSourceBinding';
-import {navigationGeometryIdentity,navigationPreparationSource,navigationReadyForGeometry,type NavigationGeometrySelection} from './navigationGeometrySource';
+import {navigationExpectedSource,navigationGeometryIdentity,navigationPreparationSource,navigationReadyForGeometry,type NavigationGeometrySelection} from './navigationGeometrySource';
 type Binding={captureEpoch:string;width:number;height:number};
 const identity=()=>crypto.randomUUID().replaceAll('-','');
 export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,scope=null,onSelectClip,selectionDisabled=false,walkInput,vehicleInput,onReview,sourceRecording=null}:{job:ReconstructionJob|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;binding:Binding|null;clips?:TeachingClipChoice[];clip?:string|null;scope?:string|null;onSelectClip?:(id:string|null)=>void;selectionDisabled?:boolean;walkInput?:WalkInputControl;vehicleInput?:VehicleInputControl;onReview?:()=>void;sourceRecording?:RouteSource|null}) {
@@ -34,6 +34,8 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
   const selectedAlternative=geometrySelection?.alternativeId??null;
   const preparationSource=navigationPreparationSource(assets,geometrySelection);
   const mapReady=navigationReadyForGeometry(assets,geometrySelection,!!sourceRecording);
+  const expectedSource=navigationExpectedSource(assets,geometrySelection,!!sourceRecording);
+  const expectedSourceIdentity=expectedSource?JSON.stringify([expectedSource.alternativeId,expectedSource.geometry_sha256,expectedSource.runtime_family]):null;
   const preparationSelection=JSON.stringify([job?.id,selectedAlternative]);
   const preparingAssets=['pending_auto_prepare','preparing','features'].includes(assets?.phase??'');
   const awaitingQualification=assets?.phase==='awaiting_qualification';
@@ -56,7 +58,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
   const frame=useRef({sequence:0,at:0}),readyRef=useRef(ready),bindingRef=useRef(binding),stopRef=useRef<()=>void>(()=>{});
   const selected=useRef('');
   const displayed=useRef(0);
-  selected.current=JSON.stringify([job?.id,job?.key,clip,scope,expectedManifestSha,selectedGeometryIdentity,binding?.captureEpoch,binding?.width,binding?.height]);
+  selected.current=JSON.stringify([job?.id,job?.key,clip,scope,expectedManifestSha,selectedGeometryIdentity,expectedSourceIdentity,binding?.captureEpoch,binding?.width,binding?.height]);
   readyRef.current=ready;bindingRef.current=binding;
   const clear=useCallback(()=>{
     displayed.current=0;const context=output.current?.getContext('2d'),element=video.current;
@@ -79,7 +81,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     // the user's confirmation. Close the observer on the job that opened it.
     if(session.current)stopRef.current();
     setConfirmed(false);
-  },[job?.id,job?.key,clip,scope,expectedManifestSha,selectedGeometryIdentity,binding?.captureEpoch,binding?.width,binding?.height]);
+  },[job?.id,job?.key,clip,scope,expectedManifestSha,selectedGeometryIdentity,expectedSourceIdentity,binding?.captureEpoch,binding?.width,binding?.height]);
   useEffect(()=>{diagnostics.current=null;setDiagnosticCount(0);},[job?.id,clip,scope]);
   useEffect(()=>{setPrepareNotice(null);},[job?.id,selectedGeometryIdentity]);
   useEffect(()=>{setGeometrySelection(null);setGeometryChoice(null);},[assetSelection]);
@@ -138,7 +140,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     const request=new AbortController();abort.current=request;session.current={id,job,scope,clip,log:null};setBusy(true);setObservation(null);setSavedDebug('Диагностика пишется в памяти; после остановки сохранится локально.');setNotice('Подтверждаем один сеанс наблюдения. Управление ИИ выключено.');
     try{
       const state=await(await reconstructionRequest(`/jobs/${job.id}/navigation/start`,job,{method:'POST',signal:request.signal,
-        body:JSON.stringify({id,captureEpoch:epoch,width:source.width,height:source.height,sceneConfirmed:true})})).json();
+        body:JSON.stringify({id,captureEpoch:epoch,width:source.width,height:source.height,sceneConfirmed:true,...(expectedSource?{expectedSource}:{})})})).json();
       if(current!==generation.current||selection!==selected.current)return;
       if(state.phase!=='observing'||state.id!==id||state.physicalActions!==0)throw Error('route_start_not_confirmed');
       setBusy(false);setRunning(true);setMetrics({observations:0,known:0,unknown:0,late:0,age:0,compute:0,inliers:0,segment:null});
@@ -220,8 +222,8 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     {scope&&clip&&<RouteDebugArchive scope={scope} clip={clip} refresh={savedDebug}/>}
     {observation&&<details className="rounded-lg border p-3 text-xs" open><summary className="cursor-pointer font-medium">Диагностика последнего ответа · {observation.reply.pose.state}</summary><dl className="mt-2 grid grid-cols-2 gap-2"><div><dt>Причина</dt><dd className="break-all font-mono">{observation.reply.pose.reason}</dd></div><div><dt>Метод</dt><dd>{observation.reply.method}</dd></div><div><dt>Ошибка проекции</dt><dd>{observation.reply.pose.median_error_px?.toFixed(2)??'—'} px</dd></div><div><dt>Отклонение от пути</dt><dd>{observation.reply.pose.cross_track_units?.toFixed(3)??'—'} усл. ед.</dd></div></dl></details>}
     </div>
-    {walkInput&&panel==='walk'&&<WalkingRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={mapReady} preparationIssue={preparationIssue} input={walkInput} observerBusy={running||busy||panel!=='walk'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='walk')}/>}
-    {vehicleInput&&panel==='vehicle'&&<VehicleRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={mapReady} preparationIssue={preparationIssue} input={vehicleInput} observerBusy={running||busy||panel!=='vehicle'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='vehicle')}/>}
+    {walkInput&&panel==='walk'&&<WalkingRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={mapReady} expectedSource={expectedSource} preparationIssue={preparationIssue} input={walkInput} observerBusy={running||busy||panel!=='walk'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='walk')}/>}
+    {vehicleInput&&panel==='vehicle'&&<VehicleRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={mapReady} expectedSource={expectedSource} preparationIssue={preparationIssue} input={vehicleInput} observerBusy={running||busy||panel!=='vehicle'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='vehicle')}/>}
     <p className="text-[11px] leading-5 text-muted-foreground">Разрешение можно уменьшать с сохранением пропорций; FOV и режим камеры должны совпадать. Узнавание на минимальном рендере проверяется отдельно. «Кадр → ответ» измеряется в браузере; полная задержка Android неизвестна. Неподтверждённая поза и ответы старше 250 мс скрывают линию. Моторная модель не запускается.</p>
   </section>;
 }

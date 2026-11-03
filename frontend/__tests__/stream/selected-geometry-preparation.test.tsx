@@ -2,7 +2,7 @@ import {act,fireEvent,render,screen,waitFor,within} from '@testing-library/react
 import {webcrypto} from 'node:crypto';
 import {TextDecoder,TextEncoder} from 'node:util';
 import {TeachingNavigation} from '@/src/features/stream/TeachingNavigation';
-import {reconstructionRequest,type NavigationState} from '@/src/features/stream/reconstructionClient';
+import {reconstructionRequest,ReconstructionResponseError,type NavigationState} from '@/src/features/stream/reconstructionClient';
 import type {RouteSource} from '@/src/features/stream/routeSource';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
 jest.mock('@/src/features/stream/RecordedRouteFrame',()=>({RecordedRouteFrame:()=> <div>original-source-frame</div>}));
@@ -23,11 +23,13 @@ beforeEach(()=>{
 });
 afterEach(()=>jest.restoreAllMocks());
 
-function fixture(navigation:NavigationState={phase:'not_prepared'},qualified=true){
+function fixture(navigation:NavigationState={phase:'not_prepared'},qualified=true,startRefusal?:403|409){
   let current=navigation;
   const bound={alternativeId:'retained-173',geometry_sha256:geometrySha,runtime_family:'reference_lk' as const};
   const preparationSource={...bound,cameras:2,points:1};
   jest.mocked(reconstructionRequest).mockImplementation(async(path,_job,init)=>{
+    if(path.endsWith('/navigation/start'))throw new ReconstructionResponseError(startRefusal??409,'route_start_source_changed');
+    if(path.endsWith('/navigation/stop'))return {json:async()=>({phase:'closed'})} as Response;
     if(path.endsWith('/navigation/prepare')){
       current={phase:'features',source:bound};
       return {json:async()=>current} as Response;
@@ -108,4 +110,16 @@ test('changing the control panel preserves a manually selected schema and cannot
   await waitFor(()=>expect(within(screen.getByLabelText('Подготовка карты выбранной схемы')).getByRole('status')).toHaveTextContent('другой схеме'));
   expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
   expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>call[2]?.method!=='POST')).toBe(true);
+});
+
+test.each([403,409] as const)('observer start sends the validated source fence and a %s mismatch never reaches observation',async(status)=>{
+  const bound={alternativeId:'retained-173',geometry_sha256:geometrySha,runtime_family:'reference_lk' as const};
+  fixture({phase:'ready',source:bound},true,status);
+  await waitFor(()=>expect(within(screen.getByLabelText('Подготовка карты выбранной схемы')).getByRole('status')).toHaveTextContent('готова к проверке'));
+  fireEvent.click(screen.getByRole('checkbox',{name:/На экране игровой мир/}));
+  fireEvent.click(screen.getByRole('button',{name:'Проверить направление · 120 с'}));
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path.endsWith('/navigation/stop'))).toBe(true));
+  const posts=jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[2]?.method==='POST');
+  expect(posts.map(([path])=>path.split('/').at(-1))).toEqual(['start','stop']);
+  expect(JSON.parse(String(posts[0][2]?.body)).expectedSource).toEqual(bound);
 });

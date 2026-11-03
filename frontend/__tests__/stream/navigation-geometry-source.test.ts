@@ -1,4 +1,4 @@
-import {navigationPreparationSource,navigationReadyForGeometry} from '@/src/features/stream/navigationGeometrySource';
+import {navigationExpectedSource,navigationPreparationSource,navigationReadyForGeometry} from '@/src/features/stream/navigationGeometrySource';
 import type {NavigationGeometrySelection} from '@/src/features/stream/navigationGeometrySource';
 import type {NavigationState} from '@/src/features/stream/reconstructionClient';
 
@@ -30,4 +30,15 @@ test('legacy ready primary maps remain compatible without promoting an inspected
   expect(navigationReadyForGeometry({phase:'ready'},null,true)).toBe(false);
   expect(navigationReadyForGeometry({phase:'ready'},primary,true)).toBe(true);
   expect(navigationReadyForGeometry({phase:'ready'},selected,true)).toBe(false);
+});
+test('a start fence contains only the exact validated public binding and legacy requests stay unchanged',()=>{
+  expect(navigationExpectedSource({phase:'ready',source},selected,true)).toEqual({alternativeId:source.alternativeId,geometry_sha256:source.geometry_sha256,runtime_family:'reference_lk'});
+  expect(navigationExpectedSource({phase:'ready',source},selected,true)).not.toHaveProperty('cameras');
+  expect(navigationExpectedSource({phase:'ready',source}, {...selected,alternativeId:'other'},true)).toBeUndefined();
+  expect(navigationExpectedSource({phase:'ready'},null,false)).toBeUndefined();
+  for(const changed of [{alternativeId:'../native'},{runtime_family:'unknown'},{geometry_sha256:'invalid'}]){
+    const value={...source,...changed};
+    expect(navigationReadyForGeometry({phase:'ready',source:value} as NavigationState,{...selected,alternativeId:value.alternativeId,geometry_sha256:value.geometry_sha256},true)).toBe(false);
+    expect(navigationExpectedSource({phase:'ready',source:value} as NavigationState,selected,true)).toBeUndefined();
+  }
 });
