@@ -7,10 +7,12 @@ export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'
 
 /** Pedestrian sample-and-hold: fresh RGB is guarded independently at 250 ms.
  * A newly verified pose may hold its correction for at most 250 ms after the
- * answer, and never beyond 350 ms from capture. This is not pose prediction. */
+ * answer, and never beyond 450 ms from capture. For steady 5 Hz replies with
+ * 150–200 ms processing, this leaves 50 ms of scheduling headroom.
+ * Only a newly admitted reply renews it; timer ticks cannot predict a pose. */
 export function walkDecisionDeadline(capturedAt:number,answeredAt:number):number|null{
   if(!Number.isFinite(capturedAt)||!Number.isFinite(answeredAt)||answeredAt<capturedAt||answeredAt-capturedAt>=250)return null;
-  return Math.min(capturedAt+350,answeredAt+250);
+  return Math.min(capturedAt+450,answeredAt+250);
 }
 export type WalkSourceHealth={encodedAgeMs:number|null;presentedAgeMs:number|null;hidden:boolean};
 export type WalkInputLease={active():boolean;failure?():string|null;sourceHealth?():WalkSourceHealth|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;

@@ -7,7 +7,9 @@ const profile=calibrateProfile(defaultTeachingProfile,geometry,'stick',{x:150,y:
 
 test('a verified foot correction has a bounded hold independent from fresh-video monitoring',()=>{
   expect(walkDecisionDeadline(1000,1080)).toBe(1330);
-  expect(walkDecisionDeadline(1000,1200)).toBe(1350);
+  expect(walkDecisionDeadline(1000,1200)).toBe(1450);
+  expect(walkDecisionDeadline(1000,1150)).toBe(1400);
+  expect(walkDecisionDeadline(1000,1249)).toBe(1450);
   expect(walkDecisionDeadline(1000,1250)).toBeNull();
   expect(walkDecisionDeadline(1000,999)).toBeNull();
   expect(walkDecisionDeadline(NaN,1050)).toBeNull();

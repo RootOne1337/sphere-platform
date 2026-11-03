@@ -417,7 +417,9 @@ test('fresh video permits a bounded held correction between pose answers, then c
   now=1260;fresh();await waitFor(()=>expect(queries).toBe(2));
   now=1280;await act(async()=>{await new Promise(r=>setTimeout(r,35));});
   expect(lease.neutral).not.toHaveBeenCalled();expect(lease.close).not.toHaveBeenCalled();
-  now=1360;fresh();await waitFor(()=>expect(lease.neutral).toHaveBeenCalled());
+  now=1360;fresh();await act(async()=>{await new Promise(r=>setTimeout(r,35));});
+  expect(lease.neutral).not.toHaveBeenCalled(); // min(capture1000+450, answer1120+250) = 1370.
+  now=1380;fresh();await waitFor(()=>expect(lease.neutral).toHaveBeenCalled());
   expect(lease.close).not.toHaveBeenCalled();fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
   const response=await original(`/jobs/${job.id}/navigation/observe`,job,{body:JSON.stringify({sequence:2})});
   await act(async()=>complete(response));
