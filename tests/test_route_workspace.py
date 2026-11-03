@@ -122,6 +122,27 @@ class RouteWorkspaceTests(unittest.TestCase):
         (folder/'receipt.json').write_text(json.dumps(dict(geometry_sha256='0'*64,source_capture_sha256='0'*64)))
         self.assertEqual(self.workspace.status(self.job)['phase'], 'rejected')
 
+    def test_admission_display_reuses_fresh_gate_hashes_only_within_one_poll(self):
+        from scripts.pilot import route_workspace as module
+        from scripts.pilot.route_reconstruction_recipe import bind_geometry,route_recipe
+        self.attach_fixture_map()
+        (self.job/'prepared').mkdir(exist_ok=True)
+        (self.job/'prepared/reconstruction-input.json').write_text('{}')
+        recipe=route_recipe(self.job,self.job/'prepared',vehicle=False,fused_enabled=False)
+        bind_geometry(recipe,self.job/'geometry.json')
+        (self.job/'quality.json').write_text(json.dumps(dict(reconstruction_recipe=recipe,selection=dict(route_admissible=True))))
+        with patch('scripts.pilot.route_workspace.digest_file',wraps=module.digest_file) as hashed:
+            first=self.workspace.status(self.job)
+            self.assertEqual(first['admission']['geometry']['status'],'accepted')
+            self.assertEqual(sum(call.args==(self.job/'geometry.json',) for call in hashed.call_args_list),1)
+            self.assertEqual(sum(call.args==(self.job/'input/manifest.json',) for call in hashed.call_args_list),1)
+            (self.job/'input/manifest.json').write_text('{"source_changed":true}')
+            second=self.workspace.status(self.job)
+            self.assertEqual(second['phase'],'rejected')
+            self.assertEqual(second['error'],'route_source_changed')
+            self.assertEqual(second['admission']['recipe']['status'],'source_changed')
+            self.assertEqual(second['admission']['runtime_map']['status'],'not_admitted')
+
     def test_old_ready_receipt_without_coverage_evidence_is_rejected(self):
         folder = self.job/'navigation'/self.identity
         folder.mkdir(parents=True)
@@ -519,7 +540,10 @@ class RouteWorkspaceTests(unittest.TestCase):
         receipt=json.loads((folder/'receipt.json').read_text())
         receipt['pipeline_sha256']='0'*64
         (folder/'receipt.json').write_text(json.dumps(receipt))
-        self.assertEqual(self.workspace.status(self.job)['error'],'route_feature_runtime_mismatch')
+        status=self.workspace.status(self.job)
+        self.assertEqual(status['error'],'route_feature_runtime_mismatch')
+        self.assertEqual(status['admission']['runtime_map']['status'],'not_admitted')
+        self.assertEqual(status['admission']['runtime_map']['feature_pipeline_sha256'],'0'*64)
         with self.assertRaisesRegex(ValueError,'not_ready'):
             self.workspace.start_walk(self.job,dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,
                 sceneConfirmed=True,clientVersion='walk_live_v8',footCameraAssumptionConfirmed=True))

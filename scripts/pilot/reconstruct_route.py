@@ -338,6 +338,12 @@ def _reconstruct(job, mask, steps, *, route_only=False):
     images = list((prepared / 'images').glob('*.png'))
     if len(images) < 10:
         raise RuntimeError('insufficient_selected_views')
+    recipe = None
+    if route_only:
+        from scripts.pilot.route_fused_recovery import experimental_enabled
+        from scripts.pilot.route_reconstruction_recipe import route_recipe
+        recipe = route_recipe(job, prepared, vehicle=vehicle, fused_enabled=experimental_enabled())
+        write_json(job/'reconstruction-recipe.json', recipe)
     masks = masked_inputs(prepared, mask, manifest=capture.manifest)
     checkpoint(job)
     import pycolmap as p
@@ -385,6 +391,9 @@ def _reconstruct(job, mask, steps, *, route_only=False):
             tracks=build_video_track_database(job,prepared,skeleton,database,lambda:checkpoint(job),
                 wide_tracking=vehicle,
                 progress=lambda done,total:state(job,'features',method='source_video_corner_tracks',selected_views=len(images),completed_items=done,total_items=total))
+            recipe['features'].update({key: tracks.get(key) for key in
+                ('trackingResolution', 'maxCorners', 'forwardBackwardPixels', 'lkWindow', 'lkPyramidLevels')})
+            write_json(job/'reconstruction-recipe.json', recipe)
             pair_file=prepared/'video-track-pairs.txt'
             pair_file.write_text(''.join(row['first']+' '+row['second']+'\n' for row in tracks['pairs']),encoding='ascii')
             state(job,'matching',selected_views=len(images),method='video_tracks_geometric_verification')
@@ -441,16 +450,28 @@ def _reconstruct(job, mask, steps, *, route_only=False):
     recovery=None
     component_merge=None
     fused_recovery=None
+    if route_only:
+        fused_recovery=dict(schema='sphere-fused-route-recovery-v1',
+            enabled=recipe['fused_recovery']['enabled'], attempted=False, accepted=False,
+            reason='not_attempted_native_geometry_admitted' if rec is not None and cached_assessment[1]['route_admissible']
+                else 'not_evaluated')
+        recipe['mapping']['selected_method']='incremental_mapping' if rec is not None else None
     if rec is not None:
         first_geometry,first_assessment=cached_assessment
         # Preserve inspectable evidence even if a later optional model load is
         # refused. This unsealed first pass never authorizes navigation.
         write_json(job/'geometry.json',first_geometry)
+        if recipe is not None:
+            from scripts.pilot.route_reconstruction_recipe import bind_geometry, record_fused_decision
+            bind_geometry(recipe, job/'geometry.json')
+            record_fused_decision(recipe, fused_recovery)
+            write_json(job/'reconstruction-recipe.json', recipe)
         write_json(job/'quality.json',dict(registered=rec.num_reg_images(),selected=len(images),
             coverage=rec.num_reg_images()/len(images),points=rec.num_points3D(),
             mean_reprojection_px=rec.compute_mean_reprojection_error(),components=len(models),
             conditioning=first_assessment['conditioning'],intrinsics_condition=first_assessment['intrinsics_condition'],
-            selection=first_assessment,first_pass_only=True))
+            selection=first_assessment,first_pass_only=True,
+            **({'reconstruction_recipe':recipe, 'fused_recovery':fused_recovery} if recipe is not None else {})))
     if route_only and len(models)>1 and (rec is None or not cached_assessment[1]['route_admissible']):
         # Native mapping may return overlapping reconstructions of one route.
         # Check their actual camera/observation identities before loading an
@@ -462,19 +483,32 @@ def _reconstruct(job, mask, steps, *, route_only=False):
             assessment_check=observation_check)
         if component_merge.get('accepted'):
             cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
+            if cached_assessment[1]['route_admissible']:
+                fused_recovery['reason']='not_attempted_native_geometry_admitted'
     if route_only and (rec is None or not cached_assessment[1]['route_admissible']):
         # One CPU candidate combines temporal measurements and independently
         # verified SIFT associations before considering a model-heavy fallback.
         # It never requires a HUD and never edits the first-pass evidence.
         from scripts.pilot.route_fused_recovery import experimental_enabled,recover_fused
+        from scripts.pilot.route_reconstruction_recipe import persist_progress
         fused_recovery=dict(schema='sphere-fused-route-recovery-v1',enabled=experimental_enabled(),
             attempted=False,accepted=False,reason='fused_unqualified_default_disabled')
         if fused_recovery['enabled']:
-            rec,fused_recovery=recover_fused(job,prepared,rec,len(images),source_start,source_end,
-                lambda:checkpoint(job),
-                lambda phase,done,total:state(job,phase,method='fused_observation_global_sfm',
-                    selected_views=len(images),completed_items=done,total_items=total),
-                assessment_check=observation_check)
+            fused_recovery.update(attempted=True,reason='fused_candidate_running')
+            persist_progress(job,recipe,fused_recovery)
+            try:
+                rec,fused_recovery=recover_fused(job,prepared,rec,len(images),source_start,source_end,
+                    lambda:checkpoint(job),
+                    lambda phase,done,total:state(job,phase,method='fused_observation_global_sfm',
+                        selected_views=len(images),completed_items=done,total_items=total),
+                    assessment_check=observation_check)
+            except BaseException:
+                fused_recovery.update(accepted=False,reason='fused_candidate_interrupted')
+                raise
+            finally:
+                persist_progress(job,recipe,fused_recovery)
+        else:
+            persist_progress(job,recipe,fused_recovery)
         if fused_recovery.get('accepted'):
             cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
     if route_only and (rec is None or not cached_assessment[1]['route_admissible']):
@@ -525,10 +559,23 @@ def _reconstruct(job, mask, steps, *, route_only=False):
             cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
             geometry=cached_assessment[0]
     write_json(job / 'geometry.json', geometry)
+    if recipe is not None:
+        from scripts.pilot.route_reconstruction_recipe import bind_geometry, record_fused_decision
+        recipe['mapping']['selected_method']=(
+            'learned_recovery' if recovery is not None and recovery.get('accepted') else
+            'fused_observation_global_sfm' if fused_recovery.get('accepted') else
+            'compatible_component_merge' if component_merge is not None and component_merge.get('accepted') else
+            'incremental_mapping')
+        recipe['mapping']['endpoint_resection_accepted']=endpoint_resection is not None and endpoint_resection.get('accepted') is True
+        bind_geometry(recipe, job/'geometry.json')
+        record_fused_decision(recipe, fused_recovery)
+        write_json(job/'reconstruction-recipe.json', recipe)
     coverage = rec.num_reg_images() / len(images)
     error = rec.compute_mean_reprojection_error()
     quality = dict(registered=rec.num_reg_images(), selected=len(images), coverage=coverage,
                    points=rec.num_points3D(), mean_reprojection_px=error, components=len(models))
+    if recipe is not None:
+        quality['reconstruction_recipe']=recipe
     if component_merge is not None:
         quality['component_merge']={key:component_merge.get(key) for key in ('schema','accepted','reason','chosen','seconds','source_modified')}
         quality['component_merge']['attempts']=len(component_merge.get('attempts',[]))

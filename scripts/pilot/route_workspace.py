@@ -137,6 +137,20 @@ class RouteWorkspaces:
         return folder
 
     def status(self, job):
+        from scripts.pilot.route_reconstruction_recipe import admission_ladder
+        # The gate and its display use one fresh hash per path in this request.
+        # Do not repeatedly hash a multi-megabyte geometry for the same poll,
+        # and do not retain hashes across polls where the source may change.
+        hashes = {}
+        def source_digest(path):
+            if path not in hashes:
+                hashes[path] = digest_file(path)
+            return hashes[path]
+        result = self._status(job, digest=source_digest)
+        result['admission'] = admission_ladder(job, result, read_json=checked_json, digest=source_digest)
+        return result
+
+    def _status(self, job, *, digest=digest_file):
         folder = self.current(job)
         if folder is None:
             return dict(phase='not_prepared', executionQualified=False,
@@ -147,8 +161,8 @@ class RouteWorkspaces:
             return dict(result, phase='rejected', error='route_receipt_missing')
         if result['phase'] in {'ready', 'rejected'} and (folder/'receipt.json').exists():
             receipt = checked_json(folder/'receipt.json')
-            if (receipt.get('geometry_sha256') != digest_file(job/'geometry.json')
-                    or receipt.get('source_capture_sha256') != digest_file(job/'input/manifest.json')):
+            if (receipt.get('geometry_sha256') != digest(job/'geometry.json')
+                    or receipt.get('source_capture_sha256') != digest(job/'input/manifest.json')):
                 return dict(result, phase='rejected', error='route_source_changed')
             support = receipt.get('map_support') or {}
             coverage = receipt.get('source_coverage') or {}
@@ -156,7 +170,7 @@ class RouteWorkspaces:
             # A new preflight failure does not erase this previous attempt.
             result['summary'] = {key: receipt.get(key) for key in
                 ('cameras', 'landmarks', 'first_seconds', 'last_seconds', 'source_coverage',
-                 'map_support', 'camera_trace_only')}
+                 'map_support', 'camera_trace_only', 'pipeline_sha256')}
             if (support.get('all_reference_neighborhoods_supported') is not True
                     or support.get('all_reference_intervals_observed') is not True
                     or coverage.get('endpoints_observed') is not True):
@@ -165,8 +179,8 @@ class RouteWorkspaces:
             if receipt.get('pipeline_sha256') == native_reference_pipeline_id():
                 from scripts.pilot.route_native_landmarks import validate_reference_receipt
                 try:
-                    validate_reference_receipt(receipt, folder, source_sha256=digest_file(job/'input/manifest.json'),
-                                               source_index_sha256=digest_file(job/'prepared/reconstruction-input.json'))
+                    validate_reference_receipt(receipt, folder, source_sha256=digest(job/'input/manifest.json'),
+                                               source_index_sha256=digest(job/'prepared/reconstruction-input.json'))
                 except (OSError, ValueError, TypeError, KeyError):
                     return dict(result, phase='rejected', error='route_native_reference_invalid')
                 # Exact measured binding is not runtime localization evidence.

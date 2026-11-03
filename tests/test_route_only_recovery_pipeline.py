@@ -71,6 +71,34 @@ def test_unqualified_fused_candidate_is_default_disabled_without_new_ui_switch(t
     assert status['enabled'] is False and status['attempted'] is False and status['accepted'] is False
 
 
+def test_native_success_records_the_actual_recipe_and_skipped_fused_decision(tmp_path,monkeypatch):
+    from scripts.pilot import route_fused_recovery,route_learned_recovery
+    job,calls=setup_pipeline(tmp_path,monkeypatch)
+    native=sys.modules['pycolmap'].incremental_mapping()[0]
+    native.write=lambda _:calls.append('write_model')
+    native.export_PLY=lambda _:calls.append('write_points')
+    original=pipeline.model_assessment
+    def admitted(rec,*args,**kwargs):
+        geometry,report=original(rec,*args,**kwargs)
+        report.update(route_admissible=True,scene_admissible=True,conditioning=dict(passed=True))
+        return geometry,report
+    monkeypatch.setattr(pipeline,'model_assessment',admitted)
+    monkeypatch.setattr(route_fused_recovery,'recover_fused',lambda *a,**k:pytest.fail('native admission must not silently start a new recipe'))
+    monkeypatch.setattr(route_learned_recovery,'recover_with_learned',lambda *a,**k:pytest.fail('no heavy fallback for native success'))
+    pipeline.reconstruct(job,'game',30000,route_only=True)
+    assert calls==['write_model','write_points','sealed']
+    quality=json.loads((job/'quality.json').read_bytes())
+    recipe=quality['reconstruction_recipe']
+    assert recipe['recipe_id']=='video-fb-lk-incremental-colmap-v1'
+    assert recipe['features']['method']=='source_video_corner_tracks'
+    assert recipe['mapping']['method']=='incremental_mapping'
+    assert all(quality['fused_recovery'][key]==value for key,value in recipe['fused_recovery'].items())
+    assert recipe['fused_recovery']['enabled'] is True
+    assert recipe['fused_recovery']['attempted'] is False
+    assert recipe['fused_recovery']['reason']=='not_attempted_native_geometry_admitted'
+    assert recipe['source']['geometry_sha256']==__import__('hashlib').sha256((job/'geometry.json').read_bytes()).hexdigest()
+
+
 def test_automatic_fused_candidate_precedes_heavy_fallback_and_uses_same_admission(tmp_path,monkeypatch):
     from scripts.pilot import route_fused_recovery,route_learned_recovery
     job,calls=setup_pipeline(tmp_path,monkeypatch)
@@ -106,7 +134,11 @@ def test_fused_resource_failure_preserves_baseline_without_loading_heavy_fallbac
     with pytest.raises(RuntimeError,match='resource_guard'):
         pipeline.reconstruct(job,'game',30000,route_only=True)
     assert not calls and (job/'geometry.json').is_file()
-    assert json.loads((job/'quality.json').read_bytes())['first_pass_only']
+    quality=json.loads((job/'quality.json').read_bytes())
+    assert quality['first_pass_only']
+    assert quality['fused_recovery']['attempted'] is True
+    assert quality['fused_recovery']['accepted'] is False
+    assert quality['fused_recovery']['reason']=='fused_candidate_interrupted'
 
 
 def test_full_count_collapsed_route_runs_recovery_even_when_learned_dense_is_disabled(tmp_path,monkeypatch):
