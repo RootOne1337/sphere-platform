@@ -1,0 +1,52 @@
+{
+  "schema": "sphere-selected-geometry-evidence-manifest-v1",
+  "files": [
+    {
+      "file": "browser-source-workflow.json",
+      "sha256": "c33f2fa5f4784b44907ec84d8f955e091e5e0b1101dc364eb28aeea338a0fef6",
+      "bytes": 2080
+    },
+    {
+      "file": "controlled-test-qualification.json",
+      "sha256": "d95bc25bce683233c332575595040ecb449e0685c00bf03c993292c8dff137a3",
+      "bytes": 1531
+    },
+    {
+      "file": "import-6a770406.json",
+      "sha256": "5d5f579b79eb6d760872b10f8acc165b8d2bfce82e6bfa6461f5c11649cedf69",
+      "bytes": 2314
+    },
+    {
+      "file": "import-f3033bb7.json",
+      "sha256": "ecc2d94a88d4fb5155491469e7c73e55c36d98324355d5b509011a2092b9ddc6",
+      "bytes": 2314
+    },
+    {
+      "file": "installed-runtime.json",
+      "sha256": "9f8c9d5768151c41530f9531e09bc6291e00d66d2dc2aeb183e0f5c1b1098be0",
+      "bytes": 780
+    },
+    {
+      "file": "measured-query-validation.json",
+      "sha256": "ddc36e71a1c26389fad97bd6659f10a153bc44b520b6e3d9fb120c5d46d6f3b0",
+      "bytes": 3180
+    },
+    {
+      "file": "prepared-map-start-check.json",
+      "sha256": "10d36959fd1190772eb55da3fce01785c4d9d6677d7ca885e3c704f80e4c3d83",
+      "bytes": 1385
+    },
+    {
+      "file": "source-bound-ready-fixture.png",
+      "sha256": "be696d51c2304cd42226583f66feb1fb0b161d6787fd868ac4a5edabc351529a",
+      "bytes": 382510
+    },
+    {
+      "file": "verification.json",
+      "sha256": "a437edf54a702a023591baf0c2957b99a1ac1251f0761f936318cbcb729bfd7c",
+      "bytes": 543
+    }
+  ],
+  "raw_video_or_native_models_published": false,
+  "physical_actions": 0
+}
