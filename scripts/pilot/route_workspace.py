@@ -26,7 +26,7 @@ from scripts.pilot.route_owned_process import spawn_owned
 
 ROOT = Path(__file__).resolve().parents[2]
 ID = re.compile(r'^[0-9a-f]{32}$')
-TERMINAL = {'ready', 'failed', 'rejected', 'cancelled'}
+TERMINAL = {'ready', 'failed', 'rejected', 'cancelled', 'awaiting_qualification'}
 
 
 def checked_json(path, maximum=65536):
@@ -148,6 +148,10 @@ class RouteWorkspaces:
             return hashes[path]
         result = self._status(job, digest=source_digest)
         result['admission'] = admission_ladder(job, result, read_json=checked_json, digest=source_digest)
+        from scripts.pilot.route_preparation_source import preparation_sources
+        result['preparationSources'] = preparation_sources(job, digest=source_digest)
+        if result.get('source', {}).get('alternativeId') is not None:
+            result['admission']['geometry'] = dict(status='accepted', reason='alternative_native_geometry_gate')
         return result
 
     def _status(self, job, *, digest=digest_file):
@@ -157,13 +161,21 @@ class RouteWorkspaces:
                         resourceProfile=route_resource_profile(job))
         result = dict(self._attempt_state(folder), id=folder.name, executionQualified=False,
                       resourceProfile=route_resource_profile(job))
+        from scripts.pilot.route_preparation_source import attempt_source, public_source
+        try:
+            selected = attempt_source(job, folder, digest=digest)
+            result['source'] = public_source(selected, digest=digest)
+        except (OSError, ValueError, TypeError, KeyError):
+            return dict(result, phase='rejected', error='route_preparation_source_changed')
         if result['phase'] == 'ready' and not (folder/'receipt.json').is_file():
             return dict(result, phase='rejected', error='route_receipt_missing')
-        if result['phase'] in {'ready', 'rejected'} and (folder/'receipt.json').exists():
+        if result['phase'] in {'ready', 'rejected', 'awaiting_qualification'} and (folder/'receipt.json').exists():
             receipt = checked_json(folder/'receipt.json')
-            if (receipt.get('geometry_sha256') != digest(job/'geometry.json')
+            if (receipt.get('geometry_sha256') != digest(selected['geometry_path'])
                     or receipt.get('source_capture_sha256') != digest(job/'input/manifest.json')):
                 return dict(result, phase='rejected', error='route_source_changed')
+            if selected['binding'] is not None and receipt.get('source_binding') != selected['binding']:
+                return dict(result, phase='rejected', error='route_preparation_source_changed')
             support = receipt.get('map_support') or {}
             coverage = receipt.get('source_coverage') or {}
             # Keep the measured cause available even for a rejected result.
@@ -176,6 +188,23 @@ class RouteWorkspaces:
                     or coverage.get('endpoints_observed') is not True):
                 return dict(result, phase='rejected', error='route_map_has_unobserved_sections')
             from motor_worker.route_localization import native_reference_pipeline_id, pipeline_id
+            if selected['binding'] is not None:
+                from scripts.pilot.route_reference_lk_export import (
+                    validate_reference_lk_qualification, validate_reference_lk_receipt,
+                )
+                try:
+                    validate_reference_lk_receipt(receipt, folder,
+                        source_capture_sha256=digest(job/'input/manifest.json'),
+                        source_index_sha256=digest(job/'prepared/reconstruction-input.json'),
+                        geometry_sha256=selected['binding']['geometry_sha256'],
+                        model_sha256=selected['binding']['model_sha256'])
+                except (OSError, ValueError, TypeError, KeyError):
+                    return dict(result, phase='rejected', error='route_reference_lk_invalid')
+                try:
+                    validate_reference_lk_qualification(receipt, folder, source_binding=selected['binding'])
+                except (OSError, ValueError, TypeError, KeyError):
+                    return dict(result, phase='awaiting_qualification', error='route_reference_lk_unqualified')
+                return dict(result, phase='ready', error=None, controlledExperimentalTestOnly=True)
             if receipt.get('pipeline_sha256') == native_reference_pipeline_id():
                 from scripts.pilot.route_native_landmarks import validate_reference_receipt
                 try:
@@ -204,14 +233,24 @@ class RouteWorkspaces:
         self._expire()
         self.current(job)  # Validate the fixed root before creating any directory.
         identity = body.get('id') if type(body) is dict else None
-        if not isinstance(identity, str) or not ID.fullmatch(identity) or set(body) != {'id'}:
+        if (not isinstance(identity, str) or not ID.fullmatch(identity)
+                or set(body) not in ({'id'}, {'id', 'alternativeId'})):
             raise ValueError('route_preparation_intent')
+        alternative_id = body.get('alternativeId')
+        if 'alternativeId' in body:
+            from scripts.pilot.alternative_geometry import ID as ALTERNATIVE_ID
+            if not isinstance(alternative_id, str) or not ALTERNATIVE_ID.fullmatch(alternative_id):
+                raise ValueError('route_alternative_id')
         folder = job/'navigation'/identity
         if folder.exists():
             # Repeated intent reads its own outcome; never repeat a lost start.
+            intent = checked_json(folder/'intent.json') if (folder/'intent.json').exists() else {}
+            if intent.get('alternativeId') != alternative_id:
+                raise ValueError('route_preparation_intent_source_changed')
             return dict(self._attempt_state(folder), id=identity, executionQualified=False)
         current = self.status(job)
-        if current.get('error') == 'route_map_has_unobserved_sections':
+        if (current.get('error') == 'route_map_has_unobserved_sections'
+                and current.get('source', {}).get('alternativeId') == alternative_id):
             summary = current.get('summary', {})
             if ((summary.get('source_coverage') or {}).get('endpoints_observed') is False
                     or (summary.get('map_support') or {}).get('all_reference_intervals_observed') is False):
@@ -220,16 +259,30 @@ class RouteWorkspaces:
                 raise ValueError('route_camera_recovery_required')
         if self.preparing(job) or self.live is not None:
             raise ValueError('route_workspace_busy')
-        if len(list((job/'navigation').glob('*/intent.json'))) >= 3:
+        intents = list((job/'navigation').glob('*/intent.json'))
+        source_attempts = sum(checked_json(path).get('alternativeId') == alternative_id for path in intents)
+        if ((alternative_id is None and len(intents) >= 3)
+                or (alternative_id is not None and (source_attempts >= 3 or len(intents) >= 16))):
             raise ValueError('route_preparation_attempt_quota')
         profile = route_resource_profile(job)
-        resource_checkpoint(job, profile=profile)
+        source_intent = {}
+        if alternative_id is not None:
+            from scripts.pilot.route_preparation_source import cancel_marker, resolve_alternative_source
+            selected = resolve_alternative_source(job, alternative_id)
+            marker = cancel_marker(job/'CANCEL')
+            source_intent = dict(alternativeId=alternative_id, sourceBinding=selected['binding'],
+                                cancellationPolicy=dict(parentCancelAtIntent=marker))
+            resource_checkpoint(folder, profile=profile)
+            if cancel_marker(job/'CANCEL') != marker:
+                raise RuntimeError('cancelled')
+        else:
+            resource_checkpoint(job, profile=profile)
         folder.mkdir(parents=True)
         process = None
         self.processes[job.name] = None
         try:
             write_json(folder/'intent.json', dict(id=identity, scope='READ_ONLY_ROUTE_ASSETS', physicalActions=0,
-                                               resourceProfile=profile))
+                                               resourceProfile=profile, **source_intent))
             write_json(folder/'state.json', dict(phase='preparing'))
             write_json(job/'navigation/active.json', dict(id=identity))
             with (folder/'worker.private.log').open('xb') as log:
@@ -248,7 +301,8 @@ class RouteWorkspaces:
                 if process is not None and hasattr(process, 'close'):
                     process.close()
                 self.processes.pop(job.name, None)
-                write_json(folder/'state.json', dict(phase='cancelled' if (job/'CANCEL').exists() else 'failed',
+                from scripts.pilot.route_preparation_source import attempt_cancelled
+                write_json(folder/'state.json', dict(phase='cancelled' if attempt_cancelled(job, folder) else 'failed',
                                                     error='route_start_not_confirmed'))
             raise
         return self.status(job)
@@ -261,8 +315,8 @@ class RouteWorkspaces:
                 if process.poll() is None:
                     self._stop_process(process)
             finally:
-                write_json(folder/'state.json', dict(phase='cancelled' if (folder/'CANCEL').exists()
-                                                    or (folder.parent.parent/'CANCEL').exists() else 'failed',
+                from scripts.pilot.route_preparation_source import attempt_cancelled
+                write_json(folder/'state.json', dict(phase='cancelled' if attempt_cancelled(folder.parent.parent, folder) else 'failed',
                                                     error='route_monitor_failed'))
         finally:
             if hasattr(process, 'close'):
@@ -289,6 +343,7 @@ class RouteWorkspaces:
             self._monitor_owned_process(folder, process, profile, monitor)
 
     def _monitor_owned_process(self, folder, process, profile, monitor):
+        from scripts.pilot.route_preparation_source import attempt_cancelled
         deadline = time.monotonic()+330
         while process.poll() is None:
             time.sleep(3)
@@ -298,9 +353,7 @@ class RouteWorkspaces:
             if process.poll() is not None:
                 break
             try:
-                if (folder.parent.parent/'CANCEL').exists():
-                    raise RuntimeError('cancelled')
-                if (folder/'CANCEL').exists():
+                if attempt_cancelled(folder.parent.parent, folder):
                     raise RuntimeError('cancelled')
                 resource_checkpoint(folder, profile=profile, snapshot=monitor.sample())
                 if time.monotonic() > deadline:
@@ -311,7 +364,7 @@ class RouteWorkspaces:
                 self._stop_process(process)
                 write_json(folder/'state.json', dict(phase='cancelled' if str(exc) == 'cancelled' else 'failed', error=str(exc)))
                 return
-        if (folder/'CANCEL').exists() or (folder.parent.parent/'CANCEL').exists():
+        if attempt_cancelled(folder.parent.parent, folder):
             write_json(folder/'state.json', dict(phase='cancelled', error='cancelled'))
             return
         if checked_json(folder/'state.json')['phase'] not in TERMINAL:
@@ -323,7 +376,43 @@ class RouteWorkspaces:
         if self.live and self.clock() >= self.live['deadline']:
             self._finish_diagnostics(self.live)
             self.retired[self.live['id']] = now + 600
+            self._close_runtime(self.live)
             self.live = None
+
+    @staticmethod
+    def _close_runtime(session):
+        tracker = session.get('tracker')
+        route = getattr(tracker, 'route', None)
+        for resource in (tracker, route):
+            close = getattr(resource, 'close', None)
+            if close is not None:
+                close()
+
+    @staticmethod
+    def _runtime_source_stamp(paths):
+        # Hashes are verified by source/receipt/load admission. A live session
+        # then owns immutable bytes; a cheap file-identity fence catches any
+        # later replacement/touch without hashing its gray cache each frame.
+        values = []
+        for path in paths:
+            if path.is_symlink() or getattr(path, 'is_junction', lambda: False)():
+                raise ValueError('route_source_changed')
+            stat = path.stat()
+            values.append((stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns))
+        return tuple(values)
+
+    def _validate_live_source(self, session):
+        paths = session.get('source_paths')
+        if paths is not None:
+            try:
+                unchanged = self._runtime_source_stamp(paths) == session['source_stamp']
+            except (OSError, ValueError):
+                unchanged = False
+            if not unchanged:
+                self.retired[session['id']] = self.clock()+600
+                self._close_runtime(session)
+                self.live = None
+                raise ValueError('route_source_changed')
 
     @staticmethod
     def _finish_diagnostics(session):
@@ -343,43 +432,99 @@ class RouteWorkspaces:
         from motor_worker.route_localization import SparseRoute
         from motor_worker.route_tracking import AnchoredRouteLocalizer
 
-        if (mode not in {'live','recorded_replay'} or type(body) is not dict or set(body) != {'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed'}
+        required = {'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed'}
+        if (mode not in {'live','recorded_replay'} or type(body) is not dict
+                or not required <= body.keys() or not body.keys() <= required | {'expectedSource'}
                 or not isinstance(body['id'], str) or not ID.fullmatch(body['id'])
                 or not isinstance(body['captureEpoch'], str)
                 or not re.fullmatch(r'[0-9a-f-]{16,64}', body['captureEpoch'])
                 or body['sceneConfirmed'] is not True):
             raise ValueError('route_live_confirmation_or_binding')
         self._expire()
+        from scripts.pilot.route_preparation_source import attempt_cancelled, attempt_source, public_source
+        folder = self.current(job)
+        selected = attempt_source(job, folder) if folder is not None else None
+        expected_source = body.get('expectedSource')
+        if expected_source is not None:
+            if (not isinstance(expected_source, dict)
+                    or set(expected_source) != {'alternativeId', 'geometry_sha256', 'runtime_family'}
+                    or selected is None or expected_source != public_source(selected)):
+                raise ValueError('route_start_source_changed')
+        elif selected is not None and selected['binding'] is not None:
+            raise ValueError('route_start_source_confirmation_required')
         if self.live is not None:
             if (self.live['id'] == body['id'] and self.live['job'] == job.name and self.live['binding'] == body
                     and self.live.get('mode','live')==mode):
+                self._validate_live_source(self.live)
                 return self.live_status()
             raise ValueError('one_live_route_observer_only')
         if body['id'] in self.retired or len(self.retired) >= 2048:
             raise ValueError('route_session_retired_or_quota')
         if self.status(job)['phase'] != 'ready':
             raise ValueError('route_assets_not_ready')
-        resource_checkpoint(job, profile=route_resource_profile(job, 'live'))
+        folder = self.current(job)
+        if selected != attempt_source(job, folder):
+            raise ValueError('route_start_source_changed')
+        reference_lk = selected['binding'] is not None
+        if reference_lk and attempt_cancelled(job, folder):
+            raise RuntimeError('cancelled')
+        resource_checkpoint(folder if reference_lk else job, profile=route_resource_profile(job, 'live'))
         # One observation is processed at a time. Bound native parallelism while
         # leaving headroom inside the 250 ms receiver-age budget for SIFT/PnP.
-        cv.setNumThreads(4)
-        folder = self.current(job)
+        cv.setNumThreads(2 if reference_lk else 4)
         receipt = checked_json(folder/'receipt.json')
-        route = SparseRoute.load(folder/'route.json', sha256=receipt['sha256'])
+        if reference_lk:
+            from motor_worker.route_reference_lk import ReferenceLKLocalizer, ReferenceLKRoute
+            route = ReferenceLKRoute.load(folder/'route.json', sha256=receipt['sha256'])
+        else:
+            route = SparseRoute.load(folder/'route.json', sha256=receipt['sha256'])
         if (type(body['width']) is not int or type(body['height']) is not int
                 or not 128 <= body['width'] <= 8192 or not 128 <= body['height'] <= 8192
                 or body['width']*body['height'] > 8*1024**2
                 or body['width']*route.profile.height != body['height']*route.profile.width):
+            if reference_lk:
+                route.close()
             raise ValueError('route_live_geometry_changed')
         # JPEG is transmitted at the fixed analysis size; original dimensions
         # must match the map above. Intrinsics already use this analysis size.
-        route = replace(route, profile=replace(route.profile, width=960, height=540))
+        if not reference_lk:
+            route = replace(route, profile=replace(route.profile, width=960, height=540))
         epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
-        tracker = AnchoredRouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
-                                        clock=self.clock, recovery_candidate_limit=8)
+        try:
+            tracker = (ReferenceLKLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
+                                           clock=self.clock, candidate_limit=3) if reference_lk else
+                       AnchoredRouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
+                                              clock=self.clock, recovery_candidate_limit=8))
+        except BaseException:
+            if reference_lk:
+                route.close()
+            raise
+        source_paths = None
+        try:
+            if reference_lk:
+                from scripts.pilot.route_preparation_source import MODEL_FILES
+                if attempt_source(job, folder) != selected:
+                    raise ValueError('route_source_changed')
+                source_paths = (selected['geometry_path'], job/'input/manifest.json',
+                    job/'prepared/reconstruction-input.json', job/'navigation/active.json',
+                    folder/'intent.json', folder/'receipt.json',
+                    folder/'route.json', folder/'reference-lk.npz', folder/'controlled-test-qualification.json',
+                    folder/'reference-lk-positive.json', folder/'reference-lk-transport.json',
+                    folder/'reference-lk-negative.json', selected['model_path'].parent/'source.json',
+                    selected['model_path'].parent/'assessment.json', selected['model_path'].parent/'producer-proof.json',
+                    *(selected['model_path']/name for name in sorted(MODEL_FILES)))
+            source_stamp = self._runtime_source_stamp(source_paths) if source_paths else None
+        except BaseException:
+            if reference_lk:
+                tracker.close()
+                route.close()
+            raise
         self.live = dict(id=body['id'], binding=body.copy(), job=job.name, epoch=epoch,
             episode=episode, goal=goal, tracker=tracker, sequence=0, observations=0, deadline=self.clock()+120,
-            geometry_sha256=receipt['geometry_sha256'],mode=mode)
+            geometry_sha256=receipt['geometry_sha256'],mode=mode,
+            geometry_path=selected['geometry_path'], source=public_source(selected),
+            runtime_family='reference_lk' if reference_lk else 'legacy_sparse', preparation_folder=folder,
+            source_paths=source_paths, source_stamp=source_stamp)
         return self.live_status()
 
     def stop_live(self, job, body, *, mode='live'):
@@ -393,6 +538,7 @@ class RouteWorkspaces:
         self.retired[body['id']] = self.clock() + 600  # Fence a delayed start.
         if self.live and self.live['id'] == body['id'] and self.live['job'] == job.name:
             diagnostics=self._finish_diagnostics(self.live)
+            self._close_runtime(self.live)
             self.live = None
             return dict(phase='closed',physicalActions=0,diagnostics=diagnostics)
         return dict(phase='closed', physicalActions=0)
@@ -408,7 +554,7 @@ class RouteWorkspaces:
 
         required={'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed', 'footCameraAssumptionConfirmed'}
         if (type(body) is not dict or body.get('footCameraAssumptionConfirmed') is not True
-                or not required <= body.keys() or not body.keys() <= required|{'startMode','cameraTracking','cameraControl','diagnosticFrames','clientVersion'}
+                or not required <= body.keys() or not body.keys() <= required|{'startMode','cameraTracking','cameraControl','diagnosticFrames','clientVersion','expectedSource'}
                 or type(body.get('diagnosticFrames',False)) is not bool
                 or type(body.get('cameraTracking',False)) is not bool
                 or type(body.get('cameraControl','pulse_v1')) is not str
@@ -434,17 +580,23 @@ class RouteWorkspaces:
         if self.live and self.live['id']==request['id'] and bool(self.live.get('frame_archive'))!=body.get('diagnosticFrames',False):
             raise ValueError('walk_diagnostic_mode_changed')
         self.start_live(job, request)
-        route=self.live['tracker'].route
-        budget=min(600,max(120,math.ceil((route.source_seconds[-1]-route.source_seconds[0])*5+30)))
-        self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control,max_seconds=budget)
-        self.live['motion_protocol']='applied_stick_v1'
-        if body.get('diagnosticFrames') and not self.live.get('frame_archive'):
-            from scripts.pilot.walk_diagnostics import WalkFrameArchive
-            self.live['frame_archive']=WalkFrameArchive(job,body['id'],clock=self.clock,
-                geometry_sha256=self.live['geometry_sha256'],capture_epoch=body['captureEpoch'])
-        return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=self.live['walk'].max_seconds,
-                    startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
-                    observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v8')
+        try:
+            route=self.live['tracker'].route
+            budget=min(600,max(120,math.ceil((route.source_seconds[-1]-route.source_seconds[0])*5+30)))
+            self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control,max_seconds=budget)
+            self.live['motion_protocol']='applied_stick_v1'
+            if body.get('diagnosticFrames') and not self.live.get('frame_archive'):
+                from scripts.pilot.walk_diagnostics import WalkFrameArchive
+                self.live['frame_archive']=WalkFrameArchive(job,body['id'],clock=self.clock,
+                    geometry_sha256=self.live['geometry_sha256'],capture_epoch=body['captureEpoch'])
+            return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=self.live['walk'].max_seconds,
+                        startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
+                        observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v8')
+        except BaseException:
+            self.retired[body['id']] = self.clock()+600
+            self._close_runtime(self.live)
+            self.live = None
+            raise
 
     def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1',max_seconds=60):
         from motor_worker.walk_route import WalkRouteFollower
@@ -455,12 +607,14 @@ class RouteWorkspaces:
             # The lower central avatar is not a stationary world landmark.
             # This conservative foot-only query mask does not alter saved map
             # bytes or claim segmentation of dynamic players/traffic.
-            profile = replace(route.profile, excluded=(*route.profile.excluded, (.33, .45, .67, 1.)))
-            route = replace(route, profile=profile)
-            self.live['tracker'] = AnchoredRouteLocalizer(route, capture_epoch=self.live['epoch'],
-                episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock,
-                recovery_candidate_limit=8)
-            views=reference_rotations(self.folder/self.live['job']/'geometry.json',route,self.live['geometry_sha256'])
+            if self.live.get('runtime_family') != 'reference_lk':
+                profile = replace(route.profile, excluded=(*route.profile.excluded, (.33, .45, .67, 1.)))
+                route = replace(route, profile=profile)
+                self.live['tracker'] = AnchoredRouteLocalizer(route, capture_epoch=self.live['epoch'],
+                    episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock,
+                    recovery_candidate_limit=8)
+            views=reference_rotations(self.live.get('geometry_path', self.folder/self.live['job']/'geometry.json'),
+                                      route,self.live['geometry_sha256'])
             self.live['walk'] = WalkRouteFollower(route, clock=self.clock,start_mode=start_mode,camera_tracking=camera_tracking,
                                                 camera_control=camera_control,reference_rotations=views,max_seconds=max_seconds)
             self.live['deadline'] = self.clock()+max_seconds
@@ -480,7 +634,7 @@ class RouteWorkspaces:
                     'vehicleCameraAssumptionConfirmed', 'cameraFollowsBodyConfirmed',
                     'hudProfile', 'maxSpeedKmh', 'cameraTracking', 'cameraControl', 'clientVersion'}
         if (type(body) is not dict or not required <= body.keys()
-                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds'}
+                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds', 'expectedSource'}
                 or body.get('vehicleCameraAssumptionConfirmed') is not True
                 or body.get('cameraFollowsBodyConfirmed') is not True
                 or body.get('hudProfile') != 'black_russia_scooter_v1'
@@ -498,6 +652,8 @@ class RouteWorkspaces:
                 or profile.get('steering') != 'stick' or profile.get('hudProfile') != body['hudProfile']):
             raise ValueError('vehicle_source_profile_mismatch')
         request = {key: body[key] for key in ('id', 'captureEpoch', 'width', 'height', 'sceneConfirmed')}
+        if 'expectedSource' in body:
+            request['expectedSource'] = body['expectedSource']
         settings = {key: body.get(key, False if key == 'diagnosticFrames' else 'beginning')
                     for key in ('startMode', 'maxSpeedKmh', 'diagnosticFrames', 'hudProfile')}
         settings['maxSeconds'] = body.get('maxSeconds')
@@ -514,7 +670,8 @@ class RouteWorkspaces:
         try:
             if 'vehicle' not in self.live:
                 route = self.live['tracker'].route
-                views = reference_rotations(job / 'geometry.json', route, self.live['geometry_sha256'])
+                views = reference_rotations(self.live.get('geometry_path', job/'geometry.json'),
+                                            route, self.live['geometry_sha256'])
                 budget = body.get('maxSeconds', min(1800, max(180,
                     math.ceil((route.source_seconds[-1] - route.source_seconds[0]) * 5 + 30))))
                 self.live['vehicle'] = VehicleRouteFollower(route, reference, clock=self.clock,
@@ -536,6 +693,7 @@ class RouteWorkspaces:
                         motionProtocol='applied_vehicle_v1', clientVersion='vehicle_live_v1')
         except BaseException:
             self.retired[body['id']] = self.clock() + 600
+            self._close_runtime(self.live)
             self.live = None
             raise
     def start_replay(self,job,body):
@@ -590,21 +748,35 @@ class RouteWorkspaces:
         rgb = cv.cvtColor(image, cv.COLOR_BGR2RGB).tobytes()
         now = self.clock()
         session = self.live
+        self._validate_live_source(session)
+        if session.get('runtime_family') == 'reference_lk':
+            from scripts.pilot.route_preparation_source import attempt_cancelled
+            if attempt_cancelled(job, session['preparation_folder']):
+                self.retired[session['id']] = self.clock()+600
+                self._close_runtime(session)
+                self.live = None
+                raise RuntimeError('cancelled')
         session['sequence'] = body['sequence']
         session['observations'] += 1
         if session['observations'] > session.get('observation_limit',1200):
             self.retired[session['id']] = self.clock() + 600
+            self._close_runtime(session)
             self.live = None
             raise ValueError('route_live_observation_quota')
         frame = PolicyFrame(session['epoch'], body['sequence'], now, 960, 540, rgb)
         pose = session['tracker'].observe(frame, episode_id=session['episode'], goal_revision=session['goal'], scene='active')
         elapsed = (self.clock()-now)*1000
         values = asdict(pose)
+        if session.get('runtime_family') == 'reference_lk':
+            from motor_worker.route_reference_lk import REFERENCE_LK_SEARCH_POLICY, REFERENCE_LK_VERIFICATION_POLICY
+            verification_policy, search_policy = REFERENCE_LK_VERIFICATION_POLICY, REFERENCE_LK_SEARCH_POLICY
+        else:
+            verification_policy, search_policy = PNP_VERIFICATION_POLICY, COARSE_SEARCH_POLICY
         result = dict(id=session['id'], sequence=body['sequence'], jpegSha256=hashlib.sha256(raw).hexdigest(),
             captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed, geometrySha256=session['geometry_sha256'],
             method=session['tracker'].last_diagnostic.get('method', 'not_attempted'),
-            verificationPolicy=PNP_VERIFICATION_POLICY,
-            coarseSearchPolicy=COARSE_SEARCH_POLICY,
+            verificationPolicy=verification_policy,
+            coarseSearchPolicy=search_policy,
             physicalActions=0, framesArchived=0, executionQualified=False, groundRoute=False,
             viewCompatibility='same_aspect_assumed_same_fov',
             fullAndroidLatencyKnown=False, sceneIsOperatorAssumption=True)

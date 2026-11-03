@@ -744,6 +744,8 @@ def handler(jobs, origin, port):
                                              image_route_preparation_contract='bounded_cpu_before_sfm_v1',
                                              browser_teach_input_clock_contract='idle_preroll100_worker_receipt_v1',
                                              alternative_catalog_contract='source_bound_review_v1',
+                                             alternative_preparation_contract='native_source_bound_attempt_v1',
+                                             route_alternative_preparation_contract='source_bound_native_reference_lk_v1',
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
                                              route_resource_monitor_contract='task_volume30_fresh_native_v1',
                                              route_reactivity_contract='gray_reuse_owned_supervision_v1',

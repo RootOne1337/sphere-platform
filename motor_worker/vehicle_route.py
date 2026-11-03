@@ -17,6 +17,7 @@ from motor_worker.route_localization import (
     SparseRoute,
     trace_step_scale,
 )
+from motor_worker.route_reference_lk import ReferenceLKRoute
 
 
 class VehicleRouteFollower:
@@ -29,7 +30,7 @@ class VehicleRouteFollower:
                  start_mode='beginning', max_seconds=120, max_speed_kmh=15):
         import numpy as np
 
-        if type(route) is not SparseRoute or not callable(getattr(speed_reference, 'sample', None)):
+        if type(route) not in (SparseRoute, ReferenceLKRoute) or not callable(getattr(speed_reference, 'sample', None)):
             raise ValueError('vehicle_route_or_speed_reference_required')
         if start_mode not in {'beginning', 'recognized_route'}:
             raise ValueError('vehicle_start_mode')

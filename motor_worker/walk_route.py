@@ -10,6 +10,7 @@ from collections import deque
 import math
 
 from motor_worker.route_localization import RoutePose, SparseRoute, MIN_TRACE_STEP_UNITS, trace_step_scale
+from motor_worker.route_reference_lk import ReferenceLKRoute
 
 
 class WalkRouteFollower:
@@ -22,7 +23,7 @@ class WalkRouteFollower:
     def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False,camera_control='continuous_drag_v1',reference_rotations=None,max_seconds=60):
         import numpy as np
 
-        if type(route) is not SparseRoute:
+        if type(route) not in (SparseRoute, ReferenceLKRoute):
             raise ValueError('walk_route_required')
         if type(max_seconds)is not int or not 60<=max_seconds<=600:raise ValueError('walk_duration_invalid')
         self.max_seconds=max_seconds
