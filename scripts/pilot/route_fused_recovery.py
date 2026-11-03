@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -18,7 +19,7 @@ import sqlite3
 import subprocess
 import sys
 import time
-from contextlib import closing
+from contextlib import closing, nullcontext
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
@@ -38,6 +39,8 @@ TEMPORAL_LAGS = (1, 2, 3, 5, 8)
 LOOP_MIN_SEPARATION = 16
 LOOP_TOP_K = 2
 COARSE_MIN_COSINE = 0.3
+BF_BACKEND = "opencv_rootsift_mutual_global2nn_075_then_train_F2px"
+LIGHTGLUE_BACKEND = "pinned_rootsift_lightglue_temporal_float_loop_q512_v1"
 
 
 def experimental_enabled():
@@ -239,7 +242,6 @@ def verified_matches(xy_a, desc_a, xy_b, desc_b, *, holdout=False, diagnostics=N
     Exact physical-coordinate duplicates are removed before the deterministic
     holdout split. Holdout correspondences never enter F fitting or mapping.
     """
-    import cv2 as cv
     import numpy as np
 
     if any(
@@ -253,8 +255,40 @@ def verified_matches(xy_a, desc_a, xy_b, desc_b, *, holdout=False, diagnostics=N
         for xy, desc in ((xy_a, desc_a), (xy_b, desc_b))
     ):
         raise ValueError("fused_feature_layout")
+    return verified_correspondences(
+        xy_a, xy_b, _ratio_matches(desc_a, desc_b), holdout=holdout, diagnostics=diagnostics
+    )
+
+
+def partition_correspondences(
+    xy_a, xy_b, correspondences, *, holdout=False, holdout_policy="mod5_v1"
+):
+    """Remove coordinate aliases and split unfitted constraints before mapping.
+
+    Caller-provided correspondences retain their original feature-row indices.
+    The historical BF split remains unchanged; the optional learned backend
+    uses the historical loop hash policy (first byte >=192 held out, ~25%).
+    """
+    import numpy as np
+
+    if holdout_policy not in ("mod5_v1", "sha256_row_pair_byte192_v1"):
+        raise ValueError("fused_holdout_policy")
+    if any(
+        not isinstance(xy, np.ndarray)
+        or xy.ndim != 2
+        or xy.shape[1] != 2
+        or not np.isfinite(xy).all()
+        for xy in (xy_a, xy_b)
+    ):
+        raise ValueError("fused_feature_layout")
+    raw = np.asarray(correspondences)
+    if raw.size and (
+        raw.ndim != 2 or raw.shape[1] != 2 or raw.dtype.kind not in "iu" or (raw < 0).any()
+    ):
+        raise ValueError("fused_match_index")
+    raw = raw.reshape(-1, 2)
     matches, seen_a, seen_b = [], set(), set()
-    for a, b in _ratio_matches(desc_a, desc_b):
+    for a, b in raw:
         if not 0 <= a < len(xy_a) or not 0 <= b < len(xy_b):
             raise ValueError("fused_match_index")
         ka, kb = xy_a[a].tobytes(), xy_b[b].tobytes()
@@ -263,10 +297,35 @@ def verified_matches(xy_a, desc_a, xy_b, desc_b, *, holdout=False, diagnostics=N
             seen_a.add(ka)
             seen_b.add(kb)
     matched = np.asarray(matches, dtype="<u4").reshape(-1, 2)
-    held = np.arange(len(matched)) % 5 == 0 if holdout else np.zeros(len(matched), dtype=bool)
+    held = np.zeros(len(matched), dtype=bool)
+    if holdout:
+        held = (
+            np.arange(len(matched)) % 5 == 0
+            if holdout_policy == "mod5_v1"
+            else np.asarray(
+                [
+                    hashlib.sha256(f"{int(a)}:{int(b)}".encode()).digest()[0] >= 192
+                    for a, b in matched
+                ],
+                dtype=bool,
+            )
+        )
     train = matched[~held]
+    return train, matched[held]
+
+
+def verified_correspondences(
+    xy_a, xy_b, correspondences, *, holdout=False, holdout_policy="mod5_v1", diagnostics=None
+):
+    """Existing BF-only training F gate; optional LG uses native verification."""
+    import cv2 as cv
+    import numpy as np
+
+    train, held = partition_correspondences(
+        xy_a, xy_b, correspondences, holdout=holdout, holdout_policy=holdout_policy
+    )
     if len(train) < 24:
-        return np.empty((0, 2), dtype="<u4"), matched[held]
+        return np.empty((0, 2), dtype="<u4"), held
     cv.setRNGSeed(17)
     try:
         fundamental, inliers = cv.findFundamentalMat(
@@ -284,7 +343,7 @@ def verified_matches(xy_a, desc_a, xy_b, desc_b, *, holdout=False, diagnostics=N
             diagnostics["fundamental_model_error"] = (
                 diagnostics.get("fundamental_model_error", 0) + 1
             )
-        return np.empty((0, 2), dtype="<u4"), matched[held]
+        return np.empty((0, 2), dtype="<u4"), held
     if (
         fundamental is None
         or np.asarray(fundamental).shape != (3, 3)
@@ -299,7 +358,7 @@ def verified_matches(xy_a, desc_a, xy_b, desc_b, *, holdout=False, diagnostics=N
             diagnostics["fundamental_model_invalid"] = (
                 diagnostics.get("fundamental_model_invalid", 0) + 1
             )
-        return np.empty((0, 2), dtype="<u4"), matched[held]
+        return np.empty((0, 2), dtype="<u4"), held
     accepted = train[inliers.reshape(-1).astype(bool)]
     if len(accepted) < 24 or len(accepted) / len(train) < 0.25:
         accepted = np.empty((0, 2), dtype="<u4")
@@ -310,7 +369,7 @@ def verified_matches(xy_a, desc_a, xy_b, desc_b, *, holdout=False, diagnostics=N
             if len(np.unique(cells[:, 1] * 4 + cells[:, 0])) < 4:
                 accepted = np.empty((0, 2), dtype="<u4")
                 break
-    return accepted, matched[held]
+    return accepted, held
 
 
 def _pair_id(a, b):
@@ -379,7 +438,57 @@ def _native_database_boundary(folder, label, check):
     write_json(path, report)
 
 
-def _build_sift(prepared, source_database, output, rows, check, progress):
+def _matcher_configuration(backend, device, loop_device, memory_fraction):
+    if (
+        backend not in (BF_BACKEND, LIGHTGLUE_BACKEND)
+        or device not in ("cpu", "cuda")
+        or loop_device not in ("cpu", "cuda")
+        or type(memory_fraction) not in (int, float)
+        or not math.isfinite(memory_fraction)
+        or not 0 < memory_fraction <= 0.65
+        or backend == BF_BACKEND
+        and (device != "cpu" or loop_device != "cpu")
+    ):
+        raise ValueError("fused_matcher_configuration")
+
+
+def _build_sift(
+    prepared,
+    source_database,
+    output,
+    rows,
+    check,
+    progress,
+    *,
+    matcher_backend=BF_BACKEND,
+    matcher_device="cpu",
+    loop_matcher_device="cpu",
+    matcher_memory_fraction=0.20,
+):
+    _matcher_configuration(
+        matcher_backend, matcher_device, loop_matcher_device, matcher_memory_fraction
+    )
+    if matcher_backend == LIGHTGLUE_BACKEND:
+        from scripts.pilot.route_lightglue_matcher import LocalLightGlueMatcher
+
+        context = LocalLightGlueMatcher(
+            ROOT,
+            device=matcher_device,
+            loop_device=loop_matcher_device,
+            memory_fraction=matcher_memory_fraction,
+            check=check,
+        )
+    else:
+        context = nullcontext()
+    with context as learned:
+        return _build_sift_owned(
+            prepared, source_database, output, rows, check, progress, learned_matcher=learned
+        )
+
+
+def _build_sift_owned(
+    prepared, source_database, output, rows, check, progress, *, learned_matcher=None
+):
     import cv2 as cv
     import numpy as np
 
@@ -465,10 +574,23 @@ def _build_sift(prepared, source_database, output, rows, check, progress):
             )
             np.savez_compressed(features / f"{identity}.npz", keypoints=geometry, descriptors=desc)
             values[identity] = (xy, desc)
-            signatures.append(coarse_signature(gray))
+            if learned_matcher is None:
+                signatures.append(coarse_signature(gray))
+            else:
+                from scripts.pilot.route_lightglue_matcher import masked_coarse_signature
+
+                learned_matcher.register(identity, geometry, desc, (gray.shape[1], gray.shape[0]))
+                signatures.append(masked_coarse_signature(gray, mask))
         db.commit()
         pairs, heldouts, count, rejections = [], [], 0, {}
-        proposals = propose_pairs(signatures)
+        if learned_matcher is None:
+            proposals = propose_pairs(signatures)
+        else:
+            from scripts.pilot.route_lightglue_matcher import propose_learned_pairs
+
+            proposals = propose_learned_pairs(
+                signatures, [row["relative_ticks_90k"] / 90000 for row in rows]
+            )
         for n, (a, b, kind) in enumerate(proposals):
             check()
             progress("matching", n, MAX_PAIRS)
@@ -478,9 +600,30 @@ def _build_sift(prepared, source_database, output, rows, check, progress):
             )
             xy_a, desc_a = values[ia]
             xy_b, desc_b = values[ib]
-            matches, held = verified_matches(
-                xy_a, desc_a, xy_b, desc_b, holdout=kind != "temporal", diagnostics=rejections
-            )
+            if learned_matcher is None:
+                matches, held = verified_matches(
+                    xy_a, desc_a, xy_b, desc_b, holdout=kind != "temporal", diagnostics=rejections
+                )
+            else:
+                matched = learned_matcher.match(ia, ib, kind=kind)
+                matches, held = partition_correspondences(
+                    xy_a,
+                    xy_b,
+                    matched,
+                    holdout=kind != "temporal",
+                    holdout_policy="sha256_row_pair_byte192_v1",
+                )
+                # Persist unfitted constraints even if no training rows remain.
+                if len(held):
+                    ha, hb, hr = (ia, ib, held) if ia < ib else (ib, ia, held[:, ::-1])
+                    heldouts.append(
+                        dict(
+                            first=ha,
+                            second=hb,
+                            rows=hr.tolist(),
+                            train_pair_written=bool(len(matches)),
+                        )
+                    )
             if len(matches) == 0:
                 continue
             if ia > ib:
@@ -495,9 +638,10 @@ def _build_sift(prepared, source_database, output, rows, check, progress):
                 (_pair_id(ia, ib), len(matches), matches.astype("<u4").tobytes()),
             )
             pairs.append(dict(first=ia, second=ib, kind=kind, matches=len(matches)))
-            if len(held):
+            if len(held) and learned_matcher is None:
                 heldouts.append(dict(first=ia, second=ib, rows=held.tolist()))
         db.commit()
+        matcher_receipt = learned_matcher.receipt() if learned_matcher is not None else None
     _seal_database(database)
     write_json(
         output / "sift-pairs.json",
@@ -505,13 +649,19 @@ def _build_sift(prepared, source_database, output, rows, check, progress):
             pairs=pairs,
             heldout=heldouts,
             holdout_used_for_fit=False,
-            matcher="opencv_rootsift_mutual_global2nn_075_then_train_F2px",
+            matcher=LIGHTGLUE_BACKEND if learned_matcher is not None else BF_BACKEND,
             max_features=MAX_FEATURES,
             proposed_pairs=len(proposals),
             verified_pairs=len(pairs),
             pair_rejections=rejections,
         ),
     )
+    if matcher_receipt is not None:
+        matcher_receipt["verification"] = "pinned_native_two_view_only_v1"
+        matcher_receipt["non_temporal_holdout"] = "sha256_row_pair_firstbyte_ge192_before_native"
+        matcher_receipt["holdout_used_for_fit"] = False
+        matcher_receipt["native_verification_complete_at_matcher_stage"] = False
+        write_json(output / "lightglue-matcher.json", matcher_receipt)
     write_json(output / "detector-masks.json", dict(images=mask_records))
     return database, pairs, heldouts
 
@@ -887,12 +1037,19 @@ def recover_fused(
     *,
     assessment_check=None,
     native_runner=None,
+    matcher_backend=BF_BACKEND,
+    matcher_device="cpu",
+    loop_matcher_device="cpu",
+    matcher_memory_fraction=0.20,
 ):
     """Return baseline on one inconclusive candidate; cancellation/resources abort.
 
     Nothing is published by this function. The caller seals its chosen model
     through the common sparse receipt and independently prepares runtime maps.
     """
+    _matcher_configuration(
+        matcher_backend, matcher_device, loop_matcher_device, matcher_memory_fraction
+    )
     job, prepared = Path(job), Path(prepared)
     folder = prepared / "fused-recovery"
     report = dict(
@@ -906,12 +1063,26 @@ def recover_fused(
         closure_forced=False,
         network_downloads=False,
         physical_actions=0,
-        matcher="opencv_rootsift_mutual_global2nn_075_then_train_F2px",
+        matcher=matcher_backend,
     )
     if folder.exists() or folder.is_symlink():
         return baseline, dict(report, attempted=False, reason="fused_existing_intent")
     rows, bindings = _source(job, prepared, selected, check)
     mask_context = _mask_context(job, prepared, bindings, check)
+    if matcher_backend == LIGHTGLUE_BACKEND:
+        matcher_file = ROOT / "scripts/pilot/route_lightglue_matcher.py"
+        mask_context["producer_sources"][matcher_file.relative_to(ROOT).as_posix()] = _hash(
+            matcher_file, check
+        )
+        report["requested_matcher"] = dict(
+            backend=matcher_backend,
+            device=matcher_device,
+            loop_device=loop_matcher_device,
+            gpu_memory_fraction=matcher_memory_fraction,
+            non_temporal_holdout="sha256_row_pair_firstbyte_ge192_before_native",
+            verification="pinned_native_two_view_only_v1",
+            holdout_used_for_fit=False,
+        )
     folder.mkdir()
     write_json(
         folder / "intent.json",
@@ -962,9 +1133,24 @@ def recover_fused(
             if baseline is not None
             else None
         )
-        sift, pairs, heldouts = _build_sift(
-            prepared, prepared / "database.db", folder, rows, bounded, progress
-        )
+        if matcher_backend == BF_BACKEND:
+            # Preserve the existing default call/recipe and avoid optional runtime imports.
+            sift, pairs, heldouts = _build_sift(
+                prepared, prepared / "database.db", folder, rows, bounded, progress
+            )
+        else:
+            sift, pairs, heldouts = _build_sift(
+                prepared,
+                prepared / "database.db",
+                folder,
+                rows,
+                bounded,
+                progress,
+                matcher_backend=matcher_backend,
+                matcher_device=matcher_device,
+                loop_matcher_device=loop_matcher_device,
+                matcher_memory_fraction=matcher_memory_fraction,
+            )
         namespace = fuse_databases(
             prepared / "database.db",
             sift,

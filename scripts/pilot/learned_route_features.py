@@ -49,16 +49,18 @@ def verify_pairs(database, pair_file, token, *, filter_stationary=False):
     p.verify_matches(database, pair_file, options=options, cancellation_token=token)
 
 
-def load_matcher(root, memory_fraction=.65, *, device='cuda'):
+def load_matcher(root, memory_fraction=.65, *, device='cuda', num_threads=4):
     """Load the locally verified weights, never the upstream download path."""
     if device not in ('cpu','cuda'):
         raise ValueError('learned_matching_device')
+    if type(num_threads) is not int or not 1 <= num_threads <= 4:
+        raise ValueError('learned_matching_threads')
     source, weights = validate_assets(root)
     import torch
 
     if device=='cuda' and not torch.cuda.is_available():
         raise RuntimeError('lightglue_gpu_unavailable')
-    torch.set_num_threads(4)
+    torch.set_num_threads(num_threads)
     torch.manual_seed(17)
     if device=='cuda':
         torch.cuda.set_per_process_memory_fraction(memory_fraction)
