@@ -17,7 +17,7 @@ export function readVehiclePlan(value:unknown):VehiclePlan|null {
     ||typeof p.reason!=='string'||!/^[a-z0-9_]{1,100}$/.test(p.reason)
     ||!['coast','throttle','brake'].includes(p.pedal)||!Number.isFinite(p.steering)||Math.abs(p.steering)>.35
     ||p.maxSteering!==.35||!Number.isInteger(p.maxSeconds)||p.maxSeconds<60||p.maxSeconds>1800
-    ||!Number.isInteger(p.maxSpeedKmh)||p.maxSpeedKmh<1||p.maxSpeedKmh>30
+    ||!Number.isInteger(p.maxSpeedKmh)||p.maxSpeedKmh<1||p.maxSpeedKmh>50
     ||p.maxDecisionAgeMs!==450||p.maxAnswerHoldMs!==350
     ||p.groundRoute!==false||p.executionQualified!==false||p.cameraBodyAssumption!==true
     ||typeof p.speedAccepted!=='boolean'||!speed(p.targetSpeedKmh)||!speed(p.observedSpeedKmh)

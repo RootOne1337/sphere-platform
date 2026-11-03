@@ -91,3 +91,19 @@ test('one admitted vehicle target ramps between replies and expiry cannot restar
   expect(mockLease!.translating!()).toBe(false);
   await act(async()=>{await mockLease?.close();});view.unmount();
 });
+
+test('ten fresh throttle decisions keep one native pedal DOWN until explicit neutral',async()=>{
+  const {view}=await driveFixture();
+  for(let observation=0;observation<10;observation++){
+    mockLease!.permit!(performance.now()+300);
+    mockLease!.setVehicle({pedal:'throttle',steering:.2});
+    await act(async()=>{await new Promise(resolve=>setTimeout(resolve,15));});
+  }
+  const pedal=()=>sent.filter(e=>e.type==='touch_contact_event'&&e.pointer_id===0);
+  expect(pedal().filter(e=>e.action===0)).toHaveLength(1);
+  expect(pedal().filter(e=>e.action===1)).toHaveLength(0);
+  mockLease!.neutral!();
+  await waitFor(()=>expect(pedal().filter(e=>e.action===1)).toHaveLength(1));
+  expect(pedal().filter(e=>e.action===0)).toHaveLength(1);
+  await act(async()=>{await mockLease?.close();});view.unmount();
+});

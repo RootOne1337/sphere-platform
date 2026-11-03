@@ -13,9 +13,16 @@ test('initial acquisition is not described as losing a previously acquired vehic
 });
 test('following requires same-reply accepted actual speed, target speed and camera direction',()=>{
   expect(readVehiclePlan(plan)).toEqual(plan);
-  for(const change of [{observedSpeedKmh:null},{targetSpeedKmh:null},{speedAccepted:false},{maxSpeedKmh:31},{targetSpeedKmh:16},
+  for(const change of [{observedSpeedKmh:null},{targetSpeedKmh:null},{speedAccepted:false},{maxSpeedKmh:51},{targetSpeedKmh:16},
     {observedSpeedKmh:NaN},{observedSpeedKmh:351},{maxSteering:1},{steering:.351},{executionQualified:true},
     {groundRoute:true},{pedal:'reverse'},{stick:[.2,-.1]},{targetViewCamera:[Infinity,0,1]}])expect(readVehiclePlan({...plan,...change})).toBeNull();
+});
+
+test('a negotiated50kmh cap admits a50kmh target but retains integer and target bounds',()=>{
+  const capped={...plan,maxSpeedKmh:50,targetSpeedKmh:50,observedSpeedKmh:49};
+  expect(readVehiclePlan(capped)).toEqual(capped);
+  for(const change of [{maxSpeedKmh:51},{maxSpeedKmh:50.5},{targetSpeedKmh:50.01},{maxSpeedKmh:0}])
+    expect(readVehiclePlan({...capped,...change})).toBeNull();
 });
 test('unknown, stopped and arrived never retain throttle or steering; unknown is not fabricated zero speed',()=>{
   for(const phase of ['waiting','stopped','arrived']){

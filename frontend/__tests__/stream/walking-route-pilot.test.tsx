@@ -114,6 +114,28 @@ test('the actual failed-source shape cannot promote diagnostic173 into a vehicle
   expect(f.vehicleOpen).not.toHaveBeenCalled();expect(f.starts).toHaveLength(0);
 });
 
+test.each(['25','40','50','recorded'])('speed choice %s negotiates its cap and admits a bound target',async(choice)=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const cap=choice==='recorded'?50:Number(choice);
+  const f=vehicleFixture({plan:p=>({...p,targetSpeedKmh:cap})});
+  expect(screen.getByLabelText('Предел скорости транспорта')).toHaveValue('15');
+  fireEvent.change(screen.getByLabelText('Предел скорости транспорта'),{target:{value:choice}});
+  f.startVehicle();
+  await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledWith({pedal:'throttle',steering:.2}));
+  expect(f.starts[0].maxSpeedKmh).toBe(cap);
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
+test('a valid lower cap in a reply cannot replace the selected50kmh session cap',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const f=vehicleFixture({plan:p=>({...p,maxSpeedKmh:30})});
+  fireEvent.change(screen.getByLabelText('Предел скорости транспорта'),{target:{value:'50'}});
+  f.startVehicle();
+  await screen.findByText('Освобождение: CLOSED');
+  expect(f.starts[0].maxSpeedKmh).toBe(50);
+  expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();expect(f.vehicleLease.close).toHaveBeenCalled();
+});
+
 test('an unknown speed is coast with zero steering and visibly unknown, never synthesized zero kmh',async()=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);
   const f=vehicleFixture({plan:p=>({...p,phase:'waiting',reason:'vehicle_speed_unknown',pedal:'coast',steering:0,
@@ -171,6 +193,16 @@ test('changing a vehicle speed cap revokes the previous physical-scene confirmat
   const f=vehicleFixture();fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));
   expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeEnabled();
   fireEvent.change(screen.getByLabelText('Предел скорости транспорта'),{target:{value:'5'}});
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
+  expect(f.vehicleOpen).not.toHaveBeenCalled();
+});
+
+test('choosing recorded speed revokes consent even when the numeric50kmh cap stays the same',()=>{
+  const f=vehicleFixture();fresh();
+  fireEvent.change(screen.getByLabelText('Предел скорости транспорта'),{target:{value:'50'}});
+  fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeEnabled();
+  fireEvent.change(screen.getByLabelText('Предел скорости транспорта'),{target:{value:'recorded'}});
   expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
   expect(f.vehicleOpen).not.toHaveBeenCalled();
 });
