@@ -29,11 +29,19 @@ def route_recipe(job, prepared, *, vehicle, fused_enabled):
     root = Path(__file__).resolve().parents[2]
     producer_names = ('reconstruct_route.py', 'route_video_tracks.py',
                       'route_motion_sampling.py', 'route_fused_recovery.py',
-                      'route_native_track_policy.py', 'route_reconstruction_recipe.py')
+                      'route_native_track_policy.py', 'route_reconstruction_recipe.py',
+                      'route_masks.py')
+    from scripts.pilot.route_masks import capture_mask_plan
+    manifest_path, control_path = job/'input/manifest.json', job/'control.json'
+    manifest = json.loads(manifest_path.read_bytes()) if manifest_path.is_file() else {}
+    control = json.loads(control_path.read_bytes()) if control_path.is_file() else {}
+    mask_plan = capture_mask_plan(control.get('mask', 'none'), manifest)
     return dict(schema=SCHEMA, recipe_id=RECIPE_ID,
         source=dict(manifest_sha256=_digest(job/'input/manifest.json'),
                     reconstruction_input_sha256=_digest(prepared/'reconstruction-input.json')),
         producer_sources={name: _digest(root/'scripts/pilot'/name) for name in producer_names},
+        mask_plan=mask_plan, mask_plan_sha256=mask_plan['sha256'],
+        mask_module_sha256=_digest(root/'scripts/pilot/route_masks.py'),
         features=dict(method='source_video_corner_tracks', wide_tracking=vehicle),
         mapping=dict(method='incremental_mapping', pycolmap_version='4.2.1',
                      random_seed=17, maximum_models=4),

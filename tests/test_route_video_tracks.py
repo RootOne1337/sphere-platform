@@ -64,9 +64,11 @@ def test_tracker_uses_recorded_mask_policy_without_an_implicit_upper_crop(tmp_pa
     monkeypatch.setattr(cv2,'goodFeaturesToTrack',detect)
     build_video_track_database(tmp_path,prepared,database,prepared/'output.db',lambda:None)
     assert len(seen)==12
-    # Upper-centre facade pixels remain observable except for the explicit HUD
-    # preset. This inspects the mask actually passed to the corner detector.
-    assert int(seen[0][18,160])==(0 if mode=='game' else 255)
+    # Even the precise HUD preset keeps the upper-centre facade. The radar is
+    # separately excluded only when HUD is present, with no implicit crop.
+    # This inspects the mask actually passed to the corner detector.
+    assert int(seen[0][18,160])==255
+    assert int(seen[0][18,32])==(0 if mode=='game' else 255)
     assert int(seen[0][72,160])==255
     if mode=='none':
         assert np.all(seen[0]==255)
