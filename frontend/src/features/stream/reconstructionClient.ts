@@ -1,7 +1,9 @@
 export const reconstructionBase = 'http://127.0.0.1:3342';
 export const reconstructionFiles = ['manifest.json','frames.jsonl','inputs.jsonl','video.h264','COMPLETE'] as const;
 export type ReconstructionJob = {id:string; key:string; creation?:{mask:'none'|'avatar'|'game';steps:number;prepare_route:true;route_only:true}};
-export type NavigationState = {phase:string;id?:string;error?:string|null;executionQualified?:false;resourceProfile?:{kind:string;minRamGiB:number};summary?:{cameras:number;landmarks:number;first_seconds?:number;last_seconds?:number;source_coverage?:{recording_start_seconds:number;recording_end_seconds:number;uncovered_start_seconds:number;uncovered_end_seconds:number;endpoints_observed:boolean};camera_trace_only:true;map_support:{all_reference_neighborhoods_supported:boolean;unobserved_intervals?:{start_seconds:number;end_seconds:number}[]}}};
+export type NavigationMapSource = {alternativeId:string|null;geometry_sha256:string;runtime_family:'legacy_sparse'|'reference_lk'};
+export type NavigationPreparationSource = NavigationMapSource&{alternativeId:string;cameras:number;points:number};
+export type NavigationState = {phase:string;id?:string;error?:string|null;executionQualified?:false;source?:NavigationMapSource;preparationSources?:NavigationPreparationSource[];resourceProfile?:{kind:string;minRamGiB:number};summary?:{cameras:number;landmarks:number;first_seconds?:number;last_seconds?:number;source_coverage?:{recording_start_seconds:number;recording_end_seconds:number;uncovered_start_seconds:number;uncovered_end_seconds:number;endpoints_observed:boolean};camera_trace_only:true;map_support:{all_reference_neighborhoods_supported:boolean;unobserved_intervals?:{start_seconds:number;end_seconds:number}[]}}};
 export type SceneAppearance = {state:'unverified'|'passed'|'rejected';mean_psnr?:number;mean_ssim?:number;min_psnr?:number;min_ssim?:number;views?:{image:string;psnr:number;ssim:number}[]};
 export type SurfaceState = {visual_review?:{state:'issues_found'|'limited_preview';issues:string[]};id?:string;fragment?:{first_view:number;view_count:number};phase:string;error?:string;available?:boolean;views?:number;total_views?:number;result?:{sha256:string;bytes:number;triangles:number;vertices:number;textures:number;texture_pixels:number;source_images:string[];mesh_faces:number;unknown_faces:number;seconds:number}};
 export type HudTelemetry = {phase:string;accepted_count?:number;unknown_count?:number;selected_count?:number;source_manifest_sha256?:string;units?:string;samples?:{ticks_90k:number;hud_kmh:number|null;gap_before?:boolean}[]};
@@ -34,7 +36,7 @@ export class ReconstructionResponseError extends Error {
 export const processingSurface = (state:ReconstructionState) => [state.surface,...state.fragments??[]].find(item=>item&&!['ready','review_required','failed','cancelled'].includes(item.phase));
 export const activeSurface = (state:ReconstructionState) => !!processingSurface(state);
 export const terminalReconstruction = (state:ReconstructionState) => ['complete','sparse_complete','failed','cancelled','quality_rejected','review_required','partial_scene'].includes(state.phase)&&!activeSurface(state)&&!['pending_auto_prepare','preparing','features'].includes(state.navigation?.phase??'')
-  &&(!state.navigation||['not_prepared','ready','rejected','failed','cancelled'].includes(state.navigation.phase));
+  &&(!state.navigation||['not_prepared','ready','rejected','failed','cancelled','awaiting_qualification'].includes(state.navigation.phase));
 export async function reconstructionRequest(path:string, job:ReconstructionJob|null, init:RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('X-Sphere-Reconstruction','1');

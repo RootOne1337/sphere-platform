@@ -83,6 +83,28 @@ test('a source mismatch never displays the unrelated map or a live pin',async()=
   expect(screen.queryByLabelText('Обзор ориентиров и камер')).not.toBeInTheDocument();expect(screen.getByText('live-frame')).toBeInTheDocument();
 });
 
+test('an exactly bound prepared alternative keeps its selection and live pin when input becomes busy',async()=>{
+  const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
+  jest.mocked(reconstructionRequest).mockImplementation(async path=>({json:async()=>path.endsWith('/geometry-alternatives')?
+    {preferredAlternativeId:'retained',alternatives:[{id:'retained',label:'Историческая 173',cameras:173}]}:{source_manifest_sha256:manifestSha},
+    arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);
+  const changed=jest.fn(),preparedSource={alternativeId:'retained',geometry_sha256:sha,runtime_family:'reference_lk' as const};
+  const props={job,source,assetsReady:true,preparedSource,onGeometryChange:changed};
+  const view=render(<NavigationRouteContext {...props} observation={null}/>);
+  await screen.findByText('source-frame-0');
+  expect(screen.getByLabelText('Схема для живой проверки')).toHaveValue('retained');
+  await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({alternativeId:'retained',geometry_sha256:sha,cameras:2,points:1})));
+  const reply=navigationReply({id:'s',captureEpoch:'epoch',sequence:1,jpegSha256:'f'.repeat(64),geometrySha256:sha,referenceTicks90k:90000,computeMs:10,method:'reference_lk',physicalActions:0,executionQualified:false,groundRoute:false,
+    pose:{state:'localized',reason:'verified',inliers:30,segment:0,progress_units:1,polyline_px:[],center:[0,0,1],rotation:[1,0,0,0,1,0,0,0,1]}},'s','epoch',1,'f'.repeat(64))!;
+  const capturedAt=performance.now();view.rerender(<NavigationRouteContext {...props} busy observation={{reply,capturedAt,answeredAt:capturedAt+10}}/>);
+  await screen.findByLabelText('Подтверждённое живое положение');
+  expect(screen.getByLabelText('Схема для живой проверки')).toHaveValue('retained');
+  expect(screen.getByLabelText('Схема для живой проверки')).toBeDisabled();
+  view.rerender(<NavigationRouteContext {...props} busy preparedSource={{...preparedSource,alternativeId:'other'}} observation={{reply,capturedAt,answeredAt:capturedAt+10}}/>);
+  await waitFor(()=>expect(screen.queryByLabelText('Подтверждённое живое положение')).not.toBeInTheDocument());
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);
+});
+
 test('a short display gap retains only a labelled past measurement, never a fresh live pin',async()=>{
   const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
   jest.mocked(reconstructionRequest).mockImplementation(async()=>({json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);

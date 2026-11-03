@@ -1,16 +1,23 @@
 import {reconstructionRequest,ReconstructionResponseError,type NavigationState,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 
 const idPattern=/^[0-9a-f]{32}$/;
+const alternativePattern=/^[a-z0-9][a-z0-9-]{0,47}$/;
 const terminal=new Set(['ready','failed','rejected','cancelled']);
-const phaseLabels:Record<string,string>={not_prepared:'не подготовлена',pending_auto_prepare:'ожидается подготовка',preparing:'подготовка',features:'поиск ориентиров',ready:'готова к проверке',failed:'ошибка подготовки',rejected:'не прошла проверку',cancelled:'отменена'};
+const phaseLabels:Record<string,string>={not_prepared:'не подготовлена',pending_auto_prepare:'ожидается подготовка',preparing:'подготовка',features:'поиск ориентиров',awaiting_qualification:'проверка узнавания',ready:'готова к проверке',failed:'ошибка подготовки',rejected:'не прошла проверку',cancelled:'отменена'};
 const errorLabels:Record<string,string>={route_preparation_interrupted:'обработка прервалась при остановке сервиса',route_preparation_not_started:'автоматический запуск не подтверждён',route_camera_motion_requires_review:'траекторию камеры нужно проверить',camera_intrinsics_degenerate:'некорректные параметры восстановленной камеры',route_preparation_attempt_quota:'исчерпан лимит попыток подготовки этой сцены',route_map_has_unobserved_sections:'не хватает ориентиров на части пути',resource_guard:'ресурсная проверка предыдущей попытки не пройдена; это не замер текущей ОЗУ'};
 Object.assign(errorLabels,{sparse_receipt_invalid:'не подтверждена квитанция геометрии',sparse_source_changed:'файлы геометрии изменились после подготовки',sparse_source_missing_or_symlink:'файлы геометрии недоступны или перемещены',sparse_quality_gate_failed:'камеры не прошли проверку качества'});
 errorLabels.route_feature_runtime_mismatch='ориентиры подготовлены другой версией обработчика; подготовьте их заново из сохранённой записи';
+errorLabels.route_alternative_native_missing='для этой схемы ещё не подключены сохранённые измерения камер и ориентиров';
+errorLabels.route_reference_lk_unqualified='карта построена; проверка узнавания новых кадров ещё не подтверждена';
+errorLabels.route_reference_lk_invalid='измерения карты или их привязка не прошли проверку';
+for(const code of ['route_alternative_native_binding','route_alternative_native_changed','route_alternative_native_layout','route_alternative_native_evidence','route_alternative_geometry_not_admitted'])errorLabels[code]='исходные измерения выбранной схемы не прошли проверку';
+for(const code of ['route_preparation_source_changed','route_preparation_intent_source_changed'])errorLabels[code]='привязка карты к выбранной геометрии изменилась';
 export const navigationPhaseLabel=(phase:string|null|undefined)=>phase?(phaseLabels[phase]??'состояние уточняется'):'не прочитана';
 export const navigationErrorLabel=(code:string)=>errorLabels[code]??'причину можно проверить в диагностике';
 export function routeReadinessIssue(source:ReconstructionState|null,assets:NavigationState|null):string|null {
   if(assets?.phase==='ready')return null;
   if(!assets)return 'Проверяем состояние обработки выбранной записи…';
+  if(assets.phase==='awaiting_qualification')return 'Карта построена. Проверка узнавания новых кадров ещё не подтверждена; движение не запускается.';
   if(['pending_auto_prepare','preparing','features'].includes(assets.phase))return 'Запись обрабатывается автоматически. Карта ориентиров ещё строится.';
   if(source?.phase==='failed'&&source.error==='resource_guard')return 'У предыдущей попытки сохранён ресурсный отказ. Это не проверка свободной ОЗУ сейчас. Карта управления этой попытки не создана; показанная схема доступна для просмотра. Исходное видео сохранено. Откройте «Библиотека», чтобы проверить или подготовить отдельную попытку.';
   const quality=source?.quality,coverage=quality?` Восстановлено ${quality.registered} из ${quality.selected} ракурсов.`:'';
@@ -38,14 +45,15 @@ export function cameraMotionRequiresReview(motion:{warning:string|null;rapid_rev
 export const preparationQuotaReached=(error:unknown)=>error instanceof ReconstructionResponseError&&error.status===409&&error.message==='route_preparation_attempt_quota';
 
 /** A shared idempotent preparation intent for the scene and direction views. */
-export async function prepareRoute(job:ReconstructionJob,scope:string,clip:string):Promise<NavigationState> {
-  if(!idPattern.test(scope)||!idPattern.test(clip))throw Error('route_recording_identity_invalid');
-  const key=`sphere-reconstruction-${scope}-${clip}:route-intent`;
+export async function prepareRoute(job:ReconstructionJob,scope:string,clip:string,alternativeId?:string):Promise<NavigationState> {
+  if(!idPattern.test(scope)||!idPattern.test(clip)||!idPattern.test(job.id))throw Error('route_recording_identity_invalid');
+  if(alternativeId!==undefined&&!alternativePattern.test(alternativeId))throw Error('route_geometry_source_invalid');
+  const key=`sphere-reconstruction-${scope}-${clip}:route-intent:${job.id}:${alternativeId??'primary'}`;
   const saved=sessionStorage.getItem(key);
   const id=saved&&idPattern.test(saved)?saved:crypto.randomUUID().replaceAll('-','');
   sessionStorage.setItem(key,id);
   const result=await(await reconstructionRequest(`/jobs/${job.id}/navigation/prepare`,job,
-    {method:'POST',body:JSON.stringify({id})})).json() as NavigationState;
+    {method:'POST',body:JSON.stringify(alternativeId===undefined?{id}:{id,alternativeId})})).json() as NavigationState;
   if(terminal.has(result.phase)&&sessionStorage.getItem(key)===id)sessionStorage.removeItem(key);
   return result;
 }
@@ -59,6 +67,8 @@ export function preparationError(error:unknown):string {
     if(error.message==='camera_intrinsics_degenerate')return 'Расчёт дал некорректные параметры камеры. Откройте «Библиотека»; исходная запись сохранена.';
     if(error.message==='one_active_job_only'||error.message==='route_workspace_busy')return 'Другая обработка ещё выполняется. Дождитесь её завершения.';
     if(error.message==='surface_completed_source_required'||error.message==='job_file_unavailable')return 'Камеры и исходная сцена ещё не прошли проверку. Откройте «Библиотека» и проверьте причину.';
+    if(error.message==='route_alternative_native_missing')return 'Схема сохранена, но обработчик ещё не подключил её исходные измерения. Повторная запись видео не требуется.';
+    if(error.message in errorLabels&&(error.message.startsWith('route_alternative_')||error.message.startsWith('route_reference_lk_')||error.message.startsWith('route_preparation_')&&error.message.endsWith('source_changed')))return navigationErrorLabel(error.message);
   }
   return 'Ответ не подтверждён. Проверьте состояние этого же задания; повторного запуска нет.';
 }

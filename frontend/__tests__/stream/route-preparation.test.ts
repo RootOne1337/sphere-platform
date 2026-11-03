@@ -25,6 +25,35 @@ test('unknown preparation outcome is reconciled with the same intent',async()=>{
   expect(sessionStorage.length).toBe(0);
 });
 
+test('preparing retained geometry binds the optional alternative and keeps an unknown outcome idempotent',async()=>{
+  jest.mocked(reconstructionRequest).mockRejectedValueOnce(Error('lost_response'))
+    .mockResolvedValueOnce({json:async()=>({phase:'features'})} as Response);
+  await expect(prepareRoute(job,scope,clip,'retained-173')).rejects.toThrow('lost_response');
+  await prepareRoute(job,scope,clip,'retained-173');
+  const calls=jest.mocked(reconstructionRequest).mock.calls;
+  expect(calls.map(call=>call[0])).toEqual([`/jobs/${job.id}/navigation/prepare`,`/jobs/${job.id}/navigation/prepare`]);
+  const body=JSON.parse(String(calls[0][2]?.body));
+  expect(body).toEqual({id:'e'.repeat(32),alternativeId:'retained-173'});
+  expect(JSON.parse(String(calls[1][2]?.body))).toEqual(body);
+  expect(sessionStorage.length).toBe(1);
+});
+
+test('preparation intents are isolated by job and geometry source, while legacy payload stays unchanged',async()=>{
+  let count=0;Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> `${++count}`.padStart(32,'0')});
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'features'})} as Response);
+  await prepareRoute(job,scope,clip);await prepareRoute(job,scope,clip,'retained-173');
+  await prepareRoute({...job,id:'f'.repeat(32)},scope,clip,'retained-173');
+  const bodies=jest.mocked(reconstructionRequest).mock.calls.map(call=>JSON.parse(String(call[2]?.body)));
+  expect(Object.keys(bodies[0])).toEqual(['id']);
+  expect(new Set(bodies.map(body=>body.id)).size).toBe(3);
+  expect(sessionStorage.length).toBe(3);
+});
+
+test.each(['../model','retained/173','A'.repeat(49),''])('invalid geometry source %s never reaches the processor',async alternative=>{
+  await expect(prepareRoute(job,scope,clip,alternative)).rejects.toThrow('route_geometry_source_invalid');
+  expect(reconstructionRequest).not.toHaveBeenCalled();expect(sessionStorage.length).toBe(0);
+});
+
 test('a confirmed memory refusal is not presented as an unknown execution',()=>{
   expect(preparationError(new ReconstructionResponseError(409,'resource_guard'))).toMatch(/Ресурсная проверка новой задачи/);
   expect(preparationError(Error('network_result_unknown'))).toMatch(/Ответ не подтверждён/);
