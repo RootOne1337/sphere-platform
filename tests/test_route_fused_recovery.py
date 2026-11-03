@@ -820,3 +820,52 @@ def test_physical_holdout_aliases_are_excluded_only_from_evaluation(tmp_path):
     assert report["pairs"][0]["clean"] == 1
     assert report["admission_effect"] == "none" and not report["fit_used_heldout"]
     assert (out / "database.db").read_bytes() == before
+
+
+def registered_holdout_fixture(tmp_path):
+    """Both cameras are registered, exercising real finite Sampson evaluation."""
+    video, sift, out = tmp_path / "video.db", tmp_path / "sift.db", tmp_path / "out"
+    database(video)
+    database(sift, sift=True)
+    out.mkdir()
+    fused.fuse_databases(video, sift, out)
+    k = np.array([[100., 0., 100.], [0., 100., 50.], [0., 0., 1.]])
+    def image(x):
+        matrix = np.column_stack([np.eye(3), [x, 0., 0.]])
+        return SimpleNamespace(camera_id=1,cam_from_world=lambda:SimpleNamespace(matrix=lambda:matrix))
+    rec = SimpleNamespace(reg_image_ids=lambda:[10,20],images={10:image(0.),20:image(-1.)},
+        cameras={1:SimpleNamespace(calibration_matrix=lambda:k)})
+    heldouts = [dict(first=1,second=3,rows=[[2,2],[0,2]])]
+    return out, rec, heldouts
+
+
+@pytest.mark.parametrize("blob", [None, b""])
+def test_native_empty_training_pair_keeps_registered_camera_holdout_audit(tmp_path, blob):
+    out,rec,heldouts = registered_holdout_fixture(tmp_path)
+    with sqlite3.connect(out/"database.db") as db:
+        db.execute("UPDATE matches SET rows=0,cols=2,data=?",(blob,))
+    before = (out/"database.db").read_bytes()
+    report = fused.audit_heldouts(out,heldouts,rec)
+    pair = report["pairs"][0]
+    assert pair["cameras_observed"] and pair["clean"] == 2
+    assert pair["physical_aliases_excluded"] == 0
+    assert pair["sampson_px"]["count"] == 2
+    assert all(np.isfinite(pair["sampson_px"][key]) for key in ("median","p95","maximum"))
+    assert report["admission_effect"] == "none" and not report["fit_used_heldout"]
+    assert (out/"database.db").read_bytes() == before
+
+
+@pytest.mark.parametrize("rows,columns,blob", [
+    (1,2,None), (1,2,b"\x00"*4), (-1,2,None), (1,3,b"\x00"*12),
+    (0,2,b"\x00"*8), (1,2,np.array([[99,0]],dtype="<u4").tobytes()),
+    (1,2,np.array([[-1,0]],dtype="<i4").tobytes()),
+])
+def test_invalid_training_layout_cannot_be_treated_as_an_empty_pair(tmp_path, rows, columns, blob):
+    out,rec,heldouts = registered_holdout_fixture(tmp_path)
+    with sqlite3.connect(out/"database.db") as db:
+        db.execute("UPDATE matches SET rows=?,cols=?,data=?",(rows,columns,blob))
+    before = (out/"database.db").read_bytes()
+    with pytest.raises(ValueError,match="fused_heldout_training_layout"):
+        fused.audit_heldouts(out,heldouts,rec)
+    assert (out/"database.db").read_bytes() == before
+    assert not (out/"heldout-audit.json").exists()

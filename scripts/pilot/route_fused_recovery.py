@@ -884,16 +884,29 @@ def audit_heldouts(folder, heldouts, rec, *, check=lambda: None):
                     return xy_a[u].tobytes() + xy_b[v].tobytes()
 
                 found = db.execute(
-                    "SELECT rows,data FROM matches WHERE pair_id=?",
+                    "SELECT rows,cols,data FROM matches WHERE pair_id=?",
                     (_pair_id(min(ia, ib), max(ia, ib)),),
                 ).fetchone()
-                train = (
-                    np.frombuffer(found[1], "<u4").reshape(found[0], 2)
-                    if found
-                    else np.empty((0, 2), dtype=int)
-                )
+                # Pinned COLMAP writes a legitimate rejected pair as
+                # (rows=0, cols=2, data=NULL). It has no training matches.
+                # A nonempty malformed row must never become empty evidence.
+                train = np.empty((0, 2), dtype="<u4")
+                if found is not None:
+                    count, columns, blob = found
+                    if (
+                        type(count) is not int
+                        or not 0 <= count <= MAX_FEATURES * 8
+                        or columns != 2
+                        or count == 0 and blob not in (None, b"")
+                        or count > 0 and (not isinstance(blob, bytes) or len(blob) != count * 8)
+                    ):
+                        raise ValueError("fused_heldout_training_layout")
+                    if count:
+                        train = np.frombuffer(blob, "<u4").reshape(count, 2)
                 if ia > ib:
                     train = train[:, ::-1]
+                if len(train) and (train[:, 0].max() >= rows_a or train[:, 1].max() >= rows_b):
+                    raise ValueError("fused_heldout_training_layout")
                 training = {key(u, v) for u, v in train}
                 seen, clean, aliases = set(), [], 0
                 for u, v in pairs:
