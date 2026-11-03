@@ -55,15 +55,16 @@ test.each(['../model','retained/173','A'.repeat(49),''])('invalid geometry sourc
 });
 
 test('a confirmed memory refusal is not presented as an unknown execution',()=>{
-  expect(preparationError(new ReconstructionResponseError(409,'resource_guard'))).toMatch(/Ресурсная проверка новой задачи/);
+  expect(preparationError(new ReconstructionResponseError(409,'resource_guard'))).toMatch(/Ресурсная проверка запроса/);
   expect(preparationError(Error('network_result_unknown'))).toMatch(/Ответ не подтверждён/);
 });
 
 test('a historical reconstruction refusal does not claim RAM is low now or grant a ready map',()=>{
   const source={phase:'failed',error:'resource_guard'};
   const issue=routeReadinessIssue(source,{phase:'not_prepared'});
-  expect(issue).toContain('У предыдущей попытки');
-  expect(issue).toContain('не проверка свободной ОЗУ сейчас');
+  expect(issue).toContain('Подготовка выбранной попытки');
+  expect(issue).not.toMatch(/предыдущ|прежний/);
+  expect(issue).toContain('не текущий замер свободной ОЗУ');
   expect(issue).toContain('Карта управления этой попытки не создана');
   expect(routeReadinessIssue(source,{phase:'ready'})).toBeNull();
 });

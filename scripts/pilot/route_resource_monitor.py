@@ -1,7 +1,8 @@
 """Task-owned Windows volume proof; RAM, commit and disk are always fresh.
 
-Admission takes a fresh bounded volume probe. During this same task only, one
-background probe refreshes a healthy proof with a maximum age of 30 seconds.
+Admission takes a fresh bounded volume probe. During this same task only, an
+owned scheduler refreshes the proof even while the caller is in a long CPU
+stage without sampling. At most one probe runs; its proof expires after 30s.
 Timeouts never invent health, retain old RAM or waive an observed warning.
 There is no global cache, threshold change, thread pool or native input channel.
 """
@@ -27,6 +28,7 @@ from scripts.pilot import resource_guard
 PROBE_INTERVAL_SECONDS = 10.
 PROBE_TIMEOUT_SECONDS = 10.
 PROOF_MAX_AGE_SECONDS = 30.
+REFRESH_WAKE_SECONDS = 1.
 
 
 def utc_now():
@@ -79,6 +81,9 @@ class TaskResourceMonitor:
         self.task_id = uuid.uuid4().hex
         self._lock, self._sample_lock = threading.Lock(), threading.Lock()
         self._worker = self._process = self._result = None
+        self._refresher = None
+        self._stop = threading.Event()
+        self._background_error = None
         self._closed = self._initialized = self._identity_changed = False
         self._identity = self._last_launch = self._measurement = self._failure = None
         self._last_clock = None
@@ -182,15 +187,61 @@ class TaskResourceMonitor:
             self._failure = result
         return True
 
+    def _checked_clock(self):
+        now = self.clock()
+        if (type(now) not in (int, float) or not math.isfinite(now)
+                or self._last_clock is not None and now < self._last_clock):
+            raise RuntimeError('resource_monitor_clock_regressed')
+        self._last_clock = now
+        return now
+
+    def _refresh_loop(self):
+        # This deadline is independent of sample(): image indexing/native CPU
+        # stages can run for minutes without returning to a caller checkpoint.
+        # Only short state/native-identity operations hold the sample lock;
+        # CIM remains in the separately bounded owned probe.
+        while not self._stop.wait(REFRESH_WAKE_SECONDS):
+            try:
+                with self._sample_lock:
+                    if self._closed:
+                        return
+                    now = self._checked_clock()
+                    try:
+                        identity = self._check_identity()
+                    except OSError:
+                        self._measurement = None
+                        self._failure = dict(errorType='VolumeIdentityChanged'
+                            if self._identity_changed else 'VolumeIdentityUnavailable')
+                        continue
+                    self._harvest()
+                    if self._last_launch is None or now - self._last_launch >= PROBE_INTERVAL_SECONDS:
+                        self._launch(now, identity)
+            except Exception as error:
+                # A failed scheduler cannot silently leave an apparently
+                # maintained healthy proof behind. A new task is required.
+                with self._sample_lock:
+                    self._measurement = None
+                    self._background_error = ('resource_monitor_clock_regressed'
+                        if isinstance(error, RuntimeError)
+                        and str(error) == 'resource_monitor_clock_regressed'
+                        else 'resource_monitor_background_failed')
+                self._stop.set()
+
+    def _start_refresher(self):
+        with self._lock:
+            if self._closed or self._refresher is not None:
+                return
+            self._refresher = threading.Thread(target=self._refresh_loop,
+                name='sphere-task-volume-refresh', daemon=True)
+            self._refresher.start()
+
     def sample(self):
         with self._sample_lock:
             if self._closed:
                 raise RuntimeError('resource_monitor_closed')
-            now = self.clock()
-            if (type(now) not in (int, float) or not math.isfinite(now)
-                    or self._last_clock is not None and now < self._last_clock):
-                raise RuntimeError('resource_monitor_clock_regressed')
-            self._last_clock = now
+            if self._background_error is not None:
+                raise RuntimeError(self._background_error)
+            now = self._checked_clock()
             if self.system != 'Windows':
                 # Linux retains its own fresh /proc semantics, with no Windows
                 # subprocess, volume cache or commit comparison.
@@ -217,6 +268,7 @@ class TaskResourceMonitor:
                     self._worker.join(PROBE_TIMEOUT_SECONDS + 3)
                     fresh = self._harvest()
                     self._initialized = True
+                    self._start_refresher()
                 elif self._last_launch is None or now - self._last_launch >= PROBE_INTERVAL_SECONDS:
                     self._launch(now, identity)
                 # Detect a mount change during the admission/probe hand-off.
@@ -226,7 +278,7 @@ class TaskResourceMonitor:
                     identity = None
                     self._measurement = None
                     self._error(snapshot, 'volume_identity', 'VolumeIdentityChanged')
-            now = self.clock()
+            now = self._checked_clock()
             measurement = self._measurement
             if measurement is not None and identity is not None:
                 age = now - measurement['completed_at']
@@ -260,25 +312,25 @@ class TaskResourceMonitor:
             except (OSError, ValueError) as error:
                 self._error(snapshot, 'memory', type(error).__name__)
             snapshot['collectionCompletedAt'] = utc_now()
-            if now < self._last_clock:
-                raise RuntimeError('resource_monitor_clock_regressed')
-            self._last_clock = now
             if self._closed:
                 raise RuntimeError('resource_monitor_closed')
             return snapshot
 
     def close(self):
+        self._stop.set()
         with self._lock:
             self._closed = True
-            process, worker = self._process, self._worker
+            process, worker, refresher = self._process, self._worker, self._refresher
             if process is not None and process.poll() is None:
                 try:
                     process.kill()
                 except OSError:
                     pass
-        if worker is not None and worker is not threading.current_thread():
-            worker.join(3)
+        for thread in (refresher, worker):
+            if thread is not None and thread is not threading.current_thread():
+                thread.join(3)
         with self._lock:
-            if ((worker is not None and worker.is_alive())
+            if ((refresher is not None and refresher.is_alive())
+                    or (worker is not None and worker.is_alive())
                     or self._process is not None and self._process.poll() is None):
                 raise RuntimeError('volume_probe_close_unconfirmed')

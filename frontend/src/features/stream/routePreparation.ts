@@ -4,7 +4,7 @@ const idPattern=/^[0-9a-f]{32}$/;
 const alternativePattern=/^[a-z0-9][a-z0-9-]{0,47}$/;
 const terminal=new Set(['ready','failed','rejected','cancelled']);
 const phaseLabels:Record<string,string>={not_prepared:'не подготовлена',pending_auto_prepare:'ожидается подготовка',preparing:'подготовка',features:'поиск ориентиров',awaiting_qualification:'проверка узнавания',ready:'готова к проверке',failed:'ошибка подготовки',rejected:'не прошла проверку',cancelled:'отменена'};
-const errorLabels:Record<string,string>={route_preparation_interrupted:'обработка прервалась при остановке сервиса',route_preparation_not_started:'автоматический запуск не подтверждён',route_camera_motion_requires_review:'траекторию камеры нужно проверить',camera_intrinsics_degenerate:'некорректные параметры восстановленной камеры',route_preparation_attempt_quota:'исчерпан лимит попыток подготовки этой сцены',route_map_has_unobserved_sections:'не хватает ориентиров на части пути',resource_guard:'ресурсная проверка предыдущей попытки не пройдена; это не замер текущей ОЗУ'};
+const errorLabels:Record<string,string>={route_preparation_interrupted:'обработка прервалась при остановке сервиса',route_preparation_not_started:'автоматический запуск не подтверждён',route_camera_motion_requires_review:'траекторию камеры нужно проверить',camera_intrinsics_degenerate:'некорректные параметры восстановленной камеры',route_preparation_attempt_quota:'исчерпан лимит попыток подготовки этой сцены',route_map_has_unobserved_sections:'не хватает ориентиров на части пути',resource_guard:'ресурсная проверка этой попытки не пройдена; это не текущий замер ОЗУ'};
 Object.assign(errorLabels,{sparse_receipt_invalid:'не подтверждена квитанция геометрии',sparse_source_changed:'файлы геометрии изменились после подготовки',sparse_source_missing_or_symlink:'файлы геометрии недоступны или перемещены',sparse_quality_gate_failed:'камеры не прошли проверку качества'});
 errorLabels.route_feature_runtime_mismatch='ориентиры подготовлены другой версией обработчика; подготовьте их заново из сохранённой записи';
 errorLabels.route_alternative_native_missing='для этой схемы ещё не подключены сохранённые измерения камер и ориентиров';
@@ -19,7 +19,7 @@ export function routeReadinessIssue(source:ReconstructionState|null,assets:Navig
   if(!assets)return 'Проверяем состояние обработки выбранной записи…';
   if(assets.phase==='awaiting_qualification')return 'Карта построена. Проверка узнавания новых кадров ещё не подтверждена; движение не запускается.';
   if(['pending_auto_prepare','preparing','features'].includes(assets.phase))return 'Запись обрабатывается автоматически. Карта ориентиров ещё строится.';
-  if(source?.phase==='failed'&&source.error==='resource_guard')return 'У предыдущей попытки сохранён ресурсный отказ. Это не проверка свободной ОЗУ сейчас. Карта управления этой попытки не создана; показанная схема доступна для просмотра. Исходное видео сохранено. Откройте «Библиотека», чтобы проверить или подготовить отдельную попытку.';
+  if(source?.phase==='failed'&&source.error==='resource_guard')return 'Подготовка выбранной попытки остановлена ресурсной проверкой. Это сохранённый результат проверки, а не текущий замер свободной ОЗУ. Карта управления этой попытки не создана. Если схема сохранена, она доступна для просмотра. Исходное видео сохранено. Откройте «Библиотека», чтобы проверить или подготовить отдельную попытку.';
   const quality=source?.quality,coverage=quality?` Восстановлено ${quality.registered} из ${quality.selected} ракурсов.`:'';
   if(assets.error==='route_camera_motion_requires_review'||cameraMotionRequiresReview(source?.camera_motion))return `Автоматическая подготовка остановлена: восстановленная траектория содержит подозрительные скачки.${coverage} Исходное видео сохранено; требуется восстановление геометрии, а не повторное нажатие подготовки.`;
   if(assets.error)return `Карта не готова: ${navigationErrorLabel(assets.error)}.${coverage} Исходное видео сохранено.`;
@@ -60,7 +60,7 @@ export async function prepareRoute(job:ReconstructionJob,scope:string,clip:strin
 
 export function preparationError(error:unknown):string {
   if(error instanceof ReconstructionResponseError) {
-    if(error.message==='resource_guard')return 'Ресурсная проверка новой задачи не пройдена: подготовка не началась. Причиной могут быть ОЗУ, commit, место или недоступное измерение. Предыдущий результат карты показан отдельно; исходная запись сохранена.';
+    if(error.message==='resource_guard')return 'Ресурсная проверка запроса не пройдена: подготовка не началась. Причиной могут быть ОЗУ, commit, место или недоступное измерение. Исходная запись и сохранённые результаты не изменены.';
     if(error.message==='route_camera_recovery_required')return 'Сохранённая модель пропустила часть записи. Повторный экспорт не восстановит камеры; откройте восстановление из исходного видео.';
     if(preparationQuotaReached(error))return 'Исчерпан лимит попыток для этой сцены. Повторные запуски не исправят ошибку траектории; откройте «Библиотека» для диагностики.';
     if(error.message==='route_camera_motion_requires_review')return 'Траектория камер требует проверки. Откройте «Библиотека»: карта для направления пока не подготовлена.';

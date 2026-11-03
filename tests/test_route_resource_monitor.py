@@ -3,6 +3,7 @@
 import json
 import subprocess
 import threading
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -92,6 +93,133 @@ def finish(task):
     task._worker.join(1)
     assert not task._worker.is_alive()
     return task.sample()
+
+
+def wait_until(predicate):
+    deadline = time.monotonic() + 1
+    while not predicate():
+        assert time.monotonic() < deadline, 'owned refresher did not make progress'
+        threading.Event().wait(.001)
+
+
+def background_probe(host, task, count):
+    wait_until(lambda: len(host.probes) >= count)
+    task._worker.join(1)
+    assert not task._worker.is_alive()
+
+
+def test_111_second_cpu_stage_without_samples_keeps_volume_fresh_but_not_memory_or_disk(
+        host, tmp_path, monkeypatch):
+    # Only accelerate scheduler wakeups, not the 10s launch interval or 30s TTL.
+    monkeypatch.setattr(monitor, 'REFRESH_WAKE_SECONDS', .005)
+    host.outcomes.extend([HEALTHY] * 12)
+    with monitor.TaskResourceMonitor(tmp_path, clock=host.clock) as task:
+        assert guard.evaluate(task.sample()) == []
+        refresher = task._refresher
+        assert refresher.is_alive()
+        for count, seconds in enumerate(range(10, 111, 10), start=2):
+            host.clock.value = float(seconds)
+            background_probe(host, task, count)
+        # No sample() occurred throughout the simulated 111s CPU phase.
+        host.clock.value = 111.
+        host.values['availableRamBytes'] = 2 * guard.GIB
+        host.values['committedBytes'] = 80 * guard.GIB
+        monkeypatch.setattr(monitor.shutil, 'disk_usage',
+                            lambda _: SimpleNamespace(free=10 * guard.GIB))
+        sample = task.sample()
+        assert sample['volumeHealthStatus'] == 'Healthy'
+        assert sample['volumeProofAgeMs'] == 1000
+        assert sample['volumeProofMaxAgeMs'] == 30000
+        assert guard.evaluate(sample) == ['disk_headroom_low', 'ram_headroom_low',
+                                          'commit_headroom_low']
+        assert len(host.probes) == 12
+        assert sum(p.poll() is None for p in host.probes) == 0
+    assert not refresher.is_alive()
+    assert task._stop.is_set()
+
+
+def test_background_warning_without_samples_replaces_healthy_proof(host, tmp_path, monkeypatch):
+    monkeypatch.setattr(monitor, 'REFRESH_WAKE_SECONDS', .005)
+    host.outcomes.extend([HEALTHY, WARNING])
+    with monitor.TaskResourceMonitor(tmp_path, clock=host.clock) as task:
+        task.sample()
+        host.clock.value = 10.
+        background_probe(host, task, 2)
+        sample = task.sample()
+        assert sample['volumeHealthStatus'] == 'Warning'
+        assert sample['volumeProofAgeMs'] == 0
+        assert guard.evaluate(sample) == ['volume_not_ready']
+
+
+def test_background_refresh_missing_response_cannot_renew_the_original_ttl(
+        host, tmp_path, monkeypatch):
+    monkeypatch.setattr(monitor, 'REFRESH_WAKE_SECONDS', .005)
+    host.outcomes.extend([HEALTHY, b'{}', 'pending'])
+    with monitor.TaskResourceMonitor(tmp_path, clock=host.clock) as task:
+        task.sample()
+        host.clock.value = 10.
+        background_probe(host, task, 2)
+        assert guard.evaluate(task.sample()) == []
+        host.clock.value = 31.
+        wait_until(lambda: len(host.probes) == 3)
+        assert host.probes[-1].entered.wait(1)
+        started = time.monotonic()
+        sample = task.sample()
+        assert time.monotonic() - started < .1  # No wait for pending CIM.
+        assert sample['volumeProofAgeMs'] == 31000
+        assert sample['volumeProbeState'] == 'running'
+        assert 'volumeHealthStatus' not in sample
+        assert guard.evaluate(sample) == ['volume_health_unavailable']
+    assert host.probes[-1].killed
+    assert not task._worker.is_alive() and not task._refresher.is_alive()
+
+
+def test_background_volume_identity_change_is_latched_before_next_sample(
+        host, tmp_path, monkeypatch):
+    monkeypatch.setattr(monitor, 'REFRESH_WAKE_SECONDS', .005)
+    host.outcomes.append(HEALTHY)
+    with monitor.TaskResourceMonitor(tmp_path, clock=host.clock) as task:
+        task.sample()
+        host.identity['value'] = 'volume-b'
+        host.clock.value = 10.
+        wait_until(lambda: task._identity_changed)
+        host.identity['value'] = 'volume-a'
+        assert guard.evaluate(task.sample()) == ['volume_health_unavailable']
+        assert len(host.probes) == 1
+
+
+def test_exception_exit_stops_background_scheduler_and_reaps_its_pending_probe(
+        host, tmp_path, monkeypatch):
+    monkeypatch.setattr(monitor, 'REFRESH_WAKE_SECONDS', .005)
+    host.outcomes.extend([HEALTHY, 'pending'])
+    with pytest.raises(RuntimeError, match='task_cancelled'):
+        with monitor.TaskResourceMonitor(tmp_path, clock=host.clock) as task:
+            task.sample()
+            host.clock.value = 10.
+            wait_until(lambda: len(host.probes) == 2)
+            assert host.probes[-1].entered.wait(1)
+            raise RuntimeError('task_cancelled')
+    assert task._stop.is_set()
+    assert not task._refresher.is_alive() and not task._worker.is_alive()
+    assert task._process is None and host.probes[-1].killed
+    assert not host.probes[0].killed
+    task.close()  # Repeated cleanup cannot resurrect the scheduler.
+    assert len(host.probes) == 2
+
+
+def test_background_clock_regression_cannot_restore_a_fresh_looking_proof(
+        host, tmp_path, monkeypatch):
+    monkeypatch.setattr(monitor, 'REFRESH_WAKE_SECONDS', .005)
+    host.outcomes.append(HEALTHY)
+    with monitor.TaskResourceMonitor(tmp_path, clock=host.clock) as task:
+        task.sample()
+        host.clock.value = -1.
+        wait_until(lambda: task._background_error is not None)
+        host.clock.value = 1.
+        with pytest.raises(RuntimeError, match='resource_monitor_clock_regressed'):
+            task.sample()
+        assert task._measurement is None
+        assert len(host.probes) == 1
 
 
 def test_admission_is_fresh_then_only_volume_is_cached_ram_and_commit_are_fresh(host, tmp_path):

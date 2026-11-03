@@ -27,7 +27,7 @@ export function HudSpeedCard({telemetry,sourceManifestSha}:{telemetry:Reconstruc
   </div>;
 }
 const phases:Record<string,string>={uploading:'Передача сохранённой записи',starting:'Запуск обработчика',verifying:'Проверка исходника и освобождения ввода',extracting:'Извлечение кадров в исходном разрешении',features:'Поиск устойчивых визуальных признаков',matching:'Сопоставление соседних ракурсов',cameras:'Восстановление связанных камер',training:'Построение плотной Gaussian-сцены на GPU',complete:'Плотная сцена готова',failed:'Обработка остановлена',cancelled:'Задание отменено'};
-const reasons:Record<string,string>={no_connected_cameras_need_translation_and_overlap:'Не удалось связать камеры. Нужен проход с перемещением, перекрывающимися ракурсами и неподвижными деталями.',camera_quality_gate_failed:'Камеры восстановлены лишь частично или с большой ошибкой. Результат не принят как цельная сцена.',resource_guard:'У этой попытки сохранён прежний ресурсный отказ. Это не замер памяти сейчас.',worker_service_restarted:'Сервис был перезапущен. Исходная запись сохранена.',brush_failed_see_local_log:'Плотный рендер завершился с ошибкой. Камеры можно проверить отдельно.'};
+const reasons:Record<string,string>={no_connected_cameras_need_translation_and_overlap:'Не удалось связать камеры. Нужен проход с перемещением, перекрывающимися ракурсами и неподвижными деталями.',camera_quality_gate_failed:'Камеры восстановлены лишь частично или с большой ошибкой. Результат не принят как цельная сцена.',resource_guard:'Ресурсная проверка остановила эту попытку обработки. Это сохранённый результат проверки, а не текущий замер свободной памяти.',worker_service_restarted:'Сервис был перезапущен. Исходная запись сохранена.',brush_failed_see_local_log:'Плотный рендер завершился с ошибкой. Камеры можно проверить отдельно.'};
 reasons.brush_timing_overflow='Brush завершился с ошибкой измерения времени GPU. Камеры и проверенные промежуточные результаты сохранены.';
 reasons["No module named 'av'"]='Не запустился декодер видео. Это ошибка обработчика.';
 reasons.brush_system_timing_build_required='Совместимый локальный движок плотной сцены ещё не подготовлен. Запись и восстановленные камеры сохранены.';
@@ -159,7 +159,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       if(fatal&&job.creation&&folderRef.current()){autoStopped.current=true;await stopAutomaticReconstruction(folderRef.current()!,job).catch(()=>{});}
       const message=e instanceof Error?e.message:'нет ответа';
       setError(fatal?`Подготовка остановлена: ${message}. Запись сохранена.`:
-        message==='resource_guard'?'Недостаточно ресурсов. Подготовка продолжится автоматически, когда они освободятся.':
+        message==='resource_guard'?'Запрос подготовки остановлен ресурсной проверкой обработчика. Проверяем состояние этой же попытки; исходная запись сохранена.':
         message==='one_active_job_only'?'Другая обработка ещё выполняется. Подготовка продолжится автоматически после её завершения.':
         `Подготовка ожидает локальный обработчик: ${message}. Проверяем то же задание.`);
       if(!fatal){timer=setTimeout(()=>{void poll();},delay);delay=Math.min(delay*2,30000);}
@@ -195,7 +195,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
         const started=await(await reconstructionRequest(`/jobs/${next.id}/start`,next,{method:'POST',body:'{}',signal:controller.signal})).json();assertReconstructionSource(started,sourceManifestSha);setStatus(started,next);
       };
       if(navigator.locks)await navigator.locks.request(`sphere-reconstruction-upload-${next.id}`,{signal:controller.signal},launch);else await launch();
-    }catch(e){if(pending){setJob(pending);setError(`Запуск не подтверждён: ${e instanceof Error?e.message:'нет ответа'}. Проверяем существующее задание; повторного запуска нет.`);}else setError('Не удалось сохранить ссылку на новое задание. Обработка не запускалась; прежняя попытка и исходная запись сохранены.');}
+    }catch(e){if(pending){setJob(pending);setError(e instanceof ReconstructionResponseError&&e.status===409&&e.message==='resource_guard'?'Ресурсная проверка запроса остановила запуск. Проверяем состояние этой же попытки; исходная запись сохранена.':`Запуск не подтверждён: ${e instanceof Error?e.message:'нет ответа'}. Проверяем существующее задание; повторного запуска нет.`);}else setError('Не удалось сохранить ссылку на новое задание. Обработка не запускалась; прежняя попытка и исходная запись сохранены.');}
     finally{uploadAbort.current=null;setUploading(false);}
   };
   const retryPreparation=()=>{

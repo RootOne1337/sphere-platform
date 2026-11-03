@@ -46,7 +46,9 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
     # Keep fine facades/road texture through turns. This is a bounded CPU
     # observation budget, independent of the ordinary stream's resolution.
     scale=min(1.,1280/max(width,height));size=(round(width*scale),round(height*scale));cv2.setNumThreads(2)
-    mask=np.full((size[1],size[0]),255,dtype='uint8');mask[:int(size[1]*.2)]=0
+    # The recorded mask policy owns exclusions. A blanket upper crop would also
+    # erase building landmarks when the operator explicitly selects no mask.
+    mask=np.full((size[1],size[0]),255,dtype='uint8')
     for x1,y1,x2,y2 in capture_exclusions(control.get('mask','none'),getattr(capture,'manifest',{})):
         mask[int(y1*size[1]):int(y2*size[1]),int(x1*size[0]):int(x2*size[0])]=0
     with sqlite3.connect(source_database.resolve().as_uri()+'?mode=ro',uri=True) as src:

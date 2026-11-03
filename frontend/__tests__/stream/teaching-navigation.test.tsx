@@ -2,6 +2,8 @@ import {act,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {TeachingNavigation} from '@/src/features/stream/TeachingNavigation';
 import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
 import {preparationError} from '@/src/features/stream/routePreparation';
+import {walkingCalibrationIssue} from '@/src/features/stream/walkPilot';
+import {blackRussiaScooterProfile} from '@/src/features/stream/teachingProfileStorage';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
 const job={id:'a'.repeat(32),key:'b'.repeat(64)};
 beforeEach(()=>{
@@ -10,6 +12,21 @@ beforeEach(()=>{
   jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn()} as never);
 });
 afterEach(()=>jest.restoreAllMocks());
+
+test('a scooter profile keeps the physical foot pilot blocked and replay explains its foot-only no-input scope',async()=>{
+  const binding={captureEpoch:'e'.repeat(32),width:1920,height:1080},open=jest.fn();
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'complete',sparse_available:true,navigation:{phase:'ready'}})} as Response);
+  const issue=walkingCalibrationIssue(blackRussiaScooterProfile(binding),binding);
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={binding} walkInput={{issue,open}}/>);
+  await screen.findByText(/Карта ориентиров готова/);
+  fireEvent.click(screen.getByRole('button',{name:'Пеший тест со стиком'}));
+  expect(screen.getByText('Выберите схему «Стик»: пеший тест не управляет транспортом.')).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Запустить проход'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('button',{name:'Проверить на записи'}));
+  expect(screen.getByText(/Проверка на видео рассчитывает только пеший стик, без касаний в игре/)).toBeInTheDocument();
+  expect(open).not.toHaveBeenCalled();
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>call[2]?.method!=='POST')).toBe(true);
+});
 
 test('a ready response for another recording cannot enable control or publish its camera counts',async()=>{
   jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'sparse_complete',source_manifest_sha256:'f'.repeat(64),geometry_available:true,
@@ -44,7 +61,7 @@ test('the vehicle panel keeps failed skuter1 diagnostic geometry behind readines
   render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}
     onReview={review} vehicleInput={{issue:null,hudProfile:'black_russia_scooter_v1',open}}/>);
   fireEvent.click(screen.getByRole('button',{name:'Транспорт · газ и руль'}));
-  await waitFor(()=>expect(screen.getAllByText(/У предыдущей попытки сохранён ресурсный отказ/).length).toBeGreaterThan(0));
+  await waitFor(()=>expect(screen.getAllByText(/Подготовка выбранной попытки остановлена ресурсной проверкой/).length).toBeGreaterThan(0));
   expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
   fireEvent.click(screen.getByRole('button',{name:'Открыть подготовку записи'}));expect(review).toHaveBeenCalledTimes(1);
   expect(open).not.toHaveBeenCalled();expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);

@@ -52,7 +52,7 @@ test('a retained verified schema can prepare directly despite a failed old prima
   fixture();
   const button=await screen.findByRole('button',{name:'Подготовить карту из выбранной схемы'});
   expect(button).toBeEnabled();expect(screen.queryByRole('button',{name:'Открыть подготовку записи'})).not.toBeInTheDocument();
-  expect(screen.queryByText(/У предыдущей попытки сохранён ресурсный отказ/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Подготовка выбранной попытки остановлена ресурсной проверкой/)).not.toBeInTheDocument();
   expect(screen.getByRole('button',{name:'Проверить направление · 120 с'})).toBeDisabled();
   fireEvent.click(button);
   await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[2]?.method==='POST')).toHaveLength(1));

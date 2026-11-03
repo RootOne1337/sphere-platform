@@ -32,6 +32,25 @@ test('one-button route preparation creates a sparse-only automatic pipeline',asy
   view.unmount();
 });
 
+test('a first create resource refusal is a confirmed rejection of this intent, not an old error or uncertain launch',async()=>{
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'});
+  jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);
+  jest.mocked(ensureAutomaticReconstructionLink).mockImplementation(async(_source,_clip,_mask,candidate)=>candidate!);
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>{
+    if(path==='/jobs')throw new ReconstructionResponseError(409,'resource_guard');
+    return {json:async()=>({phase:'failed',error:'resource_guard'})} as Response;
+  });
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>({} as FileSystemDirectoryHandle)} complete onBusyChange={()=>{}} manageAutomaticPreparation={false}/>);
+  const button=await screen.findByRole('button',{name:'Подготовить ориентиры'});
+  await waitFor(()=>expect(button).toBeEnabled());fireEvent.click(button);
+  await screen.findByText('Ресурсная проверка запроса остановила запуск. Проверяем состояние этой же попытки; исходная запись сохранена.');
+  expect(screen.queryByText(/прежний ресурсный|У предыдущей попытки|Запуск не подтверждён: resource_guard/)).not.toBeInTheDocument();
+  expect(uploadReconstruction).not.toHaveBeenCalled();
+  expect(jest.mocked(reconstructionRequest).mock.calls.filter(([path])=>path==='/jobs')).toHaveLength(1);
+  expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path.endsWith('/start'))).toBe(false);
+  view.unmount();
+});
+
 test('a newly finalized recording can prepare once automatically but a recovered intent never creates another job',async()=>{
   Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'});
   jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);
