@@ -84,9 +84,9 @@ export class VehicleContacts {
   }
 }
 
-export function vehicleReasonLabel(reason:string):string|null {
+export function vehicleReasonLabel(reason:string,positionPreviouslyConfirmed=false):string|null {
   return ({vehicle_confirming_current_position:'Три свежих подтверждения текущего места перед движением',
-    vehicle_confirming_position:'Положение потеряно: газ отпущен, ожидаем подтверждённые ориентиры',
+    vehicle_confirming_position:positionPreviouslyConfirmed?'Положение потеряно: газ отпущен, ожидаем подтверждённые ориентиры':'Ищем положение по ориентирам; педали отпущены',
     vehicle_fresh_pose_required:'Ожидаем свежее положение; движение приостановлено',
     vehicle_speed_unconfirmed:'Скорость не подтверждена — газ отпущен; ждём свежие показания',
     vehicle_continuous_pursuit:'Следуем маршруту: газ удерживается, руль корректируется по свежим кадрам',

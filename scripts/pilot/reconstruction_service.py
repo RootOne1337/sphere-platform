@@ -746,6 +746,7 @@ def handler(jobs, origin, port):
                                              alternative_catalog_contract='source_bound_review_v1',
                                              alternative_preparation_contract='native_source_bound_attempt_v1',
                                              route_alternative_preparation_contract='source_bound_native_reference_lk_v1',
+                                             route_localization_diagnostic_contract='bounded_stage_counts_first2_tail_v1',
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
                                              route_resource_monitor_contract='task_volume30_fresh_native_v1',
                                              route_reactivity_contract='gray_reuse_owned_supervision_v1',

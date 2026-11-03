@@ -14,6 +14,7 @@ import {saveRouteDebugReport} from './routeDebugStorage';
 import {RouteDebugArchive} from './RouteDebugArchive';
 import {WalkRunDiagnostics,walkInputSummary,walkCameraInputSummary,boundedWalkSummary} from './walkRunDiagnostics';
 import {WalkCameraDrag as WalkCameraServo,type CameraDragStep as CameraStep} from './walkCameraDrag';
+import {readLocalizationDiagnostic,type LocalizationDiagnostic} from './routeLocalizationDiagnostic';
 
 type Binding={captureEpoch:string;width:number;height:number};
 type StartMode='beginning'|'recognized_route';
@@ -21,13 +22,13 @@ type Sample={elapsedMs:number;sequence:number;ageMs:number;computeMs:number;stat
   motionActive:boolean;motionSeconds:number|null;
   captureMode:string|null;captureMs:number|null;workerMs:number|null;encodeMs:number|null;hashMs:number|null;method:string;runtimePolicy:string|null;
   sourcePresented:number|null;sourceMediaTime:number|null;decodeMs:number|null;receiveAgeMs:number|null;captureAgeMs:number|null;
-  poseState:'unknown'|'confirming'|'localized';
+  poseState:'unknown'|'confirming'|'localized';positionPreviouslyConfirmed:boolean;localizationDiagnostic:LocalizationDiagnostic|null;
   inliers:number;progress:number|null;stick:[number,number];jpegSha256:string;image?:string;
   vehicle?:VehicleCommand&{targetSpeedKmh:number|null;observedSpeedKmh:number|null;speedAccepted:boolean};
   poseReason:string;plannerReason:string;cameraYawRadians:number|null;cameraPitchRadians:number|null;segment:number|null;medianErrorPx:number|null;crossTrackUnits:number|null;center:number[]|null;rotation:number[]|null;geometrySha256:string|null};
 type Run={id:string;job:ReconstructionJob;abort:AbortController;lease:WalkInputLease|null;opening:Promise<WalkInputLease>|null;began:number;
   binding:Binding;deadline:number;permitUntil:number;moving:boolean;lastSequence:number;clip:string|null;scope:string|null;
-  freshUntil:number|null;freshWaits:number;trace:WalkRunDiagnostics;maxSeconds:number;maxSpeedKmh?:number;observationCount:number;
+  freshUntil:number|null;freshWaits:number;trace:WalkRunDiagnostics;maxSeconds:number;maxSpeedKmh?:number;observationCount:number;positionConfirmed:boolean;
   observe:(()=>void)|null;inFlight:boolean;nextObservationAt:number;startMode:StartMode;camera:WalkCameraServo|null;binaryJpeg?:boolean;lastPreviewAt?:number};
 type ResumeIntent={job:string;key:string;clip:string|null;epoch:string;width:number;height:number;remainingMs:number};
 const gapReason=(active:Run|null)=>{
@@ -46,7 +47,7 @@ type PilotProps={
 export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot',expectedSource}:PilotProps) {
   const vehicleMode=mode==='vehicle';
   const expectedSourceIdentity=expectedSource?JSON.stringify([expectedSource.alternativeId,expectedSource.geometry_sha256,expectedSource.runtime_family]):null;
-  const reasonLabel=(reason:string)=>vehicleMode?(vehicleReasonLabel(reason)??(reason.startsWith('vehicle_')?`Транспорт: ${reason}`:walkReasonLabel(reason))):walkReasonLabel(reason);
+  const reasonLabel=(reason:string,positionPreviouslyConfirmed=false)=>vehicleMode?(vehicleReasonLabel(reason,positionPreviouslyConfirmed)??(reason.startsWith('vehicle_')?`Транспорт: ${reason}`:walkReasonLabel(reason))):walkReasonLabel(reason);
   const [confirmed,setConfirmed]=useState(false),[busy,setBusy]=useState(false),[saveFrames,setSaveFrames]=useState(true);
   const [startMode,setStartMode]=useState<StartMode>('recognized_route');
   const [cameraEnabled,setCameraEnabled]=useState(!vehicleMode&&input.cameraIssue!==undefined);
@@ -234,7 +235,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     resumeIntent.current=null;setVisibilityPaused(false);
     const began=performance.now();
     const active:Run={id:crypto.randomUUID().replaceAll('-',''),job,abort:new AbortController(),lease:null,opening:null,began,
-      binding:{...binding},deadline:began+600000,permitUntil:0,moving:false,lastSequence:0,clip,scope,freshUntil:null,freshWaits:0,trace:new WalkRunDiagnostics(began),maxSeconds:60,...(vehicleMode?{maxSpeedKmh}:{}),observationCount:0,observe:null,inFlight:false,nextObservationAt:0,startMode:options?.mode??startMode,camera:cameraEnabled&&!vehicleMode?new WalkCameraServo():null};
+      binding:{...binding},deadline:began+600000,permitUntil:0,moving:false,lastSequence:0,clip,scope,freshUntil:null,freshWaits:0,trace:new WalkRunDiagnostics(began),maxSeconds:60,...(vehicleMode?{maxSpeedKmh}:{}),observationCount:0,positionConfirmed:false,observe:null,inFlight:false,nextObservationAt:0,startMode:options?.mode??startMode,camera:cameraEnabled&&!vehicleMode?new WalkCameraServo():null};
     run.current=active;setBusy(true);busyChange.current(true);setRelease('none');setStopDetail(null);setPreviewFrame(null);clear();setNotice(vehicleMode?'Открываем отдельный тест транспорта. До подтверждения текущего места и скорости педали отпущены.':'Открываем отдельный пеший тест. До узнавания старта стик нейтрален.');
     history.current=[];inputs.current=[];images.current=0;lastImageAt.current=-Infinity;lastReport.current=null;lastUiPaint.current=-Infinity;setSamples([]);setEvents(0);
     const signal=active.abort.signal,alive=()=>run.current===active&&!signal.aborted;
@@ -323,6 +324,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
             if(cameraStep.hold){command=[0,0];if(vehicleCommand)vehicleCommand={pedal:'coast',steering:0};}
           }else if(active.camera&&lease.canLook?.())cameraStep=active.camera.pause(now);
           const sample:Sample={elapsedMs:now-active.began,sequence:frame.sequence,ageMs:now-frame.at,computeMs:reply.computeMs,
+            positionPreviouslyConfirmed:active.positionConfirmed,localizationDiagnostic:readLocalizationDiagnostic(value.localizationDiagnostic),
             motionActive,motionSeconds:typeof rawPlan.motionSeconds==='number'&&Number.isFinite(rawPlan.motionSeconds)&&rawPlan.motionSeconds>=0?rawPlan.motionSeconds:null,
             sourcePresented:frame.source?.presented??null,sourceMediaTime:frame.source?.mediaTime??null,decodeMs:frame.source?.decodeMs??null,receiveAgeMs:frame.source?.receiveAgeMs??null,captureAgeMs:frame.source?.captureAgeMs??null,
             captureMode:encoding?.captureMode??null,captureMs:encoding?.captureMs??null,workerMs:encoding?.workerMs??null,encodeMs:encoding?.encodeMs??null,hashMs:encoding?.hashMs??null,method:reply.method,
@@ -333,6 +335,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
             crossTrackUnits:reply.pose.cross_track_units??null,center:reply.pose.center?[...reply.pose.center]:null,rotation:reply.pose.rotation?[...reply.pose.rotation]:null,geometrySha256:reply.geometrySha256??null};
           if(vehiclePlan&&vehicleCommand)sample.vehicle={...vehicleCommand,targetSpeedKmh:vehiclePlan.targetSpeedKmh,
             observedSpeedKmh:vehiclePlan.speedAccepted?vehiclePlan.observedSpeedKmh:null,speedAccepted:vehiclePlan.speedAccepted};
+          if(reply.pose.state==='localized')active.positionConfirmed=true;
           // Deliver the fresh decision before any diagnostic canvas or React
           // work. Rendering may be skipped; input identity/deadline never is.
           active.permitUntil=(vehicleMode?vehicleDecisionDeadline(frame.at,now):walkDecisionDeadline(frame.at,now))!;
@@ -366,7 +369,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           if(paintUi)setSamples([...history.current.slice(-8)]);
           if(now-(active.lastPreviewAt??-Infinity)>=100){active.lastPreviewAt=now;
             setPreviewFrame({blob,sequence:frame.sequence,capturedAt:frame.at,points:reply.pose.state==='localized'?reply.pose.polyline_px:[]});}
-          if(paintUi)setNotice(reasonLabel(sample.reason));
+          if(paintUi)setNotice(reasonLabel(sample.reason,sample.positionPreviouslyConfirmed));
         }catch(error){if(alive()){
           if(error instanceof Error&&['walk_decision_expired','vehicle_decision_expired','walk_encoder_retry'].includes(error.message)){
             active.trace.add('decision_expired',performance.now(),{sequence:frame.sequence,ageMs:performance.now()-frame.at});
@@ -425,7 +428,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const cameraFeedback=(run.current?.camera?.snapshot()??lastReport.current?.camera as ReturnType<WalkCameraServo['snapshot']>|null)?.feedback?.at(-1);
   return <section aria-label={vehicleMode?'Тест транспорта по маршруту':'Пеший тест маршрута'} className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
     <div className="flex items-center gap-2">{vehicleMode?<Car size={19} className="text-amber-500"/>:<Footprints size={19} className="text-amber-500"/>}<h3 className="font-semibold">{vehicleMode?'Транспорт · газ и руль по живому кадру':'Пеший проход · живой стик'}</h3><span className="ml-auto text-xs text-muted-foreground">{budgetSeconds?`до ${budgetSeconds} с`:vehicleMode?`до ${durationSeconds} с`:'время по длине маршрута · до 10 мин'} · до 35% стика</span></div>
-    <p className="text-[10px] text-muted-foreground">Контур {vehicleMode?'vehicle_live_v1':'walk_live_v8'} · {last?.captureMode??'захват ожидается'} · {last?.method??'локализация ожидается'}</p>
+    <p aria-label="Диагностика локализации" className="h-10 overflow-hidden text-[10px] leading-5 text-muted-foreground"><span className="block truncate">Контур {vehicleMode?'vehicle_live_v1':'walk_live_v8'} · {last?.captureMode??'захват ожидается'} · {last?.method??'локализация ожидается'}</span><span className="block truncate">Кандидаты: {last?.localizationDiagnostic?.candidateCount??'—'} · LK макс.: {last?.localizationDiagnostic?.maxRetainedLkCount??'—'} · PnP: {last?.localizationDiagnostic?.verifiedCandidateCount??'—'}</span></p>
     <p className="text-xs leading-5 text-muted-foreground">{vehicleMode?'Газ удерживается, руль корректируется по новым кадрам. Скорость игрового спидометра сравнивается с записью; неизвестное значение отпускает педали. Камера должна следовать корпусу: свободный поворот во время движения не выполняется. Миникарта не подтверждает положение. Объезд препятствий и метрическая точность не проверены.':'Стик удерживается, свежие кадры корректируют движение. Умеренные повороты камеры выполняются на ходу. При задержке кадров стик уходит в центр и ждёт до 3 секунд. Потеря геометрии проверяется отдельно: три свежих подтверждения перед продолжением, 2 секунды без совместимых ориентиров и до 6 секунд на серию поиска. Объезд препятствий не реализован, точность в метрах ещё не измерена.'}</p>
     <label className="flex flex-wrap items-center gap-2 text-xs">Начало движения<select aria-label={vehicleMode?'Точка запуска транспорта':'Точка запуска пешего теста'} className="rounded-lg border bg-background p-2" value={startMode} disabled={busy} onChange={e=>{setStartMode(e.target.value as StartMode);setConfirmed(false);}}><option value="recognized_route">С текущей узнанной точки маршрута</option><option value="beginning">Только у начала записи</option></select></label>
     {vehicleMode&&<label className="flex flex-wrap items-center gap-2 text-xs">Предел скорости HUD<select aria-label="Предел скорости транспорта" className="rounded-lg border bg-background p-2" value={maxSpeedKmh} disabled={busy} onChange={e=>{setMaxSpeedKmh(Number(e.target.value));setConfirmed(false);}}>{[5,10,15,20,30].map(v=><option value={v} key={v}>{v} км/ч</option>)}</select></label>}
@@ -458,7 +461,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     <div className="grid grid-cols-3 gap-2 text-xs tabular-nums"><div>Прогресс: {last?.progress==null?'—':`${(last.progress*100).toFixed(1)}%`}</div><div>Опоры: {last?.inliers??0}</div><div>Кадр → ответ: {last?`${last.ageMs.toFixed(0)} мс`:'—'}</div><div>Стик: {release==='unknown'?'UNKNOWN':busy&&last?last.stick.map(v=>v.toFixed(2)).join(' / '):'0 / 0'}</div><div>Камера X / Y: {last?.cameraYawRadians==null?"—":`${(last.cameraYawRadians*180/Math.PI).toFixed(1)}°`} / {last?.cameraPitchRadians==null?"—":`${(last.cameraPitchRadians*180/Math.PI).toFixed(1)}°`}</div><div>События ввода: {events}</div><div>Освобождение: {({none:'—',pending:'ожидается',closed:'CLOSED',unknown:'UNKNOWN'})[release]}</div></div>
     {(()=>{const preview=<figure className="space-y-2"><figcaption className="text-xs text-muted-foreground">{busy?(vehicleMode?'Транспорт: исходный кадр и подтверждённое направление':'Пеший тест: исходный кадр и подтверждённое направление'):'Просмотр источника · автоматическое движение выключено'}</figcaption><canvas ref={output} width={960} height={540} aria-label={vehicleMode?'Диагностика транспорта на свежем кадре':'Диагностика пешего теста на свежем кадре'} className={previewFrame?'hidden':'aspect-video w-full rounded-lg border bg-black'}/>{previewFrame&&<WalkLivePreview frame={previewFrame} active={busy}/>}</figure>;return renderView?renderView(preview):preview;})()}
     {!busy&&samples.length>0&&<details><summary className="cursor-pointer text-xs">Кадры диагностики · {images.current}</summary><div className="mt-2 grid grid-cols-2 gap-2">{history.current.filter(s=>s.image).map(s=><figure key={s.sequence}><Image src={s.image!} width={960} height={540} unoptimized alt={`Кадр теста ${(s.elapsedMs/1000).toFixed(1)} с`} className="w-full rounded border"/><figcaption className="text-[10px]">{(s.elapsedMs/1000).toFixed(1)} с · {s.inliers} опор · {s.progress==null?'позиция неизвестна':`${(s.progress*100).toFixed(1)}%`}</figcaption></figure>)}</div></details>}
-    {!!samples.length&&<div className="overflow-auto"><table className="w-full text-left text-[11px] tabular-nums"><caption className="pb-2 text-left text-muted-foreground">Последние наблюдения · относительный прогресс, без метров</caption><thead><tr><th>Время</th><th>Опоры</th><th>{vehicleMode?'Педаль / руль':'Стик X/Y'}</th><th>Состояние</th></tr></thead><tbody>{samples.map(s=><tr key={s.sequence}><td>{(s.elapsedMs/1000).toFixed(1)} с</td><td>{s.inliers}</td><td>{s.vehicle?`${s.vehicle.pedal} / ${s.vehicle.steering.toFixed(2)}`:s.stick.map(n=>n.toFixed(2)).join(' / ')}</td><td>{reasonLabel(s.reason)}</td></tr>)}</tbody></table></div>}
+    {!!samples.length&&<div className="overflow-auto"><table className="w-full text-left text-[11px] tabular-nums"><caption className="pb-2 text-left text-muted-foreground">Последние наблюдения · относительный прогресс, без метров</caption><thead><tr><th>Время</th><th>Опоры</th><th>{vehicleMode?'Педаль / руль':'Стик X/Y'}</th><th>Состояние</th></tr></thead><tbody>{samples.map(s=><tr key={s.sequence}><td>{(s.elapsedMs/1000).toFixed(1)} с</td><td>{s.inliers}</td><td>{s.vehicle?`${s.vehicle.pedal} / ${s.vehicle.steering.toFixed(2)}`:s.stick.map(n=>n.toFixed(2)).join(' / ')}</td><td>{reasonLabel(s.reason,s.positionPreviouslyConfirmed)}</td></tr>)}</tbody></table></div>}
   </section>;
 }
 

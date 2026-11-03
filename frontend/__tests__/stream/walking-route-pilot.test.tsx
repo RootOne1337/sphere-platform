@@ -124,6 +124,30 @@ test('an unknown speed is coast with zero steering and visibly unknown, never sy
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
 });
 
+test('vehicle initial acquisition, acquired movement and later loss retain distinct truthful labels and bounded stage counts',async()=>{
+  let now=1000,stage:'initial'|'following'|'lost'='initial';jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const f=vehicleFixture({plan:p=>stage==='following'?p:{...p,phase:'waiting',reason:'vehicle_confirming_position',pedal:'coast',steering:0}});
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);if(!args[0].endsWith('/observe'))return response;
+    const value=await response.json();
+    if(stage!=='following')value.pose={...value.pose,state:'unknown',inliers:0,reason:'route_pose_not_verified'};
+    value.localizationDiagnostic={schema:'sphere-localization-observation-diagnostic-v1',candidateCount:3,maxRetainedLkCount:stage==='following'?72:12,verifiedCandidateCount:stage==='following'?1:0,descriptors:['ignored']};
+    return {json:async()=>value} as Response;
+  });
+  f.startVehicle();await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('Ищем положение по ориентирам'));
+  expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('Кандидаты: 3 · LK макс.: 12 · PnP: 0');
+  expect(screen.getByLabelText('Диагностика локализации')).toHaveClass('h-10');
+  expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();expect(f.vehicleLease.neutral).toHaveBeenCalled();
+  stage='following';now+=200;fresh();await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalled());
+  expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('LK макс.: 72 · PnP: 1');
+  stage='lost';now+=200;fresh();await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('Положение потеряно'));
+  const history=screen.getByRole('table');
+  expect(history).toHaveTextContent('Ищем положение по ориентирам; педали отпущены');
+  expect(history).toHaveTextContent('Положение потеряно');
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
 test('a service changing the requested speed cap is rejected before Android input opens',async()=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);
   const f=vehicleFixture({start:s=>({...s,maxSpeedKmh:30})});f.startVehicle();

@@ -402,6 +402,38 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.now += 121
         self.assertEqual(self.workspace.live_status()['phase'],'idle')
 
+    def test_observation_exposes_only_bounded_diagnostics_and_tolerates_missing_legacy_dict(self):
+        import cv2 as cv
+        import numpy as np
+        self.attach_fixture_map()
+        tracker=self.workspace.live['tracker']
+        original=tracker.observe
+        ok,encoded=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
+        self.assertTrue(ok)
+        values=[None,dict(method='measured_reference_lk',candidateReferenceIndices=[0,2,4],
+            flowRetainedByCandidate=[8,30,9],verifiedCandidateCount=0,coarseSearchMs=1.5,
+            rawArrays='must_not_escape')]
+        for sequence,diagnostic in enumerate(values,1):
+            def observe(*args,**kwargs):
+                pose=original(*args,**kwargs)
+                tracker.last_diagnostic=diagnostic
+                return pose
+            with patch.object(tracker,'observe',side_effect=observe):
+                result=self.workspace.observe(self.job,dict(id='d'*32,captureEpoch='e'*32,sequence=sequence,
+                    jpeg=base64.b64encode(encoded).decode()))
+            item=result['localizationDiagnostic']
+            self.assertEqual(result['physicalActions'],0)
+            self.assertFalse(result['executionQualified'])
+            self.assertNotIn('rawArrays',item)
+            if diagnostic is None:
+                self.assertEqual(item['method'],'not_attempted')
+                self.assertIsNone(item['candidateCount'])
+            else:
+                self.assertEqual(item['candidateCount'],3)
+                self.assertEqual(item['retainedLkCount'],47)
+                self.assertEqual(item['verifiedCandidateCount'],0)
+            self.now+=.1
+
     def test_explicit_walk_diagnostic_frames_flush_only_after_stop(self):
         import cv2 as cv
         import numpy as np

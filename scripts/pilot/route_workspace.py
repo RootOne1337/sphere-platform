@@ -772,9 +772,12 @@ class RouteWorkspaces:
             verification_policy, search_policy = REFERENCE_LK_VERIFICATION_POLICY, REFERENCE_LK_SEARCH_POLICY
         else:
             verification_policy, search_policy = PNP_VERIFICATION_POLICY, COARSE_SEARCH_POLICY
+        from scripts.pilot.walk_diagnostics import bounded_localization_diagnostic
+        diagnostic = bounded_localization_diagnostic(getattr(session['tracker'], 'last_diagnostic', None),
+            reason=pose.reason, source_family=session.get('runtime_family', 'legacy_sparse'))
         result = dict(id=session['id'], sequence=body['sequence'], jpegSha256=hashlib.sha256(raw).hexdigest(),
             captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed, geometrySha256=session['geometry_sha256'],
-            method=session['tracker'].last_diagnostic.get('method', 'not_attempted'),
+            method=diagnostic['method'],localizationDiagnostic=diagnostic,
             verificationPolicy=verification_policy,
             coarseSearchPolicy=search_policy,
             physicalActions=0, framesArchived=0, executionQualified=False, groundRoute=False,
@@ -803,5 +806,5 @@ class RouteWorkspaces:
             result['computeMs'] = (self.clock() - now) * 1000
         if session.get('frame_archive'):
             session['frame_archive'].offer(raw,sequence=body['sequence'],pose=pose,plan=result.get('walk', result.get('vehicle')),
-                method=result['method'],compute_ms=elapsed)
+                method=result['method'],compute_ms=elapsed,diagnostic=diagnostic)
         return result

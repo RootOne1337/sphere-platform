@@ -1,4 +1,4 @@
-import {readVehiclePlan,vehicleCalibrationIssue,vehicleCameraIssue,vehicleDecisionDeadline,VehicleContacts,type VehiclePlan} from '@/src/features/stream/vehiclePilot';
+import {readVehiclePlan,vehicleCalibrationIssue,vehicleCameraIssue,vehicleDecisionDeadline,vehicleReasonLabel,VehicleContacts,type VehiclePlan} from '@/src/features/stream/vehiclePilot';
 import {blackRussiaScooterProfile,defaultWalkingProfile} from '@/src/features/stream/teachingProfileStorage';
 import {calibrateProfile} from '@/src/features/stream/teachingKeymap';
 
@@ -6,6 +6,11 @@ const geometry={width:1920,height:1080};
 const plan:VehiclePlan={schema:'sphere-vehicle-plan-v1',phase:'following',reason:'vehicle_camera_relative_pursuit',
   pedal:'throttle',steering:.2,progressFraction:.4,maxSteering:.35,maxSpeedKmh:15,maxSeconds:180,maxDecisionAgeMs:450,maxAnswerHoldMs:350,groundRoute:false,executionQualified:false,cameraBodyAssumption:true,
   targetSpeedKmh:12,observedSpeedKmh:10,speedAccepted:true,targetViewCamera:null};
+test('initial acquisition is not described as losing a previously acquired vehicle pose',()=>{
+  expect(vehicleReasonLabel('vehicle_confirming_position')).toBe('Ищем положение по ориентирам; педали отпущены');
+  expect(vehicleReasonLabel('vehicle_confirming_position',true)).toContain('Положение потеряно');
+  expect(vehicleReasonLabel('vehicle_confirming_current_position')).toContain('Три свежих подтверждения');
+});
 test('following requires same-reply accepted actual speed, target speed and camera direction',()=>{
   expect(readVehiclePlan(plan)).toEqual(plan);
   for(const change of [{observedSpeedKmh:null},{targetSpeedKmh:null},{speedAccepted:false},{maxSpeedKmh:31},{targetSpeedKmh:16},
