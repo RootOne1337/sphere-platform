@@ -32,6 +32,9 @@ CONTEXTS = {"frontend": "Sphere Local / Frontend regressions",
             "backend": "Sphere Local / Backend regressions",
             "android": "Sphere Local / Android unit tests"}
 LOG_LIMIT = 8 * 1024 * 1024
+STATUS_READBACK_ATTEMPTS = 5
+STATUS_READBACK_SECONDS = 10.0
+STATUS_READBACK_INTERVAL = 0.5
 PG_IMAGE = "public.ecr.aws/docker/library/postgres@sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7"
 REDIS_IMAGE = "public.ecr.aws/docker/library/redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048"
 LOCAL_PG_IMAGE = "postgres@sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1"
@@ -74,13 +77,14 @@ def validate_source(root: Path, sha: str, trusted_ref: str) -> dict:
             "trustedRef": trusted_ref, "repository": REPOSITORY}
 
 
-def github(root: Path, endpoint: str, payload: dict | None = None) -> object:
+def github(root: Path, endpoint: str, payload: dict | None = None, *,
+           timeout: float = 30) -> object:
     args = ["gh", "api", "-H", "Accept: application/vnd.github+json",
             "-H", "X-GitHub-Api-Version: 2026-03-10", endpoint]
     if payload is not None:
         args += ["--method", "POST", "--input", "-"]
     result = subprocess.run(args, cwd=root, input=json.dumps(payload) if payload else None,
-                            capture_output=True, text=True, encoding="utf-8", timeout=30)
+                            capture_output=True, text=True, encoding="utf-8", timeout=timeout)
     if result.returncode or len(result.stdout) > 2 * 1024 * 1024:
         raise Refused("github_publication_or_readback_failed")
     return json.loads(result.stdout)
@@ -100,16 +104,34 @@ def publish(root: Path, sha: str, profile: str, state: str, description: str,
     if target_url:
         payload["target_url"] = target_url
     created = github(root, f"repos/{REPOSITORY}/statuses/{sha}", payload)
-    rows = github(root, f"repos/{REPOSITORY}/commits/{sha}/statuses?per_page=100")
-    if not isinstance(created, dict) or not isinstance(rows, list):
+    if (not isinstance(created, dict) or type(created.get("id")) is not int or
+            created["id"] <= 0 or
+            any(created.get(key) != value for key, value in payload.items())):
         raise Refused("invalid_status_readback")
-    latest = next((row for row in rows if row.get("context") == payload["context"]), None)
-    if (not latest or latest.get("id") != created.get("id") or
-            any(latest.get(key) != value for key, value in payload.items())):
-        raise Refused("status_readback_mismatch")
-    return {"id": created["id"], "context": payload["context"], "state": state,
-            "createdAt": latest.get("created_at"), "readbackVerified": True,
-            "targetUrl": latest.get("target_url")}
+    # The POST can become visible in the status list after its response returns.
+    # Retry only the readback; an older or superseding status cannot confirm ours.
+    deadline = time.monotonic() + STATUS_READBACK_SECONDS
+    for attempt in range(STATUS_READBACK_ATTEMPTS):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        try:
+            rows = github(root, f"repos/{REPOSITORY}/commits/{sha}/statuses?per_page=100",
+                          timeout=remaining)
+        except subprocess.TimeoutExpired:
+            raise Refused("status_readback_timeout") from None
+        if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+            raise Refused("invalid_status_readback")
+        latest = next((row for row in rows if row.get("context") == payload["context"]), None)
+        if (latest and latest.get("id") == created["id"] and
+                all(latest.get(key) == value for key, value in payload.items())):
+            return {"id": created["id"], "context": payload["context"], "state": state,
+                    "createdAt": latest.get("created_at"), "readbackVerified": True,
+                    "targetUrl": latest.get("target_url")}
+        remaining = deadline - time.monotonic()
+        if attempt + 1 < STATUS_READBACK_ATTEMPTS and remaining > 0:
+            time.sleep(min(STATUS_READBACK_INTERVAL, remaining))
+    raise Refused("status_readback_mismatch")
 
 
 @contextlib.contextmanager

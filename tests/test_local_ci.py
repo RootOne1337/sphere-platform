@@ -136,11 +136,76 @@ class LocalCIResultsTest(unittest.TestCase):
                                       ({"sha": sha}, expected, [expected | {"state": "pending"}]),
                                       ({"sha": sha}, expected, [])]:
             with self.subTest(commit=commit, rows=rows):
-                with patch.object(ci, "github", side_effect=[commit, created, rows]):
+                with patch.object(ci, "github", side_effect=[commit, created] +
+                                  [rows] * ci.STATUS_READBACK_ATTEMPTS), patch.object(ci.time, "sleep"):
                     with self.assertRaises(ci.Refused):
                         ci.publish(self.root, sha, "frontend", "success", "passed")
         with patch.object(ci, "github", side_effect=[{"sha": sha}, expected, [expected]]):
             self.assertTrue(ci.publish(self.root, sha, "frontend", "success", "passed")["readbackVerified"])
+
+    def test_status_waits_for_exact_created_id_after_empty_and_older_readbacks(self):
+        sha = "a" * 40
+        expected = {"id": 5, "state": "pending", "context": ci.CONTEXTS["frontend"],
+                    "description": "running", "created_at": "now"}
+        with patch.object(ci, "github", side_effect=[{"sha": sha}, expected, [],
+                          [expected | {"id": 4}], [expected]]) as api, patch.object(ci.time, "sleep") as sleep:
+            result = ci.publish(self.root, sha, "frontend", "pending", "running")
+        self.assertEqual(result["id"], 5)
+        self.assertTrue(result["readbackVerified"])
+        self.assertEqual(api.call_count, 5)
+        self.assertEqual(sum(len(call.args) == 3 for call in api.call_args_list), 1)
+        self.assertEqual(sleep.call_count, 2)
+        self.assertTrue(all(call.args == (0.5,) for call in sleep.call_args_list))
+        self.assertTrue(all(0 < call.kwargs["timeout"] <= 10
+                            for call in api.call_args_list[2:]))
+
+    def test_status_never_accepts_superseding_status_or_changed_payload(self):
+        sha = "a" * 40
+        url = f"https://github.com/{ci.REPOSITORY}/actions/runs/1"
+        expected = {"id": 5, "state": "success", "context": ci.CONTEXTS["frontend"],
+                    "description": "passed", "target_url": url}
+        mismatches = [[expected | {"id": 6}, expected]]
+        mismatches += [[expected | update] for update in [
+            {"id": 4}, {"state": "pending"}, {"context": ci.CONTEXTS["backend"]},
+            {"description": "other"}, {"target_url": url + "0"}]]
+        for rows in mismatches:
+            with self.subTest(rows=rows), patch.object(ci, "github", side_effect=[
+                    {"sha": sha}, expected] + [rows] * ci.STATUS_READBACK_ATTEMPTS) as api, patch.object(ci.time, "sleep"):
+                with self.assertRaisesRegex(ci.Refused, "status_readback_mismatch"):
+                    ci.publish(self.root, sha, "frontend", "success", "passed", url)
+                self.assertEqual(api.call_count, 2 + ci.STATUS_READBACK_ATTEMPTS)
+
+    def test_status_readback_deadline_stops_polling(self):
+        sha = "a" * 40
+        expected = {"id": 5, "state": "pending", "context": ci.CONTEXTS["frontend"],
+                    "description": "running"}
+        clock = [0.0]
+
+        def api_response(root, endpoint, payload=None, *, timeout=30):
+            if payload is not None:
+                return expected
+            if endpoint.endswith("/statuses?per_page=100"):
+                self.assertEqual(timeout, 10.0)
+                clock[0] = 10.01
+                return []
+            return {"sha": sha}
+
+        with patch.object(ci, "github", side_effect=api_response) as api, patch.object(
+                ci.time, "monotonic", side_effect=lambda: clock[0]), patch.object(ci.time, "sleep") as sleep:
+            with self.assertRaisesRegex(ci.Refused, "status_readback_mismatch"):
+                ci.publish(self.root, sha, "frontend", "pending", "running")
+        self.assertEqual(api.call_count, 3)
+        sleep.assert_not_called()
+
+    def test_status_readback_timeout_is_not_success_or_republication(self):
+        sha = "a" * 40
+        expected = {"id": 5, "state": "pending", "context": ci.CONTEXTS["frontend"],
+                    "description": "running"}
+        with patch.object(ci, "github", side_effect=[{"sha": sha}, expected,
+                          subprocess.TimeoutExpired("gh", 10)]) as api:
+            with self.assertRaisesRegex(ci.Refused, "status_readback_timeout"):
+                ci.publish(self.root, sha, "frontend", "pending", "running")
+        self.assertEqual(api.call_count, 3)
 
     def test_status_cannot_send_token_or_external_url(self):
         with patch.object(ci, "github") as api:
