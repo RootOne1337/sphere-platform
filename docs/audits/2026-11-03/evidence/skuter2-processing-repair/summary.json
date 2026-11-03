@@ -1,0 +1,79 @@
+{
+  "schema": "sphere-skuter2-processing-repair-public-evidence-v1",
+  "version_scope": "v1_only",
+  "source_refs": {
+    "prior_aggregate": {
+      "private_artifact_ref": ".local-pilot/skuter2-evidence-aggregate-20261104-v1/summary.json",
+      "sha256": "b441e8bd598b9da53655fbcf4b71e1a46b911254d876ea6fdb908f7253a6617b"
+    },
+    "precise_mask_report": {
+      "private_artifact_ref": ".local-pilot/skuter2-precise-mask-plan-20261104-v1/report.json",
+      "sha256": "0fb69ca04cf2fafdbaac4e3e573bad9357439b6d40887f160816e98d69044ce5"
+    },
+    "precise_mask_verification": {
+      "private_artifact_ref": ".local-pilot/skuter2-precise-mask-plan-20261104-v1/verification.json",
+      "sha256": "8dba46614a549de2aeff5a9d2e0b04392265368b7e5dde5cec7950891654b332"
+    },
+    "native_v1_failure_analysis": {
+      "private_artifact_ref": ".local-pilot/skuter2-cached-lg-fused-analysis-20261104-v1/result.json",
+      "sha256": "87cc433b5338b924ed015e0c20f7ed42865a6ae40e514f1064cd0d4100eee138"
+    }
+  },
+  "mask_comparison": {
+    "private_artifact_ref": ".local-pilot/skuter2-precise-mask-plan-20261104-v1/mask-comparison.png",
+    "published_file": "masks.png",
+    "sha256": "908389adf822862fe8d64fdaad578b04d3b8678784693669fd3ff2d54294809d",
+    "legacy_eligible_fraction": 0.2561979166666667,
+    "legacy_eligible_percent_rounded": 25.61979,
+    "v2_precise_eligible_fraction": 0.5596199845679012,
+    "v2_precise_eligible_percent_rounded": 55.961998,
+    "dynamic_coverage": "unknown",
+    "source_detail": "unknown_other_camera_poses_unvalidated",
+    "source_unchanged": true,
+    "new_mask_applied_to_existing_prepared": false,
+    "legacy_mask_sha256": "4fc84e852a6d26135c22a84e1f8cf86959f79ccf361c1db675911c29659580b2",
+    "precise_mask_sha256": "0757b9296f5ebc007faf52382842d81940ffd7d25667ae2f3ed1f0b03edd622d",
+    "mask_module_sha256": "010b3f24f1c35e05871934cde0562d231b20892478f0dc10a3186133f830e649"
+  },
+  "verification": {
+    "tests_passed": 48,
+    "subtests_passed": 2,
+    "warnings": 1,
+    "elapsed_seconds": 5.28,
+    "test_exit_code": 0,
+    "ruff_current_issues": 9,
+    "ruff_baseline_issues": 9,
+    "ruff_new_issues": false,
+    "diff_check_exit_code": 0,
+    "source_unchanged": true,
+    "physical_actions": 0
+  },
+  "native_v1_bounded_attempt": {
+    "status": "failed",
+    "actual_failure": "native_stage_deadline",
+    "failure_stage": "view_graph_calibrator_45second_deadline",
+    "calibration_status": "failed",
+    "calibration_seconds": 45.155999999988126,
+    "calibration_maximum_seconds": 45,
+    "calibration_exit_code": 0,
+    "not_run": [
+      "global_mapping",
+      "fixed_K_BA",
+      "native_row_endpoint_PnP",
+      "final_geometry_admission"
+    ],
+    "completed_measurement_fusion": {
+      "views": 209,
+      "video_rows": 184868,
+      "sift_rows": 214005,
+      "fused_rows": 364122,
+      "exact_sift_aliases": 34751,
+      "pairs": 1517,
+      "matches": 789392,
+      "original_float_features_available": false
+    },
+    "new_route_geometry_exists": false,
+    "execution_qualified": false,
+    "source_original_unchanged": true
+  }
+}

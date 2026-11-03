@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 457,
+    "DATED_EVIDENCE": 458,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 91,
     "PROJECT_POLICY": 7,
@@ -1966,6 +1966,10 @@
     },
     {
       "file": "docs/audits/2026-11-03/SELECTED-GEOMETRY-NAVIGATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-03/SKUTER2-PROCESSING-REPAIR.md",
       "role": "DATED_EVIDENCE"
     },
     {
