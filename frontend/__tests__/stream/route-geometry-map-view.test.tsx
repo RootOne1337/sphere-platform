@@ -1,5 +1,6 @@
 import {fireEvent,render,screen} from '@testing-library/react';
 import RouteGeometryMap from '@/src/features/stream/RouteGeometryMap';
+import {routeDisplayPoint,type RouteMapViewport} from '@/src/features/stream/routeMapViewport';
 const fills:string[]=[];
 beforeEach(()=>{
   fills.length=0;
@@ -112,4 +113,68 @@ test('experimental alternative is visibly unconfirmed while primary presentation
   view.rerender(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={0} validTicks={new Set([0,9000])} onSeekCamera={jest.fn()} sourcePreview={<span>Исходное видео</span>}/>);
   expect(screen.queryByText(/Экспериментальная реконструкция — маршрут не подтверждён/)).not.toBeInTheDocument();
   expect(screen.getByText('Карта прохода')).toBeInTheDocument();
+});
+
+function mapSurface(){
+  const element=screen.getByLabelText('Проекция опорных точек и положений камеры') as unknown as SVGSVGElement;
+  jest.spyOn(element,'getBoundingClientRect').mockReturnValue({left:0,top:0,width:600,height:540,right:600,bottom:540,x:0,y:0,toJSON(){return {};}});
+  return element;
+}
+function currentViewport():RouteMapViewport {
+  const element=screen.getByLabelText('Окно схемы');return {zoom:Number(element.getAttribute('data-zoom')),panX:Number(element.getAttribute('data-pan-x')),panY:Number(element.getAttribute('data-pan-y'))};
+}
+function pointer(element:SVGSVGElement,type:string,x:number,y:number){
+  const event=new MouseEvent(type,{clientX:x,clientY:y,button:0,bubbles:true});Object.defineProperty(event,'pointerId',{value:1});fireEvent(element,event);
+}
+
+test('zoomed and rotated canvas picking still seeks the exact source-backed camera',()=>{
+  const seek=jest.fn(),cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[1,0,1],ticks_90k:9000,camera_to_world:[[0,0,1,1],[0,1,0,0],[-1,0,0,1]]},
+    {center:[2,0,2],ticks_90k:18000,camera_to_world:[[1,0,0,2],[0,1,0,0],[0,0,1,2]]}];
+  render(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={9000} validTicks={new Set([0,9000])} onSeekCamera={seek}/>);
+  const surface=mapSurface();fireEvent.keyDown(surface,{key:'+'});fireEvent.keyDown(surface,{key:'ArrowRight'});
+  const camera=screen.getByRole('button',{name:'Показать исходный кадр 1 · 0.00 с'}).querySelector('circle')!;
+  const point={x:Number(camera.getAttribute('cx')),y:Number(camera.getAttribute('cy'))},angle=Number(screen.getByLabelText('Поворот схемы').getAttribute('data-angle-radians'));
+  const displayed=routeDisplayPoint(point,currentViewport(),angle);
+  fireEvent.click(surface,{clientX:displayed.x,clientY:displayed.y});expect(seek).toHaveBeenCalledTimes(1);expect(seek).toHaveBeenLastCalledWith(0);
+  expect(screen.queryByRole('button',{name:/исходный кадр 3/i})).not.toBeInTheDocument();
+});
+
+test('drag pans without seeking, keyboard and Fit reset the viewport without changing compass or geometry',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:9000}],points=[[0,1,0,255,20,10]],seek=jest.fn(),snapshot=JSON.stringify({cameras,points});
+  const view=render(<RouteGeometryMap cameras={cameras} points={points} selectedTicks={0} validTicks={new Set([0,9000])} onSeekCamera={seek}/>);
+  const surface=mapSurface(),angle=screen.getByLabelText('Поворот схемы').getAttribute('data-angle-radians');
+  pointer(surface,'pointerdown',200,200);pointer(surface,'pointermove',280,250);pointer(surface,'pointerup',280,250);
+  expect(currentViewport()).toEqual({zoom:1,panX:80,panY:50});
+  fireEvent.click(screen.getByRole('button',{name:'Показать исходный кадр 1 · 0.00 с'}));expect(seek).not.toHaveBeenCalled();
+  fireEvent.keyDown(surface,{key:'+'});fireEvent.keyDown(surface,{key:'ArrowUp'});expect(currentViewport().zoom).toBe(1.25);
+  fireEvent.click(screen.getByRole('button',{name:'Вписать весь маршрут'}));expect(currentViewport()).toEqual({zoom:1,panX:0,panY:0});
+  expect(screen.getByLabelText('Поворот схемы')).toHaveAttribute('data-angle-radians',angle);
+  fireEvent.click(screen.getByRole('button',{name:'Маршрут'}));expect(screen.getByLabelText('Облако восстановленных ориентиров')).toHaveAttribute('data-point-count','0');
+  fireEvent.click(screen.getByRole('button',{name:'Исходные цвета'}));expect(screen.getByLabelText('Цвет опорных точек')).toHaveValue('rgb');
+  expect(fills).toContain('rgb(255,20,10)');expect(JSON.stringify({cameras,points})).toBe(snapshot);
+  fireEvent.keyDown(surface,{key:'+'});view.rerender(<RouteGeometryMap cameras={cameras} points={points} selectedTicks={9000} validTicks={new Set([0,9000])} onSeekCamera={seek}/>);
+  expect(currentViewport().zoom).toBe(1.25);expect(screen.getByLabelText('Цвет опорных точек')).toHaveValue('rgb');
+  view.rerender(<RouteGeometryMap cameras={cameras.map(camera=>({...camera,center:[...camera.center]}))} points={points} selectedTicks={0} validTicks={new Set([0,9000])} onSeekCamera={seek}/>);
+  expect(currentViewport()).toEqual({zoom:1,panX:0,panY:0});expect(screen.getByLabelText('Цвет опорных точек')).not.toHaveValue('rgb');
+});
+
+test('wheel zoom is bounded, prevents page scroll and keeps its pointer anchor fixed; Home fits',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:9000}];render(<RouteGeometryMap cameras={cameras} points={[]}/>);
+  const surface=mapSurface(),anchor={x:160,y:220},wheel=new WheelEvent('wheel',{clientX:anchor.x,clientY:anchor.y,deltaY:-300,bubbles:true,cancelable:true});
+  fireEvent(surface,wheel);expect(wheel.defaultPrevented).toBe(true);expect(currentViewport().zoom).toBeGreaterThan(1);
+  const displayed=routeDisplayPoint(anchor,currentViewport(),0);expect(displayed.x).toBeCloseTo(anchor.x);expect(displayed.y).toBeCloseTo(anchor.y);
+  for(let n=0;n<10;n++)fireEvent.wheel(surface,{clientX:300,clientY:270,deltaY:-10000});
+  expect(currentViewport().zoom).toBe(8);expect(screen.getByRole('button',{name:'Приблизить схему'})).toBeDisabled();
+  fireEvent.keyDown(surface,{key:'Home'});expect(currentViewport()).toEqual({zoom:1,panX:0,panY:0});expect(screen.getByRole('button',{name:'Отдалить схему'})).toBeDisabled();
+});
+
+test('a pointer gesture begun on an old result cannot select a camera after source geometry changes',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:9000}],seek=jest.fn();
+  const view=render(<RouteGeometryMap cameras={cameras} points={[]} validTicks={new Set([0,9000])} onSeekCamera={seek}/>),surface=mapSurface();
+  pointer(surface,'pointerdown',200,200);
+  view.rerender(<RouteGeometryMap cameras={cameras.map(camera=>({...camera,center:[...camera.center]}))} points={[]} validTicks={new Set([0,9000])} onSeekCamera={seek}/>);
+  pointer(surface,'pointerup',200,200);fireEvent.click(screen.getByRole('button',{name:'Показать исходный кадр 1 · 0.00 с'}));expect(seek).not.toHaveBeenCalled();
+  pointer(surface,'pointerdown',200,200);pointer(surface,'pointerup',200,200);
+  fireEvent.click(screen.getByRole('button',{name:'Показать исходный кадр 1 · 0.00 с'}));expect(seek).toHaveBeenLastCalledWith(0);
 });

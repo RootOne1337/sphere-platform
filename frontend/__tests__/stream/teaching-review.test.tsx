@@ -198,7 +198,7 @@ test('the current prepared map takes precedence over a stale experimental geomet
   function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
   jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
   render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
-  await screen.findByText('Текущая подготовленная карта связана с исходной записью.');
+  await screen.findByText('Текущая реконструкция связана с исходной записью.');
   const select=screen.getByLabelText('Сохранённая схема ориентиров');
   expect(select).toHaveValue('primary');
   expect(jest.mocked(reconstructionRequest).mock.calls.map(call=>call[0])).toContain(`/jobs/${job.id}/geometry`);
@@ -206,7 +206,7 @@ test('the current prepared map takes precedence over a stale experimental geomet
   fireEvent.change(select,{target:{value:'old-experiment'}});
   await screen.findByText('Сохранённая экспериментальная схема связана с исходной записью.');
   fireEvent.change(select,{target:{value:'primary'}});
-  await screen.findByText('Текущая подготовленная карта связана с исходной записью.');
+  await screen.findByText('Текущая реконструкция связана с исходной записью.');
 });
 test('recommendation is explicit and never overrides operator or an accepted primary',()=>{
   const items=[{id:'old',cameras:163,points:5544},{id:'new',cameras:163,points:15041}];

@@ -238,7 +238,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
     const identity=JSON.stringify([storageScope,selected,linkedJob.id,sourceManifestSha,alternativeId]);
     void(async()=>{const data=await(await reconstructionRequest(`/jobs/${linkedJob.id}/${alternativeId==='primary'?'geometry':`geometry-alternatives/${alternativeId}`}`,linkedJob,{signal:controller.signal})).json();
       const geometry=readImportedRouteGeometry(data,sourceManifestSha,validTicks);
-      if(current===generation.current&&request===importGeneration.current&&!controller.signal.aborted){setImportedGeometry(geometry);setLoadedGeometryIdentity(identity);setAlternativeStatus(alternativeId==='primary'?'Текущая подготовленная карта связана с исходной записью.':'Сохранённая экспериментальная схема связана с исходной записью.');}
+      if(current===generation.current&&request===importGeneration.current&&!controller.signal.aborted){setImportedGeometry(geometry);setLoadedGeometryIdentity(identity);setAlternativeStatus(alternativeId==='primary'?'Текущая реконструкция связана с исходной записью.':'Сохранённая экспериментальная схема связана с исходной записью.');}
     })().catch(()=>{if(current===generation.current&&request===importGeneration.current&&!controller.signal.aborted)setAlternativeStatus('Схема не прошла проверку привязки или недоступна.');});
     return()=>controller.abort();
   },[visible,linkedJob,alternativeId,sourceManifestSha,validTicks,geometryRefresh]);
@@ -272,7 +272,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   };
   return <section aria-label="Просмотр записанных маршрутов" className="min-w-0 space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
     {selectedRecord&&<header className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4" aria-label="Выбранный маршрут">
-      <div className="min-w-0 flex-1"><p className="text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-cyan-300">Рабочее пространство маршрута</p><h3 className="mt-1 break-words text-lg font-semibold">{selectedRecord.title}</h3>
+      <div className="min-w-0 basis-full sm:basis-0 sm:flex-1"><p className="text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-cyan-300">Рабочее пространство маршрута</p><h3 className="mt-1 break-words text-lg font-semibold">{selectedRecord.title}</h3>
         <div className="mt-3 flex flex-wrap gap-2 text-[11px]" aria-label="Состояние выбранной записи">{[selectedStatus?.source.label,selectedStatus?.reconstruction.label,selectedStatus?.navigation.label].map((text,index)=><span key={index} className="rounded-md border border-border bg-background/65 px-2 py-1">{text}</span>)}</div>
       </div>
       <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={operationBusy} onClick={()=>setCatalogOpen(open=>!open)}>{catalogOpen?'Скрыть библиотеку':'Сменить запись'}</Button>
