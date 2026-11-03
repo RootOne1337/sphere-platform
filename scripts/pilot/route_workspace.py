@@ -381,6 +381,12 @@ class RouteWorkspaces:
 
     @staticmethod
     def _close_runtime(session):
+        metadata = session.get('metadata_ring')
+        if metadata is not None:
+            try:
+                metadata.close()
+            except Exception:
+                pass  # Optional diagnostics cannot change contact release.
         tracker = session.get('tracker')
         route = getattr(tracker, 'route', None)
         for resource in (tracker, route):
@@ -425,6 +431,8 @@ class RouteWorkspaces:
             return dict(phase='idle', physicalActions=0)
         return dict(phase='observing', id=self.live['id'], job=self.live['job'],
                     observations=self.live['observations'], secondsRemaining=max(0, self.live['deadline']-self.clock()),
+                    confirmationPolicy=getattr(self.live['tracker'], 'confirmation_policy', None),
+                    confirmationRuntimeSha256=getattr(self.live['tracker'], 'confirmation_runtime_sha256', None),
                     physicalActions=0)
 
     def start_live(self, job, body, *, mode='live'):
@@ -474,7 +482,8 @@ class RouteWorkspaces:
         cv.setNumThreads(2 if reference_lk else 4)
         receipt = checked_json(folder/'receipt.json')
         if reference_lk:
-            from motor_worker.route_reference_lk import ReferenceLKLocalizer, ReferenceLKRoute
+            from motor_worker.route_reference_lk import ReferenceLKRoute
+            from motor_worker.route_confirmation import ReferenceLKConfirmationLocalizer
             route = ReferenceLKRoute.load(folder/'route.json', sha256=receipt['sha256'])
         else:
             route = SparseRoute.load(folder/'route.json', sha256=receipt['sha256'])
@@ -491,7 +500,7 @@ class RouteWorkspaces:
             route = replace(route, profile=replace(route.profile, width=960, height=540))
         epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
         try:
-            tracker = (ReferenceLKLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
+            tracker = (ReferenceLKConfirmationLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
                                            clock=self.clock, candidate_limit=3) if reference_lk else
                        AnchoredRouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
                                               clock=self.clock, recovery_candidate_limit=8))
@@ -512,7 +521,8 @@ class RouteWorkspaces:
                     folder/'reference-lk-positive.json', folder/'reference-lk-transport.json',
                     folder/'reference-lk-negative.json', selected['model_path'].parent/'source.json',
                     selected['model_path'].parent/'assessment.json', selected['model_path'].parent/'producer-proof.json',
-                    *(selected['model_path']/name for name in sorted(MODEL_FILES)))
+                    *(selected['model_path']/name for name in sorted(MODEL_FILES)),
+                    ROOT/'motor_worker/route_confirmation.py', ROOT/'motor_worker/vehicle_route.py')
             source_stamp = self._runtime_source_stamp(source_paths) if source_paths else None
         except BaseException:
             if reference_lk:
@@ -523,8 +533,15 @@ class RouteWorkspaces:
             episode=episode, goal=goal, tracker=tracker, sequence=0, observations=0, deadline=self.clock()+120,
             geometry_sha256=receipt['geometry_sha256'],mode=mode,
             geometry_path=selected['geometry_path'], source=public_source(selected),
+            source_binding=selected['binding'],
             runtime_family='reference_lk' if reference_lk else 'legacy_sparse', preparation_folder=folder,
             source_paths=source_paths, source_stamp=source_stamp)
+        if reference_lk:
+            try:
+                from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
+                self.live['metadata_ring'] = RuntimeMetadataRing(job, clock=self.clock)
+            except Exception:
+                pass  # A failed optional logger never blocks a valid test.
         return self.live_status()
 
     def stop_live(self, job, body, *, mode='live'):
@@ -638,7 +655,7 @@ class RouteWorkspaces:
                 or body.get('vehicleCameraAssumptionConfirmed') is not True
                 or body.get('cameraFollowsBodyConfirmed') is not True
                 or body.get('hudProfile') != 'black_russia_scooter_v1'
-                or type(body.get('maxSpeedKmh')) is not int or not 1 <= body['maxSpeedKmh'] <= 30
+                or type(body.get('maxSpeedKmh')) is not int or not 1 <= body['maxSpeedKmh'] <= 50
                 or body.get('cameraTracking') is not True
                 or body.get('cameraControl') != 'continuous_drag_v1'
                 or body.get('clientVersion') != 'vehicle_live_v1'
@@ -769,7 +786,8 @@ class RouteWorkspaces:
         values = asdict(pose)
         if session.get('runtime_family') == 'reference_lk':
             from motor_worker.route_reference_lk import REFERENCE_LK_SEARCH_POLICY, REFERENCE_LK_VERIFICATION_POLICY
-            verification_policy, search_policy = REFERENCE_LK_VERIFICATION_POLICY, REFERENCE_LK_SEARCH_POLICY
+            verification_policy = getattr(session['tracker'], 'verification_policy', REFERENCE_LK_VERIFICATION_POLICY)
+            search_policy = REFERENCE_LK_SEARCH_POLICY
         else:
             verification_policy, search_policy = PNP_VERIFICATION_POLICY, COARSE_SEARCH_POLICY
         from scripts.pilot.walk_diagnostics import bounded_localization_diagnostic
@@ -779,6 +797,8 @@ class RouteWorkspaces:
             captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed, geometrySha256=session['geometry_sha256'],
             method=diagnostic['method'],localizationDiagnostic=diagnostic,
             verificationPolicy=verification_policy,
+            confirmationPolicy=getattr(session['tracker'], 'confirmation_policy', None),
+            confirmationRuntimeSha256=getattr(session['tracker'], 'confirmation_runtime_sha256', None),
             coarseSearchPolicy=search_policy,
             physicalActions=0, framesArchived=0, executionQualified=False, groundRoute=False,
             viewCompatibility='same_aspect_assumed_same_fov',
@@ -807,4 +827,13 @@ class RouteWorkspaces:
         if session.get('frame_archive'):
             session['frame_archive'].offer(raw,sequence=body['sequence'],pose=pose,plan=result.get('walk', result.get('vehicle')),
                 method=result['method'],compute_ms=elapsed,diagnostic=diagnostic)
+        metadata = session.get('metadata_ring')
+        if metadata is not None:
+            try:
+                metadata.offer(pose=values, diagnostic=diagnostic,
+                    plan=result.get('walk', result.get('vehicle')), compute_ms=result['computeMs'],
+                    source_binding=session.get('source_binding') or
+                        dict(geometry_sha256=session['geometry_sha256']))
+            except Exception:
+                pass
         return result

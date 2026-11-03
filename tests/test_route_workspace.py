@@ -402,6 +402,50 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.now += 121
         self.assertEqual(self.workspace.live_status()['phase'],'idle')
 
+    def test_optional_metadata_failure_does_not_change_pose_result_or_runtime_release(self):
+        import cv2 as cv
+        import numpy as np
+
+        self.attach_fixture_map()
+        class FailingMetadata:
+            def offer(self, **values):
+                raise OSError('diagnostic unavailable')
+
+            def close(self):
+                raise OSError('diagnostic close unavailable')
+
+        self.workspace.live['metadata_ring'] = FailingMetadata()
+        ok, encoded = cv.imencode('.jpg', np.zeros((540, 960, 3), np.uint8))
+        self.assertTrue(ok)
+        result = self.workspace.observe_jpeg(self.job,
+            dict(id='d'*32, captureEpoch='e'*32, sequence=1), encoded.tobytes())
+        self.assertEqual((result['pose']['state'], result['physicalActions']), ('unknown', 0))
+        self.assertEqual(self.workspace.stop_live(self.job, dict(id='d'*32))['phase'], 'closed')
+        self.assertIsNone(self.workspace.live)
+
+    def test_runtime_metadata_receives_exact_selected_source_hash_binding(self):
+        import cv2 as cv
+        import numpy as np
+
+        self.attach_fixture_map()
+        source = dict(geometry_sha256='a'*64, source_manifest_sha256='b'*64,
+                      reconstruction_input_sha256='c'*64)
+        captured = []
+        class Metadata:
+            def offer(self, **values):
+                captured.append(values)
+
+            def close(self):
+                pass
+
+        self.workspace.live.update(source_binding=source, metadata_ring=Metadata())
+        ok, encoded = cv.imencode('.jpg', np.zeros((540, 960, 3), np.uint8))
+        self.assertTrue(ok)
+        self.workspace.observe_jpeg(self.job,
+            dict(id='d'*32, captureEpoch='e'*32, sequence=1), encoded.tobytes())
+        self.assertEqual(captured[0]['source_binding'], source)
+        self.assertEqual(captured[0]['pose']['reason'], 'route_pose_not_verified')
+
     def test_observation_exposes_only_bounded_diagnostics_and_tolerates_missing_legacy_dict(self):
         import cv2 as cv
         import numpy as np

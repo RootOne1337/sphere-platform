@@ -27,6 +27,7 @@ from scripts.pilot.route_owned_process import spawn_owned
 LIVE_CPU_RUNTIME = initialize_route_cpu_runtime()
 
 from motor_worker.route_localization import PNP_VERIFICATION_POLICY
+from motor_worker.route_confirmation import CONFIRMATION_POLICY, CONFIRMATION_RUNTIME_SHA256, MOTION_TOLERANCE_POLICY, SOURCE_MOTION_POLICY
 from scripts.pilot.atomic_json import write_json
 from scripts.pilot.alternative_geometry import alternative, alternative_catalog
 from scripts.pilot.reconstruct_surface import (
@@ -752,6 +753,10 @@ def handler(jobs, origin, port):
                                              route_reactivity_contract='gray_reuse_owned_supervision_v1',
                                              route_reconstruction_recipe_contract='source_bound_recipe_admission_v1',
                                              route_pose_verification_policy=PNP_VERIFICATION_POLICY,
+                                             route_confirmation_contract=CONFIRMATION_POLICY,
+                                             route_confirmation_runtime_sha256=CONFIRMATION_RUNTIME_SHA256,
+                                             route_subpixel_motion_contract=MOTION_TOLERANCE_POLICY,
+                                             route_source_motion_contract=SOURCE_MOTION_POLICY,
                                              hud_speed_reference_contract='source_bound_font_display_v1',
                                              fused_recovery_contract='gated_cpu_native_v1',
                                              fused_recovery_enabled=os.environ.get('SPHERE_EXPERIMENTAL_FUSED_RECOVERY') == '1',

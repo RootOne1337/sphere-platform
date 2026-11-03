@@ -11,6 +11,11 @@ from __future__ import annotations
 import math
 from collections import deque
 
+from motor_worker.route_confirmation import (
+    CONFIRMATION_POLICY,
+    SOFT_VISUAL_MISSES,
+    ConfirmationEvidence,
+)
 from motor_worker.route_localization import (
     MIN_TRACE_STEP_UNITS,
     RoutePose,
@@ -36,7 +41,7 @@ class VehicleRouteFollower:
             raise ValueError('vehicle_start_mode')
         if type(max_seconds) is not int or not 60 <= max_seconds <= 1800:
             raise ValueError('vehicle_duration_invalid')
-        if type(max_speed_kmh) is not int or not 1 <= max_speed_kmh <= 30:
+        if type(max_speed_kmh) is not int or not 1 <= max_speed_kmh <= 50:
             raise ValueError('vehicle_speed_cap_invalid')
         views = np.asarray(reference_rotations, float)
         if (views.shape != (len(route.camera_trace), 3, 3) or not np.isfinite(views).all()
@@ -58,6 +63,7 @@ class VehicleRouteFollower:
         self.last_center = None
         self.started = False
         self.confirmations = 0
+        self._confirmation = ConfirmationEvidence()
         self.waiting_since = None
         self.high_water = 0.
         self.steering = 0.
@@ -81,18 +87,24 @@ class VehicleRouteFollower:
                     groundRoute=False, executionQualified=False, cameraBodyAssumption=True,
                     targetSpeedKmh=self.target_speed, observedSpeedKmh=self.observed_speed,
                     speedAccepted=speed_accepted,
+                    confirmationPolicy=CONFIRMATION_POLICY,
+                    confirmationValidCount=len(self._confirmation.votes),
+                    confirmationObservationCount=len(self._confirmation.slots),
                     targetViewCamera=None if target_view is None else list(map(float, target_view)))
 
     def _neutral(self, reason, *, terminal=False, arrived=False):
         self.steering, self.pedal = 0., 'coast'
         if terminal:
+            self._confirmation.clear()
             self.terminal = (reason, 'arrived' if arrived else 'stopped')
         phase = self.terminal[1] if self.terminal else 'waiting'
         reason = self.terminal[0] if self.terminal else reason
         return self._reply(phase, reason, self.high_water if self.started else None)
 
-    def _wait(self, reason, now):
-        self.confirmations = 0
+    def _wait(self, reason, now, *, preserve_confirmation=False):
+        if not preserve_confirmation:
+            self._confirmation.clear()
+            self.confirmations = 0
         self.speed_sample = None
         if self.started:
             if self.waiting_since is None:
@@ -156,8 +168,13 @@ class VehicleRouteFollower:
         self.last_at, self.sequence = pose.received_at, pose.receiver_sequence
         if now - pose.received_at > .25 or dt > .5:
             return self._wait('vehicle_fresh_pose_required', now)
-        if pose.state != 'localized' or pose.inliers < 24:
-            return self._wait('vehicle_confirming_position', now)
+        if pose.state not in {'localized', 'confirming'} or pose.inliers < 24:
+            soft = pose.state == 'unknown' and pose.reason in SOFT_VISUAL_MISSES
+            if soft:
+                self._confirmation.prepare(binding, pose.receiver_sequence, pose.received_at)
+                self._confirmation.append(pose.source_rgb_sha256, valid=False)
+                self.confirmations = len(self._confirmation.votes)
+            return self._wait('vehicle_confirming_position', now, preserve_confirmation=soft)
         try:
             center = np.asarray(pose.center, float)
             rotation = np.asarray(pose.rotation, float).reshape(3, 3)
@@ -233,8 +250,16 @@ class VehicleRouteFollower:
         self.target_speed = min(float(self.max_speed_kmh), self.target_speed)
         if self.waiting_since is not None and now - self.waiting_since >= self.MAX_RELOCALIZE_SECONDS:
             return self._neutral('vehicle_relocalization_timeout', terminal=True)
+        self._confirmation.prepare(binding, pose.receiver_sequence, pose.received_at)
+        current_vote = self._confirmation.append(pose.source_rgb_sha256, valid=True)
+        self.confirmations = len(self._confirmation.votes)
+        if not current_vote:
+            return self._wait('vehicle_confirming_position', now, preserve_confirmation=True)
+        # A geometrically verified confirming pose with its current HUD can
+        # provide evidence, but only a CURRENT localized pose authorizes input.
+        if pose.state != 'localized':
+            return self._neutral('vehicle_confirming_current_position')
         if not self.started or self.waiting_since is not None:
-            self.confirmations += 1
             if self.confirmations < 3:
                 return self._neutral('vehicle_confirming_current_position')
             self.waiting_since = None

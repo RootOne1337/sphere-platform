@@ -57,13 +57,19 @@ class VehicleWorkspaceTests(unittest.TestCase):
             self.workspace.start_vehicle(self.job, dict(self.body, maxSpeedKmh=20))
 
     def test_missing_or_changed_assumptions_do_not_consume_live_intent(self):
-        cases = [{'cameraFollowsBodyConfirmed': False}, {'maxSpeedKmh': True}, {'maxSpeedKmh': 31},
+        cases = [{'cameraFollowsBodyConfirmed': False}, {'maxSpeedKmh': True}, {'maxSpeedKmh': 51},
                  {'hudProfile': 'unknown'}, {'cameraTracking': False}, {'clientVersion': 'old'},
                  {'remoteSpeed': 50}]
         for changes in cases:
             with self.subTest(changes=changes), self.assertRaisesRegex(ValueError, 'explicit_confirmation'):
                 self.workspace.start_vehicle(self.job, dict(self.body, **changes))
             self.assertIsNone(self.workspace.live)
+
+    def test_fifty_cap_is_echoed_and_bound_without_acquiring_input(self):
+        result = self.workspace.start_vehicle(self.job, dict(self.body, maxSpeedKmh=50))
+        self.assertEqual(result['maxSpeedKmh'], 50)
+        self.assertEqual(self.workspace.live['vehicle'].max_speed_kmh, 50)
+        self.assertEqual(result['physicalActions'], 0)
 
     def test_rejected_map_is_not_admitted_by_a_valid_speed_profile(self):
         (self.workspace.current(self.job) / 'state.json').write_text('{"phase":"rejected"}')

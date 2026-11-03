@@ -1,8 +1,104 @@
 import json
-from types import SimpleNamespace
 import zipfile
+from types import SimpleNamespace
 
 from scripts.pilot.walk_diagnostics import WalkFrameArchive, bounded_localization_diagnostic
+
+
+def test_runtime_motion_and_confirmation_fields_are_allowlisted():
+    import math
+    value=bounded_localization_diagnostic(dict(verifiedInliersBeforeTemporalGate=512,
+        verifiedMedianErrorPx=.095,motionCenterDeltaUnits=.0002406,motionProgressDeltaUnits=.0015656,
+        motionLimitUnits=.0002386,motionTurnRadians=.1,confirmationValidCount=3,
+        confirmationObservationCount=5,confirmationPolicy='distinct_current_pose_3of5_source_bound_1second_v1',
+        jpeg=b'secret',authorization='secret'))
+    assert value['verifiedInliersBeforeTemporalGate']==512
+    assert value['motionCenterDeltaUnits']==.0002406 and value['motionLimitUnits']==.0002386
+    assert value['confirmationValidCount']==3 and 'jpeg'not in value and 'authorization'not in value
+    bad=bounded_localization_diagnostic(dict(verifiedInliersBeforeTemporalGate=True,
+        verifiedMedianErrorPx=float('nan'),motionCenterDeltaUnits=-1,motionTurnRadians=math.pi+.001,
+        confirmationValidCount=6,confirmationPolicy='secret'))
+    assert all(key not in bad for key in ('verifiedInliersBeforeTemporalGate','verifiedMedianErrorPx',
+        'motionCenterDeltaUnits','motionTurnRadians','confirmationValidCount','confirmationPolicy'))
+
+
+def test_runtime_ring_keeps_alternating_outcomes_metadata_only_and_bounds_disk(tmp_path):
+    import time
+
+    from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
+    ring=RuntimeMetadataRing(tmp_path)
+    try:
+        for i in range(100):
+            ring.offer(sequence=i,pose=dict(state='confirming'if i%2 else'unknown',
+                reason='route_pose_discontinuity',inliers=0,rawJPEG=b'DO_NOT_STORE'),
+                diagnostic=dict(verifiedInliersBeforeTemporalGate=512,motionCenterDeltaUnits=.0002406,
+                    motionLimitUnits=.0002386,authorization='DO_NOT_STORE'),
+                plan=dict(phase='following',reason='vehicle_continuous_pursuit',pedal='throttle',
+                    targetSpeedKmh=10,observedSpeedKmh=0,secret='DO_NOT_STORE'),compute_ms=91.)
+        assert ring.offer(sequence=99,pose=dict(state='confirming',reason='route_pose_discontinuity',inliers=0),
+            diagnostic=dict(verifiedInliersBeforeTemporalGate=512),
+            plan=dict(phase='following',reason='vehicle_continuous_pursuit',pedal='throttle'))
+        deadline=time.monotonic()+2.5
+        while time.monotonic()<deadline:
+            path=tmp_path/ring.FILE
+            if path.is_file():
+                saved=json.loads(path.read_bytes())
+                if saved['rows'][-1].get('sequence')==99:break
+            time.sleep(.02)
+        raw=path.read_bytes();assert len(raw)<65536 and b'DO_NOT_STORE'not in raw
+        rows=json.loads(raw)['rows'];assert len(rows)<=64 and rows[-1]['sequence']==99
+        assert {'unknown','confirming'}<={row['poseState']for row in rows}
+        assert rows[-1]['plan']['pedal']=='throttle'
+        assert rows[-1]['localizationDiagnostic']['verifiedInliersBeforeTemporalGate']==512
+        assert ring.writes<=2
+    finally:ring.close()
+    assert not ring._thread.is_alive() and not ring.offer(pose={})
+
+
+def test_runtime_writer_is_singleton_and_close_releases_owned_thread(tmp_path):
+    import pytest
+
+    from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
+    first=RuntimeMetadataRing(tmp_path)
+    try:
+        with pytest.raises(ValueError,match='writer_owned'):RuntimeMetadataRing(tmp_path)
+    finally:first.close()
+    second=RuntimeMetadataRing(tmp_path)
+    second.close();second.close()
+    assert not second._thread.is_alive()
+
+
+def test_runtime_offer_never_calls_disk_writer_and_contention_is_nonblocking(tmp_path,monkeypatch):
+    import threading
+
+    from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
+    calls=[];main=threading.get_ident();written=threading.Event()
+    def write(self,rows):calls.append(threading.get_ident());written.set()
+    monkeypatch.setattr(RuntimeMetadataRing,'_write_snapshot',write)
+    ring=RuntimeMetadataRing(tmp_path)
+    try:
+        ring._lock.acquire()
+        try:assert ring.offer(pose={})is False
+        finally:ring._lock.release()
+        assert ring.offer(pose={})is True
+        assert written.wait(.5)
+    finally:ring.close()
+    assert all(value!=main for value in calls)
+
+
+def test_runtime_disk_failure_cannot_escape_to_session(tmp_path,monkeypatch):
+    import time
+
+    from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
+    def denied(self,rows):raise PermissionError('fixture_denial')
+    monkeypatch.setattr(RuntimeMetadataRing,'_write_snapshot',denied)
+    ring=RuntimeMetadataRing(tmp_path)
+    try:
+        assert ring.offer(pose=dict(state='unknown',reason='route_pose_not_verified',inliers=0))
+        deadline=time.monotonic()+.5
+        while not ring.write_errors and time.monotonic()<deadline:time.sleep(.01)
+        assert ring.write_errors==1
+    finally:ring.close()
 
 
 def test_exact_queries_are_bounded_and_written_only_when_session_finishes(tmp_path):
@@ -65,3 +161,30 @@ def test_numeric_diagnostic_tolerates_none_and_drops_uncapped_or_nonfinite_data(
     assert value['verifiedCandidateCount'] is None
     assert 'coarseSearchMs' not in value and 'secret' not in value
     assert len(json.dumps(value,allow_nan=False))<1024
+
+
+def test_subpixel_diagnostics_report_the_actual_gate_metric_and_drop_invalid_values():
+    from scripts.pilot.walk_diagnostics import MOTION_TELEMETRY_POLICY
+    value = bounded_localization_diagnostic(dict(motionSubpixelDeltaPx=.31,
+        motionSubpixelCapUnits=.004, motionBaseLimitUnits=.0002, motionAllowanceUnits=.004,
+        motionConsistencyPolicy=MOTION_TELEMETRY_POLICY, motionSubpixelEligible=True))
+    assert value['motionSubpixelDeltaPx'] == .31 and value['motionSubpixelEligible'] is True
+    assert value['motionBaseLimitUnits'] < value['motionAllowanceUnits']
+    invalid = bounded_localization_diagnostic(dict(motionSubpixelDeltaPx=float('inf'),
+        motionSubpixelCapUnits=-1., motionBaseLimitUnits=True, motionAllowanceUnits=1e13,
+        motionConsistencyPolicy='unreviewed', motionSubpixelEligible=1))
+    assert not any(key in invalid for key in ('motionSubpixelDeltaPx', 'motionSubpixelCapUnits',
+        'motionBaseLimitUnits', 'motionAllowanceUnits', 'motionConsistencyPolicy', 'motionSubpixelEligible'))
+
+
+def test_local_source_window_diagnostics_keep_camera_units_separate_from_hud_speed():
+    from scripts.pilot.walk_diagnostics import SOURCE_MOTION_TELEMETRY_POLICY
+    value = bounded_localization_diagnostic(dict(motionSourcePolicy=SOURCE_MOTION_TELEMETRY_POLICY,
+        motionSourceEnvelopeEligible=True, motionSourceArcEpsilonUnits=.004568,
+        motionSourceFirstSeconds=0., motionSourceLastSeconds=2.02463,
+        motionSourceWindowStartSeconds=0., motionSourceWindowEndSeconds=2.52463,
+        motionSourceMaxSpeedUnitsPerSecond=1.04087, motionSourceLimitUnits=.2602))
+    assert value['motionSourcePolicy'] == SOURCE_MOTION_TELEMETRY_POLICY
+    assert value['motionSourceLastSeconds'] < value['motionSourceWindowEndSeconds']
+    assert value['motionSourceMaxSpeedUnitsPerSecond'] == 1.04087
+    assert 'targetSpeedKmh' not in value

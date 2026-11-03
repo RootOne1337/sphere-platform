@@ -1,5 +1,6 @@
 """Closed-loop controller and binding tests; synthetic plant is not a game."""
 
+import hashlib
 import math
 import unittest
 from dataclasses import replace
@@ -28,7 +29,7 @@ class VehicleRouteTests(unittest.TestCase):
         self.sequence += 1
         at = self.now - delay
         pose = RoutePose('localized', 'test', self.route.id, self.route.world_revision,
-            'e' * 32, self.sequence, at, self.now, 'a' * 64, (960, 540),
+            'e' * 32, self.sequence, at, self.now, hashlib.sha256(str(self.sequence).encode()).hexdigest(), (960, 540),
             center=(0., 0., progress), rotation=(1., 0., 0., 0., 1., 0., 0., 0., 1.),
             segment=min(6, int(progress / 5)), progress_units=progress, cross_track_units=0.,
             inliers=50, median_error_px=.5)
@@ -56,6 +57,53 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertTrue(all(r['pedal'] == 'throttle' for r in replies[5:]))
         self.assertTrue(all(r['targetViewCamera'] is None for r in replies))
         self.assertFalse(replies[-1]['executionQualified'])
+
+    def test_current_pnp_and_hud_votes_survive_single_soft_misses_without_blind_input(self):
+        results = []
+        for index in range(5):
+            result = self.observe(speed=0., state='localized' if index == 4 else
+                                  'confirming' if index % 2 == 0 else 'unknown',
+                                  reason='relative_camera_pose_not_clearance_or_arrival' if index % 2 == 0
+                                  else 'route_pose_not_verified', inliers=174 if index % 2 == 0 else 0)
+            results.append(result)
+            self.now += .1
+        self.assertTrue(all(row['pedal'] == 'coast' for row in results[:4]))
+        self.assertEqual((results[4]['phase'], results[4]['pedal']), ('following', 'throttle'))
+        self.assertEqual(results[4]['confirmationValidCount'], 3)
+        missed = self.observe(state='unknown', reason='route_pose_not_verified', inliers=0)
+        self.assertEqual((missed['phase'], missed['pedal'], missed['steering']), ('waiting', 'coast', 0.))
+
+    def test_repeated_rgb_cannot_supply_vehicle_votes_and_current_miss_never_drives(self):
+        for _ in range(9):
+            result = self.observe(speed=0., source_rgb_sha256='a' * 64)
+            self.assertEqual(result['pedal'], 'coast')
+            self.assertLess(result['confirmationValidCount'], 3)
+            self.now += .1
+
+    def test_invalid_current_hud_and_hard_pose_loss_clear_initial_evidence(self):
+        for loss in ('bad_hud', 'route_pose_discontinuity', 'route_progress_ambiguous'):
+            with self.subTest(loss=loss):
+                self.follower = self.make()
+                for _ in range(2):
+                    self.observe(speed=0., state='confirming')
+                    self.now += .1
+                if loss == 'bad_hud':
+                    result = self.observe(speed=0., speed_changes={'status': 'unknown'})
+                else:
+                    result = self.observe(state='unknown', reason=loss, inliers=0)
+                self.assertEqual((result['pedal'], result['confirmationValidCount']), ('coast', 0))
+                self.now += .1
+                result = self.observe(speed=0.)
+                self.assertEqual((result['pedal'], result['confirmationValidCount']), ('coast', 1))
+                self.now += .1
+
+    def test_only_current_localized_pose_can_act_even_after_three_verified_confirming_votes(self):
+        for _ in range(3):
+            result = self.observe(speed=0., state='confirming')
+            self.assertEqual(result['pedal'], 'coast')
+            self.now += .1
+        self.assertEqual(result['confirmationValidCount'], 3)
+        self.assertEqual(self.observe(speed=0.)['pedal'], 'throttle')
 
     def test_curve_steers_and_holds_gas_without_free_camera_or_pause(self):
         self.acquire()
@@ -156,9 +204,16 @@ class VehicleRouteTests(unittest.TestCase):
         self.follower = self.make(max_speed_kmh=10)
         result = self.acquire()
         self.assertEqual((result['targetSpeedKmh'], result['maxSpeedKmh']), (10., 10))
-        for cap in (0, 31, True, 15.):
+        for cap in (0, 51, True, 15.):
             with self.subTest(cap=cap), self.assertRaises(ValueError):
                 self.make(max_speed_kmh=cap)
+
+    def test_fifty_speed_cap_is_supported_and_default_remains_fifteen(self):
+        self.assertEqual(self.make().max_speed_kmh, 15)
+        self.reference.sample = lambda _: 90.
+        self.reference.preview = lambda *args, **kwargs: 90.
+        self.follower = self.make(max_speed_kmh=50)
+        self.assertEqual(self.acquire()['targetSpeedKmh'], 50.)
 
     def test_waiting_with_unknown_live_speed_still_reports_a_capped_target(self):
         self.reference.sample = lambda _: 90.

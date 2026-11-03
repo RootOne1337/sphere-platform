@@ -711,6 +711,11 @@ def test_http_origin_host_capability_and_cors(jobs, monkeypatch, fused_opt_in):
             assert health['route_reactivity_contract']=='gray_reuse_owned_supervision_v1'
             assert health['route_reconstruction_recipe_contract']=='source_bound_recipe_admission_v1'
             assert health['route_pose_verification_policy']=='pnp-ap3p-continuous-image-support-source-time-motion-v6'
+            assert health['route_confirmation_contract']=='distinct_current_pose_3of5_source_bound_1second_v1'
+            from motor_worker.route_confirmation import CONFIRMATION_RUNTIME_SHA256
+            assert health['route_confirmation_runtime_sha256']==CONFIRMATION_RUNTIME_SHA256
+            assert health['route_subpixel_motion_contract']=='current_inlier_center_subpixel_0p5px_1pct_moving_step_v2'
+            assert health['route_source_motion_contract']=='bounded_source_arc_preimage_local_speed_v1'
             assert health['job_source_binding_contract']=='manifest_sha256_status_v1'
             assert health['fused_recovery_contract']=='gated_cpu_native_v1'
             assert health['fused_recovery_enabled'] is (fused_opt_in == '1')
