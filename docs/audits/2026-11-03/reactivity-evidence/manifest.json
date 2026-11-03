@@ -70,6 +70,11 @@
       "sha256": "2b2c2aa0fe1876d3836a73544bd9fde2fa2c49084351b22c7bb8f3f7a31291eb"
     },
     {
+      "name": "historical-review-preference-restored.json",
+      "bytes": 19670,
+      "sha256": "fc7e3af8cdcc8d147e8783a05db34f950138037f86211eaf6bd341b33a6d1c89"
+    },
+    {
       "name": "independent-pair-check-v2.png",
       "bytes": 885478,
       "sha256": "41a3bd73aa1f755096164a1239aedb40f7ecb8b637932f47f9055eb35600cf3a"

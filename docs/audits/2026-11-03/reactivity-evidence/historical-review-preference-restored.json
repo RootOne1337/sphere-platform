@@ -1,0 +1,465 @@
+{
+  "schema": "sphere-historical-review-preference-decision-v1",
+  "decision": "retain_historical_panel01_for_review_new_panel03_comparison_only",
+  "userVisualPreference": "historical_panel01",
+  "independentPhysicalWinnerEstablished": false,
+  "restore": {
+    "status": "restored_review_preference_only",
+    "catalogBefore": {
+      "6a77040681d142ec97d51831a22785fb": {
+        "alternatives": [
+          {
+            "id": "components-169-diagnostic",
+            "cameras": 169,
+            "points": 9987,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "Скутер: объединённые фрагменты (диагностика)"
+          },
+          {
+            "id": "fixed-k-fused-173-supported-diagnostic",
+            "cameras": 173,
+            "points": 20556,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "Совместная геометрия · 173 ракурса · 20 556 точек"
+          },
+          {
+            "id": "full-173-endpoints-diagnostic",
+            "cameras": 173,
+            "points": 9987,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "Полный временной охват · 173 ракурса"
+          },
+          {
+            "id": "lightglue-fused-173-20887-review",
+            "cameras": 173,
+            "points": 20887,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "LightGlue · полный маршрут · 173 камеры · 20 887 точек"
+          }
+        ],
+        "preferredAlternativeId": "fixed-k-fused-173-supported-diagnostic"
+      },
+      "f3033bb704d4460fb8ed27a613427cc1": {
+        "alternatives": [
+          {
+            "id": "lightglue-fused-173-20887-review",
+            "cameras": 173,
+            "points": 20887,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "LightGlue · полный маршрут · 173 камеры · 20 887 точек"
+          }
+        ],
+        "preferredAlternativeId": "lightglue-fused-173-20887-review"
+      }
+    },
+    "catalogAfter": {
+      "6a77040681d142ec97d51831a22785fb": {
+        "alternatives": [
+          {
+            "id": "components-169-diagnostic",
+            "cameras": 169,
+            "points": 9987,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "Скутер: объединённые фрагменты (диагностика)"
+          },
+          {
+            "id": "fixed-k-fused-173-supported-diagnostic",
+            "cameras": 173,
+            "points": 20556,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "Совместная геометрия · 173 ракурса · 20 556 точек"
+          },
+          {
+            "id": "full-173-endpoints-diagnostic",
+            "cameras": 173,
+            "points": 9987,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "Полный временной охват · 173 ракурса"
+          },
+          {
+            "id": "lightglue-fused-173-20887-review",
+            "cameras": 173,
+            "points": 20887,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "LightGlue · полный маршрут · 173 камеры · 20 887 точек"
+          }
+        ],
+        "preferredAlternativeId": "fixed-k-fused-173-supported-diagnostic"
+      },
+      "f3033bb704d4460fb8ed27a613427cc1": {
+        "alternatives": [
+          {
+            "id": "fixed-k-fused-173-supported-diagnostic",
+            "cameras": 173,
+            "points": 20556,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "Совместная геометрия · 173 ракурса · 20 556 точек"
+          },
+          {
+            "id": "lightglue-fused-173-20887-review",
+            "cameras": 173,
+            "points": 20887,
+            "scope": "diagnostic",
+            "executionQualified": false,
+            "label": "LightGlue · полный маршрут · 173 камеры · 20 887 точек"
+          }
+        ],
+        "preferredAlternativeId": "fixed-k-fused-173-supported-diagnostic"
+      }
+    },
+    "allPreviouslyProtectedUnchanged": true,
+    "protectedFiles": 1523,
+    "originalPreferenceByteExact": true,
+    "secondPreferenceChanged": true,
+    "geometryAndReceiptExactCopy": true,
+    "geometrySha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+    "primaryUnchanged": true,
+    "navigationUnchanged": true,
+    "inputUnchanged": true,
+    "new20887ComparisonPreserved": true,
+    "canonicalHandlerReadVerified": true,
+    "unauthenticatedHttpChecks": [
+      {
+        "job": "6a77040681d142ec97d51831a22785fb",
+        "path": "geometry-alternatives",
+        "status": 403,
+        "authenticated": false
+      },
+      {
+        "job": "6a77040681d142ec97d51831a22785fb",
+        "path": "geometry-alternatives/fixed-k-fused-173-supported-diagnostic",
+        "status": 403,
+        "authenticated": false
+      },
+      {
+        "job": "f3033bb704d4460fb8ed27a613427cc1",
+        "path": "geometry-alternatives",
+        "status": 403,
+        "authenticated": false
+      },
+      {
+        "job": "f3033bb704d4460fb8ed27a613427cc1",
+        "path": "geometry-alternatives/fixed-k-fused-173-supported-diagnostic",
+        "status": 403,
+        "authenticated": false
+      }
+    ],
+    "authenticatedHttpVerified": false,
+    "browserAcceptance": false,
+    "physicalActions": 0,
+    "executionQualified": false,
+    "navigationQualified": false,
+    "seconds": 8.125
+  },
+  "sourceBinding": {
+    "geometrySha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+    "manifestSha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "reconstructionInputSha256": "fd1b80002f79c3957001b99ed561d4449e91cbc7828fe1e3a143fca78ce1f7cf",
+    "receiptSha256": "0ad6cede4d5b1d69eb110c76fa93a0245993203bde139c561134d1ba8aa1e4cf",
+    "nativeModelSha256": {
+      "cameras.bin": "b91cc00f86302d377a84293589630f17d8d6d1bf84641f8d27fcd8c2fd1be537",
+      "frames.bin": "f64e7a626e40c44c11c180f3391bdcca8965b387f765d652e55e56dad34286e5",
+      "images.bin": "ffd9fe00f97050e510a52252e775476f5f4ea5df1d0f3b71a14dac1df8b7c402",
+      "points3D.bin": "53de3a71e9f452dfa6b32360fc152ec22ec456e66c7603fea1e4cb6172cb12b2",
+      "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+    },
+    "proofSha256": {
+      ".local-pilot/route-recipe-admission-20261103-v1/good-recipe-producer-proof.json": "0d3e318ca6f967b193111ba3e455744043bdf731b154af0b7a8ffcafe387baf3",
+      ".local-pilot/route-recipe-admission-20261103-v1/namespace-binding-proof.json": "cbbb3581e7f7ac33286a3c1dc8af8919f2678888cf042b19f1ddea55576f71ac"
+    },
+    "selfSha256": "ca7bc7986ed368cf1908adc2d242bc288fc180fa0a928a3785f27df23b366184",
+    "canonicalHandlerSha256": "02565fd072be6e9922c8fb59856122f8685e62a4c73fb86b83dd5f06b60bb458"
+  },
+  "restoreReceiptSHA": "7692ca613942baae4b4f90e5c565cf42b86b7e8433cead1623f6bbdddbfd082c",
+  "staticAudit": {
+    "schema": "sphere-static-coordinate-conditioning-and-01-vs03-audit-v1",
+    "scope": "read_only_static_arithmetic_from_frozen_native_bound_data",
+    "physicalActions": 0,
+    "sourceUnchanged": true,
+    "noPnPExecuted": true,
+    "noInferenceExecuted": true,
+    "noRefitExecuted": true,
+    "noSourceGeometryModified": true,
+    "torchImported": false,
+    "sourceModels": {
+      "oldgood": {
+        "path": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/model",
+        "sha256": {
+          "cameras.bin": "b91cc00f86302d377a84293589630f17d8d6d1bf84641f8d27fcd8c2fd1be537",
+          "frames.bin": "f64e7a626e40c44c11c180f3391bdcca8965b387f765d652e55e56dad34286e5",
+          "images.bin": "ffd9fe00f97050e510a52252e775476f5f4ea5df1d0f3b71a14dac1df8b7c402",
+          "points3D.bin": "53de3a71e9f452dfa6b32360fc152ec22ec456e66c7603fea1e4cb6172cb12b2",
+          "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+        }
+      },
+      "lightglue": {
+        "path": ".local-pilot/skuter1-lightglue-finalize-20261103-v1/model",
+        "sha256": {
+          "cameras.bin": "566ff492c1483305f70d55b6eef5cd01b44a64d05a1368ac71955131f36d1b9d",
+          "frames.bin": "3c5224336a8f730ce36e621fa64cf453ab76f76d4457ca5b3312903d4b20159a",
+          "images.bin": "75f381515230c448b7eafda1e34441063f1050be36f350c5a2a5a2c6099dd56c",
+          "points3D.bin": "6251f10db192a0f24af41223e173aefed65b450c9b799573a640a33a22175817",
+          "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+        }
+      }
+    },
+    "currentProducerSHA": {
+      "motor_worker/route_localization.py": "efec9eeeeb36beea6db60e814ae9c75ccc05191702bfda7fb72bb052a51523b2",
+      "motor_worker/route_tracking.py": "537ba3fc50f4da3227b240098cc90d6092d67584994c69d858c587d011f7c75d",
+      "scripts/pilot/camera_pixel_conventions.py": "c144d4e9771ba292528e52fa8e52aec5b2fb79e1baf448e2d77aa47f05f29c96",
+      "scripts/pilot/route_native_landmarks.py": "02ffae3b6e964705c7fd8da783b345e1d8aa272009b93a60d4e6ef2b5e4c7f7b",
+      "scripts/pilot/route_fused_recovery.py": "731843a83a5d0678140c15de3e2f930480344d414e90b9bb68224503658a1227",
+      "scripts/pilot/learned_route_features.py": "942093ffbf9df03b9f792be34bdea6c04aedf2c969658bdc4842a91e9058a83e"
+    },
+    "numpyVersion": "2.4.4",
+    "opencvVersion": "4.13.0",
+    "seconds": 0.7350000000005821,
+    "findings": {
+      "oldgood": {
+        "selectedNativeReferenceLandmarks": 3756,
+        "cameraPathUnits": 74.94923223568438,
+        "startEndGapPercentPath": 3.0594163674749577,
+        "absoluteCenterMaximum": 26.95814925081624,
+        "centerMean": [
+          2.8083673706320074,
+          0.7632150895589905,
+          9.833620938956559
+        ],
+        "centerBBoxSpan": [
+          18.76611108640119,
+          2.2187431012237813,
+          31.028557960966907
+        ],
+        "medianTraceStepUnits": 0.4568474896542627,
+        "traceSegmentsBelowFixed1e6": 0,
+        "traceSegmentStartSecondsBelowFixed1e6": [],
+        "selectedReferenceNativeDepths": {
+          "count": 18557,
+          "minimum": 0.44500498738775845,
+          "median": 4.300487801983889,
+          "p05": 1.304727127674865,
+          "p95": 16.241997642323994,
+          "maximum": 81.55291527325468
+        },
+        "selectedVisibleDepthsBelowRuntime1e5": 0,
+        "positiveNextEightTraceCandidates": 1259,
+        "positiveNextEightTraceCandidatesBelowOverlay1e4": 10,
+        "selectedNativeXYZFloat32RoundoffUnits": {
+          "count": 3756,
+          "minimum": 3.445108549231815e-09,
+          "median": 2.1934389492490947e-07,
+          "p05": 3.982496194553982e-08,
+          "p95": 9.037834615846238e-07,
+          "maximum": 2.5784713328924578e-06
+        },
+        "uniqueSelectedXYZAfterFloat32": 3756,
+        "maximumCenterFloat32ULP": 1.9073486328125e-06,
+        "nativeActualObservationResidualPixels": {
+          "observations": 130081,
+          "reprojectionPixels": {
+            "count": 130081,
+            "mean": 0.8879859104215804,
+            "median": 0.5811277913010129,
+            "p95": 2.8097361584941067,
+            "maximum": 5.798725208215495,
+            "rms": 1.2421927223373734
+          },
+          "nonpositiveDepth": 0
+        },
+        "same32RawMutualPairMedianStats": {
+          "count": 32,
+          "median": 0.5563625794478437,
+          "mean": 0.5935029825510898,
+          "p95": 1.076308118241401,
+          "maximum": 1.83571713225997
+        },
+        "same32Shared2DFilteredPairMedianStats": {
+          "count": 32,
+          "median": 0.49496826158320234,
+          "mean": 0.5371560149456615,
+          "p95": 1.0449537822043915,
+          "maximum": 1.5047923731346398
+        }
+      },
+      "lightglue": {
+        "selectedNativeReferenceLandmarks": 3837,
+        "cameraPathUnits": 0.007749437793441263,
+        "startEndGapPercentPath": 4.07824768925519,
+        "absoluteCenterMaximum": 3.7356576221957853,
+        "centerMean": [
+          -1.0254356320956173,
+          -0.28025716028918196,
+          -3.7341005792756214
+        ],
+        "centerBBoxSpan": [
+          0.0017929504406013486,
+          0.00022274132460631257,
+          0.0033475957994273386
+        ],
+        "medianTraceStepUnits": 4.80986265321098e-05,
+        "traceSegmentsBelowFixed1e6": 19,
+        "traceSegmentStartSecondsBelowFixed1e6": [
+          0.0,
+          0.208,
+          0.441,
+          0.674,
+          0.875,
+          1.107,
+          1.322,
+          1.522,
+          1.74,
+          34.523,
+          34.739,
+          34.939,
+          35.155,
+          35.388,
+          35.621,
+          35.906,
+          36.155,
+          36.404,
+          36.637
+        ],
+        "selectedReferenceNativeDepths": {
+          "count": 18833,
+          "minimum": 3.436763614260432e-05,
+          "median": 0.0004428601117394683,
+          "p05": 0.000135908118254863,
+          "p95": 0.0016867354847674603,
+          "maximum": 0.0079916155160729
+        },
+        "selectedVisibleDepthsBelowRuntime1e5": 0,
+        "positiveNextEightTraceCandidates": 1265,
+        "positiveNextEightTraceCandidatesBelowOverlay1e4": 369,
+        "selectedNativeXYZFloat32RoundoffUnits": {
+          "count": 3837,
+          "minimum": 6.509214759145226e-09,
+          "median": 7.038562753136031e-08,
+          "p05": 2.3028824631226026e-08,
+          "p95": 1.1875501812848379e-07,
+          "maximum": 1.3189637333824364e-07
+        },
+        "uniqueSelectedXYZAfterFloat32": 3837,
+        "maximumCenterFloat32ULP": 2.384185791015625e-07,
+        "nativeActualObservationResidualPixels": {
+          "observations": 133784,
+          "reprojectionPixels": {
+            "count": 133784,
+            "mean": 0.9035206266726226,
+            "median": 0.5907575151601241,
+            "p95": 2.849810768759726,
+            "maximum": 5.349673464487641,
+            "rms": 1.2600483286700426
+          },
+          "nonpositiveDepth": 0
+        },
+        "same32RawMutualPairMedianStats": {
+          "count": 32,
+          "median": 0.5598729878862695,
+          "mean": 0.5888215039358728,
+          "p95": 1.0559126705245285,
+          "maximum": 1.7870401432896796
+        },
+        "same32Shared2DFilteredPairMedianStats": {
+          "count": 32,
+          "median": 0.494140139228355,
+          "mean": 0.5292898469262577,
+          "p95": 1.0364671268879826,
+          "maximum": 1.4648629335355805
+        }
+      }
+    },
+    "properPositiveSimilarityNewToOld": {
+      "scale": 9594.12236948639,
+      "rotation": [
+        [
+          0.9997903994975446,
+          -0.0029815443334164637,
+          0.02025506025485467
+        ],
+        [
+          0.0030101177948011096,
+          0.9999945169099561,
+          -0.0013803408583746523
+        ],
+        [
+          -0.020250833647070945,
+          0.0014410216555451687,
+          0.9997938923564131
+        ]
+      ],
+      "translation": [
+        10556.53037920046,
+        2669.7326799280036,
+        35632.51143700168
+      ],
+      "determinant": 1.0000000000000002,
+      "reflection": false,
+      "nonlinearWarp": false,
+      "forcedClosure": false
+    },
+    "same32PairComparison": [
+      {
+        "first": "lightglue",
+        "second": "oldgood",
+        "common_pairs": 32,
+        "first_lower_pairs": 20,
+        "second_lower_pairs": 12,
+        "second_minus_first_median_error_px": {
+          "count": 32,
+          "median": 0.005327202671920362,
+          "mean": 0.007866168019403777,
+          "p95": 0.055641800732140485,
+          "maximum": 0.09006939652313059
+        }
+      }
+    ],
+    "commonPairMeasurementSHA": "0943eae18dd3f3ec317d11ce231a511ef6792e539d7c63a1c9221d3df1a02787",
+    "methods": {
+      "runtimeFloors": {
+        "minTraceStepUnits": 1e-06,
+        "positivePnPDepthUnits": 1e-05,
+        "overlayNearDepthUnits": 0.0001
+      },
+      "traceSegments": "172 differences between actual173 native camera centres; below means strictly less than1e-6.",
+      "nextEightTraceDepth": "At each actual native camera pose, transform next1..8 recorded camera centres into that native camera and count positive Z, then positive Z<=1e-4. This is a static candidate-depth proxy, NOT livePnP/render output; offscreen checks and contiguous-stop behaviour are not simulated.",
+      "nativeReferenceDepth": "For each cached landmark and each recorded landmark_views entry, compute forward dot(XYZ-camera centre) using actual native camera-to-world. Old3756 and new3837 selected reference landmarks differ; denominator is selected reference observations, not all native fitted observations.",
+      "float32Roundoff": "Euclidean norm of stored selectedXYZ minus float64(float32(selectedXYZ)); representational arithmetic only, no PnP rerun. ULP is numpy.spacing of absolute float32 camera coordinates.",
+      "rawVsFilteredPairs": "Reuse exact same immutable32-pair ORB measurement bundle for both candidates; raw all-mutual and shared independent2D-filtered sets are both reported; no candidate observations used to fit that2D filter. Spatial novelty versus all fitted physical features is not certified.",
+      "reprojection": "Reuse prior identically computed1920x1080 Euclidean observation reprojection mean/median/p95 from exact native5bin identities. Native observation sets differ, so errors alone do not rank physical truth."
+    },
+    "primaryOpenCV": {
+      "url": "https://raw.githubusercontent.com/opencv/opencv/4.13.0/modules/calib3d/src/solvepnp.cpp",
+      "versionTag": "4.13.0",
+      "relevantLines": [
+        198,
+        216
+      ],
+      "accessedDate": "2026-11-03",
+      "finding": "The non-USAC solvePnPRansac branch used with SOLVEPNP_AP3P converts float64 object and image inputs to CV_32F before its RANSAC kernel. Python float64 storage therefore does not itself prevent float32 sampling precision loss."
+    },
+    "interpretationLimits": [
+      "Neither historical panel01 nor new panel03 is physical/metric ground truth; a small loop gap or more points does not prove correct road geometry.",
+      "Same32 raw/filtered errors are nearly tied and favour opposite models by tiny aggregate amounts. The data does not establish a decisive physical winner.",
+      "New19 segments below the absolute trace floor are in preroll/end pauses; they are not19 proven erroneous movements.",
+      "No selected native reference observation at its known native pose is below1e-5 in either map; this audit does not prove that depth floor caused the measured query failures.",
+      "Float32 conversion and absolute-unit thresholds establish conditioning/non-Sim3-invariance risks, not causality for any specific failed query or live-control stop.",
+      "All selected nativeXYZ remain distinct after float32 conversion; no catastrophic complete landmark collapse was observed.",
+      "Panel03 was an offline private candidate; these findings do not retrospectively identify the cause of historical live tests using another map."
+    ]
+  },
+  "staticAuditSHA": "e42d3096a34dfebd2042f979cef382a5d2700ed39847659fa258ed2cc2a33892",
+  "manualBrowserSelectionOverridden": false,
+  "physicalActions": 0,
+  "executionQualified": false,
+  "navigationQualified": false
+}
