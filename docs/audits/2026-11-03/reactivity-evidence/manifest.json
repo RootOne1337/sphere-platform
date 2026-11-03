@@ -5,9 +5,69 @@
   "executionQualified": false,
   "files": [
     {
+      "name": "backend-runtime.json",
+      "bytes": 511,
+      "sha256": "7766c61b07303f815856f48304eb5f7907895aa6f0d9696d2e726bfa3ed68e31"
+    },
+    {
+      "name": "completed-attempt-retained-source.png",
+      "bytes": 422352,
+      "sha256": "be843c37a9fd08338af22d5be251822ac4c31d6be2ca2aed1d2abb3a7b88e019"
+    },
+    {
+      "name": "completed-prior-173-opened.png",
+      "bytes": 435818,
+      "sha256": "92e5098ecdd1da8445dc2c5f158885924bab7e58279adbe7db64489b12ed0134"
+    },
+    {
+      "name": "completed-prior-browser-evidence.json",
+      "bytes": 3607,
+      "sha256": "d2c092a7e74758165abd03dad833a9bd3a7555d28e039e799c80a7d5d4ccc08e"
+    },
+    {
+      "name": "corrective-browser-evidence.json",
+      "bytes": 3709,
+      "sha256": "6715e0b6dfbd48c5373ff08711aa42b1eabc38e5104d4573c23a34d9a8e6e6cf"
+    },
+    {
+      "name": "failed-attempt-retained-source.png",
+      "bytes": 347179,
+      "sha256": "f172bc9616b6ab43b6f5b235a6b48ebfca4cce497e5c2db7c49fda7d0a65c162"
+    },
+    {
+      "name": "final-backend-runtime.json",
+      "bytes": 518,
+      "sha256": "af1d2884406d6eb33508a11a532238cdf5f9877ac78bd370e236f470bd8cf3cc"
+    },
+    {
+      "name": "final-web-runtime.json",
+      "bytes": 5388,
+      "sha256": "e4bdee18086a2e773db3e7ab919c1b8220ea61d44ed6a79a177bcf0a4d0a3f7e"
+    },
+    {
+      "name": "good-model-method-comparison.json",
+      "bytes": 9413,
+      "sha256": "78380db9d4a1fb37543ed440d0d6876a1be696d4a5c31e825bccea8125f0e5d3"
+    },
+    {
       "name": "historical-reactivity-summary.json",
       "bytes": 8924,
       "sha256": "2b2c2aa0fe1876d3836a73544bd9fde2fa2c49084351b22c7bb8f3f7a31291eb"
+    },
+    {
+      "name": "isolated-decoder-verification.json",
+      "bytes": 1520,
+      "sha256": "0578c3323dc108d75042e6d0f8c03d6de4d84d6fda03d1153146ee73cb71eece"
+    },
+    {
+      "name": "minimap-combination-disposition.json",
+      "bytes": 3441,
+      "sha256": "3d37dc8765e69b4ef03fd230dc08debc5a677db7faf18d4a55ee6a4bbb63ced4"
+    },
+    {
+      "name": "minimap-shortlist-summary.json",
+      "bytes": 2898,
+      "sha256": "77b8aa2ce5608ef4a913e6d7d92413e2cf9c1dcb4848b9b3c82172474843c7bd"
     },
     {
       "name": "paired-compute-summary.json",
@@ -20,9 +80,59 @@
       "sha256": "c089222236447f11728f8d2e2a91cf40cd36b85fd2a4825016dde053369d5653"
     },
     {
+      "name": "preferred-173-direction.png",
+      "bytes": 480452,
+      "sha256": "ebf1d0bafb178ad01c0e8395a8e29b14a3ec0e09dc43bb3787a1fd4656cf7964"
+    },
+    {
+      "name": "preferred-173-scene.png",
+      "bytes": 195238,
+      "sha256": "1fe67b19275090607d46acd8188829cf2144611724ea01218cb368879ee83940"
+    },
+    {
+      "name": "preferred-baseline-restore.json",
+      "bytes": 1258,
+      "sha256": "fc6b9144bc27386449af70c9b961df57f0675906442ddb1e9a7c24c49826c295"
+    },
+    {
       "name": "preparation-monitor-verification.json",
       "bytes": 1988,
       "sha256": "479bfe7f6320ce2511cc97067aad928e32228d45ec86eec5e243d317d46c317e"
+    },
+    {
+      "name": "prior-173-explicitly-opened.png",
+      "bytes": 418794,
+      "sha256": "dc68c9ed0e86b405ccf0a3fc9636f6f9cb9e916addda6cb5157207f477d13ffb"
+    },
+    {
+      "name": "reference-lk-comparison.json",
+      "bytes": 2135,
+      "sha256": "3132a62ef66085fd9a523f638ba3bac4e73b60abd3f94749d8e439a7a7608fa5"
+    },
+    {
+      "name": "saved-results-browser-evidence.json",
+      "bytes": 3446,
+      "sha256": "e2c8b3ba5b00cfb072e8ff3c6fe23e898a06057423fe685dcb6ff53fe29b3fc5"
+    },
+    {
+      "name": "source-mismatch-refused.png",
+      "bytes": 31809,
+      "sha256": "720898232fe2dc36d061d1746d8cf283d109366d89fbab94ad648e2d30c976b6"
+    },
+    {
+      "name": "source-motion-product-verification.json",
+      "bytes": 1235,
+      "sha256": "e1e3dc6e37b740e400a2d8bb84a4c58b1e8e98a12455a3264b3d8064ca54a35f"
+    },
+    {
+      "name": "v7-result-summary.json",
+      "bytes": 1245,
+      "sha256": "9917c1ec6837c8524f77a0351905ce63e6c82df5475bbda912a89c5bfc5cbafc"
+    },
+    {
+      "name": "web-runtime.json",
+      "bytes": 963,
+      "sha256": "d03df79468acbfd95f37b5369c3025daa672c54114b9495daf0c5523eca98dca"
     }
   ]
 }

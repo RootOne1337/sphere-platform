@@ -1,0 +1,40 @@
+{
+  "schema": "sphere-skuter1-v7-evidence-summary-v1",
+  "acceptedGeometry": true,
+  "seconds": 368.0,
+  "sourceUnchanged": true,
+  "physicalActions": 0,
+  "navigationPromoted": false,
+  "executionQualified": false,
+  "geometry": {
+    "registered": 173,
+    "selected": 173,
+    "points": 14712,
+    "reprojection_px": 0.9037688650539685,
+    "scene_admissible": true,
+    "route_admissible": true,
+    "route_reasons": [],
+    "source_coverage": {
+      "first_seconds": 0.0,
+      "last_seconds": 36.903,
+      "missing_start_seconds": 0.0,
+      "missing_end_seconds": 0.0,
+      "max_observed_gap_seconds": 0.2849999999999966,
+      "endpoints_observed": true,
+      "all_intervals_observed": true,
+      "endpoint_limit_seconds": 1.0,
+      "interval_limit_seconds": 1.0
+    }
+  },
+  "guided": {
+    "cameras": 173,
+    "landmarks": 3067,
+    "mapSupportPassed": true,
+    "same159QueryIndices": true,
+    "independentGameplay": false,
+    "canonicalDefaultChanged": false,
+    "sourceJobAdopted": false
+  },
+  "knownLimitation": "Long unlocalized intervals persist. Geometry gate acceptance and map support do not qualify autonomous repeat.",
+  "privateOutcomeSha256": "1ad82e6c3f7b8e1f72ad4bf55dd96879d019242ac6cd54875d49a38696992f55"
+}
