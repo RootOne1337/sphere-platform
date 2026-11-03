@@ -709,6 +709,7 @@ def test_http_origin_host_capability_and_cors(jobs, monkeypatch, fused_opt_in):
             assert health['creation_recovery_contract']=='confirmed_absence_v1'
             assert health['route_lifecycle_contract']=='owned_serial_handoff_v1'
             assert health['route_reactivity_contract']=='gray_reuse_owned_supervision_v1'
+            assert health['route_reconstruction_recipe_contract']=='source_bound_recipe_admission_v1'
             assert health['route_pose_verification_policy']=='pnp-ap3p-continuous-image-support-source-time-motion-v6'
             assert health['job_source_binding_contract']=='manifest_sha256_status_v1'
             assert health['fused_recovery_contract']=='gated_cpu_native_v1'

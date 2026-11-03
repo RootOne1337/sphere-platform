@@ -747,6 +747,7 @@ def handler(jobs, origin, port):
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
                                              route_resource_monitor_contract='task_volume30_fresh_native_v1',
                                              route_reactivity_contract='gray_reuse_owned_supervision_v1',
+                                             route_reconstruction_recipe_contract='source_bound_recipe_admission_v1',
                                              route_pose_verification_policy=PNP_VERIFICATION_POLICY,
                                              hud_speed_reference_contract='source_bound_font_display_v1',
                                              fused_recovery_contract='gated_cpu_native_v1',
