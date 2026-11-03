@@ -93,5 +93,7 @@ def test_new_recipe_records_exact_mask_policy_plan_and_producer_hash(tmp_path):
     assert recipe['mask_module_sha256'] == digest(Path(route_masks.__file__))
     assert recipe['producer_sources']['route_masks.py'] == recipe['mask_module_sha256']
     assert recipe['mask_plan']['policy_id'] == route_masks.PRECISE_SCOOTER_POLICY
+    assert recipe['mask_plan']['policy_id'] == 'black_russia_scooter_precise_rect_v3'
+    assert recipe['mask_plan']['foreground_rectangles'][2] == [.0,.90,.73,1.]
     assert recipe['execution_qualified'] is False
     assert (tmp_path/'input/manifest.json').read_bytes() == before

@@ -15,11 +15,16 @@ VEHICLE_MIRROR = (.20, .55, .40, 1.)
 VEHICLE_HUD = ((0., 0., 1., .25), (0., 0., .2, .33),
                (0., .48, .25, 1.), (.77, .37, 1., 1.))
 LEGACY_SCOOTER_POLICY = 'black_russia_scooter_rect_v1'
-PRECISE_SCOOTER_POLICY = 'black_russia_scooter_precise_rect_v2'
+PRECISE_SCOOTER_V2_POLICY = 'black_russia_scooter_precise_rect_v2'
+PRECISE_SCOOTER_POLICY = 'black_russia_scooter_precise_rect_v3'
 PLAN_SCHEMA = 'sphere-capture-mask-plan-v1'
 MAX_EXCLUDED_RECTANGLES = 16  # Existing RouteViewProfile wire-format bound.
+PRECISE_FOREGROUND_V2 = ((.07, .74, .31, 1.), (.64, .72, .84, 1.),
+                         (.28, .90, .73, 1.))
+# v3 extends only the existing lower foreground union to cover the left logo;
+# old v2 observations keep their exact prior policy/rectangles.
 PRECISE_FOREGROUND = ((.07, .74, .31, 1.), (.64, .72, .84, 1.),
-                      (.28, .90, .73, 1.))
+                      (.0, .90, .73, 1.))
 HUD_BASIS = (1920, 1080)
 HUD_PADDING_PIXELS = 6
 
@@ -86,7 +91,7 @@ def capture_mask_plan(mode, manifest, *, policy_id=None):
     profile = (manifest.get('config') or {}).get('profile') or {}
     known = (profile.get('mode') == 'vehicle_buttons' and
              profile.get('hudProfile') == 'black_russia_scooter_v1')
-    if policy_id not in {None, LEGACY_SCOOTER_POLICY, PRECISE_SCOOTER_POLICY}:
+    if policy_id not in {None, LEGACY_SCOOTER_POLICY, PRECISE_SCOOTER_V2_POLICY, PRECISE_SCOOTER_POLICY}:
         raise ValueError('invalid_capture_mask_policy')
     if policy_id is not None and not known:
         raise ValueError('capture_mask_policy_capture_mismatch')
@@ -94,6 +99,7 @@ def capture_mask_plan(mode, manifest, *, policy_id=None):
     selected = policy_id or (PRECISE_SCOOTER_POLICY if known else 'generic_rect_v1')
     if mode != 'none' and known:
         foreground = ((VEHICLE_BODY, VEHICLE_MIRROR) if selected == LEGACY_SCOOTER_POLICY
+                      else PRECISE_FOREGROUND_V2 if selected == PRECISE_SCOOTER_V2_POLICY
                       else PRECISE_FOREGROUND)
         footer = (WATERMARK,)
         if mode == 'game':
@@ -115,7 +121,7 @@ def capture_mask_plan(mode, manifest, *, policy_id=None):
                 footer_rectangles=[list(rect) for rect in footer],
                 excluded_rectangles=[list(rect) for rect in rectangles],
                 hud_padding_source_pixels=HUD_PADDING_PIXELS if known and
-                    selected == PRECISE_SCOOTER_POLICY and mode == 'game' else 0,
+                    selected in {PRECISE_SCOOTER_V2_POLICY, PRECISE_SCOOTER_POLICY} and mode == 'game' else 0,
                 runtime_feature_margin_pixels=8,
                 rasterization='consumer_integer_bounds_not_a_stored_mask_rewrite',
                 dynamic_foreground_coverage='unknown',

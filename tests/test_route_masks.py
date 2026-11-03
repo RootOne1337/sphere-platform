@@ -8,6 +8,7 @@ from scripts.pilot.route_masks import (
     LEGACY_SCOOTER_POLICY,
     PRECISE_FOREGROUND,
     PRECISE_SCOOTER_POLICY,
+    PRECISE_SCOOTER_V2_POLICY,
     VEHICLE_BODY,
     VEHICLE_HUD,
     VEHICLE_MIRROR,
@@ -126,3 +127,63 @@ def test_sealed_old_profile_stays_byte_identical_and_valid_after_new_plan_select
     assert feature_mask(restored).tobytes() == before
     assert hashlib.sha256(before).hexdigest() == '4fc84e852a6d26135c22a84e1f8cf86959f79ccf361c1db675911c29659580b2'
     assert (feature_mask(new) != 0).sum() > 1.5*(feature_mask(restored) != 0).sum()
+
+
+@pytest.mark.parametrize('policy,mode,expected', [
+    (LEGACY_SCOOTER_POLICY, 'none', '9567aeccc6e6577cc4b0cb1ba4f9e0bc1c7c9fb25f06c3576bd61bad0d2cca00'),
+    (LEGACY_SCOOTER_POLICY, 'avatar', 'ff68018599cfd218b7b677adae139188f2bf079fa4efc568c9200954e706af5a'),
+    (LEGACY_SCOOTER_POLICY, 'game', 'f1ccb4fda5a51d769ecf8d1e5b243ee4457304e820ace180106910caf85b5c7a'),
+    (PRECISE_SCOOTER_V2_POLICY, 'none', '787d85e884245447ba0ccf51d063638970deac894a08a995da873c014a83e97f'),
+    (PRECISE_SCOOTER_V2_POLICY, 'avatar', '62c38c8b271b42cbdd74547f1e14add53892257c5c7c0252c020cc71166904b6'),
+    (PRECISE_SCOOTER_V2_POLICY, 'game', '3c9c6ace7e9e34216cb824e46f3ea3b867d23c10ed00559a306fc4234ac7b1f0'),
+])
+def test_explicit_historical_policies_retain_full_pre_v3_plan_sha(policy, mode, expected):
+    assert capture_mask_plan(mode, VEHICLE, policy_id=policy)['sha256'] == expected
+
+
+def test_v3_closes_observed_logo_gap_without_adding_a_rectangle():
+    v2 = capture_exclusions('game', VEHICLE, policy_id=PRECISE_SCOOTER_V2_POLICY)
+    v3 = capture_exclusions('game', VEHICLE)
+    assert PRECISE_SCOOTER_POLICY == 'black_russia_scooter_precise_rect_v3'
+    assert len(v2) == len(v3) == 16
+    assert not excluded((.04, .95), v2)
+    for point in ((.0,.91), (.04,.95), (.06,.97), (.075,.95)):
+        assert excluded(point, v3)
+    assert capture_mask_plan('game', VEHICLE)['foreground_rectangles'][2] == [.0,.90,.73,1.]
+    for point in ((.04,.88), (.04,.50), (.15,.50), (.5,.4)):
+        assert excluded(point, v3) == excluded(point, v2)
+
+
+def test_v2_stored_runtime_mask_is_exact_and_v3_area_change_stays_local():
+    import numpy as np
+
+    from motor_worker.landmarks import RouteViewProfile
+    from motor_worker.route_localization import feature_mask
+
+    def profile(policy):
+        return RouteViewProfile('f6b07080-9380-40d9-90e8-b4405924c8cb', 1920, 1080,
+            (0.,0.,1.,1.), capture_exclusions('game', VEHICLE, policy_id=policy))
+
+    old_profile = profile(PRECISE_SCOOTER_V2_POLICY)
+    encoded = old_profile.encode()
+    old = feature_mask(RouteViewProfile.parse(encoded))
+    new = feature_mask(profile(PRECISE_SCOOTER_POLICY))
+    assert hashlib.sha256(old.tobytes()).hexdigest() == '0757b9296f5ebc007faf52382842d81940ffd7d25667ae2f3ed1f0b03edd622d'
+    assert old_profile.encode() == encoded
+    assert not np.any((old == 0) & (new != 0))
+    added = (old != 0) & (new == 0)
+    assert 0 < added.mean() < .015
+    yy, xx = np.nonzero(added)
+    height, width = old.shape  # Runtime masks are 960x540, with an 8px margin.
+    assert xx.max() < .08*width and yy.min() >= .88*height
+    assert np.array_equal(old[:int(.88*height)], new[:int(.88*height)])
+    assert (feature_mask(RouteViewProfile.parse(encoded)) == old).all()
+
+
+def test_none_and_unknown_profiles_keep_their_previous_exclusions():
+    assert capture_exclusions('none', VEHICLE) == ()
+    assert capture_exclusions('none', {}) == ()
+    assert capture_exclusions('game', {}) == excluded_rectangles('game')
+    unknown_vehicle = dict(config=dict(profile=dict(mode='vehicle_buttons', hudProfile='other_game')))
+    assert capture_exclusions('game', unknown_vehicle) == excluded_rectangles('avatar')
+    assert capture_mask_plan('game', unknown_vehicle)['policy_id'] == 'generic_rect_v1'
