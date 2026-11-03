@@ -422,7 +422,15 @@ def test_too_many_views_are_rejected_before_any_workspace_or_model_load(tmp_path
     assert not (tmp_path / "fused-recovery").exists()
 
 
-def orchestration(tmp_path, monkeypatch, *, admissible=True, fail_native=None, changed_k=False):
+def orchestration(
+    tmp_path,
+    monkeypatch,
+    *,
+    admissible=True,
+    fail_native=None,
+    changed_k=False,
+    matcher_backend=fused.BF_BACKEND,
+):
     from scripts.pilot import reconstruct_route, route_native_track_policy
 
     job, prepared = source(tmp_path)
@@ -454,7 +462,7 @@ def orchestration(tmp_path, monkeypatch, *, admissible=True, fail_native=None, c
         ),
     )
 
-    def build(prepared, _db, output, rows, check, progress):
+    def build(prepared, _db, output, rows, check, progress, **_kwargs):
         (output / "sift.db").write_bytes(b"owned measured descriptors")
         (output / "sift-features").mkdir()
         (output / "detector-masks.json").write_text(
@@ -540,6 +548,7 @@ def orchestration(tmp_path, monkeypatch, *, admissible=True, fail_native=None, c
             lambda: None,
             lambda *args: None,
             native_runner=native,
+            matcher_backend=matcher_backend,
         )
 
     return job, prepared, baseline, candidate, calls, run
@@ -594,6 +603,75 @@ def test_successful_engine_uses_existing_admission_and_seals_native_bundle_witho
     assert all(
         row["wal_bytes"] == 0 and row["owned_sqlite_handles_explicitly_closed"]
         for row in boundaries
+    )
+
+
+@pytest.mark.parametrize(
+    "backend,applied,skipped",
+    [
+        (fused.LIGHTGLUE_BACKEND, True, True),
+        (fused.LIGHTGLUE_BACKEND, False, False),
+        (fused.LIGHTGLUE_BACKEND, 1, False),
+        (fused.LIGHTGLUE_BACKEND, "true", False),
+        (fused.BF_BACKEND, True, False),
+        (fused.BF_BACKEND, False, False),
+    ],
+)
+def test_optional_calibrator_requires_only_new_matcher_and_exact_validated_prior(
+    tmp_path, monkeypatch, backend, applied, skipped
+):
+    from scripts.pilot import route_intrinsics_prior
+
+    _, prepared, _, candidate, calls, run = orchestration(
+        tmp_path, monkeypatch, matcher_backend=backend
+    )
+    seeded = []
+
+    def initialize(database, *_args, **_kwargs):
+        # An observable DB marker proves verification runs after initialization,
+        # rather than merely checking two calls somewhere in the same fixture.
+        with closing(sqlite3.connect(database)) as connection:
+            connection.execute("PRAGMA user_version=17")
+        seeded.append(True)
+        return dict(applied=applied, physical_calibration_verified=False)
+
+    monkeypatch.setattr(route_intrinsics_prior, "initialize_intrinsics", initialize)
+    original_boundary = fused._native_database_boundary
+
+    def boundary(folder, stage, check):
+        if stage == "before_verify":
+            assert seeded == [True]
+            with closing(sqlite3.connect(folder / "database.db")) as connection:
+                assert connection.execute("PRAGMA user_version").fetchone() == (17,)
+        return original_boundary(folder, stage, check)
+
+    monkeypatch.setattr(fused, "_native_database_boundary", boundary)
+    chosen, report = run()
+    assert chosen is candidate and report["accepted"]
+    assert [row[0] for row in calls] == (
+        ["verify", "global-map", "fixed-k-ba"]
+        if skipped
+        else ["verify", "calibrate", "global-map", "fixed-k-ba"]
+    )
+    calibration = json.loads((prepared / "fused-recovery/calibration.json").read_bytes())
+    assert calibration == report["calibration"]
+    assert calibration["skipped"] is skipped
+    assert calibration["status"] == ("skipped" if skipped else "completed")
+    assert calibration["native_verification_completed"] is True
+    assert calibration["same_source_numeric_prior_applied"] is (applied is True)
+    assert calibration["physical_calibration_verified"] is False
+    assert calibration["global_focal_refinement"] is True
+    assert (
+        calibration["producer_sha256"]
+        == hashlib.sha256(Path(fused.__file__).read_bytes()).hexdigest()
+    )
+    if skipped:
+        assert calibration["reason"] == "valid_same_source_numeric_prior"
+    intent = json.loads((prepared / "fused-recovery/intent.json").read_bytes())
+    assert intent["calibration_policy"] == report["calibration_policy"]
+    global_arguments = [str(v) for row in calls if row[0] == "global-map" for v in row[1]]
+    assert (
+        global_arguments[global_arguments.index("--GlobalMapper.ba_refine_focal_length") + 1] == "1"
     )
 
 

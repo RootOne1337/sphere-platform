@@ -41,6 +41,7 @@ LOOP_TOP_K = 2
 COARSE_MIN_COSINE = 0.3
 BF_BACKEND = "opencv_rootsift_mutual_global2nn_075_then_train_F2px"
 LIGHTGLUE_BACKEND = "pinned_rootsift_lightglue_temporal_float_loop_q512_v1"
+LIGHTGLUE_CALIBRATION_POLICY = "strict_same_source_numeric_prior_optional_calibrator_v1"
 
 
 def experimental_enabled():
@@ -1064,6 +1065,9 @@ def recover_fused(
         network_downloads=False,
         physical_actions=0,
         matcher=matcher_backend,
+        calibration_policy=LIGHTGLUE_CALIBRATION_POLICY
+        if matcher_backend == LIGHTGLUE_BACKEND
+        else "always_pinned_view_graph_calibrator_v1",
     )
     if folder.exists() or folder.is_symlink():
         return baseline, dict(report, attempted=False, reason="fused_existing_intent")
@@ -1211,23 +1215,50 @@ def recover_fused(
             bounded,
         )
         progress("cameras", 0, selected)
-        _native_database_boundary(folder, "before_calibrate", bounded)
-        runner(
-            [
-                COLMAP,
-                "view_graph_calibrator",
-                "--database_path",
-                folder / "database.db",
-                "--default_random_seed",
-                "17",
-                "--log_target",
-                "stdout",
-            ],
-            folder,
-            "calibrate",
-            45,
-            bounded,
+        # The optional learned matcher may reuse only the initializer that has
+        # already proved this exact source's native physical observation rows.
+        # This is a numerical seed, not physical calibration; global focal BA
+        # remains enabled. Legacy BF and every declined prior still calibrate.
+        skip_calibrator = matcher_backend == LIGHTGLUE_BACKEND and prior.get("applied") is True
+        calibration = dict(
+            schema="sphere-fused-view-graph-calibration-v1",
+            policy=report["calibration_policy"],
+            skipped=skip_calibrator,
+            reason="valid_same_source_numeric_prior"
+            if skip_calibrator
+            else "legacy_backend_always_calibrates"
+            if matcher_backend == BF_BACKEND
+            else "same_source_numeric_prior_not_applied",
+            status="skipped" if skip_calibrator else "pending",
+            native_verification_completed=True,
+            same_source_numeric_prior_applied=prior.get("applied") is True,
+            prior_sha256=_hash(folder / "intrinsics-prior.json", bounded),
+            producer_sha256=_hash(Path(__file__), bounded),
+            global_focal_refinement=True,
+            physical_calibration_verified=False,
         )
+        report["calibration"] = calibration
+        write_json(folder / "calibration.json", calibration)
+        if not skip_calibrator:
+            _native_database_boundary(folder, "before_calibrate", bounded)
+            runner(
+                [
+                    COLMAP,
+                    "view_graph_calibrator",
+                    "--database_path",
+                    folder / "database.db",
+                    "--default_random_seed",
+                    "17",
+                    "--log_target",
+                    "stdout",
+                ],
+                folder,
+                "calibrate",
+                45,
+                bounded,
+            )
+            calibration["status"] = "completed"
+            write_json(folder / "calibration.json", calibration)
         models = folder / "models"
         models.mkdir()
         _native_database_boundary(folder, "before_global_map", bounded)
