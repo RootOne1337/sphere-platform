@@ -8,6 +8,8 @@ import RouteGeometryMap from './RouteGeometryMap';
 import {RecordedRouteFrame} from './RecordedRouteFrame';
 import {assertReconstructionSource,routeRecordingIdentity} from './routeSourceBinding';
 import type {NavigationGeometrySelection} from './navigationGeometrySource';
+import {sceneCameraCoverage} from './sceneGeometrySelection';
+import {CameraCoverageNotice} from './CameraCoverageNotice';
 
 /** A preview never authorizes movement. A live pin requires the exact map hash. */
 export function NavigationRouteContext({job,source,recordingTitle,assetsReady,observation,comparison,busy=false,preparedLandmarks=null,preparedSource,initialChoice,onGeometryChange}:{job:ReconstructionJob;source:RouteSource;assetsReady:boolean;recordingTitle?:string;
@@ -30,6 +32,8 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
   const [orientation,setOrientation]=useState<RouteMapCamera|null>(null);
   const [recentPose,setRecentPose]=useState<{camera:RouteMapCamera;at:number;epoch:string}|null>(null);
   const lastReferenceAt=useRef(-Infinity),validTicks=useMemo(()=>new Set(source.rows.map(row=>row.relative_ticks_90k)),[source.rows]);
+  const recordingRange=useMemo(()=>source.rows.length?{firstTicks:source.rows[0].relative_ticks_90k,lastTicks:source.rows.at(-1)!.relative_ticks_90k,frames:source.rows.length}:undefined,[source.rows]);
+  const cameraCoverage=useMemo(()=>geometry?sceneCameraCoverage(geometry.data.cameras,recordingRange,validTicks):null,[geometry,recordingRange,validTicks]);
   const selectedGeometry=useMemo<NavigationGeometrySelection|null>(()=>geometry?{
     alternativeId:geometry.choice==='primary'?null:geometry.choice,geometry_sha256:geometry.sha,
     label:geometry.choice==='primary'?'Основная реконструкция':choices.find(item=>item.id===geometry.choice)?.label||geometry.choice,
@@ -92,6 +96,7 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
     <p aria-label="Запись и обработка живой карты" className="break-words text-xs font-medium text-cyan-600 dark:text-cyan-400">{routeRecordingIdentity(recordingTitle,source.clip,job.id)}</p>
     <div className="flex flex-wrap items-center gap-3 text-xs"><label className="min-w-0 flex-1">Схема<select aria-label="Схема для живой проверки" className="mt-1 block w-full min-w-0 rounded-lg border bg-background p-2" disabled={busy} value={choice} onChange={e=>{manualChoice.current=e.target.value;setChoice(e.target.value);}}><option value="primary">Основная карта локализации</option>{choices.map(item=><option key={item.id} value={item.id}>{item.label||item.id} · {item.cameras} камер · осмотр</option>)}</select></label><label className="flex items-center gap-2"><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/>Опорный кадр вслед за локализацией · до 1/с</label><span className="inline-block w-64 shrink-0 truncate text-muted-foreground">{live||recent?'Слежение за маршрутом':'Живое положение не нанесено'}</span></div>
     <p className="text-xs text-muted-foreground">{notice}</p>
+    {cameraCoverage&&<CameraCoverageNotice coverage={cameraCoverage}/>}
     <div aria-label="Состояние локализации" className="flex h-10 items-center overflow-hidden text-xs leading-5">
       <p className={`line-clamp-2 ${observation?.reply.pose.state==='unknown'&&!recent?'text-amber-500':'text-slate-400'}`}>
         {busy&&(live||recent)?'Позиция обновляется по живым кадрам. Пунктир — последняя измеренная позиция, без предсказания движения.':

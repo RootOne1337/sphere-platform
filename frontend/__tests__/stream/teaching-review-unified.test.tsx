@@ -141,3 +141,24 @@ test('source playback does not hold the parent operation lock or swallow navigat
   expect(busy.mock.calls.some(([value])=>value===true)).toBe(false);
   fireEvent.click(screen.getByRole('button',{name:'Живая проверка'}));expect(navigate).toHaveBeenCalledTimes(1);
 });
+
+test('partial measured camera range is visible in2D3Dandvideo without seeking away from the first source frame',async()=>{
+  const {source,primary}=await setup();
+  const partial={...primary,cameras:source.geometry(174).cameras.slice(50)};
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?{alternatives:[]}:path.endsWith('/geometry')?partial:{phase:'quality_rejected',source_manifest_sha256:source.manifestSha,geometry_available:true,quality:{registered:124,selected:209},navigation:{phase:'rejected'}}}) as Response);
+  render(<TeachingReview {...base}/>);
+  await waitFor(()=>expect(screen.getByTestId('map-choice')).toHaveAttribute('data-count','124'));
+  const note=screen.getByLabelText('Время исходного видео и восстановленных камер');
+  expect(note).toHaveTextContent('Исходное видео целиком: 0.000–19.900 с · кадров: 200');
+  expect(note).toHaveTextContent('Камеры в интервале 5.000–17.300 с · ракурсов: 124');
+  expect(note).toHaveTextContent('0.000–5.000 с; 17.300–19.900 с');
+  for(const mode of ['Камеры и точки 3D','Исходное видео','Карта 2D']){
+    fireEvent.click(screen.getByRole('button',{name:mode}));
+    expect(screen.getAllByLabelText('Время исходного видео и восстановленных камер')).toHaveLength(1);
+    expect(screen.getByLabelText('Время записанного прохода')).toHaveValue('0');
+    expect(screen.getByText('Кадр 1 / 200 · 0.000 с')).toBeInTheDocument();
+  }
+  expect(partial.cameras[0].ticks_90k).toBe(450000);
+  expect(latest().selectedTicks).toBe(0);
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
+});

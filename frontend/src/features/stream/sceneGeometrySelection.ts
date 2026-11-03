@@ -34,12 +34,15 @@ export function sceneCameraCoverage(cameras:ImportedRouteGeometry['cameras'],ran
   if(!cameras.length)return null;
   const source=readSceneRecordingRange(range,ticks),first=cameras[0].ticks_90k/90000,last=cameras.at(-1)!.ticks_90k/90000;
   let coveredSeconds=0,gapSeconds=0;
+  const cameraIntervals=[{first,last:first}],gaps:{first:number;last:number}[]=[];
   for(let index=1;index<cameras.length;index++){
     const dt=(cameras[index].ticks_90k-cameras[index-1].ticks_90k)/90000;
-    if(dt>0&&dt<=1)coveredSeconds+=dt;else if(dt>1)gapSeconds+=dt;
+    const current=cameras[index].ticks_90k/90000;
+    if(dt>0&&dt<=1){coveredSeconds+=dt;cameraIntervals.at(-1)!.last=current;}
+    else if(dt>1){gapSeconds+=dt;gaps.push({first:cameras[index-1].ticks_90k/90000,last:current});cameraIntervals.push({first:current,last:current});}
   }
   const sourceStart=source?source.firstTicks/90000:first,sourceEnd=source?source.lastTicks/90000:last;
-  return {first,last,views:cameras.length,sourceStart,sourceEnd,knownSource:!!source,
+  return {first,last,views:cameras.length,sourceStart,sourceEnd,sourceFrames:source?.frames,knownSource:!!source,cameraIntervals,gaps,
     uncoveredStart:Math.max(0,first-sourceStart),uncoveredEnd:Math.max(0,sourceEnd-last),gapSeconds,coveredSeconds,
     fraction:sourceEnd>sourceStart?Math.min(1,coveredSeconds/(sourceEnd-sourceStart)):0};
 }

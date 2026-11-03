@@ -17,7 +17,8 @@ import RouteGeometryMap from './RouteGeometryMap';
 import ImageRouteReview from './ImageRouteReview';
 import {reconstructionRequest} from './reconstructionClient';
 import type {RouteSource} from './routeSource';
-import type {SceneGeometrySelection} from './sceneGeometrySelection';
+import {sceneCameraCoverage,type SceneGeometrySelection} from './sceneGeometrySelection';
+import {CameraCoverageNotice} from './CameraCoverageNotice';
 import {cameraMotionRequiresReview} from './routePreparation';
 
 type Row = { index: number; offset: number; bytes: number; relative_ticks_90k: number; key: boolean; seekable?: boolean; sha256: string; worker_observed_at_ms: number };
@@ -259,9 +260,11 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   const currentGeometry=expectedGeometryIdentity&&loadedGeometryIdentity===expectedGeometryIdentity&&loadedSourceKey===sourceKey?importedGeometry:null;
   const geometryLabel=choiceId==='primary'?(primaryReady?'Основная подготовленная карта':'Основная реконструкция · проверка'):
     choiceId==='file'?'Геометрия из файла':alternatives.find(item=>item.id===choiceId)?.label??'Дополнительная реконструкция';
+  const recordingRange=useMemo(()=>rows.length?{firstTicks:rows[0].relative_ticks_90k,lastTicks:rows.at(-1)!.relative_ticks_90k,frames:rows.length}:undefined,[rows]);
+  const cameraCoverage=useMemo(()=>currentGeometry?sceneCameraCoverage(currentGeometry.cameras,recordingRange,validTicks):null,[currentGeometry,recordingRange,validTicks]);
   const selectedGeometry:SceneGeometrySelection|null=sourceKey&&linkedJob&&sourceManifestSha&&choiceId?{
     sourceKey,jobId:linkedJob.id,sourceManifestSha,id:choiceId,label:geometryLabel,diagnostic:choiceId!=='primary'||!primaryReady,geometry:currentGeometry,
-    recordingRange:rows.length?{firstTicks:rows[0].relative_ticks_90k,lastTicks:rows.at(-1)!.relative_ticks_90k,frames:rows.length}:undefined,
+    recordingRange,
   }:null;
   const operationBusy=exporting||processing||renaming||deleting;
   const chooseClip=(id:string)=>{setCatalogOpen(false);onSelect(id);};
@@ -313,6 +316,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         </div>
         {choiceId&&choiceId!=='primary'&&<p className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-xs leading-5 text-amber-800 dark:text-amber-300">Это результат для проверки геометрии. Допуск живого движения и состояние основной карты показаны в блоке подготовки.</p>}
         <p role="status" className="min-h-5 text-xs text-muted-foreground">{alternativeStatus||'Сохранённые результаты появятся после обработки записи.'}</p>
+        {cameraCoverage&&<CameraCoverageNotice coverage={cameraCoverage}/>}
         {importError&&<p role="alert" className="text-xs text-destructive">{importError}</p>}
       </header>
       <div className="min-w-0 p-3 sm:p-4">

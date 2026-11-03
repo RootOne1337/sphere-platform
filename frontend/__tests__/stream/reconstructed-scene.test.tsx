@@ -85,3 +85,16 @@ test('an alternative selection cannot silently open primary geometry under the s
   expect(screen.queryByRole('button',{name:'Основной расчёт · камеры и точки'})).not.toBeInTheDocument();
   expect(request).not.toHaveBeenCalled();
 });
+
+test('standalone3D keeps full source coverage visible while the sharedreview header owns its single notice',async()=>{
+  const partial={...selection(),geometry:readImportedRouteGeometry(raw(124),sha,ticks)};
+  const view=render(<ReconstructedScene {...props} showGeometryMap selectedGeometry={partial} selectedTicks={0}/>);
+  const note=await screen.findByLabelText('Время исходного видео и восстановленных камер');
+  expect(note).toHaveTextContent('Исходное видео целиком: 0.000–17.200 с · кадров: 173');
+  expect(note).toHaveTextContent('Камеры в интервале 4.900–17.200 с · ракурсов: 124');
+  expect(note).toHaveTextContent('Начало видео сохранено; положения камер на этих участках ещё не восстановлены: 0.000–4.900 с.');
+  view.rerender(<ReconstructedScene {...props} selectedGeometry={partial} selectedTicks={0}/>);
+  expect(screen.queryByLabelText('Время исходного видео и восстановленных камер')).not.toBeInTheDocument();
+  expect(partial.geometry?.cameras[0].ticks_90k).toBe(441000);
+  expect(request).not.toHaveBeenCalled();
+});

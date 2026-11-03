@@ -83,6 +83,20 @@ test('a source mismatch never displays the unrelated map or a live pin',async()=
   expect(screen.queryByLabelText('Обзор ориентиров и камер')).not.toBeInTheDocument();expect(screen.getByText('live-frame')).toBeInTheDocument();
 });
 
+test('livecontext labels the full source separately from its partial bound camera interval',async()=>{
+  const rows=[0,90000,180000,270000,360000].map(relative_ticks_90k=>({relative_ticks_90k}));
+  const partial={...data,cameras:data.cameras.map((camera,index)=>({...camera,ticks_90k:(index+1)*90000}))};
+  const raw=new TextEncoder().encode(JSON.stringify(partial));
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),arrayBuffer:async()=>raw.buffer} as Response);
+  render(<NavigationRouteContext job={job} source={{...source,rows} as RouteSource} assetsReady={false} observation={null}/>);
+  const note=await screen.findByLabelText('Время исходного видео и восстановленных камер');
+  expect(note).toHaveTextContent('Исходное видео целиком: 0.000–4.000 с · кадров: 5');
+  expect(note).toHaveTextContent('Камеры в интервале 1.000–2.000 с · ракурсов: 2');
+  expect(note).toHaveTextContent('0.000–1.000 с; 2.000–4.000 с');
+  expect(screen.queryByLabelText('Подтверждённое живое положение')).not.toBeInTheDocument();
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
+});
+
 test('an exactly bound prepared alternative keeps its selection and live pin when input becomes busy',async()=>{
   const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
   jest.mocked(reconstructionRequest).mockImplementation(async path=>({json:async()=>path.endsWith('/geometry-alternatives')?

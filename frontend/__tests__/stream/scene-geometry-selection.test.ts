@@ -34,6 +34,9 @@ test('coverage uses the verified full source range, not the reconstructed subset
   const view=sceneCameraCoverage(cameras,range,sourceTicks)!;
   expect(view.sourceEnd).toBe(36.9);expect(view.uncoveredStart).toBe(5.7);expect(view.uncoveredEnd).toBeCloseTo(.5);
   expect(view.knownSource).toBe(true);expect(view.fraction).toBeLessThan(1);expect(view.gapSeconds).toBeGreaterThan(0);
+  expect(view.sourceFrames).toBe(sourceTicks.size);
+  expect(view.cameraIntervals).toEqual([{first:5.7,last:5.7},{first:10,last:10},{first:20,last:20},{first:36.4,last:36.4}]);
+  expect(view.gaps).toEqual([{first:5.7,last:10},{first:10,last:20},{first:20,last:36.4}]);
   const legacy=sceneCameraCoverage(cameras,undefined,sourceTicks)!;
   expect(legacy.knownSource).toBe(false);
   expect(()=>readSceneRecordingRange({...range,firstTicks:513000},sourceTicks)).toThrow();
