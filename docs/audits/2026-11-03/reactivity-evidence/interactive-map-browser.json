@@ -1,0 +1,198 @@
+{
+  "checks": [
+    {
+      "name": "real173geometry_and_original1920_h264",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "real_wheel_cursor_anchor",
+      "passed": true,
+      "detail": {
+        "anchorErrorPixels": 0.5357130522169049,
+        "viewport": {
+          "zoom": 1.5840739849944818,
+          "panX": -24.036444312894176,
+          "panY": 6.5806297949024
+        }
+      }
+    },
+    {
+      "name": "native_pointer_drag_pans_without_seeking",
+      "passed": true,
+      "detail": {
+        "before": {
+          "zoom": 1.5840739849944818,
+          "panX": -24.036444312894176,
+          "panY": 6.5806297949024
+        },
+        "after": {
+          "zoom": 1.5840739849944818,
+          "panX": 29.641488092672418,
+          "panY": 39.98023218058831
+        }
+      }
+    },
+    {
+      "name": "a_real_source_camera_remains_visible_after_pan_and_rotation",
+      "passed": true,
+      "detail": {
+        "index": 50,
+        "x": 489.85572654247346,
+        "y": 934.6476687310112,
+        "label": "Показать исходный кадр 51 · 10.65 с"
+      }
+    },
+    {
+      "name": "selected_exact_original_frame_is_decoded_and_opaque",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "camera_click_after_zoom_pan_and_90deg_rotation_seeks_exact_original_time",
+      "passed": true,
+      "detail": {
+        "cameraIndex": 50,
+        "ticks": 958950,
+        "framePosition": 284,
+        "sourceImage": "00000284.png"
+      }
+    },
+    {
+      "name": "same_result_frame_change_retains_zoom_and_pan",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "preset_shows_actual_rgb_cloud",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "different_result_geometry_resets_viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "different_result_geometry_resets_display_preset",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "mobile_toolbar_and_page_do_not_overflow",
+      "passed": true,
+      "detail": {
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "name": "mobile_heading_remains_a_readable_line",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no_api_mutations_or_external_connections",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "only_fake_link_metadata_written",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no_browser_console_or_page_errors",
+      "passed": true,
+      "detail": [
+        {
+          "type": "warning",
+          "text": "Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently"
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "type": "warning",
+      "text": "Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently"
+    }
+  ],
+  "pageErrors": [],
+  "blocked": [],
+  "boundary": "ACTUAL_FROZEN_REACT_WITH_REAL_SAVED_GEOMETRY_AND_H264_MOCK_HTTP_FAKE_LINK_WRITES_ONLY",
+  "physicalActions": 0,
+  "fixture": {
+    "apiReads": [
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1",
+      "/jobs/11111111111111111111111111111111",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1/geometry-alternatives",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1/geometry",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/11111111111111111111111111111111",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives/fixed-k-fused-173-supported-diagnostic",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives/fixed-k-fused-173-supported-diagnostic"
+    ],
+    "apiWrites": [],
+    "fileWrites": [
+      "reconstruction-attempt-f3033bb704d4460fb8ed27a613427cc1.json",
+      "reconstruction-link.json"
+    ],
+    "sourceRangeReadCount": 581
+  },
+  "sourceManifestSHA256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "sourceGeometrySHA256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "actualGeometryCounts": {
+    "cameras": 173,
+    "points": 20556
+  },
+  "componentSourceFreeze": {
+    "frozen": true,
+    "files": {
+      "frontend/src/features/stream/TeachingReview.tsx": "5dd0748bbcdf2bc372000112302171208e54de51cf97aa80f01fff7f7b1ebeeb",
+      "frontend/__tests__/stream/teaching-review.test.tsx": "935a2df0c41779b968aaefdacf31e0dda6e788de8e01ed0189e552de4a959fe6",
+      "frontend/src/features/stream/RouteGeometryMap.tsx": "6d5afe78764dcb2ea7b02095b8cc8e9bfc33c6127b2d4162ffde131392a4521c",
+      "frontend/src/features/stream/routeMapViewport.ts": "067515cbea3aedcc3734114c9b50e0fce9d404596ccac6f18781672ca4a832bd",
+      "frontend/__tests__/stream/route-geometry-map-view.test.tsx": "2427a06c1079c1c65e2c0a133d65161f843426aa98e4e20517b072196fe16fea",
+      "frontend/__tests__/stream/route-map-viewport.test.ts": "9776a08d733e5b595adeb1e1e96c9ced721701add2c2ae29d91e21db2e5223bf"
+    },
+    "targetedMapTests": 66,
+    "afterResponsiveClassRenderTests": 30,
+    "typeCheckBeforeClassOnlyPatch": "PASS",
+    "noProductBuildOrInstall": true
+  },
+  "fixtureAdapter": "isolated React bundle compiled with esbuild jsx automatic + explicit single React aliases; fresh fixture-only Tailwind CSS from actual product files; no product build",
+  "fixturePreparationNotes": [
+    "First automation ran camera coordinates before the 150ms compass rotation settled; exact-camera wait timed out. Corrected harness to await target angle and rendered computed rotation before actual native pointer click; no geometry or picking code change needed.",
+    "Screenshots wait for opaque decoded1920x1080 H264 source and completed decoder state, rather than capturing a legitimate in-flight seek."
+  ],
+  "screenshots": {
+    "output\\playwright\\interactive-map-20261103-v1\\mobile.png": "dbb0f759350493dd99bf548d43a7520f8d3a6b7bc76f4303af5359be4f3bc854",
+    "output\\playwright\\interactive-map-20261103-v1\\ordinary.png": "8e65e01bb993fd7f270b31bd72cc67e8c1532c3ea04de62b08566577b16110fb",
+    "output\\playwright\\interactive-map-20261103-v1\\zoom-pan.png": "fc638547c65a3447e93fd9e86a573f86e1a063e8e08757dbc28464fac87bc157"
+  },
+  "cleanup": {
+    "closedOwnedBrowserSession": "interactive-map-20261103",
+    "closedOwnedLoopbackPort": 49810,
+    "physicalActions": 0,
+    "userProfileUsed": false,
+    "userOPFSWrites": 0,
+    "productBuildOrInstall": false,
+    "sourceMediaWrites": 0,
+    "frozenProductFilesUnchanged": true,
+    "sourceManifestSHA256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "sourceVideoSHA256": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "sourceFramesSHA256": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12"
+  },
+  "consoleWarningsAreHarnessReadbackOnly": true
+}

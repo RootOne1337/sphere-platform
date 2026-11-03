@@ -1,0 +1,37 @@
+{
+  "schema": "sphere-walking-held-contact-regression-v1",
+  "oldDeadline": "min(capturedAt+350,answeredAt+250)",
+  "newDeadline": "min(capturedAt+450,answeredAt+250)",
+  "unchanged": {
+    "replyAcceptanceMaxAgeMs": 250,
+    "answerRelativeMaxHoldMs": 250,
+    "independentRawVideoMaxAgeMs": 250,
+    "nativeAckTimeoutMs": 500,
+    "timerCannotRenew": true
+  },
+  "red": {
+    "numTotalTests": 14,
+    "numFailedTests": 9,
+    "numPassedTests": 5,
+    "success": false
+  },
+  "green": {
+    "numTotalTests": 134,
+    "numFailedTests": 0,
+    "numPassedTests": 134,
+    "numPassedTestSuites": 7,
+    "success": true
+  },
+  "scenarios": [
+    "5Hz150_175_200msProcessingAnd0_7_19msPhases",
+    "forwardToForwardLeftSameContact",
+    "jitterAndSlowNativeAck",
+    "missingPerceptionReply",
+    "sourceLoss",
+    "rawFramePause",
+    "nativeAckTimeout"
+  ],
+  "benchmark": "fake-clock real PilotCommandLoop and TeachingContacts, no Android execution",
+  "physicalActions": 0,
+  "executionQualified": false
+}
