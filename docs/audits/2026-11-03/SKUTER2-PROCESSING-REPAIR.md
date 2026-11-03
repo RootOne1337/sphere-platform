@@ -229,6 +229,59 @@ new recording. A versioned automatic candidate requires its own source-bound
 measurements, resource bounds, whole-model audit and regression evidence before
 it can replace this branch.
 
+## Fresh precise-mask observations
+
+A separate owned stage regenerated measurements with precise-v2 masks from all
+1,032 source frames and the same 209 selected original 1920×1080 PNGs. The old
+mask, images and databases remain unchanged. This completed in **242.797 s**:
+278,106 VIDEO observations (previous legacy cache: 184,868), 209 actual floating
+RootSIFT caches, 1,058 LightGlue training pairs and 32 heldout loop pairs. Its
+fused database contains 1,609 pairs and 1,026,427 correspondences. These counts
+describe new image measurements; they are not 3D landmarks or accurate poses.
+
+Temporal matching used the real floating descriptors; appearance-loop inputs
+retained their explicitly named q512-decoded representation. Both matching
+paths used CUDA, with the historical CPU-loop change recorded in the matcher
+receipt. Native descriptor rows were checked against quantization of the
+persisted float payload, and native keypoint rows matched float-cache geometry
+exactly. The namespace refers to the real retained float cache.
+
+At least **11.111 GiB** of physical RAM remained available in sampled checks;
+the largest sampled tensor allocator reserve was **318,767,104 bytes**. This
+does not measure all GPU driver/runtime allocations. The worker and children
+were reaped, and all original/producers hashes remained unchanged. This stage
+does not execute a native mapper or generate poses. Geometry admission is a
+separate subsequent measurement, not implied by these larger feature counts.
+
+## Fresh native candidate and rotation check
+
+The subsequent precise-v2 global calculation completed inside its resource and
+time bounds, with the original source and producers unchanged. It serialized
+209 camera records and 19,325 raw points (18,939 after the 3-view filter), but
+only 202 cameras had any supporting observation and only 200 had at least 15.
+Seven cameras at 36.733–37.733 s had zero support. A moving interval at
+18.534–18.684 s also produced a large discontinuity in this model's own gauge.
+Fixed-K BA was therefore not started. This candidate is not published or used
+for navigation; the low 0.804 px mean projection error does not repair those
+failures. The owned runner closed every child in 248.906 s.
+
+A separate read-only check compared native focal lengths: 614.363 px for the
+new global candidate, 607.553 px for MAIN and 604.476 px for the skuter1
+reference, all at 1920×1080. Six accepted tail rotation pairs gave 610.155 px
+under fixed-center, square-pixel, zero-distortion assumptions. This small
+difference does not establish a radically wrong FOV as the cause. The
+unconstrained rotating-camera calibration was unsuitable; no numeric K prior
+was forced or copied into the models.
+
+The fresh image check also exposed a small uncovered server-logo area in the
+bottom-left footer. New captures use precise-v3 to close it: 62.040% raw frame
+area and 55.584% after the runtime feature margin remain eligible. Explicit
+v1/v2 masks and stored route profiles remain byte-compatible. This changes
+feature exclusion for new calculations; it is not a reconstruction acceptance.
+
+The [experiment registry](../../operations/ROUTE-EXPERIMENTS.md) connects all
+these attempts to the unchanged skuter1 reference and their dated evidence.
+
 ## Remaining acceptance
 
 This repair establishes the cause and correction of the false resource refusal

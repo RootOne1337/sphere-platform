@@ -963,5 +963,183 @@
         ]
       }
     }
+  },
+  "fresh_precise_mask_observations": {
+    "status": "completed_stage1_only",
+    "seconds": 242.79699999999139,
+    "receipt": {
+      "path": ".local-pilot/skuter2-precise-mask-fusion-20261104-v1/outcome.json",
+      "sha256": "9906d2da3cafcd3a920b42a2f2d10d05aed96a92d7711d90e990f54cb5498ad5"
+    },
+    "mask_policy": "black_russia_scooter_precise_rect_v2",
+    "originals_and_producers_unchanged": true,
+    "decoded_frames": 1032,
+    "selected_views": 209,
+    "measured_video_observations": 278106,
+    "real_video_track_identities": 99900,
+    "video_pairs": 1525,
+    "tracking_resolution": [
+      1280,
+      720
+    ],
+    "float_feature_files": 209,
+    "sift_train_pairs": 1058,
+    "sift_heldout_pairs": 32,
+    "matcher_backend": "pinned_rootsift_lightglue_temporal_float_loop_q512_v1",
+    "temporal_device": "cuda",
+    "loop_device": "cuda",
+    "loop_inputs": "q512_decoded_l2",
+    "full_float_features_available": true,
+    "maximum_sampled_tensor_reserved_bytes": 318767104,
+    "minimum_sampled_available_ram_bytes": 11930443776,
+    "native_mapping_executed": false,
+    "poses_generated": false,
+    "geometry_admission": false,
+    "execution_qualified": false
+  },
+  "fresh_precise_mask_global": {
+    "status": "failed",
+    "error": "private_pre_ba_zero_physical_observations",
+    "seconds": 245.0619999999908,
+    "receipt": {
+      "path": ".local-pilot/skuter2-precise-mask-global-20261104-v1/outcome.json",
+      "sha256": "7351a04f03c8c66ded9a62ac3f5d73ce383c2e220b6e4b38985c7cfd9a938156"
+    },
+    "native_audit": {
+      "path": ".local-pilot/skuter2-precise-mask-failure-audit-20261104-v1/summary.json",
+      "sha256": "bc52db709cd06042306ef10546225e75b450a2a507dc6f824af69918fa2fa7e3"
+    },
+    "source_and_producers_unchanged": true,
+    "source_manifest_sha256": "0286968eeee607b6319b51921f5ce46f778a7fcf65940c586b9046ec5ab68360",
+    "raw_points": 19325,
+    "supported_3view_points": 18939,
+    "cameras_with_observations": 202,
+    "cameras_with_at_least15": 200,
+    "zero_observation_views": [
+      {
+        "image_id": 191,
+        "image": "00000953.png",
+        "positive_depth_unique_physical_observations": 0,
+        "source_index": 953,
+        "seconds": 36.733
+      },
+      {
+        "image_id": 192,
+        "image": "00000957.png",
+        "positive_depth_unique_physical_observations": 0,
+        "source_index": 957,
+        "seconds": 36.902
+      },
+      {
+        "image_id": 193,
+        "image": "00000960.png",
+        "positive_depth_unique_physical_observations": 0,
+        "source_index": 960,
+        "seconds": 37.034
+      },
+      {
+        "image_id": 194,
+        "image": "00000963.png",
+        "positive_depth_unique_physical_observations": 0,
+        "source_index": 963,
+        "seconds": 37.167
+      },
+      {
+        "image_id": 195,
+        "image": "00000969.png",
+        "positive_depth_unique_physical_observations": 0,
+        "source_index": 969,
+        "seconds": 37.401
+      },
+      {
+        "image_id": 196,
+        "image": "00000973.png",
+        "positive_depth_unique_physical_observations": 0,
+        "source_index": 973,
+        "seconds": 37.567
+      },
+      {
+        "image_id": 197,
+        "image": "00000977.png",
+        "positive_depth_unique_physical_observations": 0,
+        "source_index": 977,
+        "seconds": 37.733
+      }
+    ],
+    "fixed_K_BA_started": false,
+    "poses_interpolated": false,
+    "geometry_admission": false,
+    "navigation_promoted": false,
+    "physical_actions": 0
+  },
+  "rotation_intrinsics_comparison": {
+    "decision": "NO_GO_for_copying_or_forcing_numeric_K_prior",
+    "useful_signal": "Native focal order around600px is corroborated by6tail homographies; no evidence for radically different FOV",
+    "receipt": {
+      "path": ".local-pilot/skuter2-rotation-intrinsics-20261104-v1/compact-proof.json",
+      "sha256": "f527de0982946aad57472cf8a00975e7d2c245a4e6fb8d59a5613d8d0b23a487"
+    },
+    "models": {
+      "fresh_stage2": {
+        "registered": 209,
+        "camera_bin_sha256": "4cb301d2eb0e2f83f96d7e2a87807315d2319f8f6b64d587aee456c10f3e698d",
+        "K_1920x1080": {
+          "fx": 614.3627850472847,
+          "fy": 614.3627850472847,
+          "cx": 960.0,
+          "cy": 540.0,
+          "hfov_degrees": 114.7646653090527,
+          "vfov_degrees": 82.62832312133096
+        }
+      },
+      "canonical_primary_b8": {
+        "registered": 124,
+        "camera_bin_sha256": "d759671bda9d7bd798f1b0b02f8709771baa3bd9904627265dd25d8cccd2fd4e",
+        "K_1920x1080": {
+          "fx": 607.5532667973956,
+          "fy": 607.5532667973957,
+          "cx": 960.0,
+          "cy": 540.0,
+          "hfov_degrees": 115.34317997866441,
+          "vfov_degrees": 83.2620897575705
+        }
+      },
+      "historical_skuter1_173": {
+        "registered": 173,
+        "camera_bin_sha256": "b91cc00f86302d377a84293589630f17d8d6d1bf84641f8d27fcd8c2fd1be537",
+        "K_1920x1080": {
+          "fx": 604.4762254407945,
+          "fy": 604.4762254407945,
+          "cx": 960.0,
+          "cy": 540.0,
+          "hfov_degrees": 115.60581555262395,
+          "vfov_degrees": 83.55108537571985
+        }
+      }
+    },
+    "pair_counts": {
+      "eligible106": 106,
+      "selected": 24,
+      "passed_H_checks": 6,
+      "start_selected": 12,
+      "start_passed": 0,
+      "tail_selected": 12,
+      "tail_passed": 6,
+      "rejection_reasons": {
+        "homography_heldout_failed": 15,
+        "homography_failed": 3
+      },
+      "unique_images_in_accepted_pairs": 10
+    },
+    "shared_f_grid_best_px": 610.1547670104952,
+    "assumption": "square pixels,zero skew,principalCOLMAPcenter960,540,no distortion,pure rotation at fixed optical center",
+    "numeric_K_prior_forced": false
+  },
+  "new_capture_mask": {
+    "policy": "black_russia_scooter_precise_rect_v3",
+    "plan_sha256": "a4fc04efb097460298bb740ef3ca21e2b47a8e57180abca6284491df8045b05c",
+    "raw_eligible_percent": 62.040075,
+    "runtime_eligible_percent": 55.583912,
+    "legacy_profiles_and_stored_caches_modified": false
   }
 }

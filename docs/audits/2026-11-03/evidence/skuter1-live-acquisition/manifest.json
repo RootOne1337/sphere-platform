@@ -1,0 +1,30 @@
+{
+  "schema": "sphere-public-acquisition-manifest-v1",
+  "files": [
+    {
+      "file": "acquisition-proof.png",
+      "bytes": 192367,
+      "sha256": "456d7dd791812be159ae5497645e3588360c16936347e384ae5fb6e46d29d965"
+    },
+    {
+      "file": "delivery.json",
+      "bytes": 2289,
+      "sha256": "b4ae95f9c34069bc8ce49aba9b3a7a18b36bc8b620dae882267671a3988e5d71"
+    },
+    {
+      "file": "live-tail-summary.json",
+      "bytes": 957,
+      "sha256": "9d402e69f6567e0f0343a4ebe51e794e5752b7012886e44cd9123cd00a9dd3df"
+    },
+    {
+      "file": "midroute.json",
+      "bytes": 10744,
+      "sha256": "ec38d1b528072c1bfb980c784686c1b5b85facdf89b7157ef59451afa3780116"
+    },
+    {
+      "file": "paired-start.json",
+      "bytes": 2505,
+      "sha256": "3a4ae90bc5a383204a8d457b88c37c13eef1e6450d47aea0b93ac10bcc5c9168"
+    }
+  ]
+}

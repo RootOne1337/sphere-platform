@@ -5,9 +5,9 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 458,
+    "DATED_EVIDENCE": 459,
     "DESIGN_SPECIFICATION": 91,
-    "OPERATING_GUIDE": 91,
+    "OPERATING_GUIDE": 92,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1969,6 +1969,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-11-03/SKUTER1-LIVE-ACQUISITION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-11-03/SKUTER2-PROCESSING-REPAIR.md",
       "role": "DATED_EVIDENCE"
     },
@@ -2218,6 +2222,10 @@
     },
     {
       "file": "docs/operations/REVIEW-GATEWAY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/ROUTE-EXPERIMENTS.md",
       "role": "OPERATING_GUIDE"
     },
     {
