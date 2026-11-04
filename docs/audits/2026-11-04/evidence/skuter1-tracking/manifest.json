@@ -10,6 +10,16 @@
       "path": "qpc-replay.png",
       "sha256": "1516e9948cd94b04bd757e609c2c0c9755d42b9ee7949ad4581dafe15b128c2f",
       "bytes": 286914
+    },
+    {
+      "path": "frame-gap-pair.png",
+      "sha256": "17dea51c02736dc6cef00b4f7c3ee5a6dadcc65904f34975bc7a746ce17035b2",
+      "bytes": 73823
+    },
+    {
+      "path": "frame-gap-pair.json",
+      "sha256": "74910c5ad826d8f58b6be44f2be9273dc551dcc77d63031e82ae81b1bbedfb34",
+      "bytes": 1086
     }
   ]
 }
