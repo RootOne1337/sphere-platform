@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import time
+from collections import Counter
 from contextlib import closing
 from pathlib import Path
 from uuid import uuid4
@@ -21,7 +22,7 @@ from motor_worker.route_descriptor_recovery import ReferenceLKRecoveryLocalizer
 from motor_worker.route_localization import coarse_reference_votes, extract_gray_features
 from motor_worker.route_reference_lk import ReferenceLKRoute
 from scripts.pilot.check_route_lighting_replay import (
-    CAPTURE_FILES, holdout_window, sample_holdout_windows, validate_holdout_windows,
+    CAPTURE_FILES, holdout_coverage, holdout_window, sample_holdout_windows, validate_holdout_windows,
 )
 from scripts.pilot.route_descriptor_attachment import load_descriptor_recovery
 from scripts.pilot.route_workspace import RouteWorkspaces, digest_file
@@ -74,7 +75,7 @@ def evaluate_reference(localizer, gray, at):
     return count, verified
 
 
-def replay_policy(route, sidecar, batches, policy):
+def replay_policy(route, sidecar, batches, policy, jpeg_quality):
     """Exercise actual confirmation and freshness gates on a fresh observer per window."""
     from motor_worker.policy import PolicyFrame
     from motor_worker.route_confirmation import ReferenceLKConfirmationLocalizer, _BoundedConfirmationMixin
@@ -117,11 +118,12 @@ def replay_policy(route, sidecar, batches, policy):
     for batch in batches:
         prepared = []
         for index, seconds, rgb in batch:
-            ok, encoded = cv.imencode(".jpg", cv.cvtColor(rgb, cv.COLOR_RGB2BGR), [cv.IMWRITE_JPEG_QUALITY, 86])
+            ok, encoded = cv.imencode(".jpg", cv.cvtColor(rgb, cv.COLOR_RGB2BGR),
+                                      [cv.IMWRITE_JPEG_QUALITY, jpeg_quality])
             if not ok or len(encoded) > 384 * 1024:
                 raise ValueError("replay jpeg quota")
             data = cv.cvtColor(cv.imdecode(encoded, cv.IMREAD_COLOR), cv.COLOR_BGR2RGB)
-            prepared.append((index, seconds, data.tobytes()))
+            prepared.append((index, seconds, data.tobytes(), hashlib.sha256(encoded.tobytes()).hexdigest()))
         opts = dict(capture_epoch=str(uuid4()), episode_id=str(uuid4()), goal_revision=str(uuid4()),
                     clock=time.perf_counter)
         tracker = (ReferenceLKConfirmationLocalizer(route, **opts) if policy == "baseline"
@@ -137,19 +139,43 @@ def replay_policy(route, sidecar, batches, policy):
                 if cursor + 1 < len(prepared) and start + prepared[cursor + 1][1] - prepared[0][1] <= time.perf_counter():
                     cursor += 1
                     continue
-                index, seconds, rgb = prepared[cursor]
+                index, seconds, rgb, jpeg_sha = prepared[cursor]
                 cv.setRNGSeed(17)
                 frame = PolicyFrame(tracker.epoch, cursor + 1, captured, 960, 540, rgb)
                 pose = tracker.observe(frame, episode_id=tracker.episode, goal_revision=tracker.goal, scene="active")
                 age_ms = (time.perf_counter() - captured) * 1000
                 rows.append({"frame": index, "seconds": seconds, "state": pose.state, "reason": pose.reason,
+                             "jpegSha256": jpeg_sha,
                              "inliers": pose.inliers, "center": pose.center, "progressUnits": pose.progress_units,
                              "ageMs": age_ms,
                              "localizedOnTime": pose.state == "localized" and age_ms <= 250,
                              "diagnostic": dict(tracker.last_diagnostic)})
                 cursor += 1
-        runs.append({"scheduled": len(prepared), "dropped": len(prepared) - len(rows), "rows": rows})
+        runs.append({"scheduled": len(prepared), "dropped": len(prepared) - len(rows),
+                     "scheduledQueries": [{"frame": index, "seconds": seconds, "jpegSha256": sha}
+                                          for index, seconds, _, sha in prepared], "rows": rows})
     return runs
+
+
+def paced_holdout_coverage(windows, replays):
+    """Compare exact encoded inputs, then summarize freshness and outages by window."""
+    baseline = replays["baseline"]
+    result = {}
+    for policy, runs in replays.items():
+        for control, run in zip(baseline, runs, strict=True):
+            if control["scheduledQueries"] != run["scheduledQueries"]:
+                raise ValueError("route_coarse_replay_query_mismatch")
+        held_out_runs = runs[:len(windows)]
+        coverage = holdout_coverage(windows, held_out_runs, timestamp_key="seconds")
+        for item, run in zip(coverage, held_out_runs, strict=True):
+            rows = run["rows"]
+            item.update(dropped=run["dropped"], repliesOver250Ms=sum(row["ageMs"] > 250 for row in rows),
+                        framesWithVerifiedGeometryOnTime=sum(row["ageMs"] <= 250 and
+                            row["diagnostic"].get("verifiedCandidateCount", 0) > 0 for row in rows),
+                        ageP95Ms=float(np.percentile([row["ageMs"] for row in rows], 95)) if rows else None,
+                        reasons=dict(Counter(row["reason"] for row in rows)))
+        result[policy] = coverage
+    return result
 
 
 def main():
@@ -161,6 +187,8 @@ def main():
     parser.add_argument("--negative-plan", type=Path,
                         help="Optional prior private plan with unrelated scene images and hashes")
     parser.add_argument("--replay", action="store_true", help="also run paced observer and freshness gates")
+    parser.add_argument("--jpeg-quality", type=int, choices=(86, 92), default=86,
+                        help="OpenCV JPEG quality for paced replay (browser encoder may differ)")
     parser.add_argument("--negative-replay", action="store_true",
                         help="also replay unrelated images at artificial 5 Hz, requires --replay and --negative-plan")
     args = parser.parse_args()
@@ -188,8 +216,9 @@ def main():
         negatives = [(root / item["path"], item) for item in plan["negatives"][::3]]
         if not 1 <= len(negatives) <= 40:
             raise ValueError("negative frame quota")
-    paths = [Path(__file__).resolve(), Path(__file__).resolve().parents[2] / "motor_worker/route_reference_lk.py",
-             Path(__file__).resolve().parents[2] / "motor_worker/route_localization.py",
+    paths = [Path(__file__).resolve(), Path(__file__).with_name("check_route_lighting_replay.py").resolve(),
+             root / "motor_worker/route_reference_lk.py", root / "motor_worker/route_localization.py",
+             root / "motor_worker/route_confirmation.py", root / "motor_worker/route_descriptor_recovery.py",
              job / "navigation/active.json", nav / "route.json", nav / "reference-lk.npz",
              nav / "receipt.json", *attachment_paths] + [folder / name for folder in (job / "input", holdout) for name in CAPTURE_FILES]
     if negatives:
@@ -276,7 +305,7 @@ def main():
                 replay_batches = [*replay_batches,
                                   [(index, at * .2, rgb) for at, (index, _, rgb) in enumerate(batches[-1])]]
             for policy in ("baseline", "vote"):
-                replays[policy] = replay_policy(route, sidecar, replay_batches, policy)
+                replays[policy] = replay_policy(route, sidecar, replay_batches, policy, args.jpeg_quality)
     if any(digest_file(Path(path)) != value for path, value in before.items()):
         raise RuntimeError("source changed during experiment")
     def stats(method, subset):
@@ -295,7 +324,9 @@ def main():
               "groupLabels": [*["holdout_window"] * len(windows), *(["unrelated_scene"] if negatives else [])],
               "replayGroupLabels": [*["holdout_original_rtp"] * len(windows),
                                     *(["unrelated_scene_artificial_5hz"] if args.negative_replay else [])],
+              "pacedJpegQuality": args.jpeg_quality if replays else None,
               "pacedObserverReplay": replays,
+              "pacedHoldoutCoverage": paced_holdout_coverage(windows, replays) if replays else {},
               "rows": rows}
     with output.open("x", encoding="utf-8") as target:
         json.dump(report, target, indent=2, allow_nan=False)

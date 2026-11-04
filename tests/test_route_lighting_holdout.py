@@ -57,3 +57,28 @@ def test_window_coverage_counts_delayed_poses_and_silent_windows_as_unavailable(
     assert start["longestWithoutLocalizedFrameSeconds"] == 1.6
     assert silent["firstLocalizedAfterSeconds"] is None
     assert silent["longestWithoutLocalizedFrameSeconds"] == 2.0
+
+
+def test_coarse_replay_reports_outage_and_compares_scheduled_jpegs_after_drops():
+    from scripts.pilot.check_route_coarse_retrieval import paced_holdout_coverage
+
+    windows = [(0, 90000)]
+    schedule = [{"frame": 10, "seconds": 0.2, "jpegSha256": "a" * 64},
+                {"frame": 20, "seconds": 0.6, "jpegSha256": "b" * 64}]
+    baseline = {"scheduledQueries": schedule, "dropped": 0, "rows": [
+        {"seconds": 0.2, "localizedOnTime": False, "ageMs": 40, "diagnostic": {}, "reason": "unknown"},
+        {"seconds": 0.6, "localizedOnTime": False, "ageMs": 40, "diagnostic": {}, "reason": "unknown"}]}
+    vote = {"scheduledQueries": schedule, "dropped": 1, "rows": [
+        {"seconds": 0.2, "localizedOnTime": False, "ageMs": 260,
+         "diagnostic": {"verifiedCandidateCount": 1}, "reason": "expired"}]}
+    result = paced_holdout_coverage(windows, {"baseline": [baseline], "vote": [vote]})
+    coverage = result["vote"][0]
+    assert coverage["scheduled"] == 2
+    assert coverage["dropped"] == coverage["repliesOver250Ms"] == 1
+    assert coverage["localizedOnTime"] == coverage["framesWithVerifiedGeometryOnTime"] == 0
+    assert coverage["longestWithoutLocalizedFrameSeconds"] == 1
+    assert coverage["reasons"] == {"expired": 1}
+
+    vote["scheduledQueries"] = [schedule[0], {**schedule[1], "jpegSha256": "c" * 64}]
+    with pytest.raises(ValueError, match="route_coarse_replay_query_mismatch"):
+        paced_holdout_coverage(windows, {"baseline": [baseline], "vote": [vote]})

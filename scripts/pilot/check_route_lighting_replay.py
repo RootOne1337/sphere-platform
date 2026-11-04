@@ -169,11 +169,11 @@ def independent_capture(source, holdout, source_hashes):
     return capture
 
 
-def holdout_coverage(windows, runs):
+def holdout_coverage(windows, runs, *, timestamp_key="mediaSeconds"):
     evidence = []
     for (first, last), run in zip(windows, runs, strict=True):
         start, end = first / 90000, last / 90000
-        localized = [row["mediaSeconds"] for row in run["rows"] if row["localizedOnTime"]]
+        localized = [row[timestamp_key] for row in run["rows"] if row["localizedOnTime"]]
         boundaries = [start, *localized, end]
         evidence.append(dict(
             windowSeconds=[start, end],
