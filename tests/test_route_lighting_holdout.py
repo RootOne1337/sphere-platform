@@ -82,3 +82,18 @@ def test_coarse_replay_reports_outage_and_compares_scheduled_jpegs_after_drops()
     vote["scheduledQueries"] = [schedule[0], {**schedule[1], "jpegSha256": "c" * 64}]
     with pytest.raises(ValueError, match="route_coarse_replay_query_mismatch"):
         paced_holdout_coverage(windows, {"baseline": [baseline], "vote": [vote]})
+
+
+def test_sequence_vote_keeps_global_escape_and_rechecks_current_evidence():
+    from scripts.pilot.check_route_coarse_retrieval import sequence_vote_candidates, vote_candidates
+
+    votes = np.array([0, 31, 29, 0, 0, 0, 25, 0, 0, 11, 20])
+    previous = np.zeros_like(votes)
+    previous[2] = previous[9] = 1
+    neighborhoods = np.eye(len(votes), dtype=bool)
+
+    assert vote_candidates(votes) == [1, 6, 10]
+    assert sequence_vote_candidates(votes, None, neighborhoods) == [1, 6, 10]
+    assert sequence_vote_candidates(votes, previous, neighborhoods) == [1, 2, 6]
+    assert sequence_vote_candidates(np.zeros_like(votes), previous, neighborhoods) == []
+    assert votes[1] == 31

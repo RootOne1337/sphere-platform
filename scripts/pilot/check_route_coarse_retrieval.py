@@ -75,28 +75,72 @@ def evaluate_reference(localizer, gray, at):
     return count, verified
 
 
+def vote_candidates(votes):
+    remaining = votes.copy()
+    candidates = []
+    for _ in range(3):
+        at = int(np.argmax(remaining))
+        if remaining[at] < 12:
+            break
+        candidates.append(at)
+        remaining[max(0, at - 3):at + 4] = 0
+    return candidates
+
+
+def sequence_vote_candidates(votes, previous, neighborhoods):
+    """Reserve one of three checks for recent appearance with current support."""
+    global_candidates = vote_candidates(votes)
+    if not global_candidates or previous is None:
+        return global_candidates
+    first = global_candidates[0]
+    prior = np.max(np.where(neighborhoods, previous, 0), axis=1)
+    eligible = (votes >= 12) & (prior > 0)
+    eligible[first] = False
+    if not eligible.any():
+        return global_candidates
+    score = votes * (0.65 + 0.35 * prior)
+    nearby = int(np.argmax(np.where(eligible, score, -1)))
+    return [first, nearby, *[at for at in global_candidates[1:] if at != nearby]][:3]
+
+
 def replay_policy(route, sidecar, batches, policy, jpeg_quality):
     """Exercise actual confirmation and freshness gates on a fresh observer per window."""
     from motor_worker.policy import PolicyFrame
-    from motor_worker.route_confirmation import ReferenceLKConfirmationLocalizer, _BoundedConfirmationMixin
+    from motor_worker.route_confirmation import (
+        SOFT_VISUAL_MISSES, ReferenceLKConfirmationLocalizer, _BoundedConfirmationMixin,
+    )
     from motor_worker.route_descriptor_recovery import _DescriptorRecoverySolve
 
     class VoteSolve(_DescriptorRecoverySolve):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.vote_prior = None
+            seconds = np.asarray(route.source_seconds)
+            self.vote_neighborhoods = np.abs(seconds[:, None] - seconds[None, :]) <= 1.0
+
         def _solve(self, *_unused):
             began = time.perf_counter()
             if not self._has_receiver_budget(.150):
+                self.vote_prior = None
                 self.last_diagnostic.update(method="offline_rootsift_vote_lk", skipped="receiver_budget")
                 return None
             pixels, descriptors = extract_gray_features(self._gray, self.mask)
             candidates = []
             if len(pixels) >= 24 and self._has_receiver_budget(0):
                 votes = coarse_reference_votes(self._coarse_matches(descriptors), self.visibility)
-                for _ in range(3):
-                    at = int(np.argmax(votes))
-                    if votes[at] < 12:
-                        break
-                    candidates.append(at)
-                    votes[max(0, at - 3):at + 4] = 0
+                if policy == "sequence_vote":
+                    previous = None
+                    if self.vote_prior is not None:
+                        then, scores = self.vote_prior
+                        if 0 < self.last_received - then <= .5:
+                            previous = scores
+                    candidates = sequence_vote_candidates(votes, previous, self.vote_neighborhoods)
+                    self.vote_prior = ((self.last_received, np.where(votes >= 12, votes / votes.max(), 0))
+                                       if candidates else None)
+                else:
+                    candidates = vote_candidates(votes)
+            else:
+                self.vote_prior = None
             self.last_diagnostic.update(method="offline_rootsift_vote_lk", candidateReferenceIndices=candidates,
                                         coarseAndFeaturesMs=(time.perf_counter() - began) * 1000)
             proposals, retained = [], []
@@ -108,11 +152,16 @@ def replay_policy(route, sidecar, batches, policy, jpeg_quality):
                 retained.append(count)
                 if verified is not None:
                     proposals.append(verified[:4])
-            self.last_diagnostic.update(flowRetainedByCandidate=retained, verifiedCandidateCount=len(proposals))
+            self.last_diagnostic.update(flowRetainedByCandidate=retained, verifiedCandidateCount=len(proposals),
+                                        testedCandidateCount=len(retained))
             return self._rank_proposals(proposals) if proposals else None
 
     class VoteObserver(_BoundedConfirmationMixin, VoteSolve):
-        pass
+        def observe(self, *args, **kwargs):
+            pose = super().observe(*args, **kwargs)
+            if pose.state == "unknown" and pose.reason not in SOFT_VISUAL_MISSES:
+                self.vote_prior = None
+            return pose
 
     runs = []
     for batch in batches:
@@ -187,11 +236,15 @@ def main():
     parser.add_argument("--negative-plan", type=Path,
                         help="Optional prior private plan with unrelated scene images and hashes")
     parser.add_argument("--replay", action="store_true", help="also run paced observer and freshness gates")
+    parser.add_argument("--sequence-vote", action="store_true",
+                        help="compare a causal two-frame proposal policy in paced replay")
     parser.add_argument("--jpeg-quality", type=int, choices=(86, 92), default=86,
                         help="OpenCV JPEG quality for paced replay (browser encoder may differ)")
     parser.add_argument("--negative-replay", action="store_true",
                         help="also replay unrelated images at artificial 5 Hz, requires --replay and --negative-plan")
     args = parser.parse_args()
+    if args.sequence_vote and not args.replay:
+        parser.error("--sequence-vote requires --replay")
     if args.negative_replay and not (args.replay and args.negative_plan):
         parser.error("--negative-replay requires --replay and --negative-plan")
     root = Path(__file__).resolve().parents[2]
@@ -272,12 +325,7 @@ def main():
                     vote = []
                     if len(pixels) >= 24:
                         votes = coarse_reference_votes(localizer._coarse_matches(descriptors), localizer.visibility)
-                        for _ in range(3):
-                            at = int(np.argmax(votes))
-                            if votes[at] < 12:
-                                break
-                            vote.append(at)
-                            votes[max(0, at - 3):at + 4] = 0
+                        vote = vote_candidates(votes)
                     vote_ms = (time.perf_counter() - t0) * 1000
                     fusion = list(map(int, baseline[:2]))
                     for at in [*vote, *map(int, baseline)]:
@@ -304,7 +352,8 @@ def main():
             if args.negative_replay:
                 replay_batches = [*replay_batches,
                                   [(index, at * .2, rgb) for at, (index, _, rgb) in enumerate(batches[-1])]]
-            for policy in ("baseline", "vote"):
+            policies = ("baseline", "vote", "sequence_vote") if args.sequence_vote else ("baseline", "vote")
+            for policy in policies:
                 replays[policy] = replay_policy(route, sidecar, replay_batches, policy, args.jpeg_quality)
     if any(digest_file(Path(path)) != value for path, value in before.items()):
         raise RuntimeError("source changed during experiment")
