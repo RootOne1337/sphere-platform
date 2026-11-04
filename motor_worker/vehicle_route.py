@@ -190,14 +190,24 @@ class VehicleRouteFollower:
         if self.started and (progress < self.high_water - self.step * 2
                              or progress > self.high_water + self.step * 6):
             return self._neutral('vehicle_progress_discontinuity', terminal=True)
-        if self.last_center is not None and np.linalg.norm(center - self.last_center) > self.step * 6:
-            return self._neutral('vehicle_pose_discontinuity', terminal=True)
-        self.last_center = center.copy()
+        if self.started:
+            if self.last_center is not None and np.linalg.norm(center - self.last_center) > self.step * 6:
+                return self._neutral('vehicle_pose_discontinuity', terminal=True)
+            self.last_center = center.copy()
         if not self.started and self.start_mode == 'beginning':
             first_arc = min(self.total * .15, float(np.interp(
                 self.route.source_seconds[0] + 5., self.route.source_seconds, self.arc)))
             if progress > first_arc or np.linalg.norm(center - self.trace[0]) > first_arc + self.step * 3:
+                if pose.state == 'confirming':
+                    return self._wait('vehicle_confirming_position', now)
                 return self._neutral('vehicle_start_outside_recorded_beginning', terminal=True)
+        if not self.started:
+            # Only a still-eligible startup vote may constrain the next centre.
+            # A provisional pose must never permanently stop an idle run.
+            votes = self._confirmation.votes
+            if votes and pose.received_at - votes[-1][0] <= 1.0:
+                if np.linalg.norm(center - votes[-1][3]) > self.step * 6:
+                    return self._wait('vehicle_confirming_position', now)
         self.observed_speed = self._speed(pose, speed, now)
         acceleration = 0.
         if self.observed_speed is not None:
@@ -251,7 +261,7 @@ class VehicleRouteFollower:
         if self.waiting_since is not None and now - self.waiting_since >= self.MAX_RELOCALIZE_SECONDS:
             return self._neutral('vehicle_relocalization_timeout', terminal=True)
         self._confirmation.prepare(binding, pose.receiver_sequence, pose.received_at)
-        current_vote = self._confirmation.append(pose.source_rgb_sha256, valid=True)
+        current_vote = self._confirmation.append(pose.source_rgb_sha256, valid=True, payload=center)
         self.confirmations = len(self._confirmation.votes)
         if not current_vote:
             return self._wait('vehicle_confirming_position', now, preserve_confirmation=True)
@@ -264,6 +274,7 @@ class VehicleRouteFollower:
                 return self._neutral('vehicle_confirming_current_position')
             self.waiting_since = None
             self.started = True
+            self.last_center = center.copy()
         self.high_water = max(self.high_water, progress)
         if near_end and self.observed_speed <= .5:
             self.arrival += 1

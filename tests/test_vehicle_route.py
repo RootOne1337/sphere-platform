@@ -260,6 +260,45 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual(result['phase'], 'following')
         self.assertGreater(result['progressFraction'], .5)
 
+    def test_tentative_pose_at_finish_does_not_retire_start_session(self):
+        tentative = self.observe(34., state='confirming')
+        self.assertEqual((tentative['phase'], tentative['pedal']), ('waiting', 'coast'))
+        self.assertEqual(tentative['confirmationValidCount'], 0)
+        for i in range(3):
+            self.now += .1
+            result = self.observe(speed=0.)
+            self.assertEqual(result['pedal'], 'throttle' if i == 2 else 'coast')
+
+    def test_expired_startup_vote_does_not_block_a_new_position(self):
+        self.follower = self.make(start_mode='recognized_route')
+        self.assertEqual(self.observe(34., state='confirming')['pedal'], 'coast')
+        for _ in range(7):
+            self.now += .2
+            self.observe(state='unknown', reason='route_pose_not_verified', inliers=0)
+        for i in range(3):
+            self.now += .1
+            result = self.observe(speed=0.)
+            self.assertEqual(result['pedal'], 'throttle' if i == 2 else 'coast')
+
+    def test_two_second_observation_gap_reacquires_nearby_with_three_new_votes(self):
+        self.assertEqual(self.acquire()['pedal'], 'throttle')
+        self.now += 2.426
+        gap = self.observe(.5, speed=0.)
+        self.assertEqual((gap['phase'], gap['pedal']), ('waiting', 'coast'))
+        for i in range(3):
+            self.now += .1
+            result = self.observe(.5, speed=0.)
+            self.assertEqual(result['pedal'], 'throttle' if i == 2 else 'coast')
+
+    def test_running_session_still_stops_on_large_jump_after_gap(self):
+        self.assertEqual(self.acquire()['pedal'], 'throttle')
+        self.now += 2.426
+        self.assertEqual(self.observe(34., speed=0.)['phase'], 'waiting')
+        self.now += .1
+        jumped = self.observe(34., speed=0.)
+        self.assertEqual((jumped['phase'], jumped['pedal']), ('stopped', 'coast'))
+        self.assertEqual(jumped['reason'], 'vehicle_progress_discontinuity')
+
     def test_close_endpoint_requires_ordered_progress_and_low_observed_speed(self):
         self.follower = self.make(start_mode='recognized_route')
         result = self.acquire(34., speed=15.)
