@@ -103,6 +103,20 @@ def sequence_vote_candidates(votes, previous, neighborhoods):
     return [first, nearby, *[at for at in global_candidates[1:] if at != nearby]][:3]
 
 
+def neighborhood_vote_candidates(votes):
+    """Keep two global hypotheses and spend at most one check on a nearby view."""
+    global_candidates = vote_candidates(votes)
+    leaders = global_candidates[:2]
+    neighbors = {
+        at for leader in leaders for at in range(max(0, leader - 2), min(len(votes), leader + 3))
+        if at not in leaders and votes[at] >= 12
+    }
+    if not neighbors:
+        return global_candidates
+    nearby = min(neighbors, key=lambda at: (-votes[at], at))
+    return [*leaders, nearby]
+
+
 def replay_policy(route, sidecar, batches, policy, jpeg_quality):
     """Exercise actual confirmation and freshness gates on a fresh observer per window."""
     from motor_worker.policy import PolicyFrame
@@ -137,6 +151,8 @@ def replay_policy(route, sidecar, batches, policy, jpeg_quality):
                     candidates = sequence_vote_candidates(votes, previous, self.vote_neighborhoods)
                     self.vote_prior = ((self.last_received, np.where(votes >= 12, votes / votes.max(), 0))
                                        if candidates else None)
+                elif policy == "neighborhood_vote":
+                    candidates = neighborhood_vote_candidates(votes)
                 else:
                     candidates = vote_candidates(votes)
             else:
@@ -238,13 +254,15 @@ def main():
     parser.add_argument("--replay", action="store_true", help="also run paced observer and freshness gates")
     parser.add_argument("--sequence-vote", action="store_true",
                         help="compare a causal two-frame proposal policy in paced replay")
+    parser.add_argument("--neighborhood-vote", action="store_true",
+                        help="reserve one of three checks for a neighboring reference in paced replay")
     parser.add_argument("--jpeg-quality", type=int, choices=(86, 92), default=86,
                         help="OpenCV JPEG quality for paced replay (browser encoder may differ)")
     parser.add_argument("--negative-replay", action="store_true",
                         help="also replay unrelated images at artificial 5 Hz, requires --replay and --negative-plan")
     args = parser.parse_args()
-    if args.sequence_vote and not args.replay:
-        parser.error("--sequence-vote requires --replay")
+    if (args.sequence_vote or args.neighborhood_vote) and not args.replay:
+        parser.error("candidate replay options require --replay")
     if args.negative_replay and not (args.replay and args.negative_plan):
         parser.error("--negative-replay requires --replay and --negative-plan")
     root = Path(__file__).resolve().parents[2]
@@ -352,7 +370,11 @@ def main():
             if args.negative_replay:
                 replay_batches = [*replay_batches,
                                   [(index, at * .2, rgb) for at, (index, _, rgb) in enumerate(batches[-1])]]
-            policies = ("baseline", "vote", "sequence_vote") if args.sequence_vote else ("baseline", "vote")
+            policies = ["baseline", "vote"]
+            if args.sequence_vote:
+                policies.append("sequence_vote")
+            if args.neighborhood_vote:
+                policies.append("neighborhood_vote")
             for policy in policies:
                 replays[policy] = replay_policy(route, sidecar, replay_batches, policy, args.jpeg_quality)
     if any(digest_file(Path(path)) != value for path, value in before.items()):

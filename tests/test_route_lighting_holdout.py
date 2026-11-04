@@ -97,3 +97,13 @@ def test_sequence_vote_keeps_global_escape_and_rechecks_current_evidence():
     assert sequence_vote_candidates(votes, previous, neighborhoods) == [1, 2, 6]
     assert sequence_vote_candidates(np.zeros_like(votes), previous, neighborhoods) == []
     assert votes[1] == 31
+
+
+def test_neighborhood_vote_keeps_two_global_candidates_and_uses_current_support():
+    from scripts.pilot.check_route_coarse_retrieval import neighborhood_vote_candidates
+
+    votes = np.array([31, 24, 24, 0, 0, 0, 25, 0, 11, 0, 20])
+    assert neighborhood_vote_candidates(votes) == [0, 6, 1]
+    votes[1:3] = 11
+    assert neighborhood_vote_candidates(votes) == [0, 6, 10]
+    assert neighborhood_vote_candidates(np.zeros(2)) == []
