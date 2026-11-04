@@ -68,12 +68,54 @@ def test_runtime_writer_is_singleton_and_close_releases_owned_thread(tmp_path):
     assert not second._thread.is_alive()
 
 
+def test_runtime_snapshot_preserves_first_pose_loss_after_tail_wrap_and_byte_trim(tmp_path, monkeypatch):
+    import time
+
+    from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
+    monkeypatch.setattr(RuntimeMetadataRing, 'MAX_BYTES', 8192)
+    ring = RuntimeMetadataRing(tmp_path)
+    try:
+        for i in range(150):
+            following = i in {3, 4, 5, 8, 9}
+            state = 'localized' if following else 'confirming' if i == 6 else 'unknown'
+            deadline = time.monotonic() + .5
+            while not ring.offer(sequence=i, pose=dict(state=state, inliers=60 if following else 0,
+                    reason='route_pose_not_verified'), plan=dict(
+                        phase='following' if following else 'waiting',
+                        pedal='throttle' if following else 'coast')):
+                assert time.monotonic() < deadline
+                time.sleep(.001)
+        path = tmp_path / ring.FILE
+        deadline = time.monotonic() + 3
+        while time.monotonic() < deadline:
+            if path.exists():
+                raw = path.read_bytes()
+                saved = json.loads(raw)
+                if saved['rows'][-1]['sequence'] == 149:
+                    break
+            time.sleep(.01)
+        else:
+            raise AssertionError('latest runtime snapshot was not published')
+        milestone = saved['milestones']
+        assert saved['retentionPolicy'] == ring.RETENTION_POLICY
+        assert [row['sequence'] for row in milestone['start']] == [0, 1, 2]
+        assert milestone['firstFollowing']['sequence'] == 3
+        assert milestone['beforeFirstPoseLoss']['sequence'] == 5
+        assert milestone['firstPoseLoss']['sequence'] == 7
+        assert milestone['firstPoseLoss']['plan']['pedal'] == 'coast'
+        assert milestone['firstReacquired']['sequence'] == 8
+        assert 0 < len(saved['rows']) < ring.rows.maxlen
+        assert len(raw) < ring.MAX_BYTES
+    finally:
+        ring.close()
+
+
 def test_runtime_offer_never_calls_disk_writer_and_contention_is_nonblocking(tmp_path,monkeypatch):
     import threading
 
     from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
     calls=[];main=threading.get_ident();written=threading.Event()
-    def write(self,rows):calls.append(threading.get_ident());written.set()
+    def write(self,rows,milestones):calls.append(threading.get_ident());written.set()
     monkeypatch.setattr(RuntimeMetadataRing,'_write_snapshot',write)
     ring=RuntimeMetadataRing(tmp_path)
     try:
@@ -90,7 +132,7 @@ def test_runtime_disk_failure_cannot_escape_to_session(tmp_path,monkeypatch):
     import time
 
     from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
-    def denied(self,rows):raise PermissionError('fixture_denial')
+    def denied(self,rows,milestones):raise PermissionError('fixture_denial')
     monkeypatch.setattr(RuntimeMetadataRing,'_write_snapshot',denied)
     ring=RuntimeMetadataRing(tmp_path)
     try:

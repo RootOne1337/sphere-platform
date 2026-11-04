@@ -87,14 +87,17 @@ def bounded_localization_diagnostic(value, *, reason=None, source_family='unknow
 class RuntimeMetadataRing:
     """One owned latest-snapshot writer; offers never perform filesystem I/O.
 
-    Every admitted offer stays in a bounded 64-row memory ring. Disk snapshots
-    are coalesced to at most one per second, so alternating pose outcomes are
-    retained even when input cadence is faster than the writer. Close drops
-    pending work and joins; diagnostics never grant or repeat input authority.
+    Keep the recent tail and the first confirmed movement-to-loss-to-recovery
+    sequence.
+    Disk snapshots are coalesced to at most one per second. Close drops pending
+    work and joins; diagnostics never grant or repeat input authority.
     """
     FILE = 'navigation-runtime-diagnostic.json'
     MAX_ROWS = 64
     MAX_BYTES = 64 * 1024
+    START_ROWS = 3
+    MILESTONE_ROWS = START_ROWS + 4
+    RETENTION_POLICY = 'first3_first_tracking_loss_reacquisition_tail_v1'
     _owners = {}
     _owners_lock = threading.Lock()
 
@@ -109,7 +112,12 @@ class RuntimeMetadataRing:
         self.clock = clock
         self.identity = uuid.uuid4().hex
         self.began = clock()
-        self.rows = deque(maxlen=self.MAX_ROWS)
+        self.rows = deque(maxlen=self.MAX_ROWS - self.MILESTONE_ROWS)
+        self._start = []
+        self._first_following = None
+        self._last_before_loss = None
+        self._first_loss = None
+        self._first_reacquired = None
         self._lock = threading.Lock()
         self._wake = threading.Event()
         self._stop = threading.Event()
@@ -180,6 +188,19 @@ class RuntimeMetadataRing:
             try:
                 if self._closed:
                     return False
+                if len(self._start) < self.START_ROWS:
+                    self._start.append(row)
+                phase = row.get('plan', {}).get('phase')
+                following = phase == 'following' and row['poseState'] == 'localized'
+                if self._first_loss is None:
+                    if following:
+                        if self._first_following is None:
+                            self._first_following = row
+                        self._last_before_loss = row
+                    elif self._last_before_loss is not None and row['poseState'] == 'unknown':
+                        self._first_loss = row
+                elif following and self._first_reacquired is None:
+                    self._first_reacquired = row
                 self.rows.append(row)
                 self._wake.set()
             finally:
@@ -188,11 +209,12 @@ class RuntimeMetadataRing:
         except Exception:
             return False
 
-    def _write_snapshot(self, rows):
+    def _write_snapshot(self, rows, milestones):
         if self.path.is_symlink() or self.path.is_junction() or self.path.resolve().parent != self.folder:
             raise ValueError('runtime_diagnostic_path')
         body = dict(schema='sphere-navigation-runtime-metadata-v1', scope='local_metadata_only',
-                    sessionId=self.identity, physicalActions=0, executionQualified=False, rows=rows)
+                    sessionId=self.identity, physicalActions=0, executionQualified=False,
+                    retentionPolicy=self.RETENTION_POLICY, milestones=milestones, rows=rows)
         raw = json.dumps(body, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode('utf-8')
         while len(raw) >= self.MAX_BYTES and rows:
             rows = rows[1:]
@@ -224,10 +246,18 @@ class RuntimeMetadataRing:
                     continue
                 with self._lock:
                     rows = list(self.rows)
+                    milestones = dict(start=list(self._start))
+                    if self._first_following is not None:
+                        milestones['firstFollowing'] = self._first_following
+                    if self._first_loss is not None:
+                        milestones['beforeFirstPoseLoss'] = self._last_before_loss
+                        milestones['firstPoseLoss'] = self._first_loss
+                    if self._first_reacquired is not None:
+                        milestones['firstReacquired'] = self._first_reacquired
                     self._wake.clear()
                 next_write = now + 1.
                 try:
-                    self._write_snapshot(rows)
+                    self._write_snapshot(rows, milestones)
                     self.writes += 1
                 except Exception:
                     self.write_errors += 1
@@ -245,6 +275,8 @@ class RuntimeMetadataRing:
             self._thread.join(timeout=2.)
             if not self._thread.is_alive():
                 self.rows.clear()
+                self._start.clear()
+                self._first_following = self._last_before_loss = self._first_loss = self._first_reacquired = None
         except Exception:
             pass
 

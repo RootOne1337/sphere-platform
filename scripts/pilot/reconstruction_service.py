@@ -43,6 +43,7 @@ from scripts.pilot.route_reconstruction_resources import profile as route_resour
 from scripts.pilot.route_motion_audit import audit as audit_camera_motion
 from scripts.pilot.route_workspace import RouteWorkspaces
 from scripts.pilot.surface_asset import MAX_BYTES, MAX_FACES, validate_glb
+from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
 
 ROOT = Path(__file__).resolve().parents[2]
 LIMITS = {'manifest.json': 65536, 'frames.jsonl': 16 * 1024**2,
@@ -748,6 +749,7 @@ def handler(jobs, origin, port):
                                              alternative_preparation_contract='native_source_bound_attempt_v1',
                                              route_alternative_preparation_contract='source_bound_native_reference_lk_v1',
                                              route_localization_diagnostic_contract='bounded_stage_counts_first2_tail_v1',
+                                             route_runtime_metadata_retention_contract=RuntimeMetadataRing.RETENTION_POLICY,
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
                                              route_resource_monitor_contract='task_volume30_background_refresh_v2',
                                              route_reactivity_contract='gray_reuse_owned_supervision_v1',
