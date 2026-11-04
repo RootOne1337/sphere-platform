@@ -187,13 +187,18 @@ class VehicleRouteFollower:
                 raise ValueError('invalid_pose')
         except (ValueError, TypeError):
             return self._neutral('vehicle_pose_or_corridor_unqualified', terminal=True)
-        if self.started and (progress < self.high_water - self.step * 2
-                             or progress > self.high_water + self.step * 6):
-            return self._neutral('vehicle_progress_discontinuity', terminal=True)
         if self.started:
-            if self.last_center is not None and np.linalg.norm(center - self.last_center) > self.step * 6:
-                return self._neutral('vehicle_pose_discontinuity', terminal=True)
-            self.last_center = center.copy()
+            discontinuity = None
+            if progress < self.high_water - self.step * 2 or progress > self.high_water + self.step * 6:
+                discontinuity = 'vehicle_progress_discontinuity'
+            elif self.last_center is not None and np.linalg.norm(center - self.last_center) > self.step * 6:
+                discontinuity = 'vehicle_pose_discontinuity'
+            if discontinuity:
+                if pose.state == 'confirming':
+                    # Reject the tentative jump without replacing the last
+                    # verified position or allowing it to vote for movement.
+                    return self._wait('vehicle_confirming_position', now)
+                return self._neutral(discontinuity, terminal=True)
         if not self.started and self.start_mode == 'beginning':
             first_arc = min(self.total * .15, float(np.interp(
                 self.route.source_seconds[0] + 5., self.route.source_seconds, self.arc)))
@@ -274,7 +279,7 @@ class VehicleRouteFollower:
                 return self._neutral('vehicle_confirming_current_position')
             self.waiting_since = None
             self.started = True
-            self.last_center = center.copy()
+        self.last_center = center.copy()
         self.high_water = max(self.high_water, progress)
         if near_end and self.observed_speed <= .5:
             self.arrival += 1

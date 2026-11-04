@@ -146,14 +146,15 @@ test('an unknown speed is coast with zero steering and visibly unknown, never sy
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
 });
 
-test('vehicle initial acquisition, acquired movement and later loss retain distinct truthful labels and bounded stage counts',async()=>{
-  let now=1000,stage:'initial'|'following'|'lost'='initial';jest.spyOn(performance,'now').mockImplementation(()=>now);
+test('vehicle goes neutral through loss and tentative recovery, then resumes on the same input lease',async()=>{
+  let now=1000,stage:'initial'|'following'|'lost'|'confirming'='initial';jest.spyOn(performance,'now').mockImplementation(()=>now);
   const f=vehicleFixture({plan:p=>stage==='following'?p:{...p,phase:'waiting',reason:'vehicle_confirming_position',pedal:'coast',steering:0}});
   const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const response=await original(...args);if(!args[0].endsWith('/observe'))return response;
     const value=await response.json();
-    if(stage!=='following')value.pose={...value.pose,state:'unknown',inliers:0,reason:'route_pose_not_verified'};
+    if(stage==='confirming')value.pose={...value.pose,state:'confirming',inliers:351,reason:'route_pose_confirming'};
+    else if(stage!=='following')value.pose={...value.pose,state:'unknown',inliers:0,reason:'route_pose_not_verified'};
     value.localizationDiagnostic={schema:'sphere-localization-observation-diagnostic-v1',candidateCount:3,maxRetainedLkCount:stage==='following'?72:12,verifiedCandidateCount:stage==='following'?1:0,descriptors:['ignored']};
     return {json:async()=>value} as Response;
   });
@@ -167,6 +168,14 @@ test('vehicle initial acquisition, acquired movement and later loss retain disti
   const history=screen.getByRole('table');
   expect(history).toHaveTextContent('Ищем положение по ориентирам; педали отпущены');
   expect(history).toHaveTextContent('Положение потеряно');
+  const appliedCommands=f.vehicleLease.setVehicle.mock.calls.length;
+  const neutralCommands=f.vehicleLease.neutral.mock.calls.length;
+  stage='confirming';now+=200;fresh();
+  await waitFor(()=>expect(f.vehicleLease.neutral).toHaveBeenCalledTimes(neutralCommands+1));
+  expect(f.vehicleLease.setVehicle).toHaveBeenCalledTimes(appliedCommands);
+  stage='following';now+=200;fresh();
+  await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledTimes(appliedCommands+1));
+  expect(f.vehicleOpen).toHaveBeenCalledTimes(1);expect(f.starts).toHaveLength(1);
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
 });
 

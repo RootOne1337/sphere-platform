@@ -299,6 +299,28 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual((jumped['phase'], jumped['pedal']), ('stopped', 'coast'))
         self.assertEqual(jumped['reason'], 'vehicle_progress_discontinuity')
 
+    def test_tentative_jump_after_loss_waits_and_nearby_pose_can_recover(self):
+        self.assertEqual(self.acquire()['pedal'], 'throttle')
+        self.now += 2.426
+        self.assertEqual(self.observe(state='unknown', inliers=0)['pedal'], 'coast')
+        self.now += .1
+        tentative = self.observe(34., state='confirming', speed=0.)
+        self.assertEqual((tentative['phase'], tentative['pedal']), ('waiting', 'coast'))
+        self.assertEqual(tentative['confirmationValidCount'], 0)
+        for i in range(3):
+            self.now += .1
+            result = self.observe(.5, speed=0.)
+            self.assertEqual(result['pedal'], 'throttle' if i == 2 else 'coast')
+
+    def test_repeated_tentative_jumps_do_not_extend_reacquisition_deadline(self):
+        self.assertEqual(self.acquire()['pedal'], 'throttle')
+        for _ in range(77):
+            result = self.observe(34., state='confirming', speed=0.)
+            self.assertEqual(result['pedal'], 'coast')
+            self.assertEqual(result['confirmationValidCount'], 0)
+            self.now += .2
+        self.assertEqual(result['reason'], 'vehicle_relocalization_timeout')
+
     def test_close_endpoint_requires_ordered_progress_and_low_observed_speed(self):
         self.follower = self.make(start_mode='recognized_route')
         result = self.acquire(34., speed=15.)

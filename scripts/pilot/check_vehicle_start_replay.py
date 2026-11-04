@@ -80,6 +80,7 @@ def run_window(route, views, speed_reference, sidecar, rows, *, projected=False)
             )
             speed["source_rgb_sha256"] = pose.source_rgb_sha256
             # Open-loop source footage. No fabricated Android motion ACK.
+            high_water = follower.high_water
             plan = follower.observe(pose, speed, motion_active=False)
             plans.append(
                 dict(
@@ -91,6 +92,8 @@ def run_window(route, views, speed_reference, sidecar, rows, *, projected=False)
                     center=pose.center,
                     inliers=pose.inliers,
                     segment=pose.segment,
+                    progressUnits=pose.progress_units,
+                    priorProgressUnits=high_water,
                     hud=speed["status"],
                     hudKmh=speed.get("speed_kmh"),
                     phase=plan["phase"],
@@ -99,6 +102,12 @@ def run_window(route, views, speed_reference, sidecar, rows, *, projected=False)
                     confirmationCount=plan["confirmationValidCount"],
                     method=tracker.last_diagnostic.get("method"),
                     directCandidateCount=tracker.last_diagnostic.get("verifiedCandidateCount"),
+                    directCandidates=tracker.last_diagnostic.get("candidateReferenceIndices"),
+                    flowRetained=tracker.last_diagnostic.get("flowRetainedByCandidate"),
+                    poseCenterDelta=tracker.last_diagnostic.get("motionCenterDeltaUnits"),
+                    poseProgressDelta=tracker.last_diagnostic.get("motionProgressDeltaUnits"),
+                    poseTurnRadians=tracker.last_diagnostic.get("motionTurnRadians"),
+                    poseMotionLimit=tracker.last_diagnostic.get("motionLimitUnits"),
                     projectedResult=tracker.last_diagnostic.get("projectedResult"),
                     projectedRetained=tracker.last_diagnostic.get("projectedRetained"),
                 )
