@@ -18,17 +18,19 @@ function nalTypes(bytes) {
 function failure(r, reason) {
   if (r.failure) return;
   r.failure = reason; r.accept = false;
-  postMessage({ type: 'failed', reason });
+  if (!r.diagnostic) postMessage({ type: 'failed', reason });
 }
 function limit(r, reason) {
   r.accept = false; r.limit = reason;
-  postMessage({ type: 'limit_reached', reason });
+  if (!r.diagnostic) postMessage({ type: 'limit_reached', reason });
 }
 function enqueue(r, bytes, write) {
   if (r.queuedBytes + bytes > 8 * 1024 * 1024 || r.queued >= 32) { failure(r, 'disk_queue_budget'); return false; }
   r.queuedBytes += bytes; r.queued++;
   r.queueHighWater = Math.max(r.queueHighWater,r.queuedBytes);
-  r.tail = r.tail.then(async()=>{const began=stamp();await write();r.maxWriteMs=Math.max(r.maxWriteMs,stamp()-began);}).catch(() => failure(r, 'recording_write_failed')).finally(() => { r.queuedBytes -= bytes; r.queued--; });
+  r.tail = r.tail.then(async()=>{const began=stamp();await write();r.maxWriteMs=Math.max(r.maxWriteMs,stamp()-began);}).catch(() => {
+    r.writeFailed = true; failure(r, 'recording_write_failed');
+  }).finally(() => { r.queuedBytes -= bytes; r.queued--; });
   return true;
 }
 function frame(value) {
@@ -78,7 +80,7 @@ function frame(value) {
       return;
     }
     r.started = true; r.startedAt = receivedAt; r.ssrc = meta.synchronizationSource; r.firstRtp = r.lastRtp = timestamp; r.ticks = 0;
-    postMessage({ type: 'recording', id: r.id });
+    if (!r.diagnostic) postMessage({ type: 'recording', id: r.id });
   } else {
     const delta = (timestamp - r.lastRtp + 0x100000000) % 0x100000000;
     if (!delta || delta > 90000) { failure(r, 'rtp_discontinuity'); return; }
@@ -96,7 +98,7 @@ function frame(value) {
   })) return;
   r.bytes += size; r.frames++;
   if (r.frames % 300 === 0) void transformer.sendKeyFrameRequest().catch(() => {});
-  if (r.frames % 30 === 0 || receivedAt-r.lastProgressAt>=1000) {
+  if (!r.diagnostic && (r.frames % 30 === 0 || receivedAt-r.lastProgressAt>=1000)) {
     r.lastProgressAt=receivedAt;postMessage({ type: 'progress', frames: r.frames, bytes: r.bytes, seconds: r.ticks / 90000,
       capture_quality:quality(r) });
   }
@@ -134,23 +136,28 @@ async function arm(config, receivedAt = stamp()) {
   try { await library.getDirectoryHandle(config.id); throw Error('recording_exists'); }
   catch (error) { if (error.name !== 'NotFoundError') throw error; }
   const directory = await library.getDirectoryHandle(config.id, { create: true });
-  const r = recording = { id: config.id, config, directory, at: receivedAt, accept: false, started: false,
+  const r = await openCapture(config, directory, receivedAt);
+  postMessage({ type: 'armed', id: r.id });
+  void transformer.sendKeyFrameRequest().catch(() => {});
+}
+async function openCapture(config, directory, receivedAt, diagnostic = null) {
+  const r = recording = { id: config.id, config, directory, at: receivedAt, accept: false, started: false, diagnostic,
     frames: 0, bytes: 0, events: 0, inputBytes: 0, pending: new Map(), closed: false,
     lastInputAt: receivedAt, lastFrameAt: receivedAt, lastSourceInputAt: null,
     queued: 0, queuedBytes: 0, queueHighWater:0,maxWriteMs:0,maxGapTicks:0,gaps25:0,gaps50:0,gaps100:0,gaps200:0,gaps500:0,
     gapHistogram:new Uint32Array(1001),lastProgressAt:0,
     tail: Promise.resolve(), failure: null };
   const create = async name => (await directory.getFileHandle(name, { create: true })).createWritable();
-  r.video = await create('video.h264'); r.index = await create('frames.jsonl'); r.input = await create('inputs.jsonl');
+  r.video = await create('video.h264'); r.index = await create('frames.jsonl');
+  if (!diagnostic) r.input = await create('inputs.jsonl');
   r.readyAt = stamp();
   if (!validStamp(r.readyAt) || r.readyAt < r.at) throw Error('browser_clock_regressed');
   r.accept = true;
-  postMessage({ type: 'armed', id: r.id });
-  void transformer.sendKeyFrameRequest().catch(() => {});
+  return r;
 }
 function input(event, receivedAt = stamp()) {
   const r = recording;
-  if (!r || r.stopping) return;
+  if (!r || r.stopping || r.diagnostic) return;
   if (!event || !['submitted','receipt','closed'].includes(event.stage) || !validStamp(event.at_ms)
     || !Number.isSafeInteger(event.sequence) || !Number.isSafeInteger(event.gesture)
     || !Number.isSafeInteger(event.action) || !Number.isSafeInteger(event.pointer_id)) { failure(r, 'invalid_input_journal'); return; }
@@ -180,6 +187,7 @@ function input(event, receivedAt = stamp()) {
 }
 async function stop(confirmed, reason) {
   const r = recording;
+  if (r?.diagnostic) { await stopDiagnostic(r.id, reason).catch(() => {}); return; }
   if (!r) { postMessage({type:'finalized',id:null,manifest:{complete:false,failure:reason||'recorder_not_started'}}); return; }
   if (r.stopping) return;
   r.stopping = true; r.accept = false;
@@ -209,6 +217,98 @@ async function stop(confirmed, reason) {
   if (!r.failure) await write('COMPLETE', JSON.stringify({ manifest_sha256: await hash(encode.encode(text)) }) + '\n');
   postMessage({ type: 'finalized', id: r.id, manifest });
 }
+
+// One optional video writer per account in this browser. The old two clips
+// are retained until a new video has closed and has a verified index.
+const diagnosticCap = 512 * 1024 ** 2;
+const diagnosticId = /^[0-9a-f]{32}$/;
+async function diagnosticEntries(archive, currentId) {
+  const completed = [];
+  for await (const entry of archive.values()) {
+    if (entry.kind !== 'directory' || !diagnosticId.test(entry.name) || entry.name === currentId) continue;
+    const folder = await archive.getDirectoryHandle(entry.name);
+    let meta = null;
+    try {
+      const marker = await (await folder.getFileHandle('COMPLETE')).getFile();
+      if (marker.size <= 2048) meta = JSON.parse(await marker.text());
+    } catch (error) { if (!(error instanceof SyntaxError) && error.name !== 'NotFoundError') throw error; }
+    if (meta?.schema === 'sphere-vehicle-video-v1' && meta.runId === entry.name && Number.isFinite(meta.beganAtMs))
+      completed.push({ id: entry.name, at: meta.beganAtMs });
+    else await archive.removeEntry(entry.name, { recursive: true });
+  }
+  return completed.sort((a, b) => b.at - a.at || b.id.localeCompare(a.id));
+}
+async function diagnosticLock(scope) {
+  return new Promise((resolve, reject) => {
+    void navigator.locks.request('sphere-vehicle-video-' + scope, { ifAvailable: true }, lock => {
+      if (!lock) { reject(Error('diagnostic_writer_busy')); return; }
+      return new Promise(release => resolve(release));
+    }).catch(reject);
+  });
+}
+async function startDiagnostic(config, receivedAt) {
+  const { id, scope, clip, job, captureEpoch, geometrySha256, width, height, beganAtMs } = config ?? {};
+  if (!transformer || recording || ![id, scope, clip, job].every(v => typeof v === 'string' && diagnosticId.test(v))
+    || typeof captureEpoch !== 'string' || !/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(captureEpoch)
+    || captureEpoch === '00000000-0000-0000-0000-000000000000'
+    || geometrySha256 !== null && (typeof geometrySha256 !== 'string' || !/^[0-9a-f]{64}$/.test(geometrySha256))
+    || !Number.isInteger(width) || width < 1 || width > 8192 || !Number.isInteger(height) || height < 1 || height > 8192
+    || !validStamp(beganAtMs) || !navigator.locks) throw Error('diagnostic_capture_unavailable');
+  const release = await diagnosticLock(scope);
+  try {
+    const root = await navigator.storage.getDirectory();
+    const archive = await root.getDirectoryHandle('sphere-vehicle-video-' + scope, { create: true });
+    const completed = await diagnosticEntries(archive);
+    for (const entry of completed.slice(2)) await archive.removeEntry(entry.id, { recursive: true });
+    try { await archive.getDirectoryHandle(id); throw Error('diagnostic_capture_exists'); }
+    catch (error) { if (error.name !== 'NotFoundError') throw error; }
+    const directory = await archive.getDirectoryHandle(id, { create: true });
+    await openCapture({ id, width, height, max_duration_ms: 1800000, max_frames: 108000, max_bytes: diagnosticCap },
+      directory, receivedAt, { archive, release, clip, job, captureEpoch, geometrySha256, beganAtMs });
+    void transformer.sendKeyFrameRequest().catch(() => {});
+  } catch (error) {
+    if (recording?.diagnostic?.release === release) {
+      const r = recording; recording = null;
+      await Promise.allSettled([r.video?.abort(), r.index?.abort()]);
+    }
+    release();
+    throw error;
+  }
+}
+async function stopDiagnostic(id, reason) {
+  const r = recording;
+  if (!r?.diagnostic || r.id !== id || r.stopping) return;
+  r.stopping = true; r.accept = false;
+  const { archive, release, clip, job, captureEpoch, geometrySha256, beganAtMs } = r.diagnostic;
+  let saved = false, retentionConfirmed = false;
+  try {
+    await r.tail;
+    const closed = await Promise.allSettled([r.video.close(), r.index.close()]);
+    if (closed.some(result => result.status === 'rejected')) throw Error('diagnostic_close_failed');
+    const read = async name => (await r.directory.getFileHandle(name)).getFile();
+    const video = await read('video.h264'), index = await read('frames.jsonl');
+    if (!r.frames || !r.bytes || r.bytes !== video.size || !index.size || index.size > 48 * 1024 ** 2
+      || r.writeFailed) throw Error('diagnostic_no_video_or_incomplete_write');
+    const marker = { schema: 'sphere-vehicle-video-v1', runId: id, clip, job, captureEpoch, geometrySha256,
+      beganAtMs, endedAtMs: stamp(), width: r.config.width, height: r.config.height, frames: r.frames,
+      durationTicks90k: r.ticks ?? 0, videoBytes: video.size, indexBytes: index.size,
+      indexSha256: await hash(await index.arrayBuffer()), endedEarly: r.failure ?? r.limit ?? null,
+      stopReason: typeof reason === 'string' ? reason.slice(0, 128) : null };
+    const done = await (await r.directory.getFileHandle('COMPLETE', { create: true })).createWritable();
+    try { await done.write(JSON.stringify(marker)); await done.close(); }
+    catch (error) { await done.abort().catch(() => {}); throw error; }
+    saved = true;
+    const older = await diagnosticEntries(archive, id);
+    for (const entry of older.slice(1)) await archive.removeEntry(entry.id, { recursive: true });
+    retentionConfirmed = true;
+  } finally {
+    try { if (!saved) await archive.removeEntry(id, { recursive: true }); }
+    finally {
+      recording = null; release();
+      postMessage({ type: 'diagnostic_video_finalized', id, saved, retentionConfirmed, endedEarly: r.failure ?? r.limit ?? null });
+    }
+  }
+}
 self.onmessage = ({ data }) => {
   // Capture arrival before waiting for an earlier command or OPFS promises.
   const receivedAt = stamp();
@@ -217,6 +317,11 @@ self.onmessage = ({ data }) => {
     else if (data?.type === 'input') input(data.event, receivedAt);
     else if (data?.type === 'stop') await stop(data.confirmed === true, data.reason);
     else if (data?.type === 'external_capture') { externalCapture = data.enabled === true; lastEncodedHeartbeat = 0; }
+    else if (data?.type === 'diagnostic_video_start') {
+      try { await startDiagnostic(data.config, receivedAt); }
+      catch { postMessage({ type: 'diagnostic_video_finalized', id: data.config?.id, saved: false }); }
+    }
+    else if (data?.type === 'diagnostic_video_stop') await stopDiagnostic(data.id, data.reason).catch(() => {});
   }).catch(error => {
     const known=['recorder_already_used','invalid_recording_config','invalid_recording_budget','recording_library_limit','recording_exists','invalid_recorder_clock','browser_clock_regressed'];
     const reason=known.includes(error?.message)?error.message:error?.name==='QuotaExceededError'?'recording_storage_full':['NotAllowedError','SecurityError'].includes(error?.name)?'recording_storage_denied':recording?'recorder_command_failed':'recorder_start_failed';

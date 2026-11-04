@@ -8,6 +8,7 @@ import { TeachingContacts, type TeachingInput, type TeachingPoint } from './teac
 import { calibrated, calibrateProfile, calibrationNames, cameraContact, defaultTeachingProfile, fromPercent, keyLabel, movementTargets, profileIssue, teachingKeys, teachingRole, vehicleButtons, type CalibrationTarget, type TeachingKeyRole, type TeachingProfile } from './teachingKeymap';
 import { TeachingKeyBindings } from './TeachingKeyBindings';
 import { connectTeaching, type TeachingConnection } from './teachingConnection';
+import {terminateTeachingRecorder} from './vehicleDiagnosticVideo';
 import type { DirectProbeResult } from './directProbe';
 import { TeachingReview, type TeachingClipChoice } from './TeachingReview';
 import { TeachingScenePreview } from './TeachingScenePreview';
@@ -138,7 +139,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const disconnect = async () => {
     await stopCallback.current('connection_closed');
     abort.current?.abort(); abort.current = null;
-    connection.current?.close(); connection.current?.worker.terminate(); connection.current = null;
+    connection.current?.close(); terminateTeachingRecorder(connection.current?.worker); connection.current = null;
     controller.current = null; attached.current = false; armSent.current = false; setReady(false); setResult(null); change('idle');
   };
   useEffect(() => {
@@ -170,8 +171,8 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         if (active(phaseRef.current) && conn) {
           const confirmed = await control?.close() ?? false;
           conn.worker.postMessage({ type: 'stop', confirmed, reason: 'page_unmounted' });
-          setTimeout(() => conn.worker.terminate(), 10000);
-        } else conn?.worker.terminate();
+          setTimeout(() => terminateTeachingRecorder(conn.worker), 10000);
+        } else terminateTeachingRecorder(conn?.worker);
         conn?.close(); request?.abort();
       })();
     };
@@ -234,7 +235,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
             finalize.current?.();
           }
         });
-      if (request.signal.aborted) { conn.close(); conn.worker.terminate(); return; }
+      if (request.signal.aborted) { conn.close(); terminateTeachingRecorder(conn.worker); return; }
       connection.current = conn; change('preview');
       setNotice('Проверьте игру в потоке. Для записи из эмулятора достаточно нажать «Записать маршрут»; веб-управление включается отдельно.');
     } catch (error) { request.abort(); change('idle'); setNotice(`Подключение не готово: ${error instanceof Error ? error.message : 'ошибка'}`); }
@@ -464,7 +465,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     if(phase!=='finished'||!autoPrepare||autoPrepare.clip!==clip||autoPrepare.scope!==storageScope)return;
     // Finalized COMPLETE and CLOSED precede this effect. Release the old
     // encoded receiver before offline processing; no new Android input opens.
-    abort.current?.abort();abort.current=null;connection.current?.close();connection.current?.worker.terminate();connection.current=null;
+    abort.current?.abort();abort.current=null;connection.current?.close();terminateTeachingRecorder(connection.current?.worker);connection.current=null;
     controller.current=null;attached.current=false;armSent.current=false;setReady(false);setResult(null);change('idle');setWorkspaceMode('review');
   },[phase,autoPrepare,clip,storageScope]);
   const workflow=[
@@ -533,6 +534,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Транспорт · калибровка</p><Button size="sm" variant="outline" disabled={readOnly||!ready||!binding||active(phase)} onClick={()=>{if(binding){setBindingTarget(null);setCalibrate(null);setProfile(p=>blackRussiaScooterProfile(binding,p));}}}>Настроить скутер · педали и стик</Button><p className="text-muted-foreground">Профиль Black Russia выбирается явно; его применение не отправляет касания. Проверьте педали и центр стика перед поездкой.</p></div>}
       </section>
       {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} sourceRecording={routeSource?.clip===clip&&routeSource.scope===storageScope?routeSource:null} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'} onReview={()=>{void switchMode('review');}}
+        beginVehicleVideo={config=>!readOnly&&config.scope===storageScope?connection.current?.beginVehicleVideo(config)??null:null}
         walkInput={{open:openWalkInput,revision:JSON.stringify(profile),cameraIssue:walkingCameraIssue(profile,binding??null),issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для пешего теста нужен прямой поток.':walkingCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}
         vehicleInput={{open:openVehicleInput,revision:JSON.stringify(profile),hudProfile:'black_russia_scooter_v1',cameraIssue:vehicleCameraIssue(profile,binding??null),issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для транспорта нужен прямой поток.':vehicleCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}/>}
       <aside hidden={workspaceMode==='live'} className="space-y-4 rounded-2xl border border-border bg-card p-4">

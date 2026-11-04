@@ -5,12 +5,14 @@ import type { DirectControlEndpoint } from './directPointerTransport';
 import type { DirectVideoBinding } from './directVideoProtocol';
 import { StreamSessionReporter, teachingStreamSample } from './streamSessionTelemetry';
 import type {WalkSourceHealth} from './walkPilot';
+import {beginVehicleDiagnosticVideo, type DiagnosticVideoCapture, type DiagnosticVideoConfig} from './vehicleDiagnosticVideo';
 
 export type TeachingConnection = { close(): void; fresh(): boolean; binding(): DirectVideoBinding | null;
   idleInputFresh?():boolean;
   endpoint(): DirectControlEndpoint | null; worker: Worker;
   observeControl?(state:'idle'|'opening'|'ready'|'closing'|'closed'|'fenced',reason?:string,rtt?:number):void;
-  controlRttMs?():number|null; sourceHealth?():WalkSourceHealth;setExternalCapture?(enabled:boolean):void };
+  controlRttMs?():number|null; sourceHealth?():WalkSourceHealth;setExternalCapture?(enabled:boolean):void;
+  beginVehicleVideo(config: DiagnosticVideoConfig): DiagnosticVideoCapture | null };
 
 /** One explicit capture-only presence and one direct peer. No media relay or automatic retry. */
 export async function connectTeaching(deviceId: string, token: string, video: HTMLVideoElement,
@@ -154,6 +156,11 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     } catch { fault('invalid_capture_message'); }
   };
   return { close, fresh, idleInputFresh, binding: () => binding, endpoint: () => endpoint, worker,
+    beginVehicleVideo(config) {
+      if (disposed || faulted || !binding || config.captureEpoch !== binding.captureEpoch
+        || config.width !== binding.width || config.height !== binding.height) return null;
+      return beginVehicleDiagnosticVideo(worker, config);
+    },
     sourceHealth:()=>({encodedAgeMs:lastEncoded?Math.max(0,performance.now()-lastEncoded):null,presentedAgeMs:lastFrame?Math.max(0,performance.now()-lastFrame):null,hidden:document.hidden}),
     setExternalCapture:(enabled)=>{externalCapture=enabled;if(enabled)lastEncoded=0;worker.postMessage({type:'external_capture',enabled});},
     controlRttMs:()=>controlRtt,

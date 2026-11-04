@@ -5,6 +5,9 @@ import path from 'node:path';
 import { webcrypto } from 'node:crypto';
 class Folder {
   entries=new Map<string,Folder|MemoryFile>();
+  async removeEntry(name:string) {
+    if(!this.entries.delete(name))throw Object.assign(Error(),{name:'NotFoundError'});
+  }
   async *values(){for(const[name,value]of this.entries)yield{name,kind:value instanceof Folder?'directory':'file'};}
   async getDirectoryHandle(name:string,options?:{create:boolean}):Promise<Folder>{
     if(!this.entries.has(name)){if(!options?.create)throw Object.assign(Error(),{name:'NotFoundError'});this.entries.set(name,new Folder());}
@@ -18,12 +21,16 @@ class Folder {
 class MemoryFile {
   data=Buffer.alloc(0);
   async createWritable(){return{write:async(value:ArrayBuffer|string)=>{this.data=Buffer.concat([this.data,typeof value==='string'?Buffer.from(value):Buffer.from(new Uint8Array(value))]);},close:async()=>{}};}
-  async getFile(){const bytes=this.data;return{size:bytes.length,arrayBuffer:async()=>Uint8Array.from(bytes).buffer};}
+  async getFile(){const bytes=this.data;return{size:bytes.length,arrayBuffer:async()=>Uint8Array.from(bytes).buffer,text:async()=>bytes.toString()};}
 }
 function fixture(origin=1000000){
-  const root=new Folder(),messages:Record<string,unknown>[]=[];let at=1000,storageGate:Promise<void>|null=null;
+  const root=new Folder(),messages:Record<string,unknown>[]=[],locks=new Set<string>();let at=1000,storageGate:Promise<void>|null=null;
   const context=vm.createContext({crypto:webcrypto,TextEncoder,Uint8Array,ArrayBuffer,Set,Map,JSON,Promise,
-    performance:{timeOrigin:origin,now:()=>at},navigator:{storage:{getDirectory:async()=>{if(storageGate)await storageGate;return root;}}},
+    performance:{timeOrigin:origin,now:()=>at},navigator:{storage:{getDirectory:async()=>{if(storageGate)await storageGate;return root;}},
+      locks:{request:async(name:string,_options:unknown,callback:(lock:unknown)=>Promise<void>)=>{
+        if(locks.has(name))return callback(null);
+        locks.add(name);try{await callback({name});}finally{locks.delete(name);}
+      }}},
     postMessage:(m:Record<string,unknown>)=>messages.push(m),self:{}});
   vm.runInContext(fs.readFileSync(path.join(process.cwd(),'public/teaching-recorder.worker.js'),'utf8'),context);
   vm.runInContext('transformer={sendKeyFrameRequest:()=>Promise.resolve()}',context);
@@ -71,6 +78,42 @@ test('message arrival clocks enclose early page heartbeat while OPFS and command
   expect(rows[1].device_uptime_ms).toBe(618759230);
   expect(submitted).not.toHaveProperty('source_at_ms');
   expect(dir.entries.has('COMPLETE')).toBe(true);
+});
+
+test('keeps the last two complete original-video captures without changing the recording library',async()=>{
+  const f=fixture();
+  const library=await f.root.getDirectoryHandle('sphere-teaching-'+f.config.storage_scope,{create:true});
+  await library.getDirectoryHandle(f.config.id,{create:true});
+  const command=async(data:Record<string,unknown>)=>{
+    f.context.self.onmessage({data});await vm.runInContext('command',f.context);
+  };
+  const config={scope:f.config.storage_scope,clip:f.config.id,job:'c'.repeat(32),captureEpoch:'9dbe1c39-9d2a-4d8c-93f8-12982d6f0202',geometrySha256:'e'.repeat(64),width:960,height:540};
+  const successfulIds=['1','2','3'].map(value=>value.repeat(32));
+  for(const [index,id] of successfulIds.entries()){
+    await command({type:'diagnostic_video_start',config:{...config,id,beganAtMs:1001000+index*200}});
+    f.frame(100,false); // no IDR yet
+    f.frame(90000);f.advance();f.frame(108000,false);
+    await command({type:'diagnostic_video_stop',id,reason:'walk_manual_stop'});
+    expect(f.messages.at(-1)).toMatchObject({type:'diagnostic_video_finalized',id,saved:true,retentionConfirmed:true,endedEarly:null});
+  }
+  const archive=await f.root.getDirectoryHandle('sphere-vehicle-video-'+config.scope);
+  expect([...archive.entries.keys()]).toEqual(successfulIds.slice(1));
+  const latest=await archive.getDirectoryHandle(successfulIds[2]);
+  const marker=JSON.parse((latest.entries.get('COMPLETE') as MemoryFile).data.toString());
+  const index=(latest.entries.get('frames.jsonl') as MemoryFile).data.toString().trim().split('\n').map(line=>JSON.parse(line));
+  expect(marker).toMatchObject({schema:'sphere-vehicle-video-v1',frames:2,clip:config.clip,job:config.job,geometrySha256:config.geometrySha256,durationTicks90k:18000});
+  expect(marker.indexSha256).toMatch(/^[0-9a-f]{64}$/);
+  expect(index[0]).toMatchObject({rtp_timestamp:90000,seekable:true});
+  expect((latest.entries.get('video.h264') as MemoryFile).data).toEqual(Buffer.from([0,0,0,1,103,66,0,31,0,0,1,104,1,0,0,1,101,9,0,0,0,1,65,9]));
+  expect(latest.entries.has('inputs.jsonl')).toBe(false);
+  expect([...library.entries.keys()]).toEqual([f.config.id]);
+  // No usable frame in the next run leaves the previous pair in place.
+  const emptyId='4'.repeat(32);
+  await command({type:'diagnostic_video_start',config:{...config,id:emptyId,beganAtMs:1001800}});
+  await command({type:'diagnostic_video_stop',id:emptyId});
+  expect(f.messages.at(-1)).toMatchObject({type:'diagnostic_video_finalized',id:emptyId,saved:false});
+  expect([...archive.entries.keys()]).toEqual(successfulIds.slice(1));
+  expect(f.messages.some(message=>['failed','limit_reached','recording'].includes(String(message.type)))).toBe(false);
 });
 
 test.each(['source','worker-input','worker-frame','worker-finalize'])('never clamps a %s clock rollback into a completed recording',async kind=>{

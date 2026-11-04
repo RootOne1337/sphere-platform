@@ -15,6 +15,8 @@ import {RouteDebugArchive} from './RouteDebugArchive';
 import {WalkRunDiagnostics,walkInputSummary,walkCameraInputSummary,boundedWalkSummary} from './walkRunDiagnostics';
 import {WalkCameraDrag as WalkCameraServo,type CameraDragStep as CameraStep} from './walkCameraDrag';
 import {readLocalizationDiagnostic,type LocalizationDiagnostic} from './routeLocalizationDiagnostic';
+import type {DiagnosticVideoCapture, DiagnosticVideoConfig} from './vehicleDiagnosticVideo';
+import {VehicleDiagnosticVideoArchive} from './VehicleDiagnosticVideoArchive';
 
 type Binding={captureEpoch:string;width:number;height:number};
 type StartMode='beginning'|'recognized_route';
@@ -29,7 +31,7 @@ type Sample={elapsedMs:number;sequence:number;ageMs:number;computeMs:number;stat
 type Run={id:string;job:ReconstructionJob;abort:AbortController;lease:WalkInputLease|null;opening:Promise<WalkInputLease>|null;began:number;
   binding:Binding;deadline:number;permitUntil:number;moving:boolean;lastSequence:number;clip:string|null;scope:string|null;
   freshUntil:number|null;freshWaits:number;trace:WalkRunDiagnostics;maxSeconds:number;maxSpeedKmh?:number;observationCount:number;positionConfirmed:boolean;
-  observe:(()=>void)|null;inFlight:boolean;nextObservationAt:number;startMode:StartMode;camera:WalkCameraServo|null;binaryJpeg?:boolean;lastPreviewAt?:number};
+  observe:(()=>void)|null;inFlight:boolean;nextObservationAt:number;startMode:StartMode;camera:WalkCameraServo|null;binaryJpeg?:boolean;lastPreviewAt?:number;diagnosticVideo?:DiagnosticVideoCapture};
 type ResumeIntent={job:string;key:string;clip:string|null;epoch:string;width:number;height:number;remainingMs:number};
 const gapReason=(active:Run|null)=>{
   try{const health=active?.lease?.sourceHealth?.();
@@ -43,8 +45,9 @@ type PilotProps={
   binding:Binding|null;assetsReady:boolean;input:WalkInputControl;observerBusy:boolean;onBusyChange:(busy:boolean)=>void;
   onObservation?:(observation:LiveRouteObservation|null)=>void;renderView?:(view:ReactNode)=>ReactNode;
   scope?:string|null;preparationIssue?:string|null;mode?:'foot'|'vehicle';expectedSource?:NavigationMapSource;
+  beginVehicleVideo?:(config:DiagnosticVideoConfig)=>DiagnosticVideoCapture|null;
 };
-export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot',expectedSource}:PilotProps) {
+export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot',expectedSource,beginVehicleVideo}:PilotProps) {
   const vehicleMode=mode==='vehicle';
   const expectedSourceIdentity=expectedSource?JSON.stringify([expectedSource.alternativeId,expectedSource.geometry_sha256,expectedSource.runtime_family]):null;
   const reasonLabel=(reason:string,positionPreviouslyConfirmed=false)=>vehicleMode?(vehicleReasonLabel(reason,positionPreviouslyConfirmed)??(reason.startsWith('vehicle_')?`Транспорт: ${reason}`:walkReasonLabel(reason))):walkReasonLabel(reason);
@@ -58,6 +61,9 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const [release,setRelease]=useState<'none'|'pending'|'closed'|'unknown'>('none');
   const [samples,setSamples]=useState<Sample[]>([]),[events,setEvents]=useState(0);
   const [savedDebug,setSavedDebug]=useState('Диагностика сохранится локально после освобождения ввода.');
+  const [saveVideo,setSaveVideo]=useState(false);
+  const [videoNotice,setVideoNotice]=useState('');
+  const [videoRefresh,setVideoRefresh]=useState(0);
   const [stopDetail,setStopDetail]=useState<string|null>(null);
   const [previewFrame,setPreviewFrame]=useState<WalkPreviewFrame|null>(null);
   const [budgetSeconds,setBudgetSeconds]=useState<number|null>(null);
@@ -131,6 +137,15 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     active.trace.add('stop',performance.now(),{reason,sequence:frameSequence,...(frameAge===null?{}:{ageMs:frameAge})});
     setStopDetail(`Кадров источника: ${frameSequence}; возраст: ${frameAge===null?'нет кадра':`${frameAge.toFixed(0)} мс`}; ответов локализации: ${active.observationCount}.`);
     run.current=null;active.abort.abort();observed.current?.(null);setNotice(reasonLabel(reason));setRelease('pending');
+    if(active.diagnosticVideo){
+      setVideoNotice('Завершаем локальную запись видео…');
+      void active.diagnosticVideo.stop(reason).then(result=>{
+        setVideoRefresh(value=>value+1);
+        setVideoNotice(result.saved
+          ?result.retentionConfirmed?result.endedEarly?'Сохранена доступная часть видео.':'Видео запуска сохранено.':'Видео сохранено. Удаление более старых запусков пока не подтверждено.'
+          :'Видеозапись этого запуска не подтверждена. Предыдущие видео сохранены.');
+      }).catch(()=>setVideoNotice('Видеозапись этого запуска не подтверждена.'));
+    }
     // A stopped query must not keep the shared encoder busy in a new run.
     encoder.current?.close();encoder.current=encoderMounted.current?new WalkFrameEncoder():null;
     const closing=(async()=>{
@@ -240,6 +255,13 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     run.current=active;setBusy(true);busyChange.current(true);setRelease('none');setStopDetail(null);setPreviewFrame(null);clear();setNotice(vehicleMode?'Открываем отдельный тест транспорта. До подтверждения текущего места и скорости педали отпущены.':'Открываем отдельный пеший тест. До узнавания старта стик нейтрален.');
     history.current=[];inputs.current=[];images.current=0;lastImageAt.current=-Infinity;lastReport.current=null;lastUiPaint.current=-Infinity;setSamples([]);setEvents(0);
     const signal=active.abort.signal,alive=()=>run.current===active&&!signal.aborted;
+    if(vehicleMode&&saveVideo&&scope&&clip){
+      try {
+        active.diagnosticVideo=beginVehicleVideo?.({id:active.id,scope,clip,job:job.id,...binding,
+          geometrySha256:expectedSource?.geometry_sha256??null,beganAtMs:performance.timeOrigin+began})??undefined;
+      } catch { /* Optional storage cannot block the vehicle startup. */ }
+      setVideoNotice(active.diagnosticVideo?'Локальная видеозапись запрошена.':'Запись видео сейчас недоступна.');
+    }else setVideoNotice('');
     try{
       const state=await(await reconstructionRequest(`/jobs/${job.id}/navigation/${vehicleMode?'vehicle-start':'walk-start'}`,job,{method:'POST',signal,
         body:JSON.stringify({id:active.id,clientVersion:vehicleMode?'vehicle_live_v1':'walk_live_v8',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,...(expectedSource?{expectedSource}:{}),
@@ -441,6 +463,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     {cameraEnabled&&input.cameraIssue&&<p className="text-xs text-amber-500">{input.cameraIssue}</p>}
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={confirmed} disabled={busy} onChange={e=>setConfirmed(e.target.checked)}/>{vehicleMode?'Скутер на записанном участке; камера закреплена и следует корпусу, HUD и FOV соответствуют записи, педали и стик проверены, путь свободен; готов остановить транспорт':'Персонаж пешком на записанном участке, ракурс и FOV соответствуют записи, путь свободен; готов остановить тест'}</label>
     <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={saveFrames} disabled={busy} onChange={e=>setSaveFrames(e.target.checked)}/>Диагностика: до 60 кадров, положения стика и подтверждения Android остаются в этой вкладке</label>
+    {vehicleMode&&scope&&beginVehicleVideo&&<label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={saveVideo} disabled={busy} onChange={e=>setSaveVideo(e.target.checked)}/><span>Сохранить видео запуска транспорта<br/><span className="text-muted-foreground">Два последних сохранённых запуска в этом браузере. До 30 минут или 512 МиБ на запуск. В архиве будет весь видимый игровой экран.</span></span></label>}
     {(input.issue||!assetsReady)&&<p className="text-xs text-amber-500">{!assetsReady?(preparationIssue??'Проверяем обработку записи и готовность ориентиров…'):input.issue}</p>}
     <div className="flex flex-wrap gap-2"><Button size="sm" disabled={busy||observerBusy||!job||!ready||!assetsReady||!confirmed||!!input.issue||cameraEnabled&&!!input.cameraIssue||release==='unknown'} onClick={()=>{void start();}}>{vehicleMode?'Запустить транспорт':'Запустить проход'}</Button><Button size="sm" variant="destructive" disabled={!busy&&!visibilityPaused} onClick={()=>{void stop('walk_manual_stop');}}><Square size={13} className="mr-1"/>{vehicleMode?'Стоп транспорта · Esc':'Стоп пешего теста · Esc'}</Button><Button size="sm" variant="outline" disabled={!samples.length||busy} onClick={download}><Download size={13} className="mr-1"/>Скачать отчёт теста</Button></div>
     {vehicleMode&&<div aria-label="Скорость транспорта по последнему ответу" className="rounded-lg border p-3 text-xs"><p>Игровой HUD в последнем ответе: {last?.vehicle?.speedAccepted?`${last.vehicle.observedSpeedKmh} км/ч`:'не подтверждён'} · цель записи: {last?.vehicle?.targetSpeedKmh==null?'неизвестна':`${last.vehicle.targetSpeedKmh} км/ч`}</p><p className="mt-1 text-muted-foreground">Скорость интерфейса игры, без калибровки физического масштаба. Неизвестное значение не заменяется нулём.</p></div>}
@@ -459,6 +482,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     {!busy&&inputProgress.submitted>0&&inputProgress.applied===0&&<p className="text-xs text-amber-500">Команда стику отправлена, но Android ещё не подтвердил касание. Этот запуск не подтвердил движение по маршруту.</p>}
     <p className="text-[11px] text-muted-foreground">{savedDebug}</p>
     {scope&&clip&&<RouteDebugArchive scope={scope} clip={clip} refresh={savedDebug}/>}
+    {vehicleMode&&videoNotice&&<p role="status" className="text-[11px] text-muted-foreground">{videoNotice}</p>}
+    {vehicleMode&&scope&&<VehicleDiagnosticVideoArchive scope={scope} refresh={videoRefresh}/>}
     <div className="grid grid-cols-3 gap-2 text-xs tabular-nums"><div>Прогресс: {last?.progress==null?'—':`${(last.progress*100).toFixed(1)}%`}</div><div>Опоры: {last?.inliers??0}</div><div>Кадр → ответ: {last?`${last.ageMs.toFixed(0)} мс`:'—'}</div><div>Стик: {release==='unknown'?'UNKNOWN':busy&&last?last.stick.map(v=>v.toFixed(2)).join(' / '):'0 / 0'}</div><div>Камера X / Y: {last?.cameraYawRadians==null?"—":`${(last.cameraYawRadians*180/Math.PI).toFixed(1)}°`} / {last?.cameraPitchRadians==null?"—":`${(last.cameraPitchRadians*180/Math.PI).toFixed(1)}°`}</div><div>События ввода: {events}</div><div>Освобождение: {({none:'—',pending:'ожидается',closed:'CLOSED',unknown:'UNKNOWN'})[release]}</div></div>
     {(()=>{const preview=<figure className="space-y-2"><figcaption className="text-xs text-muted-foreground">{busy?(vehicleMode?'Транспорт: исходный кадр и подтверждённое направление':'Пеший тест: исходный кадр и подтверждённое направление'):'Просмотр источника · автоматическое движение выключено'}</figcaption><canvas ref={output} width={960} height={540} aria-label={vehicleMode?'Диагностика транспорта на свежем кадре':'Диагностика пешего теста на свежем кадре'} className={previewFrame?'hidden':'aspect-video w-full rounded-lg border bg-black'}/>{previewFrame&&<WalkLivePreview frame={previewFrame} active={busy}/>}</figure>;return renderView?renderView(preview):preview;})()}
     {!busy&&samples.length>0&&<details><summary className="cursor-pointer text-xs">Кадры диагностики · {images.current}</summary><div className="mt-2 grid grid-cols-2 gap-2">{history.current.filter(s=>s.image).map(s=><figure key={s.sequence}><Image src={s.image!} width={960} height={540} unoptimized alt={`Кадр теста ${(s.elapsedMs/1000).toFixed(1)} с`} className="w-full rounded border"/><figcaption className="text-[10px]">{(s.elapsedMs/1000).toFixed(1)} с · {s.inliers} опор · {s.progress==null?'позиция неизвестна':`${(s.progress*100).toFixed(1)}%`}</figcaption></figure>)}</div></details>}
