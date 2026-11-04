@@ -85,14 +85,17 @@ def bounded_localization_diagnostic(value, *, reason=None, source_family='unknow
 
 
 class RuntimeMetadataRing:
-    """One owned latest-snapshot writer; offers never perform filesystem I/O.
+    """One owned snapshot writer; offers never perform filesystem I/O.
 
     Keep the recent tail and the first confirmed movement-to-loss-to-recovery
-    sequence.
+    sequence. The first snapshot of a new run preserves the prior run in a
+    single fixed slot.
     Disk snapshots are coalesced to at most one per second. Close drops pending
     work and joins; diagnostics never grant or repeat input authority.
     """
     FILE = 'navigation-runtime-diagnostic.json'
+    PREVIOUS_FILE = 'navigation-runtime-diagnostic.previous.json'
+    SCHEMA = 'sphere-navigation-runtime-metadata-v1'
     MAX_ROWS = 64
     MAX_BYTES = 64 * 1024
     START_ROWS = 3
@@ -209,10 +212,45 @@ class RuntimeMetadataRing:
         except Exception:
             return False
 
-    def _write_snapshot(self, rows, milestones):
-        if self.path.is_symlink() or self.path.is_junction() or self.path.resolve().parent != self.folder:
+    def _check_snapshot_path(self, path):
+        if (path.is_symlink() or path.is_junction() or path.resolve().parent != self.folder
+                or (path.exists() and not path.is_file())):
             raise ValueError('runtime_diagnostic_path')
-        body = dict(schema='sphere-navigation-runtime-metadata-v1', scope='local_metadata_only',
+
+    def _replace_snapshot(self, path, raw):
+        self._check_snapshot_path(path)
+        temporary = self.folder / f'.{path.stem}.{self.identity}.tmp'
+        stream = temporary.open('xb')
+        try:
+            with stream:
+                stream.write(raw)
+            self._check_snapshot_path(path)
+            temporary.replace(path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def _previous_snapshot(self):
+        try:
+            with self.path.open('rb') as stream:
+                raw = stream.read(self.MAX_BYTES)
+        except FileNotFoundError:
+            return None
+        if len(raw) >= self.MAX_BYTES:
+            return None
+        try:
+            body = json.loads(raw)
+        except (ValueError, UnicodeError, RecursionError):
+            return None
+        if not isinstance(body, dict) or body.get('schema') != self.SCHEMA:
+            return None
+        identity = body.get('sessionId')
+        if isinstance(identity, str) and identity != self.identity and re.fullmatch(r'[0-9a-f]{32}', identity):
+            return raw
+        return None
+
+    def _write_snapshot(self, rows, milestones):
+        self._check_snapshot_path(self.path)
+        body = dict(schema=self.SCHEMA, scope='local_metadata_only',
                     sessionId=self.identity, physicalActions=0, executionQualified=False,
                     retentionPolicy=self.RETENTION_POLICY, milestones=milestones, rows=rows)
         raw = json.dumps(body, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode('utf-8')
@@ -220,18 +258,11 @@ class RuntimeMetadataRing:
             rows = rows[1:]
             body['rows'] = rows
             raw = json.dumps(body, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode('utf-8')
-        temporary = self.folder / ('.navigation-runtime-diagnostic.'+self.identity+'.tmp')
-        if temporary.exists() and (temporary.is_symlink() or temporary.is_junction()):
-            raise ValueError('runtime_diagnostic_path')
-        try:
-            with temporary.open('wb') as stream:
-                stream.write(raw)
-            if self.path.is_symlink() or self.path.is_junction():
-                raise ValueError('runtime_diagnostic_path')
-            temporary.replace(self.path)
-        finally:
-            if temporary.is_file() and not temporary.is_symlink():
-                temporary.unlink(missing_ok=True)
+        if not self.writes:
+            previous = self._previous_snapshot()
+            if previous is not None:
+                self._replace_snapshot(self.folder / self.PREVIOUS_FILE, previous)
+        self._replace_snapshot(self.path, raw)
 
     def _run(self):
         next_write = -math.inf

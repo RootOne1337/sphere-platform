@@ -68,6 +68,52 @@ def test_runtime_writer_is_singleton_and_close_releases_owned_thread(tmp_path):
     assert not second._thread.is_alive()
 
 
+def test_runtime_ring_preserves_previous_session_in_one_fixed_slot(tmp_path):
+    import time
+
+    from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
+
+    latest = tmp_path / RuntimeMetadataRing.FILE
+    previous = tmp_path / RuntimeMetadataRing.PREVIOUS_FILE
+
+    def publish(ring, sequence):
+        assert ring.offer(sequence=sequence, pose=dict(state='unknown', reason='route_pose_not_verified'))
+        deadline = time.monotonic() + 2.5
+        while time.monotonic() < deadline:
+            if latest.exists():
+                raw = latest.read_bytes()
+                saved = json.loads(raw)
+                if saved['sessionId'] == ring.identity and saved['rows'][-1]['sequence'] == sequence:
+                    return raw
+            time.sleep(.01)
+        raise AssertionError('expected runtime snapshot was not published')
+
+    first = RuntimeMetadataRing(tmp_path)
+    try:
+        first_raw = publish(first, 1)
+        assert not previous.exists()
+    finally:
+        first.close()
+
+    second = RuntimeMetadataRing(tmp_path)
+    try:
+        publish(second, 2)
+        assert previous.read_bytes() == first_raw
+        second_raw = publish(second, 3)
+        assert previous.read_bytes() == first_raw
+    finally:
+        second.close()
+
+    third = RuntimeMetadataRing(tmp_path)
+    try:
+        third_raw = publish(third, 4)
+        assert previous.read_bytes() == second_raw
+        assert len(second_raw) + len(third_raw) < 2 * RuntimeMetadataRing.MAX_BYTES
+    finally:
+        third.close()
+    assert set(tmp_path.iterdir()) == {latest, previous}
+
+
 def test_runtime_snapshot_preserves_first_pose_loss_after_tail_wrap_and_byte_trim(tmp_path, monkeypatch):
     import time
 

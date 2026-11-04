@@ -8,7 +8,8 @@ import json
 import time
 import uuid
 from collections import Counter
-from contextlib import closing
+from contextlib import closing, nullcontext
+from dataclasses import replace
 from pathlib import Path
 
 from scripts.pilot.resource_guard import collect, evaluate
@@ -27,7 +28,7 @@ def checked_frame(root, row):
     return data
 
 
-def run_window(route, views, speed_reference, sidecar, rows, *, projected=False):
+def run_window(route, views, speed_reference, sidecar, rows, *, start_mode="beginning", projected=False, anchored=False):
     import cv2 as cv
     import numpy as np
 
@@ -44,14 +45,21 @@ def run_window(route, views, speed_reference, sidecar, rows, *, projected=False)
         from scripts.pilot.route_projected_recovery import ProjectedRecoveryLocalizer
 
         tracker = ProjectedRecoveryLocalizer(route, **options)
+    elif anchored:
+        from motor_worker.route_descriptor_recovery import _validate_sidecar
+        from motor_worker.route_tracking import AnchoredRouteLocalizer
+
+        _validate_sidecar(route, sidecar)
+        profile = replace(sidecar.profile, width=960, height=540)
+        tracker = AnchoredRouteLocalizer(replace(sidecar, profile=profile), recovery_candidate_limit=8, **options)
     elif sidecar is not None:
         tracker = ReferenceLKRecoveryLocalizer(route, sidecar=sidecar, **options)
     else:
         tracker = ReferenceLKConfirmationLocalizer(route, **options)
     plans, skipped = [], 0
-    with closing(tracker):
+    with (nullcontext(tracker) if anchored else closing(tracker)):
         follower = VehicleRouteFollower(
-            route, speed_reference, clock=clock, reference_rotations=views, start_mode="beginning"
+            tracker.route, speed_reference, clock=clock, reference_rotations=views, start_mode=start_mode
         )
         first_ticks = rows[0][0]["relative_ticks_90k"]
         start = clock() + 0.02
@@ -71,6 +79,7 @@ def run_window(route, views, speed_reference, sidecar, rows, *, projected=False)
             frame = PolicyFrame(epoch, sequence, received, 960, 540, rgb)
             cv.setRNGSeed(17)
             pose = tracker.observe(frame, episode_id=episode, goal_revision=goal, scene="active")
+            compute_ms = (clock() - received) * 1000
             speed = read_live_speed(
                 image,
                 epoch=epoch,
@@ -87,6 +96,7 @@ def run_window(route, views, speed_reference, sidecar, rows, *, projected=False)
                     frame=sample["frame_index"],
                     seconds=sample["relative_ticks_90k"] / 90000,
                     frameAgeMs=(clock() - due) * 1000,
+                    poseComputeMs=compute_ms,
                     pose=pose.state,
                     poseReason=pose.reason,
                     center=pose.center,
@@ -140,10 +150,17 @@ def main():
         metavar=("NAME", "MANIFEST", "CAPTURE", "FROM", "TO"),
     )
     parser.add_argument("--compare-descriptor-recovery", action="store_true")
+    parser.add_argument("--compare-anchored-descriptors", action="store_true")
     parser.add_argument("--compare-projected-recovery", action="store_true")
+    parser.add_argument("--skip-baseline", action="store_true", help="run only the requested diagnostic methods")
+    parser.add_argument("--start-mode", choices=("beginning", "recognized_route"), default="beginning")
     args = parser.parse_args()
     if len(args.window) > 8:
         parser.error("at most eight bounded replay windows")
+    if args.skip_baseline and not any((args.compare_descriptor_recovery,
+                                      args.compare_anchored_descriptors,
+                                      args.compare_projected_recovery)):
+        parser.error("--skip-baseline requires a diagnostic method")
     root = Path.cwd().resolve()
     job, output = args.job.resolve(), args.output.resolve()
     if (
@@ -176,14 +193,17 @@ def main():
     receipt = json.loads((nav / "receipt.json").read_bytes())
     selected = attempt_source(job, nav)
     speed = load_speed_reference(job)
-    methods = {"vehicle_runtime_lk": None}
-    if args.compare_descriptor_recovery:
+    methods = {} if args.skip_baseline else {"vehicle_runtime_lk": None}
+    if args.compare_descriptor_recovery or args.compare_anchored_descriptors:
         recovery, _, _ = load_descriptor_recovery(
             nav, receipt, stamp=RouteWorkspaces._runtime_source_stamp
         )
         if recovery is None:
             raise ValueError("verified descriptor sidecar unavailable")
-        methods["diagnostic_descriptor_recovery"] = recovery
+        if args.compare_descriptor_recovery:
+            methods["diagnostic_descriptor_recovery"] = recovery
+        if args.compare_anchored_descriptors:
+            methods["diagnostic_anchored_descriptors"] = recovery
     if args.compare_projected_recovery:
         methods["diagnostic_projected_recovery"] = None
     output.mkdir()
@@ -195,7 +215,7 @@ def main():
         physicalActions=0,
         androidFeedback=False,
         closedLoop=False,
-        startMode="beginning",
+        startMode=args.start_mode,
         windows=[],
     )
     with closing(ReferenceLKRoute.load(nav / "route.json", sha256=receipt["sha256"])) as route:
@@ -236,7 +256,9 @@ def main():
                     speed,
                     sidecar,
                     rows,
+                    start_mode=args.start_mode,
                     projected=method == "diagnostic_projected_recovery",
+                    anchored=method == "diagnostic_anchored_descriptors",
                 )
                 print(label, method, {k: v for k, v in result.items() if k != "rows"}, flush=True)
                 (output / "report.json").write_text(
