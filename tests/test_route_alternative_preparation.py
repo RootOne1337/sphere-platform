@@ -282,7 +282,7 @@ class AlternativePreparationTests(unittest.TestCase):
              patch('scripts.pilot.route_preparation_source.attempt_source',
                    side_effect=[selected, selected, ValueError('source_changed_during_load')]), \
              patch('motor_worker.route_reference_lk.ReferenceLKRoute.load', return_value=route), \
-             patch('motor_worker.route_reference_lk.ReferenceLKLocalizer', return_value=tracker):
+             patch('motor_worker.route_confirmation.ReferenceLKConfirmationLocalizer', return_value=tracker):
             with self.assertRaisesRegex(ValueError, 'source_changed_during_load'):
                 self.workspace.start_live(self.job, body)
         tracker.close.assert_called_once()

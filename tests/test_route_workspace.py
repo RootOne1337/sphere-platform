@@ -493,6 +493,57 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.assertEqual(stopped['diagnostics']['state'],'saved')
         self.assertTrue((self.job/'walk-diagnostics'/('f'*32+'.zip')).exists())
 
+    def test_observation_quota_retires_session_and_preserves_opt_in_jpeg(self):
+        import zipfile
+
+        import cv2 as cv
+        import numpy as np
+
+        from scripts.pilot.walk_diagnostics import WalkFrameArchive
+
+        self.attach_fixture_map()
+        identity = 'd' * 32
+        archive = WalkFrameArchive(self.job, identity, clock=lambda: self.now)
+        self.workspace.live.update(frame_archive=archive, observation_limit=1)
+        _, encoded = cv.imencode('.jpg', np.zeros((540, 960, 3), np.uint8))
+        raw = encoded.tobytes()
+        query = dict(id=identity, captureEpoch='e' * 32, sequence=1)
+        self.workspace.observe_jpeg(self.job, query, raw)
+        folder = self.job / 'walk-diagnostics'
+        self.assertFalse(folder.exists())
+
+        with self.assertRaisesRegex(ValueError, 'route_live_observation_quota'):
+            self.workspace.observe_jpeg(self.job, dict(query, sequence=2), raw)
+
+        self.assertIsNone(self.workspace.live)
+        self.assertIn(identity, self.workspace.retired)
+        with zipfile.ZipFile(folder / (identity + '.zip')) as saved:
+            self.assertEqual(saved.namelist(), ['frame-000001.jpg', 'metadata.json'])
+            self.assertEqual(saved.read('frame-000001.jpg'), raw)
+
+    def test_archive_failure_after_source_change_does_not_override_retirement(self):
+        from types import SimpleNamespace
+
+        self.attach_fixture_map()
+        session = self.workspace.live
+        path = self.job / 'geometry.json'
+        finish_called = []
+
+        def failing_finish():
+            self.assertIsNone(self.workspace.live)
+            self.assertIn(session['id'], self.workspace.retired)
+            finish_called.append(True)
+            raise OSError('diagnostic disk unavailable')
+
+        session.update(source_paths=(path,), source_stamp=self.workspace._runtime_source_stamp((path,)),
+                       frame_archive=SimpleNamespace(finish=failing_finish))
+        path.write_text('{"replaced":true}')
+        with self.assertRaisesRegex(ValueError, 'route_source_changed'):
+            self.workspace._validate_live_source(session)
+
+        self.assertEqual(finish_called, [True])
+        self.assertIsNone(self.workspace.live)
+
     def test_walk_requires_separate_confirmation_and_cannot_promote_observer(self):
         self.attach_fixture_map()
         body=dict(id='d'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True)

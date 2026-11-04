@@ -374,10 +374,18 @@ class RouteWorkspaces:
         now = self.clock()
         self.retired = {identity: deadline for identity, deadline in self.retired.items() if deadline > now}
         if self.live and self.clock() >= self.live['deadline']:
-            self._finish_diagnostics(self.live)
-            self.retired[self.live['id']] = now + 600
-            self._close_runtime(self.live)
-            self.live = None
+            self._retire_live(self.live, now)
+
+    def _retire_live(self, session, now):
+        # Fence the session before optional, bounded archive I/O. Browser
+        # input ownership remains independent of the local diagnostic write.
+        self.retired[session['id']] = now + 600
+        self.live = None
+        try:
+            self._close_runtime(session)
+        finally:
+            diagnostics = self._finish_diagnostics(session)
+        return diagnostics
 
     @staticmethod
     def _close_runtime(session):
@@ -415,15 +423,18 @@ class RouteWorkspaces:
             except (OSError, ValueError):
                 unchanged = False
             if not unchanged:
-                self.retired[session['id']] = self.clock()+600
-                self._close_runtime(session)
-                self.live = None
+                self._retire_live(session, self.clock())
                 raise ValueError('route_source_changed')
 
     @staticmethod
     def _finish_diagnostics(session):
-        try:return session['frame_archive'].finish() if session.get('frame_archive') else None
-        except (OSError,ValueError):return dict(state='unconfirmed',frames=0,bytes=0)
+        archive = session.get('frame_archive')
+        if archive is None:
+            return None
+        try:
+            return archive.finish()
+        except Exception:
+            return dict(state='unconfirmed', frames=0, bytes=0)
 
     def live_status(self):
         self._expire()
@@ -569,12 +580,11 @@ class RouteWorkspaces:
             raise ValueError('route_session_mode_changed')
         if body['id'] not in self.retired and len(self.retired) >= 2048:
             raise ValueError('route_session_retirement_quota')
-        self.retired[body['id']] = self.clock() + 600  # Fence a delayed start.
+        now = self.clock()
         if self.live and self.live['id'] == body['id'] and self.live['job'] == job.name:
-            diagnostics=self._finish_diagnostics(self.live)
-            self._close_runtime(self.live)
-            self.live = None
+            diagnostics = self._retire_live(self.live, now)
             return dict(phase='closed',physicalActions=0,diagnostics=diagnostics)
+        self.retired[body['id']] = now + 600  # Fence a delayed start.
         return dict(phase='closed', physicalActions=0)
 
     def start_walk(self, job, body):
@@ -627,9 +637,7 @@ class RouteWorkspaces:
                         startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
                         observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v8')
         except BaseException:
-            self.retired[body['id']] = self.clock()+600
-            self._close_runtime(self.live)
-            self.live = None
+            self._retire_live(self.live, self.clock())
             raise
 
     def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1',max_seconds=60):
@@ -726,9 +734,7 @@ class RouteWorkspaces:
                         hudProfile=body['hudProfile'], observationProtocol='jpeg_binary_v1',
                         motionProtocol='applied_vehicle_v1', clientVersion='vehicle_live_v1')
         except BaseException:
-            self.retired[body['id']] = self.clock() + 600
-            self._close_runtime(self.live)
-            self.live = None
+            self._retire_live(self.live, self.clock())
             raise
     def start_replay(self,job,body):
         """The real pose/planner path, with a separate recorded-input protocol.
@@ -786,16 +792,12 @@ class RouteWorkspaces:
         if session.get('runtime_family') == 'reference_lk':
             from scripts.pilot.route_preparation_source import attempt_cancelled
             if attempt_cancelled(job, session['preparation_folder']):
-                self.retired[session['id']] = self.clock()+600
-                self._close_runtime(session)
-                self.live = None
+                self._retire_live(session, self.clock())
                 raise RuntimeError('cancelled')
         session['sequence'] = body['sequence']
         session['observations'] += 1
         if session['observations'] > session.get('observation_limit',1200):
-            self.retired[session['id']] = self.clock() + 600
-            self._close_runtime(session)
-            self.live = None
+            self._retire_live(session, self.clock())
             raise ValueError('route_live_observation_quota')
         frame = PolicyFrame(session['epoch'], body['sequence'], now, 960, 540, rgb)
         pose = session['tracker'].observe(frame, episode_id=session['episode'], goal_revision=session['goal'], scene='active')
