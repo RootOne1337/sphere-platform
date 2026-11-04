@@ -11,7 +11,9 @@
     "whole_route_review": "b608514e3710a1c33903d42f056492613e13b62fe14e39b8520132dec5a34cf2",
     "batch97": "8859245b78dcbfb3f220344d7a6a56fa2a184db18abc7d354ab5eded72a9d848",
     "clock_correction": "05a37dc1eec21d481db224b58331a641bdf5dfb41eefe4eb05280d8e1a24b177",
-    "exact_orientation_aliases": "57322295ac09988a77d3f254a3d573a3ec672e29c1c8220bc3b1835390d1b1d3"
+    "exact_orientation_aliases": "57322295ac09988a77d3f254a3d573a3ec672e29c1c8220bc3b1835390d1b1d3",
+    "rejected_live_anchor": "bcf86c0f411a5bb8dcd77ba807592de5b163955869182c219d4522ad4f7c4010",
+    "optional_minimap_cue": "e23055bd165365ef1661e0d9802ed9a2e23fb10ea33c1caf69f93e41962df4ba"
   },
   "balanced116": {
     "attempted_counts": {
@@ -242,5 +244,87 @@
       "full_spatial_pass": true,
       "first_refusal": "positive_depth_error3_fraction"
     }
-  ]
+  ],
+  "rejected_live_anchor": {
+    "consumed_queries": 177,
+    "counts": {
+      "unknown": 20,
+      "confirming": 18,
+      "localized": 139
+    },
+    "source_end_reached": true,
+    "taught_queries": 41,
+    "compute_ms": {
+      "n": 177,
+      "min": 0.6423000013455749,
+      "median": 25.885099996230565,
+      "p95": 146.75641999347124,
+      "p99": 486.8254799942952,
+      "max": 560.4850000090664
+    },
+    "source_time_center_errors": {
+      "confirming": {
+        "n": 18,
+        "min": 3.46976601620572e-05,
+        "median": 0.0063860078042107925,
+        "p95": 0.03381738006462746,
+        "p99": 0.041629566382686306,
+        "max": 0.043582612962201034
+      },
+      "localized": {
+        "n": 139,
+        "min": 2.9979373306842096e-05,
+        "median": 0.013223164080961369,
+        "p95": 0.8601629988055712,
+        "p99": 4.123920300008097,
+        "max": 5.338439137414099
+      }
+    }
+  },
+  "live_anchor_limit": "Nine localized outputs exceeded 0.2 native source units; max 5.338. Rejected. 22 source indices overlap prior run; not a paired causal latency comparison.",
+  "minimap_cue": {
+    "reference_count": 173,
+    "reference_available": 173,
+    "retained_signature_bytes": 885760,
+    "night_alias_evaluation": {
+      "count": 7,
+      "source_time_neighborhood_top1": 7,
+      "source_time_neighborhood_seconds": 0.35,
+      "top1_scores": [
+        0.9883678555488586,
+        0.9779524803161621,
+        0.9746172428131104,
+        0.9864137172698975,
+        0.9156348705291748,
+        0.9638096690177917,
+        0.9906938672065735
+      ],
+      "source_time_not_matching_hint": true,
+      "independent_ground_truth": false
+    },
+    "compute_ms": {
+      "median": 6.889500000397675,
+      "p95": 7.011330004024785,
+      "maximum": 7.029599990346469
+    },
+    "black_control": {
+      "reason": "no_hint_circle_not_visible",
+      "hint_given": false
+    },
+    "negative_bank": {
+      "total": 89,
+      "attempted_matching": 0,
+      "no_hint_unknown_hud_profile": 89,
+      "reason": "manifest has no calibrated minimap HUD profile; first source PNG manually inspected without HUD",
+      "negative_qualification_claimed": false
+    },
+    "limits": [
+      "All seven successful alias evaluations are from the same recording and were selected as known difficult cases before the experiment.",
+      "Crossclip start has a wrong rotated-road top1 and correct start onlythird; correlation can only be an optional retrieval/disambiguation cue.",
+      "No PnP was rerun, no pose or vote was created, no controller or native input was used.",
+      "The89-image bank has no calibrated HUD and was not used to claim negative map-recognition accuracy.",
+      "Only independently source-calibrated circle/visibility changed fromV1; masks,32x32gradients,24rotations,3scales andmasked Pearson scoring stayedfixed."
+    ]
+  },
+  "minimap_limit": "Retrieval only. Daytime start received a rotated wrong-road top1, true-start third; near-ties remain. No independent place accuracy or PnP/control admission."
 }
