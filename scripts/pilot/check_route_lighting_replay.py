@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import time
 from collections import Counter
 from contextlib import closing, nullcontext
@@ -25,6 +26,9 @@ from scripts.pilot.route_workspace import (
 
 POLICIES = ("lk", "recovery", "recovery-prewarm", "recovery720", "recovery640")
 SIZE = (960, 540)
+CAPTURE_FILES = ("manifest.json", "COMPLETE", "video.h264", "frames.jsonl", "inputs.jsonl")
+HOLDOUT_MAX_WINDOWS = 6
+HOLDOUT_MAX_SPAN = 216000
 
 
 def sample_windows(frames, end, excluded, windows, samples, *, allow_short=False):
@@ -100,6 +104,85 @@ def archived_frames(path, geometry_sha):
         if any(right[1] <= left[1] for left, right in zip(batch, batch[1:])):
             raise ValueError("route_lighting_archive_frame_order")
         return batch
+
+
+def holdout_window(value):
+    try:
+        start, end = map(float, value.split(":"))
+        if not all(math.isfinite(at) and 0 <= at <= 601 for at in (start, end)):
+            raise ValueError
+        ticks = round(start * 90000), round(end * 90000)
+        if not 0 < ticks[1] - ticks[0] <= HOLDOUT_MAX_SPAN:
+            raise ValueError
+        return ticks
+    except ValueError:
+        raise argparse.ArgumentTypeError("expected START:END seconds, with 0 < END - START <= 2.4") from None
+
+
+def validate_holdout_windows(windows, end):
+    ordered = sorted(windows)
+    if (not 1 <= len(ordered) <= HOLDOUT_MAX_WINDOWS
+            or any(not 0 <= start < stop <= end or stop - start > HOLDOUT_MAX_SPAN
+                   for start, stop in ordered)
+            or any(left[1] > right[0] for left, right in zip(ordered, ordered[1:]))):
+        raise ValueError("route_lighting_holdout_window_scope")
+    return ordered
+
+
+def sample_holdout_windows(frames, windows):
+    """Sample half-open windows without modifying media timestamps or compressing gaps."""
+    import cv2 as cv
+
+    batches = [[] for _ in windows]
+    at, next_tick, previous = 0, windows[0][0], -1
+    with closing(frames):
+        for row, frame in frames:
+            ticks = row["relative_ticks_90k"]
+            if ticks <= previous:
+                raise ValueError("route_lighting_holdout_frame_order")
+            previous = ticks
+            while ticks >= windows[at][1]:
+                at += 1
+                if at == len(windows):
+                    break
+                next_tick = windows[at][0]
+            if at == len(windows):
+                break
+            if ticks < next_tick:
+                continue
+            rgb = cv.resize(frame.to_ndarray(format="rgb24"), SIZE, interpolation=cv.INTER_AREA)
+            batches[at].append((row["index"], ticks / 90000, rgb))
+            next_tick = ticks + 18000
+    if not all(batches):
+        raise ValueError("route_lighting_holdout_empty_window")
+    return batches
+
+
+def independent_capture(source, holdout, source_hashes):
+    from motor_worker.browser_teach import validate_browser
+
+    if source_hashes[str(source / "video.h264")] == source_hashes[str(holdout / "video.h264")]:
+        raise ValueError("route_lighting_holdout_same_source_video")
+    capture = validate_browser(holdout)
+    if capture.geometry[0] * SIZE[1] != capture.geometry[1] * SIZE[0]:
+        raise ValueError("route_lighting_holdout_geometry")
+    return capture
+
+
+def holdout_coverage(windows, runs):
+    evidence = []
+    for (first, last), run in zip(windows, runs, strict=True):
+        start, end = first / 90000, last / 90000
+        localized = [row["mediaSeconds"] for row in run["rows"] if row["localizedOnTime"]]
+        boundaries = [start, *localized, end]
+        evidence.append(dict(
+            windowSeconds=[start, end],
+            scheduled=len(run["rows"]) + run["dropped"],
+            localizedOnTime=len(localized),
+            firstLocalizedAfterSeconds=localized[0] - start if localized else None,
+            longestWithoutLocalizedFrameSeconds=max(right - left for left, right in zip(boundaries, boundaries[1:])),
+        ))
+    return evidence
 
 
 def reduced_features(width):
@@ -221,13 +304,17 @@ def run(args):
         raise ValueError("route_lighting_replay_requires_ready_map")
     receipt = checked_json(nav / "receipt.json")
     capture_folder = job / "input"
+    holdout = args.holdout.resolve(strict=True) if args.holdout else None
+    if holdout is not None and output.resolve().is_relative_to(holdout):
+        raise ValueError("route_lighting_report_scope")
     source_files = [job / "navigation/active.json", nav / "receipt.json", nav / "route.json",
-                    nav / "reference-lk.npz", *(capture_folder / name for name in
-                    ("manifest.json", "COMPLETE", "video.h264", "frames.jsonl", "inputs.jsonl"))]
+                    nav / "reference-lk.npz", *(capture_folder / name for name in CAPTURE_FILES)]
     if args.archive:
         source_files.append(args.archive.resolve(strict=True))
     if args.diagnostic:
         source_files.extend(path.resolve(strict=True) for path in args.diagnostic)
+    if holdout is not None:
+        source_files.extend(holdout / name for name in CAPTURE_FILES)
     cv.setNumThreads(2)
     with TaskResourceMonitor(ROOT) as monitor:
         budget = route_resource_profile(job)
@@ -240,6 +327,15 @@ def run(args):
         before = {str(path): digest_file(path) for path in source_files}
         if before[str(capture_folder / "manifest.json")] != receipt["source_capture_sha256"]:
             raise ValueError("route_lighting_capture_binding")
+        holdout_details, holdout_batches, ranges = None, [], []
+        if holdout is not None:
+            held_out = independent_capture(capture_folder, holdout, before)
+            ranges = validate_holdout_windows(args.holdout_window, held_out.frames[-1]["relative_ticks_90k"])
+            holdout_batches = sample_holdout_windows(decoded_browser(held_out), ranges)
+            holdout_details = dict(videoSha256=before[str(holdout / "video.h264")],
+                                   requestedWindowsSeconds=[[start/90000, end/90000] for start, end in ranges],
+                                   sampling="original timestamps, at most 5 Hz, fresh observer per window",
+                                   independentGeometricGroundTruth=False)
         capture = validate_browser(capture_folder)
         with closing(ReferenceLKRoute.load(nav / "route.json", sha256=receipt["sha256"])) as route:
             windows = sample_windows(decoded_browser(capture), capture.frames[-1]["relative_ticks_90k"],
@@ -280,6 +376,12 @@ def run(args):
                 groups[f"vehicle_diagnostic_video/{policy}"] = [
                     replay(batch, policy, "original", route, attachment, args.seed, compare_trace=False)
                     for batch in diagnostic_windows]
+            for policy in args.policies if holdout_batches else ():
+                resource_checkpoint(output.parent, profile=budget, snapshot=monitor.sample())
+                runs = groups[f"independent_gameplay_holdout/{policy}"] = [
+                    replay(batch, policy, "original", route, attachment, args.seed, compare_trace=False)
+                    for batch in holdout_batches]
+                holdout_details.setdefault("windowCoverage", {})[policy] = holdout_coverage(ranges, runs)
         if any(digest_file(Path(path)) != value for path, value in before.items()):
             raise RuntimeError("route_lighting_replay_source_changed")
     report = dict(scope="OFFLINE_RECORDED_OBSERVER_ONLY", physicalActions=0, sourceFilesUnchanged=True,
@@ -287,6 +389,8 @@ def run(args):
                   seed=args.seed, lightingPolicy=LIGHTING_POLICY, sourceFiles=before,
                   summary={key: summary(value) for key, value in groups.items()},
                   groups=groups)
+    if holdout_details is not None:
+        report["independentGameplayHoldout"] = holdout_details
     with output.open("x", encoding="utf-8") as file:
         json.dump(report, file, indent=2, allow_nan=False)
     print(json.dumps(report["summary"]))
@@ -298,6 +402,9 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--archive", type=Path)
     parser.add_argument("--diagnostic", type=Path, nargs=3, metavar=("VIDEO", "INDEX", "METADATA"))
+    parser.add_argument("--holdout", type=Path, metavar="INPUT_DIRECTORY")
+    parser.add_argument("--holdout-window", action="append", type=holdout_window, default=[], metavar="START:END",
+                        help="Half-open window in source seconds, up to 2.4 seconds. Repeat up to six times.")
     parser.add_argument("--profiles", nargs="+", choices=LIGHTING_PROFILES, default=LIGHTING_PROFILES)
     parser.add_argument("--policies", nargs="+", choices=POLICIES, default=("lk", "recovery"))
     parser.add_argument("--windows", type=int, choices=range(2, 7), default=4)
@@ -306,6 +413,8 @@ def main():
     args = parser.parse_args()
     if len(set(args.profiles)) != len(args.profiles) or len(set(args.policies)) != len(args.policies):
         parser.error("profiles and policies must be unique")
+    if bool(args.holdout) != bool(args.holdout_window) or len(args.holdout_window) > HOLDOUT_MAX_WINDOWS:
+        parser.error("--holdout requires one to six --holdout-window values")
     run(args)
 
 
