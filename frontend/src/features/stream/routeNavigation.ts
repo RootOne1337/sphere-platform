@@ -1,6 +1,6 @@
 /** Read-only same-query-frame preview. No native input/model permit. */
 import {routeCameraFrame,type RouteMapCamera} from './routeMapProjection';
-export type NavigationReply = {id:string;sequence:number;captureEpoch:string;jpegSha256:string;computeMs:number;method:string;geometrySha256?:string;referenceTicks90k?:number|null;
+export type NavigationReply = {id:string;sequence:number;captureEpoch:string;jpegSha256:string;computeMs:number;method:string;geometrySha256?:string;referenceTicks90k?:number|null;localizationDiagnostic?:unknown;
   physicalActions:0;executionQualified:false;groundRoute:false;pose:{state:'unknown'|'confirming'|'localized';reason:string;
     inliers:number;segment:number|null;progress_units:number|null;polyline_px:[number,number][];center?:number[]|null;rotation?:number[]|null;median_error_px?:number|null;cross_track_units?:number|null}};
 export function navigationReply(value:unknown,id:string,epoch:string,sequence:number,jpegSha256:string):NavigationReply|null {

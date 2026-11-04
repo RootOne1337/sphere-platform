@@ -27,6 +27,22 @@ test('samples are bounded and invalid clock values do not become evidence',()=>{
   expect(log.size).toBe(1200);expect(log.export().samplesOmitted).toBe(3);
 });
 
+test('export keeps verified stage counts distinct from a missing pose',()=>{
+  const log=new RouteNavigationDiagnostics('job',null,1000);
+  const diagnostic={schema:'sphere-localization-observation-diagnostic-v1',candidateCount:3,
+    maxRetainedLkCount:0,verifiedCandidateCount:0,candidateReferenceIndices:[165,171,170]};
+  const reply={...valid(),localizationDiagnostic:{...diagnostic,internal:'secret-payload'}};
+  log.add({...reply,pose:{...reply.pose,state:'unknown',inliers:0,polyline_px:[]}},1100,1150);
+  log.add({...reply,localizationDiagnostic:{...diagnostic,verifiedCandidateCount:4}},1150,1200);
+  const {samples}=log.export();
+  expect(samples[0]).toMatchObject({state:'unknown',localizationDiagnostic:diagnostic});
+  expect(samples[1].localizationDiagnostic).toBeNull();
+  expect(JSON.stringify(samples)).not.toContain('secret-payload');
+  samples[0].localizationDiagnostic!.candidateCount=1;
+  samples[0].localizationDiagnostic!.candidateReferenceIndices![0]=0;
+  expect(log.export().samples[0].localizationDiagnostic).toEqual(diagnostic);
+});
+
 test('malformed segment, progress, method or reason never enters diagnostics',()=>{
   const base=response();
   for(const value of [

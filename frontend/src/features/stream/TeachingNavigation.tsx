@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button';
 import {reconstructionRequest,ReconstructionResponseError,type NavigationState,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import {freshNavigationFrame,navigationReply,paintNavigation,type LiveRouteObservation} from './routeNavigation';
 import {RouteNavigationDiagnostics} from './routeNavigationDiagnostics';
+import {readLocalizationDiagnostic,type LocalizationDiagnostic} from './routeLocalizationDiagnostic';
 import {cameraMotionRequiresReview,navigationErrorLabel,navigationPhaseLabel,routeCoverageLabel,routeReadinessIssue,prepareRoute,preparationError,preparationQuotaReached} from './routePreparation';
 import type {TeachingClipChoice} from './TeachingReview';
 import {WalkingRoutePilot,VehicleRoutePilot} from './WalkingRoutePilot';
@@ -20,6 +21,8 @@ import type {DiagnosticVideoCapture,DiagnosticVideoConfig} from './vehicleDiagno
 import {navigationExpectedSource,navigationGeometryIdentity,navigationPreparationSource,navigationReadyForGeometry,type NavigationGeometrySelection} from './navigationGeometrySource';
 type Binding={captureEpoch:string;width:number;height:number};
 const identity=()=>crypto.randomUUID().replaceAll('-','');
+const initialMetrics={observations:0,known:0,confirming:0,unknown:0,late:0,age:0,compute:0,inliers:null as number|null,
+  segment:null as number|null,diagnostic:null as LocalizationDiagnostic|null};
 export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,scope=null,onSelectClip,selectionDisabled=false,walkInput,vehicleInput,onReview,sourceRecording=null,beginVehicleVideo}:{job:ReconstructionJob|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;binding:Binding|null;clips?:TeachingClipChoice[];clip?:string|null;scope?:string|null;onSelectClip?:(id:string|null)=>void;selectionDisabled?:boolean;walkInput?:WalkInputControl;vehicleInput?:VehicleInputControl;onReview?:()=>void;sourceRecording?:RouteSource|null;beginVehicleVideo?:(config:DiagnosticVideoConfig)=>DiagnosticVideoCapture|null}) {
   const expectedManifestSha=sourceRecording?.clip===clip&&sourceRecording.scope===scope?sourceRecording.manifestSha:null;
   const assetSelection=JSON.stringify([job?.id,job?.key,clip,scope,expectedManifestSha]);
@@ -47,7 +50,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     selectedAlternative?preparationSource?'Схема уже рассчитана. Осталось подготовить карту узнавания из её сохранённых ориентиров, без повторной реконструкции.':'Схема сохранена. Обработчик ещё не подтвердил исходные измерения для подготовки карты из этого результата.':routeReadinessIssue(source,assets);
   const changeGeometry=useCallback((value:NavigationGeometrySelection|null)=>{setGeometrySelection(value);if(value)setGeometryChoice(value.alternativeId??'primary');},[]);
   const [confirmed,setConfirmed]=useState(false),[running,setRunning]=useState(false),[busy,setBusy]=useState(false),[hz,setHz]=useState(5);
-  const [metrics,setMetrics]=useState({observations:0,known:0,unknown:0,late:0,age:0,compute:0,inliers:0,segment:null as number|null});
+  const [metrics,setMetrics]=useState(initialMetrics);
   const [diagnosticCount,setDiagnosticCount]=useState(0);
   const [walking,setWalking]=useState(false);
   const [replaying,setReplaying]=useState(false);
@@ -82,6 +85,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     // the user's confirmation. Close the observer on the job that opened it.
     if(session.current)stopRef.current();
     setConfirmed(false);
+    setMetrics(initialMetrics);
   },[job?.id,job?.key,clip,scope,expectedManifestSha,selectedGeometryIdentity,expectedSourceIdentity,binding?.captureEpoch,binding?.width,binding?.height]);
   useEffect(()=>{diagnostics.current=null;setDiagnosticCount(0);},[job?.id,clip,scope]);
   useEffect(()=>{setPrepareNotice(null);},[job?.id,selectedGeometryIdentity]);
@@ -144,7 +148,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
         body:JSON.stringify({id,captureEpoch:epoch,width:source.width,height:source.height,sceneConfirmed:true,...(expectedSource?{expectedSource}:{})})})).json();
       if(current!==generation.current||selection!==selected.current)return;
       if(state.phase!=='observing'||state.id!==id||state.physicalActions!==0)throw Error('route_start_not_confirmed');
-      setBusy(false);setRunning(true);setMetrics({observations:0,known:0,unknown:0,late:0,age:0,compute:0,inliers:0,segment:null});
+      setBusy(false);setRunning(true);setMetrics(initialMetrics);
       diagnostics.current=new RouteNavigationDiagnostics(job.id,clip,performance.now());setDiagnosticCount(0);
       if(session.current?.id===id)session.current.log=diagnostics.current;
       const scratch=document.createElement('canvas');scratch.width=960;scratch.height=540;
@@ -176,7 +180,10 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
           const draw=output.current?.getContext('2d');if(draw){paintNavigation(draw,scratch,reply);displayed.current=recent.sequence;}
           // Hide this exact query result on expiry even if the raw video keeps moving.
           setTimeout(()=>{if(current===generation.current&&displayed.current===recent.sequence)clear();},Math.max(0,250-age));
-          setMetrics(m=>({observations:m.observations+1,known:m.known+Number(reply.pose.state==='localized'),unknown:m.unknown+Number(reply.pose.state==='unknown'),late:m.late,age,compute:reply.computeMs,inliers:reply.pose.inliers,segment:reply.pose.segment}));
+          setMetrics(m=>({...m,observations:m.observations+1,known:m.known+Number(reply.pose.state==='localized'),
+            confirming:m.confirming+Number(reply.pose.state==='confirming'),unknown:m.unknown+Number(reply.pose.state==='unknown'),
+            age,compute:reply.computeMs,inliers:reply.pose.state==='unknown'?null:reply.pose.inliers,segment:reply.pose.segment,
+            diagnostic:readLocalizationDiagnostic(reply.localizationDiagnostic)}));
           setNotice(reply.pose.state==='localized'?'Ориентиры найдены. Сверяйте линию камеры с реальной сценой.':reply.pose.state==='confirming'?'Проверяем согласованность нескольких наблюдений…':'Положение неизвестно. Направление не выдумывается.');
         }catch(error){if(current===generation.current&&selection===selected.current){stopRef.current();setNotice(`Проверка остановлена: ${error instanceof Error?error.message:'нет ответа'}. Автоматического перезапуска нет.`);}}
         finally{if(current===generation.current&&selection===selected.current&&!request.signal.aborted)setTimeout(()=>{void observe();},Math.max(0,1000/hz-(performance.now()-began)));}
@@ -202,7 +209,8 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     <div hidden={panel!=='observer'} className="space-y-3">
     {sourceView(<div className="overflow-hidden rounded-xl border border-border bg-black"><div className="flex items-center justify-between gap-3 bg-background/95 px-3 py-2 text-[11px]"><span className="font-medium">Живой кадр и путь камеры</span><span className={running?'text-emerald-500':'text-muted-foreground'}>{running?'Наблюдение включено':'Ожидает запуска'}</span></div><canvas ref={output} width={960} height={540} aria-label="Свежий кадр с направлением маршрута" className="aspect-video w-full"/></div>,panel==='observer')}
     <p role="status" className="rounded-lg border border-border/70 bg-background/60 px-3 py-2 text-xs leading-5">{selectedAlternative&&!mapReady&&!running&&!busy?assetError??preparationIssue:notice}</p>
-    <div className="grid grid-cols-2 gap-2 text-xs tabular-nums sm:grid-cols-3">{[['Привязка',`${metrics.known} / ${metrics.observations}`],['Расчёт',`${metrics.compute.toFixed(1)} мс`],['Кадр → ответ',`${metrics.age.toFixed(1)} мс`],['3D-опоры',String(metrics.inliers)],['Не определено',String(metrics.unknown)],['Опоздало',String(metrics.late)]].map(([label,value])=><div key={label} className="rounded-lg border border-border/70 bg-background/50 p-2.5"><p className="text-muted-foreground">{label}</p><p className="mt-1 font-semibold">{value}</p></div>)}</div>
+    <div className="grid grid-cols-2 gap-2 text-xs tabular-nums sm:grid-cols-3">{[['Подтверждённые позы',`${metrics.known} / ${metrics.observations}`],['В серии подтверждения',String(metrics.confirming)],['Без позы',String(metrics.unknown)],['Кадр → ответ',metrics.observations?`${metrics.age.toFixed(1)} мс`:'—'],['Инлайеры позы',metrics.inliers??'—'],['Опоздало',String(metrics.late)]].map(([label,value])=><div key={label} className="rounded-lg border border-border/70 bg-background/50 p-2.5"><p className="text-muted-foreground">{label}</p><p className="mt-1 font-semibold">{value}</p></div>)}</div>
+    <p className="truncate text-xs leading-5 text-muted-foreground" aria-label="Этапы узнавания кадра">Последний своевременный ответ · ракурсов {metrics.diagnostic?.candidateCount??'—'} · пар LK до {metrics.diagnostic?.maxRetainedLkCount??'—'} · геометрических гипотез {metrics.diagnostic?.verifiedCandidateCount??'—'} · расчёт {metrics.observations?`${metrics.compute.toFixed(1)} мс`:'—'}</p>
     </div>
     <p className="text-xs text-muted-foreground">Реконструкция: {job?job.id.slice(0,8):'не выбрана'} · карта: {navigationPhaseLabel(assets?.phase)}{metrics.segment===null?'':` · участок ${metrics.segment+1}`}</p>
     {selectedAlternative&&<div aria-label="Подготовка карты выбранной схемы" className="space-y-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4 text-xs">

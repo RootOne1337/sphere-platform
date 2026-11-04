@@ -158,11 +158,11 @@ test('vehicle initial acquisition, acquired movement and later loss retain disti
     return {json:async()=>value} as Response;
   });
   f.startVehicle();await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('Ищем положение по ориентирам'));
-  expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('Кандидаты: 3 · LK макс.: 12 · PnP: 0');
+  expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('Ракурсов 3 · пар LK до 12 · геометрических гипотез 0');
   expect(screen.getByLabelText('Диагностика локализации')).toHaveClass('h-10');
   expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();expect(f.vehicleLease.neutral).toHaveBeenCalled();
   stage='following';now+=200;fresh();await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalled());
-  expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('LK макс.: 72 · PnP: 1');
+  expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('пар LK до 72 · геометрических гипотез 1');
   stage='lost';now+=200;fresh();await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('Положение потеряно'));
   const history=screen.getByRole('table');
   expect(history).toHaveTextContent('Ищем положение по ориентирам; педали отпущены');
