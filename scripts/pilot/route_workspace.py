@@ -433,9 +433,10 @@ class RouteWorkspaces:
                     observations=self.live['observations'], secondsRemaining=max(0, self.live['deadline']-self.clock()),
                     confirmationPolicy=getattr(self.live['tracker'], 'confirmation_policy', None),
                     confirmationRuntimeSha256=getattr(self.live['tracker'], 'confirmation_runtime_sha256', None),
+                    descriptorRecoveryPolicy=self.live.get('descriptor_recovery_policy'),
                     physicalActions=0)
 
-    def start_live(self, job, body, *, mode='live'):
+    def start_live(self, job, body, *, mode='live', observation_only=True):
         import cv2 as cv
         from motor_worker.route_localization import SparseRoute
         from motor_worker.route_tracking import AnchoredRouteLocalizer
@@ -499,11 +500,25 @@ class RouteWorkspaces:
         if not reference_lk:
             route = replace(route, profile=replace(route.profile, width=960, height=540))
         epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
+        recovery_paths, recovery_stamp, recovery_policy = (), None, None
         try:
-            tracker = (ReferenceLKConfirmationLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
-                                           clock=self.clock, candidate_limit=3) if reference_lk else
-                       AnchoredRouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
-                                              clock=self.clock, recovery_candidate_limit=8))
+            options = dict(capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=self.clock)
+            if reference_lk:
+                sidecar = None
+                if mode == 'live' and observation_only:
+                    from scripts.pilot.route_descriptor_attachment import load_descriptor_recovery
+                    sidecar, recovery_paths, recovery_stamp = load_descriptor_recovery(
+                        folder, receipt, stamp=self._runtime_source_stamp)
+                if sidecar is None:
+                    tracker = ReferenceLKConfirmationLocalizer(route, **options)
+                else:
+                    from motor_worker.route_descriptor_recovery import (
+                        DESCRIPTOR_RECOVERY_POLICY, ReferenceLKRecoveryLocalizer,
+                    )
+                    tracker = ReferenceLKRecoveryLocalizer(route, sidecar=sidecar, **options)
+                    recovery_policy = DESCRIPTOR_RECOVERY_POLICY
+            else:
+                tracker = AnchoredRouteLocalizer(route, recovery_candidate_limit=8, **options)
         except BaseException:
             if reference_lk:
                 route.close()
@@ -522,8 +537,10 @@ class RouteWorkspaces:
                     folder/'reference-lk-negative.json', selected['model_path'].parent/'source.json',
                     selected['model_path'].parent/'assessment.json', selected['model_path'].parent/'producer-proof.json',
                     *(selected['model_path']/name for name in sorted(MODEL_FILES)),
-                    ROOT/'motor_worker/route_confirmation.py', ROOT/'motor_worker/vehicle_route.py')
+                    ROOT/'motor_worker/route_confirmation.py', ROOT/'motor_worker/vehicle_route.py', *recovery_paths)
             source_stamp = self._runtime_source_stamp(source_paths) if source_paths else None
+            if recovery_paths and source_stamp[-len(recovery_paths):] != recovery_stamp:
+                raise ValueError('route_descriptor_recovery_changed')
         except BaseException:
             if reference_lk:
                 tracker.close()
@@ -535,7 +552,7 @@ class RouteWorkspaces:
             geometry_path=selected['geometry_path'], source=public_source(selected),
             source_binding=selected['binding'],
             runtime_family='reference_lk' if reference_lk else 'legacy_sparse', preparation_folder=folder,
-            source_paths=source_paths, source_stamp=source_stamp)
+            source_paths=source_paths, source_stamp=source_stamp, descriptor_recovery_policy=recovery_policy)
         if reference_lk:
             try:
                 from scripts.pilot.walk_diagnostics import RuntimeMetadataRing
@@ -596,7 +613,7 @@ class RouteWorkspaces:
             raise ValueError('walk_camera_mode_changed')
         if self.live and self.live['id']==request['id'] and bool(self.live.get('frame_archive'))!=body.get('diagnosticFrames',False):
             raise ValueError('walk_diagnostic_mode_changed')
-        self.start_live(job, request)
+        self.start_live(job, request, observation_only=False)
         try:
             route=self.live['tracker'].route
             budget=min(600,max(120,math.ceil((route.source_seconds[-1]-route.source_seconds[0])*5+30)))
@@ -683,7 +700,7 @@ class RouteWorkspaces:
         reference = load_speed_reference(job)
         if reference is None:
             raise ValueError('vehicle_source_speed_not_prepared')
-        self.start_live(job, request)
+        self.start_live(job, request, observation_only=False)
         try:
             if 'vehicle' not in self.live:
                 route = self.live['tracker'].route
@@ -793,6 +810,8 @@ class RouteWorkspaces:
         from scripts.pilot.walk_diagnostics import bounded_localization_diagnostic
         diagnostic = bounded_localization_diagnostic(getattr(session['tracker'], 'last_diagnostic', None),
             reason=pose.reason, source_family=session.get('runtime_family', 'legacy_sparse'))
+        if diagnostic['method'] == 'descriptor_pnp':
+            search_policy = COARSE_SEARCH_POLICY
         result = dict(id=session['id'], sequence=body['sequence'], jpegSha256=hashlib.sha256(raw).hexdigest(),
             captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed, geometrySha256=session['geometry_sha256'],
             method=diagnostic['method'],localizationDiagnostic=diagnostic,
