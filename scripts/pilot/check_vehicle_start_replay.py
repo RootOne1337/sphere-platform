@@ -27,7 +27,7 @@ def checked_frame(root, row):
     return data
 
 
-def run_window(route, views, speed_reference, sidecar, rows):
+def run_window(route, views, speed_reference, sidecar, rows, *, projected=False):
     import cv2 as cv
     import numpy as np
 
@@ -40,11 +40,14 @@ def run_window(route, views, speed_reference, sidecar, rows):
     epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
     clock = time.perf_counter
     options = dict(capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=clock)
-    tracker = (
-        ReferenceLKConfirmationLocalizer(route, **options)
-        if sidecar is None
-        else ReferenceLKRecoveryLocalizer(route, sidecar=sidecar, **options)
-    )
+    if projected:
+        from scripts.pilot.route_projected_recovery import ProjectedRecoveryLocalizer
+
+        tracker = ProjectedRecoveryLocalizer(route, **options)
+    elif sidecar is not None:
+        tracker = ReferenceLKRecoveryLocalizer(route, sidecar=sidecar, **options)
+    else:
+        tracker = ReferenceLKConfirmationLocalizer(route, **options)
     plans, skipped = [], 0
     with closing(tracker):
         follower = VehicleRouteFollower(
@@ -85,6 +88,7 @@ def run_window(route, views, speed_reference, sidecar, rows):
                     frameAgeMs=(clock() - due) * 1000,
                     pose=pose.state,
                     poseReason=pose.reason,
+                    center=pose.center,
                     inliers=pose.inliers,
                     segment=pose.segment,
                     hud=speed["status"],
@@ -93,6 +97,10 @@ def run_window(route, views, speed_reference, sidecar, rows):
                     pedal=plan["pedal"],
                     planReason=plan["reason"],
                     confirmationCount=plan["confirmationValidCount"],
+                    method=tracker.last_diagnostic.get("method"),
+                    directCandidateCount=tracker.last_diagnostic.get("verifiedCandidateCount"),
+                    projectedResult=tracker.last_diagnostic.get("projectedResult"),
+                    projectedRetained=tracker.last_diagnostic.get("projectedRetained"),
                 )
             )
     first_throttle = next((row for row in plans if row["pedal"] == "throttle"), None)
@@ -123,6 +131,7 @@ def main():
         metavar=("NAME", "MANIFEST", "CAPTURE", "FROM", "TO"),
     )
     parser.add_argument("--compare-descriptor-recovery", action="store_true")
+    parser.add_argument("--compare-projected-recovery", action="store_true")
     args = parser.parse_args()
     if len(args.window) > 8:
         parser.error("at most eight bounded replay windows")
@@ -166,6 +175,8 @@ def main():
         if recovery is None:
             raise ValueError("verified descriptor sidecar unavailable")
         methods["diagnostic_descriptor_recovery"] = recovery
+    if args.compare_projected_recovery:
+        methods["diagnostic_projected_recovery"] = None
     output.mkdir()
     report = dict(
         schema="sphere-vehicle-start-replay-v1",
@@ -185,7 +196,7 @@ def main():
             manifest_bytes = manifest_path.read_bytes()
             manifest = json.loads(manifest_bytes)
             start, end = float(lower), float(upper)
-            if not 0 <= start < end <= 180 or end - start > 15:
+            if not 0 <= start < end <= 180 or end - start > 45:
                 raise ValueError("replay window outside bounds")
             if manifest["schema"] != "sphere-learned-replay-queries-v1":
                 raise ValueError("unknown query manifest")
@@ -196,7 +207,7 @@ def main():
                 if start <= row["relative_ticks_90k"] / 90000 <= end
             ]
             ticks = [row["relative_ticks_90k"] for row in frames]
-            if not 3 <= len(frames) <= 151 or any(a >= b for a, b in zip(ticks, ticks[1:])):
+            if not 3 <= len(frames) <= 451 or any(a >= b for a, b in zip(ticks, ticks[1:])):
                 raise ValueError("replay frame quota or order")
             rows = [(row, checked_frame(manifest_path.parent, row)) for row in frames]
             window = dict(
@@ -210,7 +221,14 @@ def main():
             report["windows"].append(window)
             for method, sidecar in methods.items():
                 check_resources()
-                window["methods"][method] = result = run_window(route, views, speed, sidecar, rows)
+                window["methods"][method] = result = run_window(
+                    route,
+                    views,
+                    speed,
+                    sidecar,
+                    rows,
+                    projected=method == "diagnostic_projected_recovery",
+                )
                 print(label, method, {k: v for k, v in result.items() if k != "rows"}, flush=True)
                 (output / "report.json").write_text(
                     json.dumps(report, indent=2, allow_nan=False), encoding="utf8"

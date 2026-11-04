@@ -22,7 +22,11 @@ from motor_worker.route_descriptor_recovery import ReferenceLKRecoveryLocalizer
 from motor_worker.route_localization import coarse_reference_votes, extract_gray_features
 from motor_worker.route_reference_lk import ReferenceLKRoute
 from scripts.pilot.check_route_lighting_replay import (
-    CAPTURE_FILES, holdout_coverage, holdout_window, sample_holdout_windows, validate_holdout_windows,
+    CAPTURE_FILES,
+    holdout_coverage,
+    holdout_window,
+    sample_holdout_windows,
+    validate_holdout_windows,
 )
 from scripts.pilot.route_descriptor_attachment import load_descriptor_recovery
 from scripts.pilot.route_workspace import RouteWorkspaces, digest_file
@@ -45,15 +49,21 @@ def orientation(gray, mask):
     return hist.reshape(-1)
 
 
-def evaluate_reference(localizer, gray, at):
+def evaluate_reference(localizer, gray, at, *, initial_pixels=None, point_indices=None):
     arrays, mask = localizer._cache.arrays, localizer.mask
     start, end = map(int, arrays["offsets"][at:at + 2])
-    old = arrays["pixels"][start:end].reshape(-1, 1, 2)
+    indices = slice(None) if point_indices is None else point_indices
+    old = arrays["pixels"][start:end][indices].reshape(-1, 1, 2)
+    initial = None
     options = dict(winSize=(21, 21), maxLevel=3,
                    criteria=(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 30, .01))
-    forward, status, error = cv.calcOpticalFlowPyrLK(arrays["grays"][at], gray, old, None, **options)
+    if initial_pixels is not None:
+        initial = initial_pixels.astype(np.float32).reshape(-1, 1, 2).copy()
+        options["flags"] = cv.OPTFLOW_USE_INITIAL_FLOW
+    forward, status, error = cv.calcOpticalFlowPyrLK(arrays["grays"][at], gray, old, initial, **options)
     if forward is None or status is None or error is None:
         return 0, None
+    options.pop("flags", None)
     backward, back_status, _ = cv.calcOpticalFlowPyrLK(gray, arrays["grays"][at], forward, None, **options)
     if backward is None or back_status is None:
         return 0, None
@@ -70,7 +80,7 @@ def evaluate_reference(localizer, gray, at):
     count = int(keep.sum())
     if count < 24:
         return count, None
-    verified = localizer._verify_correspondences(arrays["xyz"][start:end][keep],
+    verified = localizer._verify_correspondences(arrays["xyz"][start:end][indices][keep],
                                                  pixels[keep].astype(np.float64))
     return count, verified
 
@@ -121,7 +131,9 @@ def replay_policy(route, sidecar, batches, policy, jpeg_quality):
     """Exercise actual confirmation and freshness gates on a fresh observer per window."""
     from motor_worker.policy import PolicyFrame
     from motor_worker.route_confirmation import (
-        SOFT_VISUAL_MISSES, ReferenceLKConfirmationLocalizer, _BoundedConfirmationMixin,
+        SOFT_VISUAL_MISSES,
+        ReferenceLKConfirmationLocalizer,
+        _BoundedConfirmationMixin,
     )
     from motor_worker.route_descriptor_recovery import _DescriptorRecoverySolve
 
