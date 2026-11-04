@@ -1,0 +1,10 @@
+{
+  "schema": "sphere-public-evidence-manifest-v1",
+  "files": [
+    {
+      "path": "verification-summary.json",
+      "sha256": "d695960b915b48a9fcd6fc346f782aed790d1db4ced1ceb905aca68f42f9b1b9",
+      "bytes": 7626
+    }
+  ]
+}
