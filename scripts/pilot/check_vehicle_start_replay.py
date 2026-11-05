@@ -29,7 +29,7 @@ def checked_frame(root, row):
 
 
 def run_window(route, views, speed_reference, sidecar, rows, *, start_mode="beginning", projected=False,
-               anchored=False, causal=False):
+               anchored=False, causal=False, guided=False):
     import cv2 as cv
     import numpy as np
 
@@ -42,7 +42,11 @@ def run_window(route, views, speed_reference, sidecar, rows, *, start_mode="begi
     epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
     clock = time.perf_counter
     options = dict(capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=clock)
-    if causal:
+    if guided:
+        from scripts.pilot.route_guided_descriptor_probe import GuidedDescriptorLocalizer
+
+        tracker = GuidedDescriptorLocalizer(route, sidecar=sidecar, **options)
+    elif causal:
         from scripts.pilot.route_causal_retrieval import CausalReferenceLocalizer
 
         tracker = CausalReferenceLocalizer(route, start_mode=start_mode, **options)
@@ -119,6 +123,8 @@ def run_window(route, views, speed_reference, sidecar, rows, *, start_mode="begi
                     directCandidateCount=tracker.last_diagnostic.get("verifiedCandidateCount"),
                     directCandidates=tracker.last_diagnostic.get("candidateReferenceIndices"),
                     causalSearchScope=tracker.last_diagnostic.get("causalSearchScope"),
+                    guidedSeedInliers=tracker.last_diagnostic.get("guidedSeedInliers"),
+                    guidedResultInliers=tracker.last_diagnostic.get("guidedResultInliers"),
                     flowRetained=tracker.last_diagnostic.get("flowRetainedByCandidate"),
                     poseCenterDelta=tracker.last_diagnostic.get("motionCenterDeltaUnits"),
                     poseProgressDelta=tracker.last_diagnostic.get("motionProgressDeltaUnits"),
@@ -159,14 +165,16 @@ def main():
     parser.add_argument("--compare-anchored-descriptors", action="store_true")
     parser.add_argument("--compare-projected-recovery", action="store_true")
     parser.add_argument("--compare-causal-retrieval", action="store_true")
+    parser.add_argument("--compare-guided-descriptors", action="store_true")
     parser.add_argument("--skip-baseline", action="store_true", help="run only the requested diagnostic methods")
     parser.add_argument("--start-mode", choices=("beginning", "recognized_route"), default="beginning")
     args = parser.parse_args()
     if len(args.window) > 8:
         parser.error("at most eight bounded replay windows")
-    if args.skip_baseline and not any((args.compare_descriptor_recovery,
-                                      args.compare_anchored_descriptors,
-                                      args.compare_projected_recovery, args.compare_causal_retrieval)):
+    descriptor_methods = (args.compare_descriptor_recovery, args.compare_anchored_descriptors,
+                          args.compare_guided_descriptors)
+    if args.skip_baseline and not any((*descriptor_methods, args.compare_projected_recovery,
+                                      args.compare_causal_retrieval)):
         parser.error("--skip-baseline requires a diagnostic method")
     root = Path.cwd().resolve()
     job, output = args.job.resolve(), args.output.resolve()
@@ -201,7 +209,7 @@ def main():
     selected = attempt_source(job, nav)
     speed = load_speed_reference(job)
     methods = {} if args.skip_baseline else {"vehicle_runtime_lk": None}
-    if args.compare_descriptor_recovery or args.compare_anchored_descriptors:
+    if any(descriptor_methods):
         recovery, _, _ = load_descriptor_recovery(
             nav, receipt, stamp=RouteWorkspaces._runtime_source_stamp
         )
@@ -211,6 +219,8 @@ def main():
             methods["diagnostic_descriptor_recovery"] = recovery
         if args.compare_anchored_descriptors:
             methods["diagnostic_anchored_descriptors"] = recovery
+        if args.compare_guided_descriptors:
+            methods["diagnostic_guided_descriptors"] = recovery
     if args.compare_projected_recovery:
         methods["diagnostic_projected_recovery"] = None
     if args.compare_causal_retrieval:
@@ -269,6 +279,7 @@ def main():
                     projected=method == "diagnostic_projected_recovery",
                     anchored=method == "diagnostic_anchored_descriptors",
                     causal=method == "diagnostic_causal_retrieval",
+                    guided=method == "diagnostic_guided_descriptors",
                 )
                 print(label, method, {k: v for k, v in result.items() if k != "rows"}, flush=True)
                 (output / "report.json").write_text(
