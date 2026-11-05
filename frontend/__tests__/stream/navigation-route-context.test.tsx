@@ -19,6 +19,32 @@ beforeEach(()=>{
 });
 afterEach(()=>jest.restoreAllMocks());
 
+test('pose inliers are unavailable without a verified current pose',async()=>{
+  const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer} as Response);
+  const props={job,source,assetsReady:true};
+  const view=render(<NavigationRouteContext {...props} observation={null}/>);
+  await screen.findByText('source-frame-0');
+  const inliers=()=>screen.getByLabelText('Инлайеры текущей позы на карте');
+  expect(inliers()).toHaveTextContent('—');
+  const reply=navigationReply({id:'s',captureEpoch:'epoch',sequence:1,jpegSha256:'f'.repeat(64),geometrySha256:sha,computeMs:10,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
+    pose:{state:'localized',reason:'verified',inliers:30,segment:0,progress_units:1,polyline_px:[],center:[0,0,1],rotation:[1,0,0,0,1,0,0,0,1]}},'s','epoch',1,'f'.repeat(64))!;
+  const capturedAt=performance.now(),observation={reply,capturedAt,answeredAt:capturedAt+10};
+  view.rerender(<NavigationRouteContext {...props} observation={{...observation,reply:{...reply,pose:{...reply.pose,state:'unknown',inliers:0}}}}/>);
+  expect(inliers()).toHaveTextContent('—');
+  view.rerender(<NavigationRouteContext {...props} observation={{...observation,reply:{...reply,pose:{...reply.pose,state:'confirming',inliers:24}}}}/>);
+  expect(inliers()).toHaveTextContent('24');
+  view.rerender(<NavigationRouteContext {...props} observation={observation}/>);
+  expect(inliers()).toHaveTextContent('30');
+  view.rerender(<NavigationRouteContext {...props} observation={{...observation,reply:{...reply,geometrySha256:'0'.repeat(64)}}}/>);
+  expect(inliers()).toHaveTextContent('—');
+  view.rerender(<NavigationRouteContext {...props} assetsReady={false} observation={observation}/>);
+  expect(inliers()).toHaveTextContent('—');
+  view.rerender(<NavigationRouteContext {...props} observation={observation}/>);
+  expect(inliers()).toHaveTextContent('30');
+  await waitFor(()=>expect(inliers()).toHaveTextContent('—'),{timeout:1000});
+});
+
 test('delayed catalog cannot flash primary; preferred beats point count and manual choice survives metadata refresh',async()=>{
   const raw=new TextEncoder().encode(JSON.stringify(data));let release:()=>void=()=>{};
   const pending=new Promise<void>(resolve=>{release=resolve;});

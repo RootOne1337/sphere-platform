@@ -179,6 +179,27 @@ class AnchoredTrackingTests(unittest.TestCase):
         self.tracker._extract = old_extract
         self.confirm()
 
+    def test_soft_miss_keeps_last_confirmed_retrieval_hint_without_a_current_pose(self):
+        self.confirm()
+        hint = self.tracker._recovery_hint
+        old_extract = self.tracker._extract
+        self.tracker._extract = lambda: (self.np.empty((0, 2)), self.np.empty((0, 128), self.np.float32))
+        pose, _ = self.observe(blank=True)
+        self.assertEqual((pose.state, pose.reason), ("unknown", "route_pose_not_verified"))
+        self.assertIsNone(self.tracker.previous)
+        self.assertEqual(self.tracker.confirmations, 0)
+        self.assertIsNone(self.tracker._anchors)
+        self.assertEqual(self.tracker._recovery_hint, hint)
+        self.assertEqual(self.tracker._recent_reference_candidate(), hint[0])
+
+        self.tracker._extract = old_extract
+        for i in range(3):
+            pose, _ = self.observe()
+            self.assertEqual(pose.state, "localized" if i == 2 else "confirming")
+            self.assertEqual(self.tracker.last_diagnostic["method"], "descriptor_pnp")
+            if i < 2:
+                self.assertEqual(self.tracker._recovery_hint, hint)
+
     def test_flow_rejects_backward_inconsistent_correspondences(self):
         from unittest.mock import patch
 

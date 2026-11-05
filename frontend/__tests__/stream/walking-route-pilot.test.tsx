@@ -149,29 +149,40 @@ test('an unknown speed is coast with zero steering and visibly unknown, never sy
 test('vehicle goes neutral through loss and tentative recovery, then resumes on the same input lease',async()=>{
   let now=1000,stage:'initial'|'following'|'lost'|'confirming'='initial';jest.spyOn(performance,'now').mockImplementation(()=>now);
   const f=vehicleFixture({plan:p=>stage==='following'?p:{...p,phase:'waiting',reason:'vehicle_confirming_position',pedal:'coast',steering:0}});
+  expect(screen.getByLabelText('Инлайеры текущей позы прохода')).toHaveTextContent('—');
   const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const response=await original(...args);if(!args[0].endsWith('/observe'))return response;
     const value=await response.json();
     if(stage==='confirming')value.pose={...value.pose,state:'confirming',inliers:351,reason:'route_pose_confirming'};
     else if(stage!=='following')value.pose={...value.pose,state:'unknown',inliers:0,reason:'route_pose_not_verified'};
-    value.localizationDiagnostic={schema:'sphere-localization-observation-diagnostic-v1',candidateCount:3,maxRetainedLkCount:stage==='following'?72:12,verifiedCandidateCount:stage==='following'?1:0,descriptors:['ignored']};
+    value.localizationDiagnostic={schema:'sphere-localization-observation-diagnostic-v1',candidateCount:3,maxRetainedLkCount:stage==='following'?72:stage==='initial'?0:12,verifiedCandidateCount:stage==='following'?1:0,candidateReferenceIndices:[165,171,170],flowRetainedByCandidate:stage==='initial'?[0,0,0]:stage==='following'?[72,4,0]:[12,4,0],...(stage==='confirming'?{queryFeatures:351}:{}),descriptors:['ignored']};
     return {json:async()=>value} as Response;
   });
   f.startVehicle();await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('Ищем положение по ориентирам'));
-  expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('Ракурсов 3 · пар LK до 12 · геометрических гипотез 0');
+  expect(screen.getByLabelText('Инлайеры текущей позы прохода')).toHaveTextContent('—');
+  expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('Ракурсов 3 · пар LK до 0 · геометрических гипотез 0');
+  expect(screen.getByLabelText('Причина и этапы последнего кадра')).toHaveTextContent('route_pose_not_verified');
+  expect(screen.getByLabelText('Причина и этапы последнего кадра')).toHaveTextContent('#166: 0 / #172: 0 / #171: 0 · признаков кадра для дескрипторов: нет данных');
   expect(screen.getByLabelText('Диагностика локализации')).toHaveClass('h-10');
+  expect(screen.getByLabelText('Причина и этапы последнего кадра')).toHaveClass('h-16','overflow-hidden');
+  expect(screen.getByLabelText('Причина и этапы последнего кадра')).toHaveAttribute('title',expect.stringContaining('#166: 0'));
   expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();expect(f.vehicleLease.neutral).toHaveBeenCalled();
   stage='following';now+=200;fresh();await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalled());
+  expect(screen.getByLabelText('Инлайеры текущей позы прохода')).toHaveTextContent('40');
   expect(screen.getByLabelText('Диагностика локализации')).toHaveTextContent('пар LK до 72 · геометрических гипотез 1');
   stage='lost';now+=200;fresh();await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('Положение потеряно'));
+  expect(screen.getByLabelText('Инлайеры текущей позы прохода')).toHaveTextContent('—');
+  expect(screen.getByLabelText('Причина и этапы последнего кадра')).toHaveTextContent('#166: 12 / #172: 4 / #171: 0');
   const history=screen.getByRole('table');
   expect(history).toHaveTextContent('Ищем положение по ориентирам; педали отпущены');
   expect(history).toHaveTextContent('Положение потеряно');
-  const appliedCommands=f.vehicleLease.setVehicle.mock.calls.length;
-  const neutralCommands=f.vehicleLease.neutral.mock.calls.length;
+  const appliedCommands=jest.mocked(f.vehicleLease.setVehicle).mock.calls.length;
+  const neutralCommands=jest.mocked(f.vehicleLease.neutral!).mock.calls.length;
   stage='confirming';now+=200;fresh();
   await waitFor(()=>expect(f.vehicleLease.neutral).toHaveBeenCalledTimes(neutralCommands+1));
+  expect(screen.getByLabelText('Инлайеры текущей позы прохода')).toHaveTextContent('351');
+  expect(screen.getByLabelText('Причина и этапы последнего кадра')).toHaveTextContent('признаков кадра для дескрипторов: 351');
   expect(f.vehicleLease.setVehicle).toHaveBeenCalledTimes(appliedCommands);
   stage='following';now+=200;fresh();
   await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledTimes(appliedCommands+1));
@@ -607,6 +618,26 @@ test('a localized start refusal is not presented as an Android ACK failure',asyn
   });
   view();start();await screen.findByText('Освобождение: CLOSED');
   expect(screen.getByText(/Место узнано, но команда движения не выдавалась/)).toBeInTheDocument();
+  expect(screen.queryByText(/Android ещё не подтвердил касание/)).not.toBeInTheDocument();
+});
+
+test('a terminal reply updates the latest diagnostics without enlarging the archived sample',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);if(!args[0].endsWith('/observe'))return response;
+    const value=await response.json();value.walk={...value.walk,phase:'stopped',reason:'walk_start_outside_recorded_beginning',stick:[0,0]};
+    value.pose={...value.pose,state:'unknown',inliers:0,reason:'route_pose_not_verified'};
+    value.localizationDiagnostic={schema:'sphere-localization-observation-diagnostic-v1',candidateCount:0,maxRetainedLkCount:0,verifiedCandidateCount:0,candidateReferenceIndices:[],flowRetainedByCandidate:[],queryFeatures:321};
+    return {json:async()=>value} as Response;
+  });
+  view({scope:'e'.repeat(32)});start();await screen.findByText('Освобождение: CLOSED');
+  expect(screen.getByLabelText('Причина и этапы последнего кадра')).toHaveTextContent('route_pose_not_verified');
+  expect(screen.getByLabelText('Причина и этапы последнего кадра')).toHaveTextContent('нет ракурсов · признаков кадра для дескрипторов: 321');
+  await waitFor(()=>expect(saveRouteDebugReport).toHaveBeenCalled());
+  const report=jest.mocked(saveRouteDebugReport).mock.calls.at(-1)![3] as {observations:{localizationDiagnostic:Record<string,unknown>}[]};
+  expect(report.observations[0].localizationDiagnostic).not.toHaveProperty('flowRetainedByCandidate');
+  expect(report.observations[0].localizationDiagnostic).not.toHaveProperty('queryFeatures');
   expect(screen.queryByText(/Android ещё не подтвердил касание/)).not.toBeInTheDocument();
 });
 

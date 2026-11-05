@@ -2,7 +2,7 @@
 import {useCallback,useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import {reconstructionRequest,type ReconstructionJob,type NavigationMapSource} from './reconstructionClient';
 import {readImportedRouteGeometry,type ImportedRouteGeometry,type RouteMapCamera} from './routeMapProjection';
-import {boundLiveRouteCamera,type LiveRouteObservation} from './routeNavigation';
+import {boundLiveRouteCamera,freshNavigationFrame,type LiveRouteObservation} from './routeNavigation';
 import type {RouteSource} from './routeSource';
 import RouteGeometryMap from './RouteGeometryMap';
 import {RecordedRouteFrame} from './RecordedRouteFrame';
@@ -30,6 +30,7 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
   const geometry=validatedIdentity===identity&&storedGeometry?.identity===identity&&storedGeometry.choice===choice?storedGeometry:null;
   const [ticks,setTicks]=useState<number|null>(null),[follow,setFollow]=useState(true),[live,setLive]=useState<RouteMapCamera|null>(null);
   const [orientation,setOrientation]=useState<RouteMapCamera|null>(null);
+  const [,setMeasurementExpiry]=useState(0);
   const [recentPose,setRecentPose]=useState<{camera:RouteMapCamera;at:number;epoch:string}|null>(null);
   const lastReferenceAt=useRef(-Infinity),validTicks=useMemo(()=>new Set(source.rows.map(row=>row.relative_ticks_90k)),[source.rows]);
   const recordingRange=useMemo(()=>source.rows.length?{firstTicks:source.rows[0].relative_ticks_90k,lastTicks:source.rows.at(-1)!.relative_ticks_90k,frames:source.rows.length}:undefined,[source.rows]);
@@ -41,6 +42,13 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
   }:null,[geometry,choices]);
   const geometryReady=!!geometry&&assetsReady&&(preparedSource?
     preparedSource.geometry_sha256===geometry.sha&&preparedSource.alternativeId===(geometry.choice==='primary'?null:geometry.choice):geometry.choice==='primary');
+  useEffect(()=>{
+    if(!observation)return;
+    const timeout=setTimeout(()=>setMeasurementExpiry(value=>value+1),Math.max(0,251-(performance.now()-observation.capturedAt)));
+    return()=>clearTimeout(timeout);
+  },[observation]);
+  const measurement=observation&&geometryReady&&geometry&&observation.reply.geometrySha256===geometry.sha
+    &&observation.reply.pose.state!=='unknown'&&freshNavigationFrame(observation.capturedAt,performance.now())?observation.reply.pose.inliers:null;
   useEffect(()=>{onGeometryChange?.(selectedGeometry);},[onGeometryChange,selectedGeometry]);
   useEffect(()=>()=>onGeometryChange?.(null),[onGeometryChange]);
   useEffect(()=>{
@@ -104,7 +112,7 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
           live?'Положение подтверждено по свежим 3D-ориентирам.':'Сохранённая схема и опорный кадр доступны для сравнения.'}
       </p>
     </div>
-    <p className="text-xs text-muted-foreground">Ориентиров карты: <span className="inline-block min-w-10 tabular-nums">{preparedLandmarks??'—'}</span> · Совпадений кадра: <span className="inline-block min-w-10 tabular-nums">{observation?.reply.pose.inliers??0}</span>. Облако сцены показано отдельно от текущих совпадений.</p>
+    <p className="text-xs text-muted-foreground">Ориентиров карты: <span className="inline-block min-w-10 tabular-nums">{preparedLandmarks??'—'}</span> · Инлайеры текущей позы: <span aria-label="Инлайеры текущей позы на карте" className="inline-block min-w-10 tabular-nums">{measurement??'—'}</span>. Облако сцены показано отдельно от текущей позы.</p>
     {geometry&&ticks!==null?<RouteGeometryMap cameras={geometry.data.cameras} points={geometry.data.points} motionWarning={!geometryReady}
       selectedTicks={ticks} validTicks={validTicks} onSeekCamera={value=>{setFollow(false);setTicks(value);}} liveCamera={live} orientationCamera={orientation} recentCamera={recent} showStaleWarning={busy}
       sourcePreview={<RecordedRouteFrame source={source} ticks={ticks}/>} comparison={comparison}/>:comparison}

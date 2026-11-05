@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 460,
+    "DATED_EVIDENCE": 462,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 92,
     "PROJECT_POLICY": 7,
@@ -1977,7 +1977,15 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-11-04/SKUTER1-LEARNED-LOCALIZATION-REPLAY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-11-04/SKUTER1-TRACKING-RESILIENCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-06/SKUTER1-MASK-PARITY-AND-TURN-LOCALIZATION.md",
       "role": "DATED_EVIDENCE"
     },
     {
