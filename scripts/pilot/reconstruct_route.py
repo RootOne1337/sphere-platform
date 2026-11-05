@@ -137,7 +137,7 @@ def state(job, phase, **details):
     write_json(job / 'state.json', dict(phase=phase, updated_at=time.time(), **details))
 
 
-def masked_inputs(prepared, mode, *, manifest=None):
+def masked_inputs(prepared, mode, *, manifest=None, route_only=False):
     """Keep original RGB; a separate documented exclusion mask precedes SfM.
 
     This fixed game preset excludes HUD and the usual third-person avatar. It
@@ -151,13 +151,21 @@ def masked_inputs(prepared, mode, *, manifest=None):
         return None
     folder = prepared / 'masks'
     folder.mkdir()
+    masks_by_size = {}
     for path in (prepared / 'images').glob('*.png'):
         with Image.open(path) as rgb:
             width, height = rgb.size
-        mask = Image.new('L', (width, height), 255)
-        draw = ImageDraw.Draw(mask)
-        for a,b,c,d in rectangles:
-            draw.rectangle((int(width*a), int(height*b), int(width*c), int(height*d)), fill=0)
+        if (width, height) not in masks_by_size:
+            if route_only:
+                from scripts.pilot.route_mask_raster import reconstruction_mask
+                mask = Image.fromarray(reconstruction_mask(rectangles, (width, height)))
+            else:
+                mask = Image.new('L', (width, height), 255)
+                draw = ImageDraw.Draw(mask)
+                for a,b,c,d in rectangles:
+                    draw.rectangle((int(width*a), int(height*b), int(width*c), int(height*d)), fill=0)
+            masks_by_size[(width, height)] = mask
+        mask = masks_by_size[(width, height)]
         mask.save(folder / (path.name + '.png'))  # COLMAP image.png.png convention
     return folder
 
@@ -344,7 +352,7 @@ def _reconstruct(job, mask, steps, *, route_only=False):
         from scripts.pilot.route_reconstruction_recipe import route_recipe
         recipe = route_recipe(job, prepared, vehicle=vehicle, fused_enabled=experimental_enabled())
         write_json(job/'reconstruction-recipe.json', recipe)
-    masks = masked_inputs(prepared, mask, manifest=capture.manifest)
+    masks = masked_inputs(prepared, mask, manifest=capture.manifest, route_only=route_only)
     checkpoint(job)
     import pycolmap as p
 

@@ -29,3 +29,30 @@ def test_vehicle_keeps_temporal_overlap_even_when_static_hud_reduces_median_flow
     assert min(vehicle)==0 and max(vehicle)==900
     assert max(b-a for a,b in zip(sorted(vehicle),sorted(vehicle)[1:]))*3600/90000<=.24
     assert report['vehicleOverlap'] is True and report['posesUsed'] is False
+
+
+@pytest.mark.parametrize(('destination_x', 'measured'), [(14., 1), (40., 0), (70., 0)])
+def test_motion_sampling_excludes_tracks_entering_hud_or_leaving_frame(monkeypatch, destination_x, measured):
+    from types import SimpleNamespace
+
+    cv = pytest.importorskip('cv2')
+    np = pytest.importorskip('numpy')
+    from motor_worker import browser_teach
+    from scripts.pilot import route_mask_raster, route_motion_sampling
+
+    rows = [dict(index=0, relative_ticks_90k=0), dict(index=1, relative_ticks_90k=3000)]
+    capture = SimpleNamespace(geometry=(64, 36), manifest={}, frames=rows)
+    frame = SimpleNamespace(to_ndarray=lambda **_: np.zeros((36, 64), np.uint8))
+    mask = np.full((36, 64), 255, np.uint8)
+    mask[:, 32:] = 0
+    points = np.array([(10., y) for y in range(8, 23)], dtype=np.float32).reshape(-1, 1, 2)
+    moved = points[:, 0].copy()
+    moved[:, 0] = destination_x
+    monkeypatch.setattr(browser_teach, 'decoded_browser', lambda _: ((row, frame) for row in rows))
+    monkeypatch.setattr(route_mask_raster, 'reconstruction_mask', lambda *_: mask)
+    monkeypatch.setattr(cv, 'goodFeaturesToTrack', lambda *_, **__: points)
+    monkeypatch.setattr(route_motion_sampling, 'track_source_points',
+                        lambda *_, **__: (moved, np.ones(len(points), dtype=bool)))
+
+    _, report = route_motion_sampling.sample_video(capture, 'game', lambda: None)
+    assert report['scoresMeasured'] == measured

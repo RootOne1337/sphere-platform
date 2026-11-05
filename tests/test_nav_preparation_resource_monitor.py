@@ -1,5 +1,6 @@
 """Navigation preparation uses one task proof, fresh counters and unchanged gates."""
 import copy
+import importlib
 import json
 import sys
 from types import SimpleNamespace
@@ -11,6 +12,8 @@ from scripts.pilot import route_workspace as workspace
 
 GIB = 2**30
 BUDGET = dict(kind='route_features', minRamGiB=6.25, minDiskGiB=20, maxCommitPercent=85)
+GEOMETRY = dict(cameras=[dict(center=[0, 0, 0], ticks_90k=0),
+                         dict(center=[1, 0, 0], ticks_90k=90000)])
 
 
 def healthy():
@@ -23,8 +26,8 @@ def healthy():
 def environment(tmp_path, monkeypatch):
     import cv2
 
-    from motor_worker import browser_teach
-    from scripts.pilot import export_route_localization, route_motion_audit
+    browser_teach = importlib.import_module('motor_worker.browser_teach')
+    export_route_localization = importlib.import_module('scripts.pilot.export_route_localization')
 
     monkeypatch.setattr(preparation, 'ROOT', tmp_path)
     monkeypatch.setattr(workspace, 'ROOT', tmp_path)
@@ -32,8 +35,9 @@ def environment(tmp_path, monkeypatch):
     monkeypatch.setattr(cv2, 'setNumThreads', lambda _: None)
     monkeypatch.setattr(preparation, 'route_resource_profile', lambda job: dict(BUDGET))
     monkeypatch.setattr(preparation, 'route_source_model', lambda job: job/'prepared/model')
-    monkeypatch.setattr(route_motion_audit, 'audit', lambda _: dict(rapid_reversals=[], speed_outliers=[]))
-    capture = SimpleNamespace(geometry=(1920, 1080), manifest={},
+    manifest_bytes = b'{}'
+    capture = SimpleNamespace(geometry=(1920, 1080), manifest=json.loads(manifest_bytes),
+        originals={'manifest.json': manifest_bytes},
         frames=[dict(relative_ticks_90k=0), dict(relative_ticks_90k=90000)])
     monkeypatch.setattr(browser_teach, 'validate_browser', lambda _: capture)
     env = dict(root=tmp_path, monitors=[], sequences=[], export_hook=None, calls=[])
@@ -86,7 +90,9 @@ def environment(tmp_path, monkeypatch):
         folder = target/'navigation'/attempt
         folder.mkdir(parents=True)
         (folder/'intent.json').write_text(json.dumps(dict(id=attempt)))
-        (target/'geometry.json').write_text('{}')
+        (target/'geometry.json').write_text(json.dumps(GEOMETRY))
+        (target/'input').mkdir()
+        (target/'input/manifest.json').write_bytes(manifest_bytes)
         return target, attempt, folder
 
     env['job'] = job
@@ -104,7 +110,7 @@ def test_preparation_uses_one_monitor_and_fresh_snapshot_for_every_callback(envi
     assert len({s['memoryObservedAt'] for s in monitor.samples}) == 13
     assert json.loads((folder/'state.json').read_text())['phase'] == 'ready'
     assert not json.loads((folder/'state.json').read_text())['executionQualified']
-    assert (job/'geometry.json').read_text() == '{}'
+    assert json.loads((job/'geometry.json').read_text()) == GEOMETRY
 
 
 @pytest.mark.parametrize('phase', ['admission', 'callback'])

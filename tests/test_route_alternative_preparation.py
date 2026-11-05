@@ -219,7 +219,9 @@ class AlternativePreparationTests(unittest.TestCase):
                         map_support=dict(all_reference_neighborhoods_supported=True,
                                          all_reference_intervals_observed=True))
         module.export = export
-        capture = types.SimpleNamespace(geometry=(1920, 1080), manifest={},
+        manifest_bytes = (self.job/'input/manifest.json').read_bytes()
+        capture = types.SimpleNamespace(geometry=(1920, 1080), manifest=json.loads(manifest_bytes),
+            originals={'manifest.json': manifest_bytes},
             frames=[dict(relative_ticks_90k=0), dict(relative_ticks_90k=90000)])
         with patch.dict('sys.modules', {'scripts.pilot.route_reference_lk_export': module}), \
              patch('motor_worker.browser_teach.validate_browser', return_value=capture), \
@@ -236,6 +238,34 @@ class AlternativePreparationTests(unittest.TestCase):
         receipt = json.loads((folder/'receipt.json').read_bytes())
         self.assertEqual(receipt['source_binding']['alternative_id'], self.identity)
         self.assertEqual(json.loads((folder/'state.json').read_bytes())['phase'], 'awaiting_qualification')
+
+    def test_worker_refuses_control_change_during_export(self):
+        from scripts.pilot.prepare_route_workspace import prepare
+
+        folder = self.attach_attempt(phase='preparing')
+        (folder/'receipt.json').unlink()
+        write(self.job/'control.json', {'mask': 'game'})
+        manifest_bytes = (self.job/'input/manifest.json').read_bytes()
+        capture = types.SimpleNamespace(geometry=(1920, 1080), manifest=json.loads(manifest_bytes),
+            originals={'manifest.json': manifest_bytes},
+            frames=[dict(relative_ticks_90k=0), dict(relative_ticks_90k=90000)])
+        module = types.ModuleType('scripts.pilot.route_reference_lk_export')
+
+        def export(*args, **kwargs):
+            write(self.job/'control.json', {'mask': 'none'})
+            return dict(first_seconds=0., last_seconds=1.,
+                        map_support=dict(all_reference_neighborhoods_supported=True,
+                                         all_reference_intervals_observed=True))
+
+        module.export = export
+        with patch.dict('sys.modules', {'scripts.pilot.route_reference_lk_export': module}), \
+             patch('motor_worker.browser_teach.validate_browser', return_value=capture), \
+             patch('scripts.pilot.route_motion_audit.audit', return_value=dict(rapid_reversals=[], speed_outliers=[])), \
+             patch('scripts.pilot.prepare_route_workspace.resource_checkpoint'), \
+             patch('scripts.pilot.prepare_route_workspace.TaskResourceMonitor'):
+            with self.assertRaisesRegex(ValueError, 'route_mask_plan_source_binding'):
+                prepare(self.job, self.attempt)
+        self.assertFalse((folder/'receipt.json').exists())
 
     def test_live_immutable_source_fence_closes_caches_when_source_is_touched(self):
         path = self.alt/'native/model/images.bin'

@@ -48,9 +48,8 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
     scale=min(1.,1280/max(width,height));size=(round(width*scale),round(height*scale));cv2.setNumThreads(2)
     # The recorded mask policy owns exclusions. A blanket upper crop would also
     # erase building landmarks when the operator explicitly selects no mask.
-    mask=np.full((size[1],size[0]),255,dtype='uint8')
-    for x1,y1,x2,y2 in capture_exclusions(control.get('mask','none'),getattr(capture,'manifest',{})):
-        mask[int(y1*size[1]):int(y2*size[1]),int(x1*size[0]):int(x2*size[0])]=0
+    from scripts.pilot.route_mask_raster import raster_provenance, reconstruction_mask
+    mask=reconstruction_mask(capture_exclusions(control.get('mask','none'),getattr(capture,'manifest',{})),size)
     with sqlite3.connect(source_database.resolve().as_uri()+'?mode=ro',uri=True) as src:
         with sqlite3.connect(output) as dst:src.backup(dst)
     with p.Database.open(output) as db:
@@ -108,6 +107,7 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
         trackingResolution=list(size),maxCorners=2000,forwardBackwardPixels=.75,descriptorsGenerated=False,
         pixelCoordinates='colmap_corner_centers_after_resize_v1',
         lkWindow=31 if wide_tracking else 21,lkPyramidLevels=4 if wide_tracking else 3,
+        maskRasterization=raster_provenance(),
         sourceGapLimitSeconds=.25,trackingBreaks=breaks,
         sourceModified=False,posesInterpolated=False,physicalActions=0)
     write_json(output.with_suffix('.tracks.json'),report)

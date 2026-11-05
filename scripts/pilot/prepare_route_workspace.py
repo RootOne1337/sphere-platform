@@ -94,9 +94,11 @@ def prepare(job, attempt):
             raise ValueError('route_camera_motion_requires_review')
         capture = validate_browser(job/'input')
         width, height = capture.geometry
-        from scripts.pilot.route_masks import WATERMARK, capture_exclusions
-        control = checked_json(job/'control.json') if (job/'control.json').exists() else {}
-        excluded = capture_exclusions(control.get('mask', 'none'), capture.manifest) or (WATERMARK,)
+        from scripts.pilot.route_preparation_mask import preparation_control, preparation_mask
+        control, control_digest = preparation_control(job)
+        manifest_bytes = capture.originals['manifest.json']
+        excluded, mask_provenance = preparation_mask(
+            job, selected, capture.manifest, control, manifest_bytes=manifest_bytes)
         profile = RouteViewProfile(str(uuid.uuid4()), width, height, (0., 0., 1., 1.), excluded)
         write_json(folder/'state.json', dict(phase='features'))
         if selected['binding'] is not None:
@@ -112,10 +114,16 @@ def prepare(job, attempt):
             receipt = export(model, job/'prepared/reconstruction-input.json', job/'prepared/images',
                 folder/'route.json', profile=profile, world_revision=str(uuid.uuid4()), checkpoint_fn=bounded)
         bounded(folder)
+        receipt['mask_provenance'] = mask_provenance
         receipt['source_coverage'] = source_endpoint_coverage(capture.frames, receipt['first_seconds'], receipt['last_seconds'])
         receipt['geometry_sha256'] = hashlib.sha256(geometry_raw).hexdigest()
         if attempt_source(job, folder) != selected:
             raise ValueError('route_source_changed')
+        current_control, current_control_digest = preparation_control(job)
+        if (current_control_digest != control_digest or current_control != control
+                or preparation_mask(job, selected, capture.manifest, current_control,
+                                    manifest_bytes=manifest_bytes) != (excluded, mask_provenance)):
+            raise ValueError('route_mask_plan_source_binding')
         if selected['binding'] is None and route_source_model(job) != model:
             raise ValueError('route_source_changed')
         if hashlib.sha256(selected['geometry_path'].read_bytes()).hexdigest() != receipt['geometry_sha256']:
@@ -150,7 +158,8 @@ def main():
                    'route_preparation_source_changed', 'route_preparation_source_binding',
                    'route_alternative_native_missing', 'route_alternative_native_changed',
                    'route_alternative_native_binding', 'route_alternative_native_layout',
-                   'route_alternative_native_evidence', 'route_alternative_geometry_not_admitted'}
+                   'route_alternative_native_evidence', 'route_alternative_geometry_not_admitted',
+                   'route_mask_plan_invalid', 'route_mask_plan_source_binding'}
         reason = str(exc) if str(exc) in allowed else 'route_preparation_failed_inspect_local_log'
         write_json(job/'navigation'/args.attempt/'state.json', dict(phase='failed', error=reason))
         raise

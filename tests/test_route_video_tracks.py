@@ -64,6 +64,11 @@ def test_tracker_uses_recorded_mask_policy_without_an_implicit_upper_crop(tmp_pa
     monkeypatch.setattr(cv2,'goodFeaturesToTrack',detect)
     build_video_track_database(tmp_path,prepared,database,prepared/'output.db',lambda:None)
     assert len(seen)==12
+    from scripts.pilot.route_mask_raster import reconstruction_mask
+    from scripts.pilot.route_masks import capture_exclusions
+    assert np.array_equal(seen[0], reconstruction_mask(capture_exclusions(mode, manifest), (320, 180)))
+    report=json.loads((prepared/'output.tracks.json').read_bytes())
+    assert report['maskRasterization']['policy']=='runtime_feature_mask_cells_conservative_v1'
     # Even the precise HUD preset keeps the upper-centre facade. The radar is
     # separately excluded only when HUD is present, with no implicit crop.
     # This inspects the mask actually passed to the corner detector.

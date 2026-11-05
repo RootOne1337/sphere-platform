@@ -42,9 +42,8 @@ def sample_video(capture, mask_mode, check, progress=None):
     from motor_worker.browser_teach import decoded_browser
 
     width,height=capture.geometry;scale=min(1.,480/max(width,height));size=(round(width*scale),round(height*scale))
-    mask=np.full((size[1],size[0]),255,dtype='uint8')
-    for x1,y1,x2,y2 in capture_exclusions(mask_mode,capture.manifest):
-        mask[int(y1*size[1]):int(y2*size[1]),int(x1*size[0]):int(x2*size[0])]=0
+    from scripts.pilot.route_mask_raster import raster_provenance, reconstruction_mask
+    mask=reconstruction_mask(capture_exclusions(mask_mode,capture.manifest),size)
     previous=None;motion={};decoded=0;began=checked=time.monotonic();cv2.setNumThreads(2)
     for row,frame in decoded_browser(capture):
         now=time.monotonic()
@@ -57,11 +56,18 @@ def sample_video(capture, mask_mode, check, progress=None):
             points=cv2.goodFeaturesToTrack(previous,180,.015,10,mask=mask)
             if points is not None and len(points)>=15:
                 moved,good=track_source_points(previous,gray,points,tolerance=1.)
-                if good.sum()>=15:motion[row['index']]=float(np.median(np.linalg.norm(moved-points[:,0],axis=1)[good]))
+                origins, destinations = points[good, 0], moved[good]
+                inside = ((destinations >= 0) & (destinations < size)).all(axis=1)
+                origins, destinations = origins[inside], destinations[inside]
+                pixels = np.minimum(np.rint(destinations).astype(int), np.asarray(size) - 1)
+                allowed = mask[pixels[:, 1], pixels[:, 0]] != 0
+                if allowed.sum() >= 15:
+                    motion[row['index']] = float(np.median(np.linalg.norm(
+                        destinations[allowed] - origins[allowed], axis=1)))
         previous=gray;decoded+=1
     if decoded!=len(capture.frames):raise ValueError('motion_sampling_decode')
     vehicle=(capture.manifest.get('config',{}).get('profile') or {}).get('mode')=='vehicle_buttons'
     indices,report=select_motion_rows(capture.frames,motion,vehicle=vehicle)
     report.update(decodedFrames=decoded,seconds=time.monotonic()-began,trackingResolution=list(size),
-                  scoresMeasured=len(motion),sourceModified=False)
+                  scoresMeasured=len(motion),sourceModified=False,maskRasterization=raster_provenance())
     return indices,report
