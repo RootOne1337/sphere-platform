@@ -246,6 +246,7 @@ def repair_endpoints(
     progress,
     *,
     assessment_check=None,
+    mask_mode="game",
 ):
     job, prepared = Path(job), Path(prepared)
     began = time.monotonic()
@@ -311,7 +312,7 @@ def repair_endpoints(
         candidate = p.Reconstruction(folder / "baseline")
         cv2.setNumThreads(2)
         cv2.setRNGSeed(17)
-        exclusions = capture_exclusions("game", manifest)
+        exclusions = capture_exclusions(mask_mode, manifest)
     except (
         ValueError,
         KeyError,

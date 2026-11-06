@@ -170,10 +170,13 @@ def test_bad_provenance_is_rejected_before_any_workspace_write(tmp_path, case):
 
 
 @pytest.mark.parametrize(
-    "case", ["accepted", "bad_frame_hash", "bad_access_unit", "quality_rejected", "existing_intent"]
+    "case,mask_mode", [("accepted", None), ("accepted", "none"),
+                       ("accepted", "avatar"), ("accepted", "game"),
+                       *[(case, None) for case in
+                         ("bad_frame_hash", "bad_access_unit", "quality_rejected", "existing_intent")]]
 )
 def test_real_lk_resection_adds_new_rows_without_mutating_source_or_anchor(
-    tmp_path, monkeypatch, case
+    tmp_path, monkeypatch, case, mask_mode
 ):
     import sqlite3
 
@@ -181,6 +184,7 @@ def test_real_lk_resection_adds_new_rows_without_mutating_source_or_anchor(
     import pycolmap as p
 
     import scripts.pilot.reconstruct_route as route
+    import scripts.pilot.route_endpoint_resection as endpoint
 
     cam, ids, xy, xyz = calibrated_tracks()
     xy = np.array([(35 + (i % 20) * 45, 25 + (i // 20) * 37) for i in range(280)], dtype=float)
@@ -257,9 +261,17 @@ def test_real_lk_resection_adds_new_rows_without_mutating_source_or_anchor(
             {"scene_admissible": True, "route_admissible": case != "quality_rejected"},
         ),
     )
+    observed_modes = []
+    original_exclusions = endpoint.capture_exclusions
+    def capture_mode(mode, source_manifest):
+        observed_modes.append(mode)
+        return original_exclusions(mode, source_manifest)
+    monkeypatch.setattr(endpoint, "capture_exclusions", capture_mode)
+    options = {} if mask_mode is None else {"mask_mode": mask_mode}
     chosen, report = repair_endpoints(
-        job, prepared, rec, 2, 0.0, 1.0, lambda: None, lambda *x: None
+        job, prepared, rec, 2, 0.0, 1.0, lambda: None, lambda *x: None, **options
     )
+    assert observed_modes == ([] if case == "existing_intent" else [mask_mode or "game"])
     if case != "accepted":
         assert chosen is rec and not report["accepted"]
         assert (

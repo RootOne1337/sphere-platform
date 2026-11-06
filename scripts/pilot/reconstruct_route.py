@@ -562,7 +562,7 @@ def _reconstruct(job, mask, steps, *, route_only=False):
         rec,endpoint_resection=repair_endpoints(job,prepared,rec,len(images),source_start,source_end,
             lambda:checkpoint(job),
             lambda _phase,done,total:state(job,'cameras',method='endpoint_resection',selected_views=len(images),completed_items=done,total_items=total),
-            assessment_check=observation_check)
+            assessment_check=observation_check,mask_mode=mask)
         if endpoint_resection.get('accepted'):
             cached_assessment=model_assessment(rec,prepared,len(images),source_start,source_end,check=observation_check)
             geometry=cached_assessment[0]
