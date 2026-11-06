@@ -364,6 +364,31 @@ class VehicleRouteTests(unittest.TestCase):
             result = self.observe(34., speed=0.)
         self.assertEqual((result['phase'], result['pedal']), ('arrived', 'coast'))
 
+    def test_endpoint_confirmation_restarts_after_loss_or_repeated_frame(self):
+        for interruption in ('ambiguous', 'confirming', 'repeated_rgb'):
+            with self.subTest(interruption=interruption):
+                self.follower = self.make(start_mode='recognized_route')
+                for frame in range(1, 5):
+                    result = self.observe(34., speed=0., source_rgb_sha256=str(frame) * 64)
+                    self.now += .1
+                self.assertEqual((result['reason'], self.follower.arrival), ('vehicle_confirming_end', 2))
+                if interruption == 'ambiguous':
+                    result = self.observe(34., speed=0., state='unknown', reason='route_progress_ambiguous', inliers=0)
+                elif interruption == 'confirming':
+                    result = self.observe(34., speed=0., state='confirming')
+                else:
+                    result = self.observe(34., speed=0., source_rgb_sha256='4' * 64)
+                self.assertEqual((result['phase'], result['pedal'], self.follower.arrival), ('waiting', 'coast', 0))
+                self.now += .1
+                if interruption != 'confirming':
+                    for _ in range(2):
+                        result = self.observe(34., speed=0., state='confirming')
+                        self.now += .1
+                for expected in (1, 2, 3):
+                    result = self.observe(34., speed=0.)
+                    self.now += .1
+                    self.assertEqual(result['phase'], 'arrived' if expected == 3 else 'waiting')
+
     def test_large_heading_correction_does_not_blindly_turn_or_drag_camera(self):
         self.acquire()
         self.now += .1

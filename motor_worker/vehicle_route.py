@@ -104,6 +104,8 @@ class VehicleRouteFollower:
         return self._reply(phase, reason, self.high_water if self.started else None)
 
     def _wait(self, reason, now, *, preserve_confirmation=False):
+        # Arrival requires a continuous series of qualified endpoint poses.
+        self.arrival = 0
         if not preserve_confirmation:
             self._confirmation.clear()
             self.confirmations = 0
@@ -279,6 +281,7 @@ class VehicleRouteFollower:
         # A geometrically verified confirming pose with its current HUD can
         # provide evidence, but only a CURRENT localized pose authorizes input.
         if pose.state != 'localized':
+            self.arrival = 0
             return self._neutral('vehicle_confirming_current_position')
         if not self.started or self.waiting_since is not None:
             if self.confirmations < 3:
