@@ -330,6 +330,39 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual((jumped['phase'], jumped['pedal']), ('stopped', 'coast'))
         self.assertEqual(jumped['reason'], 'vehicle_progress_discontinuity')
 
+    def _acquire_moving_dense_trace(self):
+        count = 161
+        self.route = replace(self.route, camera_trace=tuple((0., 0., i * .2) for i in range(count)),
+            source_seconds=tuple(i * .1 for i in range(count)), source_frame_indices=tuple(range(count)),
+            reference_rgb_sha256=tuple(f'{i:064x}' for i in range(count)))
+        self.follower = self.make()
+        self.acquire()
+        for i in range(1, 6):
+            self.assertEqual(self.observe(i * .2)['phase'], 'following')
+            self.now += .1
+        for _ in range(7):
+            result = self.observe(state='unknown', reason='route_pose_not_verified', inliers=0)
+            self.assertEqual((result['phase'], result['pedal']), ('waiting', 'coast'))
+            self.now += .1
+
+    def test_short_forward_coast_reacquires_only_after_three_current_poses(self):
+        self._acquire_moving_dense_trace()
+        for i in range(3):
+            result = self.observe(2.5 + i * .1, speed=4., state='confirming' if i < 2 else 'localized')
+            if i < 2:
+                self.assertEqual((result['phase'], result['pedal']), ('waiting', 'coast'))
+                self.assertAlmostEqual(self.follower.high_water, 1.)
+            self.now += .1
+        self.assertEqual((result['phase'], result['pedal']), ('following', 'throttle'))
+        self.assertAlmostEqual(self.follower.high_water, 2.7)
+
+    def test_short_pause_does_not_allow_an_unreachable_forward_jump(self):
+        self._acquire_moving_dense_trace()
+        result = self.observe(4., speed=4.)
+        self.assertEqual((result['phase'], result['reason'], result['pedal']),
+                         ('stopped', 'vehicle_progress_discontinuity', 'coast'))
+        self.assertAlmostEqual(self.follower.high_water, 1.)
+
     def test_tentative_jump_after_loss_waits_and_nearby_pose_can_recover(self):
         self.assertEqual(self.acquire()['pedal'], 'throttle')
         self.now += 2.426
@@ -363,6 +396,7 @@ class VehicleRouteTests(unittest.TestCase):
             self.now += .1
             result = self.observe(34., speed=0.)
         self.assertEqual((result['phase'], result['pedal']), ('arrived', 'coast'))
+        self.assertEqual(result['targetSpeedKmh'], 0.)
 
     def test_endpoint_confirmation_restarts_after_loss_or_repeated_frame(self):
         for interruption in ('ambiguous', 'confirming', 'repeated_rgb'):
@@ -439,6 +473,15 @@ class VehicleRouteTests(unittest.TestCase):
         result = self.acquire(speed=0.)
         self.assertEqual(result['phase'], 'following')
         self.assertLessEqual(result['targetSpeedKmh'], 5.)
+
+    def test_falling_hud_speed_cannot_reapply_throttle_at_or_above_cap(self):
+        self.follower = self.make(max_speed_kmh=5)
+        self.acquire(speed=5.)
+        for speed in (6.2, 5.5, 5.1, 5.):
+            result = self.observe(speed=speed)
+            self.assertEqual(result['phase'], 'following')
+            self.assertNotEqual(result['pedal'], 'throttle')
+            self.now += .1
         self.now += .1
         result = self.observe(speed=10.)
         self.assertEqual(result['pedal'], 'brake')

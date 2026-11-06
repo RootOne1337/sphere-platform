@@ -15,6 +15,7 @@ from motor_worker.route_confirmation import (
     CONFIRMATION_POLICY,
     SOFT_VISUAL_MISSES,
     ConfirmationEvidence,
+    source_arc_motion_envelope,
 )
 from motor_worker.route_localization import (
     MIN_TRACE_STEP_UNITS,
@@ -80,6 +81,7 @@ class VehicleRouteFollower:
     # Recovery is a stationary, bounded wait. No stale pose gains movement
     # permission while the browser has already released both native contacts.
     MAX_RELOCALIZE_SECONDS = 15.
+    MAX_FORWARD_COAST_SECONDS = 2.
 
     def __init__(self, route, speed_reference, *, clock, reference_rotations,
                  start_mode='beginning', max_seconds=120, max_speed_kmh=15):
@@ -113,6 +115,9 @@ class VehicleRouteFollower:
         self.sequence = 0
         self.last_at = None
         self.last_center = None
+        self.last_qualified_at = None
+        self.recent_progress_rates = deque(maxlen=5)
+        self._forward_recovery = False
         self.started = False
         self.confirmations = 0
         self._confirmation = ConfirmationEvidence()
@@ -159,6 +164,7 @@ class VehicleRouteFollower:
         if not preserve_confirmation:
             self._confirmation.clear()
             self.confirmations = 0
+            self._forward_recovery = False
         self.speed_sample = None
         if self.started:
             if self.waiting_since is None:
@@ -194,6 +200,24 @@ class VehicleRouteFollower:
     def _point_at_arc(self, value):
         index, fraction = self._at_arc(value)
         return self.trace[index] * (1. - fraction) + self.trace[index + 1] * fraction
+
+    def _within_forward_coast(self, center, progress, received_at):
+        if (self.waiting_since is None or self.last_qualified_at is None
+                or len(self.recent_progress_rates) < 3 or progress <= self.high_water):
+            return False
+        elapsed = received_at - self.last_qualified_at
+        if not 0 < elapsed <= self.MAX_FORWARD_COAST_SECONDS:
+            return False
+        # Require agreement with both recent measured progress and the local
+        # recorded trace. Neither supplies a pose or permission to move.
+        epsilon = self.step * 2.
+        recorded = source_arc_motion_envelope(self.arc, self.route.source_seconds,
+                                               self.high_water, epsilon, elapsed)
+        if recorded is None:
+            return False
+        reach = min(self.step * 16., self.total * .10, recorded['limit'],
+                    epsilon + max(self.recent_progress_rates) * elapsed)
+        return max(progress - self.high_water, self.np.linalg.norm(center - self.last_center)) <= reach
 
     def observe(self, pose, speed, *, motion_active=None):
         np, now = self.np, self.clock()
@@ -252,11 +276,17 @@ class VehicleRouteFollower:
             elif self.last_center is not None and np.linalg.norm(center - self.last_center) > self.step * 6:
                 discontinuity = 'vehicle_pose_discontinuity'
             if discontinuity:
-                if pose.state == 'confirming':
+                if self._within_forward_coast(center, progress, pose.received_at):
+                    if not self._forward_recovery:
+                        self._confirmation.clear()
+                        self.confirmations = 0
+                        self._forward_recovery = True
+                elif pose.state == 'confirming':
                     # Reject the tentative jump without replacing the last
                     # verified position or allowing it to vote for movement.
                     return self._wait('vehicle_confirming_position', now)
-                return self._neutral(discontinuity, terminal=True)
+                else:
+                    return self._neutral(discontinuity, terminal=True)
         if not self.started and self.start_mode == 'beginning':
             first_arc = min(self.total * .15, float(np.interp(
                 self.route.source_seconds[0] + 5., self.route.source_seconds, self.arc)))
@@ -264,7 +294,7 @@ class VehicleRouteFollower:
                 if pose.state == 'confirming':
                     return self._wait('vehicle_confirming_position', now)
                 return self._neutral('vehicle_start_outside_recorded_beginning', terminal=True)
-        if not self.started:
+        if not self.started or self._forward_recovery:
             # Only a still-eligible startup vote may constrain the next centre.
             # A provisional pose must never permanently stop an idle run.
             votes = self._confirmation.votes
@@ -337,8 +367,18 @@ class VehicleRouteFollower:
             if self.confirmations < 3:
                 return self._neutral('vehicle_confirming_current_position')
             self.started = True
+        if self.waiting_since is not None:
+            self.recent_progress_rates.clear()
+        elif self.last_qualified_at is not None:
+            interval = pose.received_at - self.last_qualified_at
+            if 0 < interval <= .5:
+                self.recent_progress_rates.append(max(0., progress - self.high_water) / interval)
+        self.last_qualified_at = pose.received_at
+        self._forward_recovery = False
         self.last_center = center.copy()
         self.high_water = max(self.high_water, progress)
+        if near_end:
+            self.target_speed = 0.
         if near_end and self.observed_speed <= .5:
             self.waiting_since = None
             self.arrival += 1
@@ -346,8 +386,6 @@ class VehicleRouteFollower:
                 return self._neutral('vehicle_camera_trace_end_confirmed', terminal=True, arrived=True)
             return self._neutral('vehicle_confirming_end')
         self.arrival = 0
-        if near_end:
-            self.target_speed = 0.
         look_seconds = .25 + min(self.observed_speed / 350., .3)
         source_at = ticks / 90000.
         look_arc = min(self.total, max(progress + self.step, float(np.interp(
@@ -405,6 +443,8 @@ class VehicleRouteFollower:
         elif error >= min(1.5, max(.25, self.target_speed * .1)):
             desired_pedal = 'throttle'
         else:
+            desired_pedal = 'coast'
+        if desired_pedal == 'throttle' and self.observed_speed >= self.max_speed_kmh:
             desired_pedal = 'coast'
         # Immediate deceleration/neutral is allowed; ordinary gas/coast noise
         # cannot create alternating DOWNs at the localization frame rate.
