@@ -790,6 +790,7 @@ def handler(jobs, origin, port):
                                              route_runtime_metadata_previous_slots=1,
                                              route_frame_archive_terminal_contract='retire_then_finalize_opt_in_v1',
                                              vehicle_control_contract='attached_camera_hud_binary_hold_v1',
+                                             vehicle_visual_tempo_contract='source_bound_live_hud_5_kmh_v1',
                                              route_resource_monitor_contract='task_volume30_background_refresh_v2',
                                              route_reactivity_contract='gray_reuse_owned_supervision_v1',
                                              route_reconstruction_recipe_contract='source_bound_recipe_admission_v1',

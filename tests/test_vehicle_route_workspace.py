@@ -117,6 +117,21 @@ class VehicleWorkspaceTests(unittest.TestCase):
                 self.workspace.start_vehicle(self.job, self.body)
         self.assertIsNone(self.workspace.live)
 
+    def test_visual_tempo_requires_declared_hudless_capture_and_reference_map(self):
+        visual = dict(self.body, maxSpeedKmh=5, speedMode='visual_tempo_live_hud')
+        source = {'runtime_family': 'reference_lk'}
+        with self.assertRaisesRegex(ValueError, 'vehicle_visual_tempo_unavailable'):
+            self.workspace.start_vehicle(self.job, dict(visual, expectedSource=source))
+        path = self.job/'input/manifest.json'
+        manifest = json.loads(path.read_bytes())
+        manifest['config']['hud_hidden_declared'] = True
+        path.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, 'vehicle_visual_tempo_unavailable'):
+            self.workspace.start_vehicle(self.job, visual)
+        with self.assertRaisesRegex(ValueError, 'vehicle_visual_tempo_unavailable'):
+            self.workspace.start_vehicle(self.job, dict(visual, maxSpeedKmh=6, expectedSource=source))
+        self.assertIsNone(self.workspace.live)
+
     def test_explicit_longer_budget_is_echoed_and_cannot_change_in_place(self):
         body = dict(self.body, maxSeconds=1200)
         result = self.workspace.start_vehicle(self.job, body)

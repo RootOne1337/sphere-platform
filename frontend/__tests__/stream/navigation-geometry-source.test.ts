@@ -1,9 +1,18 @@
-import {navigationExpectedSource,navigationPreparationSource,navigationReadyForGeometry} from '@/src/features/stream/navigationGeometrySource';
+import {navigationExpectedSource,navigationPreparationSource,navigationReadyForGeometry,visualTempoAvailable} from '@/src/features/stream/navigationGeometrySource';
 import type {NavigationGeometrySelection} from '@/src/features/stream/navigationGeometrySource';
 import type {NavigationState} from '@/src/features/stream/reconstructionClient';
 
 const selected:NavigationGeometrySelection={alternativeId:'retained-173',geometry_sha256:'a'.repeat(64),cameras:173,points:20556,label:'Сохранённая схема'};
 const source={alternativeId:'retained-173',geometry_sha256:selected.geometry_sha256,cameras:173,points:20556,runtime_family:'reference_lk' as const};
+test('visual tempo requires a bound hidden-HUD recording, capability and exact ready geometry',()=>{
+  const assets:NavigationState={phase:'ready',source,vehicleVisualTempoAvailable:true};
+  expect(visualTempoAvailable(true,assets,selected,true)).toBe(true);
+  expect(visualTempoAvailable(false,assets,selected,true)).toBe(false);
+  expect(visualTempoAvailable(true,{...assets,vehicleVisualTempoAvailable:undefined},selected,true)).toBe(false);
+  expect(visualTempoAvailable(true,{...assets,phase:'features'},selected,true)).toBe(false);
+  expect(visualTempoAvailable(true,{phase:'ready',vehicleVisualTempoAvailable:true},{...selected,alternativeId:null},true)).toBe(false);
+  expect(visualTempoAvailable(true,assets,{...selected,geometry_sha256:'b'.repeat(64)},true)).toBe(false);
+});
 test('counts and a valid view alone cannot authorize preparation or movement',()=>{
   expect(navigationPreparationSource({phase:'not_prepared'},selected)).toBeNull();
   expect(navigationReadyForGeometry({phase:'not_prepared',preparationSources:[source]},selected,true)).toBe(false);

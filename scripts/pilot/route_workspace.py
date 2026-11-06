@@ -195,7 +195,7 @@ class RouteWorkspaces:
                 try:
                     validate_reference_lk_receipt(receipt, folder,
                         source_capture_sha256=digest(job/'input/manifest.json'),
-                        source_index_sha256=digest(job/'prepared/reconstruction-input.json'),
+                        source_index_sha256=digest(selected['index_path']),
                         geometry_sha256=selected['binding']['geometry_sha256'],
                         model_sha256=selected['binding']['model_sha256'])
                 except (OSError, ValueError, TypeError, KeyError):
@@ -204,7 +204,8 @@ class RouteWorkspaces:
                     validate_reference_lk_qualification(receipt, folder, source_binding=selected['binding'])
                 except (OSError, ValueError, TypeError, KeyError):
                     return dict(result, phase='awaiting_qualification', error='route_reference_lk_unqualified')
-                return dict(result, phase='ready', error=None, controlledExperimentalTestOnly=True)
+                return dict(result, phase='ready', error=None, controlledExperimentalTestOnly=True,
+                            vehicleVisualTempoAvailable=self._visual_tempo_source(job))
             if receipt.get('pipeline_sha256') == native_reference_pipeline_id():
                 from scripts.pilot.route_native_landmarks import validate_reference_receipt
                 try:
@@ -549,8 +550,11 @@ class RouteWorkspaces:
                     selected['model_path'].parent/'assessment.json', selected['model_path'].parent/'producer-proof.json',
                     *(selected['model_path']/name for name in sorted(MODEL_FILES)),
                     ROOT/'motor_worker/route_confirmation.py', ROOT/'motor_worker/vehicle_route.py', *recovery_paths)
+                if selected['index_path'] != job/'prepared/reconstruction-input.json':
+                    source_paths += (selected['index_path'],
+                                     selected['index_path'].parent.parent/'input/manifest.json')
             source_stamp = self._runtime_source_stamp(source_paths) if source_paths else None
-            if recovery_paths and source_stamp[-len(recovery_paths):] != recovery_stamp:
+            if recovery_paths and self._runtime_source_stamp(recovery_paths) != recovery_stamp:
                 raise ValueError('route_descriptor_recovery_changed')
         except BaseException:
             if reference_lk:
@@ -662,6 +666,16 @@ class RouteWorkspaces:
             self.live['deadline'] = self.clock()+max_seconds
             self.live['observation_limit']=max_seconds*30
 
+    @staticmethod
+    def _visual_tempo_source(job, *, manifest=None):
+        if manifest is None:
+            manifest = checked_json(job/'input/manifest.json')
+        config = manifest.get('config') if isinstance(manifest, dict) else None
+        profile = config.get('profile') if isinstance(config, dict) else None
+        return (isinstance(profile, dict) and config.get('hud_hidden_declared') is True
+                and profile.get('mode') == 'vehicle_buttons' and profile.get('steering') == 'stick'
+                and profile.get('hudProfile') == 'black_russia_scooter_v1')
+
     def start_vehicle(self, job, body):
         """Separate speed-observed, attached-camera vehicle planner.
 
@@ -669,14 +683,14 @@ class RouteWorkspaces:
         cannot acquire Android input or promote an observer or pedestrian run.
         """
         from motor_worker.route_reference_view import reference_rotations
-        from motor_worker.vehicle_route import VehicleRouteFollower
+        from motor_worker.vehicle_route import ConservativeTempoReference, VehicleRouteFollower
         from scripts.pilot.route_hud_profile import load_speed_reference
 
         required = {'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed',
                     'vehicleCameraAssumptionConfirmed', 'cameraFollowsBodyConfirmed',
                     'hudProfile', 'maxSpeedKmh', 'cameraTracking', 'cameraControl', 'clientVersion'}
         if (type(body) is not dict or not required <= body.keys()
-                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds', 'expectedSource'}
+                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds', 'expectedSource', 'speedMode'}
                 or body.get('vehicleCameraAssumptionConfirmed') is not True
                 or body.get('cameraFollowsBodyConfirmed') is not True
                 or body.get('hudProfile') != 'black_russia_scooter_v1'
@@ -684,11 +698,19 @@ class RouteWorkspaces:
                 or body.get('cameraTracking') is not True
                 or body.get('cameraControl') != 'continuous_drag_v1'
                 or body.get('clientVersion') != 'vehicle_live_v1'
+                or body.get('speedMode', 'recorded_hud') not in ('recorded_hud', 'visual_tempo_live_hud')
                 or body.get('startMode', 'beginning') not in {'beginning', 'recognized_route'}
                 or 'maxSeconds' in body and (type(body['maxSeconds']) is not int or not 60 <= body['maxSeconds'] <= 1800)
                 or type(body.get('diagnosticFrames', False)) is not bool):
             raise ValueError('vehicle_explicit_confirmation_required')
         manifest = checked_json(job / 'input/manifest.json')
+        speed_mode = body.get('speedMode', 'recorded_hud')
+        visual_tempo = speed_mode == 'visual_tempo_live_hud'
+        if visual_tempo and (body['maxSpeedKmh'] != ConservativeTempoReference.MAX_SPEED_KMH
+                or not self._visual_tempo_source(job, manifest=manifest)
+                or not isinstance(body.get('expectedSource'), dict)
+                or body['expectedSource'].get('runtime_family') != 'reference_lk'):
+            raise ValueError('vehicle_visual_tempo_unavailable')
         profile = manifest.get('config', {}).get('profile', {})
         if (type(profile) is not dict or profile.get('mode') != 'vehicle_buttons'
                 or profile.get('steering') != 'stick' or profile.get('hudProfile') != body['hudProfile']):
@@ -699,19 +721,24 @@ class RouteWorkspaces:
         settings = {key: body.get(key, False if key == 'diagnosticFrames' else 'beginning')
                     for key in ('startMode', 'maxSpeedKmh', 'diagnosticFrames', 'hudProfile')}
         settings['maxSeconds'] = body.get('maxSeconds')
+        settings['speedMode'] = speed_mode
         self._expire()
         if self.live and self.live['id'] == request['id']:
             if 'vehicle' not in self.live:
                 raise ValueError('vehicle_observer_cannot_be_promoted')
             if self.live.get('vehicle_settings') != settings:
                 raise ValueError('vehicle_settings_changed')
-        reference = load_speed_reference(job)
-        if reference is None:
+        reference = None if visual_tempo else load_speed_reference(job)
+        if not visual_tempo and reference is None:
             raise ValueError('vehicle_source_speed_not_prepared')
         self.start_live(job, request, observation_only=False)
         try:
             if 'vehicle' not in self.live:
                 route = self.live['tracker'].route
+                if visual_tempo:
+                    if self.live.get('runtime_family') != 'reference_lk':
+                        raise ValueError('vehicle_visual_tempo_unavailable')
+                    reference = ConservativeTempoReference(route)
                 views = reference_rotations(self.live.get('geometry_path', job/'geometry.json'),
                                             route, self.live['geometry_sha256'])
                 budget = body.get('maxSeconds', min(1800, max(180,
@@ -731,7 +758,7 @@ class RouteWorkspaces:
                         maxSeconds=self.live['vehicle'].max_seconds, maxSpeedKmh=body['maxSpeedKmh'],
                         startMode=settings['startMode'], cameraTracking=True,
                         cameraControl='continuous_drag_v1', cameraFollowsBodyConfirmed=True,
-                        hudProfile=body['hudProfile'], observationProtocol='jpeg_binary_v1',
+                        hudProfile=body['hudProfile'], speedMode=speed_mode, observationProtocol='jpeg_binary_v1',
                         motionProtocol='applied_vehicle_v1', clientVersion='vehicle_live_v1')
         except BaseException:
             self._retire_live(self.live, self.clock())

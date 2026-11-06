@@ -103,7 +103,7 @@ def prepare(job, attempt):
         write_json(folder/'state.json', dict(phase='features'))
         if selected['binding'] is not None:
             from scripts.pilot.route_reference_lk_export import export as export_reference_lk
-            receipt = export_reference_lk(model, job/'prepared/reconstruction-input.json', job/'prepared/images',
+            receipt = export_reference_lk(model, selected['index_path'], selected['images_path'],
                 folder/'route.json', profile=profile, world_revision=str(uuid.uuid4()), checkpoint_fn=bounded,
                 source_geometry_sha256=selected['binding']['geometry_sha256'],
                 source_model_sha256=selected['binding']['model_sha256'],

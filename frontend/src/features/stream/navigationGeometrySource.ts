@@ -26,6 +26,11 @@ export function navigationReadyForGeometry(assets:NavigationState|null,selection
   return !hasSourceView||selection?.alternativeId===null;
 }
 
+/** Hidden-HUD recordings require both backend support and the selected ready map. */
+export function visualTempoAvailable(recordedWithoutHud:boolean,assets:NavigationState|null,selection:NavigationGeometrySelection|null,hasSourceView:boolean):boolean {
+  return recordedWithoutHud&&assets?.vehicleVisualTempoAvailable===true&&!!assets.source&&navigationReadyForGeometry(assets,selection,hasSourceView);
+}
+
 /** Freeze only the validated public binding, never catalog metadata or arbitrary status fields. */
 export function navigationExpectedSource(assets:NavigationState|null,selection:NavigationGeometrySelection|null,hasSourceView:boolean):NavigationMapSource|undefined {
   if(!navigationReadyForGeometry(assets,selection,hasSourceView)||!assets?.source)return undefined;

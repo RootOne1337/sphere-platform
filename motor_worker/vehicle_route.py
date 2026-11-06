@@ -25,6 +25,54 @@ from motor_worker.route_localization import (
 from motor_worker.route_reference_lk import ReferenceLKRoute
 
 
+class ConservativeTempoReference:
+    """Explicit low-speed policy for a trace without recorded HUD readings.
+
+    Trace distance divided by source time is only a relative tempo. Its units
+    have no conversion to km/h: the 2--5 km/h values below are policy limits,
+    which must be controlled against a fresh live HUD reading.
+    """
+
+    MAX_SPEED_KMH = 5.
+
+    def __init__(self, route):
+        import numpy as np
+
+        if type(route) not in (SparseRoute, ReferenceLKRoute):
+            raise ValueError('vehicle_route_required')
+        trace = np.asarray(route.camera_trace, dtype=float)
+        times = np.asarray(route.source_seconds, dtype=float)
+        if (trace.ndim != 2 or trace.shape != (len(times), 3) or len(times) < 2
+                or not np.isfinite(trace).all() or not np.isfinite(times).all()
+                or np.any(np.diff(times) <= 0)):
+            raise ValueError('vehicle_tempo_reference_invalid')
+        rates = np.linalg.norm(np.diff(trace, axis=0), axis=1) / np.diff(times)
+        positive = rates[rates > 1e-12]
+        if not len(positive) or not np.isfinite(rates).all():
+            raise ValueError('vehicle_tempo_reference_invalid')
+        scale = float(np.median(positive))
+        self.route = route
+        self.times = tuple(map(float, times))
+        self.targets = tuple(float(2. + 3. * min(1., rate / scale)) if rate > 1e-12 else 0.
+                             for rate in rates) + (0.,)
+
+    def sample(self, ticks):
+        import bisect
+
+        if type(ticks) not in (int, float) or not math.isfinite(ticks):
+            raise ValueError('vehicle_tempo_time_invalid')
+        index = max(0, min(len(self.targets) - 1, bisect.bisect_right(self.times, ticks / 90000.) - 1))
+        return self.targets[index]
+
+    def preview(self, ticks, horizon_ticks):
+        if (type(horizon_ticks) not in (int, float) or not math.isfinite(horizon_ticks)
+                or horizon_ticks < 0):
+            raise ValueError('vehicle_tempo_time_invalid')
+        end = (ticks + horizon_ticks) / 90000.
+        return min([self.sample(ticks), self.sample(ticks + horizon_ticks)] +
+                   [self.targets[i] for i, time in enumerate(self.times) if ticks / 90000. < time <= end])
+
+
 class VehicleRouteFollower:
     MAX_STEERING = .35
     PURSUIT_CONE = math.pi / 3
@@ -39,6 +87,8 @@ class VehicleRouteFollower:
 
         if type(route) not in (SparseRoute, ReferenceLKRoute) or not callable(getattr(speed_reference, 'sample', None)):
             raise ValueError('vehicle_route_or_speed_reference_required')
+        if isinstance(speed_reference, ConservativeTempoReference) and speed_reference.route is not route:
+            raise ValueError('vehicle_tempo_route_mismatch')
         if start_mode not in {'beginning', 'recognized_route'}:
             raise ValueError('vehicle_start_mode')
         if type(max_seconds) is not int or not 60 <= max_seconds <= 1800:

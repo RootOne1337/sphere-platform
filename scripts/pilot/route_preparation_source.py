@@ -13,6 +13,62 @@ from scripts.pilot.alternative_geometry import ID, alternative, list_alternative
 
 MODEL_FILES = frozenset(('cameras.bin', 'images.bin', 'points3D.bin', 'frames.bin', 'rigs.bin'))
 SCHEMA = 'sphere-alternative-native-source-v1'
+SCHEMA_V2 = 'sphere-alternative-native-source-v2'
+
+
+def _alternative_prepared(job, folder, record, digest):
+    """Verify an alternative-owned frame index against its original capture."""
+    from motor_worker.browser_teach import validate_browser
+
+    prepared = folder/'prepared'
+    index, images = prepared/'reconstruction-input.json', prepared/'images'
+    manifest_copy = folder/'input/manifest.json'
+    for path in (prepared, index, images, manifest_copy):
+        _inside(job, path)
+    if (not manifest_copy.is_file() or manifest_copy.stat().st_nlink != 1
+            or not 0 < manifest_copy.stat().st_size <= 65536
+            or digest(manifest_copy) != record.get('source_manifest_sha256')):
+        raise ValueError('route_alternative_native_index')
+    if (not index.is_file() or index.stat().st_nlink != 1
+            or not 0 < index.stat().st_size <= 4*1024**2 or not images.is_dir()):
+        raise ValueError('route_alternative_native_index')
+    if digest(index) != record.get('reconstruction_input_sha256'):
+        raise ValueError('route_alternative_native_index')
+    capture = validate_browser(job/'input')
+    doc = json.loads(index.read_bytes())
+    rows, hashes = doc.get('images'), record.get('images_sha256')
+    if (doc.get('schema') != 'sphere-reconstruction-input-v1'
+            or doc.get('source_manifest_sha256') != digest(job/'input/manifest.json')
+            or doc.get('clip') != capture.manifest['id'] or doc.get('geometry') != list(capture.geometry)
+            or not isinstance(rows, list) or not 2 <= len(rows) <= 240 or not isinstance(hashes, dict)):
+        raise ValueError('route_alternative_native_index')
+    names, indices, previous = set(), set(), -1
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError('route_alternative_native_index')
+        i, name = row.get('source_index'), row.get('image')
+        if (type(i) is not int or not 0 <= i < len(capture.frames) or i <= previous
+                or not isinstance(name, str) or name != f'images/{i:08d}.png'):
+            raise ValueError('route_alternative_native_index')
+        previous = i
+        frame = capture.frames[i]
+        filename = name[7:]
+        path = images/filename
+        _inside(job, path)
+        if (not path.is_file() or not 0 < path.stat().st_size <= 8*1024**2
+                or path.stat().st_nlink != 1
+                or row.get('bytes') != path.stat().st_size
+                or row.get('relative_ticks_90k') != frame['relative_ticks_90k']
+                or row.get('worker_observed_at_ms') != frame['worker_observed_at_ms']
+                or row.get('source_access_unit_sha256') != frame['sha256']
+                or row.get('png_sha256') != hashes.get(filename)
+                or digest(path) != row['png_sha256']):
+            raise ValueError('route_alternative_native_index')
+        names.add(filename)
+        indices.add(i)
+    if set(hashes) != names or {p.name for p in images.iterdir()} != names or len(indices) != len(rows):
+        raise ValueError('route_alternative_native_index')
+    return index, images
 
 
 def cancel_marker(path):
@@ -68,17 +124,29 @@ def resolve_alternative_source(job, identity, *, digest=_digest):
     if not source.is_file():
         raise ValueError('route_alternative_native_missing')
     _inside(job, source)
-    if not 0 < source.stat().st_size <= 16384:
+    if not 0 < source.stat().st_size <= 65536:
         raise ValueError('route_alternative_native_quota')
     record = json.loads(source.read_bytes())
+    if not isinstance(record, dict):
+        raise ValueError('route_alternative_native_binding')
+    if record.get('schema') == SCHEMA and source.stat().st_size > 16384:
+        raise ValueError('route_alternative_native_quota')
     geometry_sha = hashlib.sha256(body).hexdigest()
-    if (not isinstance(record, dict) or record.get('schema') != SCHEMA or record.get('alternative_id') != identity
+    if (record.get('schema') not in (SCHEMA, SCHEMA_V2) or record.get('alternative_id') != identity
             or record.get('scope') != 'READ_ONLY_ROUTE_ASSETS'
             or record.get('execution_qualified') is not False
             or record.get('geometry_sha256') != geometry_sha
-            or record.get('source_manifest_sha256') != digest(job/'input/manifest.json')
-            or record.get('reconstruction_input_sha256') != digest(job/'prepared/reconstruction-input.json')):
+            or record.get('source_manifest_sha256') != digest(job/'input/manifest.json')):
         raise ValueError('route_alternative_native_binding')
+    original_index = job/'prepared/reconstruction-input.json'
+    if record['schema'] == SCHEMA:
+        if record.get('reconstruction_input_sha256') != digest(original_index):
+            raise ValueError('route_alternative_native_binding')
+        index, images = original_index, job/'prepared/images'
+    else:
+        if record.get('original_reconstruction_input_sha256') != digest(original_index):
+            raise ValueError('route_alternative_native_binding')
+        index, images = _alternative_prepared(job, folder, record, digest)
     files = record.get('model_sha256')
     model = folder/'model'
     _inside(job, model)
@@ -112,7 +180,12 @@ def resolve_alternative_source(job, identity, *, digest=_digest):
         source_manifest_sha256=record['source_manifest_sha256'],
         reconstruction_input_sha256=record['reconstruction_input_sha256'],
         native_source_sha256=digest(source), model_sha256=files)
-    return dict(geometry_path=base/'geometry.json', model_path=model, binding=binding, info=info)
+    if record['schema'] == SCHEMA_V2:
+        binding.update(schema='sphere-route-preparation-source-v2',
+            original_reconstruction_input_sha256=record['original_reconstruction_input_sha256'],
+            images_sha256=record['images_sha256'])
+    return dict(geometry_path=base/'geometry.json', model_path=model, binding=binding, info=info,
+                index_path=index, images_path=images)
 
 
 def attempt_source(job, folder, *, digest=_digest):
@@ -132,7 +205,8 @@ def attempt_source(job, folder, *, digest=_digest):
         if 'sourceBinding' in record:
             raise ValueError('route_preparation_source_binding')
     return dict(geometry_path=job/'geometry.json', model_path=None, binding=None,
-                info=dict(id=None))
+                info=dict(id=None), index_path=job/'prepared/reconstruction-input.json',
+                images_path=job/'prepared/images')
 
 
 def public_source(selected, *, digest=_digest):

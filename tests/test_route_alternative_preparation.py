@@ -87,6 +87,46 @@ class AlternativePreparationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'native_changed'):
             resolve_alternative_source(self.job, self.identity)
 
+    def test_v2_uses_alternative_index_and_rejects_changed_frame_or_original_index(self):
+        native = self.alt/'native'
+        manifest = self.job/'input/manifest.json'
+        manifest_copy = native/'input/manifest.json'
+        manifest_copy.parent.mkdir(parents=True)
+        manifest_copy.write_bytes(manifest.read_bytes())
+        frames, rows, hashes = [], [], {}
+        for i in range(2):
+            frame = dict(relative_ticks_90k=i*9000, worker_observed_at_ms=float(i), sha256=str(i)*64)
+            frames.append(frame)
+            name = f'{i:08d}.png'
+            path = native/'prepared/images'/name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(bytes([i+1]))
+            hashes[name] = sha(path)
+            rows.append(dict(image='images/'+name, source_index=i, relative_ticks_90k=frame['relative_ticks_90k'],
+                worker_observed_at_ms=frame['worker_observed_at_ms'], source_access_unit_sha256=frame['sha256'],
+                png_sha256=hashes[name], bytes=1))
+        index = native/'prepared/reconstruction-input.json'
+        write(index, dict(schema='sphere-reconstruction-input-v1', clip='clip', geometry=[1920, 1080],
+                          source_manifest_sha256=sha(manifest), images=rows))
+        source = native/'source.json'
+        record = json.loads(source.read_bytes())
+        record.update(schema='sphere-alternative-native-source-v2',
+                      original_reconstruction_input_sha256=record['reconstruction_input_sha256'],
+                      reconstruction_input_sha256=sha(index), images_sha256=hashes)
+        write(source, record)
+        capture = types.SimpleNamespace(manifest={'id': 'clip'}, geometry=(1920, 1080), frames=frames)
+        with patch('motor_worker.browser_teach.validate_browser', return_value=capture):
+            selected = resolve_alternative_source(self.job, self.identity)
+            self.assertEqual(selected['index_path'], index)
+            self.assertEqual(selected['binding']['schema'], 'sphere-route-preparation-source-v2')
+            (native/'prepared/images/00000000.png').write_bytes(b'changed')
+            with self.assertRaisesRegex(ValueError, 'native_index'):
+                resolve_alternative_source(self.job, self.identity)
+            (native/'prepared/images/00000000.png').write_bytes(b'\x01')
+            write(self.job/'prepared/reconstruction-input.json', {'changed': True})
+            with self.assertRaisesRegex(ValueError, 'native_binding'):
+                resolve_alternative_source(self.job, self.identity)
+
     def test_native_source_cannot_rebind_to_changed_index_or_execution_claim(self):
         source = self.alt/'native/source.json'
         record = json.loads(source.read_bytes())

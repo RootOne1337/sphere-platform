@@ -7,7 +7,7 @@ from dataclasses import replace
 from types import SimpleNamespace
 
 from motor_worker.route_localization import RoutePose
-from motor_worker.vehicle_route import VehicleRouteFollower
+from motor_worker.vehicle_route import ConservativeTempoReference, VehicleRouteFollower
 from tests import test_motor_route_localization as fixtures
 
 
@@ -416,6 +416,33 @@ class VehicleRouteTests(unittest.TestCase):
         result = self.observe(1.)
         self.assertEqual((result['phase'], result['pedal']), ('waiting', 'coast'))
         self.assertIsNone(result['targetSpeedKmh'])
+
+    def test_conservative_tempo_is_scale_independent_and_policy_capped(self):
+        reference = ConservativeTempoReference(self.route)
+        scaled = replace(self.route, camera_trace=tuple(tuple(100 * x for x in point)
+                                                       for point in self.route.camera_trace))
+        other = ConservativeTempoReference(scaled)
+        self.assertEqual(reference.targets, other.targets)
+        self.assertTrue(all(0 <= target <= 5 for target in reference.targets))
+        self.assertEqual(reference.targets[-1], 0.)
+        self.assertEqual(reference.preview(0, 90000 * 600), 0.)
+        with self.assertRaises(ValueError):
+            VehicleRouteFollower(self.route, other, clock=lambda: self.now,
+                reference_rotations=(self.np.eye(3),) * len(self.route.camera_trace))
+
+    def test_conservative_tempo_requires_live_hud_and_never_exceeds_five(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=50)
+        result = self.observe(speed_changes={'status': 'unknown'})
+        self.assertEqual((result['phase'], result['pedal']), ('waiting', 'coast'))
+        self.now += .1
+        result = self.acquire(speed=0.)
+        self.assertEqual(result['phase'], 'following')
+        self.assertLessEqual(result['targetSpeedKmh'], 5.)
+        self.now += .1
+        result = self.observe(speed=10.)
+        self.assertEqual(result['pedal'], 'brake')
+        self.assertLessEqual(result['targetSpeedKmh'], 5.)
 
     def test_invalid_pose_metadata_and_failed_reference_stop_without_movement(self):
         for changed in ({'receiver_sequence': True}, {'received_at': None},
