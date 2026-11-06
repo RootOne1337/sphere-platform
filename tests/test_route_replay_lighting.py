@@ -6,6 +6,7 @@ from scripts.pilot.route_replay_lighting import (
     LIGHTING_PROFILES,
     MAX_FRAME_PIXELS,
     apply_lighting,
+    photometric_summary,
 )
 
 
@@ -35,7 +36,7 @@ def test_visible_detail_profiles_do_not_move_or_smear_local_image_structure(prof
     np.testing.assert_array_equal(changed[:, :, 1] > plain[:, :, 1], expected)
 
 
-@pytest.mark.parametrize("profile", ["warm_shadow", "glare"])
+@pytest.mark.parametrize("profile", ["warm_shadow", "side_sun", "glare"])
 def test_spatial_pattern_is_seeded_and_varies_across_the_frame(profile):
     source = np.full((60, 96, 3), 64, dtype=np.uint8)
     first = apply_lighting(source, profile, seed=1)
@@ -50,6 +51,13 @@ def test_tone_profile_direction_and_explicit_detail_loss():
     assert apply_lighting(neutral, "cool_twilight").mean() < neutral.mean()
     ramp = np.arange(256, dtype=np.uint8)[None, :, None].repeat(3, axis=2)
     assert (apply_lighting(ramp, "overexposed") == 255).mean() > 0.9
+
+
+def test_stress_set_has_nine_variants_and_measures_clipping_in_delivered_rgb():
+    assert len(set(LIGHTING_PROFILES) - {"original"}) == 9
+    summary = photometric_summary(np.array([[[0, 0, 0], [255, 255, 255]]], dtype=np.uint8))
+    assert summary["blackChannelFraction"] == summary["whiteChannelFraction"] == 0.5
+    assert summary["lumaMean"] == pytest.approx(127.5)
 
 
 @pytest.mark.parametrize(

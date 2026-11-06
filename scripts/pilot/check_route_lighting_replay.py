@@ -13,7 +13,12 @@ from unittest.mock import patch
 from uuid import uuid4
 from zipfile import ZipFile
 
-from scripts.pilot.route_replay_lighting import LIGHTING_POLICY, LIGHTING_PROFILES, apply_lighting
+from scripts.pilot.route_replay_lighting import (
+    LIGHTING_POLICY,
+    LIGHTING_PROFILES,
+    apply_lighting,
+    photometric_summary,
+)
 from scripts.pilot.route_resource_monitor import TaskResourceMonitor
 from scripts.pilot.route_workspace import (
     ID,
@@ -29,6 +34,7 @@ SIZE = (960, 540)
 CAPTURE_FILES = ("manifest.json", "COMPLETE", "video.h264", "frames.jsonl", "inputs.jsonl")
 HOLDOUT_MAX_WINDOWS = 6
 HOLDOUT_MAX_SPAN = 216000
+SOURCE_MAX_SPAN = 720000
 
 
 def sample_windows(frames, end, excluded, windows, samples, *, allow_short=False):
@@ -106,17 +112,27 @@ def archived_frames(path, geometry_sha):
         return batch
 
 
-def holdout_window(value):
+def _time_window(value, max_span):
     try:
         start, end = map(float, value.split(":"))
         if not all(math.isfinite(at) and 0 <= at <= 601 for at in (start, end)):
             raise ValueError
         ticks = round(start * 90000), round(end * 90000)
-        if not 0 < ticks[1] - ticks[0] <= HOLDOUT_MAX_SPAN:
+        if not 0 < ticks[1] - ticks[0] <= max_span:
             raise ValueError
         return ticks
     except ValueError:
-        raise argparse.ArgumentTypeError("expected START:END seconds, with 0 < END - START <= 2.4") from None
+        raise argparse.ArgumentTypeError(
+            f"expected START:END seconds, with 0 < END - START <= {max_span / 90000:g}"
+        ) from None
+
+
+def holdout_window(value):
+    return _time_window(value, HOLDOUT_MAX_SPAN)
+
+
+def source_window(value):
+    return _time_window(value, SOURCE_MAX_SPAN)
 
 
 def validate_holdout_windows(windows, end):
@@ -129,7 +145,7 @@ def validate_holdout_windows(windows, end):
     return ordered
 
 
-def sample_holdout_windows(frames, windows):
+def sample_holdout_windows(frames, windows, *, excluded=()):
     """Sample half-open windows without modifying media timestamps or compressing gaps."""
     import cv2 as cv
 
@@ -148,7 +164,7 @@ def sample_holdout_windows(frames, windows):
                 next_tick = windows[at][0]
             if at == len(windows):
                 break
-            if ticks < next_tick:
+            if ticks < next_tick or row["index"] in excluded:
                 continue
             rgb = cv.resize(frame.to_ndarray(format="rgb24"), SIZE, interpolation=cv.INTER_AREA)
             batches[at].append((row["index"], ticks / 90000, rgb))
@@ -214,7 +230,7 @@ def replay(batch, policy, profile, route, sidecar, seed, *, recorded_jpeg=False,
     from motor_worker.policy import PolicyFrame
     from motor_worker.route_confirmation import ReferenceLKConfirmationLocalizer
 
-    prepared = []
+    prepared, schedule = [], []
     for index, media, rgb in batch:
         if not recorded_jpeg:
             relit = apply_lighting(rgb, profile, seed=seed)
@@ -223,6 +239,7 @@ def replay(batch, policy, profile, route, sidecar, seed, *, recorded_jpeg=False,
                 raise ValueError("route_lighting_jpeg_quota")
             rgb = cv.cvtColor(cv.imdecode(jpeg, cv.IMREAD_COLOR), cv.COLOR_BGR2RGB)
         prepared.append((index, media, rgb.tobytes()))
+        schedule.append(dict(index=index, mediaSeconds=media, photometry=photometric_summary(rgb)))
     kwargs = dict(capture_epoch=str(uuid4()), episode_id=str(uuid4()), goal_revision=str(uuid4()), clock=time.perf_counter)
     tracker = (ReferenceLKConfirmationLocalizer(route, **kwargs) if policy == "lk"
                else recovery.ReferenceLKRecoveryLocalizer(route, sidecar=sidecar, **kwargs))
@@ -263,7 +280,7 @@ def replay(batch, policy, profile, route, sidecar, seed, *, recorded_jpeg=False,
                              centerErrorUnits=error, ageMs=age, computeMs=(done-began)*1000,
                              localizedOnTime=pose.state == "localized" and age <= 250))
             cursor += 1
-    return dict(rows=rows, dropped=len(prepared)-len(rows), prewarmMs=prewarm_ms)
+    return dict(rows=rows, dropped=len(prepared)-len(rows), prewarmMs=prewarm_ms, schedule=schedule)
 
 
 def summary(runs):
@@ -338,8 +355,14 @@ def run(args):
                                    independentGeometricGroundTruth=False)
         capture = validate_browser(capture_folder)
         with closing(ReferenceLKRoute.load(nav / "route.json", sha256=receipt["sha256"])) as route:
-            windows = sample_windows(decoded_browser(capture), capture.frames[-1]["relative_ticks_90k"],
-                                     set(route.source_frame_indices), args.windows, args.samples)
+            end = capture.frames[-1]["relative_ticks_90k"]
+            excluded = set(route.source_frame_indices)
+            if args.source_window:
+                if args.source_window[1] > end:
+                    raise ValueError("route_lighting_source_window_outside_video")
+                windows = sample_holdout_windows(decoded_browser(capture), [args.source_window], excluded=excluded)
+            else:
+                windows = sample_windows(decoded_browser(capture), end, excluded, args.windows, args.samples)
             real = archived_frames(args.archive, receipt["geometry_sha256"]) if args.archive else None
             diagnostic_windows = []
             if args.diagnostic:
@@ -391,6 +414,13 @@ def run(args):
                   groups=groups)
     if holdout_details is not None:
         report["independentGameplayHoldout"] = holdout_details
+    if args.source_window:
+        report["continuousSourceWindow"] = dict(
+            sampling="source timestamps, at most 5 Hz, one observer per profile and policy, map keyframes excluded",
+            independentGeometricGroundTruth=False,
+            coverage={key: holdout_coverage([args.source_window], groups[key])[0]
+                      for key in (f"{profile}/{policy}" for profile in args.profiles for policy in args.policies)},
+        )
     with output.open("x", encoding="utf-8") as file:
         json.dump(report, file, indent=2, allow_nan=False)
     print(json.dumps(report["summary"]))
@@ -409,6 +439,8 @@ def main():
     parser.add_argument("--policies", nargs="+", choices=POLICIES, default=("lk", "recovery"))
     parser.add_argument("--windows", type=int, choices=range(2, 7), default=4)
     parser.add_argument("--samples", type=int, choices=range(4, 17), default=6)
+    parser.add_argument("--source-window", type=source_window, metavar="START:END",
+                        help="Use one continuous source-video interval up to 8 seconds in place of evenly spaced windows.")
     parser.add_argument("--seed", type=int, default=17)
     args = parser.parse_args()
     if len(set(args.profiles)) != len(args.profiles) or len(set(args.policies)) != len(args.policies):

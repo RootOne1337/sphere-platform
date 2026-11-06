@@ -35,6 +35,16 @@ def test_holdout_keeps_original_timestamps_and_does_not_cross_window_boundaries(
         [(0, 0.), (2, .2), (3, .9)], [(4, 1.), (6, 1.2)]]
 
 
+def test_continuous_source_window_skips_map_keyframes_and_preserves_source_clock():
+    assert replay.source_window("0:6.6") == (0, 594000)
+    with pytest.raises(argparse.ArgumentTypeError):
+        replay.source_window("0:8.0001")
+    frame = SimpleNamespace(to_ndarray=lambda **_: np.zeros((4, 8, 3), dtype=np.uint8))
+    frames = (({"index": i, "relative_ticks_90k": i * 9000}, frame) for i in range(7))
+    batch, = replay.sample_holdout_windows(frames, [(0, 54000)], excluded={0, 3})
+    assert [(index, time) for index, time, _ in batch] == [(1, .1), (4, .4)]
+
+
 def test_holdout_rejects_reuploaded_source_video(tmp_path):
     source, uploaded = tmp_path / "source", tmp_path / "upload"
     hashes = {str(source / "video.h264"): "a", str(uploaded / "video.h264"): "a",
