@@ -340,6 +340,19 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual((result['phase'], result['pedal'], result['steering']), ('waiting', 'coast', 0.))
         self.assertIsNone(result['targetViewCamera'])
 
+    def test_rejoin_does_not_aim_across_a_nearby_right_angle(self):
+        trace = ((0., 0., 0.), (0., 0., .65), (0., 0., 1.3),
+                 *((i * .65, 0., 1.3) for i in range(1, 6)))
+        self.route = replace(self.route, camera_trace=trace, source_seconds=tuple(map(float, range(len(trace)))))
+        self.follower = self.make()
+        yaw = math.radians(-3.)
+        rotation = (math.cos(yaw), 0., -math.sin(yaw), 0., 1., 0., math.sin(yaw), 0., math.cos(yaw))
+        for _ in range(3):
+            plan = self.observe(speed=0., center=(-1.25, 0., 0.), cross_track_units=1.25, rotation=rotation)
+            self.now += .1
+        self.assertEqual((plan['phase'], plan['reason'], plan['pedal'], plan['steering']),
+                         ('waiting', 'vehicle_heading_outside_pursuit_cone', 'coast', 0.))
+
     def test_unknown_source_speed_is_unknown_not_replaced_by_last_known_target(self):
         self.acquire()
         self.reference.sample = lambda _: None
@@ -363,6 +376,18 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual(self.observe()['reason'], 'vehicle_reference_speed_invalid')
 
     def test_delayed_bicycle_plant_holds_commands_turns_and_recovers_two_dropped_corrections(self):
+        self._drive_delayed_bicycle_plant()
+
+    def test_delayed_bicycle_plant_rejoins_from_either_side_with_small_heading_error(self):
+        for sign in (-1, 1):
+            with self.subTest(side=sign):
+                self._drive_delayed_bicycle_plant(initial_x=sign * 1.25, initial_yaw=sign * math.radians(8.))
+                observations = self.plant_result['observations']
+                first_steer = next(row['steering'] for row in observations if row['steering'])
+                self.assertLess(sign * first_steer, 0.)
+                self.assertLess(min(row['crossTrack'] for row in observations if 3 <= row['progress'] <= 9), .35)
+
+    def _drive_delayed_bicycle_plant(self, *, initial_x=0., initial_yaw=0.):
         # This known synthetic plant exercises temporal/control integration.
         # It supplies oracle poses, not image localization or game calibration.
         np = self.np
@@ -386,11 +411,12 @@ class VehicleRouteTests(unittest.TestCase):
             sample=lambda ticks: float(np.interp(ticks / 90000., seconds, speeds)),
             preview=lambda ticks, horizon_ticks: float(min(np.interp(ticks / 90000., seconds, speeds),
                 np.interp((ticks + horizon_ticks) / 90000., seconds, speeds))))
+        self.now = 10.
         follower = self.make(max_seconds=120, max_speed_kmh=15)
         # Actuation runs at 20 Hz. Pose corrections run at 5 Hz with 150 ms
         # latency. Two consecutive corrections are lost; source frames stay
         # fresh and a decision may be held at most 450 ms, never indefinitely.
-        state = np.array([0., 0., 0., 0.])  # x,z,body yaw, speed m/s in THIS plant.
+        state = np.array([initial_x, 0., initial_yaw, 0.])  # x,z,body yaw, speed m/s in THIS plant.
         history = [state.copy()] * 4
         plan, deadline = None, -1.
         pedals, errors, reasons, curve_speeds = [], [], [], []

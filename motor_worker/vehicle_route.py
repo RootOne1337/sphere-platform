@@ -27,6 +27,8 @@ from motor_worker.route_reference_lk import ReferenceLKRoute
 
 class VehicleRouteFollower:
     MAX_STEERING = .35
+    PURSUIT_CONE = math.pi / 3
+    REJOIN_SPEED_KMH = 5.
     # Recovery is a stationary, bounded wait. No stale pose gains movement
     # permission while the browser has already released both native contacts.
     MAX_RELOCALIZE_SECONDS = 15.
@@ -136,6 +138,10 @@ class VehicleRouteFollower:
         index = int(moving[at])
         fraction = float(np.clip((value - self.arc[index]) / self.steps[index], 0., 1.))
         return index, fraction
+
+    def _point_at_arc(self, value):
+        index, fraction = self._at_arc(value)
+        return self.trace[index] * (1. - fraction) + self.trace[index + 1] * fraction
 
     def observe(self, pose, speed, *, motion_active=None):
         np, now = self.np, self.clock()
@@ -293,14 +299,27 @@ class VehicleRouteFollower:
         source_at = ticks / 90000.
         look_arc = min(self.total, max(progress + self.step, float(np.interp(
             source_at + look_seconds, self.route.source_seconds, self.arc))))
-        index, fraction = self._at_arc(look_arc)
-        target_position = self.trace[index] * (1 - fraction) + self.trace[index + 1] * fraction
-        camera_delta = rotation @ (target_position - center)
+        camera_delta = rotation @ (self._point_at_arc(look_arc) - center)
         if np.linalg.norm(camera_delta[[0, 2]]) < self.step * .01 and not near_end:
             return self._neutral('vehicle_target_direction_unknown', terminal=True)
         yaw = float(math.atan2(camera_delta[0], camera_delta[2])) if not near_end else 0.
+        if not near_end and cross > .5 * self.step and self.observed_speed <= self.REJOIN_SPEED_KMH:
+            # A close target can be almost sideways even when the vehicle
+            # faces along the route. At low speed, choose a farther point
+            # on the same straight portion. Keep the original cone and
+            # corridor limits, and avoid cutting across a bend.
+            rejoin_arc = min(self.total, progress + min(3. * self.step, self.step + cross))
+            if rejoin_arc > look_arc:
+                rejoin_point = self._point_at_arc(rejoin_arc)
+                chord = rejoin_point - self._point_at_arc(progress)
+                if np.linalg.norm(chord) >= .995 * (rejoin_arc - progress):
+                    rejoin_delta = rotation @ (rejoin_point - center)
+                    rejoin_yaw = math.atan2(rejoin_delta[0], rejoin_delta[2])
+                    if rejoin_delta[2] > self.step * .01 and abs(rejoin_yaw) <= self.PURSUIT_CONE:
+                        look_arc, yaw = rejoin_arc, rejoin_yaw
+                        self.target_speed = min(self.target_speed, self.REJOIN_SPEED_KMH)
         # A large error calls for operator review, not a sharp blind U-turn.
-        if abs(yaw) > math.pi / 3 and not near_end:
+        if abs(yaw) > self.PURSUIT_CONE and not near_end:
             return self._wait('vehicle_heading_outside_pursuit_cone', now)
         desired = float(np.clip(yaw * .6, -self.MAX_STEERING, self.MAX_STEERING))
         self.steering += float(np.clip(desired - self.steering, -1.2 * dt, 1.2 * dt))
