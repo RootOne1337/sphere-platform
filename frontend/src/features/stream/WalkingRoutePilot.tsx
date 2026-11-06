@@ -329,7 +329,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
             plan=vehicleMode?vehiclePlan:readWalkPlan(value.walk),rawPlan=vehicleMode?value.vehicle:value.walk,now=performance.now();
           if(!reply||!plan||plan.maxSeconds!==active.maxSeconds||vehiclePlan&&vehiclePlan.maxSpeedKmh!==active.maxSpeedKmh)throw Error(vehicleMode?'vehicle_reply_not_bound':'walk_reply_not_bound');
           if(!lease.active())throw Error(lease.failure?.()??'walk_native_closed');
-          if(!freshNavigationFrame(frame.at,now))throw Error('walk_decision_expired');
+          const permitUntil=vehicleMode?vehicleDecisionDeadline(frame.at,now):walkDecisionDeadline(frame.at,now);
+          if(permitUntil===null)throw Error('walk_decision_expired');
           let command:[number,number]=vehiclePlan?[vehiclePlan.steering,0]:(plan as WalkPlan).stick;
           let vehicleCommand:VehicleCommand|null=vehiclePlan?{pedal:vehiclePlan.pedal,steering:vehiclePlan.steering}:null;
           if(active.freshUntil!==null){
@@ -362,7 +363,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           if(reply.pose.state==='localized')active.positionConfirmed=true;
           // Deliver the fresh decision before any diagnostic canvas or React
           // work. Rendering may be skipped; input identity/deadline never is.
-          active.permitUntil=(vehicleMode?vehicleDecisionDeadline(frame.at,now):walkDecisionDeadline(frame.at,now))!;
+          active.permitUntil=permitUntil;
           const remember=()=>{active.observationCount++;if(history.current.length>=1200)history.current.shift();history.current.push(sample);};
           if(plan.phase==='stopped'||plan.phase==='arrived'){
             remember();setSamples([...history.current.slice(-8,-1),{...sample,localizationDiagnostic:readLocalizationDiagnostic(value.localizationDiagnostic,true)}]);

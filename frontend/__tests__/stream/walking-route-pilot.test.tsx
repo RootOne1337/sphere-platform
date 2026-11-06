@@ -159,6 +159,30 @@ test('an unknown speed is coast with zero steering and visibly unknown, never sy
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
 });
 
+test('a vehicle reply at the 250 ms boundary cannot confirm position or renew input',async()=>{
+  let now=1000,queries=0;
+  jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const f=vehicleFixture(),original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  const permit=jest.fn();f.vehicleLease.permit=permit;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);
+    if(!args[0].endsWith('/observe'))return response;
+    const value=await response.json();queries++;
+    if(queries===1)now+=250;
+    if(queries===2){
+      value.pose={...value.pose,state:'unknown',reason:'route_pose_not_verified',inliers:0,segment:null,progress_units:null};
+      value.vehicle={...value.vehicle,phase:'waiting',reason:'vehicle_confirming_position',pedal:'coast',steering:0,speedAccepted:false};
+    }
+    return {json:async()=>value} as Response;
+  });
+  f.startVehicle();await screen.findByText(/Газ отпущен, руль по центру/);
+  expect(permit).not.toHaveBeenCalled();expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();
+  fresh();await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('Ищем положение по ориентирам; педали отпущены'));
+  expect(f.vehicleLease.close).not.toHaveBeenCalled();expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();
+  now+=100;fresh();await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledWith({pedal:'throttle',steering:.2}));
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
 test('vehicle goes neutral through loss and tentative recovery, then resumes on the same input lease',async()=>{
   let now=1000,stage:'initial'|'following'|'lost'|'confirming'='initial';jest.spyOn(performance,'now').mockImplementation(()=>now);
   const f=vehicleFixture({plan:p=>stage==='following'?p:{...p,phase:'waiting',reason:'vehicle_confirming_position',pedal:'coast',steering:0}});
