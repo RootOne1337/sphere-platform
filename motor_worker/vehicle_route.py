@@ -283,11 +283,11 @@ class VehicleRouteFollower:
         if not self.started or self.waiting_since is not None:
             if self.confirmations < 3:
                 return self._neutral('vehicle_confirming_current_position')
-            self.waiting_since = None
             self.started = True
         self.last_center = center.copy()
         self.high_water = max(self.high_water, progress)
         if near_end and self.observed_speed <= .5:
+            self.waiting_since = None
             self.arrival += 1
             if self.arrival >= 3:
                 return self._neutral('vehicle_camera_trace_end_confirmed', terminal=True, arrived=True)
@@ -321,6 +321,7 @@ class VehicleRouteFollower:
         # A large error calls for operator review, not a sharp blind U-turn.
         if abs(yaw) > self.PURSUIT_CONE and not near_end:
             return self._wait('vehicle_heading_outside_pursuit_cone', now)
+        self.waiting_since = None
         desired = float(np.clip(yaw * .6, -self.MAX_STEERING, self.MAX_STEERING))
         self.steering += float(np.clip(desired - self.steering, -1.2 * dt, 1.2 * dt))
         if abs(yaw) > .25:

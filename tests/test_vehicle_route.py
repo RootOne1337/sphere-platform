@@ -198,6 +198,37 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual((result['phase'], result['reason'], result['pedal']),
                          ('stopped', 'vehicle_relocalization_timeout', 'coast'))
 
+    def test_repeated_unfit_heading_does_not_reset_relocalization_timeout(self):
+        self.acquire()
+        backwards = (-1., 0., 0., 0., 1., 0., 0., 0., -1.)
+        reasons = set()
+        for _ in range(80):
+            self.now += .2
+            result = self.observe(1., speed=0., rotation=backwards)
+            self.assertEqual((result['pedal'], result['steering']), ('coast', 0.))
+            reasons.add(result['reason'])
+            if result['phase'] == 'stopped':
+                break
+        self.assertIn('vehicle_heading_outside_pursuit_cone', reasons)
+        self.assertEqual((result['phase'], result['reason']),
+                         ('stopped', 'vehicle_relocalization_timeout'))
+
+    def test_valid_heading_rejoins_after_repeated_unfit_heading(self):
+        self.acquire()
+        backwards = (-1., 0., 0., 0., 1., 0., 0., 0., -1.)
+        for _ in range(20):
+            self.now += .2
+            result = self.observe(1., speed=0., rotation=backwards)
+            self.assertEqual((result['phase'], result['pedal'], result['steering']),
+                             ('waiting', 'coast', 0.))
+        for _ in range(4):
+            self.now += .2
+            result = self.observe(1., speed=0.)
+            if result['phase'] == 'following':
+                break
+        self.assertEqual((result['phase'], result['pedal']), ('following', 'throttle'))
+        self.assertIsNone(self.follower.waiting_since)
+
     def test_user_speed_cap_is_binding_and_invalid_cap_rejected(self):
         self.reference.sample = lambda _: 90.
         self.reference.preview = lambda *a, **k: 90.
