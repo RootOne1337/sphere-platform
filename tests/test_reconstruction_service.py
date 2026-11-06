@@ -59,6 +59,24 @@ def test_status_manifest_binding_is_absent_then_tracks_actual_uploaded_bytes(job
         (job/'input/manifest.json').read_bytes()).hexdigest()
 
 
+def test_status_exposes_only_bounded_resource_reason_for_the_failed_attempt(jobs):
+    job = create(jobs)
+    service.write_json(job/'state.json', {'phase': 'failed', 'error': 'resource_guard'})
+    receipt = job/'resource-refusal.json'
+    service.write_json(receipt, {'findings': ['commit_headroom_low'],
+                                'snapshot': {'private_path': 'do not expose'}})
+    status = jobs.status(job)
+    assert status['resource_findings'] == ['commit_headroom_low']
+    assert 'private_path' not in json.dumps(status)
+    service.write_json(receipt, {'findings': ['unknown internal data']})
+    assert 'resource_findings' not in jobs.status(job)
+    receipt.write_text('{invalid', encoding='utf-8')
+    assert 'resource_findings' not in jobs.status(job)
+    service.write_json(receipt, {'findings': ['commit_headroom_low']})
+    service.write_json(job/'state.json', {'phase': 'failed', 'error': 'worker_timeout'})
+    assert 'resource_findings' not in jobs.status(job)
+
+
 def test_catalog_manifest_quota_does_not_read_oversized_source(jobs, monkeypatch):
     job = create(jobs)
     manifest = job/'input/manifest.json'
@@ -523,11 +541,45 @@ def test_cpu_route_supervisor_retains_fresh_guard_and_owned_monitor_cleanup(jobs
     monkeypatch.setattr(service.time, 'sleep', lambda _: None)
     monkeypatch.setattr(jobs, '_stop_worker', stop)
     monkeypatch.setattr(jobs.navigation, 'prepare', lambda *a, **k: pytest.fail('guard must prevent export'))
+    # An earlier worker receipt must not mask the supervisor's final reason.
+    service.write_json(job/'resource-refusal.json', {'findings': ['commit_headroom_low']})
     jobs.monitor(job, child)
-    assert jobs.status(job)['phase'] == 'failed'
-    assert jobs.status(job)['error'] == 'resource_guard'
+    status = jobs.status(job)
+    assert status['phase'] == 'failed'
+    assert status['error'] == 'resource_guard'
+    assert status['resource_findings'] == ['ram_headroom_low']
+    assert 'snapshot' not in status and 'resource_refusal_source' not in status
+    receipt = json.loads((job/'supervisor-resource-refusal.json').read_bytes())
+    assert receipt['source'] == 'supervisor'
+    assert receipt['snapshot'] == dict(healthy, availableRamBytes=1*2**30)
+    assert receipt['findings'] == ['ram_headroom_low']
+    assert receipt['profile']['kind'] == 'route_reconstruction_cpu'
     assert json.loads((job/'route-pipeline-refusal.json').read_bytes())['error'] == 'resource_guard'
     assert events == ['sample', 'sample', 'child_stopped', 'monitor_closed']
+
+
+def test_supervisor_receipt_write_failure_still_stops_worker(jobs, monkeypatch):
+    from types import SimpleNamespace
+
+    job = create(jobs)
+    (job/'worker.log').touch()
+    child = SimpleNamespace(returncode=None)
+    child.poll = lambda: child.returncode
+    monkeypatch.setattr(service.time, 'sleep', lambda _: None)
+    monkeypatch.setattr(service, 'collect', lambda _: {'system': 'Windows'})
+    monkeypatch.setattr(service, 'route_resource_findings', lambda *a, **k: ['commit_headroom_low'])
+    monkeypatch.setattr(jobs, '_stop_worker', lambda _: setattr(child, 'returncode', -1))
+    original_write = service.write_json
+    def write(path, data):
+        if path.name == 'supervisor-resource-refusal.json':
+            raise OSError('diagnostic write failed')
+        original_write(path, data)
+    monkeypatch.setattr(service, 'write_json', write)
+    service.write_json(job/'resource-refusal.json', {'findings': ['ram_headroom_low']})
+    jobs._monitor_owned_worker(job, child, None)
+    assert child.returncode == -1
+    assert jobs.status(job)['error'] == 'resource_guard'
+    assert 'resource_findings' not in jobs.status(job)
 
 
 def test_dense_supervision_keeps_original_full_collector(jobs, monkeypatch):

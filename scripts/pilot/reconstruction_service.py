@@ -138,6 +138,27 @@ class Jobs:
     def status(self, job):
         fence = job/'service-interrupted.json'
         result = json.loads((fence if fence.is_file() else job/'state.json').read_text('utf-8'))
+        receipt_source = result.pop('resource_refusal_source', None)
+        if result.get('phase') == 'failed' and result.get('error') == 'resource_guard':
+            # Expose only the bounded, known reason codes, not the raw machine
+            # snapshot or paths. This is historical evidence for the attempt;
+            # a later supervisor refusal may have had a different cause.
+            receipt = job / ('supervisor-resource-refusal.json' if receipt_source == 'supervisor'
+                             else 'resource-refusal.json')
+            allowed = {'ram_headroom_low', 'commit_headroom_low', 'disk_headroom_low',
+                       'memory_measurement_unavailable', 'commit_measurement_unavailable',
+                       'disk_measurement_unavailable', 'volume_health_unavailable',
+                       'volume_not_ready', 'unsupported_host'}
+            try:
+                if not receipt.is_symlink() and receipt.is_file() and receipt.stat().st_size <= 16384:
+                    with receipt.open('rb') as file:
+                        raw = file.read(16385)
+                    if len(raw) <= 16384:
+                        codes = json.loads(raw).get('findings')
+                        if isinstance(codes, list) and all(isinstance(code, str) and code in allowed for code in codes):
+                            result['resource_findings'] = list(dict.fromkeys(codes))
+            except (OSError, ValueError, TypeError, AttributeError):
+                pass
         # The catalog can bind a job to the currently selected recording without
         # loading its video. During upload, absent/partial manifests cannot make
         # a complete recording's expected digest match accidentally.
@@ -622,18 +643,33 @@ class Jobs:
                 # before unrelated later resource pressure can reject it.
                 break
             reason = None
+            resource_evidence = None
             if (job / 'CANCEL').exists():
                 reason = 'cancelled'
             elif time.monotonic() > deadline:
                 reason = 'worker_timeout'
             elif (job / 'worker.log').stat().st_size > 32 * 1024**2:
                 reason = 'worker_log_quota'
-            elif route_resource_findings(monitor.sample() if monitor is not None else collect(ROOT),budget,evaluate_fn=evaluate):
-                reason = 'resource_guard'
+            else:
+                snapshot = monitor.sample() if monitor is not None else collect(ROOT)
+                findings = route_resource_findings(snapshot, budget, evaluate_fn=evaluate)
+                if findings:
+                    reason = 'resource_guard'
+                    resource_evidence = dict(source='supervisor', snapshot=snapshot,
+                                             findings=findings, profile=budget)
             if reason:
                 (job/'CANCEL').touch(exist_ok=True)
                 self._stop_worker(process)
-                write_json(job / 'state.json', dict(phase='cancelled' if reason == 'cancelled' else 'failed', error=reason))
+                if resource_evidence is not None:
+                    try:
+                        write_json(job/'supervisor-resource-refusal.json', resource_evidence)
+                    except OSError:
+                        # Failure to persist diagnostics must not prevent the stop.
+                        pass
+                state = dict(phase='cancelled' if reason == 'cancelled' else 'failed', error=reason)
+                if resource_evidence is not None:
+                    state['resource_refusal_source'] = 'supervisor'
+                write_json(job / 'state.json', state)
                 write_json(job/'route-pipeline-refusal.json', dict(error=reason))
                 self._settle_sidecars(job, cancelled=reason == 'cancelled', error=reason)
                 return
