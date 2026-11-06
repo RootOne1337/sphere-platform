@@ -4,7 +4,7 @@ const idPattern=/^[0-9a-f]{32}$/;
 const shaPattern=/^[0-9a-f]{64}$/;
 export type TeachingLibraryRecord={
   id:string;title:string;createdAt:number;complete:boolean;frames:number;durationSeconds?:number;
-  deviceId?:string;controlMode?:string;hudProfile?:string;hudHidden:boolean;prepareAfterRecording:boolean;
+  deviceId?:string;controlMode?:string;hudProfile?:string;hudHidden:boolean;hudHiddenView?:'first_person'|'third_person';prepareAfterRecording:boolean;
   manifestSha:string|null;sourceState:'saved'|'incomplete'|'unverified'|'unavailable';sourceFailure?:string;
   folder:FileSystemDirectoryHandle;
 };
@@ -49,6 +49,7 @@ export async function readTeachingLibrary(scope:string,{signal,root:providedRoot
       record.controlMode=boundedText(manifest.config?.profile?.mode,64);
       record.hudProfile=boundedText(manifest.config?.profile?.hudProfile,64);
       record.hudHidden=manifest.config?.hud_hidden_declared===true;
+      if(record.hudHidden&&['first_person','third_person'].includes(manifest.config?.hud_hidden_view))record.hudHiddenView=manifest.config.hud_hidden_view;
       record.prepareAfterRecording=manifest.config?.prepare_after_recording===true;
       if(manifest.complete!==true){record.sourceState='incomplete';record.sourceFailure=boundedText(manifest.failure,128)||'recording_incomplete';continue;}
       if(manifest.release_confirmed!==true)throw Error('teaching_library_release_unconfirmed');

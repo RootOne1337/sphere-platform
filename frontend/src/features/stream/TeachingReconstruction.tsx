@@ -8,7 +8,8 @@ import {boundHudTelemetry,hudChart,processingSurface,reconstructionRequest,Recon
 import {automaticReconstructionStopped,ensureAutomaticReconstructionLink,listReconstructionLinks,readReconstructionLink,saveReconstructionLink,stopAutomaticReconstruction,validReconstructionJob} from './reconstructionLink';
 import ReferenceComparison from './ReferenceComparison';
 import {cameraMotionRequiresReview,navigationErrorLabel,navigationPhaseLabel,routeCoverageLabel,prepareRoute as prepareRouteIntent,preparationError,preparationQuotaReached} from './routePreparation';
-import {newAutomaticReconstruction,queueWait} from './teachingQueue';
+import {newAutomaticReconstruction,queueWait,recordingPreparationMask} from './teachingQueue';
+import type {TeachingLibraryRecord} from './teachingLibrary';
 import {assertReconstructionSource,routeSourceMismatch} from './routeSourceBinding';
 import {readSavedRouteResults,type SavedRouteResult} from './savedRouteResults';
 import {CompactReconstructionWorkflow,type ReconstructionWorkflowAction} from './CompactReconstructionWorkflow';
@@ -51,7 +52,7 @@ reasons.lightglue_source_mismatch='Версия локального инстр�
 reasons.lightglue_gpu_unavailable='GPU для сопоставления ракурсов недоступен. Запись сохранена.';
 reasons.learned_matching_timeout='Сопоставление ракурсов достигло лимита времени. Промежуточные материалы сохранены.';
 reasons.reference_evaluation_failed='Не удалось завершить проверку рендера по исходным ракурсам. Качество не подтверждено.';
-export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=false,onBusyChange,onRouteChange,visible=true,sourceManifestSha=null,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,alternativeCameraCount=null,autoPrepare=false,onAutoPrepareConsumed,manageAutomaticPreparation=true,processingJobId,presentation='full',selectedGeometry,sceneContainer}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;hudHidden?:boolean;onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean;sourceManifestSha?:string|null;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;alternativeCameraCount?:number|null;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void;manageAutomaticPreparation?:boolean;processingJobId?:string;presentation?:'full'|'compact';selectedGeometry?:SceneGeometrySelection|null;sceneContainer?:HTMLElement|null}) {
+export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=false,hudHiddenView,onBusyChange,onRouteChange,visible=true,sourceManifestSha=null,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,alternativeCameraCount=null,autoPrepare=false,onAutoPrepareConsumed,manageAutomaticPreparation=true,processingJobId,presentation='full',selectedGeometry,sceneContainer}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;hudHidden?:boolean;hudHiddenView?:TeachingLibraryRecord['hudHiddenView'];onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean;sourceManifestSha?:string|null;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;alternativeCameraCount?:number|null;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void;manageAutomaticPreparation?:boolean;processingJobId?:string;presentation?:'full'|'compact';selectedGeometry?:SceneGeometrySelection|null;sceneContainer?:HTMLElement|null}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[storedStatus,setStoredStatus]=useState<ReconstructionState|null>(null),[statusIdentity,setStatusIdentity]=useState<string|null>(null),[error,setError]=useState<string|null>(null);
   const jobIdentity=job?`${job.id}:${job.key}`:null;
   const status=statusIdentity===jobIdentity&&(!sourceManifestSha||storedStatus?.source_manifest_sha256===sourceManifestSha
@@ -61,7 +62,8 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const [attempts,setAttempts]=useState<ReconstructionJob[]>([]),[switchingAttempt,setSwitchingAttempt]=useState(false);
   const [savedResults,setSavedResults]=useState<{identity:string;items:SavedRouteResult[]}|null>(null);
   const [preparationNotice,setPreparationNotice]=useState<{jobId:string;message:string}|null>(null),[quotaJob,setQuotaJob]=useState<string|null>(null);
-  const [mask,setMask]=useState(hudHidden?'avatar':'game'),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
+  const defaultMask=recordingPreparationMask({hudHidden,hudHiddenView});
+  const [mask,setMask]=useState<string>(defaultMask),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
   const autoAttempted=useRef(false);
   const autoCandidate=useRef<ReconstructionJob|null>(null);
@@ -201,7 +203,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const retryPreparation=()=>{
     if(!job||!status||!['failed','cancelled'].includes(status.phase)||busy||!complete||!folder()||uploadAbort.current)return;
     const next:ReconstructionJob={id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join(''),
-      creation:{mask:hudHidden?'avatar':'game',steps:30000,prepare_route:true,route_only:true}};
+      creation:{mask:defaultMask,steps:30000,prepare_route:true,route_only:true}};
     if(next.id===job.id||attempts.some(item=>item.id===next.id)){setError('Не удалось создать отдельную попытку. Прежняя запись и результат сохранены.');return;}
     void start(true,next);
   };
@@ -224,11 +226,11 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     // start. Only new completed recordings may create an automatic attempt.
     if(job||attempts.length){onAutoPrepareConsumed?.();return;}
     const source=folderRef.current()!,request=new AbortController();let retired=false;setUploading(true);
-    const mask=hudHidden?'avatar':'game';autoCandidate.current??=newAutomaticReconstruction(mask);
+    autoCandidate.current??=newAutomaticReconstruction(defaultMask);
     void(async()=>{
       for(let attempt=0;attempt<3;attempt++){
         try{
-          const next=await ensureAutomaticReconstructionLink(source,clip,mask,autoCandidate.current!);
+          const next=await ensureAutomaticReconstructionLink(source,clip,defaultMask,autoCandidate.current!);
           if(retired)return;
           if(next){setUploading(false);setJob(next);setAttempts([next]);sessionStorage.setItem(storageKey,JSON.stringify(next));onAutoPrepareConsumed?.();}
           return;
@@ -240,7 +242,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       }
     })().catch(()=>{}).finally(()=>{if(!retired)setUploading(false);});
     return()=>{retired=true;request.abort();};
-  },[autoPrepare,recovering,complete,job,attempts,onAutoPrepareConsumed,clip,hudHidden,storageKey,manageAutomaticPreparation]);
+  },[autoPrepare,recovering,complete,job,attempts,onAutoPrepareConsumed,clip,defaultMask,storageKey,manageAutomaticPreparation]);
   const cancel=async()=>{
     if(job?.creation)autoStopped.current=true;uploadAbort.current?.abort();if(!job)return;
     if(job.creation&&folderRef.current())try{await stopAutomaticReconstruction(folderRef.current()!,job);}catch{setError('Не удалось сохранить остановку подготовки. Проверьте локальное хранилище.');return;}

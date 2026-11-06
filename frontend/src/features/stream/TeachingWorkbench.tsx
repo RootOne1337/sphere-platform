@@ -51,6 +51,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [calibrate, setCalibrate] = useState<CalibrationTarget | null>(null);
   const [bindingTarget,setBindingTarget]=useState<TeachingKeyRole|null>(null);
   const [hudHidden, setHudHidden] = useState(false);
+  const [hudHiddenView, setHudHiddenView] = useState<'first_person'|'third_person'>('third_person');
   const [externalRecording, setExternalRecording] = useState(true);
   const externalActive = useRef(false);
   const externalOwnerReleased = useRef(false), externalVideoStarted = useRef(false);
@@ -392,7 +393,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       source: 'direct_webrtc_h264', target_fps: captureTargetFps, actual_fps_unverified: true,
       input_capture: externalRecording ? 'external_unobserved' : 'sphere_confirmed',
       prepare_after_recording: prepareAfterRecording,
-      hud_hidden_declared: hudHidden, contact_roles: p.mode==='stick'?['stick','camera','action']:['throttle_or_brake','steering','camera_or_action'],
+      hud_hidden_declared: hudHidden, ...(hudHidden?{hud_hidden_view:hudHiddenView}:{}), contact_roles: p.mode==='stick'?['stick','camera','action']:['throttle_or_brake','steering','camera_or_action'],
       max_duration_ms: minutes*60000, max_bytes: maxBytes, max_frames: minutes*3600 };
     externalActive.current=externalRecording;externalOwnerReleased.current=false;externalVideoStarted.current=false;
     change('opening'); setNotice('Открываем три контакта. Требуется APK 1.2.89 или новее с contact_protocol=1.');
@@ -554,6 +555,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           {calibrate&&<Button size="sm" variant="ghost" onClick={()=>setCalibrate(null)}>Отменить калибровку</Button>}
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={hudHidden} disabled={active(phase)} onChange={e=>setHudHidden(e.target.checked)} />HUD скрыт в игре</label>
+        {hudHidden&&<label className="block space-y-1 text-sm"><span>Вид записи при скрытом HUD</span><select className={field} value={hudHiddenView} disabled={active(phase)} onChange={e=>setHudHiddenView(e.target.value as 'first_person'|'third_person')}><option value="third_person">От третьего лица · персонаж в кадре</option><option value="first_person">От первого лица · свободный вид</option></select><span className="block text-xs text-muted-foreground">Выбор задаёт маску для подготовки карты. Выберите первый вариант, если персонаж закрывает центр кадра.</span></label>}
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={prepareAfterRecording} disabled={active(phase)} onChange={e=>setPrepareAfterRecording(e.target.checked)}/><span>После сохранения подготовить карту<span className="mt-1 block text-xs text-muted-foreground">Камеры и ориентиры рассчитываются локально один раз. Управление запускается отдельно.</span></span></label>
         <p className="text-xs leading-5 text-muted-foreground">Кнопки калибруйте до отключения HUD. Флажок сохраняет пометку в материале; он не скрывает интерфейс игры и не вырезает надписи из видео.</p>
         <p className="text-xs leading-5 text-muted-foreground">Перед качественным проходом: 1920 × 1080, рендер игры100%, стабильная камера. Сохраните одинаковые FOV и режим камеры для записи и повторения; DPI сам по себе не улучшает3D. Сначала подтвердите реальные30 FPS по записи.</p>

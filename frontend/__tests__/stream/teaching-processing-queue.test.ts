@@ -49,6 +49,19 @@ test('reload with no selected clip recovers the recorded intent and processes tw
   expect(test.snapshots.at(-1)?.activeClip).toBe(second.id);
   expect(JSON.stringify(test.snapshots)).not.toContain(firstJob.key);
 });
+test.each<[Partial<QueueRecording>,string]>([
+  [{hudHidden:true,hudHiddenView:'first_person'},'none'],
+  [{hudHidden:true,hudHiddenView:'third_person'},'avatar'],
+  [{hudHidden:true},'avatar'],
+  [{hudHidden:false,hudHiddenView:'first_person'},'game'],
+])('the first automatic job uses the sealed recording mask preference %j',async(options,mask)=>{
+  const source=record(1,options),test=setup([source]);
+  await test.queue.cycle(test.records);
+  expect(test.saved.get(source.folder)?.creation?.mask).toBe(mask);
+  const creates=test.requests.filter(item=>item.path==='/jobs');
+  expect(creates).toHaveLength(1);
+  expect(JSON.parse(creates[0].body!).mask).toBe(mask);
+});
 test('a durable manual creation is recovered without retrofitting consent onto legacy recordings',async()=>{
   const durable=record(1,{prepareAfterRecording:false}),legacy=record(2,{prepareAfterRecording:false}),test=setup([durable,legacy]);
   test.saved.set(durable.folder,job());test.states.set(job().id,{phase:'matching'});

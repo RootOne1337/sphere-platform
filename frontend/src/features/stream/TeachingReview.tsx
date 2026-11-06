@@ -290,7 +290,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
     <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
     <aside className="order-last min-w-0 xl:col-start-2 xl:row-start-1">
     {selected&&storageScope&&loadedSourceKey===sourceKey&&rows.length>0&&clips.some(c=>c.id===selected)&&<TeachingReconstruction key={`${storageScope}:${selected}`} clip={selected} scope={storageScope} folder={()=>directory.current}
-      complete={!exporting&&!deleting&&!!clips.find(c=>c.id===selected)?.complete} hudHidden={clips.find(c=>c.id===selected)?.hudHidden} onBusyChange={setProcessing} onRouteChange={routeChanged}
+      complete={!exporting&&!deleting&&!!clips.find(c=>c.id===selected)?.complete} hudHidden={clips.find(c=>c.id===selected)?.hudHidden} hudHiddenView={clips.find(c=>c.id===selected)?.hudHiddenView} onBusyChange={setProcessing} onRouteChange={routeChanged}
       visible={visible} sourceManifestSha={sourceManifestSha} selectedTicks={rows[position]?.relative_ticks_90k??null} onSeekCamera={seekCamera} validTicks={validTicks}
       sourcePreview={sourceViewer(setPreviewCanvas)} alternativeCameraCount={currentGeometry?.cameras.length??null} manageAutomaticPreparation={manageAutomaticPreparation}
       processingJobId={selectedQueue?.jobId} autoPrepare={autoPrepare||clips.find(c=>c.id===selected)?.prepareAfterRecording===true} onAutoPrepareConsumed={onAutoPrepareConsumed}

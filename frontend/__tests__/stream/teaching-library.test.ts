@@ -10,7 +10,7 @@ const missing = () => new DOMException('Missing', 'NotFoundError');
 type Row = {index: number; offset: number; bytes: number; relative_ticks_90k: number; sha256: string; key: boolean};
 type Manifest = {
   schema: string; id: string; started_at_ms: number; complete: boolean; release_confirmed: boolean; frames: number; events: number;
-  failure?: string; config: {title: string; device_id: string; profile: {mode: string; hudProfile: string}; hud_hidden_declared: boolean; prepare_after_recording: boolean};
+  failure?: string; config: {title: string; device_id: string; profile: {mode: string; hudProfile: string}; hud_hidden_declared: boolean; hud_hidden_view?: string; prepare_after_recording: boolean};
   files: Record<string, {bytes: number; sha256?: string}>;
 };
 function directory(files: Map<string, File>) {
@@ -57,6 +57,19 @@ function library(records: {id: string; folder: FileSystemDirectoryHandle}[], ext
   return {root: {getDirectoryHandle: rootGet, removeEntry: writes} as unknown as FileSystemDirectoryHandle, writes, rootGet, getDirectoryHandle};
 }
 beforeAll(() => {Object.defineProperty(globalThis, 'crypto', {configurable: true, value: webcrypto});});
+
+test.each([
+  [true, 'first_person', 'first_person'],
+  [true, 'third_person', 'third_person'],
+  [true, undefined, undefined],
+  [true, 'invalid', undefined],
+  [false, 'first_person', undefined],
+] as const)('reads a declared camera view only for hidden HUD: %s %s', async (hidden, view, expected) => {
+  const capture = await recording({change: m => {m.config.hud_hidden_declared=hidden; m.config.hud_hidden_view=view;}});
+  const result = await readTeachingLibrary(scope, {root: library([capture]).root});
+  expect(result.records[0]).toMatchObject({sourceState:'saved',hudHidden:hidden});
+  expect(result.records[0].hudHiddenView).toBe(expected);
+});
 
 test('seals source only after COMPLETE, index SHA/count/order and video size checks, without claiming full-video verification', async () => {
   const capture = await recording(), store = library([capture]);

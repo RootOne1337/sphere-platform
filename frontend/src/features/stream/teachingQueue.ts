@@ -1,10 +1,12 @@
 import {automaticReconstructionStopped,ensureAutomaticReconstructionLink,listReconstructionLinks,readReconstructionLink,stopAutomaticReconstruction} from './reconstructionLink';
 import {reconstructionRequest,ReconstructionResponseError,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
+import type {TeachingLibraryRecord} from './teachingLibrary';
 
 export type TeachingQueuePhase='waiting'|'persisting'|'uploading'|'processing'|'ready'|'failed'|'cancelled'|'stopped'|'unavailable';
 export type TeachingQueueItem={clip:string;jobId?:string;phase:TeachingQueuePhase;reason?:string;updatedAt:number};
 export type TeachingQueueSnapshot={scope:string;activeClip:string|null;items:TeachingQueueItem[]};
-export type QueueRecording={id:string;createdAt:number;complete:boolean;manifestSha:string|null;sourceState:string;folder:FileSystemDirectoryHandle;prepareAfterRecording:boolean;hudHidden:boolean};
+type CaptureMaskPreference=Pick<TeachingLibraryRecord,'hudHidden'|'hudHiddenView'>;
+export type QueueRecording={id:string;createdAt:number;complete:boolean;manifestSha:string|null;sourceState:string;folder:FileSystemDirectoryHandle;prepareAfterRecording:boolean}&CaptureMaskPreference;
 type Dependencies={
   readLink:typeof readReconstructionLink;listLinks:typeof listReconstructionLinks;ensureLink:typeof ensureAutomaticReconstructionLink;
   stopped:typeof automaticReconstructionStopped;stop:typeof stopAutomaticReconstruction;
@@ -16,6 +18,10 @@ const defaults=():Dependencies=>({readLink:readReconstructionLink,listLinks:list
 const idPattern=/^[0-9a-f]{32}$/;
 const abortError=()=>new DOMException('Aborted','AbortError');
 const reasonCode=(value:unknown,fallback:string)=>typeof value==='string'&&/^[a-z0-9_]{1,160}$/.test(value)?value:fallback;
+export function recordingPreparationMask({hudHidden,hudHiddenView}:CaptureMaskPreference):'none'|'avatar'|'game' {
+  if(!hudHidden)return 'game';
+  return hudHiddenView==='first_person'?'none':'avatar';
+}
 export function newAutomaticReconstruction(mask:'none'|'avatar'|'game'):ReconstructionJob {
   return {id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join(''),creation:{mask,steps:30000,prepare_route:true,route_only:true}};
 }
@@ -119,7 +125,7 @@ export class TeachingQueueController {
         if(job&&this.terminal.get(record.id)===this.binding(record,job))continue;
         if((this.metadataFailures.get(record.id)??0)>=3){this.publish(record.id,'unavailable',job??undefined,'preparation_metadata_retry_limit');continue;}
         if(!job){
-          const mask=record.hudHidden?'avatar':'game';
+          const mask=recordingPreparationMask(record);
           let candidate=this.candidates.get(record.id);if(!candidate){candidate=newAutomaticReconstruction(mask);this.candidates.set(record.id,candidate);}
           this.publish(record.id,'persisting',candidate);
           try{job=await this.deps.ensureLink(record.folder,record.id,mask,candidate);}
