@@ -30,7 +30,8 @@ export function chooseReviewGeometry(items:Alternative[], preferred:unknown, pri
   if(primary!==false)return null;
   return typeof preferred==='string'&&items.some(item=>item.id===preferred)?preferred:visualPrimary?'primary':null;
 }
-export type TeachingClipChoice = Pick<Clip,'id'|'title'|'complete'|'frames'>;
+export type TeachingClipChoice = Pick<Clip,'id'|'title'|'complete'|'frames'> &
+  Partial<Pick<Clip,'hudHidden'|'manifestSha'>>;
 const emptyClips:Clip[]=[];
 const names = ['video.h264','frames.jsonl','inputs.jsonl','manifest.json','COMPLETE'];
 const digest = async (buffer: ArrayBuffer) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)), v => v.toString(16).padStart(2,'0')).join('');

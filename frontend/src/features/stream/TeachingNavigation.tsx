@@ -25,6 +25,11 @@ const initialMetrics={observations:0,known:0,confirming:0,unknown:0,late:0,age:0
   segment:null as number|null,diagnostic:null as LocalizationDiagnostic|null};
 export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,scope=null,onSelectClip,selectionDisabled=false,walkInput,vehicleInput,onReview,sourceRecording=null,beginVehicleVideo}:{job:ReconstructionJob|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;binding:Binding|null;clips?:TeachingClipChoice[];clip?:string|null;scope?:string|null;onSelectClip?:(id:string|null)=>void;selectionDisabled?:boolean;walkInput?:WalkInputControl;vehicleInput?:VehicleInputControl;onReview?:()=>void;sourceRecording?:RouteSource|null;beginVehicleVideo?:(config:DiagnosticVideoConfig)=>DiagnosticVideoCapture|null}) {
   const expectedManifestSha=sourceRecording?.clip===clip&&sourceRecording.scope===scope?sourceRecording.manifestSha:null;
+  const recordedWithoutHud=!!expectedManifestSha&&clips.some(recording=>
+    recording.id===clip&&recording.complete&&recording.manifestSha===expectedManifestSha&&recording.hudHidden===true);
+  const vehicleSpeedIssue=recordedWithoutHud
+    ? 'Запись снята без HUD. Текущий режим транспорта требует скорость из записи и с живого спидометра.'
+    : null;
   const assetSelection=JSON.stringify([job?.id,job?.key,clip,scope,expectedManifestSha]);
   const [assetIdentity,setAssetIdentity]=useState<string|null>(null);
   const [storedAssets,setAssets]=useState<NavigationState|null>(null),[notice,setNotice]=useState('Выберите сохранённый маршрут во вкладке «Библиотека».');
@@ -232,7 +237,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     {observation&&<details className="rounded-lg border p-3 text-xs" open><summary className="cursor-pointer font-medium">Диагностика последнего ответа · {observation.reply.pose.state}</summary><dl className="mt-2 grid grid-cols-2 gap-2"><div><dt>Причина</dt><dd className="break-all font-mono">{observation.reply.pose.reason}</dd></div><div><dt>Метод</dt><dd>{observation.reply.method}</dd></div><div><dt>Ошибка проекции</dt><dd>{observation.reply.pose.median_error_px?.toFixed(2)??'—'} px</dd></div><div><dt>Отклонение от пути</dt><dd>{observation.reply.pose.cross_track_units?.toFixed(3)??'—'} усл. ед.</dd></div></dl></details>}
     </div>
     {walkInput&&panel==='walk'&&<WalkingRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={mapReady} expectedSource={expectedSource} preparationIssue={preparationIssue} input={walkInput} observerBusy={running||busy||panel!=='walk'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='walk')}/>}
-    {vehicleInput&&panel==='vehicle'&&<VehicleRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={mapReady} expectedSource={expectedSource} preparationIssue={preparationIssue} input={vehicleInput} beginVehicleVideo={beginVehicleVideo} observerBusy={running||busy||panel!=='vehicle'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='vehicle')}/>}
+    {vehicleInput&&panel==='vehicle'&&<VehicleRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={mapReady&&!vehicleSpeedIssue} expectedSource={expectedSource} preparationIssue={vehicleSpeedIssue??preparationIssue} input={vehicleInput} beginVehicleVideo={beginVehicleVideo} observerBusy={running||busy||panel!=='vehicle'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='vehicle')}/>}
     <p className="text-[11px] leading-5 text-muted-foreground">Разрешение можно уменьшать с сохранением пропорций; FOV и режим камеры должны совпадать. Узнавание на минимальном рендере проверяется отдельно. «Кадр → ответ» измеряется в браузере; полная задержка Android неизвестна. Неподтверждённая поза и ответы старше 250 мс скрывают линию. Моторная модель не запускается.</p>
   </section>;
 }

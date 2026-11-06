@@ -43,6 +43,23 @@ test('a ready response for another recording cannot enable control or publish it
   expect(screen.queryByText(/83.*163/)).not.toBeInTheDocument();
   expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>!call[2]?.method)).toBe(true);
 });
+test.each([true,false])('vehicle explains hidden HUD only for the bound recording (%s)',async matches=>{
+  const clip='c'.repeat(32),scope='d'.repeat(32),manifestSha='f'.repeat(64),open=jest.fn();
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'sparse_complete',source_manifest_sha256:manifestSha,
+    geometry_available:true,navigation:{phase:'not_prepared'}})} as Response);
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}
+    clip={clip} scope={scope} clips={[{id:clip,title:'skuter4',complete:true,frames:1,hudHidden:true,manifestSha:matches?manifestSha:'a'.repeat(64)}]}
+    sourceRecording={{clip,scope,manifestSha,rows:[],folder:{} as FileSystemDirectoryHandle}}
+    vehicleInput={{issue:null,hudProfile:'black_russia_scooter_v1',open}}/>);
+  await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalledWith(`/jobs/${job.id}`,job,expect.any(Object)));
+  fireEvent.click(screen.getByRole('button',{name:'Транспорт · газ и руль'}));
+  const issue=screen.queryByText(/Запись снята без HUD/);
+  if(matches)expect(issue).toBeInTheDocument();
+  else expect(issue).not.toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Запустить транспорт'})).toBeDisabled();
+  expect(open).not.toHaveBeenCalled();
+});
+
 test.each([
   [403,'Нет доступа к заданию выбранной записи'],
   [404,'Связанное задание не найдено в обработчике'],
