@@ -97,6 +97,29 @@ class VehicleRouteTests(unittest.TestCase):
                 self.assertEqual((result['pedal'], result['confirmationValidCount']), ('coast', 1))
                 self.now += .1
 
+    def test_bound_ambiguous_hud_pauses_without_erasing_recent_position_votes(self):
+        self.acquire(speed=0.)
+        unreadable = {'status': 'glyph_ambiguous', 'speed_kmh': None}
+        for remaining in (4, 3, 2, 1, 0):
+            plan = self.observe(speed_changes=unreadable)
+            self.assertEqual((plan['phase'], plan['reason'], plan['pedal']),
+                             ('waiting', 'vehicle_speed_unconfirmed', 'coast'))
+            self.assertEqual((plan['confirmationValidCount'], plan['speedAccepted']), (remaining, False))
+            self.now += .1
+        self.assertEqual(self.observe(speed=0.)['phase'], 'waiting')
+
+    def test_fresh_speed_recovers_in_one_frame_after_bound_glyph_miss_only(self):
+        for mismatch in (None, {'epoch': 'wrong'}, {'status': 'glyph_bounds'}):
+            with self.subTest(mismatch=mismatch):
+                self.follower = self.make()
+                self.acquire(speed=0.)
+                unreadable = {'status': 'glyph_ambiguous', 'speed_kmh': None} | (mismatch or {})
+                self.assertEqual(self.observe(speed_changes=unreadable)['pedal'], 'coast')
+                self.now += .15
+                plan = self.observe(speed=0.)
+                self.assertEqual((plan['phase'], plan['pedal']),
+                                 ('following', 'throttle') if mismatch is None else ('waiting', 'coast'))
+
     def test_only_current_localized_pose_can_act_even_after_three_verified_confirming_votes(self):
         for _ in range(3):
             result = self.observe(speed=0., state='confirming')
@@ -221,11 +244,8 @@ class VehicleRouteTests(unittest.TestCase):
             result = self.observe(1., speed=0., rotation=backwards)
             self.assertEqual((result['phase'], result['pedal'], result['steering']),
                              ('waiting', 'coast', 0.))
-        for _ in range(4):
-            self.now += .2
-            result = self.observe(1., speed=0.)
-            if result['phase'] == 'following':
-                break
+        self.now += .2
+        result = self.observe(1., speed=0.)
         self.assertEqual((result['phase'], result['pedal']), ('following', 'throttle'))
         self.assertIsNone(self.follower.waiting_since)
 

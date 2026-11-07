@@ -173,19 +173,23 @@ class VehicleRouteFollower:
                 return self._neutral('vehicle_relocalization_timeout', terminal=True)
         return self._neutral(reason)
 
-    def _speed(self, pose, speed, now):
-        if type(speed) is not dict:
+    @staticmethod
+    def _speed_is_current(pose, speed, now):
+        return (type(speed) is dict and speed.get('epoch') == pose.capture_epoch
+                and speed.get('sequence') == pose.receiver_sequence
+                and speed.get('received_at') == pose.received_at
+                and speed.get('source_rgb_sha256') == pose.source_rgb_sha256
+                and 0 <= now - pose.received_at <= .25)
+
+    @staticmethod
+    def _speed(speed):
+        if speed is None:
             return None
         value, confidence = speed.get('speed_kmh'), speed.get('confidence')
         if (speed.get('status') != 'accepted' or type(value) not in (int, float)
                 or not math.isfinite(value) or not 0 <= value <= 350
                 or type(confidence) not in (int, float) or not math.isfinite(confidence)
-                or not 80 <= confidence <= 100
-                or speed.get('epoch') != pose.capture_epoch
-                or speed.get('sequence') != pose.receiver_sequence
-                or speed.get('received_at') != pose.received_at
-                or speed.get('source_rgb_sha256') != pose.source_rgb_sha256
-                or not 0 <= now - speed['received_at'] <= .25):
+                or not 80 <= confidence <= 100):
             return None
         return float(value)
 
@@ -308,7 +312,8 @@ class VehicleRouteFollower:
             if votes and pose.received_at - votes[-1][0] <= 1.0:
                 if np.linalg.norm(center - votes[-1][3][0]) > self.step * 6:
                     return self._wait('vehicle_confirming_position', now)
-        self.observed_speed = self._speed(pose, speed, now)
+        current_speed = speed if self._speed_is_current(pose, speed, now) else None
+        self.observed_speed = self._speed(current_speed)
         acceleration = 0.
         if self.observed_speed is not None:
             if self.speed_sample is not None:
@@ -322,11 +327,19 @@ class VehicleRouteFollower:
             target = self.speed_reference.sample(ticks)
         except (ValueError, TypeError, RuntimeError):
             return self._neutral('vehicle_reference_speed_invalid', terminal=True)
-        if (type(target) not in (int, float) or not math.isfinite(target) or not 0 <= target <= 350
-                or self.observed_speed is None):
-            self.target_speed = (min(float(self.max_speed_kmh), float(target)) if type(target) in (int, float)
-                                 and math.isfinite(target) and 0 <= target <= 350 else None)
-            return self._wait('vehicle_speed_unconfirmed', now)
+        target_valid = type(target) in (int, float) and math.isfinite(target) and 0 <= target <= 350
+        if not target_valid or self.observed_speed is None:
+            self.target_speed = min(float(self.max_speed_kmh), float(target)) if target_valid else None
+            # A current, ambiguous HUD digit grants no input and casts no vote.
+            # On an established run, let older verified votes age normally.
+            soft_hud_miss = (self.started and pose.state == 'localized' and target_valid
+                             and current_speed is not None and current_speed.get('status') == 'glyph_ambiguous'
+                             and current_speed.get('speed_kmh') is None)
+            if soft_hud_miss:
+                self._confirmation.prepare(binding, pose.receiver_sequence, pose.received_at)
+                self._confirmation.append(pose.source_rgb_sha256, valid=False)
+                self.confirmations = len(self._confirmation.votes)
+            return self._wait('vehicle_speed_unconfirmed', now, preserve_confirmation=soft_hud_miss)
         # Preview slower source speeds before a corner, indexed by localized
         # progress. Never advance the recorded clock because live time passed.
         preview = getattr(self.speed_reference, 'preview', None)
@@ -419,7 +432,8 @@ class VehicleRouteFollower:
                         self.target_speed = min(self.target_speed, self.REJOIN_SPEED_KMH)
         # A large error calls for operator review, not a sharp blind U-turn.
         if abs(yaw) > self.PURSUIT_CONE and not near_end:
-            return self._wait('vehicle_heading_outside_pursuit_cone', now)
+            # Steering admission failed after recording a qualified position vote.
+            return self._wait('vehicle_heading_outside_pursuit_cone', now, preserve_confirmation=True)
         self.waiting_since = None
         desired = float(np.clip(yaw * .6, -self.MAX_STEERING, self.MAX_STEERING))
         self.steering += float(np.clip(desired - self.steering, -1.2 * dt, 1.2 * dt))
