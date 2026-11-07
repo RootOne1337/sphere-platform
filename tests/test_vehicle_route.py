@@ -356,6 +356,27 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual((result['phase'], result['pedal']), ('following', 'throttle'))
         self.assertAlmostEqual(self.follower.high_water, 2.7)
 
+    def test_forward_recovery_keeps_earlier_post_loss_votes_inside_ordinary_limit(self):
+        self._acquire_moving_dense_trace()
+        for progress in (2.0, 2.1):
+            waiting = self.observe(progress, speed=4., state='confirming')
+            self.assertEqual((waiting['phase'], waiting['pedal']), ('waiting', 'coast'))
+            self.now += .1
+        recovered = self.observe(2.3, speed=4.)
+        self.assertEqual((recovered['phase'], recovered['pedal'], recovered['confirmationValidCount']),
+                         ('following', 'throttle', 3))
+        self.assertAlmostEqual(self.follower.high_water, 2.3)
+
+    def test_forward_recovery_discards_earlier_votes_behind_last_position(self):
+        self._acquire_moving_dense_trace()
+        for progress in (.8, .9):
+            self.observe(progress, speed=4., state='confirming')
+            self.now += .1
+        pending = self.observe(2.3, speed=4.)
+        self.assertEqual((pending['phase'], pending['pedal'], pending['confirmationValidCount']),
+                         ('waiting', 'coast', 1))
+        self.assertAlmostEqual(self.follower.high_water, 1.)
+
     def test_short_pause_does_not_allow_an_unreachable_forward_jump(self):
         self._acquire_moving_dense_trace()
         result = self.observe(4., speed=4.)

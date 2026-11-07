@@ -269,17 +269,24 @@ class VehicleRouteFollower:
                 raise ValueError('invalid_pose')
         except (ValueError, TypeError):
             return self._neutral('vehicle_pose_or_corridor_unqualified', terminal=True)
+        within_forward_coast = False
         if self.started:
             discontinuity = None
             if progress < self.high_water - self.step * 2 or progress > self.high_water + self.step * 6:
                 discontinuity = 'vehicle_progress_discontinuity'
             elif self.last_center is not None and np.linalg.norm(center - self.last_center) > self.step * 6:
                 discontinuity = 'vehicle_pose_discontinuity'
+            if discontinuity or self._forward_recovery:
+                within_forward_coast = self._within_forward_coast(center, progress, pose.received_at)
             if discontinuity:
-                if self._within_forward_coast(center, progress, pose.received_at):
+                if within_forward_coast:
                     if not self._forward_recovery:
-                        self._confirmation.clear()
-                        self.confirmations = 0
+                        # Keep qualified post-loss observations that fit the same
+                        # envelope, even if they were inside the ordinary limit.
+                        for index, (at, sequence, digest, measured) in enumerate(self._confirmation.slots):
+                            if digest is not None and (at < self.waiting_since or not self._within_forward_coast(
+                                    measured[0], measured[1], at)):
+                                self._confirmation.slots[index] = (at, sequence, None, None)
                         self._forward_recovery = True
                 elif pose.state == 'confirming':
                     # Reject the tentative jump without replacing the last
@@ -299,7 +306,7 @@ class VehicleRouteFollower:
             # A provisional pose must never permanently stop an idle run.
             votes = self._confirmation.votes
             if votes and pose.received_at - votes[-1][0] <= 1.0:
-                if np.linalg.norm(center - votes[-1][3]) > self.step * 6:
+                if np.linalg.norm(center - votes[-1][3][0]) > self.step * 6:
                     return self._wait('vehicle_confirming_position', now)
         self.observed_speed = self._speed(pose, speed, now)
         acceleration = 0.
@@ -354,7 +361,8 @@ class VehicleRouteFollower:
         if self.waiting_since is not None and now - self.waiting_since >= self.MAX_RELOCALIZE_SECONDS:
             return self._neutral('vehicle_relocalization_timeout', terminal=True)
         self._confirmation.prepare(binding, pose.receiver_sequence, pose.received_at)
-        current_vote = self._confirmation.append(pose.source_rgb_sha256, valid=True, payload=center)
+        current_vote = self._confirmation.append(pose.source_rgb_sha256,
+            valid=not self._forward_recovery or within_forward_coast, payload=(center, progress))
         self.confirmations = len(self._confirmation.votes)
         if not current_vote:
             return self._wait('vehicle_confirming_position', now, preserve_confirmation=True)
