@@ -82,6 +82,8 @@ class VehicleRouteFollower:
     # permission while the browser has already released both native contacts.
     MAX_RELOCALIZE_SECONDS = 15.
     MAX_FORWARD_COAST_SECONDS = 2.
+    CONTROL_CORRIDOR_STEPS = 3.
+    LOCALIZED_CORRIDOR_STEPS = 5.
 
     def __init__(self, route, speed_reference, *, clock, reference_rotations,
                  start_mode='beginning', max_seconds=120, max_speed_kmh=15):
@@ -264,15 +266,24 @@ class VehicleRouteFollower:
         try:
             center = np.asarray(pose.center, float)
             rotation = np.asarray(pose.rotation, float).reshape(3, 3)
+            if type(pose.cross_track_units) not in (int, float):
+                raise ValueError('invalid_pose')
             progress, cross = float(pose.progress_units), float(pose.cross_track_units)
             if (center.shape != (3,) or not np.isfinite(center).all()
                     or not np.isfinite(rotation).all()
                     or not np.allclose(rotation @ rotation.T, np.eye(3), atol=.01)
                     or abs(np.linalg.det(rotation) - 1) > .01
-                    or not 0 <= progress <= self.total or not 0 <= cross <= self.step * 3):
+                    or not 0 <= progress <= self.total
+                    or not 0 <= cross <= self.step * self.LOCALIZED_CORRIDOR_STEPS):
                 raise ValueError('invalid_pose')
         except (ValueError, TypeError):
             return self._neutral('vehicle_pose_or_corridor_unqualified', terminal=True)
+        if cross > self.step * self.CONTROL_CORRIDOR_STEPS:
+            # A measured pose may leave the narrower control corridor. Keep
+            # the last qualified position and require fresh in-corridor votes.
+            self.recent_progress_rates.clear()
+            self.target_speed = self.observed_speed = None
+            return self._wait('vehicle_outside_control_corridor', now)
         within_forward_coast = False
         if self.started:
             discontinuity = None

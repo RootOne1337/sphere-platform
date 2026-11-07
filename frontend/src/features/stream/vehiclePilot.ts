@@ -97,6 +97,7 @@ export function vehicleReasonLabel(reason:string,positionPreviouslyConfirmed=fal
     vehicle_heading_outside_pursuit_cone:'Ракурс слишком отличается от пути; остановитесь и совместите камеру с направлением транспорта',
     vehicle_start_outside_recorded_beginning:'Начало записи не подтверждено. Для запуска с середины выберите подхват текущего места',
     vehicle_motion_without_route_progress:'Продвижение по маршруту не подтверждается; педали отпущены',
+    vehicle_outside_control_corridor:'Положение найдено за пределами коридора управления. Ждём подтверждения возврата',
     vehicle_pose_or_corridor_unqualified:'Положение выходит за подтверждённый участок маршрута; движение остановлено',
     vehicle_pose_discontinuity:'Положение изменилось скачком; требуется повторная проверка места',
     vehicle_progress_discontinuity:'Обнаружен скачок по маршруту; движение остановлено',

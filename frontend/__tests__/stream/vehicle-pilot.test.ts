@@ -11,6 +11,12 @@ test('initial acquisition is not described as losing a previously acquired vehic
   expect(vehicleReasonLabel('vehicle_confirming_position',true)).toContain('Положение потеряно');
   expect(vehicleReasonLabel('vehicle_confirming_current_position')).toContain('Три свежих подтверждения');
 });
+test('an out-of-corridor pose reports a pause while waiting for reentry',()=>{
+  const outside:VehiclePlan={...plan,phase:'waiting',reason:'vehicle_outside_control_corridor',
+    pedal:'coast',steering:0,targetSpeedKmh:null,observedSpeedKmh:null,speedAccepted:false};
+  expect(readVehiclePlan(outside)).toEqual(outside);
+  expect(vehicleReasonLabel(outside.reason,true)).toContain('Ждём подтверждения возврата');
+});
 test('following requires same-reply accepted actual speed, target speed and camera direction',()=>{
   expect(readVehiclePlan(plan)).toEqual(plan);
   for(const change of [{observedSpeedKmh:null},{targetSpeedKmh:null},{speedAccepted:false},{maxSpeedKmh:51},{targetSpeedKmh:16},

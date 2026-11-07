@@ -80,6 +80,63 @@ class VehicleRouteTests(unittest.TestCase):
             self.assertLess(result['confirmationValidCount'], 3)
             self.now += .1
 
+    def test_measured_outside_corridor_pauses_and_requires_three_new_in_corridor_votes(self):
+        self.assertEqual(self.acquire(speed=0.)['pedal'], 'throttle')
+        follower = self.follower
+        last_center = follower.last_center.copy()
+        high_water = follower.high_water
+        follower.recent_progress_rates.extend([1., 1., 1.])
+        cross = follower.step * 3.5
+        outside = self.observe(progress=1., speed=0., center=(cross, 0., 1.), cross_track_units=cross)
+        self.assertEqual((outside['phase'], outside['reason'], outside['pedal'], outside['steering']),
+                         ('waiting', 'vehicle_outside_control_corridor', 'coast', 0.))
+        self.assertEqual(outside['confirmationValidCount'], 0)
+        self.assertFalse(outside['speedAccepted'])
+        self.assertIsNone(outside['targetSpeedKmh'])
+        self.assertIsNone(outside['observedSpeedKmh'])
+        self.np.testing.assert_array_equal(follower.last_center, last_center)
+        self.assertEqual(follower.high_water, high_water)
+        self.assertFalse(follower.recent_progress_rates)
+
+        for votes in (1, 2):
+            self.now += .1
+            inside = self.observe(progress=.1, speed=0.)
+            self.assertEqual((inside['confirmationValidCount'], inside['pedal']), (votes, 'coast'))
+        self.now += .1
+        outside = self.observe(progress=1., speed=0., center=(cross, 0., 1.), cross_track_units=cross)
+        self.assertEqual((outside['confirmationValidCount'], outside['pedal']), (0, 'coast'))
+
+        for votes in (1, 2, 3):
+            self.now += .1
+            inside = self.observe(progress=.1, speed=0.)
+            self.assertEqual(inside['confirmationValidCount'], votes)
+            self.assertEqual(inside['pedal'], 'throttle' if votes == 3 else 'coast')
+
+    def test_outside_corridor_wait_preserves_terminal_and_jump_protection(self):
+        for case in ('timeout', 'jump', 'beyond_localization_corridor', 'nonfinite', 'string'):
+            with self.subTest(case=case):
+                self.follower = self.make()
+                self.acquire(speed=0.)
+                if case in ('timeout', 'jump'):
+                    cross = self.follower.step * 4.
+                    self.observe(center=(cross, 0., 0.), cross_track_units=cross)
+                    if case == 'timeout':
+                        for _ in range(int(self.follower.MAX_RELOCALIZE_SECONDS * 4) + 1):
+                            self.now += .25
+                            result = self.observe(center=(cross, 0., 0.), cross_track_units=cross)
+                        expected = 'vehicle_relocalization_timeout'
+                    else:
+                        self.now += .1
+                        result = self.observe(progress=self.follower.total * .99, speed=0.)
+                        expected = 'vehicle_progress_discontinuity'
+                else:
+                    cross = {'beyond_localization_corridor': self.follower.step * 5.1,
+                             'nonfinite': float('nan'), 'string': str(self.follower.step * 4.)}[case]
+                    result = self.observe(cross_track_units=cross)
+                    expected = 'vehicle_pose_or_corridor_unqualified'
+                self.assertEqual((result['phase'], result['reason'], result['pedal']),
+                                 ('stopped', expected, 'coast'))
+
     def test_invalid_current_hud_and_hard_pose_loss_clear_initial_evidence(self):
         for loss in ('bad_hud', 'route_pose_discontinuity', 'route_progress_ambiguous'):
             with self.subTest(loss=loss):
