@@ -1,0 +1,1543 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-17T07:59:06.051960+00:00",
+  "workerSourceRevision": "60f02683113aefcba3a82ee3b8b2e821bd8d4918",
+  "workerVersion": "0.4.0",
+  "scope": "Research recheck plus real-RGB neutral shadow policy and finite native pointer compatibility. No learned inference, gameplay, GPU, LAN proof or production acceptance.",
+  "readiness": {
+    "headlessTransportImplemented": true,
+    "finiteNativePointerProbeVerified": true,
+    "shadowPolicyImplemented": true,
+    "modelResponseValidatorImplemented": true,
+    "modelProviderImplemented": false,
+    "modelPreprocessingValidated": false,
+    "modelDownloaded": false,
+    "modelInstalled": false,
+    "inferenceExecuted": false,
+    "gameProfileImplemented": false,
+    "multiTouchImplemented": false,
+    "episodeDelegationImplemented": false,
+    "sourceClockCorrelationImplemented": false,
+    "separateGpuLanTested": false,
+    "targetGpuBenchmarked": false,
+    "fleetCapacityBenchmarked": false,
+    "gameplayAccepted": false,
+    "fullGateG02Accepted": false
+  },
+  "workerSources": {
+    "motor_worker/observation.py": "1a9141b3f515a2a40b505c232e555bb0868fcef9b774699f4aa7582833ef621a",
+    "motor_worker/pointer_probe.py": "4cdfc05c71c5b9663ac9cca4943dfae6a3ffca696770daa0b54a342231871c9b",
+    "motor_worker/policy.py": "874e536b1a65c5690cd770c85b1f124f195523f916672ed4774c90a00e61b21f",
+    "motor_worker/protocol.py": "eee2b9a8237299d729262514e976d72f85c13bf462c69894d27188f2cb87241f",
+    "motor_worker/session.py": "494c1cb8e5cfbd80d23a65e5fa7245be769af83168ebf26be0d04e80416e520b",
+    "motor_worker/__init__.py": "946c6a2161e5cc57305ed4c6f105b7779768f33e5e954de5bfd50113427691d6",
+    "motor_worker/__main__.py": "7d5742c30f73dafcda0fe8de6c49f42448b29de011082d250c39dcf7d67271bb"
+  },
+  "testSources": {
+    "tests/test_motor_worker_protocol.py": "efb439150898b6edc22c271cca68b24b260b7dbcb5257d433b7c1bbde81f1d4c",
+    "tests/test_motor_worker_pointer_probe.py": "83357fd0c665aa9db6ef313c5d52f5d79c8ad3d0f782f8a96f6812e7dbb8ee6c",
+    "tests/test_motor_worker_policy.py": "b1a893668217e0fa7e14de5e57dd8ba2bb33e5f00613d49ce4c1a69eccad2f5c",
+    "tests/test_motor_worker_integration.py": "6cab3ee23e3700fb28aadaca4230debab25c8f85a86d67048c3f861e8b161154"
+  },
+  "liveRuns": [
+    {
+      "kind": "HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY",
+      "success": true,
+      "failure": null,
+      "durationObservedSeconds": 15.014,
+      "decodedFrames": 863,
+      "rgbObservationsDuringMonitor": 75,
+      "observationHzDuringMonitor": 4.995,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 5,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": false,
+        "dataChannelOpened": false,
+        "nativeAdmissionConfirmed": false,
+        "actorAliveReceipts": 0,
+        "lastActorRttMs": null,
+        "participantClosedConfirmed": false,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0,
+        "availabilityState": null
+      },
+      "policyShadow": {
+        "enabled": true,
+        "kind": "neutral_fixture_shadow_not_model_inference",
+        "physicalActionsSent": 0,
+        "offered": 75,
+        "submitted": 75,
+        "accepted": 75,
+        "replacedPending": 0,
+        "staleFramesDropped": 0,
+        "expiredResultsDropped": 0,
+        "foreignEpochResultsDropped": 0,
+        "timedOut": 0,
+        "activeRequestSlots": 1,
+        "pendingFrameSlots": 1,
+        "sampleTailLimit": 64,
+        "cleanupConfirmed": true,
+        "inputTransform": "original_rgb24_no_model_preprocessing",
+        "freshnessClock": "worker_receiver_not_source_capture",
+        "samples": [
+          {
+            "requestId": 12,
+            "receiverSequence": 131,
+            "receiverAgeAtResultMs": 20.725,
+            "inferenceWallMs": 0.091,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 13,
+            "receiverSequence": 142,
+            "receiverAgeAtResultMs": 25.899,
+            "inferenceWallMs": 0.047,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 14,
+            "receiverSequence": 153,
+            "receiverAgeAtResultMs": 18.742,
+            "inferenceWallMs": 0.055,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 15,
+            "receiverSequence": 165,
+            "receiverAgeAtResultMs": 21.252,
+            "inferenceWallMs": 0.073,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 16,
+            "receiverSequence": 177,
+            "receiverAgeAtResultMs": 20.413,
+            "inferenceWallMs": 0.041,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 17,
+            "receiverSequence": 188,
+            "receiverAgeAtResultMs": 20.556,
+            "inferenceWallMs": 0.072,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 18,
+            "receiverSequence": 200,
+            "receiverAgeAtResultMs": 23.793,
+            "inferenceWallMs": 0.041,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 19,
+            "receiverSequence": 211,
+            "receiverAgeAtResultMs": 18.931,
+            "inferenceWallMs": 0.051,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 20,
+            "receiverSequence": 223,
+            "receiverAgeAtResultMs": 18.623,
+            "inferenceWallMs": 0.038,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 21,
+            "receiverSequence": 234,
+            "receiverAgeAtResultMs": 25.632,
+            "inferenceWallMs": 0.044,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 22,
+            "receiverSequence": 246,
+            "receiverAgeAtResultMs": 19.863,
+            "inferenceWallMs": 0.076,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 23,
+            "receiverSequence": 257,
+            "receiverAgeAtResultMs": 19.528,
+            "inferenceWallMs": 0.098,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 24,
+            "receiverSequence": 269,
+            "receiverAgeAtResultMs": 26.991,
+            "inferenceWallMs": 0.053,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 25,
+            "receiverSequence": 280,
+            "receiverAgeAtResultMs": 19.671,
+            "inferenceWallMs": 0.053,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 26,
+            "receiverSequence": 291,
+            "receiverAgeAtResultMs": 18.791,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 27,
+            "receiverSequence": 300,
+            "receiverAgeAtResultMs": 28.806,
+            "inferenceWallMs": 0.051,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 28,
+            "receiverSequence": 312,
+            "receiverAgeAtResultMs": 32.838,
+            "inferenceWallMs": 0.068,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 29,
+            "receiverSequence": 324,
+            "receiverAgeAtResultMs": 18.555,
+            "inferenceWallMs": 0.055,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 30,
+            "receiverSequence": 336,
+            "receiverAgeAtResultMs": 18.567,
+            "inferenceWallMs": 0.038,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 31,
+            "receiverSequence": 347,
+            "receiverAgeAtResultMs": 24.956,
+            "inferenceWallMs": 0.043,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 32,
+            "receiverSequence": 357,
+            "receiverAgeAtResultMs": 21.901,
+            "inferenceWallMs": 0.072,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 33,
+            "receiverSequence": 369,
+            "receiverAgeAtResultMs": 18.615,
+            "inferenceWallMs": 0.053,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 34,
+            "receiverSequence": 381,
+            "receiverAgeAtResultMs": 19.92,
+            "inferenceWallMs": 0.053,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 35,
+            "receiverSequence": 392,
+            "receiverAgeAtResultMs": 24.344,
+            "inferenceWallMs": 0.049,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 36,
+            "receiverSequence": 404,
+            "receiverAgeAtResultMs": 19.854,
+            "inferenceWallMs": 0.037,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 37,
+            "receiverSequence": 415,
+            "receiverAgeAtResultMs": 19.747,
+            "inferenceWallMs": 0.052,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 38,
+            "receiverSequence": 426,
+            "receiverAgeAtResultMs": 23.552,
+            "inferenceWallMs": 0.056,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 39,
+            "receiverSequence": 438,
+            "receiverAgeAtResultMs": 22.546,
+            "inferenceWallMs": 0.124,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 40,
+            "receiverSequence": 450,
+            "receiverAgeAtResultMs": 14.019,
+            "inferenceWallMs": 0.051,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 41,
+            "receiverSequence": 461,
+            "receiverAgeAtResultMs": 29.925,
+            "inferenceWallMs": 0.113,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 42,
+            "receiverSequence": 473,
+            "receiverAgeAtResultMs": 24.093,
+            "inferenceWallMs": 0.072,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 43,
+            "receiverSequence": 484,
+            "receiverAgeAtResultMs": 27.041,
+            "inferenceWallMs": 0.148,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 44,
+            "receiverSequence": 494,
+            "receiverAgeAtResultMs": 40.273,
+            "inferenceWallMs": 0.045,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 45,
+            "receiverSequence": 506,
+            "receiverAgeAtResultMs": 19.548,
+            "inferenceWallMs": 0.041,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 46,
+            "receiverSequence": 518,
+            "receiverAgeAtResultMs": 19.759,
+            "inferenceWallMs": 0.047,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 47,
+            "receiverSequence": 529,
+            "receiverAgeAtResultMs": 18.679,
+            "inferenceWallMs": 0.087,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 48,
+            "receiverSequence": 541,
+            "receiverAgeAtResultMs": 14.413,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 49,
+            "receiverSequence": 552,
+            "receiverAgeAtResultMs": 19.059,
+            "inferenceWallMs": 0.041,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 50,
+            "receiverSequence": 564,
+            "receiverAgeAtResultMs": 19.836,
+            "inferenceWallMs": 0.049,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 51,
+            "receiverSequence": 576,
+            "receiverAgeAtResultMs": 19.022,
+            "inferenceWallMs": 0.048,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 52,
+            "receiverSequence": 587,
+            "receiverAgeAtResultMs": 22.883,
+            "inferenceWallMs": 0.048,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 53,
+            "receiverSequence": 598,
+            "receiverAgeAtResultMs": 21.6,
+            "inferenceWallMs": 0.042,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 54,
+            "receiverSequence": 610,
+            "receiverAgeAtResultMs": 19.829,
+            "inferenceWallMs": 0.045,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 55,
+            "receiverSequence": 622,
+            "receiverAgeAtResultMs": 20.058,
+            "inferenceWallMs": 0.078,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 56,
+            "receiverSequence": 633,
+            "receiverAgeAtResultMs": 26.247,
+            "inferenceWallMs": 0.056,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 57,
+            "receiverSequence": 645,
+            "receiverAgeAtResultMs": 23.764,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 58,
+            "receiverSequence": 656,
+            "receiverAgeAtResultMs": 18.375,
+            "inferenceWallMs": 0.037,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 59,
+            "receiverSequence": 668,
+            "receiverAgeAtResultMs": 20.627,
+            "inferenceWallMs": 0.041,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 60,
+            "receiverSequence": 680,
+            "receiverAgeAtResultMs": 18.152,
+            "inferenceWallMs": 0.105,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 61,
+            "receiverSequence": 691,
+            "receiverAgeAtResultMs": 24.307,
+            "inferenceWallMs": 0.052,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 62,
+            "receiverSequence": 703,
+            "receiverAgeAtResultMs": 23.24,
+            "inferenceWallMs": 0.045,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 63,
+            "receiverSequence": 714,
+            "receiverAgeAtResultMs": 19.909,
+            "inferenceWallMs": 0.114,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 64,
+            "receiverSequence": 726,
+            "receiverAgeAtResultMs": 20.499,
+            "inferenceWallMs": 0.104,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 65,
+            "receiverSequence": 738,
+            "receiverAgeAtResultMs": 18.66,
+            "inferenceWallMs": 0.053,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 66,
+            "receiverSequence": 749,
+            "receiverAgeAtResultMs": 20.024,
+            "inferenceWallMs": 0.054,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 67,
+            "receiverSequence": 761,
+            "receiverAgeAtResultMs": 18.236,
+            "inferenceWallMs": 0.036,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 68,
+            "receiverSequence": 772,
+            "receiverAgeAtResultMs": 18.806,
+            "inferenceWallMs": 0.075,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 69,
+            "receiverSequence": 784,
+            "receiverAgeAtResultMs": 24.001,
+            "inferenceWallMs": 0.056,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 70,
+            "receiverSequence": 795,
+            "receiverAgeAtResultMs": 23.437,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 71,
+            "receiverSequence": 807,
+            "receiverAgeAtResultMs": 19.121,
+            "inferenceWallMs": 0.04,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 72,
+            "receiverSequence": 818,
+            "receiverAgeAtResultMs": 24.8,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 73,
+            "receiverSequence": 829,
+            "receiverAgeAtResultMs": 27.015,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 74,
+            "receiverSequence": 840,
+            "receiverAgeAtResultMs": 32.115,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 75,
+            "receiverSequence": 853,
+            "receiverAgeAtResultMs": 18.97,
+            "inferenceWallMs": 0.055,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          }
+        ]
+      },
+      "pointerProbe": {
+        "requested": false,
+        "expectedPoints": 0,
+        "attemptedPoints": 0,
+        "appliedReceipts": 0,
+        "lastNativeActionRttMs": null,
+        "complete": false,
+        "samples": []
+      },
+      "device": "auto-ph-011",
+      "origin": "http://127.0.0.1:3015",
+      "observedAtUtc": "2026-10-17T07:56:40.579055+00:00",
+      "privateReport": {
+        "file": ".local-pilot/motor04-shadow-20261017T075623Z.private.json",
+        "sha256NormalizedLf": "050b5dd4e1eea65ed6ed5640c00069fc98cfd9320abda2c0a4353070648705a0"
+      },
+      "sourceProof": {
+        "file": ".local-pilot/motor04-shadow-20261017T075623Z.private.source.json",
+        "sha256NormalizedLf": "8af3890c6fc1cd7e489cbcbf1b7ca09ff919a7097ecd0b1502bf7361d12e7c42"
+      }
+    },
+    {
+      "kind": "HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY",
+      "success": true,
+      "failure": null,
+      "durationObservedSeconds": 15.003,
+      "decodedFrames": 853,
+      "rgbObservationsDuringMonitor": 75,
+      "observationHzDuringMonitor": 4.999,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 5,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": false,
+        "dataChannelOpened": false,
+        "nativeAdmissionConfirmed": false,
+        "actorAliveReceipts": 0,
+        "lastActorRttMs": null,
+        "participantClosedConfirmed": false,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0,
+        "availabilityState": null
+      },
+      "policyShadow": {
+        "enabled": true,
+        "kind": "neutral_fixture_shadow_not_model_inference",
+        "physicalActionsSent": 0,
+        "offered": 75,
+        "submitted": 75,
+        "accepted": 75,
+        "replacedPending": 0,
+        "staleFramesDropped": 0,
+        "expiredResultsDropped": 0,
+        "foreignEpochResultsDropped": 0,
+        "timedOut": 0,
+        "activeRequestSlots": 1,
+        "pendingFrameSlots": 1,
+        "sampleTailLimit": 64,
+        "cleanupConfirmed": true,
+        "inputTransform": "original_rgb24_no_model_preprocessing",
+        "freshnessClock": "worker_receiver_not_source_capture",
+        "samples": [
+          {
+            "requestId": 12,
+            "receiverSequence": 134,
+            "receiverAgeAtResultMs": 9.54,
+            "inferenceWallMs": 0.074,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 13,
+            "receiverSequence": 145,
+            "receiverAgeAtResultMs": 23.874,
+            "inferenceWallMs": 0.049,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 14,
+            "receiverSequence": 157,
+            "receiverAgeAtResultMs": 23.322,
+            "inferenceWallMs": 0.06,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 15,
+            "receiverSequence": 168,
+            "receiverAgeAtResultMs": 17.903,
+            "inferenceWallMs": 0.04,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 16,
+            "receiverSequence": 180,
+            "receiverAgeAtResultMs": 19.112,
+            "inferenceWallMs": 0.083,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 17,
+            "receiverSequence": 192,
+            "receiverAgeAtResultMs": 24.794,
+            "inferenceWallMs": 0.064,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 18,
+            "receiverSequence": 203,
+            "receiverAgeAtResultMs": 19.972,
+            "inferenceWallMs": 0.059,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 19,
+            "receiverSequence": 215,
+            "receiverAgeAtResultMs": 18.719,
+            "inferenceWallMs": 0.069,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 20,
+            "receiverSequence": 226,
+            "receiverAgeAtResultMs": 18.909,
+            "inferenceWallMs": 0.048,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 21,
+            "receiverSequence": 238,
+            "receiverAgeAtResultMs": 22.9,
+            "inferenceWallMs": 0.048,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 22,
+            "receiverSequence": 249,
+            "receiverAgeAtResultMs": 18.756,
+            "inferenceWallMs": 0.037,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 23,
+            "receiverSequence": 261,
+            "receiverAgeAtResultMs": 20.106,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 24,
+            "receiverSequence": 272,
+            "receiverAgeAtResultMs": 23.085,
+            "inferenceWallMs": 0.04,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 25,
+            "receiverSequence": 284,
+            "receiverAgeAtResultMs": 15.271,
+            "inferenceWallMs": 0.041,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 26,
+            "receiverSequence": 294,
+            "receiverAgeAtResultMs": 18.977,
+            "inferenceWallMs": 0.04,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 27,
+            "receiverSequence": 305,
+            "receiverAgeAtResultMs": 18.169,
+            "inferenceWallMs": 0.131,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 28,
+            "receiverSequence": 315,
+            "receiverAgeAtResultMs": 23.704,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 29,
+            "receiverSequence": 327,
+            "receiverAgeAtResultMs": 18.245,
+            "inferenceWallMs": 0.038,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 30,
+            "receiverSequence": 338,
+            "receiverAgeAtResultMs": 30.641,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 31,
+            "receiverSequence": 349,
+            "receiverAgeAtResultMs": 24.792,
+            "inferenceWallMs": 0.064,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 32,
+            "receiverSequence": 360,
+            "receiverAgeAtResultMs": 34.414,
+            "inferenceWallMs": 0.055,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 33,
+            "receiverSequence": 373,
+            "receiverAgeAtResultMs": 19.61,
+            "inferenceWallMs": 0.083,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 34,
+            "receiverSequence": 384,
+            "receiverAgeAtResultMs": 18.946,
+            "inferenceWallMs": 0.053,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 35,
+            "receiverSequence": 395,
+            "receiverAgeAtResultMs": 25.227,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 36,
+            "receiverSequence": 406,
+            "receiverAgeAtResultMs": 19.425,
+            "inferenceWallMs": 0.04,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 37,
+            "receiverSequence": 418,
+            "receiverAgeAtResultMs": 18.39,
+            "inferenceWallMs": 0.048,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 38,
+            "receiverSequence": 429,
+            "receiverAgeAtResultMs": 9.312,
+            "inferenceWallMs": 0.054,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 39,
+            "receiverSequence": 441,
+            "receiverAgeAtResultMs": 22.788,
+            "inferenceWallMs": 0.045,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 40,
+            "receiverSequence": 452,
+            "receiverAgeAtResultMs": 22.593,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 41,
+            "receiverSequence": 464,
+            "receiverAgeAtResultMs": 17.999,
+            "inferenceWallMs": 0.042,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 42,
+            "receiverSequence": 476,
+            "receiverAgeAtResultMs": 17.763,
+            "inferenceWallMs": 0.097,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 43,
+            "receiverSequence": 487,
+            "receiverAgeAtResultMs": 23.778,
+            "inferenceWallMs": 0.049,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 44,
+            "receiverSequence": 499,
+            "receiverAgeAtResultMs": 23.408,
+            "inferenceWallMs": 0.043,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 45,
+            "receiverSequence": 510,
+            "receiverAgeAtResultMs": 18.81,
+            "inferenceWallMs": 0.04,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 46,
+            "receiverSequence": 521,
+            "receiverAgeAtResultMs": 19.957,
+            "inferenceWallMs": 0.054,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 47,
+            "receiverSequence": 533,
+            "receiverAgeAtResultMs": 9.925,
+            "inferenceWallMs": 0.043,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 48,
+            "receiverSequence": 543,
+            "receiverAgeAtResultMs": 24.877,
+            "inferenceWallMs": 0.057,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 49,
+            "receiverSequence": 555,
+            "receiverAgeAtResultMs": 18.045,
+            "inferenceWallMs": 0.273,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 50,
+            "receiverSequence": 567,
+            "receiverAgeAtResultMs": 18.5,
+            "inferenceWallMs": 0.174,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 51,
+            "receiverSequence": 578,
+            "receiverAgeAtResultMs": 16.67,
+            "inferenceWallMs": 0.078,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 52,
+            "receiverSequence": 589,
+            "receiverAgeAtResultMs": 18.916,
+            "inferenceWallMs": 0.043,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 53,
+            "receiverSequence": 599,
+            "receiverAgeAtResultMs": 17.375,
+            "inferenceWallMs": 0.074,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 54,
+            "receiverSequence": 611,
+            "receiverAgeAtResultMs": 19.632,
+            "inferenceWallMs": 0.063,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 55,
+            "receiverSequence": 622,
+            "receiverAgeAtResultMs": 19.541,
+            "inferenceWallMs": 0.076,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 56,
+            "receiverSequence": 634,
+            "receiverAgeAtResultMs": 19.393,
+            "inferenceWallMs": 0.038,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 57,
+            "receiverSequence": 644,
+            "receiverAgeAtResultMs": 33.354,
+            "inferenceWallMs": 0.04,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 58,
+            "receiverSequence": 655,
+            "receiverAgeAtResultMs": 24.125,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 59,
+            "receiverSequence": 667,
+            "receiverAgeAtResultMs": 18.528,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 60,
+            "receiverSequence": 679,
+            "receiverAgeAtResultMs": 18.306,
+            "inferenceWallMs": 0.037,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 61,
+            "receiverSequence": 690,
+            "receiverAgeAtResultMs": 15.825,
+            "inferenceWallMs": 0.043,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 62,
+            "receiverSequence": 701,
+            "receiverAgeAtResultMs": 18.08,
+            "inferenceWallMs": 0.068,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 63,
+            "receiverSequence": 711,
+            "receiverAgeAtResultMs": 24.279,
+            "inferenceWallMs": 0.052,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 64,
+            "receiverSequence": 724,
+            "receiverAgeAtResultMs": 17.956,
+            "inferenceWallMs": 0.05,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 65,
+            "receiverSequence": 735,
+            "receiverAgeAtResultMs": 16.952,
+            "inferenceWallMs": 0.214,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 66,
+            "receiverSequence": 746,
+            "receiverAgeAtResultMs": 19.264,
+            "inferenceWallMs": 0.041,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 67,
+            "receiverSequence": 758,
+            "receiverAgeAtResultMs": 14.67,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 68,
+            "receiverSequence": 768,
+            "receiverAgeAtResultMs": 22.481,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 69,
+            "receiverSequence": 780,
+            "receiverAgeAtResultMs": 21.298,
+            "inferenceWallMs": 0.046,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 70,
+            "receiverSequence": 791,
+            "receiverAgeAtResultMs": 18.347,
+            "inferenceWallMs": 0.08,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 71,
+            "receiverSequence": 803,
+            "receiverAgeAtResultMs": 18.873,
+            "inferenceWallMs": 0.042,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 72,
+            "receiverSequence": 814,
+            "receiverAgeAtResultMs": 30.184,
+            "inferenceWallMs": 0.058,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 73,
+            "receiverSequence": 825,
+            "receiverAgeAtResultMs": 24.254,
+            "inferenceWallMs": 0.052,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 74,
+            "receiverSequence": 837,
+            "receiverAgeAtResultMs": 17.802,
+            "inferenceWallMs": 0.039,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          },
+          {
+            "requestId": 75,
+            "receiverSequence": 849,
+            "receiverAgeAtResultMs": 18.516,
+            "inferenceWallMs": 0.064,
+            "chunkStates": 16,
+            "chunkTicksPerSecond": 60
+          }
+        ]
+      },
+      "pointerProbe": {
+        "requested": false,
+        "expectedPoints": 0,
+        "attemptedPoints": 0,
+        "appliedReceipts": 0,
+        "lastNativeActionRttMs": null,
+        "complete": false,
+        "samples": []
+      },
+      "device": "auto-ph-011",
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "observedAtUtc": "2026-10-17T07:57:01.112007+00:00",
+      "privateReport": {
+        "file": ".local-pilot/motor04-shadow-20261017T075640Z.private.json",
+        "sha256NormalizedLf": "8757ba9bc016d5579b6e631cd001abc9bd0cfbc5928ee93a3de1141805d5ad41"
+      },
+      "sourceProof": {
+        "file": ".local-pilot/motor04-shadow-20261017T075640Z.private.source.json",
+        "sha256NormalizedLf": "cb6871bb07ab8bb80887b27429d8585f3285d06bfc4ba2571ff2c98f3508ee18"
+      }
+    },
+    {
+      "kind": "HEADLESS_POINTER_PROBE_NOT_GAMEPLAY",
+      "success": true,
+      "failure": null,
+      "durationObservedSeconds": 8.012,
+      "decodedFrames": 443,
+      "rgbObservationsDuringMonitor": 41,
+      "observationHzDuringMonitor": 5.117,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 3,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": true,
+        "dataChannelOpened": true,
+        "nativeAdmissionConfirmed": true,
+        "actorAliveReceipts": 26,
+        "lastActorRttMs": 2.7706999971996993,
+        "participantClosedConfirmed": true,
+        "nativeActionAppliedVerified": true,
+        "pointerKeyTextCommandsSent": 6,
+        "availabilityState": "manual"
+      },
+      "policyShadow": {
+        "enabled": false
+      },
+      "pointerProbe": {
+        "requested": true,
+        "expectedPoints": 6,
+        "attemptedPoints": 6,
+        "appliedReceipts": 6,
+        "lastNativeActionRttMs": 6.233899999642745,
+        "complete": true,
+        "samples": [
+          {
+            "sequence": 1,
+            "action": 0,
+            "receiverSequence": 11,
+            "receiverFrameAgeMs": 15.082,
+            "scheduleLatenessMs": 0.0
+          },
+          {
+            "sequence": 4,
+            "action": 2,
+            "receiverSequence": 32,
+            "receiverFrameAgeMs": 16.595,
+            "scheduleLatenessMs": 9.568
+          },
+          {
+            "sequence": 7,
+            "action": 2,
+            "receiverSequence": 60,
+            "receiverFrameAgeMs": 2.219,
+            "scheduleLatenessMs": 4.096
+          },
+          {
+            "sequence": 11,
+            "action": 2,
+            "receiverSequence": 114,
+            "receiverFrameAgeMs": 16.739,
+            "scheduleLatenessMs": 5.395
+          },
+          {
+            "sequence": 14,
+            "action": 2,
+            "receiverSequence": 142,
+            "receiverFrameAgeMs": 16.884,
+            "scheduleLatenessMs": 4.837
+          },
+          {
+            "sequence": 16,
+            "action": 1,
+            "receiverSequence": 170,
+            "receiverFrameAgeMs": 16.517,
+            "scheduleLatenessMs": 3.214
+          }
+        ]
+      },
+      "device": "auto-ph-011",
+      "origin": "http://127.0.0.1:3015",
+      "observedAtUtc": "2026-10-17T07:58:16.807672+00:00",
+      "privateReport": {
+        "file": ".local-pilot/motor04-pointer-20261017T075806Z.private.json",
+        "sha256NormalizedLf": "d9ab24f2f9c6951a2c6695096f0a4b6a1fceeb16fdaea5d3e4cb8ce933b25abe"
+      },
+      "sourceProof": {
+        "file": ".local-pilot/motor04-pointer-20261017T075806Z.private.source.json",
+        "sha256NormalizedLf": "da268fcbdf4ddb99bf21ad9921c1230964a2fce749e491a99b4bc25f406581a6"
+      }
+    }
+  ],
+  "validation": {
+    "motorTestsPassed": 68,
+    "motorTestsSkipped": 0,
+    "testLog": {
+      "file": ".local-pilot/motor04-full-acceptance.private.log",
+      "sha256NormalizedLf": "37d85ffb2a64588b90b8412fc393367eb3fa9a49f69d343905453a117fb61ed7"
+    },
+    "realH264DtlsSctpAndOriginalRgbColors": true,
+    "ruffCheckPassed": true,
+    "ruffFormatPassed": true
+  },
+  "retainedNegatives": {
+    "fullRunBeforeIdleAckDrainFix": {
+      "file": ".local-pilot/motor04-full-final.private.log",
+      "sha256NormalizedLf": "ab28e7f7d05d0ee5b36d88eae94cdcb2cba2e79eb0dcac6389d9963201a51346"
+    },
+    "deterministicCloseDrainBeforeFix": {
+      "file": ".local-pilot/motor04-close-drain-before.private.log",
+      "sha256NormalizedLf": "cb0b84a4059030448aec0a9385b603754e0d0fdcff4cb71d454c824ad5e6e5d1"
+    },
+    "reason": "unexpected_control_receipt for exact pending ACK after close started; exact drain added without reopening or replay"
+  },
+  "research": {
+    "reviewedAtUtc": "2026-10-17T07:56:13.292904+00:00",
+    "repositories": [
+      {
+        "repository": "MineDojo/NitroGen",
+        "revision": "32608444660950ffda95e1e57c79632ad65bea10",
+        "files": [
+          {
+            "file": "README.md",
+            "sha256": "b8709f0e3997adf5da95141aa993f2c0b06a73834a7d79d4c41a2c2c20cf447b",
+            "url": "https://github.com/MineDojo/NitroGen/blob/32608444660950ffda95e1e57c79632ad65bea10/README.md"
+          },
+          {
+            "file": "nitrogen/game_env.py",
+            "sha256": "55525fc8fa4539260f874f6b437c40342858d772c238f124e23158e92617b663",
+            "url": "https://github.com/MineDojo/NitroGen/blob/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/game_env.py"
+          },
+          {
+            "file": "nitrogen/inference_client.py",
+            "sha256": "e11f3ec73e4145bcf3e8ae2341fc54b0d2e886e7005aa6e0b8cd1384d0d762c4",
+            "url": "https://github.com/MineDojo/NitroGen/blob/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/inference_client.py"
+          },
+          {
+            "file": "nitrogen/inference_session.py",
+            "sha256": "4a0115776b5c63b6694f2bd973d8baf713658fc2f51f47219260b6acea424363",
+            "url": "https://github.com/MineDojo/NitroGen/blob/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/inference_session.py"
+          },
+          {
+            "file": "nitrogen/mm_tokenizers.py",
+            "sha256": "4503c4b4a227ad5e8c21280b53acd3d0e0614b9beb9ffef208b87806b8f17e7c",
+            "url": "https://github.com/MineDojo/NitroGen/blob/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/mm_tokenizers.py"
+          },
+          {
+            "file": "nitrogen/shared.py",
+            "sha256": "2094c335790ad2909ed8f6e5ead250b68decc57a0e439affa44a42411fb7370d",
+            "url": "https://github.com/MineDojo/NitroGen/blob/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/shared.py"
+          },
+          {
+            "file": "scripts/play.py",
+            "sha256": "daf724c8f15b2a4839fefa168d98a88e2aa627031fda470f101f735fe7c04c4c",
+            "url": "https://github.com/MineDojo/NitroGen/blob/32608444660950ffda95e1e57c79632ad65bea10/scripts/play.py"
+          }
+        ]
+      },
+      {
+        "repository": "subbon/NitroGen-Full",
+        "revision": "a42921a39e44331a800f7d5d53fc3ce5a5680191",
+        "files": [
+          {
+            "file": "play.py",
+            "sha256": "56aeeac3f3652b124eea108c4354a8cc1a31946a4963dd4affab763d4a9f5376",
+            "url": "https://github.com/subbon/NitroGen-Full/blob/a42921a39e44331a800f7d5d53fc3ce5a5680191/play.py"
+          },
+          {
+            "file": "README.md",
+            "sha256": "e20a6e890fea504daf97efe704462d88a4a7d6a547e45061dc78905ad1dd3fee",
+            "url": "https://github.com/subbon/NitroGen-Full/blob/a42921a39e44331a800f7d5d53fc3ce5a5680191/README.md"
+          },
+          {
+            "file": "nitrogen/game_env.py",
+            "sha256": "507007fb9284421d3296d42e106146f8350585880c04862eec44ab922b40f038",
+            "url": "https://github.com/subbon/NitroGen-Full/blob/a42921a39e44331a800f7d5d53fc3ce5a5680191/nitrogen/game_env.py"
+          },
+          {
+            "file": "nitrogen/inference_session.py",
+            "sha256": "0a6810df18e6ffea6472bf39bad90bf819729bf50bf64ac51468f520509024d4",
+            "url": "https://github.com/subbon/NitroGen-Full/blob/a42921a39e44331a800f7d5d53fc3ce5a5680191/nitrogen/inference_session.py"
+          }
+        ]
+      },
+      {
+        "repository": "CraftJarvis/MineStudio",
+        "revision": "278aa8553668d591339dbf30d281594ed06ee882",
+        "files": [
+          {
+            "file": "README.md",
+            "sha256": "ccb3505c5c4fb61e7b5dec316063e9b096c7160f13a398dd53071ba859f4d8d2",
+            "url": "https://github.com/CraftJarvis/MineStudio/blob/278aa8553668d591339dbf30d281594ed06ee882/README.md"
+          },
+          {
+            "file": "minestudio/inference/generator/mine_generator.py",
+            "sha256": "ed61d02ae1e7ff0391b772d596fef1dc36a056b7dbc7de9204a56d0d6ddca276",
+            "url": "https://github.com/CraftJarvis/MineStudio/blob/278aa8553668d591339dbf30d281594ed06ee882/minestudio/inference/generator/mine_generator.py"
+          },
+          {
+            "file": "minestudio/online/rollout/rollout_worker.py",
+            "sha256": "e3588ac5d6763a7cb1378da8251d256d0b14d3084178925118c9e07bffc11f34",
+            "url": "https://github.com/CraftJarvis/MineStudio/blob/278aa8553668d591339dbf30d281594ed06ee882/minestudio/online/rollout/rollout_worker.py"
+          }
+        ]
+      },
+      {
+        "repository": "openai/Video-Pre-Training",
+        "revision": "095519fbd4ee0e9281d19f19601e45629de9ac3f",
+        "files": [
+          {
+            "file": "agent.py",
+            "sha256": "cd6e61398da226d5c2222141bf6a7bb6e4779f9506095d8c3d46e2838bf031fa",
+            "url": "https://github.com/openai/Video-Pre-Training/blob/095519fbd4ee0e9281d19f19601e45629de9ac3f/agent.py"
+          },
+          {
+            "file": "README.md",
+            "sha256": "d99c56ff758873b142b6b6fe6566afddfddea62c52dbbf5750840e9e54d64b06",
+            "url": "https://github.com/openai/Video-Pre-Training/blob/095519fbd4ee0e9281d19f19601e45629de9ac3f/README.md"
+          },
+          {
+            "file": "run_agent.py",
+            "sha256": "0a40bd958873d9ca170fe0bf2262823c22d1b834f700855bdeb9614d99f1d761",
+            "url": "https://github.com/openai/Video-Pre-Training/blob/095519fbd4ee0e9281d19f19601e45629de9ac3f/run_agent.py"
+          }
+        ]
+      },
+      {
+        "repository": "Rolv-Arild/Necto",
+        "revision": "2e6ed7d6ed2b352e8ff529d4a12a0c9c70c28cca",
+        "files": [
+          {
+            "file": "README.md",
+            "sha256": "6a16073cfd779bb791c8f857f7b912d0bba4112e84fae1dcce350e4fc7b06903",
+            "url": "https://github.com/Rolv-Arild/Necto/blob/2e6ed7d6ed2b352e8ff529d4a12a0c9c70c28cca/README.md"
+          },
+          {
+            "file": "rlbot-support/Necto/bot.py",
+            "sha256": "6ee2e25733e3db345c96c522ee4fbcf91139d75a8225ef4e4a99e0c5753a5b11",
+            "url": "https://github.com/Rolv-Arild/Necto/blob/2e6ed7d6ed2b352e8ff529d4a12a0c9c70c28cca/rlbot-support/Necto/bot.py"
+          },
+          {
+            "file": "rlbot-support/Nexto/bot.py",
+            "sha256": "6dcd0c223a7e7c716825dbc76c14cfea8c66e5ab35278c21f2c733574e53fc7b",
+            "url": "https://github.com/Rolv-Arild/Necto/blob/2e6ed7d6ed2b352e8ff529d4a12a0c9c70c28cca/rlbot-support/Nexto/bot.py"
+          }
+        ]
+      }
+    ]
+  },
+  "communityEvidence": {
+    "classification": "self_report_not_local_benchmark",
+    "issue": "https://github.com/MineDojo/NitroGen/issues/24",
+    "localSource": {
+      "file": ".local-pilot/motor-realtime-research-20261017/nitrogen-issue24-comments.json",
+      "sha256NormalizedLf": "d39ee4c24c10af9d9c3bc249b928d567e1b01555d2db6871a8c89f5062131d50"
+    },
+    "comments": [
+      "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3696372675",
+      "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3696458248"
+    ]
+  },
+  "bounds": {
+    "activeInferenceSlots": 1,
+    "pendingLatestFrames": 1,
+    "maxRgbPixels": 8388608,
+    "maxChunkStates": 16,
+    "maxChunkSeconds": 2,
+    "defaultInferenceTimeoutMs": 250,
+    "defaultReceiverAgeMs": 500,
+    "cancellationConfirmationBudgetMs": 100,
+    "diagnosticTail": 64,
+    "physicalShadowCommands": 0
+  },
+  "runtime": {
+    "uiApiApkChanged": false,
+    "workerGpuInstalled": false,
+    "previousInstalledEvidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
+    "previousInstalledEvidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+    "fleetReadbackRepeated": false
+  },
+  "limitations": [
+    "Neutral fixture has no learned weights; its timings are not GPU inference performance.",
+    "Shadow has no Android input sink. Chunk preview is not native hold or multi-touch execution.",
+    "Policy receives original RGB; model-specific preprocessing and a network GPU API remain open.",
+    "Receiver age is not source capture freshness or cross-host clock mapping.",
+    "5Hz sampling still decodes full shared stream; 50-device capacity unmeasured.",
+    "Necto/Nexto use structured game state, MineStudio/VPT use specialized Minecraft environments, official NitroGen play uses pauses. These are not transferable Android-game acceptance.",
+    "Coroutine cancellation does not prove GPU kernel cancellation; production provider needs process/service isolation.",
+    "Single PH011 finite tests, no general reliability SLA or GPU-host LAN proof."
+  ]
+}

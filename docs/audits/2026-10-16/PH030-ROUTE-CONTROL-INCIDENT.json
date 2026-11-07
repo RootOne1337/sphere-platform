@@ -1,0 +1,808 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T20:18:51.866066+00:00",
+  "device": "PH030",
+  "agentVersion": "1.2.76-dev",
+  "agentVersionCode": 10276,
+  "source": "Authenticated read of last ten bounded session records before opening the diagnostic observer.",
+  "incidents": [
+    {
+      "openedAtUtc": "2026-10-15T20:14:42.312941+00:00",
+      "lastServerObservationUtc": "2026-10-15T20:17:32.405684+00:00",
+      "stateAtRead": "closed",
+      "browserSamples": [
+        {
+          "received_at": "2026-10-15T20:14:42.791212+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 0,
+          "direct_frames": 0,
+          "control_state": "idle",
+          "queue_recoveries": 0
+        },
+        {
+          "received_at": "2026-10-15T20:14:57.390923+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 0,
+          "direct_frames": 0,
+          "control_state": "probing",
+          "queue_recoveries": 5
+        },
+        {
+          "received_at": "2026-10-15T20:15:07.370638+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 0,
+          "direct_frames": 0,
+          "control_state": "probing",
+          "queue_recoveries": 9
+        },
+        {
+          "received_at": "2026-10-15T20:15:17.484631+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 0,
+          "direct_frames": 0,
+          "control_state": "probing",
+          "queue_recoveries": 11
+        },
+        {
+          "received_at": "2026-10-15T20:15:31.876338+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 1,
+          "direct_state": "connecting",
+          "direct_network": {
+            "local_candidates": 5,
+            "checking_pairs": 2,
+            "pairs": 2,
+            "remote_candidates": 2,
+            "requests_sent": 72,
+            "succeeded_pairs": 0,
+            "responses_received": 0,
+            "failed_pairs": 0
+          },
+          "direct_frames": 0,
+          "control_state": "probing",
+          "queue_recoveries": 15
+        },
+        {
+          "received_at": "2026-10-15T20:15:34.652245+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 1,
+          "direct_state": "failed",
+          "direct_failure": "connection_deadline",
+          "direct_network": {
+            "local_candidates": 5,
+            "checking_pairs": 2,
+            "pairs": 2,
+            "remote_candidates": 2,
+            "requests_sent": 144,
+            "succeeded_pairs": 0,
+            "responses_received": 0,
+            "failed_pairs": 0
+          },
+          "direct_frames": 0,
+          "control_state": "probing",
+          "queue_recoveries": 17
+        },
+        {
+          "received_at": "2026-10-15T20:15:42.257258+00:00",
+          "transport": "direct_webrtc",
+          "control_transport": "direct_webrtc",
+          "direct_attempts": 2,
+          "direct_state": "connected",
+          "direct_network": {
+            "local_candidates": 5,
+            "checking_pairs": 1,
+            "pairs": 2,
+            "remote_candidates": 2,
+            "requests_sent": 14,
+            "succeeded_pairs": 1,
+            "responses_received": 5,
+            "failed_pairs": 0
+          },
+          "direct_network_rtt_ms": 167,
+          "direct_frames": 14,
+          "control_state": "fenced",
+          "control_failure_detail": "idle_receipt_timeout",
+          "control_rtt_ms": 225,
+          "control_fence": {
+            "offered_sequence": 7,
+            "oldest_action": 4,
+            "last_receipt_rtt_ms": 170.90000000596,
+            "reason": "native_receipt_timeout",
+            "oldest_age_ms": 1264.1000000089,
+            "buffered_bytes": 0,
+            "acknowledged_sequence": 2,
+            "last_send_age_ms": 240.30000001192,
+            "socket_state": 1,
+            "last_receipt_age_ms": 1349.200000003,
+            "pointer_held": false,
+            "tick_gap_ms": 16.40000000596,
+            "oldest_deadline_age_ms": 1264.1000000089,
+            "age_ms": 0,
+            "pending_count": 5,
+            "terminal_age_ms": null,
+            "phase": "ready",
+            "idle_heartbeat_only": true
+          },
+          "queue_recoveries": 20
+        }
+      ],
+      "nativePeers": [
+        {
+          "ordinal": 1,
+          "samples": [
+            {
+              "received_at": "2026-10-15T20:16:20.083855+00:00",
+              "sequence": 13,
+              "stage": "channel_open",
+              "elapsed_ms": 12448,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 7,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 9,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 37,
+                "dtls_state": "connected",
+                "responses_sent": 9,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:21.097123+00:00",
+              "sequence": 14,
+              "stage": "channel_open",
+              "elapsed_ms": 13460,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 8,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 9,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 39,
+                "dtls_state": "connected",
+                "responses_sent": 9,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:22.123926+00:00",
+              "sequence": 15,
+              "stage": "channel_open",
+              "elapsed_ms": 14485,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 8,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 9,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 41,
+                "dtls_state": "connected",
+                "responses_sent": 9,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:23.346971+00:00",
+              "sequence": 16,
+              "stage": "channel_open",
+              "elapsed_ms": 15499,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 9,
+                "pairs": 2,
+                "succeeded_pairs": 1,
+                "requests_received": 10,
+                "checking_pairs": 1,
+                "remote_candidates": 2,
+                "requests_sent": 27,
+                "dtls_state": "connected",
+                "responses_sent": 10,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:24.205812+00:00",
+              "sequence": 17,
+              "stage": "channel_open",
+              "elapsed_ms": 16570,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 9,
+                "pairs": 2,
+                "succeeded_pairs": 1,
+                "requests_received": 10,
+                "checking_pairs": 1,
+                "remote_candidates": 2,
+                "requests_sent": 27,
+                "dtls_state": "connected",
+                "responses_sent": 10,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:25.227893+00:00",
+              "sequence": 18,
+              "stage": "channel_open",
+              "elapsed_ms": 17592,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 9,
+                "pairs": 2,
+                "succeeded_pairs": 0,
+                "requests_received": 11,
+                "checking_pairs": 2,
+                "remote_candidates": 2,
+                "requests_sent": 28,
+                "dtls_state": "connected",
+                "responses_sent": 11,
+                "failed_pairs": 0
+              }
+            }
+          ]
+        },
+        {
+          "ordinal": 2,
+          "samples": [
+            {
+              "received_at": "2026-10-15T20:16:29.184826+00:00",
+              "sequence": 1,
+              "stage": "offer_received",
+              "elapsed_ms": 43,
+              "answer_sent": false,
+              "network": null
+            },
+            {
+              "received_at": "2026-10-15T20:16:30.226909+00:00",
+              "sequence": 2,
+              "stage": "gathered",
+              "elapsed_ms": 1114,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 2,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 5,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 11,
+                "dtls_state": "connecting",
+                "responses_sent": 5,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:31.251028+00:00",
+              "sequence": 3,
+              "stage": "channel_open",
+              "elapsed_ms": 2168,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 3,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 5,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 13,
+                "dtls_state": "connected",
+                "responses_sent": 5,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:32.233034+00:00",
+              "sequence": 4,
+              "stage": "channel_open",
+              "elapsed_ms": 3188,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 4,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 5,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 15,
+                "dtls_state": "connected",
+                "responses_sent": 5,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:33.259965+00:00",
+              "sequence": 5,
+              "stage": "channel_open",
+              "elapsed_ms": 4201,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 5,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 6,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 17,
+                "dtls_state": "connected",
+                "responses_sent": 6,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:34.289942+00:00",
+              "sequence": 6,
+              "stage": "channel_open",
+              "elapsed_ms": 5217,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 5,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 6,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 19,
+                "dtls_state": "connected",
+                "responses_sent": 6,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:35.334534+00:00",
+              "sequence": 7,
+              "stage": "channel_open",
+              "elapsed_ms": 6235,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 5,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 7,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 21,
+                "dtls_state": "connected",
+                "responses_sent": 7,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:36.429570+00:00",
+              "sequence": 8,
+              "stage": "channel_open",
+              "elapsed_ms": 7299,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 6,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 7,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 23,
+                "dtls_state": "connected",
+                "responses_sent": 7,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:16:37.464499+00:00",
+              "sequence": 9,
+              "stage": "channel_open",
+              "elapsed_ms": 8317,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 6,
+                "pairs": 3,
+                "succeeded_pairs": 1,
+                "requests_received": 8,
+                "checking_pairs": 2,
+                "remote_candidates": 3,
+                "requests_sent": 25,
+                "dtls_state": "connected",
+                "responses_sent": 8,
+                "failed_pairs": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "openedAtUtc": "2026-10-15T20:09:42.870551+00:00",
+      "lastServerObservationUtc": "2026-10-15T20:10:02.886147+00:00",
+      "stateAtRead": "closed",
+      "browserSamples": [
+        {
+          "received_at": "2026-10-15T20:09:43.101578+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 0,
+          "direct_frames": 0,
+          "control_state": "idle",
+          "queue_recoveries": 0
+        },
+        {
+          "received_at": "2026-10-15T20:09:57.397102+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 1,
+          "direct_state": "connecting",
+          "direct_network": {
+            "local_candidates": 5,
+            "checking_pairs": 2,
+            "pairs": 2,
+            "remote_candidates": 2,
+            "requests_sent": 75,
+            "succeeded_pairs": 0,
+            "responses_received": 0,
+            "failed_pairs": 0
+          },
+          "direct_frames": 0,
+          "control_state": "probing",
+          "queue_recoveries": 5
+        },
+        {
+          "received_at": "2026-10-15T20:10:01.460855+00:00",
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "direct_attempts": 1,
+          "direct_state": "failed",
+          "direct_failure": "connection_deadline",
+          "direct_network": {
+            "local_candidates": 5,
+            "checking_pairs": 2,
+            "pairs": 2,
+            "remote_candidates": 2,
+            "requests_sent": 149,
+            "succeeded_pairs": 0,
+            "responses_received": 0,
+            "failed_pairs": 0
+          },
+          "direct_frames": 0,
+          "control_state": "probing",
+          "queue_recoveries": 7
+        }
+      ],
+      "nativePeers": [
+        {
+          "ordinal": 1,
+          "samples": [
+            {
+              "received_at": "2026-10-15T20:09:54.147906+00:00",
+              "sequence": 6,
+              "stage": "gathered",
+              "elapsed_ms": 5262,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 99,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:09:54.905969+00:00",
+              "sequence": 7,
+              "stage": "gathered",
+              "elapsed_ms": 6277,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 119,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:09:55.937293+00:00",
+              "sequence": 8,
+              "stage": "gathered",
+              "elapsed_ms": 7292,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 140,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:09:57.010621+00:00",
+              "sequence": 9,
+              "stage": "gathered",
+              "elapsed_ms": 8303,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 161,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:09:59.176583+00:00",
+              "sequence": 11,
+              "stage": "gathered",
+              "elapsed_ms": 10362,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 204,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:10:00.164334+00:00",
+              "sequence": 12,
+              "stage": "gathered",
+              "elapsed_ms": 11382,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 223,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:10:01.041338+00:00",
+              "sequence": 13,
+              "stage": "gathered",
+              "elapsed_ms": 12397,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 243,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            }
+          ]
+        },
+        {
+          "ordinal": 2,
+          "samples": [
+            {
+              "received_at": "2026-10-15T20:10:03.434446+00:00",
+              "sequence": 1,
+              "stage": "offer_received",
+              "elapsed_ms": 34,
+              "answer_sent": false,
+              "network": null
+            },
+            {
+              "received_at": "2026-10-15T20:10:05.497169+00:00",
+              "sequence": 3,
+              "stage": "gathered",
+              "elapsed_ms": 2104,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 39,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:10:06.516272+00:00",
+              "sequence": 4,
+              "stage": "gathered",
+              "elapsed_ms": 3116,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 60,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:10:07.526648+00:00",
+              "sequence": 5,
+              "stage": "gathered",
+              "elapsed_ms": 4129,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 81,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:10:08.541866+00:00",
+              "sequence": 6,
+              "stage": "gathered",
+              "elapsed_ms": 5144,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 101,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:10:09.564990+00:00",
+              "sequence": 7,
+              "stage": "gathered",
+              "elapsed_ms": 6156,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 122,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:10:10.565517+00:00",
+              "sequence": 8,
+              "stage": "gathered",
+              "elapsed_ms": 7167,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 143,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "received_at": "2026-10-15T20:10:11.577918+00:00",
+              "sequence": 9,
+              "stage": "gathered",
+              "elapsed_ms": 8178,
+              "answer_sent": true,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 163,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "interpretation": {
+    "iceNoResponsesObserved": true,
+    "idleAckExpiryObserved": true,
+    "rootCauseOfNetworkLossIdentified": false,
+    "rootCauseOfIdleExpiryIdentified": false,
+    "oldNativeStartupFailureExcludedFromCurrentIncident": true,
+    "fallbackAdmissionRaceReproducedInRegression": true,
+    "fallbackRaceSourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24"
+  },
+  "limits": [
+    "Oldest rows can be evicted from each bounded record; native peer ordinals do not identify the browser attempt after pruning.",
+    "No SDP, addresses, tokens, owner IDs, input text or media stored in this report.",
+    "Direct NAT is not proof of VPN bypass, localhost or LAN."
+  ]
+}

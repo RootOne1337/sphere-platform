@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useState } from "react";
 import {
   useAccountSessions,
   useSessionStats,
@@ -10,6 +10,9 @@ import {
   type AccountSessionParams,
 } from "@/lib/hooks/useAccountSessions";
 import { Button } from "@/src/shared/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageFrame, PageHeading } from "@/src/shared/ui/page-layout";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/src/shared/ui/badge";
 import {
@@ -22,6 +25,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -153,7 +157,6 @@ function formatDuration(seconds: number | null): string {
 export default function SessionsPage() {
   // Фильтры и пагинация
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterReason, setFilterReason] = useState("__all__");
   const [filterActive, setFilterActive] = useState("__all__");
   const [page, setPage] = useState(1);
@@ -165,15 +168,7 @@ export default function SessionsPage() {
   const [detailSession, setDetailSession] = useState<AccountSession | null>(
     null,
   );
-
-  const handleSearchChange = useCallback((val: string) => {
-    setSearch(val);
-    const timer = setTimeout(() => {
-      setDebouncedSearch(val);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+  const [sessionToEnd, setSessionToEnd] = useState<AccountSession | null>(null);
 
   // Параметры запроса
   const params: AccountSessionParams = useMemo(
@@ -189,11 +184,26 @@ export default function SessionsPage() {
   );
 
   // Данные
-  const { data, isLoading, refetch } = useAccountSessions(params);
-  const { data: stats } = useSessionStats();
+  const { data, isLoading, isFetching, isError, refetch } = useAccountSessions(params);
+  const { data: stats, isError: statsError } = useSessionStats();
   const endSession = useEndSession();
 
-  const sessions = data?.items ?? [];
+  const sessions = useMemo(() => data?.items ?? [], [data?.items]);
+  const filteredSessions = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase("ru-RU");
+    if (!query) return sessions;
+    return sessions.filter((session) => [
+      session.account_login,
+      session.account_game,
+      session.device_name,
+      session.device_id,
+      session.end_reason,
+      session.error_message,
+      session.task_id,
+      session.pipeline_run_id,
+    ].some((value) => value?.toLocaleLowerCase("ru-RU").includes(query)));
+  }, [sessions, search]);
+  const initialError = isError && !data;
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 0;
 
@@ -210,26 +220,33 @@ export default function SessionsPage() {
   const hasFilters =
     filterReason !== "__all__" ||
     filterActive !== "__all__" ||
-    debouncedSearch;
+    search.trim();
+
+  const confirmEndSession = () => {
+    if (!sessionToEnd) return;
+    endSession.mutate(
+      { id: sessionToEnd.id, end_reason: "manual" },
+      {
+        onSuccess: () => {
+          setSessionToEnd(null);
+          setDetailSession(null);
+          toast.success("Сессия завершена");
+        },
+        onError: () => toast.error("Не удалось завершить сессию. Она остаётся активной."),
+      },
+    );
+  };
 
   return (
-    <div className="p-4 md:p-6 space-y-4 font-mono">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <History className="w-6 h-6 text-primary" />
-            Account Sessions
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            История сессий аккаунтов · {total} записей
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="w-3.5 h-3.5 mr-1" />
-          Обновить
-        </Button>
-      </div>
+    <PageFrame>
+      <PageHeading
+        eyebrow="История и контроль"
+        title="Сессии аккаунтов"
+        description={`${total.toLocaleString("ru-RU")} записей · поиск ограничен загруженной страницей`}
+        actions={<Button variant="outline" onClick={() => void refetch()} disabled={isFetching}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} aria-hidden="true" />Обновить
+        </Button>}
+      />
 
       {/* Статистика */}
       {stats && (
@@ -277,15 +294,21 @@ export default function SessionsPage() {
           />
         </div>
       )}
+      {statsError && <p role="status" className="text-sm text-muted-foreground">Сводная статистика сессий временно недоступна.</p>}
+      {isError && data && <p role="status" className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-sm text-warning">Не удалось обновить сессии. Показаны последние загруженные записи.</p>}
 
       {/* Фильтры */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
-            placeholder="Поиск по аккаунту, устройству..."
+            placeholder="Поиск по аккаунту или устройству на странице"
             value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            aria-label="Поиск сессий на текущей странице"
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="pl-8 h-9 text-xs font-mono bg-background border-border"
           />
         </div>
@@ -335,7 +358,6 @@ export default function SessionsPage() {
               setFilterReason("__all__");
               setFilterActive("__all__");
               setSearch("");
-              setDebouncedSearch("");
               setPage(1);
             }}
           >
@@ -346,7 +368,7 @@ export default function SessionsPage() {
       </div>
 
       {/* Таблица */}
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
+      <Card className="overflow-hidden shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -400,7 +422,18 @@ export default function SessionsPage() {
                     Загрузка...
                   </td>
                 </tr>
-              ) : sessions.length === 0 ? (
+              ) : initialError ? (
+                <tr>
+                  <td colSpan={8} className="px-5 py-16 text-center" role="alert">
+                    <div className="mx-auto max-w-md">
+                      <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-destructive" aria-hidden="true" />
+                      <p className="font-medium">Не удалось загрузить сессии</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Проверьте доступ session:read и соединение с backend.</p>
+                      <Button className="mt-4" variant="outline" onClick={() => void refetch()}>Повторить запрос</Button>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredSessions.length === 0 ? (
                 <tr>
                   <td
                     colSpan={8}
@@ -408,12 +441,12 @@ export default function SessionsPage() {
                   >
                     <History className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     {hasFilters
-                      ? "Ничего не найдено по фильтрам"
+                      ? "На этой странице нет совпадений"
                       : "Нет сессий"}
                   </td>
                 </tr>
               ) : (
-                sessions.map((ses) => (
+                filteredSessions.map((ses) => (
                   <tr
                     key={ses.id}
                     className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
@@ -465,6 +498,7 @@ export default function SessionsPage() {
                           size="sm"
                           className="h-7 w-7 p-0"
                           onClick={() => setDetailSession(ses)}
+                          aria-label={`Открыть сессию ${ses.account_login ?? ses.id}`}
                           title="Подробности"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -474,12 +508,9 @@ export default function SessionsPage() {
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-red-400"
-                            onClick={() =>
-                              endSession.mutate({
-                                id: ses.id,
-                                end_reason: "manual",
-                              })
-                            }
+                            onClick={() => setSessionToEnd(ses)}
+                            disabled={endSession.isPending}
+                            aria-label={`Завершить сессию ${ses.account_login ?? ses.id}`}
                             title="Завершить сессию"
                           >
                             <Square className="w-3.5 h-3.5" />
@@ -498,7 +529,7 @@ export default function SessionsPage() {
         {pages > 1 && (
           <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
             <span className="text-xs text-muted-foreground">
-              Стр. {page} из {pages} · {total} записей
+              На странице {filteredSessions.length} из {sessions.length} · стр. {page} из {pages} · всего {total}
             </span>
             <div className="flex gap-1">
               <Button
@@ -507,6 +538,7 @@ export default function SessionsPage() {
                 className="h-7"
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
+                aria-label="Предыдущая страница"
               >
                 <ChevronLeft className="w-3 h-3" />
               </Button>
@@ -516,25 +548,27 @@ export default function SessionsPage() {
                 className="h-7"
                 disabled={page >= pages}
                 onClick={() => setPage(page + 1)}
+                aria-label="Следующая страница"
               >
                 <ChevronRight className="w-3 h-3" />
               </Button>
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Детали сессии */}
       <Dialog
         open={!!detailSession}
         onOpenChange={(open) => !open && setDetailSession(null)}
       >
-        <DialogContent className="max-w-lg font-mono">
+        <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <History className="w-5 h-5 text-primary" />
               Сессия: {detailSession?.account_login ?? "—"}
             </DialogTitle>
+            <DialogDescription>История и фактическое состояние сессии из API Sphere.</DialogDescription>
           </DialogHeader>
           {detailSession && (
             <div className="space-y-3 text-xs">
@@ -635,13 +669,8 @@ export default function SessionsPage() {
                   size="sm"
                   variant="destructive"
                   className="w-full"
-                  onClick={() => {
-                    endSession.mutate({
-                      id: detailSession.id,
-                      end_reason: "manual",
-                    });
-                    setDetailSession(null);
-                  }}
+                  onClick={() => setSessionToEnd(detailSession)}
+                  disabled={endSession.isPending}
                 >
                   <Square className="w-3.5 h-3.5 mr-1" />
                   Завершить сессию вручную
@@ -651,7 +680,22 @@ export default function SessionsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+
+      <Dialog open={!!sessionToEnd} onOpenChange={(open) => { if (!open && !endSession.isPending) setSessionToEnd(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Завершить активную сессию?</DialogTitle>
+            <DialogDescription>Текущая сессия аккаунта будет закрыта с причиной «Вручную». Продолжить?</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setSessionToEnd(null)} disabled={endSession.isPending}>Отмена</Button>
+            <Button variant="destructive" onClick={confirmEndSession} disabled={endSession.isPending}>
+              {endSession.isPending ? "Завершаем…" : "Завершить сессию"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </PageFrame>
   );
 }
 

@@ -1,0 +1,13 @@
+{
+  "schema": "sphere-global-loop-comparison-figure-v1",
+  "oldGeometrySHA256": "52088388dc0097b9bfdbc24a60aa51b858fef35845424c989198e4b6d3f45140",
+  "newGeometrySHA256": "2fff1a9f94e86a5509247f2bc848d8750f895adf0b44a4c24fa473914bc5d081",
+  "constraintsSHA256": "89c4bc67342e587c95ebed975b1bfe60828ab5b431b88e0e7d0f5f6a2b7df044",
+  "figureSHA256": "f8c86a00fc4d54df3c0aeae96dfaf4e76829f8e6c032ad9a91e4c8665d084785",
+  "projection": "each first camera right/forward optical axes; independent unknown scales",
+  "poseChanges": false,
+  "forcedClosure": false,
+  "physicalActions": 0,
+  "evaluationQualification": "historical row-disjoint evaluation has 7 physical train aliases and 1 internal duplicate; not independent ground truth",
+  "aliasAuditSHA256": "ce846233886a176270f0786b94817db1cf54a59d80d4b029ae171922701370b7"
+}

@@ -1,0 +1,257 @@
+{
+  "anchor_frame": "00000311.png",
+  "anchor_distance_model_units": 4.963256237487536,
+  "coordinate_frame": "camera0 center origin and camera0 x/z axes; x/z projection of camera centers, not topdown physical map",
+  "all_rotations_intrinsics_fixed": true,
+  "cases": {
+    "baseline": {
+      "train": {
+        "count": 13493,
+        "mean_px": 1.363078869942588,
+        "median_px": 0.8929846398525696,
+        "p95_px": 3.7597416868860485,
+        "behind_or_zero_depth": 0
+      },
+      "heldout": {
+        "count": 4132,
+        "mean_px": 1.3586879642539011,
+        "median_px": 0.8910039123396428,
+        "p95_px": 3.789004652295996,
+        "behind_or_zero_depth": 0
+      },
+      "first_camera_unchanged": true,
+      "anchor_distance": 4.963256237487536,
+      "max_step": 4.289771443026079
+    },
+    "w0": {
+      "train": {
+        "count": 13493,
+        "mean_px": 1.3021517776563298,
+        "median_px": 0.9846562401936886,
+        "p95_px": 3.3760817504297123,
+        "behind_or_zero_depth": 0
+      },
+      "heldout": {
+        "count": 4132,
+        "mean_px": 2.100339745017967,
+        "median_px": 1.578664370127159,
+        "p95_px": 5.159242033873777,
+        "behind_or_zero_depth": 0
+      },
+      "first_camera_unchanged": true,
+      "anchor_distance": 4.963256237487537,
+      "max_step": 3.1405070737692737
+    },
+    "w05": {
+      "train": {
+        "count": 13493,
+        "mean_px": 1.3020348268551958,
+        "median_px": 0.9840910046088884,
+        "p95_px": 3.3788244934437626,
+        "behind_or_zero_depth": 0
+      },
+      "heldout": {
+        "count": 4132,
+        "mean_px": 2.103809770166044,
+        "median_px": 1.5793616363818122,
+        "p95_px": 5.172660118317783,
+        "behind_or_zero_depth": 0
+      },
+      "first_camera_unchanged": true,
+      "anchor_distance": 4.963256237487536,
+      "max_step": 2.551183465022556,
+      "max_step_reduction_vs_w0_percent": 18.765237425159008,
+      "velocity_change_p95_reduction_vs_w0_percent": 4.281292777937116
+    },
+    "w2": {
+      "train": {
+        "count": 13493,
+        "mean_px": 1.3044241691326586,
+        "median_px": 0.9898592408742422,
+        "p95_px": 3.388771257405122,
+        "behind_or_zero_depth": 0
+      },
+      "heldout": {
+        "count": 4132,
+        "mean_px": 2.1136268404995353,
+        "median_px": 1.5823976260250332,
+        "p95_px": 5.18070945348131,
+        "behind_or_zero_depth": 0
+      },
+      "first_camera_unchanged": true,
+      "anchor_distance": 4.963256237487536,
+      "max_step": 1.5588584071453495,
+      "max_step_reduction_vs_w0_percent": 50.36284362593748,
+      "velocity_change_p95_reduction_vs_w0_percent": 9.772290001381059
+    }
+  },
+  "most_changed_intervals": {
+    "w05": [
+      {
+        "image_a": "00000689.png",
+        "image_b": "00000694.png",
+        "start_s": 27.236,
+        "end_s": 27.468,
+        "w0_step": 3.1405070737692737,
+        "candidate_step": 2.551183465022556,
+        "delta_step": -0.5893236087467177
+      },
+      {
+        "image_a": "00000694.png",
+        "image_b": "00000700.png",
+        "start_s": 27.468,
+        "end_s": 27.668,
+        "w0_step": 2.178454012828184,
+        "candidate_step": 1.6837765725803118,
+        "delta_step": -0.4946774402478724
+      },
+      {
+        "image_a": "00000097.png",
+        "image_b": "00000102.png",
+        "start_s": 3.735,
+        "end_s": 3.952,
+        "w0_step": 0.6568789904733703,
+        "candidate_step": 0.5137057387122352,
+        "delta_step": -0.14317325176113505
+      },
+      {
+        "image_a": "00000092.png",
+        "image_b": "00000097.png",
+        "start_s": 3.535,
+        "end_s": 3.735,
+        "w0_step": 0.2686297300631323,
+        "candidate_step": 0.19274216109279727,
+        "delta_step": -0.07588756897033502
+      },
+      {
+        "image_a": "00000722.png",
+        "image_b": "00000727.png",
+        "start_s": 28.551,
+        "end_s": 28.751,
+        "w0_step": 1.0065041532769063,
+        "candidate_step": 0.9337660059486261,
+        "delta_step": -0.07273814732828021
+      },
+      {
+        "image_a": "00000718.png",
+        "image_b": "00000722.png",
+        "start_s": 28.351,
+        "end_s": 28.551,
+        "w0_step": 0.8904324688754174,
+        "candidate_step": 0.8372414975734391,
+        "delta_step": -0.05319097130197825
+      },
+      {
+        "image_a": "00000086.png",
+        "image_b": "00000092.png",
+        "start_s": 3.318,
+        "end_s": 3.535,
+        "w0_step": 1.5574842261422692,
+        "candidate_step": 1.5119299139395228,
+        "delta_step": -0.045554312202746416
+      },
+      {
+        "image_a": "00000707.png",
+        "image_b": "00000713.png",
+        "start_s": 27.901,
+        "end_s": 28.134,
+        "w0_step": 0.7628000569551323,
+        "candidate_step": 0.7212238116179938,
+        "delta_step": -0.04157624533713855
+      }
+    ],
+    "w2": [
+      {
+        "image_a": "00000689.png",
+        "image_b": "00000694.png",
+        "start_s": 27.236,
+        "end_s": 27.468,
+        "w0_step": 3.1405070737692737,
+        "candidate_step": 1.5588584071453495,
+        "delta_step": -1.5816486666239242
+      },
+      {
+        "image_a": "00000694.png",
+        "image_b": "00000700.png",
+        "start_s": 27.468,
+        "end_s": 27.668,
+        "w0_step": 2.178454012828184,
+        "candidate_step": 0.8131170701989381,
+        "delta_step": -1.365336942629246
+      },
+      {
+        "image_a": "00000097.png",
+        "image_b": "00000102.png",
+        "start_s": 3.735,
+        "end_s": 3.952,
+        "w0_step": 0.6568789904733703,
+        "candidate_step": 0.26660680419239413,
+        "delta_step": -0.39027218628097615
+      },
+      {
+        "image_a": "00000722.png",
+        "image_b": "00000727.png",
+        "start_s": 28.551,
+        "end_s": 28.751,
+        "w0_step": 1.0065041532769063,
+        "candidate_step": 0.7622401822655581,
+        "delta_step": -0.24426397101134822
+      },
+      {
+        "image_a": "00000590.png",
+        "image_b": "00000596.png",
+        "start_s": 23.595,
+        "end_s": 23.812,
+        "w0_step": 0.7225257605305051,
+        "candidate_step": 0.5788602674557798,
+        "delta_step": -0.14366549307472531
+      },
+      {
+        "image_a": "00000092.png",
+        "image_b": "00000097.png",
+        "start_s": 3.535,
+        "end_s": 3.735,
+        "w0_step": 0.2686297300631323,
+        "candidate_step": 0.13418781785427453,
+        "delta_step": -0.13444191220885776
+      },
+      {
+        "image_a": "00000718.png",
+        "image_b": "00000722.png",
+        "start_s": 28.351,
+        "end_s": 28.551,
+        "w0_step": 0.8904324688754174,
+        "candidate_step": 0.7645038563002925,
+        "delta_step": -0.1259286125751249
+      },
+      {
+        "image_a": "00000584.png",
+        "image_b": "00000590.png",
+        "start_s": 23.363,
+        "end_s": 23.595,
+        "w0_step": 0.4544108096287232,
+        "candidate_step": 0.3288641627744982,
+        "delta_step": -0.125546646854225
+      }
+    ]
+  },
+  "limits": "Diagnostic partial point subset; projected line connects reconstructed samples only, not a proven road or motion. Values in model units, no uncertainty or ground truth.",
+  "source_hashes_before": {
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\geometry-0.json": "a4cddab78876cef9183ec5beea94e6c7739e02173652ca4f0243f7e19aba9933",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\data.npz": "966fe547ff0a795d1c5977d051a79debd440974b85e14c51fb747f1a868514f9",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\comparison.json": "785a5b31a8e2fbce37ac9d94fe165b68195bb04d5e65be8314d40c4f92bf372a",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w0\\fit.npz": "12595487857689055ef4e1da9448ceec740dcd95b480f64ded9d96b00743994e",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w05\\fit.npz": "1f6744a0b821d78711af0c2aad8001b9f0df2c6dc7f456e9a99529fbd209890a",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w2\\fit.npz": "6a9b0984d95f55247a46789c290936533e167250b00f8b14ddde9f4b9e476ff0"
+  },
+  "source_hashes_after": {
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\geometry-0.json": "a4cddab78876cef9183ec5beea94e6c7739e02173652ca4f0243f7e19aba9933",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\data.npz": "966fe547ff0a795d1c5977d051a79debd440974b85e14c51fb747f1a868514f9",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\comparison.json": "785a5b31a8e2fbce37ac9d94fe165b68195bb04d5e65be8314d40c4f92bf372a",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w0\\fit.npz": "12595487857689055ef4e1da9448ceec740dcd95b480f64ded9d96b00743994e",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w05\\fit.npz": "1f6744a0b821d78711af0c2aad8001b9f0df2c6dc7f456e9a99529fbd209890a",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w2\\fit.npz": "6a9b0984d95f55247a46789c290936533e167250b00f8b14ddde9f4b9e476ff0"
+  },
+  "source_unchanged": true,
+  "seconds": 0.045999999972991645
+}

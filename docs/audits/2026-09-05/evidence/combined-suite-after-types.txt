@@ -1,0 +1,148 @@
+........................................................................ [  8%]
+........................................................................ [ 16%]
+........................................................................ [ 24%]
+........................................................................ [ 32%]
+........................................................................ [ 41%]
+........................................................................ [ 49%]
+........................................................................ [ 57%]
+........................................................................ [ 65%]
+........................................................................ [ 74%]
+........................................................................ [ 82%]
+........................................................................ [ 90%]
+........................................................................ [ 98%]
+...........                                                              [100%]
+ERROR: Coverage failure: total of 64 is less than fail-under=65
+
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+tests/test_updates/test_updates_api.py::TestSSRFGuard::test_http_url_rejected_at_creation
+tests/test_updates/test_updates_api.py::TestSSRFGuard::test_internal_ip_http_url_rejected
+tests/test_updates/test_updates_api.py::TestSSRFGuard::test_file_scheme_rejected
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\fastapi\routing.py:314: DeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    return await dependant.call(**values)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.12.12-final-0 _______________
+
+Name                                                    Stmts   Miss  Cover
+---------------------------------------------------------------------------
+backend\api\v1\account_sessions\router.py                  35     13    63%
+backend\api\v1\audit\router.py                             32     17    47%
+backend\api\v1\auth\router.py                             139     63    55%
+backend\api\v1\batches\router.py                           32     13    59%
+backend\api\v1\bulk\router.py                              29      2    93%
+backend\api\v1\config\router.py                            71     11    85%
+backend\api\v1\device_events\router.py                     35     13    63%
+backend\api\v1\devices\router.py                          242    166    31%
+backend\api\v1\discovery\router.py                         20      1    95%
+backend\api\v1\event_triggers\router.py                    83     15    82%
+backend\api\v1\game_accounts\router.py                     63     31    51%
+backend\api\v1\groups\router.py                            41      7    83%
+backend\api\v1\health\router.py                            18      1    94%
+backend\api\v1\locations\router.py                         39     16    59%
+backend\api\v1\logs\router.py                             101     38    62%
+backend\api\v1\monitoring\router.py                       151    102    32%
+backend\api\v1\n8n\router.py                               77     30    61%
+backend\api\v1\pipeline_settings\router.py                106     65    39%
+backend\api\v1\pipelines\router.py                         88     43    51%
+backend\api\v1\schedules\router.py                         71     39    45%
+backend\api\v1\scripts\router.py                           55     28    49%
+backend\api\v1\streaming\router.py                         62     34    45%
+backend\api\v1\tasks\router.py                            133     91    32%
+backend\api\v1\updates\router.py                           75     11    85%
+backend\api\v1\users\router.py                             85     37    56%
+backend\api\v1\vpn\router.py                              113     42    63%
+backend\api\ws\agent\router.py                            137     69    50%
+backend\api\ws\android\router.py                          412    200    51%
+backend\api\ws\events\router.py                           226    158    30%
+backend\api\ws\stream\router.py                           137     69    50%
+backend\core\config.py                                     57      3    95%
+backend\core\cors.py                                       11      1    91%
+backend\core\dependencies.py                               84     24    71%
+backend\core\exceptions.py                                 33     11    67%
+backend\core\lifespan_registry.py                          17      6    65%
+backend\core\logging_config.py                             21      1    95%
+backend\core\rbac.py                                       25      2    92%
+backend\core\security.py                                   35      1    97%
+backend\core\startup_checks.py                             21     15    29%
+backend\database\engine.py                                 27      8    70%
+backend\database\redis_client.py                           21      9    57%
+backend\main.py                                            76     24    68%
+backend\middleware\audit.py                                64      9    86%
+backend\middleware\tenant_middleware.py                    12      1    92%
+backend\models\account_session.py                          43      2    95%
+backend\models\device_event.py                             33      1    97%
+backend\models\event_trigger.py                            25      1    96%
+backend\models\game_account.py                             72      5    93%
+backend\models\pipeline_settings.py                        31      1    97%
+backend\models\task.py                                     43      2    95%
+backend\monitoring\pool_metrics.py                         31      2    94%
+backend\schemas\account_sessions.py                        65      4    94%
+backend\schemas\dag.py                                    108     26    76%
+backend\schemas\device_events.py                           58      9    84%
+backend\schemas\device_register.py                         56      4    93%
+backend\schemas\devices.py                                122     20    84%
+backend\schemas\discovery.py                               46      2    96%
+backend\schemas\game_accounts.py                          229     60    74%
+backend\schemas\groups.py                                  73      3    96%
+backend\schemas\locations.py                               69     15    78%
+backend\schemas\schedule.py                               138     23    83%
+backend\schemas\webhook.py                                 43      2    95%
+backend\services\account_session_service.py               122    101    17%
+backend\services\batch_service.py                         106     49    54%
+backend\services\bulk_service.py                           69     18    74%
+backend\services\device_event_service.py                   83     65    22%
+backend\services\device_registration_service.py            83      8    90%
+backend\services\device_service.py                        173     94    46%
+backend\services\device_status_cache.py                    69      7    90%
+backend\services\discovery_service.py                      65     25    62%
+backend\services\event_reactor.py                         140     86    39%
+backend\services\game_account_service.py                  179    156    13%
+backend\services\group_service.py                         101     38    62%
+backend\services\health_service.py                         98     13    87%
+backend\services\location_service.py                      101     82    19%
+backend\services\lua_safety.py                             13      1    92%
+backend\services\n8n_webhook_service.py                    99     60    39%
+backend\services\nick_generator.py                         45     27    40%
+backend\services\orchestrator\orchestration_engine.py     238    166    30%
+backend\services\orchestrator\pipeline_executor.py        146    146     0%
+backend\services\orchestrator\pipeline_service.py         152     46    70%
+backend\services\orchestrator\step_handlers.py            331    255    23%
+backend\services\pipeline_settings_service.py              40     25    38%
+backend\services\scheduler\schedule_service.py            115     30    74%
+backend\services\scheduler\scheduler_engine.py            244    244     0%
+backend\services\script_service.py                        105     13    88%
+backend\services\task_queue.py                             58      3    95%
+backend\services\task_service.py                          274    112    59%
+backend\services\vpn\awg_config.py                         59      2    97%
+backend\services\vpn\dependencies.py                       35     14    60%
+backend\services\vpn\event_publisher.py                     7      2    71%
+backend\services\vpn\health_monitor.py                     95     18    81%
+backend\services\vpn\pool_service.py                       90     12    87%
+backend\tasks\ensure_enrollment_key.py                     31     24    23%
+backend\tasks\orchestration_loop.py                        11      4    64%
+backend\tasks\sync_device_status.py                        60     15    75%
+backend\tasks\task_heartbeat_watchdog.py                  140    119    15%
+backend\tasks\vpn_health.py                                56     26    54%
+backend\websocket\connection_manager.py                    98      9    91%
+backend\websocket\event_publisher.py                       47     11    77%
+backend\websocket\frames.py                                38      2    95%
+backend\websocket\heartbeat.py                             75     18    76%
+backend\websocket\offline_queue.py                         85      8    91%
+backend\websocket\pubsub_router.py                        172     43    75%
+backend\websocket\stream_bridge.py                        139     57    59%
+---------------------------------------------------------------------------
+TOTAL                                                   10920   3976    64%
+
+96 files skipped due to complete coverage.
+Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
+FAIL Required test coverage of 65% not reached. Total coverage: 63.59%
+875 passed, 488 warnings in 51.60s

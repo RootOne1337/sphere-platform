@@ -1,0 +1,64 @@
+{
+  "schema": "sphere-acquisition-runtime-delivery-v1",
+  "api": {
+    "commit": "1d8a66d3576efe1639368cc2dcc553c482b70051",
+    "receipt": {
+      "path": ".local-pilot/skuter2-api-reload-20261104-v4/receipt.json",
+      "sha256": "1525aacb2b3190ce1dd9dedc985b8939af011d79128cd37c6d9b92e8a6b07c5c"
+    },
+    "served_policy": {
+      "route_pose_verification_policy": "pnp-ap3p-continuous-image-support-source-time-motion-v6",
+      "route_confirmation_contract": "distinct_current_pose_3of5_source_bound_1second_v1",
+      "route_confirmation_runtime_sha256": "d8e00f409ffd83348f1ada91831af71d57c90da09e9bd4d50585d27c295c598f",
+      "route_subpixel_motion_contract": "current_inlier_center_subpixel_0p5px_1pct_moving_step_v2",
+      "route_source_motion_contract": "bounded_source_arc_preimage_local_speed_v1"
+    },
+    "protected_assets": 1035,
+    "protected_assets_unchanged": true,
+    "containers_unchanged": true,
+    "unauthorized_status": 403
+  },
+  "backend_checks": {
+    "tests": 426,
+    "subtests": 187,
+    "seconds": 13.16
+  },
+  "physical_actions": 0,
+  "autonomous_route_completion": false,
+  "measured_50kmh_driving": false,
+  "speed_accuracy_plus_minus5_kmh": false,
+  "fresh_user_full_archive_retrieved": false,
+  "browser_access": "unavailable_os_error3",
+  "speed_default_kmh": 15,
+  "speed_maximum_kmh": 50,
+  "same_pedal_hold_fixture": {
+    "updates": 10,
+    "down": 1,
+    "up_before_neutral": 0,
+    "up_after_neutral": 1
+  },
+  "live_metadata_tail": {
+    "receipt": {
+      "path": ".local-pilot/skuter1-live-metadata-20261104-v1/summary.json",
+      "sha256": "23923a7fcdebc668befa555ff77d4e66fee581269ff09393302d26c0e7937bdf"
+    },
+    "retained_rows": 55,
+    "pose_reasons": {
+      "route_pose_not_verified": 55
+    },
+    "maximum_retained_lk": 5,
+    "complete_archive": false,
+    "exact_images_available": false
+  },
+  "web": {
+    "state": "installed_verified",
+    "receipt": {
+      "path": ".local-pilot/skuter1-ui-install-20261104-v1/ui-install-receipt.json",
+      "sha256": "c23122015a12cb0cfbbd536fb3e171df49b950fe674e657e9359f882ef4e7fef"
+    },
+    "ci": {
+      "path": ".local-pilot/local-ci/runs/20261103T233126Z-ff1a5eb1/receipt.json",
+      "sha256": "0f1f996ef48c9857df50a3864135bd1a11c4969b616af19e4338fdaa4ae2266c"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "outcome": "sentinel_expected",
+  "workspace_state": {
+    "phase": "ready"
+  },
+  "builder_children": [
+    {
+      "pid": 41484,
+      "exit": 0
+    }
+  ],
+  "all_children_exited": true,
+  "elapsed_seconds": 94.71900000004098,
+  "peak_aggregate_observed_working_set_bytes": 291631104,
+  "owned_processes": {
+    "27736": {
+      "name": "python.exe",
+      "peak_working_set_bytes": 46714880
+    },
+    "41484": {
+      "name": "python.exe",
+      "peak_working_set_bytes": 5124096
+    },
+    "18368": {
+      "name": "conhost.exe",
+      "peak_working_set_bytes": 8114176
+    },
+    "39476": {
+      "name": "python.exe",
+      "peak_working_set_bytes": 247205888
+    }
+  },
+  "sfm_stubbed": true,
+  "physical_actions": 0,
+  "review": {
+    "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    "samples": 758,
+    "references": 143,
+    "selected": 485,
+    "unknown_or_ambiguous": 273,
+    "same_video_hit_within_0_6": 437,
+    "same_video_wrong_over_2": 0,
+    "denominator_all_samples": 758,
+    "time_labels_only_for_evaluation": true,
+    "execution_qualified": false
+  },
+  "producer": {
+    "cache_bytes": 16554936,
+    "source_unchanged": true,
+    "analysis_shape": [
+      540,
+      960
+    ],
+    "references": 143,
+    "limit_seconds": 180.0
+  }
+}

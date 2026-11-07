@@ -1,0 +1,70 @@
+{
+  "method": "fb_lk_original_pixels_landmark_split_sha256",
+  "max_fb_px": 0.5,
+  "pnp_threshold_px": 4,
+  "split": "sha256(point3D_id) first byte <179 train",
+  "samples": [
+    {
+      "source_index": 0,
+      "anchor": 10,
+      "anchor_landmarks_masked": 584,
+      "fb_pass_unique": 582,
+      "train": 422,
+      "heldout": 160,
+      "train_inliers": 422,
+      "heldout_le4": 160,
+      "heldout_positive": 160,
+      "heldout_cells": 5,
+      "accepted": true,
+      "heldout_median_px": 0.24319644203252802,
+      "heldout_p95_px": 0.7710662492432775
+    },
+    {
+      "source_index": 6,
+      "anchor": 10,
+      "anchor_landmarks_masked": 584,
+      "fb_pass_unique": 582,
+      "train": 423,
+      "heldout": 159,
+      "train_inliers": 423,
+      "heldout_le4": 159,
+      "heldout_positive": 159,
+      "heldout_cells": 5,
+      "accepted": true,
+      "heldout_median_px": 0.2630469172053165,
+      "heldout_p95_px": 0.7640446495574966
+    },
+    {
+      "source_index": 850,
+      "anchor": 844,
+      "anchor_landmarks_masked": 419,
+      "fb_pass_unique": 417,
+      "train": 285,
+      "heldout": 132,
+      "train_inliers": 285,
+      "heldout_le4": 132,
+      "heldout_positive": 132,
+      "heldout_cells": 5,
+      "accepted": true,
+      "heldout_median_px": 0.40963540762927986,
+      "heldout_p95_px": 1.0805881757914595
+    },
+    {
+      "source_index": 856,
+      "anchor": 844,
+      "anchor_landmarks_masked": 419,
+      "fb_pass_unique": 417,
+      "train": 285,
+      "heldout": 132,
+      "train_inliers": 285,
+      "heldout_le4": 132,
+      "heldout_positive": 132,
+      "heldout_cells": 5,
+      "accepted": true,
+      "heldout_median_px": 0.41861836011738973,
+      "heldout_p95_px": 1.1222930630164536
+    }
+  ],
+  "scope": "research_only",
+  "execution_qualified": false
+}

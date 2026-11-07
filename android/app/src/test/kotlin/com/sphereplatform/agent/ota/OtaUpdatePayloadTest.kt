@@ -24,6 +24,7 @@ class OtaUpdatePayloadTest {
             {
                 "download_url": "https://example.com/update.apk",
                 "version": "1.2.3",
+                "version_code": 10203,
                 "sha256": "abc123def456",
                 "force": true
             }
@@ -31,6 +32,7 @@ class OtaUpdatePayloadTest {
         val payload = json.decodeFromString<OtaUpdatePayload>(raw)
         assertEquals("https://example.com/update.apk", payload.download_url)
         assertEquals("1.2.3", payload.version)
+        assertEquals(10203, payload.version_code)
         assertEquals("abc123def456", payload.sha256)
         assertTrue(payload.force)
     }
@@ -40,6 +42,7 @@ class OtaUpdatePayloadTest {
         val raw = """{"download_url":"u","version":"v","sha256":"h"}"""
         val payload = json.decodeFromString<OtaUpdatePayload>(raw)
         assertFalse(payload.force)
+        assertEquals(0, payload.version_code)
     }
 
     @Test

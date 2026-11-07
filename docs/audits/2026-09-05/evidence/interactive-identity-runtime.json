@@ -1,0 +1,138 @@
+{
+  "interactive-identity-before": {
+    "start": "2026-09-19T21:49:40.324821+00:00",
+    "end": "2026-09-19T21:49:44.728618+00:00",
+    "backend_source": "03b161e5faffda0a28d82eb2db94064e73b5360f",
+    "commands": 12,
+    "shell": 6,
+    "logcat": 6,
+    "missing_task_warnings": 12,
+    "log_sha256": "022cd41531f1233e029791e9ccc8b04e4b460db808bbb0f6d6a8e3b4864aea32",
+    "scope": "Two owned APKs. No reboot, settings change, games or automation task created."
+  },
+  "interactive-identity-after": {
+    "start": "2026-09-19T21:55:19.659310+00:00",
+    "end": "2026-09-19T21:55:24.535933+00:00",
+    "backend_source": "eacf69238f2171af87c6bdf38fa7856eec4b0b9d",
+    "commands": 12,
+    "shell": 6,
+    "logcat": 6,
+    "missing_task_warnings": 0,
+    "log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "scope": "Two owned APKs. No reboot, settings change, games or automation task created."
+  },
+  "interactive-identity-deploy": {
+    "at": "2026-09-19T21:54:29.474313+00:00",
+    "source": "eacf69238f2171af87c6bdf38fa7856eec4b0b9d",
+    "images": {
+      "backend": {
+        "tag": "sphere-pilot-20260911-backend:eacf692",
+        "id": "sha256:df96b60dca8579c06199cf666f4675535bef9ce7a411d6d614cc0e39b1f996fe"
+      }
+    },
+    "only_new_backend_replaced": true,
+    "other_container_ids_images_start_times_preserved": true,
+    "ota_catalog_preserved": true,
+    "apk_download_hash_verified": true,
+    "task_total": 190,
+    "status_counts": {
+      "queued": 0,
+      "assigned": 0,
+      "running": 0,
+      "completed": 190,
+      "failed": 0,
+      "timeout": 0,
+      "cancelled": 0
+    },
+    "build_context": "git archive committed runtime files; no private environment or untracked files"
+  },
+  "interactive-identity-dag": {
+    "started": "2026-09-19T21:55:25.623527+00:00",
+    "backend": "eacf69238f2171af87c6bdf38fa7856eec4b0b9d",
+    "tasks": [
+      {
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "task_id": "18baaff4-b7c7-403c-a624-d88019f527a4",
+        "pid_before": "2182",
+        "status": "completed",
+        "node_ids": [
+          "start",
+          "counter",
+          "home",
+          "settle",
+          "expand",
+          "observe",
+          "collapse",
+          "increment",
+          "branch",
+          "echo",
+          "verify",
+          "sdk",
+          "end"
+        ],
+        "native_result_verified": true,
+        "pid_after": "2182"
+      },
+      {
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "task_id": "ae21f930-c6bf-485b-ad77-0bcdd9712df4",
+        "pid_before": "2187",
+        "status": "completed",
+        "node_ids": [
+          "start",
+          "counter",
+          "home",
+          "settle",
+          "expand",
+          "observe",
+          "collapse",
+          "increment",
+          "branch",
+          "echo",
+          "verify",
+          "sdk",
+          "end"
+        ],
+        "native_result_verified": true,
+        "pid_after": "2187"
+      }
+    ],
+    "finished": "2026-09-19T21:55:37.650164+00:00",
+    "history_total": 192,
+    "counts": {
+      "queued": 0,
+      "assigned": 0,
+      "running": 0,
+      "completed": 192,
+      "failed": 0,
+      "timeout": 0,
+      "cancelled": 0
+    },
+    "passed": true
+  },
+  "interactive-identity-log-validation": {
+    "start": "2026-09-19T21:55:19.659310+00:00",
+    "end": "2026-09-19T21:55:37.650164+00:00",
+    "positive_control_durable_task_completions": 2,
+    "structured_log_events": 8,
+    "missing_task_warnings": 0,
+    "log_sha256": "e9c1983156849e2aefd41747f4a2ffc64f79bcffa45879d2d0a09500bcc67345",
+    "note": "Successful RPCs produce no task logs. Two known durable DAG completions in the same container/window positively verify log collection."
+  },
+  "browser_followup": {
+    "history_total": 192,
+    "both_new_dag_ids_visible": true,
+    "reloaded": false,
+    "active_tasks": 0,
+    "active_pipelines": 0
+  },
+  "harness_note": "The first rollout was reverted because the public route was briefly unready after replacing backend. The readiness helper PublicationError was not included in its bounded read-only retry. Including it retained installation verification; repeat rollout passed. All attempt logs remain private.",
+  "scope": "Two existing rooted Android 9 APKs, bounded shell/logcat and two reviewed safe DAGs; no new APK, network fault, games, settings, overnight or fleet acceptance.",
+  "private_artifact_sha256": {
+    "interactive-identity-before": "a4974f6c939cf62f893dee9c02ec926debe549943f0f97d1174f7ecd0125aab7",
+    "interactive-identity-after": "b645d4cfc9b185ec2af2f439857da42485fae4157651d99fac703357d4799277",
+    "interactive-identity-deploy": "640333adac7cfdffefee3eb4e0e627524d1dfe47499e0bf45be427a87246b724",
+    "interactive-identity-dag": "80ba6466079c98264c31046e58cb9fa7368d86de6c7ff6dea1ec3ad7e773af24",
+    "interactive-identity-log-validation": "3982c72816b284c866d330523a7784c1ad02543a3ad3078075aeb42aca39e385"
+  }
+}

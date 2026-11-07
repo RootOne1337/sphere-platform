@@ -1,0 +1,39 @@
+{
+  "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "observedAt": "2026-10-05T19:42:41.104416+00:00",
+  "stage": "ui",
+  "target": "sphere-review-20261002-review-ui-1",
+  "changedContainers": [
+    "sphere-review-20261002-review-ui-1"
+  ],
+  "otherContainersPreserved": 45,
+  "mountsPreserved": true,
+  "logRotationPreserved": true,
+  "beforeFleet": {
+    "observedAt": "2026-10-05T19:42:33.009933+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 9,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 10,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "afterFleet": {
+    "observedAt": "2026-10-05T19:42:41.102347+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 9,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 10,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "ready": true
+}

@@ -1,0 +1,1046 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-13T21:43:22.819779+00:00",
+  "runtimeInstalled": true,
+  "scope": "UI103d8532 / API3538b650 installed on3015/Tuna; APK69 completed addressed OTA on15 online emulators,14 exact installed SHA proofs and PH030 command/version only. Ten live independent direct controllers, confirmed takeover/independent close and native fullscreen/touch layouts passed. Physical keyboard/IME/audio, direct system keys,20+, offline autonomous grants and real phone/hotspot remain open.",
+  "runtime": {
+    "sourceRevision": "103d853292d96d905a6b97e204e06b7600722a1c",
+    "apiSourceRevision": "3538b650c0bfaf70cdd904b278e41d8d9387ca9a",
+    "uiContainer": {
+      "id": "f309b762bab1b17b8f7cffd2a52f8f0505afe4637ca2092ff688c5d3b4ac2ab7",
+      "imageId": "sha256:683b8fb7fedae2d7ff357c7d29bf50919f026f75a595f2d0a52383e4112fe2a7",
+      "imageTag": "sphere-review-frontend:103d853292d96d905a6b97e204e06b7600722a1c",
+      "startedAt": "2026-10-13T21:26:58.732109381Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "22ba81b791229041510541b8b78c7c47e8d24662c3b5a1bb26c555c3e6add44f",
+      "imageId": "sha256:48666523ccedccdf8a95554450715c168839830894a798e221eac4b19b2ec607",
+      "imageTag": "sphere-reviewed-backend:3538b650c0bfaf70cdd904b278e41d8d9387ca9a",
+      "startedAt": "2026-10-13T20:03:12.387871948Z",
+      "status": "running"
+    },
+    "uiCiRunId": 38469519486,
+    "apiCiRunId": 38455477549,
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otherContainersPreservedPerInstall": 45
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "productionAccepted": false,
+    "ordinaryChrome": true,
+    "transportOverrides": false,
+    "commandsReplayed": false,
+    "fullscreen": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-13T21:31:46.977Z",
+        "accepted": true,
+        "layouts": [
+          {
+            "name": "desktop",
+            "fullscreen": true,
+            "width": 1440,
+            "height": 1000,
+            "rootWithinViewport": true,
+            "drawerWithinViewport": true,
+            "trayOpacity": 1,
+            "drawerBackground": "rgb(9, 9, 11)",
+            "buttonRects": [
+              {
+                "label": "Назад",
+                "x": 578,
+                "y": 941,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Домой",
+                "x": 626,
+                "y": 941,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Недавние",
+                "x": 674,
+                "y": 941,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Меню",
+                "x": 722,
+                "y": 941,
+                "width": 44,
+                "height": 44
+              }
+            ],
+            "sameCanvas": true,
+            "sameVideo": true
+          },
+          {
+            "name": "portrait",
+            "fullscreen": true,
+            "width": 390,
+            "height": 844,
+            "rootWithinViewport": true,
+            "drawerWithinViewport": true,
+            "trayOpacity": 1,
+            "drawerBackground": "rgb(9, 9, 11)",
+            "buttonRects": [
+              {
+                "label": "Назад",
+                "x": 53,
+                "y": 785,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Домой",
+                "x": 101,
+                "y": 785,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Недавние",
+                "x": 149,
+                "y": 785,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Меню",
+                "x": 197,
+                "y": 785,
+                "width": 44,
+                "height": 44
+              }
+            ],
+            "sameCanvas": true,
+            "sameVideo": true
+          },
+          {
+            "name": "landscape",
+            "fullscreen": true,
+            "width": 844,
+            "height": 390,
+            "rootWithinViewport": true,
+            "drawerWithinViewport": true,
+            "trayOpacity": 1,
+            "drawerBackground": "rgb(9, 9, 11)",
+            "buttonRects": [
+              {
+                "label": "Назад",
+                "x": 280,
+                "y": 331,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Домой",
+                "x": 328,
+                "y": 331,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Недавние",
+                "x": 376,
+                "y": 331,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Меню",
+                "x": 424,
+                "y": 331,
+                "width": 44,
+                "height": 44
+              }
+            ],
+            "sameCanvas": true,
+            "sameVideo": true
+          }
+        ],
+        "gestures": [
+          {
+            "touch": false,
+            "events": 5,
+            "nativeApplied": 5
+          },
+          {
+            "touch": true,
+            "events": 8,
+            "nativeApplied": 8
+          },
+          {
+            "touch": true,
+            "events": 8,
+            "nativeApplied": 8
+          }
+        ],
+        "sameMediaElementsAfterExit": {
+          "canvas": true,
+          "video": true
+        },
+        "peersCreated": 1,
+        "serverTouchEvents": 0,
+        "directFramesPresented": 218,
+        "fps": 46,
+        "packetLoss": 0,
+        "freezes": 0,
+        "pageErrors": [],
+        "ownContextsClosed": true,
+        "evidenceSha256NormalizedLf": "78d65595ee23f1336496510daeff3f5b4ca2a9bc7c30d1bc50a39892fcd18883",
+        "scope": "Real browser fullscreen and trusted automated mouse/touch at1440x1000,390x844,844x390. Not a physical phone/hotspot acceptance."
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-13T21:34:03.906Z",
+        "accepted": true,
+        "layouts": [
+          {
+            "name": "desktop",
+            "fullscreen": true,
+            "width": 1440,
+            "height": 1000,
+            "rootWithinViewport": true,
+            "drawerWithinViewport": true,
+            "trayOpacity": 1,
+            "drawerBackground": "rgb(9, 9, 11)",
+            "buttonRects": [
+              {
+                "label": "Назад",
+                "x": 578,
+                "y": 941,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Домой",
+                "x": 626,
+                "y": 941,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Недавние",
+                "x": 674,
+                "y": 941,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Меню",
+                "x": 722,
+                "y": 941,
+                "width": 44,
+                "height": 44
+              }
+            ],
+            "sameCanvas": true,
+            "sameVideo": true
+          },
+          {
+            "name": "portrait",
+            "fullscreen": true,
+            "width": 390,
+            "height": 844,
+            "rootWithinViewport": true,
+            "drawerWithinViewport": true,
+            "trayOpacity": 1,
+            "drawerBackground": "rgb(9, 9, 11)",
+            "buttonRects": [
+              {
+                "label": "Назад",
+                "x": 53,
+                "y": 785,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Домой",
+                "x": 101,
+                "y": 785,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Недавние",
+                "x": 149,
+                "y": 785,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Меню",
+                "x": 197,
+                "y": 785,
+                "width": 44,
+                "height": 44
+              }
+            ],
+            "sameCanvas": true,
+            "sameVideo": true
+          },
+          {
+            "name": "landscape",
+            "fullscreen": true,
+            "width": 844,
+            "height": 390,
+            "rootWithinViewport": true,
+            "drawerWithinViewport": true,
+            "trayOpacity": 1,
+            "drawerBackground": "rgb(9, 9, 11)",
+            "buttonRects": [
+              {
+                "label": "Назад",
+                "x": 280,
+                "y": 331,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Домой",
+                "x": 328,
+                "y": 331,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Недавние",
+                "x": 376,
+                "y": 331,
+                "width": 44,
+                "height": 44
+              },
+              {
+                "label": "Меню",
+                "x": 424,
+                "y": 331,
+                "width": 44,
+                "height": 44
+              }
+            ],
+            "sameCanvas": true,
+            "sameVideo": true
+          }
+        ],
+        "gestures": [
+          {
+            "touch": false,
+            "events": 5,
+            "nativeApplied": 5
+          },
+          {
+            "touch": true,
+            "events": 8,
+            "nativeApplied": 8
+          },
+          {
+            "touch": true,
+            "events": 8,
+            "nativeApplied": 8
+          }
+        ],
+        "sameMediaElementsAfterExit": {
+          "canvas": true,
+          "video": true
+        },
+        "peersCreated": 1,
+        "serverTouchEvents": 0,
+        "directFramesPresented": 223,
+        "fps": 45,
+        "packetLoss": 0,
+        "freezes": 0,
+        "pageErrors": [],
+        "ownContextsClosed": true,
+        "evidenceSha256NormalizedLf": "7f7898dc1e87a31a1808dd5ae2251b17a27be4cf1c2233df8d271aac03df9e37",
+        "scope": "Real browser fullscreen and trusted automated mouse/touch at1440x1000,390x844,844x390. Not a physical phone/hotspot acceptance."
+      }
+    ],
+    "sharedControl": {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "observedAtUtc": "2026-10-13T21:42:07.805Z",
+      "uiSourceRevision": "103d853292d96d905a6b97e204e06b7600722a1c",
+      "apiSourceRevision": "3538b650c0bfaf70cdd904b278e41d8d9387ca9a",
+      "participants": 10,
+      "separateNormalLogins": true,
+      "realMouseGestures": true,
+      "overlappingTakeoverConfirmed": true,
+      "nativeAppliedPerParticipant": [
+        6,
+        6,
+        6,
+        3,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6
+      ],
+      "openingMs": [
+        4389,
+        3467,
+        3467,
+        3501,
+        3467,
+        3650,
+        3750,
+        3954,
+        3597,
+        5001
+      ],
+      "independentCloseSurvivors": 9,
+      "survivorSeconds": 30,
+      "survivorFps": [
+        56,
+        56,
+        56,
+        56,
+        56,
+        57,
+        57,
+        56,
+        56
+      ],
+      "survivorLosses": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "survivorFreezes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        4,
+        0,
+        0
+      ],
+      "peersPerParticipant": 1,
+      "serverTouchEvents": 0,
+      "ownContextsClosed": true,
+      "evidenceSha256NormalizedLf": "b7d131f1bc5cb1db908a9eff41a68f9336ce09e3528fb965bbfc90e148b8f7f2",
+      "scope": "Ten browser contexts on one test PC through Tuna and PH010. Not20+, different geographical clients or physical emulator-input acceptance."
+    },
+    "directFramesPresented": 441,
+    "frameMeasurement": "Additional passive requestVideoFrameCallback observer on active direct video; scalar counter only.",
+    "glassToGlassLatencyMeasured": false,
+    "physicalPhoneAccepted": false
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "sourceRevision": "9730bc5c41968401e4abb3d372472bc122460094",
+        "version": "1.2.69-dev",
+        "versionCode": 10269,
+        "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "bytes": 57786356,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1168,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1168,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T19:35:04.062412+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "device": "auto-ph-028",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:37:57.966761+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:10.302848+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "device": "auto-ph-022",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:20.992725+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "device": "auto-ph-020",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:31.926231+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "device": "auto-ph-019",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:34.665537+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "device": "auto-ph-018",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:43.190572+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "device": "auto-ph-017",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:44.448229+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "device": "auto-ph-016",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:43.657532+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "device": "auto-ph-015",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:45.581821+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "device": "auto-ph-014",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:49.048771+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "device": "auto-ph-013",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:48.741965+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "device": "auto-ph-012",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:50.614947+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:38:49.722758+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+        "packageProofRecordedAtUtc": "2026-10-13T20:56:20.374608+00:00"
+      }
+    ],
+    "installedCount": 14,
+    "completedOtaCount": 15,
+    "partialPackageProofs": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10269,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10269,
+          "recorded_at": "2026-10-13T20:37:28.257114+00:00",
+          "sha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32"
+        },
+        "installedPackageHashVerified": false,
+        "reportedVersionCode": 10269,
+        "reason": "Active input rejects shell package-hash read. User stream was not interrupted."
+      }
+    ],
+    "offlineDevices": [
+      {
+        "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+        "device": "auto-ph-029",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "grantIssued": false,
+        "state": "pending_fresh_online_package_and_signature_baseline"
+      },
+      {
+        "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+        "device": "auto-ph-027",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "grantIssued": false,
+        "state": "pending_fresh_online_package_and_signature_baseline"
+      },
+      {
+        "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+        "device": "auto-ph-026",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "grantIssued": false,
+        "state": "pending_fresh_online_package_and_signature_baseline"
+      },
+      {
+        "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+        "device": "auto-ph-024",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "grantIssued": false,
+        "state": "pending_fresh_online_package_and_signature_baseline"
+      },
+      {
+        "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+        "device": "auto-ph-023",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "grantIssued": false,
+        "state": "pending_fresh_online_package_and_signature_baseline"
+      },
+      {
+        "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+        "device": "auto-ph-021",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "grantIssued": false,
+        "state": "pending_fresh_online_package_and_signature_baseline"
+      }
+    ],
+    "offlineCount": 6,
+    "verifiedVersionCounts": {
+      "10269": 14
+    },
+    "ordinaryChannelUnchanged": true,
+    "adbInstalls": 0,
+    "dataClears": 0,
+    "exactCi": {
+      "runId": 38451128924,
+      "sourceRevision": "9730bc5c41968401e4abb3d372472bc122460094",
+      "status": "completed",
+      "conclusion": "success",
+      "observedAtUtc": "2026-10-13T20:36:36.923704+00:00"
+    },
+    "initialCanaryAcceptance": {
+      "accepted": true,
+      "observedAtUtc": "2026-10-13T20:36:34.864191+00:00",
+      "liveObservedAtUtc": "2026-10-13T20:34:29.099Z",
+      "uiSource": "db282298d2337496ccc7f95e8e14d6f3d7bf65ca",
+      "apiSource": "3538b650c0bfaf70cdd904b278e41d8d9387ca9a",
+      "participants": 2,
+      "nativeGestureReceipts": 13,
+      "survivorSeconds": 30,
+      "serverTouchEvents": 0,
+      "ownedContextsClosed": true,
+      "evidenceFile": "shared-input69-two-peer-accepted-local.private.json",
+      "evidenceSha256": "67e4f6106b69803efcd2ab87144f96059f51820762fc29951a89c7e248cdeb4d",
+      "scope": "Two live authenticated viewers, acknowledged direct gestures, independent close,30-second survivor. Ten/20+, real phone, keyboard and direct navigation are not accepted by this check."
+    },
+    "liveInventory": {
+      "observedAtUtc": "2026-10-13T21:24:27.431034+00:00",
+      "devices": [
+        {
+          "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+          "device": "auto-ph-030",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": false,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+          "device": "auto-ph-029",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed69Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "device": "auto-ph-028",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+          "device": "auto-ph-027",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed69Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+          "device": "auto-ph-026",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed69Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "device": "auto-ph-025",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+          "device": "auto-ph-024",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed69Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+          "device": "auto-ph-023",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed69Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "device": "auto-ph-022",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+          "device": "auto-ph-021",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed69Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+          "device": "auto-ph-020",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "device": "auto-ph-019",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "device": "auto-ph-018",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "device": "auto-ph-017",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "device": "auto-ph-016",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "device": "auto-ph-015",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "device": "auto-ph-014",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "device": "auto-ph-013",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "device": "auto-ph-012",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "device": "auto-ph-011",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "device": "auto-ph-010",
+          "status": "online",
+          "reportedVersionCode": 10269,
+          "currentInstalledHashVerified": true,
+          "completed69Ota": true,
+          "offlineRolloutPending": false
+        }
+      ],
+      "deviceCommandsSent": 0,
+      "scope": "Read-only live inventory plus earlier exact installed package proofs. Offline delivery is pending, not queued or falsely reported as installed."
+    },
+    "offlineAutomaticDeliveryArmed": false
+  },
+  "downloads": [
+    {
+      "origin": "http://127.0.0.1:3015",
+      "observedAt": "2026-10-13T21:13:55.555Z",
+      "channel": "android-canary/dev",
+      "status": 200,
+      "elapsedMs": 1153,
+      "downloadedSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+      "downloadedBytes": 57786356,
+      "officialLink": "https://www.ldplayer.net/",
+      "pageErrors": [],
+      "staticAssetFailures": []
+    },
+    {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "observedAt": "2026-10-13T21:18:47.772Z",
+      "channel": "android-canary/dev",
+      "status": 200,
+      "elapsedMs": 6498,
+      "downloadedSha256": "2708e0b794ddfacc72d1f340da91fb4c13cb6a845acf297a3fba8b65f99bfb32",
+      "downloadedBytes": 57786356,
+      "officialLink": "https://www.ldplayer.net/",
+      "pageErrors": [],
+      "staticAssetFailures": []
+    }
+  ],
+  "apiSchema": {
+    "paths": 149,
+    "operations": 188,
+    "canonicalSha256": "e38e7eb8dfd736c67e2e6f4c1f3afc7b694718f6e09aa017194a6283da31c748",
+    "qualityMethods": [
+      "get",
+      "post"
+    ],
+    "viewersMethods": [
+      "post"
+    ],
+    "sourceRevision": "3538b650c0bfaf70cdd904b278e41d8d9387ca9a",
+    "observedAtUtc": "2026-10-13T21:12:44.141085+00:00",
+    "applicationLifespanStarted": false,
+    "sameAsCommittedCanonicalJson": true
+  },
+  "sourceReuseCi": {
+    "observedAtUtc": "2026-10-13T21:21:30.339648+00:00",
+    "proofs": [
+      {
+        "component": "android",
+        "source": "103d853292d96d905a6b97e204e06b7600722a1c",
+        "identicalTree": "c7df87cf3f6e5402d1ebce9d6d8ec5e4e34aadff",
+        "validatedSource": "9730bc5c41968401e4abb3d372472bc122460094",
+        "validatedRun": 38451128924,
+        "cancelledRedundantHostedRun": 38469519558,
+        "readbackVerified": true
+      },
+      {
+        "component": "backend",
+        "source": "103d853292d96d905a6b97e204e06b7600722a1c",
+        "identicalTree": "0286b5f38a9d120b72800418b7590ad4ad9e9680",
+        "validatedSource": "3538b650c0bfaf70cdd904b278e41d8d9387ca9a",
+        "validatedRun": 38455477549,
+        "cancelledRedundantHostedRun": 38469519335,
+        "readbackVerified": true
+      }
+    ],
+    "limitation": "No fresh Android/backend run is claimed. Installer regressions ran locally; changed frontend still has its own exact build."
+  },
+  "localCi": {
+    "fullCloudMigrationAccepted": false,
+    "selfHostedRunnerRegistered": false,
+    "scope": "Local trusted profiles and exact-SHA GitHub statuses exist. Hosted UI packaging and Linux/release/security gates remain; unchanged APK/API jobs explicitly reused successful identical trees."
+  },
+  "boundaries": {
+    "sharedControlInstalled": true,
+    "finiteTenControlAccepted": true,
+    "fullscreenInstalled": true,
+    "physicalKeyboardInstalled": false,
+    "directNavigationInstalled": false,
+    "audioInstalled": false,
+    "brokerIndependentSessionInstalled": false,
+    "realPhoneNewBuildAccepted": false,
+    "twentyPlusAccepted": false,
+    "wideWanTurnAccepted": false,
+    "frameIdCorrelationAccepted": false,
+    "stable13ReleaseAccepted": false
+  },
+  "volumeWarningException": {
+    "authority": "Explicit user authorization to continue builds/installation as-is",
+    "measuredVolumeWarningRetained": true,
+    "otherResourceGatesPreserved": true
+  },
+  "privacy": {
+    "noTypedContents": true,
+    "noRawCandidateAddresses": true,
+    "noTokensOwnersOrSessionKeys": true
+  }
+}

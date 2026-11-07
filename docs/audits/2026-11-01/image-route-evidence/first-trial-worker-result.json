@@ -1,0 +1,37 @@
+{
+  "outcome": "sentinel_reached_after_optional_builder_failure",
+  "workspace_state": {
+    "phase": "failed",
+    "error": "image_route_worker_failed"
+  },
+  "builder_children": [
+    {
+      "pid": 4664,
+      "exit": 1
+    }
+  ],
+  "all_children_exited": true,
+  "elapsed_seconds": 0.4529999999795109,
+  "peak_aggregate_observed_working_set_bytes": 80744448,
+  "owned_processes": {
+    "54028": {
+      "name": "python.exe",
+      "peak_working_set_bytes": 46702592
+    },
+    "4664": {
+      "name": "python.exe",
+      "peak_working_set_bytes": 5124096
+    },
+    "25756": {
+      "name": "conhost.exe",
+      "peak_working_set_bytes": 8114176
+    },
+    "4940": {
+      "name": "python.exe",
+      "peak_working_set_bytes": 50114560
+    }
+  },
+  "sfm_stubbed": true,
+  "physical_actions": 0,
+  "trial_status": "failed_no_review"
+}

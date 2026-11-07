@@ -1,0 +1,19 @@
+{
+  "redisVersion": "7.2.12",
+  "races": [
+    {
+      "kind": "pong",
+      "replacementPreserved": true,
+      "independentClients": 2
+    },
+    {
+      "kind": "telemetry",
+      "replacementPreserved": true,
+      "independentClients": 2
+    }
+  ],
+  "freshFalseReport": true,
+  "pass": true,
+  "productionContacted": false,
+  "persistenceEnabled": false
+}

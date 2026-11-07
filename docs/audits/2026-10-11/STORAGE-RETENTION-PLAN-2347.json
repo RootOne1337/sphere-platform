@@ -1,0 +1,740 @@
+{
+  "observedAtUtc": "2026-10-10T23:47:37.483257+00:00",
+  "mode": "read-only-analysis",
+  "sourcePlan": "image-retention-20261010T234421870713.json",
+  "sourcePlanSha256": "a455442d53a39de13c960de1735ca1ab23e600b4ba19fa6d2000226b711e6f13",
+  "sourceCollectorSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+  "sourceRows": 163,
+  "firstSampleUtc": "2026-10-10T18:22:19.274599+00:00",
+  "lastSampleUtc": "2026-10-10T23:46:19.273702+00:00",
+  "freeDiskDeltaBytes": -835284992,
+  "dockerAllocationDeltaBytes": 1342177280,
+  "dockerGrowthWindows": [
+    {
+      "observedAtUtc": "2026-10-10T21:28:19.273748+00:00",
+      "sampleIndex": 93,
+      "dockerAllocationDeltaBytes": 201326592,
+      "freeDiskDeltaBytes": -204951552
+    },
+    {
+      "observedAtUtc": "2026-10-10T22:28:19.275273+00:00",
+      "sampleIndex": 123,
+      "dockerAllocationDeltaBytes": 1140850688,
+      "freeDiskDeltaBytes": -1403080704
+    }
+  ],
+  "ownedUnusedImageCount": 53,
+  "imageExclusiveLogicalApproxBytes": 33736200000,
+  "physicalBytesReclaimed": null,
+  "physicalBytesReclaimedEstimate": null,
+  "warning": "Image-exclusive size uses rounded Docker units and is not promised reclaimed host space: cache references and VHDX allocation differ.",
+  "candidateRepositoryCounts": {
+    "sphere-review-frontend": 38,
+    "sphere-reviewed-backend": 15
+  },
+  "candidates": [
+    {
+      "imageId": "sha256:1ea416ef190c7fc46216aa6c2ade03bc83b66bbbc57fb42ac7015524e1c11729",
+      "tags": [
+        "sphere-review-frontend:b50d6ae2af537adb12a52503f0809ef565c0ba21"
+      ],
+      "sourceCommits": [
+        "b50d6ae2af537adb12a52503f0809ef565c0ba21"
+      ],
+      "logicalBytes": 325980664,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:4b3b30b6609f5bbd89727eeb6847109023fbf8844d519e639723cded20f3559b",
+      "tags": [
+        "sphere-reviewed-backend:114775a481f579e840ff63a154f1520b2f37dd0d"
+      ],
+      "sourceCommits": [
+        "114775a481f579e840ff63a154f1520b2f37dd0d"
+      ],
+      "logicalBytes": 637185410,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.176GB",
+      "imageExclusiveLogicalApproxBytes": 1176000000
+    },
+    {
+      "imageId": "sha256:19d2c43ac03076bf214ddc68c43dc8f14f6c8c9429d5645781e934f4acb2d2c6",
+      "tags": [
+        "sphere-reviewed-backend:a41c4e64bf569a7518d34606da0facbba32f77e6"
+      ],
+      "sourceCommits": [
+        "a41c4e64bf569a7518d34606da0facbba32f77e6"
+      ],
+      "logicalBytes": 637187973,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.176GB",
+      "imageExclusiveLogicalApproxBytes": 1176000000
+    },
+    {
+      "imageId": "sha256:d12e372c7c9b00cf61920cd0ae7716c8d3f91e3833a8e781fd1e33628c2f1657",
+      "tags": [
+        "sphere-review-frontend:a41c4e64bf569a7518d34606da0facbba32f77e6"
+      ],
+      "sourceCommits": [
+        "a41c4e64bf569a7518d34606da0facbba32f77e6"
+      ],
+      "logicalBytes": 325982712,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:6125524c534ee1468366a929633644c3523fa7296b7ef17e3db7bf8b9674fae0",
+      "tags": [
+        "sphere-review-frontend:8780744504415591a8446597595e262bbf42f1b9"
+      ],
+      "sourceCommits": [
+        "8780744504415591a8446597595e262bbf42f1b9"
+      ],
+      "logicalBytes": 325985784,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:c692331339978775bff229bbb9151448af8a69a9f60a705cd5dc0c0a7311cdd7",
+      "tags": [
+        "sphere-review-frontend:af9054ecd0a12d0bc40112298c06178472b59eae"
+      ],
+      "sourceCommits": [
+        "af9054ecd0a12d0bc40112298c06178472b59eae"
+      ],
+      "logicalBytes": 325995512,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:4e3f93684178e1ca739e8568b60e1063b8dec524043ff76c8ef8a6bef8333202",
+      "tags": [
+        "sphere-review-frontend:fcdc547627ea410e65d7ff79601dc71cdd25f343"
+      ],
+      "sourceCommits": [
+        "fcdc547627ea410e65d7ff79601dc71cdd25f343"
+      ],
+      "logicalBytes": 325997560,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:cea73fd19924848339960f451127b84594f19a165ec70279c11607463b40ce7d",
+      "tags": [
+        "sphere-review-frontend:cae80575bbfbc5faf56f02b8bac4a0d21d297162"
+      ],
+      "sourceCommits": [
+        "cae80575bbfbc5faf56f02b8bac4a0d21d297162"
+      ],
+      "logicalBytes": 326013944,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:59706f054297d325864c59e9bd58621e728833d3817d355f930576d870ecdf38",
+      "tags": [
+        "sphere-reviewed-backend:28104f80000d66f0ebfe3add913a48c97f293a08"
+      ],
+      "sourceCommits": [
+        "28104f80000d66f0ebfe3add913a48c97f293a08"
+      ],
+      "logicalBytes": 637244293,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.176GB",
+      "imageExclusiveLogicalApproxBytes": 1176000000
+    },
+    {
+      "imageId": "sha256:ad20d83c1c46e22128020a97251248529c6878ad38fb6762570dc748674022f5",
+      "tags": [
+        "sphere-review-frontend:28104f80000d66f0ebfe3add913a48c97f293a08"
+      ],
+      "sourceCommits": [
+        "28104f80000d66f0ebfe3add913a48c97f293a08"
+      ],
+      "logicalBytes": 326013944,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:7f806f2cf64f159fe97cdb863fd7706007253833eac371ca5f981f6d2640e792",
+      "tags": [
+        "sphere-review-frontend:bc867526af66a33fab066ae65ba57e88717856fe"
+      ],
+      "sourceCommits": [
+        "bc867526af66a33fab066ae65ba57e88717856fe"
+      ],
+      "logicalBytes": 326021111,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:666bac024f073bf9b97a1da8c18a10a3c3e5932f57874770e0cd2fbd09d62d96",
+      "tags": [
+        "sphere-reviewed-backend:2225f73b27f0c85130981d870cd85d37b1d47786"
+      ],
+      "sourceCommits": [
+        "2225f73b27f0c85130981d870cd85d37b1d47786"
+      ],
+      "logicalBytes": 637245317,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.176GB",
+      "imageExclusiveLogicalApproxBytes": 1176000000
+    },
+    {
+      "imageId": "sha256:3a3a8b0e0da45c9283912588704f75936b2acc171aa65393290e5b7731f5fdef",
+      "tags": [
+        "sphere-review-frontend:2225f73b27f0c85130981d870cd85d37b1d47786"
+      ],
+      "sourceCommits": [
+        "2225f73b27f0c85130981d870cd85d37b1d47786"
+      ],
+      "logicalBytes": 326021112,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:265a6e12854c63058097379e984a5048d125acebb793e66179dc4a0aa03a1e86",
+      "tags": [
+        "sphere-review-frontend:29eecb88783ee43f2df30ab9f1e0cfe9fcdb3e0f"
+      ],
+      "sourceCommits": [
+        "29eecb88783ee43f2df30ab9f1e0cfe9fcdb3e0f"
+      ],
+      "logicalBytes": 326024184,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:d9326840eb36dedc3cfdf73f8a7f63628aa7b7ce4cd3333481770e2bb55be502",
+      "tags": [
+        "sphere-review-frontend:e88c4db8633d8288d7bbea58da773eb52d5f0e8f"
+      ],
+      "sourceCommits": [
+        "e88c4db8633d8288d7bbea58da773eb52d5f0e8f"
+      ],
+      "logicalBytes": 326024176,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.2MB",
+      "imageExclusiveLogicalApproxBytes": 423200000
+    },
+    {
+      "imageId": "sha256:5632b66b1edda072c1fd7c53f568b2f65d02d2d036bbf52118ade16f18a1bd29",
+      "tags": [
+        "sphere-reviewed-backend:961052334b99f9a27fa292f5217d5d0130dd6094"
+      ],
+      "sourceCommits": [
+        "961052334b99f9a27fa292f5217d5d0130dd6094"
+      ],
+      "logicalBytes": 637251461,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.176GB",
+      "imageExclusiveLogicalApproxBytes": 1176000000
+    },
+    {
+      "imageId": "sha256:d1f917c10da88c382c1ea9bfe22b807536f5cdcf15f43bd2ee2c71324ce7a6ec",
+      "tags": [
+        "sphere-review-frontend:961052334b99f9a27fa292f5217d5d0130dd6094"
+      ],
+      "sourceCommits": [
+        "961052334b99f9a27fa292f5217d5d0130dd6094"
+      ],
+      "logicalBytes": 326034424,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.3MB",
+      "imageExclusiveLogicalApproxBytes": 423300000
+    },
+    {
+      "imageId": "sha256:be702b576d30c92be328dafbd179bf3889d2daced3d6754ec1bdafdcb59be9d2",
+      "tags": [
+        "sphere-review-frontend:a8945e43319c95827c0c49d075484eb0d57c78f3"
+      ],
+      "sourceCommits": [
+        "a8945e43319c95827c0c49d075484eb0d57c78f3"
+      ],
+      "logicalBytes": 326035952,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.3MB",
+      "imageExclusiveLogicalApproxBytes": 423300000
+    },
+    {
+      "imageId": "sha256:573ddbc9293450f83c3c604ffd13424a6a580e063a716b3d89806dd6078d92f7",
+      "tags": [
+        "sphere-review-frontend:5382fe4bbabbe46b29eea081a8e6916afe1181bd"
+      ],
+      "sourceCommits": [
+        "5382fe4bbabbe46b29eea081a8e6916afe1181bd"
+      ],
+      "logicalBytes": 326042104,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.3MB",
+      "imageExclusiveLogicalApproxBytes": 423300000
+    },
+    {
+      "imageId": "sha256:bf7ff7556bc834e3bca6b1e43d2baa608ea97bd67ba1f421eeed1f7ba9165a05",
+      "tags": [
+        "sphere-review-frontend:36b160f925e3f1d073620281bbf6e584636ada14"
+      ],
+      "sourceCommits": [
+        "36b160f925e3f1d073620281bbf6e584636ada14"
+      ],
+      "logicalBytes": 326042104,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.3MB",
+      "imageExclusiveLogicalApproxBytes": 423300000
+    },
+    {
+      "imageId": "sha256:49a0ac9dca8f27db1dd8564090ef495139682919ebaa39d5cb396c43ad51ede1",
+      "tags": [
+        "sphere-reviewed-backend:be803773037c16a113b50c1a2774793fffae8773"
+      ],
+      "sourceCommits": [
+        "be803773037c16a113b50c1a2774793fffae8773"
+      ],
+      "logicalBytes": 637252485,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.176GB",
+      "imageExclusiveLogicalApproxBytes": 1176000000
+    },
+    {
+      "imageId": "sha256:0a13d13e0647848e47673b9e8fa5d9a1790ac6e5fa275a43d376c0edcc30f03a",
+      "tags": [
+        "sphere-review-frontend:46ca2096fef48486be821b3239eeef16f231bbc5"
+      ],
+      "sourceCommits": [
+        "46ca2096fef48486be821b3239eeef16f231bbc5"
+      ],
+      "logicalBytes": 326049783,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.3MB",
+      "imageExclusiveLogicalApproxBytes": 423300000
+    },
+    {
+      "imageId": "sha256:898fa44854c86d6c8afc914a08011a00a929f50d6d2aa2a9541a9869ac9fd820",
+      "tags": [
+        "sphere-review-frontend:b36adbb3e2f278a9acf8b18a5e80aa5e9dd7737a"
+      ],
+      "sourceCommits": [
+        "b36adbb3e2f278a9acf8b18a5e80aa5e9dd7737a"
+      ],
+      "logicalBytes": 326069752,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.3MB",
+      "imageExclusiveLogicalApproxBytes": 423300000
+    },
+    {
+      "imageId": "sha256:2cb783f7ab485dcf39c4b6ce7d573b943edfeb0f09ecc3c08867bbcf2b49cbfe",
+      "tags": [
+        "sphere-review-frontend:ec3f22678f20c16c221d4e2d02810d4f8122e6af"
+      ],
+      "sourceCommits": [
+        "ec3f22678f20c16c221d4e2d02810d4f8122e6af"
+      ],
+      "logicalBytes": 326069752,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.3MB",
+      "imageExclusiveLogicalApproxBytes": 423300000
+    },
+    {
+      "imageId": "sha256:70b7703d44e492d8d1df1422f217522ac09c2b2d11c51bc9eb16e4ab55814a7b",
+      "tags": [
+        "sphere-review-frontend:60be6ecd0b13e33715761b53b781ad190c1e3e6e"
+      ],
+      "sourceCommits": [
+        "60be6ecd0b13e33715761b53b781ad190c1e3e6e"
+      ],
+      "logicalBytes": 326070264,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:9d970ca556d4121537a865dc23f49ec8c23aefa8c5ba1e175b5f9f8c70fb9ea6",
+      "tags": [
+        "sphere-review-frontend:0b321d490a76dafb37d1f71d37557a69fa955dfd"
+      ],
+      "sourceCommits": [
+        "0b321d490a76dafb37d1f71d37557a69fa955dfd"
+      ],
+      "logicalBytes": 326077936,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:57b92b528375d30d067783c998cc90da81c6c74b63edf6b13095fd3947c935c2",
+      "tags": [
+        "sphere-review-frontend:b953ec109a563c893122c294495bcfabadc55c78"
+      ],
+      "sourceCommits": [
+        "b953ec109a563c893122c294495bcfabadc55c78"
+      ],
+      "logicalBytes": 326079480,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:31f2aff9ceeb119415b6bcfe81596ea2be7012eaa34cf19d51a2aa735d160dbc",
+      "tags": [
+        "sphere-review-frontend:86354350638650215717658b9395b2751326af6c"
+      ],
+      "sourceCommits": [
+        "86354350638650215717658b9395b2751326af6c"
+      ],
+      "logicalBytes": 326079480,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:ee2e9dea6466237f9cc30488784524b5aa7590f07fa117b0651cc94fefffe891",
+      "tags": [
+        "sphere-reviewed-backend:d720232e3164d278a7322a61a90ba111e205ae3c"
+      ],
+      "sourceCommits": [
+        "d720232e3164d278a7322a61a90ba111e205ae3c"
+      ],
+      "logicalBytes": 637462405,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:1a9b3a593baf4594c1cdb35f40d19e13e5e0916807fcb46184070c4cf1bca7ff",
+      "tags": [
+        "sphere-review-frontend:227a0c8460cdea04231eb889ebbdde9056c783a9"
+      ],
+      "sourceCommits": [
+        "227a0c8460cdea04231eb889ebbdde9056c783a9"
+      ],
+      "logicalBytes": 326079992,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:f30a661aea04c79758458f02ce73f6e58f9445232734916b5cc4e9360159864b",
+      "tags": [
+        "sphere-review-frontend:d70f55c6de36a01801af201ea4d6ca42bff53549"
+      ],
+      "sourceCommits": [
+        "d70f55c6de36a01801af201ea4d6ca42bff53549"
+      ],
+      "logicalBytes": 326079992,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:73ea8abcff6b3d4cb67c82a997e8f09da11c9313311dc44982348af2e928323b",
+      "tags": [
+        "sphere-reviewed-backend:9ad3481c1173fdd508b43d0314ec6cf6ffbade1d"
+      ],
+      "sourceCommits": [
+        "9ad3481c1173fdd508b43d0314ec6cf6ffbade1d"
+      ],
+      "logicalBytes": 637484933,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "tags": [
+        "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e"
+      ],
+      "sourceCommits": [
+        "369654a0be4bded35e299062badc9bfe95101f1e"
+      ],
+      "logicalBytes": 637570435,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:aab964f9218f3911f4f35f4aec8ed63898cbf673a7a4c122c01b3016b65e94bb",
+      "tags": [
+        "sphere-review-frontend:369654a0be4bded35e299062badc9bfe95101f1e"
+      ],
+      "sourceCommits": [
+        "369654a0be4bded35e299062badc9bfe95101f1e"
+      ],
+      "logicalBytes": 326101495,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:014b6da888f59f76604f15be949aa5b5e3e25edba8e9e36164029cb1ddb682a5",
+      "tags": [
+        "sphere-review-frontend:a513f7dfbb6694f7e8f627ce740f59347f5f48fc"
+      ],
+      "sourceCommits": [
+        "a513f7dfbb6694f7e8f627ce740f59347f5f48fc"
+      ],
+      "logicalBytes": 326104056,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:4b5440a9838899c1426fe18f7a13328da08cb2d54cfa699f5feffa289f0970ca",
+      "tags": [
+        "sphere-review-frontend:34497f9b9fe642050999e9d973de17f5623b4344"
+      ],
+      "sourceCommits": [
+        "34497f9b9fe642050999e9d973de17f5623b4344"
+      ],
+      "logicalBytes": 326105080,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:504535b25ca25de1af5a0134bdf4fff0b34e29983019981fccc7b34c1f91e202",
+      "tags": [
+        "sphere-review-frontend:13f38ca95d2e2135736fe31a6c0634c1e02b69a5"
+      ],
+      "sourceCommits": [
+        "13f38ca95d2e2135736fe31a6c0634c1e02b69a5"
+      ],
+      "logicalBytes": 326105080,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:addce2bdef7e7c574fa68abfa0bc273184e63df81d1a721268caefbf4874ab13",
+      "tags": [
+        "sphere-review-frontend:639b6ad52fe3651579499659ded46ff73027f313"
+      ],
+      "sourceCommits": [
+        "639b6ad52fe3651579499659ded46ff73027f313"
+      ],
+      "logicalBytes": 326105592,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:e4f002ec897c083a0e614f38228189d929d62ed7978e9583483b79dbace33d1b",
+      "tags": [
+        "sphere-reviewed-backend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258"
+      ],
+      "sourceCommits": [
+        "c17332ebe39e2288a0db055a35d3f3c5d1ab8258"
+      ],
+      "logicalBytes": 637584769,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:6d4fe2264e3334d22dbb9600ad9236b5b653bcd5e92446bf6dccd714c9312322",
+      "tags": [
+        "sphere-review-frontend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258"
+      ],
+      "sourceCommits": [
+        "c17332ebe39e2288a0db055a35d3f3c5d1ab8258"
+      ],
+      "logicalBytes": 326119928,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.4MB",
+      "imageExclusiveLogicalApproxBytes": 423400000
+    },
+    {
+      "imageId": "sha256:abacfdd57f0e83df87926a9e8427f2843d45c0cce4840fdfcbb6ab344472a25f",
+      "tags": [
+        "sphere-reviewed-backend:ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498"
+      ],
+      "sourceCommits": [
+        "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498"
+      ],
+      "logicalBytes": 637588868,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:bac99541be23596fde8576715659ebb6915e1db2b4dd6128db63f9204bfdcec2",
+      "tags": [
+        "sphere-review-frontend:ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498"
+      ],
+      "sourceCommits": [
+        "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498"
+      ],
+      "logicalBytes": 326139384,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.5MB",
+      "imageExclusiveLogicalApproxBytes": 423500000
+    },
+    {
+      "imageId": "sha256:0843e8c6eb052024ea422696ddaec7aa6086331304f4ead852f8df2ff6534ce8",
+      "tags": [
+        "sphere-reviewed-backend:678f78cf746e2be7b189e01a65b4b77134b373eb"
+      ],
+      "sourceCommits": [
+        "678f78cf746e2be7b189e01a65b4b77134b373eb"
+      ],
+      "logicalBytes": 637590917,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:07e52136800e1d4fa633c3a4b3806219ec1a32349b5296ea9fcaa498cd5aaf5d",
+      "tags": [
+        "sphere-review-frontend:678f78cf746e2be7b189e01a65b4b77134b373eb"
+      ],
+      "sourceCommits": [
+        "678f78cf746e2be7b189e01a65b4b77134b373eb"
+      ],
+      "logicalBytes": 326143992,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.5MB",
+      "imageExclusiveLogicalApproxBytes": 423500000
+    },
+    {
+      "imageId": "sha256:c9e1d103fa747981c9e8567f0931dd054e0c87058b5ad67528ee2d08c3cbd15a",
+      "tags": [
+        "sphere-review-frontend:4778a1b4fb20ac3ef9c2e6ad9bc8927f867a3e79"
+      ],
+      "sourceCommits": [
+        "4778a1b4fb20ac3ef9c2e6ad9bc8927f867a3e79"
+      ],
+      "logicalBytes": 326162936,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.5MB",
+      "imageExclusiveLogicalApproxBytes": 423500000
+    },
+    {
+      "imageId": "sha256:79c3ad8d9966515d1b5d03f68f84616adc530e6bc4fa7349ddd138d450b59b7f",
+      "tags": [
+        "sphere-reviewed-backend:4a2a54baebbf1370a695260281cb9314f137dd8d"
+      ],
+      "sourceCommits": [
+        "4a2a54baebbf1370a695260281cb9314f137dd8d"
+      ],
+      "logicalBytes": 637608837,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:c14d25c63efa22b219becf29d20fb75fd25e220bfcd8e707fd419c44c08338cb",
+      "tags": [
+        "sphere-review-frontend:4a2a54baebbf1370a695260281cb9314f137dd8d"
+      ],
+      "sourceCommits": [
+        "4a2a54baebbf1370a695260281cb9314f137dd8d"
+      ],
+      "logicalBytes": 326162936,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.5MB",
+      "imageExclusiveLogicalApproxBytes": 423500000
+    },
+    {
+      "imageId": "sha256:e0be60c97284c82d5eb47f6f72357ed1c5220464a2f52c7f2de7257d0fe23937",
+      "tags": [
+        "sphere-reviewed-backend:c14c32351f89c6b4a67b3b7eb3f911b5a881fb46"
+      ],
+      "sourceCommits": [
+        "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46"
+      ],
+      "logicalBytes": 637608836,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:913558750125be63d371e60dd487c44946af0a11eeee834ab356cad2c9066e65",
+      "tags": [
+        "sphere-review-frontend:c14c32351f89c6b4a67b3b7eb3f911b5a881fb46"
+      ],
+      "sourceCommits": [
+        "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46"
+      ],
+      "logicalBytes": 326162936,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.5MB",
+      "imageExclusiveLogicalApproxBytes": 423500000
+    },
+    {
+      "imageId": "sha256:4130a32822965a86e0d31cb955d0c38f704a52a1924439217601b0fafa3b9fd1",
+      "tags": [
+        "sphere-review-frontend:c4826d4682472edb912fc14e68e8fd447994a95f"
+      ],
+      "sourceCommits": [
+        "c4826d4682472edb912fc14e68e8fd447994a95f"
+      ],
+      "logicalBytes": 326163959,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.5MB",
+      "imageExclusiveLogicalApproxBytes": 423500000
+    },
+    {
+      "imageId": "sha256:1c07f57caaabafc9fc37607268eebec0a83bf6fdf8fb65add6058b051a696f49",
+      "tags": [
+        "sphere-review-frontend:a32854e6bbf4a8df5b062e9569e2258f160f753a"
+      ],
+      "sourceCommits": [
+        "a32854e6bbf4a8df5b062e9569e2258f160f753a"
+      ],
+      "logicalBytes": 326163960,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.5MB",
+      "imageExclusiveLogicalApproxBytes": 423500000
+    },
+    {
+      "imageId": "sha256:7302b901c73adc6d94944640baae034da6ef9124f99acbccd1c7390d8915f08f",
+      "tags": [
+        "sphere-reviewed-backend:daa107ab572282cd5a85c91cd310d66ec6d4d24f"
+      ],
+      "sourceCommits": [
+        "daa107ab572282cd5a85c91cd310d66ec6d4d24f"
+      ],
+      "logicalBytes": 637615484,
+      "sharedWithOtherImagesDockerUnits": "134MB",
+      "imageExclusiveDockerUnits": "1.177GB",
+      "imageExclusiveLogicalApproxBytes": 1177000000
+    },
+    {
+      "imageId": "sha256:e2bf2113d0c55eb38441cbe009c5e31ae8bd4662af5c80db2cd3c565a67c1f9b",
+      "tags": [
+        "sphere-review-frontend:daa107ab572282cd5a85c91cd310d66ec6d4d24f"
+      ],
+      "sourceCommits": [
+        "daa107ab572282cd5a85c91cd310d66ec6d4d24f"
+      ],
+      "logicalBytes": 326182904,
+      "sharedWithOtherImagesDockerUnits": "248.9MB",
+      "imageExclusiveDockerUnits": "423.6MB",
+      "imageExclusiveLogicalApproxBytes": 423600000
+    }
+  ],
+  "protectedImages": 40,
+  "protectedContainers": 46,
+  "keepLatest": 2,
+  "excludedCounts": {
+    "foreign-or-unattested-tag": 116,
+    "noncommit-tag": 3
+  },
+  "vss": "unavailable",
+  "wholePcWriterAttribution": "UNDETERMINED",
+  "deletionPerformed": false,
+  "serviceRestartPerformed": false,
+  "androidCommandSent": false,
+  "requiresFreshIdentityCheckBeforeApply": true,
+  "applyBlockedByWindowsVolume": "Full Repair Needed"
+}

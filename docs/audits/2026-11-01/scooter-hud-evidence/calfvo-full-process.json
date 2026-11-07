@@ -1,0 +1,15 @@
+{
+  "admission": {
+    "free_commit_gib": 8.057403564453125,
+    "free_physical_gib": 9.069892883300781
+  },
+  "elapsed_wall_s": 41.868,
+  "peak_sampled_tree_working_set_bytes": 1236611072,
+  "minimum_sampled_physical_gib": 7.593910217285156,
+  "minimum_sampled_commit_gib": 4.995174407958984,
+  "guard": null,
+  "exit_code": 0,
+  "checkpoint_post_sha256": "ca3531dbbdeec1e1ff3f5300ab236d3d529b413eb7fe89769a174def07f37ecd",
+  "stdout": "Warning, cannot find cuda-compiled version of RoPE2D, using a slow pytorch version instead\r\n{\"status\": \"complete\", \"total_input_frames\": 901, \"total_planned_windows\": 225, \"completed_windows\": 225, \"last_processed_frame\": 900, \"unprocessed_frame_indices\": [], \"upstream_window_overlap\": 4, \"tail_window\": [893, 894, 895, 896, 897, 898, 899, 900], \"tail_is_explicit_extension\": true, \"upstream_recover_trajectory\": true, \"synthetic_aggregation_fixture\": \"passed\", \"hash_checkpoint_before_after\": \"ca3531dbbdeec1e1ff3f5300ab236d3d529b413eb7fe89769a174def07f37ecd\", \"hash_video_before_after\": \"0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e\", \"png_pixel_binding_count\": 41, \"forward_first_two_s\": [1.984000000054948, 0.0470000000204891], \"forward_mean_after_first_two_s\": 0.04648430493134053, \"elapsed_s\": 40.20299999997951, \"max_gpu_allocated_bytes\": 1224280064, \"max_gpu_reserved_bytes\": 1264582656, \"limits\": \"Experimental camera trajectory in learned model units, no metric validation, no route or execution qualification; FP16 not proven equivalent FP32; confidence not calibrated.\"}\r\n",
+  "stderr": null
+}

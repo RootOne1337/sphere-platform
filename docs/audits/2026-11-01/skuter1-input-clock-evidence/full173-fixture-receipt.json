@@ -1,0 +1,45 @@
+{
+  "mode": "COMPONENT_FIXTURE_NOT_IAB_ACCEPTANCE",
+  "screenshot": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\skuter1-full-route-20261101.png",
+  "screenshot_sha256": "c395b4cab51a214212f34b2470d75ccd3858d8e2bb1a803700be845202cbd346",
+  "inputs": {
+    "mode": "COMPONENT_FIXTURE_NOT_IAB_ACCEPTANCE",
+    "render": "Actual React SSR RouteGeometryMap; no hydration; static canvas populated with same project projection/layout and depth colors",
+    "geometry_sha256": "52088388dc0097b9bfdbc24a60aa51b858fef35845424c989198e4b6d3f45140",
+    "component_sha256": "55a0fc964ed6b6720023589c95f85c761427eb80eda89548d507b01373594d1e",
+    "projection_sha256": "6168718939a4d225065430cfdf58ad2d73e7b85e8b4f3bf544c733959e9c0aec",
+    "frame_sha256": [
+      "5590757b15ab96799acd70df13a196480d10c4ee2b40b62fcdf40eaa7812424a",
+      "2b9e41849cc05e2a588a1f20f5a003dacae122f068b5a10de167620eb0f1f3c6"
+    ],
+    "css": [
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\343d268372e978c3.css",
+        "sha256": "060dd6d743cf8de3061f78412d14a6b74012e094c8d58be23cfdd5fc9d6561e8"
+      },
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\44c801311a9d7b2d.css",
+        "sha256": "e9a6af9c76b9641e5e51167c548e615346ac6db837325de6342eeba27ed995ea"
+      },
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\599369d853c61df7.css",
+        "sha256": "dae1c1338c9a6d70787063786e64b9ffe238de67379ad80f2827c60aa90fddd1"
+      },
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\ee1c600aa5123b7f.css",
+        "sha256": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855"
+      }
+    ],
+    "cameras": 173,
+    "points": 9987,
+    "shown_points": 2478,
+    "execution_qualified": false
+  },
+  "visual_inspected": true,
+  "browser_closed": true,
+  "owned_server_stopped": true,
+  "hydration": false,
+  "click_testing": false,
+  "application_acceptance": false,
+  "physical_actions": 0
+}

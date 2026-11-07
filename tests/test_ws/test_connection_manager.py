@@ -54,8 +54,8 @@ class TestConnectionManager:
         # нужно уступить event loop чтобы задача успела выполниться.
         await asyncio.sleep(0)
 
-        # Старое соединение должно было получить close с code 4001
-        ws1.close.assert_called_once_with(code=4001, reason="replaced_by_new_connection")
+        # Replacement is a normal session transition, not an authentication rejection.
+        ws1.close.assert_called_once_with(code=4009, reason="replaced_by_new_connection")
         # Новое соединение активно
         assert manager.is_connected("dev-1")
         assert manager.total_connections == 1

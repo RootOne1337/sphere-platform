@@ -1,0 +1,60 @@
+{
+  "model_dir": ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0",
+  "image": "00000026.png",
+  "image_id": 6,
+  "counts": {
+    "old_observations_len_ge3": 1301,
+    "old_unique_points_len_ge3": 1149,
+    "new_unique_points_distinct_ge3": 1148,
+    "old_observations_from_lt3_distinct": 1,
+    "duplicate_this_image_observations": 152,
+    "tracks_duplicate_any_image": 358
+  },
+  "examples": [
+    {
+      "point_id": 24426,
+      "elements": 9,
+      "distinct_images": 7,
+      "this_image_observations": 2
+    },
+    {
+      "point_id": 23389,
+      "elements": 7,
+      "distinct_images": 6,
+      "this_image_observations": 2
+    },
+    {
+      "point_id": 25121,
+      "elements": 5,
+      "distinct_images": 4,
+      "this_image_observations": 2
+    },
+    {
+      "point_id": 24394,
+      "elements": 9,
+      "distinct_images": 8,
+      "this_image_observations": 2
+    },
+    {
+      "point_id": 98814,
+      "elements": 11,
+      "distinct_images": 9,
+      "this_image_observations": 2
+    }
+  ],
+  "hashes_before": {
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\cameras.bin": "e10041b6bb0fb81d67475f8f0d0567bb942e0944f574b1db930c2a27a2b8c11f",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\frames.bin": "59aa381e12b831227426b9841cb104b6f707cbf2909d4da78cfa3e44870f7a8d",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\images.bin": "2e9b18de8d5756c18a361f035ed0fb82069a790b7322cfbebfe00ca84f6051fc",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\points3D.bin": "596162f2859f3fadea88b27e8ce96756bdd8fbf756035833df187239ae9322ad",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+  },
+  "hashes_after": {
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\cameras.bin": "e10041b6bb0fb81d67475f8f0d0567bb942e0944f574b1db930c2a27a2b8c11f",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\frames.bin": "59aa381e12b831227426b9841cb104b6f707cbf2909d4da78cfa3e44870f7a8d",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\images.bin": "2e9b18de8d5756c18a361f035ed0fb82069a790b7322cfbebfe00ca84f6051fc",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\points3D.bin": "596162f2859f3fadea88b27e8ce96756bdd8fbf756035833df187239ae9322ad",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+  },
+  "unchanged": true
+}

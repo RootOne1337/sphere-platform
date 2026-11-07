@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T23:16:31.388835+00:00",
+  "scope": "PH010 owned ordinary Chrome with an automation-only exact Windows mDNS discovery adapter; API integration not yet installed",
+  "installed": {
+    "ui": "6e6381f1a72f85739788e452a96e135c88f8059c",
+    "api": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+    "apkVersionCode": 10259
+  },
+  "browser": {
+    "numericIceOverride": false,
+    "automationOnlySdpAdapter": true,
+    "defaultUserTabModified": false,
+    "observedAtUtc": "2026-10-11T23:14:29.006Z",
+    "video": {
+      "framesDecoded": 30672,
+      "framesReceived": 30673,
+      "framesDropped": 0,
+      "framesPerSecond": 29,
+      "freezeCount": 0,
+      "packetsLost": 0,
+      "bytesReceived": 405267124
+    },
+    "nativeGestureEventsConfirmed": 14,
+    "nativeUpConfirmed": true,
+    "serverTouchEvents": 0,
+    "controlTransport": "direct_datachannel",
+    "videoTransport": "direct_webrtc"
+  },
+  "discovery": {
+    "hostOwnNameResolved": true,
+    "nativeDiagnosticOwnNameResolved": false,
+    "nativeMulticastLockUsed": true,
+    "nativeMulticastLockReleased": true,
+    "nativeDiagnosticScope": "One local ADB emulator network, not a fleet mDNS acceptance",
+    "queryQuestions": 1,
+    "hostMulticastResponsesReceived": true,
+    "rawPacketsRetained": false,
+    "canonicalHelperReachableFromOwnedApi": true,
+    "canonicalHelperMediaRelay": false
+  },
+  "productionAccepted": false,
+  "unmodifiedBrowserRuntimeInstalled": false,
+  "lanAccepted": false,
+  "wanAccepted": false,
+  "closestLocalRouteAccepted": false,
+  "physicalNetworkSwitchAccepted": false
+}

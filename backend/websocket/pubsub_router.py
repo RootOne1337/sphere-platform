@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import secrets
+import time
 
 import structlog
 from fastapi import HTTPException
@@ -14,6 +16,7 @@ from backend.websocket.channels import ChannelPattern
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
 
 logger = structlog.get_logger()
+INTERACTIVE_COMMAND_ID = re.compile(r"interactive_[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}")
 
 
 class PubSubRouter:
@@ -74,16 +77,33 @@ class PubSubRouter:
             return
         backoff = 1.0
         max_backoff = 30.0
+        recovery_needed = False
         while True:
             try:
+                # Keep recovery pending until EVERY subscription is restored.
+                # A failed first subscribe leaves subscribed=False; a partial
+                # restore may stay live forever while silently missing channels.
+                if recovery_needed:
+                    await self._pubsub.aclose()
+                    self._pubsub = self.redis.pubsub()
+                    for ch in list(self._subscribed_channels):
+                        await self._pubsub.subscribe(ch)
+                    recovery_needed = False
+                    logger.info("PubSub listen loop restarted", channels=len(self._subscribed_channels))
+
                 # FIX: если нет подписок — ждём, иначе listen() вернётся немедленно
                 # и while True образует CPU spinloop без единого await, блокируя event loop.
                 if not self._pubsub.subscribed:
                     await asyncio.sleep(1.0)
                     continue
 
-                async for message in self._pubsub.listen():
-                    if message["type"] != "message":
+                while self._pubsub.subscribed:
+                    # The shared client has a 5 s request socket timeout.
+                    # Blocking listen() reconnects on ordinary command silence,
+                    # briefly removing subscriptions and losing live controls.
+                    # A bounded Pub/Sub poll waits without resetting the socket.
+                    message = await self._pubsub.get_message(timeout=1.0)
+                    if message is None or message["type"] != "message":
                         continue
 
                     channel: str = message["channel"]
@@ -97,6 +117,7 @@ class PubSubRouter:
             except asyncio.CancelledError:
                 return
             except Exception as e:
+                recovery_needed = True
                 logger.error(
                     "PubSub listen loop crashed — restarting",
                     error=str(e),
@@ -104,24 +125,23 @@ class PubSubRouter:
                 )
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, max_backoff)
-                # Re-create pubsub connection after crash
-                try:
-                    if self._pubsub:
-                        await self._pubsub.aclose()
-                    self._pubsub = self.redis.pubsub()
-                    # Re-subscribe to all channels
-                    for ch in list(self._subscribed_channels):
-                        await self._pubsub.subscribe(ch)
-                    logger.info("PubSub listen loop restarted", channels=len(self._subscribed_channels))
-                except Exception as re_err:
-                    logger.error("PubSub reconnect failed", error=str(re_err))
 
     async def _route_message(self, channel: str, data: bytes | str) -> None:
         # MED-7: removeprefix() вместо split(":")[-1] — безопасно для device_id вида "192.168.1.1:5555"
         if channel.startswith("sphere:agent:cmd:"):
             device_id = channel.removeprefix("sphere:agent:cmd:")
             msg = json.loads(data) if isinstance(data, (bytes, str)) else data
-            await self.manager.send_to_device(device_id, msg)
+            if isinstance(msg, dict) and msg.get("type") == "_ota_recovery_wake":
+                from backend.services.ota_delivery import dispatch_ota_wake
+                await dispatch_ota_wake(self.manager, device_id, msg)
+                return
+            started = time.monotonic()
+            delivered = await self.manager.send_to_device(device_id, msg)
+            command_id = msg.get("command_id") if isinstance(msg, dict) else None
+            if isinstance(command_id, str) and INTERACTIVE_COMMAND_ID.fullmatch(command_id):
+                logger.info("interactive_rpc.forwarded", command_id=command_id,
+                            device_id=device_id, socket_send_completed=delivered,
+                            elapsed_ms=max(0, int((time.monotonic() - started) * 1000)))
 
         elif channel.startswith("sphere:org:events:"):
             org_id = channel.removeprefix("sphere:org:events:")
@@ -216,41 +236,91 @@ class PubSubPublisher:
         device_id: str,
         command: dict,
         timeout: float = 30.0,
+        *,
+        live_only: bool = False,
+        accept_progress: bool = False,
     ) -> dict:
         """
         Отправить команду и ждать ответ.
         Если устройство offline — возвращает 503, не ждёт timeout впустую.
         Использует временный канал sphere:agent:result:{device_id}:{command_id}.
         """
-        command_id = command.setdefault("id", secrets.token_hex(8))
+        command_id = command.setdefault("command_id", command.get("id") or secrets.token_hex(8))
         result_channel = f"sphere:agent:result:{device_id}:{command_id}"
 
         # Подписаться ДО публикации во избежание race condition
         ps = self.redis.pubsub()
-        await ps.subscribe(result_channel)
-
+        started = time.monotonic()
+        phase, outcome = "subscribe", "error"
+        published = False
+        progress_count = 0
+        first_progress_ms: int | None = None
+        last_progress: str | None = None
+        # Only server-created interactive UUIDs enter this diagnostic stream.
+        # Never log command payload, outputs, remote error text or result data.
+        diagnostic = isinstance(command_id, str) and INTERACTIVE_COMMAND_ID.fullmatch(command_id) is not None
+        cleanup_outcome = "closed"
         try:
-            success, was_queued = await self._send_command_inner(device_id, command)
-            if not success:
-                raise HTTPException(503, f"Device '{device_id}' is offline and queue unavailable")
-            if was_queued:
-                raise HTTPException(
-                    503,
-                    f"Device '{device_id}' is offline — command queued for delivery on reconnect",
-                )
-
-            loop = asyncio.get_running_loop()
-            deadline = loop.time() + timeout
-            async for msg in ps.listen():
-                if msg["type"] == "message":
-                    return json.loads(msg["data"])
-                if loop.time() > deadline:
-                    raise asyncio.TimeoutError()
+            async with asyncio.timeout(timeout):
+                await ps.subscribe(result_channel)
+                # subscribe() writes the command; wait for Redis to confirm it
+                # before another connection can publish a very fast result.
+                async for message in ps.listen():
+                    if message["type"] == "subscribe":
+                        break
+                phase = "publish"
+                if live_only:
+                    success, was_queued = await self.send_command_live(device_id, command), False
+                else:
+                    success, was_queued = await self._send_command_inner(device_id, command)
+                if not success:
+                    raise HTTPException(503, f"Device '{device_id}' command channel is unavailable")
+                if was_queued:
+                    raise HTTPException(
+                        503,
+                        f"Device '{device_id}' is offline — command queued for delivery on reconnect",
+                    )
+                published = True
+                phase = "await_result"
+                async for msg in ps.listen():
+                    if msg["type"] == "message":
+                        result = json.loads(msg["data"])
+                        if result.get("status") in {"received", "running"}:
+                            progress_count = min(progress_count + 1, 1000)
+                            last_progress = result["status"]
+                            if first_progress_ms is None:
+                                first_progress_ms = max(0, int((time.monotonic() - started) * 1000))
+                        if accept_progress or result.get("status") not in {"received", "running"}:
+                            state = result.get("status")
+                            outcome = state if state in {"completed", "failed", "received", "running"} else "invalid_result"
+                            return result
+                outcome = "no_response"
         except asyncio.TimeoutError:
+            outcome = "timeout"
             raise HTTPException(504, f"Command timeout after {timeout}s")
+        except HTTPException as exc:
+            outcome = "unavailable" if exc.status_code == 503 else "http_error"
+            raise
+        except asyncio.CancelledError:
+            outcome = "cancelled"
+            raise
         finally:
-            await ps.unsubscribe(result_channel)
-            await ps.aclose()
+            # Closing the dedicated connection drops its subscriptions without
+            # an extra round trip that could hang during a network outage.
+            elapsed_ms = max(0, int((time.monotonic() - started) * 1000))
+            try:
+                async with asyncio.timeout(2):
+                    await ps.aclose()
+            except Exception:
+                # A failed connection close must not replace a completed result
+                # or the original 503/504. No automatic command resend follows.
+                cleanup_outcome = "unconfirmed"
+            if diagnostic:
+                logger.info("interactive_rpc.finished", command_id=command_id,
+                            device_id=device_id, outcome=outcome, wait_phase=phase,
+                            published=published, live_only=live_only, elapsed_ms=elapsed_ms,
+                            progress_count=progress_count, first_progress_ms=first_progress_ms,
+                            last_progress=last_progress, subscription_cleanup=cleanup_outcome)
 
         raise HTTPException(504, "No response received")
 

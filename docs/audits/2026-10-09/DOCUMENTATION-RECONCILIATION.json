@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-10-09 Asia/Yekaterinburg",
+  "sourceReviewed": "f79de04725deebd1c04a45bb2038ca145c42a1d3",
+  "scope": "Documentation and consistency automation; no rollout, new Android actions, task run, cleanup or observer start.",
+  "effectiveRegistry": "docs/operations/STATUS-REGISTRY.json",
+  "inventory": "docs/operations/DOCUMENT-INVENTORY.json",
+  "coverage": {
+    "markdown": 388,
+    "currentEntrypoints": 8,
+    "operatingGuides": 63,
+    "datedEvidence": 224,
+    "designSpecifications": 74,
+    "adr": 6,
+    "projectPolicies": 7,
+    "supportingDocuments": 6,
+    "chatRequirements": 15,
+    "scope": "Classification/navigation scan; not sentence-by-sentence semantic certification. Local inline paths only; anchors/reference links/external URLs and execution of runbooks not attested."
+  },
+  "counts": {
+    "productAcceptedRecordedScope": 9,
+    "productOpen": 41,
+    "legacySourceFixed": 34,
+    "legacyUnclosed": 7,
+    "legacyPartial": 3,
+    "legacyOpen": 4,
+    "legacyCountsAreNotAdditionalProductItems": true
+  },
+  "runtimeObservation": {
+    "observedUtc": "2026-10-08T23:10:38.3997504Z",
+    "uiContainer": "0880bfe04f7b83201e9c66fd0ec6e0c629fff7ba941ba5cc7583d49602c17d48",
+    "apiContainer": "1b45b96a26d892482bcce80fd9445d5d57d5b4c187cfd6550994286b7798bffe",
+    "ui": "ec3f22678f20c16c221d4e2d02810d4f8122e6af",
+    "api": "be803773037c16a113b50c1a2774793fffae8773",
+    "sameContainerImagesAndStartupTimes": true,
+    "scope": "Read-only Docker inspect, not new stream/input canary.",
+    "visibleMatchingCollectorProcesses": 0,
+    "collectorCheckScope": "Visible process command lines, no privileged kernel evidence.",
+    "continuousCoverageConfirmed": false,
+    "oneFreeDiskReadingBytes": 50563411968
+  },
+  "schema": {
+    "exportedFrom": "installed API be803773 app.openapi, without lifespan hooks",
+    "sameCanonicalJsonAsCommitted": true,
+    "operations": 182,
+    "paths": 144,
+    "canonicalSha256": "488e804a84f62de7c81313b14d5e2dfca522c630d2583b0712c9399950950968",
+    "localGatewaySchemaGet": {
+      "url": "http://127.0.0.1:18080/openapi.json",
+      "httpStatus": 404
+    },
+    "httpActionExecutionProven": false
+  },
+  "checks": {
+    "unittestRegressions": 15,
+    "scopedRuff": "passed",
+    "fullApplicationSuitesRepeated": false,
+    "applicationSuiteReason": "No frontend/backend/APK implementation change in this checkpoint.",
+    "ciRevision": "f79de04725deebd1c04a45bb2038ca145c42a1d3",
+    "ci": {
+      "frontend": {
+        "runId": 37856889527,
+        "conclusion": "success",
+        "headSha": "f79de04725deebd1c04a45bb2038ca145c42a1d3",
+        "status": "completed",
+        "updatedAt": "2026-10-08T23:02:56Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37856889527"
+      },
+      "backend": {
+        "runId": 37856889502,
+        "conclusion": "success",
+        "headSha": "f79de04725deebd1c04a45bb2038ca145c42a1d3",
+        "status": "completed",
+        "updatedAt": "2026-10-08T23:17:12Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37856889502"
+      },
+      "android": {
+        "runId": 37856889561,
+        "conclusion": "success",
+        "headSha": "f79de04725deebd1c04a45bb2038ca145c42a1d3",
+        "status": "completed",
+        "updatedAt": "2026-10-08T23:13:48Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37856889561"
+      },
+      "preview": {
+        "runId": 37856889489,
+        "conclusion": "success",
+        "headSha": "f79de04725deebd1c04a45bb2038ca145c42a1d3",
+        "status": "completed",
+        "updatedAt": "2026-10-08T23:00:05Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37856889489"
+      }
+    },
+    "followingRevisionHasSeparateCi": true
+  },
+  "remaining": {
+    "clockFix1577Installed": false,
+    "idleReceiptFailure": "OPEN",
+    "globalControlArbitration": "OPEN",
+    "continuousTrajectoryRecorder": "OPEN",
+    "automaticContextBundle": "OPEN",
+    "hostWriterAfterDeadline": "UNKNOWN",
+    "directMedia": "DEFERRED_DESIGN",
+    "ep049": "OPEN"
+  },
+  "oldDatedReceiptsModified": false
+}

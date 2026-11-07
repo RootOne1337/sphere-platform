@@ -10,7 +10,7 @@ import com.sphereplatform.agent.workers.KeepAliveWorker
 import timber.log.Timber
 
 /**
- * ServiceWatchdog — гарантирует что [SphereAgentService] ВСЕГДА запущен после enrollment.
+ * ServiceWatchdog — best-effort recovery request for [SphereAgentService] after enrollment.
  *
  * Механизм:
  *   - [AlarmManager.setInexactRepeating] каждые 5 минут (ELAPSED_REALTIME_WAKEUP)
@@ -20,8 +20,8 @@ import timber.log.Timber
  * Зачем это нужно (помимо START_STICKY + BootReceiver):
  *   - START_STICKY не гарантирует перезапуск при aggressive battery optimization
  *   - Некоторые OEM (Xiaomi, Huawei, Samsung) убивают foreground service агрессивнее
- *   - AlarmManager работает даже после force-stop на большинстве прошивок
- *   - Двойная/тройная защита: BootReceiver + START_STICKY + AlarmManager = 100% uptime
+ *   - Alarm delivery is inexact and subject to Doze, OEM policy and force-stop.
+ *   - BootReceiver + START_STICKY + AlarmManager improve recovery but cannot guarantee uptime.
  *
  * ВАЖНО: Вызов startForegroundService обёрнут в try-catch чтобы не допустить
  * ForegroundServiceStartNotAllowedException на Android 12+ (API 31).

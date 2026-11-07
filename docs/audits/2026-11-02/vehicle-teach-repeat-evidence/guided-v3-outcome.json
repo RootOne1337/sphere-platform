@@ -1,0 +1,110 @@
+{
+  "status": "completed_map_support_passes_but_live_drive_unproven",
+  "method": "global-2nn-ratio-before-known-sampson-conflict-free-v2",
+  "schemaVersion": "sphere-guided-runtime-landmark-build-v2",
+  "modelSource": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\track-filter-ba-20261102-v2\\supported-3view-20261102-v1\\model",
+  "canonicalMapSupportPassed": true,
+  "sourceEndpointsObserved": true,
+  "routeSha256": "75244ca44fd029d6e10e22d274be5c156e5ad0821cc852760f61ffe217f4697c",
+  "landmarks": 3059,
+  "cameras": 173,
+  "unsupportedNeighborhoods": 0,
+  "minimumNeighborhoodSupport": 25,
+  "counts": {
+    "confirming": 29,
+    "localized": 66,
+    "unknown": 64
+  },
+  "queries": 159,
+  "localizedFraction": 0.41509433962264153,
+  "computeMs": {
+    "p50": 127.8854999691248,
+    "p95": 212.01218996429807,
+    "maximum": 1518.303900025785
+  },
+  "computeFreshnessLowerBound": {
+    "receiver_age_budget_ms": 250,
+    "scope": "compute_only_lower_bound",
+    "samples_exceeding_budget": 5,
+    "localized_samples_exceeding_budget": 2
+  },
+  "timestampAliasRiskNotGroundTruth": [
+    {
+      "seconds": 6.609,
+      "segment_start_seconds": 14.235,
+      "segment_end_seconds": 14.435,
+      "time_offset_seconds": 7.6259999999999994,
+      "state": "confirming",
+      "source_index": 179,
+      "inliers": 27,
+      "reason": "relative_camera_pose_not_clearance_or_arrival"
+    }
+  ],
+  "sourceUnchanged": true,
+  "runtimeSourcesUnchanged": true,
+  "fairness": {
+    "queryIndicesEqualToBaseline": true,
+    "queryIndicesEqualToV2": true,
+    "referenceRGBHashesEqual": true,
+    "referenceIndicesEqual": true,
+    "KEqual": true,
+    "cameraTraceEqual": true,
+    "sourceBindingsEqual": true,
+    "pipelineEqual": true,
+    "profileExceptRevisionEqual": true,
+    "actualFreshFeatureArrayHashesEqualToV2": true
+  },
+  "successfulAttemptWallSeconds": 110.70299999997951,
+  "previousIncompleteLoggingAttemptSeconds": 54.125,
+  "previousNegativeAttemptSeconds": 107.781,
+  "threeAttemptsWallSeconds": 272.6089999999795,
+  "freshExtractionsAcrossGuidedAttempts": 3,
+  "isResume": false,
+  "algorithmTrialLastInBatch": true,
+  "builderTiming": {
+    "wallSeconds": 50.18415400001686,
+    "resourceCallbackCalls": 10624,
+    "resourceCallbackWallSeconds": 30.28469639865216,
+    "evidenceIoWallSeconds": 0.9339581994572654,
+    "wallExcludingResourceCallbacks": 19.899457601364702,
+    "isRealtimeBenchmark": false
+  },
+  "callbackMetrics": {
+    "callbackCalls": 10669,
+    "cumulativeGuardWallSeconds": 31.976870398502797,
+    "evidenceIoWallSeconds": 0.9829305994790047,
+    "guardWallExcludingEvidenceIo": 30.993939799023792,
+    "byPhase": {
+      "export": {
+        "calls": 10661,
+        "wallSeconds": 31.92648539855145
+      },
+      "localization": {
+        "calls": 8,
+        "wallSeconds": 0.05038499995134771
+      }
+    },
+    "persistedSamples": 126,
+    "maxEvidenceRateHz": 2.0,
+    "checksStillEveryCallback": true,
+    "isRealtimeBenchmark": false
+  },
+  "peakSampledPrivateBytes": 298803200,
+  "minAvailableRamGiB": 10.454570770263672,
+  "exportReceiptBytes": 10386,
+  "provenance": {
+    "file": "guided-provenance.json.gz",
+    "sha256": "23df10539cc8c9ccebc208b0ef5e8723a2ee627647d7486396c959282fe430e7",
+    "bytes": 118168,
+    "uncompressedBytes": 451337,
+    "selectedLandmarks": 3059
+  },
+  "productionApiTouched": false,
+  "sourceJobModified": false,
+  "mapPublished": false,
+  "httpFixtureCreated": false,
+  "navigationPromoted": false,
+  "independentGameplayTested": false,
+  "physicalActions": 0,
+  "executionQualified": false
+}

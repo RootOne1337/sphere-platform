@@ -1,0 +1,12 @@
+{
+  "baseline_sha": "bcec5cdcc653abe1e76eeeba3ba014d84a6a78e5",
+  "state": "startup-sequence-after",
+  "totals": {
+    "tests": 65,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [],
+  "boundary": "Full shipped PS main and Bash preamble/main with process Docker state model. Host Python beyond --version and HTTP are intercepted. Real Compose rendering + actual probe expressions with HTTP doubles. No daemon/API/SQL startup."
+}

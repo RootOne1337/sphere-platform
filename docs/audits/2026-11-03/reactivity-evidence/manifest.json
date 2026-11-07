@@ -1,0 +1,243 @@
+{
+  "schema": "sphere-route-reactivity-public-evidence-v1",
+  "textHashConvention": "UTF-8 LF text; PNG raw bytes; embedded private source hashes retain original producer bytes",
+  "physicalActions": 0,
+  "executionQualified": false,
+  "files": [
+    {
+      "name": "backend-runtime.json",
+      "bytes": 511,
+      "sha256": "7766c61b07303f815856f48304eb5f7907895aa6f0d9696d2e726bfa3ed68e31"
+    },
+    {
+      "name": "completed-attempt-retained-source.png",
+      "bytes": 422352,
+      "sha256": "be843c37a9fd08338af22d5be251822ac4c31d6be2ca2aed1d2abb3a7b88e019"
+    },
+    {
+      "name": "completed-prior-173-opened.png",
+      "bytes": 435818,
+      "sha256": "92e5098ecdd1da8445dc2c5f158885924bab7e58279adbe7db64489b12ed0134"
+    },
+    {
+      "name": "completed-prior-browser-evidence.json",
+      "bytes": 3607,
+      "sha256": "d2c092a7e74758165abd03dad833a9bd3a7555d28e039e799c80a7d5d4ccc08e"
+    },
+    {
+      "name": "corrective-browser-evidence.json",
+      "bytes": 3709,
+      "sha256": "6715e0b6dfbd48c5373ff08711aa42b1eabc38e5104d4573c23a34d9a8e6e6cf"
+    },
+    {
+      "name": "failed-attempt-retained-source.png",
+      "bytes": 347179,
+      "sha256": "f172bc9616b6ab43b6f5b235a6b48ebfca4cce497e5c2db7c49fda7d0a65c162"
+    },
+    {
+      "name": "final-backend-runtime.json",
+      "bytes": 518,
+      "sha256": "af1d2884406d6eb33508a11a532238cdf5f9877ac78bd370e236f470bd8cf3cc"
+    },
+    {
+      "name": "final-web-runtime.json",
+      "bytes": 5388,
+      "sha256": "e4bdee18086a2e773db3e7ab919c1b8220ea61d44ed6a79a177bcf0a4d0a3f7e"
+    },
+    {
+      "name": "geometry-comparison-v2.png",
+      "bytes": 426575,
+      "sha256": "13fad42562267032968a7ac421c7e3b20c71355fd7c37a8ee22820cc5e85c702"
+    },
+    {
+      "name": "good-lightglue-producer-chain.json",
+      "bytes": 7747,
+      "sha256": "fb323714703b1ec49ed8cd4fafb2a738df0d52d61909013204405cd751d7d5e5"
+    },
+    {
+      "name": "good-model-method-comparison-correction.json",
+      "bytes": 9946,
+      "sha256": "73170da283d3353c86f8d3ed0eb1f68881fb00ea06e69614434d380067f4e2f1"
+    },
+    {
+      "name": "good-model-method-comparison.json",
+      "bytes": 9413,
+      "sha256": "78380db9d4a1fb37543ed440d0d6876a1be696d4a5c31e825bccea8125f0e5d3"
+    },
+    {
+      "name": "historical-reactivity-summary.json",
+      "bytes": 8924,
+      "sha256": "2b2c2aa0fe1876d3836a73544bd9fde2fa2c49084351b22c7bb8f3f7a31291eb"
+    },
+    {
+      "name": "historical-review-preference-restored.json",
+      "bytes": 19670,
+      "sha256": "fc7e3af8cdcc8d147e8783a05db34f950138037f86211eaf6bd341b33a6d1c89"
+    },
+    {
+      "name": "independent-pair-check-v2.png",
+      "bytes": 885478,
+      "sha256": "41a3bd73aa1f755096164a1239aedb40f7ecb8b637932f47f9055eb35600cf3a"
+    },
+    {
+      "name": "interactive-map-browser.json",
+      "bytes": 7623,
+      "sha256": "8ea5383682fbc2c3910e1ee30cb93a2ca9fa74a0b5e00b8b51ca55a533029501"
+    },
+    {
+      "name": "interactive-map-mobile.png",
+      "bytes": 253069,
+      "sha256": "dbb0f759350493dd99bf548d43a7520f8d3a6b7bc76f4303af5359be4f3bc854"
+    },
+    {
+      "name": "interactive-map-ordinary.png",
+      "bytes": 442824,
+      "sha256": "8e65e01bb993fd7f270b31bd72cc67e8c1532c3ea04de62b08566577b16110fb"
+    },
+    {
+      "name": "interactive-map-zoom-pan.png",
+      "bytes": 472088,
+      "sha256": "fc638547c65a3447e93fd9e86a573f86e1a063e8e08757dbc28464fac87bc157"
+    },
+    {
+      "name": "isolated-decoder-verification.json",
+      "bytes": 1520,
+      "sha256": "0578c3323dc108d75042e6d0f8c03d6de4d84d6fda03d1153146ee73cb71eece"
+    },
+    {
+      "name": "lightglue-common-pair-diagnostics.json",
+      "bytes": 4172,
+      "sha256": "f55e20c800398451bbf8673e69681ac1892ca79bfcc53174bc7503176f6fe544"
+    },
+    {
+      "name": "lightglue-diagnostic-catalog-publication.json",
+      "bytes": 5309,
+      "sha256": "42cae7b81308baa47fceee7e2b61510417d5e95f92a5fe83639d249db337104a"
+    },
+    {
+      "name": "lightglue-native-finalization.json",
+      "bytes": 3136,
+      "sha256": "d26e950488198a09eb5d79a0d6ae0b3159f54bf2e0dd5183eed39613569bed38"
+    },
+    {
+      "name": "lightglue-native-runtime-replay.json",
+      "bytes": 7179,
+      "sha256": "d2b9aeaea3fce9da76ddd776c3691b24f22036483a541cbc4d1be80e3cc5e2fd"
+    },
+    {
+      "name": "lightglue-three-model-comparison.json",
+      "bytes": 8114,
+      "sha256": "c4c2ea930d69c7996eb24c3cb3a0ba95ce408efe46f654f872e0acc8ac4ec692"
+    },
+    {
+      "name": "minimap-combination-disposition.json",
+      "bytes": 3441,
+      "sha256": "3d37dc8765e69b4ef03fd230dc08debc5a677db7faf18d4a55ee6a4bbb63ced4"
+    },
+    {
+      "name": "minimap-shortlist-summary.json",
+      "bytes": 2898,
+      "sha256": "77b8aa2ce5608ef4a913e6d7d92413e2cf9c1dcb4848b9b3c82172474843c7bd"
+    },
+    {
+      "name": "paired-compute-summary.json",
+      "bytes": 2618,
+      "sha256": "edf82e72f3cfee093adfb5f229dd4daa1874a2d21cf7a116f3abd7e0ecf84749"
+    },
+    {
+      "name": "paired-geometry-audit.json",
+      "bytes": 1755,
+      "sha256": "eff85541eb66981c61ba09e5221807a1fa921a13f73633d6223c6de7a028a492"
+    },
+    {
+      "name": "paired-latency.png",
+      "bytes": 127513,
+      "sha256": "c089222236447f11728f8d2e2a91cf40cd36b85fd2a4825016dde053369d5653"
+    },
+    {
+      "name": "preferred-173-direction.png",
+      "bytes": 480452,
+      "sha256": "ebf1d0bafb178ad01c0e8395a8e29b14a3ec0e09dc43bb3787a1fd4656cf7964"
+    },
+    {
+      "name": "preferred-173-scene.png",
+      "bytes": 195238,
+      "sha256": "1fe67b19275090607d46acd8188829cf2144611724ea01218cb368879ee83940"
+    },
+    {
+      "name": "preferred-baseline-restore.json",
+      "bytes": 1258,
+      "sha256": "fc6b9144bc27386449af70c9b961df57f0675906442ddb1e9a7c24c49826c295"
+    },
+    {
+      "name": "preparation-monitor-verification.json",
+      "bytes": 1988,
+      "sha256": "479bfe7f6320ce2511cc97067aad928e32228d45ec86eec5e243d317d46c317e"
+    },
+    {
+      "name": "prior-173-explicitly-opened.png",
+      "bytes": 418794,
+      "sha256": "dc68c9ed0e86b405ccf0a3fc9636f6f9cb9e916addda6cb5157207f477d13ffb"
+    },
+    {
+      "name": "quality-api-runtime.json",
+      "bytes": 5000,
+      "sha256": "04733ecb633ea7dcb312e232b31645dca13787778c5803caab5034773e8b773f"
+    },
+    {
+      "name": "quality-web-runtime.json",
+      "bytes": 6766,
+      "sha256": "9c1bcdf3d253548daa75cd0062ddcdf2781933aa6c7a92660736a0ea606f4d4c"
+    },
+    {
+      "name": "reference-lk-comparison.json",
+      "bytes": 2135,
+      "sha256": "3132a62ef66085fd9a523f638ba3bac4e73b60abd3f94749d8e439a7a7608fa5"
+    },
+    {
+      "name": "reference-lk-same159-comparison.json",
+      "bytes": 36221,
+      "sha256": "e7be4c4c82fb851ce2a0119e4e72a704ca24a196c1e10193b4610034a4f4df0c"
+    },
+    {
+      "name": "reference-lk-same159-comparison.png",
+      "bytes": 300880,
+      "sha256": "226238398a37cf50187f6e317edfce5b024963bab09bc8818de5504a9bb1cda1"
+    },
+    {
+      "name": "saved-results-browser-evidence.json",
+      "bytes": 3446,
+      "sha256": "e2c8b3ba5b00cfb072e8ff3c6fe23e898a06057423fe685dcb6ff53fe29b3fc5"
+    },
+    {
+      "name": "skuter1-three-real-routes.png",
+      "bytes": 1251719,
+      "sha256": "7a58c27b60377e4348465ea80e1ad5bb79f3068caac180db943f08bb00e974ef"
+    },
+    {
+      "name": "source-mismatch-refused.png",
+      "bytes": 31809,
+      "sha256": "720898232fe2dc36d061d1746d8cf283d109366d89fbab94ad648e2d30c976b6"
+    },
+    {
+      "name": "source-motion-product-verification.json",
+      "bytes": 1235,
+      "sha256": "e1e3dc6e37b740e400a2d8bb84a4c58b1e8e98a12455a3264b3d8064ca54a35f"
+    },
+    {
+      "name": "v7-result-summary.json",
+      "bytes": 1245,
+      "sha256": "9917c1ec6837c8524f77a0351905ce63e6c82df5475bbda912a89c5bfc5cbafc"
+    },
+    {
+      "name": "walking-held-contact-regression.json",
+      "bytes": 1005,
+      "sha256": "fe711b121fe8129b78b9b795b7266a5ce9e628ee379035dff6919f855768d083"
+    },
+    {
+      "name": "web-runtime.json",
+      "bytes": 963,
+      "sha256": "d03df79468acbfd95f37b5369c3025daa672c54114b9495daf0c5523eca98dca"
+    }
+  ]
+}

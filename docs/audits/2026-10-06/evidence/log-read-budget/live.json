@@ -1,0 +1,112 @@
+{
+  "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "observedAt": "2026-10-05T19:42:42.128963+00:00",
+  "targetName": "auto-ph-025",
+  "reads": [
+    {
+      "query": "tail",
+      "status": 200,
+      "returnedLines": 0,
+      "responseBytes": 404,
+      "read": {
+        "schema_version": 1,
+        "scope": "recent-file-tail",
+        "date": null,
+        "truncated": false,
+        "reasons": [],
+        "bytes_scanned": 0,
+        "scan_byte_limit": 2097152,
+        "response_lines_bytes": 2,
+        "response_byte_limit": 524288,
+        "max_line_bytes": 16384,
+        "omitted_oversized_lines": 0,
+        "files_scanned": 0,
+        "files_available": 0,
+        "max_files": 3,
+        "concurrent_reads_per_worker": 4
+      }
+    },
+    {
+      "query": "search",
+      "status": 200,
+      "returnedLines": 0,
+      "responseBytes": 404,
+      "read": {
+        "schema_version": 1,
+        "scope": "recent-file-tail",
+        "date": null,
+        "truncated": false,
+        "reasons": [],
+        "bytes_scanned": 0,
+        "scan_byte_limit": 2097152,
+        "response_lines_bytes": 2,
+        "response_byte_limit": 524288,
+        "max_line_bytes": 16384,
+        "omitted_oversized_lines": 0,
+        "files_scanned": 0,
+        "files_available": 0,
+        "max_files": 3,
+        "concurrent_reads_per_worker": 4
+      }
+    },
+    {
+      "query": "invalid-date",
+      "status": 422
+    },
+    {
+      "query": "invalid-date",
+      "status": 422
+    },
+    {
+      "query": "oversized-search",
+      "status": 422
+    }
+  ],
+  "ready": true,
+  "fleetCoverage": {
+    "inventory": {
+      "state": "ready",
+      "source": "sql-active-inventory",
+      "observed_at": "2026-10-05T19:42:42.104865Z",
+      "counts": {
+        "total": 19
+      },
+      "reason": "",
+      "max_age_seconds": null
+    },
+    "presence": {
+      "state": "ready",
+      "source": "redis-presence",
+      "observed_at": "2026-10-05T19:42:42.112420Z",
+      "counts": {
+        "online": 9,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "error": 0,
+        "unknown": 5
+      },
+      "reason": "",
+      "max_age_seconds": 120
+    },
+    "android_vpn": {
+      "state": "ready",
+      "source": "android-managed-vpn-report",
+      "observed_at": "2026-10-05T19:42:42.112420Z",
+      "counts": {
+        "active": 0,
+        "inactive": 9,
+        "stale": 0,
+        "unknown": 10
+      },
+      "reason": "",
+      "max_age_seconds": 120
+    }
+  },
+  "ownLogout": 204,
+  "revokedRead": 401,
+  "deviceCommandsSent": false,
+  "logFilesCreatedDeleted": false,
+  "diskWriterIdentified": false,
+  "continuousUptimeClaimed": false
+}

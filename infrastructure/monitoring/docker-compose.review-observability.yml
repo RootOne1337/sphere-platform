@@ -1,0 +1,15 @@
+# Optional overlay for docker-compose.review.yml, supplied after that base file.
+# Use the SAME exact address in Grafana's OBS_GRAFANA_PROXY_WHITELIST.
+# The external tools network must already have an explicit IPv4 subnet.
+services:
+  review-ui:
+    networks:
+      review:
+        ipv4_address: ${SPHERE_REVIEW_UI_IP:-172.30.0.3}
+      tools:
+        ipv4_address: ${OBS_GRAFANA_PROXY_WHITELIST:?Set one reserved IPv4 proxy address}
+
+networks:
+  tools:
+    external: true
+    name: ${OBS_TOOLS_NETWORK:?Set the existing observability tools network}

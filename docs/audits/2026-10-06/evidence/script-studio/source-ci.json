@@ -1,0 +1,112 @@
+{
+  "observedAt": "2026-10-05T22:17:15.878284+00:00",
+  "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+  "runs": [
+    {
+      "conclusion": "failure",
+      "headSha": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861819",
+      "jobs": [
+        {
+          "name": "Security (bandit + pip-audit)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861819/job/111988264517"
+        },
+        {
+          "name": "RLS Policy Coverage",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861819/job/111988264736"
+        },
+        {
+          "name": "Production image bootstrap",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861819/job/111988264986"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861819/job/111988264992"
+        },
+        {
+          "name": "Tests",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861819/job/111988265092"
+        },
+        {
+          "name": "Alembic Single Head",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861819/job/111993470207"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "headSha": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861798",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861798/job/111988051630"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "headSha": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861762",
+      "jobs": [
+        {
+          "name": "Android tests and signed release smoke build",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861762/job/111988053391"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "headSha": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861765",
+      "jobs": [
+        {
+          "name": "guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861765/job/111988053518"
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37376861765/job/111988104464"
+        }
+      ]
+    }
+  ],
+  "allSourceRunsPassed": false,
+  "laterDocsHeadCiInherited": false,
+  "backendTestFailure": {
+    "test": "test_heartbeat_renews_live_owner_and_cannot_renew_expired_generation",
+    "failed": 1,
+    "passed": 2842,
+    "skipped": 30,
+    "coveragePercent": 80.17,
+    "fixedDelayDidNotEstablishRenewalCommit": true
+  }
+}

@@ -9,42 +9,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.security import create_access_token, hash_password
-from backend.database.engine import Base, get_db
+from backend.database.engine import get_db
 from backend.database.redis_client import get_redis
 from backend.main import app
 from backend.models import *  # noqa: F401,F403
 from backend.models.organization import Organization
 from backend.models.user import User
-
-
-def _patch_pg_types_for_sqlite() -> None:
-    """JSONB → JSON, INET → String(45), ARRAY → JSON, gen_random_uuid → uuid4."""
-    import uuid as _uuid
-
-    from sqlalchemy import JSON, String
-    from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-
-    for table in Base.metadata.tables.values():
-        for column in table.columns:
-            col_type = type(column.type)
-            if col_type is JSONB or col_type.__name__ == "JSONB":
-                column.type = JSON()
-            elif col_type.__name__ == "INET":
-                column.type = String(45)
-            elif col_type is ARRAY or col_type.__name__ == "ARRAY":
-                column.type = JSON()
-
-    # AuditLog.id uses server_default=gen_random_uuid() which SQLite doesn't support.
-    # Replace with a Python-side default so SQLAlchemy never calls gen_random_uuid().
-    if "audit_logs" in Base.metadata.tables:
-        audit_id_col = Base.metadata.tables["audit_logs"].c["id"]
-        audit_id_col.server_default = None
-        from sqlalchemy import ColumnDefault
-        audit_id_col.default = ColumnDefault(_uuid.uuid4)
-
-
-# Patch at import time so the root conftest's async_engine sees patched types
-_patch_pg_types_for_sqlite()
 
 
 @pytest_asyncio.fixture

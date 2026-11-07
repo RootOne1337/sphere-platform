@@ -1,0 +1,585 @@
+{
+  "source": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+  "samples": [
+    {
+      "observedAt": "2026-10-05T19:00:24.737461+00:00",
+      "requestMs": 16.0,
+      "coverage": {
+        "schema_version": 1,
+        "scope": "current-tenant-active-inventory",
+        "generated_at": "2026-10-05T19:00:24.720897Z",
+        "max_inventory_devices": 5000,
+        "inventory": {
+          "state": "ready",
+          "source": "sql-active-inventory",
+          "observed_at": "2026-10-05T19:00:24.716289Z",
+          "counts": {
+            "total": 19
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "presence": {
+          "state": "ready",
+          "source": "redis-presence",
+          "observed_at": "2026-10-05T19:00:24.720167Z",
+          "counts": {
+            "online": 14,
+            "busy": 0,
+            "connecting": 0,
+            "offline": 0,
+            "error": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "android_vpn": {
+          "state": "ready",
+          "source": "android-managed-vpn-report",
+          "observed_at": "2026-10-05T19:00:24.720167Z",
+          "counts": {
+            "active": 0,
+            "inactive": 14,
+            "stale": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "vpn_assignment": {
+          "state": "ready",
+          "source": "sql-tenant-peers",
+          "observed_at": "2026-10-05T19:00:24.716368Z",
+          "counts": {
+            "free": 0,
+            "assigned": 0,
+            "error": 0,
+            "provisioning": 0,
+            "revoking": 0,
+            "outside_active_inventory": 0
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "handshakes": {
+          "state": "ready",
+          "source": "retained-sql-handshakes",
+          "observed_at": "2026-10-05T19:00:24.716368Z",
+          "counts": {
+            "recent": 0,
+            "stale": 0,
+            "unknown": 0,
+            "inactive": 0
+          },
+          "reason": "",
+          "max_age_seconds": 180
+        },
+        "transport_tunnels": {
+          "state": "unmeasured",
+          "source": "transport-tunnel-probes",
+          "observed_at": null,
+          "counts": null,
+          "reason": "transport_probes_not_connected",
+          "max_age_seconds": null
+        }
+      },
+      "registryStatusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "registryAgreement": true,
+      "tenantScopeVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T19:00:27.763506+00:00",
+      "requestMs": 16.0,
+      "coverage": {
+        "schema_version": 1,
+        "scope": "current-tenant-active-inventory",
+        "generated_at": "2026-10-05T19:00:27.749533Z",
+        "max_inventory_devices": 5000,
+        "inventory": {
+          "state": "ready",
+          "source": "sql-active-inventory",
+          "observed_at": "2026-10-05T19:00:27.744758Z",
+          "counts": {
+            "total": 19
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "presence": {
+          "state": "ready",
+          "source": "redis-presence",
+          "observed_at": "2026-10-05T19:00:27.748950Z",
+          "counts": {
+            "online": 14,
+            "busy": 0,
+            "connecting": 0,
+            "offline": 0,
+            "error": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "android_vpn": {
+          "state": "ready",
+          "source": "android-managed-vpn-report",
+          "observed_at": "2026-10-05T19:00:27.748950Z",
+          "counts": {
+            "active": 0,
+            "inactive": 14,
+            "stale": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "vpn_assignment": {
+          "state": "ready",
+          "source": "sql-tenant-peers",
+          "observed_at": "2026-10-05T19:00:27.744822Z",
+          "counts": {
+            "free": 0,
+            "assigned": 0,
+            "error": 0,
+            "provisioning": 0,
+            "revoking": 0,
+            "outside_active_inventory": 0
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "handshakes": {
+          "state": "ready",
+          "source": "retained-sql-handshakes",
+          "observed_at": "2026-10-05T19:00:27.744822Z",
+          "counts": {
+            "recent": 0,
+            "stale": 0,
+            "unknown": 0,
+            "inactive": 0
+          },
+          "reason": "",
+          "max_age_seconds": 180
+        },
+        "transport_tunnels": {
+          "state": "unmeasured",
+          "source": "transport-tunnel-probes",
+          "observed_at": null,
+          "counts": null,
+          "reason": "transport_probes_not_connected",
+          "max_age_seconds": null
+        }
+      },
+      "registryStatusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "registryAgreement": true,
+      "tenantScopeVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T19:00:30.793056+00:00",
+      "requestMs": 16.0,
+      "coverage": {
+        "schema_version": 1,
+        "scope": "current-tenant-active-inventory",
+        "generated_at": "2026-10-05T19:00:30.776382Z",
+        "max_inventory_devices": 5000,
+        "inventory": {
+          "state": "ready",
+          "source": "sql-active-inventory",
+          "observed_at": "2026-10-05T19:00:30.771099Z",
+          "counts": {
+            "total": 19
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "presence": {
+          "state": "ready",
+          "source": "redis-presence",
+          "observed_at": "2026-10-05T19:00:30.775812Z",
+          "counts": {
+            "online": 14,
+            "busy": 0,
+            "connecting": 0,
+            "offline": 0,
+            "error": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "android_vpn": {
+          "state": "ready",
+          "source": "android-managed-vpn-report",
+          "observed_at": "2026-10-05T19:00:30.775812Z",
+          "counts": {
+            "active": 0,
+            "inactive": 14,
+            "stale": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "vpn_assignment": {
+          "state": "ready",
+          "source": "sql-tenant-peers",
+          "observed_at": "2026-10-05T19:00:30.771155Z",
+          "counts": {
+            "free": 0,
+            "assigned": 0,
+            "error": 0,
+            "provisioning": 0,
+            "revoking": 0,
+            "outside_active_inventory": 0
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "handshakes": {
+          "state": "ready",
+          "source": "retained-sql-handshakes",
+          "observed_at": "2026-10-05T19:00:30.771155Z",
+          "counts": {
+            "recent": 0,
+            "stale": 0,
+            "unknown": 0,
+            "inactive": 0
+          },
+          "reason": "",
+          "max_age_seconds": 180
+        },
+        "transport_tunnels": {
+          "state": "unmeasured",
+          "source": "transport-tunnel-probes",
+          "observed_at": null,
+          "counts": null,
+          "reason": "transport_probes_not_connected",
+          "max_age_seconds": null
+        }
+      },
+      "registryStatusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "registryAgreement": true,
+      "tenantScopeVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T19:00:33.816133+00:00",
+      "requestMs": 16.0,
+      "coverage": {
+        "schema_version": 1,
+        "scope": "current-tenant-active-inventory",
+        "generated_at": "2026-10-05T19:00:33.803412Z",
+        "max_inventory_devices": 5000,
+        "inventory": {
+          "state": "ready",
+          "source": "sql-active-inventory",
+          "observed_at": "2026-10-05T19:00:33.799925Z",
+          "counts": {
+            "total": 19
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "presence": {
+          "state": "ready",
+          "source": "redis-presence",
+          "observed_at": "2026-10-05T19:00:33.802857Z",
+          "counts": {
+            "online": 14,
+            "busy": 0,
+            "connecting": 0,
+            "offline": 0,
+            "error": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "android_vpn": {
+          "state": "ready",
+          "source": "android-managed-vpn-report",
+          "observed_at": "2026-10-05T19:00:33.802857Z",
+          "counts": {
+            "active": 0,
+            "inactive": 14,
+            "stale": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "vpn_assignment": {
+          "state": "ready",
+          "source": "sql-tenant-peers",
+          "observed_at": "2026-10-05T19:00:33.799982Z",
+          "counts": {
+            "free": 0,
+            "assigned": 0,
+            "error": 0,
+            "provisioning": 0,
+            "revoking": 0,
+            "outside_active_inventory": 0
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "handshakes": {
+          "state": "ready",
+          "source": "retained-sql-handshakes",
+          "observed_at": "2026-10-05T19:00:33.799982Z",
+          "counts": {
+            "recent": 0,
+            "stale": 0,
+            "unknown": 0,
+            "inactive": 0
+          },
+          "reason": "",
+          "max_age_seconds": 180
+        },
+        "transport_tunnels": {
+          "state": "unmeasured",
+          "source": "transport-tunnel-probes",
+          "observed_at": null,
+          "counts": null,
+          "reason": "transport_probes_not_connected",
+          "max_age_seconds": null
+        }
+      },
+      "registryStatusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "registryAgreement": true,
+      "tenantScopeVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T19:00:36.844031+00:00",
+      "requestMs": 15.0,
+      "coverage": {
+        "schema_version": 1,
+        "scope": "current-tenant-active-inventory",
+        "generated_at": "2026-10-05T19:00:36.828405Z",
+        "max_inventory_devices": 5000,
+        "inventory": {
+          "state": "ready",
+          "source": "sql-active-inventory",
+          "observed_at": "2026-10-05T19:00:36.823322Z",
+          "counts": {
+            "total": 19
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "presence": {
+          "state": "ready",
+          "source": "redis-presence",
+          "observed_at": "2026-10-05T19:00:36.827740Z",
+          "counts": {
+            "online": 14,
+            "busy": 0,
+            "connecting": 0,
+            "offline": 0,
+            "error": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "android_vpn": {
+          "state": "ready",
+          "source": "android-managed-vpn-report",
+          "observed_at": "2026-10-05T19:00:36.827740Z",
+          "counts": {
+            "active": 0,
+            "inactive": 14,
+            "stale": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "vpn_assignment": {
+          "state": "ready",
+          "source": "sql-tenant-peers",
+          "observed_at": "2026-10-05T19:00:36.823388Z",
+          "counts": {
+            "free": 0,
+            "assigned": 0,
+            "error": 0,
+            "provisioning": 0,
+            "revoking": 0,
+            "outside_active_inventory": 0
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "handshakes": {
+          "state": "ready",
+          "source": "retained-sql-handshakes",
+          "observed_at": "2026-10-05T19:00:36.823388Z",
+          "counts": {
+            "recent": 0,
+            "stale": 0,
+            "unknown": 0,
+            "inactive": 0
+          },
+          "reason": "",
+          "max_age_seconds": 180
+        },
+        "transport_tunnels": {
+          "state": "unmeasured",
+          "source": "transport-tunnel-probes",
+          "observed_at": null,
+          "counts": null,
+          "reason": "transport_probes_not_connected",
+          "max_age_seconds": null
+        }
+      },
+      "registryStatusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "registryAgreement": true,
+      "tenantScopeVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T19:00:39.866642+00:00",
+      "requestMs": 0.0,
+      "coverage": {
+        "schema_version": 1,
+        "scope": "current-tenant-active-inventory",
+        "generated_at": "2026-10-05T19:00:39.855227Z",
+        "max_inventory_devices": 5000,
+        "inventory": {
+          "state": "ready",
+          "source": "sql-active-inventory",
+          "observed_at": "2026-10-05T19:00:39.851809Z",
+          "counts": {
+            "total": 19
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "presence": {
+          "state": "ready",
+          "source": "redis-presence",
+          "observed_at": "2026-10-05T19:00:39.854653Z",
+          "counts": {
+            "online": 14,
+            "busy": 0,
+            "connecting": 0,
+            "offline": 0,
+            "error": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "android_vpn": {
+          "state": "ready",
+          "source": "android-managed-vpn-report",
+          "observed_at": "2026-10-05T19:00:39.854653Z",
+          "counts": {
+            "active": 0,
+            "inactive": 14,
+            "stale": 0,
+            "unknown": 5
+          },
+          "reason": "",
+          "max_age_seconds": 120
+        },
+        "vpn_assignment": {
+          "state": "ready",
+          "source": "sql-tenant-peers",
+          "observed_at": "2026-10-05T19:00:39.851878Z",
+          "counts": {
+            "free": 0,
+            "assigned": 0,
+            "error": 0,
+            "provisioning": 0,
+            "revoking": 0,
+            "outside_active_inventory": 0
+          },
+          "reason": "",
+          "max_age_seconds": null
+        },
+        "handshakes": {
+          "state": "ready",
+          "source": "retained-sql-handshakes",
+          "observed_at": "2026-10-05T19:00:39.851878Z",
+          "counts": {
+            "recent": 0,
+            "stale": 0,
+            "unknown": 0,
+            "inactive": 0
+          },
+          "reason": "",
+          "max_age_seconds": 180
+        },
+        "transport_tunnels": {
+          "state": "unmeasured",
+          "source": "transport-tunnel-probes",
+          "observed_at": null,
+          "counts": null,
+          "reason": "transport_probes_not_connected",
+          "max_age_seconds": null
+        }
+      },
+      "registryStatusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "registryAgreement": true,
+      "tenantScopeVerified": true
+    }
+  ],
+  "deviceCommandsSent": false,
+  "continuousUptimeClaimed": false,
+  "vpnTrafficProven": false,
+  "independentProducerProven": false,
+  "transportProbesConnected": false,
+  "buildVerified": true,
+  "resourceStates": {
+    "cpu": "ready",
+    "cpuQuota": "empty",
+    "memory": "ready",
+    "memoryLimit": "ready"
+  },
+  "httpStates": {
+    "rps": "ready",
+    "p95": "ready",
+    "serverErrors": "ready",
+    "clientErrors": "ready"
+  },
+  "ready": true,
+  "ownLogout": 204,
+  "revokedRead": 401,
+  "observedAt": "2026-10-05T19:00:39.928729+00:00"
+}

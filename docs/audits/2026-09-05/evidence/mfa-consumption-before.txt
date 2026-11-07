@@ -1,0 +1,23 @@
+FF...                                                                    [100%]
+================================== FAILURES ===================================
+___________ test_concurrent_valid_mfa_submissions_issue_one_session ___________
+tests\production\test_mfa_consumption.py:66: in test_concurrent_valid_mfa_submissions_issue_one_session
+    assert sorted(results) == [200, 401]
+E   assert [200, 200] == [200, 401]
+E
+E     At index 1 diff: 200 != 401
+E     Use -v to get more diff
+___________ test_mfa_state_expiring_after_read_cannot_issue_tokens ____________
+tests\production\test_mfa_consumption.py:86: in test_mfa_state_expiring_after_read_cannot_issue_tokens
+    assert await complete(db, ExpiringCache(), state, code) == 401
+E   assert 200 == 401
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_mfa_consumption.py::test_concurrent_valid_mfa_submissions_issue_one_session
+FAILED tests/production/test_mfa_consumption.py::test_mfa_state_expiring_after_read_cannot_issue_tokens
+2 failed, 3 passed, 1 warning in 1.63s

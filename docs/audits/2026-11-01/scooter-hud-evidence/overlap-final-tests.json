@@ -1,0 +1,9 @@
+{
+  "command": "motor-worker-venv python -m unittest discover -s tests -p test_route_overlap_sampling.py -v",
+  "passed": 14,
+  "exit_code": 0,
+  "test_source_sha256": "52edd6dd514b92b67d964769ddcd17797460714d62cafbc5bf4d42f6b1f3df80",
+  "module_source_sha256": "1cbac9fe3c94e44c472b277c456f76e120fc55d4c3b8c5ce09fe7da60658c3d5",
+  "log_sha256": "440e7a239ca235313efe7ef2fc972a6078b4b32a550e369aca51cdf194509264",
+  "production_wired": false
+}

@@ -1,0 +1,1265 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T15:30:02.348427+00:00",
+  "scope": "One diagnostic clean WSL pagecache reclaim, delayed host commit return, actual P2P shadow on PH011 and negative VLM qualification.",
+  "worker": {
+    "version": "0.7.3",
+    "sourceRevision": "3f57b3d9690247ddfd16fe9de6fb0dba682e0d3c",
+    "motorTestsPassed": 231,
+    "ruffPassed": true
+  },
+  "productionAccepted": false,
+  "resourceRecovery": {
+    "operation": "one write of1 to /proc/sys/vm/drop_caches in existing docker-desktop WSL VM",
+    "completed": true,
+    "automaticRepeat": false,
+    "syncRequested": false,
+    "slabOrAnonymousReclaimRequested": false,
+    "sameWslBoot": true,
+    "sameContainersWithoutRestart": true,
+    "containerCount": 14,
+    "beforeAtUtc": "2026-10-23T15:03:54.011336+00:00",
+    "lateAtUtc": "2026-10-23T15:07:51.514032+00:00",
+    "beforeWindows": {
+      "availableRamBytes": 10092773376,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 85898252288,
+      "commitLimitBytes": 101336473600,
+      "kernelPagedBytes": 10184364032,
+      "kernelNonpagedBytes": 5820588032,
+      "processCount": 501,
+      "handleCount": 1008786
+    },
+    "lateWindows": {
+      "availableRamBytes": 11966603264,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 70674456576,
+      "commitLimitBytes": 101336473600,
+      "kernelPagedBytes": 10187071488,
+      "kernelNonpagedBytes": 5671886848,
+      "processCount": 498,
+      "handleCount": 1006756
+    },
+    "commitReductionBytes": 15223795712,
+    "availablePhysicalIncreaseBytes": 1873829888,
+    "beforeGuestCachedBytes": 14057910272,
+    "afterGuestCachedBytes": 1135034368,
+    "lateWslPrivateBytes": 7518326784,
+    "afterHealth": {
+      "/api/v1/health": "ok",
+      "/api/v1/health/ready": "ready"
+    },
+    "initial25SecondsHadNoMeaningfulCommitReduction": true,
+    "kernelPoolLeakFixed": false,
+    "guardThresholdsChanged": false,
+    "pagefileOrWslconfigChanged": false,
+    "privateReceiptSha256": "ce64f4c97088907d2d4d133b224251b7592770447c6552ba94b2abf4bec369ca"
+  },
+  "p2pCheckpoint": {
+    "repository": "elefantai/open-p2p",
+    "revision": "de18b62bc8f9722bda64497600c38c8f7634d86b",
+    "file": "150M/checkpoint-step=00500000.ckpt",
+    "bytes": 2198488343,
+    "sha256": "2a3b43121144ca2d9c2b8aa605e313184c98ac5ef6d2c3b530c2d353d886c5bc",
+    "verifiedAfterFiniteShadow": true,
+    "bridgeDoesNotAttestWeights": true
+  },
+  "p2pShadows": [
+    {
+      "scene": "character_selection_menu",
+      "physicalActionsSent": 0,
+      "textConditioning": false,
+      "goalConditioning": false,
+      "success": true,
+      "failure": null,
+      "warmupSeconds": 14.12647520005703,
+      "responses": 125,
+      "lastInferenceWallMs": 126.70999998226762,
+      "acceptedResultTiming": {
+        "clock": "worker_monotonic_receiver_not_source_capture",
+        "meaning": "accepted_policy_results_not_android_applied_actions",
+        "measurementStarted": true,
+        "measurementClosed": true,
+        "clockReversalsIgnored": 0,
+        "elapsedSeconds": 24.854872,
+        "acceptedResults": 125,
+        "averageAcceptedHz": 5.029,
+        "requestedHz": 5,
+        "completeOneSecondWindows": 24,
+        "minimumAcceptedInCompleteWindow": 5,
+        "requiredCountPerCompleteWindow": 5,
+        "allCompleteWindowsMeetRequestedCount": true,
+        "maximumSilenceIncludingLeadingTrailingMs": 242.149,
+        "gapP50Ms": 200.828,
+        "gapP95Ms": 217.321,
+        "receiverAgeAtResultP50Ms": 149.401,
+        "receiverAgeAtResultP95Ms": 176.715,
+        "receiverAgeAtResultMaxMs": 239.711,
+        "percentileTailLimit": 128,
+        "gapTailSamples": 124,
+        "ageTailSamples": 125,
+        "sourceCaptureAgeKnown": false
+      },
+      "decodedFpsDuringMonitor": 32.878,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 9,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "cleanupConfirmed": true,
+      "postWarmupFindings": [],
+      "modelResolution": [
+        192,
+        192
+      ],
+      "workerOriginalResolution": [
+        960,
+        540
+      ],
+      "backgroundModelDownloadActive": false,
+      "weightsVerifiedAfterRun": true,
+      "privateReceiptSha256": "d1785be25bf02c7e7cca81344dea7a76cf963ea1bf39630726a08cbbac64feb7"
+    },
+    {
+      "scene": "active_gameplay",
+      "physicalActionsSent": 0,
+      "textConditioning": false,
+      "goalConditioning": false,
+      "success": true,
+      "failure": null,
+      "warmupSeconds": 9.382918699993752,
+      "responses": 124,
+      "lastInferenceWallMs": 119.37849991954863,
+      "acceptedResultTiming": {
+        "clock": "worker_monotonic_receiver_not_source_capture",
+        "meaning": "accepted_policy_results_not_android_applied_actions",
+        "measurementStarted": true,
+        "measurementClosed": true,
+        "clockReversalsIgnored": 0,
+        "elapsedSeconds": 24.80656,
+        "acceptedResults": 124,
+        "averageAcceptedHz": 4.999,
+        "requestedHz": 5,
+        "completeOneSecondWindows": 24,
+        "minimumAcceptedInCompleteWindow": 5,
+        "requiredCountPerCompleteWindow": 5,
+        "allCompleteWindowsMeetRequestedCount": true,
+        "maximumSilenceIncludingLeadingTrailingMs": 250.254,
+        "gapP50Ms": 201.266,
+        "gapP95Ms": 219.533,
+        "receiverAgeAtResultP50Ms": 154.846,
+        "receiverAgeAtResultP95Ms": 232.931,
+        "receiverAgeAtResultMaxMs": 265.505,
+        "percentileTailLimit": 128,
+        "gapTailSamples": 123,
+        "ageTailSamples": 124,
+        "sourceCaptureAgeKnown": false
+      },
+      "decodedFpsDuringMonitor": 31.438,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 9,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "cleanupConfirmed": true,
+      "postWarmupFindings": [],
+      "modelResolution": [
+        192,
+        192
+      ],
+      "workerOriginalResolution": [
+        960,
+        540
+      ],
+      "backgroundModelDownloadActive": true,
+      "weightsVerifiedAfterRun": true,
+      "privateReceiptSha256": "fecfb9119eb5dd7f261f0e95385e878adbeefa2bddd5cfd362e8baac53c80e96"
+    }
+  ],
+  "vlmProbes": [
+    {
+      "model": "Qwen3.5-0.8B",
+      "precision": "Q4_K_M + F16 vision projector",
+      "runtime": "llama.cpp b11836 Vulkan",
+      "kind": null,
+      "physicalActions": 0,
+      "gameplayAccepted": false,
+      "snapshotObservedAtUtc": "2026-10-23T15:07:20.785516+00:00",
+      "snapshotSha256": "2e7eaf422327a4917448706a32c88a07c7bbafcd63e014e59f1040472c42b7b2",
+      "sourceSize": [
+        960,
+        540
+      ],
+      "sceneCaption": null,
+      "samples": [
+        {
+          "warmup": true,
+          "goal": "left_grass",
+          "roundTripMs": 8978.704,
+          "result": {
+            "status": "not_gameplay",
+            "side": "left",
+            "x": 100,
+            "y": 1000
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 48,
+            "prompt_tokens": 1117,
+            "total_tokens": 1165,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1117,
+            "prompt_ms": 7871.377,
+            "prompt_per_token_ms": 7.046890778871979,
+            "prompt_per_second": 141.90655586690866,
+            "predicted_n": 48,
+            "predicted_ms": 1079.47,
+            "predicted_per_token_ms": 22.96744680851064,
+            "predicted_per_second": 43.53988531408932
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "left_grass",
+          "roundTripMs": 824.377,
+          "result": {
+            "status": "not_gameplay",
+            "side": "left",
+            "x": 100,
+            "y": 1000
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 48,
+            "prompt_tokens": 1117,
+            "total_tokens": 1165,
+            "prompt_tokens_details": {
+              "cached_tokens": 1113
+            }
+          },
+          "timings": {
+            "cache_n": 1113,
+            "prompt_n": 4,
+            "prompt_ms": 57.348,
+            "prompt_per_token_ms": 14.337,
+            "prompt_per_second": 69.74959893980609,
+            "predicted_n": 48,
+            "predicted_ms": 743.993,
+            "predicted_per_token_ms": 15.829638297872341,
+            "predicted_per_second": 63.17263737696456
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "right_grass",
+          "roundTripMs": 2082.801,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 48,
+            "prompt_tokens": 1128,
+            "total_tokens": 1176,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1128,
+            "prompt_ms": 860.252,
+            "prompt_per_token_ms": 0.7626347517730496,
+            "prompt_per_second": 1311.2436820838545,
+            "predicted_n": 48,
+            "predicted_ms": 1185.558,
+            "predicted_per_token_ms": 25.22463829787234,
+            "predicted_per_second": 39.64377955359417
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "destination_pin",
+          "roundTripMs": 1201.315,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 36,
+            "prompt_tokens": 1139,
+            "total_tokens": 1175,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1139,
+            "prompt_ms": 869.946,
+            "prompt_per_token_ms": 0.7637805092186128,
+            "prompt_per_second": 1309.2766677471934,
+            "predicted_n": 36,
+            "predicted_ms": 295.232,
+            "predicted_per_token_ms": 8.4352,
+            "predicted_per_second": 118.55083459787556
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "destination_pin",
+          "roundTripMs": 368.058,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 36,
+            "prompt_tokens": 1139,
+            "total_tokens": 1175,
+            "prompt_tokens_details": {
+              "cached_tokens": 1135
+            }
+          },
+          "timings": {
+            "cache_n": 1135,
+            "prompt_n": 4,
+            "prompt_ms": 49.157,
+            "prompt_per_token_ms": 12.28925,
+            "prompt_per_second": 81.37193075248693,
+            "predicted_n": 36,
+            "predicted_ms": 297.436,
+            "predicted_per_token_ms": 8.498171428571428,
+            "predicted_per_second": 117.67237321642303
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "right_grass",
+          "roundTripMs": 1944.012,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 48,
+            "prompt_tokens": 1128,
+            "total_tokens": 1176,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1128,
+            "prompt_ms": 854.687,
+            "prompt_per_token_ms": 0.7577012411347518,
+            "prompt_per_second": 1319.7813936563912,
+            "predicted_n": 48,
+            "predicted_ms": 1053.3,
+            "predicted_per_token_ms": 22.41063829787234,
+            "predicted_per_second": 44.62166524257097
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "left_grass",
+          "roundTripMs": 1537.764,
+          "result": {
+            "status": "not_gameplay",
+            "side": "left",
+            "x": 100,
+            "y": 1000
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 48,
+            "prompt_tokens": 1117,
+            "total_tokens": 1165,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1117,
+            "prompt_ms": 848.697,
+            "prompt_per_token_ms": 0.759800358102059,
+            "prompt_per_second": 1316.13520490823,
+            "predicted_n": 48,
+            "predicted_ms": 652.692,
+            "predicted_per_token_ms": 13.887063829787234,
+            "predicted_per_second": 72.009462349776
+          }
+        }
+      ],
+      "before": {
+        "availableRamBytes": 12061253632,
+        "committedBytes": 70647787520,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 65448857600
+      },
+      "afterLoad": {
+        "availableRamBytes": 10504855552,
+        "committedBytes": 72518922240,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 65446354944
+      },
+      "postLoadFindings": [],
+      "completed": true,
+      "ownedServerCleanupConfirmed": true,
+      "label": "qwen-1024-r2",
+      "privateReceiptSha256": "e1a100493d82ee7de36c3b52a7794b53aa304741a3b64ada2f9ac194fb225dbc",
+      "visionTokens": 1024,
+      "receivedCoordinateClaimsAdmittedForInput": 0
+    },
+    {
+      "model": "Qwen3.5-0.8B",
+      "precision": "Q4_K_M + F16 vision projector",
+      "runtime": "llama.cpp b11836 Vulkan",
+      "kind": null,
+      "physicalActions": 0,
+      "gameplayAccepted": false,
+      "snapshotObservedAtUtc": "2026-10-23T15:14:46.224490+00:00",
+      "snapshotSha256": "a01ea3c283c3fe73dcfb945f20e9f7982a285b7947ec675266fc7c2541ee126b",
+      "sourceSize": [
+        960,
+        540
+      ],
+      "sceneCaption": null,
+      "samples": [
+        {
+          "warmup": true,
+          "goal": "ground_left",
+          "roundTripMs": 1373.813,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 38,
+            "prompt_tokens": 1131,
+            "total_tokens": 1169,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1131,
+            "prompt_ms": 922.234,
+            "prompt_per_token_ms": 0.8154146772767463,
+            "prompt_per_second": 1226.3698800955071,
+            "predicted_n": 38,
+            "predicted_ms": 413.22,
+            "predicted_per_token_ms": 11.16810810810811,
+            "predicted_per_second": 89.54068050917186
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "ground_left",
+          "roundTripMs": 485.385,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 38,
+            "prompt_tokens": 1131,
+            "total_tokens": 1169,
+            "prompt_tokens_details": {
+              "cached_tokens": 1127
+            }
+          },
+          "timings": {
+            "cache_n": 1127,
+            "prompt_n": 4,
+            "prompt_ms": 65.287,
+            "prompt_per_token_ms": 16.32175,
+            "prompt_per_second": 61.267940018686716,
+            "predicted_n": 38,
+            "predicted_ms": 395.46,
+            "predicted_per_token_ms": 10.688108108108107,
+            "predicted_per_second": 93.56192788145452
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "ground_right",
+          "roundTripMs": 1325.685,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 38,
+            "prompt_tokens": 1131,
+            "total_tokens": 1169,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1131,
+            "prompt_ms": 878.136,
+            "prompt_per_token_ms": 0.7764244031830239,
+            "prompt_per_second": 1287.9553964306215,
+            "predicted_n": 38,
+            "predicted_ms": 409.008,
+            "predicted_per_token_ms": 11.054270270270269,
+            "predicted_per_second": 90.46277823416656
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "destination_pin",
+          "roundTripMs": 1354.96,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 39,
+            "prompt_tokens": 1139,
+            "total_tokens": 1178,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1139,
+            "prompt_ms": 893.171,
+            "prompt_per_token_ms": 0.784171202809482,
+            "prompt_per_second": 1275.2317305420797,
+            "predicted_n": 39,
+            "predicted_ms": 421.109,
+            "predicted_per_token_ms": 11.081815789473684,
+            "predicted_per_second": 90.23791939854053
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "destination_pin",
+          "roundTripMs": 542.32,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 39,
+            "prompt_tokens": 1139,
+            "total_tokens": 1178,
+            "prompt_tokens_details": {
+              "cached_tokens": 1135
+            }
+          },
+          "timings": {
+            "cache_n": 1135,
+            "prompt_n": 4,
+            "prompt_ms": 67.535,
+            "prompt_per_token_ms": 16.88375,
+            "prompt_per_second": 59.22854816021322,
+            "predicted_n": 39,
+            "predicted_ms": 448.73,
+            "predicted_per_token_ms": 11.808684210526316,
+            "predicted_per_second": 84.68343993047044
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "ground_right",
+          "roundTripMs": 1312.602,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 38,
+            "prompt_tokens": 1131,
+            "total_tokens": 1169,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1131,
+            "prompt_ms": 873.388,
+            "prompt_per_token_ms": 0.7722263483642794,
+            "prompt_per_second": 1294.9571095549745,
+            "predicted_n": 38,
+            "predicted_ms": 398.397,
+            "predicted_per_token_ms": 10.767486486486487,
+            "predicted_per_second": 92.87218528251971
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "ground_left",
+          "roundTripMs": 1310.783,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 38,
+            "prompt_tokens": 1131,
+            "total_tokens": 1169,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1131,
+            "prompt_ms": 871.895,
+            "prompt_per_token_ms": 0.7709062776304155,
+            "prompt_per_second": 1297.1745451000406,
+            "predicted_n": 38,
+            "predicted_ms": 398.955,
+            "predicted_per_token_ms": 10.782567567567567,
+            "predicted_per_second": 92.74228923061499
+          }
+        }
+      ],
+      "before": {
+        "availableRamBytes": 9974636544,
+        "committedBytes": 71250980864,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 65212805120
+      },
+      "afterLoad": {
+        "availableRamBytes": 8479309824,
+        "committedBytes": 73064820736,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 65204940800
+      },
+      "postLoadFindings": [],
+      "completed": true,
+      "ownedServerCleanupConfirmed": true,
+      "label": "qwen-world-r3",
+      "privateReceiptSha256": "1283cbccbf5a3e514f94fafafd1d3063cbb48bf3a79923deabccf40dd890135f",
+      "visionTokens": 1024,
+      "receivedCoordinateClaimsAdmittedForInput": 0
+    },
+    {
+      "model": "Qwen3.5-2B",
+      "precision": "Q4_K_M + F16 vision projector",
+      "runtime": "llama.cpp b11836 Vulkan",
+      "kind": null,
+      "physicalActions": 0,
+      "gameplayAccepted": false,
+      "snapshotObservedAtUtc": "2026-10-23T15:22:39.924938+00:00",
+      "snapshotSha256": "7c47f9462ed9f56fb8d93c446376d175544817b7798ebbc98536f78617b8b781",
+      "sourceSize": [
+        960,
+        540
+      ],
+      "sceneCaption": {
+        "roundTripMs": 2503.075,
+        "text": "The image shows a character standing in front of a wooden structure with a red and white striped awning, likely a game environment rather than an Android launcher.",
+        "finishReason": "stop"
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "goal": "ground_left",
+          "roundTripMs": 2742.403,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 38,
+            "prompt_tokens": 1131,
+            "total_tokens": 1169,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1131,
+            "prompt_ms": 1964.101,
+            "prompt_per_token_ms": 1.736605658709107,
+            "prompt_per_second": 575.8359677022719,
+            "predicted_n": 38,
+            "predicted_ms": 729.911,
+            "predicted_per_token_ms": 19.72732432432432,
+            "predicted_per_second": 50.69111165607862
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "ground_left",
+          "roundTripMs": 831.115,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 38,
+            "prompt_tokens": 1131,
+            "total_tokens": 1169,
+            "prompt_tokens_details": {
+              "cached_tokens": 1127
+            }
+          },
+          "timings": {
+            "cache_n": 1127,
+            "prompt_n": 4,
+            "prompt_ms": 76.601,
+            "prompt_per_token_ms": 19.15025,
+            "prompt_per_second": 52.2186394433493,
+            "predicted_n": 38,
+            "predicted_ms": 725.592,
+            "predicted_per_token_ms": 19.610594594594595,
+            "predicted_per_second": 50.99284446355528
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "ground_right",
+          "roundTripMs": 2554.546,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 35,
+            "prompt_tokens": 1131,
+            "total_tokens": 1166,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1131,
+            "prompt_ms": 1928.114,
+            "prompt_per_token_ms": 1.7047869142351901,
+            "prompt_per_second": 586.5835733779227,
+            "predicted_n": 35,
+            "predicted_ms": 581.332,
+            "predicted_per_token_ms": 17.098,
+            "predicted_per_second": 58.486372675166685
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "destination_pin",
+          "roundTripMs": 2579.932,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 35,
+            "prompt_tokens": 1139,
+            "total_tokens": 1174,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1139,
+            "prompt_ms": 1951.146,
+            "prompt_per_token_ms": 1.7130342405618963,
+            "prompt_per_second": 583.759493138904,
+            "predicted_n": 35,
+            "predicted_ms": 586.734,
+            "predicted_per_token_ms": 17.256882352941176,
+            "predicted_per_second": 57.94789461664058
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "destination_pin",
+          "roundTripMs": 689.766,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 35,
+            "prompt_tokens": 1139,
+            "total_tokens": 1174,
+            "prompt_tokens_details": {
+              "cached_tokens": 1135
+            }
+          },
+          "timings": {
+            "cache_n": 1135,
+            "prompt_n": 4,
+            "prompt_ms": 72.081,
+            "prompt_per_token_ms": 18.02025,
+            "prompt_per_second": 55.49312578904288,
+            "predicted_n": 35,
+            "predicted_ms": 591.51,
+            "predicted_per_token_ms": 17.39735294117647,
+            "predicted_per_second": 57.48000879106017
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "ground_right",
+          "roundTripMs": 2602.592,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 35,
+            "prompt_tokens": 1131,
+            "total_tokens": 1166,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1131,
+            "prompt_ms": 1955.452,
+            "prompt_per_token_ms": 1.7289584438549956,
+            "prompt_per_second": 578.3829007308796,
+            "predicted_n": 35,
+            "predicted_ms": 594.732,
+            "predicted_per_token_ms": 17.492117647058823,
+            "predicted_per_second": 57.168607036446666
+          }
+        },
+        {
+          "warmup": false,
+          "goal": "ground_left",
+          "roundTripMs": 2778.631,
+          "result": {
+            "status": "unknown",
+            "side": "none",
+            "x": 0,
+            "y": 0
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 38,
+            "prompt_tokens": 1131,
+            "total_tokens": 1169,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1131,
+            "prompt_ms": 1995.567,
+            "prompt_per_token_ms": 1.7644270557029178,
+            "prompt_per_second": 566.756215150882,
+            "predicted_n": 38,
+            "predicted_ms": 732.416,
+            "predicted_per_token_ms": 19.79502702702703,
+            "predicted_per_second": 50.51773855295351
+          }
+        }
+      ],
+      "before": {
+        "availableRamBytes": 9941848064,
+        "committedBytes": 70881988608,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 63255949312
+      },
+      "afterLoad": {
+        "availableRamBytes": 7677403136,
+        "committedBytes": 74104750080,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 63255355392
+      },
+      "postLoadFindings": [],
+      "completed": true,
+      "ownedServerCleanupConfirmed": true,
+      "label": "qwen2b-world-r4",
+      "privateReceiptSha256": "cb499a9890ece016be8c4a5646ce6614cc7241883cb91784a2995a998e3c2866",
+      "visionTokens": 1024,
+      "receivedCoordinateClaimsAdmittedForInput": 0
+    },
+    {
+      "model": "Qwen3.5-2B",
+      "precision": "Q4_K_M + F16 vision projector",
+      "runtime": "llama.cpp b11836 Vulkan",
+      "kind": "READ_ONLY_SCENE_CLASSIFICATION_NOT_COLLISION_DETECTOR",
+      "physicalActions": 0,
+      "gameplayAccepted": false,
+      "snapshotObservedAtUtc": "2026-10-23T15:26:29.256394+00:00",
+      "snapshotSha256": "e83b9488ed01a4eaef40893f996fa1dd2af03481875814545ecc42e6f0ffaf0e",
+      "sourceSize": [
+        960,
+        540
+      ],
+      "sceneCaption": null,
+      "samples": [
+        {
+          "case": "launcher_fixture",
+          "historicalFixture": true,
+          "inputSha256": "2e7eaf422327a4917448706a32c88a07c7bbafcd63e014e59f1040472c42b7b2",
+          "roundTripMs": 3012.892,
+          "result": {
+            "scene": "android_launcher",
+            "central_object": "wall_or_building",
+            "visible_ground": "left"
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 40,
+            "prompt_tokens": 1108,
+            "total_tokens": 1148,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1108,
+            "prompt_ms": 1939.835,
+            "prompt_per_token_ms": 1.7507536101083032,
+            "prompt_per_second": 571.1826005820083,
+            "predicted_n": 40,
+            "predicted_ms": 1039.127,
+            "predicted_per_token_ms": 26.64428205128205,
+            "predicted_per_second": 37.531504811250215
+          }
+        },
+        {
+          "case": "fence_fixture",
+          "historicalFixture": true,
+          "inputSha256": "d74dd188e861d37ef137ccb5527215558cc09a011c3f6036a0881b4a0b0192d2",
+          "roundTripMs": 2501.338,
+          "result": {
+            "scene": "gameplay",
+            "central_object": "ground",
+            "visible_ground": "right"
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 31,
+            "prompt_tokens": 1108,
+            "total_tokens": 1139,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1108,
+            "prompt_ms": 1791.935,
+            "prompt_per_token_ms": 1.6172698555956677,
+            "prompt_per_second": 618.3259995479747,
+            "predicted_n": 31,
+            "predicted_ms": 647.774,
+            "predicted_per_token_ms": 21.592466666666667,
+            "predicted_per_second": 46.31244847740107
+          }
+        },
+        {
+          "case": "market_fixture",
+          "historicalFixture": true,
+          "inputSha256": "7c47f9462ed9f56fb8d93c446376d175544817b7798ebbc98536f78617b8b781",
+          "roundTripMs": 2552.76,
+          "result": {
+            "scene": "gameplay",
+            "central_object": "wall_or_building",
+            "visible_ground": "left"
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 30,
+            "prompt_tokens": 1108,
+            "total_tokens": 1138,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1108,
+            "prompt_ms": 1818.541,
+            "prompt_per_token_ms": 1.6412824909747292,
+            "prompt_per_second": 609.2796368077486,
+            "predicted_n": 30,
+            "predicted_ms": 661.486,
+            "predicted_per_token_ms": 22.80986206896552,
+            "predicted_per_second": 43.84068597067814
+          }
+        },
+        {
+          "case": "fresh_world",
+          "historicalFixture": false,
+          "inputSha256": "e83b9488ed01a4eaef40893f996fa1dd2af03481875814545ecc42e6f0ffaf0e",
+          "roundTripMs": 2610.386,
+          "result": {
+            "scene": "gameplay",
+            "central_object": "ground",
+            "visible_ground": "left"
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 31,
+            "prompt_tokens": 1108,
+            "total_tokens": 1139,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 1108,
+            "prompt_ms": 1830.706,
+            "prompt_per_token_ms": 1.6522617328519855,
+            "prompt_per_second": 605.2309873895645,
+            "predicted_n": 31,
+            "predicted_ms": 722.533,
+            "predicted_per_token_ms": 24.084433333333333,
+            "predicted_per_second": 41.520594907083826
+          }
+        },
+        {
+          "case": "no_image",
+          "historicalFixture": false,
+          "inputSha256": null,
+          "roundTripMs": 1003.699,
+          "result": {
+            "scene": "android_launcher",
+            "central_object": "ground",
+            "visible_ground": "left"
+          },
+          "finishReason": "stop",
+          "usage": {
+            "completion_tokens": 37,
+            "prompt_tokens": 74,
+            "total_tokens": 111,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 74,
+            "prompt_ms": 88.263,
+            "prompt_per_token_ms": 1.1927432432432432,
+            "prompt_per_second": 838.4034079965556,
+            "predicted_n": 37,
+            "predicted_ms": 891.533,
+            "predicted_per_token_ms": 24.764805555555554,
+            "predicted_per_second": 40.3798849846276
+          }
+        }
+      ],
+      "before": {
+        "availableRamBytes": 9494581248,
+        "committedBytes": 71368048640,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 63254642688
+      },
+      "afterLoad": {
+        "availableRamBytes": 7284031488,
+        "committedBytes": 74439565312,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 63287984128
+      },
+      "postLoadFindings": [],
+      "completed": true,
+      "ownedServerCleanupConfirmed": true,
+      "label": "qwen2b-scene-r5",
+      "privateReceiptSha256": "ef955d6ce583074a1a1b1cef17548702572e4f7fba28cdd03fe1d607e48ddd91",
+      "visionTokens": 1024,
+      "receivedCoordinateClaimsAdmittedForInput": 0
+    }
+  ],
+  "visualReplyReplay": {
+    "qwen-1024-r2": {
+      "groundedClaims": 0,
+      "validRefusals": 4,
+      "semanticallyInvalid": 3,
+      "allPhysicalActions": 0
+    },
+    "qwen-world-r3": {
+      "groundedClaims": 0,
+      "validRefusals": 7,
+      "semanticallyInvalid": 0,
+      "allPhysicalActions": 0
+    },
+    "qwen2b-world-r4": {
+      "groundedClaims": 0,
+      "validRefusals": 7,
+      "semanticallyInvalid": 0,
+      "allPhysicalActions": 0
+    }
+  },
+  "acceptance": {
+    "neuralFreshFrame5HzOneDevice": true,
+    "learnedGoalNavigation": false,
+    "autonomousObstacleAvoidance": false,
+    "arrival": false,
+    "fleetCapacity": false,
+    "sourceCaptureToActionLatency": false
+  },
+  "frameStorage": {
+    "continuousArchiveEnabled": false,
+    "newPublishedPngs": 0,
+    "historicalImagesUsedOnlyAsLabeledReadOnlyFixtures": true
+  },
+  "vlmAssets": {
+    "qwen08": {
+      "modelAuthor": "Qwen",
+      "quantizationPublisher": "unsloth",
+      "runtimeAuthor": "ggml-org",
+      "modelRevision": "6ab461498e2023f6e3c1baea90a8f0fe38ab64d0",
+      "assets": [
+        {
+          "file": "llama-b11836-vulkan.zip",
+          "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11836/llama-b11836-bin-win-vulkan-x64.zip",
+          "bytes": 36881686,
+          "sha256": "cd79abc3f25bce0086918d43f7b5562dc760d9809429f1a9037941185bc7cdf4"
+        },
+        {
+          "file": "Qwen3.5-0.8B-Q4_K_M.gguf",
+          "url": "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
+          "bytes": 532517120,
+          "sha256": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
+        },
+        {
+          "file": "mmproj-F16.gguf",
+          "url": "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/mmproj-F16.gguf",
+          "bytes": 204987232,
+          "sha256": "56e4c6cfe73b0c82e3e82bc518d7591997e61d81f723fc41a586f4fa69ea2453"
+        }
+      ],
+      "modelLaunched": false
+    },
+    "qwen2b": {
+      "modelAuthor": "Qwen",
+      "quantizationPublisher": "unsloth",
+      "modelRevision": "f6d5376be1edb4d416d56da11e5397a961aca8ae",
+      "assets": [
+        {
+          "file": "Qwen3.5-2B-Q4_K_M.gguf",
+          "url": "https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf",
+          "bytes": 1280835840,
+          "sha256": "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223"
+        },
+        {
+          "file": "mmproj-F16.gguf",
+          "url": "https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/mmproj-F16.gguf",
+          "bytes": 668227264,
+          "sha256": "7035e9cb8d7c6a9681d07eef9a364783e86ea4cd73faab2eabb4f43a101830c7"
+        }
+      ],
+      "reusedRuntime": "../qwen-small/runtime/llama-server.exe",
+      "modelLaunched": false
+    },
+    "scope": "Download-time asset receipts; later model launches recorded separately above."
+  },
+  "finalWindowsMemory": {
+    "availableRamBytes": 9528807424,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 71115821056,
+    "commitLimitBytes": 101336473600,
+    "kernelPagedBytes": 10210848768,
+    "kernelNonpagedBytes": 5706784768,
+    "processCount": 495,
+    "handleCount": 1006445
+  }
+}

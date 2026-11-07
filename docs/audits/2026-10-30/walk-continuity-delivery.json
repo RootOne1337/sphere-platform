@@ -1,0 +1,70 @@
+{
+  "schema": "sphere-walk-continuity-delivery-v1",
+  "frontend": {
+    "success": true,
+    "numPassedTests": 122,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 13
+  },
+  "pythonUnitTests": 88,
+  "httpTests": 37,
+  "httpSubtests": 5,
+  "typescript": "passed",
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "d595db16997d76599075293cab0624f71a0d23d05bbee1c1cd23bc923c8f4ba3",
+    "source_sha_after": "d595db16997d76599075293cab0624f71a0d23d05bbee1c1cd23bc923c8f4ba3",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 6.5,
+      "stop_ram_gib": 5.5,
+      "max_commit_percent": 85,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "service": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "sourceHashes": {
+      "scripts\\pilot\\reconstruction_service.py": "e42bd157ccf7b6f2c8d9d7558ce86032ccc06bf859f3a2e641a6ea40cfa505b2",
+      "scripts\\pilot\\route_walk_reports.py": "babc2a4361fea21bbb7fb6e81dd92f5cfa107cff6fd29a41c143d8155769cb84",
+      "scripts\\pilot\\route_workspace.py": "d015bfbd550472e9a109ac8c2a5a8f5a56fa69f97efb91f3be08e74c7723163c",
+      "motor_worker\\route_localization.py": "a5b05f938aaf806bd75b7c96331d2ae12bcd269d54544372663be9a1ff171095",
+      "motor_worker\\walk_route.py": "742a388b04610f37f0c27c2aa3ac97181fb7ba6ad9322ce62b122c456f685412"
+    },
+    "health": 200,
+    "missingCapability": 403,
+    "existingAssetsUnchanged": true,
+    "sourceStillMatches": true
+  },
+  "probe": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "workerMatches": true,
+    "newBundlePresent": true
+  },
+  "install": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:f5ed5e162c7f3214f17170eff3cf85318b931ddf35d72cb329c2fee0373b396c",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "nativeDesktopUsed": false,
+  "apkChanged": false,
+  "independentGameplay": false,
+  "liveRouteAfterFixVerified": false,
+  "visualBrowserCheck": "blocked_by_browser_tool_disabled",
+  "oneActiveRouteSessionOnly": true
+}

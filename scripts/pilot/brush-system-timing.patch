@@ -1,0 +1,14 @@
+diff --git a/crates/cubecl-wgpu/src/runtime.rs b/crates/cubecl-wgpu/src/runtime.rs
+--- a/crates/cubecl-wgpu/src/runtime.rs
++++ b/crates/cubecl-wgpu/src/runtime.rs
+@@ -261,5 +261,5 @@
+-    let time_measurement = if features.contains(wgpu::Features::TIMESTAMP_QUERY) {
+-        TimingMethod::Device
+-    } else {
+-        TimingMethod::System
+-    };
++    // Sphere local compatibility patch: Vulkan GPU timestamps overflowed
++    // during autotuning on RX9070. System timing synchronizes GPU execution;
++    // training kernels and tensor arithmetic are unchanged.
++    let time_measurement = TimingMethod::System;
++    log::info!("Sphere compatibility: synchronized system timing for autotuning");

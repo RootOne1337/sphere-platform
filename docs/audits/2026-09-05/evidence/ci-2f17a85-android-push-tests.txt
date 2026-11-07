@@ -1,0 +1,9 @@
+Android run 34500313633, head 2f17a85cf90fbb87ac5312fdfc2c4ff60dd324e0, attempt 1
+All four variant tasks; case counts come from the separate local XML summary.
+
+Build APK	Build debug APK	2026-09-10T16:12:30.4005803Z BUILD SUCCESSFUL in 2m 44s
+Build APK	Run unit tests	2026-09-10T16:13:56.2256567Z > Task :app:testDevDebugUnitTest
+Build APK	Run unit tests	2026-09-10T16:13:56.2296351Z > Task :app:testEnterpriseDebugUnitTest
+Build APK	Run unit tests	2026-09-10T16:14:16.6221450Z > Task :app:testEnterpriseReleaseUnitTest
+Build APK	Run unit tests	2026-09-10T16:14:17.5221384Z > Task :app:testDevReleaseUnitTest
+Build APK	Run unit tests	2026-09-10T16:16:33.6128520Z BUILD SUCCESSFUL in 4m 2s

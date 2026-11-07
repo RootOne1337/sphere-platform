@@ -1,0 +1,18 @@
+{
+  "before": {
+    "tests": 24,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 51.115
+  },
+  "after": {
+    "tests": 56,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 12.313
+  },
+  "setup_retry": "First combined run had 27 setup errors because isolated PostgreSQL/Redis were stopped after host restart; started only sphere-audit services and reran all 56 cases successfully.",
+  "lint": "ruff passed"
+}

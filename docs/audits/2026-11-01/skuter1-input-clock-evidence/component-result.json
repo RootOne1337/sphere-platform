@@ -1,0 +1,420 @@
+{
+  "merge": {
+    "exit": 0,
+    "reason": null,
+    "seconds": 0.5160000000614673,
+    "peak_rss": 32768
+  },
+  "registration": {
+    "exit": 0,
+    "reason": null,
+    "seconds": 0.5160000000614673,
+    "peak_rss": 32768
+  },
+  "merge_assessment": {
+    "registered": 169,
+    "points": 9987,
+    "mean_reprojection_px": 1.9200837983094563,
+    "point_error_p95": 3.306595702750645,
+    "track_observations": 72406,
+    "duplicate_image_within_track": 0,
+    "invalid_reciprocal_observations": 0,
+    "nonpositive_depth": 0,
+    "assessment": {
+      "schema": "sphere-route-geometry-selection-v1",
+      "registered": 169,
+      "selected": 173,
+      "coverage": 0.976878612716763,
+      "points": 9987,
+      "reprojection_px": 1.9200837983094563,
+      "scene_admissible": true,
+      "route_admissible": true,
+      "scene_reasons": [],
+      "route_reasons": [],
+      "source_coverage": {
+        "first_seconds": 0.441,
+        "last_seconds": 36.404,
+        "missing_start_seconds": 0.441,
+        "missing_end_seconds": 0.4989999999999952,
+        "max_observed_gap_seconds": 0.2849999999999966,
+        "endpoints_observed": true,
+        "all_intervals_observed": true,
+        "endpoint_limit_seconds": 1.0,
+        "interval_limit_seconds": 1.0
+      },
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 169,
+        "first_seconds": 0.441,
+        "last_seconds": 36.404,
+        "path_units": 72.0200505952677,
+        "endpoint_displacement_units": 7.83690623358089,
+        "median_step_units": 0.46525379712182546,
+        "max_step_units": 0.9362011773836466,
+        "rapid_reversals": [],
+        "median_rate_units_per_second": 2.049743277596912,
+        "speed_outliers": [],
+        "warning": null,
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "poses_interpolated": false,
+      "navigation_qualified": false,
+      "execution_qualified": false,
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 35.91743922303001,
+        "passed": true
+      },
+      "intrinsics_condition": {
+        "passed": true,
+        "focal_ratio": 1.0,
+        "horizontal_fov_degrees": 115.85501915542773,
+        "vertical_fov_degrees": 83.82604141189846,
+        "physical_calibration_verified": false
+      },
+      "observation_support": {
+        "status": "complete",
+        "schema": "sphere-observation-support-v1",
+        "summary": {
+          "min": 95,
+          "median": 401.0,
+          "p10": 240.0,
+          "count_under_6": 0,
+          "count_under_15": 0
+        },
+        "summary_measure": "reprojection_le_4px",
+        "track_observations": 72406,
+        "execution_qualified": false,
+        "admission_effect": "none",
+        "caveat": "In-sample diagnostic; counts do not certify camera pose or navigation.",
+        "frame_count": 169,
+        "worst_frames": [
+          {
+            "image": "00000148.png",
+            "ticks_90k": 493020,
+            "raw_eligible_tracks": 95,
+            "positive_depth_inside": 95,
+            "reprojection_le_4px": 95,
+            "occupied_grid_4x4": 4
+          },
+          {
+            "image": "00000143.png",
+            "ticks_90k": 478080,
+            "raw_eligible_tracks": 107,
+            "positive_depth_inside": 107,
+            "reprojection_le_4px": 107,
+            "occupied_grid_4x4": 5
+          },
+          {
+            "image": "00000115.png",
+            "ticks_90k": 385200,
+            "raw_eligible_tracks": 110,
+            "positive_depth_inside": 110,
+            "reprojection_le_4px": 110,
+            "occupied_grid_4x4": 7
+          },
+          {
+            "image": "00000134.png",
+            "ticks_90k": 446670,
+            "raw_eligible_tracks": 117,
+            "positive_depth_inside": 117,
+            "reprojection_le_4px": 117,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000121.png",
+            "ticks_90k": 404730,
+            "raw_eligible_tracks": 119,
+            "positive_depth_inside": 119,
+            "reprojection_le_4px": 119,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000139.png",
+            "ticks_90k": 464670,
+            "raw_eligible_tracks": 122,
+            "positive_depth_inside": 122,
+            "reprojection_le_4px": 122,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000127.png",
+            "ticks_90k": 425700,
+            "raw_eligible_tracks": 125,
+            "positive_depth_inside": 125,
+            "reprojection_le_4px": 125,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000108.png",
+            "ticks_90k": 364410,
+            "raw_eligible_tracks": 143,
+            "positive_depth_inside": 143,
+            "reprojection_le_4px": 143,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000153.png",
+            "ticks_90k": 511020,
+            "raw_eligible_tracks": 147,
+            "positive_depth_inside": 147,
+            "reprojection_le_4px": 147,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000102.png",
+            "ticks_90k": 346500,
+            "raw_eligible_tracks": 175,
+            "positive_depth_inside": 175,
+            "reprojection_le_4px": 175,
+            "occupied_grid_4x4": 7
+          },
+          {
+            "image": "00000163.png",
+            "ticks_90k": 546930,
+            "raw_eligible_tracks": 199,
+            "positive_depth_inside": 199,
+            "reprojection_le_4px": 199,
+            "occupied_grid_4x4": 5
+          },
+          {
+            "image": "00000157.png",
+            "ticks_90k": 527580,
+            "raw_eligible_tracks": 205,
+            "positive_depth_inside": 205,
+            "reprojection_le_4px": 205,
+            "occupied_grid_4x4": 6
+          }
+        ],
+        "worst_frames_truncated": true
+      }
+    }
+  },
+  "registration_assessment": {
+    "registered": 169,
+    "points": 9987,
+    "mean_reprojection_px": 1.9200837983094563,
+    "point_error_p95": 3.306595702750645,
+    "track_observations": 72406,
+    "duplicate_image_within_track": 0,
+    "invalid_reciprocal_observations": 0,
+    "nonpositive_depth": 0,
+    "assessment": {
+      "schema": "sphere-route-geometry-selection-v1",
+      "registered": 169,
+      "selected": 173,
+      "coverage": 0.976878612716763,
+      "points": 9987,
+      "reprojection_px": 1.9200837983094563,
+      "scene_admissible": true,
+      "route_admissible": true,
+      "scene_reasons": [],
+      "route_reasons": [],
+      "source_coverage": {
+        "first_seconds": 0.441,
+        "last_seconds": 36.404,
+        "missing_start_seconds": 0.441,
+        "missing_end_seconds": 0.4989999999999952,
+        "max_observed_gap_seconds": 0.2849999999999966,
+        "endpoints_observed": true,
+        "all_intervals_observed": true,
+        "endpoint_limit_seconds": 1.0,
+        "interval_limit_seconds": 1.0
+      },
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 169,
+        "first_seconds": 0.441,
+        "last_seconds": 36.404,
+        "path_units": 72.0200505952677,
+        "endpoint_displacement_units": 7.83690623358089,
+        "median_step_units": 0.46525379712182546,
+        "max_step_units": 0.9362011773836466,
+        "rapid_reversals": [],
+        "median_rate_units_per_second": 2.049743277596912,
+        "speed_outliers": [],
+        "warning": null,
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "poses_interpolated": false,
+      "navigation_qualified": false,
+      "execution_qualified": false,
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 35.91743922303001,
+        "passed": true
+      },
+      "intrinsics_condition": {
+        "passed": true,
+        "focal_ratio": 1.0,
+        "horizontal_fov_degrees": 115.85501915542773,
+        "vertical_fov_degrees": 83.82604141189846,
+        "physical_calibration_verified": false
+      },
+      "observation_support": {
+        "status": "complete",
+        "schema": "sphere-observation-support-v1",
+        "summary": {
+          "min": 95,
+          "median": 401.0,
+          "p10": 240.0,
+          "count_under_6": 0,
+          "count_under_15": 0
+        },
+        "summary_measure": "reprojection_le_4px",
+        "track_observations": 72406,
+        "execution_qualified": false,
+        "admission_effect": "none",
+        "caveat": "In-sample diagnostic; counts do not certify camera pose or navigation.",
+        "frame_count": 169,
+        "worst_frames": [
+          {
+            "image": "00000148.png",
+            "ticks_90k": 493020,
+            "raw_eligible_tracks": 95,
+            "positive_depth_inside": 95,
+            "reprojection_le_4px": 95,
+            "occupied_grid_4x4": 4
+          },
+          {
+            "image": "00000143.png",
+            "ticks_90k": 478080,
+            "raw_eligible_tracks": 107,
+            "positive_depth_inside": 107,
+            "reprojection_le_4px": 107,
+            "occupied_grid_4x4": 5
+          },
+          {
+            "image": "00000115.png",
+            "ticks_90k": 385200,
+            "raw_eligible_tracks": 110,
+            "positive_depth_inside": 110,
+            "reprojection_le_4px": 110,
+            "occupied_grid_4x4": 7
+          },
+          {
+            "image": "00000134.png",
+            "ticks_90k": 446670,
+            "raw_eligible_tracks": 117,
+            "positive_depth_inside": 117,
+            "reprojection_le_4px": 117,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000121.png",
+            "ticks_90k": 404730,
+            "raw_eligible_tracks": 119,
+            "positive_depth_inside": 119,
+            "reprojection_le_4px": 119,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000139.png",
+            "ticks_90k": 464670,
+            "raw_eligible_tracks": 122,
+            "positive_depth_inside": 122,
+            "reprojection_le_4px": 122,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000127.png",
+            "ticks_90k": 425700,
+            "raw_eligible_tracks": 125,
+            "positive_depth_inside": 125,
+            "reprojection_le_4px": 125,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000108.png",
+            "ticks_90k": 364410,
+            "raw_eligible_tracks": 143,
+            "positive_depth_inside": 143,
+            "reprojection_le_4px": 143,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000153.png",
+            "ticks_90k": 511020,
+            "raw_eligible_tracks": 147,
+            "positive_depth_inside": 147,
+            "reprojection_le_4px": 147,
+            "occupied_grid_4x4": 6
+          },
+          {
+            "image": "00000102.png",
+            "ticks_90k": 346500,
+            "raw_eligible_tracks": 175,
+            "positive_depth_inside": 175,
+            "reprojection_le_4px": 175,
+            "occupied_grid_4x4": 7
+          },
+          {
+            "image": "00000163.png",
+            "ticks_90k": 546930,
+            "raw_eligible_tracks": 199,
+            "positive_depth_inside": 199,
+            "reprojection_le_4px": 199,
+            "occupied_grid_4x4": 5
+          },
+          {
+            "image": "00000157.png",
+            "ticks_90k": 527580,
+            "raw_eligible_tracks": 205,
+            "positive_depth_inside": 205,
+            "reprojection_le_4px": 205,
+            "occupied_grid_4x4": 6
+          }
+        ],
+        "worst_frames_truncated": true
+      }
+    }
+  },
+  "source_before": {
+    "input\\COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "input\\frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "input\\inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "input\\manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "input\\video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "prepared\\database.db": "4f549499eac9219b7e4c21dda3ddaff28dfdddda73aa9c501d2071d4cd6a51c8",
+    "prepared\\models\\0\\cameras.bin": "733e60dfa670ac83249f2ef3fa61a027a2d2b5ac2e6548282275c52a35259c2e",
+    "prepared\\models\\0\\frames.bin": "17bfca53e83e19cbdf090b4a1ffd274b8fabd05fbd2484281963e6ed0289714d",
+    "prepared\\models\\0\\images.bin": "7e0bae2d2d7a9754cd8b7ca7d3cec2e0364047534b5e7813980f0aef79dbdd5f",
+    "prepared\\models\\0\\points3D.bin": "bcc91923e936727f5a6792e1595920d1887c625fc534b4ce117125649f402312",
+    "prepared\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "prepared\\models\\1\\cameras.bin": "13ba0a5223d32f30cec06d830e0269a0cfc4bf2025d731c624387311ef628e34",
+    "prepared\\models\\1\\frames.bin": "60aad361769ce48b4badeb1c3753dcaed838d1ff0ea9129a379d2ed677c6062e",
+    "prepared\\models\\1\\images.bin": "9582a65bc4dba324e9ded6709b09f22de08681c9a7a8271f735b98e84b3ffc84",
+    "prepared\\models\\1\\points3D.bin": "3ea4bb7b79a4aa20f85b33e308a3483ac7318c986d14c6bcb081bd80723ec809",
+    "prepared\\models\\1\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source_after": {
+    "input\\COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "input\\frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "input\\inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "input\\manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "input\\video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "prepared\\database.db": "4f549499eac9219b7e4c21dda3ddaff28dfdddda73aa9c501d2071d4cd6a51c8",
+    "prepared\\models\\0\\cameras.bin": "733e60dfa670ac83249f2ef3fa61a027a2d2b5ac2e6548282275c52a35259c2e",
+    "prepared\\models\\0\\frames.bin": "17bfca53e83e19cbdf090b4a1ffd274b8fabd05fbd2484281963e6ed0289714d",
+    "prepared\\models\\0\\images.bin": "7e0bae2d2d7a9754cd8b7ca7d3cec2e0364047534b5e7813980f0aef79dbdd5f",
+    "prepared\\models\\0\\points3D.bin": "bcc91923e936727f5a6792e1595920d1887c625fc534b4ce117125649f402312",
+    "prepared\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "prepared\\models\\1\\cameras.bin": "13ba0a5223d32f30cec06d830e0269a0cfc4bf2025d731c624387311ef628e34",
+    "prepared\\models\\1\\frames.bin": "60aad361769ce48b4badeb1c3753dcaed838d1ff0ea9129a379d2ed677c6062e",
+    "prepared\\models\\1\\images.bin": "9582a65bc4dba324e9ded6709b09f22de08681c9a7a8271f735b98e84b3ffc84",
+    "prepared\\models\\1\\points3D.bin": "3ea4bb7b79a4aa20f85b33e308a3483ac7318c986d14c6bcb081bd80723ec809",
+    "prepared\\models\\1\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source_unchanged": true,
+  "execution_qualified": false
+}

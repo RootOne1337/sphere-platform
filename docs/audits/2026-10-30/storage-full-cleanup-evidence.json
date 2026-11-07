@@ -1,0 +1,141 @@
+{
+  "schema": "sphere-storage-full-cleanup-v1",
+  "before": {
+    "logicalBytes": 105853221876,
+    "files": 1085724,
+    "directories": 124689,
+    "errors": 0,
+    "complete": true
+  },
+  "after": {
+    "logicalBytes": 93529960480,
+    "files": 622059,
+    "directories": 77878,
+    "errors": 0,
+    "complete": true
+  },
+  "topBefore": [
+    {
+      "name": "artifact-builds",
+      "bytes": 18879745202,
+      "files": 574862
+    },
+    {
+      "name": "reboot-recovery-20261007",
+      "bytes": 10268212000,
+      "files": 104
+    },
+    {
+      "name": "reconstruction-tools",
+      "bytes": 7620121649,
+      "files": 8338
+    },
+    {
+      "name": "reconstruction-jobs",
+      "bytes": 7035270354,
+      "files": 3708
+    },
+    {
+      "name": "motor-amd-venv",
+      "bytes": 6865901575,
+      "files": 41765
+    },
+    {
+      "name": "map-anything-apache-00f9c245",
+      "bytes": 4914068996,
+      "files": 4
+    },
+    {
+      "name": "motor-amd-20261017",
+      "bytes": 4210974061,
+      "files": 520
+    },
+    {
+      "name": "dense-quality-20261025",
+      "bytes": 4067582446,
+      "files": 2568
+    },
+    {
+      "name": "apk",
+      "bytes": 3401729013,
+      "files": 210
+    },
+    {
+      "name": "motor-ph011-20261023",
+      "bytes": 3339862960,
+      "files": 5260
+    },
+    {
+      "name": "updates",
+      "bytes": 2856475069,
+      "files": 72
+    },
+    {
+      "name": "continuous-live-20261008",
+      "bytes": 2779391327,
+      "files": 319
+    },
+    {
+      "name": "fuflo228-20261027",
+      "bytes": 1943678600,
+      "files": 1351
+    },
+    {
+      "name": "turnkey-20261025-route012",
+      "bytes": 1374798271,
+      "files": 5912
+    },
+    {
+      "name": "direct-probe-20261010",
+      "bytes": 1361718536,
+      "files": 15281
+    },
+    {
+      "name": "vpn-native-20261021",
+      "bytes": 1319683001,
+      "files": 35118
+    },
+    {
+      "name": "admincn-research",
+      "bytes": 956661551,
+      "files": 49961
+    },
+    {
+      "name": "route011321-audit-20261026",
+      "bytes": 950130154,
+      "files": 689
+    },
+    {
+      "name": "direct-probe-20261009",
+      "bytes": 764760994,
+      "files": 15211
+    },
+    {
+      "name": "web-build-check-20260929",
+      "bytes": 752276547,
+      "files": 3246
+    }
+  ],
+  "androidCleanup": {
+    "targets": 192,
+    "removed": 192,
+    "logicalBytes": 12325043223,
+    "protectedRuns": [
+      "teaching92-apk-ef69ee2-resolved-metadata",
+      "teaching92-apk-ef69ee2-fresh-output",
+      "teaching92-apk-7ee9506-fresh-output",
+      "teaching91-apk-b26adc7-fresh-output",
+      "teaching90-apk-d620880-fresh-output"
+    ],
+    "freeHostBefore": 32489226240,
+    "freeHostAfter": 54594007040,
+    "apksPreserved": true,
+    "reportsPreserved": true
+  },
+  "imagesRemoved": 36,
+  "containerBaselineUnchanged": true,
+  "dockerGlobalPrune": false,
+  "volumesTouched": false,
+  "vhdCompacted": false,
+  "testsPassed": 5
+}

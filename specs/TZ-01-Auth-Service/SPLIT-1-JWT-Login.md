@@ -1,5 +1,31 @@
 # SPLIT-1 — JWT Login / Refresh / Logout
 
+> **Историческое ТЗ, не действующая инструкция и не подтверждение безопасности.**
+> Ветка, worktree, ограничения доступа, правила merge, сроки и код ниже сохранены
+> как исходный план; не запускайте команды и не копируйте реализацию из этого
+> документа как текущий контракт. Установленное окружение и состояние GitHub
+> этим ТЗ не проверяются.
+>
+> Статическая сверка исходников 1 ноября 2026 выявила существенные отличия:
+>
+> - [Auth router](../../backend/api/v1/auth/router.py) при успешном login/refresh
+>   возвращает refresh token **также в JSON**, а не только в HttpOnly cookie.
+>   [Frontend store](../../frontend/lib/store.ts) сохраняет полученный token в
+>   `localStorage` как fallback: он доступен JavaScript. Cookie policy зависит от
+>   `COOKIE_SECURE` и схемы запроса; пример с постоянным `SameSite=Strict` ниже
+>   не описывает текущий обработчик.
+> - MFA login сначала возвращает отдельный challenge, а не обязательно выдаёт
+>   token pair. Refresh выбирает непустой cookie, затем header, затем JSON body;
+>   потерянный ответ после SQL commit может оставить клиента со старым токеном.
+> - Logout может вернуть 204 и удалить cookie без пригодного Bearer, **не доказав**
+>   отзыв refresh в БД. Текущий обработчик отзывает переданный refresh только в
+>   ветви успешно декодированного Bearer; сетевой отказ оставляет результат неизвестным.
+> - Текущие проверки identity/RLS и ограничения описаны в
+>   [user auth bootstrap](../../docs/security/user-auth-bootstrap.md),
+>   [frontend sessions](../../docs/security/frontend-sessions.md) и
+>   [user access](../../docs/operations/USER-ACCESS.md). Сверка кода не является
+>   проверкой конкретной установки, сетевого ingress или поведения браузера.
+
 **ТЗ-родитель:** TZ-01-Auth-Service  
 **Ветка:** `stage/1-auth`  
 **Задача:** `SPHERE-006`  

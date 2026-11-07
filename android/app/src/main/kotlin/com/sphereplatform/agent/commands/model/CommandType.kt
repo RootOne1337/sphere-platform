@@ -16,6 +16,7 @@ enum class CommandType {
     RESUME_DAG,
     // VPN
     VPN_CONNECT, VPN_DISCONNECT, VPN_RECONNECT,
+    VPN_APP_OPERATION, VPN_APP_STATUS, VPN_APP_CONSENT, VPN_APP_RECIPIENT,
     // OTA обновления (реализация в SPLIT-5)
     OTA_UPDATE,
     // Агент

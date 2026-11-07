@@ -1,0 +1,49 @@
+{
+  "method": "deterministic match split, fit E/H on train only, score same-video heldout; arbitrary assumed fixed K",
+  "matches": 64,
+  "train": 48,
+  "heldout": 16,
+  "train_essential_inliers": 28,
+  "train_positive_depth": 27,
+  "train_positive_cells_4x4": 4,
+  "fitted_relative_rotation_deg": 38.209371266401995,
+  "baseline_relative_rotation_deg": 40.55211166482337,
+  "rotation_disagreement_deg": 21.04251434146205,
+  "sampson_fit_train": {
+    "median_px": 1.224910097954918,
+    "p95_px": 13.695200638056187,
+    "within_1_5px": 28,
+    "count": 48
+  },
+  "sampson_fit_heldout": {
+    "median_px": 3.3948980451994513,
+    "p95_px": 10.281010215800308,
+    "within_1_5px": 5,
+    "count": 16
+  },
+  "sampson_existing_train": {
+    "median_px": 15.62872655671008,
+    "p95_px": 53.21916530297763,
+    "within_1_5px": 2,
+    "count": 48
+  },
+  "sampson_existing_heldout": {
+    "median_px": 20.313629018844065,
+    "p95_px": 68.14769785891116,
+    "within_1_5px": 0,
+    "count": 16
+  },
+  "homography_train_inliers": 16,
+  "homography_heldout": {
+    "median_px": 4.349864959716797,
+    "p95_px": 86.223388671875,
+    "within_1_5px": 4,
+    "count": 16
+  },
+  "positive_parallax_deg_median": 10.101420689021493,
+  "positive_parallax_deg_p95": 18.08816481213259,
+  "physical_calibration_verified": false,
+  "metric_scale_known": false,
+  "independent_truth": false,
+  "execution_qualified": false
+}

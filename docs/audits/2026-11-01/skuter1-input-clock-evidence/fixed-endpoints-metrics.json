@@ -1,0 +1,308 @@
+{
+  "schema": "sphere-published-endpoint-comparison-v1",
+  "source_manifest_sha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "published_geometry_sha256": "52088388dc0097b9bfdbc24a60aa51b858fef35845424c989198e4b6d3f45140",
+  "published_alternative_id": "full-173-endpoints-diagnostic",
+  "model": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100",
+  "model_camera_poses_match_published": true,
+  "cameras": 173,
+  "path_units": 59.42455898048769,
+  "endpoint_gap_3d_units": 3.255662937972919,
+  "endpoint_gap_over_path": 0.05478648884953324,
+  "endpoint_gap_projected_units": 3.255651487175046,
+  "endpoint_offset_from_start_camera": {
+    "right_units": -2.178120433628182,
+    "down_units": -0.008634798513614848,
+    "forward_units": -2.419722707782127
+  },
+  "endpoint_relative_yaw_deg": -40.48833126231665,
+  "endpoint_relative_rotation_3d_deg": 40.55211166482335,
+  "relative_cam_to_world_rotation": [
+    [
+      0.7608017424549216,
+      -0.01971337130442096,
+      -0.6486848939734677
+    ],
+    [
+      -0.011012826871643606,
+      0.9990024687424846,
+      -0.04327568706232708
+    ],
+    [
+      0.6488909202029647,
+      0.04006807255453263,
+      0.7598257189908186
+    ]
+  ],
+  "last4_seconds": {
+    "requested_from_seconds": 32.903,
+    "actual_first_seconds": 33.044,
+    "actual_last_seconds": 36.903,
+    "sample_count": 18,
+    "path_units": 0.44238915585814714,
+    "displacement_3d_units": 0.42223640495091913,
+    "displacement_start_axes": {
+      "right_units": -0.368980539739955,
+      "down_units": -0.0026413790197425766,
+      "forward_units": 0.2052558551563442
+    },
+    "yaw_change_deg": 14.715435427468151,
+    "yaw_min_deg": 304.7962333102152,
+    "yaw_max_deg": 319.56658278242895,
+    "maximum_adjacent_yaw_change_deg": 7.917567855201128,
+    "maximum_adjacent_yaw_interval_seconds": [
+      33.044,
+      33.21
+    ],
+    "actual_samples": [
+      {
+        "image": "00000771.png",
+        "source_index": 771,
+        "ticks_90k": 2973960,
+        "seconds": 33.044,
+        "yaw_start_frame_deg": 304.7962333102152,
+        "right_units": -1.8091398938882268,
+        "forward_units": -2.6249785629384714
+      },
+      {
+        "image": "00000775.png",
+        "source_index": 775,
+        "ticks_90k": 2988900,
+        "seconds": 33.21,
+        "yaw_start_frame_deg": 312.7138011654163,
+        "right_units": -1.9028104821209095,
+        "forward_units": -2.5682164251772677
+      },
+      {
+        "image": "00000780.png",
+        "source_index": 780,
+        "ticks_90k": 3009870,
+        "seconds": 33.443,
+        "yaw_start_frame_deg": 314.53516611553704,
+        "right_units": -2.0104134194173766,
+        "forward_units": -2.5088316017727053
+      },
+      {
+        "image": "00000786.png",
+        "source_index": 786,
+        "ticks_90k": 3029310,
+        "seconds": 33.659,
+        "yaw_start_frame_deg": 314.58026868611523,
+        "right_units": -2.081821093191472,
+        "forward_units": -2.4637304723528146
+      },
+      {
+        "image": "00000790.png",
+        "source_index": 790,
+        "ticks_90k": 3047400,
+        "seconds": 33.86,
+        "yaw_start_frame_deg": 314.8826303490387,
+        "right_units": -2.1316611054291816,
+        "forward_units": -2.4291559446718956
+      },
+      {
+        "image": "00000795.png",
+        "source_index": 795,
+        "ticks_90k": 3066750,
+        "seconds": 34.075,
+        "yaw_start_frame_deg": 318.226874654439,
+        "right_units": -2.1595512840094466,
+        "forward_units": -2.4065378255977503
+      },
+      {
+        "image": "00000800.png",
+        "source_index": 800,
+        "ticks_90k": 3087630,
+        "seconds": 34.307,
+        "yaw_start_frame_deg": 319.5523363332396,
+        "right_units": -2.1686002368312316,
+        "forward_units": -2.407260050809562
+      },
+      {
+        "image": "00000805.png",
+        "source_index": 805,
+        "ticks_90k": 3107070,
+        "seconds": 34.523,
+        "yaw_start_frame_deg": 319.5483229605934,
+        "right_units": -2.173766232659099,
+        "forward_units": -2.4143653232349953
+      },
+      {
+        "image": "00000810.png",
+        "source_index": 810,
+        "ticks_90k": 3126510,
+        "seconds": 34.739,
+        "yaw_start_frame_deg": 319.5487880349978,
+        "right_units": -2.177930838919107,
+        "forward_units": -2.418881987808101
+      },
+      {
+        "image": "00000814.png",
+        "source_index": 814,
+        "ticks_90k": 3144510,
+        "seconds": 34.939,
+        "yaw_start_frame_deg": 319.55023703569134,
+        "right_units": -2.1783682052421263,
+        "forward_units": -2.4193706162921433
+      },
+      {
+        "image": "00000819.png",
+        "source_index": 819,
+        "ticks_90k": 3163950,
+        "seconds": 35.155,
+        "yaw_start_frame_deg": 319.55610183711394,
+        "right_units": -2.1788047842875358,
+        "forward_units": -2.4203524350328944
+      },
+      {
+        "image": "00000824.png",
+        "source_index": 824,
+        "ticks_90k": 3184920,
+        "seconds": 35.388,
+        "yaw_start_frame_deg": 319.5603908156329,
+        "right_units": -2.1789289791603697,
+        "forward_units": -2.4205047154880335
+      },
+      {
+        "image": "00000829.png",
+        "source_index": 829,
+        "ticks_90k": 3205890,
+        "seconds": 35.621,
+        "yaw_start_frame_deg": 319.56337772902424,
+        "right_units": -2.178879854464014,
+        "forward_units": -2.420639992213187
+      },
+      {
+        "image": "00000833.png",
+        "source_index": 833,
+        "ticks_90k": 3231540,
+        "seconds": 35.906,
+        "yaw_start_frame_deg": 319.56658278242895,
+        "right_units": -2.178921678585585,
+        "forward_units": -2.420764948391453
+      },
+      {
+        "image": "00000838.png",
+        "source_index": 838,
+        "ticks_90k": 3253950,
+        "seconds": 36.155,
+        "yaw_start_frame_deg": 319.5635285649759,
+        "right_units": -2.178847679517925,
+        "forward_units": -2.42069942423194
+      },
+      {
+        "image": "00000844.png",
+        "source_index": 844,
+        "ticks_90k": 3276360,
+        "seconds": 36.404,
+        "yaw_start_frame_deg": 319.51334232440126,
+        "right_units": -2.1782415779274245,
+        "forward_units": -2.419696390084364
+      },
+      {
+        "image": "00000850.png",
+        "source_index": 850,
+        "ticks_90k": 3297330,
+        "seconds": 36.637,
+        "yaw_start_frame_deg": 319.5103582928393,
+        "right_units": -2.178094262581743,
+        "forward_units": -2.419661264408828
+      },
+      {
+        "image": "00000856.png",
+        "source_index": 856,
+        "ticks_90k": 3321270,
+        "seconds": 36.903,
+        "yaw_start_frame_deg": 319.51166873768335,
+        "right_units": -2.178120433628182,
+        "forward_units": -2.419722707782127
+      }
+    ]
+  },
+  "display_rotation_invariance": {
+    "0": {
+      "determinant": 1.0,
+      "projected_gap": 3.255651487175046
+    },
+    "45": {
+      "determinant": 1.0,
+      "projected_gap": 3.2556514871750464
+    },
+    "90": {
+      "determinant": 1.0,
+      "projected_gap": 3.255651487175046
+    },
+    "180": {
+      "determinant": 1.0,
+      "projected_gap": 3.255651487175046
+    },
+    "270": {
+      "determinant": 1.0,
+      "projected_gap": 3.255651487175046
+    }
+  },
+  "source_frames": [
+    {
+      "image": "00000000.png",
+      "source_index": 0,
+      "seconds": 0.0,
+      "ticks_90k": 0,
+      "png_path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\images\\00000000.png",
+      "png_sha256": "5590757b15ab96799acd70df13a196480d10c4ee2b40b62fcdf40eaa7812424a",
+      "access_unit_sha256": "f3a18b2829b80b1b5cc96e19c026638c6e7127514d78009625ca3b7815fe9664"
+    },
+    {
+      "image": "00000856.png",
+      "source_index": 856,
+      "seconds": 36.903,
+      "ticks_90k": 3321270,
+      "png_path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\images\\00000856.png",
+      "png_sha256": "2b9e41849cc05e2a588a1f20f5a003dacae122f068b5a10de167620eb0f1f3c6",
+      "access_unit_sha256": "d4d0cf676e40bf72a6f9b4f75fbceecbf8d63cd8ee165cb1df4c886e5464f153"
+    }
+  ],
+  "source_before": {
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\cameras.bin": "13ba0a5223d32f30cec06d830e0269a0cfc4bf2025d731c624387311ef628e34",
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\frames.bin": "ba69ed0cc9978bc745c542b16090d92f96e61c47c463e08f9f55f4c2c9e60228",
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\images.bin": "354174895e7e2c2397ac16046572bf6ee717e12f881cfb8c895f62aaad0849ac",
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\points3D.bin": "4eb1ec1abb99cb06c10079df503c7ee3e5e6f602b9e2b8604eb2cffc861dd7fa",
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\alternatives\\full-173-endpoints-diagnostic\\geometry.json": "52088388dc0097b9bfdbc24a60aa51b858fef35845424c989198e4b6d3f45140",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\alternative-selection.json": "1e4c2f10b60459d846c253f4d90ceffc8cecd0a3b99a8e481ce985cbe814fb9a",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\state.json": "1f4b809096a638fb1600b9d53af795cf4af8d7724ec717c87fb4e87906065ede",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source_after": {
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\cameras.bin": "13ba0a5223d32f30cec06d830e0269a0cfc4bf2025d731c624387311ef628e34",
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\frames.bin": "ba69ed0cc9978bc745c542b16090d92f96e61c47c463e08f9f55f4c2c9e60228",
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\images.bin": "354174895e7e2c2397ac16046572bf6ee717e12f881cfb8c895f62aaad0849ac",
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\points3D.bin": "4eb1ec1abb99cb06c10079df503c7ee3e5e6f602b9e2b8604eb2cffc861dd7fa",
+    ".local-pilot\\skuter1-component-merge-20261101-v1\\endpoints-ba100\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\alternatives\\full-173-endpoints-diagnostic\\geometry.json": "52088388dc0097b9bfdbc24a60aa51b858fef35845424c989198e4b6d3f45140",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\alternative-selection.json": "1e4c2f10b60459d846c253f4d90ceffc8cecd0a3b99a8e481ce985cbe814fb9a",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\state.json": "1f4b809096a638fb1600b9d53af795cf4af8d7724ec717c87fb4e87906065ede",
+    ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source_unchanged": true,
+  "units": "arbitrary_SfM_units",
+  "basis": "first_actual_camera_optical_X_right_Z_forward; not gravity-aligned ground plane",
+  "poses_interpolated": false,
+  "loop_closure_forced": false,
+  "independent_loop_ground_truth": false,
+  "vehicle_heading_verified": false,
+  "metric_scale": null,
+  "execution_qualified": false,
+  "navigation_qualified": false,
+  "caveat": "Yaw is camera optical heading relative to first optical frame, not vehicle/world compass. Map rotation preserves gap; drift versus actual shortfall cannot be resolved from this model alone.",
+  "read_only_export_seconds": 0.15700000000651926
+}

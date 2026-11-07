@@ -1,0 +1,448 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T06:36:12.043608+00:00",
+  "runtimeInstalled": true,
+  "correction": {
+    "id": "direct-probe-runtime-admission-panel",
+    "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258"
+  },
+  "scope": "Exact CI backend/web delivery and finite authenticated per-device HTTP/UI admission on two origins. No browser-on-laptop channel, media, input, latency or fleet acceptance.",
+  "runtime": {
+    "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+    "apiSourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+    "uiContainer": {
+      "id": "416c9520f2beb2952fc2d11db16b1c94eea81563c714775b758169618b72e621",
+      "imageId": "sha256:6d4fe2264e3334d22dbb9600ad9236b5b653bcd5e92446bf6dccd714c9312322",
+      "imageTag": "sphere-review-frontend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "startedAt": "2026-10-10T06:31:13.114693668Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "22f0c10d9ca8b7afcca71459429a685ab031d54588631c536563f08c9279c87a",
+      "imageId": "sha256:e4f002ec897c083a0e614f38228189d929d62ed7978e9583483b79dbace33d1b",
+      "imageTag": "sphere-reviewed-backend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "startedAt": "2026-10-10T06:29:33.031457084Z",
+      "status": "running"
+    },
+    "otherContainersPreservedPerInstall": 45,
+    "schemaMigrationPerformed": false,
+    "otaCatalogSha256": "26cebb0b97bcc405e75c30dd1816b7290391563f9addd2933c7e0820c387727a",
+    "publicHostMapChanged": false,
+    "directMediaControlInstalled": false,
+    "apkChangedDuringWebApiInstall": false
+  },
+  "delivery": {
+    "backend": {
+      "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "runId": 38029922749,
+      "imageId": "sha256:adf86592df11b31eb5f8cc9bc04094d33b4021e285b5325c329b7d50353d368c",
+      "archiveBytes": 236254001,
+      "previousBackend": {
+        "id": "fe9fb8f38427ce1e03e9d86c350cbad612aa9bc114c02181e5982be85f9f05d1",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-10T04:12:56.954296937Z",
+        "status": "running"
+      },
+      "sourceChanges": [
+        "backend/api/v1/direct_probe/__init__.py",
+        "backend/api/v1/direct_probe/router.py",
+        "backend/api/ws/direct/router.py",
+        "backend/core/config.py",
+        "backend/websocket/direct_probe_ice.py",
+        "backend/websocket/direct_probe_runtime.py"
+      ],
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false,
+      "resourceFindings": [],
+      "observedAtUtc": "2026-10-10T06:28:50.183881+00:00",
+      "applyRequested": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "directProbeDevice": "753fd530-2f19-4e5e-98ba-769863678141",
+      "directProbeMediaControlEnabled": false,
+      "directProbeExplicitlyDisabled": false,
+      "otaCatalogSha256": "26cebb0b97bcc405e75c30dd1816b7290391563f9addd2933c7e0820c387727a",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-backend-install-c17332ebe39e-fbfdc0bf",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:e4f002ec897c083a0e614f38228189d929d62ed7978e9583483b79dbace33d1b",
+      "installedBackend": {
+        "id": "22f0c10d9ca8b7afcca71459429a685ab031d54588631c536563f08c9279c87a",
+        "imageId": "sha256:e4f002ec897c083a0e614f38228189d929d62ed7978e9583483b79dbace33d1b",
+        "imageTag": "sphere-reviewed-backend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "startedAt": "2026-10-10T06:29:33.031457084Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "liveContractVerified": false,
+      "agentReconnectVerified": false
+    },
+    "web": {
+      "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "runId": 38029922726,
+      "imageId": "sha256:da289b32ef065facbf78beeefc1f774d39303aa9b49404adbedd9735c6448a32",
+      "archiveBytes": 120892112,
+      "previousUi": {
+        "id": "2109cf7c08790a48f9637031f1603bbdba1d435e9260a1f32a5719c827be9102",
+        "imageId": "sha256:addce2bdef7e7c574fa68abfa0bc273184e63df81d1a721268caefbf4874ab13",
+        "imageTag": "sphere-review-frontend:639b6ad52fe3651579499659ded46ff73027f313",
+        "startedAt": "2026-10-10T00:38:05.533230075Z",
+        "status": "running"
+      },
+      "containerCount": 46,
+      "observedAtUtc": "2026-10-10T06:30:44.146232+00:00",
+      "resourceFindings": [],
+      "applyRequested": true,
+      "onlyUiImageAndBuildRemovalDelta": true,
+      "backendPreserved": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "otaCatalogSha256": "26cebb0b97bcc405e75c30dd1816b7290391563f9addd2933c7e0820c387727a",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-c17332ebe39e-49f3e52d",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:6d4fe2264e3334d22dbb9600ad9236b5b653bcd5e92446bf6dccd714c9312322",
+      "installedUi": {
+        "id": "416c9520f2beb2952fc2d11db16b1c94eea81563c714775b758169618b72e621",
+        "imageId": "sha256:6d4fe2264e3334d22dbb9600ad9236b5b653bcd5e92446bf6dccd714c9312322",
+        "imageTag": "sphere-review-frontend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "startedAt": "2026-10-10T06:31:13.114693668Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "browserVerified": false
+    }
+  },
+  "artifacts": {
+    "backend": {
+      "source": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "runId": 38029922749,
+      "artifactId": 11661906794,
+      "zipBytes": 236255633,
+      "zipSha256": "b558ea7433be057fdde38f7572bfd8de1891de284cfa35f29e80ff1c0cd0e301",
+      "independentImageId": "sha256:adf86592df11b31eb5f8cc9bc04094d33b4021e285b5325c329b7d50353d368c",
+      "ciAdmission": {
+        "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "imageId": "sha256:adf86592df11b31eb5f8cc9bc04094d33b4021e285b5325c329b7d50353d368c",
+        "imageTag": "sphere-reviewed-backend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "archiveBytes": 236254001,
+        "runId": 38029922749,
+        "runAttempt": 1,
+        "migrationHeads": [
+          "20261006_script_catalog_metadata"
+        ],
+        "archiveAdmitted": true,
+        "runtimeInstalled": false
+      },
+      "artifactDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\direct-admission-delivery-backend-c17332eb\\artifact",
+      "ciImageIdentityIndependentOfDownloadedReceipt": true,
+      "archiveAdmission": {
+        "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "imageId": "sha256:adf86592df11b31eb5f8cc9bc04094d33b4021e285b5325c329b7d50353d368c",
+        "imageTag": "sphere-reviewed-backend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "archiveBytes": 236254001,
+        "runId": 38029922749,
+        "runAttempt": 1,
+        "migrationHeads": [
+          "20261006_script_catalog_metadata"
+        ],
+        "archiveAdmitted": true,
+        "runtimeInstalled": false
+      },
+      "zipRetained": false
+    },
+    "web": {
+      "source": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "runId": 38029922726,
+      "artifactId": 11661413623,
+      "zipBytes": 120895063,
+      "zipSha256": "6efe7baa2f2f90ae25c400bf4221f8e287c982c14203a284df492de29035c70d",
+      "independentImageId": "sha256:da289b32ef065facbf78beeefc1f774d39303aa9b49404adbedd9735c6448a32",
+      "ciAdmission": {
+        "source": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "imageId": "sha256:da289b32ef065facbf78beeefc1f774d39303aa9b49404adbedd9735c6448a32",
+        "compressedBytes": 120892112,
+        "pages": 26,
+        "assets": 73,
+        "runId": 38029922726,
+        "runtimeInstalled": false
+      },
+      "artifactDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\direct-admission-delivery-web-c17332eb\\artifact",
+      "ciImageIdentityIndependentOfDownloadedReceipt": true,
+      "archiveAdmission": {
+        "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "imageId": "sha256:da289b32ef065facbf78beeefc1f774d39303aa9b49404adbedd9735c6448a32",
+        "imageTag": "sphere-review-frontend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "archiveBytes": 120892112,
+        "runId": 38029922726,
+        "runAttempt": 1,
+        "pages": 26,
+        "clientAssets": 73,
+        "archiveAdmitted": true,
+        "runtimeInstalled": false
+      },
+      "zipRetained": false
+    }
+  },
+  "exactSourceCiAtObservation": [
+    {
+      "conclusion": "success",
+      "databaseId": 38029922725,
+      "headSha": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "name": "Preview — Deploy",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38029922726,
+      "headSha": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "name": "CI — Frontend",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38029922738,
+      "headSha": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "name": "CI — Android",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38029922749,
+      "headSha": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "name": "CI — Backend",
+      "status": "completed"
+    }
+  ],
+  "diagnosticPilot": {
+    "enabled": true,
+    "deviceIds": [
+      "753fd530-2f19-4e5e-98ba-769863678141"
+    ],
+    "scope": "diagnostic_echo_only",
+    "mediaControlInstalled": false,
+    "channelAccepted": false,
+    "maxDurationMs": 30000,
+    "samples": 20,
+    "turnConfigured": false,
+    "profiles": [
+      "host",
+      "public-stun"
+    ]
+  },
+  "http": {
+    "observedAtUtc": "2026-10-10T06:30:55.860591+00:00",
+    "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+    "checks": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "apiSource": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "anonymousStatus": 401,
+        "cacheControl": "private, no-store",
+        "allowed": {
+          "schema_version": 1,
+          "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "enabled": true,
+          "profiles": [
+            "host",
+            "public-stun"
+          ],
+          "scope": "diagnostic_echo_only",
+          "max_duration_ms": 30000,
+          "samples": 20
+        },
+        "nonAllowlistedProfiles": [],
+        "deviceStatus": "offline",
+        "lastHeartbeat": "2026-10-10T06:01:00.477891Z",
+        "apkVersion": "1.2.50-dev",
+        "apkVersionCode": 10250
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "apiSource": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "anonymousStatus": 401,
+        "cacheControl": "private, no-store",
+        "allowed": {
+          "schema_version": 1,
+          "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "enabled": true,
+          "profiles": [
+            "host",
+            "public-stun"
+          ],
+          "scope": "diagnostic_echo_only",
+          "max_duration_ms": 30000,
+          "samples": 20
+        },
+        "nonAllowlistedProfiles": [],
+        "deviceStatus": "offline",
+        "lastHeartbeat": "2026-10-10T06:01:00.477891Z",
+        "apkVersion": "1.2.50-dev",
+        "apkVersionCode": 10250
+      }
+    ],
+    "peerAllocated": false,
+    "androidInputSent": false,
+    "installedApkChanged": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "observations": [
+      {
+        "origin": "local",
+        "observedAtUtc": "2026-10-10T06:32:44.759Z",
+        "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "sourceBadgeObserved": true,
+        "admissionPanelVisible": true,
+        "profileOptions": [
+          "host",
+          "public-stun"
+        ],
+        "probeStarted": false,
+        "panelText": "Прямой канал · экспериментальная проверка\n\nДо 20 замеров между браузером и APK за 30 секунд. Видео и касания пока используют текущий транспорт. Проверка использует публичный STUN Cloudflare; TURN не подключён.\n\nПроверить прямой канал",
+        "screenshot": "direct-admission-local-ui-20261010.jpg",
+        "sourceBadgeObservedAtUtc": "2026-10-10T06:35:36.823Z"
+      },
+      {
+        "origin": "public",
+        "observedAtUtc": "2026-10-10T06:33:04.369Z",
+        "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "sourceBadgeObserved": true,
+        "admissionPanelVisible": true,
+        "profileOptions": [
+          "host",
+          "public-stun"
+        ],
+        "probeStarted": false,
+        "panelText": "Прямой канал · экспериментальная проверка\n\nДо 20 замеров между браузером и APK за 30 секунд. Видео и касания пока используют текущий транспорт. Проверка использует публичный STUN Cloudflare; TURN не подключён.\n\nПроверить прямой канал",
+        "screenshot": "direct-admission-public-ui-20261010.jpg",
+        "mobile": {
+          "bodyWidth": 390,
+          "documentWidth": 390,
+          "viewport": 390,
+          "actionKeyboardReachable": true,
+          "viewportRestored": true,
+          "screenshot": "direct-admission-public-mobile-action-20261010.jpg"
+        },
+        "sourceBadgeObservedAtUtc": "2026-10-10T06:35:36.824Z"
+      }
+    ],
+    "scope": "Admission rendering only; no echo peer created or Android action sent. Current PH030 reachability recorded separately.",
+    "channelAccepted": false,
+    "mediaControlAccepted": false,
+    "testTabsClosed": true,
+    "viewportRestored": true
+  },
+  "validation": {
+    "localStreamGridTests": 437,
+    "localStreamGridSuites": 20,
+    "hostedFrontendTests": 2106,
+    "hostedFrontendSuites": 146,
+    "hostedBackendTests": 3492,
+    "hostedBackendSubtests": 252,
+    "hostedBackendSkipped": 37,
+    "focusedBackendTests": 87,
+    "installerTests": 27,
+    "localDocumentationTests": 29,
+    "typeScriptPassed": true
+  },
+  "targetedOtaEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+  "storageCheckpoint": {
+    "observedAtUtc": "2026-10-10T06:36:10.442151+00:00",
+    "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+    "process": {
+      "pid": 32064,
+      "creationUtc": "2026-10-10T00:14:44.8920620Z",
+      "commandMatched": true
+    },
+    "completeSamples": 191,
+    "firstSampleUtc": "2026-10-10T00:14:45.084580+00:00",
+    "lastSampleUtc": "2026-10-10T06:34:43.045113+00:00",
+    "dueUtc": "2026-10-10T12:34:45.083321+00:00",
+    "prefixBytes": 2518792,
+    "prefixSha256": "3d17fff5201afd15b116a1479c7a3ad02de4ad1531b7baaa116d5e0f12cdb8c1",
+    "freeStartBytes": 46521065472,
+    "freeEndBytes": 48073904128,
+    "freeDeltaBytes": 1552838656,
+    "namedFiles": [
+      {
+        "name": "docker_data.vhdx",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": true,
+        "allocatedDeltaBytes": 0,
+        "lastAllocatedBytes": 234731077632
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 2359296,
+        "lastAllocatedBytes": 9562095616
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 1,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 159318016,
+        "lastAllocatedBytes": 7237140480
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 2,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": true,
+        "allocatedDeltaBytes": 0,
+        "lastAllocatedBytes": 1023737856
+      },
+      {
+        "name": "thread_history_1.sqlite",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 32960512,
+        "lastAllocatedBytes": 771796992
+      }
+    ],
+    "vssMeasuredSamples": 0,
+    "writerAttribution": "UNDETERMINED",
+    "globalKernelCaptureAvailable": false,
+    "futureCoverageGuaranteed": false,
+    "inputMutationsPerformed": false,
+    "freeMinimumBytes": 36221018112,
+    "freeMaximumBytes": 48075698176,
+    "largestFreeSpaceChanges": [
+      {
+        "fromUtc": "2026-10-10T06:28:43.044698+00:00",
+        "toUtc": "2026-10-10T06:30:43.044683+00:00",
+        "freeDeltaBytes": 11805712384
+      },
+      {
+        "fromUtc": "2026-10-10T06:16:43.045094+00:00",
+        "toUtc": "2026-10-10T06:18:43.044740+00:00",
+        "freeDeltaBytes": -2218278912
+      },
+      {
+        "fromUtc": "2026-10-10T05:42:43.044916+00:00",
+        "toUtc": "2026-10-10T05:44:43.044643+00:00",
+        "freeDeltaBytes": 837668864
+      }
+    ]
+  },
+  "remaining": [
+    "Actual browser-on-laptop PH030 echo/path and native authenticated relay",
+    "Direct video/control, distributed ownership and input-to-picture timing",
+    "Reconnect/resource soak, keyboard/IME/audio and stable APK promotion",
+    "Whole-PC disk writer attribution; current Docker allocation does not explain C: delta"
+  ]
+}

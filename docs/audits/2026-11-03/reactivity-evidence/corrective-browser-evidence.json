@@ -1,0 +1,99 @@
+{
+  "checks": [
+    {
+      "name": "explicit_preferred_173_beats_larger_240",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "visible_exact_recording_identity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "larger_candidate_not_fetched",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "real_source_frame_decoded",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "changed_source_hides_previous_map_and_frame",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "source_mismatch_has_visible_reason",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "same_173_in_actual_review_3d",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "real_webgl_context",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no_processing_or_input_or_opfs_writes",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no_external_connections",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no_errors_after_corrected_fixture_compilation",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "console": [],
+  "pageErrors": [],
+  "blocked": [],
+  "boundary": "ACTUAL_REACT_WITH_REAL_SAVED_GEOMETRY_AND_H264_MOCKED_API_NOT_USER_BROWSER",
+  "physicalActions": 0,
+  "fixture": {
+    "apiReads": [
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives/fixed-k-fused-173-supported-diagnostic",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives/fixed-k-fused-173-supported-diagnostic"
+    ],
+    "apiWrites": [],
+    "fileWrites": [],
+    "sourceRangeReadCount": 4
+  },
+  "componentSha256": {
+    "frontend/src/features/stream/NavigationRouteContext.tsx": "dfb382e64d90af1ecfe0852cbb432cbf3dcd4f0cffbf79f879338068d7f9b951",
+    "frontend/src/features/stream/routeSourceBinding.ts": "b6bee902b6b4f1ef78c6e87c3a65c16d2abc46eff4b3e455a25741594ecb0b52",
+    "frontend/src/features/stream/TeachingReview.tsx": "225e97e6dd3dbc2cbc6723f2f3e6b6818dca7055abc1608ae0fafba16a0077c4",
+    "frontend/src/features/stream/ReconstructedScene.tsx": "966fea59ddb6d4a14e098754265cf761f60e03b3043fa36886c18b2aa43e6314"
+  },
+  "sourceGeometrySha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "fixtureAdapter": "next/dynamic React.lazy adapter; compiled with esbuild jsx=automatic; reused previous isolated fixture stylesheet",
+  "fixturePreparationErrors": [
+    "First private fixture build missed jsx=automatic: React undefined; corrected private bundler option before accepted run",
+    "First proof serialization used window in Node harness: corrected final page.evaluate; no product source changes"
+  ],
+  "screenshots": {
+    "output\\playwright\\corrective-route-20261103-v1\\preferred-173-direction.png": "ebf1d0bafb178ad01c0e8395a8e29b14a3ec0e09dc43bb3787a1fd4656cf7964",
+    "output\\playwright\\corrective-route-20261103-v1\\preferred-173-scene.png": "1fe67b19275090607d46acd8188829cf2144611724ea01218cb368879ee83940",
+    "output\\playwright\\corrective-route-20261103-v1\\source-mismatch-refused.png": "720898232fe2dc36d061d1746d8cf283d109366d89fbab94ad648e2d30c976b6"
+  }
+}

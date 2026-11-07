@@ -2,6 +2,7 @@
 // ВЛАДЕЛЕЦ: TZ-11 Device Events — React Query хуки для событий устройств.
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 
 // ── Типы ──────────────────────────────────────────────────────────────
 
@@ -76,7 +77,7 @@ export function useDeviceEvents(params: DeviceEventParams) {
       return data;
     },
     staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: API_POLL_INTERVALS.deviceEventsMs,
   });
 }
 
@@ -100,7 +101,7 @@ export function useEventStats(deviceId?: string) {
       return data;
     },
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    refetchInterval: API_POLL_INTERVALS.deviceEventStatsMs,
   });
 }
 

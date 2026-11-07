@@ -1,216 +1,336 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Activity, Server, Database, HardDrive, Cpu, Terminal, ArrowUpRight, ShieldCheck, Wifi, AlertTriangle } from 'lucide-react';
-import { Badge } from '@/src/shared/ui/badge';
 
-import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
-
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock3, Cpu, Database, HardDrive, RefreshCw, Search, Server, Wifi } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { Badge } from '@/src/shared/ui/badge';
+import { Button } from '@/src/shared/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card';
+import { Input } from '@/src/shared/ui/input';
+import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
+import { ObservabilityPanel } from '@/src/features/monitoring/ObservabilityPanel';
+import { FleetCoveragePanel } from '@/src/features/monitoring/FleetCoveragePanel';
+import { deriveNetworkRate, formatBytes, formatBytesPerSecond, getMonitoringTelemetryGaps, type ClusterNode, type MonitoringMetrics, type NetworkCounterSample, type NetworkRate, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
 
-const DEFAULT_METRICS = {
-    cpu: { current: 0, history: Array(12).fill(0) },
-    ram: { current: 0, total: 32, history: Array(8).fill(0) },
-    redis: { ops: 0, memory: '0 MB', clients: 0 },
-    network: { tx: '0 Mbps', rx: '0 Mbps', activeTunnels: 0 },
-};
+type StatusFilter = 'all' | 'healthy' | 'attention' | 'unavailable';
+
+function parseMonitoringNodes(payload: unknown): ClusterNode[] {
+    if (!Array.isArray(payload)) {
+        throw new Error('Ожидается список проверок сервиса.');
+    }
+    const nodes: unknown[] = payload;
+    const isNode = (value: unknown): value is ClusterNode => {
+        if (!value || typeof value !== 'object') return false;
+        const candidate = value as Partial<ClusterNode>;
+        return typeof candidate.id === 'string'
+            && typeof candidate.name === 'string'
+            && typeof candidate.type === 'string'
+            && typeof candidate.status === 'string';
+    };
+    if (!nodes.every(isNode)) {
+        throw new Error('Ответ содержит некорректную запись проверки сервиса.');
+    }
+    if (nodes.some(node => !node.details || typeof node.details !== 'object' || Array.isArray(node.details))) {
+        throw new Error('Старый API не сообщает источник проверок сервисов. Нужен согласованный backend rollout.');
+    }
+    return nodes as ClusterNode[];
+}
+
+function formatTime(timestamp: number) {
+    if (!timestamp) return 'Ожидаем первые данные';
+    return new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(timestamp);
+}
+
+function formatUtcSampleTime(value: string | null | undefined) {
+    const timestamp = value ? Date.parse(value) : Number.NaN;
+    if (!Number.isFinite(timestamp)) return 'время замера недоступно';
+    const formatted = new Intl.DateTimeFormat('ru-RU', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC',
+    }).format(timestamp);
+    return `${formatted} UTC`;
+}
+
+function networkRateStateLabel(rate: NetworkRate) {
+    switch (rate.state) {
+        case 'ready': return `Среднее за ${rate.intervalSeconds?.toFixed(0) ?? '—'} с`;
+        case 'warming': return 'Ожидаем второй замер';
+        case 'counter-reset': return 'Счётчик сброшен · собираем базу';
+        case 'gap': return 'Большой интервал · скорость скрыта';
+        default: return 'Время замера API недоступно';
+    }
+}
+
+function healthTone(tone: ReturnType<typeof summarizeMonitoringHealth>['tone']) {
+    if (tone === 'healthy') return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300';
+    if (tone === 'warning') return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300';
+    if (tone === 'critical') return 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300';
+    return 'border-border bg-muted text-muted-foreground';
+}
+
+function healthLabel(label: string) {
+    const labels: Record<string, string> = {
+        'CHECKING SYSTEMS': 'Проверяем сервисы',
+        'STATUS UNAVAILABLE': 'Статус недоступен',
+        'NO HEALTH CHECKS RECEIVED': 'Нет данных о здоровье',
+        'CRITICAL COMPONENT FAILURE': 'Критическая ошибка сервиса',
+        'DEGRADED COMPONENTS': 'Есть деградация',
+        'HEALTH CHECKS PASS · TELEMETRY DEGRADED': 'Проверки прошли · метрики частично недоступны',
+        'ALL OBSERVED CHECKS HEALTHY': 'Все полученные проверки в норме',
+        'HEALTH STATUS INCOMPLETE': 'Статус частичный',
+    };
+    return labels[label] ?? label;
+}
+
+function Sparkline({ values, tone }: { values: number[]; tone: 'blue' | 'violet' | 'green' }) {
+    if (!values.length) {
+        return <p className="mt-4 text-xs text-muted-foreground">История измерений этим endpoint не возвращается.</p>;
+    }
+    const maximum = Math.max(...values.filter(Number.isFinite), 1);
+    const color = tone === 'blue' ? 'bg-sky-500' : tone === 'violet' ? 'bg-violet-500' : 'bg-emerald-500';
+    return (
+        <div className="mt-4 flex h-10 items-end gap-1" role="img" aria-label={`Последние ${values.length} измерений`}>
+            {values.map((value, index) => (
+                <span key={`${index}-${value}`} className={`min-w-1 flex-1 rounded-t-sm ${color} opacity-80`} style={{ height: `${Math.max(4, Math.min(100, (Math.max(0, value) / maximum) * 100))}%` }} />
+            ))}
+        </div>
+    );
+}
+
+function MetricCard({ title, icon: Icon, value, detail, children }: {
+    title: string;
+    icon: typeof Cpu;
+    value: string;
+    detail: string;
+    children?: ReactNode;
+}) {
+    return (
+        <Card className="rounded-xl border-border/80 shadow-sm">
+            <CardHeader className="flex-row items-center justify-between space-y-0 border-0 pb-0">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted/70 text-muted-foreground" aria-hidden="true"><Icon className="h-4 w-4" /></span>
+            </CardHeader>
+            <CardContent className="pt-3">
+                <p className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">{value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+                {children}
+            </CardContent>
+        </Card>
+    );
+}
+
+function isHealthy(node: ClusterNode) {
+    const status = String(node.status).toUpperCase();
+    return status === 'HEALTHY' || status === 'OK';
+}
+
+function isAttention(node: ClusterNode) {
+    const status = String(node.status).toUpperCase();
+    return ['WARNING', 'DEGRADED', 'CRITICAL', 'DOWN'].includes(status);
+}
 
 export default function MonitoringPage() {
-    const { data: metrics = DEFAULT_METRICS, isLoading: metricsLoading } = useQuery({
+    const metricsQuery = useQuery<MonitoringMetrics>({
         queryKey: ['monitoring-metrics'],
         queryFn: async () => {
-            try {
-                const { data } = await api.get('/monitoring/metrics');
-                return data;
-            } catch (e) {
-                console.warn('Failed to fetch metrics (backend might be offline)', e);
-                return DEFAULT_METRICS;
+            const { data } = await api.get<MonitoringMetrics>('/monitoring/metrics');
+            if (!data?.observedAt || !Number.isFinite(Date.parse(data.observedAt))) {
+                throw new Error('Время измерения API не сообщено; старый monitoring payload не принимается.');
             }
+            return data;
         },
-        refetchInterval: 10000
+        refetchInterval: 10000,
     });
-
-    const { data: nodes = [], isLoading: nodesLoading } = useQuery({
+    const nodesQuery = useQuery<ClusterNode[]>({
         queryKey: ['monitoring-nodes'],
         queryFn: async () => {
-            try {
-                const { data } = await api.get('/monitoring/nodes');
-                return data;
-            } catch (e) {
-                console.warn('Failed to fetch nodes (backend might be offline)', e);
-                return [];
-            }
+            const { data } = await api.get<unknown>('/monitoring/nodes');
+            return parseMonitoringNodes(data);
         },
-        refetchInterval: 10000
+        refetchInterval: 10000,
     });
 
-    // Simple sparkline generator for NOC feel
-    const renderSparkline = (data: number[], colorClass: string) => {
-        const max = Math.max(...data, 100);
-        return (
-            <div className="flex items-end h-12 gap-[2px] mt-4">
-                {data.map((val, i) => (
-                    <div
-                        key={i}
-                        className={`flex-1 rounded-t-sm ${colorClass} transition-all duration-500`}
-                        style={{ height: `${(val / max) * 100}%`, opacity: 0.5 + (i / data.length) * 0.5 }}
-                    />
-                ))}
-            </div>
-        );
-    };
+    const metrics = metricsQuery.data;
+    const nodes = nodesQuery.data;
+    const telemetryGaps = getMonitoringTelemetryGaps(metrics);
+    const systemHealth = summarizeMonitoringHealth(nodes, {
+        loading: nodesQuery.isLoading || metricsQuery.isLoading,
+        failed: nodesQuery.isError,
+        telemetryFailed: metricsQuery.isError,
+        telemetryIncomplete: metricsQuery.isSuccess && telemetryGaps.length > 0,
+    });
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+    // Keep the explicit choice in the page: the inspector is intentionally
+    // unmounted on failed/empty responses so cached probes cannot look healthy.
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+    const [networkSamples, setNetworkSamples] = useState<{
+        previous?: NetworkCounterSample;
+        current?: NetworkCounterSample;
+    }>({});
+    useEffect(() => {
+        if (!metrics?.observedAt) {
+            setNetworkSamples((samples) => samples.current ? {} : samples);
+            return;
+        }
+        const sample: NetworkCounterSample = {
+            observedAt: metrics.observedAt,
+            txTotalBytes: metrics.network?.txTotalBytes,
+            rxTotalBytes: metrics.network?.rxTotalBytes,
+        };
+        setNetworkSamples((samples) => {
+            if (samples.current?.observedAt === sample.observedAt) return samples;
+            return { previous: samples.current, current: sample };
+        });
+    }, [metrics]);
+    const networkRate = useMemo(
+        () => deriveNetworkRate(networkSamples.previous, networkSamples.current),
+        [networkSamples],
+    );
+    const observedNodes = useMemo(() => nodes ?? [], [nodes]);
+    const filteredNodes = useMemo(() => {
+        const needle = search.trim().toLocaleLowerCase();
+        return observedNodes.filter((node) => {
+            const matchesSearch = !needle || [node.name, node.id, node.type].some((part) => part.toLocaleLowerCase().includes(needle));
+            const matchesStatus = statusFilter === 'all'
+                || (statusFilter === 'healthy' && isHealthy(node))
+                || (statusFilter === 'attention' && isAttention(node))
+                || (statusFilter === 'unavailable' && !isHealthy(node) && !isAttention(node));
+            return matchesSearch && matchesStatus;
+        });
+    }, [observedNodes, search, statusFilter]);
+
+    const healthyCount = observedNodes.filter(isHealthy).length;
+    const attentionCount = observedNodes.filter(isAttention).length;
+    const unavailableCount = observedNodes.length - healthyCount - attentionCount;
+    const isRefreshing = metricsQuery.isFetching || nodesQuery.isFetching;
+    const lastUpdated = Math.min(metricsQuery.dataUpdatedAt || 0, nodesQuery.dataUpdatedAt || 0);
+    const refreshNow = () => { void Promise.all([metricsQuery.refetch(), nodesQuery.refetch()]); };
+
+    const filters: Array<{ id: StatusFilter; label: string; count: number }> = [
+        { id: 'all', label: 'Все сервисы', count: observedNodes.length },
+        { id: 'healthy', label: 'Работают', count: healthyCount },
+        { id: 'attention', label: 'Внимание', count: attentionCount },
+        { id: 'unavailable', label: 'Неизвестно', count: unavailableCount },
+    ];
 
     return (
-        <div className="flex flex-col h-full bg-card overflow-y-auto custom-scrollbar">
-            {/* Header */}
-            <div className="px-6 py-5 border-b border-border bg-muted shrink-0">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 p-4 sm:p-6 lg:p-8">
+            <header className="flex flex-col gap-4 border-b border-border/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Sphere / Наблюдаемость</p>
+                    <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Инфраструктура</h1>
+                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Состояние сервисов и реальные метрики backend. Показатели не подменяются нулями, если API их не вернул.</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className={`inline-flex min-h-10 max-w-full flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium sm:max-w-[19rem] ${healthTone(systemHealth.tone)}`} role="status" aria-live="polite">
+                        <span className={`h-2 w-2 rounded-full ${systemHealth.tone === 'healthy' ? 'bg-emerald-500' : systemHealth.tone === 'critical' ? 'bg-rose-500' : systemHealth.tone === 'warning' ? 'bg-amber-500' : 'bg-muted-foreground'}`} />
+                        <span className="max-w-full text-left leading-5">{healthLabel(systemHealth.label)}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={refreshNow} disabled={isRefreshing} aria-label="Обновить метрики и проверки сервисов">
+                        <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
+                        Обновить
+                    </Button>
+                </div>
+            </header>
+
+            <ObservabilityPanel />
+            <FleetCoveragePanel />
+
+            {(nodesQuery.isError || metricsQuery.isError) && (
+                <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <div><p className="font-medium">Часть наблюдаемости сейчас недоступна</p><p className="mt-1 opacity-80">Проверьте API, права доступа и версию backend. Старый monitoring payload без времени измерения или источника probe не принимается. Недоступные значения не считаются здоровыми.</p></div>
+                </div>
+            )}
+
+            {metricsQuery.isSuccess && telemetryGaps.length > 0 && (
+                <div role="status" className="rounded-xl border border-amber-300/60 bg-amber-50/50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200">
+                    <span className="font-medium">Проверки сервисов и покрытие метрик — разные сигналы.</span>{' '}
+                    Не получены: {telemetryGaps.join(', ')}. Отсутствующие измерения не означают ноль или подтверждённо здоровый сервис.
+                </div>
+            )}
+
+            <section aria-label="Метрики backend" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard title="Linux load · 1 мин" icon={Cpu} value={metricsQuery.isError ? 'Недоступно' : metrics?.cpu?.linuxLoad1mPerCpu == null ? '—' : metrics.cpu.linuxLoad1mPerCpu.toFixed(2)} detail="Нагрузка хоста на логический CPU; это не процент CPU контейнера.">
+                    {metricsQuery.isError ? <p className="mt-4 text-xs text-amber-700 dark:text-amber-300">Запрос метрик завершился ошибкой.</p> : <Sparkline values={metrics?.cpu?.history ?? []} tone="blue" />}
+                </MetricCard>
+                <MetricCard title="Память контейнера" icon={HardDrive} value={metricsQuery.isError ? 'Недоступно' : formatBytes(metrics?.ram?.currentBytes)} detail={metricsQuery.isError ? 'Последний запрос метрик завершился ошибкой.' : metrics?.ram?.totalBytes == null ? 'Лимит cgroup не сообщён.' : `Из ${formatBytes(metrics.ram.totalBytes)} по данным cgroup.`}>
+                    {metricsQuery.isError ? <p className="mt-4 text-xs text-amber-700 dark:text-amber-300">Запрос метрик завершился ошибкой.</p> : <Sparkline values={metrics?.ram?.history ?? []} tone="violet" />}
+                </MetricCard>
+                <MetricCard title="Redis" icon={Database} value={metricsQuery.isError ? 'Недоступно' : String(metrics?.redis?.status ?? 'Нет данных')} detail={metricsQuery.isError ? 'Последний запрос метрик завершился ошибкой.' : metrics?.redis?.ops == null ? 'Операции/с не сообщаются.' : `${metrics.redis.ops} операций в секунду.`}>
+                    <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border/70 pt-3 text-xs">
+                        <div><dt className="text-muted-foreground">Память</dt><dd className="mt-1 font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : metrics?.redis?.memory ?? '—'}</dd></div>
+                        <div><dt className="text-muted-foreground">Клиенты</dt><dd className="mt-1 font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : metrics?.redis?.clients ?? '—'}</dd></div>
+                    </dl>
+                </MetricCard>
+                <MetricCard title="Сетевые счётчики" icon={Wifi} value={metricsQuery.isError ? 'Недоступно' : metrics?.network?.txTotalBytes == null || metrics?.network?.rxTotalBytes == null ? 'Нет данных' : formatBytes(metrics.network.txTotalBytes + metrics.network.rxTotalBytes)} detail={metricsQuery.isError ? 'Последний запрос метрик завершился ошибкой.' : `TX + RX. Срез API: ${formatUtcSampleTime(metrics?.observedAt)}. Байты видны в сетевом namespace backend-контейнера.`}>
+                    <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border/70 pt-3 text-xs">
+                        <div className="min-w-0"><dt className="flex items-center gap-1 text-muted-foreground"><ArrowUpFromLine className="h-3 w-3" aria-hidden="true" />TX всего</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : formatBytes(metrics?.network?.txTotalBytes)}</dd></div>
+                        <div className="min-w-0"><dt className="flex items-center gap-1 text-muted-foreground"><ArrowDownToLine className="h-3 w-3" aria-hidden="true" />RX всего</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : formatBytes(metrics?.network?.rxTotalBytes)}</dd></div>
+                        <div className="min-w-0"><dt className="text-muted-foreground">TX / с</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : networkRate.state === 'ready' ? formatBytesPerSecond(networkRate.txBytesPerSecond) : '—'}</dd></div>
+                        <div className="min-w-0"><dt className="text-muted-foreground">RX / с</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : networkRate.state === 'ready' ? formatBytesPerSecond(networkRate.rxBytesPerSecond) : '—'}</dd></div>
+                        <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">Активные туннели</dt><dd className="mt-1 font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : metrics?.network?.activeTunnels == null ? 'Не измеряется' : metrics.network.activeTunnels}</dd></div>
+                    </dl>
+                    <p className="mt-3 text-[11px] text-muted-foreground" role="status" aria-live="polite">{metricsQuery.isError ? 'Скорость недоступна: API не вернул свежий замер.' : networkRateStateLabel(networkRate)} · скорость вычисляется по двум замерам во время открытой страницы.</p>
+                </MetricCard>
+            </section>
+
+            <section aria-labelledby="service-checks-title" className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Activity className="w-5 h-5 text-primary" />
-                            <h1 className="text-xl font-bold font-mono tracking-tight text-foreground uppercase pt-1">Infrastructure Monitoring</h1>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h2 id="service-checks-title" className="text-lg font-semibold tracking-tight text-foreground">Проверки сервисов</h2>
+                            <Badge variant="outline" className="rounded-full px-2 normal-case tracking-normal">{observedNodes.length} получено</Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground max-w-xl font-mono">
-                            Real-time telemetry, backend resource utilization, and subsystem health status.
-                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">Статусы из `/monitoring/nodes`; выберите сервис, чтобы открыть его телеметрию.</p>
                     </div>
-
-                    <div className="flex items-center gap-4 bg-black/40 px-4 py-2 rounded-sm border border-border">
-                        <div className="flex flex-col hidden sm:flex">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">System Status</span>
-                            {(() => {
-                                const critical = Array.isArray(nodes) ? nodes.filter((n: any) => n.status === 'critical' || n.status === 'down').length : 0;
-                                if (critical > 0) return (
-                                    <span className="text-xs text-warning font-mono font-bold flex items-center gap-2">
-                                        <AlertTriangle className="w-3 h-3 text-warning animate-pulse" />
-                                        {critical} NODE{critical > 1 ? 'S' : ''} CRITICAL
-                                    </span>
-                                );
-                                return (
-                                    <span className="text-xs text-success font-mono font-bold flex items-center gap-2">
-                                        ALL SYSTEMS NOMINAL
-                                    </span>
-                                );
-                            })()}
-                        </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground" title="Автоматическое обновление с интервалом 10 секунд">
+                        <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>Обновлено: {formatTime(lastUpdated)}</span>
+                        <span className="hidden text-border sm:inline" aria-hidden="true">·</span>
+                        <span className="hidden sm:inline">Автообновление каждые 10 с</span>
                     </div>
                 </div>
-            </div>
 
-            <div className="p-6 space-y-6">
-
-                {/* Top KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                    {/* CPU Widget */}
-                    <div className="bg-muted border border-border p-4 rounded-sm flex flex-col relative overflow-hidden group">
-                        <div className="flex justify-between items-start mb-2 relative z-10">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Cpu className="w-4 h-4" />
-                                <span className="text-[10px] uppercase font-bold tracking-widest">CPU Compute</span>
-                            </div>
-                            <Badge variant="outline" className="text-[9px] border-warning text-warning">MODERATE</Badge>
+                <Card className="overflow-hidden rounded-xl border-border/80">
+                    <div className="flex flex-col gap-3 border-b border-border/70 bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                        <div className="flex flex-wrap gap-1" role="group" aria-label="Фильтр состояния сервисов">
+                            {filters.map((filter) => (
+                                <Button key={filter.id} type="button" size="sm" variant={statusFilter === filter.id ? 'secondary' : 'ghost'} aria-pressed={statusFilter === filter.id} onClick={() => setStatusFilter(filter.id)} className="h-8 rounded-lg px-2.5 text-xs">
+                                    {filter.label}<span className="ml-1.5 tabular-nums text-muted-foreground">{filter.count}</span>
+                                </Button>
+                            ))}
                         </div>
-                        <div className="flex items-baseline gap-1 relative z-10">
-                            <span className="text-3xl font-mono font-bold text-foreground">{metrics.cpu.current}</span>
-                            <span className="text-xs text-muted-foreground font-mono">%</span>
-                        </div>
-                        {renderSparkline(metrics.cpu.history, 'bg-warning')}
+                        <label className="relative block w-full sm:max-w-xs">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск по имени, ID или типу" className="h-9 rounded-lg pl-9" aria-label="Поиск сервисов" />
+                        </label>
                     </div>
+                    <CardContent className="p-4 sm:p-5">
+                        {nodesQuery.isLoading ? (
+                            <p role="status" className="py-10 text-center text-sm text-muted-foreground">Получаем проверки сервисов…</p>
+                        ) : nodesQuery.isError ? (
+                            <p role="alert" className="rounded-lg border border-amber-300/70 bg-amber-50/60 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">Проверки сервисов не загружены или пришёл некорректный ответ. Статус здоровья не выводится из ошибки запроса.</p>
+                        ) : observedNodes.length === 0 ? (
+                            <div className="flex flex-col items-center py-10 text-center">
+                                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground"><Server className="h-5 w-5" /></span>
+                                <p className="mt-3 text-sm font-medium text-foreground">Проверки не получены</p>
+                                <p className="mt-1 max-w-md text-sm text-muted-foreground">Backend пока не вернул список сервисов. Пустой ответ не считается признаком исправности.</p>
+                            </div>
+                        ) : filteredNodes.length === 0 ? (
+                            <p className="py-10 text-center text-sm text-muted-foreground">Ничего не найдено. Измените фильтр или поисковый запрос.</p>
+                        ) : (
+                            <ClusterHeatmap nodes={filteredNodes} selectedNodeId={selectedNodeId} onSelectNode={setSelectedNodeId} />
+                        )}
+                    </CardContent>
+                </Card>
+            </section>
 
-                    {/* RAM Widget */}
-                    <div className="bg-muted border border-border p-4 rounded-sm flex flex-col relative overflow-hidden">
-                        <div className="flex justify-between items-start mb-2 relative z-10">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <HardDrive className="w-4 h-4" />
-                                <span className="text-[10px] uppercase font-bold tracking-widest">Memory (RAM)</span>
-                            </div>
-                            <Badge variant="outline" className="text-[9px] border-primary text-primary">STABLE</Badge>
-                        </div>
-                        <div className="flex items-baseline gap-1 relative z-10">
-                            <span className="text-3xl font-mono font-bold text-foreground">{metrics.ram.current}</span>
-                            <span className="text-xs text-muted-foreground font-mono">/ {metrics.ram.total} GB</span>
-                        </div>
-                        {renderSparkline(metrics.ram.history, 'bg-primary')}
-                    </div>
-
-                    {/* Redis State */}
-                    <div className="bg-muted border border-border p-4 rounded-sm flex flex-col justify-between">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Database className="w-4 h-4" />
-                                <span className="text-[10px] uppercase font-bold tracking-widest">Redis Cache</span>
-                            </div>
-                            <div className="w-2 h-2 rounded-full bg-success" />
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between text-xs font-mono">
-                                <span className="text-muted-foreground">Operations/sec</span>
-                                <span className="text-foreground">{metrics.redis.ops}</span>
-                            </div>
-                            <div className="flex justify-between text-xs font-mono">
-                                <span className="text-muted-foreground">Memory Used</span>
-                                <span className="text-foreground">{metrics.redis.memory}</span>
-                            </div>
-                            <div className="flex justify-between text-xs font-mono">
-                                <span className="text-muted-foreground">Active Clients</span>
-                                <span className="text-success">{metrics.redis.clients}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Network / VPN */}
-                    <div className="bg-muted border border-border p-4 rounded-sm flex flex-col justify-between">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Wifi className="w-4 h-4" />
-                                <span className="text-[10px] uppercase font-bold tracking-widest">Global Network</span>
-                            </div>
-                            <ArrowUpRight className="w-4 h-4 text-primary" />
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between text-xs font-mono">
-                                <span className="text-muted-foreground">Bandwidth TX</span>
-                                <span className="text-foreground">{metrics.network.tx}</span>
-                            </div>
-                            <div className="flex justify-between text-xs font-mono">
-                                <span className="text-muted-foreground">Bandwidth RX</span>
-                                <span className="text-foreground">{metrics.network.rx}</span>
-                            </div>
-                            <div className="flex justify-between text-xs font-mono">
-                                <span className="text-muted-foreground">Active Tunnels</span>
-                                <span className="text-primary font-bold">{metrics.network.activeTunnels}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* Node Topology Matrix */}
-                <div className="border border-border bg-muted rounded-sm p-4">
-                    <div className="flex items-center justify-between mb-4 border-b border-border pb-4">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Server className="w-4 h-4" />
-                            <span className="text-xs uppercase font-bold tracking-widest text-foreground">Cluster Topology & Nodes</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-success"></div><span className="text-[10px] text-muted-foreground font-mono">HEALTHY</span></div>
-                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-warning"></div><span className="text-[10px] text-muted-foreground font-mono">WARNING</span></div>
-                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-destructive animate-pulse"></div><span className="text-[10px] text-muted-foreground font-mono">CRITICAL</span></div>
-                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-muted-foreground/50 border border-border"></div><span className="text-[10px] text-muted-foreground font-mono">OFFLINE</span></div>
-                        </div>
-                    </div>
-
-                    {nodesLoading ? (
-                        <div className="py-10 text-center text-xs text-muted-foreground animate-pulse">
-                            Fetching cluster topology...
-                        </div>
-                    ) : (
-                        <ClusterHeatmap nodes={nodes} />
-                    )}
-                </div>
-
-            </div>
-        </div>
+            <footer className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border/70 pt-4 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Проверки инфраструктуры</span><span aria-hidden="true">·</span><span>10-секундный интервал</span><span aria-hidden="true">·</span><span>Источник: backend API</span>
+            </footer>
+        </main>
     );
 }

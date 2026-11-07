@@ -81,8 +81,23 @@ class EventsManager:
             return
         backoff = 1.0
         max_backoff = 30.0
+        recovery_needed = False
         while True:
             try:
+                # An unsuccessful resubscribe must remain in recovery even if
+                # the replacement connection has no (or only some) channels.
+                if recovery_needed:
+                    await self._pubsub.aclose()
+                    self._pubsub = self._redis.pubsub()
+                    for org_id in list(self._subscribed_orgs):
+                        from backend.websocket.channels import ChannelPattern
+                        await self._pubsub.subscribe(ChannelPattern.org_events(org_id))
+                    recovery_needed = False
+                    logger.info(
+                        "EventsManager listen loop restarted",
+                        subscribed_orgs=len(self._subscribed_orgs),
+                    )
+
                 # FIX: если нет подписок — ждём, иначе listen() вернётся немедленно
                 # и while True образует CPU spinloop без единого await, блокируя event loop.
                 if not self._pubsub.subscribed:
@@ -106,6 +121,7 @@ class EventsManager:
             except asyncio.CancelledError:
                 return
             except Exception as e:
+                recovery_needed = True
                 logger.error(
                     "EventsManager listen loop crashed — restarting",
                     error=str(e),
@@ -113,21 +129,6 @@ class EventsManager:
                 )
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, max_backoff)
-                # Re-create pubsub connection
-                try:
-                    if self._pubsub:
-                        await self._pubsub.aclose()
-                    self._pubsub = self._redis.pubsub()
-                    # Re-subscribe to org channels that still have clients
-                    for org_id in list(self._subscribed_orgs):
-                        from backend.websocket.channels import ChannelPattern
-                        await self._pubsub.subscribe(ChannelPattern.org_events(org_id))
-                    logger.info(
-                        "EventsManager listen loop restarted",
-                        subscribed_orgs=len(self._subscribed_orgs),
-                    )
-                except Exception as re_err:
-                    logger.error("EventsManager reconnect failed", error=str(re_err))
 
     async def _deliver_to_browsers(self, event: FleetEvent) -> None:
         """Доставить событие локальным browser-клиентам (без Redis, in-process)."""

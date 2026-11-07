@@ -1,0 +1,33 @@
+{
+  "source": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+  "uiSourcePreserved": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+  "capturedBetweenUtc": [
+    "2026-10-05T16:18:00Z",
+    "2026-10-05T16:23:00Z"
+  ],
+  "urls": [
+    "http://127.0.0.1:3015/monitoring",
+    "http://127.0.0.1:3015/devices"
+  ],
+  "viewport": {
+    "width": 724,
+    "height": 884
+  },
+  "newViewportOverrideUsed": false,
+  "uiCommandsToAndroidSent": false,
+  "capturesAreViewportOnly": true,
+  "apiBadge": "W:cb5b3f91 A:d656b579",
+  "fleet": {
+    "total": 19,
+    "online": 14,
+    "offline": 5,
+    "connecting": 0
+  },
+  "resourcePanelsPresentInDom": true,
+  "freshnessMetadataNewUiClaimed": false,
+  "documentWidth": 724,
+  "documentClientWidth": 724,
+  "warnErrorEntriesReturned": 0,
+  "finalPage": "http://127.0.0.1:3015/monitoring",
+  "boundary": "Short browser compatibility observation; not stream/VPN traffic, a soak or full responsive acceptance."
+}

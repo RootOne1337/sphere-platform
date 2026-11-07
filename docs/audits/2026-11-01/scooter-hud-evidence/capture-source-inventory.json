@@ -1,0 +1,19 @@
+{
+  "observed_at": "2026-11-01T00:43:08.509219+00:00",
+  "manifests_read": 13,
+  "matching_scooter_sources": [
+    {
+      "job": "c667f86cc9de4a378fb12e5269981a6e",
+      "name": "zaezd888",
+      "manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417"
+    },
+    {
+      "job": "f7dc528660854681b4dc8fe257c7fa09",
+      "name": "fuflo228",
+      "manifest_sha256": "6600429df8f21fb079ca3c5256efa986ea702c6df9a9be984cf2a764639f7cd0"
+    }
+  ],
+  "skuter1_received": false,
+  "browser_access_observation": "cua.getBrowser returned Local browser use is disabled in Work settings in current session",
+  "device_actions": 0
+}

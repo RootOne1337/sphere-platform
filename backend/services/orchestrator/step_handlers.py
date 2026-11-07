@@ -18,8 +18,14 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.models.pipeline import PipelineRun
+from backend.models.pipeline import PipelineRun, PipelineRunStatus
 from backend.models.task import Task, TaskStatus
+from backend.services.orchestrator.pipeline_ownership import (
+    PipelineSuspended,
+    current_ownership,
+    fence_write,
+    is_checkpointed_child,
+)
 
 logger = structlog.get_logger()
 
@@ -31,6 +37,7 @@ class StepResult:
     output: dict[str, Any] | None = None
     error: str | None = None
     context_updates: dict[str, Any] = field(default_factory=dict)
+    outcome_unknown: bool = False
 
 
 # Тип обработчика шага
@@ -72,6 +79,14 @@ class StepHandlerRegistry:
 
         timeout_ms = step.get("timeout_ms", 60_000)
         try:
+            ownership = current_ownership.get()
+            if ownership is not None:
+                async with ownership.session_lock:
+                    await fence_write(db, run)
+                    cancelled = run.cancel_requested_at is not None
+                    await db.commit()
+                if cancelled:
+                    return StepResult(status="failure", error="pipeline_cancelled_before_step")
             return await asyncio.wait_for(
                 handler(step, run, db),
                 timeout=timeout_ms / 1000.0,
@@ -80,6 +95,7 @@ class StepHandlerRegistry:
             return StepResult(
                 status="failure",
                 error=f"Таймаут шага: {timeout_ms}ms",
+                outcome_unknown=True,
             )
         except Exception as exc:
             logger.error(
@@ -88,7 +104,7 @@ class StepHandlerRegistry:
                 step_id=step.get("id"),
                 error=str(exc),
             )
-            return StepResult(status="failure", error=str(exc))
+            return StepResult(status="failure", error=str(exc), outcome_unknown=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -110,6 +126,23 @@ async def handle_execute_script(
 
     Создаёт Task, ожидает его завершения (polling), возвращает результат.
     """
+    # Serialize admission with cancellation: no child may be created after the
+    # run's cancellation intent has committed.
+    await fence_write(db, run)
+    if run.cancel_requested_at is not None or run.status in (
+        PipelineRunStatus.CANCELLED, PipelineRunStatus.TIMED_OUT,
+    ):
+        await db.commit()
+        return StepResult(status="failure", error="pipeline_cancelled_before_admission")
+    checkpointed = is_checkpointed_child(step, run)
+    if checkpointed and run.current_task_id is not None:
+        task = await db.scalar(select(Task).where(
+            Task.id == run.current_task_id, Task.org_id == run.org_id, Task.device_id == run.device_id,
+        ))
+        if task is None:
+            return StepResult(status="failure", error="pipeline_child_identity_unavailable")
+        await db.commit()
+        return await _wait_for_task(task, run, db, checkpointed=True)
     params = step.get("params", {})
     script_id_str = params.get("script_id")
     if not script_id_str:
@@ -161,18 +194,27 @@ async def handle_execute_script(
         script_id=script_id_str,
     )
 
-    # Polling: ожидаем завершения task (с таймаутом шага = timeout_ms)
+    return await _wait_for_task(task, run, db, checkpointed=checkpointed)
+
+
+async def _wait_for_task(task: Task, run: PipelineRun, db: AsyncSession, *, checkpointed: bool) -> StepResult:
+    # A top-level child's identity stays until result/context/next-step commit.
     poll_interval = 1.0  # секунда
     while True:
         await asyncio.sleep(poll_interval)
         await db.refresh(task)
 
+        # Polling sleeps must not pin a connection/idle transaction for the
+        # lifetime of a native task. expire_on_commit=False preserves this read.
+        await db.commit()
+
         if task.status in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT, TaskStatus.CANCELLED):
             break
 
-    # Снять привязку
-    run.current_task_id = None
-    await db.commit()
+    if not checkpointed:
+        await fence_write(db, run)
+        run.current_task_id = None
+        await db.commit()
 
     if task.status == TaskStatus.COMPLETED:
         return StepResult(
@@ -391,6 +433,9 @@ async def handle_parallel(
     if not sub_steps:
         return StepResult(status="failure", error="Подшаги не найдены в steps_snapshot")
 
+    if any(ss.get("type") not in ("action", "delay") for ss in sub_steps):
+        return StepResult(status="failure", error="parallel supports only action/delay; stateful steps require sequential execution")
+
     # Параллельное исполнение
     tasks = [
         StepHandlerRegistry.execute(step=ss, run=run, db=db)
@@ -453,6 +498,7 @@ async def handle_loop(
 
     results = []
     for i in range(iterations):
+        await fence_write(db, run)
         # Обновить iteration counter в контексте
         ctx = dict(run.context)
         ctx["_loop_iteration"] = i
@@ -539,6 +585,22 @@ async def handle_sub_pipeline(
       - pipeline_id: UUID вложенного pipeline
       - input_params: параметры для вложенного (можно ссылаться на context)
     """
+    await fence_write(db, run)
+    if run.cancel_requested_at is not None or run.status in (
+        PipelineRunStatus.CANCELLED, PipelineRunStatus.TIMED_OUT,
+    ):
+        await db.commit()
+        return StepResult(status="failure", error="pipeline_cancelled_before_admission")
+    checkpointed = is_checkpointed_child(step, run)
+    if checkpointed and run.current_child_run_id is not None:
+        sub_run = await db.scalar(select(PipelineRun).where(
+            PipelineRun.id == run.current_child_run_id, PipelineRun.org_id == run.org_id,
+            PipelineRun.device_id == run.device_id,
+            PipelineRun.context["parent_run_id"].astext == str(run.id),
+        ))
+        if sub_run is None:
+            return StepResult(status="failure", error="pipeline_child_identity_unavailable")
+        return await _checkpoint_nested_wait(sub_run, run, db)
     params = step.get("params", {})
     pipeline_id_str = params.get("pipeline_id")
     sub_input = params.get("input_params", {})
@@ -551,7 +613,7 @@ async def handle_sub_pipeline(
     except (ValueError, TypeError):
         return StepResult(status="failure", error=f"Некорректный pipeline_id: {pipeline_id_str}")
 
-    from backend.models.pipeline import Pipeline, PipelineRunStatus
+    from backend.models.pipeline import Pipeline
 
     pipeline = await db.scalar(
         select(Pipeline).where(Pipeline.id == pipeline_id, Pipeline.org_id == run.org_id)
@@ -571,13 +633,41 @@ async def handle_sub_pipeline(
         step_logs=[],
     )
     db.add(sub_run)
+    await db.flush()
+    if checkpointed:
+        run.current_child_run_id = sub_run.id
+        return await _checkpoint_nested_wait(sub_run, run, db)
     await db.commit()
+
+    return await _wait_for_sub_pipeline(sub_run, db)
+
+
+async def _checkpoint_nested_wait(sub_run: PipelineRun, run: PipelineRun, db: AsyncSession) -> StepResult:
+    if sub_run.status in (PipelineRunStatus.COMPLETED, PipelineRunStatus.FAILED,
+                          PipelineRunStatus.CANCELLED, PipelineRunStatus.TIMED_OUT):
+        await db.commit()
+        return _nested_result(sub_run)
+    # Child INSERT, parent identity, waiting state and owner release share a
+    # commit. Losing its ACK is safe: recovery reuses the saved child identity.
+    # handle_sub_pipeline already holds the fenced parent row lock. Do not refresh
+    # away its just-assigned current_child_run_id before the shared commit.
+    if run.status == PipelineRunStatus.RUNNING:
+        run.status = PipelineRunStatus.WAITING
+    run.execution_owner = None
+    run.execution_lease_until = None
+    run.execution_generation += 1
+    await db.commit()
+    raise PipelineSuspended()
+
+
+async def _wait_for_sub_pipeline(sub_run: PipelineRun, db: AsyncSession) -> StepResult:
 
     # Polling: ожидаем завершения sub-run
     poll_interval = 1.0
     while True:
         await asyncio.sleep(poll_interval)
         await db.refresh(sub_run)
+        await db.commit()
         if sub_run.status in (
             PipelineRunStatus.COMPLETED,
             PipelineRunStatus.FAILED,
@@ -586,6 +676,10 @@ async def handle_sub_pipeline(
         ):
             break
 
+    return _nested_result(sub_run)
+
+
+def _nested_result(sub_run: PipelineRun) -> StepResult:
     if sub_run.status == PipelineRunStatus.COMPLETED:
         return StepResult(
             status="success",
@@ -657,6 +751,7 @@ async def handle_assign_account(
     from backend.models.account_session import AccountSession
     from backend.models.game_account import AccountStatus, GameAccount
 
+    await fence_write(db, run)
     specific_id = params.get("account_id")
     if specific_id:
         # Назначить конкретный аккаунт
@@ -766,6 +861,7 @@ async def handle_release_account(
     from backend.models.account_session import AccountSession, SessionEndReason
     from backend.models.game_account import AccountStatus, GameAccount
 
+    await fence_write(db, run)
     try:
         account_id = uuid.UUID(account_id_str)
     except (ValueError, TypeError):

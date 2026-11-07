@@ -1,0 +1,8 @@
+PASS __tests__/stream/route-source-frame.test.ts
+  √ reference preview verifies the exact stored access unit and closes aborted work (11 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        1.266 s
+Ran all test suites matching __tests__/stream/route-source-frame.test.ts.

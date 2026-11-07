@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-12T01:43:02.294307+00:00",
+  "scope": "Read-only prefix of one ongoing limited collector; not a completed 24-hour run or writer attribution",
+  "current": {
+    "workerPid": 28000,
+    "workerIdentityVerified": true,
+    "completeSamples": 125,
+    "startedUtc": "2026-10-11T21:33:18.721807+00:00",
+    "dueUtc": "2026-10-12T21:33:18.721807+00:00",
+    "lastSampleUtc": "2026-10-12T01:41:18.725992+00:00",
+    "sourceSha256": "3a6bf900a04051dd624ee762cffa60e697b887a893cfb23e969ee968787b853d",
+    "intervalSeconds": 120,
+    "reportBytes": 1675954,
+    "prefixSha256": "641c2d2eddb7b323f7f98facaf2e8ae91e48a849858021a13f791648267b7ea6",
+    "maxObservedSampleGapSeconds": 120.014,
+    "elevated": false
+  },
+  "freeDisk": {
+    "before": 35116244992,
+    "after": 28588052480,
+    "changeBytes": -6528192512
+  },
+  "dockerVhdx": {
+    "allocatedBefore": 239022899200,
+    "allocatedAfter": 240566403072,
+    "allocatedDelta": 1543503872,
+    "logicalBefore": 239022899200,
+    "logicalAfter": 240566403072,
+    "identityUnchanged": true
+  },
+  "emulatorDisks": [
+    {
+      "disk": "leidian0/data.vmdk",
+      "allocatedBefore": 9570680832,
+      "allocatedAfter": 9570680832,
+      "allocatedDelta": 0
+    },
+    {
+      "disk": "leidian0/sdcard.vmdk",
+      "allocatedBefore": 12709658624,
+      "allocatedAfter": 12709658624,
+      "allocatedDelta": 0
+    },
+    {
+      "disk": "leidian1/data.vmdk",
+      "allocatedBefore": 7331512320,
+      "allocatedAfter": 7331512320,
+      "allocatedDelta": 0
+    },
+    {
+      "disk": "leidian1/sdcard.vmdk",
+      "allocatedBefore": 9272950784,
+      "allocatedAfter": 9272950784,
+      "allocatedDelta": 0
+    },
+    {
+      "disk": "leidian2/data.vmdk",
+      "allocatedBefore": 1023737856,
+      "allocatedAfter": 1023737856,
+      "allocatedDelta": 0
+    },
+    {
+      "disk": "leidian2/sdcard.vmdk",
+      "allocatedBefore": 50528256,
+      "allocatedAfter": 50528256,
+      "allocatedDelta": 0
+    }
+  ],
+  "pagefilesMiB": {
+    "before": [
+      {
+        "Name": "C:\\pagefile.sys",
+        "AllocatedBaseSize": 45662,
+        "CurrentUsage": 199,
+        "PeakUsage": 239
+      }
+    ],
+    "after": [
+      {
+        "Name": "C:\\pagefile.sys",
+        "AllocatedBaseSize": 45662,
+        "CurrentUsage": 183,
+        "PeakUsage": 239
+      }
+    ]
+  },
+  "memory": {
+    "availableBefore": 17557004288,
+    "availableAfter": 16677806080,
+    "committedBefore": 56544641024,
+    "committedAfter": 59353055232,
+    "commitLimitBytes": 98549288960
+  },
+  "dockerSummary": {
+    "observedAtUtc": "2026-10-12T01:33:18.730684+00:00",
+    "rows": [
+      {
+        "Active": "33",
+        "Reclaimable": "61.37GB (30%)",
+        "Size": "200.7GB",
+        "TotalCount": "246",
+        "Type": "Images"
+      },
+      {
+        "Active": "14",
+        "Reclaimable": "298.9MB (93%)",
+        "Size": "318.3MB",
+        "TotalCount": "46",
+        "Type": "Containers"
+      },
+      {
+        "Active": "36",
+        "Reclaimable": "1.82GB (23%)",
+        "Size": "7.676GB",
+        "TotalCount": "75",
+        "Type": "Local Volumes"
+      },
+      {
+        "Active": "0",
+        "Reclaimable": "20.22GB",
+        "Size": "84.42GB",
+        "TotalCount": "768",
+        "Type": "Build Cache"
+      }
+    ],
+    "categoriesMayShareLayers": true,
+    "reclaimableIsNotHostPhysicalReclamation": true
+  },
+  "continuousCoverageConfirmed": false,
+  "independentLifetimeConfirmed": false,
+  "autostartConfigured": false,
+  "vssAccessGuaranteed": false,
+  "processIoIsWriterAttribution": false,
+  "writerAttribution": "UNDETERMINED",
+  "cleanupPerformed": false,
+  "deviceCommandsSent": false,
+  "findings": [
+    "Most standing Docker storage is images/build cache, rather than writable container layers or volumes",
+    "Docker VHDX accounts for part, not all, of the observed host free-space decrease",
+    "Watched emulator disk allocations stayed constant in this prefix",
+    "VSS and growth outside the finite watch list remain unknown"
+  ]
+}

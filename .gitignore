@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 .venv/
+.venv-*/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
@@ -12,6 +13,7 @@ htmlcov/
 # Node
 node_modules/
 .next/
+.next-*/
 dist/
 build/
 
@@ -87,6 +89,7 @@ task_result*.json
 data/
 reports/
 /updates/
+/target/
 
 # Docs trash (временные/ad-hoc файлы в docs/)
 docs/XPath.txt
@@ -97,6 +100,11 @@ docs/MERGE_LOG.md
 
 # Deployment artifacts (генерируются скриптами развёртывания)
 .admin-credentials
+.local-pilot/
+/reviewed-backend/
+/frontend/reviewed-web/
+.playwright-cli/
+output/playwright/
 .deploy.log
 backups/
 ui_dump*.xml
@@ -117,3 +125,4 @@ test_task*.py
 test_task.py
 verify_dag.py
 reset_pw.py
+frontend/public/vendor/elk/

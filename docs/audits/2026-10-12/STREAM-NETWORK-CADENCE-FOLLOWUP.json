@@ -1,0 +1,421 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T19:00:54.209045+00:00",
+  "installedSourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+  "installedApkVersionCode": 10255,
+  "candidateVersionCode": 10256,
+  "candidateInstalled": false,
+  "ph030": {
+    "sessions": [
+      {
+        "openedAtUtc": "2026-10-11T19:00:21.766713+00:00",
+        "endedAtUtc": null,
+        "lastBrowserSample": {
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "control_state": "fenced",
+          "control_failure_detail": "server_runtime_retry",
+          "direct_frames": 0,
+          "direct_state": "gathering",
+          "direct_path": "unknown",
+          "direct_attempts": 3,
+          "queue_recoveries": 4,
+          "decode_errors": 0,
+          "render_errors": 0,
+          "rendered_frames": 226,
+          "incoming_fps": 0,
+          "rendered_fps": 0
+        },
+        "maxRetainedBrowserJitterBufferMs": null,
+        "nativeLast": [
+          {
+            "stage": "answer_sent",
+            "answerSent": true,
+            "elapsedMs": 12337,
+            "network": {
+              "local_candidates": 3,
+              "responses_received": 0,
+              "pairs": 1,
+              "succeeded_pairs": 0,
+              "requests_received": 0,
+              "checking_pairs": 1,
+              "remote_candidates": 1,
+              "requests_sent": 242,
+              "dtls_state": "new",
+              "responses_sent": 0,
+              "failed_pairs": 0
+            }
+          }
+        ]
+      },
+      {
+        "openedAtUtc": "2026-10-11T18:58:34.245274+00:00",
+        "endedAtUtc": "2026-10-11T19:00:12.965134+00:00",
+        "lastBrowserSample": {
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "control_state": "fenced",
+          "direct_frames": 0,
+          "direct_state": "failed",
+          "direct_failure": "connection_deadline",
+          "direct_path": "unknown",
+          "direct_ice_state": "checking",
+          "direct_dtls_state": "new",
+          "direct_attempts": 4,
+          "queue_recoveries": 19,
+          "decode_errors": 0,
+          "render_errors": 0,
+          "rendered_frames": 663,
+          "incoming_fps": 28,
+          "rendered_fps": 13
+        },
+        "maxRetainedBrowserJitterBufferMs": null,
+        "nativeLast": [
+          {
+            "stage": "answer_sent",
+            "answerSent": true,
+            "elapsedMs": 12403,
+            "network": {
+              "local_candidates": 3,
+              "responses_received": 0,
+              "pairs": 1,
+              "succeeded_pairs": 0,
+              "requests_received": 0,
+              "checking_pairs": 1,
+              "remote_candidates": 1,
+              "requests_sent": 246,
+              "dtls_state": "new",
+              "responses_sent": 0,
+              "failed_pairs": 0
+            }
+          }
+        ]
+      },
+      {
+        "openedAtUtc": "2026-10-11T18:57:50.313175+00:00",
+        "endedAtUtc": "2026-10-11T18:58:27.011097+00:00",
+        "lastBrowserSample": {
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "control_state": "idle",
+          "direct_frames": 0,
+          "direct_state": "signaling",
+          "direct_path": "unknown",
+          "direct_attempts": 3,
+          "queue_recoveries": 6,
+          "decode_errors": 0,
+          "render_errors": 0,
+          "rendered_frames": 189,
+          "incoming_fps": 48,
+          "rendered_fps": 0
+        },
+        "maxRetainedBrowserJitterBufferMs": null,
+        "nativeLast": [
+          {
+            "stage": "answer_sent",
+            "answerSent": true,
+            "elapsedMs": 7276,
+            "network": {
+              "local_candidates": 3,
+              "responses_received": 0,
+              "pairs": 1,
+              "succeeded_pairs": 0,
+              "requests_received": 0,
+              "checking_pairs": 1,
+              "remote_candidates": 1,
+              "requests_sent": 141,
+              "dtls_state": "new",
+              "responses_sent": 0,
+              "failed_pairs": 0
+            }
+          }
+        ]
+      },
+      {
+        "openedAtUtc": "2026-10-11T18:57:44.349899+00:00",
+        "endedAtUtc": "2026-10-11T18:57:47.464264+00:00",
+        "lastBrowserSample": {
+          "transport": "server_websocket",
+          "control_transport": "server_websocket",
+          "control_state": "idle",
+          "direct_frames": 0,
+          "direct_path": "unknown",
+          "direct_attempts": 0,
+          "queue_recoveries": 0,
+          "decode_errors": 0,
+          "render_errors": 0,
+          "rendered_frames": 83,
+          "incoming_fps": 0,
+          "rendered_fps": 0
+        },
+        "maxRetainedBrowserJitterBufferMs": null,
+        "nativeLast": []
+      },
+      {
+        "openedAtUtc": "2026-10-11T18:53:20.019998+00:00",
+        "endedAtUtc": "2026-10-11T18:57:59.922680+00:00",
+        "lastBrowserSample": {
+          "transport": "direct_webrtc",
+          "control_transport": "direct_webrtc",
+          "control_state": "ready",
+          "direct_frames": 3390,
+          "direct_state": "connected",
+          "direct_path": "nat",
+          "direct_protocol": "udp",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 1,
+          "direct_network_rtt_ms": 21,
+          "direct_jitter_buffer_ms": 156.44728571428,
+          "direct_decode_ms": 1.2191428571429,
+          "direct_fps": 8.3689152823918,
+          "direct_frame_age_ms": 912,
+          "control_rtt_ms": 53,
+          "queue_recoveries": 0,
+          "decode_errors": 0,
+          "render_errors": 0,
+          "rendered_frames": 83,
+          "incoming_fps": 0,
+          "rendered_fps": 0
+        },
+        "maxRetainedBrowserJitterBufferMs": 230.38353125,
+        "nativeLast": [
+          {
+            "stage": "channel_open",
+            "answerSent": true,
+            "elapsedMs": 243345,
+            "network": {
+              "local_candidates": 3,
+              "responses_received": 98,
+              "pairs": 1,
+              "succeeded_pairs": 1,
+              "requests_received": 101,
+              "checking_pairs": 0,
+              "remote_candidates": 1,
+              "requests_sent": 129,
+              "dtls_state": "connected",
+              "responses_sent": 101,
+              "failed_pairs": 0
+            }
+          }
+        ]
+      },
+      {
+        "openedAtUtc": "2026-10-11T18:42:11.633770+00:00",
+        "endedAtUtc": "2026-10-11T18:53:16.802890+00:00",
+        "lastBrowserSample": {
+          "transport": "direct_webrtc",
+          "control_transport": "direct_webrtc",
+          "control_state": "ready",
+          "direct_frames": 5010,
+          "direct_state": "connected",
+          "direct_path": "nat",
+          "direct_protocol": "udp",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 1,
+          "direct_network_rtt_ms": 19,
+          "direct_jitter_buffer_ms": 100.64799999998,
+          "direct_decode_ms": 1.0166,
+          "direct_fps": 21.490595241218,
+          "direct_frame_age_ms": 23,
+          "control_rtt_ms": 43,
+          "queue_recoveries": 0,
+          "decode_errors": 0,
+          "render_errors": 0,
+          "rendered_frames": 14,
+          "incoming_fps": 0,
+          "rendered_fps": 0
+        },
+        "maxRetainedBrowserJitterBufferMs": 275.67971428571,
+        "nativeLast": [
+          {
+            "stage": "channel_open",
+            "answerSent": true,
+            "elapsedMs": 654939,
+            "network": {
+              "local_candidates": 3,
+              "responses_received": 263,
+              "pairs": 1,
+              "succeeded_pairs": 1,
+              "requests_received": 245,
+              "checking_pairs": 0,
+              "remote_candidates": 1,
+              "requests_sent": 269,
+              "dtls_state": "connected",
+              "responses_sent": 245,
+              "failed_pairs": 0
+            }
+          }
+        ]
+      },
+      {
+        "openedAtUtc": "2026-10-11T18:26:18.037594+00:00",
+        "endedAtUtc": "2026-10-11T18:42:09.518144+00:00",
+        "lastBrowserSample": {
+          "transport": "direct_webrtc",
+          "control_transport": "direct_webrtc",
+          "control_state": "ready",
+          "direct_frames": 930,
+          "direct_state": "connected",
+          "direct_path": "nat",
+          "direct_protocol": "udp",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 1,
+          "direct_network_rtt_ms": 24,
+          "direct_frame_age_ms": 439,
+          "control_rtt_ms": 38,
+          "queue_recoveries": 0,
+          "decode_errors": 0,
+          "render_errors": 0,
+          "rendered_frames": 36,
+          "incoming_fps": 0,
+          "rendered_fps": 0
+        },
+        "maxRetainedBrowserJitterBufferMs": null,
+        "nativeLast": [
+          {
+            "stage": "channel_open",
+            "answerSent": true,
+            "elapsedMs": 945725,
+            "network": {
+              "local_candidates": 3,
+              "responses_received": 378,
+              "pairs": 1,
+              "succeeded_pairs": 1,
+              "requests_received": 385,
+              "checking_pairs": 0,
+              "remote_candidates": 1,
+              "requests_sent": 474,
+              "dtls_state": "connected",
+              "responses_sent": 385,
+              "failed_pairs": 0
+            }
+          }
+        ]
+      },
+      {
+        "openedAtUtc": "2026-10-11T18:15:19.498213+00:00",
+        "endedAtUtc": "2026-10-11T18:26:15.757877+00:00",
+        "lastBrowserSample": {
+          "transport": "direct_webrtc",
+          "control_transport": "server_websocket",
+          "control_state": "fenced",
+          "direct_frames": 790,
+          "direct_state": "connected",
+          "direct_path": "nat",
+          "direct_protocol": "udp",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 1,
+          "direct_network_rtt_ms": 23,
+          "direct_jitter_buffer_ms": 0.23399999999985,
+          "direct_decode_ms": 0.81950000000003,
+          "direct_fps": 0.72550514579935,
+          "direct_frame_age_ms": 512,
+          "control_rtt_ms": 460,
+          "queue_recoveries": 0,
+          "decode_errors": 0,
+          "render_errors": 0,
+          "rendered_frames": 26,
+          "incoming_fps": 0,
+          "rendered_fps": 0
+        },
+        "maxRetainedBrowserJitterBufferMs": 31.554333333334,
+        "nativeLast": [
+          {
+            "stage": "channel_open",
+            "answerSent": true,
+            "elapsedMs": 645458,
+            "network": {
+              "local_candidates": 3,
+              "responses_received": 258,
+              "pairs": 1,
+              "succeeded_pairs": 1,
+              "requests_received": 289,
+              "checking_pairs": 0,
+              "remote_candidates": 1,
+              "requests_sent": 396,
+              "dtls_state": "connected",
+              "responses_sent": 289,
+              "failed_pairs": 0
+            }
+          }
+        ]
+      }
+    ],
+    "networkSwitchTimeSource": "User observation, exact interface-switch timestamp unmeasured",
+    "nearestLocalPathAccepted": false,
+    "networkSwitchRecoveryAccepted": false
+  },
+  "mainPcControlledNumericIce": {
+    "atUtc": "2026-10-11T18:49:42.336Z",
+    "ordinaryBrowserAccepted": false,
+    "isolatedBrowserOnly": true,
+    "browserMdnsPrivacyFeatureDisabledForExperiment": true,
+    "systemOrUserBrowserSettingsChanged": false,
+    "selectedPath": "nat",
+    "protocol": "udp",
+    "observedNetworkRttMs": 1,
+    "touchEvents": 14,
+    "nativeInputReceipts": 14,
+    "downMoveUpNativeConfirmed": true,
+    "serverTouchEvents": 0,
+    "nativeActionAckMs": 15,
+    "glassToGlassLatencyMeasured": false
+  },
+  "postOtaPh025": {
+    "timeoutRecurredAfterFleetDownloads": true,
+    "failureAtUtc": [
+      "2026-10-11T18:31:22.838034+00:00",
+      "2026-10-11T18:33:20.037063+00:00"
+    ],
+    "lastControlRttMs": [
+      258,
+      262
+    ],
+    "decodeRenderErrors": 0,
+    "soakAccepted": false
+  },
+  "legacyGestureEvidence": {
+    "earlierGeometryMayHaveBeenOutsideViewport": true,
+    "earlierReadyStateAndHeartbeatAreNotNativeGestureProof": true,
+    "newFiniteProofRequiresVisibleCanvasAndExactDownUpNativeReceipts": true
+  },
+  "generatedBuildDamage": {
+    "path": "android/app/build/generated/ksp/devDebug/java/com/sphereplatform/agent/service/ConfigWatchdog_Factory.java",
+    "bytes": 2327,
+    "allBytesWere0xff": true,
+    "sha256": "f152c9a6c36365019df6a9363889e1816228502dd214e9e1e1f19b05aff15c1a",
+    "creationTimeUtc": "2026-10-11T19:07:54Z",
+    "lastWriteTimeUtc": "2026-10-11T17:54:25Z",
+    "gitFsckExit": 0,
+    "volumeHealth": "Healthy",
+    "hardwareCauseProven": false,
+    "regenerationWithoutBuildCacheInProgress": true
+  },
+  "unaccepted": [
+    "ordinary-browser nearest localhost route",
+    "LAN/WAN/TURN acceptance",
+    "stable network switch",
+    "shared multi-operator input",
+    "source-rate 60FPS and per-device quality profiles",
+    "full native input/video soak",
+    "APK durable desired-version offline catch-up",
+    "disk-writer attribution"
+  ],
+  "publicationContains": [
+    "aggregate counters",
+    "timestamps",
+    "artifact hashes"
+  ],
+  "publicationExcludes": [
+    "SDP",
+    "ICE credentials",
+    "addresses",
+    "candidate IDs",
+    "input coordinates",
+    "media"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-06T14:30:36.344645+00:00",
+  "system": "Windows",
+  "freeDiskBytes": 42028113920,
+  "deviceCommandsSent": false,
+  "mutationsPerformed": false,
+  "availableRamBytes": 14105333760,
+  "totalRamBytes": 50668236800,
+  "committedBytes": 76931256320,
+  "commitLimitBytes": 95153381376,
+  "findings": [],
+  "buildAllowed": true
+}

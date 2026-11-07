@@ -1,0 +1,643 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-16T01:29:38.463489+00:00",
+  "runtimeInstalled": true,
+  "scope": "Finite delivery of capture-only headless transport and APK SDP guard, not game model or production SLA acceptance.",
+  "runtime": {
+    "sourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+    "apiSourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+    "uiContainer": {
+      "sourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+      "containerId": "4f46b34dd1f3b7e1ef2e1829a2ffb35e1d01b5e024a33f13dd5620d54a9d85f8",
+      "imageId": "sha256:f54a15e7b59213d8842c19af6bf77fa850afa168bfdff5506eaf1e5da86fd27e",
+      "status": "running",
+      "unchangedFromPreviousVerifiedDelivery": true
+    },
+    "apiContainer": {
+      "id": "c587915e67f9c6d2f7b244592c9700f1dc088c911e24caae1df91f2c4f753ec1",
+      "imageId": "sha256:972f779f74376f2e0442828d0602e62ea7fff458310b0608a4fb693caeb7e3c8",
+      "imageTag": "sphere-reviewed-backend:27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+      "startedAt": "2026-10-16T01:10:31.184166438Z",
+      "status": "running"
+    },
+    "previousBackend": {
+      "id": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "imageTag": "sphere-reviewed-backend:969a74440d67e987be98f37cdb450f7c47817f68",
+      "startedAt": "2026-10-14T20:25:53.673837743Z",
+      "status": "running"
+    },
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otherContainersPreserved": 45,
+    "transportFlags": {
+      "directProbeEnabled": true,
+      "readOnlyVideoEnabled": false,
+      "primaryVideoEnabled": true,
+      "inputEnabled": true
+    },
+    "mdnsConfigurationPreserved": true,
+    "health": [
+      {
+        "address": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "payload": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "address": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "payload": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+        }
+      },
+      {
+        "address": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "payload": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "address": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "payload": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+        }
+      }
+    ]
+  },
+  "backendPackage": {
+    "kind": "sphere-local-backend",
+    "image": {
+      "id": "sha256:972f779f74376f2e0442828d0602e62ea7fff458310b0608a4fb693caeb7e3c8",
+      "tag": "sphere-reviewed-backend:27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+    },
+    "parentImageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+    "parentSource": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "dependencyInstallPerformed": false,
+    "buildNetwork": "none",
+    "archivesCreated": 0,
+    "rollbackImagePreserved": true,
+    "imageRuntimeProbePassed": true,
+    "isolatedRuntimeContainersRemoved": true,
+    "metricsProbeRuns": 2,
+    "metricsWorkersPerRun": 4,
+    "workerRecyclesPerRun": 2,
+    "masterRestartChecked": true,
+    "privateProof": {
+      "file": ".local-pilot/local-backend-27f3a61f/receipt.json",
+      "sha256": "da7c2f9b080f864bce89b447bfda80c47af84188f569f77e7b324c7b80f720e1"
+    }
+  },
+  "ci": {
+    "mode": "maintainer-local-executor",
+    "sourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+    "backend": {
+      "tests": {
+        "tests": 4168,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 11
+      },
+      "passed": 4157,
+      "subtests": 511,
+      "github": {
+        "id": 56480321588,
+        "context": "Sphere Local / Backend regressions",
+        "state": "success",
+        "createdAt": "2026-10-15T23:20:35Z",
+        "readbackVerified": true,
+        "targetUrl": null
+      },
+      "isolatedServicesRemoved": true,
+      "checkoutRemoved": true,
+      "serviceImages": {
+        "postgres": {
+          "reference": "postgres@sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+          "imageId": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+          "matchesCloudReference": false
+        },
+        "redis": {
+          "reference": "redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048",
+          "imageId": "sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048",
+          "matchesCloudReference": true
+        }
+      }
+    },
+    "android": {
+      "variants": {
+        "dev": {
+          "tests": 1212,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "enterprise": {
+          "tests": 1212,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        }
+      },
+      "localBuildStatus": {
+        "sourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+        "context": "Sphere Local / Android candidate build",
+        "id": 56485962192,
+        "state": "success",
+        "readbackVerified": true,
+        "apkSha256": "9144dc1a25c9ced752fdec392580b6322db7d189817aed9591aa7e34cc2f0f5e",
+        "metadataSha256": "b206d50ee29b6ed590cf20757022dd95290af88d98144d1e52e03a3dc19069d4"
+      },
+      "fullCloudVariantMatrixAccepted": false
+    },
+    "hostedActionsStartedForThisDelivery": false,
+    "completeCiMigrationAccepted": false,
+    "privateBackendProof": {
+      "file": ".local-pilot/local-ci/runs/20261015T230350Z-29012442/receipt.json",
+      "sha256": "0f0d80ef730902dd3e09c8738533aab95f29a0f3a69593deecedce9b8d17fb07"
+    }
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "version": "1.2.77-dev",
+        "versionCode": 10277,
+        "sourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+        "androidTree": "07a97ac8ca18fd468c68301a2dd5300913cba716",
+        "sha256": "9144dc1a25c9ced752fdec392580b6322db7d189817aed9591aa7e34cc2f0f5e",
+        "bytes": 57836037,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "versionCode": 10277,
+        "installedPackageSha256": "9144dc1a25c9ced752fdec392580b6322db7d189817aed9591aa7e34cc2f0f5e",
+        "observedAtUtc": "2026-10-16T01:26:05.871791+00:00"
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "name": "auto-ph-025",
+        "versionCode": 10277,
+        "installedPackageSha256": "9144dc1a25c9ced752fdec392580b6322db7d189817aed9591aa7e34cc2f0f5e",
+        "observedAtUtc": "2026-10-16T01:26:05.871791+00:00"
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "name": "auto-ph-010",
+        "versionCode": 10277,
+        "installedPackageSha256": "9144dc1a25c9ced752fdec392580b6322db7d189817aed9591aa7e34cc2f0f5e",
+        "observedAtUtc": "2026-10-16T01:26:05.871791+00:00"
+      }
+    ],
+    "partialPackageProofDevices": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "name": "auto-ph-030",
+        "versionCode": 10277,
+        "reason": "native_input_busy",
+        "installedPackageSha256": null,
+        "completedOtaCommandId": "24304e45-b154-49b4-b79b-103c01b0ba1a",
+        "preflight": {
+          "currentVersionCode": 10276,
+          "completedOtaCommandId": "07bd32df-d92c-4a1d-9bdf-ee58575779e4",
+          "otaArtifactSha256": "e0a7806ab59d2a5856277ab419b86f93f92251dd1694dc2162fb06cac56865a9",
+          "currentPackageHashVerified": false,
+          "reason": "native_input_busy"
+        }
+      }
+    ],
+    "completedUpdates": [
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "commandId": "d73ccb35-a439-4be2-91d1-6cdadf273cab",
+        "status": "completed",
+        "versionCode": 10277,
+        "recordedAtUtc": "2026-10-16T01:11:54.962562+00:00",
+        "currentPackageHashVerified": true
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "name": "auto-ph-025",
+        "commandId": "e332a894-c4a8-4789-838c-a946622b77c9",
+        "status": "completed",
+        "versionCode": 10277,
+        "recordedAtUtc": "2026-10-16T01:22:55.841824+00:00",
+        "currentPackageHashVerified": true
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "name": "auto-ph-010",
+        "commandId": "b792940e-044b-4bd4-9cf9-b1b65916ad02",
+        "status": "completed",
+        "versionCode": 10277,
+        "recordedAtUtc": "2026-10-16T01:22:58.771519+00:00",
+        "currentPackageHashVerified": true
+      },
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "name": "auto-ph-030",
+        "commandId": "24304e45-b154-49b4-b79b-103c01b0ba1a",
+        "status": "completed",
+        "versionCode": 10277,
+        "recordedAtUtc": "2026-10-16T01:23:20.308665+00:00",
+        "currentPackageHashVerified": false
+      }
+    ],
+    "offlineDevices": [
+      {
+        "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+        "name": "auto-ph-029",
+        "status": "offline"
+      },
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "name": "auto-ph-028",
+        "status": "offline"
+      },
+      {
+        "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+        "name": "auto-ph-027",
+        "status": "offline"
+      },
+      {
+        "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+        "name": "auto-ph-026",
+        "status": "offline"
+      },
+      {
+        "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+        "name": "auto-ph-024",
+        "status": "offline"
+      },
+      {
+        "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+        "name": "auto-ph-023",
+        "status": "offline"
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "name": "auto-ph-022",
+        "status": "offline"
+      },
+      {
+        "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+        "name": "auto-ph-021",
+        "status": "offline"
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "name": "auto-ph-020",
+        "status": "offline"
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "name": "auto-ph-019",
+        "status": "offline"
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "name": "auto-ph-018",
+        "status": "offline"
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "name": "auto-ph-017",
+        "status": "offline"
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "name": "auto-ph-016",
+        "status": "offline"
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "name": "auto-ph-015",
+        "status": "offline"
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "name": "auto-ph-014",
+        "status": "offline"
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "name": "auto-ph-013",
+        "status": "offline"
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "name": "auto-ph-012",
+        "status": "offline"
+      }
+    ],
+    "ordinaryChannelUnchanged": true,
+    "publishedPlatform": "android-canary",
+    "publishedFlavor": "dev",
+    "mandatory": false,
+    "anonymousArtifactAccessStatus": 401,
+    "authenticatedArtifactDigestVerified": true,
+    "dataClears": 0,
+    "adbInstalls": 0,
+    "privateProof": {
+      "file": ".local-pilot/motor77-fleet-ota-20261016.private.json",
+      "sha256": "5f66d4a723077d597913d8f44ad7100d303822ea9cd8e2b04ee8455a74c0b39f"
+    }
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "directFramesPresented": 2564,
+    "directFramesScope": "One participant of the final tunnel soak; cumulative presentation count, not unique source frames.",
+    "ordinaryChrome": true,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-16T01:18:42.849Z",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "finiteAccepted": true,
+        "participants": 2,
+        "simultaneousMouseTouchRounds": 12,
+        "nativeNavigationAppliedPerParticipant": [
+          4,
+          4
+        ],
+        "survivorNativeNavigationApplied": 5,
+        "mainPeersPerParticipant": [
+          1,
+          1
+        ],
+        "serverKeysSent": 0,
+        "serverTouchesSent": 0,
+        "pageErrors": 0,
+        "ownedContextsClosed": 2,
+        "soakSamples": 6,
+        "presentedFramesAtFinalSoak": [
+          2887,
+          1466
+        ],
+        "privateProof": {
+          "file": ".local-pilot/motor77-direct-system-input-result.private.json",
+          "sha256": "91f5df0d8ec0e30a1e508ee967e7236a79157c6b41ea44feddc4557cfd30bc23"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-16T01:25:37.604Z",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "finiteAccepted": true,
+        "participants": 2,
+        "simultaneousMouseTouchRounds": 12,
+        "nativeNavigationAppliedPerParticipant": [
+          4,
+          4
+        ],
+        "survivorNativeNavigationApplied": 5,
+        "mainPeersPerParticipant": [
+          1,
+          1
+        ],
+        "serverKeysSent": 0,
+        "serverTouchesSent": 0,
+        "pageErrors": 0,
+        "ownedContextsClosed": 2,
+        "soakSamples": 6,
+        "presentedFramesAtFinalSoak": [
+          2564,
+          1347
+        ],
+        "privateProof": {
+          "file": ".local-pilot/motor77-direct-system-input-tunnel-result.private.json",
+          "sha256": "079d7e467f9870f5dd6dd5985fb98559babaabcf93c6d250d306fe68c279301b"
+        }
+      }
+    ],
+    "inputProtocol": "shared_input_v2",
+    "keyboardTextImeRetested": false,
+    "actualPh030ClientAccepted": false
+  },
+  "headless": {
+    "module": "motor_worker",
+    "version": "0.2.0",
+    "installedApiTested": true,
+    "singleAndOverlappingPeers": [
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "success": true,
+        "durationObservedSeconds": 15.016,
+        "decodedFrames": 885,
+        "decodedFpsDuringMonitor": 57.806,
+        "rgbObservationsDuringMonitor": 75,
+        "observationHzDuringMonitor": 4.995,
+        "captureLifecycle": {
+          "requested": true,
+          "delivery": "capture_only",
+          "sourceReadinessConfirmed": true,
+          "directDeliveryAcks": 6,
+          "serverBootstrapBytesDiscarded": 0,
+          "serverBytesAfterHandover": 0,
+          "relayFramesDecoded": 0
+        },
+        "control": {
+          "requested": true,
+          "dataChannelOpened": true,
+          "nativeAdmissionConfirmed": true,
+          "actorAliveReceipts": 49,
+          "lastActorRttMs": 2.7685999957611784,
+          "participantClosedConfirmed": true,
+          "nativeActionAppliedVerified": false,
+          "pointerKeyTextCommandsSent": 0
+        },
+        "route": {
+          "path": "nat",
+          "protocol": "udp",
+          "candidateTypes": [
+            "host",
+            "prflx"
+          ],
+          "addressScopes": [
+            "private",
+            "private"
+          ],
+          "evidence": "aiortc_1_15_nominated_pair_adapter",
+          "lanProven": false
+        },
+        "receiverStats": {
+          "packetsReceived": 9606,
+          "packetsLost": 0,
+          "jitter": 97
+        },
+        "modelInstalled": false,
+        "gameplayReady": false,
+        "hardwareDecodeAssumed": false,
+        "captureSize": {
+          "width": 960,
+          "height": 540
+        },
+        "privateProof": {
+          "file": ".local-pilot/motor-headless-ph011-20261016T011858Z.private.json",
+          "sha256": "3818c84c0fd88b22553da45eed63db945b0b6e4ea52b2bb9d84dd3f6c5762472"
+        }
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "success": true,
+        "durationObservedSeconds": 12.018,
+        "decodedFrames": 695,
+        "decodedFpsDuringMonitor": 57.662,
+        "rgbObservationsDuringMonitor": 61,
+        "observationHzDuringMonitor": 5.076,
+        "captureLifecycle": {
+          "requested": true,
+          "delivery": "capture_only",
+          "sourceReadinessConfirmed": true,
+          "directDeliveryAcks": 4,
+          "serverBootstrapBytesDiscarded": 0,
+          "serverBytesAfterHandover": 0,
+          "relayFramesDecoded": 0
+        },
+        "control": {
+          "requested": true,
+          "dataChannelOpened": true,
+          "nativeAdmissionConfirmed": true,
+          "actorAliveReceipts": 39,
+          "lastActorRttMs": 2.451899999869056,
+          "participantClosedConfirmed": true,
+          "nativeActionAppliedVerified": false,
+          "pointerKeyTextCommandsSent": 0
+        },
+        "route": {
+          "path": "nat",
+          "protocol": "udp",
+          "candidateTypes": [
+            "host",
+            "prflx"
+          ],
+          "addressScopes": [
+            "private",
+            "private"
+          ],
+          "evidence": "aiortc_1_15_nominated_pair_adapter",
+          "lanProven": false
+        },
+        "receiverStats": {
+          "packetsReceived": 7559,
+          "packetsLost": 0,
+          "jitter": 151
+        },
+        "modelInstalled": false,
+        "gameplayReady": false,
+        "hardwareDecodeAssumed": false,
+        "captureSize": {
+          "width": 960,
+          "height": 540
+        },
+        "privateProof": {
+          "file": ".local-pilot/motor-pair-20261016T011928Z-short.private.json",
+          "sha256": "4831ef2392e96f95f75e03c0932049247cb3397a5f7886e7db6cf3d19df4e923"
+        }
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "success": true,
+        "durationObservedSeconds": 25.009,
+        "decodedFrames": 1442,
+        "decodedFpsDuringMonitor": 57.34,
+        "rgbObservationsDuringMonitor": 126,
+        "observationHzDuringMonitor": 5.038,
+        "captureLifecycle": {
+          "requested": true,
+          "delivery": "capture_only",
+          "sourceReadinessConfirmed": true,
+          "directDeliveryAcks": 9,
+          "serverBootstrapBytesDiscarded": 0,
+          "serverBytesAfterHandover": 0,
+          "relayFramesDecoded": 0
+        },
+        "control": {
+          "requested": true,
+          "dataChannelOpened": true,
+          "nativeAdmissionConfirmed": true,
+          "actorAliveReceipts": 81,
+          "lastActorRttMs": 3.1331999925896525,
+          "participantClosedConfirmed": true,
+          "nativeActionAppliedVerified": false,
+          "pointerKeyTextCommandsSent": 0
+        },
+        "route": {
+          "path": "nat",
+          "protocol": "udp",
+          "candidateTypes": [
+            "host",
+            "prflx"
+          ],
+          "addressScopes": [
+            "private",
+            "private"
+          ],
+          "evidence": "aiortc_1_15_nominated_pair_adapter",
+          "lanProven": false
+        },
+        "receiverStats": {
+          "packetsReceived": 15668,
+          "packetsLost": 0,
+          "jitter": 86
+        },
+        "modelInstalled": false,
+        "gameplayReady": false,
+        "hardwareDecodeAssumed": false,
+        "captureSize": {
+          "width": 960,
+          "height": 540
+        },
+        "privateProof": {
+          "file": ".local-pilot/motor-pair-20261016T011928Z-long.private.json",
+          "sha256": "15db2612d3b374e0e5b7d4cb0140bdae3be16606d2957e5153c0a7b51057795c"
+        }
+      }
+    ],
+    "serverToHeadlessMediaFromStartupBytes": 0,
+    "apkToServerStartupMediaBytesProvenZero": false,
+    "nativeGameplayActionsExecuted": false,
+    "targetGpuTested": false,
+    "modelDownloaded": false,
+    "modelInstalled": false,
+    "inferenceExecuted": false
+  },
+  "operationalFindings": {
+    "gitObjectIntegrity": "Six corrupt loose objects restored from GitHub with exact Git object SHA verification; final git fsck exit 0. The first local snapshot attempt failed before tests; successful full rerun retained separately.",
+    "activeInputBlocksShellInspection": "PH030 current input actor refuses discrete shell inspection. Its completed OTA and current version are confirmed; installed package hash remains unverified. No input ownership fence was reset."
+  },
+  "limits": [
+    "Finite local canary tests do not accept all devices, networks, color handling, long-running recovery or a latency SLA.",
+    "Native READY/ALIVE in the headless client is not a gameplay action receipt.",
+    "Private ICE addresses do not prove LAN routing or VPN bypass.",
+    "No source capture frame identity/clock correlation or capture-to-action freshness guarantee.",
+    "No game profile executor, multi-touch, atomic DAG episode delegation, GPU benchmark or model inference acceptance.",
+    "Seventeen offline devices were not updated; no grants were issued to them.",
+    "Local backend/Android contexts are not a complete automatic replacement for every GitHub workflow."
+  ]
+}

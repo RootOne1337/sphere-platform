@@ -1,0 +1,73 @@
+{
+  "schema": "sphere-visual-repeat-research-v1",
+  "physicalActions": 0,
+  "modelsDownloaded": false,
+  "repositories": [
+    {
+      "repo": "KTH-RPL/lotis",
+      "branch": "main",
+      "sha": "c3724e06b5c10897ddbc791ce930b41a90c65379",
+      "date": "2026-07-14T07:51:10Z",
+      "license": "MIT",
+      "archived": false
+    },
+    {
+      "repo": "wangjks/FFI-VTR",
+      "branch": "master",
+      "sha": "1bd0fda511026e402be734805f1f1aa33c5e0bff",
+      "date": "2025-03-19T09:28:36Z",
+      "license": "MIT",
+      "archived": false
+    },
+    {
+      "repo": "QVPR/teach-repeat",
+      "branch": "master",
+      "sha": "a0d54ea58f6410d66d49d76db9d7ae08dc06d8d7",
+      "date": "2022-10-29T12:00:26Z",
+      "license": "BSD-2-Clause",
+      "archived": false
+    },
+    {
+      "repo": "utiasASRL/vtr3",
+      "branch": "main",
+      "sha": "bdb40d8ad22f02094507cc0924af8622e1ed796c",
+      "date": "2026-08-05T18:34:45Z",
+      "license": "Apache-2.0",
+      "archived": false
+    },
+    {
+      "repo": "robodhruv/visualnav-transformer",
+      "branch": "main",
+      "sha": "dca79815b704e5aa9c6bdc3082351f9e3b2848c2",
+      "date": "2024-09-15T06:36:11Z",
+      "license": "MIT",
+      "archived": false
+    },
+    {
+      "repo": "gestom/stroll_bearnav",
+      "branch": "master",
+      "sha": "70cb436af7d4e5f562a1f9f58e853fc53477d9b2",
+      "date": "2022-07-13T07:29:12Z",
+      "license": null,
+      "archived": false
+    }
+  ],
+  "lotisFiles": [
+    {
+      "path": ".gitattributes",
+      "size": 1519
+    },
+    {
+      "path": "README.md",
+      "size": 2272
+    },
+    {
+      "path": "final_config.yaml",
+      "size": 1475
+    },
+    {
+      "path": "final_model.pth",
+      "size": 118422240
+    }
+  ]
+}

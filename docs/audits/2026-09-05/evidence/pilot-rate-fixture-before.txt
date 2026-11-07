@@ -1,0 +1,257 @@
+........................................................................ [  5%]
+........................................................................ [ 10%]
+........................................................................ [ 15%]
+........................................................................ [ 20%]
+........................................................................ [ 25%]
+........................................................................ [ 30%]
+........................................................................ [ 35%]
+...................................................F.................... [ 40%]
+........................................................................ [ 45%]
+........................................................................ [ 51%]
+........................................................................ [ 56%]
+........................................................................ [ 61%]
+........................................................................ [ 66%]
+........................................................................ [ 71%]
+........................................................................ [ 76%]
+........................................................................ [ 81%]
+........................................................................ [ 86%]
+........................................................................ [ 91%]
+........................................................................ [ 97%]
+.........................................                                [100%]
+================================== FAILURES ===================================
+_ test_actual_admin_cli_login_and_enrollment_share_one_organization[new_organization] _
+tests\production\test_pilot_enrollment_bootstrap.py:138: in test_actual_admin_cli_login_and_enrollment_share_one_organization
+    assert login.status_code == 200, login.text
+E   AssertionError: {"detail":"Too many login attempts. Try again in 60 seconds."}
+E   assert 429 == 200
+E    +  where 429 = <Response [429 Too Many Requests]>.status_code
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+tests/test_updates/test_updates_api.py::TestSSRFGuard::test_http_url_rejected_at_creation
+tests/test_updates/test_updates_api.py::TestSSRFGuard::test_internal_ip_http_url_rejected
+tests/test_updates/test_updates_api.py::TestSSRFGuard::test_file_scheme_rejected
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py:328: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    return await dependant.call(**values)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.12.12-final-0 _______________
+
+Name                                                    Stmts   Miss   Cover
+----------------------------------------------------------------------------
+backend\api\__init__.py                                     0      0 100.00%
+backend\api\v1\__init__.py                                  0      0 100.00%
+backend\api\v1\account_sessions\__init__.py                 0      0 100.00%
+backend\api\v1\account_sessions\router.py                  35     13  62.86%
+backend\api\v1\audit\__init__.py                            0      0 100.00%
+backend\api\v1\audit\router.py                             32     17  46.88%
+backend\api\v1\auth\__init__.py                             0      0 100.00%
+backend\api\v1\auth\router.py                             142     49  65.49%
+backend\api\v1\batches\__init__.py                          0      0 100.00%
+backend\api\v1\batches\router.py                           30      9  70.00%
+backend\api\v1\bulk\__init__.py                             0      0 100.00%
+backend\api\v1\bulk\router.py                              29      2  93.10%
+backend\api\v1\config\__init__.py                           0      0 100.00%
+backend\api\v1\config\router.py                            71      9  87.32%
+backend\api\v1\device_events\__init__.py                    0      0 100.00%
+backend\api\v1\device_events\router.py                     35     13  62.86%
+backend\api\v1\devices\__init__.py                          0      0 100.00%
+backend\api\v1\devices\router.py                          242    161  33.47%
+backend\api\v1\discovery\__init__.py                        0      0 100.00%
+backend\api\v1\discovery\router.py                         20      1  95.00%
+backend\api\v1\event_triggers\__init__.py                   0      0 100.00%
+backend\api\v1\event_triggers\router.py                    83     15  81.93%
+backend\api\v1\game_accounts\__init__.py                    0      0 100.00%
+backend\api\v1\game_accounts\router.py                     68     27  60.29%
+backend\api\v1\groups\__init__.py                           0      0 100.00%
+backend\api\v1\groups\router.py                            41      7  82.93%
+backend\api\v1\health\__init__.py                           0      0 100.00%
+backend\api\v1\health\router.py                            18      1  94.44%
+backend\api\v1\locations\__init__.py                        0      0 100.00%
+backend\api\v1\locations\router.py                         39     16  58.97%
+backend\api\v1\logs\__init__.py                             0      0 100.00%
+backend\api\v1\logs\router.py                             101     37  63.37%
+backend\api\v1\monitoring\__init__.py                       0      0 100.00%
+backend\api\v1\monitoring\router.py                       151    102  32.45%
+backend\api\v1\n8n\__init__.py                              0      0 100.00%
+backend\api\v1\n8n\router.py                               77     30  61.04%
+backend\api\v1\pipeline_settings\__init__.py                0      0 100.00%
+backend\api\v1\pipeline_settings\router.py                106     65  38.68%
+backend\api\v1\pipelines\__init__.py                        0      0 100.00%
+backend\api\v1\pipelines\router.py                         88     43  51.14%
+backend\api\v1\schedules\__init__.py                        0      0 100.00%
+backend\api\v1\schedules\router.py                         71     39  45.07%
+backend\api\v1\scripts\__init__.py                          0      0 100.00%
+backend\api\v1\scripts\router.py                           55     28  49.09%
+backend\api\v1\streaming\__init__.py                        0      0 100.00%
+backend\api\v1\streaming\binary_handler.py                 30      0 100.00%
+backend\api\v1\streaming\router.py                         62     34  45.16%
+backend\api\v1\tasks\__init__.py                            0      0 100.00%
+backend\api\v1\tasks\router.py                            137     89  35.04%
+backend\api\v1\updates\__init__.py                          0      0 100.00%
+backend\api\v1\updates\router.py                           75     10  86.67%
+backend\api\v1\users\__init__.py                            0      0 100.00%
+backend\api\v1\users\router.py                             85     37  56.47%
+backend\api\v1\vpn\__init__.py                              0      0 100.00%
+backend\api\v1\vpn\router.py                              115     45  60.87%
+backend\api\ws\__init__.py                                  2      0 100.00%
+backend\api\ws\agent\__init__.py                            0      0 100.00%
+backend\api\ws\agent\router.py                            134     13  90.30%
+backend\api\ws\android\__init__.py                          0      0 100.00%
+backend\api\ws\android\router.py                          452    104  76.99%
+backend\api\ws\events\__init__.py                           0      0 100.00%
+backend\api\ws\events\router.py                           226    158  30.09%
+backend\api\ws\stream\__init__.py                           0      0 100.00%
+backend\api\ws\stream\router.py                           137     69  49.64%
+backend\cli\__init__.py                                     0      0 100.00%
+backend\cli\account_credentials.py                         41     41   0.00%
+backend\core\config.py                                     58      3  94.83%
+backend\core\constants.py                                   2      0 100.00%
+backend\core\cors.py                                       11      1  90.91%
+backend\core\dependencies.py                               94     26  72.34%
+backend\core\exceptions.py                                 33     11  66.67%
+backend\core\lifespan_registry.py                          17      6  64.71%
+backend\core\logging_config.py                             21      1  95.24%
+backend\core\rbac.py                                       25      2  92.00%
+backend\core\security.py                                   35      1  97.14%
+backend\core\setup_middlewares.py                           8      0 100.00%
+backend\core\startup_checks.py                             47      5  89.36%
+backend\database\credential_lookup.py                      25      3  88.00%
+backend\database\engine.py                                 27      3  88.89%
+backend\database\redis_client.py                           21      8  61.90%
+backend\database\tenant.py                                 22      0 100.00%
+backend\main.py                                            76     20  73.68%
+backend\metrics.py                                         33      0 100.00%
+backend\middleware\__init__.py                              0      0 100.00%
+backend\middleware\audit.py                                67      9  86.57%
+backend\middleware\logging_context.py                       3      0 100.00%
+backend\middleware\metrics.py                              25      0 100.00%
+backend\middleware\request_id.py                           13      0 100.00%
+backend\middleware\tenant_middleware.py                    13      2  84.62%
+backend\models\__init__.py                                 24      0 100.00%
+backend\models\account_session.py                          43      2  95.35%
+backend\models\api_key.py                                  20      0 100.00%
+backend\models\audit_log.py                                21      0 100.00%
+backend\models\base_model.py                                9      0 100.00%
+backend\models\device.py                                   37      0 100.00%
+backend\models\device_event.py                             33      1  96.97%
+backend\models\device_group.py                             19      0 100.00%
+backend\models\event_trigger.py                            25      1  96.00%
+backend\models\game_account.py                             73      3  95.89%
+backend\models\ldplayer_instance.py                        18      0 100.00%
+backend\models\location.py                                 23      0 100.00%
+backend\models\organization.py                             11      0 100.00%
+backend\models\pipeline.py                                 71      0 100.00%
+backend\models\pipeline_settings.py                        31      1  96.77%
+backend\models\refresh_token.py                            18      0 100.00%
+backend\models\schedule.py                                 67      0 100.00%
+backend\models\script.py                                   26      0 100.00%
+backend\models\task.py                                     43      2  95.35%
+backend\models\task_batch.py                               28      0 100.00%
+backend\models\user.py                                     19      0 100.00%
+backend\models\vpn_peer.py                                 47      0 100.00%
+backend\models\webhook.py                                  19      0 100.00%
+backend\models\workstation.py                              18      0 100.00%
+backend\monitoring\__init__.py                              0      0 100.00%
+backend\monitoring\pool_metrics.py                         31      2  93.55%
+backend\schemas\__init__.py                                 0      0 100.00%
+backend\schemas\account_sessions.py                        65      4  93.85%
+backend\schemas\agent_config.py                            14      0 100.00%
+backend\schemas\auth.py                                    84      0 100.00%
+backend\schemas\batch.py                                   42      0 100.00%
+backend\schemas\bulk.py                                    36      0 100.00%
+backend\schemas\dag.py                                    108     26  75.93%
+backend\schemas\device_events.py                           58      9  84.48%
+backend\schemas\device_register.py                         56      4  92.86%
+backend\schemas\device_status.py                           34      0 100.00%
+backend\schemas\devices.py                                122     20  83.61%
+backend\schemas\discovery.py                               46      2  95.65%
+backend\schemas\event_trigger.py                           43      0 100.00%
+backend\schemas\events.py                                  33      0 100.00%
+backend\schemas\game_accounts.py                          229     48  79.04%
+backend\schemas\groups.py                                  73      3  95.89%
+backend\schemas\locations.py                               69     15  78.26%
+backend\schemas\pipeline.py                                99      0 100.00%
+backend\schemas\pipeline_settings.py                       80      0 100.00%
+backend\schemas\schedule.py                               138     23  83.33%
+backend\schemas\script.py                                  44      0 100.00%
+backend\schemas\task.py                                    38      0 100.00%
+backend\schemas\task_results.py                            24      0 100.00%
+backend\schemas\vpn\__init__.py                             3      0 100.00%
+backend\schemas\vpn\config.py                              24      0 100.00%
+backend\schemas\vpn\peer.py                                52      0 100.00%
+backend\schemas\webhook.py                                 43      2  95.35%
+backend\services\__init__.py                                0      0 100.00%
+backend\services\account_credential_migration.py           42      2  95.24%
+backend\services\account_credentials.py                    36      0 100.00%
+backend\services\account_session_service.py               122    101  17.21%
+backend\services\api_key_service.py                        51      4  92.16%
+backend\services\audit_log_service.py                      18      0 100.00%
+backend\services\auth_service.py                          110      2  98.18%
+backend\services\batch_service.py                         122     16  86.89%
+backend\services\bulk_service.py                           69     18  73.91%
+backend\services\cache_service.py                          49      0 100.00%
+backend\services\device_event_service.py                   83     65  21.69%
+backend\services\device_registration_service.py           109     17  84.40%
+backend\services\device_service.py                        173     94  45.66%
+backend\services\device_status_cache.py                    69      7  89.86%
+backend\services\discovery_service.py                      65     25  61.54%
+backend\services\event_reactor.py                         140     86  38.57%
+backend\services\game_account_service.py                  185    104  43.78%
+backend\services\group_service.py                         101     38  62.38%
+backend\services\health_service.py                         98     13  86.73%
+backend\services\location_service.py                      101     82  18.81%
+backend\services\lua_safety.py                             13      1  92.31%
+backend\services\mfa_service.py                            21      0 100.00%
+backend\services\n8n_webhook_service.py                    99     60  39.39%
+backend\services\nick_generator.py                         45     26  42.22%
+backend\services\orchestrator\__init__.py                   0      0 100.00%
+backend\services\orchestrator\orchestration_engine.py     240    152  36.67%
+backend\services\orchestrator\pipeline_executor.py        146    146   0.00%
+backend\services\orchestrator\pipeline_service.py         152     46  69.74%
+backend\services\orchestrator\step_handlers.py            331    255  22.96%
+backend\services\pipeline_settings_service.py              40     25  37.50%
+backend\services\scheduler\__init__.py                      0      0 100.00%
+backend\services\scheduler\schedule_service.py            115     30  73.91%
+backend\services\scheduler\scheduler_engine.py            245    176  28.16%
+backend\services\screenshot_storage.py                     23      0 100.00%
+backend\services\script_service.py                        105     13  87.62%
+backend\services\task_queue.py                             58      3  94.83%
+backend\services\task_service.py                          259     48  81.47%
+backend\services\vpn\__init__.py                            0      0 100.00%
+backend\services\vpn\awg_config.py                         59      2  96.61%
+backend\services\vpn\dependencies.py                       34     15  55.88%
+backend\services\vpn\event_publisher.py                     7      2  71.43%
+backend\services\vpn\health_monitor.py                    102     13  87.25%
+backend\services\vpn\ip_pool.py                            54      2  96.30%
+backend\services\vpn\killswitch_service.py                 19      0 100.00%
+backend\services\vpn\pool_service.py                      121      2  98.35%
+backend\services\webhook_service.py                        31      0 100.00%
+backend\services\workstation_mapping.py                    45      0 100.00%
+backend\tasks\__init__.py                                   0      0 100.00%
+backend\tasks\ensure_enrollment_key.py                     31     24  22.58%
+backend\tasks\orchestration_loop.py                        11      4  63.64%
+backend\tasks\sync_device_status.py                        60     15  75.00%
+backend\tasks\task_heartbeat_watchdog.py                  139     28  79.86%
+backend\tasks\vpn_health.py                                59      2  96.61%
+backend\websocket\__init__.py                               0      0 100.00%
+backend\websocket\channels.py                              17      0 100.00%
+backend\websocket\connection_manager.py                    98      9  90.82%
+backend\websocket\event_publisher.py                       47     11  76.60%
+backend\websocket\frames.py                                38      2  94.74%
+backend\websocket\heartbeat.py                             90     18  80.00%
+backend\websocket\offline_queue.py                         85      8  90.59%
+backend\websocket\pubsub_router.py                        172     43  75.00%
+backend\websocket\startup.py                               16      0 100.00%
+backend\websocket\stream_bridge.py                        139     57  58.99%
+backend\websocket\stream_metrics.py                        22      0 100.00%
+backend\websocket\video_queue.py                           63      0 100.00%
+----------------------------------------------------------------------------
+TOTAL                                                   11331   3465  69.42%
+Required test coverage of 65% reached. Total coverage: 69.42%
+=========================== short test summary info ===========================
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_actual_admin_cli_login_and_enrollment_share_one_organization[new_organization]
+1 failed, 1408 passed, 4 warnings in 279.46s (0:04:39)

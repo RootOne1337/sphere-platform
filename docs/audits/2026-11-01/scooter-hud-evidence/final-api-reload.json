@@ -1,0 +1,15 @@
+{
+  "oldPid": 54044,
+  "watchdogPid": 4444,
+  "physicalActions": 0,
+  "outcome": "verified",
+  "newPid": 5412,
+  "existingAssetsUnchanged": true,
+  "health": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true,
+    "route_camera_pipeline": "vehicle_geometry_v3_hud",
+    "creation_recovery_contract": "confirmed_absence_v1"
+  },
+  "verifiedAssets": 61
+}

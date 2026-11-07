@@ -1,0 +1,14 @@
+{
+  "schema": "sphere-route011321-checkpoint-comparison-index-v1",
+  "date": "2026-10-26",
+  "source_manifest_sha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+  "source_unchanged": true,
+  "files": {
+    "checkpoint-comparison.json": "9590af95055e7a2dcc1b2608757e903448fe5d615d87b37ea65d1f81ce99c690",
+    "checkpoint-comparison.jpg": "5b8904d93e29c960849aa1a850c674ec04453bdf63e738bed7ed58c06e3075df"
+  },
+  "runner_sha256": "1b0325ea555f591a22f8dfc0bea2f811984a89bca113d6c85bf91555976dd98f",
+  "evaluator_entry_sha256": "1b961029490c3da7612572afd1c72292141b88fb02e3f34975428f20ae970733",
+  "new_training": false,
+  "physical_actions": 0
+}

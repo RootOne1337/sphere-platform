@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 import uuid
 
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.schemas.bulk import (
@@ -123,16 +125,41 @@ class BulkActionService:
             case BulkActionType.SEND_COMMAND:
                 await self._send_command(device_id, params, org_id)
 
-    # ── Action implementations (TZ-03/08 stubs) ──────────────────────────────
+    # ── Action implementations ──────────────────────────────────────────────
 
     async def _reboot_device(self, device_id: str, org_id: uuid.UUID) -> None:
-        """TZ-08 stub: write reboot command to Redis for PC Agent to pick up."""
-        key = f"cmd:reboot:{device_id}"
-        await self.cache.set(
-            key,
-            f'{{"type":"reboot","device_id":"{device_id}"}}',
-            ttl=30,
-        )
+        """Issue reboot over the live Android command channel and require an agent receipt."""
+        from backend.websocket.pubsub_router import get_pubsub_publisher
+
+        publisher = get_pubsub_publisher()
+        if publisher is None:
+            raise RuntimeError("Device command transport is unavailable")
+
+        try:
+            result = await publisher.send_command_wait_result(
+                device_id,
+                {
+                    "type": "REBOOT",
+                    "command_id": f"interactive_{uuid.uuid4()}",
+                    "payload": {},
+                    "signed_at": int(time.time()),
+                    "ttl_seconds": 15,
+                },
+                timeout=10.0,
+                live_only=True,
+                accept_progress=True,
+            )
+        except HTTPException as exc:
+            if exc.status_code == 504:
+                raise RuntimeError("Reboot outcome unknown: device did not acknowledge") from exc
+            if exc.status_code == 503:
+                raise RuntimeError("Device is offline or command transport is unavailable") from exc
+            raise RuntimeError("Device reboot command failed") from exc
+
+        if result.get("status") == "failed":
+            raise RuntimeError("Agent rejected reboot command")
+        if result.get("status") not in {"completed", "received", "running"}:
+            raise RuntimeError("Agent returned an invalid reboot receipt")
 
     async def _connect_adb(self, device_id: str, org_id: uuid.UUID) -> None:
         """TZ-03 stub: write adb_connect command to Redis."""

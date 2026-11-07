@@ -1,0 +1,12 @@
+{
+  "sourceRevision": "60e7f6ffdab4265d3b838aa8ca1320e003289419",
+  "imageId": "sha256:5288835ba424dcdae75e28786134f8e8c7f0bd69ef1411285c345dd9fa943c4a",
+  "imageTag": "sphere-review-frontend:60e7f6ffdab4265d3b838aa8ca1320e003289419",
+  "archiveBytes": 110910143,
+  "runId": 41454423270,
+  "runAttempt": 1,
+  "pages": 26,
+  "clientAssets": 72,
+  "archiveAdmitted": true,
+  "runtimeInstalled": false
+}

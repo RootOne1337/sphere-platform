@@ -1,0 +1,249 @@
+{
+  "observedAt": "2026-10-01T23:55:54.100265+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "reviewSource": "0f4530cefb33c32822959e65de715ef7625fc145",
+  "backendSource": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+  "initial": {
+    "observedAt": "2026-10-01T23:50:20.561442+00:00",
+    "phase": "initial",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "0f4530cefb33c32822959e65de715ef7625fc145",
+    "backendSource": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "3258bc725ace9473987838b6d086d12b50ba5f2a24878f27ba6f312195fad299",
+        "imageId": "sha256:7a3386f4ea277211bedab7196dbee27cc54c4f9927cdfb893eaf8fc8aecfc647",
+        "image": "sphere-review-frontend:0f4530cefb33c32822959e65de715ef7625fc145",
+        "health": "healthy",
+        "startedAt": "2026-10-01T23:49:44.099980322Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "761ffc03ddb051c85b322f2018d3be9cfd85990fa7af183d1e7327d47269731d",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-01T23:49:50.117876232Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "afterRestart": {
+    "observedAt": "2026-10-01T23:51:19.784809+00:00",
+    "phase": "after-restart",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "0f4530cefb33c32822959e65de715ef7625fc145",
+    "backendSource": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "3258bc725ace9473987838b6d086d12b50ba5f2a24878f27ba6f312195fad299",
+        "imageId": "sha256:7a3386f4ea277211bedab7196dbee27cc54c4f9927cdfb893eaf8fc8aecfc647",
+        "image": "sphere-review-frontend:0f4530cefb33c32822959e65de715ef7625fc145",
+        "health": "healthy",
+        "startedAt": "2026-10-01T23:50:49.500997783Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "761ffc03ddb051c85b322f2018d3be9cfd85990fa7af183d1e7327d47269731d",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-01T23:50:50.054839831Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "existingContainers": {
+    "unchanged": true,
+    "count": 14,
+    "names": [
+      "sphere-pilot-20260911-backend-1",
+      "sphere-observability-20260930-grafana-1",
+      "sphere-observability-20260930-prometheus-1",
+      "sphere-tuna-canary",
+      "sphere-pilot-20260911-frontend-1",
+      "sphere-pilot-20260911-cloudflare-quick-1",
+      "sphere-pilot-20260911-public-gateway-1",
+      "sphere-pilot-20260911-nginx-1",
+      "sphere-pilot-20260911-n8n-1",
+      "sphere-pilot-20260911-minio-1",
+      "sphere-pilot-20260911-postgres-1",
+      "sphere-pilot-20260911-redis-1",
+      "sphere-audit-20260905-redis",
+      "sphere-audit-20260905-postgres"
+    ]
+  },
+  "remoteRerun": {
+    "startedAt": "2026-10-01T23:45:34.722618+00:00",
+    "applicationSource": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "apiBaseUrl": "http://127.0.0.1:18080/api/v1",
+    "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+    "deviceName": "auto-ph-025",
+    "reportedAgentVersion": "1.2.40-dev",
+    "actions": [
+      "set_variable",
+      "get_variable"
+    ],
+    "changesAndroidUiOrAccount": false,
+    "automaticPostRetries": false,
+    "scope": "one remote device, two finite variable-only executions",
+    "scriptId": "686d9d40-b9c7-402c-8717-2ed8ba564563",
+    "originalVersionId": "c7b011a0-18c3-4546-8fcb-f61d2d615b1a",
+    "originalTaskId": "c82b0d7d-6ba6-437d-abdb-dc507e5288d6",
+    "originalExecution": {
+      "taskId": "c82b0d7d-6ba6-437d-abdb-dc507e5288d6",
+      "status": "completed",
+      "scriptVersionId": "c7b011a0-18c3-4546-8fcb-f61d2d615b1a",
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "priority": 3,
+      "inputParams": {
+        "priority": 3
+      },
+      "createdAt": "2026-10-01T23:45:34.810237Z",
+      "startedAt": "2026-10-01T23:45:35.723482Z",
+      "finishedAt": "2026-10-01T23:45:35.753302Z",
+      "resultSuccess": true,
+      "nodes": [
+        {
+          "node_id": "write_marker",
+          "action_type": "set_variable",
+          "success": true,
+          "duration_ms": 1,
+          "output": "sphere-original-v1-aed64771a4"
+        },
+        {
+          "node_id": "read_marker",
+          "action_type": "get_variable",
+          "success": true,
+          "duration_ms": 0,
+          "output": "sphere-original-v1-aed64771a4"
+        }
+      ]
+    },
+    "latestVersionId": "3d1b80cd-edb0-4e4b-8f84-754780252923",
+    "rerunTaskId": "d76a87c9-b613-4cb1-82b5-f31b1d84cb23",
+    "repeatedExecution": {
+      "taskId": "d76a87c9-b613-4cb1-82b5-f31b1d84cb23",
+      "status": "completed",
+      "scriptVersionId": "c7b011a0-18c3-4546-8fcb-f61d2d615b1a",
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "priority": 3,
+      "inputParams": {
+        "priority": 3
+      },
+      "createdAt": "2026-10-01T23:45:36.879313Z",
+      "startedAt": "2026-10-01T23:45:40.551757Z",
+      "finishedAt": "2026-10-01T23:45:40.616586Z",
+      "resultSuccess": true,
+      "nodes": [
+        {
+          "node_id": "write_marker",
+          "action_type": "set_variable",
+          "success": true,
+          "duration_ms": 1,
+          "output": "sphere-original-v1-aed64771a4"
+        },
+        {
+          "node_id": "read_marker",
+          "action_type": "get_variable",
+          "success": true,
+          "duration_ms": 1,
+          "output": "sphere-original-v1-aed64771a4"
+        }
+      ]
+    },
+    "pinnedVersionConfirmedByAndroidOutput": true,
+    "inputAndPriorityPreservedInApi": true,
+    "reportedFinalDeviceStatus": "online",
+    "reportedFinalAgentVersion": "1.2.40-dev",
+    "diagnosticArchived": true,
+    "completedAt": "2026-10-01T23:45:41.250669+00:00",
+    "outcome": "passed"
+  },
+  "firstPackagingAttempt": {
+    "source": "cc3d13b",
+    "productionBuild": "passed",
+    "nginxConfigContainer": "failed_invalid_tmpfs_mount",
+    "correctedSource": "0f4530c"
+  },
+  "ci77e96a4": {
+    "backend": {
+      "run": 36924906048,
+      "conclusion": "success"
+    },
+    "frontend": {
+      "run": 36924906017,
+      "conclusion": "success"
+    },
+    "android": {
+      "run": 36924905908,
+      "conclusion": "success"
+    }
+  },
+  "limits": [
+    "browser visual acceptance OPEN_URL_POLICY_BLOCKED",
+    "no Docker daemon/Windows restart trial",
+    "N01 Android screenshot upload still open",
+    "no public rollout",
+    "no video benchmark",
+    "no new APK or OTA"
+  ]
+}

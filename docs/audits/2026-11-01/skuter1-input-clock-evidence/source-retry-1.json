@@ -1,0 +1,68 @@
+{
+  "explicit_operator_requested": "compatibility_fix_retry",
+  "attempt": 1,
+  "previous_state": {
+    "phase": "failed",
+    "updated_at": 1793524739.4137616,
+    "error": "browser_teach_input_order",
+    "error_type": "ProtocolError"
+  },
+  "source_sha256": {
+    "COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce"
+  },
+  "protected_sha256": {
+    "control.json": "0407672a9e12b7a29f1a4dab98a9a0bc72dd4b67f8717d62b2259e772650834f",
+    "START": "8b43ec9dba5945f6d33fcfc62e9228da9198ff4fe3187b466e35519feafc77bc",
+    "worker.log": "ace1c7cb6c99e663cbf3f14e3069db9481086a43347e2afc402fc40dfc6b04bc"
+  },
+  "health": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true,
+    "route_camera_pipeline": "vehicle_geometry_v3_hud",
+    "creation_recovery_contract": "confirmed_absence_v1",
+    "image_route_review_contract": "source_bound_offline_v1",
+    "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+    "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+    "alternative_catalog_contract": "source_bound_review_v1",
+    "live_session_active": false
+  },
+  "resource_profile": {
+    "kind": "route_reconstruction_cpu",
+    "minRamGiB": 6.0,
+    "minDiskGiB": 20.0,
+    "maxCommitPercent": 90,
+    "hostReserveGiB": 4.0,
+    "taskReserveGiB": 2.0,
+    "sourceVideoBytes": 38563488,
+    "sourceSizeKnown": true,
+    "uploading": false,
+    "modelLoaded": false
+  },
+  "resource_snapshot": {
+    "observedAt": "2026-11-01T09:33:43.829990+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 36115156992,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "availableRamBytes": 7456251904,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 78896893952,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 10790363136,
+    "kernelNonpagedBytes": 5161529344,
+    "processCount": 464,
+    "handleCount": 681093,
+    "memoryMeasurement": "GetPerformanceInfo"
+  },
+  "wall_limit_seconds": 900,
+  "log_limit_bytes": 33554432,
+  "created_at": 1793525625.5189118
+}

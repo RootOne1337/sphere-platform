@@ -1,0 +1,44 @@
+{
+  "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+  "imageId": "sha256:485728529eb13daab946233306ac19e1f6f544ae491460a23ac4ba22a13dee8b",
+  "previousSource": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+  "observedAt": "2026-10-05T20:37:17.468216+00:00",
+  "volume": "sphere-pilot-20260911_device_logs",
+  "onlyBackendChanged": true,
+  "otherContainersPreserved": 45,
+  "mountsPreserved": true,
+  "logRotationPreserved": true,
+  "existingPrefixes": {
+    "files": 14,
+    "bytes": 3614902,
+    "prefixHashesVerified": true,
+    "uid": 1001
+  },
+  "beforeFleet": {
+    "observedAt": "2026-10-05T20:37:08.300660+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    }
+  },
+  "afterFleet": {
+    "observedAt": "2026-10-05T20:37:17.466132+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    }
+  },
+  "ready": true,
+  "uiChanged": false,
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "diskWriterIdentified": false
+}

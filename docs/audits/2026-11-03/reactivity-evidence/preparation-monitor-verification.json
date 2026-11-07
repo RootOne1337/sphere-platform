@@ -1,0 +1,50 @@
+{
+  "schema": "sphere-route-supervision-verification-v1",
+  "recordedAt": "2026-11-02T21:01:02.947309+00:00",
+  "state": "source_verified_runtime_not_reloaded",
+  "sourceHashes": {
+    "scripts/pilot/route_workspace.py": "92d0660cf0b8d5ffbb08d25810d1e61924006e3e2e4beab93cb1513e4727ab1a",
+    "scripts/pilot/reconstruction_service.py": "d89a2ccc99282c27fcc2a877f192bcc8fd21da83fcd10d003026cc975844a357",
+    "tests/test_route_preparation_monitor.py": "81f9b5fd3ba18521fe14da5b8e39f00966d91521722a0660dd2cced0e157777f",
+    "tests/test_reconstruction_service.py": "1fc1ffda64a7172cc3c853e468f1690812c5e27c1584e11e5686001c66feb72d"
+  },
+  "tests": {
+    "command": ".local-pilot/motor-amd-venv/Scripts/python.exe -B -c [pytest.main --noconftest tests/test_route_preparation_monitor.py tests/test_route_resource_monitor.py tests/test_route_task_resources.py tests/test_route_workspace.py tests/test_reconstruction_service.py -q]",
+    "passed": 126,
+    "subtestsPassed": 16,
+    "seconds": 7.55,
+    "resultOrigin": "terminal tool output, no separate raw console log"
+  },
+  "readOnlyTiming": {
+    "resultOrigin": "read-only collector measurement terminal output copied without rerun",
+    "fullCollectMs": 3191.5742000001046,
+    "taskAdmissionMs": 1175.5065999996077,
+    "taskRecurringMs": [
+      1.5067999993334524,
+      1.4794999997320701,
+      1.3822999999320018,
+      1.3962000002720742,
+      1.3340999994397862
+    ],
+    "volumeStates": [
+      "Healthy",
+      "Healthy",
+      "Healthy"
+    ],
+    "sampleContract": {
+      "memoryMeasurement": "GetPerformanceInfo",
+      "volumeMeasurement": "task_cache",
+      "volumeProofAgeMs": 16.000000000531145,
+      "volumeProofScope": "task_and_volume",
+      "volumeProbeState": "idle"
+    }
+  },
+  "boundary": {
+    "deviceCommands": 0,
+    "servicesRestarted": 0,
+    "sourceJobsModified": 0,
+    "offlineNativeJobsStarted": 0,
+    "denseSupervisorChanged": false,
+    "liveLatencyOrRouteQualityImprovedClaimed": false
+  }
+}

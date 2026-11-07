@@ -1,0 +1,16 @@
+{
+  "finding": "AUD-123",
+  "before": {
+    "numFailedTests": 4,
+    "numPassedTests": 3,
+    "numTotalTests": 7
+  },
+  "after": {
+    "numFailedTests": 0,
+    "numPassedTests": 208,
+    "numTotalTests": 208,
+    "numPassedTestSuites": 25
+  },
+  "typescript": "passed",
+  "browser_runtime": "pending"
+}

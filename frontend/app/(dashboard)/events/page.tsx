@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useDeviceEvents,
   useEventStats,
@@ -10,6 +10,10 @@ import {
   type DeviceEventParams,
 } from "@/lib/hooks/useDeviceEvents";
 import { Button } from "@/src/shared/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageFrame, PageHeading } from "@/src/shared/ui/page-layout";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/src/shared/ui/badge";
 import {
@@ -22,6 +26,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -50,28 +55,28 @@ const SEVERITY_CONFIG: Record<
   { label: string; color: string; icon: typeof Info }
 > = {
   debug: {
-    label: "Debug",
-    color: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+    label: "Отладка",
+    color: "bg-muted text-muted-foreground border-border",
     icon: Bug,
   },
   info: {
-    label: "Info",
-    color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    label: "Информация",
+    color: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/25",
     icon: Info,
   },
   warning: {
-    label: "Warning",
-    color: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    label: "Предупреждение",
+    color: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25",
     icon: AlertTriangle,
   },
   error: {
-    label: "Error",
-    color: "bg-red-500/20 text-red-400 border-red-500/30",
+    label: "Ошибка",
+    color: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/25",
     icon: AlertOctagon,
   },
   critical: {
-    label: "Critical",
-    color: "bg-rose-600/20 text-rose-400 border-rose-600/30",
+    label: "Критическое",
+    color: "bg-destructive/10 text-destructive border-destructive/25",
     icon: AlertOctagon,
   },
 };
@@ -94,6 +99,7 @@ function SeverityBadge({ severity }: { severity: EventSeverity }) {
 
 function formatDate(iso: string) {
   const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleString("ru-RU", {
     day: "2-digit",
     month: "2-digit",
@@ -108,7 +114,7 @@ function formatDate(iso: string) {
 export default function EventsPage() {
   // Фильтры и пагинация
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [filterSeverity, setFilterSeverity] = useState("__all__");
   const [filterProcessed, setFilterProcessed] = useState("__all__");
   const [page, setPage] = useState(1);
@@ -119,15 +125,7 @@ export default function EventsPage() {
   // Диалоги
   const [detailEvent, setDetailEvent] = useState<DeviceEvent | null>(null);
 
-  // Дебаунс поиска
-  const handleSearchChange = useCallback((val: string) => {
-    setSearch(val);
-    const timer = setTimeout(() => {
-      setDebouncedSearch(val);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+  useEffect(() => setPage(1), [debouncedSearch]);
 
   // Параметры запроса
   const params: DeviceEventParams = useMemo(
@@ -149,11 +147,12 @@ export default function EventsPage() {
   );
 
   // Данные
-  const { data, isLoading, refetch } = useDeviceEvents(params);
-  const { data: stats } = useEventStats();
+  const { data, isLoading, isFetching, isError, refetch } = useDeviceEvents(params);
+  const { data: stats, isError: statsError } = useEventStats();
   const markProcessed = useMarkEventProcessed();
 
   const events = data?.items ?? [];
+  const initialError = isError && !data;
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 0;
 
@@ -173,24 +172,26 @@ export default function EventsPage() {
     filterProcessed !== "__all__" ||
     debouncedSearch;
 
+  const handleMarkProcessed = (event: DeviceEvent) => {
+    markProcessed.mutate(event.id, {
+      onSuccess: () => {
+        setDetailEvent(null);
+        toast.success("Событие отмечено как обработанное");
+      },
+      onError: () => toast.error("Не удалось обновить событие. Состояние сохранено."),
+    });
+  };
+
   return (
-    <div className="p-4 md:p-6 space-y-4 font-mono">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Zap className="w-6 h-6 text-primary" />
-            Device Events
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Журнал событий устройств · {total} записей
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="w-3.5 h-3.5 mr-1" />
-          Обновить
-        </Button>
-      </div>
+    <PageFrame>
+      <PageHeading
+        eyebrow="События и диагностика"
+        title="События устройств"
+        description={`Журнал событий парка · ${total.toLocaleString("ru-RU")} записей`}
+        actions={<Button variant="outline" onClick={() => void refetch()} disabled={isFetching}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} aria-hidden="true" />Обновить
+        </Button>}
+      />
 
       {/* Статистика */}
       {stats && (
@@ -228,6 +229,8 @@ export default function EventsPage() {
           ))}
         </div>
       )}
+      {statsError && <p role="status" className="text-sm text-muted-foreground">Сводная статистика временно недоступна; журнал продолжает загружаться.</p>}
+      {isError && data && <p role="status" className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-sm text-warning">Не удалось обновить журнал. Показаны ранее загруженные события.</p>}
 
       {/* Фильтры */}
       <div className="flex flex-wrap items-center gap-2">
@@ -236,7 +239,8 @@ export default function EventsPage() {
           <Input
             placeholder="Поиск по типу, сообщению..."
             value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            aria-label="Поиск событий"
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-9 text-xs font-mono bg-background border-border"
           />
         </div>
@@ -287,7 +291,6 @@ export default function EventsPage() {
               setFilterSeverity("__all__");
               setFilterProcessed("__all__");
               setSearch("");
-              setDebouncedSearch("");
               setPage(1);
             }}
           >
@@ -298,7 +301,7 @@ export default function EventsPage() {
       </div>
 
       {/* Таблица */}
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
+      <Card className="overflow-hidden shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -352,6 +355,17 @@ export default function EventsPage() {
                     Загрузка...
                   </td>
                 </tr>
+              ) : initialError ? (
+                <tr>
+                  <td colSpan={8} className="px-5 py-16 text-center" role="alert">
+                    <div className="mx-auto max-w-md">
+                      <AlertOctagon className="mx-auto mb-3 h-8 w-8 text-destructive" aria-hidden="true" />
+                      <p className="font-medium">Не удалось загрузить события</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Проверьте доступ event:read и соединение с backend.</p>
+                      <Button className="mt-4" variant="outline" onClick={() => void refetch()}>Повторить запрос</Button>
+                    </div>
+                  </td>
+                </tr>
               ) : events.length === 0 ? (
                 <tr>
                   <td
@@ -368,8 +382,7 @@ export default function EventsPage() {
                 events.map((evt) => (
                   <tr
                     key={evt.id}
-                    className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => setDetailEvent(evt)}
+                    className="border-b border-border/50 transition-colors hover:bg-muted/30"
                   >
                     <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
                       {formatDate(evt.occurred_at)}
@@ -414,6 +427,7 @@ export default function EventsPage() {
                           size="sm"
                           className="h-7 w-7 p-0"
                           onClick={() => setDetailEvent(evt)}
+                          aria-label={`Открыть событие ${evt.event_type}`}
                           title="Подробности"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -423,7 +437,9 @@ export default function EventsPage() {
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-emerald-400"
-                            onClick={() => markProcessed.mutate(evt.id)}
+                            onClick={() => handleMarkProcessed(evt)}
+                            disabled={markProcessed.isPending}
+                            aria-label={`Отметить событие ${evt.event_type} обработанным`}
                             title="Отметить обработанным"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -451,6 +467,7 @@ export default function EventsPage() {
                 className="h-7"
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
+                aria-label="Предыдущая страница"
               >
                 <ChevronLeft className="w-3 h-3" />
               </Button>
@@ -460,25 +477,27 @@ export default function EventsPage() {
                 className="h-7"
                 disabled={page >= pages}
                 onClick={() => setPage(page + 1)}
+                aria-label="Следующая страница"
               >
                 <ChevronRight className="w-3 h-3" />
               </Button>
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Детали события */}
       <Dialog
         open={!!detailEvent}
         onOpenChange={(open) => !open && setDetailEvent(null)}
       >
-        <DialogContent className="max-w-lg font-mono">
+        <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-primary" />
               Событие: {detailEvent?.event_type}
             </DialogTitle>
+            <DialogDescription>Детали события, полученные из API Sphere.</DialogDescription>
           </DialogHeader>
           {detailEvent && (
             <div className="space-y-3 text-xs">
@@ -543,10 +562,8 @@ export default function EventsPage() {
                 <Button
                   size="sm"
                   className="w-full"
-                  onClick={() => {
-                    markProcessed.mutate(detailEvent.id);
-                    setDetailEvent(null);
-                  }}
+                  onClick={() => handleMarkProcessed(detailEvent)}
+                  disabled={markProcessed.isPending}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                   Отметить обработанным
@@ -556,7 +573,7 @@ export default function EventsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageFrame>
   );
 }
 

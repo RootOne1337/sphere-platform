@@ -85,8 +85,12 @@ export class H264Decoder {
 
   /** Вызывается когда WS закрылся и все попытки reconnect исчерпаны. */
   onDisconnect?: () => void;
+  /** Вызывается сразу после потери сокета, пока выполняется reconnect. */
+  onReconnectStart?: () => void;
   /** Вызывается при успешном reconnect. */
   onReconnect?: () => void;
+  /** Вызывается только после декодирования и передачи кадра в canvas. */
+  onFrame?: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -180,6 +184,7 @@ export class H264Decoder {
     }
 
     this._reconnecting = true;
+    this.onReconnectStart?.();
     const backoffMs = Math.min(
       1000 * Math.pow(2, this._reconnectAttempts),
       H264Decoder.MAX_BACKOFF_MS,
@@ -353,11 +358,15 @@ export class H264Decoder {
   }
 
   private renderFrame(frame: VideoFrame): void {
-    this.canvas.width = frame.displayWidth;
-    this.canvas.height = frame.displayHeight;
-    this.ctx.drawImage(frame, 0, 0);
-    // CRITICAL: must release every frame to avoid GPU memory leak
-    frame.close();
+    try {
+      this.canvas.width = frame.displayWidth;
+      this.canvas.height = frame.displayHeight;
+      this.ctx.drawImage(frame, 0, 0);
+      this.onFrame?.();
+    } finally {
+      // CRITICAL: must release every frame to avoid GPU memory leak
+      frame.close();
+    }
   }
 
   private async reconfigure(): Promise<void> {

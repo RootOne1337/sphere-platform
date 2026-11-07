@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import os
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -21,6 +22,34 @@ from starlette.responses import Response
 
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
+from backend.models.device import Device
+from backend.schemas.device_logs import DeviceLogsResponse
+from backend.services.device_log_reader import (
+    LogReadBusy,
+    LogReadUnavailable,
+    read_log_tail_async,
+    validate_date,
+)
+from backend.services.device_log_upload import (
+    MAX_BODY_BYTES,
+    LogUploadBusy,
+    LogUploadInvalidBody,
+    LogUploadTimeout,
+    LogUploadTooLarge,
+    LogUploadUnavailable,
+    receive_and_store_log,
+)
+
+
+async def _owned_device(db: AsyncSession, device_id: str, principal) -> Device:
+    try:
+        device = await db.get(Device, uuid.UUID(device_id))
+    except ValueError:
+        device = None
+    if (not device or not device.is_active or device.org_id != principal.org_id
+            or getattr(principal, "device_id", device.id) != device.id):
+        raise HTTPException(status_code=404, detail="Device not found")
+    return device
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 
@@ -28,7 +57,6 @@ router = APIRouter(prefix="/logs", tags=["logs"])
 # В production заменяется на путь из env-переменной SPHERE_LOGS_DIR
 _LOGS_DIR = Path(os.environ.get("SPHERE_LOGS_DIR", "/tmp/sphere_device_logs"))  # nosec B108
 _MAX_LOG_SIZE_BYTES = 50 * 1024 * 1024   # 50 MB per device
-_MAX_ENTRY_BYTES = 512 * 1024             # 512 KB per upload
 _LOG_TTL_DAYS = 30                        # rotate logs older than N days
 
 
@@ -65,10 +93,16 @@ def _get_device_id_from_header(
 
 # ── Upload (called by LogUploadWorker on the Android agent) ──────────────────
 
-@router.post("/upload")
+@router.post("/upload", responses={
+    400: {"description": "Invalid or incomplete log body"},
+    408: {"description": "Log body receive deadline exceeded"},
+    413: {"description": "Log body exceeds 512 KiB"},
+    503: {"description": "Upload capacity is busy or log storage unavailable"},
+})
 async def upload_logs(
     request: Request,
-    device_id: str = Query(..., description="Device ID"),
+    device_id: str | None = Query(default=None, description="Device ID (legacy clients)"),
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
     x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
     db: AsyncSession = Depends(get_db),
 ) -> Response:
@@ -80,80 +114,69 @@ async def upload_logs(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required")
 
     # Verify API key belongs to this device
-    from backend.services.api_key_service import APIKeyService
-    api_key_svc = APIKeyService(db)
-    key_obj = await api_key_svc.authenticate(x_api_key)
-    if not key_obj:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+    from backend.api.ws.android.router import authenticate_ws_token
+    principal = await authenticate_ws_token(x_api_key, db)
+    if device_id and x_device_id and device_id != x_device_id:
+        raise HTTPException(status_code=400, detail="Conflicting device identifiers")
+    device_id = x_device_id or device_id
+    if not device_id:
+        raise HTTPException(status_code=400, detail="X-Device-Id required")
+    device_id = str((await _owned_device(db, device_id, principal)).id)
 
-    # Read body with size limit
-    body = await request.body()
-    if len(body) > _MAX_ENTRY_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"Log body exceeds {_MAX_ENTRY_BYTES // 1024} KB limit",
-        )
+    def append_entry(body: bytes) -> None:
+        upload_ts = datetime.now(timezone.utc).isoformat()
+        separator = f"\n--- Uploaded at {upload_ts} ---\n"
+        log_file = _get_log_file(device_id)
+        # Rotation and cleanup share the writer thread, never the HTTP event loop.
+        # Global quotas and cross-worker rotation locking remain separate work.
+        if log_file.exists() and log_file.stat().st_size > _MAX_LOG_SIZE_BYTES:
+            log_file.unlink(missing_ok=True)
+        with log_file.open("ab") as stream:
+            stream.write(separator.encode() + body)
+        _clean_old_logs(device_id)
 
-    upload_ts = datetime.now(timezone.utc).isoformat()
-    separator = f"\n--- Uploaded at {upload_ts} ---\n"
-
-    log_file = _get_log_file(device_id)
-    # Rotate if file exceeds max size
-    if log_file.exists() and log_file.stat().st_size > _MAX_LOG_SIZE_BYTES:
-        log_file.unlink(missing_ok=True)
-
-    log_file.write_bytes(
-        log_file.read_bytes() + separator.encode() + body
-        if log_file.exists()
-        else separator.encode() + body
-    )
-    _clean_old_logs(device_id)
+    try:
+        await receive_and_store_log(request, append_entry)
+    except LogUploadTooLarge as exc:
+        raise HTTPException(status_code=413, detail=f"Log body exceeds {MAX_BODY_BYTES // 1024} KB limit") from exc
+    except LogUploadInvalidBody as exc:
+        raise HTTPException(status_code=400, detail="Invalid or incomplete log body") from exc
+    except LogUploadTimeout as exc:
+        raise HTTPException(status_code=408, detail="Log body receive deadline exceeded") from exc
+    except LogUploadBusy as exc:
+        raise HTTPException(status_code=503, detail="Log upload capacity is busy", headers={"Retry-After": "1"}) from exc
+    except LogUploadUnavailable as exc:
+        raise HTTPException(status_code=503, detail="Log storage is unavailable", headers={"Retry-After": "1"}) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ── Get logs for a device ─────────────────────────────────────────────────────
 
-@router.get("/{device_id}")
+@router.get("/{device_id}", response_model=DeviceLogsResponse)
 async def get_device_logs(
     device_id: str,
     lines: int = Query(default=500, ge=1, le=10000, description="Max lines to return"),
-    date: Optional[str] = Query(default=None, description="Date filter YYYY-MM-DD (default: today)"),
-    search: Optional[str] = Query(default=None, description="Filter lines containing this text"),
+    date: Optional[str] = Query(default=None, max_length=10, description="UTC date YYYY-MM-DD; default: recent three daily files"),
+    search: Optional[str] = Query(default=None, max_length=512, description="Substring search within the bounded recent-file tail"),
     _principal=require_permission("device:read"),
+    db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
     """
     Возвращает последние N строк логов для устройства.
     Поддерживает фильтрацию по дате и поиск подстроки.
     """
-    device_dir = _device_log_path(device_id)
-    if not device_dir.exists():
-        return JSONResponse({"device_id": device_id, "lines": [], "total": 0})
-
-    # Выбираем файлы
-    if date:
-        target_files = sorted(device_dir.glob(f"agent_{date}*.log"))
-    else:
-        target_files = sorted(device_dir.glob("agent_*.log"), reverse=True)[:3]
-
-    all_lines: list[str] = []
-    for f in reversed(target_files):
-        try:
-            text = f.read_text(errors="replace")
-            all_lines.extend(text.splitlines())
-        except OSError:
-            pass
-
-    # Apply search filter
-    if search:
-        all_lines = [ln for ln in all_lines if search.lower() in ln.lower()]
-
-    # Return last N lines
-    result_lines = all_lines[-lines:]
-    return JSONResponse({
-        "device_id": device_id,
-        "lines": result_lines,
-        "total": len(result_lines),
-    })
+    await _owned_device(db, device_id, _principal)
+    try:
+        validate_date(date)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Date must use YYYY-MM-DD") from exc
+    try:
+        payload = await read_log_tail_async(_device_log_path(device_id), lines=lines, date=date, search=search)
+    except LogReadBusy as exc:
+        raise HTTPException(status_code=503, detail="Log read capacity is busy", headers={"Retry-After": "1"}) from exc
+    except LogReadUnavailable as exc:
+        raise HTTPException(status_code=503, detail="Log source is unavailable") from exc
+    return JSONResponse({"device_id": device_id, **payload})
 
 
 # ── Delete (admin only) ───────────────────────────────────────────────────────
@@ -162,9 +185,11 @@ async def get_device_logs(
 async def delete_device_logs(
     device_id: str,
     _user=require_permission("device:delete"),
+    db: AsyncSession = Depends(get_db),
 ) -> Response:
     """Удаляет все логи для устройства. Только для администраторов."""
     import shutil
+    await _owned_device(db, device_id, _user)
     device_dir = _device_log_path(device_id)
     if device_dir.exists():
         shutil.rmtree(device_dir, ignore_errors=True)

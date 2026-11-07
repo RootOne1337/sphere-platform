@@ -1,0 +1,89 @@
+{
+  "schema": "sphere-route-gray-reuse-summary-v1",
+  "physicalActions": 0,
+  "pairedQueries": 159,
+  "allPoseOutputsExact": true,
+  "sourceUnchanged": true,
+  "cases": {
+    "baseline": {
+      "counts": {
+        "confirming": 29,
+        "localized": 66,
+        "unknown": 64
+      },
+      "computeMs": {
+        "p50": 87.67979999993258,
+        "p95": 111.4557900001273,
+        "maximum": 143.37139999952342
+      },
+      "descriptorFrames": 114,
+      "descriptorMs": {
+        "p50": 93.48035000084565,
+        "p95": 115.46381999955882
+      },
+      "samplesOver200": 0,
+      "samplesOver250": 0
+    },
+    "reuse": {
+      "counts": {
+        "confirming": 29,
+        "localized": 66,
+        "unknown": 64
+      },
+      "computeMs": {
+        "p50": 86.29280000059225,
+        "p95": 109.65833999980532,
+        "maximum": 134.81210000009014
+      },
+      "descriptorFrames": 114,
+      "descriptorMs": {
+        "p50": 92.10644999939177,
+        "p95": 110.66549999941344
+      },
+      "samplesOver200": 0,
+      "samplesOver250": 0
+    }
+  },
+  "maxSampledPrivateBytes": 126328832,
+  "stageMs": {
+    "featurePreparationMs": {
+      "samples": 159,
+      "p50": 0.6543999988934956,
+      "p95": 0.8082699997430609
+    },
+    "featureExtractionMs": {
+      "samples": 114,
+      "p50": 61.91290000015215,
+      "p95": 69.84367500003827
+    },
+    "coarseSearchMs": {
+      "samples": 114,
+      "p50": 7.778599999710423,
+      "p95": 11.430159999872558
+    },
+    "candidateMatchPnPMs": {
+      "samples": 114,
+      "p50": 11.193599999842263,
+      "p95": 34.74508999993304
+    },
+    "flowPnPMs": {
+      "samples": 52,
+      "p50": 5.170699999325734,
+      "p95": 6.60696500008271
+    }
+  },
+  "unknownReasons": {
+    "route_pose_not_verified": 44,
+    "route_pose_discontinuity": 20
+  },
+  "executionQualified": false,
+  "boundary": "same-recording heldout compute, synthetic media clock; no browser, HTTP, capture, input ACK or control; no geometric improvement claimed",
+  "resultSha256": "8aa1021a9feeea5d7ac4bd0981c411ecf38266b1a1ed8a14360ad6a2a3d4d531",
+  "producerSha256": "62e0760c5e37c165e738face2904612538fe0c543b47dcf823aac27c1c518c7e",
+  "testedSources": {
+    "motor_worker/route_localization.py": "13c2ce23a4b0aba78a0075eca9a861b40916cd4caa08b975242fac6f231d7fd6",
+    "motor_worker/route_tracking.py": "537ba3fc50f4da3227b240098cc90d6092d67584994c69d858c587d011f7c75d",
+    "tests/test_motor_route_tracking.py": "137ecdc53f3a4716ae0c7259ae4b0de39feaa19f01e97cb0c2a6d06d2f0e5a72"
+  },
+  "privateSummarySha256": "8f0c4c6b011fa3ce6110eaa2edb694d388f1e4f421d46c29b09d6c1a2d1bed02"
+}

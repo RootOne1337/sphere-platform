@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Settings2,
   Power,
@@ -32,6 +32,7 @@ import {
   useUpdatePipelineSettings,
   useTogglePipeline,
   useOrchestrationStatus,
+  type PipelineSettings,
 } from '@/lib/hooks/usePipelineSettings';
 import { useScripts } from '@/lib/hooks/useScripts';
 
@@ -53,10 +54,29 @@ interface FormState {
   notes: string;
 }
 
+function settingsForm(settings: PipelineSettings): FormState {
+  return {
+    max_concurrent_registrations: settings.max_concurrent_registrations,
+    registration_script_id: settings.registration_script_id ?? '',
+    registration_timeout_seconds: settings.registration_timeout_seconds,
+    max_concurrent_farming: settings.max_concurrent_farming,
+    farming_script_id: settings.farming_script_id ?? '',
+    farming_session_duration_seconds: settings.farming_session_duration_seconds,
+    default_target_level: settings.default_target_level,
+    cooldown_between_sessions_minutes: settings.cooldown_between_sessions_minutes,
+    nick_generation_enabled: settings.nick_generation_enabled,
+    nick_pattern: settings.nick_pattern,
+    ban_detection_enabled: settings.ban_detection_enabled,
+    auto_replace_banned: settings.auto_replace_banned,
+    notes: settings.notes ?? '',
+  };
+}
+
 // ── Компонент ───────────────────────────────────────────────────────────────
 
 export default function PipelineSettingsPage() {
-  const { data: settings, isLoading } = usePipelineSettings();
+  const settingsQuery = usePipelineSettings();
+  const { data: settings, isLoading, isSuccess, isFetching, isError, refetch } = settingsQuery;
   const { data: status, refetch: refetchStatus } = useOrchestrationStatus();
   const updateMutation = useUpdatePipelineSettings();
   const toggleMutation = useTogglePipeline();
@@ -64,66 +84,58 @@ export default function PipelineSettingsPage() {
 
   const scripts = scriptsData?.items ?? [];
 
-  // Локальное состояние формы (инициализируется из бэкенда)
-  const [form, setForm] = useState<FormState>({
-    max_concurrent_registrations: 3,
-    registration_script_id: '',
-    registration_timeout_seconds: 600,
-    max_concurrent_farming: 10,
-    farming_script_id: '',
-    farming_session_duration_seconds: 3600,
-    default_target_level: 3,
-    cooldown_between_sessions_minutes: 30,
-    nick_generation_enabled: true,
-    nick_pattern: '{first_name}_{last_name}',
-    ban_detection_enabled: true,
-    auto_replace_banned: false,
-    notes: '',
-  });
+  const baseline = useMemo(() => settings ? settingsForm(settings) : null, [settings]);
+  const [changes, setChanges] = useState<Partial<FormState>>({});
+  const [editBase, setEditBase] = useState<FormState | null>(null);
+  const form = baseline ? { ...baseline, ...changes } : null;
+  const isDirty = Object.keys(changes).length > 0;
+  const writesPending = updateMutation.isPending || toggleMutation.isPending;
+  const canWrite = !!baseline && isSuccess && !isFetching && !writesPending;
+  const conflicts = baseline && editBase
+    ? (Object.keys(changes) as (keyof FormState)[]).filter((key) =>
+      baseline[key] !== editBase[key] && baseline[key] !== changes[key])
+    : [];
 
-  const [isDirty, setIsDirty] = useState(false);
-
-  // Синхронизация данных бэкенда → форму
+  // Keep user intent separate from refreshed server values. A confirmed equal
+  // server value acknowledges that field without discarding unrelated edits.
   useEffect(() => {
-    if (!settings) return;
-    setForm({
-      max_concurrent_registrations: settings.max_concurrent_registrations,
-      registration_script_id: settings.registration_script_id ?? '',
-      registration_timeout_seconds: settings.registration_timeout_seconds,
-      max_concurrent_farming: settings.max_concurrent_farming,
-      farming_script_id: settings.farming_script_id ?? '',
-      farming_session_duration_seconds: settings.farming_session_duration_seconds,
-      default_target_level: settings.default_target_level,
-      cooldown_between_sessions_minutes: settings.cooldown_between_sessions_minutes,
-      nick_generation_enabled: settings.nick_generation_enabled,
-      nick_pattern: settings.nick_pattern,
-      ban_detection_enabled: settings.ban_detection_enabled,
-      auto_replace_banned: settings.auto_replace_banned,
-      notes: settings.notes ?? '',
+    if (!baseline) return;
+    setChanges((previous) => {
+      const acknowledged = (Object.keys(previous) as (keyof FormState)[])
+        .filter((key) => baseline[key] === previous[key]);
+      if (!acknowledged.length) return previous;
+      const next = { ...previous };
+      acknowledged.forEach((key) => { delete next[key]; });
+      return next;
     });
-    setIsDirty(false);
-  }, [settings]);
+  }, [baseline]);
+
+  useEffect(() => { if (!isDirty) setEditBase(null); }, [isDirty]);
 
   // Обработчик изменения полей
   const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    setIsDirty(true);
+    if (!canWrite || !baseline) return;
+    if (!isDirty) setEditBase(baseline);
+    setChanges((previous) => {
+      const next = { ...previous, [key]: value };
+      if (value === baseline[key]) delete next[key];
+      return next;
+    });
   };
 
   // Сохранение формы
   const handleSave = () => {
-    const payload: Record<string, unknown> = { ...form };
-    // Пустой UUID → null
-    if (!payload.registration_script_id) payload.registration_script_id = null;
-    if (!payload.farming_script_id) payload.farming_script_id = null;
-    if (!payload.notes) payload.notes = null;
-    updateMutation.mutate(payload as any, {
-      onSuccess: () => setIsDirty(false),
-    });
+    if (!canWrite || !isDirty || conflicts.length) return;
+    const payload: Partial<PipelineSettings> = { ...changes };
+    if (payload.registration_script_id === '') payload.registration_script_id = null;
+    if (payload.farming_script_id === '') payload.farming_script_id = null;
+    if (payload.notes === '') payload.notes = null;
+    updateMutation.mutate(payload);
   };
 
   // Переключатели
   const handleToggle = (feature: 'orchestration' | 'scheduler' | 'registration' | 'farming', enabled: boolean) => {
+    if (!canWrite) return;
     toggleMutation.mutate({ feature, enabled });
   };
 
@@ -131,6 +143,18 @@ export default function PipelineSettingsPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!form) {
+    return (
+      <div className="mx-auto w-full max-w-xl p-6">
+        <div role="alert" className="space-y-4 rounded-xl border border-destructive/30 bg-card p-6">
+          <h1 className="text-lg font-semibold">Настройки не загружены</h1>
+          <p className="text-sm text-muted-foreground">Исходные значения не подтверждены. Изменение настроек и переключателей недоступно.</p>
+          <Button onClick={() => void refetch()} disabled={isFetching}>Повторить загрузку настроек</Button>
+        </div>
       </div>
     );
   }
@@ -153,7 +177,9 @@ export default function PipelineSettingsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => refetchStatus()}
+              onClick={() => void Promise.allSettled([refetch(), refetchStatus()])}
+              disabled={isFetching || writesPending}
+              aria-label="Обновить настройки и состояние"
               className="font-mono text-xs"
             >
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
@@ -163,7 +189,7 @@ export default function PipelineSettingsPage() {
               variant="noc"
               size="sm"
               onClick={handleSave}
-              disabled={!isDirty || updateMutation.isPending}
+              disabled={!canWrite || !isDirty || conflicts.length > 0}
               className="font-mono text-xs"
             >
               {updateMutation.isPending ? (
@@ -177,7 +203,19 @@ export default function PipelineSettingsPage() {
         </div>
       </div>
 
-      <div className="p-6 space-y-6 max-w-5xl">
+      {isError && <div role="alert" className="mx-6 mt-4 space-y-2 rounded-lg border border-destructive/30 p-4 text-sm">
+        <p>Не удалось обновить настройки. Показан предыдущий снимок и ваши правки; запись заблокирована до успешного чтения.</p>
+        <Button variant="outline" onClick={() => void refetch()} disabled={isFetching}>Повторить загрузку настроек</Button>
+      </div>}
+      {conflicts.length > 0 && <div role="alert" className="mx-6 mt-4 space-y-3 rounded-lg border border-warning/40 p-4 text-sm">
+        <p>Редактируемые поля изменились на сервере. Ваши правки сохранены; выберите, какие значения оставить перед записью.</p>
+        <p className="break-words font-mono text-xs">{conflicts.join(', ')}</p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" disabled={!canWrite} onClick={() => setChanges({})}>Принять серверные значения</Button>
+          <Button variant="outline" disabled={!canWrite} onClick={() => setEditBase(baseline)}>Оставить мои правки</Button>
+        </div>
+      </div>}
+      <fieldset disabled={!canWrite} className="min-w-0 p-6 space-y-6 max-w-5xl">
         {/* ── Live-статус ────────────────────────────────────────────── */}
         {status && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -440,6 +478,7 @@ export default function PipelineSettingsPage() {
                 </p>
               </div>
               <Switch
+                aria-label="Авто-генерация"
                 checked={form.nick_generation_enabled}
                 onCheckedChange={(v) => updateField('nick_generation_enabled', v)}
               />
@@ -478,6 +517,7 @@ export default function PipelineSettingsPage() {
                 </p>
               </div>
               <Switch
+                aria-label="Обнаружение банов"
                 checked={form.ban_detection_enabled}
                 onCheckedChange={(v) => updateField('ban_detection_enabled', v)}
               />
@@ -491,6 +531,7 @@ export default function PipelineSettingsPage() {
                 </p>
               </div>
               <Switch
+                aria-label="Авто-замена"
                 checked={form.auto_replace_banned}
                 onCheckedChange={(v) => updateField('auto_replace_banned', v)}
               />
@@ -505,6 +546,7 @@ export default function PipelineSettingsPage() {
             Заметки
           </h2>
           <textarea
+            aria-label="Заметки"
             value={form.notes}
             onChange={(e) => updateField('notes', e.target.value)}
             placeholder="Заметки администратора (необязательно)..."
@@ -520,7 +562,7 @@ export default function PipelineSettingsPage() {
               variant="noc"
               size="sm"
               onClick={handleSave}
-              disabled={updateMutation.isPending}
+              disabled={!canWrite || conflicts.length > 0}
               className="font-mono text-xs"
             >
               {updateMutation.isPending ? (
@@ -532,7 +574,7 @@ export default function PipelineSettingsPage() {
             </Button>
           </div>
         )}
-      </div>
+      </fieldset>
     </div>
   );
 }
@@ -601,6 +643,7 @@ function ToggleCard({
         </div>
       </div>
       <Switch
+        aria-label={label}
         checked={enabled}
         onCheckedChange={onToggle}
         disabled={isPending}

@@ -1,0 +1,44 @@
+{
+  "schema": "sphere-day-night-evidence-manifest-v1",
+  "authority": "measured_diagnostic_and_private_experiments_no_execution_qualification",
+  "files": [
+    {
+      "path": "direct512-proof.json",
+      "bytes": 27071,
+      "sha256": "470f5b248b2404f1a225a2ba2618fb5aa03ec17fbcb3fdb2d3200d5c87f94abc"
+    },
+    {
+      "path": "fresh-masked-comparison.json",
+      "bytes": 17404,
+      "sha256": "cc36ffe6d71310f0c02801c7e56df6be31c4ecd74a7c05f3fb9d7eb77588fb8b"
+    },
+    {
+      "path": "learned-matcher-experiments.json",
+      "bytes": 54288,
+      "sha256": "b090880184a0ba435e4910aee1f55419602920cbbc05a654500dba765ae1902c"
+    },
+    {
+      "path": "night-day-measured.png",
+      "bytes": 1241707,
+      "sha256": "0b22cbbc0894ba8c0f3718df5270e4d34dfc4b094d1683202e7aa0cfd39c586f"
+    },
+    {
+      "path": "photometric-proof.json",
+      "bytes": 9999,
+      "sha256": "577e48139c81a97fdaa532276775b00e3225cd0a52173bf7735a2f02e6ccd384"
+    },
+    {
+      "path": "runtime-delivery.json",
+      "bytes": 7997,
+      "sha256": "51b2b57f37073e3661193f58ec5442956036027917d799c3c4ef77d8068a597d"
+    },
+    {
+      "path": "sequence-experiments.json",
+      "bytes": 20150,
+      "sha256": "c9052438b628a2a140a909162b14ac441acc60b97115b22746128ea40e2df662"
+    }
+  ],
+  "rawVideoOrFeatureDatabaseIncluded": false,
+  "physicalActions": 0,
+  "runtimeMatcherPromoted": false
+}

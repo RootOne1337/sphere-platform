@@ -1,0 +1,23 @@
+{
+  "outcome": "verified",
+  "candidateImageId": "sha256:aad66cdda43aa025afcd10f5d7a4c5a216b64cb2ebcf814be6599a47e51afb5d",
+  "physicalDeviceActions": 0,
+  "resourceProfile": "ui_only_absolute_reserve_4.75GiB",
+  "initialMemory": {
+    "availableRamBytes": 7583510528,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 93513265152,
+    "commitLimitBytes": 103009927168,
+    "kernelPagedBytes": 10490142720,
+    "kernelNonpagedBytes": 5198356480,
+    "processCount": 524,
+    "handleCount": 695404
+  },
+  "pages": 2,
+  "assets": 31,
+  "assetsHashMatched": true,
+  "workersHashMatched": true,
+  "uiHealthy": true,
+  "otherContainersPreserved": true,
+  "sourceMatches": true
+}

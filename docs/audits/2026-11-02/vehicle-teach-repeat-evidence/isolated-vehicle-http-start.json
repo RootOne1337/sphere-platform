@@ -1,0 +1,47 @@
+{
+  "request": {
+    "id": "0a0039f2337feac58221c06ff35157d3",
+    "captureEpoch": "e3fd971ca5575fa49f3ad96254c5c3c1",
+    "width": 1920,
+    "height": 1080,
+    "sceneConfirmed": true,
+    "vehicleCameraAssumptionConfirmed": true,
+    "cameraFollowsBodyConfirmed": true,
+    "hudProfile": "black_russia_scooter_v1",
+    "maxSpeedKmh": 15,
+    "cameraTracking": true,
+    "cameraControl": "continuous_drag_v1",
+    "clientVersion": "vehicle_live_v1",
+    "startMode": "recognized_route",
+    "diagnosticFrames": false,
+    "maxSeconds": 300
+  },
+  "response": {
+    "phase": "observing",
+    "id": "0a0039f2337feac58221c06ff35157d3",
+    "job": "f843aafb0229b063fc4ecc10ac0d71dd",
+    "observations": 0,
+    "secondsRemaining": 299.999995799968,
+    "physicalActions": 0,
+    "mode": "vehicle_camera_trace_v1",
+    "maxSeconds": 300,
+    "maxSpeedKmh": 15,
+    "startMode": "recognized_route",
+    "cameraTracking": true,
+    "cameraControl": "continuous_drag_v1",
+    "cameraFollowsBodyConfirmed": true,
+    "hudProfile": "black_russia_scooter_v1",
+    "observationProtocol": "jpeg_binary_v1",
+    "motionProtocol": "applied_vehicle_v1",
+    "clientVersion": "vehicle_live_v1"
+  },
+  "opencvThreads": 4,
+  "cpuAffinity": [
+    0,
+    1
+  ],
+  "blasThreads": 1,
+  "regularCandidates": 3,
+  "recoveryCandidates": 8,
+  "physicalActions": 0
+}

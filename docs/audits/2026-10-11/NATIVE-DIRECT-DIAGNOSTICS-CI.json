@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T11:38:30.531660+00:00",
+  "sourceRevision": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+  "scope": "Completed CI and remote artifact metadata; no local image admission, pilot signing, OTA, runtime install or direct-route acceptance.",
+  "runs": [
+    {
+      "name": "frontend",
+      "id": 38109681169,
+      "headRevision": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+      "event": "pull_request",
+      "conclusion": "success",
+      "completedAtUtc": "2026-10-11T03:52:56Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38109681169",
+      "artifacts": [
+        {
+          "id": 11690973272,
+          "name": "sphere-reviewed-web-4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+          "size_in_bytes": 120925339,
+          "digest": "sha256:165a804ed69bc6a37a026b886173117ceb16460aace0de06bf00f9f81ce84e7d",
+          "expired": false
+        }
+      ]
+    },
+    {
+      "name": "backend",
+      "id": 38109681230,
+      "headRevision": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+      "event": "pull_request",
+      "conclusion": "success",
+      "completedAtUtc": "2026-10-11T04:08:15Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38109681230",
+      "artifacts": [
+        {
+          "id": 11691347839,
+          "name": "backend-test-results",
+          "size_in_bytes": 109851,
+          "digest": "sha256:1798f3e4b7b1035e9655c41383f9a9a1693e7dac74c10a1170a0250a762599d7",
+          "expired": false
+        },
+        {
+          "id": 11691016943,
+          "name": "sphere-reviewed-backend-4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+          "size_in_bytes": 236439950,
+          "digest": "sha256:b569f8a32d1abad93125401eb677ba00fd3820d3cc98afb607834d57266f943a",
+          "expired": false
+        },
+        {
+          "id": 11690672349,
+          "name": "image-bootstrap-probe",
+          "size_in_bytes": 10474,
+          "digest": "sha256:81729326008c7b7a763b2b6048698977d56029fc08d12d3e0bab539b352f4721",
+          "expired": false
+        }
+      ]
+    },
+    {
+      "name": "android",
+      "id": 38109681165,
+      "headRevision": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+      "event": "pull_request",
+      "conclusion": "success",
+      "completedAtUtc": "2026-10-11T04:16:17Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38109681165",
+      "artifacts": [
+        {
+          "id": 11692030250,
+          "name": "android-direct-probe-public-stun-8944ccfbcd96d4ce2c408bc62a7ff90adc729e6e",
+          "size_in_bytes": 31344722,
+          "digest": "sha256:fd37da55592b4f10aa2bbfebaa9d3eeae7d9b7c43cb715bd77e0aaee2153ed43",
+          "expired": false
+        },
+        {
+          "id": 11691418974,
+          "name": "android-ci-diagnostics-8944ccfbcd96d4ce2c408bc62a7ff90adc729e6e",
+          "size_in_bytes": 15408594,
+          "digest": "sha256:cde2f2eeea0d496592a4f67260ecd68fa20ed2f9296238877972b289e7b894e8",
+          "expired": false
+        }
+      ]
+    }
+  ],
+  "frontend": {
+    "passedTests": 2208,
+    "passedSuites": 153,
+    "typesAndProductionBuild": "success"
+  },
+  "backend": {
+    "passedTests": 3638,
+    "passedSubtests": 320,
+    "skippedTests": 37,
+    "junitCasesIncludingSubtestsAndSkipped": 3995,
+    "failures": 0,
+    "errors": 0,
+    "lineCoverage": 0.8147,
+    "junitArtifactId": 11691347839,
+    "verification": "Raw job log plus bounded in-memory JUnit/coverage artifact read; no container image downloaded."
+  },
+  "android": {
+    "checkedOutRevision": "8944ccfbcd96d4ce2c408bc62a7ff90adc729e6e",
+    "androidTree": "67684e5084fc769752b7e5fbb8db3f1fca9c16fd",
+    "sourceAndroidTree": "67684e5084fc769752b7e5fbb8db3f1fca9c16fd",
+    "treeEqualityVerified": true,
+    "scope": "PR merge checkout, identical Android subtree to the reviewed head. Ordinary variants and isolated/local/public STUN debug canaries passed.",
+    "declaredVersionCode": 10255,
+    "declaredVersionName": "1.2.55",
+    "ciReleaseSigner": "disposable smoke key, not the installed pilot signer",
+    "pilotApkSigned": false,
+    "installed": false
+  },
+  "runtimeInstalled": false,
+  "directInputAccepted": false,
+  "stableReleaseAccepted": false,
+  "deliveryBlocker": {
+    "volume": "C:",
+    "health": "Warning",
+    "operationalStatus": "Full Repair Needed",
+    "freshAdministratorScanResultAvailable": false
+  },
+  "installedEvidenceUnchanged": "docs/audits/2026-10-11/CURRENT-STREAM-DELIVERY.json"
+}

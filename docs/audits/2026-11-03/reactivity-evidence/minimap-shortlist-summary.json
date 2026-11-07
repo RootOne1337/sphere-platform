@@ -1,0 +1,98 @@
+{
+  "schema": "sphere-private-minimap-shortlist-comparison-v1",
+  "status": "completed",
+  "physicalActions": 0,
+  "runtimeQualified": false,
+  "executionQualified": false,
+  "independentGameplay": false,
+  "sameRecording": true,
+  "noWorldPose": true,
+  "noGPSLine": true,
+  "queryTimestampUsedForRetrieval": false,
+  "queryProgressUsedForRetrieval": false,
+  "allSim2GatesUnchanged": true,
+  "uniquenessScope": "within_retrieved_six_only_not_global",
+  "referenceInputResolution": [
+    1920,
+    1080
+  ],
+  "sourceOriginalResolution": [
+    1920,
+    1080
+  ],
+  "all159IdentitySHA": "ff9837847c41368dec897fa063aeb40cf815b6fc4388d6e47861e47a6b719514",
+  "referenceSourceIndexSHA": "fd1b80002f79c3957001b99ed561d4449e91cbc7828fe1e3a143fca78ce1f7cf",
+  "sourceCaptureSHA": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "methods": {
+    "lsh6": {
+      "samples": 159,
+      "verified": 154,
+      "apparentUniqueWithinShortlist": 93,
+      "verifiedWithin1SourceSecond": 152,
+      "verifiedButOver2SourceSeconds": 0,
+      "top3AnyWithin1SourceSecond": 152,
+      "computeMS": {
+        "p50": 760.9677000000374,
+        "p95": 1466.5743099998506,
+        "maximum": 2068.4178000010434,
+        "over250": 148
+      },
+      "indexBuildMS": 28.8935999997193,
+      "stageP95MS": {
+        "extraction": 2.974419997917719,
+        "retrieval": 1442.9131999990202,
+        "verification": 19.663699998636726
+      },
+      "weak4to5p5Verified": 6,
+      "lostVersusOldVerified": [
+        767
+      ]
+    },
+    "bf6": {
+      "samples": 159,
+      "verified": 154,
+      "apparentUniqueWithinShortlist": 93,
+      "verifiedWithin1SourceSecond": 152,
+      "verifiedButOver2SourceSeconds": 0,
+      "top3AnyWithin1SourceSecond": 152,
+      "computeMS": {
+        "p50": 87.84600000217324,
+        "p95": 1415.3818100003261,
+        "maximum": 1652.8260000013688,
+        "over250": 16
+      },
+      "indexBuildMS": 9.290599999076221,
+      "stageP95MS": {
+        "extraction": 2.232030000595839,
+        "retrieval": 1403.4615499978827,
+        "verification": 21.71898000051442
+      },
+      "weak4to5p5Verified": 6,
+      "lostVersusOldVerified": [
+        767
+      ]
+    }
+  },
+  "oldMinimapWhole": {
+    "samples": 159,
+    "verified": 152,
+    "unique": 93,
+    "imageVerifiedAndWithin1SourceSecond": 147,
+    "imageVerifiedButOver2SourceSeconds": 3,
+    "baseline3DUnknown": 66
+  },
+  "oldMinimapComputeMS": {
+    "p50": 138.17220006603748,
+    "p95": 264.0211599413305,
+    "maximum": 447.71229999605566
+  },
+  "cacheBuildMS": 5204.422800001339,
+  "referenceFeatures": 40966,
+  "cacheBytes": 956506,
+  "queryAndReferenceRGBIndependentGameplay": false,
+  "oldExperimentAndCurrentBothUseExactOriginal1920RGB": true,
+  "within1SourceSecondIsNotWorldPoseError": true,
+  "seconds": 175.27150290000282,
+  "sourceUnchanged": true,
+  "peakSampledPrivateMiB": 181.4375
+}

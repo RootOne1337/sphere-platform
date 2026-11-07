@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-25T14:21:06.800408+00:00",
+  "scope": "installed local route surface fragment preview; geometric accuracy and navigation not accepted",
+  "source": {
+    "manifestSha256": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b",
+    "geometrySha256": "f79f9380ac0362eea1038977f3570227e1f4560567accccd3f739ebefd4a89c0",
+    "checkedAccessUnits": 458,
+    "sourceFrames": 458,
+    "registeredViews": 81,
+    "fragmentFirstView": 21,
+    "fragmentLastView": 38,
+    "fragmentViews": 18,
+    "originalRgbPreserved": true,
+    "originalGaussianPreserved": true,
+    "controlFileSha256": "a4a654b1d5f80bbb059f4df116475d76354d2f29e994b739959fee7efa71d0ee"
+  },
+  "surface": {
+    "sha256": "7ffb6792504721d606581d8cb550be1e9a7e4d9adde65a7af7c386a293e156e8",
+    "bytes": 14337876,
+    "vertices": 297228,
+    "triangles": 99076,
+    "textures": 18,
+    "texture_pixels": 37324800,
+    "meshFaces": 99564,
+    "unknownFaces": 488,
+    "textureSeconds": 8.55,
+    "textureResolution": "1920x1080",
+    "metricScale": null,
+    "geometricAccuracyAccepted": false,
+    "collisionMap": false,
+    "navigationQualified": false,
+    "automaticQualityAcceptance": false,
+    "state": "review_required",
+    "nativeSourceMeshSha256": "7c2120810426b2087d315019bba94e84214bf95ea309d4eaa5864e75805cac73"
+  },
+  "renderProof": {
+    "schema": "sphere-surface-geometry-proof-v1",
+    "embedded_glb_sha256": "7ffb6792504721d606581d8cb550be1e9a7e4d9adde65a7af7c386a293e156e8",
+    "embedded_glb_bytes": 14337876,
+    "source_parts": {
+      "scene.glb": "7ffb6792504721d606581d8cb550be1e9a7e4d9adde65a7af7c386a293e156e8"
+    },
+    "split_uv_vertices": 297228,
+    "triangles": 99076,
+    "embedded_textures": 18,
+    "external_uris": 0,
+    "triangle_cpu_renders": [
+      {
+        "image": "00000113.png",
+        "visible_mesh_fraction": 0.7416743827160494
+      },
+      {
+        "image": "00000161.png",
+        "visible_mesh_fraction": 0.7205632716049383
+      },
+      {
+        "image": "00000196.png",
+        "visible_mesh_fraction": 0.7314969135802469
+      }
+    ],
+    "hole_closure": false,
+    "smoothing": false,
+    "projection_uses_recovered_cameras": true,
+    "diagnostic_texture_v_flip": false,
+    "geometry_qualified": false,
+    "navigation_qualified": false
+  },
+  "fullSequenceCandidate": {
+    "state": "rejected",
+    "sha256": "f9390c16227d22cf2f46e4a746eb5f42946dba279d554dab5d3bad27a1f45e17",
+    "reason": "false bridges and occluding ghost surfaces in five camera triangle renders",
+    "preserved": true,
+    "usedAsDefault": false
+  },
+  "localExecution": {
+    "source": "43a2164fd1e602c250e9a5a942c99ccaf83bd85b",
+    "runId": "20261025T141308Z-8b201479",
+    "state": "success",
+    "frontendSuites": 194,
+    "frontendTests": 2697,
+    "pythonTests": 101,
+    "ruff": "passed",
+    "newGithubActionsRuns": 0
+  },
+  "delivery": {
+    "sourceRevision": "43a2164fd1e602c250e9a5a942c99ccaf83bd85b",
+    "imageId": "sha256:be64dbb57a1d81293c2322ab0cd88ee5f655f37fa0964309ca1810e42327b4e4",
+    "containerId": "ac9d239f7803230dc74e7f2774b4d40777a83c7df9c3585fade318aa22f19028",
+    "runtimeInstalled": true,
+    "otherContainersPreserved": 45,
+    "backendPreserved": true,
+    "otaCatalogSha256": "26c15c8e3c4ed22f805b5caab071897b6c12b56685e3214a3211377ef0710c52",
+    "browserVerified": false,
+    "browserLimitation": "User physically stopped Computer Use with Escape; no further browser input or alternative automation",
+    "androidCommandsSent": false,
+    "vpnChanged": false
+  },
+  "research": [
+    "https://github.com/cdcseacave/openMVS/releases/tag/v2.4.0",
+    "https://github.com/hbb1/2d-gaussian-splatting",
+    "https://github.com/nerfstudio-project/gsplat",
+    "https://github.com/hbb1/2d-gaussian-splatting/issues/133",
+    "https://github.com/hbb1/2d-gaussian-splatting/issues/245"
+  ]
+}

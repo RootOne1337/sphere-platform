@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "observedUtc": "2026-10-07T18:31:00Z",
+  "status": "SOURCE_VALIDATED_RUNTIME_NOT_INSTALLED",
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "SF26-05": "OPEN"
+  },
+  "runtime": {
+    "ui": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "api": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "apkInstalled": false,
+    "browserContinuousEnabled": false
+  },
+  "sourceHashMeaning": "Raw workspace bytes before staging; Git may normalize CRLF/LF. This is not an installed APK source attestation.",
+  "sourceFiles": {
+    "android/app/build.gradle.kts": {
+      "bytes": 12055,
+      "sha256": "9f35ce5646e498842a9fe2e3a03c469193f62ce47070f8bdb3f43783da4f65ec"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt": {
+      "bytes": 41889,
+      "sha256": "abf2bae11a58a95bec5483fd1b75d9876a2709e258e76f7546bb3a9af0cca046"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandDispatcher.kt": {
+      "bytes": 33903,
+      "sha256": "a49fe7d0e307f5544d7bb0213bb1c1d8893e4632a8eeecebb02bb513fe38073d"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt": {
+      "bytes": 50602,
+      "sha256": "bbf221e19a5db0da0a6689d7f4d02de280c7b5bf2d63e59951cd625d3070e131"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/RootCommandAcknowledgement.kt": {
+      "bytes": 2386,
+      "sha256": "ca466a8af0440a843c293c0768c24079b00c33b6930a52b0ce41f2c301499a70"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/ContinuousInputController.kt": {
+      "bytes": 9395,
+      "sha256": "f93ed65b2bea3ea4f3b85a6b1c1ccb5f99bc787f0d832c2547fa8aacf4aafddc"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DeviceInputOwnership.kt": {
+      "bytes": 1411,
+      "sha256": "927c182ae229eeb10ca4e2edcb901b8819824a0e5a2c040f482fe4ed9895684a"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/OwnedTouchPipeFactory.kt": {
+      "bytes": 1563,
+      "sha256": "a8a70210a82deda6743005fe93b50e3ca7ffba96aa6718e1ff8fc4a079ba0fe3"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/StreamingManager.kt": {
+      "bytes": 1357,
+      "sha256": "a4b481814f304b6085dbd1f23908c71ba36e9463adc43ec41e526727fc86ec25"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/StreamingManagerImpl.kt": {
+      "bytes": 24436,
+      "sha256": "a6df4ee5c1c033b56401671802ca1d74a2ba197e299146170b4ee78ca518592f"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/CaptureInputSession.kt": {
+      "bytes": 1412,
+      "sha256": "6eec34c80e07aa0f6de56e948bb2739b49d8e9c831435bc428947a7a1e270b66"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/ws/SphereWebSocketClient.kt": {
+      "bytes": 27557,
+      "sha256": "b0c0dd77d392f0be02d51cd3d3644fd535ff0dd572923042740f8f3cd18d8758"
+    },
+    "android/app/src/debug/kotlin/com/sphereplatform/agent/commands/ContinuousInputCanary.kt": {
+      "bytes": 3972,
+      "sha256": "a7f1a73f48b511c5d67a9efce9cb2dce2632c9fdef87c9fe28278c9d66cd07df"
+    },
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/RootCommandAcknowledgementTest.kt": {
+      "bytes": 3010,
+      "sha256": "9fcfaf20c2b174a5fd11feb6711365ab33a8fc782f601da5f18e4ba884b7b370"
+    },
+    "android/app/src/test/kotlin/com/sphereplatform/agent/ws/WebSocketAuthenticationTest.kt": {
+      "bytes": 14408,
+      "sha256": "490c05d99e1f9c7f1342d475ed3227ac61a3df83a1b6a9410d4a504aec736360"
+    },
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/AdbContinuousHandoffTest.kt": {
+      "bytes": 4011,
+      "sha256": "b1dfc89ec3dbc6618d1467f71fcadf398d6a9d04f3f9bf626cd30553f311086b"
+    },
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/ContinuousInputControllerTest.kt": {
+      "bytes": 9927,
+      "sha256": "ac438c1f4108046b31c2a1032ffc5d523fc434a126672a82b4c5ef475dbc1f70"
+    },
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/DeviceInputOwnershipTest.kt": {
+      "bytes": 5663,
+      "sha256": "62bcb3829c5c65615971b82d0e8eb1bbf146cdf209197dbc6109bb527893b574"
+    },
+    "android/app/src/test/kotlin/com/sphereplatform/agent/streaming/CaptureInputSessionTest.kt": {
+      "bytes": 2193,
+      "sha256": "911b2c983f957a95ff3fb16b77e98bf343b4cb040c5f681ab18f3ef8aafa5336"
+    }
+  },
+  "localValidation": {
+    "results": {
+      "testDevDebugUnitTest": {
+        "suites": 81,
+        "totals": {
+          "tests": 961,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "passed": 958
+      },
+      "testEnterpriseDebugUnitTest": {
+        "suites": 81,
+        "totals": {
+          "tests": 961,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "passed": 958
+      }
+    },
+    "newDistinctCases": {
+      "controller": 12,
+      "ownership": 8,
+      "handoff": 5,
+      "capture": 4,
+      "websocket": 3,
+      "crlfAcknowledgement": 1
+    },
+    "newDistinctCasesThisStage": 33,
+    "newDistinctCasesAllThreeStages": 89,
+    "tasks": [
+      ":app:testDevDebugUnitTest",
+      ":app:testEnterpriseDebugUnitTest",
+      ":app:assembleDevDebug"
+    ],
+    "fullLog": {
+      "bytes": 5722,
+      "sha256": "f71d37f7f49608121fad80d471fa3428596530d0ca8d777ec0aa62da28ac8586"
+    },
+    "releaseCanaryGuard": {
+      "task": ":app:assembleDevRelease",
+      "flag": "SPHERE_CONTINUOUS_INPUT_CANARY=true",
+      "expectedRefusalVerified": true,
+      "releaseArtifactProduced": false,
+      "log": {
+        "bytes": 670,
+        "sha256": "2779ab3a3a1fe5890874648fef7017ac815b7cd8580b9d188546a23e3ca99761"
+      }
+    },
+    "debugArtifact": {
+      "path": "android/app/build/outputs/apk/dev/debug/app-dev-debug.apk",
+      "bytes": 8741555,
+      "sha256": "0fb483abb379840a9b2d8b9b634bb6ebd6819956e766c6a11cffe8ed068694b6",
+      "canaryEnabled": false,
+      "installed": false
+    }
+  },
+  "previousSourceCI": {
+    "sha": "3cb9fe9ecc79f7f190c5808ea964d2578f44d64d",
+    "checkedUtc": "2026-10-07T18:08:00Z",
+    "runs": {
+      "37661452145": "success",
+      "37661463643": "success",
+      "37661463599": "success",
+      "37661463582": "success",
+      "37661463825": "success"
+    }
+  },
+  "currentSourceCI": "Pending commit and exact-source hosted checks; previous CI does not validate this stage.",
+  "androidPipelineAcceptance": {
+    "status": "OPEN",
+    "reason": "Both platform-tools and LDPlayer adb inventories empty; emulator-5554 unavailable",
+    "nativeHelperHistoricalEightCanariesDoNotValidateNewKotlinPipeline": true
+  },
+  "remainingGates": [
+    "Actual Kotlin pipe to Android View acceptance",
+    "Known native reset and helper death/restart semantics",
+    "Server-issued multiworker ownership and scoped receipts",
+    "Capture epoch proven on displayed frame",
+    "Bounded browser pointermove and loss cleanup",
+    "Recorder trajectory/coalesced/uncertain outcome semantics",
+    "Latency and resource soak"
+  ],
+  "sideEffects": {
+    "backendFrontendDeployment": false,
+    "productionApkInstall": false,
+    "ota": false,
+    "sqlMigration": false,
+    "emulatorSettingsChange": false
+  }
+}

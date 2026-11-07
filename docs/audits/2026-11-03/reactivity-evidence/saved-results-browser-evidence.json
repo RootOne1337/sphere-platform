@@ -1,0 +1,95 @@
+{
+  "checks": [
+    {
+      "name": "new_failed_attempt_remains_selected_until_explicit_click",
+      "passed": true
+    },
+    {
+      "name": "prior_result_is173_and_not_navigation_ready",
+      "passed": true
+    },
+    {
+      "name": "foreign_source_prior_attempt_excluded",
+      "passed": true
+    },
+    {
+      "name": "actual_saved_video_decodes_without_geometry",
+      "passed": true
+    },
+    {
+      "name": "friendly_decoder_error_visible",
+      "passed": true
+    },
+    {
+      "name": "no_files_written_before_click",
+      "passed": true
+    },
+    {
+      "name": "explicit_open_selects_original173",
+      "passed": true
+    },
+    {
+      "name": "historical_resource_failure_not_current_ram_reading",
+      "passed": true
+    },
+    {
+      "name": "canonical_preferred_selected",
+      "passed": true
+    },
+    {
+      "name": "no_http_mutations_or_external_connections",
+      "passed": true
+    },
+    {
+      "name": "only_fixture_link_metadata_written",
+      "passed": true
+    },
+    {
+      "name": "no_page_errors",
+      "passed": true
+    }
+  ],
+  "pageErrors": [],
+  "blocked": [],
+  "boundary": "ACTUAL_REACT_WITH_REAL_SAVED_GEOMETRY_AND_H264_MOCKED_API_FAKE_LINK_WRITES_ONLY",
+  "physicalActions": 0,
+  "fixture": {
+    "apiReads": [
+      "/jobs/2ae754f2d8344fb0848a583fc6de6771",
+      "/jobs/2ae754f2d8344fb0848a583fc6de6771",
+      "/jobs/11111111111111111111111111111111",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/2ae754f2d8344fb0848a583fc6de6771/geometry-alternatives",
+      "/jobs/2ae754f2d8344fb0848a583fc6de6771",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/11111111111111111111111111111111",
+      "/jobs/2ae754f2d8344fb0848a583fc6de6771",
+      "/jobs/2ae754f2d8344fb0848a583fc6de6771/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives/fixed-k-fused-173-supported-diagnostic"
+    ],
+    "apiWrites": [],
+    "fileWrites": [
+      "reconstruction-attempt-2ae754f2d8344fb0848a583fc6de6771.json",
+      "reconstruction-link.json"
+    ],
+    "sourceRangeReadCount": 3
+  },
+  "sourceBaseCommit": "db8b5742",
+  "sourcePatch": "Historical resource failure wording in TeachingReconstruction; 83 targeted tests pass.",
+  "fixturePreparationErrors": [
+    "First private bundle had duplicate React resolution; fixed private React aliases only before accepted run. No product source edits.",
+    "Empty failed-attempt catalog handler added to mocked API before final screenshots."
+  ],
+  "componentSha256": {
+    "frontend\\src\\features\\stream\\TeachingReconstruction.tsx": "a7bb41fbd555c79566b4b8b6e28f4562154f82abb92403f1b9cbb82156b43c53",
+    "frontend\\src\\features\\stream\\TeachingReview.tsx": "a89995d8a8301b8b09a94cded870b6422fc7e4d32e1c1212b68ca676f6dd5dfb",
+    "frontend\\src\\features\\stream\\savedRouteResults.ts": "8222aa72ae788fbeb5c0f8528f6b3a621c75c42d3dbd6e89b1fc646f03e6266d"
+  },
+  "screenshots": {
+    "output\\playwright\\saved-results-20261103-v1\\failed-attempt-retained-source.png": "f172bc9616b6ab43b6f5b235a6b48ebfca4cce497e5c2db7c49fda7d0a65c162",
+    "output\\playwright\\saved-results-20261103-v1\\prior-173-explicitly-opened.png": "dc68c9ed0e86b405ccf0a3fc9636f6f9cb9e916addda6cb5157207f477d13ffb"
+  }
+}

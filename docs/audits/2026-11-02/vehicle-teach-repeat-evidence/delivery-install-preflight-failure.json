@@ -1,0 +1,8 @@
+{
+  "state": "stopped-before-mutation",
+  "reason": "missing current Compose environment_file metadata; canonical installer assumes label",
+  "exception": "KeyError",
+  "productionUiChanged": false,
+  "uiImage": "sha256:61bdd78299702ee2b812a53ebc9556cd7eac44cec0e03093efacd891da436cf2",
+  "canonicalInstallInvoked": false
+}

@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T03:39:33.8449414Z",
+  "mode": "limited-read-only",
+  "sourceRevision": "30ce71c009910911e071b350e17e550cfe597090",
+  "collectorSourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+  "completedWindow": {
+    "startedUtc": "2026-10-10T18:22:19.273130+00:00",
+    "lastSampleUtc": "2026-10-11T02:22:19.273529+00:00",
+    "finishedUtc": "2026-10-11T02:22:27.825036+00:00",
+    "state": "complete",
+    "samples": 241,
+    "reportBytes": 3173298,
+    "sourceJsonlSha256": "3b5629b983dc1879af8e5bcd1c16667996dcc5a91f8ad43488c859626fe3036a",
+    "freeDiskDeltaBytes": -2417668096,
+    "startFreeBytes": 36086755328,
+    "endFreeBytes": 33669087232,
+    "namedAllocationChanges": {
+      "docker_data.vhdx": {
+        "startAllocatedBytes": 234731077632,
+        "endAllocatedBytes": 236073254912,
+        "allocatedDeltaBytes": 1342177280,
+        "identityStable": true
+      },
+      "leidian0/data.vmdk": {
+        "startAllocatedBytes": 9562095616,
+        "endAllocatedBytes": 9570418688,
+        "allocatedDeltaBytes": 8323072,
+        "identityStable": true
+      },
+      "leidian1/data.vmdk": {
+        "startAllocatedBytes": 7237140480,
+        "endAllocatedBytes": 7318405120,
+        "allocatedDeltaBytes": 81264640,
+        "identityStable": true
+      },
+      "logs_2.sqlite-wal": {
+        "startAllocatedBytes": 4993472,
+        "endAllocatedBytes": 5009952,
+        "allocatedDeltaBytes": 16480,
+        "identityStable": true
+      },
+      "thread_history_1.sqlite": {
+        "startAllocatedBytes": 784171008,
+        "endAllocatedBytes": 797286400,
+        "allocatedDeltaBytes": 13115392,
+        "identityStable": true
+      }
+    },
+    "lastDockerDf": {
+      "state": "measured",
+      "value": [
+        {
+          "Active": "33",
+          "Reclaimable": "63.16GB (32%)",
+          "Size": "196.4GB",
+          "TotalCount": "237",
+          "Type": "Images"
+        },
+        {
+          "Active": "14",
+          "Reclaimable": "298.9MB (93%)",
+          "Size": "318.2MB",
+          "TotalCount": "46",
+          "Type": "Containers"
+        },
+        {
+          "Active": "36",
+          "Reclaimable": "1.82GB (23%)",
+          "Size": "7.589GB",
+          "TotalCount": "75",
+          "Type": "Local Volumes"
+        },
+        {
+          "Active": "0",
+          "Reclaimable": "20.22GB",
+          "Size": "84.42GB",
+          "TotalCount": "768",
+          "Type": "Build Cache"
+        }
+      ]
+    },
+    "vssState": "unavailable",
+    "pagefileAllocatedMiB": 48320,
+    "wholePcWriterAttribution": "UNDETERMINED"
+  },
+  "renewedWindow": {
+    "state": "running",
+    "pid": 43984,
+    "administrator": false,
+    "launchMode": "limited-unprivileged",
+    "vssAccessGuaranteed": false,
+    "startedUtc": "2026-10-11T03:35:33.923320+00:00",
+    "dueUtc": "2026-10-12T03:35:33.923320+00:00",
+    "samplesLimit": 721,
+    "samplesWritten": 2,
+    "intervalSeconds": 120,
+    "dockerEverySamples": 8,
+    "reportBudgetBytes": 16777216,
+    "sampleLimitBytes": 131072,
+    "reportBytes": 38511,
+    "cleanupPerformed": false,
+    "deviceCommandsSent": false,
+    "autostartConfigured": false,
+    "fullDirectoryScans": false,
+    "processIoIsWriterAttribution": false,
+    "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+    "lastSampleUtc": "2026-10-11T03:37:33.930378+00:00",
+    "freeDiskBytes": 33417150464,
+    "processIdentity": {
+      "pid": 43984,
+      "parentPid": 22792,
+      "creationUtc": "2026-10-11T03:35:33.4166440Z"
+    },
+    "privateDirectory": ".local-pilot/host-storage-limited-20261011T033533Z",
+    "firstSampleAtUtc": "2026-10-11T03:35:33.924349+00:00",
+    "firstFreeBytes": 33418137600
+  },
+  "uncoveredGap": {
+    "afterUtc": "2026-10-11T02:22:19.273529+00:00",
+    "beforeUtc": "2026-10-11T03:35:33.924349+00:00",
+    "attributionAvailable": false
+  },
+  "volume": {
+    "health": "Warning",
+    "operationalStatus": [
+      "Full Repair Needed"
+    ],
+    "freeBytes": 33415294976
+  },
+  "administrator": false,
+  "vssKernelUsnAttribution": "unavailable",
+  "cleanupPerformed": false,
+  "autostartConfigured": false,
+  "newDeviceCommandsSent": false,
+  "interpretation": "Named allocation changes do not identify every C: writer. IO includes network. No physical reclaim or fixed leak is claimed."
+}

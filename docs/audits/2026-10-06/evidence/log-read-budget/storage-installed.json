@@ -1,0 +1,64 @@
+{
+  "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+  "readerSource": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "observedAt": "2026-10-05T19:55:38.206041+00:00",
+  "volume": "sphere-pilot-20260911_device_logs",
+  "target": "sphere-pilot-20260911-backend-1",
+  "otherContainersPreserved": 45,
+  "existingMountsPreserved": true,
+  "logRotationPreserved": true,
+  "stoppedWriterCopy": true,
+  "stagingRetained": true,
+  "manifestSha256": "000c903daab0caddfabf09d75e4e2a26654aca58f06d83f2621a01b8bc7b4e14",
+  "migrated": {
+    "files": 14,
+    "bytes": 902996,
+    "hashesVerified": true
+  },
+  "verified": {
+    "files": 14,
+    "bytes": 902996,
+    "prefixHashesVerified": true,
+    "uid": 1001,
+    "writeCanaryRemoved": true
+  },
+  "freshVolumeNonRootRecreation": true,
+  "beforeFleet": {
+    "observedAt": "2026-10-05T19:55:29.473216+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    }
+  },
+  "afterFleet": {
+    "observedAt": "2026-10-05T19:55:38.182440+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    }
+  },
+  "failedAttempts": [
+    {
+      "stage": "volume-copy",
+      "cause": "Root helper without DAC override could not traverse UID1001 mode0700 directories; old container restarted before recreation"
+    },
+    {
+      "stage": "neighbor-mount-comparison",
+      "cause": "Raw Windows/WSL source paths compared without canonicalization; rollback retained persistent volume"
+    }
+  ],
+  "neighborComparisonAgainstPreMigrationUiSnapshot": true,
+  "postRollbackRecreationPreservedAllPrefixes": true,
+  "ready": true,
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "diskWriterIdentified": false
+}

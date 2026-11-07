@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "verifiedUtc": "2026-10-07T20:28:18.503162+00:00",
+  "status": "SOURCE_COMPONENT_VALIDATED_NOT_ROUTED_OR_INSTALLED",
+  "sourceHashMeaning": "Raw workspace bytes before Git normalization. Container test payload copies only listed source/tests plus unchanged ConnectionManager into an isolated temporary package. No application source files changed inside container.",
+  "sourceFiles": {
+    "backend/websocket/continuous_protocol.py": {
+      "bytes": 5393,
+      "sha256": "f7cc460bcd444bd5dcda1c1c0b359221ed5d1f0a1dbb43f7835c52c2d10bf6e1"
+    },
+    "backend/websocket/continuous_lease.py": {
+      "bytes": 16438,
+      "sha256": "7798c90bdb1598683bb49b033105204c811a8162d00301ace147be979c3be382"
+    },
+    "backend/websocket/continuous_delivery.py": {
+      "bytes": 2739,
+      "sha256": "da76b792616839a33096394b13e6d03332e50f4c2af6d4f8332320272a77831c"
+    },
+    "tests/test_ws/test_continuous_protocol.py": {
+      "bytes": 4169,
+      "sha256": "274cfc9611c92480ff44c0efa342bdaaef2e35461c78eb22c5ad5f512a870241"
+    },
+    "tests/test_ws/test_continuous_lease.py": {
+      "bytes": 23924,
+      "sha256": "3c2c1c7ede21271458fe772807fba1a718b2e27e7e1caec60ee0b1e6ff3ee5db"
+    }
+  },
+  "validation": {
+    "distinctCases": 96,
+    "protocolCases": 44,
+    "leaseDeliveryCases": 52,
+    "fakeredisLua": {
+      "passed": 96,
+      "failures": 0
+    },
+    "realRedis": {
+      "passed": 96,
+      "failures": 0
+    },
+    "ruff": "passed",
+    "mypy": "passed for all 3 modules",
+    "execution": "Independent pytest process in the existing backend container with shipped redis-py5.0.3/lupa dependencies. Fake and real run the same static Lua. Two clients share one authority,20 competing acquisitions. Real keys/channels use per-test random audit namespaces and fake device IDs,1500ms TTL and exact-key cleanup.",
+    "socketTests": "Mock sockets with the real ConnectionManager. No Android socket was contacted.",
+    "earlierRuns": "First real fixture incorrectly required20 requests to fit into bounded8-connection pools. Fixture now waits for all attempts and accepts explicit overload refusal. A later fake fixture used a constructor that strips retry/connect kwargs; it now uses an actual bounded pool with fake connections. Final96 cases passed in both modes; production transport guards were not weakened."
+  },
+  "privateLogHashes": {
+    "continuous-lease-fake-final-20261008.log": {
+      "bytes": 182,
+      "sha256": "82d4a6f1b7c2bb0885af56d1a365cd765bde23191a2131ec37e7f2a31460012a"
+    },
+    "continuous-lease-real-final-20261008.log": {
+      "bytes": 182,
+      "sha256": "dd407eebc99de2e1aa74687ed5d478eb0cb7414ca4b78a4f19905f3bdefd858b"
+    },
+    "continuous-lease-ruff-20261008.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "continuous-lease-mypy-20261008.log": {
+      "bytes": 44,
+      "sha256": "281a094c39385b4d7b53e5db635f52158036861433c2a4975b9039e77a627a24"
+    }
+  },
+  "limits": {
+    "leaseMs": 1500,
+    "authorizationMs": 1500,
+    "deliveryAgeMs": 500,
+    "operationMs": 250,
+    "socketSendMs": 250,
+    "poolMaxConnections": 8,
+    "envelopeBytes": 2048,
+    "sequenceMax": 2147483647,
+    "gestureMax": 2147483647
+  },
+  "gates": {
+    "defaultContinuousCapability": false,
+    "publicRoutesConnected": false,
+    "startupHooksAdded": false,
+    "offlineQueueUsed": false,
+    "applicationRetryingPoolAllowed": false,
+    "unknownOutcomeRetried": false,
+    "socketCompletionIsAndroidACK": false,
+    "keyExpiryProvesNativeRelease": false
+  },
+  "runtime": {
+    "lastAcceptedUI": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "lastAcceptedAPI": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "apiDeploy": false,
+    "webDeploy": false,
+    "apkInstall": false,
+    "ota": false,
+    "sqlMigration": false,
+    "deviceCommandsSent": false,
+    "dockerImageBuilt": false
+  },
+  "previousSourceCI": {
+    "sha": "3dc2456b0b60a360db43a32f255034b274359e2a",
+    "all5Runs": "success",
+    "evidence": "VIDEO-CAPTURE-V2-CI.json"
+  },
+  "currentSourceCI": "Pending commit and exact-source hosted checks",
+  "remaining": [
+    "Viewer/agent routes, multiworker subscriptions and scoped transient receipt delivery",
+    "Actual authorization/revocation cadence and server DAG/manual exclusion",
+    "Browser displayed-frame binding, pointermove/coalescing/backpressure/loss cleanup",
+    "Recorder trajectory/navigation/uncertainty semantics",
+    "Real Kotlin pipe, known reset and full local/remote Android canary",
+    "Latency distributions, resource/Redis AOF and fleet soak"
+  ],
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "SF26-05": "OPEN"
+  },
+  "hostedCIFollowup": {
+    "verifiedUtc": "2026-10-07T21:10:17.792145+00:00",
+    "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+    "allFourRuns": "success",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37682637226,
+        "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "updatedAt": "2026-10-07T20:31:32Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37682637226"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37682637240,
+        "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+        "name": "CI — Frontend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T20:34:21Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37682637240"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37682637220,
+        "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+        "name": "CI — Backend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T20:48:23Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37682637220"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37682637207,
+        "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+        "name": "CI — Android",
+        "status": "completed",
+        "updatedAt": "2026-10-07T20:45:34Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37682637207"
+      }
+    ],
+    "backendPassed": 3268,
+    "backendSkipped": 37,
+    "backendSubtestsPassed": 229,
+    "frontendTestsPassed": 1753,
+    "frontendSuitesPassed": 136,
+    "liveRoutesStillUnconnected": true
+  }
+}

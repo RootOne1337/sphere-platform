@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "stop": null,
+  "seconds": 1.062000000034459,
+  "initial_ram": 7979962368,
+  "initial_commit": 26929209344,
+  "min_ram": 7904698368,
+  "min_commit": 26865094656,
+  "source_hashes_before": {
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\zaezd888-diagnosis-20261031\\dense-tracks\\reconstruction-input.json": "f39f19c39712841bc0b4d228bedfbe128e2101cc0b9d561bfafb5e3eea3cf9f3",
+    ".local-pilot\\scooter-local-mask-20261101\\report.json": "3f4449bbdcda90fff2337bcbd9ab018055aa03f1c88def400b5808ceb3236842"
+  },
+  "source_hashes_after": {
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\zaezd888-diagnosis-20261031\\dense-tracks\\reconstruction-input.json": "f39f19c39712841bc0b4d228bedfbe128e2101cc0b9d561bfafb5e3eea3cf9f3",
+    ".local-pilot\\scooter-local-mask-20261101\\report.json": "3f4449bbdcda90fff2337bcbd9ab018055aa03f1c88def400b5808ceb3236842"
+  },
+  "unchanged": true
+}

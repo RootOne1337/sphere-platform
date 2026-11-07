@@ -1,0 +1,73 @@
+{
+  "finding": "AUD-133 / F32-25",
+  "recorded_at": "2026-09-20T22:39:25.477506+00:00",
+  "source_base": "6ebca1b17e55fa1da52081294b98f2343c1714ce",
+  "source_scope": "Working tree included with this evidence; source hashes use UTF-8 LF normalization.",
+  "source_sha256": {
+    "alembic/versions/20260921_pipeline_discovery.py": "499dc223d2ae8e73d6b22f735da87bbcbe8ecfd1d20efc028e7393c800a6654d",
+    "backend/services/orchestrator/pipeline_tenants.py": "5c3d3c288bae950e7e93391bfda6315d75cc9f72e44c718fab98a20eaf2acf02",
+    "backend/services/orchestrator/pipeline_executor.py": "d050536c125e2ef23a1917c6ec28840792336b893ae7a560d9a5c5384e426732",
+    "backend/services/orchestrator/pipeline_ownership.py": "4bb4a0af673102acd2834595ce356d39a473bbc1def8327275d4c13d95063b0d",
+    "backend/services/orchestrator/pipeline_recovery.py": "bfff30d14c53b4909de6f48da9f2af01028a77e2562c2c1d7bfb016fca44245b",
+    "tests/production/test_pipeline_rls.py": "b8da1eb8078b85877cdd2732287bea97fd0c1ae093324f402cbe82d8b5d24cff",
+    "tests/production/test_pipeline_discovery_migration.py": "1a4b3f7e1489ef528c56c675f16662cbe57206750d123f7c3efec01d17ac9c68",
+    "tests/production/pipeline_worker_probe.py": "c21a46edf68ab189c856ee4204efb0e4c59f87ccad7d5cfe9ddf94c776fe19fb"
+  },
+  "severity": "High / P0 before Fleet32 operational acceptance",
+  "before": {
+    "tests": 3,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 0,
+    "duration_seconds": 1.556
+  },
+  "after_focused": {
+    "tests": 76,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 76,
+    "duration_seconds": 64.026
+  },
+  "after_full_backend": {
+    "tests": 1880,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1880,
+    "duration_seconds": 506.957
+  },
+  "intermediate": {
+    "passed": 75,
+    "failed": 1,
+    "cause": "New migration test passed interval strings instead of datetime.timedelta to asyncpg; fixture corrected and all 76 rerun."
+  },
+  "ruff": "All changed Python files pass.",
+  "mypy": {
+    "changed_runtime_modules": 4,
+    "follow_imports": "silent",
+    "result": "pass",
+    "import_analysis_limitation": "Default imported-module analysis and standalone check of unchanged backend/database/redis_client.py each report union-attr on lines 50 and 51 in this local environment. Exact-source CI checked separately after push."
+  },
+  "verification": [
+    "Real disposable PostgreSQL non-owner/NOBYPASSRLS role, one-connection pool.",
+    "Global queued/recovery/cancel discovery performs real SQL; production grants explicitly tested.",
+    "Two-tenant completion, child admission, multiple heartbeats, tenant context after commit/rollback, no pooled LOCAL leak.",
+    "Scoped cancellation excludes foreign-tenant forged parent references.",
+    "Two executors claim 10 disjoint runs each; 12 of 32 stay queued.",
+    "Committed first tenant is registered even when the next tenant commit fails.",
+    "Wrong tenant with known owner/generation cannot adopt or renew a run.",
+    "Separate non-owner OS process is killed after child admission, then replaced; original child ID retained.",
+    "Missing EXECUTE fails closed; granting access restores next poll without replacing executor.",
+    "Migration predicates, bounded 64 IDs, PUBLIC ACL revoke, invalid/null inputs and rollback-safe downgrade/re-upgrade."
+  ],
+  "limitations": [
+    "No Android delivery in these tests: child terminal results and accelerated lease expiry are SQL fixture writes.",
+    "Global discovery is filtered to fixture tenant IDs after real lookup in tests; subprocess probe is tenant-scoped.",
+    "Backend/APK pilot not deployed; old Docker projects untouched.",
+    "Other workers, nested capacity, global/per-device quota, fairness and native runtime-role canary remain open.",
+    "No 32/64-device benchmark, full network/SQL/Redis fault matrix, or eight-hour pass.",
+    "Raw logs and credentials retained privately; CI results belong only to their exact head SHA."
+  ]
+}

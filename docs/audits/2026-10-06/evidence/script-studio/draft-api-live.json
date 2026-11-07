@@ -1,0 +1,56 @@
+{
+  "observedAt": "2026-10-05T21:25:46.655120+00:00",
+  "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+  "anonymousStatus": 401,
+  "validStatus": 200,
+  "dagHash": "7b764bfcc35a33e0020c2595b51c57a18ba864881bb250fd7a0478674d8ed519",
+  "scope": "structure-routes-lua-safety",
+  "deviceExecutionVerified": false,
+  "invalidCases": [
+    {
+      "case": "duplicate",
+      "status": 422,
+      "inputReflected": false
+    },
+    {
+      "case": "action-list",
+      "status": 422,
+      "inputReflected": false
+    },
+    {
+      "case": "branch-list",
+      "status": 422,
+      "inputReflected": false
+    },
+    {
+      "case": "lua-object",
+      "status": 422,
+      "inputReflected": false
+    }
+  ],
+  "before": {
+    "scripts": 17,
+    "versions": 20,
+    "tasks": 435
+  },
+  "after": {
+    "scripts": 17,
+    "versions": 20,
+    "tasks": 435
+  },
+  "scriptVersionTaskCountsUnchanged": true,
+  "commonAuthAuditActivityExcluded": true,
+  "fleet": {
+    "total": 19,
+    "counts": {
+      "online": 13,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 6,
+      "issues": 0
+    }
+  },
+  "remoteCandidates": [
+    "auto-ph-025"
+  ]
+}

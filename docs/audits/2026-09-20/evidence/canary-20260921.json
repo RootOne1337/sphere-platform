@@ -1,0 +1,279 @@
+{
+  "source": "c42bb5b52b2d84df12beac8560d35e29b792e06c",
+  "verified_at": "2026-09-21T10:55:29.069389+00:00",
+  "scope": "two rooted Android 9 pilot devices; old project untouched",
+  "build": {
+    "apk": {
+      "source": "c42bb5b52b2d84df12beac8560d35e29b792e06c",
+      "file": "SphereAgent-pilot-1.2.8-c42bb5b.apk",
+      "sha256": "2f958bef697243fcbf6d449410f557aaa4f71bbd02b7df632909a79506a4987a",
+      "bytes": 8393685,
+      "package": "com.sphereplatform.agent.pilot.debug",
+      "version_name": "1.2.8-dev",
+      "version_code": 10208,
+      "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+      "tests": {
+        "dev": {
+          "tests": 586,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1,
+          "passed": 585,
+          "skip_reason": "Legacy baked-route test assumes nonblank DEFAULT_SERVER_URL; signed pilot deliberately leaves it blank."
+        },
+        "enterprise": {
+          "tests": 586,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1,
+          "passed": 585,
+          "skip_reason": "Legacy baked-route test assumes nonblank DEFAULT_SERVER_URL; signed pilot deliberately leaves it blank."
+        }
+      },
+      "baked_management_urls": [],
+      "signed_discovery_config_version_checked": 23,
+      "built_at": "2026-09-21T10:25:28.003776+00:00"
+    },
+    "backend": {
+      "source": "c42bb5b52b2d84df12beac8560d35e29b792e06c",
+      "tag": "sphere-pilot-20260911-backend:c42bb5b",
+      "id": "sha256:cc1eb2fbba486b8942be62ff1f99aa3c3d6646fe229ab285a0cbfc83cd4b4ad8",
+      "context": "git archive committed inputs",
+      "built_at": "2026-09-21T10:20:24.662828+00:00"
+    },
+    "frontend": {
+      "source": "c42bb5b52b2d84df12beac8560d35e29b792e06c",
+      "tag": "sphere-pilot-20260911-frontend:c42bb5b",
+      "id": "sha256:9758010f002f546eac676b3b07d0574286e8537440cef77da57fb4f3846eb7dd",
+      "context": "git archive committed inputs",
+      "built_at": "2026-09-21T10:21:37.396504+00:00"
+    }
+  },
+  "backup_rehearsal": {
+    "at": "2026-09-21T10:21:40.018786+00:00",
+    "dump_sha256": "1533f957711cddd03cddad863f5d525dceb604ee2fa3792351ce340b7277f340",
+    "dump_bytes": 453649,
+    "restore_passed": true,
+    "migration_passed": true,
+    "migration_head": "20260921_watchdog_stop",
+    "preserved_counts": {
+      "tasks": 418,
+      "pipeline_runs": 46,
+      "task_batches": 189
+    },
+    "backend_source": "c42bb5b52b2d84df12beac8560d35e29b792e06c",
+    "external_network": "none",
+    "pilot_database_changed": false
+  },
+  "installed_migration": "20260921_watchdog_stop",
+  "native": {
+    "task_receipts": {
+      "completed": 8,
+      "cancelled": 6,
+      "timeout": 1
+    },
+    "task_ids": [
+      "02ef6beb-a0f3-4ca9-a8d7-42896acd3fc8",
+      "04935551-0b76-41b4-b549-0ad30e6ed576",
+      "08b4ae5a-2948-4894-a76d-02856473ab8c",
+      "0d182c21-7bb6-4c19-b95d-c595c779f67f",
+      "0fa0e9f7-2bcf-48b5-aab9-196df14f9237",
+      "1344c95a-cd5e-4aac-862e-d885aaea053b",
+      "19b443f5-7a24-4b64-bb38-73859fa9babb",
+      "42e9a123-4990-4a88-82e0-26ca629dcbf2",
+      "4dd41705-5fbf-4193-9a02-6fa52a61e988",
+      "5e99d104-f205-460f-a5bc-c7389fdeeba6",
+      "665159d9-6e66-4a99-b9dd-0f7ac1f5b594",
+      "941c4eb4-5369-4124-9a16-4828dc0f4139",
+      "9d6b1dbf-75ff-451e-aad6-dd818d14e06a",
+      "e6b5b273-0032-427b-901d-33cb4e6b7916",
+      "f3934053-8acb-42e1-a82b-989eaa7a41b9"
+    ],
+    "pipeline_receipts": {
+      "completed": 1,
+      "cancelled": 1
+    },
+    "devices": [
+      {
+        "serial": "emulator-5554",
+        "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "version_code": 10208,
+        "pid": "24613",
+        "same_pid_since_ota": true,
+        "crash_buffer_unchanged": true,
+        "sha256": "2f958bef697243fcbf6d449410f557aaa4f71bbd02b7df632909a79506a4987a",
+        "online": true,
+        "capture_released": true
+      },
+      {
+        "serial": "emulator-5556",
+        "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "version_code": 10208,
+        "pid": "22567",
+        "same_pid_since_ota": true,
+        "crash_buffer_unchanged": true,
+        "sha256": "2f958bef697243fcbf6d449410f557aaa4f71bbd02b7df632909a79506a4987a",
+        "online": true,
+        "capture_released": true
+      }
+    ],
+    "database_counts": {
+      "tasks": [
+        {
+          "status": "completed",
+          "count": 426
+        },
+        {
+          "status": "timeout",
+          "count": 1
+        },
+        {
+          "status": "cancelled",
+          "count": 6
+        }
+      ],
+      "pipeline_runs": [
+        {
+          "status": "completed",
+          "count": 23
+        },
+        {
+          "status": "cancelled",
+          "count": 25
+        }
+      ],
+      "task_batches": [
+        {
+          "status": "completed",
+          "count": 189
+        }
+      ],
+      "migration": [
+        "20260921_watchdog_stop"
+      ]
+    },
+    "old_and_other_containers_unchanged": true,
+    "all_fault_rules_removed": true,
+    "active_tasks_and_runs": 0,
+    "raw_logs": "private .local-pilot/rollout/canary-20260921-001",
+    "cases": {
+      "basic": {
+        "passed": true,
+        "finished_at": "2026-09-21T10:43:57.132741+00:00"
+      },
+      "offline-stop": {
+        "passed": true,
+        "finished_at": "2026-09-21T10:46:02.703231+00:00"
+      },
+      "deadline": {
+        "passed": true,
+        "finished_at": "2026-09-21T10:49:17.956500+00:00"
+      },
+      "late-execute-schema-corrected": {
+        "passed": true,
+        "finished_at": "2026-09-21T10:51:28.316294+00:00"
+      },
+      "pipeline": {
+        "passed": true,
+        "finished_at": "2026-09-21T10:52:28.272457+00:00"
+      },
+      "backend-restart": {
+        "passed": true,
+        "finished_at": "2026-09-21T10:53:59.065061+00:00"
+      }
+    },
+    "deadline_injection": "Only own task started_at aged; real scoped watchdog invoked. Not a full natural 600s deadline test.",
+    "late_execute": "Own ASSIGNED+cancel intent seeded; real dispatcher sent cancel; later EXECUTE_DAG caused no cache marker; indexed APK receipt verified.",
+    "backend_restart": "Exact new pilot backend gracefully restarted during saved stop and APK-only IPv4/IPv6 loss; intent/queue fence survived.",
+    "cancellation_latency_samples": [
+      {
+        "task_id": "0d182c21-7bb6-4c19-b95d-c595c779f67f",
+        "status": "cancelled",
+        "stop_to_terminal_seconds": 68.538
+      },
+      {
+        "task_id": "0fa0e9f7-2bcf-48b5-aab9-196df14f9237",
+        "status": "cancelled",
+        "stop_to_terminal_seconds": 9.744
+      },
+      {
+        "task_id": "19b443f5-7a24-4b64-bb38-73859fa9babb",
+        "status": "cancelled",
+        "stop_to_terminal_seconds": 9.619
+      },
+      {
+        "task_id": "9d6b1dbf-75ff-451e-aad6-dd818d14e06a",
+        "status": "cancelled",
+        "stop_to_terminal_seconds": 68.873
+      },
+      {
+        "task_id": "e6b5b273-0032-427b-901d-33cb4e6b7916",
+        "status": "timeout",
+        "stop_to_terminal_seconds": 68.052
+      },
+      {
+        "task_id": "f3934053-8acb-42e1-a82b-989eaa7a41b9",
+        "status": "cancelled",
+        "stop_to_terminal_seconds": 14.843
+      }
+    ]
+  },
+  "browser": {
+    "task_deadline_pending_label_observed": true,
+    "two_decoded_screens": true,
+    "both_returned_without_reload_after_restart": true,
+    "visual_clock_changed": "12:52 to 12:55",
+    "own_viewers_closed_and_capture_released": true,
+    "fps_latency_capacity_measured": false
+  },
+  "publication": {
+    "regular_platform": "android",
+    "flavor": "dev",
+    "version_code": 10208,
+    "mandatory": false,
+    "latest_alias_updated": true,
+    "six_hour_periodic_worker_measured": false,
+    "native_ota_adb_install_commands": 0,
+    "manual_app_starts": 0,
+    "windows_watchdog_disabled_during_ota": true
+  },
+  "harness_corrections": [
+    {
+      "case": "late-execute",
+      "first_result": "HTTP422 before script creation; DAG had one node, schema requires two",
+      "correction": "Added end node and started distinct run; original failed evidence preserved, no uncertain mutation repeated"
+    },
+    {
+      "case": "APK verification",
+      "first_result": "Post-build check expected zero skips",
+      "correction": "Inspected baked-route assumption skip and recorded 585 passed plus one skipped per signed flavor; existing build verified"
+    }
+  ],
+  "limits": [
+    "Fleet32/64 and 8h soak NOT passed",
+    "Pilot DB superuser bypasses RLS; separate non-owner integration evidence required",
+    "Stop remains cooperative at action boundary; long sleep latency F32-26 remains open",
+    "Backend graceful restart is not OS-kill or PostgreSQL/Redis loss in this native run",
+    "APK reboot and interrupted/concurrent OTA not repeated on 1.2.8",
+    "Root shell physical interruption not certified",
+    "Video preview/decoder/queue, Redis budgets, VPN, ingress independence still open"
+  ],
+  "private_evidence_sha256": {
+    "preflight.json": "f8cbd9b29cd5371a8fe263ef5c03008289b5b21b39ba5a6f1bf4c0ec4f30fd36",
+    "backup-verified.json": "f3f938711bb21b03188852c1c30da89fc570e9c19a1c1a2c4e207b24e37922c8",
+    "android-build.json": "391df16a90dfafb7b5852f736ae22568a0657c5382f6ad8cbb686459c9869afd",
+    "backend-build.json": "ec75c360084c4d6d1715ef719a1d151bf57d26f1ea0bcc01eef19dcebff6d65c",
+    "frontend-build.json": "ae302ae3e623918426a16d1c106ef4005c529a741a4366e96b03ef36323e9a0f",
+    "deploy-result.json": "317ab31265317de38a0000876192fc8d860e4d4963bcbac75369a3003b423c48",
+    "independent-verification.json": "bf71ce0894d6b5901d0ef2f963bcdac2fc93ca00c049f5d1b48b57c5d9b6269f",
+    "accepted.json": "9f4d1c688b271c57ec81c69ff2834375154e70c7f3de18f9cdae7256071ab547",
+    "regular-ota-result.json": "af28ae75729c5e9768677f9070c544f928a2cdd551f140a358a3e32020f44b47",
+    "basic/result.json": "a29ce65763833de26db6da108199cdf89e4fdb1a418d17394d4a15ced7c1cd25",
+    "offline-stop/result.json": "2032a5392f2b7b4019fb5d98a5896b50a6f129fc2ec2250a5c3a2df5b8d0c8ea",
+    "deadline/result.json": "782dd1e2b1432680753698eeda83b39b1a0b36af1fbb98a69fc4bb464e679fdd",
+    "late-execute/result.json": "2c84a4c691ee28026c93bb4a15a25df684184cc3883b30a2538d92b304d808af",
+    "late-execute-schema-corrected/result.json": "5a96498e282b3b42c267190b80319e3115bd35904f3d0bf166cbafc2a76df75e",
+    "pipeline/result.json": "1432e920a8f5cef1b5279b678fe081d54e48df198678d6c390967f8bcd7422b1",
+    "backend-restart/result.json": "e31836805b44fc19298a5704e80a2f0273ad49b0ebe52fbe2176c6421dbe135a"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T21:06:23.161747+00:00",
+  "runtimeInstalled": true,
+  "installed": {
+    "ui": "46dd02fff711c1667b44520b85290226b7155287",
+    "api": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+    "uiImageId": "sha256:7fd4d52ec5402dae96b715d890f9f905e0ca1a4b5417423eb9de5f3ce0d238d0",
+    "apiImageId": "sha256:27e1f5659fa37e213f7bb8ad8d8bfefb740921c7b32a30b658cfdce388fcc2da",
+    "schemaHeads": [
+      "20261021_vpn_profiles"
+    ],
+    "schemaMigrationPerformed": false,
+    "healthReady": true,
+    "otherContainersPreservedPerInstallation": 45,
+    "otaCatalogUnchangedDuringUiApiInstall": true
+  },
+  "privateApiReceiptSha256NormalizedLf": "910283d6030da611d552e70e08f61200825ba3b0dfaadf3f9a620c78ecb2363b",
+  "privateUiReceiptSha256NormalizedLf": "2a6fe89695ed779358d9beb688ee7c0fe1af37b200ff9c750a34a815b6f156e5",
+  "ciEvidence": "docs/audits/2026-10-22/VPN-BATCH-CI-VALIDATION.json",
+  "ciEvidenceSha256NormalizedLf": "13b23da9fb21d9173050acc7d7a4ccd1b42ece417b0dfb34f07f470514bc1411",
+  "liveHttpAcceptance": {
+    "observedAtUtc": "2026-10-21T21:03:10.156816+00:00",
+    "apiSource": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+    "deviceCommandsSent": 0,
+    "physicalVpnChanged": false,
+    "testProfiles": 2,
+    "state": "success",
+    "readOnlyStatusMatchedExistingReceipts": true,
+    "missingStatusRemainedUnknown": true,
+    "lateConflictStatus": 409,
+    "newRowsRolledBack": true,
+    "existingProfilesPreserved": true,
+    "archivedCount": 2,
+    "publicMetadataContainedNoConfig": true,
+    "browserSaveRequests": 1,
+    "browserStatusRecoveryRequests": 1
+  },
+  "browserAcceptance": {
+    "actualInstalledSite": true,
+    "sourceHarnessUsed": false,
+    "origin": "http://127.0.0.1:3015",
+    "desktopViewport": [
+      1440,
+      1000
+    ],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileDocumentWidth": 390,
+    "mobileDialogWidth": 390,
+    "hundredFilesSelected": true,
+    "invalidFile37Identified": true,
+    "invalidBatchSaveBlocked": true,
+    "allHundredRowsReachable": true,
+    "stickyControlsObserved": true,
+    "saveReplyIntentionallyAbortedAfterHttp200": true,
+    "saveRequests": 1,
+    "recoveryStatusRequests": 1,
+    "saveRequestsDuringRecovery": 0,
+    "recoveredProfiles": 2,
+    "missingNativeCountersDisplayedAsUnknown": true,
+    "realTouchHardwareTested": false,
+    "expectedNetworkFaultsInjected": 1,
+    "consoleCleanlinessClaimed": false,
+    "qaBrowserClosed": true,
+    "screenshots": [
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-live/desktop-checked-final.png",
+        "sha256": "875c891a1f056726c7932fd26340de82c39238d1f632175b9326e1b8c8204eda"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-live/mobile-checked-final.png",
+        "sha256": "540744de39391b80dd1c42c981bfc87bbf231421304749cc98a9adb767c85dc5"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-live/mobile-hundred-final.png",
+        "sha256": "713bb6d3937978c54199390d6514eb6c47188880cd8c84de9c4a93ce8cbd547a"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-live/mobile-save-unknown.png",
+        "sha256": "fcb52d2638ce0fffe604d13d6f03ee569603241453fa0a19cff9f60f1b2ba1fd"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-live/mobile-save-recovered.png",
+        "sha256": "4d57b2a395e03f3ff8e44c2d4c9e755dbe7088053002aca90938089818eb85f0"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-live/mobile-runtime-final.png",
+        "sha256": "09e9fdf9c53a5c66f8471705da894f44a55f81e01b51ebb2ead4d24fa0ff471a"
+      }
+    ]
+  },
+  "deviceCommandsSent": 0,
+  "physicalVpnChanged": false,
+  "physicalVpnAccepted": false,
+  "apk84Installed": false,
+  "productionAccepted": false,
+  "scope": "Finite real UI/API catalog acceptance. Tunnel rates are source/CI tested and shown unavailable on APK83; no physical VPN, media/input or game acceptance."
+}

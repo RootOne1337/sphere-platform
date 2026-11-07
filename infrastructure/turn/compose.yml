@@ -1,0 +1,43 @@
+# Optional relay for a Linux host. Not included in the ordinary Sphere stack.
+# Supply real TLS files and the same REST key used by the API before starting.
+services:
+  turn:
+    profiles: [direct-relay]
+    image: coturn/coturn@sha256:59af4221a2c45c1195a1a4a865542b3ea744be1dd8e228d11bde87c6631081cf
+    network_mode: host
+    restart: unless-stopped
+    user: "65534:65534"
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1
+    pids_limit: 128
+    ulimits:
+      nofile: {soft: 8192, hard: 8192}
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=4m,mode=1777
+    entrypoint: [/bin/sh, /etc/sphere-turn/entrypoint.sh]
+    environment:
+      SPHERE_TURN_HOST: ${SPHERE_TURN_HOST:?Provide the relay TLS hostname}
+    volumes:
+      - ./turnserver.conf:/etc/sphere-turn/turnserver.conf:ro
+      - ./entrypoint.sh:/etc/sphere-turn/entrypoint.sh:ro
+    secrets:
+      - source: turn_rest_key
+        target: turn-rest-key
+      - source: turn_tls_chain
+        target: turn-tls-chain.pem
+      - source: turn_tls_key
+        target: turn-tls-key.pem
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+secrets:
+  turn_rest_key:
+    file: ${SPHERE_TURN_REST_KEY_FILE:?Provide a private 64-character lowercase hex REST key file}
+  turn_tls_chain:
+    file: ${SPHERE_TURN_TLS_CHAIN_FILE:?Provide the relay hostname full certificate chain}
+  turn_tls_key:
+    file: ${SPHERE_TURN_TLS_KEY_FILE:?Provide the relay hostname TLS private key}

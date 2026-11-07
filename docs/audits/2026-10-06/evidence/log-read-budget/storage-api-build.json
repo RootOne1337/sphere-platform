@@ -1,0 +1,9 @@
+{
+  "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+  "imageId": "sha256:5d4c245e79e82fe01f5101a50ad89f3ca20ca6c4dc5151816e8bf686e7ae60f9",
+  "image": "sphere-pilot-20260911-backend:9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+  "exit": 0,
+  "gitArchive": true,
+  "applicationTreeUnchangedFromReaderSource": true,
+  "user": "sphere"
+}

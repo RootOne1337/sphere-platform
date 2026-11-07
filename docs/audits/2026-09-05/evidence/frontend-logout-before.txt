@@ -1,0 +1,24 @@
+FAIL __tests__/session/logout.test.tsx
+  × Sign out immediately removes local credentials and revokes the captured server session (38 ms)
+
+  ● Sign out immediately removes local credentials and revokes the captured server session
+
+    expect(received).toBeNull()
+
+    Received: "access-a"
+
+      29 |   render(<NOCSidebar />);
+      30 |   fireEvent.click(screen.getByTitle('Sign out'));
+    > 31 |   expect(useAuthStore.getState().accessToken).toBeNull();
+         |                                               ^
+      32 |   expect(getRefreshToken()).toBeNull();
+      33 |   expect(mockReplace).toHaveBeenCalledWith('/login');
+      34 |   await waitFor(() => expect(requests).toHaveLength(1));
+
+      at Object.<anonymous> (__tests__/session/logout.test.tsx:31:47)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        1.064 s
+Ran all test suites matching __tests__/session/logout.test.tsx.

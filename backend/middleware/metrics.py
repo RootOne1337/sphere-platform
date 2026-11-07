@@ -17,6 +17,7 @@ _RE_UUID = re.compile(
     re.IGNORECASE,
 )
 _RE_DIGITS = re.compile(r"/\d+")
+_RE_PARAMETER = re.compile(r"\{[^{}]+\}")
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
@@ -24,34 +25,37 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
     Трекает latency и счётчик HTTP-запросов для всех эндпоинтов,
     кроме перечисленных в METRICS_SKIP_PATHS.
 
-    Важно: middleware должен стоять ПЕРЕД exception handlers, чтобы
-    5xx-ответы тоже попадали в метрики (see: Step 4 порядок add_middleware).
+    Timing ends at response headers, not at the end of a streamed body.
+    Exceptions are re-raised after being counted as 500; handlers retain control.
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        path = request.url.path
+        path = request.scope["path"]
 
         if path in METRICS_SKIP_PATHS:
             return await call_next(request)
 
-        normalized = _normalize_path(path)
-
         start = time.perf_counter()
-        response = await call_next(request)
-        duration = time.perf_counter() - start
+        status_code = 500
+        try:
+            response = await call_next(request)
+            status_code = response.status_code
+            return response
+        finally:
+            # Routing has completed: use the declared template, never an
+            # attacker-controlled URL, device identifier, or arbitrary method.
+            route = request.scope.get("route")
+            endpoint = _RE_PARAMETER.sub("{id}", getattr(route, "path", "__unmatched__"))
+            method = request.method if request.method in _HTTP_METHODS else "OTHER"
+            http_requests_total.labels(
+                method=method, endpoint=endpoint, status_code=str(status_code),
+            ).inc()
+            http_request_duration_seconds.labels(
+                method=method, endpoint=endpoint,
+            ).observe(time.perf_counter() - start)
 
-        http_requests_total.labels(
-            method=request.method,
-            endpoint=normalized,
-            status_code=str(response.status_code),
-        ).inc()
 
-        http_request_duration_seconds.labels(
-            method=request.method,
-            endpoint=normalized,
-        ).observe(duration)
-
-        return response
+_HTTP_METHODS = frozenset({"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"})
 
 
 def _normalize_path(path: str) -> str:

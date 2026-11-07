@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "migrated_acknowledgements": 512,
+  "new_acknowledgements": 2048,
+  "database_reopened": true,
+  "pending_preserved": true,
+  "duplicate_execution_admitted": false,
+  "elapsed_ms": 6552,
+  "database_bytes": 221184,
+  "device_actions": 0,
+  "at": "2026-09-15T18:56:17.603394+00:00",
+  "serial": "emulator-5556",
+  "apk_source": "d2cd79881966ca25ecbe5990ddd35342807cd208",
+  "apk_hash": "e604410bf47718d901802d7d6d74f8c0cfc4a4e2f651f2a748b8580a3f499543",
+  "same_production_pid": true,
+  "fixture_cleanup_verified": true,
+  "probe_execution": "Separate app_process, API28-only bootstrap, fresh UUID preferences/key/SQLite file, platform compatibility-WAL defaults; no production journal mutation.",
+  "fixture_source": "scripts/pilot/android/JournalStorageProbe.java"
+}

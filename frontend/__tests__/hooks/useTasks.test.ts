@@ -121,6 +121,15 @@ describe('useTasks', () => {
     expect(result.current.data?.total).toBe(1);
     expect(result.current.data?.pages).toBe(1);
   });
+
+  it('sends full-history search, sort and aggregation parameters to the server', async () => {
+    mockApi.get.mockResolvedValueOnce({ data: MOCK_TASKS_RESPONSE });
+    const params = {page:8, per_page:25, search:'old failure', status:'failed',
+      sort_by:'priority' as const, sort_dir:'asc' as const, include_counts:true};
+    const { result } = renderQueryHook(() => useTasks(params));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApi.get).toHaveBeenCalledWith('/tasks', {params});
+  });
 });
 
 describe('useTask', () => {
@@ -238,4 +247,18 @@ describe('useStopTask', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.post).toHaveBeenCalledWith('/tasks/task-001/stop');
   });
+});
+
+it.each(['task', 'logs'] as const)('does not initiate a %s read until access is enabled, then reconciles once', async kind => {
+  jest.clearAllMocks();
+  mockApi.get.mockResolvedValue({ data: kind === 'task' ? MOCK_TASK_DETAIL : MOCK_LOGS });
+  let enabled = false;
+  const view = renderQueryHook(() => kind === 'task' ? useTask('task-001', enabled) : useTaskLogs('task-001', enabled));
+  expect(mockApi.get).not.toHaveBeenCalled();
+  enabled = true; view.rerender();
+  await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+  expect(mockApi.get).toHaveBeenCalledTimes(1);
+  enabled = false; view.rerender();
+  expect(view.result.current.fetchStatus).toBe('idle');
+  expect(mockApi.get).toHaveBeenCalledTimes(1);
 });

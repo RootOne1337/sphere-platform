@@ -1,0 +1,75 @@
+{
+  "head": "5157d1c9149a24eccc4502902bd76a3da430b016",
+  "checked_at": "2026-09-12T22:23:10.022631+00:00",
+  "runs": [
+    {
+      "id": 34721458386,
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34721458386",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Production image bootstrap",
+          "conclusion": "success"
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "conclusion": "success"
+        },
+        {
+          "name": "RLS Policy Coverage",
+          "conclusion": "success"
+        },
+        {
+          "name": "Alembic Single Head",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 34721458393,
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34721458393",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Build APK",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 34721458385,
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34721458385",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 34721458460,
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34721458460",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "guard",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "skipped"
+        }
+      ]
+    }
+  ],
+  "note": "Workflow/job conclusions from GitHub API. No inferred JUnit count. Preview deploy intentionally skipped; guard passed."
+}

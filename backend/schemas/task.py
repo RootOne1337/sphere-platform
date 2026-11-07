@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class CreateTaskRequest(BaseModel):
     script_id: uuid.UUID
+    expected_current_version_id: uuid.UUID | None = None
     device_id: uuid.UUID
     priority: int = Field(default=5, ge=1, le=10)
     account_id: uuid.UUID | None = Field(
@@ -37,6 +38,8 @@ class TaskResponse(BaseModel):
     priority: int
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    cancel_requested_at: datetime | None = None
+    timeout_requested_at: datetime | None = None
     wave_index: int | None = None
     created_at: datetime
     updated_at: datetime
@@ -55,6 +58,17 @@ class TaskDetailResponse(TaskResponse):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TaskScreenshotReference(BaseModel):
+    key: str
+    url: str | None = None
+    unavailable_reason: str | None = None
+
+
+class TaskScreenshotManifest(BaseModel):
+    task_id: uuid.UUID
+    screenshots: list[TaskScreenshotReference]
+
+
 # ── Пагинация ─────────────────────────────────────────────────────────────────
 
 class TaskListResponse(BaseModel):
@@ -63,3 +77,6 @@ class TaskListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+    status_counts: dict[str, int] | None = Field(
+        None, description="Counts over the full filtered tenant history, before pagination; opt-in include_counts",
+    )

@@ -1,0 +1,11 @@
+{
+  "source": "66714f26a657e3600d10ee87bafa8ab3ed769294",
+  "exit": 0,
+  "network": "none",
+  "applicationSourceMounted": false,
+  "imageId": "sha256:c8b1ffab5837f127772564f0a90e6b58e730b2e3dbc90ec3945fd3673801e40e",
+  "tests": 27,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0
+}

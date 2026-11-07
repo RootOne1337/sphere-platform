@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T01:14:10.962234+00:00",
+  "runtimeInstalled": true,
+  "scope": "Material, appearance, modal inspector and wall UI installed on3015/Tuna. API/APK catalog and other containers preserved. Finite UI checks and one live wall smoke; not production SLA or64-live capacity.",
+  "runtime": {
+    "sourceRevision": "92bd6dd8f6e3b45f9fa470d6015d1e5196d7f859",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "uiCiRunId": 38663692630,
+    "uiContainer": {
+      "sourceRevision": "92bd6dd8f6e3b45f9fa470d6015d1e5196d7f859",
+      "containerId": "06ba29a08a5cf150319923c810773235194845d0315badbc3a5155035b857b7f",
+      "imageId": "sha256:d32964585fa9f7d3d7e0f2785430d96747b0c1bb8b3989ca3adbb5384a3d7d78",
+      "status": "running"
+    },
+    "apiContainer": {
+      "sourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+      "containerId": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "status": "running"
+    },
+    "artifactDigest": "bb7e69af60782ce764af21cc0b76a1b3066ab35a84438ce260d5c40051d3cca7",
+    "githubDigestVerified": true,
+    "otherContainersPreservedPerInstall": 45,
+    "otaCatalogPreserved": true,
+    "schemaMigrationPerformed": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "productionAccepted": false,
+    "ordinaryChrome": true,
+    "transportOverrides": false,
+    "directFramesPresented": 2760,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0
+      }
+    ],
+    "mobile": {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "cleanPackagedLogin": true,
+      "modal": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "bodyOverflow": false,
+      "pageErrorCount": 0
+    },
+    "materialChecks": [
+      {
+        "check": "production matte differs from glass",
+        "glass": {
+          "bg": "rgba(252, 251, 248, 0.72)",
+          "blur": "blur(28px) saturate(1.25)"
+        },
+        "matte": {
+          "bg": "rgb(252, 251, 248)",
+          "blur": "none"
+        },
+        "passed": true
+      },
+      {
+        "check": "production material and motion persist afterF5",
+        "passed": true
+      },
+      {
+        "check": "production default card is a centered wide dialog",
+        "bounds": {
+          "x": 120,
+          "y": 24,
+          "width": 1200,
+          "height": 852
+        },
+        "passed": true
+      },
+      {
+        "check": "one live direct viewer in64-slot wall uses compact chrome without tile overlap",
+        "tiles": 64,
+        "status": "Напрямую\n1.0 мс",
+        "passed": true
+      }
+    ],
+    "stream": {
+      "device": "auto-ph-011",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "origin": "http://127.0.0.1:3015",
+      "directFramesPresented": 2760,
+      "controlState": "ready",
+      "directNativeKeysReady": true,
+      "connections": 1,
+      "networkRttMs": 2,
+      "androidActionsSent": false
+    },
+    "androidActionsSent": false,
+    "commandsReplayed": false
+  },
+  "sourceValidation": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-OBSERVATION.json",
+  "sourceValidationSha256NormalizedLf": "8a4fbe4e5917145a2f2d4c40311f207b67544ae9b2b9e8645673883a924baf78",
+  "apkBaselineEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+  "limits": [
+    "Source previews used Chrome touch emulation, not physical OS keyboard.",
+    "No repeated keyboard/gesture/multi-client/WAN/long soak acceptance.",
+    "No APK/API deployment in this wave.",
+    "File explorer, read-only profile ownership and remaining forms/roles are still open."
+  ]
+}

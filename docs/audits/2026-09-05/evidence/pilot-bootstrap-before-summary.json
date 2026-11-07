@@ -1,0 +1,58 @@
+{
+  "totals": {
+    "tests": 8,
+    "failures": 8,
+    "errors": 0,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "name": "test_shipped_seed_runs_and_device_is_visible_to_the_intended_operator",
+      "failure": {
+        "message": "ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\database\\engine.py)"
+      }
+    },
+    {
+      "name": "test_repeated_seed_reuses_one_key_without_printing_key_material",
+      "failure": {
+        "message": "ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\database\\engine.py)"
+      }
+    },
+    {
+      "name": "test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[revoked]",
+      "failure": {
+        "message": "ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\database\\engine.py)"
+      }
+    },
+    {
+      "name": "test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[expired]",
+      "failure": {
+        "message": "ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\database\\engine.py)"
+      }
+    },
+    {
+      "name": "test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[permissions]",
+      "failure": {
+        "message": "ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\database\\engine.py)"
+      }
+    },
+    {
+      "name": "test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[organization]",
+      "failure": {
+        "message": "ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\database\\engine.py)"
+      }
+    },
+    {
+      "name": "test_missing_key_is_a_bootstrap_failure_not_reported_success",
+      "failure": {
+        "message": "ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\database\\engine.py)"
+      }
+    },
+    {
+      "name": "test_missing_operator_organization_does_not_create_an_unrelated_tenant",
+      "failure": {
+        "message": "ImportError: cannot import name 'async_engine' from 'backend.database.engine' (C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\database\\engine.py)"
+      }
+    }
+  ]
+}

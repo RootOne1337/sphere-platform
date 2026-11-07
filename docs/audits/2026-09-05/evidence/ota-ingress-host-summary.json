@@ -1,0 +1,21 @@
+{
+  "finding": "AUD-106",
+  "before": {
+    "native_latest_download_host": "localhost",
+    "expected": "current verified public management host",
+    "gateway_test": "localhost|primary.example.test instead of primary.example.test|primary.example.test",
+    "failed": 1
+  },
+  "after": {
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 5.671,
+    "actual_nginx_on_isolated_internal_network": true,
+    "native_latest_current_host_verified": true,
+    "native_parallel_commands_passed": 12
+  },
+  "change": "preserve incoming Host in remote-pilot gateway; overwrite X-Forwarded-Host as before",
+  "gateway_reload_only": "sphere-pilot-20260911-public-gateway-1",
+  "runtime_limit": "native public acceptance uses standard HTTPS port 443"
+}

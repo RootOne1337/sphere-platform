@@ -1,0 +1,7 @@
+Baseline: eb22477105cba74a0364751e12ff0bd82b671133 + regression tests only
+tests=5 failures=4 errors=0
+cancelling a mutex waiter leaves the active refresh and other callers intact: PASS
+ten second deadline cancels HTTP and lets next refresh recover original intent: java.lang.AssertionError: Refresh must release its mutex at the deadline while HTTP is still stuck expected:<old-access> but was:<null>
+cancelled body read closes late response without changing credentials: org.junit.ComparisonFailure: Late body must not rotate credentials expected:<[parent]-refresh> but was:<[child]-refresh>
+stopping caller cancels HTTP and finishes without waiting for headers: java.lang.AssertionError: Stop must not wait for the server expected:<true> but was:<null>
+caller deadline is not converted into a successful token fallback: java.lang.AssertionError: Cancelled caller must not continue after getFreshToken

@@ -1,0 +1,24 @@
+{
+  "state": "postinstall-verification-failed-and-rolled-back",
+  "cause": "Owned wrapper UTF-8 source was copied with the Windows locale default decoder, corrupting its Russian required-token literal; product bytes were correct.",
+  "failedCheck": "bundle_token_missing",
+  "productSourceFault": false,
+  "canonicalInstallReport": ".local-pilot/reviewed-web-install-29e545d54b84-eea906a1/installed.json",
+  "rollback": {
+    "previousImageId": "sha256:61bdd78299702ee2b812a53ebc9556cd7eac44cec0e03093efacd891da436cf2",
+    "rolledImageId": "sha256:61bdd78299702ee2b812a53ebc9556cd7eac44cec0e03093efacd891da436cf2",
+    "healthy": "healthy"
+  },
+  "retainedChecksBeforeFailure": [
+    "all other45 container identities and full config hashes unchanged",
+    "UI complete unique12-key environment mapping equal",
+    "UI HostConfig and canonical Mounts equal",
+    "UI full Config equal after exact verified image/Compose metadata normalization",
+    "all31 gateway asset hashes equal isolated candidate"
+  ],
+  "subsequentDiagnosis": "token-diagnosis.json; correct Russian label and full sourceSHA found in new candidate JS",
+  "failedWrapperSha256": "f29859e7d6120ab5af0dadc68cdc2bff869c81de49ef130dfe00ffec78edecc5",
+  "correctedWrapperSha256": "885b8f76be13a123e036b725a59b15d1cdd8e749b56bfa49fc65a40731364fe1",
+  "thresholdsRelaxed": false,
+  "rebuilt": false
+}

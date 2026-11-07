@@ -1,0 +1,8 @@
+Packaged SQL/runtime job 103379614098, head a5209ba1fc578a63a3d3885c8009f3ea5e5352ee, attempt 1, artifact 10277643786
+Image sha256:bad1102e90699216eeb8d0525185147a8e9a8eb98c8532efe43f2e97eab6294d; one scenario separate from pytest and four no-network probes.
+
+IMAGE_RUNTIME_PHASE=first: ready/login/device-visible
+IMAGE_RUNTIME_PHASE=repeat: ready/login/device-visible
+test_fresh_image_bootstrap_and_process_restart_preserve_operator_and_device (__main__.BackendRuntimeImageTests.test_fresh_image_bootstrap_and_process_restart_preserve_operator_and_device) ... ok
+Ran 1 test in 9.818s
+OK

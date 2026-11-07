@@ -1,0 +1,127 @@
+{
+  "padding_px": 6,
+  "padding_scope": "each explicit HUD ellipse and HUD rectangle only; existing uncertain foreground components unchanged",
+  "frames": [
+    {
+      "index": 0,
+      "seconds": 0.0,
+      "source_png_sha256": "3e19311bd30def3a2d660154e3ca5eb2d3c695206b02b1d55c1bb06a1738650a",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 2942,
+      "remaining_candidate_edges_after_6px_padding": 1687,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 102,
+      "seconds": 3.952,
+      "source_png_sha256": "cfb25c4604371d993d8a001ad5c0d16e215014b05f50009759484f938c053349",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 3070,
+      "remaining_candidate_edges_after_6px_padding": 1755,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 207,
+      "seconds": 7.977,
+      "source_png_sha256": "0bcb6217f49b43bfc74b42ce717909a2df3645368fa022bb05f23213163e7bbe",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 2775,
+      "remaining_candidate_edges_after_6px_padding": 1568,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 311,
+      "seconds": 11.903,
+      "source_png_sha256": "bcd42cc4ac58cd4af43d4d1006cd9888437789f184c10678a7c61e9e1d7bbbeb",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 2855,
+      "remaining_candidate_edges_after_6px_padding": 1686,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 414,
+      "seconds": 15.85,
+      "source_png_sha256": "8243c3b81a4d6b225237f4b73c1c4db6ee0b16acfe191f3925d6adeb51280f60",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 2138,
+      "remaining_candidate_edges_after_6px_padding": 1227,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 492,
+      "seconds": 19.639,
+      "source_png_sha256": "398e7e94b3813d7ffc648ab51402d3f3d29dfa889f2d551ca4cc75811cbb99f5",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 2677,
+      "remaining_candidate_edges_after_6px_padding": 1539,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 590,
+      "seconds": 23.595,
+      "source_png_sha256": "1cca9fdb99aeb7a9a550d8b89236deb3d3e282a631956d8581d830fab8d94438",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 3394,
+      "remaining_candidate_edges_after_6px_padding": 1918,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 700,
+      "seconds": 27.668,
+      "source_png_sha256": "876b006af11652c1dbe0009b82ffe449af75c6799104cb9e67c0d60e01c043a2",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 2939,
+      "remaining_candidate_edges_after_6px_padding": 1773,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 801,
+      "seconds": 31.631,
+      "source_png_sha256": "297d27e36cfd9b614b241598fa35047410dc99bbfcd7ad95f70b415f2eaaa7b2",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 3622,
+      "remaining_candidate_edges_after_6px_padding": 2195,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    },
+    {
+      "index": 900,
+      "seconds": 35.493,
+      "source_png_sha256": "fe165fbb0451fb0c5baa7c259de4710545d2b00c9d4fa17ccd4352aaacd0e08b",
+      "original_excluded": 0.24021412037037038,
+      "padded_excluded": 0.26373167438271605,
+      "new_excluded_pixels": 48766,
+      "screen_edge_candidates_within_12px_of_old_shape": 7442,
+      "remaining_candidate_edges_after_6px_padding": 4389,
+      "candidate_edges_caveat": "Canny screen edges include world objects; not semantic HUD coverage",
+      "foreground_status": "unknown_unmasked_mirrors_not_resolved"
+    }
+  ],
+  "remaining_failure": "foreground mirrors remain unknown; no semantic label or acceptance"
+}

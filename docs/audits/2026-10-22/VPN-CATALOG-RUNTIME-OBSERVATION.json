@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T19:03:33.544514+00:00",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
+    "apiSourceRevision": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
+    "uiImageId": "sha256:525bde2e68917606b80ced820136eb99c4f4e0c6bfbaf4a62ac366b09b0c2589",
+    "apiImageId": "sha256:072800c175c26dcf2f73a8e0ca4c0a21521fdcc3d9f7087300c1a089ab38fc2c"
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "VPN catalog/workspace only; no video/input route retest",
+    "directFramesPresented": 0,
+    "deviceCommandsSent": 0,
+    "viewports": [
+      [
+        1440,
+        900
+      ],
+      [
+        390,
+        844
+      ]
+    ]
+  },
+  "deliveryEvidence": "docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.json",
+  "deliveryEvidenceSha256NormalizedLf": "681e563a54231f55620b3701f1ca29192f79535cb8fa49845178e75ba12a8021",
+  "physicalVpnAccepted": false,
+  "apk84Installed": false,
+  "productionAccepted": false,
+  "note": "Additive envelope for the frozen catalog delivery. Does not rewrite its original receipt or promote historical media evidence."
+}

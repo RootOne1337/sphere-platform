@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-16T19:08:43.984257+00:00",
+  "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
+  "repositoryYamlWorkflows": [
+    {
+      "id": 237571409,
+      "name": "CI — Android",
+      "path": ".github/workflows/ci-android.yml",
+      "state": "disabled_manually"
+    },
+    {
+      "id": 237511691,
+      "name": "CI — Backend",
+      "path": ".github/workflows/ci-backend.yml",
+      "state": "disabled_manually"
+    },
+    {
+      "id": 352697455,
+      "name": "CI — Frontend",
+      "path": ".github/workflows/ci-frontend.yml",
+      "state": "disabled_manually"
+    },
+    {
+      "id": 237511692,
+      "name": "Deploy — Staging",
+      "path": ".github/workflows/deploy-staging.yml",
+      "state": "disabled_manually"
+    },
+    {
+      "id": 237530441,
+      "name": "Merge Guard — Stage Branch Dependencies",
+      "path": ".github/workflows/merge-guard.yml",
+      "state": "disabled_manually"
+    },
+    {
+      "id": 237584163,
+      "name": "Preview — Stale Cleanup",
+      "path": ".github/workflows/preview-cleanup.yml",
+      "state": "disabled_inactivity"
+    },
+    {
+      "id": 237530442,
+      "name": "Preview — Deploy",
+      "path": ".github/workflows/preview-deploy.yml",
+      "state": "disabled_manually"
+    },
+    {
+      "id": 238620318,
+      "name": "Preview — Teardown",
+      "path": ".github/workflows/preview-teardown.yml",
+      "state": "disabled_manually"
+    },
+    {
+      "id": 240272355,
+      "name": "Release",
+      "path": ".github/workflows/release.yml",
+      "state": "disabled_manually"
+    }
+  ],
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 38950783088,
+      "event": "pull_request",
+      "name": "Preview — Deploy",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38950783020,
+      "event": "pull_request",
+      "name": "CI — Frontend",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "databaseId": 38950782818,
+      "event": "pull_request",
+      "name": "CI — Backend",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "databaseId": 38950782967,
+      "event": "pull_request",
+      "name": "CI — Android",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "databaseId": 38950770437,
+      "event": "push",
+      "name": "CI — Android",
+      "status": "completed"
+    }
+  ],
+  "allRepositoryYamlWorkflowsInactive": true,
+  "hostedRunsStartedBeforeDisabling": true,
+  "completeLocalCiMigrationAccepted": false,
+  "localResultsVisibleViaCommitStatuses": true,
+  "privateProofSha256": "17ce8643399640c61bc9886585e68219e4c5e5538bc6f74bca5e88c63d1c18e1",
+  "limitations": [
+    "Disabling workflows is repository state; files retain old hosted jobs. Re-enable only with an explicitly reviewed runner/cost policy.",
+    "These settings do not retroactively remove prior minute consumption; account billing and other repositories were not assessed.",
+    "The exact source local test runs are published as commit statuses. Automatic per-commit local dispatch, full release/deploy parity and durable artifact retention remain open.",
+    "Hosted staging/release/preview automation is disabled along with test workflows; running local pilot containers are unaffected."
+  ],
+  "priorSourcesReadback": {
+    "bf4e404550e9728eaaaa6f55e3c9007714bf733a": [
+      {
+        "conclusion": "success",
+        "databaseId": 38935415891,
+        "event": "pull_request",
+        "name": "Preview — Deploy",
+        "status": "completed"
+      },
+      {
+        "conclusion": "failure",
+        "databaseId": 38935416117,
+        "event": "pull_request",
+        "name": "CI — Backend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38935416253,
+        "event": "pull_request",
+        "name": "CI — Android",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38935416432,
+        "event": "pull_request",
+        "name": "CI — Frontend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38935407515,
+        "event": "push",
+        "name": "CI — Android",
+        "status": "completed"
+      }
+    ],
+    "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881": [
+      {
+        "conclusion": "success",
+        "databaseId": 38944332901,
+        "event": "pull_request",
+        "name": "Preview — Deploy",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38944332912,
+        "event": "pull_request",
+        "name": "CI — Frontend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "failure",
+        "databaseId": 38944332905,
+        "event": "pull_request",
+        "name": "CI — Backend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38944333044,
+        "event": "pull_request",
+        "name": "CI — Android",
+        "status": "completed"
+      }
+    ],
+    "1ecc868cf9eaf0a7e5581b33fb5e3f88b2f4387c": [
+      {
+        "conclusion": "success",
+        "databaseId": 38949110591,
+        "event": "pull_request",
+        "name": "Preview — Deploy",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38949110671,
+        "event": "pull_request",
+        "name": "CI — Frontend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "cancelled",
+        "databaseId": 38949110480,
+        "event": "pull_request",
+        "name": "CI — Android",
+        "status": "completed"
+      },
+      {
+        "conclusion": "cancelled",
+        "databaseId": 38949110601,
+        "event": "pull_request",
+        "name": "CI — Backend",
+        "status": "completed"
+      }
+    ]
+  },
+  "remainingYamlRunsAtReadback": [],
+  "priorNoHostedActionsClaimCorrected": true
+}

@@ -67,7 +67,7 @@ class TestDagContract:
             "find_first_element", "tap_first_visible", "tap_element",
             "get_element_text", "wait_for_element_gone", "scroll_to",
             # Жесты
-            "long_press", "double_tap", "scroll",
+            "long_press", "double_tap", "scroll", "pointer_path",
             # Переменные контекста
             "set_variable", "get_variable", "increment_variable",
             # Системные

@@ -1,0 +1,42 @@
+{
+  "mode": "COMPONENT_FIXTURE_NOT_IAB_ACCEPTANCE",
+  "screenshot": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\image-route-review-20261101-final.png",
+  "screenshot_sha256": "7e28f106ea65d48a424907db02444081c4e78327f1baa6c3d77d8afc7b1c30ac",
+  "inputs": {
+    "mode": "COMPONENT_FIXTURE_NOT_IAB_ACCEPTANCE",
+    "render": "React SSR actual ImageRouteReviewPanel and actual Next CSS; no hydration or click test",
+    "review_path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\image-route-review\\review.json",
+    "review_sha256": "7839bcbb2f2f7715ad9d3904420a8329649d1a21687c1730e01ca95c7d802c35",
+    "receipt_sha256": "058bc97567ccd805dc5f50bbdb49ce4ca49172df232c72f06b268308d124f0b9",
+    "component_path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\src\\features\\stream\\ImageRouteReview.tsx",
+    "component_sha256": "a118374057fd0dcef3783dbaaef055a540540447a8afcc0b7fd89634d79064ac",
+    "css_files": [
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\343d268372e978c3.css",
+        "sha256": "060dd6d743cf8de3061f78412d14a6b74012e094c8d58be23cfdd5fc9d6561e8"
+      },
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\44c801311a9d7b2d.css",
+        "sha256": "e9a6af9c76b9641e5e51167c548e615346ac6db837325de6342eeba27ed995ea"
+      },
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\599369d853c61df7.css",
+        "sha256": "dae1c1338c9a6d70787063786e64b9ffe238de67379ad80f2827c60aa90fddd1"
+      },
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\ee1c600aa5123b7f.css",
+        "sha256": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855"
+      }
+    ],
+    "samples": 758,
+    "reference_views": 143,
+    "execution_qualified": false
+  },
+  "screenshot_visually_inspected": true,
+  "browser_session_closed": true,
+  "owned_loopback_server_stopped": true,
+  "hydration": false,
+  "interaction_test": false,
+  "application_browser_acceptance": false,
+  "physical_actions": 0
+}

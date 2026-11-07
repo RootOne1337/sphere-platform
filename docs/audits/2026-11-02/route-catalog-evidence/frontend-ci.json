@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 1,
+  "runId": "20261102T110430Z-d7b0ccd7",
+  "startedAt": "2026-11-02T11:04:30.142511+00:00",
+  "state": "success",
+  "source": {
+    "sha": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+    "tree": "8dc3865743363b44cc25db3dd4d482e6b14900c2",
+    "trustedRef": "refs/heads/codex/enterprise-audit-20260905",
+    "repository": "RootOne1337/sphere-platform"
+  },
+  "executorSha256": "0707af71ea05ba3b80d7a564774d7a2cd7972cc2d613e0e43a4309fff651acc4",
+  "profiles": {
+    "frontend": {
+      "state": "success",
+      "startedAt": "2026-11-02T11:04:37.687300+00:00",
+      "steps": [
+        {
+          "name": "action-contract",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 0.125,
+          "logBytes": 36,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-02T11:04:38.057521+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 31990059008,
+            "diskObservedAt": "2026-11-02T11:04:38.057521+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-02T11:04:39.602665+00:00",
+            "availableRamBytes": 10722009088,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 82960044032,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11511169024,
+            "kernelNonpagedBytes": 5467086848,
+            "processCount": 473,
+            "handleCount": 734442,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-02T11:04:39.603645+00:00",
+            "collectionCompletedAt": "2026-11-02T11:04:39.603645+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        },
+        {
+          "name": "jest",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 126.094,
+          "logBytes": 169956,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-02T11:04:39.738889+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 31989948416,
+            "diskObservedAt": "2026-11-02T11:04:39.738889+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-02T11:04:41.279956+00:00",
+            "availableRamBytes": 10763583488,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 82865012736,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11511017472,
+            "kernelNonpagedBytes": 5468286976,
+            "processCount": 470,
+            "handleCount": 734032,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-02T11:04:41.279956+00:00",
+            "collectionCompletedAt": "2026-11-02T11:04:41.279956+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        },
+        {
+          "name": "test_preview_relay.cjs",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 0.453,
+          "logBytes": 214,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-02T11:06:47.388001+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 31952044032,
+            "diskObservedAt": "2026-11-02T11:06:47.388001+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-02T11:06:48.756825+00:00",
+            "availableRamBytes": 11104231424,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 82721714176,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11510882304,
+            "kernelNonpagedBytes": 5478313984,
+            "processCount": 469,
+            "handleCount": 733621,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-02T11:06:48.756825+00:00",
+            "collectionCompletedAt": "2026-11-02T11:06:48.756825+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        },
+        {
+          "name": "test_frontend_standalone_probe.mjs",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 0.36,
+          "logBytes": 1334,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-02T11:06:49.215942+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 31951970304,
+            "diskObservedAt": "2026-11-02T11:06:49.215942+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-02T11:06:50.460024+00:00",
+            "availableRamBytes": 11090468864,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 82734735360,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11510579200,
+            "kernelNonpagedBytes": 5478338560,
+            "processCount": 469,
+            "handleCount": 733637,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-02T11:06:50.460024+00:00",
+            "collectionCompletedAt": "2026-11-02T11:06:50.460024+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        },
+        {
+          "name": "test_package_command_failure.mjs",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 0.188,
+          "logBytes": 711,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-02T11:06:50.825166+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 31951839232,
+            "diskObservedAt": "2026-11-02T11:06:50.825166+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-02T11:06:52.138907+00:00",
+            "availableRamBytes": 11063418880,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 82765963264,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11510657024,
+            "kernelNonpagedBytes": 5480833024,
+            "processCount": 469,
+            "handleCount": 733662,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-02T11:06:52.138907+00:00",
+            "collectionCompletedAt": "2026-11-02T11:06:52.138907+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        },
+        {
+          "name": "archive-admission",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 0.704,
+          "logBytes": 131,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-02T11:06:52.330652+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 31951835136,
+            "diskObservedAt": "2026-11-02T11:06:52.330652+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-02T11:06:53.585396+00:00",
+            "availableRamBytes": 11094204416,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 82747125760,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11510902784,
+            "kernelNonpagedBytes": 5480837120,
+            "processCount": 467,
+            "handleCount": 733320,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-02T11:06:53.585396+00:00",
+            "collectionCompletedAt": "2026-11-02T11:06:53.585396+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        },
+        {
+          "name": "types",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 11.734,
+          "logBytes": 0,
+          "logTruncated": false,
+          "resourcePreflight": {
+            "observedAt": "2026-11-02T11:06:54.293712+00:00",
+            "system": "Windows",
+            "deviceCommandsSent": false,
+            "mutationsPerformed": false,
+            "freeDiskBytes": 31951687680,
+            "diskObservedAt": "2026-11-02T11:06:54.293712+00:00",
+            "volumeHealthStatus": "Healthy",
+            "volumeOperationalStatus": [
+              "OK"
+            ],
+            "volumeObservedAt": "2026-11-02T11:06:55.615077+00:00",
+            "availableRamBytes": 11072241664,
+            "totalRamBytes": 50668236800,
+            "committedBytes": 82769747968,
+            "commitLimitBytes": 100060360704,
+            "kernelPagedBytes": 11510853632,
+            "kernelNonpagedBytes": 5480906752,
+            "processCount": 469,
+            "handleCount": 733670,
+            "memoryMeasurement": "GetPerformanceInfo",
+            "memoryObservedAt": "2026-11-02T11:06:55.615604+00:00",
+            "collectionCompletedAt": "2026-11-02T11:06:55.615604+00:00",
+            "findings": [],
+            "admissionFindings": []
+          }
+        }
+      ],
+      "packagingVerified": false,
+      "nodeVersion": "v24.22.1",
+      "dependencies": {
+        "lockSha256": "d04493d745f1d6200a51e7c0a661a9a5feda0552225bd4d01b3490f9455cfc78",
+        "installedManifestSha256": "6df90657826862e17a0829227b1246183eda98fc334c3172681569527a2b127f",
+        "installedPackages": 880,
+        "optionalPackagesAbsent": 49,
+        "contentIntegrityAttested": false
+      },
+      "tests": {
+        "tests": 3134,
+        "passed": 3134,
+        "failures": 0,
+        "failedSuites": 0,
+        "skipped": 0,
+        "suites": 229,
+        "success": true
+      },
+      "finishedAt": "2026-11-02T11:07:07.957846+00:00",
+      "elapsedSeconds": 150.269,
+      "githubPending": {
+        "id": 57830357484,
+        "context": "Sphere Local / Frontend regressions",
+        "state": "pending",
+        "createdAt": "2026-11-02T11:04:32Z",
+        "readbackVerified": true,
+        "targetUrl": null
+      },
+      "github": {
+        "id": 57830541349,
+        "context": "Sphere Local / Frontend regressions",
+        "state": "success",
+        "createdAt": "2026-11-02T11:07:05Z",
+        "readbackVerified": true,
+        "targetUrl": null
+      }
+    }
+  },
+  "rawLogsUploaded": false,
+  "productionPackagingAccepted": false,
+  "publicForkJobsAccepted": false,
+  "workflowMode": "maintainer-local-executor",
+  "volumeExceptionRequested": false,
+  "retentionBeforeRun": {
+    "retainedRuns": 10,
+    "retainedBytes": 13315430,
+    "removedRuns": [],
+    "maxRuns": 10,
+    "maxBytes": 268435456
+  },
+  "resourcePreflight": {
+    "observedAt": "2026-11-02T11:04:30.143029+00:00",
+    "system": "Windows",
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "freeDiskBytes": 32088428544,
+    "diskObservedAt": "2026-11-02T11:04:30.185735+00:00",
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "volumeObservedAt": "2026-11-02T11:04:31.640224+00:00",
+    "availableRamBytes": 10941636608,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 82802229248,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 11509997568,
+    "kernelNonpagedBytes": 5458079744,
+    "processCount": 476,
+    "handleCount": 734673,
+    "memoryMeasurement": "GetPerformanceInfo",
+    "memoryObservedAt": "2026-11-02T11:04:31.642634+00:00",
+    "collectionCompletedAt": "2026-11-02T11:04:31.642634+00:00",
+    "findings": []
+  },
+  "checkoutRemoved": true,
+  "finishedAt": "2026-11-02T11:07:13.250973+00:00",
+  "retentionAfterRun": {
+    "retainedRuns": 10,
+    "retainedBytes": 13521318,
+    "removedRuns": [
+      "20261026T211342Z-e034b07a"
+    ],
+    "maxRuns": 10,
+    "maxBytes": 268435456
+  }
+}

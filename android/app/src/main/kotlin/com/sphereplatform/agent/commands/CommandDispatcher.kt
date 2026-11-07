@@ -2,6 +2,7 @@ package com.sphereplatform.agent.commands
 
 import android.content.Context
 import android.content.Intent
+import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.commands.model.CommandAck
 import com.sphereplatform.agent.commands.model.CommandType
 import com.sphereplatform.agent.commands.model.IncomingCommand
@@ -14,29 +15,34 @@ import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.streaming.ScreenCaptureRequestActivity
 import com.sphereplatform.agent.streaming.ScreenCaptureService
 import com.sphereplatform.agent.streaming.StreamingManager
-import com.sphereplatform.agent.streaming.StreamingManagerImpl
 import com.sphereplatform.agent.vpn.KillSwitchManager
 import com.sphereplatform.agent.vpn.SphereVpnManager
+import com.sphereplatform.agent.workers.UpdateCheckScheduler
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,7 +62,15 @@ class CommandDispatcher @Inject constructor(
     private val scope: CoroutineScope,
     private val streamingManager: StreamingManager,
     @ApplicationContext private val appContext: Context,
+    private val commandJournal: CommandJournal,
+    private val updateCheckScheduler: UpdateCheckScheduler,
+    private val scopedVpnClient: com.sphereplatform.agent.vpn.AppScopedVpnClient = com.sphereplatform.agent.vpn.AppScopedVpnClient(appContext),
 ) {
+    private companion object {
+        /** Let the signed route-change receipt enter OkHttp's queue before closing its socket. */
+        const val ROUTE_RECONNECT_ACK_GRACE_MS = 750L
+    }
+
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
@@ -73,12 +87,69 @@ class CommandDispatcher @Inject constructor(
 
     /** FIX D1: Job heartbeat watchdog — отменяется в stop(). */
     private var heartbeatJob: kotlinx.coroutines.Job? = null
+    private val updateCheckQueuedForService = AtomicBoolean(false)
+    private var vpnStateJob: kotlinx.coroutines.Job? = null
+    private val inputDiagnostics = NativeInputDiagnostics(android.os.SystemClock::uptimeMillis)
+    private val nativeInputDispatcher = inputDispatcher(scope)
+    private val touchFactory = OwnedTouchPipeFactory(adbActions.inputOwnership, adbActions::prepareContinuousInput, RootTouchPipeFactory(appContext))
+    private val remoteKeyboard = if (BuildConfig.CONTINUOUS_INPUT_CANARY) AndroidRemoteKeyboard(appContext).also { adapter ->
+        scope.launch(Dispatchers.IO) { adapter.recoverInterruptedLease() }
+    } else null
+    private val sharedInput = if (BuildConfig.CONTINUOUS_INPUT_CANARY) SharedDirectInputController(
+        scope, touchFactory, streamingManager::getInputSession, android.os.SystemClock::uptimeMillis,
+        diagnostics = inputDiagnostics,
+        keyboard = remoteKeyboard,
+        dispatcher = nativeInputDispatcher,
+    ) else null
+    private val continuousInput = if (BuildConfig.CONTINUOUS_INPUT_CANARY) {
+        ContinuousInputController(scope,
+            touchFactory,
+            streamingManager, wsClient::currentGeneration, wsClient::sendInputReceipt,
+            android.os.SystemClock::uptimeMillis, BuildConfig.CONTINUOUS_INPUT_CANARY,
+            inputDiagnostics,
+            dispatcher = nativeInputDispatcher,
+        )
+    } else null
+    private val inputCoordinator = DeviceInputCoordinator(adbActions.inputOwnership,
+        releaseShared = { task -> sharedInput?.acquireAutomation(task) ?: AutoCloseable {} },
+        releaseFallback = { continuousInput?.releaseForAutomation() ?: true },
+        onUnknown = { sharedInput?.fenceForAutomation() },
+    )
+    private val directProbe = com.sphereplatform.agent.direct.DirectProbeTransport(
+        appContext, scope, wsClient::currentGeneration, wsClient::sendDirectProbeSignal, streamingManager,
+        object : com.sphereplatform.agent.direct.DirectInputHandler {
+            override fun directMessage(session: String, message: JsonObject): Boolean =
+                if (sharedInput?.owns(session) == true) sharedInput.message(session, message)
+                else continuousInput?.directMessage(session, message) ?: false
+            override fun directClosed(session: String) { sharedInput?.closed(session); continuousInput?.directClosed(session) }
+            override fun sharedGranted(channel: com.sphereplatform.agent.direct.DirectInputChannel): Boolean =
+                sharedInput?.grant(channel) ?: false
+        },
+    )
 
     fun start() {
+        updateCheckQueuedForService.set(false)
+        vpnStateJob?.cancel()
+        if (BuildConfig.APP_SCOPED_VPN_CANARY) vpnStateJob = scope.launch {
+            scopedVpnClient.snapshots.collect { snapshot ->
+                if (snapshot != null) wsClient.sendJson(buildJsonObject {
+                    put("type", "app_vpn_status"); put("schema_version", 1)
+                    put("snapshot", com.sphereplatform.agent.vpn.AppVpnWire.json.encodeToJsonElement(snapshot))
+                })
+            }
+        }
+        continuousInput?.let {
+            streamingManager.setInputInvalidationListener { it.invalidate(); sharedInput?.invalidate() }
+            it.directChannel = directProbe::inputChannel
+        }
         wsClient.onJsonMessage = { msg ->
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
             if (type == "ping") {
                 handlePingImmediate(msg)
+            } else if (directProbe.handle(msg)) {
+                // Media/input peer accepts only its scoped protocols, never ordinary commands.
+            } else if (continuousInput?.handle(msg) == true) {
+                // Admission is synchronous and bounded; never launch one coroutine per MOVE.
             } else {
                 scope.launch { handleMessage(msg) }
             }
@@ -86,9 +157,16 @@ class CommandDispatcher @Inject constructor(
 
         // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
+            directProbe.invalidate()
+            continuousInput?.invalidate()
+            sharedInput?.invalidate()
             lastPingAt = System.currentTimeMillis()
-            scope.launch { dagRunner.flushPendingResults() }
+            if (updateCheckQueuedForService.compareAndSet(false, true)) {
+                updateCheckScheduler.scheduleImmediate()
+            }
+            scope.launch { flushResults() }
         }
+        wsClient.onDisconnected = { _, _ -> continuousInput?.invalidate(); sharedInput?.invalidate(); directProbe.invalidate() }
 
         // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
         // принудительный reconnect. Компенсирует кейс когда readTimeout
@@ -100,6 +178,7 @@ class CommandDispatcher @Inject constructor(
             while (true) {
                 delay(30_000L) // Проверяем каждые 30с
                 if (wsClient.isConnected) {
+                    flushResults()
                     val elapsed = System.currentTimeMillis() - lastPingAt
                     if (elapsed > HEARTBEAT_TIMEOUT_MS) {
                         Timber.w("Heartbeat watchdog: no ping for ${elapsed/1000}s — forcing reconnect")
@@ -116,10 +195,19 @@ class CommandDispatcher @Inject constructor(
      * Вызывается из SphereAgentService.onDestroy() перед отменой serviceScope.
      */
     fun stop() {
+        vpnStateJob?.cancel(); vpnStateJob = null
+        scope.launch(Dispatchers.IO) { scopedVpnClient.close() }
+        sharedInput?.invalidate()
+        directProbe.invalidate()
+        continuousInput?.let {
+            it.invalidate()
+            streamingManager.setInputInvalidationListener(null)
+        }
         heartbeatJob?.cancel()
         heartbeatJob = null
         wsClient.onJsonMessage = null
         wsClient.onConnected = null
+        wsClient.onDisconnected = null
     }
 
     /**
@@ -163,18 +251,108 @@ class CommandDispatcher @Inject constructor(
             put("ram_mb", deviceStatusProvider.getRamUsageMb())
             put("screen_on", deviceStatusProvider.isScreenOn())
             put("vpn_active", deviceStatusProvider.isVpnActive())
+            put("agent_version", BuildConfig.VERSION_NAME)
+            put("agent_version_code", BuildConfig.VERSION_CODE)
+            wsClient.previousFailureEvidence()?.let { put("previous_ws_failure", it) }
+            val stats = if (streamingManager.isActive()) streamingManager.getQualityStats() else null
+            if (stats != null) {
+                put("stream", buildJsonObject {
+                    put("schema_version", 2)
+                    put("active", true)
+                    put("stage", "capture_encoder_ws_queue")
+                    put("capture_fps", stats.currentCaptureFps)
+                    put("render_fps", stats.currentRenderFps)
+                    put("capture_frames_total", stats.captureFramesTotal)
+                    put("rendered_frames_total", stats.renderedFramesTotal)
+                    put("capture_read_failures_total", stats.captureReadFailuresTotal)
+                    put("render_failures_total", stats.renderFailuresTotal)
+                    put("encoder_errors_total", stats.encoderErrorsTotal)
+                    put("frame_throttle_drops_total", stats.frameThrottleDropsTotal)
+                    put("capture_throttle_drops_total", stats.captureThrottleDropsTotal)
+                    put("encoder_input_drops_total", stats.encoderInputDropsTotal)
+                    put("last_capture_age_ms", stats.lastCaptureAgeMs)
+                    put("last_render_age_ms", stats.lastRenderAgeMs)
+                    put("last_encoded_age_ms", stats.lastEncodedAgeMs)
+                    put("idle_refresh_frames_total", stats.idleRefreshFramesTotal)
+                    put("legacy_suppressed_packets_total", stats.legacySuppressedPacketsTotal)
+                    put("legacy_suppressed_encoded_bytes_total", stats.legacySuppressedEncodedBytesTotal)
+                    continuousInput?.let { put("native_input", sharedInput?.diagnosticSnapshot() ?: it.diagnosticSnapshot()) }
+                    // Optional diagnostic serialization must not interrupt heartbeat liveness.
+                    runCatching { streamingManager.getStreamQualityTelemetry()?.let { Json.encodeToJsonElement(it) } }
+                        .getOrNull()?.let { put("source_quality", it) }
+                    put("encoder_fps", stats.currentFps)
+                    put("encoded_frames_total", stats.totalFrames)
+                    put("encoded_bytes_total", stats.totalEncodedBytes)
+                    put("key_frame_ratio", stats.keyFrameRatio.toDouble())
+                    put("ws_queue_attempts_total", stats.webSocketQueueAttemptsTotal)
+                    put("ws_queue_accepted_total", stats.webSocketQueueAcceptedTotal)
+                    put("ws_queue_rejected_total", stats.webSocketQueueRejectedTotal)
+                    put("ws_queue_accepted_bytes_total", stats.webSocketQueueAcceptedBytesTotal)
+                })
+            }
         })
     }
 
     private suspend fun handleMessage(msg: JsonObject) {
         // System streaming messages — NOT IncomingCommand format, handle first
         when (msg["type"]?.jsonPrimitive?.contentOrNull) {
+            // Keep the backend's authenticated WebSocket path bidirectional.
+            // This tiny ACK is transport-only: it carries no telemetry and does
+            // not create a command receipt or a Redis presence write.
+            "noop" -> {
+                wsClient.sendJson(buildJsonObject {
+                    put("type", "keepalive_ack")
+                    msg["ts"]?.let { put("ts", it) }
+                })
+                return
+            }
+            "result_ack" -> {
+                try {
+                    msg["command_id"]?.jsonPrimitive?.contentOrNull?.let { commandJournal.acknowledge(it) }
+                } catch (e: Exception) {
+                    // Storage remains authoritative: retain and resend the pending result.
+                    // An ACK write failure must not escape launch and crash the entire APK.
+                    Timber.e(e, "Cannot persist command acknowledgement; result retained")
+                }
+                return
+            }
             "start_stream" -> {
-                Timber.i("Received start_stream — launching screen capture permission dialog")
+                // Viewer registration is retried after an agent reconnect. The
+                // current capture owns a one-shot MediaProjection grant; launching
+                // the consent Activity again would replace it and reset the encoder.
+                if (streamingManager.isActive()) {
+                    Timber.i("Ignoring duplicate start_stream — capture is already active")
+                    return
+                }
+                Timber.i("Received start_stream — preparing screen capture permission")
                 val intent = Intent(appContext, ScreenCaptureRequestActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 appContext.startActivity(intent)
+                return
+            }
+            "stream_quality" -> {
+                val id = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: return
+                if (!Regex("interactive_[0-9a-fA-F-]{36}").matches(id)) return
+                val signedAt = msg["signed_at"]?.jsonPrimitive?.longOrNull
+                val ttl = msg["ttl_seconds"]?.jsonPrimitive?.intOrNull
+                val age = signedAt?.let { System.currentTimeMillis() / 1000 - it }
+                if (age == null || ttl !in 1..30 || age < -30 || age > checkNotNull(ttl)) {
+                    ack(id, "failed", error = "expired"); return
+                }
+                try {
+                    val payload = msg["payload"] as? JsonObject ?: error("stream_quality_invalid")
+                    val snapshot = when (payload["action"]?.jsonPrimitive?.contentOrNull) {
+                        "get" -> streamingManager.getStreamQuality()
+                        "set" -> streamingManager.configureStreamQuality(Json.decodeFromJsonElement(
+                            checkNotNull(payload["settings"])))
+                        else -> error("stream_quality_invalid")
+                    } ?: error("stream_quality_unsupported")
+                    ack(id, "completed", result = Json.encodeToJsonElement(snapshot).jsonObject)
+                } catch (error: Exception) {
+                    val known = setOf("stream_quality_unsupported", "stream_quality_codec_refused", "stream_quality_storage_unavailable")
+                    ack(id, "failed", error = error.message?.takeIf { it in known } ?: "stream_quality_invalid")
+                }
                 return
             }
             "stop_stream" -> {
@@ -187,13 +365,23 @@ class CommandDispatcher @Inject constructor(
             }
             "viewer_connected" -> {
                 Timber.i("Received viewer_connected — requesting keyframe")
-                (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
+                streamingManager.onViewerConnected()
                 return
             }
             "touch_tap" -> {
                 val x = msg["x"]?.jsonPrimitive?.intOrNull ?: return
                 val y = msg["y"]?.jsonPrimitive?.intOrNull ?: return
-                scope.launch { adbActions.tap(x, y) }
+                scope.launch {
+                    val point = streamingManager.mapStreamPoints(listOf(com.sphereplatform.agent.streaming.StreamPoint(x, y)))
+                        ?.singleOrNull() ?: return@launch
+                    try {
+                        adbActions.tapRaw(point.x, point.y)
+                    } catch (_: RootCommandOutcomeUnknownException) {
+                        Timber.w("Live tap outcome is unknown; command was not replayed")
+                    } catch (_: DeviceInputBusyException) {
+                        Timber.w("Live tap rejected: device input is owned by another controller")
+                    }
+                }
                 return
             }
             "touch_swipe" -> {
@@ -202,39 +390,62 @@ class CommandDispatcher @Inject constructor(
                 val x2 = msg["x2"]?.jsonPrimitive?.intOrNull ?: return
                 val y2 = msg["y2"]?.jsonPrimitive?.intOrNull ?: return
                 val duration = msg["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300
-                scope.launch { adbActions.swipe(x1, y1, x2, y2, duration) }
+                scope.launch {
+                    val points = streamingManager.mapStreamPoints(listOf(
+                        com.sphereplatform.agent.streaming.StreamPoint(x1, y1),
+                        com.sphereplatform.agent.streaming.StreamPoint(x2, y2))) ?: return@launch
+                    if (points.size != 2) return@launch
+                    try {
+                        adbActions.swipeRaw(points[0].x, points[0].y, points[1].x, points[1].y, duration)
+                    } catch (_: RootCommandOutcomeUnknownException) {
+                        Timber.w("Live swipe outcome is unknown; command was not replayed")
+                    } catch (_: DeviceInputBusyException) {
+                        Timber.w("Live swipe rejected: device input is owned by another controller")
+                    }
+                }
                 return
             }
             "request_keyframe" -> {
-                (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
+                Timber.i("Received request_keyframe — requesting sync frame")
+                streamingManager.onViewerConnected()
                 return
             }
-            // ── CANCEL_DAG: bypass dagMutex ──
-            "CANCEL_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                // FIX D7: TTL-проверка для управляющих команд (защита от replay attack)
+            // Controls bypass dagMutex but are fenced to a particular execution.
+            "CANCEL_DAG", "PAUSE_DAG", "RESUME_DAG" -> {
+                val cmdId = (msg["command_id"] as? JsonPrimitive)?.contentOrNull ?: ""
                 if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[CANCEL_DAG] Received cancel for command=$cmdId")
-                dagRunner.requestCancel()
-                ack(cmdId, "completed")
-                return
-            }
-            // ── PAUSE_DAG: bypass dagMutex, пауза работающего DAG между нодами ──
-            "PAUSE_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[PAUSE_DAG] Received pause for command=$cmdId")
-                dagRunner.requestPause()
-                ack(cmdId, "completed")
-                return
-            }
-            // ── RESUME_DAG: bypass dagMutex, снятие паузы ──
-            "RESUME_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[RESUME_DAG] Received resume for command=$cmdId")
-                dagRunner.requestResume()
-                ack(cmdId, "completed")
+                val target = ((msg["payload"] as? JsonObject)?.get("task_id") as? JsonPrimitive)
+                    ?.takeIf { it.isString }?.contentOrNull
+                if (target.isNullOrBlank()) {
+                    ack(cmdId, "failed", error = "invalid_task_target")
+                    return
+                }
+                if (msg["type"]?.jsonPrimitive?.content == "CANCEL_DAG" &&
+                    (msg["payload"] as? JsonObject)?.get("durable")?.jsonPrimitive?.booleanOrNull == true) {
+                    try {
+                        val terminal = commandJournal.requestCancellation(target)
+                        if (terminal != null) wsClient.sendJson(terminal)
+                        else dagRunner.requestCancel(target)
+                        ack(cmdId, "completed", result = buildJsonObject {
+                            put("task_id", target); put("control_accepted", true)
+                        })
+                    } catch (e: Exception) {
+                        ack(cmdId, "failed", error = "cancel_intent_not_persisted")
+                        Timber.e(e, "Cannot persist cancellation fence")
+                    }
+                    return
+                }
+                val accepted = when (msg["type"]?.jsonPrimitive?.content) {
+                    "CANCEL_DAG" -> dagRunner.requestCancel(target)
+                    "PAUSE_DAG" -> dagRunner.requestPause(target)
+                    else -> dagRunner.requestResume(target)
+                }
+                if (accepted) {
+                    // This acknowledges the control request, not physical stop.
+                    ack(cmdId, "completed", result = buildJsonObject {
+                        put("task_id", target); put("control_accepted", true)
+                    })
+                } else ack(cmdId, "failed", error = "task_not_running")
                 return
             }
         }
@@ -247,26 +458,75 @@ class CommandDispatcher @Inject constructor(
         }
 
         // TTL check — отбрасываем устаревшие команды
+        // An OTA command can restart this process during installation. Fence it
+        // in this instance's durable journal just like a DAG: a reconnect must
+        // not start a second download/install with the same command ID. Each
+        // cloned Android instance has its own journal after cloning, so the
+        // shared recovery grant can still reach every copy.
+        if (cmd.type in setOf(CommandType.EXECUTE_DAG, CommandType.OTA_UPDATE, CommandType.VPN_APP_OPERATION, CommandType.VPN_APP_CONSENT)) {
+            try {
+                commandJournal.reconcileCompletedOtaInstalls(BuildConfig.VERSION_CODE)
+                when (val claim = commandJournal.claim(
+                    cmd.command_id, acknowledgeWhenQueued = cmd.type == CommandType.OTA_UPDATE,
+                    otaTargetVersionCode = if (cmd.type == CommandType.OTA_UPDATE) {
+                        cmd.payload["version_code"]?.jsonPrimitive?.intOrNull
+                    } else null,
+                    executionDomain = if (cmd.type in setOf(CommandType.VPN_APP_OPERATION, CommandType.VPN_APP_CONSENT)) "vpn" else "device",
+                )) {
+                    is CommandJournal.Claim.Existing -> {
+                        queueDurableResult(claim.response)
+                        return
+                    }
+                    CommandJournal.Claim.Started -> Unit
+                }
+            } catch (e: Exception) {
+                ack(cmd.command_id, "failed", error = e.message ?: "command_receipt_unavailable")
+                return
+            }
+        }
         val ageSeconds = System.currentTimeMillis() / 1000 - cmd.signed_at
         if (ageSeconds > cmd.ttl_seconds) {
             Timber.w("[${cmd.command_id}] Expired (age=${ageSeconds}s > ttl=${cmd.ttl_seconds}s)")
-            ack(cmd.command_id, "failed", error = "expired")
+            terminalAck(cmd, "failed", error = "expired")
             return
         }
 
         ack(cmd.command_id, "received")
 
-        val result = runCatching {
+        try {
             ack(cmd.command_id, "running")
-            dispatch(cmd)
+            val result = dispatch(cmd)
+            val failed = result?.get("success")?.jsonPrimitive?.content == "false"
+            terminalAck(cmd, if (failed) "failed" else "completed", result = result)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            terminalAck(cmd, "failed", error = "execution_interrupted_outcome_unknown")
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "[${cmd.command_id}] Failed")
+            terminalAck(cmd, "failed", error = e.message ?: "unknown")
         }
+    }
 
-        if (result.isSuccess) {
-            ack(cmd.command_id, "completed", result = result.getOrNull())
-        } else {
-            val err = result.exceptionOrNull()?.message ?: "unknown"
-            Timber.e(result.exceptionOrNull(), "[${cmd.command_id}] Failed")
-            ack(cmd.command_id, "failed", error = err)
+    private fun terminalAck(cmd: IncomingCommand, status: String, error: String? = null, result: JsonObject? = null) {
+        if (cmd.type in setOf(CommandType.EXECUTE_DAG, CommandType.OTA_UPDATE, CommandType.VPN_APP_OPERATION, CommandType.VPN_APP_CONSENT)) {
+            val receipt = commandJournal.complete(cmd.command_id, status, error, result)
+            queueDurableResult(receipt)
+        } else ack(cmd.command_id, status, error, result)
+    }
+
+    private fun queueDurableResult(receipt: JsonObject): Boolean {
+        val queued = wsClient.sendJson(receipt)
+        return queued
+    }
+
+    private fun flushResults() {
+        try {
+            commandJournal.reconcileCompletedOtaInstalls(BuildConfig.VERSION_CODE)
+            for (result in commandJournal.pending()) {
+                if (!queueDurableResult(result)) break
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Cannot flush durable command results")
         }
     }
 
@@ -304,7 +564,12 @@ class CommandDispatcher @Inject constructor(
 
         CommandType.SCREENSHOT -> {
             val path = adbActions.takeScreenshot()
-            buildJsonObject { put("path", path) }
+            buildJsonObject {
+                put("path", path)
+                put("format", "png")
+                put("storage", "android-local-cache")
+                put("server_artifact_available", false)
+            }
         }
 
         CommandType.EXECUTE_DAG -> {
@@ -315,7 +580,13 @@ class CommandDispatcher @Inject constructor(
             val timeoutMs = cmd.payload["timeout_ms"]?.jsonPrimitive?.longOrNull
 
             // Контент-адресабльный кеш: если имя + hash присланы — ищем в кеше
-            val dagJson: JsonObject = if (dagName != null && dagHash != null) {
+            val suppliedDag = cmd.payload["dag"]?.jsonObject
+            val dagJson: JsonObject = if (suppliedDag != null) {
+                // Explicit payload is authoritative, including during migration
+                // from servers that hashed a template before account substitution.
+                if (dagName != null && dagHash != null) scriptCache.put(dagName, dagHash, suppliedDag)
+                suppliedDag
+            } else if (dagName != null && dagHash != null) {
                 when (val cacheResult = scriptCache.get(dagName, dagHash)) {
                     is ScriptCacheManager.CacheResult.Hit -> {
                         // Кеш-хит: DAG актуален, запускаем без пердачи по WS
@@ -354,21 +625,15 @@ class CommandDispatcher @Inject constructor(
                 dagRunner.requestCancel()
             }
             dagMutex.withLock {
-                dagRunner.execute(cmd.command_id, dagJson, timeoutMs)
+                dagRunner.execute(cmd.command_id, dagJson, timeoutMs) { inputCoordinator.acquire(cmd.command_id) }
             }
         }
 
         CommandType.VPN_CONNECT -> {
             val config = cmd.payload["config"]!!.jsonPrimitive.content
             vpnManager.connect(config)
-            // Enable kill switch with management server carve-out
-            val vpnEndpoint = cmd.payload["endpoint"]?.jsonPrimitive?.content
-            if (vpnEndpoint != null) {
-                val mgmtHost = authStore.getServerUrl()
-                    .removePrefix("https://").removePrefix("http://")
-                    .substringBefore("/").substringBefore(":")
-                killSwitchManager.enable(vpnEndpoint, listOf(mgmtHost))
-            }
+            // App isolation/fail-closed belongs to the accepted VPN provider.
+            // Never enable a device-wide firewall based on a remote endpoint.
             null
         }
 
@@ -381,6 +646,43 @@ class CommandDispatcher @Inject constructor(
         CommandType.VPN_RECONNECT -> {
             vpnManager.reconnect()
             null
+        }
+
+        CommandType.VPN_APP_OPERATION, CommandType.VPN_APP_STATUS -> {
+            val body = if (cmd.payload.keys == setOf("envelope")) {
+                require(cmd.type == CommandType.VPN_APP_OPERATION && BuildConfig.APP_SCOPED_VPN_CANARY) { "vpn_provider_not_enabled" }
+                val plain = com.sphereplatform.agent.vpn.AppVpnEnvelope.open(java.util.UUID.fromString(cmd.command_id), cmd.payload.getValue("envelope").toString())
+                try { Json.parseToJsonElement(plain.toString(Charsets.UTF_8)).jsonObject } finally { plain.fill(0) }
+            } else {
+                require(cmd.payload.keys == setOf("schema_version", "request_id", "session_id", "action")) { "vpn_sealed_profile_required" }
+                cmd.payload
+            }
+            val request = com.sphereplatform.agent.vpn.AppVpnCommand.parse(body.toString())
+            require(request.requestId.toString() == cmd.command_id && (request.action == "status") == (cmd.type == CommandType.VPN_APP_STATUS)) { "vpn_request_identity_invalid" }
+            val snapshot = scopedVpnClient.request(body)
+            buildJsonObject {
+                put("success", snapshot.phase !in setOf("CONSENT_REQUIRED", "OPERATION_REJECTED", "OUTCOME_UNKNOWN", "RECONCILIATION_REQUIRED", "STATUS_UNKNOWN"))
+                put("vpn", com.sphereplatform.agent.vpn.AppVpnWire.json.encodeToJsonElement(snapshot))
+            }
+        }
+        CommandType.VPN_APP_CONSENT -> {
+            require(BuildConfig.APP_SCOPED_VPN_CANARY && cmd.payload.isEmpty()) { "vpn_provider_not_enabled" }
+            val ready = android.net.VpnService.prepare(appContext) == null
+            if (!ready) appContext.startActivity(Intent(appContext, com.sphereplatform.agent.vpn.AppVpnConsentActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+            buildJsonObject { put("success", true); put("consent_ready", ready); put("user_action_required", !ready); put("network_changed", false) }
+        }
+        CommandType.VPN_APP_RECIPIENT -> {
+            require(BuildConfig.APP_SCOPED_VPN_CANARY && cmd.payload.keys == setOf("operation_id")) { "vpn_provider_not_enabled" }
+            val text = cmd.payload.getValue("operation_id").jsonPrimitive.content
+            val operation = java.util.UUID.fromString(text)
+            require(operation.toString() == text) { "vpn_request_identity_invalid" }
+            val publicKey = com.sphereplatform.agent.vpn.AppVpnEnvelope.recipient(operation)
+            buildJsonObject {
+                put("operation_id", text)
+                put("public_key_der", android.util.Base64.encodeToString(publicKey, android.util.Base64.NO_WRAP))
+                put("algorithm", "RSA-OAEP-SHA256-MGF1-SHA1+A256GCM")
+                put("expires_at_epoch_ms", com.sphereplatform.agent.vpn.AppVpnEnvelope.expiresAt(operation))
+            }
         }
 
         CommandType.WAKE_SCREEN -> {
@@ -400,12 +702,37 @@ class CommandDispatcher @Inject constructor(
 
         CommandType.UPDATE_CONFIG -> {
             val serverUrl = cmd.payload["server_url"]?.jsonPrimitive?.contentOrNull
+            val fallbackServerUrl = cmd.payload["fallback_server_url"]?.jsonPrimitive?.contentOrNull
             val apiKey = cmd.payload["api_key"]?.jsonPrimitive?.contentOrNull
             val deviceId = cmd.payload["device_id"]?.jsonPrimitive?.contentOrNull
-            if (serverUrl != null) authStore.saveServerUrl(serverUrl)
+            var routeCandidatesChanged = false
+            var reconnectScheduled = false
+            if (serverUrl != null) {
+                val previousSelectedRoute = authStore.getServerUrl()
+                val previousRoutes = authStore.connectionRoutesSnapshot().urls
+                if (fallbackServerUrl != null) authStore.saveServerRoutes(serverUrl, fallbackServerUrl)
+                else authStore.saveServerUrl(serverUrl)
+                val updatedRoutes = authStore.connectionRoutesSnapshot().urls
+                val selectedRouteChanged = authStore.getServerUrl() != previousSelectedRoute
+                routeCandidatesChanged = updatedRoutes != previousRoutes
+                if (selectedRouteChanged) {
+                    scope.launch {
+                        delay(ROUTE_RECONNECT_ACK_GRACE_MS)
+                        wsClient.forceReconnectNow(bypassDebounce = true)
+                    }
+                    Timber.i("Management routes changed; reconnect scheduled")
+                }
+                reconnectScheduled = selectedRouteChanged
+            }
             if (apiKey != null) authStore.saveApiKey(apiKey)
             if (deviceId != null) authStore.saveDeviceId(deviceId)
-            buildJsonObject { put("updated", true) }
+            buildJsonObject {
+                put("updated", true)
+                if (serverUrl != null) {
+                    put("route_candidates_changed", routeCandidatesChanged)
+                    put("reconnect_scheduled", reconnectScheduled)
+                }
+            }
         }
 
         CommandType.SHELL -> {

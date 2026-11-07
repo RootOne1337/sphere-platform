@@ -1,0 +1,240 @@
+{
+  "status": "source_bound_frontier_plan_and_169_workspace_ready",
+  "boundaries": [
+    {
+      "start_source_index": 499,
+      "end_source_index": 500,
+      "start_PTS": 1797480,
+      "end_PTS": 1805040,
+      "start_seconds": 19.972,
+      "end_seconds": 20.056,
+      "components": [
+        0,
+        2
+      ],
+      "real_missing_indices": [],
+      "new_source_indices": [],
+      "original_verified_inliers": 669,
+      "remaining_edge_matches": 0,
+      "reason": {
+        "forward_per_hop_FB_valid": 42,
+        "backward_per_hop_FB_valid": 33,
+        "both_per_hop_FB_valid": 28,
+        "both_endpoint_le3": 12,
+        "full_cycle_and_all_gates": 12,
+        "threshold15_cleared_edge": true
+      },
+      "interpretation": "No intermediate source frame exists in this interval."
+    },
+    {
+      "start_source_index": 500,
+      "end_source_index": 504,
+      "start_PTS": 1805040,
+      "end_PTS": 1824390,
+      "start_seconds": 20.056,
+      "end_seconds": 20.271,
+      "components": [
+        2,
+        1
+      ],
+      "real_missing_indices": [
+        501,
+        502,
+        503
+      ],
+      "new_source_indices": [
+        501,
+        502,
+        503
+      ],
+      "original_verified_inliers": 232,
+      "remaining_edge_matches": 0,
+      "reason": {
+        "forward_per_hop_FB_valid": 5,
+        "backward_per_hop_FB_valid": 6,
+        "both_per_hop_FB_valid": 3,
+        "both_endpoint_le3": 1,
+        "full_cycle_and_all_gates": 1,
+        "threshold15_cleared_edge": true
+      },
+      "interpretation": "Newly selected frames already existed in the continuous LK decode; novelty is new feature anchors, not invented motion observations."
+    }
+  ],
+  "new_frames": [
+    {
+      "image": "images/00000501.png",
+      "source_index": 501,
+      "relative_ticks_90k": 1809540,
+      "worker_observed_at_ms": 1793394805646.8,
+      "source_access_unit_sha256": "6a2150b2461406413c64b7f290ce5c2787f599a7958935994e8249bb925e4815",
+      "png_sha256": "18df33fbc11b4c49aa11111e88e01fe2ca9c4b422b45532ab5fe6b07bc82e9e1",
+      "rgb_pixel_sha256": "19dc62670181c11a73b0b6755bf114f8cbccf97800bd72062ca91e098dfb3b94",
+      "bytes": 1045838
+    },
+    {
+      "image": "images/00000502.png",
+      "source_index": 502,
+      "relative_ticks_90k": 1814040,
+      "worker_observed_at_ms": 1793394805707.5999,
+      "source_access_unit_sha256": "49f3d62ba01851909200d151ef02e7e02a992738f0a8f224b82a133335751e39",
+      "png_sha256": "7492b44de2143fd28bfad45504350efe63d1d712229f573a7007517b1d48cee4",
+      "rgb_pixel_sha256": "a2bee00c93c8a31f07b15ae8ba0f26691d45a12a910e3df3c596cf49894132cf",
+      "bytes": 1109130
+    },
+    {
+      "image": "images/00000503.png",
+      "source_index": 503,
+      "relative_ticks_90k": 1819980,
+      "worker_observed_at_ms": 1793394805739.0999,
+      "source_access_unit_sha256": "ce7de3cf5a953b4a3597bcfacf448003ea6c48deeb4099df8d0d309d06444769",
+      "png_sha256": "c69c04aba11647eab983ca58f0a78b7ef779c623141a990a9989ead2e646ff79",
+      "rgb_pixel_sha256": "aa5a3da533919df707d6072c0221534f06a83c9092a41b846d8132912e11dd04",
+      "bytes": 1097501
+    }
+  ],
+  "new_views": 3,
+  "total_selected_views": 169,
+  "view_cap": 240,
+  "old651good_edges_preserve": true,
+  "old156empty_edges_never_restore": true,
+  "new_pair_plan": [
+    [
+      497,
+      501
+    ],
+    [
+      497,
+      502
+    ],
+    [
+      497,
+      503
+    ],
+    [
+      498,
+      501
+    ],
+    [
+      498,
+      502
+    ],
+    [
+      498,
+      503
+    ],
+    [
+      499,
+      501
+    ],
+    [
+      499,
+      502
+    ],
+    [
+      499,
+      503
+    ],
+    [
+      500,
+      501
+    ],
+    [
+      500,
+      502
+    ],
+    [
+      500,
+      503
+    ],
+    [
+      501,
+      502
+    ],
+    [
+      501,
+      503
+    ],
+    [
+      501,
+      504
+    ],
+    [
+      501,
+      509
+    ],
+    [
+      501,
+      515
+    ],
+    [
+      502,
+      503
+    ],
+    [
+      502,
+      504
+    ],
+    [
+      502,
+      509
+    ],
+    [
+      502,
+      515
+    ],
+    [
+      503,
+      504
+    ],
+    [
+      503,
+      509
+    ],
+    [
+      503,
+      515
+    ]
+  ],
+  "new_pairs": 24,
+  "anchors_from_components": {
+    "last3component94": [
+      497,
+      498,
+      499
+    ],
+    "isolated": [
+      500
+    ],
+    "first3component71": [
+      504,
+      509,
+      515
+    ]
+  },
+  "new_pair_max_time_seconds": 0.581,
+  "prepared_path": ".local-pilot\\scooter-temporal-bridge-20261101\\prepared",
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "source_hashes": {
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\reconstruction-input.json": "0e84d1c21cd19c7074577cc48261d8cf1a86e90e9a27cb9eea9ba872eecbc916",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\database.db": "95f2f0ffbc21030825d54eac1141b21d981b74ee706c8bc768ffd955570ba974",
+    ".local-pilot\\scooter-temporal-flow-full-20261101\\filtered-verified-as-new-raw.db": "bf6e7a261a3c147307a591ede327c8432269e83f0fbd6f82d0b53ecb0d9c88bc",
+    ".local-pilot\\scooter-temporal-flow-full-20261101\\flow-report.json": "e47e3807c94fc53313ddb26b012c071e359ff39cc4131cda0e4f38c31d6d1832",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\manifest.json": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\frames.jsonl": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\inputs.jsonl": "c919e79aefc90ceda827d69142e8c7504ce3fb49fc27bc09ed341d38b241c2e8",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\COMPLETE": "31231b7a04f4bdd779637913f554c958f87e33988612b11808296384bcb206b5"
+  },
+  "source_hashes_unchanged": true,
+  "source_master_transcoded": false,
+  "real_source_decode_count": 901,
+  "new_PNG_count": 3,
+  "no_hardlinks_created": true,
+  "contact": "frontier-contact.png",
+  "why_not_a_guarantee": "The full LK audit already traversed frames501..503. Selecting them for SIFT adds feature identities/track anchors, not unobserved motion. Frame499->500 has no extra source frame; preserving the same strict flow gates may still prevent a bridge. No bad old edge will be restored.",
+  "wall_seconds": 4.39000000001397,
+  "min_available_RAM_GiB": 8.185867309570312,
+  "GPU_initialized": false,
+  "solver_executed": false,
+  "physicalActions": 0
+}

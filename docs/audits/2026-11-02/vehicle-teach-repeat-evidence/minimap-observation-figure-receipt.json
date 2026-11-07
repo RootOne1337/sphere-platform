@@ -1,0 +1,16 @@
+{
+  "figureSHA": "fcc1badbf217a6eb5d7f2fdc34f0b5b3565b2fddb353b67cd5d923f36bce3837",
+  "rawResultSHA": "90de0bf1196da4d8beaa2417c63b77576da76310d9ab71fb1fc137cb120dd58c",
+  "evidenceSummarySHA": "6b804d6d7f604c12dc29c8c45013382c584800c830b20b1eb22212322a4bd72c",
+  "proofQueryCropsSHA": "c7435a32becc3dfda5712cd6ac3a2eb336967e1384297c8ad856302a9d65a361",
+  "matchingRerun": false,
+  "actualQueryIndices": [
+    122,
+    135,
+    57,
+    421,
+    767
+  ],
+  "syntheticQueryImages": false,
+  "physicalActions": 0
+}

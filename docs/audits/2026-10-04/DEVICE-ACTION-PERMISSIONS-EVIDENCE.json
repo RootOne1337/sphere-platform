@@ -1,0 +1,131 @@
+{
+  "finding": "F39",
+  "scope": "device_registry_mutation_affordances",
+  "status": "installed_ui_accepted_api_jsdom_visual_open",
+  "implementationSource": "81d065a90919c1ad60312f81cb4f821e034ad501",
+  "observedAt": "2026-10-03T20:20:20.421166+00:00",
+  "before": {
+    "applicationSource": "1bccb477a0c657b344c2704d40d627fd797b5096",
+    "archive": true,
+    "passed": 1,
+    "assertionFailures": 9,
+    "runtimeErrorSuites": 0
+  },
+  "checks": {
+    "nodeMajor": 24,
+    "sourceFrontendPassed": 997,
+    "frontendSuites": 106,
+    "typesPassed": true,
+    "productionBuildPassed": true,
+    "builderImagePassed": 997,
+    "noFrontendApplicationSourceMount": true,
+    "actualPostgresRedisPassed": 73,
+    "installedApiImagePassed": 73,
+    "noBackendSourceMount": true,
+    "addedFrontendCases": 15,
+    "addedHttpCases": 20,
+    "pythonRuffPassed": true
+  },
+  "runtime": {
+    "uiSource": "81d065a90919c1ad60312f81cb4f821e034ad501",
+    "apiSource": "37bb436ae5fb9f27eda6c7549bb46a83bf3df510",
+    "uiImageId": "sha256:c1b815f563c20513775f27693e668e220b0666fa6e3244046c1d914a105d83e3",
+    "installedAt": "2026-10-03T20:19:14.370418+00:00",
+    "url": "http://127.0.0.1:3015/devices",
+    "apiPreserved": true,
+    "neighboursPreserved": 15,
+    "tunaPreserved": true,
+    "otaCatalogPreserved": true,
+    "samples": 7,
+    "cohort": 14,
+    "apkCode": 10244,
+    "offlineOutsideAcceptance": 5,
+    "baselineEpochsPreserved": true,
+    "heartbeatUnder60Seconds": true,
+    "apiReady": true,
+    "prometheusBackendUp": true,
+    "readbackStartedAt": "2026-10-03T20:19:19.907921+00:00",
+    "readbackFinishedAt": "2026-10-03T20:20:20.421166+00:00",
+    "capabilityStatus": 200,
+    "anonymousStatus": 401,
+    "permissionMatrixMatched": true,
+    "capabilityCacheControl": "no-store"
+  },
+  "sourceCi": [
+    {
+      "conclusion": "success",
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775039"
+    },
+    {
+      "conclusion": "",
+      "name": "CI — Backend",
+      "status": "in_progress",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775061"
+    },
+    {
+      "conclusion": "success",
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775036"
+    },
+    {
+      "conclusion": "success",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775108"
+    }
+  ],
+  "limits": {
+    "browserAcceptance": "OPEN_URL_POLICY_BLOCKED",
+    "liveDestructiveOrVpnCommandsSent": false,
+    "liveAndroidRolesChanged": false,
+    "newApkInstalled": false,
+    "inflightMutationsNotUndone": true,
+    "clientChecksDoNotReplaceServerAuthorization": true,
+    "fullFleetUptimeAccepted": false,
+    "otherPageMutationCoverageStillOpen": true,
+    "frozenAuditChanged": false
+  },
+  "originalAuditCounts": {
+    "sourceFixed": 33,
+    "unclosed": 8,
+    "includedPartial": [
+      "F32",
+      "F33",
+      "F39"
+    ]
+  },
+  "sourceCiObservedAt": "2026-10-03T20:28:32.978591+00:00",
+  "sourceCiCompletion": {
+    "observedAt": "2026-10-03T20:33:16.831571+00:00",
+    "source": "81d065a90919c1ad60312f81cb4f821e034ad501",
+    "runs": [
+      {
+        "conclusion": "success",
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775039"
+      },
+      {
+        "conclusion": "success",
+        "name": "CI — Frontend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775036"
+      },
+      {
+        "conclusion": "success",
+        "name": "CI — Android",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775108"
+      },
+      {
+        "conclusion": "success",
+        "name": "CI — Backend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775061"
+      }
+    ]
+  }
+}

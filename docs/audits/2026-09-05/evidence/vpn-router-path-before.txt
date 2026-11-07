@@ -1,0 +1,27 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+___________ test_public_key_is_encoded_as_one_delete_path_component ___________
+tests\production\test_vpn_router_path.py:28: in test_public_key_is_encoded_as_one_delete_path_component
+    assert requests[0].url.raw_path == b"/peers/audit%2Fa%2Bb%3D"
+E   AssertionError: assert b'/peers/audit/a+b=' == b'/peers/audit%2Fa%2Bb%3D'
+E     
+E     At index 12 diff: b'/' != b'%'
+E     Use -v to get more diff
+_________ test_generic_route_not_found_does_not_confirm_peer_deletion _________
+tests\production\test_vpn_router_path.py:40: in test_generic_route_not_found_does_not_confirm_peer_deletion
+    with pytest.raises(httpx.HTTPStatusError):
+E   Failed: DID NOT RAISE <class 'httpx.HTTPStatusError'>
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_vpn_router_path.py::test_public_key_is_encoded_as_one_delete_path_component
+FAILED tests/production/test_vpn_router_path.py::test_generic_route_not_found_does_not_confirm_peer_deletion
+2 failed, 485 warnings in 0.90s

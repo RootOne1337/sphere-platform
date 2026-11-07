@@ -1,0 +1,15 @@
+{
+  "outcome": "verified",
+  "sourceCommit": "d359771d3861d1330c066add27a36e5649e3c2b5",
+  "servedReactivityContract": "gray_reuse_owned_supervision_v1",
+  "servedPosePolicy": "pnp-ap3p-continuous-image-support-source-time-motion-v6",
+  "reloadPerformed": true,
+  "protectedAssetCount": 798,
+  "containerCount": 66,
+  "protectedAssetsUnchanged": true,
+  "allContainersUnchanged": true,
+  "configuredWatchdogsPreserved": true,
+  "unauthenticatedStatus": 403,
+  "portOwnershipConfirmed": false,
+  "physicalActions": 0
+}

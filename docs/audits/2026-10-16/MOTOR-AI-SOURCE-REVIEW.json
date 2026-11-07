@@ -1,0 +1,1768 @@
+{
+  "schemaVersion": 1,
+  "reviewedAtUtc": "2026-10-15T21:42:26.620653+00:00",
+  "clientDate": "2026-10-16",
+  "clientTimeZone": "Asia/Yekaterinburg",
+  "sourceBaseRevision": "38ec739fa6239806c0f5bd5ab624fc129aa46012",
+  "scope": "Unified design and source/primary-literature/community review. No model installation, upstream execution, live device probe, gameplay or GPU capacity benchmark.",
+  "guide": "docs/design/MOTOR-AI-PLATFORM.md",
+  "guideSha256NormalizedLf": "0bfbc446e77fdcd0fbdc5b7e56f051bd0647593e45f695c1840a0ea767e5bc61",
+  "readiness": "ADAPTERS_REQUIRED_NOT_READY_FOR_GAMEPLAY",
+  "requestedGame": "Black Russia / GTA-like route following toward a visible marker",
+  "target": {
+    "devices": 50,
+    "freshObservationsHzPerDevice": [
+      4,
+      5
+    ],
+    "targetGpuKnown": false,
+    "directApkToWorker": true,
+    "browserInDataPath": false
+  },
+  "runtimeChanged": false,
+  "weightsDownloaded": false,
+  "upstreamCodeExecuted": false,
+  "inferenceRun": false,
+  "gameplayRun": false,
+  "gpuBenchmarked": false,
+  "scopeReady": {
+    "unifiedDesignDocument": true,
+    "headlessWorker": false,
+    "gameProfileExecutor": false,
+    "multiTouchGameControl": false,
+    "taskEpisodeDelegation": false,
+    "goalNavigation": false,
+    "fiveHzGameplayValidated": false,
+    "fiftyDeviceCapacityValidated": false
+  },
+  "installedBaselineReference": {
+    "evidence": "docs/audits/2026-10-16/FALLBACK-ADMISSION-CURRENT.json",
+    "sha256NormalizedLf": "fa816c3311f25b9a259c2f3eecb5909d75a923ca47bb52744eb50dfa6b2cfe90",
+    "newRuntimeObservation": false
+  },
+  "newSourceReview": {
+    "collectedAtUtc": "2026-10-15T21:26:28.506886+00:00",
+    "sealedAtUtc": "2026-10-15T21:33:25.267309+00:00",
+    "repositoryAndModelRecords": 19,
+    "selectedTextFileCount": 63,
+    "records": [
+      {
+        "kind": "repository",
+        "repository": "BAAI-Agents/Cradle",
+        "url": "https://github.com/BAAI-Agents/Cradle",
+        "revision": "d7752fccf890d8d3818cd1d435f3705f604a1339",
+        "committedAtUtc": "2024-11-07T04:58:20Z",
+        "archived": false,
+        "licenseSpdxReportedByGithub": "MIT",
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 12848,
+            "sha256": "fe475d3e92c42807b792c542bc5986bf74caa7d166aea860d368fbe776342a82",
+            "url": "https://raw.githubusercontent.com/BAAI-Agents/Cradle/d7752fccf890d8d3818cd1d435f3705f604a1339/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 1068,
+            "sha256": "2964861ad96d977da95d891f62d8f5d60873f4a36da0b51f052d9e98ef97d02f",
+            "url": "https://raw.githubusercontent.com/BAAI-Agents/Cradle/d7752fccf890d8d3818cd1d435f3705f604a1339/LICENSE"
+          },
+          {
+            "file": "requirements.txt",
+            "bytes": 655,
+            "sha256": "cce438d7372b6ac6798357f1e50a9997cfe4c21a9052f6697c7435c87c6fc25d",
+            "url": "https://raw.githubusercontent.com/BAAI-Agents/Cradle/d7752fccf890d8d3818cd1d435f3705f604a1339/requirements.txt"
+          }
+        ],
+        "treeTruncated": false,
+        "openIssueSample": [
+          {
+            "number": 114,
+            "url": "https://github.com/BAAI-Agents/Cradle/issues/114",
+            "title": "Verify evals on Papers with Code"
+          },
+          {
+            "number": 106,
+            "url": "https://github.com/BAAI-Agents/Cradle/issues/106",
+            "title": "关于LLM交互图片异常的问题"
+          },
+          {
+            "number": 101,
+            "url": "https://github.com/BAAI-Agents/Cradle/issues/101",
+            "title": "Report: Low operating speed"
+          },
+          {
+            "number": 100,
+            "url": "https://github.com/BAAI-Agents/Cradle/issues/100",
+            "title": "NO vertical mouse move angle function"
+          },
+          {
+            "number": 99,
+            "url": "https://github.com/BAAI-Agents/Cradle/issues/99",
+            "title": "Future Expansion"
+          }
+        ]
+      },
+      {
+        "kind": "repository",
+        "repository": "CraftJarvis/OpenHA",
+        "url": "https://github.com/CraftJarvis/OpenHA",
+        "revision": "606efc69e945bd02c700e584136bcc105d22f122",
+        "committedAtUtc": "2026-05-10T06:19:26Z",
+        "archived": false,
+        "licenseSpdxReportedByGithub": "MIT",
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 8737,
+            "sha256": "78f3cf4528e67801f4315bc12a7cfa496f765d2ed5bd97642e8359fa80f662e5",
+            "url": "https://raw.githubusercontent.com/CraftJarvis/OpenHA/606efc69e945bd02c700e584136bcc105d22f122/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 1068,
+            "sha256": "39ac3ffba5e56b1c092c9b8986b68353c5a44c6007e62d77e81b2390025aea62",
+            "url": "https://raw.githubusercontent.com/CraftJarvis/OpenHA/606efc69e945bd02c700e584136bcc105d22f122/LICENSE"
+          },
+          {
+            "file": "pyproject.toml",
+            "bytes": 1008,
+            "sha256": "b2157b94a8e05f288e03b0685c30b5cfc3c5022ae90aa8eea229dfe3a24a6abe",
+            "url": "https://raw.githubusercontent.com/CraftJarvis/OpenHA/606efc69e945bd02c700e584136bcc105d22f122/pyproject.toml"
+          }
+        ],
+        "treeTruncated": false,
+        "openIssueSample": [
+          {
+            "number": 1,
+            "url": "https://github.com/CraftJarvis/OpenHA/issues/1",
+            "title": "Release OpenHA Benchmark Datasets on Hugging Face and link artifacts"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "Qwen/Qwen3.5-9B",
+        "url": "https://huggingface.co/Qwen/Qwen3.5-9B",
+        "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+        "lastModifiedUtc": "2026-03-02T00:51:43.000Z",
+        "gated": false,
+        "licenseReportedByCard": "apache-2.0",
+        "pipelineTag": "image-text-to-text",
+        "safetensorsMetadata": {
+          "parameters": {
+            "BF16": 9653100528,
+            "F32": 3840
+          },
+          "total": 9653104368
+        },
+        "safetensorsFiles": 4,
+        "safetensorsBytesAdvertised": 19306310880,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 77643,
+            "sha256": "c5f5a8c2dddab69cfbf05279235aa5fddb137939a06539c4c7637aa900fef6d0",
+            "url": "https://huggingface.co/Qwen/Qwen3.5-9B/resolve/c202236235762e1c871ad0ccb60c8ee5ba337b9a/README.md"
+          },
+          {
+            "file": "config.json",
+            "bytes": 3126,
+            "sha256": "d0883072e01861ed0b2d47be3c16c36a8e81c224c7ffaa310c6558fb3f932b05",
+            "url": "https://huggingface.co/Qwen/Qwen3.5-9B/resolve/c202236235762e1c871ad0ccb60c8ee5ba337b9a/config.json"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 11544,
+            "sha256": "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a",
+            "url": "https://huggingface.co/Qwen/Qwen3.5-9B/resolve/c202236235762e1c871ad0ccb60c8ee5ba337b9a/LICENSE"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "102c89ea52278777b92c1e136c3cb9c757a4de3a3b960ad425790d223ea29311",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "model.safetensors-00001-of-00004.safetensors",
+            "bytes": 5276436216,
+            "sha256AdvertisedByLfs": "db6f444b43d318c92f360a13a25561a6a65b10c0631b8ed305a426dbaa6c380e"
+          },
+          {
+            "file": "model.safetensors-00002-of-00004.safetensors",
+            "bytes": 5335161512,
+            "sha256AdvertisedByLfs": "31c7d7e2dd5d207840b31cc59083c8f4c4718959149e0358c0364052bb9a0330"
+          },
+          {
+            "file": "model.safetensors-00003-of-00004.safetensors",
+            "bytes": 5368717440,
+            "sha256AdvertisedByLfs": "7ec36ba3a4176a44c3c0876ad80c56a2f70c84bf008d82e9501df642f17dadec"
+          },
+          {
+            "file": "model.safetensors-00004-of-00004.safetensors",
+            "bytes": 3325995712,
+            "sha256AdvertisedByLfs": "b62b0c4cd7e44edee103ee8f4fe225f246d5e768e07bfd5f25b63a8aa1fdd0c6"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "Qwen/Qwen3.6-27B",
+        "url": "https://huggingface.co/Qwen/Qwen3.6-27B",
+        "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+        "lastModifiedUtc": "2026-04-24T02:39:16.000Z",
+        "gated": false,
+        "licenseReportedByCard": "apache-2.0",
+        "pipelineTag": "image-text-to-text",
+        "safetensorsMetadata": {
+          "parameters": {
+            "BF16": 27781427952
+          },
+          "total": 27781427952
+        },
+        "safetensorsFiles": 15,
+        "safetensorsBytesAdvertised": 55563006400,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 62593,
+            "sha256": "bb936d6da51014f1edc9aa4cf9abf28d98695b7616ad56adfeeebfa752051d3d",
+            "url": "https://huggingface.co/Qwen/Qwen3.6-27B/resolve/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9/README.md"
+          },
+          {
+            "file": "config.json",
+            "bytes": 4308,
+            "sha256": "69db4eb7196bc8190813231b3018ca05d8c2e3abc7b1af19d55c157af44a9d9c",
+            "url": "https://huggingface.co/Qwen/Qwen3.6-27B/resolve/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9/config.json"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 11343,
+            "sha256": "50cbab8a892c5f2993b8c7351a99182507472def3b1374558308605d99b86b32",
+            "url": "https://huggingface.co/Qwen/Qwen3.6-27B/resolve/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9/LICENSE"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "d35031c517f952475395472d5bff36e26cf3337f978b15a2db30137ca06265e9",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "model-00001-of-00015.safetensors",
+            "bytes": 3968861352,
+            "sha256AdvertisedByLfs": "5f21d4e349aef6c74bedef7b3835dc8c11a16dd5ce72f4437e2284f1e83736e9"
+          },
+          {
+            "file": "model-00002-of-00015.safetensors",
+            "bytes": 3921677136,
+            "sha256AdvertisedByLfs": "03de44dc7e933025498d72f8d7ea32d5cde16eb7a85b35ff1fa49a737f4b2242"
+          },
+          {
+            "file": "model-00003-of-00015.safetensors",
+            "bytes": 3921677128,
+            "sha256AdvertisedByLfs": "5c3a68304dabeaa5a0eb70a5e383d2b8134997ef6d5c1e8afdcd236091c847f2"
+          },
+          {
+            "file": "model-00004-of-00015.safetensors",
+            "bytes": 3921677128,
+            "sha256AdvertisedByLfs": "ba8b0849cb4c4c97e674709bfe56a9c008d7563a68ac57120ceb2855a73a9944"
+          },
+          {
+            "file": "model-00005-of-00015.safetensors",
+            "bytes": 3921677112,
+            "sha256AdvertisedByLfs": "a5abc1d5e9583409193e2cd58a671a4ed98467a6eaf883cd4377e3cc02021c22"
+          },
+          {
+            "file": "model-00006-of-00015.safetensors",
+            "bytes": 3900710888,
+            "sha256AdvertisedByLfs": "160d914e2e4704a401a3eab9e9eec3380e5723a35981c9169bedfb82ea32e6d6"
+          },
+          {
+            "file": "model-00007-of-00015.safetensors",
+            "bytes": 3994391976,
+            "sha256AdvertisedByLfs": "0bcd0ce28c7d2cc6f5ab2c21902cd032fec0cc5f29e0897e3bb0967add388e47"
+          },
+          {
+            "file": "model-00008-of-00015.safetensors",
+            "bytes": 3879219776,
+            "sha256AdvertisedByLfs": "584a0ed8018d3b19ce8e533d08a460454650027901be6323b50b591da143dca6"
+          },
+          {
+            "file": "model-00009-of-00015.safetensors",
+            "bytes": 3921677136,
+            "sha256AdvertisedByLfs": "e7e3e1a17a2673340eb6bba95c3c6f07b12e7746ee738dde56551cbde27656f5"
+          },
+          {
+            "file": "model-00010-of-00015.safetensors",
+            "bytes": 3921677128,
+            "sha256AdvertisedByLfs": "e8934789f4742c11da88f937da84bdbb8764c8a7f7ebe9e7b056bcbd41b14285"
+          },
+          {
+            "file": "model-00011-of-00015.safetensors",
+            "bytes": 3921677136,
+            "sha256AdvertisedByLfs": "44e8fe06d2d609bf20b16b1d2f42348ca2dc99179721f76035ff50db678f9a8a"
+          },
+          {
+            "file": "model-00012-of-00015.safetensors",
+            "bytes": 3921677136,
+            "sha256AdvertisedByLfs": "33c5d7d18e1b3f661334dff736fc7d00561f1f1bb9d2970c669b40d2e582974e"
+          },
+          {
+            "file": "model-00013-of-00015.safetensors",
+            "bytes": 3995081848,
+            "sha256AdvertisedByLfs": "68db2ebb03231238c2a114f3642df967a970a1d96b029adc427838cb5cf7f27a"
+          },
+          {
+            "file": "model-00014-of-00015.safetensors",
+            "bytes": 3942652952,
+            "sha256AdvertisedByLfs": "26c114fb6d5d4131ab227552d489d7a97c8c958a9ed94f6d3d1584f6cfe4b9fb"
+          },
+          {
+            "file": "model-00015-of-00015.safetensors",
+            "bytes": 508670568,
+            "sha256AdvertisedByLfs": "b84b5b1315e865c9a19a444045d422a73e3e2e31ce3766797cffd3507c68c9c9"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "Qwen/Qwen3.6-35B-A3B",
+        "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B",
+        "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+        "lastModifiedUtc": "2026-04-24T02:53:42.000Z",
+        "gated": false,
+        "licenseReportedByCard": "apache-2.0",
+        "pipelineTag": "image-text-to-text",
+        "safetensorsMetadata": {
+          "parameters": {
+            "BF16": 35951822704
+          },
+          "total": 35951822704
+        },
+        "safetensorsFiles": 26,
+        "safetensorsBytesAdvertised": 71903776776,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 64550,
+            "sha256": "c4ddaa065649ff6352648f64747a16eda31726f3e34add94ce04abb461c77b75",
+            "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/resolve/995ad96eacd98c81ed38be0c5b274b04031597b0/README.md"
+          },
+          {
+            "file": "config.json",
+            "bytes": 3686,
+            "sha256": "93a4693fa9d8392fbfccd4b3c9873f4bfdcb14fdede978b123d07d19675efe99",
+            "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/resolve/995ad96eacd98c81ed38be0c5b274b04031597b0/config.json"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 11343,
+            "sha256": "50cbab8a892c5f2993b8c7351a99182507472def3b1374558308605d99b86b32",
+            "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/resolve/995ad96eacd98c81ed38be0c5b274b04031597b0/LICENSE"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "5834abe182e742ea23d0192be89cba70da853a5d00ec99e5379cb746f4b84302",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "model-00001-of-00026.safetensors",
+            "bytes": 3996199712,
+            "sha256AdvertisedByLfs": "adee7bcb930aed22e0677e58d4873b48dadb1ed8001cb5c6a0487286eadb3478"
+          },
+          {
+            "file": "model-00002-of-00026.safetensors",
+            "bytes": 1284907696,
+            "sha256AdvertisedByLfs": "88f2dfd2b9e73e4b70be533dbf61bcfa3c9a0003758900fcbc9d9b96f5751d4b"
+          },
+          {
+            "file": "model-00003-of-00026.safetensors",
+            "bytes": 3357898360,
+            "sha256AdvertisedByLfs": "8f7d72178d3f4431864978e5bcfa4c6cb1c204bc00590644d90bb19d6d522eeb"
+          },
+          {
+            "file": "model-00004-of-00026.safetensors",
+            "bytes": 3370808712,
+            "sha256AdvertisedByLfs": "12d7db38689ba3c8af74b23ef8523eca41e0cd95db870583d0663a3ee8a6bd60"
+          },
+          {
+            "file": "model-00005-of-00026.safetensors",
+            "bytes": 3357898360,
+            "sha256AdvertisedByLfs": "a836047305d0f7a7b50f0815d09d5c03ec03d59ec2c763fcdc4bf7e9936bf902"
+          },
+          {
+            "file": "model-00006-of-00026.safetensors",
+            "bytes": 3959424904,
+            "sha256AdvertisedByLfs": "c9080d718e9c5f9e337443225aa417d4c24d00ae7995d76ee3f1cc296b557d15"
+          },
+          {
+            "file": "model-00007-of-00026.safetensors",
+            "bytes": 1096788232,
+            "sha256AdvertisedByLfs": "e8c05e23131b1dd45a455ec38cfac7db14667358268623c3938d00cf3e959a68"
+          },
+          {
+            "file": "model-00008-of-00026.safetensors",
+            "bytes": 3946842008,
+            "sha256AdvertisedByLfs": "4b6a6d495053089f4a80e7cbc82e848fba44e2c0c60122233d8fdff79fa7b296"
+          },
+          {
+            "file": "model-00009-of-00026.safetensors",
+            "bytes": 1096460848,
+            "sha256AdvertisedByLfs": "a31a954bb72d1c714e751bf0aabf2ff533f5a509693ebf7dd22ad6e90be46f67"
+          },
+          {
+            "file": "model-00010-of-00026.safetensors",
+            "bytes": 3946841992,
+            "sha256AdvertisedByLfs": "246560e66570fe746653b8443e245dc334c9b8b831ea43d2d9f1b7d98623994e"
+          },
+          {
+            "file": "model-00011-of-00026.safetensors",
+            "bytes": 1096460752,
+            "sha256AdvertisedByLfs": "7180392817fe3ecb3a27a1da43b7ff22c1a94806bac49975f9f122c3126df675"
+          },
+          {
+            "file": "model-00012-of-00026.safetensors",
+            "bytes": 3409971080,
+            "sha256AdvertisedByLfs": "043fb525f6625c2f2acb75e65a9959ee3fa7b6e3fdd2034b5cfe1859b01d3cfb"
+          },
+          {
+            "file": "model-00013-of-00026.safetensors",
+            "bytes": 1633331664,
+            "sha256AdvertisedByLfs": "33a20fb20a21379bf43c84a43105f9c0cc35bd50d740b1c302dcbe4b700f5425"
+          },
+          {
+            "file": "model-00014-of-00026.safetensors",
+            "bytes": 3422553872,
+            "sha256AdvertisedByLfs": "be823e33c5cb6120ad3769d081f34a2449dc2358041fca7c29d636c1ba19130d"
+          },
+          {
+            "file": "model-00015-of-00026.safetensors",
+            "bytes": 1633659224,
+            "sha256AdvertisedByLfs": "a89d547c6f9d0b535ee5ea2f2478f163089539f3f0dd330cb23d278a19d76123"
+          },
+          {
+            "file": "model-00016-of-00026.safetensors",
+            "bytes": 3946842136,
+            "sha256AdvertisedByLfs": "69fc3ae0316482288afdcdd0b9eb7d626703ae26f7567e89aa3fc8d1ffd4ff5b"
+          },
+          {
+            "file": "model-00017-of-00026.safetensors",
+            "bytes": 1096460608,
+            "sha256AdvertisedByLfs": "e356e3943cf3852b76bb8992e674f3256013e27d54b78e8250514151cdc29637"
+          },
+          {
+            "file": "model-00018-of-00026.safetensors",
+            "bytes": 3946841992,
+            "sha256AdvertisedByLfs": "9e5e63fd1cc7d6848330c1fa363dfcb661bbc2ac87e672d0e28b71c9cb7f3c7f"
+          },
+          {
+            "file": "model-00019-of-00026.safetensors",
+            "bytes": 1096460808,
+            "sha256AdvertisedByLfs": "708644ad34f1de727bf484f396944d8ec628645d52c183e9a992e65671685e21"
+          },
+          {
+            "file": "model-00020-of-00026.safetensors",
+            "bytes": 3409971072,
+            "sha256AdvertisedByLfs": "ca083a1d1aa64f8e8a785998f543a43374f13436dc85d396eee4e72c7a84e1ae"
+          },
+          {
+            "file": "model-00021-of-00026.safetensors",
+            "bytes": 1633331744,
+            "sha256AdvertisedByLfs": "ada4ae48f3d48fe01b4c53f2f82bce25e798a9631fd33959c881156fef2ccbce"
+          },
+          {
+            "file": "model-00022-of-00026.safetensors",
+            "bytes": 3370808752,
+            "sha256AdvertisedByLfs": "def207fb42d7db31efb512755557763c23233c6e4d4c433027cb5102a7bce2f7"
+          },
+          {
+            "file": "model-00023-of-00026.safetensors",
+            "bytes": 3357898392,
+            "sha256AdvertisedByLfs": "864d52ca7768a36f514069222e8de8626264ae124097ba8fcce5b5da2c6e2ed7"
+          },
+          {
+            "file": "model-00024-of-00026.safetensors",
+            "bytes": 3370808752,
+            "sha256AdvertisedByLfs": "391acd27420cdce5935ff18152423c70620d19dac3c39a5ef1a81d369f82d737"
+          },
+          {
+            "file": "model-00025-of-00026.safetensors",
+            "bytes": 3832888256,
+            "sha256AdvertisedByLfs": "778e7f76602f05042b69ba7f3ec91f1fdffef390540b16074041c258fb81d154"
+          },
+          {
+            "file": "model-00026-of-00026.safetensors",
+            "bytes": 2231416848,
+            "sha256AdvertisedByLfs": "1a97404220077ed3d4182e10385b152004cab608377f50cec9f54a6b8d28b613"
+          }
+        ]
+      },
+      {
+        "kind": "repository",
+        "repository": "T-Py-T/gta5-vision-driving-agent",
+        "url": "https://github.com/T-Py-T/gta5-vision-driving-agent",
+        "revision": "1e63afc39c20e165cf9da78919feee5348cc485c",
+        "committedAtUtc": "2026-10-05T02:07:50Z",
+        "archived": false,
+        "licenseSpdxReportedByGithub": "MIT",
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 10968,
+            "sha256": "8cff67c82e4083fabddfadd6d0ab195a50e5e2a646c28eeb9bd821239f9c09b2",
+            "url": "https://raw.githubusercontent.com/T-Py-T/gta5-vision-driving-agent/1e63afc39c20e165cf9da78919feee5348cc485c/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 1070,
+            "sha256": "9b2b78c73a7f1976c504208c0c32daa6533fa6118beede0640f076377f15562b",
+            "url": "https://raw.githubusercontent.com/T-Py-T/gta5-vision-driving-agent/1e63afc39c20e165cf9da78919feee5348cc485c/LICENSE"
+          },
+          {
+            "file": "pyproject.toml",
+            "bytes": 824,
+            "sha256": "d2a2edab096ae26bedf40ed1d8060410dd577ee487c8039245e4645936b693cd",
+            "url": "https://raw.githubusercontent.com/T-Py-T/gta5-vision-driving-agent/1e63afc39c20e165cf9da78919feee5348cc485c/pyproject.toml"
+          },
+          {
+            "file": "src/__init__.py",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "url": "https://raw.githubusercontent.com/T-Py-T/gta5-vision-driving-agent/1e63afc39c20e165cf9da78919feee5348cc485c/src/__init__.py"
+          },
+          {
+            "file": "src/collect_data.py",
+            "bytes": 2292,
+            "sha256": "2bf7f63b86251b87af4db4b15876cf64acd87f47c70cc907edc2e14f3ed849e2",
+            "url": "https://raw.githubusercontent.com/T-Py-T/gta5-vision-driving-agent/1e63afc39c20e165cf9da78919feee5348cc485c/src/collect_data.py"
+          },
+          {
+            "file": "src/directkeys.py",
+            "bytes": 2063,
+            "sha256": "2b05b47f7d21ea3a1bd24130aa11ceaa0cbdbc59f0691fade2c599aa8e65cae5",
+            "url": "https://raw.githubusercontent.com/T-Py-T/gta5-vision-driving-agent/1e63afc39c20e165cf9da78919feee5348cc485c/src/directkeys.py"
+          },
+          {
+            "file": "src/getkeys.py",
+            "bytes": 346,
+            "sha256": "5e001de6435b90f165c9a6f0c03bb1219dc8c061ae0d5072e36c15c233a02102",
+            "url": "https://raw.githubusercontent.com/T-Py-T/gta5-vision-driving-agent/1e63afc39c20e165cf9da78919feee5348cc485c/src/getkeys.py"
+          }
+        ],
+        "treeTruncated": false,
+        "openIssueSample": [
+          {
+            "number": 62,
+            "url": "https://github.com/T-Py-T/gta5-vision-driving-agent/issues/62",
+            "title": "refactor: configurable dataset roots (replace J:/ and X:/ literals)"
+          },
+          {
+            "number": 61,
+            "url": "https://github.com/T-Py-T/gta5-vision-driving-agent/issues/61",
+            "title": "test: headless tests for motion.py stuck-detection logic"
+          },
+          {
+            "number": 60,
+            "url": "https://github.com/T-Py-T/gta5-vision-driving-agent/issues/60",
+            "title": "ci: harden headless CI (push to main, locked uv, policy typing)"
+          },
+          {
+            "number": 59,
+            "url": "https://github.com/T-Py-T/gta5-vision-driving-agent/issues/59",
+            "title": "docs: versioned evidence packet template for Windows runs"
+          },
+          {
+            "number": 58,
+            "url": "https://github.com/T-Py-T/gta5-vision-driving-agent/issues/58",
+            "title": "docs: add docs/QUICKSTART.md with a short evidence map"
+          },
+          {
+            "number": 50,
+            "url": "https://github.com/T-Py-T/gta5-vision-driving-agent/issues/50",
+            "title": "chore: documentation follow-ups after recent docs merges"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "deepseek-ai/DeepSeek-V4.1-Flash",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+        "revision": "5254448103b6254fc646dacbca1cbbf20e9216c1",
+        "lastModifiedUtc": "2026-10-12T09:45:54.000Z",
+        "gated": false,
+        "licenseReportedByCard": "mit",
+        "pipelineTag": "image-text-to-text",
+        "safetensorsMetadata": {
+          "parameters": {
+            "BF16": 1976441856,
+            "F32": 42307282,
+            "F8_E4M3": 204015223296,
+            "I8": 557171343360
+          },
+          "total": 763205315794
+        },
+        "safetensorsFiles": 48,
+        "safetensorsBytesAdvertised": 510296708312,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 13110,
+            "sha256": "347c9db4e5506acb531cbc3b724407ab88e9af8781679152f0823d7bac16d251",
+            "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/resolve/5254448103b6254fc646dacbca1cbbf20e9216c1/README.md"
+          },
+          {
+            "file": "config.json",
+            "bytes": 3311,
+            "sha256": "8be45ce0476004a3f529fd896115a4a2e800a129ad2d3ec05b16050f52e21879",
+            "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/resolve/5254448103b6254fc646dacbca1cbbf20e9216c1/config.json"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 1084,
+            "sha256": "f2c6c602815669d292889e5be8c802f2ed950653b77999b1584e8e6aed25d040",
+            "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/resolve/5254448103b6254fc646dacbca1cbbf20e9216c1/LICENSE"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "7c5a6a23b6afbc7a92ad473839af2a70bc2254b213674e7ff76285d3c27b9f8d",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "model-00001-of-00048.safetensors",
+            "bytes": 970533624,
+            "sha256AdvertisedByLfs": "886aebdafa08cc27bbae2165ed35bdfe0de9370bf88c1411283c155c6ae4ff89"
+          },
+          {
+            "file": "model-00002-of-00048.safetensors",
+            "bytes": 1323858272,
+            "sha256AdvertisedByLfs": "4320066fc6958e5bc01d8c3feba79b7454b59f0f4b7299ab7145ed44bbf4ecec"
+          },
+          {
+            "file": "model-00003-of-00048.safetensors",
+            "bytes": 7389759032,
+            "sha256AdvertisedByLfs": "e1281f85d0ce4a3dfb63d41926fc4a47fa71f36ba20992e3597e702ead49d4c9"
+          },
+          {
+            "file": "model-00004-of-00048.safetensors",
+            "bytes": 7389759032,
+            "sha256AdvertisedByLfs": "79456c9db0cda3b8115fe1c726fe3db1a34b434584a3991917088a0ab56a39de"
+          },
+          {
+            "file": "model-00005-of-00048.safetensors",
+            "bytes": 7405953784,
+            "sha256AdvertisedByLfs": "4a42dc78698bee6b1a821aa01c9650749ef1f716143751f1cdb815c6400280a9"
+          },
+          {
+            "file": "model-00006-of-00048.safetensors",
+            "bytes": 7389759032,
+            "sha256AdvertisedByLfs": "020a6df51a2853452561d91268a65481f7a7d7954ed47f8e6c9ce69a4a134f77"
+          },
+          {
+            "file": "model-00007-of-00048.safetensors",
+            "bytes": 7389759032,
+            "sha256AdvertisedByLfs": "40f8b52f763f6380d41257e1af04eee3aad300af6a418c38e49ff99e3604163a"
+          },
+          {
+            "file": "model-00008-of-00048.safetensors",
+            "bytes": 7389759032,
+            "sha256AdvertisedByLfs": "d62cca4e698f030d4b96ec624c08bed7ad604cec13077da6d6b06669281c4650"
+          },
+          {
+            "file": "model-00009-of-00048.safetensors",
+            "bytes": 7389759032,
+            "sha256AdvertisedByLfs": "1ca62e4c294df31aee69a782974cb14269264fdc08465ab4835760258f05d6ef"
+          },
+          {
+            "file": "model-00010-of-00048.safetensors",
+            "bytes": 7389759032,
+            "sha256AdvertisedByLfs": "dd33c9750a40cbfcdfb19cd8335d955f533e3a18b790c0ee43d1e5d77911595c"
+          },
+          {
+            "file": "model-00011-of-00048.safetensors",
+            "bytes": 7405953784,
+            "sha256AdvertisedByLfs": "a9b309f90e0d1e2252a224ed6b057b9c82c27d3a49cff64bfbfef12efd067f7c"
+          },
+          {
+            "file": "model-00012-of-00048.safetensors",
+            "bytes": 7389759032,
+            "sha256AdvertisedByLfs": "b359227eceb3f839c80de19dddf946648ca89425d9b719ff44702cf5e8cfbe0e"
+          },
+          {
+            "file": "model-00013-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "41d87a4c81fec1550f9cb975db05598a18ee0161c2664e8e1a0c7b60742755a6"
+          },
+          {
+            "file": "model-00014-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "e7ca4a12688a5819829ead3a03282aedb380e438bc41a00e969f70952c6d0eb9"
+          },
+          {
+            "file": "model-00015-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "fa9d49314bbb25118b3d52c573ed66a4d0acfb01dcb26d8367f43c66a52f46c4"
+          },
+          {
+            "file": "model-00016-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "07d08bce9d73d416eaca0f42843440a8c45c5f939eff1a3690fb460d8dd7f623"
+          },
+          {
+            "file": "model-00017-of-00048.safetensors",
+            "bytes": 7405956128,
+            "sha256AdvertisedByLfs": "3d35e330a6c28cd59a06a1caab8b0048f7e12cc037d728736f74431c4c0a1a4c"
+          },
+          {
+            "file": "model-00018-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "48bd0c28b7f441f131f562cb664366d7726447a3698da3dd56ebbfeb1b916c75"
+          },
+          {
+            "file": "model-00019-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "b7a25cb64a959ca5e5a99e239bb1ba2092b9bcf022bec4ba71f7441334107bd1"
+          },
+          {
+            "file": "model-00020-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "8aea8c4026ba4b93e82b4ed1b6b4620d02b6aaac88d211aaf577acea443aff84"
+          },
+          {
+            "file": "model-00021-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "4cb6558dedfdc75a6be472e27bc3e830d8443a3371854e61dc54454a1b5b18f7"
+          },
+          {
+            "file": "model-00022-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "81031b68c967539a7c51d1b12d37d18de926ca3045ec554ccdd49a83b4dc0084"
+          },
+          {
+            "file": "model-00023-of-00048.safetensors",
+            "bytes": 7400713088,
+            "sha256AdvertisedByLfs": "096723fc8afa9886b976fb63aabef159406dc483e6f2a41e3fe386435b0436cc"
+          },
+          {
+            "file": "model-00024-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "c9438ff607bd902fdeb38267d36239ccf60d38595988364562b862791841da75"
+          },
+          {
+            "file": "model-00025-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "4227ef9fe34d10de584d67250845fab905cbd8462fd84d9da24d772f223db6b4"
+          },
+          {
+            "file": "model-00026-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "0af8c8f1b96b502eda652a0549cf55cd8a4d472a34d27ef9bf1c1d7c4567ca3f"
+          },
+          {
+            "file": "model-00027-of-00048.safetensors",
+            "bytes": 7395337384,
+            "sha256AdvertisedByLfs": "3066bd03043726d2400302cb9af759ec4e3957a935d56e241b83b52870322e28"
+          },
+          {
+            "file": "model-00028-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "9bc915075568b75e2aec9c645cc0fece6287f115c32031a52ab4f9ba9d12fde6"
+          },
+          {
+            "file": "model-00029-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "d153dd9cde7c4aa7ea9896cf7aa25b49447af573f90ad14cfaaa532fbbd19434"
+          },
+          {
+            "file": "model-00030-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "3c9ccd96e908e00f02a70930b0821a6c53e5301376a261284a092e1aea7bb5da"
+          },
+          {
+            "file": "model-00031-of-00048.safetensors",
+            "bytes": 7395337384,
+            "sha256AdvertisedByLfs": "0de7b6d7142df18ad45a215e9c0ef004f78cdbfefd59cc16345b2bc004047343"
+          },
+          {
+            "file": "model-00032-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "6a5aaa73c6f97294bd079914ba44209ecf3d0491c8b95ef9995655511e35aee6"
+          },
+          {
+            "file": "model-00033-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "386e3e91f7f02f7e2c25f398b3a63379051c2077839b3081f7556e18c29a69c9"
+          },
+          {
+            "file": "model-00034-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "9deab3c4f27c956f91cd989d9a1f6cf4bbb91858ce3f7164caa5ae61125c943f"
+          },
+          {
+            "file": "model-00035-of-00048.safetensors",
+            "bytes": 7395337384,
+            "sha256AdvertisedByLfs": "226573bc07f35091b0ec27b0056ab3059f9bc1c0afd0bc104c93c86dd029cad2"
+          },
+          {
+            "file": "model-00036-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "90d6a85c1eb0cae68c6c7bffa11b60654ea00353d27a0ae17701b72e239894cd"
+          },
+          {
+            "file": "model-00037-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "207aef18f995fdfe7506175aabd700aa62dcf6f488c7cc375e9de06f56891b83"
+          },
+          {
+            "file": "model-00038-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "cbbaa0b0807311807a696efec09f9b5a5d63bdf68b82378e1fc7402a2533c627"
+          },
+          {
+            "file": "model-00039-of-00048.safetensors",
+            "bytes": 7395337384,
+            "sha256AdvertisedByLfs": "f4cf191547b50efbc35c4ed1f36cfb26043d94f987c49d54b15ef2d632a14a77"
+          },
+          {
+            "file": "model-00040-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "e991bfc416055c45ddb89f1447eae1e67dba2816e7580044ffff3db7e2af27a3"
+          },
+          {
+            "file": "model-00041-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "48a1c08afadf4e73223c587f9c6ad6f32aef57c01342ae75e96b07a001711d42"
+          },
+          {
+            "file": "model-00042-of-00048.safetensors",
+            "bytes": 7389761368,
+            "sha256AdvertisedByLfs": "e1a4d5d30ae51bafda75078d49b05a585c924b0af9b3481c075b04341507c2ef"
+          },
+          {
+            "file": "model-00043-of-00048.safetensors",
+            "bytes": 1323837624,
+            "sha256AdvertisedByLfs": "d762b688f138e00a24eac96f27b842715bb4b534ecc9ca39076bed2b8c33201e"
+          },
+          {
+            "file": "model-00044-of-00048.safetensors",
+            "bytes": 2652728736,
+            "sha256AdvertisedByLfs": "9a6b39fb88a2510487a8efaef77aa7864e8061f6b62c95a0f010e9dd538f3b05"
+          },
+          {
+            "file": "model-00045-of-00048.safetensors",
+            "bytes": 2573998176,
+            "sha256AdvertisedByLfs": "0cc9d5f6ca3a2158ccc63ce2c70c76aeda8177d54913340481af566680329eb5"
+          },
+          {
+            "file": "model-00046-of-00048.safetensors",
+            "bytes": 2706402896,
+            "sha256AdvertisedByLfs": "e625902027b9d23d416f8818c665fab4704e0b96dc1bc778321601b700475a9d"
+          },
+          {
+            "file": "model-00047-of-00048.safetensors",
+            "bytes": 101535150936,
+            "sha256AdvertisedByLfs": "824db4881320407ac340736d14dcee5ecd748c27d0f5836b8127ecc2e3781b0f"
+          },
+          {
+            "file": "model-00048-of-00048.safetensors",
+            "bytes": 101537926640,
+            "sha256AdvertisedByLfs": "976330f4954338e1ad8b508c32aa912032c7ad908959fd53c8307650fe4520ed"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "google/gemma-4-12B-it",
+        "url": "https://huggingface.co/google/gemma-4-12B-it",
+        "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+        "lastModifiedUtc": "2026-07-20T16:42:08.000Z",
+        "gated": false,
+        "licenseReportedByCard": "apache-2.0",
+        "pipelineTag": "any-to-any",
+        "safetensorsMetadata": {
+          "parameters": {
+            "BF16": 11959730224
+          },
+          "total": 11959730224
+        },
+        "safetensorsFiles": 1,
+        "safetensorsBytesAdvertised": 23919549408,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 28484,
+            "sha256": "04a06469e3d83b941eaa776a3647b8690b5a7cc5c833af2381e5345bb1bb45c0",
+            "url": "https://huggingface.co/google/gemma-4-12B-it/resolve/707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7/README.md"
+          },
+          {
+            "file": "config.json",
+            "bytes": 4423,
+            "sha256": "478c46e8d2c52d5c2d85bf67e3b3e8c90e7c9d91086cee27e3c267907e936bd9",
+            "url": "https://huggingface.co/google/gemma-4-12B-it/resolve/707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7/config.json"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "e4ac69a0857e2d1474ad4fcbf6f351acbd7fea73b8e89c7184ea0e93d890eaf6",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "model.safetensors",
+            "bytes": 23919549408,
+            "sha256AdvertisedByLfs": "5a84cb313260ac447237b890387116dfa8682e49a6b44bc585ae8353abbff18d"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "google/gemma-4-26B-A4B-it",
+        "url": "https://huggingface.co/google/gemma-4-26B-A4B-it",
+        "revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+        "lastModifiedUtc": "2026-07-20T16:42:12.000Z",
+        "gated": false,
+        "licenseReportedByCard": "apache-2.0",
+        "pipelineTag": "image-text-to-text",
+        "safetensorsMetadata": {
+          "parameters": {
+            "BF16": 25805936206
+          },
+          "total": 25805936206
+        },
+        "safetensorsFiles": 2,
+        "safetensorsBytesAdvertised": 51612009916,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 27979,
+            "sha256": "4f463225c4fe49ec120115b0f9bb6713ff1556293a909903ffdae3df7bf974da",
+            "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/resolve/4d7ae4984b7db7de8f8457170b3f1a419ee76d52/README.md"
+          },
+          {
+            "file": "config.json",
+            "bytes": 3815,
+            "sha256": "ed0c1eb3633de771906e9ba004a44cc5635bcc06ee2062077c3d2e88a50707d3",
+            "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/resolve/4d7ae4984b7db7de8f8457170b3f1a419ee76d52/config.json"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "6f13007ec73bfa67b6bbeedc353ee5dc8ca199448a8ed4191219b59249a90056",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "model-00001-of-00002.safetensors",
+            "bytes": 49907246508,
+            "sha256AdvertisedByLfs": "1127684971bbca40465435a5cad69d67ad603bf5e61c6dfd5561fae4a3bcfdb3"
+          },
+          {
+            "file": "model-00002-of-00002.safetensors",
+            "bytes": 1704763408,
+            "sha256AdvertisedByLfs": "aab47033e1e8a492ef8e581efae1cf36478d0433567e7729b3c1728bc8970db7"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "google/gemma-4-E4B-it",
+        "url": "https://huggingface.co/google/gemma-4-E4B-it",
+        "revision": "ee0ef6023621cff504d758262d4e04895a5af4a2",
+        "lastModifiedUtc": "2026-07-20T16:42:03.000Z",
+        "gated": false,
+        "licenseReportedByCard": "apache-2.0",
+        "pipelineTag": "any-to-any",
+        "safetensorsMetadata": {
+          "parameters": {
+            "BF16": 7996156490
+          },
+          "total": 7996156490
+        },
+        "safetensorsFiles": 1,
+        "safetensorsBytesAdvertised": 15992595884,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 27956,
+            "sha256": "b21e4f69614ccd77baa2f3797d05311040dee07b989cb9f0d25111aa4b605b2c",
+            "url": "https://huggingface.co/google/gemma-4-E4B-it/resolve/ee0ef6023621cff504d758262d4e04895a5af4a2/README.md"
+          },
+          {
+            "file": "config.json",
+            "bytes": 5145,
+            "sha256": "33b10c02df3c2e8536cf323d29d53262aaa2f4d11dbe19bc729373fbe90295d4",
+            "url": "https://huggingface.co/google/gemma-4-E4B-it/resolve/ee0ef6023621cff504d758262d4e04895a5af4a2/config.json"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "86bbeabae1c51f609f2c8d7674d787bc85c1c8d5bd95cfef1bc496663e245691",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "model.safetensors",
+            "bytes": 15992595884,
+            "sha256AdvertisedByLfs": "cfbd3d2f1cd71bd471c37fe2bf8546d5028d41e5736f64e1ca6c6b8893125503"
+          }
+        ]
+      },
+      {
+        "kind": "repository",
+        "repository": "jeromed780/gta-v-autonomous-driving",
+        "url": "https://github.com/jeromed780/gta-v-autonomous-driving",
+        "revision": "98165d4be046065688c07f1e12da51e25c6e141f",
+        "committedAtUtc": "2026-03-07T15:14:03Z",
+        "archived": false,
+        "licenseSpdxReportedByGithub": "MIT",
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 9081,
+            "sha256": "4bee5e3e99b751aa6fbda8a15d9e1fb389250f3560cef6dad05cc2cb2790a4fa",
+            "url": "https://raw.githubusercontent.com/jeromed780/gta-v-autonomous-driving/98165d4be046065688c07f1e12da51e25c6e141f/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 1056,
+            "sha256": "06dcddbb6908a0c6dd4a9e8ec822eea41d5a460a53089fecccc8a68049e99241",
+            "url": "https://raw.githubusercontent.com/jeromed780/gta-v-autonomous-driving/98165d4be046065688c07f1e12da51e25c6e141f/LICENSE"
+          },
+          {
+            "file": "requirements.txt",
+            "bytes": 249,
+            "sha256": "33917fc7b3df37ff9d1822260cc38ebda23e5efb09805bc4e8c9db0200e1dff6",
+            "url": "https://raw.githubusercontent.com/jeromed780/gta-v-autonomous-driving/98165d4be046065688c07f1e12da51e25c6e141f/requirements.txt"
+          },
+          {
+            "file": "capture/__init__.py",
+            "bytes": 129,
+            "sha256": "189aa285edba9ebaa585e8c311f1e4bac7bf40deb0c5cafcaa9d55bc86677670",
+            "url": "https://raw.githubusercontent.com/jeromed780/gta-v-autonomous-driving/98165d4be046065688c07f1e12da51e25c6e141f/capture/__init__.py"
+          },
+          {
+            "file": "capture/grabber.py",
+            "bytes": 1741,
+            "sha256": "0421053a36fa6da0fe72170fc4c76b95b09b7b6624ccb0728a13b46480e9b38c",
+            "url": "https://raw.githubusercontent.com/jeromed780/gta-v-autonomous-driving/98165d4be046065688c07f1e12da51e25c6e141f/capture/grabber.py"
+          },
+          {
+            "file": "config.py",
+            "bytes": 6193,
+            "sha256": "971b9ac730ad96466f29b4c49e28885bffe0ca7d19ef457e6163f885bd931ba9",
+            "url": "https://raw.githubusercontent.com/jeromed780/gta-v-autonomous-driving/98165d4be046065688c07f1e12da51e25c6e141f/config.py"
+          },
+          {
+            "file": "control/__init__.py",
+            "bytes": 139,
+            "sha256": "894e9eb9dde27823c8b40165f8fa3f8303bd0f00230bd2ce15a2611b93316132",
+            "url": "https://raw.githubusercontent.com/jeromed780/gta-v-autonomous-driving/98165d4be046065688c07f1e12da51e25c6e141f/control/__init__.py"
+          },
+          {
+            "file": "control/controller.py",
+            "bytes": 11983,
+            "sha256": "7e7e0c70242c24ffdbdc94aa9c07d55901f076017eeab9a0a4f5bdc5419901f3",
+            "url": "https://raw.githubusercontent.com/jeromed780/gta-v-autonomous-driving/98165d4be046065688c07f1e12da51e25c6e141f/control/controller.py"
+          }
+        ],
+        "treeTruncated": false,
+        "openIssueSample": []
+      },
+      {
+        "kind": "repository",
+        "repository": "lmgame-org/GamingAgent",
+        "url": "https://github.com/lmgame-org/GamingAgent",
+        "revision": "996d848ae5e3bf68433d663f38ef4da5bdfe5332",
+        "committedAtUtc": "2025-09-12T00:41:27Z",
+        "archived": false,
+        "licenseSpdxReportedByGithub": "MIT",
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 9000,
+            "sha256": "b5231ac6e61f1ca6d1ab504403de6b354ce91e7ca6cf39e8a21870f380e735eb",
+            "url": "https://raw.githubusercontent.com/lmgame-org/GamingAgent/996d848ae5e3bf68433d663f38ef4da5bdfe5332/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 1065,
+            "sha256": "c2ce17ad74a5196a13e547945d9ac493b5eb241bc46d50b76d595204d373f76a",
+            "url": "https://raw.githubusercontent.com/lmgame-org/GamingAgent/996d848ae5e3bf68433d663f38ef4da5bdfe5332/LICENSE"
+          },
+          {
+            "file": "pyproject.toml",
+            "bytes": 1039,
+            "sha256": "8f63cf34ea6a8a5ed748f785a086636e34bee205a8b7973a713765edb665e003",
+            "url": "https://raw.githubusercontent.com/lmgame-org/GamingAgent/996d848ae5e3bf68433d663f38ef4da5bdfe5332/pyproject.toml"
+          },
+          {
+            "file": "requirements.txt",
+            "bytes": 358,
+            "sha256": "8f775d325ee81bcb7935f70ea6a85abfc30bd7e68c1a307e73f48831249e007b",
+            "url": "https://raw.githubusercontent.com/lmgame-org/GamingAgent/996d848ae5e3bf68433d663f38ef4da5bdfe5332/requirements.txt"
+          }
+        ],
+        "treeTruncated": false,
+        "openIssueSample": [
+          {
+            "number": 79,
+            "url": "https://github.com/lmgame-org/GamingAgent/issues/79",
+            "title": "experimental scores"
+          },
+          {
+            "number": 78,
+            "url": "https://github.com/lmgame-org/GamingAgent/issues/78",
+            "title": "[Bug] White screen on boot when running Ace Attorney, stuck on startup screen"
+          },
+          {
+            "number": 72,
+            "url": "https://github.com/lmgame-org/GamingAgent/issues/72",
+            "title": "Crash issue by invalid moves in Sokoban"
+          },
+          {
+            "number": 70,
+            "url": "https://github.com/lmgame-org/GamingAgent/issues/70",
+            "title": "How to generate Pokemon red game videos"
+          },
+          {
+            "number": 67,
+            "url": "https://github.com/lmgame-org/GamingAgent/issues/67",
+            "title": "Missing code in \"main\" branch"
+          },
+          {
+            "number": 62,
+            "url": "https://github.com/lmgame-org/GamingAgent/issues/62",
+            "title": "Will this project have a complete open-source pla"
+          }
+        ]
+      },
+      {
+        "kind": "repository",
+        "repository": "subbon/NitroGen-Full",
+        "url": "https://github.com/subbon/NitroGen-Full",
+        "revision": "a42921a39e44331a800f7d5d53fc3ce5a5680191",
+        "committedAtUtc": "2026-03-11T09:44:20Z",
+        "archived": false,
+        "licenseSpdxReportedByGithub": "NOASSERTION",
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 12191,
+            "sha256": "e20a6e890fea504daf97efe704462d88a4a7d6a547e45061dc78905ad1dd3fee",
+            "url": "https://raw.githubusercontent.com/subbon/NitroGen-Full/a42921a39e44331a800f7d5d53fc3ce5a5680191/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 4729,
+            "sha256": "564046abbef821cefd5c169d34ee1e96b3dfb72cf0be81de41ef8f4a1323c5a3",
+            "url": "https://raw.githubusercontent.com/subbon/NitroGen-Full/a42921a39e44331a800f7d5d53fc3ce5a5680191/LICENSE"
+          },
+          {
+            "file": "pyproject.toml",
+            "bytes": 1137,
+            "sha256": "ea459aa41e428b0fd663b566ea4d77d2e6d3a8fa85d14873a516ebc7cbb68710",
+            "url": "https://raw.githubusercontent.com/subbon/NitroGen-Full/a42921a39e44331a800f7d5d53fc3ce5a5680191/pyproject.toml"
+          }
+        ],
+        "treeTruncated": false,
+        "openIssueSample": []
+      },
+      {
+        "kind": "model",
+        "model": "subbonan/nitrogen-pizza-tower-finetune",
+        "url": "https://huggingface.co/subbonan/nitrogen-pizza-tower-finetune",
+        "revision": "0fe7b7c87ae15ec566e610cd9d16a6e277594f89",
+        "lastModifiedUtc": "2026-03-11T09:46:05.000Z",
+        "gated": false,
+        "licenseReportedByCard": "other",
+        "pipelineTag": null,
+        "safetensorsMetadata": null,
+        "safetensorsFiles": 0,
+        "safetensorsBytesAdvertised": null,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 5053,
+            "sha256": "ad195755436b550cb6bb2824b75c41eb7d6e0e688987676f8480a4e868623f70",
+            "url": "https://huggingface.co/subbonan/nitrogen-pizza-tower-finetune/resolve/0fe7b7c87ae15ec566e610cd9d16a6e277594f89/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 4729,
+            "sha256": "564046abbef821cefd5c169d34ee1e96b3dfb72cf0be81de41ef8f4a1323c5a3",
+            "url": "https://huggingface.co/subbonan/nitrogen-pizza-tower-finetune/resolve/0fe7b7c87ae15ec566e610cd9d16a6e277594f89/LICENSE"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "28164fde94767d60fd50d35ac18dfc21afb9f7fa08c81314237b03e4e09c93b9",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "final_model.pt",
+            "bytes": 1974762877,
+            "sha256AdvertisedByLfs": "d745da18f7bab2d5a04519e619bf07678bfd4c0128427e4a17e7243c6f3e80a1"
+          },
+          {
+            "file": "final_model_35.pt",
+            "bytes": 1974770877,
+            "sha256AdvertisedByLfs": "974363deb8eded6e6a38e2e8a45f38406a873cbdd57acb565b30acf0db4b2523"
+          }
+        ]
+      },
+      {
+        "kind": "repository",
+        "repository": "yunncheng/GameWAM",
+        "url": "https://github.com/yunncheng/GameWAM",
+        "revision": "e3a3d29a1eef4bc1f51ec161652bcc158f908321",
+        "committedAtUtc": "2026-09-09T09:30:39Z",
+        "archived": false,
+        "licenseSpdxReportedByGithub": "Apache-2.0",
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 14197,
+            "sha256": "f4af606e4619f5c30fcedafc661f3ca6369735f612ef51135207c710b165e63c",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 11357,
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/LICENSE"
+          },
+          {
+            "file": "pyproject.toml",
+            "bytes": 1331,
+            "sha256": "3bc873e757bce6e8f4cca3e3a090806e04dd71ef35cd3e47b8467dfa6db25949",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/pyproject.toml"
+          },
+          {
+            "file": "src/gamewam/inference.py",
+            "bytes": 61145,
+            "sha256": "7495991b80870ffac403f195171b470992b82cc20cb76453aa7685fe220b9a0c",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/src/gamewam/inference.py"
+          },
+          {
+            "file": "configs/sim_minecraft.yaml",
+            "bytes": 1060,
+            "sha256": "392cba7fc33323978aa9db394d54dd5165e9907a0559a730243f09e5a9caab14",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/configs/sim_minecraft.yaml"
+          },
+          {
+            "file": "configs/sim_vizdoom.yaml",
+            "bytes": 594,
+            "sha256": "85ff1cab4f58e0d5aa46ff4568aa72f55fe776c1208fb10a1e544288ab634f6e",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/configs/sim_vizdoom.yaml"
+          },
+          {
+            "file": "configs/model/wan_uncond_ar.yaml",
+            "bytes": 2752,
+            "sha256": "092806cc08ef7b7edfc02c92224999960d750c37ae0c9b7df8186dbf14fd2495",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/configs/model/wan_uncond_ar.yaml"
+          },
+          {
+            "file": "configs/model/wan_cond_ar.yaml",
+            "bytes": 2751,
+            "sha256": "79d45e390785cf1f8df32143191c0e51fd3940209bc2c1d4d427e3767c738fef",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/configs/model/wan_cond_ar.yaml"
+          },
+          {
+            "file": "src/gamewam/envs/base.py",
+            "bytes": 1484,
+            "sha256": "d6e05c869049a3a70a97dc040e6dbd299420ca8871e36c5aa8803223b05574c4",
+            "url": "https://raw.githubusercontent.com/yunncheng/GameWAM/e3a3d29a1eef4bc1f51ec161652bcc158f908321/src/gamewam/envs/base.py"
+          }
+        ],
+        "treeTruncated": false,
+        "openIssueSample": [
+          {
+            "number": 2,
+            "url": "https://github.com/yunncheng/GameWAM/issues/2",
+            "title": "Invitation to review GameWAM in the 3D/4D World Modeling survey collection"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "jeromed780/gta-v-autonomous-driving",
+        "url": "https://huggingface.co/jeromed780/gta-v-autonomous-driving",
+        "revision": "64ad5fe9508ade15a1f00942dea9b298a34cba56",
+        "lastModifiedUtc": "2026-03-07T14:50:38.000Z",
+        "gated": false,
+        "licenseReportedByCard": null,
+        "pipelineTag": null,
+        "safetensorsMetadata": null,
+        "safetensorsFiles": 0,
+        "safetensorsBytesAdvertised": null,
+        "selectedTextFiles": [],
+        "weightsDownloaded": false,
+        "metadataSha256": "3bd8ec25bc5dbd614a938e1c29a0d3fc80ad5dbec28e84a64ca03f96085d64b2",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "gta_segment.pt",
+            "bytes": 276404733,
+            "sha256AdvertisedByLfs": "972d4ceac2a6c1e9169ba84d141bdbcd57f5f65d80a963918cb0ba7dd375bf3b"
+          },
+          {
+            "file": "tusimple_18.pth",
+            "bytes": 244961764,
+            "sha256AdvertisedByLfs": "3b4df887e7aea4e779c433fcad8c10442711b0663cb80f552a627ab5b3571111"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "nvidia/Cosmos3-Nano",
+        "url": "https://huggingface.co/nvidia/Cosmos3-Nano",
+        "revision": "e59a53c25979a090fa8706c9acc0c254a6e89b92",
+        "lastModifiedUtc": "2026-09-16T18:48:37.000Z",
+        "gated": false,
+        "licenseReportedByCard": "other",
+        "pipelineTag": null,
+        "safetensorsMetadata": {
+          "parameters": {
+            "BF16": 15750057456
+          },
+          "total": 15750057456
+        },
+        "safetensorsFiles": 10,
+        "safetensorsBytesAdvertised": 34894818144,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 43142,
+            "sha256": "bbe6a5b0e3c09ae08ba1df06d35859fa2fd5726c1edc22a43788611f126caad5",
+            "url": "https://huggingface.co/nvidia/Cosmos3-Nano/resolve/e59a53c25979a090fa8706c9acc0c254a6e89b92/README.md"
+          },
+          {
+            "file": "config.json",
+            "bytes": 8166,
+            "sha256": "c32f2468a54542c21946bc8eab6172b911dcec9a7193a94c023ea2d4073bcda6",
+            "url": "https://huggingface.co/nvidia/Cosmos3-Nano/resolve/e59a53c25979a090fa8706c9acc0c254a6e89b92/config.json"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "1289e1ba59fcd454e5dbdee35887a68c36a9c0fe0fff2862c2318bd57c323aa3",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "sound_tokenizer/diffusion_pytorch_model.safetensors",
+            "bytes": 1985176840,
+            "sha256AdvertisedByLfs": "a4b6da5975bf89f6853fe589ad4752d281ac79fbdfad52ea90537fa080b4b9c2"
+          },
+          {
+            "file": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+            "bytes": 4902257280,
+            "sha256AdvertisedByLfs": "7d0f718198cac14cf323d58568c78aa1290b4bd1dcced6481624b5b9c6d70dc2"
+          },
+          {
+            "file": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+            "bytes": 4999863656,
+            "sha256AdvertisedByLfs": "7e6e7d270c193a58a1aec0cbc89f6f5afcaef6e3b951d86b0a432244c449e34e"
+          },
+          {
+            "file": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+            "bytes": 4932719448,
+            "sha256AdvertisedByLfs": "15d08936149a7e77c6668e5b1cd47dc92a35e33741f0090d619045b66da9ff8d"
+          },
+          {
+            "file": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+            "bytes": 4983084656,
+            "sha256AdvertisedByLfs": "02cebbb557bced701eb825901e1de5f86d2e1feb49cb9a8d1fb7d1b878fdb31b"
+          },
+          {
+            "file": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+            "bytes": 4949498576,
+            "sha256AdvertisedByLfs": "a5e3edd742b8f1fcf27a3eb3878c67dfcb0e6881588fa35deef503d640ea69d1"
+          },
+          {
+            "file": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+            "bytes": 4261644464,
+            "sha256AdvertisedByLfs": "1bb99750f7ab4a47f8b0403a87aa43fefc9648660609ab2ace4cab361b957cd0"
+          },
+          {
+            "file": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+            "bytes": 1318361208,
+            "sha256AdvertisedByLfs": "3f159bc8b82477adde771ae9e4f54f76564e02844a2fc6267903bd745111d7f6"
+          },
+          {
+            "file": "vae/diffusion_pytorch_model.safetensors",
+            "bytes": 1409400600,
+            "sha256AdvertisedByLfs": "230496cb59ff85bc9c040487737c4062480cb61c71e697b197b4c30142f2a0da"
+          },
+          {
+            "file": "vision_encoder/model.safetensors",
+            "bytes": 1152811416,
+            "sha256AdvertisedByLfs": "b0c0f719fcf5f2cdadb676701477c236020713657976592ad046583707a6a95a"
+          }
+        ]
+      },
+      {
+        "kind": "model",
+        "model": "Yunncheng/gamewam-models",
+        "url": "https://huggingface.co/Yunncheng/gamewam-models",
+        "revision": "6486a716c9b7dc969f1999a26c78aea7967c1de3",
+        "lastModifiedUtc": "2026-09-11T14:54:08.000Z",
+        "gated": false,
+        "licenseReportedByCard": "apache-2.0",
+        "pipelineTag": "any-to-any",
+        "safetensorsMetadata": null,
+        "safetensorsFiles": 0,
+        "safetensorsBytesAdvertised": null,
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 3450,
+            "sha256": "ca51682707b54ae68eb2967195f586a9c07b992baad90d8bb48b052073983413",
+            "url": "https://huggingface.co/Yunncheng/gamewam-models/resolve/6486a716c9b7dc969f1999a26c78aea7967c1de3/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 11357,
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+            "url": "https://huggingface.co/Yunncheng/gamewam-models/resolve/6486a716c9b7dc969f1999a26c78aea7967c1de3/LICENSE"
+          }
+        ],
+        "weightsDownloaded": false,
+        "metadataSha256": "c03b56b0210a2680e5f24bcd56a5c9c2e5b8f3432ce3a64794b9a113fbcf1b02",
+        "advertisedCheckpointFiles": [
+          {
+            "file": "minecraft/gamewam-minecraft.pt",
+            "bytes": 12227123705,
+            "sha256AdvertisedByLfs": "65017d98cde17afafdc4b4beb8070887967eed5ef9f14c46ee1c98eb61b3a72e"
+          },
+          {
+            "file": "vizdoom/gamewam-vizdoom.pt",
+            "bytes": 12226309745,
+            "sha256AdvertisedByLfs": "999c40e402f559384df160b07fd5a7f8f55902a99f0ba66ce8aebbd3769306d6"
+          }
+        ]
+      },
+      {
+        "kind": "repository",
+        "repository": "autonomousvision/transfuser",
+        "url": "https://github.com/autonomousvision/transfuser",
+        "revision": "21bdb7eaf3aa9fa95219329883d520b3d48e4892",
+        "committedAtUtc": "2026-09-21T11:37:34Z",
+        "archived": false,
+        "licenseSpdxReportedByGithub": "MIT",
+        "selectedTextFiles": [
+          {
+            "file": "README.md",
+            "bytes": 11912,
+            "sha256": "d5e14816458707b8021a881c000ce13adf4ffe6fcca4b25824dedbc9408cf094",
+            "url": "https://raw.githubusercontent.com/autonomousvision/transfuser/21bdb7eaf3aa9fa95219329883d520b3d48e4892/README.md"
+          },
+          {
+            "file": "LICENSE",
+            "bytes": 1081,
+            "sha256": "a3f54d69c47c55baf54386a1bab1a605e8e710855a5cc6f5ef3087bb6e4ce4f7",
+            "url": "https://raw.githubusercontent.com/autonomousvision/transfuser/21bdb7eaf3aa9fa95219329883d520b3d48e4892/LICENSE"
+          }
+        ],
+        "treeTruncated": false,
+        "openIssueSample": []
+      }
+    ],
+    "communityReports": [
+      {
+        "file": "bytedance_UI-TARS-issue-232.json",
+        "bytes": 2988,
+        "sha256": "d0aa2cdea5a5e77c43b1f6e18db08c56fb292158693a9a18b3a4bd422ba87116",
+        "url": "https://github.com/bytedance/UI-TARS/issues/232"
+      },
+      {
+        "file": "BAAI-Agents_Cradle-issue-101.json",
+        "bytes": 5581,
+        "sha256": "0a93f7c0e2a35cc68c4d46b0db3e5aa47dceb99bbbaf04fc8d9640341b8d868b",
+        "url": "https://github.com/BAAI-Agents/Cradle/issues/101"
+      },
+      {
+        "file": "BAAI-Agents_Cradle-issue-106.json",
+        "bytes": 5265,
+        "sha256": "e481f30427f6f0b86439ebd7532ffd6ed9ceeacab5b353820e5fcb1350c7ab44",
+        "url": "https://github.com/BAAI-Agents/Cradle/issues/106"
+      }
+    ],
+    "webPrimaryPages": [
+      {
+        "url": "https://yunncheng.github.io/GameWAM/",
+        "bytes": 25424,
+        "sha256": "f3fde66cbb9815866e340de2fc68f0c4af29c4da9a7f7760eb98139cc2c79244",
+        "cacheFile": "gamewam-project.html"
+      },
+      {
+        "url": "https://deepmind.google/blog/sima-2-an-agent-that-plays-reasons-and-learns-with-you-in-virtual-3d-worlds/",
+        "bytes": 243240,
+        "sha256": "dc0f67b1cc57ad262e9e4a8d1815507d0dcc2fe62e5536cf6a53c41b545bff41",
+        "cacheFile": "sima2.html"
+      },
+      {
+        "url": "https://seed-tars.com/game-tars/",
+        "bytes": 2552,
+        "sha256": "6fa078f864532db57410a7b600fa2535b3728f67250e9924fb559aadd7d682b8",
+        "cacheFile": "game-tars.html"
+      },
+      {
+        "url": "https://ai.google.dev/gemma/docs/core/model_card_4",
+        "bytes": 168023,
+        "sha256": "adcf280ad0cbf3dd83175eef163ecb9faae5dd04ec5354d023c1fd3db215ac35",
+        "cacheFile": "gemma4-model-card.html"
+      },
+      {
+        "url": "https://www.deepseek.com/en/news/deepseek-v4-1-flash/",
+        "bytes": 114473,
+        "sha256": "c72624891fe36659dc3cd88421e5d425486f413bdf7cca11ea7b48277066cde9",
+        "cacheFile": "deepseek-v4-1-flash.html"
+      },
+      {
+        "url": "https://arxiv.org/html/2608.26200v1",
+        "bytes": 525771,
+        "sha256": "a742f7ab4ac545a3d18df722964378d0511e523b28bfcc3352bf565249ce1a90",
+        "cacheFile": "gamewam-paper-v1.html"
+      },
+      {
+        "url": "https://aiortc.readthedocs.io/en/latest/api.html",
+        "bytes": 192750,
+        "sha256": "04f73f3bc50eec0255f6e67b8a86a4dbe2a866d54fb7b9888fb9946e74a27635",
+        "cacheFile": "aiortc-api.html"
+      }
+    ],
+    "gtaAuthorDemoRelease": {
+      "url": "https://github.com/jeromed780/gta-v-autonomous-driving/releases/tag/v1.0.0",
+      "assets": [
+        {
+          "name": "demo.mp4",
+          "bytes": 23288394,
+          "url": "https://github.com/jeromed780/gta-v-autonomous-driving/releases/download/v1.0.0/demo.mp4",
+          "createdAt": "2026-03-07T15:05:59Z"
+        }
+      ],
+      "mediaDownloaded": false,
+      "demoViewed": false,
+      "reproducedHere": false
+    }
+  },
+  "priorNitrogenReview": {
+    "evidence": "docs/audits/2026-10-16/NITROGEN-READINESS.json",
+    "sha256NormalizedLf": "4b487aa21212c755a25c32e9aaa330d83f9355473a434517947890ca75c948db",
+    "followup": "docs/audits/2026-10-16/NITROGEN-NAVIGATION-AND-BUDGET.json",
+    "followupSha256NormalizedLf": "ee4fad833bc13bf0d52698b5c837cd530c85b9254b0105305640dac571b4444c"
+  },
+  "platformSourceFiles": [
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+      "sha256NormalizedLf": "f128820e9dad995dfecdb8f41e013b94815b9fdc600d760a6a0531cab450b7a7"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt",
+      "sha256NormalizedLf": "8cfb4cc3586bf38918a4a7799e61998fc0169aaa6f6271f4350866b27d09d0f8"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DeviceInputOwnership.kt",
+      "sha256NormalizedLf": "927c182ae229eeb10ca4e2edcb901b8819824a0e5a2c040f482fe4ed9895684a"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedPointerArbiter.kt",
+      "sha256NormalizedLf": "06190f199b2540e3586b7c2ce784f5a298bc811ef0ec038d4dd3af7d618fbab2"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedInputMailbox.kt",
+      "sha256NormalizedLf": "f9892aecb1c2a4255bb2e0a751de6339682c214a656a036acb17e3bf9c8df7a5"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedDirectInputController.kt",
+      "sha256NormalizedLf": "1668fc676fc4ebfac058009f92fba8847efeb6caa8da8857069db5f04c9a5549"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandJournal.kt",
+      "sha256NormalizedLf": "5e0d374bd9a1e108860afbd1cf0495d8c365f4be0c61dea39aa4042f25955461"
+    },
+    {
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchBridge.java",
+      "sha256NormalizedLf": "ebdcf05cb0e8af18768e438c5306176256a481d0e83053d4e5730b8cfee141ea"
+    },
+    {
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchWire.java",
+      "sha256NormalizedLf": "01a73b80a431ed71cd2584bd9d0a5dd25490d55f868b331b7a829c8e40c6d4c6"
+    },
+    {
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchSession.java",
+      "sha256NormalizedLf": "0f654b517ede36b223e56dc8789137fc2f6bc467c9e92a780bef6932e02b4bff"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/StreamingManagerImpl.kt",
+      "sha256NormalizedLf": "dd137a5eb488061fe50d4ead1b80da9908a5ef2184d2585012d418440683d5bd"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/EncodedCaptureFrame.kt",
+      "sha256NormalizedLf": "688d6f79022f0c3bd9d419853b825978bead81f87cc2113f26ca3b068a8e0492"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/FramePackager.kt",
+      "sha256NormalizedLf": "0c29cb5928e1f866062e35455b063e23a8c6aafa15198b8e2d1dcbd857616a33"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectInputChannel.kt",
+      "sha256NormalizedLf": "b11d2f233aa0cee2a4871684fe2a48aabcd167077916c8a275134d4fc86d85ef"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/direct/AutonomousSessionGrant.kt",
+      "sha256NormalizedLf": "d9ecbbdd6711d5810e0ee4f9f4dddb1bc526b55728fde8056908c6d018373ff9"
+    },
+    {
+      "file": "backend/api/ws/direct/router.py",
+      "sha256NormalizedLf": "be122894c463d5479785bc7d4661e1a0da6589fef5f3a6efc5092455244d447d"
+    },
+    {
+      "file": "frontend/src/features/stream/directProbe.ts",
+      "sha256NormalizedLf": "e3b5f0c6566b2ce9f7eb8644f896f4b7f8981777d0bf5006fff37f89a55cb550"
+    },
+    {
+      "file": "backend/websocket/frames.py",
+      "sha256NormalizedLf": "4a927c635393cdbba6ffe2497683d6ae229ab9629b42c7c56b27782b9747b46c"
+    },
+    {
+      "file": "backend/websocket/stream_session_history.py",
+      "sha256NormalizedLf": "ffd52c176f4cbdd582fab0da0ada642dee98f8714971087c2d0b8003d06d1e6e"
+    },
+    {
+      "file": "backend/services/device_viewers.py",
+      "sha256NormalizedLf": "f31decfe7cd9370e5a6bcdffe9e36d3489f154412b5610442a6c65e2abb2a5c3"
+    },
+    {
+      "file": "backend/services/task_queue.py",
+      "sha256NormalizedLf": "ef6c881c551dcf3f95a621091945e0b8323eb17b646f3c4cb6f22d0c0c75c9a2"
+    },
+    {
+      "file": "backend/services/task_dispatcher.py",
+      "sha256NormalizedLf": "a1b663ba0b5a8a15ef24a6cf4f621ec6e4bccab8e973006bae879cf6a194e190"
+    },
+    {
+      "file": "backend/services/task_screenshots.py",
+      "sha256NormalizedLf": "40fb983dc6275e500ba29b332db8bd928d9d4a5c549d690e0e6b5b9427ee7bd4"
+    },
+    {
+      "file": "backend/services/screenshot_storage.py",
+      "sha256NormalizedLf": "984bf09f420a96fa9c9a0a3406588f1d476d64ac92189c1337f01e18aae9eb4f"
+    },
+    {
+      "file": "scripts/pilot/motor_budget.py",
+      "sha256NormalizedLf": "32309c78b386b9867e2c343c0c5e681e47361ee754777349b00b246874bfc286"
+    }
+  ],
+  "findings": [
+    {
+      "id": "MOTOR-DAG-OWNERSHIP",
+      "kind": "SOURCE_CONFIRMED_INTEGRATION_GAP",
+      "fact": "DagRunner holds claimInputForTask/claimDiscrete until finally; claimContinuous rejects when discrete is nonzero. A naive child motor node would conflict with its own parent reservation.",
+      "decision": "Atomic delegated episode ownership bound to running parent task; confirmed neutral before return; preserve uncertainty fence."
+    },
+    {
+      "id": "MOTOR-STATEFUL-INPUT",
+      "kind": "SOURCE_CONFIRMED_INTEGRATION_GAP",
+      "fact": "Current native touch uses one pointer; Android KeyEvent bypasses Windows emulator keymapping.",
+      "decision": "Versioned per-game controls profile plus multi-pointer or verified Android gamepad; no Windows focus-dependent injection baseline."
+    },
+    {
+      "id": "MOTOR-FIVE-HZ",
+      "kind": "TESTABLE_DESIGN_HYPOTHESIS",
+      "fact": "5 Hz gives a 200 ms observation period. Held controls may persist between updates. This does not prove route quality or age at application.",
+      "decision": "Separate observation, prediction horizon and local execution; evaluate 2/5/10/20 Hz at matched routes and speed."
+    },
+    {
+      "id": "MOTOR-GAMEWAM",
+      "kind": "UPSTREAM_PUBLISHED_NOT_REPRODUCED",
+      "fact": "Released Minecraft/ViZDoom checkpoints have game-state/proprio inputs and domain-specific action spaces. Published H200 benchmark is not Black Russia/consumer-GPU fleet evidence.",
+      "decision": "Research alternative, not a drop-in APK visual policy."
+    },
+    {
+      "id": "MOTOR-SHARED-ENCODER",
+      "kind": "SOURCE_CONFIRMED_INTEGRATION_GAP",
+      "fact": "One encoder serves peers; weakest fresh bitrate allocation governs source. Sampling decoded frames at 5 Hz does not lower 60 Hz decoding work.",
+      "decision": "Measure AI-only low-FPS mode versus full decoding/shared-viewer policy or separate substream."
+    },
+    {
+      "id": "MOTOR-DEEPSEEK",
+      "kind": "PRIMARY_MODEL_METADATA",
+      "fact": "DeepSeek-V4.1-Flash exists with native vision, but active parameter count is not resident model size; advertised mixed-format safetensors exceed 510 decimal GB.",
+      "decision": "Optional external planner; no ordinary single-GPU local motor capacity assumed."
+    },
+    {
+      "id": "MOTOR-EVIDENCE-LIMIT",
+      "kind": "SEARCH_SCOPE_LIMIT",
+      "fact": "No reproducible ready-made Black Russia plus Sphere APK plus 50x5Hz package was found in reviewed sources. Author demos and domain benchmarks are catalogued separately.",
+      "decision": "Select models by matched route evaluation, preserve negative results and stage gates."
+    }
+  ],
+  "acceptanceGates": [
+    {
+      "id": "G00",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G01",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G02",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G03",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G04",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G05",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G06",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G07",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G08",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G09",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G10",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G11",
+      "state": "OPEN_FOR_AI_SCOPE"
+    },
+    {
+      "id": "G12",
+      "state": "OPEN_FOR_AI_SCOPE"
+    }
+  ],
+  "verification": {
+    "documentationChecks": {
+      "command": "python -m unittest tests.test_documentation_status",
+      "testsPassed": 41,
+      "state": "PASS"
+    },
+    "calculatorChecks": {
+      "command": "python -m unittest tests.test_motor_budget",
+      "testsPassed": 9,
+      "state": "PASS",
+      "scope": "Existing offline arithmetic only; not model or GPU benchmark"
+    },
+    "documentationInventory": {
+      "state": "PASS",
+      "trackedMarkdownDocuments": 497,
+      "localLinkErrors": [],
+      "scope": "Existing bounded Markdown path scanner; not all external URLs or rendered layout"
+    },
+    "evidenceHashes": {
+      "state": "PASS",
+      "platformCodeFiles": 25,
+      "selectedUpstreamTextFiles": 63,
+      "repositoryAndModelRecords": 19,
+      "primaryWebPages": 7,
+      "communityReports": 3,
+      "guideHashVerified": true,
+      "priorEvidenceAndBaselineHashesVerified": true,
+      "requirements": 26,
+      "acceptanceGates": 13,
+      "mermaidSourceFences": 3,
+      "scope": "Byte/hash and bounded source-structure validation. No weight contents, rendered diagrams or runtime validated."
+    },
+    "runtimeChecksRun": false
+  }
+}

@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 5s
+  evaluation_interval: 15s
+rule_files: [/etc/prometheus/rules.yml]
+scrape_configs:
+  - job_name: sphere-backend
+    metrics_path: /metrics
+    sample_limit: 10000
+    static_configs:
+      - targets: [backend:8000]
+    # Production HTTP/pool counters aggregate workers. Retain them for inspection;
+    # Sphere HTTP panels were accepted separately; fleet/resource panels and
+    # HTTP alerts still need their own acceptance. Native Grafana remains collection-only.
+    # High-cardinality per-device samples are not collected in this first stage.
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'process_start_time_seconds|sphere_http_requests_total|sphere_http_request_duration_seconds_(bucket|count|sum)|sphere_db_pool_(size|checked_out)|sphere_container_(cpu_usage_seconds_total|cpu_quota_cores|memory_usage_bytes|memory_limit_bytes|resource_available|resource_read_timestamp_seconds)'
+        action: keep
+  - job_name: prometheus
+    sample_limit: 20000
+    static_configs:
+      - targets: [localhost:9090]
