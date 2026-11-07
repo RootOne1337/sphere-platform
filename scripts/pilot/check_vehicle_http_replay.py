@@ -43,7 +43,7 @@ def copy_checked(source, target, root, hashes):
 
 
 def run(job, output, *, diagnostic=None, holdout=None, from_seconds=0, max_seconds=15,
-        start_mode='beginning'):
+        start_mode='beginning', speed_mode='visual_tempo_live_hud', max_speed_kmh=5):
     initialize_route_cpu_runtime()
     from motor_worker.browser_teach import validate_browser, decoded_browser
     from motor_worker.route_reference_lk import ReferenceLKRoute
@@ -62,6 +62,9 @@ def run(job, output, *, diagnostic=None, holdout=None, from_seconds=0, max_secon
             or not 0 <= from_seconds <= max_seconds - 1 or max_seconds > 55
             or (diagnostic is not None and holdout is not None)
             or start_mode not in ('beginning', 'recognized_route')
+            or speed_mode not in ('visual_tempo_live_hud', 'recorded_hud')
+            or type(max_speed_kmh) is not int or not 1 <= max_speed_kmh <= 50
+            or speed_mode == 'visual_tempo_live_hud' and max_speed_kmh != 5
             or windows_memory()['availableRamBytes'] < 4.75 * 1024**3):
         raise ValueError('vehicle_replay_scope_or_resources')
     active = json.loads((job / 'navigation/active.json').read_bytes())['id']
@@ -103,6 +106,8 @@ def run(job, output, *, diagnostic=None, holdout=None, from_seconds=0, max_secon
     # Explicit finite source trees; large reconstruction databases are excluded.
     sources = [job / 'control.json', job / 'state.json', job / 'navigation/active.json',
                job / 'prepared/reconstruction-input.json']
+    if speed_mode == 'recorded_hud':
+        sources.extend(job / 'vehicle-speed-reference' / name for name in ('COMPLETE', 'receipt.json', 'profile.json'))
     for directory in (job / 'input', nav, job / 'alternatives' / alternative):
         for path in directory.rglob('*'):
             if path.is_symlink() or getattr(path, 'is_junction', lambda: False)():
@@ -121,23 +126,30 @@ def run(job, output, *, diagnostic=None, holdout=None, from_seconds=0, max_secon
         for source in sources:
             copy_checked(source, target / source.relative_to(job), job, hashes)
         rows, skipped = replay_http(target, key, active, expected, capture.geometry, frames, excluded,
-                                    from_seconds, max_seconds, start_mode)
+                                    from_seconds, max_seconds, start_mode, speed_mode, max_speed_kmh)
     if any(file_sha(job / name) != sha for name, sha in hashes.items()):
         raise RuntimeError('vehicle_replay_source_changed')
     if any(file_sha(path) != sha for path, sha in query_hashes.items()):
         raise RuntimeError('vehicle_replay_query_changed')
+    first_terminal = next((dict(seconds=row['seconds'], phase=row['vehicle']['phase'],
+                                reason=row['vehicle']['reason'], progressFraction=row['vehicle']['progressFraction'])
+                           for row in rows if row['vehicle']['phase'] in ('arrived', 'stopped')), None)
     report = dict(schema='sphere-vehicle-http-replay-v1', physicalActions=0, openLoop=True,
                   browserTransportTested=False, liveServiceUsed=False, arrivalProven=False,
                   motionFeedback=False, source=expected, sourceUnchanged=True, sourceHashes=hashes,
                   query=query, windowSeconds=[from_seconds, max_seconds], excludedReferenceFrames=len(excluded),
+                  speedMode=speed_mode, maxSpeedKmh=max_speed_kmh,
                   observations=len(rows), skippedLate=skipped,
+                  firstTerminalPlan=first_terminal,
+                  speedCounts=dict(Counter(row['speedObservation']['status'] for row in rows)),
                   poseCounts=dict(Counter(row['pose']['state'] for row in rows)),
                   planReasons=dict(Counter(row['vehicle']['reason'] for row in rows)), samples=rows)
     (output / 'result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     return report
 
 
-def replay_http(target, key, active, expected, geometry, frames, excluded, from_seconds, max_seconds, start_mode):
+def replay_http(target, key, active, expected, geometry, frames, excluded, from_seconds, max_seconds,
+                start_mode, speed_mode, max_speed_kmh):
     import cv2 as cv
     from scripts.pilot.reconstruction_service import BoundedServer, Jobs, handler
 
@@ -175,11 +187,12 @@ def replay_http(target, key, active, expected, geometry, frames, excluded, from_
     try:
         start = request('vehicle-start', dict(id=sid, captureEpoch=epoch, width=geometry[0],
             height=geometry[1], sceneConfirmed=True, vehicleCameraAssumptionConfirmed=True,
-            cameraFollowsBodyConfirmed=True, hudProfile='black_russia_scooter_v1', maxSpeedKmh=5,
+            cameraFollowsBodyConfirmed=True, hudProfile='black_russia_scooter_v1', maxSpeedKmh=max_speed_kmh,
             cameraTracking=True, cameraControl='continuous_drag_v1', clientVersion='vehicle_live_v1',
-            startMode=start_mode, speedMode='visual_tempo_live_hud', expectedSource=expected))
+            startMode=start_mode, speedMode=speed_mode, expectedSource=expected))
         opened = True
-        if start['physicalActions'] != 0:
+        if (start['physicalActions'] != 0 or start['speedMode'] != speed_mode
+                or start['maxSpeedKmh'] != max_speed_kmh):
             raise RuntimeError('vehicle_replay_scope')
         wall, first, last = None, None, -1.0
         for row, image in frames:
@@ -236,9 +249,13 @@ def main():
     parser.add_argument('--from-seconds', type=float, default=0, help='first source timestamp to observe')
     parser.add_argument('--max-seconds', type=float, default=15, help='last source timestamp to observe')
     parser.add_argument('--start-mode', choices=('beginning', 'recognized_route'), default='beginning')
+    parser.add_argument('--speed-mode', choices=('visual_tempo_live_hud', 'recorded_hud'),
+                        default='visual_tempo_live_hud')
+    parser.add_argument('--max-speed-kmh', type=int, default=5)
     args = parser.parse_args()
     result = run(args.job, args.output, diagnostic=args.diagnostic, holdout=args.holdout,
-                 from_seconds=args.from_seconds, max_seconds=args.max_seconds, start_mode=args.start_mode)
+                 from_seconds=args.from_seconds, max_seconds=args.max_seconds, start_mode=args.start_mode,
+                 speed_mode=args.speed_mode, max_speed_kmh=args.max_speed_kmh)
     print(json.dumps({key: value for key, value in result.items() if key not in ('samples', 'sourceHashes')}))
 
 
