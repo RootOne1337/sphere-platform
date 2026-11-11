@@ -1,0 +1,39 @@
+{
+  "concurrent_account_assignment": {
+    "first_service_selected_device": true,
+    "second_waiting_on_update_lock_before_first_commit": true,
+    "second_http": 200,
+    "second_response_selected_its_device": true,
+    "committed_readback_selected_second_device": true,
+    "serial_conflict_control_http": 409
+  },
+  "retired_device_admission": {
+    "retirement_http": 204,
+    "device_active_readback": false,
+    "retired_present_in_active_inventory": false,
+    "task_admission_http": 404,
+    "account_assign_http": 200,
+    "account_status_readback": "in_use",
+    "account_assigned_to_retired_device": true,
+    "pipeline_run_http": 201,
+    "pipeline_run_status": "queued"
+  },
+  "expired_progress_readback": {
+    "progress_before_http": 200,
+    "progress_before": 70,
+    "normal_progress_ttl_seconds": 600,
+    "progress_after_http": 200,
+    "progress_after": {
+      "nodes_done": 0,
+      "total_nodes": 0,
+      "current_node": "",
+      "progress": 0,
+      "cycles": 0,
+      "started_at": null
+    },
+    "logs_before_count": 1,
+    "logs_after_count": 0,
+    "logs_after_http": 200,
+    "sql_task_status_after": "running"
+  }
+}

@@ -4,7 +4,8 @@
 Начните с задачи, затем проверьте дату и область применимости выбранного документа.
 
 [Главная проекта](../README.md) · [Правила актуальности](DOCUMENTATION.md) ·
-[Записанное состояние](operations/CURRENT-STATE.md) · [Открытые работы](operations/WORK-STATUS.md)
+[Записанное состояние](operations/CURRENT-STATE.md) · [Открытые работы](operations/WORK-STATUS.md) ·
+[Последний аудит](audits/2026-11-11/README.md)
 
 ## Начало работы и эксплуатация
 
@@ -14,7 +15,7 @@
 | Подготовить новое окружение | [Startup](operations/STARTUP.md), [конфигурация](configuration.md), [deployment](deployment.md) |
 | Работать с существующим локальным стендом | [Local pilot](operations/LOCAL-PILOT.md), [review gateway](operations/REVIEW-GATEWAY.md) |
 | Подключить удалённые устройства | [Remote pilot](operations/REMOTE-PILOT.md), [Android cloud pilot](operations/ANDROID-CLOUD-PILOT.md) |
-| Оценить готовность и восстановление | [Readiness](operations/READINESS.md), [runbooks](runbooks/README.md), [observability](operations/OBSERVABILITY.md) |
+| Оценить готовность и восстановление | [Итоговая оценка аудита](audits/2026-11-11/ASSESSMENT.md), [Readiness](operations/READINESS.md), [runbooks](runbooks/README.md) |
 | Разобраться в правах и безопасности | [Пользователи и интеграции](operations/USER-ADMIN-GUIDE.md), [Доступ пользователей](operations/USER-ACCESS.md), [безопасность](security.md), [bootstrap учётных записей](security/user-auth-bootstrap.md) |
 
 ## Пользовательские сценарии
@@ -53,7 +54,9 @@ WebSocket-протоколы и не доказывает работоспосо
 - [STATUS-REGISTRY.json](operations/STATUS-REGISTRY.json) связывает ряд статусов с
   доказательствами; [DOCUMENT-INVENTORY.json](operations/DOCUMENT-INVENTORY.json)
   классифицирует Markdown. Это не построчная аттестация всей документации.
-- [Аудиты и evidence](audits/) фиксируют результаты отдельных проверок в их время.
+- [Аудит от 11 ноября 2026 года](audits/2026-11-11/README.md) содержит реестр по компонентам,
+  материалы проверок и [условия производственной приёмки](audits/2026-11-11/CLOSURE.md).
+- [История аудитов](audits/) фиксирует результаты отдельных проверок в их время.
   [Оценка документации](audits/2026-11-01/DOCUMENTATION-ASSESSMENT.md),
   [реестр проблем](audits/2026-11-01/FINDINGS-REGISTER.md),
   [карта покрытия Web](audits/2026-11-01/WEB-COVERAGE-MATRIX.md) и

@@ -1,0 +1,35 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_baseline, TZ-00 baseline: initial schema
+INFO  [alembic.runtime.migration] Running upgrade 0001_baseline -> 0008_workstation_topology, TZ-08 SPLIT-5: workstation topology — add missing columns
+INFO  [alembic.runtime.migration] Running upgrade 0008_workstation_topology -> 0009_dg_add_color_parent, TZ-02 SPLIT-2: device_groups — add missing columns (color, parent_group_id)
+INFO  [alembic.runtime.migration] Running upgrade 0009_dg_add_color_parent -> ac22b0d428d0, sync_schema_models
+INFO  [alembic.runtime.migration] Running upgrade ac22b0d428d0 -> 20260224_tz12_orchestrator, TZ-12: pipelines, pipeline_runs, pipeline_batches, schedules, schedule_executions
+INFO  [alembic.runtime.migration] Running upgrade 20260224_tz12_orchestrator -> 20260228_locations, TZ-02: locations + device_location_members (M2M)
+INFO  [alembic.runtime.migration] Running upgrade 20260228_locations -> 20260301_game_accounts, TZ-10: game_accounts — игровые аккаунты для фарминг-платформы
+INFO  [alembic.runtime.migration] Running upgrade 20260301_game_accounts -> 20260306_events_sessions, TZ-11: device_events + account_sessions — события устройств и история сессий аккаунтов
+INFO  [alembic.runtime.migration] Running upgrade 20260306_events_sessions -> 20260306_event_triggers, TZ-11+: event_triggers таблица + pending_registration статус аккаунта
+INFO  [alembic.runtime.migration] Running upgrade 20260306_event_triggers -> 20260308_game_accounts_v2, Добавление игровой специфики в game_accounts: сервер, никнейм, двойной баланс, VIP, законопослушность, регистрационные данные.
+INFO  [alembic.runtime.migration] Running upgrade 20260308_game_accounts_v2 -> 20260309_pipeline_settings, Добавление таблицы pipeline_settings (персистентные настройки оркестрации) и колонки server_name в devices.
+INFO  [alembic.runtime.migration] Running upgrade 20260309_pipeline_settings -> 20260906_device_refresh, Persist revocable, rotating device refresh tokens separately from user tokens.
+INFO  [alembic.runtime.migration] Running upgrade 20260906_device_refresh -> 20260906_task_accounting, Track orchestration accounting separately from the immutable task outcome.
+INFO  [alembic.runtime.migration] Running upgrade 20260906_task_accounting -> 20260906_vpn_intents, Reserve global VPN addresses before provider effects; reject legacy conflicts.
+INFO  [alembic.runtime.migration] Running upgrade 20260906_vpn_intents -> 20260906_account_ciphertext, Add unambiguous encrypted credential storage; backfill uses a separate key-aware tool.
+INFO  [alembic.runtime.migration] Running upgrade 20260906_account_ciphertext -> 20260908_tenant_policies, Install complete tenant RLS policies, including associations and append-only audit.
+INFO  [alembic.runtime.migration] Running upgrade 20260908_tenant_policies -> 20260909_credential_lookup, Narrow opaque-credential tenant discovery; runtime tables remain under RLS.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_credential_lookup -> 20260909_user_auth_bootstrap, Tenant-only user login/refresh discovery; protect functions with explicit grants.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_user_auth_bootstrap -> 20260910_device_refresh_retry, Retain one recoverable device refresh operation without storing bearer tokens.
+INFO  [alembic.runtime.migration] Running upgrade 20260910_device_refresh_retry -> 20260920_task_cancel_intent, Durable task cancellation without conflating publication with completion.
+INFO  [alembic.runtime.migration] Running upgrade 20260920_task_cancel_intent -> 20260920_pipeline_cancel, Keep pipeline cancellation pending while its child task still executes.
+INFO  [alembic.runtime.migration] Running upgrade 20260920_pipeline_cancel -> 20260920_pipeline_lease, Persist pipeline ownership and step/child recovery checkpoints.
+INFO  [alembic.runtime.migration] Running upgrade 20260920_pipeline_lease -> 20260920_batch_plan, Persist batch wave plans and atomic admission progress.
+INFO  [alembic.runtime.migration] Running upgrade 20260920_batch_plan -> 20260921_pipeline_discovery, Narrow, explicitly granted pipeline work discovery for RLS runtime workers.
+INFO  [alembic.runtime.migration] Running upgrade 20260921_pipeline_discovery -> 20260921_pipeline_wait, Persist nested wait deadlines and discover only actionable waiting parents.
+INFO  [alembic.runtime.migration] Running upgrade 20260921_pipeline_wait -> 20260921_task_dispatch, Bounded task dispatch discovery for explicitly authorized RLS workers.
+INFO  [alembic.runtime.migration] Running upgrade 20260921_task_dispatch -> 20260921_schedule_work, Bounded due schedule discovery for explicitly authorized RLS workers.
+INFO  [alembic.runtime.migration] Running upgrade 20260921_schedule_work -> 20260921_watchdog_stop, Durable timeout stop intent and bounded watchdog discovery under RLS.
+INFO  [alembic.runtime.migration] Running upgrade 20260921_watchdog_stop -> 20261006_script_catalog_metadata, Add nullable, paired metadata for source-free script catalog reads.
+INFO  [alembic.runtime.migration] Running upgrade 20261006_script_catalog_metadata -> 20261021_vpn_profiles, Encrypted VPN catalog with owned, append-only revisions. No live VPN effects.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+20261021_vpn_profiles (head)

@@ -1,0 +1,189 @@
+{
+  "highway-v41-absolute-pose-audit-v1.json": {
+    "archive_sha256": "7f24cdd032bed907bf32e5293e90ac34887261f3593c782a05cd3c5187346864",
+    "errorBudgetMapUnits": 5.0,
+    "phase": "vehicle_relocalization_timeout",
+    "windows": [
+      {
+        "window": 0,
+        "calibrationWithinBudget": false,
+        "calibration": {
+          "fitCameras": 57,
+          "heldOutCameras": 28,
+          "p95MapUnits": 14.561528572042361,
+          "maximumMapUnits": 16.12355580863328
+        },
+        "followingPositions": {
+          "scored": 112,
+          "overBudget": 71,
+          "medianMapUnits": 7.43373724041754,
+          "p95MapUnits": 13.250286932375182,
+          "maximumMapUnits": 14.420567996344749
+        }
+      },
+      {
+        "window": 1,
+        "calibrationWithinBudget": false,
+        "calibration": {
+          "fitCameras": 59,
+          "heldOutCameras": 29,
+          "p95MapUnits": 6.321139475749079,
+          "maximumMapUnits": 10.899595604196769
+        },
+        "followingPositions": {
+          "scored": 201,
+          "overBudget": 126,
+          "medianMapUnits": 5.693661384130627,
+          "p95MapUnits": 12.49276684393021,
+          "maximumMapUnits": 16.020901992111718
+        }
+      },
+      {
+        "window": 2,
+        "calibrationWithinBudget": true,
+        "calibration": {
+          "fitCameras": 55,
+          "heldOutCameras": 27,
+          "p95MapUnits": 4.224191906112007,
+          "maximumMapUnits": 4.574820419716222
+        },
+        "followingPositions": {
+          "scored": 19,
+          "overBudget": 19,
+          "medianMapUnits": 31.03192349416691,
+          "p95MapUnits": 32.02189996383789,
+          "maximumMapUnits": 32.69112958736597
+        }
+      }
+    ]
+  },
+  "highway-v41-exact-distinct-support-observe-ab-v1.json": {
+    "archive_sha256": "83e5f0282cadf2dff4977a8589ea5d24ed3730387f1a316fe933a4421f4d6e1f",
+    "archived_baseline_reproduced": true,
+    "variants": {
+      "original": {
+        "localized_count": 4,
+        "first_localized_sequence": 1839,
+        "repeated_votes_withheld": 0,
+        "maximum_votes": 4,
+        "observe_compute_p95_ms": 71.91647996660322,
+        "pose_complete_age_p95_ms": 131.58040000125766
+      },
+      "distinct_support": {
+        "localized_count": 0,
+        "first_localized_sequence": null,
+        "repeated_votes_withheld": 4,
+        "maximum_votes": 1,
+        "observe_compute_p95_ms": 63.99616003036499,
+        "pose_complete_age_p95_ms": 128.1717800302431
+      }
+    },
+    "frame_count": 9
+  },
+  "city-v9-native-proxy-capacity-20261111-v1-sparse.json": {
+    "archive_sha256": "9fbfbb6bd2637437050cd5a45570b0a5aa67096c0d34ebfbd3acf2c7bbe8ca09",
+    "variant": "sparse",
+    "targetHz": 5.0,
+    "staleAgeMs": 250.0,
+    "durationSecondsPerCase": 5.0,
+    "sharedMap": true,
+    "logicalCpuCount": 4,
+    "cases": [
+      {
+        "streams": 1,
+        "offered": 25,
+        "freshLocalized": 22,
+        "overwritten": 0,
+        "expiredBeforeDispatch": 0,
+        "effectiveFreshLocalizedHz": 4.399182192051318,
+        "ageMs": {
+          "p50": 21.423,
+          "p95": 200.895,
+          "max": 218.023
+        },
+        "peakPrivateBytes": 264429568
+      },
+      {
+        "streams": 10,
+        "offered": 250,
+        "freshLocalized": 2,
+        "overwritten": 137,
+        "expiredBeforeDispatch": 5,
+        "effectiveFreshLocalizedHz": 0.36744697583760233,
+        "ageMs": {
+          "p50": 403.666,
+          "p95": 536.736,
+          "max": 584.28
+        },
+        "peakPrivateBytes": 619552768
+      },
+      {
+        "streams": 20,
+        "offered": 500,
+        "freshLocalized": 2,
+        "overwritten": 325,
+        "expiredBeforeDispatch": 7,
+        "effectiveFreshLocalizedHz": 0.3666599213504416,
+        "ageMs": {
+          "p50": 200.98,
+          "p95": 513.137,
+          "max": 553.792
+        },
+        "peakPrivateBytes": 784572416
+      }
+    ]
+  },
+  "city-v9-native-proxy-capacity-20261111-v1-native.json": {
+    "archive_sha256": "b8bb9b78e3cc40b056cf1ddaa68a474ec3d6a3dab486defbdd142a74bd99b840",
+    "variant": "native",
+    "targetHz": 5.0,
+    "staleAgeMs": 250.0,
+    "durationSecondsPerCase": 5.0,
+    "sharedMap": true,
+    "logicalCpuCount": 4,
+    "cases": [
+      {
+        "streams": 1,
+        "offered": 25,
+        "freshLocalized": 19,
+        "overwritten": 0,
+        "expiredBeforeDispatch": 0,
+        "effectiveFreshLocalizedHz": 3.7990174981318643,
+        "ageMs": {
+          "p50": 16.428,
+          "p95": 106.644,
+          "max": 111.784
+        },
+        "peakPrivateBytes": 252792832
+      },
+      {
+        "streams": 10,
+        "offered": 250,
+        "freshLocalized": 151,
+        "overwritten": 4,
+        "expiredBeforeDispatch": 0,
+        "effectiveFreshLocalizedHz": 29.508787921857273,
+        "ageMs": {
+          "p50": 130.814,
+          "p95": 267.415,
+          "max": 324.428
+        },
+        "peakPrivateBytes": 310337536
+      },
+      {
+        "streams": 20,
+        "offered": 500,
+        "freshLocalized": 32,
+        "overwritten": 156,
+        "expiredBeforeDispatch": 0,
+        "effectiveFreshLocalizedHz": 6.084522497695843,
+        "ageMs": {
+          "p50": 250.647,
+          "p95": 286.868,
+          "max": 350.992
+        },
+        "peakPrivateBytes": 344813568
+      }
+    ]
+  }
+}

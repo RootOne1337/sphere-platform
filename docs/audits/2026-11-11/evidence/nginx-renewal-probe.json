@@ -1,0 +1,6 @@
+{
+  "nginx": "nginx version: nginx/1.29.5",
+  "initial_certificate_observed": true,
+  "after_replacing_files": "initial",
+  "after_reload": "replacement"
+}

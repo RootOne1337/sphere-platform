@@ -1,0 +1,34 @@
+{
+  "compose": {
+    "bootstrap_user_used_for_backend": true,
+    "supplied_runtime_url_used": false
+  },
+  "production_startup_guard": {
+    "connected": true,
+    "role_is_superuser": true,
+    "production_guard_rejected": true
+  },
+  "alembic": {
+    "direct_escaped_dsn_select_1": true,
+    "alembic_control_exit": 0,
+    "alembic_escaped_dsn_exit": 1,
+    "alembic_configparser_interpolation_error": true
+  },
+  "restore": {
+    "preserve_roles": {
+      "failed": true,
+      "database_reported_restored": false,
+      "errors": [
+        {
+          "role_already_exists": true,
+          "failed_stage": "globals_psql"
+        }
+      ]
+    },
+    "without_roles_control": {
+      "failed": false,
+      "database_reported_restored": true,
+      "errors": []
+    }
+  }
+}

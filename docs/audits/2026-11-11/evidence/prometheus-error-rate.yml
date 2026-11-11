@@ -1,0 +1,26 @@
+# Synthetic counters only. 99 successful requests/s and 1 server error/s.
+# The existing rule produces a per-status 100% alert in that workload.
+rule_files:
+  - ../../../../infrastructure/monitoring/alert-rules.yml
+
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'sphere_http_requests_total{status_code="200",method="GET",route="/fixture"}'
+        values: '0+5940x9'
+      - series: 'sphere_http_requests_total{status_code="500",method="GET",route="/fixture"}'
+        values: '0+60x9'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: HighErrorRate
+        exp_alerts:
+          - exp_labels:
+              method: GET
+              route: /fixture
+              severity: warning
+              status_code: '500'
+              team: backend
+            exp_annotations:
+              description: 'Высокая доля серверных ошибок за последние 2 минуты'
+              summary: 'HTTP 5xx > 5% (100%)'

@@ -1,0 +1,44 @@
+{
+  "preview": {
+    "exit_code": 1,
+    "rejects_dynamic_volume_key": true
+  },
+  "request_bytes": {
+    "small": 951,
+    "large": 1206818
+  },
+  "direct_read_only_preflight": {
+    "small": {
+      "valid": true,
+      "items": 2,
+      "persisted": false
+    },
+    "large": {
+      "valid": true,
+      "items": 96,
+      "persisted": false
+    }
+  },
+  "nginx_with_body_counting_upstream": {
+    "443": {
+      "small": {
+        "status": 200,
+        "upstream_bytes": 951
+      },
+      "large": {
+        "status": 413,
+        "nginx_413": true
+      }
+    },
+    "8081": {
+      "small": {
+        "status": 200,
+        "upstream_bytes": 951
+      },
+      "large": {
+        "status": 413,
+        "nginx_413": true
+      }
+    }
+  }
+}
