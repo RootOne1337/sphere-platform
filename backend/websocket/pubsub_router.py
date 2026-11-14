@@ -136,7 +136,11 @@ class PubSubRouter:
                 await dispatch_ota_wake(self.manager, device_id, msg)
                 return
             started = time.monotonic()
-            delivered = await self.manager.send_to_device(device_id, msg)
+            target_session = msg.pop("_target_agent_session", None) if isinstance(msg, dict) else None
+            if target_session is not None:
+                delivered = await self.manager.send_to_session(device_id, target_session, msg)
+            else:
+                delivered = await self.manager.send_to_device(device_id, msg)
             command_id = msg.get("command_id") if isinstance(msg, dict) else None
             if isinstance(command_id, str) and INTERACTIVE_COMMAND_ID.fullmatch(command_id):
                 logger.info("interactive_rpc.forwarded", command_id=command_id,

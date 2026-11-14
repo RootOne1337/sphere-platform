@@ -23,4 +23,5 @@ enum class CommandType {
     PING, UPDATE_CONFIG, REQUEST_STATUS,
     // Логирование (по требованию)
     REQUEST_LOGS, UPLOAD_LOGCAT,
+    FILE_EXCHANGE,
 }

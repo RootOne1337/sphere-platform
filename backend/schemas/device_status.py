@@ -31,6 +31,7 @@ class DeviceLiveStatus(BaseModel):
     android_version: str | None = None
     agent_version: str | None = Field(default=None, min_length=1, max_length=100)
     agent_version_code: int | None = Field(default=None, ge=1, le=2_147_483_647)
+    file_exchange_version: Literal[1] | None = None
     last_heartbeat: datetime | None = None
     # Set by the first accepted pong for the current WebSocket session. Unlike
     # ConnectionManager.connected_at this survives worker changes via Redis.

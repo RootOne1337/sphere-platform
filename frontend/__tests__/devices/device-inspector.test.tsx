@@ -10,7 +10,10 @@ import { validateDeviceSnapshot } from '@/lib/hooks/useDeviceSnapshot';
 import { toast } from 'sonner';
 
 let mockCan = (_permission: string) => true;
-jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: (permission: string) => mockCan(permission) }) }));
+jest.mock('@/src/features/access/Capabilities', () => ({
+  useCapabilities: () => ({ can: (permission: string) => mockCan(permission) }),
+  PermissionNotice: () => <p role="status">Файловые операции недоступны для вашей роли.</p>,
+}));
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 jest.mock('sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
@@ -179,4 +182,24 @@ it('keeps a viewer card readable while disabling root mutations and reboot', asy
     fireEvent.click(screen.getByRole('button', { name }));
   }
   expect(mockPost).not.toHaveBeenCalled();
+});
+
+it('opens Files without reading the device folder when the role lacks device:write', async () => {
+  mockCan = permission => permission !== 'device:write';
+  render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
+  await userEvent.click(await screen.findByRole('tab', { name: 'Файлы' }));
+  expect(await screen.findByText('Файловые операции недоступны для вашей роли.')).toBeInTheDocument();
+  expect(mockGet).not.toHaveBeenCalledWith('/devices/dev-1/files', expect.anything());
+});
+
+it('opens Files from the ordinary device card when the agent is reachable', async () => {
+  const observed = new Date().toISOString();
+  mockGet.mockImplementation(async url => ({
+    data: url === '/devices/dev-1/files' ? { version: 1, max_bytes: 262144, files: [] }
+      : { ...device, last_heartbeat: observed },
+  }));
+  render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
+  await userEvent.click(await screen.findByRole('tab', { name: 'Файлы' }));
+  expect(await screen.findByText('Рабочая папка пока пуста.')).toBeInTheDocument();
+  expect(mockGet).toHaveBeenCalledWith('/devices/dev-1/files', expect.objectContaining({ signal: expect.any(AbortSignal) }));
 });

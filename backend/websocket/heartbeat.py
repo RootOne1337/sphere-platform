@@ -203,9 +203,11 @@ class HeartbeatManager:
         stored = None
         try:
             heartbeat_at = datetime.now(timezone.utc)
+            file_exchange = msg.get("file_exchange_version")
             stored = await self.status_cache.merge_agent_status(
                 self.device_id, status_update, session_id=self._session_id,
                 heartbeat_at=heartbeat_at,
+                file_exchange_version=1 if type(file_exchange) is int and file_exchange == 1 else None,
             )
             if stored and not self._first_pong_persisted:
                 self._first_pong_persisted = True

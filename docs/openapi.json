@@ -2456,6 +2456,179 @@
         }
       }
     },
+    "/api/v1/devices/{device_id}/files": {
+      "get": {
+        "tags": [
+          "device-files"
+        ],
+        "summary": "List Files",
+        "operationId": "list_files_api_v1_devices__device_id__files_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDirectory"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{device_id}/files/{name}": {
+      "get": {
+        "tags": [
+          "device-files"
+        ],
+        "summary": "Download File",
+        "operationId": "download_file_api_v1_devices__device_id__files__name__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "device-files"
+        ],
+        "summary": "Upload File",
+        "operationId": "upload_file_api_v1_devices__device_id__files__name__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileReceipt"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "maxLength": 262144
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/devices/{device_id}/application-binding": {
       "get": {
         "tags": [
@@ -18226,6 +18399,21 @@
             ],
             "title": "Agent Version Code"
           },
+          "file_exchange_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "enum": [
+                  1
+                ],
+                "const": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Exchange Version"
+          },
           "last_heartbeat": {
             "anyOf": [
               {
@@ -20060,6 +20248,101 @@
           "command"
         ],
         "title": "ExecuteShellRequest"
+      },
+      "FileDirectory": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Version"
+          },
+          "max_bytes": {
+            "type": "integer",
+            "enum": [
+              262144
+            ],
+            "const": 262144,
+            "title": "Max Bytes"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/FileEntry"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Files"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "max_bytes",
+          "files"
+        ],
+        "title": "FileDirectory"
+      },
+      "FileEntry": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._ -]{0,119}$",
+            "title": "Name"
+          },
+          "size": {
+            "type": "integer",
+            "maximum": 262144.0,
+            "minimum": 0.0,
+            "title": "Size"
+          },
+          "modified_at_ms": {
+            "type": "integer",
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Modified At Ms"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "size",
+          "modified_at_ms"
+        ],
+        "title": "FileEntry"
+      },
+      "FileReceipt": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._ -]{0,119}$",
+            "title": "Name"
+          },
+          "size": {
+            "type": "integer",
+            "maximum": 262144.0,
+            "minimum": 0.0,
+            "title": "Size"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "size",
+          "sha256"
+        ],
+        "title": "FileReceipt"
       },
       "FleetCoverageResponse": {
         "properties": {

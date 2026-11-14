@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -79,6 +80,7 @@ class CommandDispatcher @Inject constructor(
     // Serialises concurrent EXECUTE_DAG commands: only 1 DAG runs per device at a time.
     // If a second DAG arrives while one is running, it queues and waits.
     private val dagMutex = Mutex()
+    private val fileExchange by lazy { FileExchange(appContext.filesDir.toPath().resolve("sphere-exchange")) }
 
     // FIX AUDIT-2.5: Application-level heartbeat watchdog
     // Если сервер не шлёт ping >90с — WS, скорее всего, мёртв
@@ -253,6 +255,7 @@ class CommandDispatcher @Inject constructor(
             put("vpn_active", deviceStatusProvider.isVpnActive())
             put("agent_version", BuildConfig.VERSION_NAME)
             put("agent_version_code", BuildConfig.VERSION_CODE)
+            put("file_exchange_version", FileExchange.VERSION)
             wsClient.previousFailureEvidence()?.let { put("previous_ws_failure", it) }
             val stats = if (streamingManager.isActive()) streamingManager.getQualityStats() else null
             if (stats != null) {
@@ -485,6 +488,12 @@ class CommandDispatcher @Inject constructor(
             }
         }
         val ageSeconds = System.currentTimeMillis() / 1000 - cmd.signed_at
+        if (cmd.type == CommandType.FILE_EXCHANGE &&
+            (!cmd.command_id.startsWith("interactive_") || cmd.ttl_seconds !in 1..30 || ageSeconds < -30)
+        ) {
+            terminalAck(cmd, "failed", error = "file_exchange_failed")
+            return
+        }
         if (ageSeconds > cmd.ttl_seconds) {
             Timber.w("[${cmd.command_id}] Expired (age=${ageSeconds}s > ttl=${cmd.ttl_seconds}s)")
             terminalAck(cmd, "failed", error = "expired")
@@ -502,8 +511,11 @@ class CommandDispatcher @Inject constructor(
             terminalAck(cmd, "failed", error = "execution_interrupted_outcome_unknown")
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "[${cmd.command_id}] Failed")
-            terminalAck(cmd, "failed", error = e.message ?: "unknown")
+            if (cmd.type != CommandType.FILE_EXCHANGE) Timber.e(e, "[${cmd.command_id}] Failed")
+            val error = if (cmd.type == CommandType.FILE_EXCHANGE) {
+                (e as? FileExchangeFailure)?.message ?: "file_exchange_failed"
+            } else e.message ?: "unknown"
+            terminalAck(cmd, "failed", error = error)
         }
     }
 
@@ -756,6 +768,8 @@ class CommandDispatcher @Inject constructor(
                 put("vpn_active", deviceStatusProvider.isVpnActive())
             }
         }
+
+        CommandType.FILE_EXCHANGE -> withContext(Dispatchers.IO) { fileExchange.execute(cmd.payload) }
 
         CommandType.REQUEST_LOGS -> {
             val maxBytes = cmd.payload["max_bytes"]?.jsonPrimitive?.intOrNull ?: (64 * 1024)

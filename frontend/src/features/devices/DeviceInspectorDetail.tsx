@@ -21,14 +21,15 @@ import { DEVICE_COMMAND_TIMEOUT } from './interactiveResult';
 import { NativeScreenshotPanel } from './NativeScreenshotPanel';
 import { AndroidProfilePanel } from './AndroidProfilePanel';
 import { DeviceDiagnosticsPanel, DeviceHistoryPanel, DeviceSavedLogsPanel, Metric, utcTime } from './DeviceOperationsPanels';
-import { useCapabilities } from '@/src/features/access/Capabilities';
+import { PermissionNotice, useCapabilities } from '@/src/features/access/Capabilities';
+import { DeviceFilesPanel } from './DeviceFilesPanel';
 import { getDeviceAccess, getObservedDeviceStatus, getReportedDeviceModel } from './devicePresentation';
 import { DeviceViewerPresence } from './DeviceViewerPresence';
 import { applicationBindingLabel, DeviceApplicationBinding, hasApplicationBinding } from './DeviceApplicationBinding';
 import { useApplicationProfiles } from '@/src/features/accounts/applicationProfiles';
 
-type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script' | 'screenshot' | 'profile';
-const VIEWS = [['summary', 'Обзор'], ['tasks', 'Задачи'], ['events', 'События'], ['diagnostics', 'Видео'], ['logs', 'Логи APK']] as const;
+type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'files' | 'stream' | 'terminal' | 'logcat' | 'script' | 'screenshot' | 'profile';
+const VIEWS = [['summary', 'Обзор'], ['tasks', 'Задачи'], ['events', 'События'], ['diagnostics', 'Видео'], ['logs', 'Логи APK'], ['files', 'Файлы']] as const;
 
 function reportedNumber(value: unknown, suffix: string, max = Infinity): string {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= max ? `${value.toLocaleString('ru-RU', { maximumFractionDigits: 1 })}${suffix}` : 'Не сообщено';
@@ -155,6 +156,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
       <TabsContent value="events" className="mt-5"><DeviceHistoryPanel deviceId={deviceId} kind="events" /></TabsContent>
       <TabsContent value="diagnostics" className="mt-5"><DeviceDiagnosticsPanel deviceId={deviceId} /></TabsContent>
       <TabsContent value="logs" className="mt-5"><DeviceSavedLogsPanel deviceId={deviceId} /></TabsContent>
+      <TabsContent value="files" className="mt-5">{canWrite ? <DeviceFilesPanel deviceId={deviceId} enabled={isReachable} /> : <PermissionNotice permission="device:write" action="обмен файлами с Android" />}</TabsContent>
     </Tabs>
     {applicationBindingOpen && access.can('device:read') && <DeviceApplicationBinding key={deviceId} deviceId={deviceId} name={device.name} onClose={() => setApplicationBindingOpen(false)} />}
     <Dialog open={rebootOpen} onOpenChange={(open) => { if (!rebootPending) setRebootOpen(open); }}><DialogContent className="w-[calc(100%-2rem)] rounded-xl"><DialogHeader><DialogTitle>Перезагрузить «{device.name}»?</DialogTitle><DialogDescription>Android временно потеряет связь и остановит текущую работу. Принятие команды не подтверждает завершение перезагрузки.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" disabled={rebootPending} onClick={() => setRebootOpen(false)}>Отмена</Button><Button variant="destructive" disabled={!canWrite || !isReachable || rebootPending} onClick={() => { void reboot(); }}>{rebootPending ? 'Ожидаем ответ…' : 'Подтвердить перезагрузку'}</Button></DialogFooter></DialogContent></Dialog>

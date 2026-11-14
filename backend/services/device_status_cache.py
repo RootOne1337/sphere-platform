@@ -113,6 +113,7 @@ class DeviceStatusCache:
     async def merge_agent_status(
         self, device_id: str, updates: dict[str, Any], *,
         session_id: str | None, heartbeat_at: datetime | None = None,
+        file_exchange_version: int | None = None,
     ) -> AgentStatusWrite | None:
         """Return committed status after an atomic Redis session ownership check.
 
@@ -131,6 +132,8 @@ class DeviceStatusCache:
         # Strict booleans only: "true" / 1 must never mint a new observation.
         if "vpn_active" in updates and updates["vpn_active"] is not None and not isinstance(updates["vpn_active"], bool):
             updates.pop("vpn_active")
+        if heartbeat_at is not None:
+            updates["file_exchange_version"] = file_exchange_version
         if not updates and heartbeat_at is None:
             return None
         observed_at = heartbeat_at or datetime.now(timezone.utc)
