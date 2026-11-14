@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 518,
+    "DATED_EVIDENCE": 519,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 92,
     "PROJECT_POLICY": 7,
@@ -2162,6 +2162,10 @@
     },
     {
       "file": "docs/audits/2026-11-13/evidence/VPN-WORKFLOW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/ACCOUNT-APPEARANCE-SYNC.md",
       "role": "DATED_EVIDENCE"
     },
     {

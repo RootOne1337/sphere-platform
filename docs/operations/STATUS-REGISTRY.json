@@ -4666,20 +4666,22 @@
     {
       "id": "CHAT-31",
       "title": "Все настройки UI синхронизируются по аккаунту",
-      "state": "OPEN",
+      "state": "PARTIAL",
       "productItems": [
         "EP-011",
         "EP-013"
       ],
-      "acceptedScope": "Requirement and source audit recorded; implementation not accepted.",
-      "remaining": "Versioned server profile/ETag, identity-bound local cache, all preferences, conflict/offline/multi-browser acceptance.",
+      "acceptedScope": "Девять настроек панели «Внешний вид» сохраняются по аккаунту и организации. На изолированном стенде подтверждены ETag, исход 200/412, восстановление серверной версии и изоляция пользователей в четырёх сессиях Chromium.",
+      "remaining": "Выкладка на пилот, таблицы, видеостена, Studio, импорт старых локальных настроек и сохранение офлайн-правок после выхода или перезагрузки.",
       "evidence": [
         "docs/design/CLIENT-STUDIO-PLATFORM.md",
+        "docs/audits/2026-11-14/ACCOUNT-APPEARANCE-SYNC.md",
         "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
       ],
       "sourcePaths": [
         "frontend/src/shared/store/useUIStore.ts",
-        "backend/models/user.py"
+        "frontend/src/features/preferences/AccountAppearanceSync.tsx",
+        "backend/api/v1/user_preferences/router.py"
       ],
       "fleetAccepted": false
     },

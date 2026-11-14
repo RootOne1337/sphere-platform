@@ -1327,13 +1327,9 @@ Read-only profile должен выполнять типизированное �
 
 ### CHAT-31 · Все настройки UI синхронизируются по аккаунту
 
-**OPEN**
+**PARTIAL** · Девять настроек панели «Внешний вид» сохраняются в серверном профиле аккаунта и организации. `ETag` защищает от записи поверх новой версии. На изолированном стенде проверены миграция PostgreSQL и конкурентные записи. В четырёх сессиях Chromium подтверждены конфликт, восстановление серверной версии и изоляция аккаунтов.
 
-Requirement and source audit recorded; implementation not accepted.
-
-Остаётся: Versioned server profile/ETag, identity-bound local cache, all preferences, conflict/offline/multi-browser acceptance.
-
-[Контракт, очередность и критерии](../design/CLIENT-STUDIO-PLATFORM.md).
+Открыты выкладка на пилот, синхронизация таблиц, видеостены и Studio, явный импорт старых локальных настроек и сохранение офлайн-правок после выхода или перезагрузки. [Проверки](../audits/2026-11-14/ACCOUNT-APPEARANCE-SYNC.md) · [Контракт](../design/CLIENT-STUDIO-PLATFORM.md).
 
 
 ### CHAT-32 · Проверка неизменяемого несохранённого сценария на выбранном Android
