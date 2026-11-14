@@ -135,13 +135,14 @@ describe('useFleetEvents', () => {
     };
     act(() => {
       client.setQueryData(key, original, { updatedAt: now - 10_000 });
+      client.getQueryCache().find({ queryKey: key })?.invalidate();
       socket.message(packet(2000, true));
       socket.message(packet(5000, false));
     });
     expect(client.getQueryData(key)).toEqual({ ...original, items: [{
       ...original.items[0], ...packet(2000, true).payload,
     }, original.items[1]] });
-    expect(client.getQueryState(key)?.dataUpdatedAt).toBe(now - 10_000);
+    expect(client.getQueryState(key)).toMatchObject({ dataUpdatedAt: now - 10_000, isInvalidated: true });
     expect(invalidate).not.toHaveBeenCalled();
   });
 
