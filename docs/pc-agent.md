@@ -220,11 +220,12 @@ concurrency, shutdown and subprocess recovery design. Real process/network deliv
 and stop during an incomplete connect handshake remain unverified.
 
 [install.bat](../pc-agent/install.bat) configures an NSSM service named
-`SpherePCAgent`, working directory `pc-agent/`, parameters `-m agent.main`, daily log
-rotation and automatic restart. It also starts the service. Review the chosen Python,
-working directory, credentials and executable paths before using it; the audit did
-not install/start an operating-system service. Container/Windows/Linux service
-behavior and access to local emulator executables remain separate validation work.
+`SpherePCAgent` and starts it from `pc-agent/` with `-m agent.windows_service` and
+automatic restart. New installs write startup and runtime diagnostics to
+`logs/agent-service.log` with four backups and a 5 MiB limit per file. Existing services
+require a separate migration. The audit verified the Python log sink and startup
+diagnostics in local fixtures. Windows service execution, container/Linux behavior
+and access to local emulator executables remain separate validation work.
 
 AUD-63 retains [six failures before](audits/2026-09-05/evidence/pc-tenant-before.txt)
 and [45 related passing cases after](audits/2026-09-05/evidence/pc-tenant-after.txt).

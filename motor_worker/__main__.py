@@ -56,6 +56,7 @@ def main() -> int:
     args = parser.parse_args()
     # Network libraries may log private candidates / remote close reasons. The CLI
     # emits only our finite structured report and fixed errors.
+    previous_log_threshold = logging.root.manager.disable
     logging.disable(logging.CRITICAL)
     try:
         observer = None
@@ -158,6 +159,8 @@ def main() -> int:
         reason = str(exc) if isinstance(exc, ProtocolError) else "output_unavailable"
         print(json.dumps({"success": False, "failure": reason}), file=sys.stderr)
         return 2
+    finally:
+        logging.disable(previous_log_threshold)
 
 
 if __name__ == "__main__":

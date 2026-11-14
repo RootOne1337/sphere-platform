@@ -4,6 +4,7 @@ import contextlib
 import importlib.util
 import io
 import json
+import logging
 import os
 import sys
 import tempfile
@@ -80,6 +81,19 @@ class MotorCliTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIsNone(factory.call_args.kwargs["policy"])
         self.assertTrue(factory.call_args.args[0].shadow_policy)
+
+    def test_cli_restores_previous_logging_threshold_on_success_and_failure(self):
+        previous = logging.root.manager.disable
+        self.addCleanup(logging.disable, previous)
+        logging.disable(logging.WARNING)
+        for options, expected in (
+            (["--shadow-policy", "minimap"], 2),
+            (["--shadow-policy", "neutral"], 0),
+        ):
+            with self.subTest(options=options):
+                code, _, _ = self.invoke(options)
+                self.assertEqual(code, expected)
+                self.assertEqual(logging.root.manager.disable, logging.WARNING)
 
     def test_route_options_cannot_silently_enable_control_or_use_another_mode(self):
         invalid = [
