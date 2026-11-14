@@ -7,8 +7,8 @@
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
     "items": 50,
-    "acceptedRecordedScope": 9,
-    "open": 41
+    "acceptedRecordedScope": 13,
+    "open": 37
   },
   "installed": {
     "lastObservedUtc": "2026-10-26T09:33:25.639677+00:00",
@@ -3021,8 +3021,8 @@
       "title": "Объединить automation workspace и references",
       "priority": "P1",
       "state": "OPEN",
-      "progress": "OPEN",
-      "currentScope": "Сценарии/tasks/schedules/pipelines/triggers существуют отдельно с некоторыми deep links.",
+      "progress": "PARTIAL",
+      "currentScope": "В рабочей копии связаны списки задач и их сценарии, устройства, активные запуски пайплайнов и квитанции пакетов расписания.",
       "remaining": "Definition→version→run→task→device→trace, used-by graph/glossary остаются.",
       "acceptanceCriteria": [
         "Origin → version → run → task → device → trace deep links.",
@@ -3078,10 +3078,10 @@
       "id": "EP-023",
       "title": "Schedules: timezone, missed fire и next run explain",
       "priority": "P2",
-      "state": "OPEN",
-      "progress": "OPEN",
-      "currentScope": "Расписания/pipeline forms имеют имеющийся API и предыдущие regressions.",
-      "remaining": "Полный DST/missed/duplicate fire/history/conflict acceptance ещё нужен.",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "На изолированном стенде приняты политика DST, объяснение следующего времени, пропуски, сведение просроченных слотов, конфликт ревизий и повтор ручной квитанции.",
+      "remaining": "Выкладка, нагрузка парка и длительный прогон. Уже вычисленный до обновления слот обрабатывается в прежнее время.",
       "acceptanceCriteria": [
         "Cron/UTC/local/DST policy показаны.",
         "Next/missed/duplicate fire outcomes и execution history.",
@@ -3090,7 +3090,8 @@
       "dependencies": [
         "EP-021"
       ],
-      "acceptanceEvidence": null,
+      "acceptanceEvidence": "docs/audits/2026-11-14/SCHEDULE-AND-TRIGGER-ACCEPTANCE.json",
+      "acceptanceEvidenceSha256NormalizedLf": "89462640f6f7f6b148be574c15bfbe92c2edc2bbbf0dab30adf8fe6dcdc79feb",
       "kind": "CAPABILITY_GAP",
       "estimatedScope": "M",
       "sourceRefs": [
@@ -3105,10 +3106,10 @@
       "id": "EP-024",
       "title": "Triggers: безопасная simulation и feedback loop limits",
       "priority": "P2",
-      "state": "OPEN",
-      "progress": "OPEN",
-      "currentScope": "Event triggers/delivery и catalog/read evidence существуют.",
-      "remaining": "Dry match без Run, cooldown/dedup/rate/recursion budgets и origin trace остаются.",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "На изолированном стенде приняты симуляция, cooldown, часовой предел, дедупликация сохранённого события и UUID доставки, происхождение из пайплайна и пределы причинной цепочки.",
+      "remaining": "Выкладка и нагрузочная приёмка. Совместимые отправители передают UUID доставки, независимые внешние события без причинной связи образуют новые корни.",
       "acceptanceCriteria": [
         "Test match без pipeline Run.",
         "Cooldown/dedup/rate limits explain.",
@@ -3117,7 +3118,8 @@
       "dependencies": [
         "EP-021"
       ],
-      "acceptanceEvidence": null,
+      "acceptanceEvidence": "docs/audits/2026-11-14/SCHEDULE-AND-TRIGGER-ACCEPTANCE.json",
+      "acceptanceEvidenceSha256NormalizedLf": "89462640f6f7f6b148be574c15bfbe92c2edc2bbbf0dab30adf8fe6dcdc79feb",
       "kind": "CAPABILITY_GAP",
       "estimatedScope": "M",
       "sourceRefs": [
@@ -3132,10 +3134,10 @@
       "id": "EP-025",
       "title": "Webhook attempts/outbox и совместимость доставки",
       "priority": "P1",
-      "state": "OPEN",
-      "progress": "OPEN",
-      "currentScope": "Legacy HTTP outcome исправлен EP-006; n8n имеет отдельный service.",
-      "remaining": "Operator attempts/outbox/DLQ/replay и duplicate policy требуют отдельной приёмки.",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Изолированный PostgreSQL, Chromium и n8n 1.32.0 подтвердили durable outbox, историю, восстановление после прерывания, ограниченные повторы с одним UUID и подписанную доставку событий результата задачи.",
+      "remaining": "Выкладка, нагрузка на парке и проверка дедупликации необратимых эффектов у рабочих получателей. Приёмка подписок охватывает task.completed/task.failed.",
       "acceptanceCriteria": [
         "Delivery ID/outcome/retry deadline/last error доступны.",
         "Подпись и payload сохраняют совместимость.",
@@ -3145,12 +3147,19 @@
         "EP-006",
         "EP-021"
       ],
-      "acceptanceEvidence": null,
+      "acceptanceEvidence": "docs/audits/2026-11-14/WEBHOOK-AND-LOG-ACCEPTANCE.json",
+      "acceptanceEvidenceSha256NormalizedLf": "03e7e1440016b410803f0d04e572de1a710959e6f182f17a0a9272ef1c92c339",
       "kind": "CAPABILITY_GAP",
       "estimatedScope": "L",
       "sourceRefs": [
         {
-          "file": "backend/services/n8n_webhook_service.py"
+          "file": "backend/services/webhook_outbox.py"
+        },
+        {
+          "file": "backend/services/webhook_outbox_worker.py"
+        },
+        {
+          "file": "backend/api/v1/n8n/router.py"
         },
         {
           "file": "frontend/app/(dashboard)/webhooks/page.tsx"
@@ -3372,10 +3381,10 @@
       "id": "EP-033",
       "title": "Byte-bounded backend log reads и global retention",
       "priority": "P1",
-      "state": "OPEN",
-      "progress": "PARTIAL",
-      "currentScope": "Byte-bounded read/upload реализованы; router отделяет global quota/cross-worker lock от writer.",
-      "remaining": "Org/global sweeper/quotas/offline expiry/backup/restore/load остаются.",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Приняты квоты дня, организации и общего тома, независимое истечение offline журналов, восстановление копии, конкурирующие процессы, счётчики отказов и прогноз места на стенде.",
+      "remaining": "Рабочий том, подключённый сбор метрик, длительная нагрузка и резервная копия данных пилота требуют отдельной приёмки.",
       "acceptanceCriteria": [
         "Tail/filter byte budget и bounded concurrency.",
         "Org/global quotas и independent retention sweeper.",
@@ -3384,7 +3393,8 @@
       "dependencies": [
         "EP-032"
       ],
-      "acceptanceEvidence": null,
+      "acceptanceEvidence": "docs/audits/2026-11-14/WEBHOOK-AND-LOG-ACCEPTANCE.json",
+      "acceptanceEvidenceSha256NormalizedLf": "03e7e1440016b410803f0d04e572de1a710959e6f182f17a0a9272ef1c92c339",
       "kind": "CAPABILITY_GAP",
       "estimatedScope": "L",
       "sourceRefs": [
@@ -3428,8 +3438,8 @@
       "title": "Dashboard attention queue и actionable drilldown",
       "priority": "P2",
       "state": "OPEN",
-      "progress": "OPEN",
-      "currentScope": "Dashboard содержит текущие агрегаты/drilldowns.",
+      "progress": "PARTIAL",
+      "currentScope": "Главная выделяет проблемы связи, устаревшие VPN-handshake и ошибки в последних событиях со ссылками по правам роли.",
       "remaining": "Actionable attention queue с reason/version/affected scope и total/page acceptance нужна.",
       "acceptanceCriteria": [
         "Reasons affected scope/version/reconnect/task outcomes.",
@@ -3511,8 +3521,8 @@
       "title": "Discovery capability-scoped onboarding",
       "priority": "P2",
       "state": "OPEN",
-      "progress": "OPEN",
-      "currentScope": "Discovery использует текущий agent/onboarding API; будущий PC-agent не установлен.",
+      "progress": "PARTIAL",
+      "currentScope": "Discovery объясняет отдельное подключение Android APK и область существующей станции. При неизвестной регистрации интерфейс просит сверить парк.",
       "remaining": "Android onboarding без обязательного PC-agent, budgets/progress/cancel/dedup/receipts нужны.",
       "acceptanceCriteria": [
         "Android onboarding не требует PC Agent.",
@@ -3562,7 +3572,7 @@
       "priority": "P2",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Settings/pipeline settings имеют текущие permission scopes.",
+      "currentScope": "Settings/pipeline settings имеют текущие permission scopes. При неизвестном результате создания API-ключа веб сверяет список и блокирует повтор, если появился новый активный ключ с таким же именем.",
       "remaining": "Effective/applied generations, policy composition, secret lifecycle и unknown/conflict save states не приняты целиком.",
       "acceptanceCriteria": [
         "Workspace tabs с независимыми permission scopes.",
@@ -3593,7 +3603,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "APK63 exact installed package/completed OTA confirmed on two explicit canaries. Prior15-device APK60 evidence is historical; fresh reported versions do not prove installed hashes. Mass APK63 rollout and stable1.3 promotion remain held for input reliability acceptance.",
+      "currentScope": "В изолированном Chromium скачивание проверяет SHA-256 фактических байтов по заголовку выбранного канала. Историческая приёмка установки APK63 и завершённой OTA охватила два canary; APK60 охватывал 15 устройств. Массовый rollout и stable promotion остаются открытыми.",
       "remaining": "Stable promotion, normal/dev compatibility, rollout/rollback и mixed-fleet soak остаются.",
       "acceptanceCriteria": [
         "Offered/downloaded/verified/installed/unknown по target.",

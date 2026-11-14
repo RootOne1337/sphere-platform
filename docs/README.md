@@ -48,6 +48,9 @@ WebSocket-протоколы и не доказывает работоспосо
 
 ## Статус, история и границы доказательств
 
+- [Пакет исправлений от 14 ноября](operations/WORK-STATUS.md) с отчётами о
+  [расписаниях и триггерах](audits/2026-11-14/SCHEDULE-AND-TRIGGER-ACCEPTANCE.md),
+  [вебхуках и журналах](audits/2026-11-14/WEBHOOK-AND-LOG-ACCEPTANCE.md).
 - [Веб-аудит от 13–14 ноября 2026 года](audits/2026-11-13/README.md) объединяет
   [матрицу покрытия](audits/2026-11-13/WEB-CLOSURE.md), [план развития](audits/2026-11-13/WEB-OPERATOR-PLAN.md)
   и [проверку журналирования](audits/2026-11-13/LOGGING.md).

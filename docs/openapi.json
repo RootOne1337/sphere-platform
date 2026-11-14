@@ -374,6 +374,241 @@
         }
       }
     },
+    "/api/v1/application-profiles": {
+      "get": {
+        "tags": [
+          "application-profiles"
+        ],
+        "summary": "List tenant and built-in application profiles",
+        "operationId": "list_profiles_api_v1_application_profiles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationProfileList"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "application-profiles"
+        ],
+        "summary": "Create a tenant application profile",
+        "operationId": "create_profile_api_v1_application_profiles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApplicationProfile"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/application-profiles/{profile_id}": {
+      "patch": {
+        "tags": [
+          "application-profiles"
+        ],
+        "summary": "Update an inspected application profile",
+        "operationId": "update_profile_api_v1_application_profiles__profile_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationProfile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/application-profiles/{profile_id}/automation-policy": {
+      "get": {
+        "tags": [
+          "application-profiles"
+        ],
+        "summary": "Get Automation Policy",
+        "operationId": "get_automation_policy_api_v1_application_profiles__profile_id__automation_policy_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationAutomationPolicyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "application-profiles"
+        ],
+        "summary": "Update Automation Policy",
+        "operationId": "update_automation_policy_api_v1_application_profiles__profile_id__automation_policy_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationAutomationPolicyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationAutomationPolicyResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Policy revision changed or built-in profile"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit/logs": {
       "get": {
         "tags": [
@@ -500,10 +735,10 @@
                   "type": "null"
                 }
               ],
-              "description": "AND terms; status:, action:, user: and literal text",
+              "description": "AND terms; status:, action:, user:, request: (exact ID) and literal text",
               "title": "Q"
             },
-            "description": "AND terms; status:, action:, user: and literal text"
+            "description": "AND terms; status:, action:, user:, request: (exact ID) and literal text"
           },
           {
             "name": "from",
@@ -682,10 +917,10 @@
                   "type": "null"
                 }
               ],
-              "description": "AND terms; status:, action:, user: and literal text",
+              "description": "AND terms; status:, action:, user:, request: (exact ID) and literal text",
               "title": "Q"
             },
-            "description": "AND terms; status:, action:, user: and literal text"
+            "description": "AND terms; status:, action:, user:, request: (exact ID) and literal text"
           },
           {
             "name": "from",
@@ -1218,15 +1453,20 @@
         "summary": "Запустить скрипт на N устройствах волнами (202 Accepted)",
         "description": "Асинхронный запуск батча.\nВозвращает batch_id немедленно — волны запускаются в фоне.\nПрогресс: GET /batches/{id} или Events WebSocket.",
         "operationId": "start_batch_api_v1_batches_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/BatchExecutionRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -1249,12 +1489,99 @@
               }
             }
           }
-        },
+        }
+      },
+      "get": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "История пакетов заданий",
+        "operationId": "list_batches_api_v1_batches_get",
         "security": [
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Per Page"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TaskBatchStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "script_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Script Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/batches/broadcast": {
@@ -1915,6 +2242,113 @@
                 "schema": {}
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{device_id}/application-binding": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Get Application Binding",
+        "operationId": "get_application_binding_api_v1_devices__device_id__application_binding_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceApplicationBindingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Update Application Binding",
+        "operationId": "update_application_binding_api_v1_devices__device_id__application_binding_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceApplicationBindingUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceApplicationBindingResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Binding revision changed, device is busy, or built-in profile"
           },
           "422": {
             "description": "Validation Error",
@@ -3511,6 +3945,90 @@
         }
       }
     },
+    "/api/v1/event-triggers/{trigger_id}/simulate": {
+      "get": {
+        "tags": [
+          "event-triggers"
+        ],
+        "summary": "Оценить сохранённый триггер по типу или сохранённому событию без запуска",
+        "operationId": "simulate_event_trigger_api_v1_event_triggers__trigger_id__simulate_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trigger_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trigger Id"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "event_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventTriggerSimulationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/event-triggers/{trigger_id}/toggle": {
       "post": {
         "tags": [
@@ -4332,6 +4850,9 @@
           "204": {
             "description": "Successful Response"
           },
+          "409": {
+            "description": "Группа используется расписанием или изменяется"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -4350,7 +4871,7 @@
         "tags": [
           "groups"
         ],
-        "summary": "Переместить устройства в группу",
+        "summary": "Заменить все группы устройств выбранной группой",
         "operationId": "move_devices_api_v1_groups__group_id__devices_move_post",
         "security": [
           {
@@ -4390,6 +4911,70 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{group_id}/devices/membership": {
+      "post": {
+        "tags": [
+          "groups"
+        ],
+        "summary": "Добавить, удалить или заменить членства устройств в группах",
+        "operationId": "change_device_memberships_api_v1_groups__group_id__devices_membership_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Group Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupMembershipRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMembershipResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Группа не найдена"
+          },
+          "409": {
+            "description": "Состав групп меняется"
           },
           "422": {
             "description": "Validation Error",
@@ -4981,13 +5566,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Successful Response"
           },
           "400": {
             "description": "Invalid or incomplete log body"
@@ -5000,6 +5580,81 @@
           },
           "503": {
             "description": "Upload capacity is busy or log storage unavailable"
+          },
+          "507": {
+            "description": "Device journal storage budget is full"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logs/{device_id}/dates": {
+      "get": {
+        "tags": [
+          "logs"
+        ],
+        "summary": "Get Device Log Dates",
+        "description": "List retained UTC journal dates without reading their contents.",
+        "operationId": "get_device_log_dates_api_v1_logs__device_id__dates_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceLogDatesResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Log read capacity is busy or log source is unavailable",
+            "headers": {
+              "Retry-After": {
+                "description": "Delay in seconds when read capacity is busy",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Correlation ID for the request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceLogReadError"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -5101,6 +5756,30 @@
               }
             }
           },
+          "503": {
+            "description": "Log read capacity is busy or log source is unavailable",
+            "headers": {
+              "Retry-After": {
+                "description": "Delay in seconds when read capacity is busy",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Correlation ID for the request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceLogReadError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -5137,13 +5816,11 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "Device journal storage unavailable or busy"
           },
           "422": {
             "description": "Validation Error",
@@ -5491,6 +6168,206 @@
                 "schema": {}
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/n8n/deliveries": {
+      "get": {
+        "tags": [
+          "n8n"
+        ],
+        "summary": "List webhook delivery history",
+        "operationId": "list_deliveries_api_v1_n8n_deliveries_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Per Page"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "sending",
+                    "delivered",
+                    "dead"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "webhook_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Webhook Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/n8n/deliveries/{delivery_id}": {
+      "get": {
+        "tags": [
+          "n8n"
+        ],
+        "summary": "Read webhook delivery attempts",
+        "operationId": "get_delivery_api_v1_n8n_deliveries__delivery_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "delivery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Delivery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/n8n/deliveries/{delivery_id}/replay": {
+      "post": {
+        "tags": [
+          "n8n"
+        ],
+        "summary": "Retry one terminal webhook delivery with the original delivery ID",
+        "operationId": "replay_webhook_delivery_api_v1_n8n_deliveries__delivery_id__replay_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "delivery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Delivery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Replay is unavailable or tenant delivery capacity is full"
           },
           "422": {
             "description": "Validation Error",
@@ -6163,6 +7040,40 @@
           }
         ],
         "parameters": [
+          {
+            "name": "run_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "batch_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Batch Id"
+            }
+          },
           {
             "name": "pipeline_id",
             "in": "query",
@@ -7044,6 +7955,9 @@
               }
             }
           },
+          "409": {
+            "description": "schedule_revision_conflict"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -7077,11 +7991,33 @@
               "format": "uuid",
               "title": "Schedule Id"
             }
+          },
+          {
+            "name": "expected_updated_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional ScheduleResponse revision",
+              "title": "Expected Updated At"
+            },
+            "description": "Optional ScheduleResponse revision"
           }
         ],
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "409": {
+            "description": "schedule_revision_conflict"
           },
           "422": {
             "description": "Validation Error",
@@ -7129,6 +8065,25 @@
               "title": "Active"
             },
             "description": "true=включить, false=выключить"
+          },
+          {
+            "name": "expected_updated_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional ScheduleResponse revision",
+              "title": "Expected Updated At"
+            },
+            "description": "Optional ScheduleResponse revision"
           }
         ],
         "responses": {
@@ -7141,6 +8096,9 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "schedule_revision_conflict"
           },
           "422": {
             "description": "Validation Error",
@@ -7160,7 +8118,7 @@
         "tags": [
           "schedules"
         ],
-        "summary": "Принудительно запустить расписание сейчас",
+        "summary": "Запросить ближайшее срабатывание активного расписания",
         "operationId": "fire_schedule_now_api_v1_schedules__schedule_id__fire_now_post",
         "security": [
           {
@@ -7177,6 +8135,42 @@
               "format": "uuid",
               "title": "Schedule Id"
             }
+          },
+          {
+            "name": "expected_updated_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional ScheduleResponse revision",
+              "title": "Expected Updated At"
+            },
+            "description": "Optional ScheduleResponse revision"
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
           }
         ],
         "responses": {
@@ -7185,10 +8179,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ScheduleResponse"
+                  "$ref": "#/components/schemas/ScheduleFireResponse"
                 }
               }
             }
+          },
+          "409": {
+            "description": "Расписание выключено, вне окна, исчерпало лимит или schedule_revision_conflict"
+          },
+          "429": {
+            "description": "Достигнут суточный предел ключей повторов расписания"
           },
           "422": {
             "description": "Validation Error",
@@ -8717,7 +9717,7 @@
         "tags": [
           "tasks"
         ],
-        "summary": "Live node execution log entries (from Redis, for running tasks)",
+        "summary": "Retained task progress observations (active and terminal tasks)",
         "operationId": "get_task_live_logs_api_v1_tasks__task_id__live_logs_get",
         "security": [
           {
@@ -8750,6 +9750,9 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Task progress observation source unavailable"
           },
           "422": {
             "description": "Validation Error",
@@ -13610,6 +14613,376 @@
         ],
         "title": "AppVpnSnapshot"
       },
+      "ApplicationAutomationPolicyResponse": {
+        "properties": {
+          "application_profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Profile Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision",
+            "default": 0
+          },
+          "registration_enabled": {
+            "type": "boolean",
+            "title": "Registration Enabled",
+            "default": false
+          },
+          "registration_script_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Script Id"
+          },
+          "max_concurrent_registrations": {
+            "type": "integer",
+            "title": "Max Concurrent Registrations",
+            "default": 3
+          },
+          "registration_timeout_seconds": {
+            "type": "integer",
+            "title": "Registration Timeout Seconds",
+            "default": 600
+          },
+          "farming_enabled": {
+            "type": "boolean",
+            "title": "Farming Enabled",
+            "default": false
+          },
+          "farming_script_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farming Script Id"
+          },
+          "max_concurrent_farming": {
+            "type": "integer",
+            "title": "Max Concurrent Farming",
+            "default": 10
+          },
+          "farming_session_duration_seconds": {
+            "type": "integer",
+            "title": "Farming Session Duration Seconds",
+            "default": 3600
+          },
+          "default_target_level": {
+            "type": "integer",
+            "title": "Default Target Level",
+            "default": 3
+          },
+          "cooldown_between_sessions_minutes": {
+            "type": "integer",
+            "title": "Cooldown Between Sessions Minutes",
+            "default": 30
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_profile_id"
+        ],
+        "title": "ApplicationAutomationPolicyResponse"
+      },
+      "ApplicationAutomationPolicyUpdate": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Expected Revision"
+          },
+          "registration_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Enabled"
+          },
+          "registration_script_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Script Id"
+          },
+          "max_concurrent_registrations": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Concurrent Registrations"
+          },
+          "registration_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 7200.0,
+                "minimum": 60.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Timeout Seconds"
+          },
+          "farming_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farming Enabled"
+          },
+          "farming_script_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farming Script Id"
+          },
+          "max_concurrent_farming": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 500.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Concurrent Farming"
+          },
+          "farming_session_duration_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400.0,
+                "minimum": 300.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farming Session Duration Seconds"
+          },
+          "default_target_level": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Target Level"
+          },
+          "cooldown_between_sessions_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cooldown Between Sessions Minutes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision"
+        ],
+        "title": "ApplicationAutomationPolicyUpdate"
+      },
+      "ApplicationProfileList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationProfileResponse"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "ApplicationProfileList"
+      },
+      "ApplicationProfileResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "android_package": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Android Package"
+          },
+          "servers": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationServer"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Servers"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "builtin",
+              "tenant"
+            ],
+            "title": "Source",
+            "default": "tenant"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Aliases"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "name",
+          "servers"
+        ],
+        "title": "ApplicationProfileResponse"
+      },
+      "ApplicationServer": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "domain": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 1,
+            "title": "Domain"
+          },
+          "port": {
+            "type": "integer",
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "domain",
+          "port"
+        ],
+        "title": "ApplicationServer"
+      },
       "AssignAccountRequest": {
         "properties": {
           "device_id": {
@@ -13862,6 +15235,28 @@
             "format": "date-time",
             "title": "Updated At"
           },
+          "script_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Name"
+          },
+          "wave_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wave Count"
+          },
           "notes": {
             "anyOf": [
               {
@@ -13879,6 +15274,34 @@
             },
             "type": "array",
             "title": "Admission Receipts"
+          },
+          "targets": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BatchTarget"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targets"
+          },
+          "target_counts": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Counts"
           }
         },
         "type": "object",
@@ -13997,6 +15420,42 @@
         ],
         "title": "BatchExecutionRequest"
       },
+      "BatchListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BatchSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "per_page": {
+            "type": "integer",
+            "title": "Per Page"
+          },
+          "pages": {
+            "type": "integer",
+            "title": "Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "per_page",
+          "pages"
+        ],
+        "title": "BatchListResponse"
+      },
       "BatchResponse": {
         "properties": {
           "id": {
@@ -14105,12 +15564,255 @@
         ],
         "title": "BatchResponse"
       },
+      "BatchSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "script_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Script Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "succeeded": {
+            "type": "integer",
+            "title": "Succeeded"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "wave_config": {
+            "type": "object",
+            "title": "Wave Config"
+          },
+          "script_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Version Id"
+          },
+          "next_wave_index": {
+            "type": "integer",
+            "title": "Next Wave Index",
+            "default": 0
+          },
+          "next_wave_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Wave At"
+          },
+          "admission_state": {
+            "type": "string",
+            "title": "Admission State",
+            "default": "legacy_unknown"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "script_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Name"
+          },
+          "wave_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wave Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "script_id",
+          "status",
+          "total",
+          "succeeded",
+          "failed",
+          "wave_config",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "BatchSummary"
+      },
+      "BatchTarget": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "wave_index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Wave Index"
+          },
+          "state": {
+            "$ref": "#/components/schemas/BatchTargetState"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          },
+          "admission_http_status": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 499.0,
+                "minimum": 400.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admission Http Status"
+          },
+          "cancel_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Requested At"
+          },
+          "timeout_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Requested At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "wave_index",
+          "state"
+        ],
+        "title": "BatchTarget"
+      },
+      "BatchTargetState": {
+        "type": "string",
+        "enum": [
+          "pending_admission",
+          "rejected",
+          "not_admitted_cancelled",
+          "unknown",
+          "queued",
+          "assigned",
+          "running",
+          "completed",
+          "failed",
+          "timeout",
+          "cancelled"
+        ],
+        "title": "BatchTargetState"
+      },
       "BroadcastBatchRequest": {
         "properties": {
           "script_id": {
             "type": "string",
             "format": "uuid",
             "title": "Script Id"
+          },
+          "expected_current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Current Version Id"
           },
           "wave_size": {
             "type": "integer",
@@ -14605,6 +16307,49 @@
         ],
         "title": "CreateAPIKeyRequest"
       },
+      "CreateApplicationProfile": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "android_package": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Android Package"
+          },
+          "servers": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationServer"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Servers"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "name"
+        ],
+        "title": "CreateApplicationProfile"
+      },
       "CreateDeviceEventRequest": {
         "properties": {
           "device_id": {
@@ -14866,6 +16611,7 @@
           },
           "cooldown_seconds": {
             "type": "integer",
+            "maximum": 2147483647.0,
             "minimum": 0.0,
             "title": "Cooldown Seconds",
             "description": "Минимальный интервал между срабатываниями (сек)",
@@ -14873,9 +16619,10 @@
           },
           "max_triggers_per_hour": {
             "type": "integer",
+            "maximum": 2147483647.0,
             "minimum": 0.0,
             "title": "Max Triggers Per Hour",
-            "description": "Максимум срабатываний в час (0 = без лимита)",
+            "description": "Максимум за последние 60 минут (0 = без лимита)",
             "default": 100
           }
         },
@@ -15763,6 +17510,93 @@
         ],
         "title": "CreateUserRequest"
       },
+      "DeviceApplicationBindingResponse": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id"
+          },
+          "application_profile_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Profile Id"
+          },
+          "application_server_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Server Key"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "application_profile_id",
+          "application_server_key",
+          "revision"
+        ],
+        "title": "DeviceApplicationBindingResponse"
+      },
+      "DeviceApplicationBindingUpdate": {
+        "properties": {
+          "application_profile_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Profile Id"
+          },
+          "application_server_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Server Key"
+          },
+          "expected_revision": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Expected Revision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "application_profile_id",
+          "application_server_key",
+          "expected_revision"
+        ],
+        "title": "DeviceApplicationBindingUpdate"
+      },
       "DeviceEventListResponse": {
         "properties": {
           "items": {
@@ -16217,6 +18051,51 @@
           "device_id"
         ],
         "title": "DeviceLiveStatus"
+      },
+      "DeviceLogDatesResponse": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "dates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 128,
+            "title": "Dates",
+            "description": "Retained UTC dates in descending order (YYYY-MM-DD)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "dates"
+        ],
+        "title": "DeviceLogDatesResponse"
+      },
+      "DeviceLogReadError": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "log_read_busy",
+              "log_source_unavailable"
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail",
+          "reason"
+        ],
+        "title": "DeviceLogReadError"
       },
       "DeviceLogReadScope": {
         "properties": {
@@ -16776,6 +18655,35 @@
             ],
             "title": "Server Name"
           },
+          "application_profile_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Profile Id"
+          },
+          "application_server_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Server Key"
+          },
+          "application_binding_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Application Binding Revision",
+            "default": 0
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -17141,6 +19049,35 @@
               }
             ],
             "title": "Server Name"
+          },
+          "application_profile_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Profile Id"
+          },
+          "application_server_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Server Key"
+          },
+          "application_binding_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Application Binding Revision",
+            "default": 0
           },
           "created_at": {
             "type": "string",
@@ -17733,6 +19670,153 @@
         ],
         "title": "EventTriggerResponse",
         "description": "Ответ с данными EventTrigger."
+      },
+      "EventTriggerSimulationResponse": {
+        "properties": {
+          "trigger_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trigger Id"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "matches": {
+            "type": "boolean",
+            "title": "Matches"
+          },
+          "would_admit": {
+            "type": "boolean",
+            "title": "Would Admit"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "eligible",
+              "pattern_mismatch",
+              "trigger_disabled",
+              "pipeline_unavailable",
+              "cooldown",
+              "hour_limit",
+              "duplicate_event",
+              "causal_cycle",
+              "depth_limit",
+              "root_limit",
+              "cause_unavailable"
+            ],
+            "title": "Reason"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Observed At"
+          },
+          "retry_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry At"
+          },
+          "recent_runs": {
+            "type": "integer",
+            "title": "Recent Runs"
+          },
+          "max_triggers_per_hour": {
+            "type": "integer",
+            "title": "Max Triggers Per Hour"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "event_origin": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "independent",
+                  "pipeline"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Origin"
+          },
+          "root_event_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Event Id"
+          },
+          "cause_depth": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cause Depth"
+          },
+          "max_cause_depth": {
+            "type": "integer",
+            "title": "Max Cause Depth"
+          },
+          "root_runs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Runs"
+          },
+          "max_root_runs": {
+            "type": "integer",
+            "title": "Max Root Runs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trigger_id",
+          "event_type",
+          "matches",
+          "would_admit",
+          "reason",
+          "observed_at",
+          "retry_at",
+          "recent_runs",
+          "max_triggers_per_hour",
+          "max_cause_depth",
+          "max_root_runs"
+        ],
+        "title": "EventTriggerSimulationResponse"
       },
       "ExecuteShellRequest": {
         "properties": {
@@ -18596,6 +20680,92 @@
         ],
         "title": "GameAccountWithPasswordResponse",
         "description": "Ответ с паролем (для экспорта / детального просмотра)."
+      },
+      "GroupMembershipRequest": {
+        "properties": {
+          "device_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Device Ids"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "add",
+              "remove",
+              "replace"
+            ],
+            "title": "Operation",
+            "description": "add/remove change only the selected group; replace leaves only the selected group."
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_ids",
+          "operation"
+        ],
+        "title": "GroupMembershipRequest"
+      },
+      "GroupMembershipResponse": {
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Group Id"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "add",
+              "remove",
+              "replace"
+            ],
+            "title": "Operation"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/GroupMembershipResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "group_id",
+          "operation",
+          "results"
+        ],
+        "title": "GroupMembershipResponse"
+      },
+      "GroupMembershipResult": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "changed",
+              "unchanged",
+              "device_not_found"
+            ],
+            "title": "Outcome"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "outcome"
+        ],
+        "title": "GroupMembershipResult"
       },
       "GroupResponse": {
         "properties": {
@@ -19911,6 +22081,18 @@
             "type": "string",
             "format": "date-time",
             "title": "Updated At"
+          },
+          "pipeline_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Version",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -19924,7 +22106,8 @@
           "failed",
           "wave_config",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "pipeline_version"
         ],
         "title": "PipelineBatchResponse",
         "description": "Ответ массового запуска pipeline."
@@ -20262,6 +22445,18 @@
             "type": "string",
             "format": "date-time",
             "title": "Updated At"
+          },
+          "pipeline_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Version",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -20276,7 +22471,8 @@
           "step_logs",
           "retry_count",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "pipeline_version"
         ],
         "title": "PipelineRunResponse",
         "description": "Ответ одного pipeline run."
@@ -20760,6 +22956,32 @@
       },
       "RunPipelineBatchRequest": {
         "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version",
+            "description": "Version shown to the operator before launch"
+          },
+          "expected_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Updated At",
+            "description": "Revision timestamp shown before launch"
+          },
           "device_ids": {
             "anyOf": [
               {
@@ -20828,6 +23050,32 @@
       },
       "RunPipelineRequest": {
         "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version",
+            "description": "Version shown to the operator before launch"
+          },
+          "expected_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Updated At",
+            "description": "Revision timestamp shown before launch"
+          },
           "device_id": {
             "type": "string",
             "format": "uuid",
@@ -21003,6 +23251,269 @@
         ],
         "title": "ScheduleExecutionResponse",
         "description": "Ответ срабатывания расписания."
+      },
+      "ScheduleFireResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "cron_expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cron Expression"
+          },
+          "interval_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interval Seconds"
+          },
+          "one_shot_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "One Shot At"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "target_type": {
+            "type": "string",
+            "title": "Target Type"
+          },
+          "script_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Id"
+          },
+          "pipeline_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Id"
+          },
+          "input_params": {
+            "type": "object",
+            "title": "Input Params"
+          },
+          "device_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Ids"
+          },
+          "group_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Id"
+          },
+          "device_tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Tags"
+          },
+          "only_online": {
+            "type": "boolean",
+            "title": "Only Online"
+          },
+          "conflict_policy": {
+            "type": "string",
+            "title": "Conflict Policy"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "active_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active From"
+          },
+          "active_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Until"
+          },
+          "max_runs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Runs"
+          },
+          "total_runs": {
+            "type": "integer",
+            "title": "Total Runs"
+          },
+          "next_fire_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Fire At"
+          },
+          "last_fired_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Fired At"
+          },
+          "created_by_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "requested_fire_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Requested Fire At"
+          },
+          "request_replayed": {
+            "type": "boolean",
+            "title": "Request Replayed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "name",
+          "timezone",
+          "target_type",
+          "input_params",
+          "only_online",
+          "conflict_policy",
+          "is_active",
+          "total_runs",
+          "created_at",
+          "updated_at",
+          "requested_fire_at",
+          "request_replayed"
+        ],
+        "title": "ScheduleFireResponse"
       },
       "ScheduleListResponse": {
         "properties": {
@@ -22489,6 +25000,18 @@
         ],
         "title": "SystemHealth"
       },
+      "TaskBatchStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running",
+          "completed",
+          "partial",
+          "failed",
+          "cancelled"
+        ],
+        "title": "TaskBatchStatus"
+      },
       "TaskDetailResponse": {
         "properties": {
           "id": {
@@ -23182,6 +25705,62 @@
         ],
         "title": "UiHierarchyResponse"
       },
+      "UpdateApplicationProfile": {
+        "properties": {
+          "expected_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expected Updated At"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "android_package": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Android Package"
+          },
+          "servers": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ApplicationServer"
+                },
+                "type": "array",
+                "maxItems": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Servers"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_updated_at"
+        ],
+        "title": "UpdateApplicationProfile"
+      },
       "UpdateDeviceRequest": {
         "properties": {
           "name": {
@@ -23344,7 +25923,7 @@
               }
             ],
             "title": "Server Name",
-            "description": "Привязанный игровой сервер (RED, MOSCOW, GROZNY)"
+            "description": "Legacy server name for unbound devices"
           }
         },
         "type": "object",
@@ -23427,6 +26006,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 2147483647.0,
                 "minimum": 0.0
               },
               {
@@ -23439,6 +26019,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 2147483647.0,
                 "minimum": 0.0
               },
               {
@@ -24150,6 +26731,19 @@
       },
       "UpdateScheduleRequest": {
         "properties": {
+          "expected_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Updated At",
+            "description": "Optional revision timestamp from the inspected ScheduleResponse"
+          },
           "name": {
             "anyOf": [
               {
@@ -25641,6 +28235,381 @@
         ],
         "title": "WebhookCreate"
       },
+      "WebhookDeliveryAttempt": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "sending",
+              "delivered",
+              "retry",
+              "dead",
+              "unknown"
+            ],
+            "title": "Status"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "status",
+          "http_status",
+          "error",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "WebhookDeliveryAttempt"
+      },
+      "WebhookDeliveryDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "webhook_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Webhook Id"
+          },
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "task_callback",
+              "subscription"
+            ],
+            "title": "Source"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "sending",
+              "delivered",
+              "dead"
+            ],
+            "title": "Status"
+          },
+          "attempts_count": {
+            "type": "integer",
+            "title": "Attempts Count"
+          },
+          "max_attempts": {
+            "type": "integer",
+            "title": "Max Attempts"
+          },
+          "replay_count": {
+            "type": "integer",
+            "title": "Replay Count"
+          },
+          "next_attempt_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Attempt At"
+          },
+          "last_http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Http Status"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "can_replay": {
+            "type": "boolean",
+            "title": "Can Replay",
+            "default": false
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookDeliveryAttempt"
+            },
+            "type": "array",
+            "title": "Attempts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "webhook_id",
+          "subject_id",
+          "source",
+          "event_type",
+          "status",
+          "attempts_count",
+          "max_attempts",
+          "replay_count",
+          "next_attempt_at",
+          "last_http_status",
+          "last_error",
+          "created_at",
+          "updated_at",
+          "attempts"
+        ],
+        "title": "WebhookDeliveryDetail"
+      },
+      "WebhookDeliveryList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookDeliveryResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "per_page": {
+            "type": "integer",
+            "title": "Per Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "per_page"
+        ],
+        "title": "WebhookDeliveryList"
+      },
+      "WebhookDeliveryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "webhook_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Webhook Id"
+          },
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "task_callback",
+              "subscription"
+            ],
+            "title": "Source"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "sending",
+              "delivered",
+              "dead"
+            ],
+            "title": "Status"
+          },
+          "attempts_count": {
+            "type": "integer",
+            "title": "Attempts Count"
+          },
+          "max_attempts": {
+            "type": "integer",
+            "title": "Max Attempts"
+          },
+          "replay_count": {
+            "type": "integer",
+            "title": "Replay Count"
+          },
+          "next_attempt_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Attempt At"
+          },
+          "last_http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Http Status"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "can_replay": {
+            "type": "boolean",
+            "title": "Can Replay",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "webhook_id",
+          "subject_id",
+          "source",
+          "event_type",
+          "status",
+          "attempts_count",
+          "max_attempts",
+          "replay_count",
+          "next_attempt_at",
+          "last_http_status",
+          "last_error",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "WebhookDeliveryResponse"
+      },
       "WebhookListResponse": {
         "properties": {
           "items": {
@@ -25653,6 +28622,19 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "publishing_enabled": {
+            "type": "boolean",
+            "title": "Publishing Enabled",
+            "default": false
+          },
+          "supported_events": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Supported Events",
+            "default": []
           }
         },
         "type": "object",
@@ -25726,6 +28708,11 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "receiver_allowed": {
+            "type": "boolean",
+            "title": "Receiver Allowed",
+            "default": false
           }
         },
         "type": "object",

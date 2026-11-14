@@ -147,6 +147,9 @@ alone does not validate the credentials or permissions.
 |----------|----------|---------|-------------|
 | `DEBUG` | | `false` | Enable debug mode (NEVER true in production) |
 | `LOG_LEVEL` | | `INFO` | Logging level: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+| `DEVICE_LOG_DAILY_MAX_BYTES` | | `8388608` | Device journal limit per device and UTC day. A rejected append returns HTTP 507. |
+| `DEVICE_LOG_ORG_MAX_BYTES` | | `2147483648` | Logical journal bytes retained for one organization in the shared storage. |
+| `DEVICE_LOG_STORAGE_MAX_BYTES` | | `8589934592` | Shared device-journal volume budget in logical bytes across managed device directories. Requires storage that supports the shared writer lock. |
 | `ENVIRONMENT` | | `development` | Environment name; production-specific startup enforcement checks the exact value `production` |
 | `SERVER_PUBLIC_URL` | Deployment-dependent | `http://10.0.2.2:8000` | Backend public URL exposed to agents; production overlay constructs it from `SERVER_HOSTNAME` |
 | `COOKIE_SECURE` | | `false` | Forces secure refresh cookies; HTTPS detected on the request also enables `Secure` |
@@ -169,6 +172,8 @@ production only when `ENVIRONMENT` is absent or empty; the supplied template set
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `N8N_ENCRYPTION_KEY` | n8n | No Compose default | n8n credential encryption key; Compose interpolates it into the n8n container |
+| `WEBHOOK_SUBSCRIPTIONS_ENABLED` | backend | `false` | Enable delivery of registered subscriptions for terminal task events. Task callbacks are independent. |
+| `WEBHOOK_ALLOWED_ORIGINS` | backend | `[]` | JSON array of exact HTTP(S) receiver origins for registered subscriptions, including any nondefault port. Example `["http://n8n:5678"]`. |
 
 ---
 

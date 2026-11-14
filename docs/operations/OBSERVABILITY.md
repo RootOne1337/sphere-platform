@@ -327,9 +327,11 @@ HTTP-rate/latency панели и алерты требуют отдельной
 логи с bounded retention и корреляцией device/task/run/session, DB/cache
 exporters с минимальными правами, tunnel probes и Android stage/SLO metrics.
 
-Network card в новом source показывает суммарные TX + RX bytes backend
-namespace, отдельные counters/rates и отдельно coverage числа туннелей. `null`
-для `activeTunnels` не скрывает измеренный трафик и не превращается в `0`.
+Сетевая карточка показывает суммарные TX + RX bytes backend namespace,
+отдельные счётчики и скорости. При `activeTunnelsState=unmeasured` счётчик
+туннелей показывает «Не измеряется» без предупреждения об отказе. Измеренный
+`0` показывается числом. `unavailable` отмечает недоступное измерение и
+учитывается при оценке полноты телеметрии.
 Предупреждение Prometheus описывает неполное покрытие панелей, а не утверждает
 worker-local instrumentation у любого подключённого backend. Дату rollout
 frontend сверяйте в [CURRENT-STATE](CURRENT-STATE.md).

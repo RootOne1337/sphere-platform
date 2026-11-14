@@ -5,7 +5,7 @@ Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**201 HTTP operations across 160 paths.**
+**215 HTTP operations across 170 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -24,6 +24,11 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/account-sessions/stats` | account-sessions | 200, 422 | Get Session Stats |
 | `GET` | `/api/v1/account-sessions/{session_id}` | account-sessions | 200, 422 | Get Session |
 | `POST` | `/api/v1/account-sessions/{session_id}/end` | account-sessions | 200, 422 | End Session |
+| `GET` | `/api/v1/application-profiles` | application-profiles | 200 | List tenant and built-in application profiles |
+| `POST` | `/api/v1/application-profiles` | application-profiles | 201, 422 | Create a tenant application profile |
+| `PATCH` | `/api/v1/application-profiles/{profile_id}` | application-profiles | 200, 422 | Update an inspected application profile |
+| `GET` | `/api/v1/application-profiles/{profile_id}/automation-policy` | application-profiles | 200, 422 | Get Automation Policy |
+| `PUT` | `/api/v1/application-profiles/{profile_id}/automation-policy` | application-profiles | 200, 409, 422 | Update Automation Policy |
 | `GET` | `/api/v1/audit/logs` | audit | 200, 422 | SPLIT-5: Журнал аудита |
 | `GET` | `/api/v1/audit/logs/export` | audit | 200, 422 | Bounded organization-wide audit CSV |
 | `GET` | `/api/v1/auth/api-keys` | auth | 200 | SPLIT-4: Список API ключей |
@@ -38,6 +43,7 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/auth/mfa/setup` | auth | 200 | SPLIT-2: Шаг 1 — Сгенерировать TOTP QR-код |
 | `POST` | `/api/v1/auth/mfa/verify-setup` | auth | 200, 422 | SPLIT-2: Шаг 2 — Подтвердить TOTP-код и включить MFA |
 | `POST` | `/api/v1/auth/refresh` | auth | 200, 422 | Обновить access token по refresh cookie или header |
+| `GET` | `/api/v1/batches` | batches | 200, 422 | История пакетов заданий |
 | `POST` | `/api/v1/batches` | batches | 202, 422 | Запустить скрипт на N устройствах волнами (202 Accepted) |
 | `POST` | `/api/v1/batches/broadcast` | batches | 202, 422 | Запустить скрипт на ВСЕХ онлайн-устройствах организации (202 Accepted) |
 | `DELETE` | `/api/v1/batches/{batch_id}` | batches | 204, 422 | Отменить батч (незапущенные задачи → CANCELLED) |
@@ -60,6 +66,8 @@ for tested behavior and remaining limits.
 | `DELETE` | `/api/v1/devices/{device_id}` | devices | 204, 422 | Убрать устройство из активного каталога, сохранив историю |
 | `GET` | `/api/v1/devices/{device_id}` | devices | 200, 422 | Получить устройство по ID |
 | `PUT` | `/api/v1/devices/{device_id}` | devices | 200, 422 | Обновить устройство |
+| `GET` | `/api/v1/devices/{device_id}/application-binding` | devices | 200, 422 | Get Application Binding |
+| `PUT` | `/api/v1/devices/{device_id}/application-binding` | devices | 200, 409, 422 | Update Application Binding |
 | `POST` | `/api/v1/devices/{device_id}/connect` | devices | 204, 422 | Инициировать ADB подключение через PC Agent (TZ-03 stub) |
 | `GET` | `/api/v1/devices/{device_id}/direct-probe-capabilities` | direct-transport-canary | 200, 422 | Read per-device admission to the finite direct-channel diagnostic |
 | `POST` | `/api/v1/devices/{device_id}/logcat` | devices | 200, 422 | Запросить logcat устройства |
@@ -78,6 +86,7 @@ for tested behavior and remaining limits.
 | `DELETE` | `/api/v1/event-triggers/{trigger_id}` | event-triggers | 204, 422 | Удалить EventTrigger (жёсткое удаление) |
 | `GET` | `/api/v1/event-triggers/{trigger_id}` | event-triggers | 200, 422 | Получить EventTrigger по ID |
 | `PATCH` | `/api/v1/event-triggers/{trigger_id}` | event-triggers | 200, 422 | Обновить EventTrigger |
+| `GET` | `/api/v1/event-triggers/{trigger_id}/simulate` | event-triggers | 200, 422 | Оценить сохранённый триггер по типу или сохранённому событию без запуска |
 | `POST` | `/api/v1/event-triggers/{trigger_id}/toggle` | event-triggers | 200, 422 | Включить / выключить EventTrigger |
 | `GET` | `/api/v1/game-accounts` | game-accounts | 200, 422 | Список игровых аккаунтов с пагинацией, фильтрацией и сортировкой |
 | `POST` | `/api/v1/game-accounts` | game-accounts | 201, 422 | Создать игровой аккаунт |
@@ -93,9 +102,10 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/groups` | groups | 201, 422 | Создать группу устройств |
 | `PUT` | `/api/v1/groups/devices/{device_id}/tags` | groups | 204, 422 | Заменить теги устройства (идемпотентно) |
 | `GET` | `/api/v1/groups/tags` | groups | 200 | Все теги в организации (для автодополнения) |
-| `DELETE` | `/api/v1/groups/{group_id}` | groups | 204, 422 | Удалить группу устройств |
+| `DELETE` | `/api/v1/groups/{group_id}` | groups | 204, 409, 422 | Удалить группу устройств |
 | `PUT` | `/api/v1/groups/{group_id}` | groups | 200, 422 | Обновить группу устройств |
-| `POST` | `/api/v1/groups/{group_id}/devices/move` | groups | 200, 422 | Переместить устройства в группу |
+| `POST` | `/api/v1/groups/{group_id}/devices/membership` | groups | 200, 404, 409, 422 | Добавить, удалить или заменить членства устройств в группах |
+| `POST` | `/api/v1/groups/{group_id}/devices/move` | groups | 200, 422 | Заменить все группы устройств выбранной группой |
 | `GET` | `/api/v1/health` | health | 200 | Health Check |
 | `GET` | `/api/v1/health/build` | health | 200 | Build Info |
 | `GET` | `/api/v1/health/full` | health | 200 | Full Health |
@@ -109,13 +119,17 @@ for tested behavior and remaining limits.
 | `PUT` | `/api/v1/locations/{location_id}` | locations | 200, 422 | Обновить локацию |
 | `DELETE` | `/api/v1/locations/{location_id}/devices` | locations | 200, 422 | Убрать устройства из локации |
 | `POST` | `/api/v1/locations/{location_id}/devices` | locations | 200, 422 | Назначить устройства в локацию (аддитивно) |
-| `POST` | `/api/v1/logs/upload` | logs | 200, 400, 408, 413, 422, 503 | Upload Logs |
-| `DELETE` | `/api/v1/logs/{device_id}` | logs | 200, 422 | Delete Device Logs |
-| `GET` | `/api/v1/logs/{device_id}` | logs | 200, 422 | Get Device Logs |
+| `POST` | `/api/v1/logs/upload` | logs | 204, 400, 408, 413, 422, 503, 507 | Upload Logs |
+| `DELETE` | `/api/v1/logs/{device_id}` | logs | 204, 422, 503 | Delete Device Logs |
+| `GET` | `/api/v1/logs/{device_id}` | logs | 200, 422, 503 | Get Device Logs |
+| `GET` | `/api/v1/logs/{device_id}/dates` | logs | 200, 422, 503 | Get Device Log Dates |
 | `POST` | `/api/v1/monitoring/alerts` | monitoring | 200, 422 | Receive Alerts |
 | `GET` | `/api/v1/monitoring/fleet-coverage` | monitoring | 200 | Tenant inventory, presence and independently timed VPN coverage |
 | `GET` | `/api/v1/monitoring/metrics` | monitoring | 200 | Агрегированные метрики инфраструктуры |
 | `GET` | `/api/v1/monitoring/nodes` | monitoring | 200 | Топология кластера (список нод) |
+| `GET` | `/api/v1/n8n/deliveries` | n8n | 200, 422 | List webhook delivery history |
+| `GET` | `/api/v1/n8n/deliveries/{delivery_id}` | n8n | 200, 422 | Read webhook delivery attempts |
+| `POST` | `/api/v1/n8n/deliveries/{delivery_id}/replay` | n8n | 200, 409, 422 | Retry one terminal webhook delivery with the original delivery ID |
 | `POST` | `/api/v1/n8n/tasks` | n8n | 201, 422 | Create task from n8n (supports webhook callback) |
 | `GET` | `/api/v1/n8n/tasks/{task_id}` | n8n | 200, 422 | Poll task status |
 | `GET` | `/api/v1/n8n/webhooks` | n8n | 200 | List registered webhooks |
@@ -148,12 +162,12 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/pipelines/{pipeline_id}/toggle` | pipelines | 200, 422 | Включить / выключить pipeline |
 | `GET` | `/api/v1/schedules` | schedules | 200, 422 | Список расписаний |
 | `POST` | `/api/v1/schedules` | schedules | 201, 422 | Создать расписание |
-| `DELETE` | `/api/v1/schedules/{schedule_id}` | schedules | 204, 422 | Деактивировать расписание |
+| `DELETE` | `/api/v1/schedules/{schedule_id}` | schedules | 204, 409, 422 | Деактивировать расписание |
 | `GET` | `/api/v1/schedules/{schedule_id}` | schedules | 200, 422 | Получить расписание по ID |
-| `PATCH` | `/api/v1/schedules/{schedule_id}` | schedules | 200, 422 | Обновить расписание |
+| `PATCH` | `/api/v1/schedules/{schedule_id}` | schedules | 200, 409, 422 | Обновить расписание |
 | `GET` | `/api/v1/schedules/{schedule_id}/executions` | schedules | 200, 422 | История срабатываний расписания |
-| `POST` | `/api/v1/schedules/{schedule_id}/fire-now` | schedules | 200, 422 | Принудительно запустить расписание сейчас |
-| `POST` | `/api/v1/schedules/{schedule_id}/toggle` | schedules | 200, 422 | Включить / выключить расписание |
+| `POST` | `/api/v1/schedules/{schedule_id}/fire-now` | schedules | 200, 409, 422, 429 | Запросить ближайшее срабатывание активного расписания |
+| `POST` | `/api/v1/schedules/{schedule_id}/toggle` | schedules | 200, 409, 422 | Включить / выключить расписание |
 | `GET` | `/api/v1/scripts` | scripts | 200, 422 | Список скриптов с пагинацией |
 | `POST` | `/api/v1/scripts` | scripts | 201, 422 | Создать скрипт с DAG |
 | `GET` | `/api/v1/scripts/action-contract` | scripts | 200 | Контракт параметров опубликованных действий Android без проверки APK |
@@ -175,7 +189,7 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/tasks` | tasks | 201, 422 | Поставить задачу в очередь |
 | `DELETE` | `/api/v1/tasks/{task_id}` | tasks | 204, 422 | Отменить задачу (только QUEUED/ASSIGNED) |
 | `GET` | `/api/v1/tasks/{task_id}` | tasks | 200, 422 | Получить задачу по ID |
-| `GET` | `/api/v1/tasks/{task_id}/live-logs` | tasks | 200, 422 | Live node execution log entries (from Redis, for running tasks) |
+| `GET` | `/api/v1/tasks/{task_id}/live-logs` | tasks | 200, 422, 503 | Retained task progress observations (active and terminal tasks) |
 | `GET` | `/api/v1/tasks/{task_id}/logs` | tasks | 200, 422 | Логи выполнения задачи (per-node) |
 | `GET` | `/api/v1/tasks/{task_id}/progress` | tasks | 200, 422 | Live-прогресс выполнения задачи (из Redis кэша) |
 | `POST` | `/api/v1/tasks/{task_id}/rerun` | tasks | 201, 409, 422 | New independent execution with the original script version and inputs |

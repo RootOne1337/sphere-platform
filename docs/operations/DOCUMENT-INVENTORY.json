@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 506,
+    "DATED_EVIDENCE": 516,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 92,
     "PROJECT_POLICY": 7,
@@ -2162,6 +2162,46 @@
     },
     {
       "file": "docs/audits/2026-11-13/evidence/VPN-WORKFLOW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/ANDROID-AUTOMATION-RECEIPTS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/APPLICATION-AUTOMATION-ISOLATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/ENTERPRISE-PILOT-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/FLEET-GROUPS-BATCH-VALIDATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/OPERATOR-DIAGNOSTICS-AND-APPLICATION-CATALOG.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/OPERATOR-FIX-BATCH.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/OPERATOR-FOLLOWUP-VERIFICATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/SCHEDULE-AND-TRIGGER-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/WEBHOOK-AND-LOG-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/WEBHOOK-OPERATOR-AND-COMMIT.md",
       "role": "DATED_EVIDENCE"
     },
     {

@@ -1,5 +1,25 @@
 # Работы, требования пользователя и границы приёмки
 
+**14 ноября — поставка на пилот:** Web/API `f7c689b2`, миграции до `20261114_webhook_outbox`, ноды n8n и правила Prometheus. PH025 восстановил WebSocket. [Протокол поставки](../audits/2026-11-14/ENTERPRISE-PILOT-DELIVERY.md).
+
+**14 ноября — журнал аудита:** API скрывает произвольные поля старых записей. Смена роли связывает автора, пользователя, значения до и после и HTTP-запись по ID запроса. Прошли 57 Python-тестов и 38 Jest-тестов. EP-034 остаётся частичным до проверки курсора и итогов операций на устройствах.
+
+**14 ноября — приёмка вебхуков и хранения журналов:** EP-025 и EP-033 приняты на изолированном стенде. Проверены durable outbox, один ID повтора, подписанная доставка в n8n, квоты организаций, истечение старых журналов и прогноз свободного места. [Отчёт и проверки](../audits/2026-11-14/WEBHOOK-AND-LOG-ACCEPTANCE.md).
+
+**14 ноября — приёмка расписаний и триггеров:** EP-023 и EP-024 приняты на изолированном стенде. Проверены DST, конкурирующие изменения, пропуски, причинные цепочки и повторы событий. Для вебхуков и журналов добавлена диагностика. [Отчёт и проверки](../audits/2026-11-14/SCHEDULE-AND-TRIGGER-ACCEPTANCE.md).
+
+**14 ноября — перепроверка расписаний, триггеров и обновлений:** повтор запроса расписания возвращает прежнюю квитанцию, триггеры учитывают часовой лимит и проверяются без запуска. Chromium на изолированном стенде подтвердил отказ сохранения при неверном SHA-256. [Отчёт и проверки](../audits/2026-11-14/OPERATOR-FOLLOWUP-VERIFICATION.md).
+
+**14 ноября — пакет операторских исправлений:** расписания и результаты, переходы между задачами и пайплайнами, события и триггеры, локации, Discovery, пользователи, ключи и релизы. [Изменения, единый прогон и оставшаяся приёмка](../audits/2026-11-14/OPERATOR-FIX-BATCH.md).
+
+**14 ноября — результаты Android и вебхуки:** PH025 выполнил исходную версию старого сценария. В рабочей копии Android передаёт уровень и явный признак блокировки. Отключённые вебхуки доступны в реестре, callback задачи отправляется после commit. [Android и старые запуски](../audits/2026-11-14/ANDROID-AUTOMATION-RECEIPTS.md) · [Вебхуки и границы доставки](../audits/2026-11-14/WEBHOOK-OPERATOR-AND-COMMIT.md).
+
+**14 ноября — привязки приложений и автоматизация:** на изолированном стенде два профиля с одинаковыми именами серверов и логинами прошли регистрацию и фарм через WebSocket. Задание из предыдущей схемы сохранило версию сценария и аккаунт. [Изменения, проверки и границы приёмки](../audits/2026-11-14/APPLICATION-AUTOMATION-ISOLATION.md).
+
+**14 ноября — диагностика и каталог приложений:** на отдельном стенде проверены возврат после MFA к архиву, корреляция аудита, наблюдения завершённых задач, отказ источника мониторинга, создание второго профиля и аккаунта на его сервере. [Протокол и условия приёмки](../audits/2026-11-14/OPERATOR-DIAGNOSTICS-AND-APPLICATION-CATALOG.md).
+
+**14 ноября — парк, группы и пакеты:** проверены свежесть VPN и присутствия, конкурентные назначения групп, допуск и отмена пакетов на 10 и 100 целей и согласование версии pipeline. Проверки выполнялись на отдельном стенде с синтетическими устройствами. [Протокол проверки и оставшиеся условия приёмки](../audits/2026-11-14/FLEET-GROUPS-BATCH-VALIDATION.md).
+
 **Историческое наблюдение из реестра (26 октября 2026):** UI `b1e89797` / API `1afdc529`. Это не проверка текущей установки; сверяйте фактическое окружение.
 
 **26 октября — PH011 APK91 и найденный предел GPU readback:**10291 установлена
@@ -857,7 +877,7 @@ idle timeout повторился, его причина и задержка о�
 bootstrap сохранены, новых images нет. Public stream/control/soak не приняты,
 9/41 не меняется. [Receipt](../audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
 
-Сверено **10 октября 2026 (UTC+5)**. Это действующий указатель статусов; машинный
+Реестр обновлён **14 ноября 2026 (UTC+5)**. Это действующий указатель статусов; машинный
 источник — [STATUS-REGISTRY.json](STATUS-REGISTRY.json). Установка и runtime:
 [CURRENT-STATE](CURRENT-STATE.md). Критерии эксплуатации: [READINESS](READINESS.md).
 Предыдущая [подробная сверка чата и кода](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
@@ -865,11 +885,15 @@ bootstrap сохранены, новых images нет. Public stream/control/so
 
 ## Что означают числа и насколько велика работа
 
-**9 принято / 41 открыто из 50** — продуктовый план. Принятое означает только
+**13 принято / 37 открыто из 50** — продуктовый план. Принятое означает только
 scope доказательств конкретного пункта. В исходном аудите было шесть подтверждённых
 дефектов; все шесть имеют записанную приёмку EP-001–006. Остаток включает расширение
 возможностей, дизайн и будущие подсистемы. Новые дефекты могут возникать внутри
 частично выполненного пункта: пример — clock regression рекордера и idle timeout.
+
+Формально приняты 26% строк реестра. Ещё 29 строк в работе с частичным
+результатом, семь открыты без частичной приёмки, одна отложена на уровне дизайна.
+Это доли строк, где задачи разного масштаба имеют равный вес.
 
 **34 source-fixed / 7 незакрытых из 41** — отдельный старый веб-аудит. Три из семи
 PARTIAL, четыре OPEN. Это не дополнительные семь независимых задач поверх 41.
@@ -883,11 +907,12 @@ L — несколько слоёв/проверок, XL — новая подс
 
 ## Сначала закрыть риски эксплуатации
 
-1. **Диск и ОЗУ (EP-033/047):** limited observation возобновлено10Oct00:14UTC
+1. **Диск и ОЗУ всего хоста (EP-047):** limited observation возобновлено10Oct00:14UTC
    до12:34UTC:371×120s/16MiB,24namedfiles и RAM/Docker/WSL. Прежний процесс
    отсутствует,86samples закончились9Oct23:59UTC. C:−6,075GiB при постоянном
    Docker VHDX allocation; источник расхода UNKNOWN. Разрыв не покрыт, VSS/USN/
-   kernel evidence недоступны; resource soak/retention и RAM acceptance нужны.
+   kernel evidence недоступны; длительный прогон хоста и приёмка ОЗУ открыты.
+   Квоты и хранение журналов приложения приняты на стенде в EP-033.
    [Окно и границы](../audits/2026-10-10/STORAGE-OBSERVER-RESUME.md).
 2. **Управление и native latency (EP-020/029):** UI639/API369 установлен.
    Повторное idle recovery и гонки navigation/capture исправлены; fresh RELEASE/
@@ -932,11 +957,11 @@ Baseline [5 октября](../audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json
 | EP-018 | P1 | L | OPEN / PARTIAL | Запись Android input и selector candidates |
 | EP-019 | P1 | L | OPEN / OPEN | Пошаговый trace и replay с frame correlation |
 | EP-020 | P1 | L | OPEN / PARTIAL | Server/agent debug pause, step, cancel и safety |
-| EP-021 | P1 | XL | OPEN / OPEN | Объединить automation workspace и references |
+| EP-021 | P1 | XL | OPEN / PARTIAL | Объединить automation workspace и references |
 | EP-022 | P1 | M | OPEN / PARTIAL | Task detail: полные outcomes и artifacts |
-| EP-023 | P2 | M | OPEN / OPEN | Schedules: timezone, missed fire и next run explain |
-| EP-024 | P2 | M | OPEN / OPEN | Triggers: безопасная simulation и feedback loop limits |
-| EP-025 | P1 | L | OPEN / OPEN | Webhook attempts/outbox и совместимость доставки |
+| EP-023 | P2 | M | ACCEPTED_RECORDED_SCOPE / ACCEPTED_FINITE | Schedules: timezone, missed fire и next run explain |
+| EP-024 | P2 | M | ACCEPTED_RECORDED_SCOPE / ACCEPTED_FINITE | Triggers: безопасная simulation и feedback loop limits |
+| EP-025 | P1 | L | ACCEPTED_RECORDED_SCOPE / ACCEPTED_FINITE | Webhook attempts/outbox и совместимость доставки |
 | EP-026 | P2 | XL | OPEN / OPEN | Typed datasources и project manifest |
 | EP-027 | P1 | M | OPEN / PARTIAL | Inspector tree, selectors, freshness и performance |
 | EP-028 | P1 | M | OPEN / PARTIAL | Явный device/agent telemetry scope и inventory |
@@ -944,12 +969,12 @@ Baseline [5 октября](../audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json
 | EP-030 | P2 | M | OPEN / PARTIAL | Original PNG и matching asset provenance |
 | EP-031 | P1 | L | OPEN / OPEN | Thumbnail wall 128 вместо множества full video |
 | EP-032 | P1 | L | OPEN / PARTIAL | Общие structured logs всех разрешённых sources |
-| EP-033 | P1 | L | OPEN / PARTIAL | Byte-bounded backend log reads и global retention |
+| EP-033 | P1 | L | ACCEPTED_RECORDED_SCOPE / ACCEPTED_FINITE | Byte-bounded backend log reads и global retention |
 | EP-034 | P2 | M | OPEN / PARTIAL | Audit journal semantic outcome и redacted diff |
-| EP-035 | P2 | M | OPEN / OPEN | Dashboard attention queue и actionable drilldown |
+| EP-035 | P2 | M | OPEN / PARTIAL | Dashboard attention queue и actionable drilldown |
 | EP-036 | P2 | M | OPEN / PARTIAL | Groups membership и bulk plan |
 | EP-037 | P2 | M | OPEN / PARTIAL | Locations hierarchy UX и validation |
-| EP-038 | P2 | M | OPEN / OPEN | Discovery capability-scoped onboarding |
+| EP-038 | P2 | M | OPEN / PARTIAL | Discovery capability-scoped onboarding |
 | EP-039 | P2 | M | OPEN / PARTIAL | Users role preview, safety и access review |
 | EP-040 | P2 | M | OPEN / PARTIAL | Configuration effective state и разделение policies |
 | EP-041 | P1 | L | OPEN / PARTIAL | Release rollout receipts и каналы |
@@ -1077,7 +1102,7 @@ Fleet WS пакетно invalidates REST queries; скрытые вкладки/
 
 ### CHAT-12 · Наблюдение заполнения всего ПК без ручного угадывания
 
-**OPEN** · EP-033, EP-047.
+**OPEN** · EP-047. Квоты и очистка журналов приложения приняты в EP-033.
 
 Текущий срез: Ограниченный непривилегированный collector28000 после перезапуска подтвердил125 последовательных samples; bounded24h/16MiB. C: после ремонта Healthy/OK,10 проверенных Git-объектов заменены. Потеря места не атрибутирована полностью; VSS недоступен в текущем окне.
 
