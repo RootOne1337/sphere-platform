@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
 import { Radio, RefreshCw } from 'lucide-react';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
-import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 import { Button } from '@/src/shared/ui/button';
-import { type CoverageKey, type CoverageState, parseFleetCoverage } from './fleetCoverageTypes';
+import { useCapabilities } from '@/src/features/access/Capabilities';
+import { type CoverageKey, type CoverageState } from './fleetCoverageTypes';
+import { useFleetCoverage } from './useFleetCoverage';
 
 const STATES: Record<CoverageState, string> = {
     ready: 'Срез получен', unavailable: 'Источник недоступен', forbidden: 'Нет разрешения VPN',
@@ -27,25 +24,9 @@ function time(value: string) {
 }
 
 export function FleetCoveragePanel() {
-    const user = useAuthStore(state => state.user);
-    const sessionVersion = useAuthStore(state => state.sessionVersion);
-    const [now, setNow] = useState(Date.now);
-    const observation = useQuery({
-        queryKey: ['fleet-coverage', user?.org_id, user?.id, user?.role, sessionVersion],
-        queryFn: async ({ signal }) => parseFleetCoverage((await api.get('/monitoring/fleet-coverage', { signal, timeout: 10000 })).data, user!.org_id),
-        enabled: !!user?.org_id, retry: false,
-        refetchInterval: API_POLL_INTERVALS.fleetCoverageMs, refetchIntervalInBackground: false, refetchOnWindowFocus: 'always',
-    });
-    useEffect(() => {
-        const tick = () => setNow(Date.now());
-        const timer = setInterval(tick, 5000);
-        document.addEventListener('visibilitychange', tick);
-        return () => { clearInterval(timer); document.removeEventListener('visibilitychange', tick); };
-    }, []);
-    if (!user?.org_id) return null;
-    const at = Date.parse(observation.data?.generated_at ?? '');
-    const stale = !!observation.data && (!Number.isFinite(at) || now - at > 45000 || at > now + 5000);
-    const data = observation.isError || stale ? undefined : observation.data;
+    const { query: observation, orgId, stale, snapshot: data } = useFleetCoverage();
+    const access = useCapabilities();
+    if (!orgId) return null;
     return <section aria-labelledby="fleet-coverage-title" className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0"><h2 id="fleet-coverage-title" className="flex items-center gap-2 text-lg font-semibold"><Radio className="h-4 w-4 text-primary" aria-hidden="true" />Покрытие парка и VPN</h2>
@@ -68,7 +49,7 @@ export function FleetCoveragePanel() {
             })}</div>
             <footer className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                 <p>Сформировано {time(data.generated_at)} · до {data.max_inventory_devices.toLocaleString('ru-RU')} устройств за срез · неизвестно не означает ноль или исправность.</p>
-                <div className="flex gap-4"><Link href="/devices" className="text-primary hover:underline">Открыть парк</Link><Link href="/vpn" className="text-primary hover:underline">Назначения VPN</Link></div>
+                <div className="flex gap-4"><Link href="/devices" className="text-primary hover:underline">Открыть парк</Link>{access.canAccessRoute('/vpn') && data.vpn_assignment.state !== 'forbidden' && <Link href="/vpn" className="text-primary hover:underline">Назначения VPN</Link>}</div>
             </footer>
         </>}
     </section>;

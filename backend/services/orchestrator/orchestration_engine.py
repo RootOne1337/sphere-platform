@@ -1,646 +1,498 @@
-# backend/services/orchestrator/orchestration_engine.py
-# ВЛАДЕЛЕЦ: TZ-13 Orchestration Pipeline.
-# Фоновый движок оркестрации — полный контур автоматизации прокачки аккаунтов:
-#
-#   генерация ника → регистрация → фарм (циклический) → бан/готов → по кругу
-#
-# Цикл работы (каждые 10с):
-#   1. Загружает PipelineSettings из БД (все орги)
-#   2. Если orchestration_enabled=false → пропуск
-#   3. Обработка завершённых задач → обновление статусов аккаунтов
-#   4. Если registration_enabled → авто-создание аккаунтов + задач регистрации
-#   5. Если farming_enabled → авто-запуск фарм-сессий для свободных аккаунтов
-#   6. Мониторинг банов → авто-замена (если включено)
-#
-# Все данные берутся из БД → переживают перезагрузку сервера.
-# Задачи помечаются CANCELLED после обработки, чтобы избежать повторной обработки.
+"""Admit and account for automatic registration and farming tasks."""
 from __future__ import annotations
 
 import asyncio
 import secrets
 import string
+import uuid
+from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
+from time import monotonic
+from typing import Literal
 
 import structlog
-from sqlalchemy import func, select
-from sqlalchemy.orm import selectinload
+from fastapi import HTTPException
+from sqlalchemy import Select, and_, exists, func, or_, select, text
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
+from backend.database.tenant import bind_tenant_context
+from backend.metrics import orchestration_failures_total
+from backend.models.application_automation_policy import ApplicationAutomationPolicy
+from backend.models.application_profile import ApplicationProfile
 from backend.models.device import Device
 from backend.models.game_account import AccountStatus, GameAccount
 from backend.models.pipeline_settings import PipelineSettings
-from backend.models.task import Task, TaskStatus
+from backend.models.script import Script, ScriptVersion
+from backend.models.task import ORCHESTRATION_ASSIGNMENT_PARAM, Task, TaskStatus
+from backend.services.account_credentials import set_account_password
+from backend.services.application_account_scope import resolve_application_account_scope
+from backend.services.nick_generator import NickGenerator
+from backend.services.task_service import TaskService
 
 logger = structlog.get_logger()
-
-# Интервал основного цикла (секунды)
 _POLL_INTERVAL = 10.0
-
-# Алфавит для генерации паролей (буквы + цифры)
+_FAILURE_LOG_INTERVAL = 60.0
+_DISCOVERY_PAGE_SIZE = 64
+_ACTIVE = (TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED)
+_LEGACY_TERMINAL = (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT)
+_TERMINAL = (*_LEGACY_TERMINAL, TaskStatus.CANCELLED)
+_SEED_BLOCKERS = (AccountStatus.free, AccountStatus.in_use, AccountStatus.cooldown,
+                  AccountStatus.pending_registration, AccountStatus.banned)
 _PASSWORD_ALPHABET = string.ascii_letters + string.digits
 _PASSWORD_LENGTH = 12
 
+Role = Literal["register", "farm"]
+Policy = PipelineSettings | ApplicationAutomationPolicy
+
 
 class OrchestrationEngine:
-    """
-    Фоновый движок оркестрации — полный контур автоматизации.
-
-    Полный жизненный цикл аккаунта:
-      pending_registration → (задача регистрации) → free
-        → (задача фарма) → in_use → (результат) →
-           - level достигнут → free (готов, device_id/server_name сохраняются)
-           - level НЕ достигнут → cooldown → (ждём) → free → снова фарм
-           - бан → banned (device_id/server_name сохраняются в строке)
-           - ошибка → free (повторная попытка)
-
-    Один сервер может быть привязан к МНОГИМ устройствам.
-    Аккаунт ВСЕГДА хранит server_name и device_id для истории.
-    """
-
     def __init__(self) -> None:
         self._running = False
-
-        # Статистика за текущую сессию (с рестарта сервера)
+        self._cursor: uuid.UUID | None = None
+        self._next_failure_log: dict[str, float] = {}
         self.stats_registrations_completed = 0
         self.stats_registrations_failed = 0
         self.stats_bans_detected = 0
 
     async def start(self) -> None:
-        """Запуск фонового loop."""
         self._running = True
         logger.info("orchestration_engine.started")
         while self._running:
             try:
                 await self._tick()
             except Exception as exc:
-                logger.error("orchestration_engine.tick_error", error=str(exc), exc_info=True)
+                self._report_failure("discovery", error_type=type(exc).__name__)
             await asyncio.sleep(_POLL_INTERVAL)
 
     async def stop(self) -> None:
-        """Остановка движка."""
         self._running = False
         logger.info("orchestration_engine.stopped")
 
-    # ── Основной цикл ────────────────────────────────────────────────────────
-
     async def _tick(self) -> None:
-        """Один цикл оркестрации — проверка всех организаций."""
-        async with AsyncSessionLocal() as db:
-            result = await db.execute(select(PipelineSettings))
-            all_settings = result.scalars().all()
-
-            for settings in all_settings:
-                if not settings.orchestration_enabled:
-                    continue
-                try:
-                    await self._process_org(db, settings)
-                except Exception as exc:
-                    logger.error(
-                        "orchestration_engine.org_error",
-                        org_id=str(settings.org_id),
-                        error=str(exc),
-                        exc_info=True,
-                    )
-            await db.commit()
-
-    async def _process_org(self, db, settings: PipelineSettings) -> None:
-        """Обработка одной организации — полный контур."""
-        # 1. Сначала обработка результатов (чтобы освободить слоты)
-        await self._process_completed_tasks(db, settings)
-
-        # 2. Кулдаун → free (аккаунты с истёкшим кулдауном возвращаются в пул)
-        await self._process_cooldowns(db, settings)
-
-        # 3. Авто-регистрация новых аккаунтов
-        if settings.registration_enabled and settings.registration_script_id:
-            await self._process_registrations(db, settings)
-
-        # 4. Авто-фарм свободных аккаунтов
-        if settings.farming_enabled and settings.farming_script_id:
-            await self._process_farming(db, settings)
-
-        # 5. Авто-замена забаненных (если включено)
-        if settings.ban_detection_enabled and settings.auto_replace_banned:
-            await self._process_ban_replacement(db, settings)
-
-    # ── Регистрация ──────────────────────────────────────────────────────────
-
-    async def _process_registrations(self, db, settings: PipelineSettings) -> None:
-        """
-        Авто-регистрация:
-        1. Считаем активные регистрации — проверяем лимит
-        2. Находим устройства с server_name, online, без активных задач
-        3. Для каждого свободного слота: генерируем ник → создаём аккаунт → задачу
-        """
-        org_id = settings.org_id
-
-        # Подсчёт текущих регистраций
-        result = await db.execute(
-            select(func.count()).select_from(Task).where(
-                Task.org_id == org_id,
-                Task.script_id == settings.registration_script_id,
-                Task.status.in_([TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            )
-        )
-        active_count = result.scalar_one()
-        if active_count >= settings.max_concurrent_registrations:
-            return
-
-        slots = settings.max_concurrent_registrations - active_count
-
-        # Устройства с активными задачами (подзапрос)
-        busy_devices_sq = (
-            select(Task.device_id)
-            .where(
-                Task.org_id == org_id,
-                Task.status.in_([TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            )
-            .scalar_subquery()
-        )
-
-        result = await db.execute(
-            select(Device)
-            .where(
-                Device.org_id == org_id,
-                Device.server_name.isnot(None),
-                Device.is_active.is_(True),
-                Device.id.notin_(busy_devices_sq),
-            )
-            .limit(slots)
-        )
-        devices = result.scalars().all()
-        if not devices:
-            return
-
-        for device in devices:
+        async with asyncio.timeout(5), AsyncSessionLocal() as db:
+            query = text("SELECT tenant_id FROM sphere_auth.orchestration_work(CAST(:after_org AS uuid))")
+            org_ids = (await db.scalars(query, {"after_org": self._cursor})).all()
+            if not org_ids and self._cursor is not None:
+                org_ids = (await db.scalars(query, {"after_org": None})).all()
+        self._cursor = org_ids[-1] if len(org_ids) == _DISCOVERY_PAGE_SIZE else None
+        for org_id in org_ids:
             try:
-                await self._create_registration_task(db, settings, device)
+                async with AsyncSessionLocal() as db:
+                    await bind_tenant_context(db, str(org_id))
+                    await db.execute(text("SET LOCAL statement_timeout = '5s'"))
+                    # Keep the same tenant's quotas and legacy/profile admissions
+                    # serialized across worker replicas without taking an admin lock.
+                    acquired = await db.scalar(text("""
+                        SELECT pg_try_advisory_xact_lock(hashtextextended(:scope, 0))
+                    """), {"scope": f"automatic-orchestration:{org_id}"})
+                    if acquired:
+                        await self._process_org(db, org_id)
+                        await db.commit()
             except Exception as exc:
-                logger.error(
-                    "orchestration.reg_create_error",
-                    device_id=str(device.id),
-                    error=str(exc),
-                )
+                self._report_failure("tenant_processing", org_id=str(org_id), error_type=type(exc).__name__)
 
-    async def _create_registration_task(
-        self, db, settings: PipelineSettings, device: Device
-    ) -> None:
-        """Генерация ника + создание аккаунта + задачи регистрации."""
-        script_id = settings.registration_script_id
+    def _report_failure(self, reason: str, **context: str) -> None:
+        orchestration_failures_total.labels(reason=reason).inc()
+        now = monotonic()
+        if now >= self._next_failure_log.get(reason, 0):
+            self._next_failure_log[reason] = now + _FAILURE_LOG_INTERVAL
+            logger.warning("orchestration_engine.failure", reason=reason, **context)
+
+    async def _process_org(self, db: AsyncSession, org_id: uuid.UUID) -> None:
+        settings = await db.scalar(select(PipelineSettings).where(PipelineSettings.org_id == org_id).with_for_update())
+        legacy = settings if settings is not None and settings.orchestration_enabled else None
+        await self._process_completed_tasks(db, legacy, org_id=org_id)
+        await self._process_cooldowns(db, org_id)
+
+        if legacy is not None:
+            if legacy.registration_enabled:
+                await self._admit(db, legacy, "register", settings=legacy)
+            if legacy.farming_enabled:
+                await self._admit(db, legacy, "farm", settings=legacy)
+            if legacy.ban_detection_enabled and legacy.auto_replace_banned:
+                await self._admit(db, legacy, "register", settings=legacy, replace_banned=True)
+
+        policies = (await db.execute(
+            select(ApplicationAutomationPolicy, ApplicationProfile)
+            .join(ApplicationProfile, and_(
+                ApplicationProfile.org_id == org_id,
+                ApplicationProfile.id == ApplicationAutomationPolicy.application_profile_id,
+            ))
+            .where(
+                ApplicationAutomationPolicy.org_id == org_id,
+                or_(ApplicationAutomationPolicy.registration_enabled, ApplicationAutomationPolicy.farming_enabled),
+                ApplicationProfile.android_package.is_not(None),
+            )
+            .order_by(ApplicationAutomationPolicy.application_profile_id)
+            .with_for_update(of=ApplicationAutomationPolicy, skip_locked=True)
+        )).all()
+        for policy, profile in policies:
+            if policy.registration_enabled:
+                await self._admit(db, policy, "register", settings=settings, profile=profile)
+                if settings is not None and settings.ban_detection_enabled and settings.auto_replace_banned:
+                    await self._admit(db, policy, "register", settings=settings, profile=profile, replace_banned=True)
+            if policy.farming_enabled:
+                await self._admit(db, policy, "farm", settings=settings, profile=profile)
+
+    @staticmethod
+    def _script_for(policy: Policy, role: Role) -> uuid.UUID | None:
+        return policy.registration_script_id if role == "register" else policy.farming_script_id
+
+    async def _available_slots(
+        self, db: AsyncSession, policy: Policy, role: Role, profile: ApplicationProfile | None,
+    ) -> int:
+        script_id = self._script_for(policy, role)
         if script_id is None:
-            raise ValueError("Registration script is required")
-        from backend.services.nick_generator import NickGenerator
+            return 0
+        max_slots = policy.max_concurrent_registrations if role == "register" else policy.max_concurrent_farming
+        scope = and_(Task.orchestration_kind == role,
+                     Task.orchestration_profile_id == (profile.id if profile is not None else None))
+        if profile is None:
+            # The old counters included unmarked tasks using this script.
+            scope = or_(scope, _legacy_task_scope(script_id))
+        active = await db.scalar(select(func.count()).select_from(Task).where(
+            Task.org_id == policy.org_id, Task.status.in_(_ACTIVE), scope,
+        ))
+        return max(0, max_slots - (active or 0))
 
-        org_id = settings.org_id
+    @staticmethod
+    def _busy_device(org_id: uuid.UUID):
+        return exists().where(Task.org_id == org_id, Task.device_id == Device.id, Task.status.in_(_ACTIVE))
 
-        # Генерация уникального ника
-        nick_gen = NickGenerator(db)
-        pattern = settings.nick_pattern if settings.nick_generation_enabled else "{first_name}_{last_name}"
-        nickname = await nick_gen.generate(org_id=str(org_id), pattern=pattern)
+    @staticmethod
+    def _device_scope(profile: ApplicationProfile | None):
+        if profile is None:
+            return and_(Device.application_profile_id.is_(None), Device.application_server_key.is_(None))
+        return and_(Device.application_profile_id == profile.id,
+                    Device.application_server_key.in_([server["key"] for server in profile.servers]))
 
-        # Безопасный пароль
-        password = "".join(secrets.choice(_PASSWORD_ALPHABET) for _ in range(_PASSWORD_LENGTH))
+    @staticmethod
+    def _account_scope(org_id: uuid.UUID, profile: ApplicationProfile | None):
+        if profile is None:
+            # Existing unbound workflows can use arbitrary legacy game strings.
+            return ~exists().where(ApplicationProfile.org_id == org_id, ApplicationProfile.key == GameAccount.game)
+        server_pairs = [
+            and_(Device.application_server_key == server["key"], GameAccount.server_name == server["name"])
+            for server in profile.servers
+        ]
+        return and_(GameAccount.game == profile.key, or_(False, *server_pairs))
 
-        # Аккаунт в pending_registration — привязан к device и server
-        account = GameAccount(
-            org_id=org_id,
-            game="black_russia",
-            login=nickname,
-            server_name=device.server_name,
-            nickname=nickname,
-            status=AccountStatus.pending_registration,
-            status_reason="Авто-регистрация через оркестратор",
-            status_changed_at=datetime.now(timezone.utc),
-            device_id=device.id,
-            assigned_at=datetime.now(timezone.utc),
-            target_level=settings.default_target_level,
+    def _registration_candidates(
+        self, org_id: uuid.UUID, profile: ApplicationProfile | None,
+    ) -> Select[tuple[uuid.UUID]]:
+        scope = self._device_scope(profile)
+        if profile is None:
+            scope = and_(scope, Device.server_name.is_not(None))
+        else:
+            # Leave a usable or banned account in place so farming or the
+            # separately controlled replacement path can handle it.
+            has_account = exists().where(
+                GameAccount.org_id == org_id, GameAccount.device_id == Device.id,
+                GameAccount.status.in_(_SEED_BLOCKERS), self._account_scope(org_id, profile),
+            )
+            scope = and_(scope, ~has_account)
+        return select(Device.id).where(
+            Device.org_id == org_id, Device.is_active.is_(True), scope, ~self._busy_device(org_id),
+        ).order_by(Device.id)
+
+    def _account_candidates(
+        self, org_id: uuid.UUID, profile: ApplicationProfile | None, *, replace_banned: bool,
+    ) -> Select[tuple[uuid.UUID, uuid.UUID]]:
+        statement = select(Device.id, GameAccount.id).join(Device, GameAccount.device_id == Device.id).where(
+            Device.org_id == org_id, Device.is_active.is_(True), GameAccount.org_id == org_id,
+            self._device_scope(profile), self._account_scope(org_id, profile), ~self._busy_device(org_id),
+            *self._account_eligibility(org_id, profile, replace_banned),
         )
-        from backend.services.account_credentials import set_account_password
-        set_account_password(account, password)
+        # A single device can have multiple eligible accounts, but consumes one slot.
+        return statement.distinct(Device.id).order_by(Device.id, GameAccount.id)
+
+    @staticmethod
+    def _account_eligibility(org_id: uuid.UUID, profile: ApplicationProfile | None, replace_banned: bool):
+        now = datetime.now(timezone.utc)
+        if replace_banned:
+            banned = (
+                GameAccount.status == AccountStatus.banned,
+                GameAccount.status_changed_at >= now - timedelta(hours=24),
+            )
+            if profile is None:
+                return (*banned, Device.server_name.is_not(None))
+            other = GameAccount.__table__.alias("replacement_account")
+            has_replacement = exists(select(1).select_from(other).where(
+                other.c.org_id == org_id, other.c.device_id == Device.id,
+                other.c.game == profile.key, other.c.server_name == GameAccount.server_name,
+                other.c.status.in_(_SEED_BLOCKERS[:-1]),
+            ))
+            return (*banned, ~has_replacement)
+        return (
+            GameAccount.status == AccountStatus.free, GameAccount.target_level.is_not(None),
+            or_(GameAccount.level.is_(None), GameAccount.level < GameAccount.target_level),
+            or_(GameAccount.cooldown_until.is_(None), GameAccount.cooldown_until <= now),
+        )
+
+    async def _admit(
+        self, db: AsyncSession, policy: Policy, role: Role, *, settings: PipelineSettings | None,
+        profile: ApplicationProfile | None = None, replace_banned: bool = False,
+    ) -> None:
+        slots = await self._available_slots(db, policy, role, profile)
+        script_id = self._script_for(policy, role)
+        if not slots or script_id is None:
+            return
+        org_id = policy.org_id
+        version = await db.scalar(select(Script.current_version_id).join(ScriptVersion, and_(
+            ScriptVersion.id == Script.current_version_id, ScriptVersion.script_id == Script.id,
+            ScriptVersion.org_id == org_id,
+        )).where(Script.id == script_id, Script.org_id == org_id, Script.is_archived.is_(False)))
+        if version is None:
+            self._report_failure(
+                "script_unavailable", org_id=str(org_id), role=role, script_id=str(script_id),
+                profile_id=str(profile.id) if profile is not None else "legacy",
+            )
+            return
+
+        candidates: Sequence[tuple[uuid.UUID, uuid.UUID | None]]
+        if role == "register" and not replace_banned:
+            devices = await db.scalars(self._registration_candidates(org_id, profile).limit(slots))
+            candidates = [(device_id, None) for device_id in devices]
+        else:
+            cap = min(slots, 5) if replace_banned else slots
+            candidates = (await db.execute(
+                self._account_candidates(org_id, profile, replace_banned=replace_banned).limit(cap)
+            )).tuples().all()
+
+        for device_id, account_id in candidates:
+            try:
+                async with db.begin_nested():
+                    await self._admit_candidate(
+                        db, policy, role, settings, profile, device_id, account_id, script_id, version,
+                    )
+            except HTTPException as exc:
+                if exc.status_code not in {404, 409}:
+                    raise
+                logger.debug("orchestration.candidate_changed", org_id=str(org_id), device_id=str(device_id),
+                            role=role, status_code=exc.status_code)
+            except IntegrityError as exc:
+                if getattr(exc.orig, "sqlstate", None) != "23505":
+                    raise
+                logger.debug("orchestration.candidate_conflict", org_id=str(org_id), device_id=str(device_id),
+                            role=role)
+
+    async def _admit_candidate(
+        self, db: AsyncSession, policy: Policy, role: Role, settings: PipelineSettings | None,
+        profile: ApplicationProfile | None, device_id: uuid.UUID, account_id: uuid.UUID | None,
+        script_id: uuid.UUID, version: uuid.UUID,
+    ) -> None:
+        org_id = policy.org_id
+        device = await db.scalar(select(Device).where(
+            Device.id == device_id, Device.org_id == org_id, Device.is_active.is_(True),
+            self._device_scope(profile),
+        ).with_for_update(skip_locked=True).execution_options(populate_existing=True))
+        if device is None or await db.scalar(select(self._busy_device(org_id)).select_from(Device).where(
+            Device.id == device_id,
+        )):
+            return
+        scope = await resolve_application_account_scope(db, device)
+        if profile is None:
+            game, server_name = "black_russia", device.server_name
+        elif scope is not None and scope[0] == profile.key:
+            game, server_name = scope
+        else:
+            return
+
+        account = None
+        if account_id is not None:
+            # Recheck account eligibility after serializing with device binding.
+            account = await db.scalar(select(GameAccount).join(Device, Device.id == GameAccount.device_id).where(
+                Device.id == device_id, GameAccount.id == account_id, GameAccount.org_id == org_id,
+                self._account_scope(org_id, profile), *self._account_eligibility(org_id, profile, role == "register"),
+            ).with_for_update(of=GameAccount, skip_locked=True).execution_options(populate_existing=True))
+            if account is None or (profile is not None and (account.game, account.server_name) != (game, server_name)):
+                return
+
+        replaced = None
+        if role == "register":
+            if server_name is None:
+                return
+            if account_id is None and profile is not None:
+                candidate = await db.scalar(self._registration_candidates(org_id, profile).where(Device.id == device_id))
+                if candidate is None:
+                    return
+            replaced = account
+            account = await self._create_registration_account(db, policy, settings, device, game, server_name)
+        if account is None:
+            return
+
+        task = await TaskService(db).create_task(
+            org_id=org_id, device_id=device.id, script_id=script_id, script_version_id=version,
+            expected_current_version_id=version, account_id=account.id, priority=10 if role == "register" else 5,
+            input_params={ORCHESTRATION_ASSIGNMENT_PARAM: _assignment_timestamp(account)},
+        )
+        task.orchestration_kind = role
+        task.orchestration_profile_id = profile.id if profile is not None else None
+        if role == "register":
+            task.timeout_seconds = policy.registration_timeout_seconds
+            if replaced is not None:
+                replaced.device_id = None
+                replaced.assigned_at = None
+                replaced.status_reason = (
+                    f"{replaced.status_reason or 'Забанен'} | "
+                    f"Устройство: {device.name}, сервер: {replaced.server_name}"
+                )
+        else:
+            task.timeout_seconds = policy.farming_session_duration_seconds
+            task.orchestration_cooldown_minutes = policy.cooldown_between_sessions_minutes
+            account.status = AccountStatus.in_use
+            account.status_reason = "Фарм-сессия через оркестратор"
+            account.status_changed_at = datetime.now(timezone.utc)
+        await db.flush()
+        logger.debug("orchestration.task_admitted", org_id=str(org_id), role=role, task_id=str(task.id),
+                    profile_id=str(profile.id) if profile is not None else None)
+
+    @staticmethod
+    async def _create_registration_account(
+        db: AsyncSession, policy: Policy, settings: PipelineSettings | None, device: Device,
+        game: str, server_name: str,
+    ) -> GameAccount:
+        pattern = (settings.nick_pattern if settings is not None and settings.nick_generation_enabled
+                   else "{first_name}_{last_name}")
+        nickname = await NickGenerator(db).generate(org_id=str(policy.org_id), pattern=pattern)
+        now = datetime.now(timezone.utc)
+        account = GameAccount(
+            org_id=policy.org_id, game=game, login=nickname, nickname=nickname,
+            server_name=server_name, device_id=device.id, assigned_at=now, target_level=policy.default_target_level,
+            status=AccountStatus.pending_registration, status_changed_at=now,
+            status_reason="Авто-регистрация через оркестратор",
+        )
+        set_account_password(account, "".join(secrets.choice(_PASSWORD_ALPHABET) for _ in range(_PASSWORD_LENGTH)))
         db.add(account)
         await db.flush()
+        return account
 
-        # Задача регистрации
-        from backend.services.task_service import TaskService
-        task = await TaskService(db).create_task(
-            org_id=org_id,
-            device_id=device.id,
-            script_id=script_id,
-            priority=10,
-            account_id=account.id,
-        )
-        task.timeout_seconds = settings.registration_timeout_seconds
-        await db.flush()
-
-        logger.info(
-            "orchestration.reg_created",
-            device=device.name,
-            server=device.server_name,
-            nick=nickname,
-            task_id=str(task.id),
-            account_id=str(account.id),
-        )
-
-    # ── Фарм ────────────────────────────────────────────────────────────────
-
-    async def _process_farming(self, db, settings: PipelineSettings) -> None:
-        """
-        Авто-фарм:
-        1. Считаем активные фарм-сессии — проверяем лимит
-        2. Находим аккаунты: free, с device_id, level < target_level, не на кулдауне
-        3. Устройство не должно быть занято другой задачей
-        """
-        org_id = settings.org_id
-
-        result = await db.execute(
-            select(func.count()).select_from(Task).where(
-                Task.org_id == org_id,
-                Task.script_id == settings.farming_script_id,
-                Task.status.in_([TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            )
-        )
-        active_count = result.scalar_one()
-        if active_count >= settings.max_concurrent_farming:
-            return
-
-        slots = settings.max_concurrent_farming - active_count
-
-        # Устройства с активными задачами
-        busy_devices_sq = (
-            select(Task.device_id)
-            .where(
-                Task.org_id == org_id,
-                Task.status.in_([TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            )
-            .scalar_subquery()
-        )
-
-        now = datetime.now(timezone.utc)
-        result = await db.execute(
-            select(GameAccount)
-            .where(
-                GameAccount.org_id == org_id,
-                GameAccount.status == AccountStatus.free,
-                GameAccount.device_id.isnot(None),
-                GameAccount.device_id.notin_(busy_devices_sq),
-                GameAccount.target_level.isnot(None),
-                # level < target_level (или level ещё не известен)
-                (
-                    (GameAccount.level.is_(None))
-                    | (GameAccount.level < GameAccount.target_level)
-                ),
-                # Не на кулдауне
-                (
-                    (GameAccount.cooldown_until.is_(None))
-                    | (GameAccount.cooldown_until <= now)
-                ),
-            )
-            .limit(slots)
-        )
-        accounts = result.scalars().all()
-
-        for account in accounts:
-            try:
-                await self._create_farming_task(db, settings, account)
-            except Exception as exc:
-                logger.error(
-                    "orchestration.farm_create_error",
-                    account_id=str(account.id),
-                    error=str(exc),
-                )
-
-    async def _create_farming_task(
-        self, db, settings: PipelineSettings, account: GameAccount
+    async def _process_completed_tasks(
+        self, db: AsyncSession, settings: PipelineSettings | None, *, org_id: uuid.UUID | None = None,
     ) -> None:
-        """Создать задачу фарма — аккаунт переходит в in_use."""
-        device_id = account.device_id
-        script_id = settings.farming_script_id
-        if device_id is None or script_id is None:
-            raise ValueError("Farming requires a device and script")
-        from backend.services.task_service import TaskService
-        task = await TaskService(db).create_task(
-            org_id=settings.org_id,
-            device_id=device_id,
-            script_id=script_id,
-            priority=5,
-            account_id=account.id,
-        )
-        task.timeout_seconds = settings.farming_session_duration_seconds
-        account.status = AccountStatus.in_use
-        account.status_reason = "Фарм-сессия через оркестратор"
-        account.status_changed_at = datetime.now(timezone.utc)
-        await db.flush()
-
-        logger.info(
-            "orchestration.farm_created",
-            account_id=str(account.id),
-            nick=account.nickname,
-            server=account.server_name,
-            device_id=str(account.device_id),
-            task_id=str(task.id),
-            level=account.level,
-            target=account.target_level,
-        )
-
-    # ── Обработка завершённых задач ──────────────────────────────────────────
-
-    async def _process_completed_tasks(self, db, settings: PipelineSettings) -> None:
-        """
-        Обрабатывает завершённые задачи (COMPLETED/FAILED/TIMEOUT) и обновляет
-        статусы аккаунтов. Отдельная отметка обработки сохраняет terminal outcome;
-        row locks исключают повторный учёт конкурентными workers.
-
-        Регистрация:
-          COMPLETED + success=true → аккаунт free (готов к фарму)
-          COMPLETED + success=false / FAILED / TIMEOUT → аккаунт disabled
-
-        Фарм:
-          COMPLETED → обновить level, если достигнут target → free, иначе cooldown → free
-          FAILED с ban_detected → banned (сохраняем device_id + server_name)
-          FAILED / TIMEOUT → free (повторная попытка, кулдаун)
-        """
-        org_id = settings.org_id
-
-        # ── Задачи регистрации ───────────────────────────────────────────────
-        if settings.registration_script_id:
-            result = await db.execute(
-                select(Task).where(
-                    Task.org_id == org_id,
-                    Task.script_id == settings.registration_script_id,
-                    Task.status.in_([TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT]),
-                ).where(Task.orchestration_processed_at.is_(None))
-                .order_by(Task.id).limit(50).with_for_update(skip_locked=True)
-            )
-            for task in result.scalars().all():
-                account_id = (task.input_params or {}).get("account_id")
-                if not account_id:
-                    # Помечаем задачу как обработанную
-                    task.orchestration_processed_at = datetime.now(timezone.utc)
-                    continue
-
-                res = await db.execute(
-                    select(GameAccount).where(
-                        GameAccount.id == account_id, GameAccount.org_id == org_id,
-                    ).with_for_update().execution_options(populate_existing=True)
-                )
-                account = res.scalar_one_or_none()
-
-                # Guard: обрабатываем только pending_registration
-                if not account or account.status != AccountStatus.pending_registration:
-                    task.orchestration_processed_at = datetime.now(timezone.utc)
-                    continue
-
+        if org_id is None:
+            if settings is None:
+                raise ValueError("Organization required for orchestration accounting")
+            org_id = settings.org_id
+        for role in ("register", "farm"):
+            scope = and_(Task.orchestration_kind == role, Task.status.in_(_TERMINAL))
+            script_id = self._script_for(settings, role) if settings is not None else None
+            if script_id is not None:
+                scope = or_(scope, and_(_legacy_task_scope(script_id), Task.status.in_(_LEGACY_TERMINAL)))
+            tasks = await db.scalars(select(Task).where(
+                Task.org_id == org_id, Task.orchestration_processed_at.is_(None), scope,
+            ).order_by(Task.id).limit(50).with_for_update(skip_locked=True))
+            for task in tasks:
+                account = await self._completion_account(db, task)
                 now = datetime.now(timezone.utc)
-
-                if task.status == TaskStatus.COMPLETED:
-                    success = (task.result or {}).get("success", False)
-                    if success:
-                        account.status = AccountStatus.free
-                        account.status_reason = "Регистрация завершена успешно"
-                        account.registered_at = now
-                        account.registration_provider = "auto"
-                        self.stats_registrations_completed += 1
-                        logger.info(
-                            "orchestration.reg_completed",
-                            nick=account.nickname,
-                            server=account.server_name,
-                        )
-                    else:
-                        error = (task.result or {}).get("error", "unknown")
-                        account.status = AccountStatus.disabled
-                        account.status_reason = f"Регистрация провалена: {error}"
-                        self.stats_registrations_failed += 1
-                        logger.warning("orchestration.reg_failed", nick=account.nickname, error=error)
-                else:
-                    account.status = AccountStatus.disabled
-                    account.status_reason = (
-                        f"Регистрация {task.status.value}: {task.error_message or 'timeout'}"
-                    )
-                    self.stats_registrations_failed += 1
-                    logger.warning(
-                        "orchestration.reg_failed",
-                        nick=account.nickname,
-                        status=task.status.value,
-                    )
-
-                account.status_changed_at = now
-                # Помечаем задачу как обработанную
-                task.orchestration_processed_at = datetime.now(timezone.utc)
-
-        # ── Задачи фарма ─────────────────────────────────────────────────────
-        if settings.farming_script_id:
-            result = await db.execute(
-                select(Task).where(
-                    Task.org_id == org_id,
-                    Task.script_id == settings.farming_script_id,
-                    Task.status.in_([TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT]),
-                ).where(Task.orchestration_processed_at.is_(None))
-                .order_by(Task.id).limit(50).with_for_update(skip_locked=True)
-            )
-            for task in result.scalars().all():
-                account_id = (task.input_params or {}).get("account_id")
-                if not account_id:
-                    task.orchestration_processed_at = datetime.now(timezone.utc)
+                if (role == "register" and task.orchestration_kind is None and settings is not None
+                        and task.script_id == settings.farming_script_id and account is not None
+                        and account.status == AccountStatus.in_use):
+                    # Old rows have no role marker. If both legacy roles use
+                    # the script, the admitted account state identifies farm.
                     continue
+                if role == "register" and account is not None and account.status == AccountStatus.pending_registration:
+                    self._complete_registration(task, account, now)
+                elif role == "farm" and account is not None and account.status == AccountStatus.in_use:
+                    cooldown = task.orchestration_cooldown_minutes
+                    if cooldown is None:
+                        cooldown = settings.cooldown_between_sessions_minutes if settings is not None else 30
+                    self._complete_farming(task, account, cooldown, now)
+                task.orchestration_processed_at = now
 
-                res = await db.execute(
-                    select(GameAccount).where(
-                        GameAccount.id == account_id, GameAccount.org_id == org_id,
-                    ).with_for_update().execution_options(populate_existing=True)
-                )
-                account = res.scalar_one_or_none()
+    @staticmethod
+    async def _completion_account(db: AsyncSession, task: Task) -> GameAccount | None:
+        try:
+            account_id = uuid.UUID(str((task.input_params or {}).get("account_id")))
+        except ValueError:
+            return None
+        account = await db.scalar(select(GameAccount).where(
+            GameAccount.id == account_id, GameAccount.org_id == task.org_id,
+        ).with_for_update().execution_options(populate_existing=True))
+        if account is not None and task.orchestration_kind is not None:
+            if (account.device_id != task.device_id or ORCHESTRATION_ASSIGNMENT_PARAM not in task.input_params
+                    or task.input_params[ORCHESTRATION_ASSIGNMENT_PARAM] != _assignment_timestamp(account)):
+                return None
+        return account
 
-                if not account or account.status != AccountStatus.in_use:
-                    task.orchestration_processed_at = datetime.now(timezone.utc)
-                    continue
+    def _complete_registration(self, task: Task, account: GameAccount, now: datetime) -> None:
+        result = task.result if isinstance(task.result, dict) else {}
+        if task.status in (TaskStatus.COMPLETED, TaskStatus.FAILED) and result.get("ban_detected") is True:
+            self._mark_banned(account, "Бан обнаружен при регистрации", now)
+            self.stats_registrations_failed += 1
+            return
+        if task.status == TaskStatus.COMPLETED and result.get("success"):
+            account.status = AccountStatus.free
+            account.status_reason = "Регистрация завершена успешно"
+            account.registered_at = now
+            account.registration_provider = "auto"
+            self.stats_registrations_completed += 1
+        else:
+            account.status = AccountStatus.disabled
+            reason = result.get("error") or task.error_message
+            account.status_reason = f"Регистрация завершена без успеха ({task.status})"
+            if isinstance(reason, str):
+                account.status_reason += f": {reason[:200]}"
+            self.stats_registrations_failed += 1
+        account.status_changed_at = now
 
-                now = datetime.now(timezone.utc)
-                task_result = task.result or {}
+    def _complete_farming(self, task: Task, account: GameAccount, cooldown: int, now: datetime) -> None:
+        result = task.result if isinstance(task.result, dict) else {}
+        new_level = result.get("level")
+        if task.status != TaskStatus.CANCELLED and isinstance(new_level, (str, int, float)) and not isinstance(new_level, bool):
+            try:
+                level = int(new_level)
+                if 0 <= level <= 2_147_483_647:
+                    account.level = level
+            except (ValueError, OverflowError):
+                pass
+        if (task.status in {TaskStatus.COMPLETED, TaskStatus.FAILED} and result.get("ban_detected")
+                or task.status == TaskStatus.FAILED and "ban" in (task.error_message or "").lower()):
+            self._mark_banned(account, "Бан обнаружен после фарм-сессии", now)
+        elif (task.status == TaskStatus.COMPLETED and account.target_level is not None
+                and account.level is not None and account.level >= account.target_level):
+            account.status = AccountStatus.free
+            account.status_reason = f"Целевой уровень {account.target_level} достигнут — готов"
+            account.cooldown_until = None
+        else:
+            account.status = AccountStatus.cooldown
+            account.status_reason = f"Фарм-сессия завершена ({task.status}), кулдаун {cooldown}мин"
+            account.cooldown_until = now + timedelta(minutes=cooldown)
+        account.status_changed_at = now
+        account.total_sessions += 1
+        account.last_session_end = now
 
-                # Обновляем уровень из результата
-                new_level = task_result.get("level")
-                if new_level is not None:
-                    account.level = int(new_level)
-
-                if task.status == TaskStatus.COMPLETED:
-                    # Проверяем ban_detected в результате
-                    if task_result.get("ban_detected"):
-                        self._mark_banned(account, "Бан обнаружен после фарм-сессии", now)
-                    # Проверяем достижение целевого уровня
-                    elif (
-                        account.target_level is not None
-                        and account.level is not None
-                        and account.level >= account.target_level
-                    ):
-                        # Целевой уровень достигнут — аккаунт ГОТОВ
-                        # device_id и server_name СОХРАНЯЮТСЯ в строке
-                        account.status = AccountStatus.free
-                        account.status_reason = (
-                            f"Целевой уровень {account.target_level} достигнут — готов"
-                        )
-                        logger.info(
-                            "orchestration.farm_target_reached",
-                            nick=account.nickname,
-                            level=account.level,
-                            server=account.server_name,
-                        )
-                    else:
-                        # Нужен ещё фарм — ставим на кулдаун, потом вернётся в free
-                        cooldown_min = settings.cooldown_between_sessions_minutes
-                        account.status = AccountStatus.cooldown
-                        account.status_reason = f"Фарм-сессия #{account.total_sessions + 1} завершена, кулдаун {cooldown_min}мин"
-                        account.cooldown_until = now + timedelta(minutes=cooldown_min)
-
-                elif task.status == TaskStatus.FAILED:
-                    # Проверяем причину — бан или обычная ошибка
-                    error_msg = task.error_message or ""
-                    if task_result.get("ban_detected") or "ban" in error_msg.lower():
-                        self._mark_banned(account, f"Бан: {error_msg}", now)
-                    else:
-                        # Обычная ошибка — возвращаем free для повторной попытки, с кулдауном
-                        cooldown_min = settings.cooldown_between_sessions_minutes
-                        account.status = AccountStatus.cooldown
-                        account.status_reason = f"Фарм-ошибка: {error_msg[:200]}, кулдаун {cooldown_min}мин"
-                        account.cooldown_until = now + timedelta(minutes=cooldown_min)
-                        logger.warning(
-                            "orchestration.farm_error",
-                            nick=account.nickname,
-                            error=error_msg[:200],
-                        )
-
-                elif task.status == TaskStatus.TIMEOUT:
-                    # Таймаут — вернуть free для повторной попытки
-                    cooldown_min = settings.cooldown_between_sessions_minutes
-                    account.status = AccountStatus.cooldown
-                    account.status_reason = f"Фарм-таймаут, кулдаун {cooldown_min}мин"
-                    account.cooldown_until = now + timedelta(minutes=cooldown_min)
-                    logger.warning("orchestration.farm_timeout", nick=account.nickname)
-
-                account.status_changed_at = now
-                account.total_sessions += 1
-                account.last_session_end = now
-                task.orchestration_processed_at = datetime.now(timezone.utc)
-
-    # ── Кулдаун → free ───────────────────────────────────────────────────────
-
-    async def _process_cooldowns(self, db, settings: PipelineSettings) -> None:
-        """Аккаунты с истёкшим кулдауном возвращаются в free → готовы к новому фарму."""
+    @staticmethod
+    async def _process_cooldowns(db: AsyncSession, org_id: uuid.UUID) -> None:
         now = datetime.now(timezone.utc)
-        result = await db.execute(
-            select(GameAccount).where(
-                GameAccount.org_id == settings.org_id,
-                GameAccount.status == AccountStatus.cooldown,
-                GameAccount.cooldown_until.isnot(None),
-                GameAccount.cooldown_until <= now,
-            ).limit(100)
-        )
-        for account in result.scalars().all():
+        accounts = await db.scalars(select(GameAccount).where(
+            GameAccount.org_id == org_id, GameAccount.status == AccountStatus.cooldown,
+            GameAccount.cooldown_until <= now,
+        ).order_by(GameAccount.cooldown_until, GameAccount.id).limit(100).with_for_update(skip_locked=True))
+        for account in accounts:
             account.status = AccountStatus.free
             account.status_reason = "Кулдаун истёк, готов к следующей фарм-сессии"
             account.status_changed_at = now
             account.cooldown_until = None
-            logger.info("orchestration.cooldown_expired", nick=account.nickname)
-
-    # ── Авто-замена забаненных ────────────────────────────────────────────────
-
-    async def _process_ban_replacement(self, db, settings: PipelineSettings) -> None:
-        """
-        Для каждого забаненного аккаунта, у которого device_id ещё активно
-        и на устройстве нет задач — создаём новый аккаунт для регистрации.
-        Забаненный аккаунт остаётся как есть (с server_name и device_id).
-        """
-        if not settings.registration_script_id:
-            return
-
-        org_id = settings.org_id
-
-        # Устройства с активными задачами
-        busy_devices_sq = (
-            select(Task.device_id)
-            .where(
-                Task.org_id == org_id,
-                Task.status.in_([TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            )
-            .scalar_subquery()
-        )
-
-        # Забаненные аккаунты, у которых device ещё онлайн и свободен
-        result = await db.execute(
-            select(GameAccount)
-            .join(Device, GameAccount.device_id == Device.id)
-            .where(
-                GameAccount.org_id == org_id,
-                GameAccount.status == AccountStatus.banned,
-                Device.is_active.is_(True),
-                Device.server_name.isnot(None),
-                GameAccount.device_id.notin_(busy_devices_sq),
-                # Только недавние баны (за последние 24ч) — не бесконечный цикл
-                GameAccount.status_changed_at >= datetime.now(timezone.utc) - timedelta(hours=24),
-            )
-            .options(selectinload(GameAccount.device))
-            .limit(5)
-        )
-        banned_accounts = result.scalars().all()
-
-        for banned in banned_accounts:
-            device = banned.device
-            if not device:
-                continue
-
-            # Отвязываем забаненный аккаунт от устройства
-            # (server_name и ban_reason ОСТАЮТСЯ — для истории)
-            banned.device_id = None
-            banned.assigned_at = None
-            banned.status_reason = (
-                f"{banned.status_reason or 'Забанен'} | "
-                f"Устройство: {device.name}, сервер: {banned.server_name}"
-            )
-
-            # Создаём замену — новый аккаунт + задачу регистрации
-            try:
-                await self._create_registration_task(db, settings, device)
-                logger.info(
-                    "orchestration.ban_replaced",
-                    banned_nick=banned.nickname,
-                    device=device.name,
-                    server=device.server_name,
-                )
-            except Exception as exc:
-                logger.error(
-                    "orchestration.ban_replace_error",
-                    banned_nick=banned.nickname,
-                    error=str(exc),
-                )
-
-    # ── Утилиты ──────────────────────────────────────────────────────────────
 
     def _mark_banned(self, account: GameAccount, reason: str, now: datetime) -> None:
-        """Пометить аккаунт как забаненный — device_id и server_name СОХРАНЯЮТСЯ."""
         account.status = AccountStatus.banned
         account.status_reason = reason
         account.total_bans += 1
         account.last_ban_at = now
         account.ban_reason = reason
         self.stats_bans_detected += 1
-        logger.warning(
-            "orchestration.ban_detected",
-            nick=account.nickname,
-            server=account.server_name,
-            device_id=str(account.device_id) if account.device_id else None,
-            total_bans=account.total_bans,
-        )
+        logger.warning("orchestration.ban_detected", account_id=str(account.id))
 
-    @staticmethod
-    async def _enqueue_task(org_id, device_id, task_id, priority: int) -> None:
-        """Поставить задачу в per-device Redis очередь."""
-        from backend.database.redis_client import redis_binary
-        from backend.services.task_queue import TaskQueue
 
-        if redis_binary:
-            queue_svc = TaskQueue(redis_binary)
-            await queue_svc.enqueue(
-                org_id=str(org_id),
-                device_id=str(device_id),
-                task_id=str(task_id),
-                priority=priority,
-            )
+def _assignment_timestamp(account: GameAccount) -> str | None:
+    return account.assigned_at.astimezone(timezone.utc).isoformat() if account.assigned_at is not None else None
+
+
+def _legacy_task_scope(script_id: uuid.UUID):
+    # A manual rerun can retain the account and original parameters but has
+    # no orchestration kind and must not inherit the AUTO accounting role.
+    return and_(Task.orchestration_kind.is_(None), Task.script_id == script_id,
+                ~Task.input_params.has_key(ORCHESTRATION_ASSIGNMENT_PARAM))

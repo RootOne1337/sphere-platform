@@ -13,6 +13,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.database.engine import Base
 from backend.models.base_model import TimestampMixin, UUIDMixin
 
+ORCHESTRATION_ASSIGNMENT_PARAM = "orchestration_assigned_at"
+
 
 class TaskStatus(str, enum.Enum):
     QUEUED = "queued"
@@ -37,6 +39,10 @@ class Task(Base, UUIDMixin, TimestampMixin):
     script_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scripts.id"), index=True)
     batch_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("task_batches.id"), nullable=True, index=True)
     script_version_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("script_versions.id"), nullable=True)
+    pipeline_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("pipeline_runs.id", name="fk_tasks_pipeline_run", use_alter=True, ondelete="SET NULL"),
+        nullable=True, index=True,
+    )
     status: Mapped[str] = mapped_column(
         Enum(TaskStatus, name="task_status_enum", values_callable=lambda obj: [e.value for e in obj]),
         default=TaskStatus.QUEUED,
@@ -50,6 +56,9 @@ class Task(Base, UUIDMixin, TimestampMixin):
     timeout_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancel_last_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     orchestration_processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    orchestration_kind: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    orchestration_profile_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    orchestration_cooldown_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     timeout_seconds: Mapped[int] = mapped_column(Integer, default=300, nullable=False)
     input_params: Mapped[dict] = mapped_column(JSONB, server_default="{}", nullable=False)
     result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

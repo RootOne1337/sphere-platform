@@ -13,7 +13,10 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -39,12 +42,14 @@ class LogUploadWorkerTest {
     private val logcatCollector = mockk<LogcatCollector>(relaxed = true)
     private val requests = mutableListOf<Request>()
     private var responseCode = 200
+    private var retryAfter: String? = null
     private var beforeResponse: ((Request) -> Unit)? = null
     private val client = OkHttpClient.Builder().addInterceptor { chain ->
         requests += chain.request()
         beforeResponse?.invoke(chain.request())
         Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
-            .code(responseCode).message("fixture").body("accepted".toResponseBody()).build()
+            .code(responseCode).message("fixture").body("accepted".toResponseBody())
+            .apply { retryAfter?.let { header("Retry-After", it) } }.build()
     }.build()
 
     private fun worker() = LogUploadWorker(
@@ -138,6 +143,62 @@ class LogUploadWorkerTest {
         coVerify(exactly = 0) { auth.getFreshTokenForRoute(any(), "https://backup.test") }
     }
 
+    @Test fun `journal quota refusal suppresses new workers without touching crash or backup`() = runTest {
+        prepareUploadCredentials(listOf("https://primary.test", "https://backup.test"))
+        responseCode = 507
+        retryAfter = "900"
+        val crashFile = CrashHandler.crashLogFile(RuntimeEnvironment.getApplication())
+        crashFile.writeText("=== CRASH fixture ===\nkeep until accepted")
+
+        try {
+            assertEquals(Result.retry(), worker().doWork())
+            assertEquals(Result.retry(), worker().doWork())
+            assertEquals(Result.retry(), worker().doWork())
+
+            assertEquals("primary.test", requests.single().url.host)
+            coVerify(exactly = 1) { auth.getFreshTokenForRoute(any(), "https://primary.test") }
+            coVerify(exactly = 0) { auth.getFreshTokenForRoute(any(), "https://backup.test") }
+            verify(exactly = 1) { logcatCollector.collectSphereOnly(lines = 300) }
+            assertTrue(crashFile.readText().contains("keep until accepted"))
+
+            every { auth.getDeviceId() } returns "device-after-rebind"
+            responseCode = 200
+            assertEquals(Result.success(), worker().doWork())
+            assertEquals("device-after-rebind", requests.last().header("X-Device-Id"))
+            assertTrue(!crashFile.exists())
+        } finally {
+            crashFile.delete()
+        }
+    }
+
+    @Test fun `overlapping work observes the first quota response before attempting upload`() = runTest {
+        prepareUploadCredentials(listOf("https://primary.test", "https://backup.test"))
+        responseCode = 507
+        retryAfter = "900"
+        val firstEnteredRefresh = CompletableDeferred<Unit>()
+        val finishRefresh = CompletableDeferred<Unit>()
+        coEvery { auth.getFreshTokenForRoute(any(), any()) } coAnswers {
+            firstEnteredRefresh.complete(Unit)
+            finishRefresh.await()
+            "fresh-device-token"
+        }
+
+        val first = async { worker().doWork() }
+        firstEnteredRefresh.await()
+        val second = async { worker().doWork() }
+        val third = async { worker().doWork() }
+        testScheduler.runCurrent()
+        assertTrue(!second.isCompleted && !third.isCompleted)
+        assertTrue(requests.isEmpty())
+
+        finishRefresh.complete(Unit)
+        assertEquals(Result.retry(), first.await())
+        assertEquals(Result.retry(), second.await())
+        assertEquals(Result.retry(), third.await())
+        assertEquals("primary.test", requests.single().url.host)
+        coVerify(exactly = 1) { auth.getFreshTokenForRoute(any(), any()) }
+    }
+
     @Test fun `crash record is retained when server rejects log upload`() = runTest {
         prepareUploadCredentials()
         responseCode = 503
@@ -190,6 +251,7 @@ class LogUploadWorkerTest {
             assertTrue("newest crash evidence must survive whole-request truncation", text.contains("NEW_CRASH_TAIL_MARKER"))
             assertTrue("priority WebSocket evidence must survive a saturated logcat upload", text.contains("ws_lifecycle event=onFailure"))
             assertTrue("oldest crash bytes are intentionally outside the bounded tail", !text.contains("OLD_CRASH_MARKER"))
+            assertTrue("accepted tail retires the unchanged crash file", !crashFile.exists())
         } finally {
             crashFile.delete()
         }

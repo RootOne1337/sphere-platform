@@ -15,7 +15,7 @@ scrape_configs:
     # High-cardinality per-device samples are not collected in this first stage.
     metric_relabel_configs:
       - source_labels: [__name__]
-        regex: 'process_start_time_seconds|sphere_http_requests_total|sphere_http_request_duration_seconds_(bucket|count|sum)|sphere_db_pool_(size|checked_out)|sphere_container_(cpu_usage_seconds_total|cpu_quota_cores|memory_usage_bytes|memory_limit_bytes|resource_available|resource_read_timestamp_seconds)'
+        regex: 'process_start_time_seconds|sphere_http_requests_total|sphere_http_request_duration_seconds_(bucket|count|sum)|sphere_db_pool_(size|checked_out)|sphere_container_(cpu_usage_seconds_total|cpu_quota_cores|memory_usage_bytes|memory_limit_bytes|resource_available|resource_read_timestamp_seconds)|sphere_device_log_(upload_bytes_total|retention_(events|bytes)_total|retention_last_success_timestamp_seconds|storage_lock_busy_total|filesystem_(available|free_bytes|total_bytes))|sphere_android_ota_unrecognized_receipts_total'
         action: keep
   - job_name: prometheus
     sample_limit: 20000

@@ -11,15 +11,17 @@ export interface PipelineRunSummary {
   current_task_id: string | null;
 }
 
-export function useActivePipelineRuns() {
+export function useActivePipelineRuns(deviceId?: string, enabled = true) {
+  const params = { active_only: true, per_page: 10, ...(deviceId ? { device_id: deviceId } : {}) };
   return useQuery<{ items: PipelineRunSummary[]; total: number }>({
-    queryKey: ['pipeline-runs', { active_only: true, per_page: 10 }],
+    queryKey: ['pipeline-runs', params],
     queryFn: async () => {
       const { data } = await api.get('/pipelines/runs', {
-        params: { active_only: true, per_page: 10 },
+        params,
       });
       return data;
     },
+    enabled,
     refetchInterval: 10_000,
   });
 }

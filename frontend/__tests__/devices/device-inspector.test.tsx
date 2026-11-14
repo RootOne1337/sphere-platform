@@ -24,7 +24,7 @@ const device = { id: 'dev-1', name: 'Remote A', status: 'busy', agent_version: '
 beforeEach(() => {
   mockCan = () => true; jest.clearAllMocks(); mockGet.mockResolvedValue({ data: device }); });
 
-it('fetches by ID, permits a busy agent and distinguishes contact from missing heartbeat', async () => {
+it('fetches by ID and keeps live controls disabled for an unconfirmed busy snapshot', async () => {
   render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
   expect(await screen.findByText('Remote A')).toBeInTheDocument();
   expect(mockGet).toHaveBeenCalledWith('/devices/dev-1', expect.objectContaining({ signal: expect.any(AbortSignal) }));
@@ -32,7 +32,10 @@ it('fetches by ID, permits a busy agent and distinguishes contact from missing h
   expect(screen.getByText('Последний heartbeat APK').nextSibling).toHaveTextContent('Не сообщено');
   expect(screen.getByText('Последний контакт в каталоге').nextSibling).toHaveTextContent('UTC');
   expect(screen.getByText('CPU').nextSibling).toHaveTextContent('Не сообщено');
-  expect(screen.getByText('Начало сессии не сообщено')).toBeInTheDocument();
+  expect(screen.getByText('Нет подтверждённой активной связи')).toBeInTheDocument();
+  expect(screen.getByText('Неизвестно')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Перезагрузка' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Терминал' })).toBeDisabled();
   expect(mockPost).not.toHaveBeenCalled();
 });
 
@@ -44,6 +47,18 @@ it('marks a cached snapshot and blocks commands when a later refresh fails', asy
   expect(await screen.findByRole('alert')).toHaveTextContent('сохранённый ответ');
   expect(screen.getByRole('button', { name: 'Перезагрузка' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Видеопоток' })).toBeEnabled();
+});
+
+it('shows the APK VPN receipt and does not promote a legacy ADB flag into observed access', async () => {
+  const observed = new Date().toISOString();
+  mockGet.mockResolvedValue({ data: { ...device, last_heartbeat: observed, adb_connected: true, vpn_active: false,
+    vpn_observation_state: 'fresh', vpn_observation_max_age_seconds: 120, vpn_observed_at: observed } });
+  render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
+  const vpn = (await screen.findByText('VPN, активность по APK')).nextSibling as HTMLElement;
+  expect(vpn).toHaveTextContent('Не активен');
+  expect(vpn.querySelector('time')).toHaveAttribute('datetime', observed);
+  expect(screen.getByText('ADB (дополнительный канал)').nextSibling).toHaveTextContent('Не подтверждён');
+  expect(screen.getByRole('button', { name: 'Перезагрузка' })).toBeEnabled();
 });
 
 it('opens the separately authorized stream while the catalogue reports a disconnected agent', async () => {
@@ -93,6 +108,21 @@ it('makes history requests only for the selected tab and device', async () => {
   expect(screen.getByRole('link', { name: 'Результат и шаги задачи' })).toHaveAttribute('href', '/tasks/task-1');
 });
 
+it('links from the saved APK logs to the archive for the same offline device', async () => {
+  const user = userEvent.setup();
+  mockGet.mockImplementation(async (url: string) => ({ data: url === '/logs/dev-1'
+    ? { device_id: 'dev-1', lines: ['offline saved log'] }
+    : { ...device, status: 'offline' } }));
+  render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
+  await screen.findByText('Remote A');
+  expect(mockGet).not.toHaveBeenCalledWith('/logs/dev-1', expect.anything());
+  await user.click(screen.getByRole('tab', { name: 'Логи APK' }));
+  expect(await screen.findByText('offline saved log')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Открыть архив журналов' })).toHaveAttribute('href', '/logs?device_id=dev-1');
+  expect(mockGet).toHaveBeenCalledWith('/logs/dev-1', expect.objectContaining({ params: { lines: 100 } }));
+  expect(mockPost).not.toHaveBeenCalled();
+});
+
 it('ignores a late response after switching to another device', async () => {
   let finishFirst!: (data: unknown) => void;
   mockGet.mockImplementation((url: string) => url === '/devices/dev-1' ? new Promise((resolve) => { finishFirst = resolve; }) : Promise.resolve({ data: { ...device, id: 'dev-2', name: 'Remote B' } }));
@@ -104,6 +134,7 @@ it('ignores a late response after switching to another device', async () => {
 });
 
 it('requires confirmation and sends one reboot without treating timeout as success', async () => {
+  mockGet.mockResolvedValue({ data: { ...device, last_heartbeat: new Date().toISOString() } });
   const user = userEvent.setup();
   render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
   await screen.findByText('Remote A');

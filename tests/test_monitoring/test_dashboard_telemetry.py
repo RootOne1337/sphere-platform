@@ -141,6 +141,7 @@ async def test_monitoring_metrics_are_measured_or_explicitly_unavailable(monkeyp
         "txTotalBytes": 2000,
         "rxTotalBytes": 1000,
         "activeTunnels": None,
+        "activeTunnelsState": "unmeasured",
     }
     assert result["observedAt"].endswith("+00:00")
 

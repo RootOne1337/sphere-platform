@@ -20,6 +20,7 @@ from backend.models.pipeline import (
     PipelineRun,
     PipelineRunStatus,
 )
+from backend.services.application_automation_service import lock_admission_devices
 
 logger = structlog.get_logger()
 
@@ -203,6 +204,8 @@ class PipelineService:
         org_id: uuid.UUID,
         *,
         input_params: dict[str, Any] | None = None,
+        expected_version: int | None = None,
+        expected_updated_at: datetime | None = None,
     ) -> PipelineRun:
         """
         Создать PipelineRun — запустить pipeline на одном устройстве.
@@ -211,14 +214,12 @@ class PipelineService:
         PipelineExecutor берёт QUEUED записи из очереди.
         """
         pipeline = await self.get(pipeline_id, org_id, for_run=True)
+        self._check_launch_preview(pipeline, expected_version, expected_updated_at)
         if not pipeline.is_active:
             raise HTTPException(status_code=400, detail="Pipeline деактивирован")
 
         # Проверить что устройство принадлежит организации
-        device = await self.db.scalar(
-            select(Device).where(Device.id == device_id, Device.org_id == org_id)
-        )
-        if not device:
+        if not await lock_admission_devices(self.db, org_id, [device_id]):
             raise HTTPException(status_code=404, detail="Устройство не найдено")
 
         run = PipelineRun(
@@ -228,7 +229,7 @@ class PipelineService:
             status=PipelineRunStatus.QUEUED,
             input_params=input_params or {},
             steps_snapshot=pipeline.steps,  # иммутабельный снимок
-            context={},
+            context={"_pipeline_version": pipeline.version},
             step_logs=[],
         )
         self.db.add(run)
@@ -253,6 +254,8 @@ class PipelineService:
         input_params: dict[str, Any] | None = None,
         wave_size: int = 0,
         wave_delay_seconds: int = 30,
+        expected_version: int | None = None,
+        expected_updated_at: datetime | None = None,
     ) -> PipelineBatch:
         """
         Массовый запуск pipeline.
@@ -261,6 +264,7 @@ class PipelineService:
         создаёт PipelineBatch + PipelineRun для каждого устройства.
         """
         pipeline = await self.get(pipeline_id, org_id, for_run=True)
+        self._check_launch_preview(pipeline, expected_version, expected_updated_at)
         if not pipeline.is_active:
             raise HTTPException(status_code=400, detail="Pipeline деактивирован")
 
@@ -268,6 +272,7 @@ class PipelineService:
         resolved_device_ids = await self._resolve_devices(
             org_id, device_ids=device_ids, group_id=group_id, device_tags=device_tags,
         )
+        resolved_device_ids = await lock_admission_devices(self.db, org_id, resolved_device_ids)
         if not resolved_device_ids:
             raise HTTPException(status_code=400, detail="Нет подходящих устройств")
 
@@ -280,6 +285,7 @@ class PipelineService:
             wave_config={
                 "wave_size": wave_size,
                 "wave_delay_seconds": wave_delay_seconds,
+                "_pipeline_version": pipeline.version,
             },
             created_by_id=created_by_id,
         )
@@ -295,7 +301,7 @@ class PipelineService:
                 status=PipelineRunStatus.QUEUED,
                 input_params=input_params or {},
                 steps_snapshot=pipeline.steps,
-                context={"batch_id": str(batch.id)},
+                context={"batch_id": str(batch.id), "_pipeline_version": pipeline.version},
                 step_logs=[],
             )
             self.db.add(run)
@@ -308,6 +314,12 @@ class PipelineService:
             total=len(resolved_device_ids),
         )
         return batch
+
+    @staticmethod
+    def _check_launch_preview(pipeline: Pipeline, expected_version: int | None, expected_updated_at: datetime | None) -> None:
+        if expected_version is not None and pipeline.version != expected_version:
+            raise HTTPException(status_code=409, detail="Pipeline changed; refresh and confirm again")
+        PipelineService._check_updated(pipeline, expected_updated_at)
 
     # ── Pipeline Run management ──────────────────────────────────────────────
 
@@ -325,6 +337,8 @@ class PipelineService:
         self,
         org_id: uuid.UUID,
         *,
+        run_id: uuid.UUID | None = None,
+        batch_id: uuid.UUID | None = None,
         pipeline_id: uuid.UUID | None = None,
         device_id: uuid.UUID | None = None,
         status: PipelineRunStatus | None = None,
@@ -333,30 +347,28 @@ class PipelineService:
         per_page: int = 50,
     ) -> tuple[list[PipelineRun], int]:
         """Список pipeline runs с фильтрацией."""
-        base = select(PipelineRun).where(PipelineRun.org_id == org_id)
-        count_q = select(func.count()).select_from(PipelineRun).where(PipelineRun.org_id == org_id)
+        filters = [PipelineRun.org_id == org_id]
 
+        if run_id:
+            filters.append(PipelineRun.id == run_id)
+        if batch_id:
+            filters.append(PipelineRun.context["batch_id"].astext == str(batch_id))
         if pipeline_id:
-            base = base.where(PipelineRun.pipeline_id == pipeline_id)
-            count_q = count_q.where(PipelineRun.pipeline_id == pipeline_id)
+            filters.append(PipelineRun.pipeline_id == pipeline_id)
         if device_id:
-            base = base.where(PipelineRun.device_id == device_id)
-            count_q = count_q.where(PipelineRun.device_id == device_id)
+            filters.append(PipelineRun.device_id == device_id)
         if status:
-            base = base.where(PipelineRun.status == status)
-            count_q = count_q.where(PipelineRun.status == status)
+            filters.append(PipelineRun.status == status)
         if active_only:
-            active = PipelineRun.status.in_([
+            filters.append(PipelineRun.status.in_([
                 PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
                 PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED,
-            ])
-            base = base.where(active)
-            count_q = count_q.where(active)
+            ]))
 
-        total = await self.db.scalar(count_q) or 0
+        total = await self.db.scalar(select(func.count()).select_from(PipelineRun).where(*filters)) or 0
         items = (
             await self.db.scalars(
-                base.order_by(PipelineRun.created_at.desc(), PipelineRun.id.desc())
+                select(PipelineRun).where(*filters).order_by(PipelineRun.created_at.desc(), PipelineRun.id.desc())
                 .offset((page - 1) * per_page)
                 .limit(per_page)
             )

@@ -149,15 +149,21 @@ export interface LiveLogEntry {
   ts: number;
 }
 
-export function useTaskLiveLogs(taskId: string, enabled: boolean) {
+export function useTaskLiveLogs(taskId: string, enabled: boolean, poll = true) {
   return useQuery<LiveLogEntry[]>({
     queryKey: ['tasks', taskId, 'live-logs'],
     queryFn: async ({ signal }) => {
       const { data } = await api.get(`/tasks/${taskId}/live-logs`, { signal });
+      if (!Array.isArray(data) || !data.every(entry => entry && typeof entry.node_id === 'string'
+        && Number.isFinite(entry.nodes_done) && Number.isFinite(entry.ts))) {
+        throw new Error('Некорректный ответ источника наблюдений');
+      }
       return data;
     },
     enabled: enabled && !!taskId,
-    refetchInterval: 3_000,
+    refetchInterval: poll ? 3_000 : false,
+    refetchOnWindowFocus: poll,
+    refetchOnReconnect: poll,
   });
 }
 

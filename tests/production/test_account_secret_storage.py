@@ -9,7 +9,9 @@ from pydantic import SecretStr
 from sqlalchemy import select, text
 
 from backend.core.config import settings
+from backend.models.device import Device
 from backend.models.game_account import GameAccount
+from backend.models.pipeline_settings import PipelineSettings
 from backend.models.script import ScriptVersion
 from backend.models.task import Task, TaskStatus
 from backend.schemas.game_accounts import (
@@ -44,11 +46,14 @@ async def test_account_writers_do_not_persist_plaintext(world, writer):
                 game="audit", login=login, password=PASSWORD)])
             assert result.created == 1 and not result.errors
         else:
-            config = SimpleNamespace(org_id=world.org_a.id, nick_generation_enabled=False,
-                registration_script_id=world.script.id, default_target_level=5,
-                registration_timeout_seconds=120)
+            device = await db.get(Device, world.dev_a.id)
+            device.server_name = "AUDIT"
+            db.add(PipelineSettings(org_id=world.org_a.id, orchestration_enabled=True,
+                registration_enabled=True, registration_script_id=world.script.id, default_target_level=5,
+                registration_timeout_seconds=120))
+            await db.flush()
             with patch("backend.services.nick_generator.NickGenerator.generate", AsyncMock(return_value=login)):
-                await OrchestrationEngine()._create_registration_task(db, config, world.dev_a)
+                await OrchestrationEngine()._process_org(db, world.org_a.id)
         await db.commit()
         account = await db.scalar(select(GameAccount).where(
             GameAccount.org_id == world.org_a.id, GameAccount.login == login))

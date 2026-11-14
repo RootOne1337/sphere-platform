@@ -10,16 +10,18 @@ from __future__ import annotations
 import asyncio
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
 from backend.core.lifespan_registry import register_shutdown, register_startup
 from backend.database.engine import AsyncSessionLocal, get_db
+from backend.models.task_batch import TaskBatchStatus
 from backend.models.user import User
 from backend.schemas.batch import (
     BatchDetailResponse,
     BatchExecutionRequest,
+    BatchListResponse,
     BatchResponse,
     BroadcastBatchRequest,
     BroadcastBatchResponse,
@@ -108,7 +110,21 @@ async def broadcast_batch(
     )
 
 
-# ── Get batch status ───────────────────────────────────────────────────────────
+# ── Batch history and status ───────────────────────────────────────────────────
+
+@router.get("", response_model=BatchListResponse, summary="История пакетов заданий")
+async def list_batches(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(25, ge=1, le=100),
+    status: TaskBatchStatus | None = None,
+    script_id: uuid.UUID | None = None,
+    current_user: User = require_permission("script:read"),
+    svc: BatchService = Depends(get_batch_service),
+) -> BatchListResponse:
+    items, total = await svc.list_batches(current_user.org_id, page=page, per_page=per_page,
+                                          status=status, script_id=script_id)
+    return BatchListResponse(items=items, total=total, page=page, per_page=per_page,
+                             pages=(total + per_page - 1) // per_page)
 
 @router.get(
     "/{batch_id}",
@@ -120,8 +136,7 @@ async def get_batch_status(
     current_user: User = require_permission("script:read"),
     svc: BatchService = Depends(get_batch_service),
 ) -> BatchDetailResponse:
-    batch = await svc.get_batch(batch_id, current_user.org_id)
-    return BatchDetailResponse.model_validate(batch)
+    return await svc.get_batch_detail(batch_id, current_user.org_id)
 
 
 # ── Cancel batch ───────────────────────────────────────────────────────────────

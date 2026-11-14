@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -59,6 +60,7 @@ class BroadcastBatchRequest(BaseModel):
     """Запуск скрипта на ВСЕХ онлайн-устройствах организации."""
 
     script_id: uuid.UUID
+    expected_current_version_id: uuid.UUID | None = None
     wave_size: int = Field(
         default=10,
         ge=1,
@@ -112,12 +114,52 @@ class BatchResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class BatchDetailResponse(BatchResponse):
+class BatchSummary(BatchResponse):
+    script_name: str | None = None
+    wave_count: int | None = None
+
+
+class BatchTargetState(StrEnum):
+    PENDING_ADMISSION = "pending_admission"
+    REJECTED = "rejected"
+    NOT_ADMITTED_CANCELLED = "not_admitted_cancelled"
+    UNKNOWN = "unknown"
+    QUEUED = "queued"
+    ASSIGNED = "assigned"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    TIMEOUT = "timeout"
+    CANCELLED = "cancelled"
+
+
+class BatchTarget(BaseModel):
+    device_id: uuid.UUID
+    device_name: str | None = None
+    wave_index: int = Field(ge=0)
+    state: BatchTargetState
+    task_id: uuid.UUID | None = None
+    admission_http_status: int | None = Field(default=None, ge=400, le=499)
+    cancel_requested_at: datetime | None = None
+    timeout_requested_at: datetime | None = None
+
+
+class BatchDetailResponse(BatchSummary):
     """Расширенный ответ с прогрессом волн."""
     notes: str | None = None
     admission_receipts: list[dict] = Field(default_factory=list)
+    targets: list[BatchTarget] | None = None
+    target_counts: dict[BatchTargetState, int] | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BatchListResponse(BaseModel):
+    items: list[BatchSummary]
+    total: int
+    page: int
+    per_page: int
+    pages: int
 
 
 class BroadcastBatchResponse(BatchResponse):

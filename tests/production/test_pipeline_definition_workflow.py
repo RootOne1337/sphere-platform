@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 
 from backend.database.tenant import bind_tenant_context
-from backend.models.pipeline import Pipeline, PipelineRun, PipelineRunStatus
+from backend.models.pipeline import Pipeline, PipelineBatch, PipelineRun, PipelineRunStatus
 from backend.services.orchestrator.pipeline_service import PipelineService
 
 
@@ -159,6 +159,54 @@ async def test_definition_lock_blocks_admission_and_refreshes_cached_identity(wo
         with pytest.raises(HTTPException) as disabled:
             await PipelineService(contender).run(pipeline.id, world.dev_a.id, world.org_a.id)
         assert disabled.value.status_code == 400
+
+
+@pytest.mark.parametrize("batch", [False, True])
+@pytest.mark.parametrize("changed_field", ["steps", "global_timeout_ms"])
+async def test_launch_requires_current_preview_and_receipt_pins_the_committed_version(world, batch, changed_field):
+    pipeline = await seeded(world)
+    path = f"/api/v1/pipelines/{pipeline.id}"
+    auth = world.auth(world.users["org_admin"])
+    preview = await read(world, pipeline)
+    changed = {"steps": [step("new")]} if changed_field == "steps" else {"global_timeout_ms": 60000}
+    response = await world.client.patch(path, headers=auth, json=changed)
+    assert response.status_code == 200, response.text
+    current = response.json()
+    targets = {"device_ids": [str(world.dev_a.id), str(world.dev_a2.id)]} if batch else {"device_id": str(world.dev_a.id)}
+    endpoint = f"{path}/{'run-batch' if batch else 'run'}"
+
+    response = await world.client.post(endpoint, headers=auth, json={
+        **targets, "expected_version": preview["version"], "expected_updated_at": preview["updated_at"],
+    })
+    assert response.status_code == 409, response.text
+    async with world.sessions() as db:
+        assert await db.scalar(select(func.count()).select_from(PipelineRun).where(PipelineRun.pipeline_id == pipeline.id)) == 0
+        assert await db.scalar(select(func.count()).select_from(PipelineBatch).where(PipelineBatch.pipeline_id == pipeline.id)) == 0
+
+    response = await world.client.post(endpoint, headers=auth, json={
+        **targets, "expected_version": current["version"], "expected_updated_at": current["updated_at"],
+    })
+    assert response.status_code == 201, response.text
+    receipt = response.json()
+    assert receipt["pipeline_version"] == current["version"]
+    assert receipt["pipeline_id"] == str(pipeline.id)
+    filter_ = {"batch_id" if batch else "run_id": receipt["id"]}
+    response = await world.client.get("/api/v1/pipelines/runs", headers=auth, params=filter_)
+    assert response.status_code == 200, response.text
+    items = response.json()["items"]
+    assert len(items) == (2 if batch else 1)
+    assert all(item["pipeline_version"] == current["version"] and item["status"] == "queued" for item in items)
+    if batch:
+        assert all(item["context"]["batch_id"] == receipt["id"] for item in items)
+    else:
+        assert items[0]["id"] == receipt["id"]
+    response = await world.client.get("/api/v1/pipelines/runs", headers=world.auth(world.users["foreign"]), params=filter_)
+    assert response.status_code == 200, response.text
+    assert response.json()["items"] == []
+    async with world.sessions() as db:
+        stored = (await db.scalars(select(PipelineRun).where(PipelineRun.pipeline_id == pipeline.id))).all()
+        assert len(stored) == len(items)
+        assert all(run.steps_snapshot == current["steps"] for run in stored)
 
 
 @pytest.mark.parametrize("role", ["foreign", "viewer"])

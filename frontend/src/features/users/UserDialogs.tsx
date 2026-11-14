@@ -54,7 +54,7 @@ export function CreateUserDialog({ actorRole, orgId, available, onClose, onSaved
   return (
     <Dialog open onOpenChange={(open) => { if (!open && !lock.current) onClose(); }}>
       <DialogContent aria-describedby="user-create-description">
-        <DialogHeader><DialogTitle>Новая учётная запись</DialogTitle><DialogDescription id="user-create-description">Пользователь получит доступ к вашей организации. Доступные роли определены вашей текущей ролью.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Новая учётная запись</DialogTitle><DialogDescription id="user-create-description">Организация назначения <span className="break-all font-mono">{orgId}</span>. Доступные роли определены вашей текущей ролью.</DialogDescription></DialogHeader>
         <form ref={formRef} className="space-y-4 pt-2" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
           <div className="space-y-2"><Label htmlFor="new-user-email">Электронная почта</Label>
             <Input id="new-user-email" type="email" required autoComplete="email" value={email} disabled={pending} aria-invalid={Boolean(failure?.fields.email)} aria-describedby={failure?.fields.email ? 'user-email-error' : undefined}
@@ -62,10 +62,10 @@ export function CreateUserDialog({ actorRole, orgId, available, onClose, onSaved
               onChange={(event) => { setEmail(event.target.value); clearField('email'); }} />
             {failure?.fields.email && <p id="user-email-error" className="text-sm text-destructive">{failure.fields.email}</p>}
           </div>
-          <div className="space-y-2"><Label htmlFor="new-user-password">Временный пароль</Label>
+          <div className="space-y-2"><Label htmlFor="new-user-password">Начальный пароль</Label>
             <Input id="new-user-password" type="password" required autoComplete="new-password" value={password} disabled={pending} aria-invalid={Boolean(failure?.fields.password)} aria-describedby="user-password-help user-password-error"
               onChange={(event) => { setPassword(event.target.value); clearField('password'); }} />
-            <p id="user-password-help" className="text-xs text-muted-foreground">От 8 до 128 символов. Передайте пароль пользователю безопасным способом.</p>
+            <p id="user-password-help" className="text-xs text-muted-foreground">От 8 до 128 символов. Пароль действует после первого входа, автоматического истечения или обязательной смены нет. Передайте пароль безопасным способом.</p>
             <p id="user-password-error" className="text-sm text-destructive">{failure?.fields.password}</p>
           </div>
           <div className="space-y-2"><Label htmlFor="new-user-role">Роль</Label>

@@ -145,6 +145,8 @@ async def create_pipeline(
     summary="Список pipeline runs с фильтрацией",
 )
 async def list_pipeline_runs(
+    run_id: uuid.UUID | None = None,
+    batch_id: uuid.UUID | None = None,
     pipeline_id: uuid.UUID | None = None,
     device_id: uuid.UUID | None = None,
     status: PipelineRunStatus | None = None,
@@ -156,6 +158,8 @@ async def list_pipeline_runs(
 ) -> PipelineRunListResponse:
     items, total = await svc.list_runs(
         org_id=current_user.org_id,
+        run_id=run_id,
+        batch_id=batch_id,
         pipeline_id=pipeline_id,
         device_id=device_id,
         status=status,
@@ -338,6 +342,8 @@ async def run_pipeline(
         device_id=body.device_id,
         org_id=current_user.org_id,
         input_params=body.input_params,
+        expected_version=body.expected_version,
+        expected_updated_at=body.expected_updated_at,
     )
     await db.commit()
     return PipelineRunResponse.model_validate(run)
@@ -366,6 +372,8 @@ async def run_pipeline_batch(
         input_params=body.input_params,
         wave_size=body.wave_size,
         wave_delay_seconds=body.wave_delay_seconds,
+        expected_version=body.expected_version,
+        expected_updated_at=body.expected_updated_at,
     )
     await db.commit()
     return PipelineBatchResponse.model_validate(batch)

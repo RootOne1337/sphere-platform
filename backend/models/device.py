@@ -6,7 +6,22 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ARRAY, Boolean, Column, DateTime, Enum, ForeignKey, String, Table, Text
+from sqlalchemy import (
+    ARRAY,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    String,
+    Table,
+    Text,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -39,6 +54,18 @@ class Device(Base, UUIDMixin, TimestampMixin):
     """
 
     __tablename__ = "devices"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["org_id", "application_profile_id"], ["application_profiles.org_id", "application_profiles.id"],
+            name="fk_device_application_profile",
+        ),
+        CheckConstraint(
+            "(application_profile_id IS NULL) = (application_server_key IS NULL) AND application_binding_revision >= 0",
+            name="ck_device_application_binding",
+        ),
+        Index("ix_devices_org_application_profile", "org_id", "application_profile_id",
+              postgresql_where=text("application_profile_id IS NOT NULL")),
+    )
 
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -69,6 +96,9 @@ class Device(Base, UUIDMixin, TimestampMixin):
         index=True,
         comment="Игровой сервер, привязанный к устройству (RED, MOSCOW, GROZNY и т.д.)",
     )
+    application_profile_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    application_server_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    application_binding_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
 
     org: Mapped["Organization"] = relationship(back_populates="devices")
     groups: Mapped[list["DeviceGroup"]] = relationship(

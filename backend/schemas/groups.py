@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -73,7 +74,35 @@ class GroupResponse(BaseModel):
 
 class MoveDevicesRequest(BaseModel):
     device_ids: list[str] = Field(min_length=1, max_length=500)
-    group_id: uuid.UUID | None = None  # None = remove from this group
+    group_id: uuid.UUID | None = None  # Legacy ignored field. The path selects the group.
+
+
+GroupMembershipOperation = Literal["add", "remove", "replace"]
+
+
+class GroupMembershipRequest(BaseModel):
+    device_ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+    operation: GroupMembershipOperation = Field(
+        description="add/remove change only the selected group; replace leaves only the selected group.",
+    )
+
+    @field_validator("device_ids")
+    @classmethod
+    def validate_unique_devices(cls, device_ids: list[uuid.UUID]) -> list[uuid.UUID]:
+        if len(set(device_ids)) != len(device_ids):
+            raise ValueError("device_ids must not contain duplicates")
+        return device_ids
+
+
+class GroupMembershipResult(BaseModel):
+    device_id: uuid.UUID
+    outcome: Literal["changed", "unchanged", "device_not_found"]
+
+
+class GroupMembershipResponse(BaseModel):
+    group_id: uuid.UUID
+    operation: GroupMembershipOperation
+    results: list[GroupMembershipResult]
 
 
 class SetTagsRequest(BaseModel):

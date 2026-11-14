@@ -21,6 +21,7 @@ from backend.schemas.devices import (
     UpdateDeviceRequest,
 )
 from backend.services.cache_service import CacheService
+from backend.services.group_service import GroupService
 
 
 class DeviceService:
@@ -71,6 +72,9 @@ class DeviceService:
             tags=device.tags or [],
             notes=device.notes,
             server_name=device.server_name,
+            application_profile_id=getattr(device, "application_profile_id", None),
+            application_server_key=getattr(device, "application_server_key", None),
+            application_binding_revision=getattr(device, "application_binding_revision", 0),
             created_at=device.created_at,
             updated_at=device.updated_at,
         )
@@ -200,16 +204,10 @@ class DeviceService:
         self.db.add(device)
         await self.db.flush()  # получить device.id до group assignment
 
-        # M2M group assignment
+        # Serialize initial membership with group deletion and other writers.
         if data.group_id:
-            group = await self.db.get(DeviceGroup, data.group_id)
-            if not group or group.org_id != org_id:
-                raise HTTPException(status_code=404, detail="Group not found")
-            device = await self._reload_with_groups(device.id)
-            device.groups.append(group)
-            await self.db.flush()
-        else:
-            device = await self._reload_with_groups(device.id)
+            await GroupService(self.db).change_device_memberships([device.id], data.group_id, org_id, "add")
+        device = await self._reload_with_groups(device.id)
 
         return self._to_response(device)
 
@@ -273,6 +271,12 @@ class DeviceService:
     ) -> DeviceResponse:
         device = await self._get_device(device_id, org_id)
 
+        # Preserve the legacy explicit group replacement contract.
+        if data.group_id is not None:
+            await GroupService(self.db).change_device_memberships(
+                [device_id], data.group_id, org_id, "replace", active_only=False,
+            )
+
         if data.name is not None:
             device.name = data.name
 
@@ -318,14 +322,9 @@ class DeviceService:
             meta["workstation_id"] = str(data.workstation_id)
         device.meta = meta
 
-        # Group assignment: заменить текущие группы
-        if data.group_id is not None:
-            group = await self.db.get(DeviceGroup, data.group_id)
-            if not group or group.org_id != org_id:
-                raise HTTPException(status_code=404, detail="Group not found")
-            device.groups = [group]
-
         await self.db.flush()
+        if data.group_id is not None:
+            device = await self._reload_with_groups(device_id)
         # Обновить client-side значение updated_at после server-side onupdate.
         # _to_response — синхронный метод; без refresh SQLAlchemy пытается lazy-load
         # обновлённого атрибута вне greenlet-контекста и падает с MissingGreenlet.

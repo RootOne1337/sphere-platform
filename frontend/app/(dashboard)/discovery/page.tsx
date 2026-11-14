@@ -115,7 +115,7 @@ export default function DiscoveryPage() {
               <div className="space-y-2">
                 <Label htmlFor="discovery-subnet">Подсеть · CIDR</Label>
                 <Input id="discovery-subnet" value={subnet} onChange={(event) => setSubnet(event.target.value)} placeholder="192.168.1.0/24" autoComplete="off" />
-                <p className="text-xs text-muted-foreground">Например, `192.168.1.0/24` для локального сегмента.</p>
+                <p className="text-xs text-muted-foreground">Укажите согласованный сегмент из сети выбранной станции. Loopback относится к самому PC Agent.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="discovery-ports">Порты ADB</Label>
@@ -163,9 +163,13 @@ export default function DiscoveryPage() {
           <div className="min-w-0 flex-1">
             <p className="font-medium">Не удалось выполнить сканирование.</p>
             <p className="mt-1 text-xs text-muted-foreground">{getApiErrorMessage(scan.error, 'Результат не подтверждён. Проверьте PC Agent и параметры запроса.')}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Повтор отправляет исходные параметры; при включённой регистрации запрос может добавить устройства. Автоматического повтора нет.</p>
+            <p className="mt-1 text-xs text-muted-foreground">{scan.variables?.auto_register
+              ? 'Факт регистрации неизвестен. Сверьте парк, прежде чем отправить новый запрос.'
+              : 'Повтор отправляет исходные параметры поиска. Автоматического повтора нет.'}</p>
           </div>
-          <Button type="button" size="sm" variant="outline" onClick={() => { if (scan.variables) scan.mutate(scan.variables); }} disabled={scan.isPending || !scan.variables}>Повторить исходный поиск</Button>
+          {scan.variables?.auto_register
+            ? <Button asChild size="sm" variant="outline"><Link href="/devices">Сверить парк устройств</Link></Button>
+            : <Button type="button" size="sm" variant="outline" onClick={() => { if (scan.variables) scan.mutate(scan.variables); }} disabled={scan.isPending || !scan.variables}>Повторить исходный поиск</Button>}
         </div>
       )}
 
@@ -186,8 +190,8 @@ export default function DiscoveryPage() {
           {scan.data.result.devices.length === 0 ? (
             <CardContent className="p-10 text-center">
               <Radar className="mx-auto h-8 w-8 text-muted-foreground/60" aria-hidden="true" />
-              <p className="mt-3 text-sm font-medium">Устройства не найдены</p>
-              <p className="mt-1 text-xs text-muted-foreground">Проверьте CIDR, порты и доступность сети со стороны сервера.</p>
+              <p className="mt-3 text-sm font-medium">В ответе нет найденных устройств</p>
+              <p className="mt-1 text-xs text-muted-foreground">Пустой ответ сам по себе не подтверждает работу станции. Проверьте связь PC Agent и параметры согласованного сегмента со стороны этой станции.</p>
             </CardContent>
           ) : (
             <div className="overflow-x-auto">

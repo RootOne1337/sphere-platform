@@ -203,7 +203,7 @@ class TestManagedArtifacts:
                              "sha256": digest, "download_url": updates_module._ARTIFACT_PREFIX + digest})
         updates_module._save_releases(releases)
         url = "/api/v1/updates/downloads/latest?platform=android-canary&flavor=dev"
-        response = await viewer_client.get(url)
+        response = await viewer_client.get(url, headers={"Origin": "http://localhost:3000"})
         expected = b"PK\x03\x04exact-new-apk\x00\xff"
         assert response.status_code == 200, response.text
         assert response.content == expected
@@ -214,6 +214,8 @@ class TestManagedArtifacts:
         assert response.headers["cache-control"] == "private, no-store"
         assert response.headers["x-content-type-options"] == "nosniff"
         assert response.headers["content-disposition"].startswith("attachment; filename=")
+        exposed = {header.strip().lower() for header in response.headers["access-control-expose-headers"].split(",")}
+        assert {"x-sphere-apk-sha256", "x-sphere-version-code", "content-disposition"} <= exposed
         assert "android-canary-dev.apk" in response.headers["content-disposition"]
         partial = await viewer_client.get(url, headers={"Range": "bytes=0-3"})
         assert partial.status_code == 206
@@ -226,6 +228,15 @@ class TestManagedArtifacts:
             "version_name": "1.2.61-dev", "sha256": digest,
             "download_url": updates_module._ARTIFACT_PREFIX + digest}])
         assert (await viewer_client.get(url)).content == new_content
+
+    async def test_schedule_idempotency_header_is_allowed_by_cors(self, anon_client):
+        response = await anon_client.options("/api/v1/schedules/fixture/fire-now", headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Authorization, Idempotency-Key",
+        })
+        assert response.status_code == 200
+        assert "idempotency-key" in response.headers["access-control-allow-headers"].lower()
 
     async def test_operator_download_requires_operator_auth(self, anon_client, monkeypatch):
         def must_not_read():

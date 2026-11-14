@@ -81,6 +81,7 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
         return <li key={row.session_id} className="rounded-md border border-border bg-background p-2">
           <div className="flex flex-wrap justify-between gap-2 font-medium"><span>{new Date(row.opened_at).toLocaleString('ru-RU')}</span>
             <span>{({ active: 'Активен', closed: 'Завершён', stale: 'Связь с наблюдателем потеряна' })[row.state] ?? 'Состояние неизвестно'}</span></div>
+          <p className="mt-1 break-all text-xs text-muted-foreground">ID сеанса <code className="select-all">{row.session_id}</code></p>
           <div className="mt-1 text-xs text-muted-foreground">{sample?.transport === 'direct_webrtc'
             ? `Основное видео · WebRTC · ${sample.direct_frames ?? '—'} кадров · ${sample.direct_fps?.toFixed(1) ?? '—'} FPS · путь ${sample.direct_path ?? 'не определён'}`
             : sample ? `Видео через сервер · ${sample.rendered_frames} кадров · вход ${sample.incoming_fps} FPS` : 'Метрики браузера ещё не получены'}

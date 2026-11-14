@@ -10,16 +10,27 @@ from __future__ import annotations
 
 import hashlib
 import uuid
+from datetime import datetime, timezone
 
 import structlog
 from fastapi import HTTPException
-from sqlalchemy import select, text
+from redis.exceptions import RedisError
+from sqlalchemy import and_, case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import defer
 
+from backend.models.device import Device
 from backend.models.script import Script
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
-from backend.schemas.batch import BatchExecutionRequest, BroadcastBatchRequest
+from backend.schemas.batch import (
+    BatchDetailResponse,
+    BatchExecutionRequest,
+    BatchSummary,
+    BatchTarget,
+    BatchTargetState,
+    BroadcastBatchRequest,
+)
 from backend.services.workstation_mapping import WorkstationMappingService
 
 logger = structlog.get_logger()
@@ -140,12 +151,18 @@ class BatchService:
         # 2. Фильтрация по live-статусу — только online
         # Presence values are MessagePack, not UTF-8. A text client fails in
         # MGET before DeviceStatusCache can validate any individual entry.
+        if redis_binary is None:
+            raise HTTPException(status_code=503, detail="Device presence is unavailable")
         status_cache = DeviceStatusCache(redis_binary)
-        statuses = await status_cache.bulk_get_status(all_ids)
+        try:
+            statuses = await status_cache.bulk_get_status(all_ids, omit_invalid=True)
+        except (RedisError, OSError, TimeoutError) as exc:
+            raise HTTPException(status_code=503, detail="Device presence is unavailable") from exc
+        as_of = datetime.now(timezone.utc)
         online_ids = [
             uuid.UUID(did)
             for did, st in statuses.items()
-            if st and st.status == "online"
+            if st is not None and st.status == "online" and st.has_fresh_presence(as_of)
         ]
         if not online_ids:
             raise HTTPException(
@@ -163,6 +180,7 @@ class BatchService:
         # 3. Создаём стандартный BatchExecutionRequest и делегируем start_batch
         batch_request = BatchExecutionRequest(
             script_id=request.script_id,
+            expected_current_version_id=request.expected_current_version_id,
             device_ids=online_ids,
             wave_size=request.wave_size,
             wave_delay_ms=request.wave_delay_ms,
@@ -208,6 +226,107 @@ class BatchService:
         if not batch:
             raise HTTPException(status_code=404, detail="Batch not found")
         return batch
+
+    async def list_batches(
+        self, org_id: uuid.UUID, *, page: int, per_page: int,
+        status: TaskBatchStatus | None = None, script_id: uuid.UUID | None = None,
+    ) -> tuple[list[BatchSummary], int]:
+        filters = [TaskBatch.org_id == org_id]
+        if status is not None:
+            filters.append(TaskBatch.status == status)
+        if script_id is not None:
+            filters.append(TaskBatch.script_id == script_id)
+
+        total = await self.db.scalar(select(func.count()).select_from(TaskBatch).where(*filters)) or 0
+        wave_count = case((func.jsonb_typeof(TaskBatch.wave_plan) == "array", func.jsonb_array_length(TaskBatch.wave_plan)))
+        rows = (await self.db.execute(
+            select(TaskBatch, Script.name, wave_count)
+            .options(defer(TaskBatch.wave_plan), defer(TaskBatch.admission_receipts), defer(TaskBatch.notes))
+            .outerjoin(Script, and_(Script.id == TaskBatch.script_id, Script.org_id == org_id))
+            .where(*filters)
+            .order_by(TaskBatch.created_at.desc(), TaskBatch.id.desc())
+            .offset((page - 1) * per_page).limit(per_page)
+        )).all()
+        return [
+            BatchSummary.model_validate(batch).model_copy(update={"script_name": name, "wave_count": wave_count})
+            for batch, name, wave_count in rows
+        ], total
+
+    async def get_batch_detail(self, batch_id: uuid.UUID, org_id: uuid.UUID) -> BatchDetailResponse:
+        # Read the plan, admission receipts and tasks in one SQL snapshot. A wave
+        # can otherwise commit between reading the cursor and reading its tasks.
+        task_rows = (
+            select(func.jsonb_agg(func.jsonb_build_object(
+                "id", Task.id, "device_id", Task.device_id, "status", Task.status,
+                "wave_index", Task.wave_index, "cancel_requested_at", Task.cancel_requested_at,
+                "timeout_requested_at", Task.timeout_requested_at,
+            )))
+            .where(Task.batch_id == TaskBatch.id, Task.org_id == org_id,
+                   func.jsonb_typeof(TaskBatch.wave_plan) == "array")
+            .correlate(TaskBatch).scalar_subquery()
+        )
+        row = (await self.db.execute(
+            select(TaskBatch, Script.name, task_rows)
+            .outerjoin(Script, and_(Script.id == TaskBatch.script_id, Script.org_id == org_id))
+            .where(TaskBatch.id == batch_id, TaskBatch.org_id == org_id)
+        )).one_or_none()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Batch not found")
+        batch, script_name, tasks = row
+        detail = BatchDetailResponse.model_validate(batch)
+        detail.script_name = script_name
+        if not isinstance(batch.wave_plan, list):
+            return detail
+
+        try:
+            plan = [
+                (index, uuid.UUID(item["device_id"]), uuid.UUID(item["task_id"]))
+                for index, wave in enumerate(batch.wave_plan) for item in wave
+            ]
+        except (KeyError, TypeError, AttributeError, ValueError):
+            # Admission already reports invalid plans. Polling reads fall back
+            # to stored tasks without repeating a warning on every open tab.
+            return detail
+        device_ids = {device_id for _, device_id, _ in plan}
+        names = {}
+        if device_ids:
+            rows = await self.db.execute(select(Device.id, Device.name).where(
+                Device.org_id == org_id, Device.id.in_(device_ids),
+            ))
+            names = {device_id: name for device_id, name in rows}
+        tasks_by_id = {item["id"]: item for item in tasks or []}
+        rejected = {
+            (item.get("task_id"), item.get("device_id"), item.get("wave_index")): item.get("http_status")
+            for item in batch.admission_receipts if item.get("outcome") == "rejected"
+        }
+        counts = dict.fromkeys(BatchTargetState, 0)
+        targets = []
+        for wave_index, device_id, planned_id in plan:
+            task = tasks_by_id.get(str(planned_id))
+            key = (str(planned_id), str(device_id), wave_index)
+            fields = {"device_id": device_id, "device_name": names.get(device_id),
+                      "wave_index": wave_index, "state": BatchTargetState.UNKNOWN}
+            if task is not None and task["device_id"] == str(device_id) and task["wave_index"] == wave_index:
+                fields.update(task_id=planned_id, state=task["status"],
+                              cancel_requested_at=task["cancel_requested_at"],
+                              timeout_requested_at=task["timeout_requested_at"])
+            elif key in rejected:
+                fields.update(state=BatchTargetState.REJECTED, admission_http_status=rejected[key])
+            elif wave_index >= batch.next_wave_index:
+                if batch.admission_state == "cancelled" and batch.status == TaskBatchStatus.CANCELLED:
+                    fields["state"] = BatchTargetState.NOT_ADMITTED_CANCELLED
+                elif batch.admission_state == "pending" and batch.status in (
+                    TaskBatchStatus.PENDING, TaskBatchStatus.RUNNING,
+                ):
+                    fields["state"] = BatchTargetState.PENDING_ADMISSION
+            target = BatchTarget.model_validate(fields)
+            targets.append(target)
+            counts[target.state] += 1
+
+        detail.wave_count = len(batch.wave_plan)
+        detail.targets = targets
+        detail.target_counts = counts
+        return detail
 
     async def cancel_batch(
         self, batch_id: uuid.UUID, org_id: uuid.UUID

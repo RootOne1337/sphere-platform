@@ -4,8 +4,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+_INT32_MAX = 2_147_483_647
+TriggerDecisionReason = Literal[
+    "eligible", "pattern_mismatch", "trigger_disabled", "pipeline_unavailable", "cooldown", "hour_limit",
+    "duplicate_event", "causal_cycle", "depth_limit", "root_limit", "cause_unavailable",
+]
 
 
 class CreateEventTriggerRequest(BaseModel):
@@ -24,8 +31,8 @@ class CreateEventTriggerRequest(BaseModel):
         default_factory=dict,
         description="Шаблон параметров. Плейсхолдеры: {device_id}, {account_id}, {event_type}, {event_id}",
     )
-    cooldown_seconds: int = Field(60, ge=0, description="Минимальный интервал между срабатываниями (сек)")
-    max_triggers_per_hour: int = Field(100, ge=0, description="Максимум срабатываний в час (0 = без лимита)")
+    cooldown_seconds: int = Field(60, ge=0, le=_INT32_MAX, description="Минимальный интервал между срабатываниями (сек)")
+    max_triggers_per_hour: int = Field(100, ge=0, le=_INT32_MAX, description="Максимум за последние 60 минут (0 = без лимита)")
 
 
 class UpdateEventTriggerRequest(BaseModel):
@@ -37,8 +44,8 @@ class UpdateEventTriggerRequest(BaseModel):
     pipeline_id: uuid.UUID | None = None
     input_params_template: dict | None = None
     is_active: bool | None = None
-    cooldown_seconds: int | None = Field(None, ge=0)
-    max_triggers_per_hour: int | None = Field(None, ge=0)
+    cooldown_seconds: int | None = Field(None, ge=0, le=_INT32_MAX)
+    max_triggers_per_hour: int | None = Field(None, ge=0, le=_INT32_MAX)
 
 
 class EventTriggerResponse(BaseModel):
@@ -70,3 +77,22 @@ class EventTriggerListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+
+
+class EventTriggerSimulationResponse(BaseModel):
+    trigger_id: uuid.UUID
+    event_type: str
+    matches: bool
+    would_admit: bool
+    reason: TriggerDecisionReason
+    observed_at: datetime
+    retry_at: datetime | None
+    recent_runs: int
+    max_triggers_per_hour: int
+    event_id: uuid.UUID | None = None
+    event_origin: Literal["independent", "pipeline"] | None = None
+    root_event_id: uuid.UUID | None = None
+    cause_depth: int | None = None
+    max_cause_depth: int
+    root_runs: int | None = None
+    max_root_runs: int

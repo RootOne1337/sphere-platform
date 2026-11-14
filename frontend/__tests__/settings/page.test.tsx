@@ -133,6 +133,28 @@ it('retains the revoke confirmation on failure and never retries the mutation au
   expect(api.delete).toHaveBeenCalledWith('/auth/api-keys/key-1');
 });
 
+it('lets organization admins view keys without issuing or revoking them', async () => {
+  useAuthStore.setState({ user: { ...account, role: 'org_admin' } });
+  jest.mocked(api.get).mockImplementation(async (url) => ({ data: url === '/auth/me' ? account : [key] }) as never);
+  renderSettings();
+  await openTab('API-ключи');
+  expect(await screen.findByRole('article', { name: 'API-ключ CI pipeline' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Создать ключ' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Отозвать ключ CI pipeline' })).not.toBeInTheDocument();
+});
+
+it('rejects a revoke receipt when a fresh list still contains the active key', async () => {
+  jest.mocked(api.get).mockImplementation(async (url) => ({ data: url === '/auth/me' ? account : [key] }) as never);
+  jest.mocked(api.delete).mockResolvedValueOnce({ status: 204, data: null });
+  renderSettings();
+  await openTab('API-ключи');
+  await userEvent.click(await screen.findByRole('button', { name: 'Отозвать ключ CI pipeline' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Подтвердить отзыв' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Отзыв ключа не подтверждён');
+  expect(toast.success).not.toHaveBeenCalled();
+  expect(jest.mocked(api.get).mock.calls.filter(([path]) => path === '/auth/api-keys')).toHaveLength(2);
+});
+
 it('creates one key despite rapid submissions and hides its one-time value on close', async () => {
   let finish!: (value: { data: { name: string; raw_key: string } }) => void;
   jest.mocked(api.post).mockImplementation(() => new Promise((resolve) => { finish = resolve; }) as never);
@@ -213,4 +235,30 @@ it('retains the create form when no usable one-time key receipt is returned', as
   expect(screen.getByLabelText('Название интеграции')).toHaveValue('CI test');
   expect(api.post).toHaveBeenCalledTimes(1);
   expect(screen.queryByText('Ключ создан')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /^Создать$/ })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: 'Перечитать ключи' }));
+  await waitFor(() => expect(screen.getByRole('button', { name: /^Создать$/ })).toBeEnabled());
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
+
+it('keeps an uncertain same-name create blocked after reopening when a new key appears', async () => {
+  let rows = [{ ...key, name: 'CI test' }];
+  jest.mocked(api.get).mockImplementation(async url => ({ data: url === '/auth/me' ? account : rows }) as never);
+  jest.mocked(api.post).mockRejectedValue(new Error('lost response'));
+  renderSettings();
+  await openTab('API-ключи');
+  await screen.findByRole('article', { name: 'API-ключ CI test' });
+  await userEvent.click(screen.getByRole('button', { name: 'Создать ключ' }));
+  fireEvent.change(screen.getByLabelText('Название интеграции'), { target: { value: 'CI test' } });
+  await userEvent.click(screen.getByRole('button', { name: /^Создать$/ }));
+  await screen.findByRole('alert');
+  await userEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+  rows = [...rows, { ...key, id: 'new-key', name: 'CI test' }];
+  await userEvent.click(screen.getByRole('button', { name: 'Создать ключ' }));
+  fireEvent.change(screen.getByLabelText('Название интеграции'), { target: { value: 'CI test' } });
+  expect(screen.getByRole('button', { name: /^Создать$/ })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: 'Перечитать ключи' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('появился активный ключ с таким названием');
+  expect(screen.getByRole('button', { name: /^Создать$/ })).toBeDisabled();
+  expect(api.post).toHaveBeenCalledTimes(1);
 });

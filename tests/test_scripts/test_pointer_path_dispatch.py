@@ -13,10 +13,10 @@ from backend.services.task_service import TaskService
 @pytest.mark.parametrize("code", [None, 10280, 10281])
 async def test_pointer_path_dispatch_requires_new_agent_and_keeps_queued_task_receipt(code):
     device_id, org_id = uuid.uuid4(), uuid.uuid4()
-    device = SimpleNamespace(id=device_id, org_id=org_id)
+    device = SimpleNamespace(id=device_id, org_id=org_id, application_profile_id=None)
     task = SimpleNamespace(id=uuid.uuid4(), device_id=device_id, org_id=org_id, script_version_id=uuid.uuid4(),
                            script_id=uuid.uuid4(), status=TaskStatus.QUEUED, cancel_requested_at=None,
-                           timeout_seconds=90)
+                           timeout_seconds=90, batch_id=None)
     dag = {"nodes": [{"id": "gesture", "action": {"type": "pointer_path"}}]}
     db = SimpleNamespace(scalars=AsyncMock(return_value=[device_id]), rollback=AsyncMock(), commit=AsyncMock(),
                          scalar=AsyncMock(side_effect=[device, None, task, SimpleNamespace(dag=dag)]),

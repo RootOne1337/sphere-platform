@@ -47,7 +47,7 @@ it('keeps the browser signed out on network failure and reports unconfirmed revo
   expect(getRefreshToken()).toBeNull();
   expect(useAuthStore.getState().logoutWarning).toContain('could not be confirmed');
   const restored = renderHook(() => useInitAuth());
-  await waitFor(() => expect(restored.result.current).toBe(true));
+  await waitFor(() => expect(restored.result.current.state).toBe('ready'));
   expect(useAuthStore.getState().user).toBeNull();
 });
 
@@ -81,6 +81,6 @@ it('still clears local access and uses the cookie when browser storage is unavai
   expect(requests[0].withCredentials).toBe(true);
   expect(requests[0].headers['X-Refresh-Token']).toBeUndefined();
   const restored = renderHook(() => useInitAuth());
-  await waitFor(() => expect(restored.result.current).toBe(true));
+  await waitFor(() => expect(restored.result.current.state).toBe('ready'));
   expect(requests).toHaveLength(1);
 });

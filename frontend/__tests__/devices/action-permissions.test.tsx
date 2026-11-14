@@ -3,7 +3,7 @@ import DevicesPage from '@/app/(dashboard)/devices/page';
 import { useCapabilities } from '@/src/features/access/Capabilities';
 import { useBulkAction, useBulkDeleteDevices, useDeleteDevice, useDevices, useUpdateDevice, type Device } from '@/lib/hooks/useDevices';
 import { useBulkRevokeVpn } from '@/lib/hooks/useVpn';
-import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
+import { useGroups, useChangeGroupMembership } from '@/lib/hooks/useGroups';
 import { useLocations, useAssignDevicesToLocation } from '@/lib/hooks/useLocations';
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 import rolePermissions from '../fixtures/session-capabilities.json';
@@ -12,10 +12,11 @@ jest.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams
 jest.mock('@/src/features/access/Capabilities', () => ({ ...jest.requireActual('@/src/features/access/Capabilities'), useCapabilities: jest.fn() }));
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: jest.fn(), useBulkAction: jest.fn(), useBulkDeleteDevices: jest.fn(), useDeleteDevice: jest.fn(), useUpdateDevice: jest.fn() }));
 jest.mock('@/lib/hooks/useVpn', () => ({ useBulkRevokeVpn: jest.fn() }));
-jest.mock('@/lib/hooks/useGroups', () => ({ useGroups: jest.fn(), useMoveDevices: jest.fn() }));
+jest.mock('@/lib/hooks/useGroups', () => ({ useGroups: jest.fn(), useChangeGroupMembership: jest.fn() }));
 jest.mock('@/lib/hooks/useLocations', () => ({ useLocations: jest.fn(), useAssignDevicesToLocation: jest.fn() }));
 jest.mock('@/lib/hooks/usePipelineSettings', () => ({ useGameServers: jest.fn() }));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: string) => value }));
+jest.mock('@/src/features/accounts/applicationProfiles', () => ({ useApplicationProfiles: () => ({ data: undefined }) }));
 jest.mock('@/src/features/devices/MultiStreamGrid', () => ({ MultiStreamGrid: () => null }));
 jest.mock('@/src/features/devices/FleetMatrix', () => ({ FleetMatrix: ({ rowSelection, onRowSelectionChange, onDeviceAction }: {
   rowSelection: Record<string, boolean>; onRowSelectionChange: (value: Record<string, boolean>) => void;
@@ -41,7 +42,7 @@ beforeEach(() => {
   jest.mocked(useDevices).mockReturnValue({ data: { items: [device], total: 1, page: 1, page_size: 100, pages: 1 }, isLoading: false, isFetching: false, isError: false, refetch: jest.fn() } as never);
   for (const [hook, mutateAsync] of [
     [useBulkAction, mutations.reboot], [useDeleteDevice, mutations.remove], [useBulkDeleteDevices, mutations.bulkRemove],
-    [useUpdateDevice, mutations.update], [useBulkRevokeVpn, mutations.vpn], [useMoveDevices, mutations.group], [useAssignDevicesToLocation, mutations.location],
+    [useUpdateDevice, mutations.update], [useBulkRevokeVpn, mutations.vpn], [useChangeGroupMembership, mutations.group], [useAssignDevicesToLocation, mutations.location],
   ] as const) jest.mocked(hook).mockReturnValue({ isPending: false, mutateAsync } as never);
   jest.mocked(useGroups).mockReturnValue({ data: [{ id: 'group-1', name: 'Group' }], isLoading: false, isError: false, refetch: jest.fn() } as never);
   jest.mocked(useLocations).mockReturnValue({ data: [{ id: 'loc-1', name: 'Location' }], isLoading: false, isError: false, refetch: jest.fn() } as never);

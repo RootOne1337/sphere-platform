@@ -5,11 +5,12 @@ import { createWrapper } from '../helpers';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn() } }));
 jest.mock('@/lib/hooks/useScripts', () => ({ useScripts: () => ({ data: { items: [] } }) }));
-jest.mock('@/components/sphere/DeviceSelector', () => ({ DeviceSelector: ({ onChange }: { onChange: (ids: string[]) => void }) => <button onClick={() => onChange(['device-1'])}>Выбрать тестовую цель</button> }));
+jest.mock('@/components/sphere/DeviceSelector', () => ({ DeviceSelector: ({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) => <button onClick={() => onChange(value.length ? [] : ['device-1'])}>{value.length ? 'Очистить тестовую цель' : 'Выбрать тестовую цель'}</button> }));
 jest.mock('sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 const schedule = { id: 'schedule-1', name: 'One shot canary', description: null, cron_expression: null, interval_seconds: null,
   one_shot_at: '2026-10-20T13:45:26.123456+05:00', timezone: 'Asia/Yekaterinburg', target_type: 'pipeline', pipeline_id: 'pipeline-1',
-  script_id: null, conflict_policy: 'skip', is_active: true, device_ids: [], total_runs: 0, next_fire_at: null, last_fired_at: null };
+  script_id: null, conflict_policy: 'skip', is_active: true, device_ids: [], total_runs: 0, next_fire_at: null, last_fired_at: null,
+  updated_at: '2026-10-20T13:00:00.123456+05:00' };
 beforeEach(() => {
   jest.resetAllMocks();
   jest.mocked(api.get).mockImplementation(async (url) => ({ data: { items: url === '/schedules' ? [schedule] : url === '/pipelines' ? [{ id: 'pipeline-1', name: 'Canary', steps: [], version: 1, tags: [], is_active: true }] : [], total: url === '/pipelines/runs' ? 0 : 1, page: 1, per_page: 100, pages: url === '/pipelines/runs' ? 0 : 1 } }) as never);
@@ -32,6 +33,34 @@ it('edits an offset timestamp in explicit UTC and preserves the original instant
   expect(within(dialog).getByText(/Часовой пояс расписания применяется к CRON/)).toBeInTheDocument();
   fireEvent.click(within(dialog).getByRole('button', { name: 'Сохранить изменения' }));
   await waitFor(() => expect(api.patch).toHaveBeenCalledWith('/schedules/schedule-1', expect.objectContaining({ one_shot_at: schedule.one_shot_at })));
+  expect(jest.mocked(api.patch).mock.calls[0][1]).not.toHaveProperty('device_ids');
+  expect(jest.mocked(api.patch).mock.calls[0][1]).not.toHaveProperty('timezone');
+  expect(jest.mocked(api.patch).mock.calls[0][1]).toHaveProperty('expected_updated_at', schedule.updated_at);
+});
+
+it('blocks resubmitting a stale edit and reloads the schedule catalog without discarding the draft', async () => {
+  jest.mocked(api.patch).mockRejectedValue({ response: { status: 409, data: { detail: 'schedule_revision_conflict' } } });
+  const dialog = await openSchedule();
+  const name = within(dialog).getByPlaceholderText('Ежечасный health-check');
+  fireEvent.change(name, { target: { value: 'Draft changes' } });
+  const save = within(dialog).getByRole('button', { name: 'Сохранить изменения' });
+  fireEvent.click(save);
+  expect(await within(dialog).findByRole('alert')).toHaveTextContent('Закройте форму и откройте расписание снова');
+  expect(name).toHaveValue('Draft changes');
+  expect(save).toBeDisabled();
+  expect(api.patch).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(jest.mocked(api.get).mock.calls.filter(([url]) => url === '/schedules')).toHaveLength(2));
+});
+
+it('clears the last explicit device, and warns an active schedule will skip without any other targets', async () => {
+  const original = jest.mocked(api.get).getMockImplementation()!;
+  jest.mocked(api.get).mockImplementation((url, config) => url === '/schedules'
+    ? Promise.resolve({ data: { items: [{ ...schedule, device_ids: ['device-1'] }], total: 1, page: 1, per_page: 100, pages: 1 } }) as never : original(url, config));
+  const dialog = await openSchedule();
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Очистить тестовую цель' }));
+  expect(within(dialog).getByText('Без устройств, группы и тегов планировщик пропустит срабатывание.')).toBeInTheDocument();
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Сохранить изменения' }));
+  await waitFor(() => expect(api.patch).toHaveBeenCalledWith('/schedules/schedule-1', expect.objectContaining({ device_ids: [] })));
 });
 
 it('sends a changed UTC wall time as an aware instant instead of appending malformed seconds', async () => {

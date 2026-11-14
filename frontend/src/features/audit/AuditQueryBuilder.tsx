@@ -41,7 +41,7 @@ export function AuditQueryBuilder({ value, onChange }: AuditQueryBuilderProps) {
           {SUGGESTIONS.map((suggestion) => (
             <button key={suggestion} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => appendSuggestion(suggestion)} className="block w-full rounded-lg px-3 py-2 text-left font-mono text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{suggestion}</button>
           ))}
-          <p className="px-3 pb-1 pt-2 text-[11px] text-muted-foreground">Поля: <code>status</code>, <code>action</code>, <code>user</code></p>
+          <p className="px-3 pb-1 pt-2 text-[11px] text-muted-foreground">Поля: <code>status</code>, <code>action</code>, <code>user</code>, <code>request</code> (точный ID запроса)</p>
         </div>
       )}
     </div>

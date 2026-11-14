@@ -3,6 +3,10 @@ export type AuditFilters = Record<string, string>;
 export interface AuditDraft { q: string; status: string; action: string; user_id: string; resource_type: string; from: string; to: string }
 export const EMPTY_AUDIT_DRAFT: AuditDraft = { q: '', status: '', action: '', user_id: '', resource_type: '', from: '', to: '' };
 
+export function isAuditRequestId(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(value);
+}
+
 function utcTimestamp(value: string): string {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?$/.test(value)) throw new Error('Укажите корректные дату и время UTC.');
   const date = new Date(`${value}Z`);
@@ -18,8 +22,12 @@ export function auditFilterParams(draft: AuditDraft): AuditFilters {
   const terms = (params.q ?? '').split(/\s+/).filter(Boolean);
   if ((params.q?.length ?? 0) > 500 || terms.length > 20) throw new Error('Поиск: до 500 символов и 20 условий.');
   for (const term of terms) {
-    const match = term.match(/^(status|action|user):(.*)$/i);
-    if (match && (!match[2] || (match[1].toLowerCase() === 'status' && !['SUCCESS', 'FAILED', 'WARNING', 'UNKNOWN'].includes(match[2].toUpperCase())))) throw new Error('Проверьте условия status:, action: и user: в поиске.');
+    const match = term.match(/^(status|action|user|request):(.*)$/i);
+    if (!match) continue;
+    const key = match[1].toLowerCase();
+    const value = match[2];
+    if (!value || (key === 'status' && !['SUCCESS', 'FAILED', 'WARNING', 'UNKNOWN'].includes(value.toUpperCase()))
+      || (key === 'request' && !isAuditRequestId(value))) throw new Error('Проверьте условия status:, action:, user: и request: в поиске.');
   }
   if (params.from) params.from = utcTimestamp(params.from);
   if (params.to) params.to = utcTimestamp(params.to);

@@ -6,10 +6,17 @@ import importlib
 import json
 import threading
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
+from uuid import uuid4
 
+import httpx
 import pytest
+from fastapi import FastAPI
 
+from backend.core.dependencies import get_current_user
+from backend.database.engine import get_db
+from backend.middleware.request_id import RequestIdMiddleware
 from backend.services import device_log_reader as reader
 
 
@@ -54,6 +61,18 @@ def test_latest_files_order_search_and_exact_utc_date(tmp_path):
     assert result['read']['reasons'] == ['file_limit']
     result = read(tmp_path, date='2026-10-05')
     assert result['lines'] == ['second MATCH'] and not result['read']['truncated']
+
+
+def test_archive_dates_return_all_valid_files_without_opening_their_contents(tmp_path, monkeypatch):
+    for day in ['2026-10-04', '2026-10-02', '2026-10-03', '2026-10-01', '2026-02-30']:
+        write_log(tmp_path, day, b'fixture\n')
+    (tmp_path / 'arbitrary.log').write_bytes(b'not an archive file')
+    monkeypatch.setattr(reader.os, 'open', lambda *args: pytest.fail('Catalog opened file contents'))
+    assert reader.read_log_dates(tmp_path) == ['2026-10-04', '2026-10-03', '2026-10-02', '2026-10-01']
+    assert reader.read_log_dates(tmp_path / 'missing') == []
+    monkeypatch.setattr(reader, 'CATALOG_ENTRIES', 2)
+    with pytest.raises(reader.LogReadUnavailable):
+        reader.read_log_dates(tmp_path)
 
 
 @pytest.mark.parametrize('date', ['2026-02-30', '*', '../secret', '20261006', '2026-W41-2', '2026-1-06'])
@@ -156,6 +175,8 @@ async def test_io_does_not_block_loop_and_cancelled_http_keeps_capacity_until_wo
         assert entered.is_set()  # Event loop continued while the file worker was blocked.
         with pytest.raises(reader.LogReadBusy):
             await reader.read_log_tail_async(tmp_path, lines=1, date=None, search=None)
+        with pytest.raises(reader.LogReadBusy):
+            await reader.read_log_dates_async(tmp_path)
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await task
@@ -185,9 +206,62 @@ async def test_route_authorizes_before_filesystem_and_reports_failure(monkeypatc
         await router.get_device_logs('foreign', lines=1, date=None, search=None, _principal=object(), db=object())
     assert error.value.status_code == 404
     operation.assert_not_awaited()
-    monkeypatch.setattr(router, '_owned_device', AsyncMock())
-    for exception in [reader.LogReadBusy(), reader.LogReadUnavailable()]:
+    monkeypatch.setattr(router, '_owned_device', AsyncMock(return_value=SimpleNamespace(id=uuid4())))
+    for exception, reason, retry in [
+        (reader.LogReadBusy(), 'log_read_busy', '1'),
+        (reader.LogReadUnavailable(), 'log_source_unavailable', None),
+    ]:
         operation.side_effect = exception
-        with pytest.raises(HTTPException) as error:
-            await router.get_device_logs('owned', lines=1, date=None, search=None, _principal=object(), db=object())
-        assert error.value.status_code == 503
+        response = await router.get_device_logs('owned', lines=1, date=None, search=None, _principal=object(), db=object())
+        assert response.status_code == 503
+        assert json.loads(response.body)['reason'] == reason
+        assert response.headers.get('Retry-After') == retry
+
+
+@pytest.mark.asyncio
+async def test_archive_http_contract_keeps_auth_scope_and_request_ids(tmp_path, monkeypatch):
+    router = importlib.import_module('backend.api.v1.logs.router')
+    app = FastAPI()
+    app.include_router(router.router, prefix='/api/v1')
+    app.add_middleware(RequestIdMiddleware)
+    actor = SimpleNamespace(org_id=uuid4(), role='org_admin')
+    device = SimpleNamespace(org_id=actor.org_id, id=uuid4(), is_active=True)
+    app.dependency_overrides[get_current_user] = lambda: actor
+    app.dependency_overrides[get_db] = lambda: SimpleNamespace(get=AsyncMock(return_value=device))
+    monkeypatch.setattr(router, '_LOGS_DIR', tmp_path)
+    directory = router._device_log_path(str(device.id))
+    for day in ('2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13'):
+        write_log(directory, day, b'archive marker\n' if day.endswith('10') else b'recent\n')
+
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://audit.local') as client:
+        endpoint = f'/api/v1/logs/{device.id}'
+        dates = await client.get(f'{endpoint}/dates')
+        assert dates.status_code == 200
+        assert dates.json() == {'device_id': str(device.id), 'dates': [
+            '2026-11-13', '2026-11-12', '2026-11-11', '2026-11-10',
+        ]}
+        recent = await client.get(endpoint, params={'search': 'archive marker'})
+        archived = await client.get(endpoint, params={'search': 'archive marker', 'date': '2026-11-10'})
+        assert recent.json()['lines'] == [] and recent.json()['read']['truncated']
+        assert archived.json()['lines'] == ['archive marker']
+        assert archived.json()['read']['date'] == '2026-11-10'
+        assert (await client.get(endpoint, params={'date': '2026-02-30'})).status_code == 422
+
+        failing = AsyncMock(side_effect=reader.LogReadBusy())
+        monkeypatch.setattr(router, 'read_log_dates_async', failing)
+        response = await client.get(f'{endpoint}/dates', headers={'X-Request-ID': 'fixture-archive-busy'})
+        assert response.status_code == 503
+        assert response.headers['X-Request-ID'] == 'fixture-archive-busy'
+        assert response.headers['Retry-After'] == '1'
+        assert response.json()['reason'] == 'log_read_busy'
+        failing.side_effect = reader.LogReadUnavailable()
+        response = await client.get(f'{endpoint}/dates', headers={'X-Request-ID': 'fixture-archive-down'})
+        assert response.status_code == 503
+        assert response.headers['X-Request-ID'] == 'fixture-archive-down'
+        assert 'Retry-After' not in response.headers
+        assert response.json()['reason'] == 'log_source_unavailable'
+
+        device.org_id = uuid4()
+        failing.reset_mock()
+        assert (await client.get(f'{endpoint}/dates')).status_code == 404
+        failing.assert_not_awaited()

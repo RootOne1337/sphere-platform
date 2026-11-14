@@ -1,12 +1,13 @@
 """Every task producer must retain version, tenant and execution authority."""
 
-from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from sqlalchemy import func, select
 
+from backend.models.device import Device
 from backend.models.game_account import GameAccount
+from backend.models.pipeline_settings import PipelineSettings
 from backend.models.task import Task
 from backend.services.orchestrator.orchestration_engine import OrchestrationEngine
 
@@ -14,11 +15,11 @@ from backend.services.orchestrator.orchestration_engine import OrchestrationEngi
 async def test_registration_without_script_does_not_persist_account(world, account_credential_key):
     w = world
     async with w.sessions() as db:
-        config = SimpleNamespace(org_id=w.org_a.id, registration_script_id=None,
-                                 nick_generation_enabled=False, default_target_level=1,
-                                 registration_timeout_seconds=300)
-        with pytest.raises(ValueError, match="Registration script is required"):
-            await OrchestrationEngine()._create_registration_task(db, config, w.dev_a)
+        device = await db.get(Device, w.dev_a.id)
+        device.server_name = "AUDIT"
+        db.add(PipelineSettings(org_id=w.org_a.id, orchestration_enabled=True, registration_enabled=True))
+        await db.flush()
+        await OrchestrationEngine()._process_org(db, w.org_a.id)
         assert await db.scalar(select(func.count()).select_from(GameAccount).where(
             GameAccount.org_id == w.org_a.id,
         )) == 0
@@ -32,14 +33,13 @@ async def test_farming_requires_device_and_script_before_mutating_account(world,
     w = world
     async with w.sessions() as db:
         account = GameAccount(org_id=w.org_a.id, device_id=None if missing == "device" else w.dev_a.id,
-                              game="audit", login="precondition", status="free",
+                              game="audit", login="precondition", status="free", target_level=3,
                               password_encrypted="synthetic-password")
         db.add(account)
+        db.add(PipelineSettings(org_id=w.org_a.id, orchestration_enabled=True, farming_enabled=True,
+                                farming_script_id=None if missing == "script" else w.script.id))
         await db.flush()
-        config = SimpleNamespace(org_id=w.org_a.id,
-                                 farming_script_id=None if missing == "script" else w.script.id)
-        with pytest.raises(ValueError, match="Farming requires a device and script"):
-            await OrchestrationEngine()._create_farming_task(db, config, account)
+        await OrchestrationEngine()._process_org(db, w.org_a.id)
         assert account.status == "free"
         assert await db.scalar(select(func.count()).select_from(Task).where(
             Task.org_id == w.org_a.id,
@@ -50,13 +50,13 @@ async def test_farming_task_has_version_without_redis_publication(world):
     w = world
     async with w.sessions() as db:
         account = GameAccount(org_id=w.org_a.id, device_id=w.dev_a.id, game="audit",
-                              login="audit-login", password_encrypted="synthetic-password")
+                              login="audit-login", password_encrypted="synthetic-password", target_level=3)
         db.add(account)
+        db.add(PipelineSettings(org_id=w.org_a.id, orchestration_enabled=True, farming_enabled=True,
+                                farming_script_id=w.script.id, farming_session_duration_seconds=300))
         await db.flush()
-        config = SimpleNamespace(org_id=w.org_a.id, farming_script_id=w.script.id,
-                                  farming_session_duration_seconds=300)
         with patch("backend.database.redis_client.redis_binary", w.redis):
-            await OrchestrationEngine()._create_farming_task(db, config, account)
+            await OrchestrationEngine()._process_org(db, w.org_a.id)
         task = await db.scalar(select(Task).where(Task.device_id == w.dev_a.id))
         assert task.script_version_id == w.version.id
         assert "password" not in task.input_params

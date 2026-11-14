@@ -8,9 +8,11 @@ import { useBulkRevokeVpn } from '@/lib/hooks/useVpn';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { countDeviceStatuses, filterDevicesByStatus, type DeviceStatusFilter } from '@/src/features/devices/deviceListFilters';
-import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
+import { type GroupMembershipOperation, useChangeGroupMembership, useGroups } from '@/lib/hooks/useGroups';
 import { useLocations, useAssignDevicesToLocation } from '@/lib/hooks/useLocations';
 import { FleetMatrix, type DeviceAction } from '@/src/features/devices/FleetMatrix';
+import { DeviceApplicationBinding, hasApplicationBinding } from '@/src/features/devices/DeviceApplicationBinding';
+import { useApplicationProfiles } from '@/src/features/accounts/applicationProfiles';
 import { MultiStreamGrid } from '@/src/features/devices/MultiStreamGrid';
 import { DeviceBulkDeleteButton } from '@/src/features/devices/DeviceBulkDeleteButton';
 import { DeviceDeleteConfirmationDialog } from '@/src/features/devices/DeviceDeleteConfirmationDialog';
@@ -50,12 +52,17 @@ function formatDeviceFailures(failures: DeviceActionFailure[], devices: Device[]
   return examples.length ? `${examples.join('; ')}${remainder}.` : '';
 }
 
-function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
+function DevicesRegistry({ initialGroupId, initialLocationId }: { initialGroupId: string; initialLocationId: string }) {
   const access = useCapabilities();
   const canWrite = access.can('device:write');
   const canDelete = access.can('device:delete');
   const canRevokeVpn = access.can('vpn:mass_operation');
-  const canDeviceAction = useCallback((action: DeviceAction) => action === 'delete' ? canDelete : canWrite, [canDelete, canWrite]);
+  const canRead = access.can('device:read');
+  const canDeviceAction = useCallback((action: DeviceAction) => {
+    if (action === 'delete') return canDelete;
+    if (action === 'bind_application') return canRead;
+    return canWrite;
+  }, [canDelete, canRead, canWrite]);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -73,17 +80,23 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   const [vpnRevokeError, setVpnRevokeError] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [assignGroupDialog, setAssignGroupDialog] = useState(false);
+  const [groupDeviceIds, setGroupDeviceIds] = useState<string[]>([]);
+  const [groupOperation, setGroupOperation] = useState<GroupMembershipOperation>('add');
+  const [confirmGroupReplacement, setConfirmGroupReplacement] = useState(false);
+  const [groupMembershipError, setGroupMembershipError] = useState<string | null>(null);
+  const groupMembershipLock = useRef(false);
   const [assignLocationDialog, setAssignLocationDialog] = useState(false);
   const [assignServerDialog, setAssignServerDialog] = useState<{ open: boolean; deviceId: string; currentServer: string | null }>({
     open: false, deviceId: '', currentServer: null,
   });
   const [selectedServerName, setSelectedServerName] = useState<string>('');
+  const [applicationBinding, setApplicationBinding] = useState<{ id: string; name: string } | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
   // Фильтры по группе и локации
   const [filterGroupId, setFilterGroupId] = useState(initialGroupId);
-  const [filterLocationId, setFilterLocationId] = useState<string>('');
+  const [filterLocationId, setFilterLocationId] = useState(initialLocationId);
 
   const liveStatusFilter = statusFilter === 'all' ? undefined : statusFilter;
   const queryGroupId = filterGroupId && filterGroupId !== '__all__' ? filterGroupId : undefined;
@@ -106,7 +119,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   const updateDevice = useUpdateDevice();
   const { data: groups, isLoading: groupsLoading, isError: groupsLoadError, refetch: refetchGroups } = useGroups();
   const { data: locations, isLoading: locationsLoading, isError: locationsLoadError, refetch: refetchLocations } = useLocations();
-  const moveDevices = useMoveDevices();
+  const changeGroupMembership = useChangeGroupMembership();
   const assignToLocation = useAssignDevicesToLocation();
   const { data: gameServers } = useGameServers();
 
@@ -114,6 +127,9 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
     () => filterDevicesByStatus(data?.items ?? [], statusFilter),
     [data?.items, statusFilter],
   );
+  const canReadCatalog = access.can('account:read');
+  const applicationCatalog = useApplicationProfiles(canReadCatalog && pageItems.some(hasApplicationBinding));
+  const applicationProfiles = canReadCatalog && !applicationCatalog.isError ? applicationCatalog.data : undefined;
 
   const visibleDeviceIds = useMemo(() => new Set(pageItems.map((device) => device.id)), [pageItems]);
   const selectedIds = Object.entries(rowSelection)
@@ -157,6 +173,15 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   const validSnapshotTime = data?.as_of && Number.isFinite(Date.parse(data.as_of))
     ? new Date(data.as_of).toLocaleString('ru-RU', { timeZone: 'UTC', hour12: false }) + ' UTC' : 'без отметки времени';
 
+  const openGroupDialog = useCallback((deviceIds: string[]) => {
+    setGroupDeviceIds([...deviceIds]);
+    setSelectedGroupId('');
+    setGroupOperation('add');
+    setConfirmGroupReplacement(false);
+    setGroupMembershipError(null);
+    setAssignGroupDialog(true);
+  }, []);
+
   // Обработчик действий из контекстного меню FleetMatrix (для одного устройства)
   const handleDeviceAction = useCallback((deviceId: string, action: DeviceAction) => {
     if (!canDeviceAction(action)) return;
@@ -171,7 +196,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
       case 'assign_group':
         // Выбираем только одно устройство и открываем диалог
         setRowSelection({ [deviceId]: true });
-        setAssignGroupDialog(true);
+        openGroupDialog([deviceId]);
         break;
       case 'assign_location':
         setRowSelection({ [deviceId]: true });
@@ -181,12 +206,15 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
         setAssignServerDialog({ open: true, deviceId: device.id, currentServer: device.server_name });
         setSelectedServerName(device.server_name ?? '');
         break;
+      case 'bind_application':
+        setApplicationBinding({ id: device.id, name: device.name });
+        break;
       case 'delete':
         setSingleDeleteError(null);
         setSingleDeleteDialog({ deviceId: device.id, deviceName: device.name });
         break;
     }
-  }, [data?.items, canDeviceAction]);
+  }, [data?.items, canDeviceAction, openGroupDialog]);
 
   const handleSingleDelete = async () => {
     const target = singleDeleteDialog;
@@ -276,24 +304,36 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   };
 
   const handleAssignGroup = async () => {
-    if (!canWrite || !selectedGroupId || selectedIds.length === 0 || exceedsBulkLimit || moveDevices.isPending) return;
+    if (!canWrite || !groups?.some(group => group.id === selectedGroupId) || groupDeviceIds.length === 0
+      || groupDeviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT || changeGroupMembership.isPending || groupMembershipLock.current
+      || (groupOperation === 'replace' && !confirmGroupReplacement)) return;
+    groupMembershipLock.current = true;
+    setGroupMembershipError(null);
     try {
-      const requestedIds = [...selectedIds];
-      const result = await moveDevices.mutateAsync({ groupId: selectedGroupId, deviceIds: requestedIds });
-      if (result.moved === requestedIds.length) {
+      const results = await changeGroupMembership.mutateAsync({
+        groupId: selectedGroupId, deviceIds: groupDeviceIds, operation: groupOperation,
+      });
+      const unavailable = results.filter(item => item.outcome === 'device_not_found');
+      const changed = results.filter(item => item.outcome === 'changed').length;
+      const unchanged = results.length - changed - unavailable.length;
+      if (unavailable.length === 0) {
         setAssignGroupDialog(false);
-        setSelectedGroupId('');
         setRowSelection({});
-        toast.success(`В группу назначено устройств: ${result.moved}`);
+        toast.success(`Изменено устройств: ${changed}. Уже в нужном состоянии: ${unchanged}.`);
       } else {
-        toast.warning('Группа назначена частично', {
-          description: `Сервер обработал ${result.moved} из ${requestedIds.length} устройств. Выделение сохранено для проверки.`,
-        });
+        const unavailableIds = unavailable.map(item => item.device_id);
+        setGroupDeviceIds(unavailableIds);
+        setRowSelection(Object.fromEntries(unavailableIds.map(deviceId => [deviceId, true])));
+        setConfirmGroupReplacement(false);
+        const names = unavailable.slice(0, 5).map(item => data?.items.find(device => device.id === item.device_id)?.name ?? item.device_id);
+        const more = unavailable.length > names.length ? ` и ещё ${unavailable.length - names.length}` : '';
+        setGroupMembershipError(`Изменено: ${changed}. Без изменений: ${unchanged}. Недоступны: ${unavailable.length}. ${names.join(', ')}${more}.`);
       }
     } catch (error) {
-      toast.error('Не удалось назначить группу', {
-        description: getApiErrorMessage(error, 'Проверьте связь и доступ к группе.'),
-      });
+      setConfirmGroupReplacement(false);
+      setGroupMembershipError(getApiErrorMessage(error, 'Результат изменения групп не подтверждён. Проверьте членства перед повтором.'));
+    } finally {
+      groupMembershipLock.current = false;
     }
   };
 
@@ -316,10 +356,14 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   const handleAssignServer = async () => {
     if (!canWrite || updateDevice.isPending) return;
     try {
-      await updateDevice.mutateAsync({
+      const receipt = await updateDevice.mutateAsync({
         id: assignServerDialog.deviceId,
-        server_name: selectedServerName || null,
+        server_name: selectedServerName,
       });
+      if (receipt?.id !== assignServerDialog.deviceId || receipt?.server_name !== (selectedServerName || null)) {
+        toast.error('Ответ API не подтвердил изменение игрового сервера. Обновите реестр и проверьте сохранённое значение.');
+        return;
+      }
       setAssignServerDialog({ open: false, deviceId: '', currentServer: null });
       toast.success('Игровой сервер обновлён');
     } catch (error) {
@@ -511,7 +555,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
                 <RefreshCcw className={`mr-2 h-4 w-4 ${bulkMutation.isPending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
                 {bulkMutation.isPending ? 'Отправка…' : 'Перезапустить'}
               </Button>
-            <Button variant="outline" size="sm" onClick={() => { if (canWrite) setAssignGroupDialog(true); }} disabled={!canWrite || exceedsBulkLimit || !groups?.length} className="h-9 rounded-md">
+            <Button variant="outline" size="sm" onClick={() => { if (canWrite) openGroupDialog(selectedIds); }} disabled={!canWrite || exceedsBulkLimit || !groups?.length} className="h-9 rounded-md">
                 <FolderOpen className="mr-2 h-4 w-4" aria-hidden="true" /> Группа
               </Button>
               <Button variant="outline" size="sm" onClick={() => { if (canWrite) setAssignLocationDialog(true); }} disabled={!canWrite || exceedsBulkLimit || !locations?.length} className="h-9 rounded-md">
@@ -588,6 +632,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               onRowSelectionChange={setRowSelection}
               onDeviceAction={handleDeviceAction}
               canDeviceAction={canDeviceAction}
+              profiles={applicationProfiles}
             />
           ) : (
             <MultiStreamGrid devices={pageItems} selectedIds={selectedIds} />
@@ -705,23 +750,42 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
         </DialogContent>
       </Dialog>
 
-      {/* Диалог назначения группы */}
-      <Dialog open={assignGroupDialog} onOpenChange={setAssignGroupDialog}>
-        <DialogContent aria-describedby={undefined}>
+      <Dialog open={assignGroupDialog} onOpenChange={(open) => { if (!groupMembershipLock.current) setAssignGroupDialog(open); }}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Назначить в группу</DialogTitle>
+            <DialogTitle>Изменить членство в группах</DialogTitle>
+            <DialogDescription>Выбрано устройств: {groupDeviceIds.length}.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <PermissionNotice permission="device:write" action="назначение группы" />
+            <PermissionNotice permission="device:write" action="изменение групп" />
             {groupsLoadError && (
               <p role="alert" className="text-sm text-destructive">
-                Не удалось обновить список групп. {groups?.length ? 'Доступны ранее загруженные значения.' : 'Назначение группы временно недоступно.'}
+                Не удалось обновить список групп. {groups?.length ? 'Доступны ранее загруженные значения.' : 'Изменение групп временно недоступно.'}
                 {' '}<button type="button" className="underline underline-offset-2" onClick={() => { void refetchGroups(); }}>Повторить</button>
               </p>
             )}
             <div className="space-y-1">
+              <Label htmlFor="fleet-group-operation">Действие</Label>
+              <Select value={groupOperation} disabled={changeGroupMembership.isPending} onValueChange={(value: GroupMembershipOperation) => {
+                setGroupOperation(value);
+                setConfirmGroupReplacement(false);
+                setGroupMembershipError(null);
+              }}>
+                <SelectTrigger id="fleet-group-operation"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="add">Добавить в группу</SelectItem>
+                  <SelectItem value="remove">Убрать из группы</SelectItem>
+                  <SelectItem value="replace">Заменить все группы</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
               <Label htmlFor="fleet-bulk-group">Группа</Label>
-              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+              <Select value={selectedGroupId} disabled={changeGroupMembership.isPending} onValueChange={(value) => {
+                setSelectedGroupId(value);
+                setConfirmGroupReplacement(false);
+                setGroupMembershipError(null);
+              }}>
                 <SelectTrigger id="fleet-bulk-group">
                   <SelectValue placeholder="Выбери группу" />
                 </SelectTrigger>
@@ -740,9 +804,17 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-xs text-muted-foreground">{selectedIds.length} устройств будут назначены в группу</p>
-            <Button onClick={handleAssignGroup} disabled={!canWrite || moveDevices.isPending || !selectedGroupId || selectedIds.length === 0 || exceedsBulkLimit || !groups?.length} className="w-full">
-              {moveDevices.isPending ? 'Назначение…' : 'Назначить'}
+            {groupOperation === 'replace' ? <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={confirmGroupReplacement} disabled={changeGroupMembership.isPending}
+                onChange={(event) => setConfirmGroupReplacement(event.target.checked)} />
+              Подтверждаю удаление всех остальных членств у выбранных устройств.
+            </label> : <p className="text-xs text-muted-foreground">Остальные членства сохранятся.</p>}
+            {groupMembershipError && <p role="alert" className="text-sm text-destructive">{groupMembershipError}</p>}
+            <Button onClick={handleAssignGroup} variant={groupOperation === 'replace' ? 'destructive' : 'default'}
+              disabled={!canWrite || changeGroupMembership.isPending || !groups?.some(group => group.id === selectedGroupId)
+                || groupDeviceIds.length === 0 || groupDeviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT
+                || (groupOperation === 'replace' && !confirmGroupReplacement)} className="w-full">
+              {changeGroupMembership.isPending ? 'Сохраняем…' : 'Применить'}
             </Button>
           </div>
         </DialogContent>
@@ -792,11 +864,13 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
         </DialogContent>
       </Dialog>
 
-      {/* Диалог назначения игрового сервера */}
+      {applicationBinding && canRead && <DeviceApplicationBinding key={applicationBinding.id} deviceId={applicationBinding.id}
+        name={applicationBinding.name} onClose={() => setApplicationBinding(null)} />}
+
       <Dialog
         open={assignServerDialog.open}
         onOpenChange={(open) => {
-          if (!open) setAssignServerDialog({ open: false, deviceId: '', currentServer: null });
+          if (!open && !updateDevice.isPending) setAssignServerDialog({ open: false, deviceId: '', currentServer: null });
         }}
       >
         <DialogContent aria-describedby={undefined}>
@@ -808,9 +882,10 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <PermissionNotice permission="device:write" action="изменение привязки сервера" />
+            <p className="text-xs text-muted-foreground">Это поле используется прежней автоматизацией для устройств без профиля приложения.</p>
             <div className="space-y-1">
               <Label>Сервер Black Russia</Label>
-              <Select value={selectedServerName || '__none__'} onValueChange={(v) => setSelectedServerName(v === '__none__' ? '' : v)}>
+              <Select disabled={!canWrite || updateDevice.isPending} value={selectedServerName || '__none__'} onValueChange={(v) => setSelectedServerName(v === '__none__' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Выбери сервер" />
                 </SelectTrigger>
@@ -844,9 +919,11 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
 }
 
 function ScopedDevicesPage() {
-  const groupId = useSearchParams()?.get('group_id') ?? '';
+  const params = useSearchParams();
+  const groupId = params?.get('group_id') ?? '';
+  const locationId = params?.get('location_id') ?? '';
   // A new bookmark is a new operation scope: reset page, selection and open actions together.
-  return <DevicesRegistry key={groupId} initialGroupId={groupId} />;
+  return <DevicesRegistry key={JSON.stringify([groupId, locationId])} initialGroupId={groupId} initialLocationId={locationId} />;
 }
 
 export default function DevicesPage() {

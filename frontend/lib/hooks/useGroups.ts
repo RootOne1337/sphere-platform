@@ -88,17 +88,29 @@ export function useUpdateGroup() {
   });
 }
 
-export function useMoveDevices() {
+export type GroupMembershipOperation = 'add' | 'remove' | 'replace';
+
+type GroupMembershipOutcome = 'changed' | 'unchanged' | 'device_not_found';
+type GroupMembershipResult = { device_id: string; outcome: GroupMembershipOutcome };
+
+export function useChangeGroupMembership() {
   const qc = useQueryClient();
   return useMutation({
     retry: false,
-    mutationFn: async ({ groupId, deviceIds }: { groupId: string; deviceIds: string[] }): Promise<{ moved: number }> => {
-      const { data } = await api.post(`/groups/${groupId}/devices/move`, { device_ids: deviceIds });
-      return data as { moved: number };
+    mutationFn: async ({ groupId, deviceIds, operation }: {
+      groupId: string; deviceIds: string[]; operation: GroupMembershipOperation;
+    }): Promise<GroupMembershipResult[]> => {
+      const { data } = await api.post(`/groups/${groupId}/devices/membership`, { device_ids: deviceIds, operation });
+      const remaining = new Set(deviceIds);
+      if (data?.group_id !== groupId || data.operation !== operation || !Array.isArray(data.results)
+        || data.results.length !== remaining.size || !data.results.every((item: GroupMembershipResult | null) =>
+          item && remaining.delete(item.device_id) && ['changed', 'unchanged', 'device_not_found'].includes(item.outcome))) {
+        throw new Error('Результат изменения групп не подтверждён сервером.');
+      }
+      return data.results;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['groups'] });
-      qc.invalidateQueries({ queryKey: ['devices'] });
+    onSettled: async () => {
+      await Promise.all([qc.invalidateQueries({ queryKey: ['groups'] }), qc.invalidateQueries({ queryKey: ['devices'] })]);
     },
   });
 }

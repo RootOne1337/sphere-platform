@@ -59,11 +59,12 @@ export function useVpnPeers(params?: { status?: VpnPeer['status']; device_id?: s
 }
 
 /** Статистика пула IP-адресов */
-export function usePoolStats() {
+export function usePoolStats(enabled = true) {
   const actor = useAuthStore(s => s.user); const session = useAuthStore(s => s.sessionVersion);
   const scope = `${actor?.org_id}:${actor?.id}:${actor?.role}:${session}`;
   return useQuery<PoolStats>({
     queryKey: ['vpn', 'pool-stats', scope],
+    enabled,
     queryFn: async () => {
       const { data } = await api.get('/vpn/pool/stats');
       return data;
@@ -73,11 +74,12 @@ export function usePoolStats() {
 }
 
 /** Здоровье VPN-подсистемы */
-export function useVpnHealth() {
+export function useVpnHealth(enabled = true) {
   const actor = useAuthStore(s => s.user); const session = useAuthStore(s => s.sessionVersion);
   const scope = `${actor?.org_id}:${actor?.id}:${actor?.role}:${session}`;
   return useQuery<VpnHealthResponse>({
     queryKey: ['vpn', 'health', scope],
+    enabled,
     queryFn: async () => {
       const { data } = await api.get('/vpn/health');
       return data;

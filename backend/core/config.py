@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     SCREENSHOT_STORAGE_SECURE: bool = True
     SCREENSHOT_STORAGE_REGION: str = "us-east-1"
 
+    # Logical bytes of managed journals per device/day, organization and volume.
+    DEVICE_LOG_DAILY_MAX_BYTES: int = Field(default=8 * 1024**2, ge=1)
+    DEVICE_LOG_ORG_MAX_BYTES: int = Field(default=2 * 1024**3, ge=1)
+    DEVICE_LOG_STORAGE_MAX_BYTES: int = Field(default=8 * 1024**3, ge=1)
+
+    # The legacy task callback remains independent of the opt-in registry publisher.
+    WEBHOOK_SUBSCRIPTIONS_ENABLED: bool = False
+    WEBHOOK_ALLOWED_ORIGINS: tuple[str, ...] = ()
+
     # VPN
     WG_ROUTER_URL: str = "http://localhost:8001"
     WG_ROUTER_API_KEY: str = ""

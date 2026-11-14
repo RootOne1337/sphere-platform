@@ -9,6 +9,8 @@
 # --- Core (TZ-00) ---
 from backend.models.account_session import AccountSession, SessionEndReason  # noqa: F401
 from backend.models.api_key import APIKey  # noqa: F401
+from backend.models.application_automation_policy import ApplicationAutomationPolicy  # noqa: F401
+from backend.models.application_profile import ApplicationProfile  # noqa: F401
 from backend.models.audit_log import AuditLog  # noqa: F401
 from backend.models.base_model import TimestampMixin, UUIDMixin  # noqa: F401
 from backend.models.device import Device, DeviceStatus, device_group_members  # noqa: F401
@@ -47,6 +49,7 @@ from backend.models.schedule import (  # noqa: F401
     ScheduleConflictPolicy,
     ScheduleExecution,
     ScheduleExecutionStatus,
+    ScheduleFireRequest,
     ScheduleTargetType,
 )
 
@@ -62,6 +65,7 @@ from backend.models.vpn_profile import VPNProfile, VPNProfileRevision  # noqa: F
 
 # --- n8n Integration (TZ-09) ---
 from backend.models.webhook import Webhook  # noqa: F401
+from backend.models.webhook_delivery import WebhookDelivery
 
 # --- PC Agent (TZ-08) ---
 from backend.models.workstation import Workstation  # noqa: F401
@@ -70,6 +74,7 @@ __all__ = [
     "TimestampMixin",
     "UUIDMixin",
     "Organization",
+    "ApplicationProfile",
     "User",
     "APIKey",
     "RefreshToken",
@@ -93,6 +98,7 @@ __all__ = [
     "Workstation",
     "LDPlayerInstance",
     "Webhook",
+    "WebhookDelivery",
     # TZ-12 Orchestrator
     "Pipeline",
     "PipelineRun",
@@ -104,6 +110,7 @@ __all__ = [
     "ScheduleConflictPolicy",
     "ScheduleTargetType",
     "ScheduleExecutionStatus",
+    "ScheduleFireRequest",
     # TZ-10 Game Accounts
     "GameAccount",
     "AccountStatus",
@@ -116,4 +123,5 @@ __all__ = [
     "EventTrigger",
     # TZ-13 Pipeline Settings
     "PipelineSettings",
+    "ApplicationAutomationPolicy",
 ]

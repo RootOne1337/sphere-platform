@@ -29,3 +29,13 @@ class DeviceLogsResponse(BaseModel):
     lines: list[str] = Field(max_length=10000)
     total: int = Field(ge=0, le=10000)
     read: DeviceLogReadScope
+
+
+class DeviceLogDatesResponse(BaseModel):
+    device_id: str
+    dates: list[str] = Field(max_length=128, description="Retained UTC dates in descending order (YYYY-MM-DD)")
+
+
+class DeviceLogReadError(BaseModel):
+    detail: str
+    reason: Literal["log_read_busy", "log_source_unavailable"]

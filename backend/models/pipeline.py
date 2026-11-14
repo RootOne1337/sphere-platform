@@ -10,6 +10,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     Enum,
     ForeignKey,
@@ -186,6 +187,12 @@ class PipelineRun(Base, UUIDMixin, TimestampMixin):
     current_child_run_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("pipeline_runs.id"), nullable=True,
     )
+    # Historical provenance remains available after a trigger or event is removed.
+    event_trigger_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    trigger_event_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    trigger_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    trigger_root_event_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    trigger_path: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     execution_owner: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     execution_generation: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
     execution_lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -217,6 +224,30 @@ class PipelineRun(Base, UUIDMixin, TimestampMixin):
         Index("ix_pipeline_runs_org_status", "org_id", "status"),
         Index("ix_pipeline_runs_recovery", "status", "execution_lease_until"),
         Index("ix_pipeline_runs_wait_deadline", "status", "wait_deadline_at"),
+        Index(
+            "ix_pipeline_runs_trigger_root", "org_id", "trigger_root_event_id",
+            postgresql_where=event_trigger_id.is_not(None),
+        ),
+        Index(
+            "ix_pipeline_runs_legacy_trigger_root", "org_id", "trigger_event_id",
+            postgresql_where=event_trigger_id.is_not(None) & trigger_root_event_id.is_(None),
+        ),
+        Index("ix_pipeline_runs_current_task", "current_task_id", postgresql_where=current_task_id.is_not(None)),
+        Index(
+            "ix_pipeline_runs_trigger_hour",
+            "org_id", "event_trigger_id", "trigger_accepted_at",
+            postgresql_where=event_trigger_id.is_not(None),
+        ),
+        Index(
+            "uq_pipeline_runs_trigger_event",
+            "org_id", "event_trigger_id", "trigger_event_id", unique=True,
+            postgresql_where=event_trigger_id.is_not(None),
+        ),
+        CheckConstraint(
+            "(event_trigger_id IS NULL AND trigger_event_id IS NULL AND trigger_accepted_at IS NULL) OR "
+            "(event_trigger_id IS NOT NULL AND trigger_event_id IS NOT NULL AND trigger_accepted_at IS NOT NULL)",
+            name="ck_pipeline_runs_trigger_provenance",
+        ),
     )
 
 

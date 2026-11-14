@@ -44,15 +44,26 @@ function ErrorNotice({ message, children }: { message: string; children?: ReactN
 
 export default function SettingsPage() {
   const user = useAuthStore((state) => state.user);
+  const sessionVersion = useAuthStore((state) => state.sessionVersion);
+  const scope = `${user?.id}:${user?.org_id}:${user?.role}:${sessionVersion}`;
+  return <AccountSettings key={scope} scope={scope} user={user} />;
+}
+
+function AccountSettings({ scope, user }: { scope: string; user: ReturnType<typeof useAuthStore.getState>['user'] }) {
   const client = useQueryClient();
-  const profileKey = ['settings', 'profile', user?.id] as const;
-  const keysKey = ['settings', 'api-keys', user?.org_id] as const;
+  const profileKey = ['settings', 'profile', scope] as const;
+  const keysKey = ['settings', 'api-keys', scope] as const;
+  // Match the permissions on the auth API; the server still authorizes each operation.
+  const canWriteKeys = user?.role === 'org_owner' || user?.role === 'super_admin';
+  const canReadKeys = canWriteKeys || user?.role === 'org_admin';
   const [tab, setTab] = useState<TabId>('profile');
   const [createOpen, setCreateOpen] = useState(false);
   const [keyName, setKeyName] = useState('');
   const [newKey, setNewKey] = useState<APIKeyCreated | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [setup, setSetup] = useState<MFASetupData | null>(null);
+  const [uncertainCreates, setUncertainCreates] = useState<ReadonlyMap<string, ReadonlySet<string>>>(() => new Map());
+  const [uncertainRevokes, setUncertainRevokes] = useState<ReadonlySet<string>>(() => new Set());
   const [code, setCode] = useState('');
   const [showSecret, setShowSecret] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -70,27 +81,41 @@ export default function SettingsPage() {
     },
   });
   const keys = useQuery({
-    queryKey: keysKey, enabled: tab === 'apikeys' && Boolean(user), retry: false, staleTime: 30_000,
+    queryKey: keysKey, enabled: tab === 'apikeys' && canReadKeys, retry: false, staleTime: 30_000,
     queryFn: async (): Promise<APIKeyItem[]> => {
       const { data } = await api.get<APIKeyItem[]>('/auth/api-keys');
-      if (!Array.isArray(data) || data.some((key) => !key || typeof key.id !== 'string' || !Array.isArray(key.permissions))) throw new Error('Invalid API keys response');
+      if (!Array.isArray(data) || data.some((key) => !key || typeof key.id !== 'string' || !key.id
+        || typeof key.name !== 'string' || typeof key.is_active !== 'boolean' || !Array.isArray(key.permissions))) {
+        throw new Error('Invalid API keys response');
+      }
       return data;
     },
   });
   const createKey = useMutation({
     gcTime: 0,
     retry: false,
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name }: { name: string; existing: ReadonlySet<string> }) => {
       const { data } = await api.post<APIKeyCreated>('/auth/api-keys', { name });
       if (!data || typeof data.raw_key !== 'string' || !data.raw_key) throw new Error('Key receipt missing');
       return data;
     },
     onSuccess: (data) => { setNewKey(data); void client.invalidateQueries({ queryKey: keysKey }); },
+    onError: (_, { name, existing }) => setUncertainCreates(previous => new Map(previous).set(name, existing)),
   });
   const revokeKey = useMutation({
     retry: false,
-    mutationFn: async (id: string) => { await api.delete(`/auth/api-keys/${id}`); },
-    onSuccess: () => { setConfirmation(null); void client.invalidateQueries({ queryKey: keysKey }); toast.success('API-ключ отозван'); },
+    mutationFn: async (id: string) => {
+      const response = await api.delete(`/auth/api-keys/${id}`);
+      if (response.status !== 204) throw new Error('Key revoke not confirmed');
+    },
+    onSuccess: async (_, id) => {
+      const current = await keys.refetch();
+      if (current.isError || !current.data) throw new Error('Key list could not be refreshed');
+      if (current.data.some((key) => key.id === id && key.is_active)) throw new Error('Key remains active');
+      setConfirmation(null);
+      toast.success('API-ключ отозван');
+    },
+    onError: (_, id) => setUncertainRevokes(previous => new Set(previous).add(id)),
   });
   const setupMfa = useMutation({
     gcTime: 0,
@@ -145,12 +170,41 @@ export default function SettingsPage() {
     ['Роль', account?.role ?? user?.role], ['ID организации', account?.org_id ?? user?.org_id],
     ['Аккаунт создан', formatDate(account?.created_at)], ['Последний вход', formatDate(account?.last_login_at)],
   ];
-  const confirmationBlocked = busy || (confirmation?.kind === 'mfa' ? !canChangeMfa : keys.isError || !keys.isSuccess);
+  const keysWritable = canWriteKeys && keys.isSuccess && !keys.isFetching;
+  const trimmedKeyName = keyName.trim();
+  const createUnconfirmed = uncertainCreates.has(trimmedKeyName);
+  const submitKey = () => {
+    if (!trimmedKeyName || createUnconfirmed || busy || !keysWritable) return;
+    const existing = new Set(keys.data?.map(key => key.id));
+    void runAction(() => createKey.mutateAsync({ name: trimmedKeyName, existing }),
+      'Создание не подтверждено. Проверьте список ключей перед повторным запросом.');
+  };
+  const confirmationBlocked = busy || (confirmation?.kind === 'mfa' ? !canChangeMfa
+    : !keysWritable || confirmation?.kind !== 'key' || uncertainRevokes.has(confirmation.key.id)
+      || !keys.data?.some((key) => key.id === confirmation.key.id && key.is_active));
+  const refreshKeys = async () => {
+    const current = await keys.refetch();
+    if (!current.isSuccess || !current.data) return;
+    const activeKeys = current.data.filter(key => key.is_active);
+    setUncertainCreates(previous => new Map([...previous].filter(([name, existing]) =>
+      activeKeys.some(key => key.name === name && !existing.has(key.id)))));
+    if (createOpen && createUnconfirmed) {
+      const baseline = uncertainCreates.get(trimmedKeyName);
+      const found = activeKeys.some(key => key.name === trimmedKeyName && !baseline?.has(key.id));
+      setActionError(found ? 'После запроса в каталоге появился активный ключ с таким названием. Его секрет нельзя получить из списка. Проверьте ключ в каталоге.' : null);
+    }
+    setUncertainRevokes(new Set());
+    if (confirmation?.kind === 'key' && !current.data.some(key => key.id === confirmation.key.id && key.is_active)) {
+      setConfirmation(null);
+      setActionError(null);
+      toast.success('Ключ отсутствует в списке активных ключей');
+    }
+  };
 
   return <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background p-4 sm:p-6 lg:p-8">
     <div className="mx-auto w-full max-w-6xl space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
-        <div><p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Аккаунт и доступ</p><h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Настройки</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Профиль, защита входа и ключи интеграций. Права и изменения проверяет сервер.</p></div>
+        <div><p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Аккаунт и доступ</p><h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Настройки</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Профиль и защита входа относятся к вашему аккаунту. Ключи интеграций относятся к организации.</p></div>
         <Button variant="outline" disabled={profile.isFetching || busy} onClick={() => { void profile.refetch(); }}><RefreshCw className={`mr-2 h-4 w-4 ${profile.isFetching ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />Обновить профиль</Button>
       </header>
       {profile.isError && <ErrorNotice message={getApiErrorMessage(profile.error, 'Не удалось обновить профиль. Статус защиты сейчас не подтверждён.')}>
@@ -208,14 +262,16 @@ export default function SettingsPage() {
         </TabsContent>
         <TabsContent value="apikeys" className="mt-0 space-y-5">
           <Section title="Ключи интеграций" description="Сервер возвращает активные ключи текущей организации. Полный ключ доступен только один раз при создании.">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-muted-foreground">{keys.data ? `${keys.data.length} в ответе API` : 'Список ещё не подтверждён'}</p><div className="flex flex-wrap gap-2"><Button variant="outline" disabled={keys.isFetching || busy} onClick={() => { void keys.refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />Обновить ключи</Button><Button disabled={busy || keys.isError || !keys.isSuccess} onClick={() => { setKeyName(''); setNewKey(null); setActionError(null); setCreateOpen(true); }}><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Создать ключ</Button></div></div>
+            {!canReadKeys && <p className="text-sm text-muted-foreground">Список доступен администраторам и владельцам организации.</p>}
+            {canReadKeys && !canWriteKeys && <p className="mb-3 text-sm text-muted-foreground">Ваша роль позволяет просматривать ключи. Создание и отзыв доступны владельцу организации или администратору платформы.</p>}
+            {canReadKeys && <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-muted-foreground">{keys.data ? `${keys.data.length} в ответе API` : 'Список ещё не подтверждён'}</p><div className="flex flex-wrap gap-2"><Button variant="outline" disabled={keys.isFetching || busy} onClick={() => { void refreshKeys(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />Обновить ключи</Button>{canWriteKeys && <Button disabled={busy || !keysWritable} onClick={() => { setKeyName(''); setNewKey(null); setActionError(null); setCreateOpen(true); }}><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Создать ключ</Button>}</div></div>}
             {keys.isLoading && <p role="status" className="py-8 text-center text-sm text-muted-foreground">Загрузка API-ключей…</p>}
             {keys.isError && <ErrorNotice message={getApiErrorMessage(keys.error, 'Не удалось загрузить API-ключи. Проверьте соединение и права доступа.')}>
               {keys.data && <span className="text-xs text-muted-foreground">Сохранён последний успешный список</span>}
             </ErrorNotice>}
             {keys.isSuccess && keys.data.length === 0 && <div className="rounded-lg border border-dashed border-border py-10 text-center"><KeyRound className="mx-auto mb-3 h-7 w-7 text-muted-foreground" aria-hidden="true" /><h3 className="font-medium">Активных API-ключей нет</h3><p className="mt-1 text-sm text-muted-foreground">Создайте ключ для нужной интеграции.</p></div>}
             <div className="space-y-3">{keys.data?.map((key) => <article key={key.id} aria-label={`API-ключ ${key.name}`} className="mt-3 min-w-0 rounded-lg border border-border p-4 sm:p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{key.name}</h3><p className="mt-1 break-all font-mono text-xs text-muted-foreground">{key.key_prefix}••••••••</p></div><Button variant="outline" size="sm" disabled={busy || keys.isError || !key.is_active} onClick={() => { setActionError(null); setConfirmation({ kind: 'key', key }); }} aria-label={`Отозвать ключ ${key.name}`}>Отозвать</Button></div>
+              <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{key.name}</h3><p className="mt-1 break-all font-mono text-xs text-muted-foreground">{key.key_prefix}••••••••</p></div>{canWriteKeys && <Button variant="outline" size="sm" disabled={busy || !keysWritable || !key.is_active} onClick={() => { setActionError(null); setConfirmation({ kind: 'key', key }); }} aria-label={`Отозвать ключ ${key.name}`}>Отозвать</Button>}</div>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">{[['Создан', formatDate(key.created_at)], ['Последнее использование', key.last_used_at ? formatDate(key.last_used_at) : 'Не использовался'], ['Срок действия', key.expires_at ? formatDate(key.expires_at) : 'Без срока в API']].map(([label, value]) => <div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1">{value}</dd></div>)}</dl>
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground"><span>Разрешения:</span>{key.permissions.length ? key.permissions.map((permission) => <span key={permission} className="rounded-md border border-border px-2 py-1 font-mono">{permission}</span>) : <span>Список разрешений пуст</span>}</div>
             </article>)}</div>
@@ -229,8 +285,10 @@ export default function SettingsPage() {
         <DialogHeader><DialogTitle>{newKey ? 'Ключ создан' : 'Создать API-ключ'}</DialogTitle><DialogDescription>{newKey ? 'Сохраните ключ сейчас. Повторно сервер его не покажет.' : 'Ключ создаётся в текущей организации. Сервер проверит ваши права.'}</DialogDescription></DialogHeader>
         {actionError && <ErrorNotice message={actionError} />}
         {newKey ? <div className="space-y-4"><p className="text-sm font-medium">{newKey.name}</p><div className="rounded-lg border border-border bg-muted/30 p-3"><code className="break-all text-sm">{newKey.raw_key}</code></div><Button variant="outline" className="w-full" onClick={() => { void copyValue(newKey.raw_key, 'new-key'); }}><Copy className="mr-2 h-4 w-4" aria-hidden="true" />{copied === 'new-key' ? 'Скопировано' : 'Скопировать ключ'}</Button><DialogFooter><Button onClick={closeCreate}>Закрыть и скрыть ключ</Button></DialogFooter></div>
-          : <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); if (keyName.trim() && !busy) void runAction(() => createKey.mutateAsync(keyName.trim()), 'Создание не подтверждено. Проверьте список ключей перед повторным запросом.'); }}>
-            <div><label htmlFor="key-name" className="mb-2 block text-sm font-medium">Название интеграции</label><Input id="key-name" maxLength={255} value={keyName} onChange={(event) => setKeyName(event.target.value)} placeholder="Например, CI pipeline" disabled={busy} /></div><p className="text-xs text-muted-foreground">Используются серверные значения разрешений и срока по умолчанию. Пустой список разрешений не обозначает полный доступ.</p><DialogFooter className="gap-2"><Button type="button" variant="outline" disabled={busy} onClick={closeCreate}>Отмена</Button><Button type="submit" disabled={busy || !keyName.trim()}>{createKey.isPending ? 'Создание…' : 'Создать'}</Button></DialogFooter>
+          : <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); submitKey(); }}>
+            <div><label htmlFor="key-name" className="mb-2 block text-sm font-medium">Название интеграции</label><Input id="key-name" maxLength={255} value={keyName} onChange={(event) => { setKeyName(event.target.value); setActionError(null); }} placeholder="Например, CI pipeline" disabled={busy} /></div><p className="text-xs text-muted-foreground">Используются серверные значения разрешений и срока по умолчанию. Пустой список разрешений не обозначает полный доступ.</p>
+            {createUnconfirmed && <Button type="button" variant="outline" disabled={busy || keys.isFetching} onClick={() => { void refreshKeys(); }}>Перечитать ключи</Button>}
+            <DialogFooter className="gap-2"><Button type="button" variant="outline" disabled={busy} onClick={closeCreate}>Отмена</Button><Button type="submit" disabled={busy || !keysWritable || !trimmedKeyName || createUnconfirmed}>{createKey.isPending ? 'Создание…' : 'Создать'}</Button></DialogFooter>
           </form>}
       </DialogContent>
     </Dialog>
@@ -238,6 +296,7 @@ export default function SettingsPage() {
       <DialogContent className="w-[calc(100%-2rem)] rounded-xl">
         <DialogHeader><DialogTitle>{confirmation?.kind === 'key' ? 'Отозвать API-ключ?' : 'Отключить MFA?'}</DialogTitle><DialogDescription>{confirmation?.kind === 'key' ? `Интеграция «${confirmation.key.name}» больше не сможет использовать этот ключ. Восстановить его нельзя.` : 'Следующий вход будет без кода аутентификатора. Это изменение касается только вашего аккаунта.'}</DialogDescription></DialogHeader>
         {actionError && <ErrorNotice message={actionError} />}
+        {confirmation?.kind === 'key' && uncertainRevokes.has(confirmation.key.id) && <Button type="button" variant="outline" disabled={busy || keys.isFetching} onClick={() => { void refreshKeys(); }}>Перечитать ключи</Button>}
         <DialogFooter className="gap-2"><Button variant="outline" disabled={busy} onClick={() => { setConfirmation(null); setActionError(null); }}>Отмена</Button><Button variant="destructive" disabled={confirmationBlocked} onClick={() => {
           if (confirmationBlocked) return;
           if (confirmation?.kind === 'key') void runAction(() => revokeKey.mutateAsync(confirmation.key.id), 'Отзыв ключа не подтверждён. Проверьте список перед повтором.');

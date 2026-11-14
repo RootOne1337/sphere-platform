@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   useDeviceEvents,
   useEventStats,
@@ -12,6 +13,7 @@ import {
 import { Button } from "@/src/shared/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageFrame, PageHeading } from "@/src/shared/ui/page-layout";
+import { PermissionNotice, useCapabilities } from "@/src/features/access/Capabilities";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -80,6 +82,7 @@ const SEVERITY_CONFIG: Record<
     icon: AlertOctagon,
   },
 };
+const UUID_PATTERN = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 
 function SeverityBadge({ severity }: { severity: EventSeverity }) {
   const cfg = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.info;
@@ -112,18 +115,24 @@ function formatDate(iso: string) {
 // ── Главная страница ─────────────────────────────────────────────────
 
 export default function EventsPage() {
+  const access = useCapabilities();
+  const canMark = access.can("event:write");
   // Фильтры и пагинация
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [filterSeverity, setFilterSeverity] = useState("__all__");
   const [filterProcessed, setFilterProcessed] = useState("__all__");
+  const [deviceFilter, setDeviceFilter] = useState("");
+  const [accountFilter, setAccountFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState({ device_id: "", account_id: "", event_type: "" });
   const [page, setPage] = useState(1);
   const [perPage] = useState(50);
   const [sortBy, setSortBy] = useState("occurred_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   // Диалоги
-  const [detailEvent, setDetailEvent] = useState<DeviceEvent | null>(null);
+  const [openedEvent, setDetailEvent] = useState<DeviceEvent | null>(null);
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
@@ -132,7 +141,10 @@ export default function EventsPage() {
     () => ({
       page,
       per_page: perPage,
-      search: debouncedSearch || undefined,
+      search: debouncedSearch.trim() || undefined,
+      device_id: appliedFilters.device_id || undefined,
+      account_id: appliedFilters.account_id || undefined,
+      event_type: appliedFilters.event_type || undefined,
       severity: filterSeverity !== "__all__" ? filterSeverity : undefined,
       processed:
         filterProcessed === "true"
@@ -143,18 +155,23 @@ export default function EventsPage() {
       sort_by: sortBy,
       sort_dir: sortDir,
     }),
-    [page, perPage, debouncedSearch, filterSeverity, filterProcessed, sortBy, sortDir],
+    [page, perPage, debouncedSearch, appliedFilters, filterSeverity, filterProcessed, sortBy, sortDir],
   );
 
   // Данные
   const { data, isLoading, isFetching, isError, refetch } = useDeviceEvents(params);
-  const { data: stats, isError: statsError } = useEventStats();
+  const { data: stats, isError: statsError, isFetching: statsFetching, refetch: refetchStats } = useEventStats(appliedFilters.device_id || undefined);
   const markProcessed = useMarkEventProcessed();
 
   const events = data?.items ?? [];
+  const detailEvent = openedEvent ? events.find(event => event.id === openedEvent.id) ?? openedEvent : null;
   const initialError = isError && !data;
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 0;
+  const refreshing = isFetching || statsFetching;
+  const invalidDevice = Boolean(deviceFilter.trim()) && !UUID_PATTERN.test(deviceFilter.trim());
+  const invalidAccount = Boolean(accountFilter.trim()) && !UUID_PATTERN.test(accountFilter.trim());
+  const refresh = async () => Promise.all([refetch(), refetchStats()]);
 
   // Сортировка
   const handleSort = (col: string) => {
@@ -170,15 +187,19 @@ export default function EventsPage() {
   const hasFilters =
     filterSeverity !== "__all__" ||
     filterProcessed !== "__all__" ||
-    debouncedSearch;
+    debouncedSearch || appliedFilters.device_id || appliedFilters.account_id || appliedFilters.event_type;
 
   const handleMarkProcessed = (event: DeviceEvent) => {
+    if (!canMark || isError || markProcessed.isPending) return;
     markProcessed.mutate(event.id, {
       onSuccess: () => {
-        setDetailEvent(null);
+        setDetailEvent(current => current?.id === event.id ? null : current);
         toast.success("Событие отмечено как обработанное");
       },
-      onError: () => toast.error("Не удалось обновить событие. Состояние сохранено."),
+      onError: () => {
+        toast.error("Обновление не подтверждено. Перечитываем журнал и сводку.");
+        void refresh();
+      },
     });
   };
 
@@ -187,14 +208,16 @@ export default function EventsPage() {
       <PageHeading
         eyebrow="События и диагностика"
         title="События устройств"
-        description={`Журнал событий парка · ${total.toLocaleString("ru-RU")} записей`}
-        actions={<Button variant="outline" onClick={() => void refetch()} disabled={isFetching}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} aria-hidden="true" />Обновить
+        description={data ? `Журнал · ${total.toLocaleString("ru-RU")} записей по фильтрам` : "Журнал событий парка"}
+        actions={<Button variant="outline" onClick={() => void refresh()} disabled={refreshing}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true" />Обновить
         </Button>}
       />
 
       {/* Статистика */}
-      {stats && (
+      <section aria-label="Сводка событий" className="space-y-2">
+      <p className="text-sm text-muted-foreground">{appliedFilters.device_id ? "Сводка по выбранному устройству" : "Сводка по всему парку"}. Остальные фильтры применяются к журналу.</p>
+      {stats && !statsError && (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           <StatCard
             label="Всего"
@@ -230,6 +253,8 @@ export default function EventsPage() {
         </div>
       )}
       {statsError && <p role="status" className="text-sm text-muted-foreground">Сводная статистика временно недоступна; журнал продолжает загружаться.</p>}
+      </section>
+      <PermissionNotice permission="event:write" action="отметить событие обработанным" />
       {isError && data && <p role="status" className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-sm text-warning">Не удалось обновить журнал. Показаны ранее загруженные события.</p>}
 
       {/* Фильтры */}
@@ -252,7 +277,7 @@ export default function EventsPage() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="h-9 w-[160px] text-xs font-mono">
+          <SelectTrigger aria-label="Уровень события" className="h-9 w-[160px] text-xs font-mono">
             <SelectValue placeholder="Все уровни" />
           </SelectTrigger>
           <SelectContent>
@@ -272,7 +297,7 @@ export default function EventsPage() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="h-9 w-[160px] text-xs font-mono">
+          <SelectTrigger aria-label="Состояние обработки события" className="h-9 w-[160px] text-xs font-mono">
             <SelectValue placeholder="Обработка" />
           </SelectTrigger>
           <SelectContent>
@@ -291,6 +316,10 @@ export default function EventsPage() {
               setFilterSeverity("__all__");
               setFilterProcessed("__all__");
               setSearch("");
+              setDeviceFilter("");
+              setAccountFilter("");
+              setTypeFilter("");
+              setAppliedFilters({ device_id: "", account_id: "", event_type: "" });
               setPage(1);
             }}
           >
@@ -299,6 +328,27 @@ export default function EventsPage() {
           </Button>
         )}
       </div>
+      <details className="rounded-lg border border-border bg-card p-3">
+        <summary className="cursor-pointer text-sm font-medium">Фильтры по объектам и типу</summary>
+        <form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={(event) => {
+          event.preventDefault();
+          if (invalidDevice || invalidAccount) return;
+          setAppliedFilters({ device_id: deviceFilter.trim(), account_id: accountFilter.trim(), event_type: typeFilter.trim() });
+          setPage(1);
+        }}>
+          <label className="min-w-0 flex-1 basis-48 space-y-1 text-sm">ID устройства
+            <Input value={deviceFilter} onChange={event => setDeviceFilter(event.target.value)} aria-invalid={invalidDevice} placeholder="UUID устройства" maxLength={64} />
+          </label>
+          <label className="min-w-0 flex-1 basis-48 space-y-1 text-sm">ID аккаунта
+            <Input value={accountFilter} onChange={event => setAccountFilter(event.target.value)} aria-invalid={invalidAccount} placeholder="UUID аккаунта" maxLength={64} />
+          </label>
+          <label className="min-w-0 flex-1 basis-48 space-y-1 text-sm">Тип события
+            <Input value={typeFilter} onChange={event => setTypeFilter(event.target.value)} placeholder="device.reconnected" maxLength={200} />
+          </label>
+          <Button type="submit" variant="outline" disabled={invalidDevice || invalidAccount}>Применить фильтры</Button>
+          {(invalidDevice || invalidAccount) && <p role="status" className="basis-full text-sm text-destructive">Укажите полный UUID устройства или аккаунта.</p>}
+        </form>
+      </details>
 
       {/* Таблица */}
       <Card className="overflow-hidden shadow-soft">
@@ -432,13 +482,13 @@ export default function EventsPage() {
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </Button>
-                        {!evt.processed && (
+                        {canMark && !evt.processed && (
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-emerald-400"
                             onClick={() => handleMarkProcessed(evt)}
-                            disabled={markProcessed.isPending}
+                            disabled={markProcessed.isPending || isError}
                             aria-label={`Отметить событие ${evt.event_type} обработанным`}
                             title="Отметить обработанным"
                           >
@@ -511,11 +561,13 @@ export default function EventsPage() {
                 />
                 <DetailRow
                   label="Устройство"
-                  value={detailEvent.device_name ?? detailEvent.device_id}
+                  value={access.can("device:read")
+                    ? <Link className="break-all text-primary underline" href={`/devices/${encodeURIComponent(detailEvent.device_id)}`}>{detailEvent.device_name ?? detailEvent.device_id}</Link>
+                    : detailEvent.device_name ?? detailEvent.device_id}
                 />
                 <DetailRow
                   label="Аккаунт"
-                  value={detailEvent.account_login ?? "—"}
+                  value={detailEvent.account_login ?? detailEvent.account_id ?? "—"}
                 />
                 <DetailRow
                   label="Время"
@@ -528,12 +580,16 @@ export default function EventsPage() {
                   value={detailEvent.processed ? "Да" : "Нет"}
                 />
                 {detailEvent.task_id && (
-                  <DetailRow label="Task ID" value={detailEvent.task_id} />
+                  <DetailRow label="Задание" value={access.can("script:read")
+                    ? <Link className="break-all text-primary underline" href={`/tasks/${encodeURIComponent(detailEvent.task_id)}`}>{detailEvent.task_id}</Link>
+                    : detailEvent.task_id} />
                 )}
                 {detailEvent.pipeline_run_id && (
                   <DetailRow
-                    label="Pipeline Run"
-                    value={detailEvent.pipeline_run_id}
+                    label="Запуск пайплайна"
+                    value={access.can("pipeline:read")
+                      ? <Link className="break-all text-primary underline" href={`/orchestration?run_id=${encodeURIComponent(detailEvent.pipeline_run_id)}`}>{detailEvent.pipeline_run_id}</Link>
+                      : detailEvent.pipeline_run_id}
                   />
                 )}
               </div>
@@ -558,12 +614,12 @@ export default function EventsPage() {
                     </pre>
                   </div>
                 )}
-              {!detailEvent.processed && (
+              {canMark && !detailEvent.processed && (
                 <Button
                   size="sm"
                   className="w-full"
                   onClick={() => handleMarkProcessed(detailEvent)}
-                  disabled={markProcessed.isPending}
+                  disabled={markProcessed.isPending || isError}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                   Отметить обработанным

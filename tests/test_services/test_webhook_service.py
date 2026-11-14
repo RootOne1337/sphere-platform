@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
+from uuid import uuid4
 
 import httpx
 import pytest
@@ -156,13 +157,16 @@ async def test_only_2xx_is_acknowledged_and_terminal_responses_do_not_retry(stat
     if 200 <= status < 300:
         log.info.assert_called_once()
         assert log.info.call_args.args == ("webhook.delivered",)
+        assert log.info.call_args.kwargs["attempts"] == 1
         log.error.assert_not_called()
     else:
         log.info.assert_not_called()
-        assert log.warning.call_args.args == ("webhook.rejected",)
+        log.error.assert_called_once()
         assert log.error.call_args.kwargs["outcome"] == "rejected"
         assert log.error.call_args.kwargs["attempts"] == 1
         assert log.error.call_args.kwargs["status"] == status
+    log.warning.assert_not_called()
+    log.debug.assert_not_called()
 
 
 @pytest.mark.parametrize("status,outcome", [(429, "rate_limited"), (500, "server_error"), (503, "server_error")])
@@ -177,9 +181,13 @@ async def test_retry_exhaustion_has_one_correlated_failure_receipt(status, outco
     log.info.assert_not_called()
     log.error.assert_called_once()
     receipt = log.error.call_args.kwargs
-    assert receipt == {"delivery_id": receipt["delivery_id"], "event_type": "task.done", "attempts": 4, "status": status, "outcome": outcome}
-    assert all(call.kwargs["delivery_id"] == receipt["delivery_id"] for call in log.warning.call_args_list)
-    assert log.warning.call_args.kwargs["retry_in_seconds"] is None
+    assert receipt["event_type"] == "task.done" and receipt["attempts"] == 4
+    assert receipt["status"] == status and receipt["outcome"] == outcome
+    log.warning.assert_not_called()
+    assert [call.kwargs["retry_in_seconds"] for call in log.debug.call_args_list] == [5, 30, 120]
+    assert all(call.kwargs["delivery_id"] == receipt["delivery_id"] for call in log.debug.call_args_list)
+    assert receipt["previous_retry"]["retry_at"] == log.debug.call_args.kwargs["retry_at"]
+    assert datetime.fromisoformat(receipt["previous_retry"]["retry_at"]).utcoffset() == timedelta()
 
 
 @pytest.mark.parametrize("value,expected", [("7", 7), ("99999", 120), ("0", 0), ("", 5), ("garbage", 5), ("-1", 5), ("9" * 129, 5)])
@@ -200,10 +208,15 @@ async def test_rate_limit_then_success_reuses_signed_payload_and_delivery_id():
         requests.append(request)
         return httpx.Response(429, headers={"Retry-After": "7"}) if len(requests) == 1 else httpx.Response(204)
     client = httpx.AsyncClient(transport=httpx.MockTransport(receive))
+    task_id = str(uuid4())
     with patch("httpx.AsyncClient", return_value=client) as factory, \
          patch("backend.services.webhook_service.logger") as log, \
          patch("asyncio.sleep", AsyncMock()) as sleep:
-        await WebhookService().deliver("https://receiver.test/hook", {"event_type": "task.done", "text": "Привет"}, "test-signing-key")
+        await WebhookService().deliver(
+            "https://receiver.test/hook",
+            {"event_type": "task.completed", "task_id": task_id, "text": "Привет"},
+            "test-signing-key",
+        )
     assert len(requests) == 2
     assert requests[0].content == requests[1].content
     assert requests[0].headers == requests[1].headers
@@ -211,8 +224,15 @@ async def test_rate_limit_then_success_reuses_signed_payload_and_delivery_id():
     assert requests[0].headers["X-Sphere-Signature"] == "sha256=" + signature
     assert factory.call_args.kwargs["follow_redirects"] is False
     sleep.assert_awaited_once_with(7)
-    assert log.warning.call_args.args == ("webhook.rate_limited",)
+    log.warning.assert_not_called()
+    assert log.debug.call_args.args == ("webhook.retry_scheduled",)
     assert log.info.call_args.args == ("webhook.delivered",)
+    assert log.info.call_args.kwargs["task_id"] == task_id
+    assert log.info.call_args.kwargs["delivery_id"] == requests[0].headers["X-Sphere-Delivery"]
+    assert log.info.call_args.kwargs["attempts"] == 2
+    assert log.info.call_args.kwargs["previous_retry"]["status"] == 429
+    assert log.info.call_args.kwargs["previous_retry"]["retry_in_seconds"] == 7
+    assert "Привет" not in str(log.mock_calls)
     log.error.assert_not_called()
     assert client.is_closed
 
@@ -241,7 +261,30 @@ async def test_transport_failure_receipt_does_not_expose_receiver_secrets():
     assert log.error.call_args.kwargs["outcome"] == "transport_error"
     assert log.error.call_args.kwargs["status"] is None
     assert "do-not-log" not in str(log.mock_calls)
-    assert log.warning.call_args.kwargs["error_type"] == "ConnectError"
+    assert log.error.call_args.kwargs["error_type"] == "ConnectError"
+    assert log.debug.call_args.kwargs["error_type"] == "ConnectError"
+
+
+@pytest.mark.parametrize("failure", [httpx.InvalidURL, httpx.UnsupportedProtocol])
+async def test_invalid_receiver_has_one_redacted_terminal_receipt(failure):
+    ctx, client = _make_client([failure("receiver or request data must not leak")])
+    batch_id = str(uuid4())
+    with patch("httpx.AsyncClient", return_value=ctx), \
+         patch("backend.services.webhook_service.logger") as log, \
+         patch("asyncio.sleep", AsyncMock()) as sleep:
+        await WebhookService().deliver(
+            "https://receiver.test/hook?token=private",
+            {"event_type": "batch.completed", "batch_id": batch_id, "task_id": "untrusted-payload"},
+        )
+    client.post.assert_awaited_once()
+    sleep.assert_not_awaited()
+    log.error.assert_called_once()
+    log.debug.assert_not_called()
+    receipt = log.error.call_args.kwargs
+    assert receipt["outcome"] == "invalid_receiver" and receipt["error_type"] == failure.__name__
+    assert receipt["batch_id"] == batch_id and "task_id" not in receipt
+    assert receipt["attempts"] == 1 and receipt["previous_retry"] is None
+    assert "private" not in str(log.mock_calls) and "must not leak" not in str(log.mock_calls)
 
 
 @pytest.mark.parametrize("status,accepted", [(200, True), (204, True), (403, False), (429, False), (503, False)])

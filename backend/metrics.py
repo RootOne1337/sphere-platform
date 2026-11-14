@@ -41,6 +41,35 @@ http_request_duration_seconds = Histogram(
     buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0],
 )
 
+device_log_upload_bytes_total = Counter(
+    "sphere_device_log_upload_bytes_total", "Bytes successfully appended to Android journals",
+)
+device_log_storage_lock_busy_total = Counter(
+    "sphere_device_log_storage_lock_busy_total", "Device journal operations that timed out acquiring the shared lock",
+)
+device_log_retention_events_total = Counter(
+    "sphere_device_log_retention_events_total",
+    "Expired Android journal files and upload rejections by storage budget",
+    ["outcome"],
+)
+device_log_retention_bytes_total = Counter(
+    "sphere_device_log_retention_bytes_total",
+    "Logical bytes removed by Android journal expiry or rejected by storage budgets",
+    ["outcome"],
+)
+# Export the complete bounded series on a fresh worker, before the first drop.
+for _journal_outcome in ("expired", "daily_quota", "org_quota", "volume_quota"):
+    device_log_retention_events_total.labels(outcome=_journal_outcome)
+    device_log_retention_bytes_total.labels(outcome=_journal_outcome)
+
+orchestration_failures_total = Counter(
+    "sphere_orchestration_failures_total",
+    "Automation discovery errors, tenant processing errors, and unavailable configured scripts",
+    ["reason"],
+)
+for _orchestration_failure in ("discovery", "tenant_processing", "script_unavailable"):
+    orchestration_failures_total.labels(reason=_orchestration_failure)
+
 # ---------------------------------------------------------------------------
 # WebSocket
 # ---------------------------------------------------------------------------
@@ -64,6 +93,13 @@ android_ws_keepalive_ack_rtt_seconds = Histogram(
     "Round-trip time for the 10-second Android WebSocket keepalive",
     buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0],
 )
+android_ota_unrecognized_receipts_total = Counter(
+    "sphere_android_ota_unrecognized_receipts_total",
+    "Unrecognized Android OTA receipts by warning emission outcome",
+    ["outcome"],
+)
+for _ota_warning_outcome in ("warning", "suppressed"):
+    android_ota_unrecognized_receipts_total.labels(outcome=_ota_warning_outcome)
 continuous_stage_duration_seconds = Histogram(
     "sphere_continuous_stage_duration_seconds",
     "Backend input stage duration; returned is not an Android ACK",

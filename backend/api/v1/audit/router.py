@@ -73,6 +73,7 @@ async def export_audit_logs(
     stmt = audit_statement(current_user.org_id, filters).with_only_columns(
         AuditLog.id, AuditLog.created_at, AuditLog.user_id, AuditLog.action,
         AuditLog.resource_type, AuditLog.resource_id, AuditLog.ip_address,
+        AuditLog.meta["request_id"].as_string().label("request_id"),
         status_expression().label("status"),
     ).limit(limit + 1)
     rows = list((await db.execute(stmt)).all())

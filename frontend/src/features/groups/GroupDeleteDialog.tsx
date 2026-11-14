@@ -17,7 +17,12 @@ export function GroupDeleteDialog({ group, available, canDelete, onClose, onDele
     if (!canDelete || !available || deletion.isPending || lock.current) return;
     lock.current = true; setError(null);
     try { await deletion.mutateAsync(group.id); onDeleted(); }
-    catch (failure) { setError(getApiErrorMessage(failure, failure instanceof Error ? failure.message : 'Результат удаления не подтверждён. Обновите каталог и проверьте права доступа.')); }
+    catch (failure) {
+      const message = getApiErrorMessage(failure, 'Результат удаления не подтверждён. Обновите каталог и проверьте права доступа.');
+      setError(message === 'Group is used by schedules'
+        ? 'Группу нельзя удалить, пока на неё ссылаются расписания. Измените цели этих расписаний и повторите удаление.'
+        : message);
+    }
     finally { lock.current = false; }
   }
   return <Dialog open onOpenChange={(open) => { if (!open && !lock.current) onClose(); }}>
@@ -29,7 +34,7 @@ export function GroupDeleteDialog({ group, available, canDelete, onClose, onDele
       <div className="space-y-2 rounded-lg border border-border p-3 text-sm">
         <p>{group.total_devices} устройств · {group.online_devices} онлайн по последнему ответу каталога.</p>
         <p className="break-all font-mono text-xs text-muted-foreground">ID: {group.id}</p>
-        <p className="text-muted-foreground">Если группа используется в сценариях или расписаниях, проверьте их назначения после удаления.</p>
+        <p className="text-muted-foreground">Расписания, которые используют эту группу, блокируют удаление.</p>
       </div>
       {!available && <p role="alert" className="text-sm text-destructive">Каталог сейчас недоступен или группа уже удалена.</p>}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

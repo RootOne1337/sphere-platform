@@ -111,7 +111,69 @@ class DagRunnerTest {
         )
         val result = runner.execute("cmd-1", dag)
         assertTrue(result["success"]!!.jsonPrimitive.boolean)
+        assertEquals(setOf("nodes_executed", "success", "node_logs"), result.keys)
         verify { adbActions.tap(100, 200) }
+    }
+
+    @Test
+    fun `terminal end exports only declared bounded account outcomes`() = runTest {
+        val dag = buildDag(
+            "start",
+            node("start", "start", "level"),
+            node("level", "set_variable", "ban") { put("key", "observed_level"); put("value", "12") },
+            node("ban", "set_variable", "end") { put("key", "observed_ban"); put("value", "false") },
+            node("end", "end") {
+                put("result_outputs", buildJsonObject {
+                    put("level", "observed_level")
+                    put("ban_detected", "observed_ban")
+                    put("arbitrary", "observed_level")
+                })
+            },
+        )
+        val result = runner.execute("farm-result", dag)
+        assertEquals(JsonPrimitive(12), result["level"])
+        assertEquals(JsonPrimitive(false), result["ban_detected"])
+        assertEquals(setOf("nodes_executed", "success", "node_logs", "level", "ban_detected"), result.keys)
+    }
+
+    @Test
+    fun `handled failure can report a detected ban but cannot report level progress`() = runTest {
+        every { adbActions.tap(10, 20) } throws IllegalStateException("fixture")
+        val dag = buildDag(
+            "level",
+            node("level", "set_variable", "ban") { put("key", "observed_level"); put("value", "12") },
+            node("ban", "set_variable", "tap") { put("key", "observed_ban"); put("value", "true") },
+            node("tap", "tap", onFailure = "end") { put("x", 10); put("y", 20) },
+            node("end", "end") {
+                put("result_outputs", buildJsonObject {
+                    put("level", "observed_level")
+                    put("ban_detected", "observed_ban")
+                })
+            },
+        )
+        val result = runner.execute("handled-failure", dag)
+        assertEquals(JsonPrimitive(false), result["success"])
+        assertEquals(JsonPrimitive(true), result["ban_detected"])
+        assertFalse("level" in result)
+    }
+
+    @Test
+    fun `result output filters invalid values and requires a terminal end`() = runTest {
+        val outputMapping = buildJsonObject { put("level", "observed_level"); put("ban_detected", "observed_ban") }
+        val invalid = buildDag(
+            "level",
+            node("level", "set_variable", "ban") { put("key", "observed_level"); put("value", "2147483648") },
+            node("ban", "set_variable", "end") { put("key", "observed_ban"); put("value", "TRUE") },
+            node("end", "end") { put("result_outputs", outputMapping) },
+        )
+        assertEquals(setOf("nodes_executed", "success", "node_logs"), runner.execute("invalid-result", invalid).keys)
+        val intermediate = buildDag(
+            "level",
+            node("level", "set_variable", "intermediate") { put("key", "observed_level"); put("value", 12) },
+            node("intermediate", "end", "end") { put("result_outputs", outputMapping) },
+            node("end", "end"),
+        )
+        assertFalse("level" in runner.execute("intermediate-output", intermediate))
     }
 
     @Test

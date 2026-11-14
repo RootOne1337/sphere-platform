@@ -215,7 +215,7 @@ def route_fixture(monkeypatch, tmp_path):
     router = importlib.import_module('backend.api.v1.logs.router')
     auth = importlib.import_module('backend.api.ws.android.router')
     identity = str(uuid.uuid4())
-    owned = AsyncMock(return_value=SimpleNamespace(id=identity))
+    owned = AsyncMock(return_value=SimpleNamespace(id=identity, org_id=uuid.uuid4()))
     monkeypatch.setattr(router, '_LOGS_DIR', tmp_path)
     monkeypatch.setattr(router, '_owned_device', owned)
     authenticate = AsyncMock(return_value=object())
@@ -234,19 +234,19 @@ async def call_route(fixture, request, **overrides):
 async def test_route_preserves_file_format_and_moves_all_filesystem_operations_off_loop(route_fixture, monkeypatch, identity):
     fixture = route_fixture
     loop_thread = threading.get_ident()
-    get_file, cleanup = fixture.router._get_log_file, fixture.router._clean_old_logs
+    get_file, append = fixture.router._get_log_file, fixture.router.append_device_journal
     threads = []
 
-    def observed_get(device_id):
+    def observed_get(device_id, **options):
         threads.append(threading.get_ident())
-        return get_file(device_id)
+        return get_file(device_id, **options)
 
-    def observed_cleanup(device_id):
+    def observed_append(path, entry, **limits):
         threads.append(threading.get_ident())
-        cleanup(device_id)
+        append(path, entry, **limits)
 
     monkeypatch.setattr(fixture.router, '_get_log_file', observed_get)
-    monkeypatch.setattr(fixture.router, '_clean_old_logs', observed_cleanup)
+    monkeypatch.setattr(fixture.router, 'append_device_journal', observed_append)
     payload = b'original\n\x00\xff\r\n'
     request, _ = make_request([payload], length=len(payload))
     kwargs = {'device_id': fixture.device_id, 'x_device_id': None} if identity == 'legacy_query' else {}
@@ -310,21 +310,43 @@ async def test_asgi_route_serializes_rejection_and_keeps_last_successful_journal
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('problem,status', [('size', 413), ('length', 400), ('busy', 503), ('io', 503), ('timeout', 408)])
+@pytest.mark.parametrize('problem,status', [('size', 413), ('length', 400), ('busy', 503), ('io', 503), ('timeout', 408), ('quota', 507)])
 async def test_route_errors_never_claim_204_or_leak_private_storage_path(route_fixture, monkeypatch, problem, status):
     fixture = route_fixture
     request, state = make_request([b'complete'], length=upload.MAX_BODY_BYTES + 1 if problem == 'size' else 1 if problem == 'length' else None)
     if problem == 'busy':
         monkeypatch.setattr(upload, '_slots', threading.BoundedSemaphore(0))
     elif problem == 'io':
-        monkeypatch.setattr(fixture.router, '_get_log_file', lambda _: (_ for _ in ()).throw(OSError('/private/storage/path')))
+        monkeypatch.setattr(fixture.router, '_get_log_file', lambda *args, **kwargs: (_ for _ in ()).throw(OSError('/private/storage/path')))
     elif problem == 'timeout':
         monkeypatch.setattr(upload, 'RECEIVE_TIMEOUT_SECONDS', 0)
+    elif problem == 'quota':
+        monkeypatch.setattr(fixture.router.settings, 'DEVICE_LOG_DAILY_MAX_BYTES', 1)
     with pytest.raises(HTTPException) as caught:
         await call_route(fixture, request)
     assert caught.value.status_code == status and '/private' not in caught.value.detail
     if status == 503:
         assert caught.value.headers == {'Retry-After': '1'}
+    if status == 507:
+        assert caught.value.headers == {'Retry-After': '900'}
     if problem in {'size', 'busy'}:
         assert state.calls == 0
-    assert not list(fixture.path.rglob('*'))
+    assert not list(fixture.path.rglob('*.log'))
+
+
+async def test_legacy_lookup_is_bounded_and_timeout_does_not_append(route_fixture, monkeypatch):
+    fixture = route_fixture
+    legacy = fixture.path / ('a' * 32)
+    legacy.mkdir()
+    (legacy / 'agent_2000-01-01.log').write_bytes(b'legacy')
+    monkeypatch.setattr(fixture.router, '_LEGACY_LOOKUP_TIMEOUT_SECONDS', 0)
+
+    async def never_completes(*args, **kwargs):
+        await asyncio.Future()
+
+    db = SimpleNamespace(scalars=never_completes)
+    request, _ = make_request([b'do not append'])
+    with pytest.raises(HTTPException) as caught:
+        await call_route(fixture, request, db=db)
+    assert caught.value.status_code == 503 and caught.value.headers == {'Retry-After': '1'}
+    assert [path.read_bytes() for path in fixture.path.rglob('*.log')] == [b'legacy']

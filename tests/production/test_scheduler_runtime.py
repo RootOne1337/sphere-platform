@@ -13,9 +13,17 @@ from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from backend.database.engine import get_db
 from backend.database.tenant import bind_tenant_context
+from backend.main import app
+from backend.models.device import Device
 from backend.models.pipeline import Pipeline, PipelineRun, PipelineRunStatus
-from backend.models.schedule import Schedule, ScheduleExecution, ScheduleTargetType
+from backend.models.schedule import (
+    Schedule,
+    ScheduleExecution,
+    ScheduleFireRequest,
+    ScheduleTargetType,
+)
 from backend.models.script import Script, ScriptVersion
 from backend.models.task import Task, TaskStatus
 from backend.services.scheduler.scheduler_engine import SchedulerEngine
@@ -78,7 +86,7 @@ async def seed(r, *, target="script", **overrides):
                       name="isolated scheduler runtime", interval_seconds=60,
                       target_type=ScheduleTargetType.SCRIPT, script_id=script.id,
                       device_ids=[str(device.id)], only_online=False,
-                      next_fire_at=now - timedelta(minutes=1))
+                      next_fire_at=now - timedelta(seconds=5))
         if target == "pipeline":
             pipeline = Pipeline(org_id=tenant, name="isolated scheduled pipeline", steps=[])
             db.add(pipeline)
@@ -115,20 +123,418 @@ async def test_tick_retires_due_exhausted_schedule_under_actual_rls(scheduler_ru
     await SchedulerEngine()._tick()
     row, executions = await stored(r, schedule)
     assert row.is_active is False and row.next_fire_at is None
-    assert not executions
+    assert len(executions) == 1 and executions[0].status == "skipped"
+    assert executions[0].fire_time == schedule.next_fire_at
+    assert executions[0].skip_reason == "Лимит запусков расписания исчерпан"
 
 
 @pytest.mark.parametrize("target", ["script", "pipeline"])
 async def test_tick_creates_children_and_execution_under_actual_rls(scheduler_runtime, target):
     r = scheduler_runtime
-    schedule = await seed(r, target=target)
+    schedule = await seed(r, target=target, next_fire_at=datetime.now(timezone.utc) - timedelta(seconds=1))
     await SchedulerEngine()._tick()
     row, executions = await stored(r, schedule)
     assert row.total_runs == 1 and row.next_fire_at > datetime.now(timezone.utc)
+    assert row.updated_at > schedule.updated_at
     assert len(executions) == 1 and executions[0].tasks_created == 1
+    assert executions[0].fire_time == schedule.next_fire_at < executions[0].actual_time
     async with r.r.world.sessions() as db:
         model = Task if target == "script" else PipelineRun
         assert await db.scalar(select(func.count()).select_from(model).where(model.org_id == schedule.org_id)) == 1
+
+
+@pytest.mark.parametrize("mode", ["interval", "cron"])
+async def test_backlog_creates_at_most_one_launch_and_one_coalesced_receipt_under_rls(scheduler_runtime, mode):
+    r = scheduler_runtime
+    oldest = (datetime.now(timezone.utc) - timedelta(hours=4)).replace(second=0, microsecond=0)
+    timing = {"interval_seconds": 60} if mode == "interval" else {"interval_seconds": None, "cron_expression": "* * * * *"}
+    schedule = await seed(r, next_fire_at=oldest, **timing)
+    first, second = SchedulerEngine(), SchedulerEngine()
+    await asyncio.gather(first._tick(), second._tick())
+    row, executions = await stored(r, schedule)
+    launched, missed = sorted(executions, key=lambda execution: execution.fire_time)
+    assert launched.fire_time == oldest and launched.status == "triggered" and launched.tasks_created == 1
+    assert missed.fire_time == oldest + timedelta(minutes=1)
+    assert missed.status == "skipped" and missed.tasks_created == 0 and missed.finished_at is not None
+    assert missed.skip_reason == "Просроченные слоты объединены, повторный запуск не создан"
+    assert row.total_runs == 1 and row.next_fire_at > missed.actual_time
+
+
+@pytest.mark.parametrize("edge", ["before", "recovered_after_start", "expired", "impossible_one_shot"])
+async def test_out_of_window_due_slot_has_history_and_no_work_under_rls(scheduler_runtime, edge):
+    r = scheduler_runtime
+    now = datetime.now(timezone.utc)
+    due = now - timedelta(seconds=5)
+    if edge == "expired":
+        window = {"active_until": now - timedelta(seconds=1)}
+    elif edge == "recovered_after_start":
+        window = {"active_from": now - timedelta(seconds=1)}
+    else:
+        window = {"active_from": now + timedelta(hours=1)}
+        if edge == "impossible_one_shot":
+            window.update(interval_seconds=None, one_shot_at=due)
+    schedule = await seed(r, next_fire_at=due, **window)
+    engine = SchedulerEngine()
+    await engine._tick()
+    row, executions = await stored(r, schedule)
+    assert row.total_runs == 0
+    assert len(executions) == 1
+    skipped = executions[0]
+    assert skipped.status == "skipped" and skipped.fire_time == due and skipped.tasks_created == 0
+    if edge in ("before", "recovered_after_start"):
+        assert row.is_active and row.next_fire_at >= schedule.active_from
+        assert skipped.skip_reason == "Слот наступил до начала окна активности"
+    else:
+        assert not row.is_active and row.next_fire_at is None
+        assert skipped.skip_reason == (
+            "Окно активности расписания завершилось" if edge == "expired" else "Слот наступил до начала окна активности"
+        )
+
+
+@pytest.mark.parametrize("target", ["script", "pipeline"])
+async def test_unavailable_target_skips_once_and_does_not_consume_quota(scheduler_runtime, target):
+    r = scheduler_runtime
+    one_shot = datetime.now(timezone.utc) - timedelta(minutes=1)
+    schedule = await seed(r, target=target, interval_seconds=None, one_shot_at=one_shot, next_fire_at=one_shot)
+    async with r.r.world.sessions() as db:
+        if target == "script":
+            (await db.get(Script, schedule.script_id)).is_archived = True
+        else:
+            (await db.get(Pipeline, schedule.pipeline_id)).is_active = False
+        await db.commit()
+
+    engine = SchedulerEngine()
+    await engine._tick()
+    await engine._tick()
+    row, executions = await stored(r, schedule)
+    assert row.total_runs == 0 and not row.is_active and row.next_fire_at is None
+    assert len(executions) == 1 and executions[0].status == "skipped"
+    assert executions[0].fire_time == one_shot and executions[0].tasks_created == 0
+
+
+@pytest.mark.parametrize("target", ["script", "pipeline"])
+async def test_schedule_history_projects_outcomes_from_exact_children(scheduler_runtime, target):
+    r = scheduler_runtime
+    world = r.r.world
+    schedule = await seed(r, target=target, device_ids=[str(world.dev_a.id), str(world.dev_a2.id)])
+    await SchedulerEngine()._tick()
+    url = f"/api/v1/schedules/{schedule.id}/executions"
+    auth = world.auth(world.users["org_admin"])
+    active = await world.client.get(url, headers=auth)
+    assert active.status_code == 200 and active.json()["items"][0]["status"] == "triggered"
+    async with world.sessions() as db:
+        model = Task if target == "script" else PipelineRun
+        first, second = list(await db.scalars(select(model).where(model.org_id == schedule.org_id)))
+        first.status = "completed"
+        second.status = "cancelled"
+        finished = datetime.now(timezone.utc)
+        first.finished_at = second.finished_at = finished
+        await db.commit()
+
+    response = await world.client.get(url, headers=auth)
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    assert (item["status"], item["tasks_created"], item["tasks_succeeded"], item["tasks_failed"]) == ("partial", 2, 1, 1)
+    assert datetime.fromisoformat(item["finished_at"]) == finished
+    _, receipts = await stored(r, schedule)
+    assert receipts[0].status == "triggered"
+
+
+async def test_schedule_api_preserves_disabled_state_and_rejects_misleading_fire_now(world):
+    headers = world.auth(world.users["org_admin"])
+    base = "/api/v1/schedules"
+    fields = {
+        "name": "schedule API regression", "target_type": "script", "script_id": str(world.script.id),
+        "device_ids": [str(world.dev_a.id)], "one_shot_at": "2099-01-01T12:00",
+    }
+    created = await world.client.post(base, headers=headers, json=fields)
+    assert created.status_code == 201, created.text
+    item = created.json()
+    assert datetime.fromisoformat(item["one_shot_at"]).utcoffset() == timedelta(0)
+    url = f"{base}/{item['id']}"
+    edited = await world.client.patch(url, headers=headers, json={"name": "edited", "is_active": False})
+    assert edited.status_code == 200 and edited.json()["next_fire_at"] is None
+    stopped = await world.client.post(url + "/fire-now", headers=headers)
+    assert stopped.status_code == 409
+    for invalid in ({"timezone": "Not/AZone"}, {"cron_expression": "invalid"}, {"one_shot_at": None}, {"name": None}):
+        assert (await world.client.patch(url, headers=headers, json=invalid)).status_code == 422
+    reread = await world.client.get(url, headers=headers)
+    assert reread.json()["next_fire_at"] is None and reread.json()["name"] == "edited"
+
+
+async def test_same_timing_patch_keeps_a_natural_due_slot_and_its_backlog_under_rls(scheduler_runtime):
+    from backend.services.scheduler.schedule_service import ScheduleService
+
+    r = scheduler_runtime
+    oldest = (datetime.now(timezone.utc) - timedelta(minutes=5)).replace(second=0, microsecond=0)
+    schedule = await seed(r, next_fire_at=oldest, timezone="UTC")
+    async with r.r.sessions() as db:
+        await bind_tenant_context(db, str(schedule.org_id))
+        edited = await ScheduleService(db).update(
+            schedule.id, schedule.org_id, expected_updated_at=schedule.updated_at,
+            interval_seconds=60, timezone="UTC", is_active=True, name="Metadata only",
+        )
+        revision = edited.updated_at
+        assert revision > schedule.updated_at and edited.next_fire_at == oldest
+        await db.commit()
+    async with r.r.sessions() as db:
+        await bind_tenant_context(db, str(schedule.org_id))
+        no_op = await ScheduleService(db).update(
+            schedule.id, schedule.org_id, expected_updated_at=revision,
+            interval_seconds=60, timezone="UTC", is_active=True,
+        )
+        assert no_op.updated_at == revision and no_op.next_fire_at == oldest
+        await db.commit()
+    await SchedulerEngine()._tick()
+    _, executions = await stored(r, schedule)
+    assert {(row.status, row.fire_time) for row in executions} == {
+        ("triggered", oldest), ("skipped", oldest + timedelta(minutes=1)),
+    }
+
+
+async def test_competing_api_edits_and_launches_require_the_reviewed_revision_under_rls(scheduler_runtime):
+    r = scheduler_runtime
+    world = r.r.world
+    future = datetime.now(timezone.utc) + timedelta(days=1)
+    schedule = await seed(r, interval_seconds=None, one_shot_at=future, next_fire_at=future)
+    url = f"/api/v1/schedules/{schedule.id}"
+    headers = world.auth(world.users["org_admin"])
+    baseline = schedule.updated_at.isoformat()
+    stale = {"detail": "schedule_revision_conflict"}
+
+    async def runtime_session():
+        async with r.r.sessions() as db:
+            yield db
+
+    original = app.dependency_overrides[get_db]
+    app.dependency_overrides[get_db] = runtime_session
+    try:
+        edit, disable = await asyncio.gather(
+            world.client.patch(url, headers=headers, json={"name": "New configuration", "expected_updated_at": baseline}),
+            world.client.post(
+                url + "/toggle", headers=headers, params={"active": "false", "expected_updated_at": baseline},
+            ),
+        )
+        assert sorted([edit.status_code, disable.status_code]) == [200, 409]
+        rejected = edit if edit.status_code == 409 else disable
+        assert rejected.json() == stale
+        latest = (await world.client.get(url, headers=headers)).json()
+        assert latest["is_active"] == (edit.status_code == 200)
+        assert (latest["name"] == "New configuration") == (edit.status_code == 200)
+        assert latest["updated_at"] != baseline
+
+        rejected_delete = await world.client.delete(url, headers=headers, params={"expected_updated_at": baseline})
+        assert rejected_delete.status_code == 409 and rejected_delete.json() == stale
+        if not latest["is_active"]:
+            enabled = await world.client.post(
+                url + "/toggle", headers=headers,
+                params={"active": "true", "expected_updated_at": latest["updated_at"]},
+            )
+            assert enabled.status_code == 200
+            latest = enabled.json()
+        key_headers = {**headers, "Idempotency-Key": str(uuid.uuid4())}
+        rejected_fire = await world.client.post(
+            url + "/fire-now", headers=key_headers, params={"expected_updated_at": baseline},
+        )
+        assert rejected_fire.status_code == 409 and rejected_fire.json() == stale
+        async with world.sessions() as db:
+            assert await db.get(ScheduleFireRequest, (schedule.org_id, schedule.id, uuid.UUID(key_headers["Idempotency-Key"]))) is None
+
+        accepted = await world.client.post(
+            url + "/fire-now", headers=key_headers, params={"expected_updated_at": latest["updated_at"]},
+        )
+        assert accepted.status_code == 200 and not accepted.json()["request_replayed"]
+        await SchedulerEngine()._tick()
+        replay = await world.client.post(
+            url + "/fire-now", headers=key_headers, params={"expected_updated_at": latest["updated_at"]},
+        )
+        assert replay.status_code == 200 and replay.json()["request_replayed"]
+        assert replay.json()["requested_fire_at"] == accepted.json()["requested_fire_at"]
+        row, executions = await stored(r, schedule)
+        assert not row.is_active and row.total_runs == len(executions) == 1
+
+        invalid = await world.client.post(
+            url + "/toggle", headers=headers, params={"active": "true", "expected_updated_at": "2099-01-01T12:00"},
+        )
+        assert invalid.status_code == 422
+    finally:
+        app.dependency_overrides[get_db] = original
+
+
+async def test_keyed_fire_replays_after_one_shot_finishes_under_rls(scheduler_runtime):
+    r = scheduler_runtime
+    world = r.r.world
+    future = datetime.now(timezone.utc) + timedelta(days=1)
+    schedule = await seed(r, interval_seconds=None, one_shot_at=future, next_fire_at=future)
+    url = f"/api/v1/schedules/{schedule.id}/fire-now"
+    key = uuid.uuid4()
+    headers = {**world.auth(world.users["org_admin"]), "Idempotency-Key": str(key)}
+
+    async def runtime_session():
+        async with r.r.sessions() as db:
+            yield db
+
+    async with r.r.sessions() as db:
+        assert await db.scalar(text("SELECT row_security_active('schedule_fire_requests')")) is True
+    original = app.dependency_overrides[get_db]
+    app.dependency_overrides[get_db] = runtime_session
+    try:
+        first, second = await asyncio.gather(
+            world.client.post(url, headers=headers), world.client.post(url, headers=headers),
+        )
+        assert first.status_code == second.status_code == 200
+        initial, duplicate = sorted((first.json(), second.json()), key=lambda item: item["request_replayed"])
+        assert initial["request_replayed"] is False and duplicate["request_replayed"] is True
+        assert initial["requested_fire_at"] == duplicate["requested_fire_at"]
+        await SchedulerEngine()._tick()
+        replay = await world.client.post(url, headers=headers)
+        assert replay.status_code == 200
+        assert replay.json()["request_replayed"] is True and not replay.json()["is_active"]
+        assert replay.json()["requested_fire_at"] == initial["requested_fire_at"]
+        another_key = await world.client.post(url, headers={**headers, "Idempotency-Key": str(uuid.uuid4())})
+        assert another_key.status_code == 409
+        async with r.r.sessions() as db:
+            await bind_tenant_context(db, str(world.org_b.id))
+            assert await db.scalar(select(ScheduleFireRequest).where(ScheduleFireRequest.request_key == key)) is None
+        row, executions = await stored(r, schedule)
+        assert row.total_runs == 1 and len(executions) == 1 and executions[0].tasks_created == 1
+    finally:
+        app.dependency_overrides[get_db] = original
+
+
+async def test_schedule_fire_receipt_rollback_and_expiry_are_atomic(scheduler_runtime):
+    from backend.services.scheduler.schedule_service import ScheduleService
+
+    r = scheduler_runtime
+    world = r.r.world
+    future = datetime.now(timezone.utc) + timedelta(days=1)
+    schedule = await seed(r, next_fire_at=future)
+    key = uuid.uuid4()
+    async with r.r.sessions() as db:
+        await bind_tenant_context(db, str(schedule.org_id))
+        _, initial_slot, replayed = await ScheduleService(db).request_fire(schedule.id, schedule.org_id, key)
+        assert not replayed and initial_slot < future
+        await db.rollback()
+    async with world.sessions() as db:
+        assert await db.get(ScheduleFireRequest, (schedule.org_id, schedule.id, key)) is None
+        assert (await db.get(Schedule, schedule.id)).next_fire_at == future
+        db.add(ScheduleFireRequest(
+            org_id=schedule.org_id, schedule_id=schedule.id, request_key=key,
+            fire_at=initial_slot, expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+        ))
+        await db.commit()
+    async with r.r.sessions() as db:
+        await bind_tenant_context(db, str(schedule.org_id))
+        _, new_slot, replayed = await ScheduleService(db).request_fire(schedule.id, schedule.org_id, key)
+        assert not replayed and new_slot > initial_slot
+        await db.commit()
+    async with world.sessions() as db:
+        stored_request = await db.get(ScheduleFireRequest, (schedule.org_id, schedule.id, key))
+        assert stored_request.fire_at == new_slot and stored_request.expires_at > new_slot
+
+
+@pytest.mark.parametrize("mutation", ["timing_edit", "patch_disable", "toggle_disable", "delete"])
+async def test_manual_slot_gets_one_skip_when_superseded_under_rls(scheduler_runtime, mutation):
+    r = scheduler_runtime
+    world = r.r.world
+    future = datetime.now(timezone.utc) + timedelta(days=1)
+    schedule = await seed(r, next_fire_at=future)
+    url = f"/api/v1/schedules/{schedule.id}"
+    auth = world.auth(world.users["org_admin"])
+    headers = [{**auth, "Idempotency-Key": str(uuid.uuid4())} for _ in range(2)]
+
+    async def runtime_session():
+        async with r.r.sessions() as db:
+            yield db
+
+    original = app.dependency_overrides[get_db]
+    app.dependency_overrides[get_db] = runtime_session
+    try:
+        for header in headers:
+            response = await world.client.post(url + "/fire-now", headers=header)
+            assert response.status_code == 200
+            if header is headers[0]:
+                slot = response.json()["requested_fire_at"]
+            else:
+                assert response.json()["requested_fire_at"] == slot
+        no_op = await world.client.patch(url, headers=auth, json={"interval_seconds": schedule.interval_seconds})
+        renamed = await world.client.patch(url, headers=auth, json={"name": "unchanged timer"})
+        assert no_op.status_code == renamed.status_code == 200
+        assert no_op.json()["next_fire_at"] == renamed.json()["next_fire_at"] == slot
+        assert not (await stored(r, schedule))[1]
+
+        if mutation == "timing_edit":
+            method, path, body, code = "PATCH", url, {"interval_seconds": 120}, 200
+        elif mutation == "patch_disable":
+            method, path, body, code = "PATCH", url, {"is_active": False}, 200
+        elif mutation == "toggle_disable":
+            method, path, body, code = "POST", url + "/toggle?active=false", None, 200
+        else:
+            method, path, body, code = "DELETE", url, None, 204
+        for _ in range(2):
+            changed = await world.client.request(method, path, headers=auth, json=body)
+            assert changed.status_code == code, changed.text
+
+        for header in headers:
+            replay = await world.client.post(url + "/fire-now", headers=header)
+            assert replay.status_code == 200 and replay.json()["request_replayed"] is True
+            assert replay.json()["requested_fire_at"] == slot
+        await SchedulerEngine()._tick()
+        row, executions = await stored(r, schedule)
+        assert row.total_runs == 0 and len(executions) == 1
+        [execution] = executions
+        assert execution.status == "skipped" and execution.tasks_created == 0
+        assert execution.fire_time == datetime.fromisoformat(slot)
+        assert execution.finished_at == execution.actual_time
+        if mutation == "timing_edit":
+            assert execution.skip_reason == "Настройки расписания изменились до запуска"
+            assert row.is_active and row.next_fire_at > datetime.now(timezone.utc)
+        else:
+            assert execution.skip_reason == "Расписание выключено до запуска"
+            assert not row.is_active and row.next_fire_at is None
+    finally:
+        app.dependency_overrides[get_db] = original
+
+
+async def test_superseded_manual_slot_rollback_preserves_pending_firing_under_rls(scheduler_runtime):
+    from backend.services.scheduler.schedule_service import ScheduleService
+
+    r = scheduler_runtime
+    future = datetime.now(timezone.utc) + timedelta(days=1)
+    schedule = await seed(r, next_fire_at=future)
+    async with r.r.sessions() as db:
+        await bind_tenant_context(db, str(schedule.org_id))
+        service = ScheduleService(db)
+        _, slot, _ = await service.request_fire(schedule.id, schedule.org_id, uuid.uuid4())
+        await db.commit()
+        await service.toggle(schedule.id, schedule.org_id, False)
+        await db.rollback()
+    row, executions = await stored(r, schedule)
+    assert row.is_active and row.next_fire_at == slot and not executions
+    await SchedulerEngine()._tick()
+    row, executions = await stored(r, schedule)
+    assert row.total_runs == 1 and len(executions) == 1 and executions[0].fire_time == slot
+    assert executions[0].status == "triggered"
+
+
+@pytest.mark.parametrize("target", ["script", "pipeline"])
+async def test_binding_lock_defers_entire_scheduled_firing(scheduler_runtime, target):
+    r = scheduler_runtime
+    world = r.r.world
+    schedule = await seed(r, target=target, device_ids=[str(world.dev_a.id), str(world.dev_a2.id)])
+    engine = SchedulerEngine()
+    async with world.sessions() as lock:
+        await lock.scalar(select(Device).where(Device.id == world.dev_a.id).with_for_update())
+        await engine._tick()
+        row, executions = await stored(r, schedule)
+        assert row.next_fire_at == schedule.next_fire_at
+        assert not executions
+        model = Task if target == "script" else PipelineRun
+        assert await lock.scalar(select(func.count()).select_from(model).where(model.org_id == schedule.org_id)) == 0
+    await engine._tick()
+    row, executions = await stored(r, schedule)
+    assert row.total_runs == 1 and len(executions) == 1
+    assert executions[0].tasks_created == 2
 
 
 async def test_error_after_child_flush_rolls_back_entire_firing(scheduler_runtime, monkeypatch):
@@ -177,7 +583,9 @@ async def test_conflict_skip_advances_past_now_instead_of_refiring_every_poll(sc
         await db.commit()
     await SchedulerEngine()._tick()
     row, executions = await stored(r, schedule)
-    assert len(executions) == 2
+    assert len(executions) == 3
+    assert sum(execution.status == "triggered" for execution in executions) == 1
+    assert any(execution.skip_reason == "Просроченные слоты объединены, повторный запуск не создан" for execution in executions)
     assert row.next_fire_at > datetime.now(timezone.utc)
 
 

@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { clearReturnDestination } from '@/src/features/access/returnDestination';
 
 const REFRESH_TOKEN_KEY = 'sphere_refresh_token';
 const SIGNED_OUT_KEY = 'sphere_signed_out';
@@ -29,10 +30,11 @@ interface AuthState {
   sessionVersion: number;
   explicitlySignedOut: boolean;
   logoutWarning: string | null;
+  manualLogoutVersion: number | null;
   setAccessToken: (token: string) => void;
   setUser: (user: User | null) => void;
   completeLogin: (tokens: SessionTokens, version: number) => boolean;
-  logout: () => void;
+  logout: (manual?: boolean) => void;
 }
 
 // Access tokens stay in memory. A new login/logout invalidates outstanding work.
@@ -42,6 +44,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   sessionVersion: 0,
   explicitlySignedOut: false,
   logoutWarning: null,
+  manualLogoutVersion: null,
   setAccessToken: (token) => set(s => ({ accessToken: token, explicitlySignedOut: false, sessionVersion: s.sessionVersion + 1 })),
   setUser: (user) => set(s => ({ user, sessionVersion: s.sessionVersion + 1 })),
   completeLogin: (tokens, version) => {
@@ -51,9 +54,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     set({ accessToken: tokens.access_token, user: tokens.user, explicitlySignedOut: false, logoutWarning: null });
     return true;
   },
-  logout: () => {
+  logout: (manual = false) => {
     // Publish the memory boundary even if the browser blocks storage access.
-    set(s => ({ accessToken: null, user: null, explicitlySignedOut: true, sessionVersion: s.sessionVersion + 1 }));
+    set(s => ({ accessToken: null, user: null, explicitlySignedOut: true, sessionVersion: s.sessionVersion + 1,
+      manualLogoutVersion: manual ? s.sessionVersion + 1 : null }));
     clearRefreshToken();
     try { if (typeof window !== 'undefined') localStorage.setItem(SIGNED_OUT_KEY, '1'); } catch { /* Keep the in-memory logout boundary. */ }
   },
@@ -83,6 +87,12 @@ function persistTokens(data: SessionTokens) {
 
 let refreshing: { version: number; promise: Promise<string> } | null = null;
 
+function isTemporaryRefreshError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  const status = error.response?.status;
+  return status === undefined || status === 408 || status === 429 || status >= 500;
+}
+
 /** One refresh per session, shared by startup and HTTP retries. Never restore a retired session. */
 export function refreshSession(version = useAuthStore.getState().sessionVersion): Promise<string> {
   assertSession(version);
@@ -109,10 +119,7 @@ export function refreshSession(version = useAuthStore.getState().sessionVersion)
     // never retried here. A later explicit request may try its own refresh.
     // Confirmed auth rejection, malformed tokens and identity changes remain
     // terminal, and a newer login/logout cannot be altered by this old work.
-    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-    const transient = axios.isAxiosError(error)
-      && (status === undefined || status === 408 || status === 429 || status >= 500);
-    if (!transient && useAuthStore.getState().sessionVersion === version) useAuthStore.getState().logout();
+    if (!isTemporaryRefreshError(error) && useAuthStore.getState().sessionVersion === version) useAuthStore.getState().logout();
     throw error;
   }).finally(() => {
     if (refreshing?.promise === promise) refreshing = null;
@@ -121,25 +128,32 @@ export function refreshSession(version = useAuthStore.getState().sessionVersion)
   return promise;
 }
 
-export function useInitAuth(): boolean {
-  const [ready, setReady] = useState(false);
+export function useInitAuth() {
+  const [state, setState] = useState<'checking' | 'ready' | 'unavailable'>('checking');
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let mounted = true;
-    const state = useAuthStore.getState();
-    if ((state.accessToken && state.user) || signedOut()) { setReady(true); return; }
-    void refreshSession(state.sessionVersion).catch(() => undefined).finally(() => {
-      if (mounted) setReady(true);
+    const session = useAuthStore.getState();
+    if ((session.accessToken && session.user) || signedOut()) { setState('ready'); return; }
+    const { sessionVersion } = session;
+    void refreshSession(sessionVersion).then(() => {
+      if (mounted) setState('ready');
+    }, error => {
+      if (!mounted) return;
+      const sameSession = useAuthStore.getState().sessionVersion === sessionVersion;
+      setState(sameSession && isTemporaryRefreshError(error) ? 'unavailable' : 'ready');
     });
     return () => { mounted = false; };
-  }, []);
-  return ready;
+  }, [attempt]);
+  return { state, retry: () => { setState('checking'); setAttempt(value => value + 1); } };
 }
 
 /** Clear local access immediately, then revoke the captured server session without API retries. */
 export async function signOut(): Promise<boolean> {
   const access = useAuthStore.getState().accessToken;
   const refresh = getRefreshToken();
-  useAuthStore.getState().logout();
+  clearReturnDestination();
+  useAuthStore.getState().logout(true);
   const version = useAuthStore.getState().sessionVersion;
   useAuthStore.setState({ logoutWarning: null });
   try {

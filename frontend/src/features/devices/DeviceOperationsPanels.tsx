@@ -119,7 +119,13 @@ export function DeviceSavedLogsPanel({ deviceId }: { deviceId: string }) {
     }, retry: false, refetchOnMount: 'always',
   });
   return <section aria-label="Сохранённые логи APK" className="space-y-4">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-semibold">Сохранённые логи APK</h3><Button variant="outline" size="sm" disabled={query.isFetching} onClick={() => { void query.refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Обновить логи</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h3 className="font-semibold">Сохранённые логи APK</h3>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" disabled={query.isFetching} onClick={() => { void query.refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Обновить логи</Button>
+        <Button asChild variant="outline" size="sm"><Link href={`/logs?device_id=${encodeURIComponent(deviceId)}`}>Открыть архив журналов</Link></Button>
+      </div>
+    </div>
     <p className="text-sm text-muted-foreground">Последние 100 строк, ранее доставленные на сервер. Доступны и для офлайн-устройства; это не живой Logcat. Автоматический опрос выключен.</p>
     <QueryState loading={query.isLoading} error={query.isError} cached={!!query.data} updatedAt={query.dataUpdatedAt} />
     {query.data && (query.data.lines.length ? <pre className="max-h-[480px] overflow-auto whitespace-pre-wrap break-all rounded-xl border border-border bg-muted/40 p-4 font-mono text-xs leading-relaxed" tabIndex={0} aria-label="Строки логов APK">{query.data.lines.join('\n')}</pre> : !query.isError && <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">Сервер не вернул сохранённых строк. Это не подтверждает отсутствие ошибок на Android.</p>)}

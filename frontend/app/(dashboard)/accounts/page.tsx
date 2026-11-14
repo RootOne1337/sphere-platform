@@ -2,6 +2,9 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import { getApiErrorMessage } from '@/lib/apiError';
+import { ApplicationProfilesPanel } from '@/src/features/accounts/ApplicationProfilesPanel';
+import { applicationLabel, findApplication, useApplicationProfiles, type ApplicationProfile } from '@/src/features/accounts/applicationProfiles';
 import {
   useGameAccounts,
   useAccountStats,
@@ -112,6 +115,30 @@ function formatServer(name: string | null, servers?: Array<{ id: number; name: s
   return srv ? `#${srv.id} ${srv.name}` : name;
 }
 
+const LEGACY_ANDROID_GAME = 'com.br.top';
+const LEGACY_GAME_VALUES = [LEGACY_ANDROID_GAME, 'black_russia', 'black-russia'];
+
+function serversForGame(game: string, profiles: readonly ApplicationProfile[], legacy: Array<{ id: number; name: string }>) {
+  const profile = findApplication(profiles, game);
+  if (!profile && LEGACY_GAME_VALUES.includes(game)) return legacy.map(server => server.name);
+  return profile?.servers.map(server => server.name) ?? [];
+}
+
+function legacyServersForGame(game: string, legacy: Array<{ id: number; name: string }>) {
+  return LEGACY_GAME_VALUES.includes(game) ? legacy : [];
+}
+
+function AccountServerField({ value, onChange, servers }: { value: string; onChange: (value: string) => void; servers: string[] }) {
+  return <label className="grid gap-1.5 text-xs font-mono">Сервер
+    <select aria-label="Игровой сервер" value={value} onChange={event => onChange(event.target.value)}
+      className="h-9 rounded-md border border-input bg-background px-3 text-xs">
+      <option value="">Без сервера</option>
+      {value && !servers.includes(value) && <option value={value}>{value} · сохранённое значение</option>}
+      {servers.map(server => <option key={server} value={server}>{server}</option>)}
+    </select>
+  </label>;
+}
+
 /** Копирование в буфер обмена */
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text).catch(() => {});
@@ -123,9 +150,9 @@ export default function AccountsPage() {
   // Фильтры и пагинация
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
-  const [filterGame, setFilterGame] = useState("__all__");
+  const [filterGame, setFilterGame] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("__all__");
-  const [filterServer, setFilterServer] = useState("__all__");
+  const [filterServer, setFilterServer] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [perPage] = useState(50);
   const [sortBy, setSortBy] = useState("created_at");
@@ -136,6 +163,7 @@ export default function AccountsPage() {
   const [editAccount, setEditAccount] = useState<GameAccount | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [assignAccount, setAssignAccount] = useState<GameAccount | null>(null);
+  const [assignError, setAssignError] = useState<string | null>(null);
   const [releaseAccount, setReleaseAccount] = useState<GameAccount | null>(null);
   const [deleteAccount, setDeleteAccount] = useState<GameAccount | null>(null);
   const [detailAccount, setDetailAccount] = useState<GameAccount | null>(null);
@@ -156,9 +184,9 @@ export default function AccountsPage() {
       page,
       per_page: perPage,
       search: debouncedSearch || undefined,
-      game: filterGame !== "__all__" ? filterGame : undefined,
+      game: filterGame ?? undefined,
       status: filterStatus !== "__all__" ? filterStatus : undefined,
-      server_name: filterServer !== "__all__" ? filterServer : undefined,
+      server_name: filterServer ?? undefined,
       sort_by: sortBy,
       sort_dir: sortDir,
     }),
@@ -170,6 +198,8 @@ export default function AccountsPage() {
   const { data: stats } = useAccountStats();
   const { data: serversData } = useServers();
   const serversList = serversData?.servers ?? [];
+  const applications = useApplicationProfiles();
+  const profiles = applications.isError ? [] : applications.data ?? [];
 
   // Мутации
   const createMut = useCreateGameAccount();
@@ -180,6 +210,13 @@ export default function AccountsPage() {
   const importMut = useImportGameAccounts();
 
   const accounts = data?.items ?? [];
+  const gameOptions = [...new Set([...profiles.map(profile => profile.source === 'builtin' ? LEGACY_ANDROID_GAME : profile.key),
+    ...(stats?.games ?? []), ...accounts.map(account => account.game), ...(filterGame === null ? [] : [filterGame])])].filter(Boolean);
+  const serverOptions = [...new Set(filterGame === null
+    ? [...serversList.map(server => server.name), ...profiles.flatMap(profile => profile.servers.map(server => server.name)),
+      ...(stats?.servers ?? []), ...accounts.flatMap(account => account.server_name ?? [])]
+    : [...serversForGame(filterGame, profiles, serversList), ...accounts.filter(account => account.game === filterGame).flatMap(account => account.server_name ?? []),
+      ...(filterServer === null ? [] : [filterServer])])].filter(Boolean);
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 0;
 
@@ -194,7 +231,7 @@ export default function AccountsPage() {
     setPage(1);
   };
 
-  const hasFilters = filterGame !== "__all__" || filterStatus !== "__all__" || filterServer !== "__all__" || debouncedSearch;
+  const hasFilters = filterGame !== null || filterStatus !== "__all__" || filterServer !== null || debouncedSearch;
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-[1720px] space-y-[var(--page-gap)] px-4 py-[var(--page-padding-y)] sm:px-[var(--page-padding-x)]">
@@ -210,6 +247,7 @@ export default function AccountsPage() {
           </p>
         </div>
         <div className="flex max-w-full flex-wrap gap-2">
+          <ApplicationProfilesPanel profiles={profiles} pending={applications.isLoading} failed={applications.isError} refresh={applications.refetch} />
           <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
             <RefreshCw className="w-3.5 h-3.5 mr-1" />
             Обновить
@@ -252,14 +290,16 @@ export default function AccountsPage() {
           />
         </div>
 
-        <Select value={filterGame} onValueChange={(v) => { setFilterGame(v); setPage(1); }}>
-          <SelectTrigger className="h-9 w-[140px] text-xs font-mono">
+        <Select value={filterGame === null ? 'all' : `game:${filterGame}`} onValueChange={value => {
+          setFilterGame(value === 'all' ? null : value.slice('game:'.length)); setFilterServer(null); setPage(1);
+        }}>
+          <SelectTrigger aria-label="Фильтр по приложению" className="h-9 w-[140px] text-xs font-mono">
             <SelectValue placeholder="Все игры" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all__">Все игры</SelectItem>
-            {stats?.games.map((g) => (
-              <SelectItem key={g} value={g}>{g}</SelectItem>
+            <SelectItem value="all">Все приложения</SelectItem>
+            {gameOptions.map((g) => (
+              <SelectItem key={g} value={`game:${g}`}>{applicationLabel(profiles, g)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -276,14 +316,16 @@ export default function AccountsPage() {
           </SelectContent>
         </Select>
 
-        <Select value={filterServer} onValueChange={(v) => { setFilterServer(v); setPage(1); }}>
+        <Select value={filterServer === null ? 'all' : `server:${filterServer}`} onValueChange={value => {
+          setFilterServer(value === 'all' ? null : value.slice('server:'.length)); setPage(1);
+        }}>
           <SelectTrigger className="h-9 w-[170px] text-xs font-mono">
             <SelectValue placeholder="Все серверы" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all__">Все серверы</SelectItem>
-            {serversList.map((s) => (
-              <SelectItem key={s.id} value={s.name}>#{s.id} {s.name}</SelectItem>
+            <SelectItem value="all">Все серверы</SelectItem>
+            {serverOptions.map((s) => (
+              <SelectItem key={s} value={`server:${s}`}>{s}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -294,9 +336,9 @@ export default function AccountsPage() {
             size="sm"
             className="text-xs"
             onClick={() => {
-              setFilterGame("__all__");
+              setFilterGame(null);
               setFilterStatus("__all__");
-              setFilterServer("__all__");
+              setFilterServer(null);
               setSearch("");
               setPage(1);
             }}
@@ -373,7 +415,7 @@ export default function AccountsPage() {
 
                     {/* Игра */}
                     <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
-                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">{acc.game}</span>
+                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">{applicationLabel(profiles, acc.game)}</span>
                     </td>
 
                     {/* Ник (= логин) */}
@@ -391,7 +433,7 @@ export default function AccountsPage() {
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       {acc.server_name ? (
                         <span className="text-primary text-[11px]">
-                          {formatServer(acc.server_name, serversList)}
+                          {formatServer(acc.server_name, legacyServersForGame(acc.game, serversList))}
                         </span>
                       ) : (
                         <span className="text-muted-foreground/50">—</span>
@@ -550,7 +592,7 @@ export default function AccountsPage() {
                           <Edit className="w-3.5 h-3.5" />
                         </Button>
                         {acc.status === "free" && (
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-400" onClick={() => setAssignAccount(acc)} title="Назначить">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-400" onClick={() => { setAssignError(null); setAssignAccount(acc); }} title="Назначить">
                             <Link className="w-3.5 h-3.5" />
                           </Button>
                         )}
@@ -597,6 +639,7 @@ export default function AccountsPage() {
         onCreate={(data) => { createMut.mutate(data, { onSuccess: () => setCreateOpen(false) }); }}
         isLoading={createMut.isPending}
         servers={serversList}
+        profiles={profiles}
       />
 
       <EditAccountDialog
@@ -606,7 +649,7 @@ export default function AccountsPage() {
           if (editAccount) { updateMut.mutate({ id: editAccount.id, ...data }, { onSuccess: () => setEditAccount(null) }); }
         }}
         isLoading={updateMut.isPending}
-        servers={serversList}
+        servers={editAccount ? serversForGame(editAccount.game, profiles, serversList) : []}
       />
 
       <ImportDialog
@@ -618,11 +661,24 @@ export default function AccountsPage() {
       />
 
       <AssignDialog
+        key={assignAccount?.id ?? 'closed'}
         account={assignAccount}
+        gameLabel={assignAccount ? applicationLabel(profiles, assignAccount.game) : ''}
         onClose={() => setAssignAccount(null)}
         onAssign={(deviceId) => {
-          if (assignAccount) { assignMut.mutate({ id: assignAccount.id, device_id: deviceId }, { onSuccess: () => setAssignAccount(null) }); }
+          if (!assignAccount || assignMut.isPending) return;
+          setAssignError(null);
+          assignMut.mutate({ id: assignAccount.id, device_id: deviceId }, {
+            onSuccess: () => setAssignAccount(null),
+            onError: failure => {
+              const reason = getApiErrorMessage(failure, 'Не удалось назначить аккаунт на устройство.');
+              setAssignError(reason === 'Account does not match the device application and server'
+                ? 'Приложение или сервер аккаунта не совпадает с привязкой устройства. Выберите устройство с подходящей привязкой.'
+                : reason === 'Device application binding is unavailable' ? 'Привязка приложения на устройстве недоступна. Проверьте её в карточке устройства.' : reason);
+            },
+          });
         }}
+        error={assignError}
         isLoading={assignMut.isPending}
       />
 
@@ -649,7 +705,7 @@ export default function AccountsPage() {
         onClose={() => { setDetailAccount(null); setShowPassword(false); }}
         showPassword={showPassword}
         onTogglePassword={() => setShowPassword(!showPassword)}
-        servers={serversList}
+        servers={detailAccount ? legacyServersForGame(detailAccount.game, serversList) : []}
       />
     </div>
   );
@@ -710,28 +766,32 @@ function CreateAccountDialog({
   onCreate,
   isLoading,
   servers,
+  profiles,
 }: {
   open: boolean;
   onClose: () => void;
   onCreate: (data: { game: string; login: string; password: string; server_name?: string; nickname?: string; gender?: string; level?: number; target_level?: number; balance_rub?: number; balance_bc?: number; lawfulness?: number; meta?: Record<string, unknown> }) => void;
   isLoading: boolean;
   servers: Array<{ id: number; name: string }>;
+  profiles: readonly ApplicationProfile[];
 }) {
-  const [game, setGame] = useState("com.br.top");
+  const [game, setGame] = useState(LEGACY_ANDROID_GAME);
+  const [catalogSelection, setCatalogSelection] = useState(LEGACY_ANDROID_GAME);
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [serverName, setServerName] = useState("");
   const [nickname, setNickname] = useState("");
-  const [gender, setGender] = useState("male");
+  const [gender, setGender] = useState("");
   const [level, setLevel] = useState("");
   const [targetLevel, setTargetLevel] = useState("");
   const [balanceRub, setBalanceRub] = useState("");
   const [balanceBc, setBalanceBc] = useState("");
   const [lawfulness, setLawfulness] = useState("");
   const lawfulnessValid = lawfulness.trim() === '' || (Number.isInteger(Number(lawfulness)) && Number(lawfulness) >= 0 && Number(lawfulness) <= 100);
+  const legacyGame = LEGACY_GAME_VALUES.includes(game.trim());
 
   const handleSubmit = () => {
-    if (!game.trim() || !login.trim() || !password || isLoading || !lawfulnessValid) return;
+    if (!game.trim() || !login.trim() || !password || isLoading || (legacyGame && !lawfulnessValid)) return;
     const data: {
       game: string; login: string; password: string;
       server_name?: string; nickname?: string; gender?: string;
@@ -743,20 +803,22 @@ function CreateAccountDialog({
       login: login.trim(),
       password,
       server_name: serverName || undefined,
-      nickname: nickname.trim() || login.trim() || undefined,
-      gender: gender || undefined,
     };
+    if (nickname.trim()) data.nickname = nickname.trim();
+    if (gender) data.gender = gender;
     if (level) data.level = parseInt(level);
     if (targetLevel) data.target_level = parseInt(targetLevel);
-    if (balanceRub) data.balance_rub = parseFloat(balanceRub);
-    if (balanceBc) data.balance_bc = parseFloat(balanceBc);
-    if (lawfulness.trim() !== '') data.lawfulness = Number(lawfulness);
+    if (legacyGame) {
+      if (balanceRub) data.balance_rub = parseFloat(balanceRub);
+      if (balanceBc) data.balance_bc = parseFloat(balanceBc);
+      if (lawfulness.trim() !== '') data.lawfulness = Number(lawfulness);
+    }
     onCreate(data);
   };
 
   const handleClose = () => {
-    setGame("com.br.top"); setLogin(""); setPassword(""); setServerName(""); setNickname("");
-    setGender("male"); setLevel(""); setTargetLevel(""); setBalanceRub(""); setBalanceBc(""); setLawfulness("");
+    setGame(LEGACY_ANDROID_GAME); setCatalogSelection(LEGACY_ANDROID_GAME); setLogin(""); setPassword(""); setServerName(""); setNickname("");
+    setGender(""); setLevel(""); setTargetLevel(""); setBalanceRub(""); setBalanceBc(""); setLawfulness("");
     onClose();
   };
 
@@ -769,57 +831,57 @@ function CreateAccountDialog({
             Создать аккаунт
           </DialogTitle>
           <DialogDescription className="font-mono text-xs">
-            Добавить новый игровой аккаунт. Логин = Никнейм (формат: Имя_Фамилия).
+            Выберите приложение и укажите учётные данные. Сервер и данные персонажа необязательны.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
-          {/* Строка 1: Игра + Пол */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label className="text-xs font-mono flex items-center gap-1"><Gamepad2 className="w-3 h-3" /> Игра *</Label>
-              <Input value={game} onChange={(e) => setGame(e.target.value)} placeholder="com.br.top" className="text-xs font-mono" />
+              <Label htmlFor="account-application" className="text-xs font-mono flex items-center gap-1"><Gamepad2 className="w-3 h-3" /> Приложение *</Label>
+              <select id="account-application" value={catalogSelection} onChange={event => {
+                setCatalogSelection(event.target.value); setServerName('');
+                setGame(event.target.value === '__custom__' ? '' : event.target.value);
+              }} className="h-9 rounded-md border border-input bg-background px-2 text-xs">
+                <option value={LEGACY_ANDROID_GAME}>{applicationLabel(profiles, LEGACY_ANDROID_GAME)}</option>
+                {profiles.filter(profile => profile.source === 'tenant').map(profile => <option key={profile.id} value={profile.key}>{profile.name} · {profile.key}</option>)}
+                {catalogSelection !== LEGACY_ANDROID_GAME && catalogSelection !== '__custom__' && !profiles.some(profile => profile.key === catalogSelection)
+                  && <option value={catalogSelection}>{catalogSelection}</option>}
+                <option value="__custom__">Ввести значение игры вручную</option>
+              </select>
+              {catalogSelection === '__custom__' && <Input aria-label="Значение игры" value={game} maxLength={100}
+                onChange={event => { setGame(event.target.value); setServerName(''); }} placeholder="Идентификатор игры" className="text-xs font-mono" />}
             </div>
             <div className="grid gap-1.5">
-              <Label className="text-xs font-mono flex items-center gap-1"><User className="w-3 h-3" /> Пол</Label>
-              <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger className="text-xs font-mono"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Мужской</SelectItem>
-                  <SelectItem value="female">Женский</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="account-character-gender" className="text-xs font-mono flex items-center gap-1"><User className="w-3 h-3" /> Пол персонажа</Label>
+              <select id="account-character-gender" value={gender} onChange={event => setGender(event.target.value)} className="h-9 rounded-md border border-input bg-background px-2 text-xs">
+                <option value="">Не указан</option><option value="male">Мужской</option><option value="female">Женский</option>
+              </select>
             </div>
           </div>
 
-          {/* Строка 2: Логин + Никнейм (синхронизированы) */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label className="text-xs font-mono flex items-center gap-1"><User className="w-3 h-3" /> Логин / Ник *</Label>
+              <Label htmlFor="account-create-login" className="text-xs font-mono flex items-center gap-1"><User className="w-3 h-3" /> Логин *</Label>
               <Input
+                id="account-create-login"
                 value={login}
-                onChange={(e) => { setLogin(e.target.value); setNickname(e.target.value); }}
-                placeholder="Ivan_Petrov"
+                onChange={(e) => setLogin(e.target.value)}
+                placeholder="Имя пользователя или email"
+                maxLength={255}
                 className="text-xs font-mono"
               />
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs font-mono flex items-center gap-1"><Key className="w-3 h-3" /> Пароль *</Label>
-              <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Авто-генерация если пусто" className="text-xs font-mono" />
+              <Input aria-label="Пароль игрового аккаунта" type="password" autoComplete="new-password" maxLength={500} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Введите пароль" className="text-xs font-mono" />
             </div>
           </div>
+          <label className="grid gap-1.5 text-xs font-mono">Никнейм персонажа
+            <Input value={nickname} maxLength={100} onChange={event => setNickname(event.target.value)} />
+          </label>
 
           {/* Строка 3: Сервер */}
-          <div className="grid gap-1.5">
-            <Label className="text-xs font-mono flex items-center gap-1"><Server className="w-3 h-3" /> Сервер</Label>
-            <Select value={serverName} onValueChange={setServerName}>
-              <SelectTrigger className="text-xs font-mono"><SelectValue placeholder="Выберите сервер" /></SelectTrigger>
-              <SelectContent>
-                {servers.map((s) => (
-                  <SelectItem key={s.id} value={s.name}>#{s.id} {s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <AccountServerField value={serverName} onChange={setServerName} servers={serversForGame(game.trim(), profiles, servers)} />
 
           {/* Строка 4: Уровни */}
           <div className="grid grid-cols-3 gap-3">
@@ -831,15 +893,15 @@ function CreateAccountDialog({
               <Label className="text-xs font-mono flex items-center gap-1"><Target className="w-3 h-3" /> Целевой LVL</Label>
               <Input type="number" value={targetLevel} onChange={(e) => setTargetLevel(e.target.value)} placeholder="0" className="text-xs font-mono" />
             </div>
-            <div className="grid gap-1.5">
+            {legacyGame && <div className="grid gap-1.5">
               <Label className="text-xs font-mono flex items-center gap-1"><Scale className="w-3 h-3" /> Закон (0-100)</Label>
               <Input aria-label="Законопослушность" aria-invalid={!lawfulnessValid} type="number" value={lawfulness} onChange={(e) => setLawfulness(e.target.value)} placeholder="100" min={0} max={100} step={1} className="text-xs font-mono" />
               {!lawfulnessValid && <p role="alert" className="text-xs text-destructive">Введите целое число от 0 до 100.</p>}
-            </div>
+            </div>}
           </div>
 
           {/* Строка 5: Балансы */}
-          <div className="grid grid-cols-2 gap-3">
+          {legacyGame && <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label className="text-xs font-mono flex items-center gap-1"><Coins className="w-3 h-3" /> Баланс ₽</Label>
               <Input type="number" value={balanceRub} onChange={(e) => setBalanceRub(e.target.value)} placeholder="0.00" className="text-xs font-mono" />
@@ -848,11 +910,11 @@ function CreateAccountDialog({
               <Label className="text-xs font-mono flex items-center gap-1"><Coins className="w-3 h-3" /> Баланс BC</Label>
               <Input type="number" value={balanceBc} onChange={(e) => setBalanceBc(e.target.value)} placeholder="0.00" className="text-xs font-mono" />
             </div>
-          </div>
+          </div>}
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={handleClose}>Отмена</Button>
-          <Button size="sm" onClick={handleSubmit} disabled={!game.trim() || !login.trim() || !password || isLoading || !lawfulnessValid}>
+          <Button size="sm" onClick={handleSubmit} disabled={!game.trim() || !login.trim() || !password || isLoading || (legacyGame && !lawfulnessValid)}>
             {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1" /> : <Plus className="w-3.5 h-3.5 mr-1" />}
             Создать
           </Button>
@@ -877,7 +939,7 @@ function EditAccountDialog({
   onClose: () => void;
   onSave: (data: Record<string, unknown>) => void;
   isLoading: boolean;
-  servers: Array<{ id: number; name: string }>;
+  servers: string[];
 }) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -974,17 +1036,7 @@ function EditAccountDialog({
           {/* ── Раздел: Сервер + Устройство ────────────────────────────── */}
           <SectionLabel icon={Server} label="Сервер и привязка" />
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label className="text-xs font-mono">Сервер</Label>
-              <Select value={serverName} onValueChange={setServerName}>
-                <SelectTrigger className="text-xs font-mono"><SelectValue placeholder="Выберите сервер" /></SelectTrigger>
-                <SelectContent>
-                  {servers.map((s) => (
-                    <SelectItem key={s.id} value={s.name}>#{s.id} {s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <AccountServerField value={serverName} onChange={setServerName} servers={servers} />
             <div className="grid gap-1.5">
               <Label className="text-xs font-mono">Устройство (привязка)</Label>
               <div className="text-xs font-mono text-muted-foreground bg-muted/30 border border-border rounded-md px-3 py-2">
@@ -1179,19 +1231,23 @@ function ImportDialog({
 
 function AssignDialog({
   account,
+  gameLabel,
   onClose,
   onAssign,
+  error,
   isLoading,
 }: {
   account: GameAccount | null;
+  gameLabel: string;
   onClose: () => void;
   onAssign: (deviceId: string) => void;
+  error: string | null;
   isLoading: boolean;
 }) {
   const [deviceId, setDeviceId] = useState("");
 
   return (
-    <Dialog open={!!account} onOpenChange={() => { setDeviceId(""); onClose(); }}>
+    <Dialog open={!!account} onOpenChange={open => { if (!open && !isLoading) onClose(); }}>
       <DialogContent className="sm:max-w-[420px] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-mono text-foreground flex items-center gap-2">
@@ -1199,7 +1255,7 @@ function AssignDialog({
             Назначить на устройство
           </DialogTitle>
           <DialogDescription className="font-mono text-xs">
-            {account?.nickname || account?.login} · {formatServer(account?.server_name ?? null)}
+            {account?.nickname || account?.login} · {gameLabel} · {formatServer(account?.server_name ?? null)}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
@@ -1209,9 +1265,10 @@ function AssignDialog({
             disabled={isLoading}
             placeholder="Выберите устройство (эмулятор)…"
           />
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => { setDeviceId(""); onClose(); }}>Отмена</Button>
+          <Button variant="outline" size="sm" disabled={isLoading} onClick={onClose}>Отмена</Button>
           <Button size="sm" onClick={() => onAssign(deviceId)} disabled={!deviceId || isLoading}>
             {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1" /> : <Link className="w-3.5 h-3.5 mr-1" />}
             Назначить

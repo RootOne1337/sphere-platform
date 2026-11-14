@@ -15,15 +15,55 @@ export interface Batch {
   next_wave_index?: number;
   next_wave_at?: string | null;
   admission_state?: 'pending' | 'submitted' | 'cancelled' | 'legacy_unknown' | 'review_required';
-  admission_receipts?: Array<{
-    device_id: string;
-    task_id: string;
-    wave_index: number;
-    outcome: 'admitted' | 'rejected';
-    http_status?: number;
-  }>;
   created_at: string;
   updated_at: string;
+}
+
+export const batchTargetStates = [
+  'pending_admission', 'queued', 'assigned', 'running', 'completed', 'failed',
+  'timeout', 'cancelled', 'rejected', 'not_admitted_cancelled', 'unknown',
+] as const;
+
+export type BatchTargetState = typeof batchTargetStates[number];
+
+export interface BatchTarget {
+  device_id: string;
+  device_name: string | null;
+  wave_index: number;
+  state: BatchTargetState;
+  task_id: string | null;
+  admission_http_status: number | null;
+  cancel_requested_at: string | null;
+  timeout_requested_at: string | null;
+}
+
+export interface BatchSummary extends Batch {
+  script_name: string | null;
+  wave_count: number | null;
+}
+
+export interface BatchDetail extends BatchSummary {
+  targets: BatchTarget[] | null;
+  target_counts: Partial<Record<BatchTargetState, number>> | null;
+}
+
+interface BatchList {
+  items: BatchSummary[];
+  total: number;
+  page: number;
+  per_page: number;
+  pages: number;
+}
+
+export function useBatchList(page: number) {
+  return useQuery({
+    queryKey: ['batches', 'list', page],
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<BatchList>('/batches', { params: { page, per_page: 25 }, signal });
+      return data;
+    },
+    refetchInterval: 10_000,
+  });
 }
 
 export function useStartBatch() {
@@ -41,15 +81,18 @@ export function useStartBatch() {
       const { data } = await api.post('/batches', body);
       return data as Batch;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['batches'] });
+    },
   });
 }
 
 export function useBatch(batchId: string) {
-  return useQuery<Batch>({
+  return useQuery<BatchDetail>({
     queryKey: ['batches', batchId],
-    queryFn: async () => {
-      const { data } = await api.get(`/batches/${batchId}`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<BatchDetail>(`/batches/${encodeURIComponent(batchId)}`, { signal });
       return data;
     },
     enabled: !!batchId,
@@ -63,7 +106,10 @@ export function useCancelBatch() {
     mutationFn: async (batchId: string) => {
       await api.delete(`/batches/${batchId}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['batches'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['batches'] });
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+    },
   });
 }
 
@@ -81,6 +127,7 @@ export function useBroadcastBatch() {
   return useMutation({
     mutationFn: async (body: {
       script_id: string;
+      expected_current_version_id?: string;
       wave_size?: number;
       wave_delay_ms?: number;
       jitter_ms?: number;

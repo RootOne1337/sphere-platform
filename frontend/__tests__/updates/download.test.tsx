@@ -1,26 +1,40 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { createHash, webcrypto } from 'node:crypto';
 import { AgentDownloadPanel } from '@/src/features/updates/AgentDownloadPanel';
 import { api } from '@/lib/api';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
-const response = () => ({ data: new Blob(['apk']), headers: {
-  'content-type': 'application/vnd.android.package-archive',
-  'content-disposition': 'attachment; filename="SphereAgent-1.2.61-dev-android-canary-dev.apk"',
-} });
+const apkBytes = Uint8Array.from([97, 112, 107]);
+const apkHash = createHash('sha256').update(apkBytes).digest('hex');
+const response = (hash = apkHash) => {
+  const data = new Blob([apkBytes]);
+  Object.defineProperty(data, 'arrayBuffer', { value: async () => apkBytes.buffer });
+  return { data, headers: {
+    'content-type': 'application/vnd.android.package-archive',
+    'content-disposition': 'attachment; filename="SphereAgent-1.2.61-dev-android-canary-dev.apk"',
+    'x-sphere-apk-sha256': hash,
+  } };
+};
 let save: jest.SpyInstance;
+const originalSubtle = Object.getOwnPropertyDescriptor(globalThis.crypto, 'subtle');
 beforeEach(() => {
   jest.clearAllMocks();
+  Object.defineProperty(globalThis.crypto, 'subtle', { configurable: true, value: webcrypto.subtle });
   URL.createObjectURL = jest.fn(() => 'blob:owned-apk');
   URL.revokeObjectURL = jest.fn();
   save = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 });
-afterEach(() => save.mockRestore());
+afterEach(() => {
+  save.mockRestore();
+  if (originalSubtle) Object.defineProperty(globalThis.crypto, 'subtle', originalSubtle);
+  else Reflect.deleteProperty(globalThis.crypto, 'subtle');
+});
 
 it('downloads the request-time latest APK and saves the server filename', async () => {
   jest.mocked(api.get).mockResolvedValue(response() as never);
   const view = render(<AgentDownloadPanel releases={[]} available />);
   fireEvent.click(screen.getByRole('button', { name: 'Скачать последний APK' }));
-  await screen.findByText('APK передан браузеру для сохранения.');
+  await screen.findByText('SHA-256 проверен. APK передан браузеру для сохранения.');
   expect(api.get).toHaveBeenCalledWith('/updates/downloads/latest?platform=android-canary&flavor=dev', expect.objectContaining({
     signal: expect.any(AbortSignal), responseType: 'blob', timeout: 120_000,
   }));
@@ -71,6 +85,26 @@ it('rejects an ingress error page rather than saving HTML as an APK', async () =
   fireEvent.click(screen.getByRole('button', { name: 'Скачать последний APK' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось скачать APK');
   expect(save).not.toHaveBeenCalled();
+});
+
+it.each([
+  { hash: '', message: 'Сервер не подтвердил SHA-256 APK' },
+  { hash: '0'.repeat(64), message: 'SHA-256 скачанного APK не совпадает' },
+])('does not save an APK when integrity is unconfirmed ($message)', async ({ hash, message }) => {
+  jest.mocked(api.get).mockResolvedValue(response(hash) as never);
+  render(<AgentDownloadPanel releases={[]} available />);
+  fireEvent.click(screen.getByRole('button', { name: 'Скачать последний APK' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(message);
+  expect(URL.createObjectURL).not.toHaveBeenCalled();
+  expect(save).not.toHaveBeenCalled();
+});
+
+it('explains the secure context requirement before fetching bytes when crypto is unavailable', () => {
+  Object.defineProperty(globalThis.crypto, 'subtle', { configurable: true, value: undefined });
+  render(<AgentDownloadPanel releases={[]} available />);
+  fireEvent.click(screen.getByRole('button', { name: 'Скачать последний APK' }));
+  expect(screen.getByRole('alert')).toHaveTextContent('HTTPS или localhost');
+  expect(api.get).not.toHaveBeenCalled();
 });
 
 it('links only to the official LDPlayer page in a separate protected tab', () => {

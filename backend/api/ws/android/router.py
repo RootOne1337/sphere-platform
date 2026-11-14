@@ -23,8 +23,10 @@ from backend.models.task import Task, TaskStatus
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
+from backend.websocket.ota_receipt_warnings import OtaReceiptWarnings
 
 logger = structlog.get_logger()
+_ota_receipt_warnings = OtaReceiptWarnings()
 
 router = APIRouter(tags=["websocket"])
 
@@ -319,8 +321,8 @@ async def handle_command_result(
                     replay=already_persisted,
                 )
             else:
-                logger.warning(
-                    "android_ws.ota_recovery_receipt_unrecognized",
+                _ota_receipt_warnings.record(
+                    logger,
                     device_id=device_id,
                     grant_id=command_id,
                     status=status,
@@ -412,8 +414,11 @@ async def handle_command_result(
                     device_id=device_id,
                     result=final_result,
                     org_id=org_id,
+                    release_queue=False,
                 )
                 await db.commit()
+            if accepted:
+                await svc.release_committed_result(command_id, device_id)
             # Only the committed, owned task can release the device's outbox.
             if accepted and manager is not None:
                 await manager.send_to_device(device_id, {"type": "result_ack", "command_id": command_id})
@@ -423,7 +428,42 @@ async def handle_command_result(
 
 async def handle_device_event(device_id: str, org_id: str, msg: dict) -> None:
     """Перенаправить событие устройства в fleet events + обработать через EventReactor."""
-    # ── 1. Fleet event для фронтенда (SPLIT-5) ──
+    source_event_id_raw = msg.get("event_id")
+    try:
+        source_event_id = uuid.UUID(source_event_id_raw) if source_event_id_raw is not None else None
+    except (ValueError, TypeError, AttributeError):
+        logger.debug("event_reactor.invalid_ws_event_id", device_id=device_id)
+        return
+
+    replayed = False
+    try:
+        from backend.services.event_reactor import EventReactor
+
+        account_id = uuid.UUID(msg["account_id"]) if msg.get("account_id") else None
+        task_id = uuid.UUID(msg["task_id"]) if msg.get("task_id") else None
+        async with AsyncSessionLocal() as db:
+            await bind_tenant_context(db, org_id)
+            _, replayed = await EventReactor(db).process_transport_event(
+                org_id=uuid.UUID(org_id),
+                device_id=uuid.UUID(device_id),
+                event_type=msg.get("event_type", "device.unknown"),
+                severity=msg.get("severity", "info"),
+                message=msg.get("message"),
+                account_id=account_id,
+                task_id=task_id,
+                data=msg.get("data", {}),
+                source_event_id=source_event_id,
+            )
+            await db.commit()
+    except Exception as exc:
+        logger.error("event_reactor.ws_event_failed", device_id=device_id, error_type=type(exc).__name__)
+        if source_event_id is not None:
+            return
+    if replayed:
+        return
+
+    # Legacy unkeyed events retain best-effort publication. Keyed events
+    # publish only after their first committed receipt, never on a replay.
     try:
         from backend.websocket.event_publisher import get_event_publisher
         publisher = get_event_publisher()
@@ -437,56 +477,6 @@ async def handle_device_event(device_id: str, org_id: str, msg: dict) -> None:
             ))
     except Exception as e:
         logger.debug("Fleet event publish skipped", device_id=device_id, error=str(e))
-
-    # ── 2. EventReactor — бизнес-логика (ротация, статусы, триггеры pipeline) ──
-    try:
-        import uuid
-
-        from backend.database.engine import AsyncSessionLocal
-        from backend.services.event_reactor import EventReactor
-
-        event_type = msg.get("event_type", "device.unknown")
-        severity = msg.get("severity", "info")
-        message = msg.get("message")
-        account_id_raw = msg.get("account_id")
-        task_id_raw = msg.get("task_id")
-        pipeline_run_id_raw = msg.get("pipeline_run_id")
-        data = msg.get("data", {})
-
-        account_id = uuid.UUID(account_id_raw) if account_id_raw else None
-        task_id = uuid.UUID(task_id_raw) if task_id_raw else None
-        pipeline_run_id = uuid.UUID(pipeline_run_id_raw) if pipeline_run_id_raw else None
-
-        async with AsyncSessionLocal() as db:
-            await bind_tenant_context(db, org_id)
-            reactor = EventReactor(db)
-            await reactor.process_event(
-                org_id=uuid.UUID(org_id),
-                device_id=uuid.UUID(device_id),
-                event_type=event_type,
-                severity=severity,
-                message=message,
-                account_id=account_id,
-                task_id=task_id,
-                pipeline_run_id=pipeline_run_id,
-                data=data,
-            )
-            await db.commit()
-
-        logger.info(
-            "event_reactor.processed_ws_event",
-            device_id=device_id,
-            event_type=event_type,
-            account_id=str(account_id) if account_id else None,
-        )
-    except Exception as e:
-        logger.error(
-            "event_reactor.ws_event_failed",
-            device_id=device_id,
-            error=str(e),
-            exc_info=True,
-        )
-
 
 async def handle_agent_binary(
     device_id: str,

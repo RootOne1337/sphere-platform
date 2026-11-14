@@ -6,6 +6,7 @@
 # main.py не нужно изменять — хук запускается автоматически.
 from __future__ import annotations
 
+import json
 import uuid
 from typing import Literal
 from urllib.parse import quote
@@ -13,6 +14,7 @@ from urllib.parse import quote
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from minio.error import S3Error
+from redis.exceptions import RedisError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -252,11 +254,12 @@ async def get_task_progress(
     }
 
 
-# ── Live Logs (running task) ─────────────────────────────────────────────────
+# ── Retained execution observations ─────────────────────────────────────────
 
 @router.get(
     "/{task_id}/live-logs",
-    summary="Live node execution log entries (from Redis, for running tasks)",
+    summary="Retained task progress observations (active and terminal tasks)",
+    responses={503: {"description": "Task progress observation source unavailable"}},
 )
 async def get_task_live_logs(
     task_id: uuid.UUID,
@@ -268,11 +271,13 @@ async def get_task_live_logs(
         Task.id == task_id, Task.org_id == current_user.org_id,
     )) is None:
         raise HTTPException(status_code=404, detail="Task not found")
-    import json as _json
-    entries = await redis.lrange(f"task_progress_log:{task_id}", 0, -1)
-    if not entries:
-        return []
-    return [_json.loads(e) for e in entries]
+    if redis is None:
+        raise HTTPException(status_code=503, detail="Task progress observation source unavailable")
+    try:
+        entries = await redis.lrange(f"task_progress_log:{task_id}", 0, 199)
+        return [json.loads(entry) for entry in entries]
+    except (RedisError, OSError, TimeoutError, ValueError) as exc:
+        raise HTTPException(status_code=503, detail="Task progress observation source unavailable") from exc
 
 
 # ── Screenshots ───────────────────────────────────────────────────────────────

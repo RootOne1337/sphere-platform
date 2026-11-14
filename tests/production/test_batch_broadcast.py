@@ -1,6 +1,7 @@
 """A real binary Redis presence read must survive the committed HTTP 202 path."""
 import os
 import uuid
+from datetime import datetime, timezone
 
 import pytest
 from redis.asyncio import Redis
@@ -24,7 +25,10 @@ async def test_broadcast_202_uses_binary_presence_and_durable_tenant_plan(world,
     monkeypatch.setattr("backend.api.v1.batches.router.AsyncSessionLocal", world.sessions)
     try:
         for device, status in [(world.dev_a, "online"), (world.dev_a2, "busy"), (world.dev_b, "online")]:
-            await cache.set_status(str(device.id), DeviceLiveStatus(device_id=str(device.id), status=status))
+            await cache.set_status(str(device.id), DeviceLiveStatus(
+                device_id=str(device.id), status=status, last_heartbeat=datetime.now(timezone.utc),
+                ws_session_id="batch-broadcast-fixture",
+            ))
         with pytest.raises(UnicodeDecodeError):
             await world.redis.get(keys[0])
         response = await world.client.post("/api/v1/batches/broadcast", headers=world.auth(world.users["org_admin"]),

@@ -81,6 +81,7 @@ export function verifyCreatedGrant(value: unknown, deviceId: string, release: Ot
 export function installEvidence(device: OtaDevice, status: RecoveryStatus, release: OtaRelease, now = Date.now()): 'different' | 'failed' | 'waiting' | 'confirmed' | 'none' {
   const result = status.last_result;
   if (!result) return 'none';
+  if (status.state === 'active' && status.active?.command_id !== result.command_id) return 'none';
   if (result.sha256 !== release.sha256 || result.version_code !== release.version_code) return 'different';
   if (result.status === 'failed') return 'failed';
   const heartbeat = device.last_heartbeat ? Date.parse(device.last_heartbeat) : NaN;

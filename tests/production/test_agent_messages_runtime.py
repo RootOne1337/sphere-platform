@@ -4,6 +4,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -13,6 +14,8 @@ from test_device_bootstrap_runtime import issue_device, wait_for_two_runtime_loc
 from backend.models.device_event import DeviceEvent
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
+from backend.models.webhook_delivery import WebhookDelivery
+from backend.services import webhook_outbox_worker
 
 
 @pytest.fixture
@@ -52,6 +55,7 @@ async def assert_unscoped(r):
         assert await db.scalar(text("SELECT nullif(current_setting('app.current_org_id', true), '')")) is None
         assert await db.scalar(select(func.count()).select_from(Task)) == 0
         assert await db.scalar(select(func.count()).select_from(DeviceEvent)) == 0
+        assert await db.scalar(select(func.count()).select_from(WebhookDelivery)) == 0
 
 
 @pytest.mark.parametrize("status", ["received", "running"])
@@ -166,8 +170,21 @@ async def test_runtime_result_sql_abort_has_no_ack_and_replay_recovers(message_r
     r = message_runtime
     enrolled = await issue_device(r.world)
     task = await make_task(r, enrolled.device_id, TaskStatus.RUNNING)
+    async with r.world.sessions() as db:
+        stored = await db.get(Task, task.id)
+        stored.input_params = {"webhook_url": "https://callback.example.test/result"}
+        await db.commit()
     message = result_message(task, "completed")
     reached_commit = []
+    deliveries = []
+    monkeypatch.setattr(webhook_outbox_worker, "AsyncSessionLocal", r.db.sessions)
+
+    async def receiver(request):
+        async with r.world.sessions() as db:
+            deliveries.append((
+                request.url.path, (await db.get(Task, task.id)).status, request.headers["X-Sphere-Delivery"],
+            ))
+        return httpx.Response(204)
 
     @asynccontextmanager
     async def failing_sessions():
@@ -183,17 +200,31 @@ async def test_runtime_result_sql_abort_has_no_ack_and_replay_recovers(message_r
     await websocket(enrolled.device_id, enrolled.access_token, [message])
     assert reached_commit == [True]
     r.manager.send_to_device.assert_not_awaited()
+    assert deliveries == []
     async with r.world.sessions() as db:
         saved = await db.get(Task, task.id)
         assert saved.status == TaskStatus.RUNNING and saved.result is None
         assert (await db.get(TaskBatch, task.batch_id)).succeeded == 0
         assert await db.scalar(select(func.count()).select_from(DeviceEvent).where(DeviceEvent.task_id == task.id)) == 0
+        assert await db.scalar(select(WebhookDelivery.id).where(WebhookDelivery.subject_id == task.id)) is None
     monkeypatch.setattr("backend.database.engine.AsyncSessionLocal", r.db.sessions)
     await websocket(enrolled.device_id, enrolled.access_token, [message])
     r.manager.send_to_device.assert_awaited_once()
+    assert deliveries == []
+    async with r.world.sessions() as db:
+        delivery, = (await db.scalars(select(WebhookDelivery).where(WebhookDelivery.subject_id == task.id))).all()
+        assert delivery.status == "pending" and delivery.attempts_count == 0
+    await websocket(enrolled.device_id, enrolled.access_token, [message])
+    assert r.manager.send_to_device.await_count == 2
+    async with httpx.AsyncClient(transport=httpx.MockTransport(receiver)) as client:
+        await webhook_outbox_worker._process(delivery.id, delivery.org_id, client)
+        await webhook_outbox_worker._process(delivery.id, delivery.org_id, client)
+    assert deliveries == [("/result", TaskStatus.COMPLETED, str(delivery.id))]
     async with r.world.sessions() as db:
         assert (await db.get(Task, task.id)).status == TaskStatus.COMPLETED
         assert (await db.get(TaskBatch, task.batch_id)).succeeded == 1
+        saved_delivery, = (await db.scalars(select(WebhookDelivery).where(WebhookDelivery.subject_id == task.id))).all()
+        assert saved_delivery.status == "delivered" and saved_delivery.attempts_count == 1
     await assert_unscoped(r)
 
 

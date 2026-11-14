@@ -17,7 +17,9 @@ import {
 import { Device } from "@/lib/hooks/useDevices";
 import { DeviceViewerBadge } from './DeviceViewerBadge';
 import { useFleetTablePreferences } from './fleetTablePreferences';
-import { getReportedDeviceModel } from './devicePresentation';
+import { getDeviceAccess, getObservedDeviceStatus, getReportedDeviceModel } from './devicePresentation';
+import { applicationBindingLabel, hasApplicationBinding } from './DeviceApplicationBinding';
+import type { ApplicationProfile } from '@/src/features/accounts/applicationProfiles';
 import { DeviceStatusBadge } from "@/components/sphere/DeviceStatusBadge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/src/shared/ui/badge";
@@ -34,7 +36,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type DeviceAction = 'rename' | 'assign_group' | 'assign_location' | 'assign_server' | 'delete';
+export type DeviceAction = 'rename' | 'assign_group' | 'assign_location' | 'assign_server' | 'bind_application' | 'delete';
 
 function formatElapsedSince(timestamp: string | null | undefined, now: number): string | null {
     if (!timestamp) return null;
@@ -51,6 +53,20 @@ function formatElapsedSince(timestamp: string | null | undefined, now: number): 
     return `${days} д ${hours % 24} ч`;
 }
 
+function DeviceAccessLabels({ device, now }: { device: Device; now: number }) {
+    const { adb, vpn } = getDeviceAccess(device, now);
+    return <div className="flex flex-col items-start gap-0.5 text-xs" aria-label="Наблюдаемый доступ">
+        <span className="inline-flex items-center gap-1" title={adb.detail}>
+            <Wifi className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span>ADB · {adb.label}</span>
+        </span>
+        <span className="inline-flex items-center gap-1" title={vpn.detail}>
+            <Shield className={cn('h-3 w-3 shrink-0', vpn.positive ? 'text-success' : 'text-muted-foreground')} aria-hidden="true" />
+            <span>VPN APK · {vpn.label}</span>
+        </span>
+    </div>;
+}
+
 interface FleetMatrixProps {
     data: Device[];
     isLoading: boolean;
@@ -58,10 +74,11 @@ interface FleetMatrixProps {
     onRowSelectionChange: OnChangeFn<RowSelectionState>;
     onDeviceAction?: (deviceId: string, action: DeviceAction) => void;
     canDeviceAction?: (action: DeviceAction) => boolean;
+    profiles?: readonly ApplicationProfile[];
     presentation?: 'table' | 'cards';
 }
 
-export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction, canDeviceAction, presentation = 'table' }: FleetMatrixProps) {
+export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction, canDeviceAction, profiles, presentation = 'table' }: FleetMatrixProps) {
     const { openInspector } = useInspectorStore();
     const actionAuthority = React.useRef({ onDeviceAction, canDeviceAction });
     actionAuthority.current = { onDeviceAction, canDeviceAction };
@@ -161,21 +178,23 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 },
             },
             {
-                accessorKey: "status",
+                id: "status",
+                accessorFn: device => getObservedDeviceStatus(device, clockNow),
                 header: "Состояние",
                 size: 185,
                 cell: ({ row }) => {
                     const device = row.original;
+                    const status = getObservedDeviceStatus(device, clockNow);
                     const uptime = formatElapsedSince(device.connected_since, clockNow);
-                    const detail = device.status === "online" || device.status === "busy"
+                    const detail = status === "online" || status === "busy"
                         ? uptime ? `В сети ${uptime}` : "Начало сессии не сообщено"
-                        : device.status === "connecting"
+                        : status === "connecting"
                             ? "Ожидание первого heartbeat"
-                            : "По статусу API";
+                            : status === "unknown" ? "Связь с APK не подтверждена" : "По статусу API";
 
                     return (
                         <div className="flex h-full min-w-0 flex-col justify-center gap-0.5" title={detail}>
-                            <DeviceStatusBadge status={device.status} />
+                            <DeviceStatusBadge status={status} />
                             <span className="whitespace-normal text-xs leading-4 text-muted-foreground" aria-label={detail}>
                                 {detail}
                             </span>
@@ -207,37 +226,25 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "network",
                 header: "Доступ",
-                size: 145,
-                cell: ({ row }) => {
-                    const { adb_connected, vpn_assigned } = row.original;
-
-                    return (
-                        <div className="flex h-full w-full flex-col justify-center gap-0.5 pr-2">
-                            <div className="flex flex-col items-start gap-0.5" aria-label="Reported access flags">
-                                <span className="inline-flex items-center gap-1" title={`ADB ${adb_connected ? "linked" : "not linked"}`}>
-                                    {adb_connected ? <Wifi className="w-3 h-3 text-success" aria-hidden="true" /> : <Wifi className="w-3 h-3 text-muted-foreground/30" aria-hidden="true" />}
-                                    <span className="text-[10px] font-mono text-muted-foreground">ADB {adb_connected ? "linked" : "—"}</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1" title={`VPN ${vpn_assigned ? "assigned" : "not assigned"}`}>
-                                    {vpn_assigned ? <Shield className="w-3 h-3 text-primary" aria-hidden="true" /> : <Shield className="w-3 h-3 text-muted-foreground/30" aria-hidden="true" />}
-                                    <span className="text-[10px] font-mono text-muted-foreground">VPN {vpn_assigned ? "assigned" : "—"}</span>
-                                </span>
-                            </div>
-                        </div>
-                    );
-                },
+                size: 205,
+                cell: ({ row }) => <div className="flex h-full flex-col justify-center pr-2"><DeviceAccessLabels device={row.original} now={clockNow} /></div>,
             },
             {
-                accessorKey: "server_name",
+                id: "server_name",
+                accessorFn: device => applicationBindingLabel(device, profiles),
                 header: "Игровой сервер",
                 size: 125,
                 cell: ({ row }) => {
-                    const sn = row.original.server_name;
-                    if (!sn) return <span className="text-muted-foreground text-[10px] font-mono">—</span>;
+                    const device = row.original;
+                    const bound = hasApplicationBinding(device);
+                    if (!bound && !device.server_name) return <span className="text-muted-foreground text-[10px] font-mono">—</span>;
                     return (
                         <div className="flex items-center gap-1.5 h-full">
                             <Server className="w-3 h-3 text-primary shrink-0" />
-                            <span className="font-mono text-[11px] text-foreground truncate">{sn}</span>
+                            <span className="min-w-0 text-[11px] text-foreground">
+                                {bound && <span className="block text-muted-foreground">Сервер профиля</span>}
+                                <span className="block truncate font-mono" title={applicationBindingLabel(device, profiles)}>{applicationBindingLabel(device, profiles)}</span>
+                            </span>
                         </div>
                     );
                 },
@@ -325,7 +332,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 cell: ({ row }) => <FleetDeviceActions device={row.original} onDeviceAction={(id, action) => actionAuthority.current.onDeviceAction?.(id, action)} canDeviceAction={action => actionAuthority.current.canDeviceAction?.(action) ?? false} />,
             },
         ],
-        [clockNow, onDeviceAction, openInspector, canDeviceAction, selectionId]
+        [clockNow, onDeviceAction, openInspector, canDeviceAction, selectionId, profiles]
     );
 
     const table = useReactTable({
@@ -388,6 +395,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             <div className="grid min-h-0 min-w-0 gap-3 sm:flex-1 sm:grid-cols-2 sm:overflow-y-auto xl:grid-cols-3 2xl:grid-cols-4" role="list" aria-label="Устройства организации">
                 {rows.map(row => {
                     const device = row.original; const heartbeat = formatElapsedSince(device.last_heartbeat, clockNow);
+                    const status = getObservedDeviceStatus(device, clockNow);
                     const contact = formatElapsedSince(device.last_seen, clockNow);
                     const uptime = formatElapsedSince(device.connected_since, clockNow);
                     return <article key={row.id} role="listitem" className={cn('min-w-0 rounded-xl border bg-background p-3 transition-colors hover:border-primary/40', row.getIsSelected() ? 'border-primary/50 bg-primary/5' : 'border-border')}>
@@ -402,13 +410,15 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                         </div>
                         <p className="truncate text-xs text-muted-foreground" title={getReportedDeviceModel(device) ?? undefined}>{getReportedDeviceModel(device) ?? 'Модель не сообщена'}</p>
                         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                            <DeviceStatusBadge status={device.status} />
-                            <span className="text-xs text-muted-foreground">{['online', 'busy'].includes(device.status) && uptime ? `В сети ${uptime}` : device.status === 'connecting' ? 'Ожидаем APK' : 'Нет активной связи'}</span>
+                            <DeviceStatusBadge status={status} />
+                            <span className="text-xs text-muted-foreground">{['online', 'busy'].includes(status) && uptime ? `В сети ${uptime}` : status === 'connecting' ? 'Ожидаем APK' : 'Связь с APK не подтверждена'}</span>
                         </div>
                         <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs">
                             <div className="min-w-0"><dt className="text-muted-foreground">Android</dt><dd className="mt-1 truncate">{device.android_version?.replace(/^Android\s+/i, '') || 'Не сообщён'}</dd></div>
                             <div className="min-w-0"><dt className="text-muted-foreground">Sphere Agent</dt><dd className="mt-1 truncate font-mono" title={device.agent_version ?? undefined}>{device.agent_version || 'Не сообщён'}</dd></div>
+                            {columnVisibility.server_name !== false && <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">{hasApplicationBinding(device) ? 'Сервер профиля' : 'Игровой сервер'}</dt><dd className="truncate" title={applicationBindingLabel(device, profiles)}>{applicationBindingLabel(device, profiles)}</dd></div>}
                             <div className="col-span-2"><dt className="sr-only">Последний контакт</dt><dd className="text-muted-foreground">{heartbeat ? `heartbeat ${heartbeat} назад` : contact ? `Контакт ${contact} назад` : 'Нет данных о сигнале'}</dd></div>
+                            {columnVisibility.network && <div className="col-span-2"><dt className="sr-only">Доступ</dt><dd><DeviceAccessLabels device={device} now={clockNow} /></dd></div>}
                         </dl>
                     </article>;
                 })}
@@ -430,7 +440,7 @@ function FleetDeviceActions({ device, onDeviceAction, canDeviceAction }: { devic
                 <DropdownMenuLabel className="truncate text-xs text-muted-foreground">{device.name}</DropdownMenuLabel>
                 <DropdownMenuItem asChild><Link href={`/devices/${device.id}`}><Cpu className="mr-2 h-4 w-4" aria-hidden />Полная карточка</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {([['rename', 'Переименовать', Pencil], ['assign_group', 'Назначить группу', FolderOpen], ['assign_location', 'Назначить локацию', MapPin], ['assign_server', 'Игровой сервер', Server]] as const).map(([action, label, Icon]) =>
+                {([['rename', 'Переименовать', Pencil], ['assign_group', 'Назначить группу', FolderOpen], ['assign_location', 'Назначить локацию', MapPin], ['assign_server', 'Игровой сервер', Server], ['bind_application', 'Привязка приложения', Server]] as const).map(([action, label, Icon]) =>
                     <DropdownMenuItem key={action} disabled={!canDeviceAction?.(action) || !onDeviceAction} onClick={() => { if (canDeviceAction?.(action)) onDeviceAction?.(device.id, action); }}>
                         <Icon className="mr-2 h-4 w-4" aria-hidden />{label}
                     </DropdownMenuItem>)}

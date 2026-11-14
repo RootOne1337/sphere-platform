@@ -134,7 +134,7 @@ describe('Infrastructure Monitoring page failure states', () => {
         cpu: { linuxLoad1mPerCpu: 0.25, history: [] },
         ram: { currentBytes: 1024, totalBytes: null, history: [] },
         redis: { status: 'HEALTHY', ops: null, memory: null, clients: null },
-        network: { txTotalBytes: 100, rxTotalBytes: 200, activeTunnels: null },
+        network: { txTotalBytes: 100, rxTotalBytes: 200, activeTunnels: null, activeTunnelsState: 'unmeasured' },
       } });
     });
 
@@ -142,10 +142,37 @@ describe('Infrastructure Monitoring page failure states', () => {
     render(<QueryClientProvider client={client}><MonitoringPage /></QueryClientProvider>);
 
     expect(await screen.findByText('Проверки прошли · метрики частично недоступны')).toBeInTheDocument();
-    expect(screen.getByText(/Проверки сервисов и покрытие метрик — разные сигналы\./).parentElement).toHaveTextContent('активные туннели');
+    const gaps = screen.getByText(/Проверки сервисов и покрытие метрик — разные сигналы\./).parentElement;
+    expect(gaps).toHaveTextContent('операции Redis');
+    expect(gaps).not.toHaveTextContent('активные туннели');
     expect(screen.getAllByText('HEALTHY').length).toBeGreaterThan(0);
     expect(screen.getByText('300 B')).toBeInTheDocument();
     expect(screen.getByText('Активные туннели').parentElement).toHaveTextContent('Не измеряется');
+  });
+
+  it.each([
+    { state: 'unmeasured', count: null, label: 'Не измеряется', healthy: true },
+    { state: 'ready', count: 0, label: '0', healthy: true },
+    { state: 'unavailable', count: null, label: 'Недоступно', healthy: false },
+  ])('separates tunnel state $state from confirmed zero and service health', async ({ state, count, label, healthy }) => {
+    jest.mocked(api.get).mockImplementation(async url => ({ data: url.endsWith('/nodes') ? [{
+      id: 'backend-api-responder-1', name: 'Backend API responder', type: 'API',
+      cpu: null, ram: null, disk: null, status: 'HEALTHY', uptime: '1m', details: { probe: 'HTTP request served' },
+    }] : {
+      observedAt: '2026-09-30T03:00:00Z',
+      cpu: { linuxLoad1mPerCpu: 0.25, history: [] },
+      ram: { currentBytes: 1024, totalBytes: 4096, history: [] },
+      redis: { status: 'HEALTHY', ops: 0, memory: '1 MB', clients: 1 },
+      network: { txTotalBytes: 100, rxTotalBytes: 200, activeTunnels: count, activeTunnelsState: state },
+    } }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><MonitoringPage /></QueryClientProvider>);
+
+    await screen.findByText(healthy ? 'Все полученные проверки в норме' : 'Проверки прошли · метрики частично недоступны');
+    expect(screen.getByText('Активные туннели').nextElementSibling).toHaveTextContent(label);
+    const gap = screen.queryByText(/Не получены: активные туннели/);
+    if (healthy) expect(gap).not.toBeInTheDocument();
+    else expect(gap).toBeInTheDocument();
   });
 
   it('shows network rates only after two server-timestamped counter samples', async () => {

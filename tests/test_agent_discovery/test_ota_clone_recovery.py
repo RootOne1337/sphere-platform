@@ -501,6 +501,88 @@ async def test_unrecognized_ota_receipt_logs_only_bounded_failure_code(
     assert "secret.example" not in str(event)
 
 
+async def test_repeated_unrecognized_receipt_still_checks_db_but_does_not_repeat_warning(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+    from backend.database import redis_client
+    from backend.metrics import android_ota_unrecognized_receipts_total as counter
+    from backend.services import device_ota_recovery as ota
+    from backend.websocket import ota_receipt_warnings as warning_module
+
+    device, _, _ = recovery_case
+    clock = Mock(return_value=10.0)
+    monkeypatch.setattr(warning_module, "monotonic", clock)
+    monkeypatch.setattr(android_ws.router, "_ota_receipt_warnings", warning_module.OtaReceiptWarnings())
+    replay_check = AsyncMock(return_value=False)
+    grant_check = AsyncMock(return_value=None)
+    monkeypatch.setattr(ota, "is_persisted_ota_recovery_replay", replay_check)
+    monkeypatch.setattr(ota, "get_device_ota_grant", grant_check)
+
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr("backend.database.engine.AsyncSessionLocal", use_test_session)
+    warning = Mock()
+    monkeypatch.setattr(android_ws.router.logger, "warning", warning)
+    publish = AsyncMock()
+    monkeypatch.setattr(redis_client, "redis", type("Redis", (), {"publish": publish})())
+    manager = type("Manager", (), {"send_to_device": AsyncMock()})()
+    message = {"type": "command_result", "ota_recovery_receipt": True,
+               "command_id": str(uuid.uuid4()), "status": "completed"}
+    initial_warned = counter.labels(outcome="warning")._value.get()
+    initial_suppressed = counter.labels(outcome="suppressed")._value.get()
+
+    for _ in range(1000):
+        await android_ws.router.handle_command_result(str(device.id), str(device.org_id), message, manager)
+    assert warning.call_count == 1
+    assert replay_check.await_count == grant_check.await_count == 1000
+    assert counter.labels(outcome="warning")._value.get() == initial_warned + 1
+    assert counter.labels(outcome="suppressed")._value.get() == initial_suppressed + 999
+    manager.send_to_device.assert_not_awaited()
+    publish.assert_not_awaited()
+
+    clock.return_value = 70.0
+    await android_ws.router.handle_command_result(str(device.id), str(device.org_id), message, manager)
+    assert warning.call_count == 3
+    assert warning.call_args_list[1].args == ("android_ws.ota_recovery_receipt_unrecognized_summary",)
+    assert warning.call_args_list[1].kwargs == {"suppressed_count": 999, "detail_count": 1, "window_seconds": 60}
+
+    replay_check.return_value = True
+    await android_ws.router.handle_command_result(str(device.id), str(device.org_id), message, manager)
+    manager.send_to_device.assert_awaited_once_with(
+        str(device.id), {"type": "result_ack", "command_id": message["command_id"]},
+    )
+    assert warning.call_count == 3
+    assert counter.labels(outcome="warning")._value.get() == initial_warned + 2
+    assert counter.labels(outcome="suppressed")._value.get() == initial_suppressed + 999
+
+
+def test_ota_receipt_warning_window_has_bounded_cardinality(monkeypatch):
+    from backend.metrics import android_ota_unrecognized_receipts_total as counter
+    from backend.websocket import ota_receipt_warnings as warning_module
+
+    clock = Mock(return_value=10.0)
+    monkeypatch.setattr(warning_module, "monotonic", clock)
+    recorder = warning_module.OtaReceiptWarnings()
+    logger = Mock()
+    recorder.record(logger, device_id="fixture", grant_id="untrusted raw ID", status="failed", failure_code=None)
+    assert logger.warning.call_args.kwargs["grant_id"] == "invalid"
+    for _ in range(99):
+        recorder.record(logger, device_id="fixture", grant_id=str(uuid.uuid4()), status="failed", failure_code=None)
+
+    assert logger.warning.call_count == 8
+    assert len(recorder._seen) == 8
+    outcomes = {sample.labels.get("outcome") for metric in counter.collect() for sample in metric.samples}
+    assert outcomes == {"warning", "suppressed"}
+
+    clock.return_value = 70.0
+    recorder.record(logger, device_id="fixture", grant_id=str(uuid.uuid4()), status="completed", failure_code=None)
+    assert logger.warning.call_count == 10
+    assert logger.warning.call_args_list[8].kwargs == {"suppressed_count": 92, "detail_count": 8, "window_seconds": 60}
+
+
 async def test_recovery_completion_for_older_installed_version_is_not_acked(
     db_session, recovery_case, monkeypatch,
 ):

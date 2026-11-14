@@ -58,7 +58,8 @@ it('does not read a closed picker until it is enabled', async () => {
 });
 
 it('uses the paginated picker in the actual edit form and saves its unchanged out-of-page target ID', async () => {
-  const schedule = { id: 'schedule-1', name: 'Saved target', pipeline_id: 'pipeline-outside', target_type: 'pipeline', interval_seconds: 60, timezone: 'UTC', is_active: true, conflict_policy: 'skip', total_runs: 0 };
+  const schedule = { id: 'schedule-1', name: 'Saved target', pipeline_id: 'pipeline-outside', target_type: 'pipeline', interval_seconds: 60, timezone: 'UTC', is_active: true, conflict_policy: 'skip', total_runs: 0,
+    updated_at: '2026-11-14T00:00:00.123456Z' };
   jest.mocked(api.get).mockImplementation(async (url, config) => url === '/pipelines' ? envelope((config?.params as { page?: number })?.page ?? 1) as never : { data: { page: 1, per_page: 100, total: url === '/schedules' ? 1 : 0, pages: url === '/schedules' ? 1 : 0, items: url === '/schedules' ? [schedule] : [] } } as never);
   jest.mocked(api.patch).mockResolvedValue({ data: schedule });
   render(<OrchestrationPage />, { wrapper: createWrapper() });

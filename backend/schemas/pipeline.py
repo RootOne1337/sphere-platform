@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, computed_field, model_validator
 
 # ── Описание шага Pipeline (JSONB-валидация) ─────────────────────────────────
 
@@ -84,13 +84,18 @@ class UpdatePipelineRequest(BaseModel):
         return self
 
 
-class RunPipelineRequest(BaseModel):
+class PipelineLaunchPreview(BaseModel):
+    expected_version: int | None = Field(None, ge=1, description="Version shown to the operator before launch")
+    expected_updated_at: AwareDatetime | None = Field(None, description="Revision timestamp shown before launch")
+
+
+class RunPipelineRequest(PipelineLaunchPreview):
     """Запуск pipeline на одном устройстве."""
     device_id: uuid.UUID
     input_params: dict[str, Any] = Field(default_factory=dict)
 
 
-class RunPipelineBatchRequest(BaseModel):
+class RunPipelineBatchRequest(PipelineLaunchPreview):
     """Массовый запуск pipeline на нескольких устройствах."""
     device_ids: list[uuid.UUID] | None = None
     group_id: uuid.UUID | None = None
@@ -149,6 +154,12 @@ class PipelineRunResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def pipeline_version(self) -> int | None:
+        value = self.context.get("_pipeline_version")
+        return value if type(value) is int and value > 0 else None
+
 
 class PipelineBatchResponse(BaseModel):
     """Ответ массового запуска pipeline."""
@@ -165,6 +176,12 @@ class PipelineBatchResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def pipeline_version(self) -> int | None:
+        value = self.wave_config.get("_pipeline_version")
+        return value if type(value) is int and value > 0 else None
 
 
 # ── Пагинация ─────────────────────────────────────────────────────────────────

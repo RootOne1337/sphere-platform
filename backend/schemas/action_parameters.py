@@ -80,7 +80,10 @@ def action_parameter_errors(nodes: list[dict]) -> list[dict]:
             for index, item in enumerate(value):
                 visit(item, rule["items"], [*path, index])
         if kind == "object":
-            for key, child in rule.get("fields", {}).items():
+            fields = rule.get("fields", {})
+            if rule.get("closed") and value.keys() - fields.keys():
+                fail(path, "enum")
+            for key, child in fields.items():
                 visit(value.get(key), child, [*path, key], key in value)
             if "values" in rule:
                 for key, item in value.items():

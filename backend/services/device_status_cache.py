@@ -9,7 +9,7 @@ import msgpack
 import structlog
 from pydantic import ValidationError
 
-from backend.schemas.device_status import DeviceLiveStatus
+from backend.schemas.device_status import DEVICE_HEARTBEAT_MAX_AGE_SECONDS, DeviceLiveStatus
 from backend.schemas.stream_diagnostics import StoredStreamDiagnostics
 
 logger = structlog.get_logger()
@@ -29,7 +29,7 @@ class DeviceStatusCache:
     """
 
     KEY_PREFIX = "device:status:"
-    TTL_ONLINE = 120
+    TTL_ONLINE = DEVICE_HEARTBEAT_MAX_AGE_SECONDS
     TTL_CONNECTING = 90
     TTL_OFFLINE = 3600
     STREAM_DIAGNOSTICS_PREFIX = "device:stream-diagnostics:"
@@ -242,9 +242,9 @@ class DeviceStatusCache:
     # ── Bulk (MGET — single Redis round-trip) ────────────────────────────────
 
     async def bulk_get_status(
-        self, device_ids: list[str], *, as_of: datetime | None = None
+        self, device_ids: list[str], *, as_of: datetime | None = None, omit_invalid: bool = False
     ) -> dict[str, DeviceLiveStatus | None]:
-        """O(1) RTT — fetch N statuses with a single MGET."""
+        """Fetch statuses in one MGET. Omit invalid records without hiding absent keys."""
         if not device_ids:
             return {}
         if self.redis is None:
@@ -257,9 +257,12 @@ class DeviceStatusCache:
             if raw is not None:
                 try:
                     unpacked = msgpack.unpackb(raw, raw=False)
-                    result[device_id] = DeviceLiveStatus.model_validate(unpacked).with_current_vpn_observation(as_of)
+                    status = DeviceLiveStatus.model_validate(unpacked)
+                    if not omit_invalid or status.device_id == device_id:
+                        result[device_id] = status.with_current_vpn_observation(as_of)
                 except Exception:
-                    result[device_id] = None
+                    if not omit_invalid:
+                        result[device_id] = None
             else:
                 result[device_id] = None
         return result

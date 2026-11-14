@@ -35,6 +35,9 @@
     "assert": {"type": "assert", "check": "text_contains", "params": {"selector": "name", "strategy": "id", "value": "OK"}}
   },
   "cases": [
+    {"name": "terminal automation outputs", "action": {"type": "end", "result_outputs": {"level": "observed_level", "ban_detected": "observed_ban"}}, "errors": []},
+    {"name": "terminal output values must name context variables", "action": {"type": "end", "result_outputs": {"level": 12, "ban_detected": ""}}, "errors": ["result_outputs.level:string", "result_outputs.ban_detected:pattern"]},
+    {"name": "terminal output fields are allowlisted", "action": {"type": "end", "result_outputs": {"PRIVATE": "observed_ban"}}, "errors": ["result_outputs:enum"]},
     {"name": "missing tap coordinates", "action": {"type": "tap"}, "errors": ["x:required", "y:required"]},
     {"name": "sleep string", "action": {"type": "sleep", "ms": "not-a-number"}, "errors": ["ms:integer"]},
     {"name": "boolean is not coordinate", "action": {"type": "tap", "x": true, "y": 0}, "errors": ["x:integer"]},

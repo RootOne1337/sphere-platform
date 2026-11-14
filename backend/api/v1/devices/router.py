@@ -8,25 +8,32 @@ import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
+from time import monotonic
 from typing import Any, Literal
 
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Response
 from fastapi import status as http_status
+from prometheus_client import Counter
 from pydantic import BaseModel, ConfigDict, Field
 from redis.exceptions import RedisError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import require_permission
+from backend.core.dependencies import get_tenant_db, require_permission
 from backend.database import redis_client
 from backend.database.engine import get_db
 from backend.database.redis_client import get_redis_binary
 from backend.models.user import User
+from backend.schemas.application_automation import (
+    DeviceApplicationBindingResponse,
+    DeviceApplicationBindingUpdate,
+)
 from backend.schemas.device_register import (
     DeviceRegisterRequest,
     DeviceRegisterResponse,
 )
 from backend.schemas.device_status import (
     BulkStatusRequest,
+    DeviceLiveStatus,
     FleetStatusResponse,
     FleetSummaryResponse,
 )
@@ -41,6 +48,7 @@ from backend.schemas.devices import (
 from backend.schemas.stream_diagnostics import StreamDiagnosticsResponse
 from backend.schemas.ui_hierarchy import UiHierarchyResponse
 from backend.services.api_key_service import APIKeyService
+from backend.services.application_automation_service import ApplicationAutomationService
 from backend.services.cache_service import CacheService
 from backend.services.device_registration_service import DeviceRegistrationService
 from backend.services.device_service import DeviceService
@@ -49,6 +57,35 @@ from backend.services.device_viewers import DeviceViewers
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 logger = logging.getLogger(__name__)
+inventory_presence_failures = Counter(
+    "sphere_inventory_presence_failures_total",
+    "Failed Redis inventory presence lookups",
+    ("reason",),
+)
+_next_presence_warning = 0.0
+
+
+@router.get("/{device_id}/application-binding", response_model=DeviceApplicationBindingResponse)
+async def get_application_binding(
+    device_id: uuid.UUID, response: Response, user: User = require_permission("device:read"),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> DeviceApplicationBindingResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return await ApplicationAutomationService(db, user.org_id).get_binding(device_id)
+
+
+@router.put(
+    "/{device_id}/application-binding", response_model=DeviceApplicationBindingResponse,
+    responses={409: {"description": "Binding revision changed, device is busy, or built-in profile"}},
+)
+async def update_application_binding(
+    device_id: uuid.UUID, body: DeviceApplicationBindingUpdate, response: Response,
+    user: User = require_permission("device:write"), db: AsyncSession = Depends(get_tenant_db),
+) -> DeviceApplicationBindingResponse:
+    binding = await ApplicationAutomationService(db, user.org_id).update_binding(device_id, body)
+    await db.commit()
+    response.headers["Cache-Control"] = "no-store"
+    return binding
 
 
 class DeviceViewerPulse(BaseModel):
@@ -85,6 +122,58 @@ async def get_status_cache(
     redis=Depends(get_redis_binary),
 ) -> DeviceStatusCache:
     return DeviceStatusCache(redis)
+
+
+async def _read_inventory_presence(
+    status_cache: DeviceStatusCache, device_ids: list[str],
+) -> tuple[dict[str, DeviceLiveStatus | None], datetime, bool]:
+    global _next_presence_warning
+    if status_cache.redis is None:
+        inventory_presence_failures.labels(reason="unavailable").inc()
+        return {}, datetime.now(timezone.utc), False
+    try:
+        live = await status_cache.bulk_get_status(device_ids, omit_invalid=True)
+        return live, datetime.now(timezone.utc), True
+    except (RedisError, OSError, TimeoutError) as exc:
+        inventory_presence_failures.labels(reason="lookup_error").inc()
+        now = monotonic()
+        if now >= _next_presence_warning:
+            _next_presence_warning = now + 60
+            logger.warning("Device presence lookup failed (%s); returning unknown live state", type(exc).__name__)
+        return {}, datetime.now(timezone.utc), False
+
+
+def _inventory_device_status(
+    device_id: str, db_status: str, statuses: dict[str, DeviceLiveStatus | None], as_of: datetime,
+) -> str:
+    if device_id not in statuses:
+        # Unavailable source or invalid data, as opposed to a confirmed missing key.
+        return "unknown"
+    live = statuses[device_id]
+    if live is None:
+        return db_status if db_status in {"error", "maintenance"} else "offline"
+    if live.status in {"online", "busy"} and not live.has_fresh_presence(as_of):
+        return "unknown"
+    return live.status
+
+
+def _apply_inventory_telemetry(device: DeviceResponse, live: DeviceLiveStatus | None) -> None:
+    if live is None:
+        return
+    device.battery_level = live.battery
+    device.cpu_usage = live.cpu_usage
+    device.ram_usage_mb = live.ram_usage_mb
+    device.screen_on = live.screen_on
+    device.adb_connected = live.adb_connected
+    device.vpn_observed_at = live.vpn_observed_at
+    device.vpn_observation_max_age_seconds = live.vpn_observation_max_age_seconds
+    if device.status in {"online", "busy"}:
+        device.vpn_active = live.vpn_active
+        device.vpn_observation_state = live.vpn_observation_state
+        device.connected_since = live.connected_since
+    device.last_heartbeat = live.last_heartbeat
+    device.agent_version = live.agent_version
+    device.agent_version_code = live.agent_version_code
 
 
 # ── List ──────────────────────────────────────────────────────────────────────
@@ -168,38 +257,14 @@ async def list_devices(
         search=search,
     )
     candidate_ids = [device_id for device_id, _ in candidates]
-    live_statuses = {}
-    presence_available = False
-    if status_cache.redis is not None:
-        try:
-            live_statuses = await status_cache.bulk_get_status([str(device_id) for device_id in candidate_ids])
-            presence_available = True
-        except (RedisError, OSError, TimeoutError) as exc:
-            # An initialized Redis client does not prove the live-presence read
-            # succeeded. Keep the inventory available and surface status as unknown.
-            logger.warning(
-                "Device presence lookup failed (%s); returning unknown live state",
-                type(exc).__name__,
-            )
-    as_of = datetime.now(timezone.utc)
+    live_statuses, as_of, presence_available = await _read_inventory_presence(
+        status_cache, [str(device_id) for device_id in candidate_ids],
+    )
 
     effective_statuses: dict[uuid.UUID, str] = {}
     status_counts = {"online": 0, "busy": 0, "connecting": 0, "offline": 0, "issues": 0}
     for device_id, db_status in candidates:
-        live = live_statuses.get(str(device_id))
-        effective: str
-        if live:
-            effective = live.status
-        elif not presence_available:
-            # Without Redis we cannot infer liveness from a stale DB snapshot.
-            effective = "unknown"
-        elif db_status in {"error", "maintenance"}:
-            effective = db_status
-        else:
-            # Redis is reachable and the TTL-backed presence key is absent.
-            effective = "offline"
-        if effective not in {"online", "busy", "connecting", "offline", "error", "maintenance"}:
-            effective = "unknown"
+        effective = _inventory_device_status(str(device_id), db_status, live_statuses, as_of)
         effective_statuses[device_id] = effective
         if effective in {"online", "busy"}:
             status_counts["online"] += 1
@@ -231,22 +296,7 @@ async def list_devices(
         device.card_viewers = count["card"] if count else None
         device.stream_viewers = count["stream"] if count else None
         device.status = effective_statuses.get(device.id, "unknown")
-        live = live_statuses.get(str(device.id))
-        if live:
-            device.status = live.status
-            device.battery_level = live.battery
-            device.cpu_usage = live.cpu_usage
-            device.ram_usage_mb = live.ram_usage_mb
-            device.screen_on = live.screen_on
-            device.adb_connected = live.adb_connected
-            device.vpn_active = live.vpn_active
-            device.vpn_observed_at = live.vpn_observed_at
-            device.vpn_observation_state = live.vpn_observation_state
-            device.vpn_observation_max_age_seconds = live.vpn_observation_max_age_seconds
-            device.last_heartbeat = live.last_heartbeat
-            device.connected_since = live.connected_since
-            device.agent_version = live.agent_version
-            device.agent_version_code = live.agent_version_code
+        _apply_inventory_telemetry(device, live_statuses.get(str(device.id)))
     pages = (total + per_page - 1) // per_page if total > 0 else 0
     return DeviceListResponse(
         items=devices,
@@ -410,22 +460,10 @@ async def get_device(
     status_cache: DeviceStatusCache = Depends(get_status_cache),
 ) -> DeviceResponse:
     device = await svc.get_device(device_id, current_user.org_id)
-    live = await status_cache.get_status(str(device_id))
-    if live:
-        device.status = live.status
-        device.battery_level = live.battery
-        device.cpu_usage = live.cpu_usage
-        device.ram_usage_mb = live.ram_usage_mb
-        device.screen_on = live.screen_on
-        device.adb_connected = live.adb_connected
-        device.vpn_active = live.vpn_active
-        device.vpn_observed_at = live.vpn_observed_at
-        device.vpn_observation_state = live.vpn_observation_state
-        device.vpn_observation_max_age_seconds = live.vpn_observation_max_age_seconds
-        device.last_heartbeat = live.last_heartbeat
-        device.connected_since = live.connected_since
-        device.agent_version = live.agent_version
-        device.agent_version_code = live.agent_version_code
+    key = str(device_id)
+    statuses, as_of, _ = await _read_inventory_presence(status_cache, [key])
+    device.status = _inventory_device_status(key, device.status, statuses, as_of)
+    _apply_inventory_telemetry(device, statuses.get(key))
     return device
 
 

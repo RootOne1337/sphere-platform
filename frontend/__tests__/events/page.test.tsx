@@ -7,6 +7,11 @@ jest.mock('@/lib/hooks/useDeviceEvents', () => ({
   useEventStats: jest.fn(),
   useMarkEventProcessed: jest.fn(),
 }));
+let mockCanWrite = true;
+jest.mock('@/src/features/access/Capabilities', () => ({
+  useCapabilities: () => ({ can: (permission: string) => permission !== 'event:write' || mockCanWrite }),
+  PermissionNotice: () => null,
+}));
 
 const event = {
   id: 'event-1', org_id: 'org-1', device_id: 'device-1', device_name: 'Phone 1',
@@ -16,6 +21,7 @@ const event = {
   created_at: '2026-09-29T10:00:00Z', updated_at: '2026-09-29T10:00:00Z',
 };
 const refetch = jest.fn();
+const refetchStats = jest.fn();
 const mutate = jest.fn();
 
 function renderPage() {
@@ -23,13 +29,14 @@ function renderPage() {
 }
 
 beforeEach(() => {
+  mockCanWrite = true;
   jest.mocked(useDeviceEvents).mockReturnValue({
     data: { items: [event], total: 1, page: 1, per_page: 50, pages: 1 },
     isLoading: false, isFetching: false, isError: false, refetch,
   } as unknown as ReturnType<typeof useDeviceEvents>);
   jest.mocked(useEventStats).mockReturnValue({
     data: { total: 1, by_severity: { info: 1 }, by_type: {}, unprocessed: 1 },
-    isError: false,
+    isError: false, refetch: refetchStats,
   } as unknown as ReturnType<typeof useEventStats>);
   jest.mocked(useMarkEventProcessed).mockReturnValue({ mutate, isPending: false } as unknown as ReturnType<typeof useMarkEventProcessed>);
 });
@@ -40,6 +47,29 @@ afterEach(() => {
 });
 
 describe('Device events page', () => {
+  it('refreshes journal and its explicitly scoped summary together', () => {
+    renderPage();
+    expect(screen.getByText(/Сводка по всему парку/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Обновить' }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(refetchStats).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText('Фильтры по объектам и типу'));
+    const deviceId = '00000000-0000-4000-8000-000000000001';
+    fireEvent.change(screen.getByLabelText('ID устройства'), { target: { value: deviceId } });
+    fireEvent.change(screen.getByLabelText('Тип события'), { target: { value: 'task.completed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Применить фильтры' }));
+    expect(useDeviceEvents).toHaveBeenLastCalledWith(expect.objectContaining({ device_id: deviceId, event_type: 'task.completed', page: 1 }));
+    expect(useEventStats).toHaveBeenLastCalledWith(deviceId);
+    expect(screen.getByText(/Сводка по выбранному устройству/)).toBeInTheDocument();
+  });
+
+  it('does not offer writes without the event:write capability', async () => {
+    mockCanWrite = false;
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Открыть событие device.reconnected' }));
+    expect(screen.queryByRole('button', { name: 'Отметить обработанным' })).not.toBeInTheDocument();
+    expect(mutate).not.toHaveBeenCalled();
+  });
   it('uses a cancellable debounce and sends the search to the API hook', async () => {
     jest.useFakeTimers();
     renderPage();

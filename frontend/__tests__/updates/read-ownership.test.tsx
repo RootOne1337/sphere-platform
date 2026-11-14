@@ -57,7 +57,7 @@ it('aborts an old filter read and cannot replace a newer catalog with its late r
   render(<UpdatesPage />, { wrapper: createWrapper() });
   await waitFor(() => expect(api.get).toHaveBeenCalledTimes(1));
   const oldSignal = jest.mocked(api.get).mock.calls[0][1]?.signal;
-  fireEvent.change(screen.getByRole('combobox', { name: 'Platform filter' }), { target: { value: 'android-canary' } });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Фильтр по платформе' }), { target: { value: 'android-canary' } });
   expect(await screen.findByText('vcanary')).toBeInTheDocument();
   expect(oldSignal?.aborted).toBe(true);
   await act(async () => { old.resolve(response('old')); });
@@ -69,10 +69,10 @@ it('never shows another filter catalog when the new filter read fails', async ()
   jest.mocked(api.get).mockResolvedValueOnce(response('old') as never).mockRejectedValueOnce(new Error('offline'));
   render(<UpdatesPage />, { wrapper: createWrapper() });
   await screen.findByText('vold');
-  fireEvent.change(screen.getByRole('combobox', { name: 'Platform filter' }), { target: { value: 'android-canary' } });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Фильтр по платформе' }), { target: { value: 'android-canary' } });
   expect(await screen.findByRole('alert')).toBeInTheDocument();
   expect(screen.queryByText('vold')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /^Удалить релиз/ })).not.toBeInTheDocument();
   expect(screen.queryByText(/Опубликованных релизов пока нет/)).not.toBeInTheDocument();
 });
 
@@ -83,7 +83,7 @@ it('hides cached action rows after refresh failure and restores them after retry
   fireEvent.click(screen.getByRole('button', { name: 'Обновить релизы' }));
   expect(await screen.findByRole('alert')).toBeInTheDocument();
   expect(screen.queryByText('vcached')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /^Удалить релиз/ })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Повторить загрузку релизов' }));
   expect(await screen.findByText('vfresh')).toBeInTheDocument();
 });

@@ -30,7 +30,9 @@
     "user:write",
     "vpn:mass_operation",
     "vpn:read",
-    "vpn:write"
+    "vpn:write",
+    "webhook:read",
+    "webhook:write"
   ],
   "org_owner": [
     "account:credentials:read",
@@ -63,7 +65,9 @@
     "user:write",
     "vpn:mass_operation",
     "vpn:read",
-    "vpn:write"
+    "vpn:write",
+    "webhook:read",
+    "webhook:write"
   ],
   "org_admin": [
     "account:credentials:read",
@@ -94,7 +98,9 @@
     "user:read",
     "vpn:mass_operation",
     "vpn:read",
-    "vpn:write"
+    "vpn:write",
+    "webhook:read",
+    "webhook:write"
   ],
   "device_manager": [
     "account:read",
@@ -117,7 +123,8 @@
     "session:write",
     "stream:control",
     "stream:read",
-    "vpn:read"
+    "vpn:read",
+    "webhook:read"
   ],
   "script_runner": [
     "account:read",
@@ -130,7 +137,8 @@
     "script:execute",
     "script:read",
     "session:read",
-    "stream:read"
+    "stream:read",
+    "webhook:read"
   ],
   "viewer": [
     "account:read",
@@ -142,7 +150,10 @@
     "script:read",
     "session:read",
     "stream:read",
-    "vpn:read"
+    "vpn:read",
+    "webhook:read"
   ],
-  "api_user": []
+  "api_user": [
+    "webhook:read"
+  ]
 }

@@ -3,10 +3,14 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TaskDetailPage from '@/app/(dashboard)/tasks/[id]/page';
 import { api } from '@/lib/api';
-import { type NodeExecutionLog, type TaskDetail } from '@/lib/hooks/useTasks';
+import { type LiveLogEntry, type NodeExecutionLog, type TaskDetail } from '@/lib/hooks/useTasks';
 import { createTestQueryClient, createWrapper } from '../helpers';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), delete: jest.fn() } }));
+let mockOpenTaskLogs = false;
+jest.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(mockOpenTaskLogs ? 'tab=logs' : ''),
+}));
 
 function task(overrides: Partial<TaskDetail> = {}): TaskDetail {
   return {
@@ -42,19 +46,35 @@ function deferred<T>() {
 let current: TaskDetail;
 let readTask: () => Promise<{ data: TaskDetail }>;
 let readLogs: () => Promise<{ data: NodeExecutionLog[] }>;
+let readObservations: () => Promise<{ data: LiveLogEntry[] }>;
 beforeEach(() => {
   jest.clearAllMocks();
   current = task();
+  mockOpenTaskLogs = false;
   readTask = async () => ({ data: current });
   readLogs = async () => ({ data: [] });
+  readObservations = async () => ({ data: [] });
   jest.mocked(api.get).mockImplementation((url) => {
     if (url === '/tasks/task-a' || url === '/tasks/task-b') return readTask() as never;
     if (url.endsWith('/logs')) return readLogs() as never;
+    if (url.endsWith('/live-logs')) return readObservations() as never;
     if (url.endsWith('/progress')) return Promise.resolve({ data: { nodes_done: 20, total_nodes: 3, cycles: 2, current_node: 'tap', started_at: null } }) as never;
     return Promise.resolve({ data: [] }) as never;
   });
   jest.mocked(api.post).mockResolvedValue({ data: { id: 'task-new', status: 'queued' } } as never);
   jest.mocked(api.delete).mockResolvedValue({} as never);
+});
+
+it('opens retained observations in a terminal task only when requested', async () => {
+  current = task({ status: 'failed', error_message: 'execution_outcome_unknown_after_restart' });
+  readObservations = async () => ({ data: [{ node_id: 'last-known-node', nodes_done: 2, ts: 1794600000 }] });
+  const { view } = await openPage();
+  expect(await screen.findByRole('link', { name: 'Показать наблюдения' })).toHaveAttribute('href', '/tasks/task-a?tab=logs');
+  expect(jest.mocked(api.get).mock.calls.some(([path]) => path.endsWith('/live-logs'))).toBe(false);
+  mockOpenTaskLogs = true;
+  await act(async () => view.rerender(<Suspense><TaskDetailPage params={Promise.resolve({ id: 'task-a' })} /></Suspense>));
+  expect(await screen.findByText('last-known-node')).toBeInTheDocument();
+  expect(screen.getByText('Отчёты шагов не получены.')).toBeInTheDocument();
 });
 
 async function openPage(client = createTestQueryClient(), id = 'task-a') {
@@ -229,7 +249,8 @@ it('uses final result counts after an active run completes and stops its elapsed
   expect(within(screen.getByText('Длительность').closest('dl')!).getByText('00:00:05')).toBeInTheDocument();
   expect(within(screen.getByRole('region', { name: 'Итог выполнения' })).getByText('00:00:05')).toBeInTheDocument();
   expect(screen.queryByText('Текущий узел')).not.toBeInTheDocument();
-  expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Журнал выполнения' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Показать наблюдения' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Все задания' })).toHaveAttribute('href', '/tasks');
 });
 

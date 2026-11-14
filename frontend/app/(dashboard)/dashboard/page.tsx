@@ -27,33 +27,15 @@ import { useDeviceEvents, type DeviceEvent, type EventSeverity } from '@/lib/hoo
 import { usePoolStats, useVpnHealth } from '@/lib/hooks/useVpn';
 import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 import { formatDataAge, formatDataUpdatedAt, getDataFreshness, type DataFreshnessState } from '@/src/features/dashboard/dataFreshness';
+import { useCapabilities } from '@/src/features/access/Capabilities';
+import { useFleetCoverage } from '@/src/features/monitoring/useFleetCoverage';
 import { Badge } from '@/src/shared/ui/badge';
 import { Button } from '@/src/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card';
 
-interface FleetStats {
-  total: number;
-  online: number;
-  busy: number;
-  connecting: number;
-  offline: number;
-}
-
 interface SystemHealthResponse {
   status: string;
   version?: string;
-}
-
-function useFleetStats() {
-  return useQuery<FleetStats>({
-    queryKey: ['dashboard', 'fleet'],
-    queryFn: async () => {
-      const { data } = await api.get('/devices/status/fleet');
-      return data as FleetStats;
-    },
-    refetchInterval: API_POLL_INTERVALS.dashboardFleetMs,
-    staleTime: 5_000,
-  });
 }
 
 function useSystemHealth() {
@@ -133,7 +115,7 @@ function StatRow({ label, value, total, tone }: { label: string; value: number; 
   );
 }
 
-function EventRow({ event }: { event: DeviceEvent }) {
+function EventRow({ event, canOpenDevice }: { event: DeviceEvent; canOpenDevice: boolean }) {
   const eventLabel = event.event_type.replace(/[._]/g, ' ');
   const deviceHref = event.device_id ? `/devices/${encodeURIComponent(event.device_id)}` : '/events';
 
@@ -157,7 +139,7 @@ function EventRow({ event }: { event: DeviceEvent }) {
         </p>
         <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <span className="truncate">{event.device_name || eventLabel}</span>
-          {event.device_id && (
+          {event.device_id && canOpenDevice && (
             <Link href={deviceHref} className="shrink-0 rounded text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               Открыть
             </Link>
@@ -257,34 +239,56 @@ function DataFreshnessPanel({ sources }: { sources: DataSourceSnapshot[] }) {
 }
 
 export default function DashboardPage() {
-  const fleet = useFleetStats();
+  const { query: fleet, snapshot, stale } = useFleetCoverage();
+  const access = useCapabilities();
+  const canReadVpn = access.can('vpn:read');
+  const canReadEvents = access.canAccessRoute('/events');
+  const canOpenDevices = access.canAccessRoute('/devices');
   const health = useSystemHealth();
-  const pool = usePoolStats();
-  const vpnHealth = useVpnHealth();
-  const events = useDeviceEvents({ page: 1, per_page: 6, sort_by: 'occurred_at', sort_dir: 'desc' });
-  const refreshing = fleet.isFetching || health.isFetching || pool.isFetching || vpnHealth.isFetching || events.isFetching;
-  const stats = fleet.data;
-  const total = stats?.total ?? 0;
+  const pool = usePoolStats(canReadVpn);
+  const vpnHealth = useVpnHealth(canReadVpn);
+  const events = useDeviceEvents({ page: 1, per_page: 6, sort_by: 'occurred_at', sort_dir: 'desc' }, canReadEvents);
+  const refreshing = fleet.isFetching || health.isFetching || events.isFetching
+    || (canReadVpn && (pool.isFetching || vpnHealth.isFetching));
+  const stats = snapshot?.presence.counts;
+  const total = snapshot?.inventory.counts?.total;
   const serviceOk = health.data?.status === 'ok';
   const vpnOk = vpnHealth.data?.status === 'ok';
-  const lastUpdated = fleet.dataUpdatedAt
-    ? `Каталог · ${formatDataUpdatedAt(fleet.dataUpdatedAt)}`
+  const lastUpdated = snapshot?.inventory.observed_at
+    ? `Каталог · ${formatDataUpdatedAt(Date.parse(snapshot.inventory.observed_at))}`
     : 'Ожидаем первую сводку от API';
+  const presenceMessage = snapshot?.presence.state === 'limited' ? 'Инвентарь превышает бюджет сбора статусов.'
+    : snapshot ? 'Источник связи с Android недоступен.' : fleet.isLoading ? 'Получаем сводку устройств…' : 'Свежая сводка связи не получена.';
+  const recentSevereEvents = canReadEvents && !events.isError
+    ? events.data?.items.filter(({ severity }) => severity === 'error' || severity === 'critical').length ?? 0 : 0;
+  const attention = [
+    { visible: !!stats?.error, label: `Ошибки связи · ${stats?.error}`, href: '/monitoring#fleet-coverage-title' },
+    { visible: !!stats?.unknown, label: `Связь не подтверждена · ${stats?.unknown}`, href: '/monitoring#fleet-coverage-title' },
+    { visible: canReadVpn && !pool.isError && (pool.data?.stale_handshakes ?? 0) > 0,
+      label: `Устаревшие handshake VPN · ${pool.data?.stale_handshakes}`, href: '/vpn' },
+    { visible: recentSevereEvents > 0, label: `Ошибки среди последних событий · ${recentSevereEvents}`, href: '/events' },
+  ].filter(({ visible, href }) => visible && access.canAccessRoute(href));
   const freshnessSources: DataSourceSnapshot[] = [
-    { id: 'fleet', label: 'Каталог устройств', pollIntervalMs: API_POLL_INTERVALS.dashboardFleetMs, hasData: fleet.data !== undefined, dataUpdatedAt: fleet.dataUpdatedAt, isError: fleet.isError, isFetching: fleet.isFetching },
+    { id: 'fleet', label: 'Каталог устройств', pollIntervalMs: API_POLL_INTERVALS.fleetCoverageMs, hasData: total !== undefined, dataUpdatedAt: Date.parse(snapshot?.inventory.observed_at ?? '') || 0, isError: fleet.isError || stale || snapshot?.inventory.state === 'unavailable', isFetching: fleet.isFetching },
+    { id: 'presence', label: 'Связь с Android', pollIntervalMs: API_POLL_INTERVALS.fleetCoverageMs, hasData: !!stats, dataUpdatedAt: Date.parse(snapshot?.presence.observed_at ?? '') || 0, isError: fleet.isError || stale || (!!snapshot && !stats), isFetching: fleet.isFetching },
     { id: 'backend-health', label: 'Health · backend', pollIntervalMs: API_POLL_INTERVALS.dashboardHealthMs, hasData: health.data !== undefined, dataUpdatedAt: health.dataUpdatedAt, isError: health.isError, isFetching: health.isFetching },
-    { id: 'vpn-health', label: 'Health · VPN', pollIntervalMs: API_POLL_INTERVALS.vpnHealthMs, hasData: vpnHealth.data !== undefined, dataUpdatedAt: vpnHealth.dataUpdatedAt, isError: vpnHealth.isError, isFetching: vpnHealth.isFetching },
-    { id: 'vpn-pool', label: 'Пул VPN', pollIntervalMs: API_POLL_INTERVALS.vpnPoolStatsMs, hasData: pool.data !== undefined, dataUpdatedAt: pool.dataUpdatedAt, isError: pool.isError, isFetching: pool.isFetching },
-    { id: 'events', label: 'Журнал событий', pollIntervalMs: API_POLL_INTERVALS.deviceEventsMs, hasData: events.data !== undefined, dataUpdatedAt: events.dataUpdatedAt, isError: events.isError, isFetching: events.isFetching },
   ];
+  if (canReadEvents) {
+    freshnessSources.push({ id: 'events', label: 'Журнал событий', pollIntervalMs: API_POLL_INTERVALS.deviceEventsMs, hasData: events.data !== undefined, dataUpdatedAt: events.dataUpdatedAt, isError: events.isError, isFetching: events.isFetching });
+  }
+  if (canReadVpn) {
+    freshnessSources.push(
+      { id: 'vpn-health', label: 'Health · VPN', pollIntervalMs: API_POLL_INTERVALS.vpnHealthMs, hasData: vpnHealth.data !== undefined, dataUpdatedAt: vpnHealth.dataUpdatedAt, isError: vpnHealth.isError, isFetching: vpnHealth.isFetching },
+      { id: 'vpn-pool', label: 'Пул VPN', pollIntervalMs: API_POLL_INTERVALS.vpnPoolStatsMs, hasData: pool.data !== undefined, dataUpdatedAt: pool.dataUpdatedAt, isError: pool.isError, isFetching: pool.isFetching },
+    );
+  }
 
   const refreshAll = async () => {
     await Promise.all([
       fleet.refetch(),
       health.refetch(),
-      pool.refetch(),
-      vpnHealth.refetch(),
-      events.refetch(),
+      ...(canReadEvents ? [events.refetch()] : []),
+      ...(canReadVpn ? [pool.refetch(), vpnHealth.refetch()] : []),
     ]);
   };
 
@@ -302,25 +306,38 @@ export default function DashboardPage() {
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
             {refreshing ? 'Обновляем…' : 'Обновить данные'}
           </Button>
-          <Button asChild className="h-10 rounded-lg">
+          {canOpenDevices && <Button asChild className="h-10 rounded-lg">
             <Link href="/devices">Открыть реестр <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
-          </Button>
+          </Button>}
         </div>
       </header>
 
-      {fleet.isError && (
+      {(fleet.isError || stale) && (
         <div role="alert" className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-destructive">Не удалось получить сводку устройств. Отображаются последние подтверждённые данные, если они есть.</span>
+          <span className="text-destructive">{stale && !fleet.isError ? 'Сводка устройств устарела.' : 'Не удалось получить сводку устройств.'} Предыдущие числа скрыты.</span>
           <Button type="button" variant="outline" size="sm" onClick={() => { void fleet.refetch(); }} disabled={fleet.isFetching}>Повторить</Button>
         </div>
       )}
 
+      {attention.length > 0 && (
+        <section aria-labelledby="dashboard-attention" className="rounded-xl border border-border bg-card px-5 py-4">
+          <h2 id="dashboard-attention" className="text-sm font-semibold">Требуют проверки</h2>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {attention.map(({ label, href }) => (
+              <Button key={label} asChild variant="outline" size="sm">
+                <Link href={href}>{label}<ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></Link>
+              </Button>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section aria-label="Сводные показатели устройств" className="grid grid-cols-2 gap-2 xl:grid-cols-5">
-        <MetricCard label="Всего устройств" value={fleet.isLoading ? '—' : stats?.total ?? '—'} detail="Записей в организации" icon={Smartphone} tone="text-foreground" />
-        <MetricCard label="Онлайн" value={fleet.isLoading ? '—' : stats?.online ?? '—'} detail="Статус online по API" icon={Wifi} tone="text-emerald-700 dark:text-emerald-400" />
-        <MetricCard label="Выполняют задачи" value={fleet.isLoading ? '—' : stats?.busy ?? '—'} detail="Busy по статусу API" icon={Zap} tone="text-primary" />
-        <MetricCard label="Подключаются" value={fleet.isLoading ? '—' : stats?.connecting ?? '—'} detail="Ждут первый heartbeat" icon={ArrowUpRight} tone="text-amber-700 dark:text-amber-400" />
-        <MetricCard label="Не в сети" value={fleet.isLoading ? '—' : stats?.offline ?? '—'} detail="Нет живого статуса" icon={WifiOff} tone="text-muted-foreground" />
+        <MetricCard label="Всего устройств" value={total ?? '—'} detail="Активных записей в организации" icon={Smartphone} tone="text-foreground" />
+        <MetricCard label="Онлайн" value={stats?.online ?? '—'} detail="Свежий heartbeat Android" icon={Wifi} tone="text-emerald-700 dark:text-emerald-400" />
+        <MetricCard label="Выполняют задачи" value={stats?.busy ?? '—'} detail="Заняты по свежему отчёту Android" icon={Zap} tone="text-primary" />
+        <MetricCard label="Не в сети" value={stats?.offline ?? '—'} detail="Получен статус offline" icon={WifiOff} tone="text-muted-foreground" />
+        <MetricCard label="Не подтверждено" value={stats?.unknown ?? '—'} detail="Нет свежего подтверждения связи" icon={CircleAlert} tone="text-amber-700 dark:text-amber-400" />
       </section>
 
       <DataFreshnessPanel sources={freshnessSources} />
@@ -332,19 +349,21 @@ export default function DashboardPage() {
               <CardTitle className="font-sans text-base font-semibold normal-case tracking-tight text-foreground">Доступность парка</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">Распределение статусов из live-сводки backend</p>
             </div>
-            <Badge variant="outline" className="rounded-full px-2.5 py-1 text-xs">{fleet.isLoading ? 'Загрузка' : `${total} устройств`}</Badge>
+            <Badge variant="outline" className="rounded-full px-2.5 py-1 text-xs">{total == null ? fleet.isLoading ? 'Загрузка' : 'Инвентарь недоступен' : `${total} устройств`}</Badge>
           </CardHeader>
           <CardContent className="space-y-5 p-5 pt-3">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <StatRow label="Онлайн" value={stats?.online ?? 0} total={total} tone="bg-emerald-500" />
-              <StatRow label="В работе" value={stats?.busy ?? 0} total={total} tone="bg-primary" />
-              <StatRow label="Подключаются" value={stats?.connecting ?? 0} total={total} tone="bg-amber-500" />
-              <StatRow label="Не в сети" value={stats?.offline ?? 0} total={total} tone="bg-muted-foreground/50" />
-            </div>
+            {stats && total !== undefined ? <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <StatRow label="Онлайн" value={stats.online} total={total} tone="bg-emerald-500" />
+              <StatRow label="В работе" value={stats.busy} total={total} tone="bg-primary" />
+              <StatRow label="Подключаются" value={stats.connecting} total={total} tone="bg-amber-500" />
+              <StatRow label="Не в сети" value={stats.offline} total={total} tone="bg-muted-foreground/50" />
+              <StatRow label="Ошибка связи" value={stats.error} total={total} tone="bg-destructive" />
+              <StatRow label="Не подтверждено" value={stats.unknown} total={total} tone="bg-amber-500" />
+            </div> : <p role="status" className="text-sm text-muted-foreground">{presenceMessage}</p>}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
               <p className="text-xs text-muted-foreground">Значения обновляются автоматически каждые 15 секунд.</p>
               <Button asChild variant="outline" size="sm" className="rounded-lg">
-                <Link href="/devices">Диагностика устройств <ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></Link>
+                <Link href="/monitoring#fleet-coverage-title">Диагностика источника связи <ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></Link>
               </Button>
             </div>
           </CardContent>
@@ -368,21 +387,21 @@ export default function DashboardPage() {
                 {health.isLoading ? 'Проверка' : health.isError ? 'Недоступен' : health.data?.status ?? 'Нет данных'}
               </Badge>
             </div>
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/70 p-3">
+            {canReadVpn ? <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/70 p-3">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted"><ShieldCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" /></span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium">VPN</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {pool.isError ? 'Сводка пула недоступна' : `${pool.data?.active_tunnels ?? '—'} активных туннелей · ${pool.data?.stale_handshakes ?? '—'} устаревших handshake`}
+                    {pool.isError ? 'Сводка пула недоступна' : `${pool.data?.active_tunnels ?? '—'} активных по данным пула · ${pool.data?.stale_handshakes ?? '—'} устаревших handshake`}
                   </p>
                 </div>
               </div>
               <Badge variant={vpnHealth.isError ? 'destructive' : vpnOk ? 'success' : 'warning'} className="rounded-full px-2.5 py-1 text-xs">
                 {vpnHealth.isLoading ? 'Проверка' : vpnHealth.isError ? 'Недоступен' : vpnHealth.data?.status ?? 'Нет данных'}
               </Badge>
-            </div>
-            {(health.isError || vpnHealth.isError || pool.isError) && (
+            </div> : <p className="text-xs text-muted-foreground">{access.verified ? 'Нет разрешения VPN.' : 'Доступ к сводке VPN не подтверждён.'}</p>}
+            {(health.isError || (canReadVpn && (vpnHealth.isError || pool.isError))) && (
               <p className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-200">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 Один или несколько health-запросов завершились ошибкой. Проверьте страницу инфраструктуры перед изменением конфигурации.
@@ -390,14 +409,14 @@ export default function DashboardPage() {
             )}
             <div className="flex flex-wrap gap-2 pt-1">
               <Button asChild variant="outline" size="sm" className="rounded-lg"><Link href="/monitoring">Инфраструктура <ExternalLink className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>
-              <Button asChild variant="outline" size="sm" className="rounded-lg"><Link href="/vpn">Настройки VPN <ExternalLink className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>
+              {canReadVpn && access.canAccessRoute('/vpn') && <Button asChild variant="outline" size="sm" className="rounded-lg"><Link href="/vpn">Настройки VPN <ExternalLink className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>}
             </div>
           </CardContent>
         </Card>
       </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-12" aria-label="События и быстрые переходы">
-        <Card className="rounded-xl xl:col-span-8">
+        {canReadEvents && <Card className="rounded-xl xl:col-span-8">
           <CardHeader className="flex flex-row items-center justify-between gap-4 border-0 p-5 pb-2">
             <div>
               <CardTitle className="font-sans text-base font-semibold normal-case tracking-tight text-foreground">Последние события</CardTitle>
@@ -409,14 +428,14 @@ export default function DashboardPage() {
             <QueryState loading={events.isLoading} error={events.isError && !events.data} empty={!events.data?.items.length}>
               <>
                 {events.isError && events.data && <p role="status" className="mb-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2 text-xs text-amber-800 dark:text-amber-200">Не удалось обновить журнал; показаны последние полученные события.</p>}
-                <div>{events.data?.items.map((event) => <EventRow key={event.id} event={event} />)}</div>
+                <div>{events.data?.items.map((event) => <EventRow key={event.id} event={event} canOpenDevice={canOpenDevices} />)}</div>
               </>
             </QueryState>
             {events.isFetching && !events.isLoading && <p className="pt-2 text-right text-xs text-muted-foreground" aria-live="polite">Проверяем обновления…</p>}
           </CardContent>
-        </Card>
+        </Card>}
 
-        <Card className="rounded-xl xl:col-span-4">
+        <Card className={canReadEvents ? 'rounded-xl xl:col-span-4' : 'rounded-xl xl:col-span-12'}>
           <CardHeader className="border-0 p-5 pb-2">
             <CardTitle className="font-sans text-base font-semibold normal-case tracking-tight text-foreground">Рабочие разделы</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">Переходы ведут к существующим страницам Sphere</p>
@@ -427,7 +446,7 @@ export default function DashboardPage() {
               { href: '/stream', label: 'Просмотр потоков', description: 'Открыть Device Stream', icon: Activity },
               { href: '/tasks', label: 'Задания', description: 'История и исполнение задач', icon: Cpu },
               { href: '/updates', label: 'Обновления', description: 'Каталог версий и OTA', icon: ArrowDownRight },
-            ].map(({ href, label, description, icon: Icon }) => (
+            ].filter(({ href }) => access.canAccessRoute(href)).map(({ href, label, description, icon: Icon }) => (
               <Link key={href} href={href} className="group flex items-center gap-3 rounded-lg border border-transparent p-3 transition-colors hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:text-primary motion-reduce:transition-none"><Icon className="h-4 w-4" aria-hidden="true" /></span>
                 <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-foreground">{label}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{description}</span></span>

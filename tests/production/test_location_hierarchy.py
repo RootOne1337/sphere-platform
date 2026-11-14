@@ -85,6 +85,10 @@ async def test_detail_is_owned_and_counters_survive_update(world):
         device = await db.scalar(select(Device).where(Device.id == world.dev_a.id).options(selectinload(Device.locations)))
         device.locations = [await db.get(Location, a.id)]
         device.last_status = DeviceStatus.ONLINE
+        retired = await db.scalar(select(Device).where(Device.id == world.dev_a2.id).options(selectinload(Device.locations)))
+        retired.locations = [await db.get(Location, a.id)]
+        retired.last_status = DeviceStatus.ONLINE
+        retired.is_active = False
         await db.commit()
     result = await request(world, "GET", f"/{a.id}")
     assert result.status_code == 200

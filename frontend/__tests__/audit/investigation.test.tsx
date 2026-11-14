@@ -5,6 +5,10 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
+let mockRequestId: string | null = null;
+jest.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(mockRequestId ? { request_id: mockRequestId } : {}),
+}));
 const actor = { id: 'actor', org_id: 'org-a', role: 'org_owner', email: 'owner@example.org' };
 const row = { id: 'old-event', created_at: '2026-10-01T10:00:00Z', user_id: null,
   action: 'rare.action', resource_type: 'groups', meta: { status: 'failure' } };
@@ -16,6 +20,7 @@ const receipt = () => ({ data: new Blob(['csv'], { type: 'text/csv' }), headers:
 const clickDownload = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 beforeEach(() => {
   jest.clearAllMocks();
+  mockRequestId = null;
   useAuthStore.setState({ user: actor, sessionVersion: 1 });
   URL.createObjectURL = jest.fn(() => 'blob:audit'); URL.revokeObjectURL = jest.fn();
   jest.mocked(api.get).mockImplementation(async (path) => path === '/audit/logs/export' ? receipt() as never : { data: envelope } as never);
@@ -30,6 +35,21 @@ async function openFilters() {
   fireEvent.click(screen.getByRole('button', { name: 'Фильтры' }));
 }
 function apply() { fireEvent.click(screen.getByRole('button', { name: 'Применить фильтры' })); }
+
+it('opens a shared exact request filter and retains the correlation link in the inspector', async () => {
+  mockRequestId = 'operator-fixture:17';
+  const item = { ...row, meta: { ...row.meta, request_id: mockRequestId } };
+  jest.mocked(api.get).mockResolvedValue({ data: { ...envelope, items: [item] } });
+  mount();
+  expect(screen.getByRole('searchbox')).toHaveValue('request:operator-fixture:17');
+  fireEvent.click(await screen.findByText(row.action));
+  expect(api.get).toHaveBeenCalledWith('/audit/logs', expect.objectContaining({
+    params: { q: 'request:operator-fixture:17', page: 1, per_page: 100 },
+  }));
+  expect(await screen.findByRole('link', { name: 'Открыть события этого запроса' })).toHaveAttribute(
+    'href', '/audit?request_id=operator-fixture%3A17',
+  );
+});
 
 it('applies server-wide DSL only on submit and finds older-page events', async () => {
   mount(); await screen.findByText(row.action);

@@ -16,7 +16,7 @@ class Socket {
   readyState = Socket.CONNECTING;
   binaryType = '';
   onopen: (() => void) | null = null;
-  onclose: ((event: { code: number }) => void) | null = null;
+  onclose: ((event: { code: number; reason?: string }) => void) | null = null;
   onerror: (() => void) | null = null;
   onmessage: ((event: { data: string }) => void) | null = null;
   send = jest.fn();
@@ -24,7 +24,7 @@ class Socket {
   constructor(_url: string) { Socket.instances.push(this); }
   open() { this.readyState = Socket.OPEN; this.onopen?.(); }
   message(data: string) { this.onmessage?.({ data }); }
-  fail(code = 1006) { this.readyState = Socket.CLOSED; this.onclose?.({ code }); }
+  fail(code = 1006, reason?: string) { this.readyState = Socket.CLOSED; this.onclose?.({ code, reason }); }
 }
 
 function advance(ms: number) { act(() => { jest.advanceTimersByTime(ms); }); }
@@ -148,6 +148,20 @@ it.each([4001, 4003, 4004])('does not loop on a terminal access/device rejection
   const view = render(<DeviceStream deviceId="fixture" />); advance(0);
   act(() => Socket.instances[0].fail(code)); advance(60_000);
   expect(Socket.instances).toHaveLength(1); view.unmount();
+});
+
+it('allows two automatic retries after first-message timeouts and distinguishes them from access denial', () => {
+  const view = render(<DeviceStream deviceId="fixture" />); advance(0);
+  act(() => Socket.instances[0].fail(4003, 'auth_timeout'));
+  expect(screen.getByRole('status')).toHaveTextContent('Сервер не получил авторизацию вовремя');
+  advance(1000);
+  act(() => Socket.instances[1].fail(4003, 'auth_timeout'));
+  advance(1000);
+  act(() => Socket.instances[2].fail(4003, 'auth_timeout'));
+  expect(screen.getByRole('status')).toHaveTextContent('после повторных попыток');
+  advance(60_000);
+  expect(Socket.instances).toHaveLength(3);
+  view.unmount();
 });
 
 it('explains a terminal device lookup rejection on the Open page', () => {

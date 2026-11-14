@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from datetime import datetime, timezone
 
 import pytest
 from httpx import AsyncClient
@@ -325,8 +326,11 @@ class TestDevicesCRUD:
 
         app.dependency_overrides[get_status_cache] = _get_status_cache
         try:
+            now = datetime.now(timezone.utc)
             for device_id, live_status in zip(device_ids[:3], ("online", "busy", "connecting")):
-                await cache.set_status(device_id, DeviceLiveStatus(device_id=device_id, status=live_status))
+                await cache.set_status(device_id, DeviceLiveStatus(
+                    device_id=device_id, status=live_status, ws_session_id="test-session", last_heartbeat=now,
+                ))
 
             first = await device_client.get("/api/v1/devices?live_status=online&per_page=1&page=1")
             second = await device_client.get("/api/v1/devices?live_status=online&per_page=1&page=2")

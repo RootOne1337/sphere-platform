@@ -4,7 +4,7 @@ import { validPointerPath } from './pointerPath';
 type Rule = {
   ref?: string; required?: boolean; type?: string; min?: number; max?: number; nonblank?: boolean;
   enum?: string[]; case?: 'upper'; pattern?: string; format?: 'http_url' | 'pointer_path_v1';
-  fields?: Record<string, Rule>; items?: Rule; values?: Rule; key_pattern?: string;
+  fields?: Record<string, Rule>; items?: Rule; values?: Rule; key_pattern?: string; closed?: boolean;
 };
 export interface ActionSpec {
   effect: 'flow' | 'control' | 'destructive' | 'read' | 'context' | 'code' | 'network';
@@ -57,7 +57,9 @@ export function actionParameterErrors(nodes: { action: Record<string, unknown> }
     if (kind === 'array' && rule.items) (value as unknown[]).forEach((item, index) => visit(item, rule.items!, [...path, index]));
     if (kind === 'object') {
       const object = value as Record<string, unknown>;
-      for (const [key, child] of Object.entries(rule.fields ?? {})) visit(object[key], child, [...path, key], owns(object, key));
+      const fields = rule.fields ?? {};
+      if (rule.closed && Object.keys(object).some(key => !owns(fields, key))) fail(path, 'enum');
+      for (const [key, child] of Object.entries(fields)) visit(object[key], child, [...path, key], owns(object, key));
       if (rule.values) for (const [key, item] of Object.entries(object)) {
         // Don't echo arbitrary header names into error paths or operational logs.
         const childPath = [...path, '<entry>'];

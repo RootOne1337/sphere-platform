@@ -127,6 +127,34 @@ class TestWebhookList:
         assert resp.status_code == 200
         assert resp.json()["total"] == 0
 
+    async def test_disabled_webhook_remains_in_own_list_and_can_be_reenabled(self, n8n_client, other_org_client):
+        path = "/api/v1/n8n/webhooks"
+        created = await n8n_client.post(path, json=_WEBHOOK_BODY)
+        assert created.status_code == 201
+        webhook_id = created.json()["id"]
+        item_path = f"{path}/{webhook_id}"
+
+        disabled = await n8n_client.patch(item_path, json={"is_active": False})
+        assert disabled.status_code == 200
+        own_list = await n8n_client.get(path)
+        assert own_list.status_code == 200
+        item = next((item for item in own_list.json()["items"] if item["id"] == webhook_id), None)
+        assert item is not None
+        assert item["is_active"] is False
+        assert item["secret"] is None
+
+        foreign_list = await other_org_client.get(path)
+        assert foreign_list.status_code == 200
+        assert all(item["id"] != webhook_id for item in foreign_list.json()["items"])
+        assert (await other_org_client.patch(item_path, json={"is_active": True})).status_code == 404
+
+        enabled = await n8n_client.patch(item_path, json={"is_active": True})
+        assert enabled.status_code == 200
+        own_list = await n8n_client.get(path)
+        assert own_list.status_code == 200
+        item = next(item for item in own_list.json()["items"] if item["id"] == webhook_id)
+        assert item["is_active"] is True
+
 
 class TestWebhookGet:
     async def test_get_own_webhook(self, n8n_client):

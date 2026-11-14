@@ -4,15 +4,20 @@ from __future__ import annotations
 import asyncio
 import uuid
 from datetime import datetime, timedelta, timezone
+from time import monotonic
 from typing import Any
 
 import structlog
+from prometheus_client import Counter
 from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.device import Device
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
-from backend.schemas.device_status import VPN_OBSERVATION_MAX_AGE_SECONDS
+from backend.schemas.device_status import (
+    DEVICE_HEARTBEAT_MAX_AGE_SECONDS,
+    VPN_OBSERVATION_MAX_AGE_SECONDS,
+)
 from backend.schemas.fleet_coverage import CoverageSignal, FleetCoverageResponse
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.services.vpn.health_monitor import VPNHealthMonitor
@@ -22,6 +27,18 @@ MAX_INVENTORY_DEVICES = 5000
 REDIS_BATCH_SIZE = 500
 SQL_TIMEOUT_SECONDS = 3
 REDIS_TIMEOUT_SECONDS = 2
+coverage_source_failures = Counter(
+    "sphere_fleet_coverage_source_failures_total", "Failed fleet coverage reads", ("source",),
+)
+_next_source_warning: dict[str, float] = {}
+
+
+def _record_source_failure(source: str, exc: Exception) -> None:
+    coverage_source_failures.labels(source=source).inc()
+    now = monotonic()
+    if now >= _next_source_warning.get(source, 0):
+        _next_source_warning[source] = now + 60
+        logger.warning("coverage.source_unavailable", source=source, kind=type(exc).__name__)
 
 
 def absent(source: str, reason: str, state: str = "unavailable") -> CoverageSignal:
@@ -44,7 +61,7 @@ async def read_fleet_coverage(db: AsyncSession, redis: Any, org_id: uuid.UUID, *
         inventory = CoverageSignal(state="ready", source="sql-active-inventory", observed_at=datetime.now(timezone.utc),
                                    counts={"total": int(rows[0].total) if rows else 0})
     except Exception as exc:
-        logger.warning("coverage.inventory_unavailable", kind=type(exc).__name__)
+        _record_source_failure("inventory", exc)
     if not vpn_allowed:
         android = absent(android.source, "vpn_read_required", "forbidden")
         assignment = absent(assignment.source, "vpn_read_required", "forbidden")
@@ -57,7 +74,7 @@ async def read_fleet_coverage(db: AsyncSession, redis: Any, org_id: uuid.UUID, *
                     async with db.begin_nested():
                         assignment, handshake = await _read_peer_counts(db, org_id)
             except Exception as exc:
-                logger.warning("coverage.peers_unavailable", kind=type(exc).__name__)
+                _record_source_failure("peers", exc)
                 assignment = absent(assignment.source, "peer_source_unavailable")
                 handshake = absent(handshake.source, "peer_source_unavailable")
         if len(rows) > MAX_INVENTORY_DEVICES:
@@ -85,23 +102,20 @@ async def read_fleet_coverage(db: AsyncSession, redis: Any, org_id: uuid.UUID, *
                                 ac["unknown"] += 1
                                 continue
                             kind: str = status.status
-                            if kind in ("online", "busy"):
-                                hb = status.last_heartbeat
-                                if (not status.ws_session_id or hb is None or hb.tzinfo is None
-                                        or not 0 <= (as_of - hb).total_seconds() < VPN_OBSERVATION_MAX_AGE_SECONDS):
-                                    kind = "unknown"
+                            if kind in ("online", "busy") and not status.has_fresh_presence(as_of):
+                                kind = "unknown"
                             pc[kind] += 1
                             if status.vpn_observation_state == "fresh":
                                 ac["active" if status.vpn_active else "inactive"] += 1
                             else:
                                 ac[status.vpn_observation_state] += 1
                 presence = CoverageSignal(state="ready", source=presence.source, observed_at=as_of,
-                                          counts=pc, max_age_seconds=VPN_OBSERVATION_MAX_AGE_SECONDS)
+                                          counts=pc, max_age_seconds=DEVICE_HEARTBEAT_MAX_AGE_SECONDS)
                 if vpn_allowed:
                     android = CoverageSignal(state="ready", source=android.source, observed_at=as_of,
                                              counts=ac, max_age_seconds=VPN_OBSERVATION_MAX_AGE_SECONDS)
             except Exception as exc:
-                logger.warning("coverage.presence_unavailable", kind=type(exc).__name__)
+                _record_source_failure("presence", exc)
                 presence = absent(presence.source, "redis_unavailable")
                 if vpn_allowed:
                     android = absent(android.source, "redis_unavailable")

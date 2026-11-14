@@ -1,7 +1,8 @@
 'use client';
 
-import { use, useMemo, useState } from 'react';
+import { Suspense, use, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Activity, ActivitySquare, ArrowLeft, Ban, Box, Camera, CheckCircle2,
   ChevronRight, Clock, FileCode2, Flag, GitBranch, Hand, Home, Keyboard,
@@ -51,7 +52,12 @@ const ACTION_CONFIG: Record<string, { icon: LucideIcon; label: string }> = {
 
 export default function TaskDetailPage({ params }: Props) {
   const { id } = use(params);
-  return <OwnedTaskDetail key={id} id={id} />;
+  return <Suspense fallback={<p role="status" className="p-6">Загрузка задания…</p>}><TaskRoute id={id} /></Suspense>;
+}
+
+function TaskRoute({ id }: { id: string }) {
+  const openObservations = useSearchParams()?.get('tab') === 'logs';
+  return <OwnedTaskDetail key={id} id={id} openObservations={openObservations} />;
 }
 
 function httpStatus(error: unknown): number | undefined {
@@ -77,7 +83,7 @@ function reportedCount(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
-function OwnedTaskDetail({ id }: { id: string }) {
+function OwnedTaskDetail({ id, openObservations }: { id: string; openObservations: boolean }) {
   const taskQuery = useTask(id);
   const { data: task, isLoading } = taskQuery;
   const logsQuery = useTaskLogs(id);
@@ -95,7 +101,7 @@ function OwnedTaskDetail({ id }: { id: string }) {
 
   const isActive = task ? ['queued', 'assigned', 'running'].includes(task.status) : false;
   const progressQuery = useTaskProgress(id, isActive && taskQuery.isSuccess);
-  const liveLogsQuery = useTaskLiveLogs(id, isActive && taskQuery.isSuccess);
+  const liveLogsQuery = useTaskLiveLogs(id, (isActive || openObservations) && taskQuery.isSuccess, isActive);
   const { data: liveProgress } = progressQuery;
   const { data: liveLogs } = liveLogsQuery;
 
@@ -126,6 +132,8 @@ function OwnedTaskDetail({ id }: { id: string }) {
 
   const statusCfg = STATUS_CONFIG[task.status];
   const result = task.result as Record<string, unknown> | null;
+  const reportedLevel = !isActive ? reportedCount(result?.level) : undefined;
+  const reportedBan = !isActive && typeof result?.ban_detected === 'boolean' ? result.ban_detected : undefined;
   // Cached live telemetry describes an active run, not its confirmed final outcome.
   const nodesExecuted = (isActive ? reportedCount(liveProgress?.nodes_done) : undefined) ?? reportedCount(result?.nodes_executed);
   const totalNodes = (isActive ? reportedCount(liveProgress?.total_nodes) : undefined) ?? reportedCount(result?.total_nodes);
@@ -146,6 +154,7 @@ function OwnedTaskDetail({ id }: { id: string }) {
     <PageFrame className="max-w-6xl gap-5">
       <nav aria-label="Навигация задания">
         <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground"><Link href="/tasks"><ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />Все задания</Link></Button>
+        {task.batch_id && <Button asChild variant="ghost" size="sm"><Link href={`/tasks?batch_id=${encodeURIComponent(task.batch_id)}`}>К пакету</Link></Button>}
       </nav>
       {taskQuery.isError && <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-card p-4">
         <h2 className="font-semibold">{taskReadTitle(taskQuery.error)}</h2>
@@ -218,6 +227,10 @@ function OwnedTaskDetail({ id }: { id: string }) {
           <InfoCard icon={FileCode2} label="Сценарий" value={task.script_name || task.script_id} />
           <InfoCard icon={MonitorSmartphone} label="Устройство" value={task.device_name || task.device_id} />
         </div>
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          <Link className="text-primary hover:underline" href={`/tasks?script_id=${encodeURIComponent(task.script_id)}`} prefetch={false}>Задания сценария</Link>
+          <Link className="text-primary hover:underline" href={`/tasks?device_id=${encodeURIComponent(task.device_id)}`} prefetch={false}>Задания устройства</Link>
+        </div>
         <div className="mt-4 grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <InfoCard icon={GitBranch} label="Версия сценария" value={task.script_version_id ?? 'неизвестна — повтор недоступен'} isMono />
           <InfoCard icon={ActivitySquare} label="Приоритет" value={String(task.priority)} />
@@ -269,6 +282,10 @@ function OwnedTaskDetail({ id }: { id: string }) {
               <MetricCard label="Всего узлов" value={totalNodes == null ? '—' : String(totalNodes)} />
               <MetricCard label="Успешные отчёты" value={logs == null ? '—' : logs.length ? `${successfulReports}/${logs.length}` : 'Нет отчётов'} />
             </div>
+            {(reportedLevel !== undefined || reportedBan !== undefined) && <div className="mt-4 grid grid-cols-1 gap-3 border-t pt-4 sm:grid-cols-2">
+              {reportedLevel !== undefined && <MetricCard label="Уровень по отчёту агента" value={String(reportedLevel)} />}
+              {reportedBan !== undefined && <MetricCard label="Блокировка по отчёту агента" value={reportedBan ? 'Обнаружена' : 'Не обнаружена'} />}
+            </div>}
             <p className="mt-3 text-xs leading-5 text-muted-foreground">Успешность относится к полученным отчётам шагов; полнота выполнения по ним не подтверждается.</p>
             {!isActive && <p className="mt-1 text-xs leading-5 text-muted-foreground">Числа узлов и циклов получены из итогового результата задания. «—» означает, что значение не сообщено.</p>}
             {isActive && progressQuery.isError && <p role="alert" className="mt-3 text-sm text-warning">Не удалось обновить прогресс; показаны последние полученные значения.</p>}
@@ -308,19 +325,29 @@ function OwnedTaskDetail({ id }: { id: string }) {
           </section>}
         </div>
 
-        {isActive && <aside aria-labelledby="live-log-title" className="min-w-0 space-y-3">
+        <aside aria-labelledby="live-log-title" className="min-w-0 space-y-3">
           <section className="overflow-hidden rounded-xl border bg-card">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4">
-              <h2 id="live-log-title" className="flex items-center gap-2 text-sm font-semibold"><Terminal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />Журнал выполнения</h2>
-              {liveLogs && <Badge variant="secondary" className="font-normal tabular-nums">Событий: {liveLogs.length}</Badge>}
+              <h2 id="live-log-title" className="flex items-center gap-2 text-sm font-semibold"><Terminal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />{isActive ? 'Журнал выполнения' : 'Последние наблюдения выполнения'}</h2>
+              {(isActive || openObservations) && liveLogs && <Badge variant="secondary" className="font-normal tabular-nums">Событий: {liveLogs.length}</Badge>}
             </div>
             <div className="max-h-[32rem] overflow-y-auto p-4">
-              {liveLogsQuery.isError && <p role="alert" className="mb-3 text-sm leading-5 text-destructive">{liveLogs ? 'Журнал не обновлён; показан предыдущий снимок.' : 'Не удалось загрузить журнал выполнения.'}</p>}
-              {liveLogs ? <LiveLogTimeline entries={liveLogs} /> : !liveLogsQuery.isError && <p className="py-6 text-center text-sm text-muted-foreground">{liveLogsQuery.isLoading ? 'Загрузка журнала…' : 'Ожидание событий устройства…'}</p>}
+              {!isActive && <>
+                <p className="mb-3 text-sm text-muted-foreground">До 100 последних наблюдений на экране. Источник хранит до 200 в течение 10 минут после последнего сообщения. Итоговые отчёты шагов показаны отдельно.</p>
+                {!openObservations && <Button asChild variant="outline" size="sm"><Link href={`/tasks/${id}?tab=logs`} prefetch={false}>Показать наблюдения</Link></Button>}
+              </>}
+              {(isActive || openObservations) && <>
+                {liveLogsQuery.isError && <p role="alert" className="mb-3 text-sm leading-5 text-destructive">{liveLogs?.length ? 'Журнал не обновлён. Показан предыдущий снимок.' : 'Источник наблюдений недоступен.'}</p>}
+                {liveLogsQuery.dataUpdatedAt > 0 && !isActive && <p className="mb-2 text-xs text-muted-foreground">Последнее чтение {new Date(liveLogsQuery.dataUpdatedAt).toLocaleString('ru-RU')}</p>}
+                {liveLogs?.length ? <LiveLogTimeline entries={liveLogs} /> : !liveLogsQuery.isError && <p className="py-6 text-center text-sm text-muted-foreground">
+                  {liveLogsQuery.isFetching ? 'Загрузка журнала…' : isActive ? 'Ожидание событий устройства…' : 'Сохранённых наблюдений больше нет или они не поступали.'}
+                </p>}
+                {!isActive && <Button variant="outline" size="sm" className="mt-2" disabled={liveLogsQuery.isFetching || !taskQuery.isSuccess} onClick={() => void liveLogsQuery.refetch()}>Обновить наблюдения</Button>}
+              </>}
             </div>
           </section>
-          {logsQuery.isError && <p role="alert" className="rounded-xl border border-destructive/30 bg-card p-4 text-sm leading-6">Отчёты шагов не обновлены; успешность выполнения не подтверждена.</p>}
-        </aside>}
+          {isActive && logsQuery.isError && <p role="alert" className="rounded-xl border border-destructive/30 bg-card p-4 text-sm leading-6">Отчёты шагов не обновлены; успешность выполнения не подтверждена.</p>}
+        </aside>
       </div>
     </PageFrame>
   );

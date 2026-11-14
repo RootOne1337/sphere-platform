@@ -162,7 +162,8 @@ async def get_monitoring_metrics(
             "memory": redis_memory,
             "clients": redis_clients,
         },
-        "network": {"txTotalBytes": tx_bytes, "rxTotalBytes": rx_bytes, "activeTunnels": None},
+        "network": {"txTotalBytes": tx_bytes, "rxTotalBytes": rx_bytes,
+                    "activeTunnels": None, "activeTunnelsState": "unmeasured"},
         "observedAt": datetime.now(timezone.utc).isoformat(),
     }
 

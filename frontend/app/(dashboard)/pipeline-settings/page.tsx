@@ -35,6 +35,7 @@ import {
   type PipelineSettings,
 } from '@/lib/hooks/usePipelineSettings';
 import { useScripts } from '@/lib/hooks/useScripts';
+import { ProfileAutomationSettings } from '@/src/features/accounts/ProfileAutomationSettings';
 
 // ── Типы локального состояния формы ─────────────────────────────────────────
 
@@ -150,6 +151,7 @@ export default function PipelineSettingsPage() {
   if (!form) {
     return (
       <div className="mx-auto w-full max-w-xl p-6">
+        <div className="mb-3"><ProfileAutomationSettings /></div>
         <div role="alert" className="space-y-4 rounded-xl border border-destructive/30 bg-card p-6">
           <h1 className="text-lg font-semibold">Настройки не загружены</h1>
           <p className="text-sm text-muted-foreground">Исходные значения не подтверждены. Изменение настроек и переключателей недоступно.</p>
@@ -163,7 +165,7 @@ export default function PipelineSettingsPage() {
     <div className="flex flex-col h-full bg-card overflow-y-auto custom-scrollbar">
       {/* ── Заголовок ──────────────────────────────────────────────────── */}
       <div className="px-6 py-5 border-b border-border bg-muted shrink-0">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold font-mono tracking-tight text-foreground uppercase pt-1 flex items-center gap-2">
               <Settings2 className="w-5 h-5 text-primary" />
@@ -173,7 +175,8 @@ export default function PipelineSettingsPage() {
               Персистентные настройки оркестрации. Сохраняются после перезагрузки сервера.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <ProfileAutomationSettings />
             <Button
               variant="outline"
               size="sm"

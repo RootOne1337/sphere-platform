@@ -18,7 +18,7 @@ const mib = (bytes: number) => (bytes / 1024 / 1024).toLocaleString('ru-RU', { m
 
 export function AgentDownloadPanel({ releases, available }: { releases: OtaRelease[]; available: boolean }) {
   const [channelId, setChannelId] = useState<string>(CHANNELS[0].id);
-  const [progress, setProgress] = useState<{ loaded: number; total?: number } | null>(null);
+  const [progress, setProgress] = useState<{ loaded: number; total?: number; verifying?: boolean } | null>(null);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState('');
   const request = useRef<AbortController | null>(null);
@@ -41,6 +41,11 @@ export function AgentDownloadPanel({ releases, available }: { releases: OtaRelea
 
   const download = async () => {
     if (request.current || !available) return;
+    if (!globalThis.crypto?.subtle) {
+      setSaved('');
+      setError('Проверка SHA-256 недоступна. Откройте Sphere через HTTPS или localhost.');
+      return;
+    }
     const controller = new AbortController();
     request.current = controller;
     setError(''); setSaved(''); setProgress({ loaded: 0 });
@@ -57,6 +62,22 @@ export function AgentDownloadPanel({ releases, available }: { releases: OtaRelea
         || !String(response.headers['content-type']).startsWith('application/vnd.android.package-archive')) {
         throw new Error('Invalid APK download');
       }
+      const expectedHash = String(response.headers['x-sphere-apk-sha256'] ?? '').trim().toLowerCase();
+      if (!/^[a-f0-9]{64}$/.test(expectedHash)) {
+        setError('Сервер не подтвердил SHA-256 APK. Файл не сохранён.');
+        return;
+      }
+      setProgress({ loaded: response.data.size, verifying: true });
+      const digest = await crypto.subtle.digest('SHA-256', await response.data.arrayBuffer());
+      if (!active.current || controller.signal.aborted) {
+        if (active.current) setSaved('Скачивание отменено.');
+        return;
+      }
+      const receivedHash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+      if (receivedHash !== expectedHash) {
+        setError('SHA-256 скачанного APK не совпадает с ответом сервера. Файл не сохранён.');
+        return;
+      }
       const disposition = String(response.headers['content-disposition'] ?? '');
       const filename = disposition.match(/filename="?([a-zA-Z0-9_.-]+\.apk)"?(?:;|$)/i)?.[1]
         ?? `SphereAgent-${channel.platform}-${channel.flavor}.apk`;
@@ -69,7 +90,7 @@ export function AgentDownloadPanel({ releases, available }: { releases: OtaRelea
       objectUrls.current.set(url, setTimeout(() => {
         URL.revokeObjectURL(url); objectUrls.current.delete(url);
       }, 60_000));
-      setSaved('APK передан браузеру для сохранения.');
+      setSaved('SHA-256 проверен. APK передан браузеру для сохранения.');
     } catch (failure: unknown) {
       if (!active.current) return;
       if (controller.signal.aborted) { setSaved('Скачивание отменено.'); return; }
@@ -116,7 +137,7 @@ export function AgentDownloadPanel({ releases, available }: { releases: OtaRelea
         </p>
         {progress && <div className="mt-3 space-y-2" role="status" aria-live="polite">
           <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-            <span>{progress.total ? `${mib(progress.loaded)} / ${mib(progress.total)} МБ` : `${mib(progress.loaded)} МБ получено`}</span>
+            <span>{progress.verifying ? 'Проверяем SHA-256…' : progress.total ? `${mib(progress.loaded)} / ${mib(progress.total)} МБ` : `${mib(progress.loaded)} МБ получено`}</span>
             <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => request.current?.abort()}><X className="h-3.5 w-3.5" aria-hidden="true" />Отменить</button>
           </div>
           {Boolean(progress.total) && <progress aria-label="Скачивание APK" className="h-1.5 w-full accent-emerald-500" value={Math.min(progress.loaded, progress.total!)} max={progress.total} />}

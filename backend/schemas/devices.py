@@ -87,7 +87,7 @@ class UpdateDeviceRequest(BaseModel):
     tags: list[str] | None = None
     notes: str | None = None
     is_active: bool | None = None
-    server_name: str | None = Field(None, max_length=50, description="Привязанный игровой сервер (RED, MOSCOW, GROZNY)")
+    server_name: str | None = Field(None, max_length=50, description="Legacy server name for unbound devices")
 
     @field_validator("serial")
     @classmethod
@@ -145,6 +145,9 @@ class DeviceResponse(BaseModel):
     tags: list[str] = Field(default_factory=list)
     notes: str | None = None
     server_name: str | None = None
+    application_profile_id: uuid.UUID | None = None
+    application_server_key: str | None = None
+    application_binding_revision: int = Field(default=0, ge=0)
     created_at: datetime
     updated_at: datetime
 

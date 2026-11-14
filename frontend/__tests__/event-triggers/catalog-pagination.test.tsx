@@ -4,6 +4,10 @@ import { api } from '@/lib/api';
 import { createWrapper } from '../helpers';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn() } }));
+jest.mock('@/src/features/access/Capabilities', () => ({
+  useCapabilities: () => ({ can: () => true }),
+  PermissionNotice: () => null,
+}));
 
 const makeTrigger = (number: number) => ({
   id: `trigger-${number}`, org_id: 'org-a', name: `Trigger ${number}`, description: null,
@@ -16,6 +20,36 @@ const envelope = (page: number) => ({ data: { items: triggers.slice((page - 1) *
 const params = (config: { params?: unknown } | undefined) => (config?.params ?? {}) as { page?: number };
 
 beforeEach(() => jest.resetAllMocks());
+
+it('retries failed pipeline catalog reads, reaches later pages and excludes inactive targets', async () => {
+  let activeReads = 0;
+  jest.mocked(api.get).mockImplementation(async (url, config) => {
+    if (url === '/event-triggers') return envelope(1) as never;
+    const query = config?.params as { page: number; is_active?: boolean };
+    if (!query.is_active) return { data: { items: [], total: 0 } } as never;
+    if (++activeReads === 1) throw new Error('offline');
+    return { data: { total: 51, items: query.page === 1
+      ? [{ id: 'a', name: 'First option', is_active: true }, { id: 'b', name: 'Inactive option', is_active: false }]
+      : [{ id: 'c', name: 'Later option', is_active: true }] } } as never;
+  });
+  render(<EventTriggersPage />, { wrapper: createWrapper() });
+  fireEvent.click(screen.getByRole('button', { name: 'Создать триггер' }));
+  const form = within(await screen.findByRole('dialog'));
+  await form.findByText('Не удалось загрузить каталог пайплайнов.');
+  expect(form.getByRole('button', { name: 'Создать' })).toBeDisabled();
+  fireEvent.click(form.getByRole('button', { name: 'Повторить загрузку пайплайнов' }));
+  expect(await form.findByRole('option', { name: 'First option' })).toBeInTheDocument();
+  expect(form.queryByRole('option', { name: 'Inactive option' })).not.toBeInTheDocument();
+  fireEvent.click(form.getByRole('button', { name: 'Следующая страница: пайплайны' }));
+  expect(await form.findByRole('option', { name: 'Later option' })).toBeInTheDocument();
+  fireEvent.change(form.getByRole('combobox', { name: 'Пайплайн для запуска *' }), { target: { value: 'c' } });
+  fireEvent.change(form.getByLabelText('Имя *'), { target: { value: 'Later trigger' } });
+  fireEvent.change(form.getByLabelText('Шаблон события (glob) *'), { target: { value: 'task.failed' } });
+  fireEvent.change(form.getByLabelText('Шаблон параметров (JSON)'), { target: { value: '[]' } });
+  fireEvent.click(form.getByRole('button', { name: 'Создать' }));
+  expect(form.getByRole('alert')).toHaveTextContent('Шаблон параметров должен быть JSON-объектом.');
+  expect(api.post).not.toHaveBeenCalled();
+});
 
 it('reaches and opens the 101st trigger while keeping the server total', async () => {
   jest.mocked(api.get).mockImplementation(async (url, config) => url === '/event-triggers' ? envelope(params(config).page ?? 1) as never : { data: { items: [] } } as never);

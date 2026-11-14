@@ -218,6 +218,7 @@ class DagRunner @Inject constructor(
 
         val nodeLogs = mutableListOf<JsonObject>()
         val ctx = mutableMapOf<String, Any?>()   // execution context passed to Lua
+        var terminalOutputs: JsonObject? = null
 
         var success = true
         var failedNode: String? = null
@@ -277,6 +278,9 @@ class DagRunner @Inject constructor(
 
                 // stop node terminates loop
                 if (actionType == "end" || actionType == "start") {
+                    if (actionType == "end" && onSuccess == null) {
+                        terminalOutputs = readDagResultOutputs(action, ctx, success)
+                    }
                     nodeLogs.add(makeLog(nodeId, actionType, 0L, true, null, null))
                     currentNodeId = onSuccess
                     continue
@@ -361,6 +365,7 @@ class DagRunner @Inject constructor(
         }
         } catch (e: DagControlCancelledException) {
             success = false
+            terminalOutputs = null
             failedNode = currentNodeId
             nodeLogs.add(makeLog(
                 currentNodeId ?: "unknown", "CANCELLED", 0L, false, e.message, null
@@ -370,6 +375,7 @@ class DagRunner @Inject constructor(
             val elapsedSec = globalTimeoutMs / 1000
             Timber.w("[DAG] Global DAG timeout after ${elapsedSec}s at node '$currentNodeId'")
             success = false
+            terminalOutputs = null
             failedNode = currentNodeId
             nodeLogs.add(makeLog(
                 currentNodeId ?: "unknown", "GLOBAL_TIMEOUT", globalTimeoutMs, false,
@@ -384,6 +390,7 @@ class DagRunner @Inject constructor(
             if (nodeLogs.any { it["action_type"]?.jsonPrimitive?.content == "CANCELLED" }) put("cancelled", true)
             failedNode?.let { put("failed_node", it) }
             put("node_logs", nodeLogsArray)
+            terminalOutputs?.forEach { (name, value) -> put(name, value) }
         }
 
         // CommandDispatcher persists the terminal receipt before sending it,

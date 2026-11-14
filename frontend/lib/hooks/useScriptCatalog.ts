@@ -92,7 +92,7 @@ function assertScope(scope: CatalogScope, signal: AbortSignal) {
     || scope.userId !== current.user?.id || scope.role !== current.user?.role) throw new SessionChangedError();
 }
 
-export function useScriptCatalog(params: ScriptCatalogParams = {}) {
+export function useScriptCatalog(params: ScriptCatalogParams = {}, enabled = true) {
   const scope = useCatalogScope();
   return useQuery<ScriptCatalogResponse>({
     queryKey: ['scripts', 'catalog', scope, params],
@@ -102,7 +102,7 @@ export function useScriptCatalog(params: ScriptCatalogParams = {}) {
       assertScope(scope, signal);
       return parseScriptCatalog(data, scope.orgId!, params);
     },
-    enabled: Boolean(scope.orgId && scope.userId),
+    enabled: enabled && Boolean(scope.orgId && scope.userId),
     staleTime: 30_000,
     gcTime: 60_000,
     retry: false,

@@ -211,7 +211,7 @@ export function VpnBatchTab() {
                 />
                 <span className="text-sm">{device.name}</span>
                 <span className="text-xs text-muted-foreground ml-auto">
-                  {device.vpn_assigned ? 'VPN назначен' : 'VPN не назначен'}
+                  {device.vpn_assigned === true ? 'VPN назначен' : device.vpn_assigned === false ? 'VPN не назначен' : 'Назначение VPN не сообщено'}
                 </span>
               </label>
             ))}

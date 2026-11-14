@@ -1,10 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -48,7 +49,8 @@ function useReleases(platform?: string, flavor?: string, scope?: string) {
       if (platform) params.set('platform', platform);
       if (flavor) params.set('flavor', flavor);
       const { data } = await api.get<ReleasesResponse>(`/updates/?${params}`, { signal });
-      if (!Array.isArray(data?.releases) || !Number.isInteger(data.total) || data.total < 0) {
+      if (!Array.isArray(data?.releases) || data.total !== data.releases.length
+        || data.releases.some(release => !release || typeof release.id !== 'string' || !release.id)) {
         throw new Error('Invalid release catalog response');
       }
       return data;
@@ -65,12 +67,22 @@ export default function UpdatesPage() {
   const actor = useAuthStore(state => state.user);
   const sessionVersion = useAuthStore(state => state.sessionVersion);
   const scope = `${actor?.id}:${actor?.org_id}:${actor?.role}:${sessionVersion}`;
-  return <UpdatesCatalog key={scope} scope={scope} canManage={actor?.role === 'super_admin'} canReadRecovery={Boolean(actor)} />;
+  const canRead = Boolean(actor && ['viewer', 'script_runner', 'device_manager', 'org_admin', 'org_owner', 'super_admin'].includes(actor.role));
+  return <UpdatesCatalog key={scope} scope={scope} canManage={actor?.role === 'super_admin'} canRead={canRead} />;
 }
 
-function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; canManage: boolean; canReadRecovery: boolean }) {
+function UpdatesCatalog({ scope, canManage, canRead }: { scope: string; canManage: boolean; canRead: boolean }) {
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [flavorFilter, setFlavorFilter] = useState<string>('all');
+  const [deleteTarget, setDeleteTarget] = useState<Release | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [unconfirmedDeletes, setUnconfirmedDeletes] = useState<ReadonlySet<string>>(() => new Set());
+  const [notice, setNotice] = useState('');
+  const deleteRequest = useRef<AbortController | null>(null);
+  const deleteTrigger = useRef<HTMLButtonElement | null>(null);
+  const refreshButton = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => () => { deleteRequest.current?.abort(); }, []);
   const { data, isPending, isFetching, isError, error, refetch } = useReleases(
     platformFilter === 'all' ? undefined : platformFilter,
     flavorFilter === 'all' ? undefined : flavorFilter,
@@ -79,14 +91,46 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
   const [recoveryRelease, setRecoveryRelease] = useState<Release | null>(null);
 
   const releases = isError ? [] : data?.releases ?? [];
+  const filtered = platformFilter !== 'all' || flavorFilter !== 'all';
+  const deleteUnknown = Boolean(deleteTarget && unconfirmedDeletes.has(deleteTarget.id));
+  const targetPresent = Boolean(deleteTarget && releases.some(release => release.id === deleteTarget.id
+    && release.version_code === deleteTarget.version_code && release.sha256 === deleteTarget.sha256
+    && release.platform === deleteTarget.platform && release.flavor === deleteTarget.flavor));
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this release?')) return;
+  const confirmDelete = async (readOnly: boolean) => {
+    if (!canManage || !deleteTarget || deleteRequest.current || (!readOnly && (!targetPresent || isFetching || deleteUnknown))) return;
+    const target = deleteTarget;
+    const controller = new AbortController();
+    deleteRequest.current = controller;
+    setDeletePending(true);
+    setDeleteError('');
     try {
-      await api.delete(`/updates/${id}`);
-      refetch();
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Failed to delete');
+      if (!readOnly) {
+        const response = await api.delete(`/updates/${target.id}`, { signal: controller.signal });
+        if (response.status !== 204) throw new Error('Unexpected delete status');
+      }
+      const snapshot = await refetch();
+      if (controller.signal.aborted) return;
+      if (!snapshot.isSuccess || !snapshot.data) throw new Error('Catalog refresh not confirmed');
+      setUnconfirmedDeletes(previous => {
+        const next = new Set(previous);
+        next.delete(target.id);
+        return next;
+      });
+      if (snapshot.data.releases.some(release => release.id === target.id)) {
+        setDeleteError('Релиз ещё есть в каталоге. Проверьте выбранную запись перед повтором.');
+        return;
+      }
+      setDeleteTarget(null);
+      setNotice(`Релиз ${target.version_name} отсутствует в обновлённом каталоге.`);
+    } catch (failure) {
+      if (!controller.signal.aborted) {
+        setUnconfirmedDeletes(previous => new Set(previous).add(target.id));
+        setDeleteError(getApiErrorMessage(failure, 'Результат удаления неизвестен. Перечитайте каталог перед повтором.'));
+      }
+    } finally {
+      deleteRequest.current = null;
+      if (!controller.signal.aborted) setDeletePending(false);
     }
   };
 
@@ -101,14 +145,15 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" disabled={isFetching} onClick={() => { void refetch(); }}>
+          <Button ref={refreshButton} variant="outline" aria-disabled={isFetching} onClick={() => { if (!isFetching) void refetch(); }}>
             Обновить релизы
           </Button>
           {canManage && <CreateReleaseDialog available={!isPending && !isFetching && !isError} onCreated={() => { void refetch(); }} />}
         </div>
       </div>
 
-      <AgentDownloadPanel releases={releases} available={!isPending && !isError} />
+      <AgentDownloadPanel releases={filtered ? [] : releases} available={canRead} />
+      {notice && <p role="status" className="text-sm text-success">{notice}</p>}
 
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-muted-foreground">
         Агенты обнаруживают опубликованный релиз при плановой проверке <strong>только при совпадении платформы и варианта сборки</strong>.
@@ -119,7 +164,7 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <Select value={platformFilter} onValueChange={setPlatformFilter}>
-          <SelectTrigger className="w-[180px]" aria-label="Platform filter">
+          <SelectTrigger className="w-[180px]" aria-label="Фильтр по платформе">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -130,7 +175,7 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
           </SelectContent>
         </Select>
         <Select value={flavorFilter} onValueChange={setFlavorFilter}>
-          <SelectTrigger className="w-[160px]" aria-label="Flavor filter">
+          <SelectTrigger className="w-[160px]" aria-label="Фильтр по сборке">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -157,7 +202,7 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
       )}
       {!isPending && !isError && releases.length === 0 && (
         <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-          Опубликованных релизов пока нет.
+          {filtered ? 'По выбранным фильтрам релизов нет.' : 'Опубликованных релизов пока нет.'}
         </div>
       )}
 
@@ -186,20 +231,26 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
                 {release.changelog && (
                   <div className="text-sm mt-1 text-muted-foreground">{release.changelog}</div>
                 )}
-                <div className="text-xs text-muted-foreground mt-1 font-mono truncate max-w-[400px]">
+                <div className="mt-1 break-all font-mono text-xs text-muted-foreground">
                   SHA-256: {release.sha256 || '—'}
                 </div>
               </div>
               <div className="flex flex-wrap justify-end gap-2">
-              {canReadRecovery && isManagedAndroidRelease(release) && <Button variant="outline" size="sm" disabled={isFetching || isError} onClick={() => setRecoveryRelease({ ...release })}>{canManage ? 'Адресное OTA' : 'Состояние OTA'}</Button>}
+              {canRead && isManagedAndroidRelease(release) && <Button variant="outline" size="sm" disabled={isFetching || isError} onClick={() => setRecoveryRelease({ ...release })}>{canManage ? 'Адресное OTA' : 'Состояние OTA'}</Button>}
               {canManage && <Button
                 variant="ghost"
                 size="sm"
                 className="text-destructive hover:text-destructive shrink-0"
                 disabled={isFetching}
-                onClick={() => handleDelete(release.id)}
+                aria-label={`Удалить релиз ${release.version_name} · ${release.platform}/${release.flavor}`}
+                onClick={(event) => {
+                  deleteTrigger.current = event.currentTarget;
+                  setNotice('');
+                  setDeleteError('');
+                  setDeleteTarget(release);
+                }}
               >
-                Delete
+                Удалить
               </Button>}
               </div>
             </div>
@@ -210,6 +261,25 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
       {recoveryRelease && <RecoveryDialog release={recoveryRelease} scope={scope} canManage={canManage}
         available={!isError && !isFetching && Boolean(releases.find(value => value.id === recoveryRelease.id && value.sha256 === recoveryRelease.sha256 && value.version_code === recoveryRelease.version_code && value.version_name === recoveryRelease.version_name && value.download_url === recoveryRelease.download_url && value.flavor === recoveryRelease.flavor && value.platform === recoveryRelease.platform))}
         onClose={() => setRecoveryRelease(null)} />}
+      <Dialog open={deleteTarget !== null} onOpenChange={open => { if (!open && !deleteRequest.current) setDeleteTarget(null); }}>
+        {deleteTarget && <DialogContent onCloseAutoFocus={event => {
+          event.preventDefault();
+          (deleteTrigger.current?.isConnected ? deleteTrigger.current : refreshButton.current)?.focus();
+        }}>
+          <DialogHeader>
+            <DialogTitle>Удалить релиз из каталога?</DialogTitle>
+            <DialogDescription>Агенты перестанут получать этот релиз при следующих проверках канала. Для уже установленных APK нужен отдельный процесс обновления.</DialogDescription>
+          </DialogHeader>
+          <p className="text-sm font-medium">{deleteTarget.version_name} · код {deleteTarget.version_code} · {deleteTarget.platform}/{deleteTarget.flavor}</p>
+          {deleteError && <p role="alert" className="text-sm text-destructive">{deleteError}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={deletePending} onClick={() => setDeleteTarget(null)}>Отмена</Button>
+            {deleteUnknown
+              ? <Button type="button" disabled={deletePending} onClick={() => { void confirmDelete(true); }}>Перечитать каталог</Button>
+              : <Button type="button" variant="destructive" disabled={deletePending || !targetPresent || isFetching} onClick={() => { void confirmDelete(false); }}>{deletePending ? 'Проверяем…' : 'Подтвердить удаление'}</Button>}
+          </DialogFooter>
+        </DialogContent>}
+      </Dialog>
     </div>
   );
 }

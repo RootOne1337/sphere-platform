@@ -28,6 +28,7 @@
     "selector": {"type": "string", "nonblank": true, "max": 2048},
     "strategy": {"type": "string", "enum": ["xpath", "id", "text", "desc", "class"]},
     "variable": {"type": "string", "nonblank": true, "max": 128},
+    "result_variable": {"type": "string", "max": 64, "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,63}"},
     "text": {"type": "string", "max": 65536},
     "code": {"type": "string", "nonblank": true, "max": 65536},
     "package": {"type": "string", "nonblank": true, "max": 255, "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$"},
@@ -43,7 +44,7 @@
   "common_fields": {"save_to": {"ref": "variable"}},
   "actions": {
     "start": {"effect": "flow", "fields": {}, "note": "Переход по on_success; запуск действий сам по себе не подтверждает состояние Android."},
-    "end": {"effect": "flow", "fields": {}, "note": "При заданном on_success исполнение продолжается; имя узла не прекращает переходы."},
+    "end": {"effect": "flow", "fields": {"result_outputs": {"type": "object", "max": 2, "closed": true, "fields": {"level": {"ref": "result_variable"}, "ban_detected": {"ref": "result_variable"}}}}, "note": "Конечный узел может передать в результат уровень и признак блокировки из указанных переменных. При заданном on_success исполнение продолжается без экспорта из этого узла."},
     "tap": {"effect": "control", "fields": {"x": {"ref": "coordinate", "required": true}, "y": {"ref": "coordinate", "required": true}}, "note": "Координаты должны соответствовать системе координат APK. Проверка параметров не проверяет границы экрана."},
     "swipe": {"effect": "control", "fields": {"x1": {"ref": "coordinate", "required": true}, "y1": {"ref": "coordinate", "required": true}, "x2": {"ref": "coordinate", "required": true}, "y2": {"ref": "coordinate", "required": true}, "duration_ms": {"ref": "duration"}}, "note": "Один завершённый прямой жест. Непрерывный DOWN/MOVE/UP этим действием не реализуется."},
     "pointer_path": {"effect": "control", "fields": {"path": {"type": "object", "format": "pointer_path_v1", "required": true}}, "note": "Один непрерывный палец: траектория, удержания и паузы внутри жеста. APK 1.2.81+. Частично исполненный жест не повторяется; пауза задания прерывает его с отпусканием пальца."},

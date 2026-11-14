@@ -1,4 +1,7 @@
 export type MonitoringStatus = 'HEALTHY' | 'WARNING' | 'CRITICAL' | 'OFFLINE' | 'UNKNOWN';
+export type TunnelMeasurement =
+    | { state: 'ready'; count: number }
+    | { state: 'unmeasured' | 'unavailable' };
 
 export interface ClusterNode {
     id: string;
@@ -19,7 +22,12 @@ export interface MonitoringMetrics {
     cpu?: { linuxLoad1mPerCpu: number | null; history: number[] };
     ram?: { currentBytes: number | null; totalBytes: number | null; history: number[] };
     redis?: { status: MonitoringStatus | string; ops: number | null; memory: string | null; clients: number | null };
-    network?: { txTotalBytes: number | null; rxTotalBytes: number | null; activeTunnels: number | null };
+    network?: {
+        txTotalBytes: number | null;
+        rxTotalBytes: number | null;
+        activeTunnels: number | null;
+        activeTunnelsState?: 'unmeasured' | 'ready' | 'unavailable';
+    };
 }
 
 export interface NetworkCounterSample {
@@ -98,6 +106,16 @@ export function formatBytesPerSecond(bytesPerSecond: number | null | undefined):
 
 export type HealthSummary = { label: string; tone: 'healthy' | 'warning' | 'critical' | 'unknown' | 'loading' };
 
+export function getTunnelMeasurement(network: MonitoringMetrics['network']): TunnelMeasurement {
+    const count = network?.activeTunnels;
+    const state = network?.activeTunnelsState;
+    if (typeof count === 'number' && Number.isSafeInteger(count) && count >= 0 && (state === 'ready' || state === undefined)) {
+        return { state: 'ready', count };
+    }
+    if (count === null && state === 'unmeasured') return { state: 'unmeasured' };
+    return { state: 'unavailable' };
+}
+
 /** Coverage of current REST probes. History has its own Prometheus states. */
 export function getMonitoringTelemetryGaps(metrics: MonitoringMetrics | undefined): string[] {
     if (!metrics) return ['метрики ещё не получены'];
@@ -112,7 +130,7 @@ export function getMonitoringTelemetryGaps(metrics: MonitoringMetrics | undefine
     if (metrics.redis?.clients == null) gaps.push('клиенты Redis');
     if (metrics.network?.txTotalBytes == null) gaps.push('счётчик передачи');
     if (metrics.network?.rxTotalBytes == null) gaps.push('счётчик приёма');
-    if (metrics.network?.activeTunnels == null) gaps.push('активные туннели');
+    if (getTunnelMeasurement(metrics.network).state === 'unavailable') gaps.push('активные туннели');
     return gaps;
 }
 

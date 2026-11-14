@@ -9,11 +9,16 @@ from datetime import datetime, timezone
 from typing import Any
 
 import structlog
+from fastapi import HTTPException
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
+from backend.models.device import Device
 from backend.models.device_event import DeviceEvent, EventSeverity
+from backend.models.game_account import GameAccount
+from backend.models.pipeline import PipelineRun
+from backend.models.task import Task
 from backend.schemas.device_events import (
     CreateDeviceEventRequest,
     DeviceEventResponse,
@@ -66,13 +71,32 @@ class DeviceEventService:
         data: CreateDeviceEventRequest,
     ) -> DeviceEventResponse:
         """Создать новое событие."""
+        device = await self.db.scalar(select(Device).where(Device.id == data.device_id, Device.org_id == org_id))
+        if device is None:
+            raise HTTPException(status_code=404, detail="Устройство не найдено")
+        account = None
+        if data.account_id is not None:
+            account = await self.db.scalar(select(GameAccount).where(
+                GameAccount.id == data.account_id, GameAccount.org_id == org_id,
+            ))
+            if account is None:
+                raise HTTPException(status_code=404, detail="Аккаунт не найден")
+        if data.task_id is not None and await self.db.scalar(select(Task.id).where(
+            Task.id == data.task_id, Task.org_id == org_id, Task.device_id == device.id,
+        )) is None:
+            raise HTTPException(status_code=404, detail="Задача устройства не найдена")
+        if data.pipeline_run_id is not None and await self.db.scalar(select(PipelineRun.id).where(
+            PipelineRun.id == data.pipeline_run_id, PipelineRun.org_id == org_id, PipelineRun.device_id == device.id,
+        )) is None:
+            raise HTTPException(status_code=404, detail="Запуск пайплайна устройства не найден")
+
         event = DeviceEvent(
             org_id=org_id,
-            device_id=data.device_id,
+            device=device,
             event_type=data.event_type,
             severity=EventSeverity(data.severity),
             message=data.message,
-            account_id=data.account_id,
+            account=account,
             task_id=data.task_id,
             pipeline_run_id=data.pipeline_run_id,
             data=data.data,
@@ -196,8 +220,6 @@ class DeviceEventService:
         org_id: uuid.UUID,
     ) -> DeviceEventResponse:
         """Получить одно событие по ID."""
-        from fastapi import HTTPException
-
         stmt = select(DeviceEvent).where(
             DeviceEvent.id == event_id,
             DeviceEvent.org_id == org_id,
@@ -213,8 +235,6 @@ class DeviceEventService:
         org_id: uuid.UUID,
     ) -> None:
         """Пометить событие как обработанное EventReactor'ом."""
-        from fastapi import HTTPException
-
         stmt = select(DeviceEvent).where(
             DeviceEvent.id == event_id,
             DeviceEvent.org_id == org_id,

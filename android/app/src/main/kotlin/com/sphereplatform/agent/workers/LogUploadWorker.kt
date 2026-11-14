@@ -20,6 +20,10 @@ import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -57,6 +61,8 @@ class LogUploadWorker @AssistedInject constructor(
     private val httpClient: OkHttpClient,
 ) : CoroutineWorker(context, params) {
 
+    private val quotaCooldown = LogUploadCooldown(applicationContext)
+
     private data class CrashLogSnapshot(
         val file: File,
         val text: String,
@@ -73,6 +79,8 @@ class LogUploadWorker @AssistedInject constructor(
         // Backend rejects a log entry above 512 KiB. Leave room for its
         // upload separator and keep the entire request below that hard limit.
         private const val MAX_UPLOAD_BYTES = 480 * 1024
+        // Periodic, OTA and crash jobs use different WorkManager names in the same process.
+        private val uploadMutex = Mutex()
 
         fun schedule(context: Context) {
             val constraints = Constraints.Builder()
@@ -145,7 +153,9 @@ class LogUploadWorker @AssistedInject constructor(
         }
     }
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = uploadMutex.withLock { upload() }
+
+    private suspend fun upload(): Result {
         try {
             // The Android app-data copied by an emulator clone includes the master's
             // tokens. Fail closed before refresh or upload until clone rebind succeeds.
@@ -165,6 +175,7 @@ class LogUploadWorker @AssistedInject constructor(
                 Timber.d("LogUploadWorker: skipped (not enrolled yet)")
                 return Result.success()
             }
+            if (quotaCooldown.isActive(deviceId)) return Result.retry()
 
             val crashSnapshot = readCrashLogSnapshot()
             val fileLogs = loggingTree.readRecentLogs(32 * 1024)
@@ -195,6 +206,8 @@ class LogUploadWorker @AssistedInject constructor(
                     Timber.d("LogUploadWorker: no fresh device credential available")
                     return Result.success()
                 }
+                currentCoroutineContext().ensureActive()
+                if (authStore.getDeviceId() != deviceId) return Result.retry()
 
                 // FIX D3: device_id stays in X-Device-Id rather than the URL,
                 // which can otherwise leak into reverse-proxy access logs.
@@ -208,14 +221,23 @@ class LogUploadWorker @AssistedInject constructor(
                 val tryNextRoute = try {
                     httpClient.newCall(request).execute().use { response ->
                         if (response.isSuccessful) {
-                            if (crashSnapshot != null && !deleteUploadedCrashSnapshot(crashSnapshot)) {
-                                Timber.w("LogUploadWorker: crash log changed during upload; retaining it")
+                            if (crashSnapshot != null &&
+                                (authStore.getDeviceId() != deviceId || !deleteUploadedCrashSnapshot(crashSnapshot))) {
+                                Timber.w("LogUploadWorker: crash log or device changed during upload; retaining evidence")
                             }
                             Timber.i(
                                 "LogUploadWorker: uploaded ${logs.length} bytes " +
                                     "(route_slot=${routeIndex + 1}, HTTP ${response.code})",
                             )
                             return Result.success()
+                        }
+
+                        if (response.code == 507) {
+                            if (!quotaCooldown.record(deviceId, response.header("Retry-After"))) {
+                                Timber.w("LogUploadWorker: could not persist journal quota cooldown")
+                            }
+                            Timber.w("LogUploadWorker: journal quota full; deferring upload")
+                            return Result.retry()
                         }
 
                         // Never send the same device credential to other routes

@@ -21,8 +21,10 @@ def setup_cors(app: FastAPI) -> None:
         allow_origins=origins,
         allow_credentials=True,            # для HTTPOnly cookie (refresh token)
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Refresh-Token"],
-        expose_headers=["X-Request-ID"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Refresh-Token", "Idempotency-Key"],
+        expose_headers=[
+            "X-Request-ID", "Retry-After", "Content-Disposition", "X-Sphere-APK-SHA256", "X-Sphere-Version-Code",
+        ],
         max_age=3600,                      # Preflight cache 1 час
     )
 

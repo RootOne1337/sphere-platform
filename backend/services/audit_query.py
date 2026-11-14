@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 import uuid
 from datetime import timezone
 
 from sqlalchemy import String, case, cast, func, or_, select
 
+from backend.middleware.request_id import REQUEST_ID_PATTERN
 from backend.models.audit_log import AuditLog
 from backend.schemas.audit import AuditFilters
 
@@ -49,6 +51,8 @@ def audit_statement(org_id: uuid.UUID, filters: AuditFilters):
         elif separator and key.lower() == "user":
             actor = func.coalesce(cast(AuditLog.user_id, String), "system")
             stmt = stmt.where(actor.icontains(value, autoescape=True))
+        elif separator and key.lower() == "request":
+            stmt = stmt.where(AuditLog.meta["request_id"].as_string() == value)
         else:
             stmt = stmt.where(or_(*(column.icontains(term, autoescape=True) for column in searchable)))
     return stmt.order_by(AuditLog.created_at.desc(), AuditLog.id.desc())
@@ -63,9 +67,12 @@ def csv_document(rows) -> str:
         text = "" if value is None else str(value)
         return "'" + text if text.lstrip().startswith(("=", "+", "-", "@")) else text
 
-    writer.writerow(["Время UTC", "Результат", "Действие", "Пользователь / UUID", "Ресурс", "IP", "ID события"])
+    writer.writerow(["Время UTC", "Результат", "Действие", "Пользователь / UUID", "Ресурс", "IP", "ID запроса", "ID события"])
     for row in rows:
         resource = " · ".join(part for part in [row.resource_type, row.resource_id] if part)
+        request_id = getattr(row, "request_id", None)
+        if not isinstance(request_id, str) or not re.fullmatch(REQUEST_ID_PATTERN, request_id):
+            request_id = None
         writer.writerow(map(safe, [row.created_at.astimezone(timezone.utc).isoformat(), row.status, row.action,
-                                  row.user_id or "system", resource, row.ip_address, row.id]))
+                                  row.user_id or "system", resource, row.ip_address, request_id, row.id]))
     return "\ufeff" + output.getvalue()

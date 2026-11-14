@@ -464,6 +464,7 @@ export function DeviceStream({
     let probeTimer: ReturnType<typeof setTimeout> | undefined;
     let scheduleKeyFrameRecovery: ((delayMs?: number) => void) | undefined;
     let attempt = 0;
+    let authTimeouts = 0;
     setConnection('connecting');
     setHasRenderedFrame(false);
     setStreamError(null);
@@ -907,6 +908,7 @@ export function DeviceStream({
               const msg = JSON.parse(evt.data);
               if (msg.type === 'stream_link_ready' && msg.schema_version === 1) {
                 linkAuthorized = true;
+                authTimeouts = 0;
                 linkRtt.tick(!document.hidden);
                 return;
               }
@@ -1037,6 +1039,15 @@ export function DeviceStream({
         // A remote normal close can be a server restart. Only effect cleanup
         // means the user stopped viewing; access/device rejections remain terminal.
         newWs.onclose = event => {
+          if (event.code === 4003 && event.reason === 'auth_timeout') {
+            authTimeouts += 1;
+            const retry = authTimeouts <= 2;
+            const message = retry ? 'Сервер не получил авторизацию вовремя. Переподключаемся…'
+              : 'Сервер не получил авторизацию после повторных попыток. Откройте просмотр снова.';
+            finish(retry, message, 1000);
+            if (retry && !ignore) setStreamError(message);
+            return;
+          }
           const closeMessages: Record<number, string> = {
             4001: 'Сессия просмотра не авторизована. Обновите вход и откройте устройство снова.',
             4003: 'У этой учётной записи нет доступа к просмотру устройства.',

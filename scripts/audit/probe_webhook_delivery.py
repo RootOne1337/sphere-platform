@@ -13,6 +13,7 @@ import threading
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import AsyncMock, patch
+from uuid import uuid4
 
 from structlog.testing import capture_logs
 
@@ -51,10 +52,11 @@ async def probe() -> dict:
     try:
         for name, statuses, outcome in cases:
             state.update(statuses=statuses, requests=[])
+            task_id = str(uuid4())
             with capture_logs() as events, patch("asyncio.sleep", AsyncMock()) as sleep:
                 await WebhookService().deliver(
                     f"http://127.0.0.1:{server.server_port}/audit-only",
-                    {"event_type": "audit.callback", "case": name, "text": "Проверка"},
+                    {"event_type": "task.completed", "task_id": task_id, "case": name, "text": "Проверка"},
                     "isolated-audit-signing-key",
                 )
             requests = state["requests"]
@@ -64,6 +66,11 @@ async def probe() -> dict:
             assert all(r["signature"] == "sha256=" + hmac.new(
                 b"isolated-audit-signing-key", r["body"], hashlib.sha256,
             ).hexdigest() for r in requests)
+            terminal, = [event for event in events if event["log_level"] != "debug"]
+            assert terminal is events[-1]
+            assert terminal["task_id"] == task_id
+            assert terminal["delivery_id"] == requests[0]["delivery_id"]
+            assert terminal["attempts"] == len(statuses)
             assert events[-1]["outcome"] == outcome
             assert events[-1]["event"] == ("webhook.delivered" if outcome == "delivered" else "webhook.delivery_failed")
             # httpx/AnyIO can also call sleep(0) to yield to its transport. Those

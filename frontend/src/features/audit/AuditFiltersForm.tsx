@@ -5,8 +5,8 @@ import { Button } from '@/src/shared/ui/button';
 import { AuditQueryBuilder } from './AuditQueryBuilder';
 import { auditFilterParams, EMPTY_AUDIT_DRAFT, type AuditFilters } from './investigation';
 
-export function AuditFiltersForm({ onApply }: { onApply: (params: AuditFilters) => void }) {
-  const [draft, setDraft] = useState(EMPTY_AUDIT_DRAFT);
+export function AuditFiltersForm({ onApply, initialQuery = '' }: { onApply: (params: AuditFilters) => void; initialQuery?: string }) {
+  const [draft, setDraft] = useState({ ...EMPTY_AUDIT_DRAFT, q: initialQuery });
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
   const inputClass = 'h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';

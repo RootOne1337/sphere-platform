@@ -26,6 +26,7 @@ from sqlalchemy import String, and_, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from backend.core.config import settings
 from backend.models.device import Device
 from backend.models.game_account import GameAccount
 from backend.models.script import Script, ScriptVersion
@@ -33,12 +34,14 @@ from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
 from backend.schemas.pointer_path import pointer_path_admission_error
 from backend.services.account_credentials import read_account_password
+from backend.services.application_account_scope import (
+    require_account_scope,
+    resolve_application_account_scope,
+)
 from backend.services.task_queue import TaskQueue
+from backend.services.webhook_outbox import enqueue_task_webhooks
 
 logger = structlog.get_logger()
-
-# Глобальный set для фоновых webhook-задач — защита от GC (HIGH-5)
-_pending_webhook_tasks: set[asyncio.Task] = set()
 
 # Only the durable, task-targeted cancellation command is safe to redeliver.
 # The Android journal fences a late EXECUTE_DAG even if cancel arrives first.
@@ -110,30 +113,45 @@ class TaskService:
             "gender": account.gender.value if account.gender else "male",
         }
 
-    async def _load_account_for_task(self, task: Task) -> GameAccount | None:
+    async def _load_account_for_task(self, task: Task, device: Device | None = None) -> GameAccount | None:
         """
         Загружает GameAccount, связанный с задачей.
         Ищет по account_id из input_params, или по device_id задачи.
         """
+        scope = await resolve_application_account_scope(self.db, device) if device is not None else None
         # Приоритет 1: явный account_id в input_params
         account_id_raw = (task.input_params or {}).get("account_id")
         if account_id_raw:
             try:
-                return await self.db.scalar(select(GameAccount).where(
+                statement = select(GameAccount).where(
                     GameAccount.id == uuid.UUID(str(account_id_raw)),
                     GameAccount.org_id == task.org_id,
-                ))
+                )
+                if scope is not None:
+                    statement = statement.with_for_update().execution_options(populate_existing=True)
+                account = await self.db.scalar(statement)
             except (ValueError, TypeError):
-                pass
+                if scope is not None:
+                    raise HTTPException(409, "Task account is invalid") from None
+            else:
+                if scope is not None:
+                    if account is None:
+                        raise HTTPException(409, "Task account is unavailable")
+                    require_account_scope(account, scope)
+                return account
 
         # Приоритет 2: аккаунт, назначенный на устройство задачи
-        return await self.db.scalar(
-            select(GameAccount).where(
-                GameAccount.device_id == task.device_id,
-                GameAccount.org_id == task.org_id,
-                GameAccount.status.in_(["in_use", "free"]),
-            ).order_by(GameAccount.assigned_at.desc().nulls_last()).limit(1)
+        statement = select(GameAccount).where(
+            GameAccount.device_id == task.device_id,
+            GameAccount.org_id == task.org_id,
+            GameAccount.status.in_(["in_use", "free"]),
         )
+        if scope is not None:
+            statement = (
+                statement.where(GameAccount.game == scope[0], GameAccount.server_name == scope[1])
+                .with_for_update().execution_options(populate_existing=True)
+            )
+        return await self.db.scalar(statement.order_by(GameAccount.assigned_at.desc().nulls_last()).limit(1))
 
     async def _get_script(
         self, script_id: uuid.UUID, org_id: uuid.UUID
@@ -157,7 +175,7 @@ class TaskService:
                 Device.id == device_id,
                 Device.org_id == org_id,
                 Device.is_active.is_(True),
-            ).with_for_update()
+            ).with_for_update().execution_options(populate_existing=True)
         )
         if not device:
             raise HTTPException(status_code=404, detail="Device not found")
@@ -212,11 +230,14 @@ class TaskService:
         )):
             raise HTTPException(status_code=404, detail="Script version not found")
 
-        await self._get_device(device_id, org_id)
-        if account_id and not await self.db.scalar(select(GameAccount.id).where(
-            GameAccount.id == account_id, GameAccount.org_id == org_id,
-        )):
-            raise HTTPException(status_code=404, detail="Account not found")
+        device = await self._get_device(device_id, org_id)
+        if account_id:
+            account = await self.db.scalar(select(GameAccount).where(
+                GameAccount.id == account_id, GameAccount.org_id == org_id,
+            ).with_for_update().execution_options(populate_existing=True))
+            if account is None:
+                raise HTTPException(status_code=404, detail="Account not found")
+            require_account_scope(account, await resolve_application_account_scope(self.db, device))
 
         # The device lock serializes competing creators through commit/rollback.
         # Missing presence or an old heartbeat cannot prove an APK stopped work.
@@ -379,6 +400,8 @@ class TaskService:
                     task.status = TaskStatus.FAILED
                     task.error_message = "Script version not found"
                     task.finished_at = now
+                    if task.batch_id:
+                        await self._aggregate_batch(task.batch_id, success=False)
                     await self.db.commit()
                     continue
                 script = await self.db.get(Script, task.script_id)
@@ -388,9 +411,24 @@ class TaskService:
                     task.status = TaskStatus.FAILED
                     task.error_message = admission_error
                     task.finished_at = now
+                    if task.batch_id:
+                        await self._aggregate_batch(task.batch_id, success=False)
                     await self.db.commit()
                     continue
-                account = await self._load_account_for_task(task)
+                try:
+                    account = await self._load_account_for_task(task, device)
+                    if (account is None and self._PLACEHOLDER_RE.search(json.dumps(resolved_dag, ensure_ascii=False))
+                            and device.application_profile_id is not None):
+                        raise HTTPException(409, "No matching account for the device application and server")
+                except HTTPException as exc:
+                    task.status = TaskStatus.FAILED
+                    task.error_message = str(exc.detail)
+                    task.finished_at = now
+                    if task.batch_id:
+                        await self._aggregate_batch(task.batch_id, success=False)
+                    await self.db.commit()
+                    logger.warning("task.account_scope_rejected", task_id=task_id_str, device_id=str(device_id))
+                    continue
                 if account is not None:
                     resolved_dag = self._resolve_dag_placeholders(
                         version.dag, self._build_account_variables(account),
@@ -451,6 +489,8 @@ class TaskService:
         device_id: str,
         result: dict,
         org_id: str | None = None,
+        *,
+        release_queue: bool = True,
     ) -> bool:
         """Вызывается при получении command_result от агента (TZ-03 WebSocket)."""
         task = await self.db.scalar(select(Task).where(
@@ -472,7 +512,8 @@ class TaskService:
             )
             # Результат сохраняем для диагностики, но статус не меняем
             # Освобождаем running lock только если он принадлежит ЭТОЙ задаче
-            await self._safe_mark_completed(task_id, device_id)
+            if release_queue:
+                await self._safe_mark_completed(task_id, device_id)
             return True
 
         success = result.get("success", False)
@@ -497,8 +538,6 @@ class TaskService:
         task.result = result
         task.error_message = result.get("error")
 
-        # FIX BUG-2: Безопасное освобождение — только если lock принадлежит этой задаче
-        await self._safe_mark_completed(task_id, device_id)
         logger.info(
             "task.completed",
             task_id=task_id,
@@ -513,20 +552,20 @@ class TaskService:
             from backend.services.event_reactor import EventReactor
             event_type = "task.completed" if success else "task.failed"
             reactor = EventReactor(self.db)
-            await reactor.process_event(
-                org_id=task.org_id,
-                device_id=uuid.UUID(device_id),
-                event_type=event_type,
-                severity="info" if success else "warning",
-                message=result.get("error") if not success else None,
-                task_id=task.id,
-                pipeline_run_id=None,
-                data={
-                    "task_id": str(task.id),
-                    "script_id": str(task.script_id) if task.script_id else None,
-                    "success": success,
-                },
-            )
+            async with self.db.begin_nested():
+                await reactor.process_event(
+                    org_id=task.org_id,
+                    device_id=uuid.UUID(device_id),
+                    event_type=event_type,
+                    severity="info" if success else "warning",
+                    message=result.get("error") if not success else None,
+                    task_id=task.id,
+                    data={
+                        "task_id": str(task.id),
+                        "script_id": str(task.script_id) if task.script_id else None,
+                        "success": success,
+                    },
+                )
         except Exception as e:
             logger.warning(
                 "task_result.event_emission_failed",
@@ -534,31 +573,33 @@ class TaskService:
                 error=str(e),
             )
 
-        # Webhook callback (асинхронно — не блокирует)
-        webhook_url = task.input_params.get("webhook_url") if task.input_params else None
-        if webhook_url:
-            from backend.services.webhook_service import WebhookService
-            wh = WebhookService()
-            _t = asyncio.create_task(
-                wh.deliver(
-                    webhook_url,
-                    {
-                        "event_type": "task.completed",
-                        "task_id": task_id,
-                        "device_id": device_id,
-                        "success": success,
-                        "result": result,
-                    },
-                )
-            )
-            # HIGH-5: глобальный set — GC не удалит задачу до завершения
-            _pending_webhook_tasks.add(_t)
-            _t.add_done_callback(_pending_webhook_tasks.discard)
-
         # ── TaskBatch авто-агрегация: обновить счётчики succeeded/failed/status ──
         if task.batch_id:
             await self._aggregate_batch(task.batch_id, success)
+        webhook_url = task.input_params.get("webhook_url") if task.input_params else None
+        if webhook_url or settings.WEBHOOK_SUBSCRIPTIONS_ENABLED:
+            tags = None
+            if settings.WEBHOOK_SUBSCRIPTIONS_ENABLED:
+                tags = await self.db.scalar(select(Device.tags).where(Device.id == task.device_id, Device.org_id == task.org_id))
+            callback = {
+                "event_type": "task.completed", "task_id": task_id, "device_id": device_id,
+                "success": success, "result": result,
+            }
+            subscription_payload = {
+                "task_id": task_id, "script_id": str(task.script_id) if task.script_id else None,
+                "success": success, "device": {"id": device_id, "tags": tags or []},
+            }
+            await enqueue_task_webhooks(
+                self.db, task.org_id, task.id, webhook_url, callback,
+                "task.completed" if success else "task.failed", subscription_payload, tags or [],
+            )
+        if release_queue:
+            await self._safe_mark_completed(task_id, device_id)
         return True
+
+    async def release_committed_result(self, task_id: str, device_id: str) -> None:
+        """Release the owned Redis lease once terminal SQL and delivery intents are committed."""
+        await self._safe_mark_completed(task_id, device_id)
 
     # ── TaskBatch авто-агрегация ────────────────────────────────────────────
 

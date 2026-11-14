@@ -51,7 +51,7 @@ it('does not resurrect a logged-out session from a delayed startup refresh', asy
   await waitFor(() => expect(refreshRequests).toHaveLength(1));
   act(() => useAuthStore.getState().logout());
   await act(async () => refreshReply.resolve(tokens('a')));
-  await waitFor(() => expect(hook.result.current).toBe(true));
+  await waitFor(() => expect(hook.result.current.state).toBe('ready'));
   expect(useAuthStore.getState().accessToken).toBeNull();
   expect(getRefreshToken()).toBeNull();
 });
@@ -59,8 +59,24 @@ it('does not resurrect a logged-out session from a delayed startup refresh', asy
 it('shares one startup refresh through StrictMode effect replay', async () => {
   const hook = renderHook(() => useInitAuth(), { wrapper: ({ children }) => <StrictMode>{children}</StrictMode> });
   await act(async () => refreshReply.resolve(tokens('a')));
-  await waitFor(() => expect(hook.result.current).toBe(true));
+  await waitFor(() => expect(hook.result.current.state).toBe('ready'));
   expect(refreshRequests).toHaveLength(1);
+  expect(useAuthStore.getState().user?.org_id).toBe('a');
+});
+
+it('reports a temporary startup failure and restores the same session on explicit retry', async () => {
+  const hook = renderHook(() => useInitAuth());
+  await waitFor(() => expect(refreshRequests).toHaveLength(1));
+  const first = refreshRequests[0];
+  await act(async () => refreshReply.reject(new AxiosError('refresh unavailable', 'ERR_BAD_RESPONSE', first,
+    undefined, response(first, {}, 503))));
+  await waitFor(() => expect(hook.result.current.state).toBe('unavailable'));
+  expect(useAuthStore.getState().explicitlySignedOut).toBe(false);
+  refreshReply = deferred<ReturnType<typeof tokens>>();
+  act(() => hook.result.current.retry());
+  await waitFor(() => expect(refreshRequests).toHaveLength(2));
+  await act(async () => refreshReply.resolve(tokens('a')));
+  expect(hook.result.current.state).toBe('ready');
   expect(useAuthStore.getState().user?.org_id).toBe('a');
 });
 
@@ -155,7 +171,7 @@ it('coalesces concurrent 401s and retries each request at most once', async () =
 it('bounds the refresh transport wait', async () => {
   const hook = renderHook(() => useInitAuth());
   await act(async () => refreshReply.resolve(tokens('a')));
-  await waitFor(() => expect(hook.result.current).toBe(true));
+  await waitFor(() => expect(hook.result.current.state).toBe('ready'));
   expect(refreshRequests[0].timeout).toBeGreaterThan(0);
   expect(refreshRequests[0].timeout).toBeLessThanOrEqual(10_000);
 });
@@ -171,8 +187,8 @@ it('shares startup refresh with a second initializer and an API 401', async () =
   await waitFor(() => expect(refreshRequests).toHaveLength(1));
   await act(async () => refreshReply.resolve(tokens('a')));
   expect((await pending).data).toBe('accounts');
-  expect(first.result.current).toBe(true);
-  expect(second.result.current).toBe(true);
+  expect(first.result.current.state).toBe('ready');
+  expect(second.result.current.state).toBe('ready');
   expect(refreshRequests).toHaveLength(1);
 });
 
@@ -242,7 +258,7 @@ it.each([400, 401, 403, 422])('retires credentials after an authoritative refres
 it('does not restore a cookie session after an explicit logout and remount', async () => {
   useAuthStore.getState().logout();
   const hook = renderHook(() => useInitAuth());
-  await waitFor(() => expect(hook.result.current).toBe(true));
+  await waitFor(() => expect(hook.result.current.state).toBe('ready'));
   expect(refreshRequests).toHaveLength(0);
   expect(useAuthStore.getState().user).toBeNull();
 });

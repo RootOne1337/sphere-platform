@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp,
   Download, Loader2, RefreshCw, ShieldCheck,
@@ -9,7 +10,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { AuditFiltersForm } from '@/src/features/audit/AuditFiltersForm';
-import { type AuditFilters } from '@/src/features/audit/investigation';
+import { isAuditRequestId, type AuditFilters } from '@/src/features/audit/investigation';
 import { useAuditExport } from '@/src/features/audit/useAuditExport';
 import { useAuthStore } from '@/lib/store';
 import { AuditDrawer } from '@/src/features/audit/AuditDrawer';
@@ -49,15 +50,21 @@ function formatTimestamp(value: string) {
 }
 
 export default function AuditLogsPage() {
+  return <Suspense fallback={<p role="status" className="p-6">Загрузка журнала аудита…</p>}><AuditRoute /></Suspense>;
+}
+
+function AuditRoute() {
   const actor = useAuthStore(state => state.user);
   const version = useAuthStore(state => state.sessionVersion);
   const scope = `${actor?.id}:${actor?.org_id}:${actor?.role}:${version}`;
-  return <AuditInvestigation key={scope} scope={scope} />;
+  const requestId = useSearchParams()?.get('request_id');
+  const initialQuery = isAuditRequestId(requestId) ? `request:${requestId}` : '';
+  return <AuditInvestigation key={`${scope}:${initialQuery}`} scope={scope} initialQuery={initialQuery} />;
 }
 
-function AuditInvestigation({ scope }: { scope: string }) {
+function AuditInvestigation({ scope, initialQuery }: { scope: string; initialQuery: string }) {
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
-  const [filters, setFilters] = useState<AuditFilters>({});
+  const [filters, setFilters] = useState<AuditFilters>(initialQuery ? { q: initialQuery } : {});
   const [page, setPage] = useState(1);
   const csv = useAuditExport();
 
@@ -151,7 +158,7 @@ function AuditInvestigation({ scope }: { scope: string }) {
       </section>
 
       <Card className="overflow-visible">
-        <AuditFiltersForm onApply={applyFilters} />
+        <AuditFiltersForm onApply={applyFilters} initialQuery={initialQuery} />
         {Object.keys(filters).length > 0 && <div className="border-b border-border px-5 py-3 text-xs text-muted-foreground">Применены: {Object.entries(filters).map(([key, value]) => `${key}=${value}`).join(' · ')}</div>}
         {csv.pending && <div role="status" className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Готовим CSV по применённым фильтрам…<Button variant="outline" size="sm" onClick={csv.cancel}>Отменить экспорт</Button></div>}
         {csv.error && <p role="alert" className="border-b border-border px-5 py-3 text-sm text-destructive">{csv.error}</p>}

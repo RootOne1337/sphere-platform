@@ -3,20 +3,39 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import and_, func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute, aliased, defer, load_only
 
+import backend.services.webhook_outbox_worker  # noqa: F401 — registers lifecycle hooks
+from backend.core.config import settings
 from backend.core.dependencies import get_current_user, get_db, require_permission
 from backend.models.task import Task
 from backend.models.webhook import Webhook
+from backend.models.webhook_delivery import WebhookDelivery
 from backend.schemas.webhook import (
+    DeliveryStatus,
     WebhookCreate,
+    WebhookDeliveryDetail,
+    WebhookDeliveryList,
+    WebhookDeliveryResponse,
     WebhookListResponse,
     WebhookResponse,
     WebhookUpdate,
 )
 from backend.services.n8n_webhook_service import n8n_webhook_service
+from backend.services.webhook_outbox import (
+    MAX_HISTORY,
+    SUBSCRIPTION_EVENTS,
+    enforce_active_subscription_limit,
+    lock_webhook_tenant,
+    may_replay,
+    replay_delivery,
+    subscription_receiver_allowed,
+)
 
 router = APIRouter(prefix="/n8n", tags=["n8n"])
 
@@ -32,7 +51,7 @@ router = APIRouter(prefix="/n8n", tags=["n8n"])
 async def create_webhook(
     body: WebhookCreate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=require_permission("webhook:write"),
 ) -> WebhookResponse:
     """
     Register a new webhook endpoint.
@@ -47,7 +66,7 @@ async def create_webhook(
         tags=body.tags,
         secret=body.secret,
     )
-    data = WebhookResponse.model_validate(webhook)
+    data = _webhook_response(webhook)
     data.secret = plain_secret  # expose plain secret once on creation
     return data
 
@@ -59,11 +78,14 @@ async def create_webhook(
 )
 async def list_webhooks(
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=require_permission("webhook:read"),
 ) -> WebhookListResponse:
     webhooks = await n8n_webhook_service.get_org_webhooks(db, current_user.org_id)
-    items = [WebhookResponse.model_validate(w) for w in webhooks]
-    return WebhookListResponse(items=items, total=len(items))
+    items = [_webhook_response(w) for w in webhooks]
+    return WebhookListResponse(
+        items=items, total=len(items), publishing_enabled=settings.WEBHOOK_SUBSCRIPTIONS_ENABLED,
+        supported_events=list(SUBSCRIPTION_EVENTS),
+    )
 
 
 @router.get(
@@ -74,10 +96,10 @@ async def list_webhooks(
 async def get_webhook(
     webhook_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=require_permission("webhook:read"),
 ) -> WebhookResponse:
     webhook = await _get_webhook_or_404(db, webhook_id, current_user.org_id)
-    return WebhookResponse.model_validate(webhook)
+    return _webhook_response(webhook)
 
 
 @router.patch(
@@ -89,8 +111,9 @@ async def update_webhook(
     webhook_id: uuid.UUID,
     body: WebhookUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=require_permission("webhook:write"),
 ) -> WebhookResponse:
+    await lock_webhook_tenant(db, current_user.org_id)
     webhook = await _get_webhook_or_404(db, webhook_id, current_user.org_id)
     if body.name is not None:
         webhook.name = body.name
@@ -99,11 +122,13 @@ async def update_webhook(
     if body.tags is not None:
         webhook.tags = body.tags
     if body.is_active is not None:
+        if body.is_active and not webhook.is_active:
+            await enforce_active_subscription_limit(db, current_user.org_id)
         webhook.is_active = body.is_active
     db.add(webhook)
     await db.commit()
     await db.refresh(webhook)
-    return WebhookResponse.model_validate(webhook)
+    return _webhook_response(webhook)
 
 
 @router.delete(
@@ -114,12 +139,109 @@ async def update_webhook(
 async def delete_webhook(
     webhook_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=require_permission("webhook:write"),
 ) -> Response:
+    await lock_webhook_tenant(db, current_user.org_id)
     deleted = await n8n_webhook_service.delete_webhook(db, webhook_id, current_user.org_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def _webhook_response(webhook: Webhook) -> WebhookResponse:
+    response = WebhookResponse.model_validate(webhook)
+    response.receiver_allowed = subscription_receiver_allowed(webhook.url)
+    return response
+
+
+def _delivery_rows():
+    return select(WebhookDelivery, Webhook, WebhookDelivery.body.is_not(None)).options(
+        defer(WebhookDelivery.body, raiseload=True), defer(WebhookDelivery.signature, raiseload=True),
+    ).outerjoin(Webhook, and_(Webhook.id == WebhookDelivery.webhook_id, Webhook.org_id == WebhookDelivery.org_id))
+
+
+@router.get("/deliveries", response_model=WebhookDeliveryList, summary="List webhook delivery history")
+async def list_deliveries(
+    response: Response,
+    page: int = Query(1, ge=1, le=MAX_HISTORY),
+    per_page: int = Query(25, ge=1, le=100),
+    delivery_status: DeliveryStatus | None = Query(None, alias="status"),
+    webhook_id: uuid.UUID | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user=require_permission("webhook:read"),
+) -> WebhookDeliveryList:
+    filters = [WebhookDelivery.org_id == current_user.org_id]
+    if delivery_status is not None:
+        filters.append(WebhookDelivery.status == delivery_status)
+    if webhook_id is not None:
+        filters.append(WebhookDelivery.webhook_id == webhook_id)
+    counter = select(func.count().label("total")).select_from(WebhookDelivery).where(*filters).subquery()
+    summary_columns: list[InstrumentedAttribute[Any]] = [
+        WebhookDelivery.id, WebhookDelivery.org_id, WebhookDelivery.webhook_id, WebhookDelivery.subject_id,
+        WebhookDelivery.source, WebhookDelivery.event_type, WebhookDelivery.destination, WebhookDelivery.status,
+        WebhookDelivery.attempts_count, WebhookDelivery.max_attempts, WebhookDelivery.replay_count,
+        WebhookDelivery.next_attempt_at, WebhookDelivery.last_http_status, WebhookDelivery.last_error,
+        WebhookDelivery.created_at, WebhookDelivery.updated_at,
+    ]
+    page_rows = select(
+        *summary_columns, WebhookDelivery.body.is_not(None).label("has_body"),
+    ).where(*filters).order_by(
+        WebhookDelivery.created_at.desc(), WebhookDelivery.id.desc(),
+    ).offset((page - 1) * per_page).limit(per_page).subquery()
+    delivery_row = aliased(WebhookDelivery, page_rows)
+    rows = (await db.execute(select(counter.c.total, delivery_row, Webhook, page_rows.c.has_body).options(
+        load_only(*[getattr(delivery_row, column.key) for column in summary_columns], raiseload=True),
+    ).select_from(counter).outerjoin(page_rows, true()).outerjoin(Webhook, and_(
+        Webhook.id == delivery_row.webhook_id, Webhook.org_id == delivery_row.org_id,
+    )).order_by(delivery_row.created_at.desc(), delivery_row.id.desc()))).all()
+    response.headers["Cache-Control"] = "no-store"
+    return WebhookDeliveryList(
+        items=[
+            WebhookDeliveryResponse.model_validate(delivery).model_copy(update={
+                "can_replay": may_replay(delivery, subscription, has_body=has_body),
+            })
+            for _, delivery, subscription, has_body in rows if delivery is not None
+        ],
+        total=rows[0][0], page=page, per_page=per_page,
+    )
+
+
+@router.get("/deliveries/{delivery_id}", response_model=WebhookDeliveryDetail, summary="Read webhook delivery attempts")
+async def get_delivery(
+    delivery_id: uuid.UUID,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    current_user=require_permission("webhook:read"),
+) -> WebhookDeliveryDetail:
+    row = (await db.execute(_delivery_rows().where(
+        WebhookDelivery.id == delivery_id, WebhookDelivery.org_id == current_user.org_id,
+    ))).one_or_none()
+    if row is None:
+        raise HTTPException(404, "Webhook delivery not found")
+    delivery, subscription, has_body = row
+    response.headers["Cache-Control"] = "no-store"
+    return WebhookDeliveryDetail.model_validate(delivery).model_copy(update={
+        "can_replay": may_replay(delivery, subscription, has_body=has_body),
+    })
+
+
+@router.post(
+    "/deliveries/{delivery_id}/replay", response_model=WebhookDeliveryResponse,
+    summary="Retry one terminal webhook delivery with the original delivery ID",
+    responses={409: {"description": "Replay is unavailable or tenant delivery capacity is full"}},
+)
+async def replay_webhook_delivery(
+    delivery_id: uuid.UUID,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    current_user=require_permission("webhook:write"),
+) -> WebhookDeliveryResponse:
+    delivery = await replay_delivery(db, current_user.org_id, delivery_id)
+    await db.refresh(delivery, ["updated_at"])
+    snapshot = WebhookDeliveryResponse.model_validate(delivery)
+    await db.commit()
+    response.headers["Cache-Control"] = "no-store"
+    return snapshot
 
 
 # ── Task creation (n8n → Sphere) ─────────────────────────────────────────────

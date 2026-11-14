@@ -7,7 +7,11 @@ let mockError = false;
 let mockLoading = false;
 let mockRows: any[];
 let mockPipelines: any;
-jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
+let mockSearchParams = '';
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => new URLSearchParams(mockSearchParams),
+}));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: unknown) => value }));
 jest.mock('@/lib/hooks/useTasks', () => ({
   useTasks: (params: any) => {
@@ -33,7 +37,7 @@ jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: () => ({ data: { items:
 jest.mock('@/lib/hooks/useBatches', () => ({ useBroadcastBatch: () => ({ mutate: jest.fn() }) }));
 
 beforeEach(() => {
-  jest.clearAllMocks(); mockError=false; mockLoading=false;
+  jest.clearAllMocks(); mockError=false; mockLoading=false; mockSearchParams='';
   mockRows = Array.from({ length: 190 }, (_, i) => ({
     id:`task-${i}`, script_id:'script', device_id:'agent', priority:5,
     script_name:i===189?'Old failure':'Safe system scenario',
@@ -128,4 +132,22 @@ it('returns to a valid server page when polling shrinks the result set', () => {
   expect(screen.getByText('1 / 1')).toBeInTheDocument();
   expect(mockQueries).toHaveBeenLastCalledWith(expect.objectContaining({ active_only:true }));
   expect(screen.queryByText('Задачи не найдены')).not.toBeInTheDocument();
+});
+
+it('passes exact device and script from a shared URL to both lists', () => {
+  const deviceId = 'b410464a-5f26-4803-a756-7840cc17b128';
+  const scriptId = '1f5ee5b5-161d-40ef-b243-17112cfd6b60';
+  mockSearchParams = `device_id=${deviceId}&script_id=${scriptId}`;
+  render(<TaskEnginePage />);
+  expect(mockQueries).toHaveBeenCalledWith(expect.objectContaining({ device_id: deviceId, script_id: scriptId, include_counts: true }));
+  expect(mockQueries).toHaveBeenCalledWith(expect.objectContaining({ device_id: deviceId, script_id: scriptId, active_only: true }));
+  expect(screen.queryByRole('region', { name: 'Активные pipeline' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Сбросить область истории' })).toHaveAttribute('href', '/tasks');
+});
+
+it('does not replace an invalid scoped URL with the general task list', () => {
+  mockSearchParams = 'device_id=bad-link';
+  render(<TaskEnginePage />);
+  expect(screen.getByRole('alert')).toHaveTextContent('некорректный ID');
+  expect(mockQueries).not.toHaveBeenCalled();
 });

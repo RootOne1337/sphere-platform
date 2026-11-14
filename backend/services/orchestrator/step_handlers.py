@@ -15,11 +15,14 @@ from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
 
 import structlog
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.models.device import Device
 from backend.models.pipeline import PipelineRun, PipelineRunStatus
 from backend.models.task import Task, TaskStatus
+from backend.services.application_account_scope import resolve_application_account_scope
 from backend.services.orchestrator.pipeline_ownership import (
     PipelineSuspended,
     current_ownership,
@@ -175,6 +178,7 @@ async def handle_execute_script(
         org_id=run.org_id,
         script_id=script_id,
         device_id=run.device_id,
+        pipeline_run_id=run.id,
         script_version_id=version.id if version else None,
         status=TaskStatus.QUEUED,
         priority=priority,
@@ -630,6 +634,8 @@ async def handle_sub_pipeline(
         input_params=sub_input,
         steps_snapshot=pipeline.steps,
         context={"parent_run_id": str(run.id)},
+        trigger_root_event_id=run.trigger_root_event_id or run.trigger_event_id,
+        trigger_path=run.trigger_path or ([str(run.event_trigger_id)] if run.event_trigger_id else None),
         step_logs=[],
     )
     db.add(sub_run)
@@ -752,6 +758,22 @@ async def handle_assign_account(
     from backend.models.game_account import AccountStatus, GameAccount
 
     await fence_write(db, run)
+    device = await db.scalar(select(Device).where(
+        Device.id == run.device_id, Device.org_id == run.org_id, Device.is_active.is_(True),
+    ).with_for_update().execution_options(populate_existing=True))
+    if device is None:
+        return StepResult(status="failure", error="Устройство недоступно")
+    try:
+        scope = await resolve_application_account_scope(db, device)
+    except HTTPException as exc:
+        return StepResult(status="failure", error=str(exc.detail))
+    if scope is not None and game != scope[0]:
+        return StepResult(status="failure", error="Игра не совпадает с профилем устройства")
+    candidates = select(GameAccount).where(
+        GameAccount.org_id == run.org_id, GameAccount.status == AccountStatus.free,
+    )
+    if scope is not None:
+        candidates = candidates.where(GameAccount.game == scope[0], GameAccount.server_name == scope[1])
     specific_id = params.get("account_id")
     if specific_id:
         # Назначить конкретный аккаунт
@@ -761,20 +783,12 @@ async def handle_assign_account(
             return StepResult(status="failure", error=f"Некорректный account_id: {specific_id}")
 
         account = (await db.execute(
-            select(GameAccount).where(
-                GameAccount.id == acc_uuid,
-                GameAccount.org_id == run.org_id,
-                GameAccount.status == AccountStatus.free,
-            ).with_for_update(skip_locked=True)
+            candidates.where(GameAccount.id == acc_uuid).with_for_update(skip_locked=True)
         )).scalar_one_or_none()
     else:
         # Найти любой свободный аккаунт этой игры
         account = (await db.execute(
-            select(GameAccount).where(
-                GameAccount.org_id == run.org_id,
-                GameAccount.game == game,
-                GameAccount.status == AccountStatus.free,
-            ).order_by(GameAccount.created_at.asc())
+            candidates.where(GameAccount.game == game).order_by(GameAccount.created_at.asc(), GameAccount.id.asc())
             .limit(1)
             .with_for_update(skip_locked=True)
         )).scalar_one_or_none()
@@ -871,11 +885,30 @@ async def handle_release_account(
         select(GameAccount).where(
             GameAccount.id == account_id,
             GameAccount.org_id == run.org_id,
-        )
+        ).with_for_update().execution_options(populate_existing=True)
     )).scalar_one_or_none()
 
     if not account:
         return StepResult(status="failure", error=f"Аккаунт {account_id_str} не найден")
+    if account.device_id != run.device_id or account.status != AccountStatus.in_use:
+        return StepResult(status="failure", error="Назначение аккаунта изменилось")
+    session = None
+    if session_id_str:
+        try:
+            session_id = uuid.UUID(session_id_str)
+        except (ValueError, TypeError):
+            return StepResult(status="failure", error="Некорректный ID сессии аккаунта")
+        session = await db.scalar(select(AccountSession).where(
+            AccountSession.id == session_id, AccountSession.org_id == run.org_id,
+            AccountSession.account_id == account.id, AccountSession.device_id == run.device_id,
+            AccountSession.pipeline_run_id == run.id, AccountSession.ended_at.is_(None),
+        ).with_for_update())
+        if session is None or (account.assigned_at is not None and session.started_at != account.assigned_at):
+            return StepResult(status="failure", error="Сессия назначения изменилась")
+        try:
+            reason = SessionEndReason(end_reason)
+        except ValueError:
+            return StepResult(status="failure", error="Некорректная причина завершения сессии")
 
     now = datetime.now(timezone.utc)
 
@@ -894,17 +927,11 @@ async def handle_release_account(
     account.last_session_end = now
 
     # Завершить сессию
-    if session_id_str:
-        try:
-            session_id = uuid.UUID(session_id_str)
-            session = await db.get(AccountSession, session_id)
-            if session and session.ended_at is None:
-                session.ended_at = now
-                session.end_reason = SessionEndReason(end_reason)
-                session.level_after = account.level
-                session.balance_after = account.balance_rub
-        except (ValueError, TypeError):
-            pass
+    if session is not None:
+        session.ended_at = now
+        session.end_reason = reason
+        session.level_after = account.level
+        session.balance_after = account.balance_rub
 
     await db.flush()
 

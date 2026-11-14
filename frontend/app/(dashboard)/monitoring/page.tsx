@@ -11,7 +11,7 @@ import { Input } from '@/src/shared/ui/input';
 import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
 import { ObservabilityPanel } from '@/src/features/monitoring/ObservabilityPanel';
 import { FleetCoveragePanel } from '@/src/features/monitoring/FleetCoveragePanel';
-import { deriveNetworkRate, formatBytes, formatBytesPerSecond, getMonitoringTelemetryGaps, type ClusterNode, type MonitoringMetrics, type NetworkCounterSample, type NetworkRate, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
+import { deriveNetworkRate, formatBytes, formatBytesPerSecond, getMonitoringTelemetryGaps, getTunnelMeasurement, type ClusterNode, type MonitoringMetrics, type NetworkCounterSample, type NetworkRate, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
 
 type StatusFilter = 'all' | 'healthy' | 'attention' | 'unavailable';
 
@@ -153,6 +153,9 @@ export default function MonitoringPage() {
     const metrics = metricsQuery.data;
     const nodes = nodesQuery.data;
     const telemetryGaps = getMonitoringTelemetryGaps(metrics);
+    const tunnels = getTunnelMeasurement(metrics?.network);
+    const tunnelDisplay = metricsQuery.isLoading ? '—' : metricsQuery.isError ? 'Недоступно'
+        : tunnels.state === 'ready' ? tunnels.count : tunnels.state === 'unmeasured' ? 'Не измеряется' : 'Недоступно';
     const systemHealth = summarizeMonitoringHealth(nodes, {
         loading: nodesQuery.isLoading || metricsQuery.isLoading,
         failed: nodesQuery.isError,
@@ -270,7 +273,7 @@ export default function MonitoringPage() {
                         <div className="min-w-0"><dt className="flex items-center gap-1 text-muted-foreground"><ArrowDownToLine className="h-3 w-3" aria-hidden="true" />RX всего</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : formatBytes(metrics?.network?.rxTotalBytes)}</dd></div>
                         <div className="min-w-0"><dt className="text-muted-foreground">TX / с</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : networkRate.state === 'ready' ? formatBytesPerSecond(networkRate.txBytesPerSecond) : '—'}</dd></div>
                         <div className="min-w-0"><dt className="text-muted-foreground">RX / с</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : networkRate.state === 'ready' ? formatBytesPerSecond(networkRate.rxBytesPerSecond) : '—'}</dd></div>
-                        <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">Активные туннели</dt><dd className="mt-1 font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : metrics?.network?.activeTunnels == null ? 'Не измеряется' : metrics.network.activeTunnels}</dd></div>
+                        <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">Активные туннели</dt><dd className="mt-1 font-medium text-foreground">{tunnelDisplay}</dd></div>
                     </dl>
                     <p className="mt-3 text-[11px] text-muted-foreground" role="status" aria-live="polite">{metricsQuery.isError ? 'Скорость недоступна: API не вернул свежий замер.' : networkRateStateLabel(networkRate)} · скорость вычисляется по двум замерам во время открытой страницы.</p>
                 </MetricCard>

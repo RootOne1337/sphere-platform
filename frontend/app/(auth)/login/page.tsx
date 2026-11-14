@@ -1,8 +1,7 @@
 'use client';
 
 import { SphereMark } from '@/src/shared/ui/SphereMark';
-import { useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,9 +19,10 @@ const authApi = axios.create({
 });
 
 export default function LoginPage() {
-  const router = useRouter();
   const logoutWarning = useAuthStore(s => s.logoutWarning);
   const attemptVersion = useRef<number | null>(null);
+  const mounted = useRef(false);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -49,7 +49,7 @@ export default function LoginPage() {
         { email, password },
       );
 
-      if (useAuthStore.getState().sessionVersion !== version) return;
+      if (!mounted.current || useAuthStore.getState().sessionVersion !== version) return;
 
       // Check if MFA is required
       if (data.mfa_required) {
@@ -59,12 +59,12 @@ export default function LoginPage() {
         return;
       }
 
-      if (useAuthStore.getState().completeLogin(data, version)) router.replace('/dashboard');
+      useAuthStore.getState().completeLogin(data, version);
     } catch (err: unknown) {
-      if (useAuthStore.getState().sessionVersion !== version) return;
+      if (!mounted.current || useAuthStore.getState().sessionVersion !== version) return;
       setError(getApiErrorMessage(err, 'Не удалось войти. Проверьте данные и подключение.'));
     } finally {
-      setLoading(false);
+      if (mounted.current && useAuthStore.getState().sessionVersion === version) setLoading(false);
     }
   };
 
@@ -81,12 +81,12 @@ export default function LoginPage() {
         '/auth/login/mfa',
         { state_token: stateToken, code: mfaCode },
       );
-      if (useAuthStore.getState().completeLogin(data, version)) router.replace('/dashboard');
+      if (mounted.current) useAuthStore.getState().completeLogin(data, version);
     } catch (err: unknown) {
-      if (useAuthStore.getState().sessionVersion !== version) return;
+      if (!mounted.current || useAuthStore.getState().sessionVersion !== version) return;
       setError(getApiErrorMessage(err, 'Не удалось подтвердить вход. Проверьте код и повторите.'));
     } finally {
-      setLoading(false);
+      if (mounted.current && useAuthStore.getState().sessionVersion === version) setLoading(false);
     }
   };
 

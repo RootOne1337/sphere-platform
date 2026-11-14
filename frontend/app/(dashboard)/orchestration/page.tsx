@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { Suspense, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { PipelineDefinitionDialog } from '@/src/features/orchestration/PipelineDefinitionDialog';
 import { toast } from 'sonner';
 import { Button } from '@/src/shared/ui/button';
@@ -51,12 +54,11 @@ import {
     Loader2,
 } from 'lucide-react';
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
-import { useScripts, Script } from '@/lib/hooks/useScripts';
-import { formatScriptStepCount, getScriptStepCount } from '@/src/features/scripts/scriptPresentation';
 import { ScheduleExecutionHistoryDialog } from '@/components/orchestration/ScheduleExecutionHistoryDialog';
 import { PipelineCatalogPicker } from '@/components/orchestration/PipelineCatalogPicker';
 import { PipelineResumeControl } from '@/components/orchestration/PipelineResumeControl';
-import { isoToUtcDateTimeInput, utcDateTimeInputToIso, isValidUtcDateTimeInput } from '@/src/features/orchestration/scheduleTime';
+import { ScriptCatalogPicker } from '@/components/orchestration/ScriptCatalogPicker';
+import { isoToUtcDateTimeInput, utcDateTimeInputToIso, isValidUtcDateTimeInput, formatScheduleUtc, formatScheduleLocal, scheduleRevision } from '@/src/features/orchestration/scheduleTime';
 import { useCatalogPage, CATALOG_PER_PAGE } from '@/src/features/orchestration/useCatalogPage';
 import { CatalogPagination } from '@/src/shared/ui/catalog-pagination';
 
@@ -95,6 +97,7 @@ interface PipelineRun {
     pipeline_id: string;
     device_id: string;
     status: string;
+    pipeline_version?: number | null;
     current_step_id: string | null;
     execution_phase?: string;
     execution_lease_until?: string | null;
@@ -139,6 +142,9 @@ interface Schedule {
     next_fire_at: string | null;
     last_fired_at: string | null;
     created_at: string;
+    updated_at: string;
+    active_until?: string | null;
+    max_runs?: number | null;
 }
 
 const EMPTY_PIPELINES: Pipeline[] = [];
@@ -208,12 +214,26 @@ const STEP_TYPE_COLORS: Record<string, string> = {
 type TabKey = 'pipelines' | 'schedules' | 'runs';
 
 export default function OrchestrationPage() {
-    const [tab, setTab] = useState<TabKey>('pipelines');
+    return <Suspense fallback={<p role="status" className="p-6 text-sm text-muted-foreground">Загрузка оркестрации…</p>}><ScopedOrchestrationPage /></Suspense>;
+}
+
+function ScopedOrchestrationPage() {
+    const params = useSearchParams();
+    const runId = params?.get('run_id') || undefined;
+    const batchId = params?.get('batch_id') || undefined;
+    const receiptKey = `${runId ?? ''}:${batchId ?? ''}`;
+    return <OrchestrationContent key={receiptKey} runId={runId} batchId={batchId} />;
+}
+
+function OrchestrationContent({ runId, batchId }: { runId?: string; batchId?: string }) {
+    const receipt = runId ?? batchId;
+    const [tab, setTab] = useState<TabKey>(receipt ? 'runs' : 'pipelines');
     const [search, setSearch] = useState('');
-    const [runPipelineTarget, setRunPipelineTarget] = useState<Pipeline | null>(null);
+    const [launchTarget, setLaunchTarget] = useState<{ pipeline: Pipeline; scope: string } | null>(null);
     const actor = useAuthStore(s => s.user);
     const session = useAuthStore(s => s.sessionVersion);
     const definitionScope = `${actor?.org_id}:${actor?.id}:${actor?.role}:${session}`;
+    const runPipelineTarget = launchTarget?.scope === definitionScope ? launchTarget.pipeline : null;
     const canManageDefinition = Boolean(actor && ['device_manager', 'org_admin', 'org_owner', 'super_admin'].includes(actor.role));
     const [definition, setDefinition] = useState<{ id: string; scope: string; action: 'view' | 'activation' } | null>(null);
     const [showCreateSchedule, setShowCreateSchedule] = useState(false);
@@ -222,7 +242,8 @@ export default function OrchestrationPage() {
     const [filters, setFilters] = useState<Record<TabKey, string>>({ pipelines: 'all', runs: 'all', schedules: 'all' });
     const pipelineFilter = filters.pipelines === 'all' ? {} : { is_active: filters.pipelines === 'active' };
     const scheduleFilter = filters.schedules === 'all' ? {} : { is_active: filters.schedules === 'active' };
-    const runFilter = filters.runs === 'all' ? {} : filters.runs === 'active' ? { active_only: true } : { status: filters.runs };
+    const runFilter = { ...(filters.runs === 'all' ? {} : filters.runs === 'active' ? { active_only: true } : { status: filters.runs }),
+        ...(runId ? { run_id: runId } : {}), ...(batchId ? { batch_id: batchId } : {}) };
     const pipelinesQuery = useCatalogPage<Pipeline>('pipelines', pages.pipelines, pipelineFilter, { polling: tab === 'pipelines' });
     const runsQuery = useCatalogPage<PipelineRun>('pipeline-runs', pages.runs, runFilter, { polling: tab === 'runs' });
     const schedulesQuery = useCatalogPage<Schedule>('schedules', pages.schedules, scheduleFilter, { polling: tab === 'schedules' });
@@ -354,6 +375,7 @@ export default function OrchestrationPage() {
 
             {/* ── CONTENT ────────────────────────────────────────────────────── */}
             <div className="flex-1 overflow-auto p-6">
+                {tab === 'runs' && receipt && <div className="mb-3 flex flex-wrap items-center gap-3 text-sm"><span>{runId ? 'Запуск' : 'Пакет'} <code className="break-all">{receipt}</code></span><Link className="text-primary underline" href="/orchestration">Сбросить выборку</Link></div>}
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <label className="text-xs text-muted-foreground">Серверный фильтр
                         <select aria-label={tab === 'runs' ? 'Серверный фильтр запусков' : tab === 'pipelines' ? 'Серверный фильтр конвейеров' : 'Серверный фильтр расписаний'} value={filters[tab]} onChange={e => changeFilter(e.target.value)} className="ml-2 rounded-md border border-border bg-card p-2 text-sm text-foreground">
@@ -365,9 +387,9 @@ export default function OrchestrationPage() {
                     <Button variant="outline" size="sm" aria-label="Обновить текущий каталог" disabled={currentQuery.isFetching} onClick={() => { void currentQuery.refetch(); }}>{currentQuery.isFetching ? 'Обновляем…' : 'Обновить каталог'}</Button>
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">Текстовый поиск применяется только к текущей странице. Для других записей используйте страницы и серверный фильтр.</p>
-                {!changingPage && tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} error={pipelinesQuery.isError} hasSnapshot={pipelinesQuery.isSuccess} filteredByServer={filters.pipelines !== 'all'} search={search} onRunPipeline={setRunPipelineTarget} canManage={canManageDefinition} onDefinition={(p, action) => { if (actor) setDefinition({ id: p.id, scope: definitionScope, action }); }} />}
+                {!changingPage && tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} error={pipelinesQuery.isError} hasSnapshot={pipelinesQuery.isSuccess} filteredByServer={filters.pipelines !== 'all'} search={search} onRunPipeline={pipeline => setLaunchTarget({ pipeline, scope: definitionScope })} canManage={canManageDefinition} onDefinition={(p, action) => { if (actor) setDefinition({ id: p.id, scope: definitionScope, action }); }} />}
                 {!changingPage && tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} error={runsQuery.isError} hasSnapshot={runsQuery.isSuccess} filteredByServer={filters.runs !== 'all'} search={search} />}
-                {!changingPage && tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} error={schedulesQuery.isError} hasSnapshot={schedulesQuery.isSuccess} filteredByServer={filters.schedules !== 'all'} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
+                {!changingPage && tab === 'schedules' && <SchedulesTab key={definitionScope} requestScope={`${actor?.org_id}:${actor?.id}`} schedules={schedules} loading={sLoading} error={schedulesQuery.isError} hasSnapshot={schedulesQuery.isSuccess} filteredByServer={filters.schedules !== 'all'} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
                 {changingPage && <p role="status">Каталог изменился; загружаем доступную страницу…</p>}
                 {currentData && !changingPage && <div className="mt-4"><CatalogPagination page={pages[tab]} perPage={CATALOG_PER_PAGE} total={currentData.total} busy={currentQuery.isFetching} label={currentLabel} onPageChange={page => setPages(previous => ({ ...previous, [tab]: page }))} /></div>}
             </div>
@@ -375,9 +397,10 @@ export default function OrchestrationPage() {
             {/* ── МОДАЛКИ (controlled mode — Dialog всегда в DOM, Portal рендерится по open) ── */}
             {actor && definition?.scope === definitionScope && <PipelineDefinitionDialog key={`${definitionScope}:${definition.id}`} pipelineId={definition.id} orgId={actor.org_id} scope={definitionScope} canManage={canManageDefinition} initialAction={definition.action} onClose={() => setDefinition(null)} />}
             <RunPipelineDialog
+                key={`${definitionScope}:${runPipelineTarget?.id ?? ''}`}
                 pipeline={runPipelineTarget}
                 open={!!runPipelineTarget}
-                onOpenChange={(v) => { if (!v) setRunPipelineTarget(null); }}
+                onOpenChange={(v) => { if (!v) setLaunchTarget(null); }}
             />
             <CreateScheduleDialog
                 open={showCreateSchedule}
@@ -737,6 +760,7 @@ function RunRow({
                         {pipelineName || run.pipeline_id}
                     </div>
                     <div className="text-[10px] text-[#555] mt-0.5">{run.id.slice(0, 12)}...</div>
+                    {run.pipeline_version != null && <span className="text-[10px] text-muted-foreground">Версия {run.pipeline_version}</span>}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{run.device_id.slice(0, 12)}...</td>
                 <td className="px-4 py-3">
@@ -813,28 +837,141 @@ function RunRow({
 //  TAB: SCHEDULES
 // ============================================================================
 
-function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filteredByServer, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
+const SCHEDULE_REQUEST_MAX_AGE = 24 * 60 * 60 * 1000;
+const SCHEDULE_STALE = 'schedule_revision_conflict';
+const SCHEDULE_CONFLICT_TEXT = 'Расписание изменилось. Сверьте обновлённые данные перед повтором.';
+const SCHEDULE_CRON_POLICY = 'CRON использует местное время выбранной зоны. Весной отсутствующий час пропускается, осенью повторяющееся время выполняется один раз в первое вхождение.';
+type PendingScheduleFire = { key: string; created: number; revision?: string };
+
+function scheduleConflict(error: unknown) {
+    return getApiErrorMessage(error, '') === SCHEDULE_STALE;
+}
+
+function ScheduleNextFire({ schedule }: { schedule: Schedule }) {
+    const { is_active, next_fire_at, cron_expression, timezone, max_runs, total_runs, active_until } = schedule;
+    if (next_fire_at && is_active) {
+        const local = cron_expression ? formatScheduleLocal(next_fire_at, timezone) : null;
+        return <div>
+            <time className="font-semibold text-foreground" dateTime={next_fire_at}>{formatScheduleUtc(next_fire_at)}</time>
+            {local && <p className="mt-1 text-[10px] text-muted-foreground">{local} · {timezone}</p>}
+        </div>;
+    }
+    const reason = max_runs != null && total_runs >= max_runs ? 'Лимит запусков исчерпан'
+        : active_until && Date.parse(active_until) < Date.now() ? 'Окно активности завершилось'
+            : !is_active ? 'Отключено' : 'Время не назначено';
+    return <span className="text-muted-foreground">{reason}</span>;
+}
+
+function scheduleRequestId() {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
+}
+
+function SchedulesTab({ requestScope, schedules, loading, error, hasSnapshot, filteredByServer, search, onCreateSchedule, onEditSchedule }: { requestScope: string; schedules: Schedule[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
     const queryClient = useQueryClient();
     const [historySchedule, setHistorySchedule] = useState<Schedule | null>(null);
-
-    const toggleMut = useMutation({
-        mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-            api.post(`/schedules/${id}/toggle?active=${active}`),
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['schedules'] }); toast.success('Расписание обновлено'); },
-        onError: () => toast.error('Ошибка'),
+    const [notice, setNotice] = useState<{ id: string; error?: boolean; text: string } | null>(null);
+    const changeLock = useRef(false);
+    const fireRequests = useRef(new Map<string, PendingScheduleFire>());
+    const storageKey = (id: string) => `sphere:schedule-fire:${requestScope}:${id}`;
+    function pendingFire(id: string): PendingScheduleFire | undefined {
+        const cached = fireRequests.current.get(id);
+        if (cached) return cached;
+        try {
+            const stored = JSON.parse(sessionStorage.getItem(storageKey(id)) ?? 'null') as PendingScheduleFire | null;
+            if (stored && /^[0-9a-f-]{36}$/.test(stored.key) && Number.isFinite(stored.created)
+                && (stored.revision === undefined || scheduleRevision(stored.revision))) return stored;
+        } catch { /* The in-memory copy remains available when storage is disabled. */ }
+        return undefined;
+    }
+    function rememberFire(id: string, request: PendingScheduleFire) {
+        fireRequests.current.set(id, request);
+        try {
+            sessionStorage.setItem(storageKey(id), JSON.stringify(request));
+        } catch { /* The in-memory copy remains available when storage is disabled. */ }
+    }
+    function clearFire(id: string, expectedKey: string) {
+        if (fireRequests.current.get(id)?.key === expectedKey) fireRequests.current.delete(id);
+        try {
+            const key = storageKey(id);
+            const stored = JSON.parse(sessionStorage.getItem(key) ?? 'null') as PendingScheduleFire | null;
+            if (stored?.key === expectedKey) sessionStorage.removeItem(key);
+        } catch { /* The in-memory copy remains available when storage is disabled. */ }
+    }
+    const changeSchedule = useMutation({
+        mutationFn: async ({ schedule, action, request }: { schedule: Schedule; action: 'toggle' | 'fire' | 'delete'; request?: PendingScheduleFire }) => {
+            const { id, is_active } = schedule;
+            const revision = scheduleRevision(schedule.updated_at);
+            if (action === 'delete') return api.delete(`/schedules/${id}`, { params: { expected_updated_at: revision } });
+            if (action === 'fire') {
+                if (!request) throw new Error('Отсутствует ключ ручного запроса');
+                const response = await api.post(`/schedules/${id}/fire-now`, undefined, {
+                    headers: { 'Idempotency-Key': request.key },
+                    ...(request.revision ? { params: { expected_updated_at: request.revision } } : {}),
+                });
+                if (response.data?.id !== id || !Number.isFinite(Date.parse(response.data?.requested_fire_at))
+                    || typeof response.data?.request_replayed !== 'boolean') {
+                    throw new Error('Квитанция запуска не подтверждена. Повтор использует тот же идентификатор.');
+                }
+                return response;
+            }
+            const response = await api.post(`/schedules/${id}/toggle`, undefined, {
+                params: { active: !is_active, expected_updated_at: revision },
+            });
+            if (response.data?.id !== id || response.data?.is_active !== !is_active) {
+                throw new Error('Состояние расписания не подтверждено');
+            }
+            return response;
+        },
+        onSuccess: async (_response, { schedule, action, request }) => {
+            if (action === 'fire' && request) clearFire(schedule.id, request.key);
+            const text = action === 'fire' ? 'Запрос принят планировщиком. Откройте историю срабатываний для проверки результата.'
+                : action === 'toggle' ? 'Настройка сохранена.' : 'Расписание выключено. История сохранена.';
+            setNotice({ id: schedule.id, text });
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['schedules'] }),
+                queryClient.invalidateQueries({ queryKey: ['schedule-executions', schedule.id] }),
+            ]);
+        },
+        onError: async (failure, { schedule, request }) => {
+            const stale = scheduleConflict(failure);
+            if (stale && request) clearFire(schedule.id, request.key);
+            setNotice({
+                id: schedule.id, error: true,
+                text: stale ? SCHEDULE_CONFLICT_TEXT
+                    : getApiErrorMessage(failure, 'Результат команды не подтверждён. Проверьте расписание и историю срабатываний.'),
+            });
+            if (stale) await queryClient.invalidateQueries({ queryKey: ['schedules'] });
+        },
+        onSettled: () => { changeLock.current = false; },
     });
 
-    const fireNowMut = useMutation({
-        mutationFn: (id: string) => api.post(`/schedules/${id}/fire-now`),
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['schedules'] }); toast.success('Расписание запущено!'); },
-        onError: () => toast.error('Ошибка запуска'),
-    });
-
-    const deleteMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/schedules/${id}`),
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['schedules'] }); toast.success('Расписание удалено'); },
-        onError: () => toast.error('Ошибка удаления'),
-    });
+    function change(schedule: Schedule, action: 'toggle' | 'fire' | 'delete') {
+        if (changeLock.current || error) return;
+        let request = action === 'fire' ? pendingFire(schedule.id) : undefined;
+        const revision = scheduleRevision(schedule.updated_at);
+        if (!request && !revision) {
+            setNotice({ id: schedule.id, error: true, text: 'Версия расписания не подтверждена. Обновите список.' });
+            void queryClient.invalidateQueries({ queryKey: ['schedules'] });
+            return;
+        }
+        if (action === 'fire') {
+            if (!schedule.is_active && !request) return;
+            if (request && Date.now() - request.created >= SCHEDULE_REQUEST_MAX_AGE) {
+                clearFire(schedule.id, request.key);
+                setNotice({ id: schedule.id, error: true, text: 'Срок повтора истёк. Сверьте историю перед новым запросом.' });
+                return;
+            }
+            request ??= { key: scheduleRequestId(), created: Date.now(), revision };
+            rememberFire(schedule.id, request);
+        }
+        changeLock.current = true;
+        setNotice(null);
+        changeSchedule.mutate({ schedule, action, request });
+    }
 
     const filtered = useMemo(() => {
         if (!search) return schedules;
@@ -848,6 +985,8 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filte
 
     return (
         <div className="space-y-4">
+            {notice && !schedules.some(schedule => schedule.id === notice.id) &&
+                <p role={notice.error ? 'alert' : 'status'} className="text-sm">{notice.text}</p>}
             <div className="flex justify-end">
                 <Button variant="outline" size="sm" className="h-8 text-xs font-mono" onClick={onCreateSchedule}>
                     <Plus className="w-3.5 h-3.5 mr-1.5" /> Новое расписание
@@ -882,15 +1021,18 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filte
                             ? { type: 'CRON', value: s.cron_expression, color: 'border-primary text-primary' }
                             : s.interval_seconds
                                 ? { type: 'INTERVAL', value: `каждые ${s.interval_seconds}s`, color: 'border-amber-400 text-amber-400' }
-                                : { type: 'ONE-SHOT', value: s.one_shot_at ? new Date(s.one_shot_at).toLocaleString('ru-RU') : '—', color: 'border-cyan-400 text-cyan-400' };
+                                : { type: 'ONE-SHOT', value: formatScheduleUtc(s.one_shot_at), color: 'border-cyan-400 text-cyan-400' };
 
                         return (
                             <tr key={s.id} className="hover:bg-muted transition-colors group">
                                 <td className="px-4 py-3">
                                     <button
-                                        onClick={() => toggleMut.mutate({ id: s.id, active: !s.is_active })}
-                                        className="focus:outline-none"
-                                        title={s.is_active ? 'Деактивировать' : 'Активировать'}
+                                        type="button"
+                                        onClick={() => change(s, 'toggle')}
+                                        disabled={error || changeSchedule.isPending}
+                                        aria-pressed={s.is_active}
+                                        aria-label={`Активность расписания ${s.name}`}
+                                        className="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
                                     >
                                         {s.is_active
                                             ? <ToggleRight className="w-5 h-5 text-success" />
@@ -901,6 +1043,9 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filte
                                 <td className="px-4 py-3">
                                     <div className="font-bold text-foreground group-hover:text-primary transition-colors">{s.name}</div>
                                     <div className="text-[10px] text-[#555] mt-0.5">{s.id.slice(0, 12)}...</div>
+                                    {changeSchedule.isPending && changeSchedule.variables?.schedule.id === s.id &&
+                                        <p role="status" className="mt-1 whitespace-normal text-muted-foreground">Обновление расписания…</p>}
+                                    {notice?.id === s.id && <p role={notice.error ? 'alert' : 'status'} className={`mt-1 max-w-72 whitespace-normal ${notice.error ? 'text-destructive' : 'text-muted-foreground'}`}>{notice.text}</p>}
                                 </td>
                                 <td className="px-4 py-3">
                                     <Badge variant="outline" className={`text-[9px] ${s.target_type === 'script' ? 'border-emerald-400 text-emerald-400' : 'border-violet-400 text-violet-400'}`}>
@@ -912,14 +1057,12 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filte
                                         <Badge variant="outline" className={`text-[8px] ${triggerInfo.color}`}>{triggerInfo.type}</Badge>
                                         <span className="text-muted-foreground text-[10px]">{triggerInfo.value}</span>
                                     </div>
+                                    {s.cron_expression && <p className="mt-1 text-[10px] text-muted-foreground">{s.timezone || 'UTC'}</p>}
                                 </td>
                                 <td className="px-4 py-3 text-muted-foreground">{s.total_runs}</td>
                                 <td className="px-4 py-3 text-muted-foreground">{timeAgo(s.last_fired_at)}</td>
                                 <td className="px-4 py-3">
-                                    {s.next_fire_at
-                                        ? <span className="text-foreground font-bold">{new Date(s.next_fire_at).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-                                        : <span className="text-muted-foreground">—</span>
-                                    }
+                                    <ScheduleNextFire schedule={s} />
                                 </td>
                                 <td className="px-4 py-3">
                                     <Badge variant="outline" className={`text-[8px] ${s.conflict_policy === 'skip' ? 'border-amber-400 text-amber-400' :
@@ -934,8 +1077,10 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filte
                                         <Button
                                             variant="ghost" size="tiny"
                                             className="text-muted-foreground hover:text-success hover:bg-success/10"
-                                            onClick={() => fireNowMut.mutate(s.id)}
-                                            title="Запустить сейчас"
+                                            onClick={() => change(s, 'fire')}
+                                            disabled={(!s.is_active && !pendingFire(s.id)) || error || changeSchedule.isPending}
+                                            title={pendingFire(s.id) ? 'Повторить запрос с прежним идентификатором' : s.is_active ? 'Поставить в очередь планировщика' : 'Сначала включите расписание'}
+                                            aria-label={`Запросить запуск расписания ${s.name}`}
                                         >
                                             <Zap className="w-3 h-3" />
                                         </Button>
@@ -947,6 +1092,7 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filte
                                             variant="ghost" size="tiny"
                                             className="text-muted-foreground hover:text-primary hover:bg-primary/10"
                                             title="Редактировать"
+                                            disabled={changeSchedule.isPending}
                                             onClick={() => onEditSchedule(s)}
                                         >
                                             <Pencil className="w-3 h-3" />
@@ -954,10 +1100,11 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filte
                                         <Button
                                             variant="ghost" size="tiny"
                                             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                            title="Удалить"
+                                            title="Выключить с сохранением истории"
+                                            disabled={!s.is_active || error || changeSchedule.isPending}
                                             onClick={() => {
-                                                if (confirm(`Удалить расписание «${s.name}»?`)) {
-                                                    deleteMut.mutate(s.id);
+                                                if (confirm(`Выключить расписание «${s.name}»? История срабатываний сохранится.`)) {
+                                                    change(s, 'delete');
                                                 }
                                             }}
                                         >
@@ -1021,8 +1168,6 @@ function emptyStep(index: number): StepDraft {
 
 function CreatePipelineButton() {
     const queryClient = useQueryClient();
-    const { data: scriptsData } = useScripts();
-    const scripts = scriptsData?.items ?? [];
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -1045,7 +1190,7 @@ function CreatePipelineButton() {
     }, []);
 
     const createMut = useMutation({
-        mutationFn: async () => {
+        mutationFn: async (devices: string[]) => {
             const payload = {
                 name: name.trim(),
                 description: description.trim() || null,
@@ -1072,29 +1217,35 @@ function CreatePipelineButton() {
                 tags: tags.split(',').map(t => t.trim()).filter(Boolean),
             };
             const { data } = await api.post('/pipelines', payload);
-            return data;
+            return { pipeline: data as Pipeline, devices };
         },
-        onSuccess: async (pipeline: any) => {
+        onSuccess: async ({ pipeline, devices }) => {
             queryClient.invalidateQueries({ queryKey: ['pipelines'] });
-            // Если выбраны устройства — сразу batch-запуск
-            if (targetDeviceIds.length > 0 && pipeline?.id) {
+            if (devices.length > 0) {
                 try {
-                    if (targetDeviceIds.length === 1) {
-                        await api.post(`/pipelines/${pipeline.id}/run`, {
-                            device_id: targetDeviceIds[0],
-                            input_params: {},
-                        });
-                    } else {
-                        await api.post(`/pipelines/${pipeline.id}/run-batch`, {
-                            device_ids: targetDeviceIds,
-                            input_params: {},
-                        });
+                    if (!pipeline?.id || !Number.isInteger(pipeline.version) || pipeline.version < 1 || !Number.isFinite(Date.parse(pipeline.updated_at))) {
+                        throw new Error('Нет подтверждённой версии созданного конвейера.');
                     }
+                    const single = devices.length === 1;
+                    const { data } = await api.post(`/pipelines/${pipeline.id}/${single ? 'run' : 'run-batch'}`, {
+                        ...(single ? { device_id: devices[0] } : { device_ids: devices }),
+                        input_params: {},
+                        expected_version: pipeline.version,
+                        expected_updated_at: pipeline.updated_at,
+                    });
+                    if (typeof data?.id !== 'string' || !data.id || data.pipeline_id !== pipeline.id
+                        || data.pipeline_version !== pipeline.version
+                        || (single ? data.device_id !== devices[0] : data.total !== devices.length)) {
+                        throw new Error('Некорректная квитанция запуска.');
+                    }
+                    const href = `/orchestration?${single ? 'run_id' : 'batch_id'}=${encodeURIComponent(data.id)}`;
                     queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] });
-                    toast.success(`Pipeline создан и запущен на ${targetDeviceIds.length} устройствах`);
-                } catch (err: any) {
+                    toast.success('Конвейер создан, запуск принят', {
+                        description: <Link className="text-primary underline" href={href}>Открыть результаты</Link>,
+                    });
+                } catch (error) {
                     toast.success('Pipeline создан');
-                    toast.error('Не удалось запустить: ' + (err?.response?.data?.detail || 'ошибка'));
+                    toast.error(getApiErrorMessage(error, 'Запуск не подтверждён. Проверьте историю запусков.'));
                 }
             } else {
                 toast.success('Pipeline создан');
@@ -1329,25 +1480,11 @@ function CreatePipelineButton() {
                                     {step.type === 'execute_script' && (
                                         <div className="space-y-1 mb-2">
                                             <Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Скрипт *</Label>
-                                            <select
+                                            <ScriptCatalogPicker
+                                                label={`Сценарий шага ${idx + 1}`}
                                                 value={step.script_id}
-                                                onChange={e => {
-                                                    const sid = e.target.value;
-                                                    const scr = scripts.find(s => s.id === sid);
-                                                    updateStep(idx, {
-                                                        script_id: sid,
-                                                        name: step.name || scr?.name || '',
-                                                    });
-                                                }}
-                                                className="w-full h-7 rounded-sm border border-border bg-background px-2 text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                                            >
-                                                <option value="">Выбери скрипт...</option>
-                                                {scripts.filter(s => !s.is_archived).map(s => (
-                                                    <option key={s.id} value={s.id}>
-                                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                onChange={(id, item) => updateStep(idx, { script_id: id, name: step.name || item?.name || '' })}
+                                            />
                                         </div>
                                     )}
                                     <div className="space-y-1">
@@ -1381,7 +1518,7 @@ function CreatePipelineButton() {
                     <Button
                         onClick={() => {
                             setShowDeviceSelector(false);
-                            createMut.mutate();
+                            createMut.mutate([]);
                         }}
                         disabled={!canSubmit || createMut.isPending}
                         className="font-mono text-xs"
@@ -1393,7 +1530,7 @@ function CreatePipelineButton() {
                         variant={showDeviceSelector ? 'default' : 'outline'}
                         onClick={() => {
                             if (showDeviceSelector && targetDeviceIds.length > 0) {
-                                createMut.mutate();
+                                createMut.mutate(targetDeviceIds);
                             } else {
                                 setShowDeviceSelector(!showDeviceSelector);
                             }
@@ -1426,43 +1563,72 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
     const queryClient = useQueryClient();
     const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
     const [inputParams, setInputParams] = useState('{}');
+    const [launchBlocked, setLaunchBlocked] = useState(false);
+    const [error, setError] = useState('');
+    const busy = useRef(false);
 
     const runMut = useMutation({
-        mutationFn: async () => {
-            if (!pipeline) return;
-            if (selectedDeviceIds.length === 1) {
-                // Одно устройство → прямой запуск
-                const { data } = await api.post(`/pipelines/${pipeline.id}/run`, {
-                    device_id: selectedDeviceIds[0],
-                    input_params: JSON.parse(inputParams || '{}'),
-                });
-                return data;
-            } else {
-                // Массовый запуск через batch
-                const { data } = await api.post(`/pipelines/${pipeline.id}/run-batch`, {
-                    device_ids: selectedDeviceIds,
-                    input_params: JSON.parse(inputParams || '{}'),
-                });
-                return data;
+        mutationFn: async ({ preview, devices, inputs }: { preview: Pipeline; devices: string[]; inputs: object }) => {
+            const single = devices.length === 1;
+            const { data } = await api.post(`/pipelines/${preview.id}/${single ? 'run' : 'run-batch'}`, {
+                ...(single ? { device_id: devices[0] } : { device_ids: devices }),
+                input_params: inputs,
+                expected_version: preview.version,
+                expected_updated_at: preview.updated_at,
+            });
+            if (typeof data?.id !== 'string' || !data.id || data.pipeline_id !== preview.id
+                || data.pipeline_version !== preview.version
+                || (single ? data.device_id !== devices[0] : data.total !== devices.length)) {
+                throw new Error('Неподтверждённая квитанция запуска');
             }
+            return { id: data.id as string, single, version: preview.version };
         },
-        onSuccess: () => {
+        onSuccess: ({ id, single, version }) => {
             queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] });
-            toast.success(`Pipeline "${pipeline?.name}" запущен на ${selectedDeviceIds.length} устройствах`);
-            setSelectedDeviceIds([]);
-            setInputParams('{}');
+            const href = `/orchestration?${single ? 'run_id' : 'batch_id'}=${encodeURIComponent(id)}`;
+            toast.success(`${single ? 'Запуск' : 'Пакет'} принят`, {
+                description: <div className="space-y-1"><p className="break-all">Версия {version} · {id}</p><Link className="text-primary underline" href={href}>Открыть результаты</Link></div>,
+            });
             onOpenChange(false);
         },
-        onError: (err: any) => {
-            const detail = err?.response?.data?.detail;
-            toast.error(typeof detail === 'string' ? detail : 'Ошибка запуска pipeline');
+        onError: error => {
+            const status = (error as { response?: { status?: number } })?.response?.status;
+            if (status === 409) {
+                setLaunchBlocked(true);
+                setError('Конвейер изменился или редактируется. Закройте окно, обновите каталог и подтвердите новый запуск.');
+                void queryClient.invalidateQueries({ queryKey: ['pipelines'] });
+            } else if (!status || status >= 500) {
+                setLaunchBlocked(true);
+                setError('Принятие запуска не подтверждено. Проверьте историю запусков перед повтором.');
+            } else {
+                setError(getApiErrorMessage(error, 'Запуск отклонён. Проверьте параметры и доступ.'));
+            }
         },
+        onSettled: () => { busy.current = false; },
     });
 
-    const canSubmit = selectedDeviceIds.length > 0;
+    const validPreview = !!pipeline && Number.isInteger(pipeline.version) && pipeline.version > 0 && Number.isFinite(Date.parse(pipeline.updated_at));
+    const canSubmit = selectedDeviceIds.length > 0 && validPreview && !launchBlocked;
+    const submit = () => {
+        if (!pipeline || !canSubmit || busy.current) return;
+        let inputs: unknown;
+        try {
+            inputs = JSON.parse(inputParams || '{}');
+        } catch {
+            setError('Входные параметры должны быть корректным объектом JSON.');
+            return;
+        }
+        if (!inputs || typeof inputs !== 'object' || Array.isArray(inputs)) {
+            setError('Входные параметры должны быть корректным объектом JSON.');
+            return;
+        }
+        setError('');
+        busy.current = true;
+        runMut.mutate({ preview: pipeline, devices: selectedDeviceIds, inputs });
+    };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={value => { if (!busy.current) onOpenChange(value); }}>
             <DialogContent layout="workspace" className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
@@ -1488,6 +1654,8 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                             placeholder='{"key": "value"}'
                         />
                     </div>
+                    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+                    {pipeline && !validPreview && <p role="status" className="text-sm text-muted-foreground">Версия конвейера недоступна. Обновите каталог.</p>}
 
                     {/* Превью шагов */}
                     <div className="border border-border rounded-sm p-3 bg-muted/30">
@@ -1506,11 +1674,11 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                 </DialogBody>
 
                 <DialogFooter className="mt-4">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} className="font-mono text-xs">
+                    <Button variant="outline" disabled={runMut.isPending} onClick={() => onOpenChange(false)} className="font-mono text-xs">
                         Отмена
                     </Button>
                     <Button
-                        onClick={() => runMut.mutate()}
+                        onClick={submit}
                         disabled={!canSubmit || runMut.isPending}
                         className="font-mono text-xs bg-success hover:bg-success/90 text-success-foreground"
                     >
@@ -1733,8 +1901,6 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
     onOpenChange: (v: boolean) => void;
 }) {
     const queryClient = useQueryClient();
-    const { data: scriptsData } = useScripts();
-    const scripts = scriptsData?.items ?? [];
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [triggerType, setTriggerType] = useState<'cron' | 'interval' | 'one_shot'>('cron');
@@ -1749,6 +1915,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
     const [conflictPolicy, setConflictPolicy] = useState<'skip' | 'queue' | 'cancel'>('skip');
     const [timezone, setTimezone] = useState('UTC');
     const [targetDeviceIds, setTargetDeviceIds] = useState<string[]>([]);
+    const [revisionConflict, setRevisionConflict] = useState(false);
 
     // Заполняем форму данными расписания при открытии
     const scheduleId = schedule?.id;
@@ -1756,6 +1923,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
     // Синхронизация состояния формы при смене расписания
     useEffect(() => {
         if (!schedule) return;
+        setRevisionConflict(false);
         originalOneShot.current = null;
         setName(schedule.name);
         setDescription(schedule.description || '');
@@ -1787,14 +1955,18 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
 
     const updateMut = useMutation({
         mutationFn: async () => {
-            if (!schedule) return;
+            if (!schedule || !scheduleRevision(schedule.updated_at)) throw new Error('Версия расписания не подтверждена');
+            const originalDeviceIds = schedule.device_ids ?? [];
+            const deviceIdsChanged = targetDeviceIds.length !== originalDeviceIds.length
+                || targetDeviceIds.some(id => !originalDeviceIds.includes(id));
             const payload: Record<string, any> = {
+                expected_updated_at: schedule.updated_at,
                 name: name.trim(),
                 description: description.trim() || null,
                 target_type: targetType,
                 conflict_policy: conflictPolicy,
-                timezone,
-                device_ids: targetDeviceIds.length > 0 ? targetDeviceIds : undefined,
+                ...(timezone !== (schedule.timezone || 'UTC') ? { timezone } : {}),
+                ...(deviceIdsChanged ? { device_ids: targetDeviceIds } : {}),
             };
             if (targetType === 'pipeline') { payload.pipeline_id = pipelineId; payload.script_id = null; }
             else { payload.script_id = scriptId; payload.pipeline_id = null; }
@@ -1816,16 +1988,22 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
             }
 
             const { data } = await api.patch(`/schedules/${schedule.id}`, payload);
-            return data;
+            if (data?.id !== schedule.id || !scheduleRevision(data?.updated_at)) {
+                throw new Error('Обновление расписания не подтверждено');
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['schedules'] });
             toast.success('Расписание обновлено');
             onOpenChange(false);
         },
-        onError: (err: any) => {
-            const detail = err?.response?.data?.detail;
-            toast.error(typeof detail === 'string' ? detail : 'Ошибка обновления расписания');
+        onError: (failure) => {
+            if (scheduleConflict(failure)) {
+                setRevisionConflict(true);
+                void queryClient.invalidateQueries({ queryKey: ['schedules'] });
+                return;
+            }
+            toast.error(getApiErrorMessage(failure, 'Обновление расписания не подтверждено. Проверьте список.'));
         },
     });
 
@@ -1852,6 +2030,12 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                 </DialogHeader>
 
                 <DialogBody>
+                    {revisionConflict && <p role="alert" className="text-sm text-destructive">
+                        {SCHEDULE_CONFLICT_TEXT} Закройте форму и откройте расписание снова.
+                    </p>}
+                    {schedule && !scheduleRevision(schedule.updated_at) && <p role="alert" className="text-sm text-destructive">
+                        Версия расписания не подтверждена. Обновите список перед изменением.
+                    </p>}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Название *</Label>
@@ -1863,8 +2047,9 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Timezone</Label>
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Часовой пояс CRON (IANA)</Label>
                             <Input
+                                aria-label="Часовой пояс CRON"
                                 value={timezone}
                                 onChange={e => setTimezone(e.target.value)}
                                 className="h-9 bg-background border-border font-mono text-xs"
@@ -1901,9 +2086,10 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                         </div>
                     </div>
 
-                    {triggerType === 'cron' && (
+                    {triggerType === 'cron' && <>
                         <CronBuilder value={cronExpression} onChange={setCronExpression} />
-                    )}
+                        <p className="text-xs text-muted-foreground">{SCHEDULE_CRON_POLICY}</p>
+                    </>}
                     {triggerType === 'interval' && (
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Интервал (секунды) *</Label>
@@ -1981,18 +2167,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                     {targetType === 'script' && (
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Скрипт *</Label>
-                            <select
-                                value={scriptId}
-                                onChange={e => setScriptId(e.target.value)}
-                                className="w-full h-9 rounded-sm border border-border bg-background px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                            >
-                                <option value="">Выбери скрипт...</option>
-                                {scripts.filter(s => !s.is_archived).map(s => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
-                                    </option>
-                                ))}
-                            </select>
+                            <ScriptCatalogPicker label="Сценарий расписания" value={scriptId} onChange={setScriptId} />
                         </div>
                     )}
 
@@ -2000,6 +2175,11 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                     <div className="space-y-1.5">
                         <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Целевые устройства</Label>
                         <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
+                        {targetDeviceIds.length === 0 && (schedule?.group_id || schedule?.device_tags?.length
+                            ? <p className="text-xs text-muted-foreground">Цели из сохранённой группы или тегов продолжат действовать.</p>
+                            : <p role="status" className="text-xs text-muted-foreground">
+                                {schedule?.is_active ? 'Без устройств, группы и тегов планировщик пропустит срабатывание.' : 'У расписания нет выбранных целей.'}
+                              </p>)}
                     </div>
                 </DialogBody>
 
@@ -2009,7 +2189,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                     </Button>
                     <Button
                         onClick={() => updateMut.mutate()}
-                        disabled={!canSubmit || updateMut.isPending}
+                        disabled={!canSubmit || updateMut.isPending || revisionConflict || !scheduleRevision(schedule?.updated_at)}
                         className="font-mono text-xs"
                     >
                         {updateMut.isPending && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
@@ -2028,8 +2208,6 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
 
 function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
     const queryClient = useQueryClient();
-    const { data: scriptsData } = useScripts();
-    const scripts = scriptsData?.items ?? [];
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [triggerType, setTriggerType] = useState<'cron' | 'interval' | 'one_shot'>('cron');
@@ -2111,8 +2289,9 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Timezone</Label>
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Часовой пояс CRON (IANA)</Label>
                             <Input
+                                aria-label="Часовой пояс CRON"
                                 value={timezone}
                                 onChange={e => setTimezone(e.target.value)}
                                 className="h-9 bg-background border-border font-mono text-xs"
@@ -2149,9 +2328,10 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                         </div>
                     </div>
 
-                    {triggerType === 'cron' && (
+                    {triggerType === 'cron' && <>
                         <CronBuilder value={cronExpression} onChange={setCronExpression} />
-                    )}
+                        <p className="text-xs text-muted-foreground">{SCHEDULE_CRON_POLICY}</p>
+                    </>}
                     {triggerType === 'interval' && (
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Интервал (секунды) *</Label>
@@ -2228,18 +2408,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                     {targetType === 'script' && (
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Скрипт *</Label>
-                            <select
-                                value={scriptId}
-                                onChange={e => setScriptId(e.target.value)}
-                                className="w-full h-9 rounded-sm border border-border bg-background px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                            >
-                                <option value="">Выбери скрипт...</option>
-                                {scripts.filter(s => !s.is_archived).map(s => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
-                                    </option>
-                                ))}
-                            </select>
+                            <ScriptCatalogPicker label="Сценарий расписания" value={scriptId} onChange={setScriptId} />
                         </div>
                     )}
 

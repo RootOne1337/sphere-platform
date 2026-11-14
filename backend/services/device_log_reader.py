@@ -6,12 +6,13 @@ import json
 import os
 import re
 import threading
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 from dataclasses import dataclass, field
 from datetime import date as Date
 from pathlib import Path
+from typing import TypeVar
 
 SCAN_BYTES = 2 * 1024 * 1024
 RESPONSE_BYTES = 512 * 1024
@@ -46,8 +47,9 @@ class _Budget:
     reasons: set[str] = field(default_factory=set)
 
 
-def _files(directory: Path, date: str | None) -> tuple[list[Path], int]:
-    if directory.is_symlink():
+def _daily_files(directory: Path, date: str | None = None) -> list[tuple[str, Path]]:
+    if (directory.is_symlink() or directory.is_junction()
+            or directory.parent.is_symlink() or directory.parent.is_junction()):
         raise LogReadUnavailable()
     found = []
     try:
@@ -60,12 +62,20 @@ def _files(directory: Path, date: str | None) -> tuple[list[Path], int]:
                 if match and (date is None or match[1] == date):
                     if entry.is_symlink() or not entry.is_file(follow_symlinks=False):
                         raise LogReadUnavailable()
-                    found.append(Path(entry.path))
+                    try:
+                        validate_date(match[1])
+                    except ValueError:
+                        continue
+                    found.append((match[1], Path(entry.path)))
     except FileNotFoundError:
-        return [], 0
+        return []
     except OSError as exc:
         raise LogReadUnavailable() from exc
-    return sorted(found, reverse=True)[:MAX_FILES], len(found)
+    return sorted(found, reverse=True)
+
+
+def read_log_dates(directory: Path) -> list[str]:
+    return [date for date, _ in _daily_files(directory)]
 
 
 def _reverse_lines(path: Path, budget: _Budget) -> Generator[bytes, None, None]:
@@ -124,9 +134,10 @@ def read_log_tail(directory: Path, *, lines: int, date: str | None, search: str 
     validate_date(date)
     if not 1 <= lines <= 10000 or (search is not None and len(search) > 512):
         raise ValueError("Invalid log query budget")
-    files, total_files = _files(directory, date)
+    daily_files = _daily_files(directory, date)
+    files = [path for _, path in daily_files[:MAX_FILES]]
     budget = _Budget()
-    if total_files > len(files):
+    if len(daily_files) > len(files):
         budget.reasons.add("file_limit")
     result: list[str] = []
     encoded_bytes = 2  # JSON array delimiters; item separators are included below.
@@ -165,21 +176,32 @@ def read_log_tail(directory: Path, *, lines: int, date: str | None, search: str 
         "bytes_scanned": budget.scanned, "scan_byte_limit": SCAN_BYTES,
         "response_lines_bytes": encoded_bytes, "response_byte_limit": RESPONSE_BYTES,
         "max_line_bytes": LINE_BYTES, "omitted_oversized_lines": budget.omitted,
-        "files_scanned": budget.files_scanned, "files_available": total_files, "max_files": MAX_FILES,
+        "files_scanned": budget.files_scanned, "files_available": len(daily_files), "max_files": MAX_FILES,
         "concurrent_reads_per_worker": CONCURRENT_READS,
     }}
 
 
-async def read_log_tail_async(directory: Path, *, lines: int, date: str | None, search: str | None) -> dict:
+_ReadResult = TypeVar("_ReadResult")
+
+
+async def _run_log_read(read: Callable[[], _ReadResult]) -> _ReadResult:
     slots = _slots
     if not slots.acquire(blocking=False):
         raise LogReadBusy()
     try:
         context = copy_context()
-        future = _executor.submit(context.run, read_log_tail, directory, lines=lines, date=date, search=search)
+        future = _executor.submit(context.run, read)
     except BaseException:
         slots.release()
         raise
     # Release on actual worker completion (or queued cancellation), not HTTP cancellation.
     future.add_done_callback(lambda completed: slots.release())
     return await asyncio.wrap_future(future)
+
+
+async def read_log_tail_async(directory: Path, *, lines: int, date: str | None, search: str | None) -> dict:
+    return await _run_log_read(lambda: read_log_tail(directory, lines=lines, date=date, search=search))
+
+
+async def read_log_dates_async(directory: Path) -> list[str]:
+    return await _run_log_read(lambda: read_log_dates(directory))

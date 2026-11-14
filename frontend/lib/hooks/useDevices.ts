@@ -25,10 +25,16 @@ export interface Device {
   last_seen: string | null;
   last_heartbeat: string | null;
   connected_since?: string | null;
-  adb_connected: boolean;
-  vpn_assigned: boolean;
+  adb_connected?: boolean | null;
+  vpn_assigned?: boolean | null;
   vpn_active: boolean | null;
+  vpn_observation_state?: 'fresh' | 'stale' | 'unknown';
+  vpn_observed_at?: string | null;
+  vpn_observation_max_age_seconds?: number;
   server_name: string | null;
+  application_profile_id?: string | null;
+  application_server_key?: string | null;
+  application_binding_revision?: number;
 }
 
 export interface BulkActionResponse {

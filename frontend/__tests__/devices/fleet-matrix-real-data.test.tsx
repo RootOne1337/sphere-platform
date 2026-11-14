@@ -47,7 +47,7 @@ const device = {
   ram_usage_mb: 1024,
   screen_on: true,
   last_seen: '2026-09-23T10:00:00Z',
-  last_heartbeat: '2026-09-23T10:00:00Z',
+  last_heartbeat: new Date().toISOString(),
   connected_since: new Date(Date.now() - 23 * 60_000).toISOString(),
   adb_connected: true,
   vpn_assigned: false,
@@ -117,7 +117,7 @@ it('does not invent an uptime when the server has no confirmed session timestamp
     />,
   );
 
-  expect(screen.getByText('Начало сессии не сообщено')).toBeInTheDocument();
+  expect(screen.getByText('Связь с APK не подтверждена')).toBeInTheDocument();
   expect(screen.getByText(/Контакт .* назад/)).toBeInTheDocument();
   expect(screen.queryByText(/В сети .* мин/)).not.toBeInTheDocument();
 
@@ -148,17 +148,41 @@ it('does not format invalid or far-future timestamps as real heartbeat evidence'
   jest.setSystemTime(new Date('2026-09-30T10:00:00Z'));
   const { container } = render(<FleetMatrix data={[{ ...device, connected_since: 'bad-date', last_heartbeat: '2026-10-01T10:00:00Z', last_seen: 'bad-date' }]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} />);
   expect(screen.getByText('Нет данных о сигнале')).toBeInTheDocument();
-  expect(screen.getByText('Начало сессии не сообщено')).toBeInTheDocument();
+  expect(screen.getByText('Связь с APK не подтверждена')).toBeInTheDocument();
   expect(container.textContent).not.toContain('Invalid Date');
 });
 
 it('keeps optional access columns available through the column menu', async () => {
   const user = userEvent.setup();
   render(<FleetMatrix data={[device]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} />);
-  expect(screen.queryByText('ADB linked')).not.toBeInTheDocument();
+  expect(screen.queryByText('ADB · Не подтверждён')).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
   await user.click(await screen.findByRole('checkbox', { name: 'Доступ' }));
-  expect(screen.getByText('ADB linked')).toBeInTheDocument();
+  expect(screen.getByText('ADB · Не подтверждён')).toBeInTheDocument();
+});
+
+it('shows current APK VPN in both layouts and expires the cached observation without a response', async () => {
+  const user = userEvent.setup();
+  const now = Date.now();
+  const reading: Device = { ...device, last_heartbeat: new Date(now - 1_000).toISOString(),
+    vpn_active: true, vpn_observation_state: 'fresh', vpn_observation_max_age_seconds: 120,
+    vpn_observed_at: new Date(now - 110_000).toISOString() };
+  const props = { data: [reading], isLoading: false, rowSelection: {}, onRowSelectionChange: jest.fn() };
+  const view = render(<FleetMatrix {...props} />);
+  await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
+  await user.click(await screen.findByRole('checkbox', { name: 'Доступ' }));
+  expect(screen.getByText('VPN APK · Активен')).toBeInTheDocument();
+  view.rerender(<FleetMatrix {...props} presentation="cards" />);
+  expect(screen.getByText('VPN APK · Активен')).toBeInTheDocument();
+  view.rerender(<FleetMatrix {...props} data={[{ ...reading, vpn_active: false }]} presentation="cards" />);
+  expect(screen.getByText('VPN APK · Не активен')).toBeInTheDocument();
+  view.unmount();
+
+  jest.useFakeTimers();
+  jest.setSystemTime(now);
+  render(<FleetMatrix {...props} presentation="cards" />);
+  act(() => jest.advanceTimersByTime(15_000));
+  expect(screen.getByText('VPN APK · Отчёт устарел')).toBeInTheDocument();
 });
 
 it('uses the canonical API model and falls back only for legacy responses', () => {
@@ -180,7 +204,7 @@ it('restores columns and sorting after remount without restoring selected device
   await user.click(screen.getByRole('button', { name: 'Сортировать по Устройство' }));
   view.unmount();
   render(<FleetMatrix {...props} />);
-  expect(screen.getByText('ADB linked')).toBeInTheDocument();
+  expect(screen.getByText('ADB · Не подтверждён')).toBeInTheDocument();
   expect(screen.getByRole('columnheader', { name: /Устройство/ })).toHaveAttribute('aria-sort', 'ascending');
   expect(props.onRowSelectionChange).not.toHaveBeenCalled();
   const stored = window.localStorage.getItem('sphere.fleet.table.v1');

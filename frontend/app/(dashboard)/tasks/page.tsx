@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ListTodo, Play, Clock, CalendarClock, ShieldAlert, CheckCircle2, Workflow, ChevronLeft, ChevronRight, RotateCcw, Radio, Loader2 } from 'lucide-react';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/src/shared/ui/input';
@@ -15,10 +16,13 @@ import { executionStatusLabel } from '@/lib/task-status';
 import { useActivePipelineRuns } from '@/lib/hooks/usePipelineRuns';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useBroadcastBatch } from '@/lib/hooks/useBatches';
-import { useScripts } from '@/lib/hooks/useScripts';
+import { useScripts, type Script } from '@/lib/hooks/useScripts';
 import { useDevices } from '@/lib/hooks/useDevices';
 import { summarizeTaskStatuses } from '@/lib/task-status-summary';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { useCapabilities } from '@/src/features/access/Capabilities';
+import { BatchRun, BatchRuns, batchHref } from '@/src/features/tasks/BatchRuns';
+import { getCurrentScriptVersion } from '@/src/features/scripts/scriptPresentation';
 import { toast } from 'sonner';
 
 const STATUS_OPTIONS = ['ALL', 'RUNNING', 'ASSIGNED', 'QUEUED', 'COMPLETED', 'FAILED', 'TIMEOUT', 'CANCELLED'] as const;
@@ -30,10 +34,35 @@ type SortField = 'script_name' | 'status' | 'priority' | 'created_at';
 type SortDir = 'asc' | 'desc';
 const taskName = (task: Task) => task.script_name || `Task ${task.id.slice(0, 8)}`;
 const formatTime = (value: string | null) => value ? new Date(value).toLocaleString() : '—';
+const scriptVersionId = (script: Script) => script.current_version_id ?? getCurrentScriptVersion(script)?.id;
+const UUID = /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i;
+const terminalStatuses = new Set(['completed', 'failed', 'cancelled', 'timeout']);
 
 const TASKS_PER_PAGE = 25;
 export default function TaskEnginePage() {
+  return <Suspense fallback={<p role="status" className="p-6">Загрузка заданий…</p>}><TasksView /></Suspense>;
+}
+
+function TasksView() {
+  const params = useSearchParams();
+  const batchId = params?.get('batch_id');
+  if (batchId) return <BatchRun key={batchId} id={batchId} />;
+  if (params?.get('view') === 'batches') return <BatchRuns />;
+  const deviceId = params?.get('device_id') || undefined;
+  const scriptId = params?.get('script_id') || undefined;
+  if ((deviceId && !UUID.test(deviceId)) || (scriptId && !UUID.test(scriptId))) {
+    return <div className="space-y-3 p-6">
+      <p role="alert">Ссылка содержит некорректный ID устройства или сценария.</p>
+      <Button asChild variant="outline"><Link href="/tasks">Открыть общую историю задач</Link></Button>
+    </div>;
+  }
+  return <TaskHistory key={`${deviceId ?? ''}:${scriptId ?? ''}`} deviceId={deviceId} scriptId={scriptId} />;
+}
+
+function TaskHistory({ deviceId, scriptId }: { deviceId?: string; scriptId?: string }) {
   const router = useRouter();
+  const access = useCapabilities();
+  const canExecute = access.can('script:execute');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [sortField, setSortField] = useState<SortField>('created_at');
@@ -43,8 +72,10 @@ export default function TaskEnginePage() {
   // Broadcast модалка
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [bcScriptId, setBcScriptId] = useState<string>('');
-  const [bcWaveSize, setBcWaveSize] = useState(10);
-  const [bcWaveDelay, setBcWaveDelay] = useState(5000);
+  const [bcVersionId, setBcVersionId] = useState<string>('');
+  const [broadcastUnconfirmed, setBroadcastUnconfirmed] = useState(false);
+  const [bcWaveSize, setBcWaveSize] = useState('10');
+  const [bcWaveDelay, setBcWaveDelay] = useState('5000');
   const [bcPriority, setBcPriority] = useState(5);
 
   const debouncedSearch = useDebounce(search.trim(), 300);
@@ -53,10 +84,13 @@ export default function TaskEnginePage() {
     page: queryPending ? 1 : page, per_page: TASKS_PER_PAGE,
     status: statusFilter === 'ALL' ? undefined : statusFilter.toLowerCase(),
     search: debouncedSearch || undefined, sort_by: sortField, sort_dir: sortDir,
+    ...(deviceId ? { device_id: deviceId } : {}), ...(scriptId ? { script_id: scriptId } : {}),
     include_counts: true,
   });
-  const active = useTasks({ active_only: true, per_page: 10 });
-  const pipelines = useActivePipelineRuns();
+  const active = useTasks({ active_only: true, per_page: 10,
+    ...(deviceId ? { device_id: deviceId } : {}), ...(scriptId ? { script_id: scriptId } : {}),
+  });
+  const pipelines = useActivePipelineRuns(deviceId, !scriptId);
   const tasksData = history.data;
   const isLoading = history.isLoading || queryPending;
   const tasks = tasksData?.items ?? [];
@@ -67,10 +101,17 @@ export default function TaskEnginePage() {
   }, [tasksData, history.isError, isLoading, page, totalPages]);
   const retryTask = useRetryTask();
   const broadcastBatch = useBroadcastBatch();
-  const { data: scriptsData } = useScripts({ per_page: 100 });
+  const [bcSearch, setBcSearch] = useState('');
+  const scriptSearch = useDebounce(bcSearch.trim(), 300);
+  const { data: scriptsData } = useScripts({ per_page: 100, state: 'active', query: scriptSearch || undefined });
   const scripts = scriptsData?.items ?? [];
-  const { data: onlineData } = useDevices({ status: 'online', page_size: 1 });
-  const onlineCount = onlineData?.total ?? 0;
+  const online = useDevices({ live_status: 'online', page_size: 1 });
+  const onlineCounts = online.isError || online.data?.presence_available === false ? undefined : online.data?.status_counts;
+  const onlineCount = onlineCounts ? onlineCounts.online - onlineCounts.busy : null;
+  const waveSize = Number(bcWaveSize);
+  const waveDelay = Number(bcWaveDelay);
+  const validWave = bcWaveSize.trim() !== '' && Number.isInteger(waveSize) && waveSize >= 1 && waveSize <= 100;
+  const validDelay = bcWaveDelay.trim() !== '' && Number.isInteger(waveDelay) && waveDelay >= 0 && waveDelay <= 60000;
   // Completion ratio has an explicit denominator: completed + failed + timeout.
   // Queued/active/cancelled work is not silently counted as an execution failure.
   const taskSummary = summarizeTaskStatuses(counts);
@@ -94,34 +135,47 @@ export default function TaskEnginePage() {
           description: 'Исходная версия и входы сохранены. Выполнение ещё не подтверждено.',
           ...(typeof created?.id === 'string' ? { action: { label: 'Открыть', onClick: () => router.push(`/tasks/${created.id}`) } } : {}),
         }),
-        onError: () => toast.error('Ошибка перезапуска'),
+        onError: (error) => toast.error(getApiErrorMessage(error, 'Не удалось подтвердить повторный запуск. Проверьте историю задач.')),
       },
     );
   };
 
   const handleBroadcast = () => {
-    if (!bcScriptId) {
-      toast.error('Выберите скрипт');
-      return;
-    }
+    if (!canExecute || !bcScriptId || !bcVersionId || !validWave || !validDelay || broadcastBatch.isPending || broadcastUnconfirmed) return;
     broadcastBatch.mutate(
       {
         script_id: bcScriptId,
-        wave_size: bcWaveSize,
-        wave_delay_ms: bcWaveDelay,
+        expected_current_version_id: bcVersionId,
+        wave_size: waveSize,
+        wave_delay_ms: waveDelay,
         priority: bcPriority,
       },
       {
         onSuccess: (data) => {
-          toast.success(`Батч запущен на ${data.online_devices} устройствах`);
+          toast.success('Пакет принят', {
+            description: `Цели: ${data.online_devices}. Состояния допуска и исполнения доступны в пакете.`,
+            action: { label: 'Открыть пакет', onClick: () => router.push(batchHref(data.id)) },
+          });
           setBroadcastOpen(false);
           setBcScriptId('');
-          setBcWaveSize(10);
-          setBcWaveDelay(5000);
+          setBcVersionId('');
+          setBcSearch('');
+          setBcWaveSize('10');
+          setBcWaveDelay('5000');
           setBcPriority(5);
+          router.push(batchHref(data.id));
         },
         onError: (err: unknown) => {
-          toast.error(getApiErrorMessage(err, 'Ошибка запуска пакетной задачи'));
+          const status = (err as { response?: { status?: number } } | null)?.response?.status;
+          if (status === undefined || status === 408 || status >= 500) {
+            setBroadcastUnconfirmed(true);
+            toast.error('Приём пакета не подтверждён', {
+              description: 'Проверьте историю пакетов перед повторной отправкой.',
+              action: { label: 'Все пакеты', onClick: () => router.push('/tasks?view=batches') },
+            });
+          } else {
+            toast.error(getApiErrorMessage(err, 'Ошибка запуска пакетной задачи'));
+          }
         },
       },
     );
@@ -142,6 +196,7 @@ export default function TaskEnginePage() {
           </div>
 
           <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
+            <Button asChild variant="outline" size="sm" className="h-10 rounded-lg"><Link href="/tasks?view=batches">Пакетные запуски</Link></Button>
             <Input
               aria-label="Поиск задач"
               placeholder="Сценарий, устройство или ID"
@@ -160,17 +215,22 @@ export default function TaskEnginePage() {
             <Button variant="default" size="sm" className="h-10 rounded-lg" onClick={() => router.push('/scripts/builder')}>
               <Workflow className="mr-2 h-4 w-4" aria-hidden="true" /> Новый сценарий
             </Button>
-            <Button variant="outline" size="sm" className="h-10 rounded-lg" onClick={() => setBroadcastOpen(true)}>
+            {canExecute && <Button variant="outline" size="sm" className="h-10 rounded-lg" onClick={() => setBroadcastOpen(true)}>
               <Radio className="mr-2 h-4 w-4" aria-hidden="true" /> Запустить на парке
               <span className="ml-2 rounded-md bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
-                {onlineCount} в сети
+                {onlineCount ?? '—'} в сети
               </span>
-            </Button>
+            </Button>}
           </div>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-6 py-6 lg:px-8">
+        {(deviceId || scriptId) && <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3 text-sm">
+          {deviceId && <span className="break-all">Устройство <code>{deviceId}</code></span>}
+          {scriptId && <span className="break-all">Сценарий <code>{scriptId}</code></span>}
+          <Button asChild variant="outline" size="sm"><Link href="/tasks">Сбросить область истории</Link></Button>
+        </div>}
         <section aria-label="Показатели выбранной истории" className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="flex items-start justify-between rounded-xl border border-border bg-card p-5 shadow-sm">
             <div><div className="text-sm font-medium text-muted-foreground">Всего задач</div>
@@ -204,19 +264,19 @@ export default function TaskEnginePage() {
               </button>)}
             </>}
           </section>
-          <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm" aria-label="Активные pipeline">
+          {!scriptId && <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm" aria-label="Активные pipeline">
             <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight"><Workflow className="h-4 w-4 text-primary" aria-hidden="true" />Активные pipeline</h2>
             {pipelines.isLoading ? <p className="text-sm text-muted-foreground">Загрузка активных pipeline…</p> : pipelines.isError ? <p role="alert" className="text-sm text-destructive">Не удалось загрузить pipeline</p> : pipelines.data && <>
               <p className="text-sm text-muted-foreground">Показано {pipelines.data.items.length} из {pipelines.data.total}. Включая ожидающие и приостановленные.</p>
               {pipelines.data.total === 0 && <p className="rounded-lg bg-muted/50 px-3 py-4 text-sm text-muted-foreground">Активных pipeline сейчас нет.</p>}
               {pipelines.data.items.map(run => <div key={run.id} className="border-t border-border pt-2 text-xs space-y-1">
-                <div className="font-mono break-all">{run.id}</div><Badge variant="outline">{executionStatusLabel(run)}</Badge>
+                <Link className="block break-all font-mono text-primary hover:underline" href={`/orchestration?run_id=${encodeURIComponent(run.id)}`} prefetch={false}>{run.id}</Link><Badge variant="outline">{executionStatusLabel(run)}</Badge>
                 <p className="text-muted-foreground break-all">Pipeline {run.pipeline_id} · устройство {run.device_id}</p>
                 {run.current_step_id && <p>Шаг: {run.current_step_id}</p>}
                 {run.current_task_id && <Button variant="outline" size="sm" aria-label={`Текущая задача pipeline ${run.id}`} onClick={() => router.push(`/tasks/${run.current_task_id}`)}>Открыть задачу</Button>}
               </div>)}
             </>}
-          </section>
+          </section>}
         </div>
 
         {history.isError && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -242,11 +302,12 @@ export default function TaskEnginePage() {
                   <td className="p-3"><Badge variant="outline">{executionStatusLabel(task).toUpperCase()}</Badge></td>
                   <td className="p-3"><button onClick={() => router.push(`/tasks/${task.id}`)} className="text-left hover:text-primary">
                     <span className="font-semibold">{taskName(task)}</span><span className="block text-xs font-mono text-muted-foreground">{task.id}</span>
-                  </button></td>
+                  </button>{task.batch_id && <Link className="mt-1 block text-xs text-primary hover:underline" href={batchHref(task.batch_id)} prefetch={false}>Пакет задания</Link>}</td>
                   <td className="p-3">{task.device_name || task.device_id}</td><td className="p-3">{task.priority}</td>
                   <td className="p-3 whitespace-nowrap">{formatTime(task.created_at)}</td>
                   <td className="p-3 whitespace-nowrap">{formatTime(task.started_at)}<br />{formatTime(task.finished_at)}</td>
-                  <td className="p-3"><Button variant="ghost" size="icon" title="Перезапустить задачу" aria-label={`Перезапустить ${task.id}`} disabled={retryTask.isPending} onClick={(e) => handleRetry(task,e)}><RotateCcw className="w-4 h-4" /></Button></td>
+                  <td className="p-3">{canExecute && terminalStatuses.has(task.status) && task.script_version_id &&
+                    <Button variant="ghost" size="icon" title="Перезапустить задачу" aria-label={`Перезапустить ${task.id}`} disabled={retryTask.isPending} onClick={(e) => handleRetry(task,e)}><RotateCcw className="w-4 h-4" /></Button>}</td>
                 </tr>)}
               </>}
             </tbody>
@@ -263,7 +324,7 @@ export default function TaskEnginePage() {
       </div>
 
       {/* ── Модалка: Broadcast — запуск на всех онлайн-устройствах ────────── */}
-      <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
+      <Dialog open={broadcastOpen && canExecute} onOpenChange={setBroadcastOpen}>
         <DialogContent className="sm:max-w-[480px] bg-card border-border">
           <DialogHeader>
             <DialogTitle className="font-mono text-foreground flex items-center gap-2">
@@ -271,61 +332,69 @@ export default function TaskEnginePage() {
               Запуск на всех устройствах
             </DialogTitle>
             <DialogDescription className="font-mono text-xs">
-              Скрипт будет запущен на всех онлайн-устройствах организации волнами.
-              Список устройств формируется автоматически по актуальному кешу статусов.
+              Сервер выберет цели среди устройств, подтверждённых онлайн при приёме запроса.
             </DialogDescription>
           </DialogHeader>
 
           {/* Статус онлайн */}
           <div className="flex items-center gap-3 p-3 rounded border border-border bg-muted/50">
-            <div className="w-2.5 h-2.5 rounded-full bg-success animate-pulse" />
-            <span className="text-sm font-mono font-bold text-foreground">{onlineCount}</span>
-            <span className="text-xs text-muted-foreground font-mono">устройств в сети</span>
+            <span className="text-sm font-mono font-bold text-foreground">{onlineCount ?? '—'}</span>
+            <span className="text-xs text-muted-foreground font-mono">устройств в сети по последнему подсчёту</span>
           </div>
 
           <div className="grid gap-4 py-2">
             {/* Выбор скрипта */}
             <div className="grid gap-2">
-              <Label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Скрипт</Label>
-              <Select value={bcScriptId} onValueChange={setBcScriptId}>
-                <SelectTrigger className="bg-background border-border font-mono text-xs">
+              <Label htmlFor="broadcast-script-search" className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Поиск сценария</Label>
+              <Input id="broadcast-script-search" value={bcSearch} onChange={e => {
+                setBcSearch(e.target.value); setBcScriptId(''); setBcVersionId('');
+              }} placeholder="Название сценария" />
+              <Select value={bcScriptId} onValueChange={id => {
+                const script = scripts.find(item => item.id === id);
+                setBcScriptId(id);
+                setBcVersionId(script ? scriptVersionId(script) ?? '' : '');
+              }}>
+                <SelectTrigger aria-label="Сценарий" className="bg-background border-border font-mono text-xs">
                   <SelectValue placeholder="Выберите скрипт..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {scripts.filter((s) => !s.is_archived).map((s) => (
+                  {scripts.filter(s => !s.is_archived && scriptVersionId(s)).map((s) => (
                     <SelectItem key={s.id} value={s.id} className="font-mono text-xs">
-                      {s.name} ({s.node_count} узлов)
+                      {s.name}{getCurrentScriptVersion(s) && ` · версия ${getCurrentScriptVersion(s)?.version}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {bcVersionId && <p className="break-all text-xs text-muted-foreground">ID подтверждаемой версии {bcVersionId}</p>}
             </div>
 
             {/* Настройки волн */}
             <div className="grid grid-cols-3 gap-3">
               <div className="grid gap-2">
-                <Label className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                <Label htmlFor="broadcast-wave-size" className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
                   Размер волны
                 </Label>
                 <Input
+                  id="broadcast-wave-size"
                   type="number"
                   min={1}
                   max={100}
                   value={bcWaveSize}
-                  onChange={(e) => setBcWaveSize(Number(e.target.value) || 10)}
+                  onChange={(e) => setBcWaveSize(e.target.value)}
                   className="bg-background border-border font-mono text-xs h-9"
                 />
               </div>
               <div className="grid gap-2">
-                <Label className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                <Label htmlFor="broadcast-wave-delay" className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
                   Задержка (мс)
                 </Label>
                 <Input
+                  id="broadcast-wave-delay"
                   type="number"
                   min={0}
                   max={60000}
                   value={bcWaveDelay}
-                  onChange={(e) => setBcWaveDelay(Number(e.target.value) || 5000)}
+                  onChange={(e) => setBcWaveDelay(e.target.value)}
                   className="bg-background border-border font-mono text-xs h-9"
                 />
               </div>
@@ -340,7 +409,7 @@ export default function TaskEnginePage() {
                   <SelectContent>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((p) => (
                       <SelectItem key={p} value={String(p)} className="font-mono text-xs">
-                        {p} {p <= 3 ? '(низкий)' : p <= 7 ? '(средний)' : '(высокий)'}
+                        {p} {p <= 3 ? '(высокий)' : p <= 7 ? '(средний)' : '(низкий)'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -349,14 +418,15 @@ export default function TaskEnginePage() {
             </div>
 
             {/* Информация о волнах */}
-            {onlineCount > 0 && bcWaveSize > 0 && (
+            {onlineCount != null && onlineCount > 0 && validWave && validDelay && (
               <div className="text-[10px] font-mono text-muted-foreground bg-muted/30 rounded p-2 border border-border/50">
-                {Math.ceil(onlineCount / bcWaveSize)} волн × {bcWaveSize} устройств
-                &nbsp;·&nbsp;~{((Math.ceil(onlineCount / bcWaveSize) - 1) * bcWaveDelay / 1000).toFixed(0)}с общая задержка
+                До {waveSize} устройств в волне · около {Math.ceil(onlineCount / waveSize)} волн.
+                Пауза между волнами {waveDelay} мс, плюс до 1000 мс случайного разброса.
               </div>
             )}
           </div>
 
+          {broadcastUnconfirmed && <p role="alert" className="text-sm text-destructive">Приём пакета не подтверждён. <Link className="underline" href="/tasks?view=batches">Сверьте историю пакетов</Link> перед новым запуском.</p>}
           <DialogFooter>
             <Button
               variant="ghost"
@@ -367,13 +437,13 @@ export default function TaskEnginePage() {
             </Button>
             <Button
               onClick={handleBroadcast}
-              disabled={!bcScriptId || onlineCount === 0 || broadcastBatch.isPending}
+              disabled={!bcScriptId || !bcVersionId || !validWave || !validDelay || broadcastBatch.isPending || broadcastUnconfirmed}
               className="font-mono text-xs"
             >
               {broadcastBatch.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Запуск...</>
               ) : (
-                <><Play className="w-4 h-4 mr-2" /> Запустить на {onlineCount} устройствах</>
+                <><Play className="w-4 h-4 mr-2" /> Отправить пакет</>
               )}
             </Button>
           </DialogFooter>

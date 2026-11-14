@@ -14,7 +14,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "alembic/versions/20260908_tenant_policies.py"
-MIGRATIONS = (MIGRATION, ROOT / "alembic/versions/20261021_vpn_profiles.py")
+MIGRATIONS = (
+    MIGRATION,
+    ROOT / "alembic/versions/20261021_vpn_profiles.py",
+    ROOT / "alembic/versions/20261114_application_profiles.py",
+    ROOT / "alembic/versions/20261114_automation_profiles.py",
+    ROOT / "alembic/versions/20261114_schedule_fire_keys.py",
+    ROOT / "alembic/versions/20261114_webhook_outbox.py",
+)
 
 
 def model_tables(directory: Path) -> set[str]:

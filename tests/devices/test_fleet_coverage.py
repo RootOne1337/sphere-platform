@@ -111,6 +111,28 @@ async def test_redis_failure_preserves_sql_but_has_no_presence_numbers(device_cl
     assert 'private upstream' not in str(data)
 
 
+async def test_reported_offline_is_separate_from_missing_and_expired_presence(
+    device_client, sample_device, device_org, db_session,
+):
+    missing = Device(org_id=device_org.id, name='missing')
+    expired = Device(org_id=device_org.id, name='expired')
+    db_session.add_all([missing, expired])
+    await db_session.flush()
+    redis = await install_live(sample_device.id, state='offline', flag=False)
+    try:
+        await DeviceStatusCache(redis).set_status(str(expired.id), DeviceLiveStatus(
+            device_id=str(expired.id), status='online', ws_session_id='expired',
+            last_heartbeat=NOW - timedelta(seconds=120),
+        ))
+        data = await read(device_client)
+        assert data['inventory']['counts'] == {'total': 3}
+        assert data['presence']['counts'] == {
+            'online': 0, 'busy': 0, 'connecting': 0, 'offline': 1, 'error': 0, 'unknown': 2,
+        }
+    finally:
+        await redis.aclose()
+
+
 async def test_tenant_and_active_scope_not_operator_selected(device_client, sample_device, db_session, device_org, other_org):
     db_session.add_all([Device(org_id=other_org.id, name='foreign'), Device(org_id=device_org.id, name='disabled', is_active=False)])
     await db_session.flush()

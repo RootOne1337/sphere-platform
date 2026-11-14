@@ -21,7 +21,7 @@ async function openCreate() {
   await screen.findByText(member.email);
   fireEvent.click(screen.getByRole('button', { name: 'Добавить пользователя' }));
   fireEvent.change(screen.getByLabelText('Электронная почта'), { target: { value: 'new@example.org' } });
-  fireEvent.change(screen.getByLabelText('Временный пароль'), { target: { value: 'test-password-2026' } });
+  fireEvent.change(screen.getByLabelText('Начальный пароль'), { target: { value: 'test-password-2026' } });
 }
 function submitCreate() {
   const form = screen.getByRole('dialog').querySelector('form');
@@ -36,6 +36,35 @@ async function proposeRole(email = member.email, role = 'device_manager') {
   return dialog;
 }
 
+it('shows platform scope and organization in each user row before any action', async () => {
+  useAuthStore.setState({ user: { ...actor, role: 'super_admin' } });
+  const other = { ...member, id: 'other', org_id: 'org-other', email: 'other@example.org' };
+  jest.mocked(api.get).mockResolvedValue({ data: { ...catalog, items: [member, other] } });
+  render(<UsersPage />, { wrapper: createWrapper() });
+  expect(await screen.findByText('Пользователи всех организаций')).toBeInTheDocument();
+  const row = (await screen.findByText(other.email)).closest('tr')!;
+  expect(within(row).getByRole('cell', { name: 'org-other' })).toBeInTheDocument();
+  await openCreate();
+  const dialog = screen.getByRole('dialog');
+  expect(dialog).toHaveTextContent('Организация назначения org');
+  expect(dialog).toHaveTextContent('автоматического истечения или обязательной смены нет');
+});
+
+it('labels page-local filtering and distinguishes no match from an empty catalog', async () => {
+  jest.mocked(api.get).mockResolvedValue({ data: { ...catalog, items: [owner, { ...member, is_active: false }] } });
+  render(<UsersPage />, { wrapper: createWrapper() });
+  const search = await screen.findByLabelText('Поиск на этой странице');
+  fireEvent.change(search, { target: { value: ' MEMBER@' } });
+  expect(screen.getByText(member.email)).toBeInTheDocument();
+  expect(screen.queryByText(owner.email)).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Статус аккаунта'), { target: { value: 'active' } });
+  expect(screen.getByText('На этой странице совпадений нет')).toBeInTheDocument();
+  expect(screen.queryByText('Пользователей нет')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Сбросить фильтры' }));
+  expect(screen.getByText(owner.email)).toBeInTheDocument();
+  expect(screen.getByText(member.email)).toBeInTheDocument();
+});
+
 it('uses native email validity and enforces the backend password bounds without sending', async () => {
   render(<UsersPage />, { wrapper: createWrapper() }); await openCreate();
   const email = screen.getByLabelText('Электронная почта');
@@ -43,18 +72,18 @@ it('uses native email validity and enforces the backend password bounds without 
   fireEvent.change(email, { target: { value: 'invalid-email' } }); submitCreate();
   expect(api.post).not.toHaveBeenCalled();
   fireEvent.change(email, { target: { value: 'new@example.org' } });
-  fireEvent.change(screen.getByLabelText('Временный пароль'), { target: { value: 'short' } }); submitCreate();
+  fireEvent.change(screen.getByLabelText('Начальный пароль'), { target: { value: 'short' } }); submitCreate();
   expect(api.post).not.toHaveBeenCalled();
-  expect(screen.getByLabelText('Временный пароль')).toHaveAttribute('aria-invalid', 'true');
+  expect(screen.getByLabelText('Начальный пароль')).toHaveAttribute('aria-invalid', 'true');
 });
 it('places a 422 password error on the field without rendering the rejected password', async () => {
   jest.mocked(api.post).mockRejectedValue({ response: { status: 422, data: { detail: [
     { loc: ['body', 'password'], msg: 'String should have at least 8 characters', input: 'secret-do-not-render' },
   ] } } });
   render(<UsersPage />, { wrapper: createWrapper() }); await openCreate(); submitCreate();
-  await waitFor(() => expect(screen.getByLabelText('Временный пароль')).toHaveAttribute('aria-invalid', 'true'));
-  expect(screen.getByLabelText('Временный пароль')).toHaveFocus();
-  expect(screen.getByLabelText('Временный пароль')).toHaveValue('test-password-2026');
+  await waitFor(() => expect(screen.getByLabelText('Начальный пароль')).toHaveAttribute('aria-invalid', 'true'));
+  expect(screen.getByLabelText('Начальный пароль')).toHaveFocus();
+  expect(screen.getByLabelText('Начальный пароль')).toHaveValue('test-password-2026');
   expect(screen.getByRole('dialog')).not.toHaveTextContent('secret-do-not-render');
   expect(api.post).toHaveBeenCalledTimes(1);
 });
@@ -143,7 +172,7 @@ it('confirms create and clears the password when the dialog is reopened', async 
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   expect(screen.getByRole('status')).toHaveTextContent('new@example.org');
   fireEvent.click(screen.getByRole('button', { name: 'Добавить пользователя' }));
-  expect(screen.getByLabelText('Временный пароль')).toHaveValue('');
+  expect(screen.getByLabelText('Начальный пароль')).toHaveValue('');
 });
 it('does not accept a create receipt belonging to a different organization', async () => {
   jest.mocked(api.post).mockResolvedValue({ data: { ...member, id: 'new', email: 'new@example.org', org_id: 'foreign' } } as never);

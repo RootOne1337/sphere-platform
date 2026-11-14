@@ -24,7 +24,7 @@ async def investigation(runtime_db):
     older = {"id": uuid.uuid4(), "org_id": w.org_a.id, "user_id": None,
              "created_at": now - timedelta(days=1), "action": "literal%_target", "resource_type": "groups",
              "resource_id": "rare-resource", "ip_address": "203.0.113.42",
-             "meta": {"status": "failure", "private_payload": "must-not-enter-csv"},
+             "meta": {"status": "failure", "request_id": "incident-fixture:51", "private_payload": "must-not-enter-csv"},
              "old_value": {"secret": "must-not-enter-csv"}}
     foreign = {**older, "id": uuid.uuid4(), "org_id": w.org_b.id}
     async with w.sessions() as db:
@@ -54,6 +54,7 @@ async def get(investigation, path, params=None, role="org_admin"):
 
 @pytest.mark.parametrize("params", [
     {"q": "rare-resource"}, {"q": "status:FAILED user:system"}, {"status": "FAILED"},
+    {"q": "request:incident-fixture:51"},
     {"action": "%_target"}, {"action": "%"}, {"resource_type": "groups"}, {"q": "203.0.113.42 action:target"},
     {"from": "2026-10-01T09:59:00Z", "to": "2026-10-01T10:01:00Z"},
 ])
@@ -67,7 +68,7 @@ async def test_filters_find_an_event_beyond_first_page_without_foreign_rows(inve
 @pytest.mark.parametrize("params", [
     {"per_page": 0}, {"per_page": -1}, {"status": "BOGUS"}, {"q": "status:BOGUS"},
     {"from": "2026-10-02T10:00:00"}, {"from": "2026-10-02T10:00:00Z", "to": "2026-10-01T10:00:00Z"},
-    {"q": "a " * 21}, {"q": "x" * 501}, {"user_id": "system"},
+    {"q": "a " * 21}, {"q": "x" * 501}, {"user_id": "system"}, {"q": "request:invalid/id"},
 ])
 async def test_invalid_investigation_is_rejected_without_unbounded_query(investigation, params):
     response = await get(investigation, "logs", params)
@@ -91,6 +92,7 @@ async def test_export_uses_all_matching_rows_and_excludes_payloads(investigation
     assert response.headers["x-audit-limit"] == "5000"
     rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
     assert len(rows) == 2 and rows[1][-1] == str(investigation[2]["id"])
+    assert rows[0][-2] == "ID запроса" and rows[1][-2] == "incident-fixture:51"
     assert "must-not-enter-csv" not in response.text
 
 

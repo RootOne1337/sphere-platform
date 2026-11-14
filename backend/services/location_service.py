@@ -127,12 +127,13 @@ class LocationService:
     # ── List (со статистикой online/total) ───────────────────────────────────
 
     async def get_location_stats(self, org_id: uuid.UUID, location_id: uuid.UUID | None = None) -> list[LocationResponse]:
-        """Direct memberships and persisted online status, never descendant totals."""
+        """Active direct memberships and persisted online status."""
         stmt = (
             select(Location, func.count(Device.id).label("total"),
                    func.sum(case((Device.last_status == DeviceStatus.ONLINE, 1), else_=0)).label("online_count"))
             .outerjoin(device_location_members, device_location_members.c.location_id == Location.id)
-            .outerjoin(Device, (Device.id == device_location_members.c.device_id) & (Device.org_id == org_id))
+            .outerjoin(Device, (Device.id == device_location_members.c.device_id)
+                       & (Device.org_id == org_id) & Device.is_active.is_(True))
             .where(Location.org_id == org_id)
             .group_by(Location.id)
             .order_by(Location.name, Location.id)

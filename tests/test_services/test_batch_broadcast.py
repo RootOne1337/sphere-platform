@@ -1,7 +1,7 @@
 """Regressions for binary presence and the response after durable batch commit."""
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -9,6 +9,7 @@ import pytest
 from fakeredis import FakeServer
 from fakeredis.aioredis import FakeRedis
 from fastapi import HTTPException
+from redis.exceptions import ConnectionError as RedisConnectionError
 from sqlalchemy import func, select
 
 from backend.database import redis_client
@@ -71,14 +72,29 @@ async def test_broadcast_reads_msgpack_and_returns_202_for_the_committed_plan(
         "offline": Device(org_id=test_org.id, name="offline"),
         "missing": Device(org_id=test_org.id, name="missing"),
         "corrupt": Device(org_id=test_org.id, name="corrupt"),
+        "stale": Device(org_id=test_org.id, name="stale"),
+        "missing_session": Device(org_id=test_org.id, name="missing-session"),
+        "future": Device(org_id=test_org.id, name="future"),
+        "other_payload": Device(org_id=test_org.id, name="other-payload"),
     }
     db_session.add_all(devices.values())
     await db_session.flush()
     cache = DeviceStatusCache(presence)
+    now = datetime.now(timezone.utc)
     for device, status in [(test_device, "online"), (devices["foreign"], "online"),
                            (devices["inactive"], "online"), (devices["busy"], "busy"),
                            (devices["offline"], "offline")]:
-        await cache.set_status(str(device.id), DeviceLiveStatus(device_id=str(device.id), status=status))
+        await cache.set_status(str(device.id), DeviceLiveStatus(device_id=str(device.id), status=status,
+                                                                ws_session_id="fixture", last_heartbeat=now))
+    for key, heartbeat, session, device_id in [
+        ("stale", now - timedelta(seconds=121), "fixture", devices["stale"].id),
+        ("missing_session", now, None, devices["missing_session"].id),
+        ("future", now + timedelta(seconds=30), "fixture", devices["future"].id),
+        ("other_payload", now, "fixture", test_device.id),
+    ]:
+        await cache.set_status(str(devices[key].id), DeviceLiveStatus(
+            device_id=str(device_id), status="online", ws_session_id=session, last_heartbeat=heartbeat,
+        ))
     await presence.set(cache._key(str(devices["corrupt"].id)), b"\xde\x00", ex=120)
     # A text Redis client must really fail on this fixture, not silently emulate bytes.
     with pytest.raises(UnicodeDecodeError):
@@ -86,7 +102,7 @@ async def test_broadcast_reads_msgpack_and_returns_202_for_the_committed_plan(
 
     response = await authenticated_client.post("/api/v1/batches/broadcast", json={
         "script_id": str(test_script.id), "wave_size": 1, "wave_delay_ms": 0,
-        "jitter_ms": 0, "stagger_by_workstation": False,
+        "jitter_ms": 0, "stagger_by_workstation": False, "expected_current_version_id": str(version.id),
     })
     assert response.status_code == 202, response.text
     body = response.json()
@@ -98,6 +114,11 @@ async def test_broadcast_reads_msgpack_and_returns_202_for_the_committed_plan(
     assert await db_session.scalar(select(func.count()).select_from(TaskBatch)) == 1
     assert await db_session.scalar(select(func.count()).select_from(Task)) == 0
     # No startup admission worker runs in this HTTP test; 202 proves the plan, not Android execution.
+    response = await authenticated_client.post("/api/v1/batches/broadcast", json={
+        "script_id": str(test_script.id), "expected_current_version_id": str(uuid.uuid4()),
+    })
+    assert response.status_code == 409, response.text
+    assert await db_session.scalar(select(func.count()).select_from(TaskBatch)) == 1
 
 
 async def test_broadcast_response_supplies_online_count_before_validation(
@@ -128,4 +149,18 @@ async def test_broadcast_with_no_online_target_creates_no_intent(db_session, tes
     with pytest.raises(HTTPException) as exc:
         await service.broadcast_batch(BroadcastBatchRequest(script_id=uuid.uuid4()), test_org.id, test_user.id)
     assert exc.value.status_code == 409
+    service.start_batch.assert_not_awaited()
+
+
+@pytest.mark.parametrize("client_missing", [True, False])
+async def test_broadcast_with_unavailable_presence_returns_503_without_intent(
+    db_session, test_org, test_user, test_device, monkeypatch, client_missing,
+):
+    offline_client = SimpleNamespace(mget=AsyncMock(side_effect=RedisConnectionError("fixture")))
+    monkeypatch.setattr(redis_client, "redis_binary", None if client_missing else offline_client)
+    service = BatchService(db_session, AsyncMock())
+    service.start_batch = AsyncMock()
+    with pytest.raises(HTTPException) as exc:
+        await service.broadcast_batch(BroadcastBatchRequest(script_id=uuid.uuid4()), test_org.id, test_user.id)
+    assert exc.value.status_code == 503
     service.start_batch.assert_not_awaited()

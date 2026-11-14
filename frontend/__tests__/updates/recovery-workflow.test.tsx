@@ -40,6 +40,17 @@ beforeEach(() => {
   jest.mocked(api.delete).mockResolvedValue({ status: 204 } as never);
 });
 afterEach(() => useAuthStore.setState({ user: null, sessionVersion: 0 }));
+
+it('keeps a previous failure in history while a different command for the same APK is active', async () => {
+  const failed = { ...grant(), command_id: '33333333-3333-4333-8333-333333333333', status: 'failed',
+    failure_code: 'install_failed', installed_version_code: null, recovered_after_process_restart: false, recorded_at: now() };
+  recovery = { device_id: id, state: 'active', active: grant(), last_result: failed, recent_results: [failed], observed_at: now() };
+  await open();
+  expect(await screen.findByText('Ожидается результат Android')).toBeInTheDocument();
+  expect(screen.queryByText(/Android сообщил ошибку/)).not.toBeInTheDocument();
+  expect(screen.getByText(failed.command_id)).toBeInTheDocument();
+});
+
 async function open() {
   render(<UpdatesPage />, { wrapper: createWrapper() });
   fireEvent.click(await screen.findByRole('button', { name: 'Адресное OTA' }));

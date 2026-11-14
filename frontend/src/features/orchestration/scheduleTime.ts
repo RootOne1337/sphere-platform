@@ -18,3 +18,28 @@ export function utcDateTimeInputToIso(value: string): string {
 export function isValidUtcDateTimeInput(value: string): boolean {
   try { utcDateTimeInputToIso(value); return true; } catch { return false; }
 }
+
+const utcFormatter = new Intl.DateTimeFormat('ru-RU', {
+  timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'medium',
+});
+
+export function formatScheduleUtc(value: string | null) {
+  if (!value || !Number.isFinite(Date.parse(value))) return '—';
+  return `${utcFormatter.format(new Date(value))} UTC`;
+}
+
+export function formatScheduleLocal(value: string, timeZone: string): string | null {
+  if (!timeZone || !Number.isFinite(Date.parse(value))) return null;
+  try {
+    return new Intl.DateTimeFormat('ru-RU', {
+      timeZone, year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'shortOffset',
+    }).format(new Date(value));
+  } catch {
+    return null;
+  }
+}
+
+export function scheduleRevision(value?: string): string | undefined {
+  return value && /(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(Date.parse(value)) ? value : undefined;
+}

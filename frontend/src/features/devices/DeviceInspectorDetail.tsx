@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Camera, Code2, ExternalLink, FileText, MonitorPlay, RefreshCw, Terminal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -21,8 +21,10 @@ import { NativeScreenshotPanel } from './NativeScreenshotPanel';
 import { AndroidProfilePanel } from './AndroidProfilePanel';
 import { DeviceDiagnosticsPanel, DeviceHistoryPanel, DeviceSavedLogsPanel, Metric, utcTime } from './DeviceOperationsPanels';
 import { useCapabilities } from '@/src/features/access/Capabilities';
-import { getReportedDeviceModel } from './devicePresentation';
+import { getDeviceAccess, getObservedDeviceStatus, getReportedDeviceModel } from './devicePresentation';
 import { DeviceViewerPresence } from './DeviceViewerPresence';
+import { applicationBindingLabel, DeviceApplicationBinding, hasApplicationBinding } from './DeviceApplicationBinding';
+import { useApplicationProfiles } from '@/src/features/accounts/applicationProfiles';
 
 type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script' | 'screenshot' | 'profile';
 const VIEWS = [['summary', 'Обзор'], ['tasks', 'Задачи'], ['events', 'События'], ['diagnostics', 'Видео'], ['logs', 'Логи APK']] as const;
@@ -44,14 +46,30 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
   const canViewStream = access.can('stream:read');
   const query = useDeviceSnapshot(deviceId);
   const device = query.data;
+  const canReadCatalog = access.can('account:read');
+  const catalog = useApplicationProfiles(canReadCatalog && Boolean(device && hasApplicationBinding(device)));
   const [view, setView] = useState<View>('summary');
   const [rebootOpen, setRebootOpen] = useState(false);
+  const [applicationBindingOpen, setApplicationBindingOpen] = useState(false);
   const [rebootPending, setRebootPending] = useState(false);
+  const [clockNow, setClockNow] = useState(Date.now);
   const commandLock = useRef(false);
-  const isReachable = !!device && query.isFetchedAfterMount && !query.isError && Date.now() - query.dataUpdatedAt <= 45_000 && ['online', 'busy'].includes(device.status);
+  useEffect(() => {
+    const tick = () => setClockNow(Date.now());
+    const timer = window.setInterval(tick, 5_000);
+    document.addEventListener('visibilitychange', tick);
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', tick); };
+  }, []);
+  const now = Math.max(clockNow, query.dataUpdatedAt);
+  const currentSnapshot = query.isFetchedAfterMount && !query.isError && now - query.dataUpdatedAt <= 45_000;
+  const observedStatus = device && getObservedDeviceStatus(device, now);
+  const status = !currentSnapshot && (observedStatus === 'online' || observedStatus === 'busy') ? 'unknown' : observedStatus;
+  const isReachable = currentSnapshot && (status === 'online' || status === 'busy');
 
   const reboot = async () => {
-    if (!canWrite || !isReachable || commandLock.current) return;
+    const submittedAt = Date.now();
+    if (!canWrite || !device || !isReachable || commandLock.current || submittedAt - query.dataUpdatedAt > 45_000
+      || getObservedDeviceStatus(device, submittedAt) === 'unknown') return;
     commandLock.current = true;
     setRebootPending(true);
     try {
@@ -70,11 +88,12 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
 
   if (!device && query.isLoading) return <p role="status" className="p-4 text-sm text-muted-foreground">Загрузка карточки устройства…</p>;
   if (!device) return <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 p-4"><h3 className="font-semibold">Карточка устройства недоступна</h3><p className="text-sm text-muted-foreground">API не вернул подтверждённые данные для выбранного ID. Проверьте доступ и существование записи.</p><Button variant="outline" disabled={query.isFetching} onClick={() => { void query.refetch(); }}>Повторить запрос</Button></div>;
+  const { adb, vpn } = getDeviceAccess(currentSnapshot ? device : { ...device, status: 'unknown' }, now);
 
   return <div className="min-w-0 space-y-5">
     <header className="space-y-3">
       <DeviceViewerPresence deviceId={deviceId} />
-      <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words text-xl font-semibold tracking-tight">{device.name}</h3><p className="mt-1 text-sm text-muted-foreground">{getReportedDeviceModel(device) ?? 'Модель не сообщена'} · Android {device.android_version || 'не сообщён'}</p></div><DeviceStatusBadge status={device.status} /></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words text-xl font-semibold tracking-tight">{device.name}</h3><p className="mt-1 text-sm text-muted-foreground">{getReportedDeviceModel(device) ?? 'Модель не сообщена'} · Android {device.android_version || 'не сообщён'}</p></div><DeviceStatusBadge status={status ?? 'unknown'} /></div>
       <div className="flex flex-wrap items-center gap-2"><Button variant="outline" size="sm" disabled={query.isFetching} onClick={() => { void query.refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Обновить карточку</Button>{!fullPage && <Button asChild variant="ghost" size="sm"><Link href={`/devices/${encodeURIComponent(deviceId)}`}><ExternalLink className="mr-2 h-4 w-4" aria-hidden />Полная карточка</Link></Button>}</div>
       <p className="text-xs text-muted-foreground">Запрос API: {utcTime(new Date(query.dataUpdatedAt).toISOString())} · опрос каждые 15 секунд.</p>
       {query.isError && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Обновление карточки не удалось. Показан сохранённый ответ; команды карточки заблокированы до успешной проверки. Состояние видеопотока проверяется при подключении.</p>}
@@ -93,7 +112,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
         </> : <>
           <dl className={`device-inspector-metrics grid grid-cols-2 gap-3 ${fullPage ? 'lg:grid-cols-4' : ''}`}>
             <Metric label="Sphere Agent" value={device.agent_version ? `${device.agent_version}${device.agent_version_code ? ` / ${device.agent_version_code}` : ''}` : 'Версия не сообщена'} />
-            <Metric label="Длительность текущей связи" value={['online', 'busy'].includes(device.status) ? elapsed(device.connected_since) : 'Нет подтверждённой активной связи'} />
+            <Metric label="Длительность текущей связи" value={isReachable ? elapsed(device.connected_since) : 'Нет подтверждённой активной связи'} />
             <Metric label="Последний heartbeat APK" value={utcTime(device.last_heartbeat)} />
             <Metric label="Последний контакт в каталоге" value={utcTime(device.last_seen)} />
             <Metric label="CPU" value={reportedNumber(device.cpu_usage, '%', 100)} />
@@ -112,6 +131,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
               <Button variant="outline" disabled={!isReachable || !access.can('device:read')} onClick={() => setView('logcat')}><FileText className="mr-2 h-4 w-4" aria-hidden />Logcat</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('script')}><Code2 className="mr-2 h-4 w-4" aria-hidden />Shell-скрипт</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('screenshot')}><Camera className="mr-2 h-4 w-4" aria-hidden />Снимок экрана</Button>
+              {access.can('device:read') && <Button variant="outline" onClick={() => setApplicationBindingOpen(true)}>Привязка приложения</Button>}
             </div>
             <div className="border-t border-border pt-3">
               <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={!canWrite || !isReachable || rebootPending} onClick={() => setRebootOpen(true)}><RefreshCw className="h-4 w-4" aria-hidden />Перезагрузка</Button>
@@ -121,11 +141,11 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
           <section className="space-y-3 sphere-inset rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h4 className="text-sm font-semibold">Идентификация и доступ</h4><Button variant="outline" disabled={!canWrite || !isReachable} onClick={() => setView('profile')}>Системный профиль Android</Button></div><dl className="device-inspector-metrics grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Metric label="ID Sphere" value={<span className="break-all font-mono text-xs">{device.id}</span>} />
             <Metric label={device.android_id ? 'Android ID' : 'Серийный идентификатор'} value={<span className="break-all font-mono text-xs">{device.android_id || device.serial || 'Не сообщён'}</span>} />
-            <Metric label="ADB (дополнительный канал)" value={typeof device.adb_connected === 'boolean' ? device.adb_connected ? 'Подключён' : 'Не подключён' : 'Не сообщено'} />
-            <Metric label="VPN, активность по APK" value={typeof device.vpn_active === 'boolean' ? device.vpn_active ? 'Активен' : 'Не активен' : 'Не сообщено'} />
+            <Metric label="ADB (дополнительный канал)" value={<span title={adb.detail}>{adb.label}</span>} />
+            <Metric label="VPN, активность по APK" value={<span title={vpn.detail}>{vpn.label}{vpn.observedAt && <> · <time dateTime={vpn.observedAt}>{utcTime(vpn.observedAt)}</time></>}</span>} />
             <Metric label="Группы" value={device.group_name || device.group_ids?.join(', ') || 'Не назначены'} />
             <Metric label="Локации" value={device.location_ids?.join(', ') || 'Не назначены'} />
-            <Metric label="Игровой сервер" value={device.server_name || 'Не назначен'} />
+            <Metric label={hasApplicationBinding(device) ? 'Сервер профиля приложения' : 'Игровой сервер'} value={applicationBindingLabel(device, canReadCatalog && !catalog.isError ? catalog.data : undefined)} />
             <Metric label="Создано" value={utcTime(device.created_at)} /><Metric label="Изменено" value={utcTime(device.updated_at)} />
           </dl>{device.notes && <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{device.notes}</p>}{!!device.tags?.length && <div className="flex flex-wrap gap-2">{device.tags.map((tag) => <Badge key={tag} variant="outline" className="max-w-full break-all">{tag}</Badge>)}</div>}<Button asChild variant="outline" size="sm" className="h-auto min-h-[var(--control-sm-height)] max-w-full whitespace-normal py-2 text-left"><Link href="/devices" title="Переименование, группы и удаление">Изменить запись в реестре</Link></Button></section>
         </>}
@@ -135,6 +155,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
       <TabsContent value="diagnostics" className="mt-5"><DeviceDiagnosticsPanel deviceId={deviceId} /></TabsContent>
       <TabsContent value="logs" className="mt-5"><DeviceSavedLogsPanel deviceId={deviceId} /></TabsContent>
     </Tabs>
+    {applicationBindingOpen && access.can('device:read') && <DeviceApplicationBinding key={deviceId} deviceId={deviceId} name={device.name} onClose={() => setApplicationBindingOpen(false)} />}
     <Dialog open={rebootOpen} onOpenChange={(open) => { if (!rebootPending) setRebootOpen(open); }}><DialogContent className="w-[calc(100%-2rem)] rounded-xl"><DialogHeader><DialogTitle>Перезагрузить «{device.name}»?</DialogTitle><DialogDescription>Android временно потеряет связь и остановит текущую работу. Принятие команды не подтверждает завершение перезагрузки.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" disabled={rebootPending} onClick={() => setRebootOpen(false)}>Отмена</Button><Button variant="destructive" disabled={!canWrite || !isReachable || rebootPending} onClick={() => { void reboot(); }}>{rebootPending ? 'Ожидаем ответ…' : 'Подтвердить перезагрузку'}</Button></DialogFooter></DialogContent></Dialog>
   </div>;
 }

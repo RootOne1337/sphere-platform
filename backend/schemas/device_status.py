@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from backend.schemas.vpn.runtime import AppVpnObservation
 
 VPN_OBSERVATION_MAX_AGE_SECONDS = 120
+DEVICE_HEARTBEAT_MAX_AGE_SECONDS = 120
 
 
 class DeviceLiveStatus(BaseModel):
@@ -37,6 +38,14 @@ class DeviceLiveStatus(BaseModel):
     ws_session_id: str | None = None    # ID WebSocket сессии агента
     current_task_id: uuid.UUID | None = None
 
+    def has_fresh_presence(self, as_of: datetime) -> bool:
+        heartbeat = self.last_heartbeat
+        return bool(
+            self.status in ("online", "busy") and self.ws_session_id
+            and heartbeat is not None and heartbeat.tzinfo is not None
+            and 0 <= (as_of - heartbeat).total_seconds() < DEVICE_HEARTBEAT_MAX_AGE_SECONDS
+        )
+
     def with_current_vpn_observation(self, as_of: datetime | None = None) -> DeviceLiveStatus:
         """Project freshness at read time without changing retained Redis evidence.
 
@@ -48,15 +57,12 @@ class DeviceLiveStatus(BaseModel):
         state: Literal["fresh", "stale", "unknown"] = "unknown"
         active = None
         if (
-            self.status in ("online", "busy") and self.ws_session_id
-            and self.vpn_observed_session_id == self.ws_session_id
+            self.has_fresh_presence(now) and self.vpn_observed_session_id == self.ws_session_id
             and self.vpn_active is not None
             and self.vpn_observed_at is not None and self.vpn_observed_at.tzinfo is not None
-            and self.last_heartbeat is not None and self.last_heartbeat.tzinfo is not None
         ):
-            heartbeat_age = (now - self.last_heartbeat).total_seconds()
             vpn_age = (now - self.vpn_observed_at).total_seconds()
-            if 0 <= heartbeat_age < VPN_OBSERVATION_MAX_AGE_SECONDS and vpn_age >= 0:
+            if vpn_age >= 0:
                 if vpn_age < VPN_OBSERVATION_MAX_AGE_SECONDS:
                     state, active = "fresh", self.vpn_active
                 else:

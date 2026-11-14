@@ -35,5 +35,30 @@ async def test_host_cannot_hide_or_relabel_an_authenticated_mutation(world, host
     assert row.resource_id == str(world.dev_a.id)
     assert row.user_id == world.users["org_admin"].id
     assert row.meta["http_status"] == 200
+    assert row.meta["request_id"] == response.headers["X-Request-ID"]
     counter.labels.assert_called_once_with(method="PUT", endpoint="/api/v1/devices/{id}", status_code="200")
     assert context.call_args.kwargs["path"] == path
+
+
+async def test_device_operations_keep_distinct_actions_and_request_receipts(world):
+    auth = world.auth(world.users["org_admin"])
+    device_id = world.dev_a.id
+    requests = {
+        "ui-hierarchy": "fixture-tree",
+        "screenshot/native": "fixture-frame",
+    }
+    for path, request_id in requests.items():
+        response = await world.client.post(
+            f"/api/v1/devices/{device_id}/{path}", headers={**auth, "X-Request-ID": request_id}, json={},
+        )
+        assert response.headers["X-Request-ID"] == request_id
+    response = await world.client.post(
+        f"/api/v1/devices/{device_id}/viewers", headers=auth, json={"session": "0" * 32},
+    )
+    assert response.status_code == 200, response.text
+    async with world.sessions() as db:
+        rows = list((await db.scalars(select(AuditLog).where(AuditLog.org_id == world.org_a.id))).all())
+    assert {(row.action, row.meta["request_id"], row.resource_id) for row in rows} == {
+        ("post.devices.ui-hierarchy", "fixture-tree", str(device_id)),
+        ("post.devices.screenshot.native", "fixture-frame", str(device_id)),
+    }

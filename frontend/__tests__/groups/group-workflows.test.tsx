@@ -111,6 +111,17 @@ it('does not report a successful update if the API answers for a different group
   expect(await screen.findByRole('alert')).toHaveTextContent('не подтверждён');
   expect(screen.getByRole('dialog')).toBeInTheDocument();
 });
+
+it('keeps the group visible and explains a schedule conflict', async () => {
+  jest.mocked(api.delete).mockRejectedValue({ response: { status: 409, data: { detail: 'Group is used by schedules' } } });
+  render(<GroupsPage />, { wrapper: createWrapper() });
+  await screen.findByRole('heading', { name: 'Remote' });
+  fireEvent.click(screen.getByRole('button', { name: 'Удалить группу Remote' }));
+  const dialog = screen.getByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Удалить группу' }));
+  expect(await within(dialog).findByRole('alert')).toHaveTextContent('пока на неё ссылаются расписания');
+  expect(screen.getByRole('heading', { name: 'Remote', hidden: true })).toBeInTheDocument();
+});
 it('does not report success if the correct owner response ignores the requested metadata', async () => {
   jest.mocked(api.put).mockResolvedValue({ data: group } as never);
   render(<GroupsPage />, { wrapper: createWrapper() }); await edit();

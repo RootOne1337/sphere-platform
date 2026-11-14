@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import DevicesPage from '@/app/(dashboard)/devices/page';
 import {
   useBulkAction,
@@ -8,7 +9,7 @@ import {
   useUpdateDevice,
 } from '@/lib/hooks/useDevices';
 import { useBulkRevokeVpn } from '@/lib/hooks/useVpn';
-import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
+import { useGroups, useChangeGroupMembership } from '@/lib/hooks/useGroups';
 import { useAssignDevicesToLocation, useLocations } from '@/lib/hooks/useLocations';
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 import type { Device } from '@/lib/hooks/useDevices';
@@ -32,10 +33,11 @@ jest.mock('@/lib/hooks/useDevices', () => ({
   useBulkDeleteDevices: jest.fn(),
 }));
 jest.mock('@/lib/hooks/useVpn', () => ({ useBulkRevokeVpn: jest.fn() }));
-jest.mock('@/lib/hooks/useGroups', () => ({ useGroups: jest.fn(), useMoveDevices: jest.fn() }));
+jest.mock('@/lib/hooks/useGroups', () => ({ useGroups: jest.fn(), useChangeGroupMembership: jest.fn() }));
 jest.mock('@/lib/hooks/useLocations', () => ({ useLocations: jest.fn(), useAssignDevicesToLocation: jest.fn() }));
 jest.mock('@/lib/hooks/usePipelineSettings', () => ({ useGameServers: jest.fn() }));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: string) => value }));
+jest.mock('@/src/features/accounts/applicationProfiles', () => ({ useApplicationProfiles: () => ({ data: undefined }) }));
 jest.mock('@/src/features/devices/FleetMatrix', () => ({
   FleetMatrix: ({
     data,
@@ -103,6 +105,13 @@ const devices = [
 
 const bulkDeleteMutation = jest.fn<Promise<{ deleted: number }>, [string[]]>();
 
+beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', { configurable: true, value: () => false });
+  Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', { configurable: true, value: () => undefined });
+  Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', { configurable: true, value: () => undefined });
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: jest.fn() });
+});
+
 beforeEach(() => {
   jest.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as never);
   jest.mocked(useDevices).mockReturnValue({
@@ -113,7 +122,7 @@ beforeEach(() => {
     error: null,
     refetch: jest.fn(),
   } as never);
-  for (const hook of [useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDeleteDevices, useBulkRevokeVpn, useMoveDevices, useAssignDevicesToLocation]) {
+  for (const hook of [useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDeleteDevices, useBulkRevokeVpn, useChangeGroupMembership, useAssignDevicesToLocation]) {
     jest.mocked(hook).mockReturnValue({ isPending: false, mutateAsync: jest.fn() } as never);
   }
   bulkDeleteMutation.mockResolvedValue({ deleted: 2 });
@@ -131,6 +140,14 @@ it('applies the bookmarked group ID to the first server request', () => {
   render(<DevicesPage />);
   expect(useDevices).toHaveBeenCalledWith(expect.objectContaining({ group_id: groupId, page: 1, page_size: 100 }));
   expect(jest.mocked(useDevices).mock.calls.every(([params]) => params.group_id === groupId)).toBe(true);
+});
+
+it('applies the location bookmark to the first server request', () => {
+  const locationId = '00000000-0000-4000-8000-000000000003';
+  jest.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ location_id: locationId }) as never);
+  render(<DevicesPage />);
+  expect(useDevices).toHaveBeenCalledWith(expect.objectContaining({ location_id: locationId, page: 1 }));
+  expect(jest.mocked(useDevices).mock.calls.every(([params]) => params.location_id === locationId)).toBe(true);
 });
 
 it('resets page and selection when navigation changes the bookmarked group', () => {
@@ -245,4 +262,51 @@ it('keeps the selection and reports the server error when bulk deletion is rejec
   expect(screen.getByRole('alert')).toHaveTextContent('Выделение сохранено');
   expect(screen.getByRole('button', { name: 'Удалить выбранные устройства (2)' })).toBeEnabled();
   expect(bulkDeleteMutation).toHaveBeenCalledWith(['phone-online', 'phone-busy']);
+});
+
+it('adds by default and retains only unavailable devices after a partial group result', async () => {
+  const user = userEvent.setup();
+  const mutateAsync = jest.fn().mockResolvedValue([
+    { device_id: 'phone-online', outcome: 'changed' },
+    { device_id: 'phone-busy', outcome: 'device_not_found' },
+  ]);
+  jest.mocked(useChangeGroupMembership).mockReturnValue({ isPending: false, mutateAsync } as never);
+  jest.mocked(useGroups).mockReturnValue({ data: [{ id: 'target', name: 'Целевая группа' }] } as never);
+  render(<DevicesPage />);
+  await user.click(screen.getByRole('button', { name: 'Переключить выбор phone-online' }));
+  await user.click(screen.getByRole('button', { name: 'Переключить выбор phone-busy' }));
+  await user.click(screen.getByRole('button', { name: 'Группа' }));
+  const dialog = screen.getByRole('dialog');
+  expect(dialog).toHaveTextContent('Остальные членства сохранятся');
+  await user.click(within(dialog).getByRole('combobox', { name: 'Группа' }));
+  await user.click(screen.getByRole('option', { name: 'Целевая группа' }));
+  await user.click(within(dialog).getByRole('button', { name: 'Применить' }));
+  expect(mutateAsync).toHaveBeenCalledWith({ groupId: 'target', deviceIds: ['phone-online', 'phone-busy'], operation: 'add' });
+  expect(await within(dialog).findByRole('alert')).toHaveTextContent('Изменено: 1. Без изменений: 0. Недоступны: 1.');
+  expect(dialog).toHaveTextContent('Выбрано устройств: 1.');
+});
+
+it('requires confirmation for replacement and allows removal while preserving other groups', async () => {
+  const user = userEvent.setup();
+  const mutateAsync = jest.fn().mockResolvedValue([{ device_id: 'phone-online', outcome: 'changed' }]);
+  jest.mocked(useChangeGroupMembership).mockReturnValue({ isPending: false, mutateAsync } as never);
+  jest.mocked(useGroups).mockReturnValue({ data: [{ id: 'target', name: 'Целевая группа' }] } as never);
+  render(<DevicesPage />);
+  await user.click(screen.getByRole('button', { name: 'Переключить выбор phone-online' }));
+  await user.click(screen.getByRole('button', { name: 'Группа' }));
+  const dialog = screen.getByRole('dialog');
+  await user.click(within(dialog).getByRole('combobox', { name: 'Группа' }));
+  await user.click(screen.getByRole('option', { name: 'Целевая группа' }));
+  await user.click(within(dialog).getByRole('combobox', { name: 'Действие' }));
+  await user.click(screen.getByRole('option', { name: 'Заменить все группы' }));
+  const apply = within(dialog).getByRole('button', { name: 'Применить' });
+  expect(apply).toBeDisabled();
+  await user.click(within(dialog).getByRole('checkbox', { name: /Подтверждаю удаление/ }));
+  expect(apply).toBeEnabled();
+  await user.click(within(dialog).getByRole('combobox', { name: 'Действие' }));
+  await user.click(screen.getByRole('option', { name: 'Убрать из группы' }));
+  expect(dialog).toHaveTextContent('Остальные членства сохранятся');
+  await user.click(apply);
+  expect(mutateAsync).toHaveBeenCalledWith({ groupId: 'target', deviceIds: ['phone-online'], operation: 'remove' });
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 });

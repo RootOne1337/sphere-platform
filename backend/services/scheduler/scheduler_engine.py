@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
 from backend.database.tenant import bind_tenant_context
+from backend.models.pipeline import Pipeline
 from backend.models.schedule import (
     Schedule,
     ScheduleConflictPolicy,
@@ -28,6 +29,9 @@ from backend.models.schedule import (
     ScheduleExecutionStatus,
     ScheduleTargetType,
 )
+from backend.models.script import Script, ScriptVersion
+from backend.services.application_automation_service import lock_admission_devices
+from backend.services.scheduler.schedule_timing import advance_schedule_revision, next_schedule_slot
 
 logger = structlog.get_logger()
 
@@ -92,12 +96,14 @@ class SchedulerEngine:
                     Schedule.id == schedule_id, Schedule.org_id == org_id,
                     Schedule.is_active.is_(True), Schedule.next_fire_at <= func.clock_timestamp(),
                 ).with_for_update(skip_locked=True).execution_options(populate_existing=True))
-                if schedule is None:
+                if schedule is None or schedule.next_fire_at is None:
                     return
                 # All child rows, the execution receipt and next-fire state
                 # commit together. The SQL dispatcher owns subsequent delivery;
                 # a Redis enqueue is unnecessary and cannot acknowledge a firing.
-                await self._process_schedule(schedule, datetime.now(timezone.utc), db, [])
+                previous_revision = schedule.updated_at
+                await self._process_schedule(schedule, schedule.next_fire_at, db, [])
+                schedule.updated_at = advance_schedule_revision(previous_revision)
                 await db.commit()
         except Exception as exc:
             # Session exit rolls back partial writes. A lost commit ACK is
@@ -123,42 +129,42 @@ class SchedulerEngine:
         6. Записать ScheduleExecution
         7. Пересчитать next_fire_at
         """
-        # Проверка лимита запусков
-        if schedule.max_runs and schedule.total_runs >= schedule.max_runs:
-            schedule.is_active = False
-            schedule.next_fire_at = None
+        now = datetime.now(timezone.utc)
+        if schedule.max_runs is not None and schedule.total_runs >= schedule.max_runs:
+            self._record_skip(schedule, fire_time, now, db, "Лимит запусков расписания исчерпан", retire=True)
             logger.info("schedule.max_runs_reached", schedule_id=str(schedule.id))
             return
 
-        # Проверка окна активности
-        now = datetime.now(timezone.utc)
-        if schedule.active_from and now < schedule.active_from:
-            return
         if schedule.active_until and now > schedule.active_until:
-            schedule.is_active = False
-            schedule.next_fire_at = None
+            self._record_skip(schedule, fire_time, now, db, "Окно активности расписания завершилось", retire=True)
+            return
+        if schedule.active_from and fire_time < schedule.active_from:
+            self._add_skip(schedule, fire_time, now, db, "Слот наступил до начала окна активности")
+            self._advance_fire_time(schedule, fire_time, now, db)
+            if schedule.one_shot_at is not None and schedule.next_fire_at is None:
+                schedule.is_active = False
+            return
+
+        version, pipeline = await self._resolve_target(schedule, db)
+        if version is None and pipeline is None:
+            self._record_skip(schedule, fire_time, now, db, "Сценарий или пайплайн недоступен для запуска")
             return
 
         # Проверка conflict_policy
         if schedule.conflict_policy == ScheduleConflictPolicy.SKIP:
             has_running = await self._has_running_tasks(schedule, db)
             if has_running:
-                # Пропустить тик, создать запись SKIPPED
-                execution = ScheduleExecution(
-                    schedule_id=schedule.id,
-                    org_id=schedule.org_id,
-                    status=ScheduleExecutionStatus.SKIPPED,
-                    fire_time=fire_time,
-                    actual_time=now,
-                    skip_reason="Предыдущий запуск ещё не завершён (conflict_policy=skip)",
-                )
-                db.add(execution)
-                # Пересчитать next_fire_at
-                self._advance_fire_time(schedule)
+                self._record_skip(schedule, fire_time, now, db, "Предыдущий запуск ещё не завершён (conflict_policy=skip)")
                 return
 
+        device_ids = await self._resolve_devices(schedule, db)
+        device_ids = await lock_admission_devices(db, schedule.org_id, device_ids) if device_ids else []
+        if not device_ids:
+            self._record_skip(schedule, fire_time, now, db, "Нет подходящих устройств")
+            return
+
         if schedule.conflict_policy == ScheduleConflictPolicy.CANCEL_PREVIOUS:
-            cancelled = await self._cancel_previous_tasks(schedule, db)
+            cancelled = await self._cancel_previous_tasks(schedule, db, nowait=True)
             if cancelled > 0:
                 logger.info(
                     "schedule.cancelled_previous",
@@ -166,33 +172,18 @@ class SchedulerEngine:
                     cancelled_count=cancelled,
                 )
 
-        # Резолвить устройства
-        device_ids = await self._resolve_devices(schedule, db)
-        if not device_ids:
-            execution = ScheduleExecution(
-                schedule_id=schedule.id,
-                org_id=schedule.org_id,
-                status=ScheduleExecutionStatus.SKIPPED,
-                fire_time=fire_time,
-                actual_time=now,
-                skip_reason="Нет подходящих устройств",
-            )
-            db.add(execution)
-            self._advance_fire_time(schedule)
-            return
-
         # Запуск задач / pipeline runs
         tasks_created = 0
         batch_id = None
         pipeline_batch_id = None
 
-        if schedule.target_type == ScheduleTargetType.SCRIPT and schedule.script_id:
+        if version is not None:
             tasks_created, batch_id = await self._create_script_tasks(
-                schedule, device_ids, db, pending_enqueue,
+                schedule, version, device_ids, db, pending_enqueue,
             )
-        elif schedule.target_type == ScheduleTargetType.PIPELINE and schedule.pipeline_id:
+        elif pipeline is not None:
             tasks_created, pipeline_batch_id = await self._create_pipeline_runs(
-                schedule, device_ids, db,
+                schedule, pipeline, device_ids, db,
             )
 
         # Создать запись о срабатывании
@@ -213,12 +204,12 @@ class SchedulerEngine:
         schedule.total_runs += 1
         schedule.last_fired_at = now
 
-        # One-shot — деактивировать
-        if schedule.one_shot_at:
+        # Completed one-shot or exhausted budget has no further firing.
+        if schedule.one_shot_at or (schedule.max_runs is not None and schedule.total_runs >= schedule.max_runs):
             schedule.is_active = False
             schedule.next_fire_at = None
         else:
-            self._advance_fire_time(schedule)
+            self._advance_fire_time(schedule, fire_time, now, db)
 
         logger.info(
             "schedule.fired",
@@ -226,6 +217,40 @@ class SchedulerEngine:
             devices=len(device_ids),
             tasks=tasks_created,
         )
+
+    def _record_skip(
+        self, schedule: Schedule, fire_time: datetime, now: datetime, db: AsyncSession, reason: str, *, retire: bool = False,
+    ) -> None:
+        self._add_skip(schedule, fire_time, now, db, reason)
+        if retire or schedule.one_shot_at is not None:
+            schedule.is_active = False
+            schedule.next_fire_at = None
+        else:
+            self._advance_fire_time(schedule, fire_time, now, db)
+
+    @staticmethod
+    def _add_skip(schedule: Schedule, fire_time: datetime, now: datetime, db: AsyncSession, reason: str) -> None:
+        db.add(ScheduleExecution(
+            schedule_id=schedule.id, org_id=schedule.org_id, status=ScheduleExecutionStatus.SKIPPED,
+            fire_time=fire_time, actual_time=now, finished_at=now, skip_reason=reason,
+        ))
+
+    @staticmethod
+    async def _resolve_target(schedule: Schedule, db: AsyncSession) -> tuple[ScriptVersion | None, Pipeline | None]:
+        if schedule.target_type == ScheduleTargetType.SCRIPT and schedule.script_id:
+            version = await db.scalar(
+                select(ScriptVersion).join(Script, Script.current_version_id == ScriptVersion.id).where(
+                    Script.id == schedule.script_id, Script.org_id == schedule.org_id, Script.is_archived.is_(False),
+                    ScriptVersion.org_id == schedule.org_id, ScriptVersion.script_id == Script.id,
+                ).with_for_update(of=Script, read=True, nowait=True)
+            )
+            return version, None
+        if schedule.target_type == ScheduleTargetType.PIPELINE and schedule.pipeline_id:
+            pipeline = await db.scalar(select(Pipeline).where(
+                Pipeline.id == schedule.pipeline_id, Pipeline.org_id == schedule.org_id, Pipeline.is_active.is_(True),
+            ).with_for_update(read=True, nowait=True).execution_options(populate_existing=True))
+            return None, pipeline
+        return None, None
 
     async def _resolve_devices(
         self,
@@ -249,22 +274,19 @@ class SchedulerEngine:
 
         if schedule.group_id:
             member_ids = await db.scalars(
-                select(device_group_members.c.device_id).where(
+                select(Device.id).join(device_group_members, device_group_members.c.device_id == Device.id).where(
                     device_group_members.c.group_id == schedule.group_id,
+                    Device.org_id == schedule.org_id, Device.is_active.is_(True),
                 )
             )
             result.update(member_ids.all())
 
         if schedule.device_tags:
-            for tag in schedule.device_tags:
-                tagged = await db.scalars(
-                    select(Device.id).where(
-                        Device.org_id == schedule.org_id,
-                        Device.is_active.is_(True),
-                        Device.tags.contains([tag]),
-                    )
-                )
-                result.update(tagged.all())
+            tagged = await db.scalars(select(Device.id).where(
+                Device.org_id == schedule.org_id, Device.is_active.is_(True),
+                Device.tags.overlap(schedule.device_tags),
+            ))
+            result.update(tagged.all())
 
         if schedule.only_online and result:
             from backend.database.redis_client import redis_binary
@@ -290,44 +312,29 @@ class SchedulerEngine:
     async def _create_script_tasks(
         self,
         schedule: Schedule,
+        version: ScriptVersion,
         device_ids: list[uuid.UUID],
         db: AsyncSession,
         pending_enqueue: list[tuple[str, str, str, int]] | None = None,
     ) -> tuple[int, uuid.UUID | None]:
         """Создать задачи (Task) для script-расписания с enqueue в Redis."""
-        from backend.models.script import Script, ScriptVersion
         from backend.models.task import Task, TaskStatus
         from backend.models.task_batch import TaskBatch
-
-        # Получить script_version_id для корректного исполнения
-        script = await db.get(Script, schedule.script_id)
-        if not script or not script.current_version_id:
-            logger.error(
-                "scheduler.script_not_found_or_no_version",
-                script_id=str(schedule.script_id),
-            )
-            return 0, None
 
         # FIX BUG-B: Извлечь timeout из DAG-версии скрипта.
         # Без этого task.timeout_seconds = 300 (дефолт модели) → payload.timeout_ms = 300_000
         # → DagRunner использует 5-минутный таймаут вместо DAG-ного (например, 86_400_000 = 24ч).
         # Цепочка: task.timeout_seconds → payload.timeout_ms → CommandDispatcher → DagRunner.
         task_timeout_seconds = 300  # дефолт, если DAG не указывает свой
-        version = await db.get(ScriptVersion, script.current_version_id)
-        if version and version.dag and isinstance(version.dag, dict):
+        if isinstance(version.dag, dict):
             dag_timeout_ms = version.dag.get("timeout_ms")
-            if isinstance(dag_timeout_ms, (int, float)) and dag_timeout_ms > 0:
-                task_timeout_seconds = int(dag_timeout_ms / 1000)
-                logger.info(
-                    "scheduler.dag_timeout_applied",
-                    timeout_seconds=task_timeout_seconds,
-                    dag_timeout_ms=dag_timeout_ms,
-                    script_id=str(schedule.script_id),
-                )
+            if type(dag_timeout_ms) is int and 1000 <= dag_timeout_ms <= 86_400_000:
+                task_timeout_seconds = dag_timeout_ms // 1000
 
         batch = TaskBatch(
             org_id=schedule.org_id,
-            script_id=schedule.script_id,
+            script_id=version.script_id,
+            script_version_id=version.id,
             status="running",
             total=len(device_ids),
         )
@@ -345,8 +352,8 @@ class SchedulerEngine:
 
             task = Task(
                 org_id=schedule.org_id,
-                script_id=schedule.script_id,
-                script_version_id=script.current_version_id,
+                script_id=version.script_id,
+                script_version_id=version.id,
                 device_id=did,
                 batch_id=batch.id,
                 status=TaskStatus.QUEUED,
@@ -392,22 +399,19 @@ class SchedulerEngine:
     async def _create_pipeline_runs(
         self,
         schedule: Schedule,
+        pipeline: Pipeline,
         device_ids: list[uuid.UUID],
         db: AsyncSession,
     ) -> tuple[int, uuid.UUID | None]:
         """Создать PipelineRun для pipeline-расписания."""
-        from backend.models.pipeline import Pipeline, PipelineBatch, PipelineRun, PipelineRunStatus
-
-        pipeline = await db.get(Pipeline, schedule.pipeline_id)
-        if not pipeline:
-            logger.error("scheduler.pipeline_not_found", pipeline_id=str(schedule.pipeline_id))
-            return 0, None
+        from backend.models.pipeline import PipelineBatch, PipelineRun, PipelineRunStatus
 
         batch = PipelineBatch(
             org_id=schedule.org_id,
             pipeline_id=pipeline.id,
             status="running",
             total=len(device_ids),
+            wave_config={"_pipeline_version": pipeline.version},
             created_by_id=schedule.created_by_id,
         )
         db.add(batch)
@@ -421,7 +425,7 @@ class SchedulerEngine:
                 status=PipelineRunStatus.QUEUED,
                 input_params=schedule.input_params or {},
                 steps_snapshot=pipeline.steps,
-                context={"schedule_id": str(schedule.id), "batch_id": str(batch.id)},
+                context={"schedule_id": str(schedule.id), "batch_id": str(batch.id), "_pipeline_version": pipeline.version},
                 step_logs=[],
             )
             db.add(run)
@@ -493,6 +497,7 @@ class SchedulerEngine:
                         PipelineRunStatus.QUEUED,
                         PipelineRunStatus.RUNNING,
                         PipelineRunStatus.WAITING,
+                        PipelineRunStatus.PAUSED,
                     ]),
                     PipelineRun.created_at > pipeline_stale_cutoff,
                 )
@@ -505,6 +510,8 @@ class SchedulerEngine:
         self,
         schedule: Schedule,
         db: AsyncSession,
+        *,
+        nowait: bool = False,
     ) -> int:
         """
         Отменить все незавершённые задачи предыдущего запуска расписания.
@@ -544,7 +551,7 @@ class SchedulerEngine:
                             TaskStatus.RUNNING,
                             TaskStatus.ASSIGNED,
                         ]),
-                    ).order_by(Task.id).with_for_update().execution_options(populate_existing=True)
+                    ).order_by(Task.id).with_for_update(nowait=nowait).execution_options(populate_existing=True)
                 )
             ).all()
 
@@ -568,7 +575,7 @@ class SchedulerEngine:
                             PipelineRunStatus.WAITING,
                             PipelineRunStatus.PAUSED,
                         ]),
-                    ).order_by(PipelineRun.id).with_for_update().execution_options(populate_existing=True)
+                    ).order_by(PipelineRun.id).with_for_update(nowait=nowait).execution_options(populate_existing=True)
                 )
             ).all()
 
@@ -583,14 +590,11 @@ class SchedulerEngine:
 
         return cancelled
 
-    @staticmethod
-    def _advance_fire_time(schedule: Schedule) -> None:
-        """Пересчитать next_fire_at после срабатывания."""
-        from backend.services.scheduler.schedule_service import ScheduleService
-        next_fire = ScheduleService._compute_next_fire(schedule)
-        now = datetime.now(timezone.utc)
-        if schedule.interval_seconds and next_fire is not None and next_fire <= now:
-            period = timedelta(seconds=schedule.interval_seconds)
-            # Preserve cadence, skip missed slots, and retain last actual firing.
-            next_fire += ((now - next_fire) // period + 1) * period
-        schedule.next_fire_at = next_fire
+    def _advance_fire_time(self, schedule: Schedule, fire_time: datetime, now: datetime, db: AsyncSession) -> None:
+        """Advance past a backlog without creating one row or work item per missed slot."""
+        following_slot = next_schedule_slot(schedule, fire_time, interval_anchor=fire_time)
+        if following_slot is None or following_slot > now:
+            schedule.next_fire_at = following_slot
+            return
+        self._add_skip(schedule, following_slot, now, db, "Просроченные слоты объединены, повторный запуск не создан")
+        schedule.next_fire_at = next_schedule_slot(schedule, now, interval_anchor=fire_time)

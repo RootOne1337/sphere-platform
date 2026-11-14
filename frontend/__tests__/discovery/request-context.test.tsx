@@ -96,8 +96,20 @@ it('treats malformed response data as an unknown result rather than an empty sca
   render(<DiscoveryPage />, { wrapper: createWrapper() });
   configure(); start();
   await screen.findByRole('alert');
-  expect(screen.queryByText('Устройства не найдены')).not.toBeInTheDocument();
+  expect(screen.queryByText('В ответе нет найденных устройств')).not.toBeInTheDocument();
   expect(screen.queryByText('Результаты поиска')).not.toBeInTheDocument();
+});
+
+it('offers the inventory instead of retrying a registration whose outcome is unknown', async () => {
+  jest.mocked(api.post).mockRejectedValue(new Error('lost response'));
+  render(<DiscoveryPage />, { wrapper: createWrapper() });
+  configure();
+  fireEvent.click(screen.getByRole('checkbox'));
+  start();
+  expect(await screen.findByRole('alert')).toHaveTextContent('Факт регистрации неизвестен');
+  expect(screen.getByRole('link', { name: 'Сверить парк устройств' })).toHaveAttribute('href', '/devices');
+  expect(screen.queryByRole('button', { name: 'Повторить исходный поиск' })).not.toBeInTheDocument();
+  expect(api.post).toHaveBeenCalledTimes(1);
 });
 
 it('never inherits automatic mutation retries and manually repeats the original scan after form edits', async () => {

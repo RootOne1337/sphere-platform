@@ -1,7 +1,9 @@
 'use client';
 
 import { CalendarClock, Code2, Fingerprint, Globe2, Shield } from 'lucide-react';
+import Link from 'next/link';
 import type { AuditEvent } from '@/src/features/audit/types';
+import { isAuditRequestId } from '@/src/features/audit/investigation';
 import { Badge } from '@/src/shared/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
@@ -19,6 +21,7 @@ function displayValue(value: unknown) {
 
 export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
   if (!event) return null;
+  const requestId = event.meta.request_id;
   const metadata = VISIBLE_META_FIELDS
     .filter((key) => event.meta[key] !== undefined && event.meta[key] !== null)
     .map((key) => ({ key, value: displayValue(event.meta[key]) }));
@@ -68,6 +71,8 @@ export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
               <dl className="divide-y divide-border px-4">
                 {metadata.map(({ key, value }) => <div key={key} className="flex items-start justify-between gap-4 py-3 text-sm"><dt className="font-mono text-muted-foreground">{key}</dt><dd className="break-all text-right font-medium">{value}</dd></div>)}
               </dl>
+              {isAuditRequestId(requestId) && <Link className="block border-t border-border p-4 text-sm text-primary underline underline-offset-2"
+                href={`/audit?request_id=${encodeURIComponent(requestId)}`} onClick={onClose}>Открыть события этого запроса</Link>}
             </section>
           )}
 

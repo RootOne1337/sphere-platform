@@ -9,6 +9,7 @@ from typing import Any
 
 import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from prometheus_client import Counter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import _is_dev_skip_auth
@@ -38,6 +39,10 @@ router = APIRouter(tags=["streaming"])
 
 VIEWER_AUTH_RECHECK_SECONDS = 10.0
 VIEWER_AUTH_TIMEOUT_SECONDS = 2.0
+stream_initial_auth_timeouts = Counter(
+    "sphere_stream_initial_auth_timeouts_total",
+    "Stream viewers closed while waiting for the initial authentication message",
+)
 
 
 async def _authenticate_viewer(token: str, db: AsyncSession):
@@ -116,6 +121,7 @@ async def stream_viewer_ws(
     try:
         first = await asyncio.wait_for(ws.receive_json(), timeout=10.0)
     except asyncio.TimeoutError:
+        stream_initial_auth_timeouts.inc()
         await ws.close(code=4003, reason="auth_timeout")
         return
     except Exception:

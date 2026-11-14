@@ -4,15 +4,28 @@ from __future__ import annotations
 
 import hashlib
 import uuid
+from asyncio import sleep
+from time import monotonic
 
 from fastapi import HTTPException
 from sqlalchemy import case, func, select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.models.device import Device, DeviceStatus, device_group_members
 from backend.models.device_group import DeviceGroup
-from backend.schemas.groups import CreateGroupRequest, GroupResponse, UpdateGroupRequest
+from backend.models.schedule import Schedule
+from backend.schemas.groups import (
+    CreateGroupRequest,
+    GroupMembershipOperation,
+    GroupMembershipResult,
+    GroupResponse,
+    UpdateGroupRequest,
+)
+
+_MEMBERSHIP_LOCK_WAIT_SECONDS = 1.0
+_MEMBERSHIP_LOCK_RETRY_SECONDS = 0.025
 
 
 class GroupService:
@@ -38,28 +51,35 @@ class GroupService:
             online_devices=online,
         )
 
-    async def _get_group(self, group_id: uuid.UUID, org_id: uuid.UUID) -> DeviceGroup:
-        group = await self.db.scalar(
-            select(DeviceGroup).where(DeviceGroup.id == group_id, DeviceGroup.org_id == org_id)
-            .execution_options(populate_existing=True)
-        )
+    async def _get_group(
+        self, group_id: uuid.UUID, org_id: uuid.UUID, *, for_update: bool = False,
+    ) -> DeviceGroup:
+        query = select(DeviceGroup).where(DeviceGroup.id == group_id, DeviceGroup.org_id == org_id)
+        if for_update:
+            query = query.with_for_update()
+        group = await self.db.scalar(query.execution_options(populate_existing=True))
         if not group:
             raise HTTPException(status_code=404, detail="Group not found")
         return group
 
-    async def _fence_writes(self, org_id: uuid.UUID) -> None:
-        """Serialize group writes through commit, without waiting or device IO.
+    async def _fence_writes(self, org_id: uuid.UUID, *, wait: bool = False) -> None:
+        """Serialize group writes through commit without device I/O.
 
         All API writers use this same transaction-scoped key. SQLite is only the
         unit-test adapter; concurrency acceptance requires actual PostgreSQL.
         """
-        if self.db.get_bind().dialect.name == "postgresql":
-            key = int.from_bytes(hashlib.sha256(
-                f"sphere:group-writes:v1:{org_id}".encode()
-            ).digest()[:8], "big", signed=True)
-            acquired = await self.db.scalar(text("SELECT pg_try_advisory_xact_lock(:key)"), {"key": key})
-            if not acquired:
+        if self.db.get_bind().dialect.name != "postgresql":
+            return
+        key = int.from_bytes(hashlib.sha256(
+            f"sphere:group-writes:v1:{org_id}".encode()
+        ).digest()[:8], "big", signed=True)
+        statement = text("SELECT pg_try_advisory_xact_lock(:key)")
+        deadline = monotonic() + _MEMBERSHIP_LOCK_WAIT_SECONDS
+        while not await self.db.scalar(statement, {"key": key}):
+            remaining = deadline - monotonic()
+            if not wait or remaining <= 0:
                 raise HTTPException(status_code=409, detail="Groups are being modified; refresh and retry")
+            await sleep(min(remaining, _MEMBERSHIP_LOCK_RETRY_SECONDS))
 
     async def _validate_parent(
         self, org_id: uuid.UUID, parent_id: uuid.UUID | None, group_id: uuid.UUID | None = None,
@@ -209,10 +229,63 @@ class GroupService:
     async def delete_group(self, group_id: uuid.UUID, org_id: uuid.UUID) -> None:
         await self._get_group(group_id, org_id)
         await self._fence_writes(org_id)
-        group = await self._get_group(group_id, org_id)
+        # The group row lock also serializes PostgreSQL's schedule FK check.
+        group = await self._get_group(group_id, org_id, for_update=True)
+        if await self.db.scalar(select(Schedule.id).where(Schedule.group_id == group_id).limit(1)):
+            raise HTTPException(status_code=409, detail="Group is used by schedules")
         await self.db.delete(group)
+        try:
+            await self.db.flush()
+        except IntegrityError as exc:
+            cause = getattr(exc.orig, "__cause__", None)
+            if getattr(cause, "constraint_name", None) != "schedules_group_id_fkey":
+                raise
+            raise HTTPException(status_code=409, detail="Group is used by schedules") from exc
 
-    # ── Move devices to group ────────────────────────────────────────────────
+    # ── Device memberships ──────────────────────────────────────────────────
+
+    async def change_device_memberships(
+        self,
+        device_ids: list[uuid.UUID],
+        group_id: uuid.UUID | None,
+        org_id: uuid.UUID,
+        operation: GroupMembershipOperation,
+        *,
+        active_only: bool = True,
+    ) -> list[GroupMembershipResult]:
+        if group_id is not None:
+            await self._get_group(group_id, org_id)
+        await self._fence_writes(org_id, wait=True)
+        target = await self._get_group(group_id, org_id) if group_id is not None else None
+        stmt = (
+            select(Device)
+            .options(selectinload(Device.groups))
+            .where(Device.id.in_(device_ids), Device.org_id == org_id)
+            .order_by(Device.id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        if active_only:
+            stmt = stmt.where(Device.is_active.is_(True))
+        devices = {device.id: device for device in (await self.db.scalars(stmt)).all()}
+        results = []
+        for device_id in device_ids:
+            device = devices.get(device_id)
+            if device is None:
+                results.append(GroupMembershipResult(device_id=device_id, outcome="device_not_found"))
+                continue
+            before = {group.id for group in device.groups}
+            if operation == "add" and target is not None and target.id not in before:
+                device.groups.append(target)
+            elif operation == "remove" and target is not None and target.id in before:
+                device.groups = [group for group in device.groups if group.id != target.id]
+            elif operation == "replace":
+                device.groups = [target] if target is not None else []
+            changed = before != {group.id for group in device.groups}
+            results.append(GroupMembershipResult(device_id=device_id, outcome="changed" if changed else "unchanged"))
+
+        await self.db.flush()
+        return results
 
     async def move_devices_to_group(
         self,
@@ -220,45 +293,15 @@ class GroupService:
         group_id: uuid.UUID | None,
         org_id: uuid.UUID,
     ) -> int:
-        """
-        Переместить устройства в группу (заменяет все текущие группы устройства).
-        group_id=None → убрать из всех группcheck.
-        Возвращает количество успешно перемещённых устройств.
-        """
-        target_group: DeviceGroup | None = None
-        if group_id:
-            target_group = await self.db.get(DeviceGroup, group_id)
-            if not target_group or target_group.org_id != org_id:
-                raise HTTPException(status_code=404, detail="Group not found")
-
-        uuids: list[uuid.UUID] = []
-        for did in device_ids:
+        """Legacy explicit replacement. Count existing targets, including no-ops."""
+        uuids: dict[uuid.UUID, None] = {}
+        for device_id in device_ids:
             try:
-                uuids.append(uuid.UUID(did))
+                uuids[uuid.UUID(device_id)] = None
             except ValueError:
                 continue
-
-        stmt = (
-            select(Device)
-            .options(selectinload(Device.groups))
-            .where(Device.id.in_(uuids), Device.org_id == org_id)
-        )
-        devices = (await self.db.execute(stmt)).scalars().all()
-
-        for device in devices:
-            device.groups = [target_group] if target_group else []
-
-        await self.db.flush()
-        return len(devices)
-
-    async def move_single(
-        self,
-        device_id: str,
-        group_id: uuid.UUID | None,
-        org_id: uuid.UUID,
-    ) -> None:
-        """Single-device variant used by BulkActionService."""
-        await self.move_devices_to_group([device_id], group_id, org_id)
+        results = await self.change_device_memberships(list(uuids), group_id, org_id, "replace", active_only=False)
+        return sum(result.outcome != "device_not_found" for result in results)
 
     # ── Tags ─────────────────────────────────────────────────────────────────
 
