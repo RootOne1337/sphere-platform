@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 import type { Device } from './useDevices';
 
 export type DeviceSnapshot = Partial<Omit<Device, 'id' | 'name' | 'status'>> & {
@@ -42,7 +43,7 @@ export function useDeviceSnapshot(deviceId: string) {
     },
     enabled: !!deviceId,
     staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: API_POLL_INTERVALS.deviceDetailMs,
     refetchOnMount: 'always',
     retry: false,
   });

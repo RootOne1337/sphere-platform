@@ -153,7 +153,22 @@ async def handle_agent_message(
         if snapshot is not None and session_id:
             observation = AppVpnObservation(snapshot=snapshot, received_at=datetime.now(timezone.utc), ws_session_id=session_id)
             try:
-                await status_cache.merge_agent_status(device_id, {"app_vpn": observation.model_dump(mode="json")}, session_id=session_id)
+                previous = await status_cache.get_status(device_id)
+                previous_sample = previous.app_vpn.snapshot if previous and previous.app_vpn else None
+                stored = await status_cache.merge_agent_status(
+                    device_id, {"app_vpn": observation.model_dump(mode="json")}, session_id=session_id,
+                )
+                if stored and (previous_sample is None or previous_sample.phase != snapshot.phase):
+                    from backend.schemas.events import EventType, FleetEvent
+                    from backend.websocket.event_publisher import get_event_publisher
+
+                    if publisher := get_event_publisher():
+                        async with asyncio.timeout(1):
+                            await publisher.emit(FleetEvent(
+                                event_type=EventType.VPN_RUNTIME_CHANGED, device_id=device_id, org_id=org_id,
+                            ))
+            except TimeoutError:
+                pass  # The periodic read reconciles missed notifications.
             except Exception:
                 logger.warning("VPN observation cache unavailable", device_id=device_id)
     elif msg_type == "task_progress":
@@ -415,6 +430,7 @@ async def handle_command_result(
                     result=final_result,
                     org_id=org_id,
                     release_queue=False,
+                    authenticated_agent=True,
                 )
                 await db.commit()
             if accepted:
@@ -786,7 +802,9 @@ async def android_agent_ws(
 
     # Запустить heartbeat (SPLIT-4)
     from backend.websocket.heartbeat import HeartbeatManager
-    heartbeat = HeartbeatManager(ws, device_id, status_cache, session_id=session_id)
+    heartbeat = HeartbeatManager(
+        ws, device_id, status_cache, session_id=session_id, org_id=org_id_str,
+    )
     await heartbeat.start()
 
     # Подписать PubSub router на командный канал этого устройства

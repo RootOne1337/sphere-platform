@@ -38,6 +38,7 @@ from backend.services.application_account_scope import (
     require_account_scope,
     resolve_application_account_scope,
 )
+from backend.services.audit_log_service import AgentOutcome, AuditLogService
 from backend.services.task_queue import TaskQueue
 from backend.services.webhook_outbox import enqueue_task_webhooks
 
@@ -491,12 +492,13 @@ class TaskService:
         org_id: str | None = None,
         *,
         release_queue: bool = True,
+        authenticated_agent: bool = False,
     ) -> bool:
         """Вызывается при получении command_result от агента (TZ-03 WebSocket)."""
         task = await self.db.scalar(select(Task).where(
             Task.id == uuid.UUID(task_id), Task.device_id == uuid.UUID(device_id),
             *([Task.org_id == uuid.UUID(org_id)] if org_id is not None else []),
-        ).with_for_update())
+        ).with_for_update().execution_options(populate_existing=True))
         if not task:
             logger.warning("task.result.not_found", task_id=task_id)
             return False
@@ -516,6 +518,9 @@ class TaskService:
                 await self._safe_mark_completed(task_id, device_id)
             return True
 
+        if authenticated_agent and task.status not in (TaskStatus.ASSIGNED, TaskStatus.RUNNING):
+            return False
+
         success = result.get("success", False)
         # An interrupted root/process outcome is not proof of physical stop.
         # Retain the active task and pending APK receipt for operator reconciliation.
@@ -524,8 +529,9 @@ class TaskService:
             "execution_interrupted_outcome_unknown",
             "Root command delivery outcome is unknown",
         }
-        if (task.cancel_requested_at is not None and isinstance(result.get("error"), str)
-                and result["error"] in unknown_errors):
+        error = result.get("error")
+        outcome_unknown = isinstance(error, str) and error in unknown_errors
+        if task.cancel_requested_at is not None and outcome_unknown:
             task.result = result
             task.error_message = "Cancellation outcome unknown; execution requires reconciliation"
             return False
@@ -536,7 +542,14 @@ class TaskService:
             task.status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
         task.finished_at = datetime.now(timezone.utc)
         task.result = result
-        task.error_message = result.get("error")
+        task.error_message = error
+        if authenticated_agent:
+            outcome: AgentOutcome = "completed" if success else "failed"
+            if outcome_unknown:
+                outcome = "unknown"
+            elif cancelled:
+                outcome = "cancelled"
+            await AuditLogService(self.db).record_agent_result(task, outcome)
 
         logger.info(
             "task.completed",

@@ -2,7 +2,7 @@
 
 import { CalendarClock, Code2, Fingerprint, Globe2, Shield } from 'lucide-react';
 import Link from 'next/link';
-import type { AuditEvent } from '@/src/features/audit/types';
+import { AGENT_OUTCOME_LABELS, type AuditEvent } from '@/src/features/audit/types';
 import { isAuditRequestId } from '@/src/features/audit/investigation';
 import { Badge } from '@/src/shared/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -11,6 +11,13 @@ interface AuditDrawerProps {
   event: AuditEvent | null;
   onClose: () => void;
 }
+
+const OUTCOME_SOURCES = {
+  http: 'Ответ HTTP',
+  effect: 'Изменение сохранено',
+  admission: 'Запуск поставлен в очередь',
+  agent: 'Результат Android-агента',
+} as const;
 
 const VISIBLE_META_FIELDS = ['status', 'http_status', 'duration_ms', 'request_id', 'trace_id', 'revision', 'revision_id'] as const;
 
@@ -22,6 +29,9 @@ function displayValue(value: unknown) {
 export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
   if (!event) return null;
   const requestId = event.meta.request_id;
+  const receipt = event.taskReceipt;
+  const statusLabel = receipt ? AGENT_OUTCOME_LABELS[receipt.outcome]
+    : { SUCCESS: 'Успешно', FAILED: 'Ошибка', WARNING: 'Предупреждение', UNKNOWN: 'Не указано' }[event.status];
   const metadata = VISIBLE_META_FIELDS
     .filter((key) => event.meta[key] !== undefined && event.meta[key] !== null)
     .map((key) => ({ key, value: displayValue(event.meta[key]) }));
@@ -48,13 +58,13 @@ export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
               <p className="mt-2 break-words text-sm font-medium">{new Date(event.timestamp).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'medium' })}</p>
             </div>
             <div className="rounded-xl border border-border bg-muted/30 p-4">
-              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />{event.outcomeSource === 'http' ? 'Ответ HTTP' : event.outcomeSource === 'effect' ? 'Изменение сохранено' : 'Статус записи'}</div>
-              <Badge variant={event.status === 'FAILED' ? 'destructive' : event.status === 'WARNING' ? 'warning' : event.status === 'UNKNOWN' ? 'secondary' : 'success'} className="mt-2">{event.status === 'UNKNOWN' ? 'Не указано' : event.status === 'FAILED' ? 'Ошибка' : event.status === 'WARNING' ? 'Предупреждение' : 'Успешно'}</Badge>
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />{event.outcomeSource ? OUTCOME_SOURCES[event.outcomeSource] : 'Статус записи'}</div>
+              <Badge variant={event.status === 'FAILED' ? 'destructive' : event.status === 'WARNING' ? 'warning' : event.status === 'UNKNOWN' ? 'secondary' : 'success'} className="mt-2">{statusLabel}</Badge>
               {event.outcomeSource === 'http' && <p className="mt-2 text-xs text-muted-foreground">Ответ сервера фиксируется отдельно от результата операции.</p>}
             </div>
             <div className="rounded-xl border border-border bg-muted/30 p-4">
-              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />Пользователь</div>
-              <p className="mt-2 break-all font-mono text-sm">{event.user || 'system'}</p>
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />{receipt ? 'Источник' : 'Пользователь'}</div>
+              <p className="mt-2 break-all font-mono text-sm">{receipt ? 'Android-агент' : event.user || 'system'}</p>
             </div>
             <div className="rounded-xl border border-border bg-muted/30 p-4">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Globe2 className="h-4 w-4" />IP-адрес</div>
@@ -65,6 +75,24 @@ export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
               <p className="mt-2 break-all text-sm">{event.resource}</p>
             </div>
           </section>
+
+          {receipt && (
+            <section className="rounded-xl border border-border p-4" aria-labelledby="audit-agent-receipt-heading">
+              <h3 id="audit-agent-receipt-heading" className="text-sm font-semibold">Квитанция команды</h3>
+              <dl className="mt-3 space-y-2 text-sm">
+                <div>
+                  <dt className="text-muted-foreground">Задание и ID квитанции</dt>
+                  <dd><Link className="break-all text-primary underline underline-offset-2" href={`/tasks/${receipt.id}`}>{receipt.id}</Link></dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Устройство</dt>
+                  <dd><Link className="break-all text-primary underline underline-offset-2" href={`/devices/${receipt.deviceId}`}>{receipt.deviceId}</Link></dd>
+                </div>
+                {receipt.requestedBy && <div><dt className="text-muted-foreground">Инициатор запуска</dt><dd className="break-all">{receipt.requestedBy}</dd></div>}
+              </dl>
+              <p className="mt-3 text-xs text-muted-foreground">Агент сообщает итог команды. Фактическое состояние приложения проверяется отдельно.</p>
+            </section>
+          )}
 
           {event.roleDiff && (
             <section className="rounded-xl border border-border p-4" aria-labelledby="audit-diff-heading">

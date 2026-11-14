@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from backend.schemas.vpn.runtime import AppVpnObservation
+from backend.schemas.vpn.runtime import APP_VPN_OBSERVATION_MAX_AGE_SECONDS, AppVpnObservation
 
 VPN_OBSERVATION_MAX_AGE_SECONDS = 120
 DEVICE_HEARTBEAT_MAX_AGE_SECONDS = 120
@@ -56,6 +56,25 @@ class DeviceLiveStatus(BaseModel):
         now = as_of or datetime.now(timezone.utc)
         state: Literal["fresh", "stale", "unknown"] = "unknown"
         active = None
+        observation = self.app_vpn
+        if observation and observation.ws_session_id == self.ws_session_id:
+            # The app-scoped provider runs outside the legacy manager. Prefer
+            # its own phase over a legacy false flag emitted on every pong.
+            state = observation.freshness(self.ws_session_id, self.has_fresh_presence(now), now)
+            if state == "fresh":
+                phase = observation.snapshot.phase
+                if phase in {"TRANSPORT_READY", "AWAITING_HANDSHAKE", "HANDSHAKE_CONFIRMED"}:
+                    active = True
+                elif phase in {"IDLE", "DISCONNECTED_CONFIRMED", "PAUSED_GUARD_HELD"}:
+                    active = False
+                else:
+                    state = "unknown"
+            return self.model_copy(update={
+                "vpn_active": active,
+                "vpn_observation_state": state,
+                "vpn_observed_at": observation.received_at,
+                "vpn_observation_max_age_seconds": APP_VPN_OBSERVATION_MAX_AGE_SECONDS,
+            })
         if (
             self.has_fresh_presence(now) and self.vpn_observed_session_id == self.ws_session_id
             and self.vpn_active is not None

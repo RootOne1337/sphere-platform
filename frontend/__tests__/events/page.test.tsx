@@ -8,6 +8,8 @@ jest.mock('@/lib/hooks/useDeviceEvents', () => ({
   useMarkEventProcessed: jest.fn(),
 }));
 let mockCanWrite = true;
+let mockSearchParams = '';
+jest.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams(mockSearchParams) }));
 jest.mock('@/src/features/access/Capabilities', () => ({
   useCapabilities: () => ({ can: (permission: string) => permission !== 'event:write' || mockCanWrite }),
   PermissionNotice: () => null,
@@ -30,6 +32,7 @@ function renderPage() {
 
 beforeEach(() => {
   mockCanWrite = true;
+  mockSearchParams = '';
   jest.mocked(useDeviceEvents).mockReturnValue({
     data: { items: [event], total: 1, page: 1, per_page: 50, pages: 1 },
     isLoading: false, isFetching: false, isError: false, refetch,
@@ -47,6 +50,15 @@ afterEach(() => {
 });
 
 describe('Device events page', () => {
+  it('applies dashboard link severity and processing state before requesting page one', () => {
+    mockSearchParams = 'severity=critical&processed=false';
+    const { rerender } = renderPage();
+    expect(useDeviceEvents).toHaveBeenLastCalledWith(expect.objectContaining({ severity: 'critical', processed: false, page: 1 }));
+    mockSearchParams = 'severity=constructor&processed=unexpected';
+    rerender(<EventsPage />);
+    expect(useDeviceEvents).toHaveBeenLastCalledWith(expect.objectContaining({ severity: undefined, processed: undefined, page: 1 }));
+  });
+
   it('refreshes journal and its explicitly scoped summary together', () => {
     renderPage();
     expect(screen.getByText(/Сводка по всему парку/)).toBeInTheDocument();

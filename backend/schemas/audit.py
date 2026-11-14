@@ -8,16 +8,23 @@ from datetime import datetime
 from typing import Literal
 
 from fastapi import HTTPException, Query
+from pydantic import BaseModel
 
 from backend.middleware.request_id import REQUEST_ID_PATTERN
 from backend.schemas.auth import AuditLogResponse, PaginatedResponse
 
 AuditStatus = Literal["SUCCESS", "FAILED", "WARNING", "UNKNOWN"]
 EXPORT_LIMIT = 5000
+CURSOR_MAX_LENGTH = 512
 
 
 class AuditLogPage(PaginatedResponse):
     items: list[AuditLogResponse]
+
+
+class AuditLogCursorPage(BaseModel):
+    items: list[AuditLogResponse]
+    next_cursor: str | None
 
 
 @dataclass(frozen=True)

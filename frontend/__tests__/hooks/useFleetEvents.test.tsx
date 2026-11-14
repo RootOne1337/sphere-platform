@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { useAuthStore } from '@/lib/store';
 import { useFleetEvents } from '@/lib/hooks/useFleetEvents';
@@ -110,6 +110,40 @@ describe('useFleetEvents', () => {
       expect(view.invalidate).toHaveBeenCalledWith({ queryKey: [root] }, { cancelRefetch: false });
     }
   });
+  it('patches the active device only, without refetching or accepting a late heartbeat', () => {
+    const client = new QueryClient();
+    const invalidate = jest.spyOn(client, 'invalidateQueries');
+    const key = ['devices', { page: 1 }];
+    const now = Date.now();
+    const row = (id: string) => ({ id, status: 'online', last_heartbeat: new Date(now - 20_000).toISOString() });
+    const original = { items: [row('first'), row('second')], total: 2 };
+    const read = jest.fn().mockResolvedValue(original);
+    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    renderHook(() => {
+      useQuery({ queryKey: key, queryFn: read, initialData: original, staleTime: Infinity });
+      return useFleetEvents();
+    }, { wrapper });
+    act(() => jest.advanceTimersByTime(0));
+    const socket = authenticate();
+    invalidate.mockClear();
+    const packet = (age: number, active: boolean) => {
+      const observed = new Date(now - age).toISOString();
+      return { event_type: 'device.heartbeat', device_id: 'first', payload: {
+        last_heartbeat: observed, vpn_observed_at: observed, vpn_active: active,
+        vpn_observation_state: 'fresh', vpn_observation_max_age_seconds: 120,
+      } };
+    };
+    act(() => {
+      client.setQueryData(key, original);
+      socket.message(packet(2000, true));
+      socket.message(packet(5000, false));
+    });
+    expect(client.getQueryData(key)).toEqual({ ...original, items: [{
+      ...original.items[0], ...packet(2000, true).payload,
+    }, original.items[1]] });
+    expect(invalidate).not.toHaveBeenCalled();
+  });
+
   it('coalesces a burst of progress events without repeatedly cancelling reads', () => {
     const view = mount();
     const socket = authenticate();

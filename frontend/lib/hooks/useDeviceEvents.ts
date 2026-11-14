@@ -69,7 +69,7 @@ export interface CreateDeviceEventInput {
 
 // ── Хуки ──────────────────────────────────────────────────────────────
 
-export function useDeviceEvents(params: DeviceEventParams, enabled = true) {
+export function useDeviceEvents(params: DeviceEventParams, enabled = true, refetchInterval: number = API_POLL_INTERVALS.deviceEventsMs) {
   return useQuery<DeviceEventListResponse>({
     queryKey: ['device-events', params],
     queryFn: async () => {
@@ -78,7 +78,7 @@ export function useDeviceEvents(params: DeviceEventParams, enabled = true) {
     },
     staleTime: 10_000,
     enabled,
-    refetchInterval: API_POLL_INTERVALS.deviceEventsMs,
+    refetchInterval,
   });
 }
 

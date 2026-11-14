@@ -103,6 +103,17 @@ class TestEventsManager:
         conn_org1.ws.send_json.assert_called_once()
         conn_org2.ws.send_json.assert_not_called()
 
+    async def test_device_heartbeat_requires_device_read_and_same_org(self, manager):
+        allowed = FrontendConnection(AsyncMock(), "org-1", set(), can_read_devices=True)
+        denied = FrontendConnection(AsyncMock(), "org-1", set())
+        foreign = FrontendConnection(AsyncMock(), "org-2", set(), can_read_devices=True)
+        for conn in (allowed, denied, foreign):
+            await manager.add_client(conn.org_id, conn)
+        await manager.publish_event(FleetEvent(event_type=EventType.DEVICE_HEARTBEAT, org_id="org-1"))
+        allowed.ws.send_json.assert_awaited_once()
+        denied.ws.send_json.assert_not_awaited()
+        foreign.ws.send_json.assert_not_awaited()
+
     async def test_publish_event_respects_filters(self, manager):
         """Клиент с фильтром ['device.online'] не получает command.completed."""
         conn = self._make_conn("org-1", filters={"device.online"})

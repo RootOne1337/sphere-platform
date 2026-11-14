@@ -8,6 +8,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+APP_VPN_OBSERVATION_MAX_AGE_SECONDS = 15
+
 Counter = Annotated[int, Field(strict=True, ge=0, le=2**53 - 1)]
 Phase = Literal[
     "IDLE", "APPLYING", "TRANSPORT_READY", "AWAITING_HANDSHAKE", "HANDSHAKE_CONFIRMED",
@@ -54,9 +56,9 @@ class AppVpnObservation(BaseModel):
             return "unknown"
         receipt_age = (now - self.received_at).total_seconds()
         sample_age = now.timestamp() - self.snapshot.sampledAtEpochMs / 1000
-        if not 0 <= receipt_age < 15:
+        if not 0 <= receipt_age < APP_VPN_OBSERVATION_MAX_AGE_SECONDS:
             return "stale"
-        if not -5 <= sample_age < 15:
+        if not -5 <= sample_age < APP_VPN_OBSERVATION_MAX_AGE_SECONDS:
             return "stale"  # Heartbeat/status read never renews the native sample.
         return "fresh"
 

@@ -1,6 +1,7 @@
 """Post-auth Android messages must bind each fresh non-owner SQL session."""
 
 import asyncio
+import uuid
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock
 
@@ -11,6 +12,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from test_agent_tenant_runtime import agent_runtime, websocket  # noqa: F401
 from test_device_bootstrap_runtime import issue_device, wait_for_two_runtime_locks
 
+from backend.core.audit_identity import TASK_AGENT_RESULT, TASK_EXECUTION_REQUESTED
+from backend.models.audit_log import AuditLog
 from backend.models.device_event import DeviceEvent
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
@@ -49,6 +52,12 @@ def result_message(task, status, typed=True):
             "result": {"value": "first", "success": status != "completed"}}
 
 
+def task_agent_audit(task):
+    return select(AuditLog).where(
+        AuditLog.resource_id == str(task.id), AuditLog.action == TASK_AGENT_RESULT,
+    )
+
+
 async def assert_unscoped(r):
     async with r.db.sessions() as db:
         assert await db.scalar(text("SELECT current_user")) == r.db.role
@@ -56,6 +65,7 @@ async def assert_unscoped(r):
         assert await db.scalar(select(func.count()).select_from(Task)) == 0
         assert await db.scalar(select(func.count()).select_from(DeviceEvent)) == 0
         assert await db.scalar(select(func.count()).select_from(WebhookDelivery)) == 0
+        assert await db.scalar(select(func.count()).select_from(AuditLog)) == 0
 
 
 @pytest.mark.parametrize("status", ["received", "running"])
@@ -99,6 +109,12 @@ async def test_runtime_result_commit_ack_and_reconnect_replay(message_runtime, m
             assert (batch.succeeded, batch.failed) == (int(status == "completed"), int(status == "failed"))
             assert batch.status == status
             assert await db.scalar(select(func.count()).select_from(DeviceEvent).where(DeviceEvent.task_id == task.id)) == 1
+            audit, = (await db.scalars(task_agent_audit(task))).all()
+            assert audit.org_id == r.world.org_a.id and audit.user_id is None
+            assert audit.meta == {
+                "status": "success" if status == "completed" else "failure",
+                "agent_outcome": status, "device_id": str(enrolled.device_id), "receipt_id": str(task.id),
+            }
         # The production handler catches send errors. Keep a success marker so
         # an assertion raised inside this callback cannot be swallowed by it.
         confirmed_commits.append(True)
@@ -147,6 +163,12 @@ async def test_runtime_progress_and_result_ownership(message_runtime, target):
         async with r.world.sessions() as db:
             assert (await db.get(Task, task.id)).status == TaskStatus.ASSIGNED
             assert (await db.get(TaskBatch, task.batch_id)).succeeded == 0
+    if target != "own":
+        if target == "terminal":
+            await websocket(enrolled.device_id, enrolled.access_token, [result_message(task, "completed")])
+            r.manager.send_to_device.assert_awaited_once()  # Existing terminal ACK behavior.
+        async with r.world.sessions() as db:
+            assert await db.scalar(task_agent_audit(task)) is None
     await assert_unscoped(r)
 
 
@@ -207,6 +229,7 @@ async def test_runtime_result_sql_abort_has_no_ack_and_replay_recovers(message_r
         assert (await db.get(TaskBatch, task.batch_id)).succeeded == 0
         assert await db.scalar(select(func.count()).select_from(DeviceEvent).where(DeviceEvent.task_id == task.id)) == 0
         assert await db.scalar(select(WebhookDelivery.id).where(WebhookDelivery.subject_id == task.id)) is None
+        assert await db.scalar(task_agent_audit(task)) is None
     monkeypatch.setattr("backend.database.engine.AsyncSessionLocal", r.db.sessions)
     await websocket(enrolled.device_id, enrolled.access_token, [message])
     r.manager.send_to_device.assert_awaited_once()
@@ -225,6 +248,8 @@ async def test_runtime_result_sql_abort_has_no_ack_and_replay_recovers(message_r
         assert (await db.get(TaskBatch, task.batch_id)).succeeded == 1
         saved_delivery, = (await db.scalars(select(WebhookDelivery).where(WebhookDelivery.subject_id == task.id))).all()
         assert saved_delivery.status == "delivered" and saved_delivery.attempts_count == 1
+        audit, = (await db.scalars(task_agent_audit(task))).all()
+        assert audit.meta["receipt_id"] == str(task.id)
     await assert_unscoped(r)
 
 
@@ -248,10 +273,101 @@ async def test_runtime_concurrent_result_replay_counts_once(message_runtime, mon
             assert (await db.get(Task, task.id)).status == TaskStatus.COMPLETED
             assert (await db.get(TaskBatch, task.batch_id)).succeeded == 1
             assert await db.scalar(select(func.count()).select_from(DeviceEvent).where(DeviceEvent.task_id == task.id)) == 1
+            assert len((await db.scalars(task_agent_audit(task))).all()) == 1
     finally:
         for call in calls:
             if not call.done():
                 call.cancel()
         await asyncio.gather(*calls, return_exceptions=True)
         await engine.dispose()
+    await assert_unscoped(r)
+
+
+
+@pytest.mark.parametrize(("path", "action"), [("", "post.tasks"), ("/rerun", "post.tasks.rerun")])
+async def test_runtime_audit_correlates_operator_request_and_authenticated_agent_receipt(message_runtime, monkeypatch, path, action):
+    from backend.main import app
+
+    r = message_runtime
+    enrolled = await issue_device(r.world)
+    request_id = "audit-correlate-agent-result"
+    if path:
+        original = await make_task(r, enrolled.device_id, TaskStatus.COMPLETED)
+        async with r.world.sessions() as db:
+            source = await db.get(Task, original.id)
+            source.script_version_id = r.world.script.current_version_id
+            await db.commit()
+        url = f"/api/v1/tasks/{original.id}/rerun"
+        payload = None
+    else:
+        url = "/api/v1/tasks"
+        payload = {"script_id": str(r.world.script.id), "device_id": str(enrolled.device_id)}
+    monkeypatch.setattr("backend.middleware.audit.AsyncSessionLocal", r.db.sessions)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://audit.local") as client:
+        headers = {**r.world.auth(r.world.users["org_admin"]), "X-Request-ID": request_id}
+        response = await client.post(url, json=payload, headers=headers)
+        assert response.status_code == 201, response.text
+        assert response.headers["X-Request-ID"] == request_id
+        created = response.json()
+        async with r.world.sessions() as db:
+            queued = await db.scalar(select(Task).where(Task.id == uuid.UUID(created["id"])))
+            assert queued.status == TaskStatus.QUEUED
+        message = {
+            "command_id": created["id"], "status": "completed", "type": "command_result",
+            "device_id": str(r.world.dev_b.id), "org_id": str(r.world.org_b.id),
+            "result": {"device_id": str(r.world.dev_b.id), "auth_token": "private-agent-output"},
+        }
+        await websocket(enrolled.device_id, enrolled.access_token, [message])
+        r.manager.send_to_device.assert_not_awaited()
+        async with r.world.sessions() as db:
+            task = await db.get(Task, queued.id)
+            assert task.status == TaskStatus.QUEUED
+            assert await db.scalar(task_agent_audit(task)) is None
+            task.status = TaskStatus.ASSIGNED
+            await db.commit()
+        await websocket(enrolled.device_id, enrolled.access_token, [message, message])
+        assert r.manager.send_to_device.await_count == 2
+
+        audit = await client.get("/api/v1/audit/logs", params={"q": f"request:{request_id}"}, headers=headers)
+        assert audit.status_code == 200, audit.text
+        records = {item["action"]: item for item in audit.json()["items"]}
+        assert len(audit.json()["items"]) == len(records) == 3
+        assert set(records) == {TASK_AGENT_RESULT, TASK_EXECUTION_REQUESTED, action}
+        admission, result, http = records[TASK_EXECUTION_REQUESTED], records[TASK_AGENT_RESULT], records[action]
+        assert admission["resource_id"] == result["resource_id"] == created["id"]
+        assert admission["user_id"] == http["user_id"] == str(r.world.users["org_admin"].id)
+        assert result["user_id"] is None
+        assert result["meta"] == {
+            "status": "success", "request_id": request_id, "agent_outcome": "completed",
+            "receipt_id": created["id"], "device_id": str(enrolled.device_id),
+            "requested_by": admission["user_id"],
+        }
+        assert http["meta"]["http_status"] == 201
+        assert result["old_value"] is result["new_value"] is None
+        assert "private-agent-output" not in audit.text
+
+
+@pytest.mark.parametrize(("result", "error", "outcome", "task_status"), [
+    ({"cancelled": True}, "private-stop-detail", "cancelled", TaskStatus.CANCELLED),
+    ({}, "execution_outcome_unknown_after_restart", "unknown", TaskStatus.FAILED),
+])
+async def test_runtime_agent_receipt_classifies_cancelled_and_unknown_without_payload(
+    message_runtime, result, error, outcome, task_status,
+):
+    r = message_runtime
+    enrolled = await issue_device(r.world)
+    task = await make_task(r, enrolled.device_id, TaskStatus.RUNNING)
+    await websocket(enrolled.device_id, enrolled.access_token, [
+        {"type": "command_result", "command_id": str(task.id), "status": "failed",
+         "error": error, "result": result},
+    ])
+    r.manager.send_to_device.assert_awaited_once()
+    async with r.world.sessions() as db:
+        saved = await db.get(Task, task.id)
+        assert saved.status == task_status and saved.result["error"] == error
+        receipt, = (await db.scalars(task_agent_audit(task))).all()
+        assert receipt.meta == {
+            "status": "warning" if outcome == "cancelled" else "unknown",
+            "agent_outcome": outcome, "device_id": str(enrolled.device_id), "receipt_id": str(task.id),
+        }
     await assert_unscoped(r)

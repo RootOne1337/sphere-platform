@@ -84,3 +84,25 @@ async def test_cache_failure_does_not_disconnect_management():
     cache.merge_agent_status.side_effect = ConnectionError("private-sentinel")
     await handle_agent_message("device", "org", report(), AsyncMock(), cache, session_id="current")
     cache.merge_agent_status.assert_awaited_once()
+
+@pytest.mark.parametrize(("phase", "age", "expected"), [
+    ("HANDSHAKE_CONFIRMED", 0, ("fresh", True)),
+    ("AWAITING_HANDSHAKE", 0, ("fresh", True)),
+    ("PAUSED_GUARD_HELD", 0, ("fresh", False)),
+    ("STATUS_UNKNOWN", 0, ("unknown", None)),
+    ("HANDSHAKE_CONFIRMED", 16, ("stale", None)),
+])
+def test_fleet_prefers_current_app_vpn_over_legacy_inactive(phase, age, expected):
+    received_at = NOW - timedelta(seconds=age)
+    snapshot = AppVpnSnapshot.model_validate(
+        report(phase=phase, sampledAtEpochMs=int(received_at.timestamp() * 1000))["snapshot"],
+    )
+    device = DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id="current", last_heartbeat=NOW,
+        vpn_active=False, vpn_observed_at=NOW, vpn_observed_session_id="current",
+        app_vpn=AppVpnObservation(snapshot=snapshot, received_at=received_at, ws_session_id="current"),
+    )
+    result = device.with_current_vpn_observation(NOW)
+    assert (result.vpn_observation_state, result.vpn_active) == expected
+    assert result.vpn_observed_at == received_at
+    assert result.vpn_observation_max_age_seconds == 15

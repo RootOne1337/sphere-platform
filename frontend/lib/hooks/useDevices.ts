@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 
 export interface Device {
   id: string;
@@ -94,7 +95,7 @@ export function useDevices(params: {
       };
     },
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    refetchInterval: API_POLL_INTERVALS.deviceInventoryMs,
   });
 }
 

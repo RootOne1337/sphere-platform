@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import DashboardPage from '@/app/(dashboard)/dashboard/page';
 import { api } from '@/lib/api';
+import type { DeviceEventParams } from '@/lib/hooks/useDeviceEvents';
 import type { FleetCoverageSnapshot } from '@/src/features/monitoring/fleetCoverageTypes';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
@@ -10,9 +11,13 @@ jest.mock('@/lib/store', () => ({ useAuthStore: (selector: (state: unknown) => u
 }) }));
 let mockVpnAllowed = true;
 let mockEventsAllowed = true;
+let mockTasksAllowed = true;
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({
   verified: true, can: (permission: string) => permission !== 'vpn:read' || mockVpnAllowed,
-  canAccessRoute: (path: string) => path === '/vpn' ? mockVpnAllowed : path === '/events' ? mockEventsAllowed : true,
+  canAccessRoute: (path: string) => {
+    const route = path.split(/[?#]/, 1)[0];
+    return route === '/vpn' ? mockVpnAllowed : route === '/events' ? mockEventsAllowed : route === '/tasks' ? mockTasksAllowed : true;
+  },
 }) }));
 
 function coverage(presenceAvailable = true): FleetCoverageSnapshot {
@@ -27,7 +32,7 @@ function coverage(presenceAvailable = true): FleetCoverageSnapshot {
       : { ...absent, source: 'redis-presence' },
     android_vpn: { ...absent, source: 'android-managed-vpn-report' },
     vpn_assignment: { ...absent, source: 'sql-tenant-peers' },
-    handshakes: { ...absent, source: 'retained-sql-handshakes' },
+    handshakes: { ...observed, source: 'retained-sql-handshakes', max_age_seconds: 180, counts: { recent: 1, stale: 2, unknown: 0, inactive: 1 } },
     transport_tunnels: { ...absent, state: 'unmeasured', source: 'transport-tunnel-probes', reason: 'transport_probes_not_connected' },
   };
 }
@@ -66,19 +71,22 @@ function mockHealthyEndpoints(events: unknown = {
   per_page: 6,
   pages: 1,
 }) {
-  jest.mocked(api.get).mockImplementation(async (url) => {
+  jest.mocked(api.get).mockImplementation(async (url, config) => {
+    const params = config?.params as DeviceEventParams | undefined;
     const dataByPath: Record<string, unknown> = {
       '/monitoring/fleet-coverage': coverage(),
       '/health': { status: 'ok', version: '1.2.41' },
       '/vpn/pool/stats': { total_ips: 100, allocated: 20, free: 80, active_tunnels: 18, stale_handshakes: 2 },
       '/vpn/health': { status: 'ok', checks: {} },
-      '/device-events': events,
+      '/device-events': params?.severity
+        ? { items: [], total: 0, page: 1, per_page: 1, pages: 0 } : events,
+      '/tasks': { items: [], total: 0, page: 1, per_page: 1, pages: 0, status_counts: { failed: 0, timeout: 0 } },
     };
     return { data: dataByPath[url] } as never;
   });
 }
 
-afterEach(() => { mockVpnAllowed = true; mockEventsAllowed = true; jest.clearAllMocks(); });
+afterEach(() => { mockVpnAllowed = true; mockEventsAllowed = true; mockTasksAllowed = true; jest.clearAllMocks(); });
 
 it('renders current fleet, service and event data from their API queries', async () => {
   mockHealthyEndpoints();
@@ -105,15 +113,10 @@ it('renders current fleet, service and event data from their API queries', async
 
 it('reports an unavailable event feed instead of substituting healthy or empty data', async () => {
   mockHealthyEndpoints();
-  jest.mocked(api.get).mockImplementation(async (url) => {
+  const respond = jest.mocked(api.get).getMockImplementation()!;
+  jest.mocked(api.get).mockImplementation(async (url, config) => {
     if (url === '/device-events') throw new Error('event API unavailable');
-    const dataByPath: Record<string, unknown> = {
-      '/monitoring/fleet-coverage': coverage(),
-      '/health': { status: 'ok', version: 'test' },
-      '/vpn/pool/stats': { total_ips: 1, allocated: 1, free: 0, active_tunnels: 1, stale_handshakes: 0 },
-      '/vpn/health': { status: 'ok', checks: {} },
-    };
-    return { data: dataByPath[url] } as never;
+    return respond(url, config);
   });
   const { client } = renderDashboard();
 
@@ -168,17 +171,85 @@ it('keeps explicit offline, unknown and measured zero separate and hides disallo
 
 it('links to diagnostics for observed problems and never polls the inaccessible event journal', async () => {
   mockEventsAllowed = false;
+  mockTasksAllowed = false;
   mockHealthyEndpoints();
   const { client } = renderDashboard();
 
   const attention = await screen.findByRole('region', { name: 'Требуют проверки' });
-  expect(within(attention).getByRole('link', { name: 'Связь не подтверждена · 2' }))
-    .toHaveAttribute('href', '/monitoring#fleet-coverage-title');
-  expect(within(attention).getByRole('link', { name: 'Устаревшие handshake VPN · 2' }))
-    .toHaveAttribute('href', '/vpn');
+  expect(await within(attention).findByRole('link', { name: /Связь не подтверждена · 2/ }))
+    .toHaveAttribute('href', '/monitoring#fleet-coverage-presence');
+  expect(within(attention).getByRole('link', { name: /Устаревшие handshake VPN · 2/ }))
+    .toHaveAttribute('href', '/monitoring#fleet-coverage-handshakes');
+  expect(within(attention).getByRole('link', { name: /Подключаются · 1.*heartbeat/ }))
+    .toHaveAttribute('href', '/monitoring#fleet-coverage-presence');
   expect(screen.queryByRole('link', { name: /Все события/ })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Обновить данные' }));
   await waitFor(() => expect(jest.mocked(api.get).mock.calls.filter(([url]) => url === '/health')).toHaveLength(2));
   expect(jest.mocked(api.get).mock.calls.some(([url]) => url === '/device-events')).toBe(false);
+  expect(jest.mocked(api.get).mock.calls.some(([url]) => url === '/tasks')).toBe(false);
+  client.clear();
+});
+
+it('uses full filtered totals and connects each result to its own server-filtered view', async () => {
+  mockHealthyEndpoints({ items: [], total: 211, page: 1, per_page: 6, pages: 36 });
+  const respond = jest.mocked(api.get).getMockImplementation()!;
+  jest.mocked(api.get).mockImplementation(async (url, config) => {
+    const params = config?.params as DeviceEventParams | undefined;
+    if (url === '/device-events' && params?.processed === false) {
+      const total = params.severity === 'error' ? 31 : 7;
+      return { data: { items: [], total, page: 1, per_page: 1, pages: total } } as never;
+    }
+    if (url === '/tasks') return { data: { items: [], total: 400, page: 1, per_page: 1, pages: 400, status_counts: { failed: 12, timeout: 3 } } } as never;
+    return respond(url, config);
+  });
+  const { client } = renderDashboard();
+  const attention = within(screen.getByRole('region', { name: 'Требуют проверки' }));
+
+  expect(await attention.findByRole('link', { name: /Ошибки в событиях · 31/ })).toHaveAttribute('href', '/events?severity=error&processed=false');
+  expect(attention.getByRole('link', { name: /Критические события · 7/ })).toHaveAttribute('href', '/events?severity=critical&processed=false');
+  expect(attention.getByRole('link', { name: /Задачи с ошибкой · 12/ })).toHaveAttribute('href', '/tasks?status=failed');
+  expect(attention.getByRole('link', { name: /Задачи с таймаутом · 3/ })).toHaveAttribute('href', '/tasks?status=timeout');
+  expect(screen.getByText('Показано 0 из 211 записей журнала')).toBeInTheDocument();
+  expect(api.get).toHaveBeenCalledWith('/device-events', expect.objectContaining({ params: { page: 1, per_page: 1, severity: 'error', processed: false } }));
+  expect(api.get).toHaveBeenCalledWith('/tasks', expect.objectContaining({ params: { page: 1, per_page: 1, include_counts: true } }));
+  client.clear();
+});
+
+it('reports missing attention coverage and does not carry forward counts after an error', async () => {
+  mockHealthyEndpoints({ items: [], total: 0, page: 1, per_page: 6, pages: 0 });
+  const respond = jest.mocked(api.get).getMockImplementation()!;
+  let fail = false;
+  jest.mocked(api.get).mockImplementation(async (url, config) => {
+    if (url === '/tasks') {
+      if (fail) throw new Error('task history unavailable');
+      return { data: { items: [], total: 9, page: 1, per_page: 1, pages: 9, status_counts: { failed: 9, timeout: 0 } } } as never;
+    }
+    if (url === '/device-events' && fail) throw new Error('events unavailable');
+    return respond(url, config);
+  });
+  const { client } = renderDashboard();
+  const attention = within(screen.getByRole('region', { name: 'Требуют проверки' }));
+  expect(await attention.findByRole('link', { name: /Задачи с ошибкой · 9/ })).toBeInTheDocument();
+  fail = true;
+  fireEvent.click(screen.getByRole('button', { name: 'Обновить данные' }));
+  expect(await attention.findByText('Без свежего подтверждения · события, история задач.')).toBeInTheDocument();
+  expect(attention.queryByRole('link', { name: /Задачи с ошибкой/ })).not.toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('Данные сейчас недоступны');
+  expect(screen.queryByText('Пока нет событий для отображения.')).not.toBeInTheDocument();
+  client.clear();
+});
+
+it('reports invalid or missing server counts as unconfirmed coverage', async () => {
+  mockHealthyEndpoints();
+  const respond = jest.mocked(api.get).getMockImplementation()!;
+  jest.mocked(api.get).mockImplementation(async (url, config) => {
+    if (url === '/tasks') return { data: { items: [], total: 0, page: 1, per_page: 1, pages: 0, status_counts: { failed: '9' } } } as never;
+    return respond(url, config);
+  });
+  const { client } = renderDashboard();
+  const attention = within(screen.getByRole('region', { name: 'Требуют проверки' }));
+  await waitFor(() => expect(client.getQueryState(['tasks', { page: 1, per_page: 1, include_counts: true }])?.status).toBe('success'));
+  expect(attention.getByText('Без свежего подтверждения · история задач.')).toBeInTheDocument();
+  expect(attention.queryByRole('link', { name: /Задачи с ошибкой/ })).not.toBeInTheDocument();
   client.clear();
 });

@@ -50,21 +50,23 @@ function TasksView() {
   if (params?.get('view') === 'batches') return <BatchRuns />;
   const deviceId = params?.get('device_id') || undefined;
   const scriptId = params?.get('script_id') || undefined;
+  const status = params?.get('status')?.toUpperCase();
+  const initialStatus = STATUS_OPTIONS.find(option => option === status) ?? 'ALL';
   if ((deviceId && !UUID.test(deviceId)) || (scriptId && !UUID.test(scriptId))) {
     return <div className="space-y-3 p-6">
       <p role="alert">Ссылка содержит некорректный ID устройства или сценария.</p>
       <Button asChild variant="outline"><Link href="/tasks">Открыть общую историю задач</Link></Button>
     </div>;
   }
-  return <TaskHistory key={`${deviceId ?? ''}:${scriptId ?? ''}`} deviceId={deviceId} scriptId={scriptId} />;
+  return <TaskHistory key={`${deviceId ?? ''}:${scriptId ?? ''}:${initialStatus}`} deviceId={deviceId} scriptId={scriptId} initialStatus={initialStatus} />;
 }
 
-function TaskHistory({ deviceId, scriptId }: { deviceId?: string; scriptId?: string }) {
+function TaskHistory({ deviceId, scriptId, initialStatus }: { deviceId?: string; scriptId?: string; initialStatus: string }) {
   const router = useRouter();
   const access = useCapabilities();
   const canExecute = access.can('script:execute');
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);

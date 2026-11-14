@@ -94,10 +94,11 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const [clockNow, setClockNow] = React.useState(() => Date.now());
 
     React.useEffect(() => {
-        const timer = window.setInterval(() => setClockNow(Date.now()), 15_000);
+        const timer = window.setInterval(() => setClockNow(Date.now()), 5_000);
         return () => window.clearInterval(timer);
     }, []);
 
+    const renderedAt = Math.max(clockNow, Date.now());
     const columns = React.useMemo<ColumnDef<Device>[]>(
         () => [
             {
@@ -179,13 +180,13 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 id: "status",
-                accessorFn: device => getObservedDeviceStatus(device, clockNow),
+                accessorFn: device => getObservedDeviceStatus(device, renderedAt),
                 header: "Состояние",
                 size: 185,
                 cell: ({ row }) => {
                     const device = row.original;
-                    const status = getObservedDeviceStatus(device, clockNow);
-                    const uptime = formatElapsedSince(device.connected_since, clockNow);
+                    const status = getObservedDeviceStatus(device, renderedAt);
+                    const uptime = formatElapsedSince(device.connected_since, renderedAt);
                     const detail = status === "online" || status === "busy"
                         ? uptime ? `В сети ${uptime}` : "Начало сессии не сообщено"
                         : status === "connecting"
@@ -227,7 +228,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 accessorKey: "network",
                 header: "Доступ",
                 size: 205,
-                cell: ({ row }) => <div className="flex h-full flex-col justify-center pr-2"><DeviceAccessLabels device={row.original} now={clockNow} /></div>,
+                cell: ({ row }) => <div className="flex h-full flex-col justify-center pr-2"><DeviceAccessLabels device={row.original} now={renderedAt} /></div>,
             },
             {
                 id: "server_name",
@@ -275,15 +276,15 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 id: "last_seen",
                 accessorFn: (device) => {
-                    const timestamp = formatElapsedSince(device.last_heartbeat, clockNow) ? device.last_heartbeat
-                        : formatElapsedSince(device.last_seen, clockNow) ? device.last_seen : null;
+                    const timestamp = formatElapsedSince(device.last_heartbeat, renderedAt) ? device.last_heartbeat
+                        : formatElapsedSince(device.last_seen, renderedAt) ? device.last_seen : null;
                     return timestamp ? Date.parse(timestamp) : 0;
                 },
                 header: "Heartbeat / контакт",
                 size: 200,
                 cell: ({ row }) => {
-                    const heartbeatAge = formatElapsedSince(row.original.last_heartbeat, clockNow);
-                    const contactAge = formatElapsedSince(row.original.last_seen, clockNow);
+                    const heartbeatAge = formatElapsedSince(row.original.last_heartbeat, renderedAt);
+                    const contactAge = formatElapsedSince(row.original.last_seen, renderedAt);
                     const ts = heartbeatAge ? row.original.last_heartbeat : contactAge ? row.original.last_seen : null;
                     if (!ts) return <div className="flex h-full items-center text-xs text-muted-foreground">Нет данных о сигнале</div>;
                     const date = new Date(ts);
@@ -332,7 +333,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 cell: ({ row }) => <FleetDeviceActions device={row.original} onDeviceAction={(id, action) => actionAuthority.current.onDeviceAction?.(id, action)} canDeviceAction={action => actionAuthority.current.canDeviceAction?.(action) ?? false} />,
             },
         ],
-        [clockNow, onDeviceAction, openInspector, canDeviceAction, selectionId, profiles]
+        [renderedAt, onDeviceAction, openInspector, canDeviceAction, selectionId, profiles]
     );
 
     const table = useReactTable({
@@ -394,10 +395,10 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             </div>
             <div className="grid min-h-0 min-w-0 gap-3 sm:flex-1 sm:grid-cols-2 sm:overflow-y-auto xl:grid-cols-3 2xl:grid-cols-4" role="list" aria-label="Устройства организации">
                 {rows.map(row => {
-                    const device = row.original; const heartbeat = formatElapsedSince(device.last_heartbeat, clockNow);
-                    const status = getObservedDeviceStatus(device, clockNow);
-                    const contact = formatElapsedSince(device.last_seen, clockNow);
-                    const uptime = formatElapsedSince(device.connected_since, clockNow);
+                    const device = row.original; const heartbeat = formatElapsedSince(device.last_heartbeat, renderedAt);
+                    const status = getObservedDeviceStatus(device, renderedAt);
+                    const contact = formatElapsedSince(device.last_seen, renderedAt);
+                    const uptime = formatElapsedSince(device.connected_since, renderedAt);
                     return <article key={row.id} role="listitem" className={cn('min-w-0 rounded-xl border bg-background p-3 transition-colors hover:border-primary/40', row.getIsSelected() ? 'border-primary/50 bg-primary/5' : 'border-border')}>
                         <div className="flex items-center gap-2">
                             <label htmlFor={`${selectionId}-card-${row.id}`} className="flex h-11 w-7 shrink-0 cursor-pointer items-center justify-center">
@@ -418,7 +419,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             <div className="min-w-0"><dt className="text-muted-foreground">Sphere Agent</dt><dd className="mt-1 truncate font-mono" title={device.agent_version ?? undefined}>{device.agent_version || 'Не сообщён'}</dd></div>
                             {columnVisibility.server_name !== false && <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">{hasApplicationBinding(device) ? 'Сервер профиля' : 'Игровой сервер'}</dt><dd className="truncate" title={applicationBindingLabel(device, profiles)}>{applicationBindingLabel(device, profiles)}</dd></div>}
                             <div className="col-span-2"><dt className="sr-only">Последний контакт</dt><dd className="text-muted-foreground">{heartbeat ? `heartbeat ${heartbeat} назад` : contact ? `Контакт ${contact} назад` : 'Нет данных о сигнале'}</dd></div>
-                            {columnVisibility.network && <div className="col-span-2"><dt className="sr-only">Доступ</dt><dd><DeviceAccessLabels device={device} now={clockNow} /></dd></div>}
+                            {columnVisibility.network && <div className="col-span-2"><dt className="sr-only">Доступ</dt><dd><DeviceAccessLabels device={device} now={renderedAt} /></dd></div>}
                         </dl>
                     </article>;
                 })}
@@ -426,7 +427,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
         </section>
     );
 
-    return <FleetDataGrid table={table} preferences={preferences} rowHeight={rowHeight} clockNow={clockNow} />;
+    return <FleetDataGrid table={table} preferences={preferences} rowHeight={rowHeight} clockNow={renderedAt} />;
 }
 
 

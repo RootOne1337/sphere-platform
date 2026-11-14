@@ -14,7 +14,7 @@ import { isAuditRequestId, type AuditFilters } from '@/src/features/audit/invest
 import { useAuditExport } from '@/src/features/audit/useAuditExport';
 import { useAuthStore } from '@/lib/store';
 import { AuditDrawer } from '@/src/features/audit/AuditDrawer';
-import { normalizeAuditResponse, type AuditEvent, type AuditStatus } from '@/src/features/audit/types';
+import { normalizeAuditEvent, type AuditEvent, type AuditStatus } from '@/src/features/audit/types';
 import { Badge } from '@/src/shared/ui/badge';
 import { Button } from '@/src/shared/ui/button';
 import { Card } from '@/components/ui/card';
@@ -22,6 +22,16 @@ import { PageFrame, PageHeading } from '@/src/shared/ui/page-layout';
 
 const PAGE_SIZE = 100;
 const EMPTY_EVENTS: AuditEvent[] = [];
+
+function normalizeCursorPage(value: unknown) {
+  if (!value || typeof value !== 'object' || !('items' in value) || !Array.isArray(value.items)
+    || !('next_cursor' in value) || (value.next_cursor !== null && (
+      typeof value.next_cursor !== 'string' || value.next_cursor.length === 0 || value.next_cursor.length > 512
+    ))) {
+    throw new Error('Backend вернул некорректный список событий аудита.');
+  }
+  return { items: value.items.map(normalizeAuditEvent), nextCursor: value.next_cursor };
+}
 
 function StatusMark({ status }: { status: AuditStatus }) {
   const config = {
@@ -65,27 +75,28 @@ function AuditRoute() {
 function AuditInvestigation({ scope, initialQuery }: { scope: string; initialQuery: string }) {
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
   const [filters, setFilters] = useState<AuditFilters>(initialQuery ? { q: initialQuery } : {});
-  const [page, setPage] = useState(1);
+  const [cursors, setCursors] = useState<(string | null)[]>([null]);
+  const cursor = cursors[cursors.length - 1];
+  const latest = cursor === null;
   const csv = useAuditExport();
 
   const auditQuery = useQuery({
-    queryKey: ['audit-logs', scope, filters, page],
+    queryKey: ['audit-logs', scope, filters, cursor],
     queryFn: async ({ signal }) => {
-      const { data } = await api.get('/audit/logs', {
-        params: { ...filters, page, per_page: PAGE_SIZE },
+      const { data } = await api.get('/audit/logs/cursor', {
+        params: { ...filters, per_page: PAGE_SIZE, ...(cursor ? { cursor } : {}) },
         signal,
       });
-      return normalizeAuditResponse(data);
+      return normalizeCursorPage(data);
     },
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    refetchInterval: latest ? 30_000 : false,
+    refetchOnWindowFocus: latest,
+    refetchOnReconnect: latest,
     refetchIntervalInBackground: false,
   });
   const events = auditQuery.data?.items ?? EMPTY_EVENTS;
-  const total = auditQuery.data?.total ?? 0;
-  const totalPages = auditQuery.data?.pages ?? 0;
-
-  const filteredEvents = events;
+  const nextCursor = auditQuery.isError ? null : auditQuery.data?.nextCursor;
 
   const summary = useMemo(() => ({
     success: events.filter((event) => event.status === 'SUCCESS').length,
@@ -95,7 +106,16 @@ function AuditInvestigation({ scope, initialQuery }: { scope: string; initialQue
   }), [events]);
 
   const applyFilters = (params: AuditFilters) => {
-    csv.cancel(); setSelectedEvent(null); setPage(1); setFilters(params);
+    csv.cancel(); setSelectedEvent(null); setCursors([null]); setFilters(params);
+  };
+
+  const move = (direction: 'back' | 'forward') => {
+    setSelectedEvent(null);
+    setCursors(current => {
+      if (current.at(-1) !== cursor) return current;
+      if (direction === 'back') return current.slice(0, -1);
+      return nextCursor ? [...current, nextCursor] : current;
+    });
   };
 
   return (
@@ -106,11 +126,15 @@ function AuditInvestigation({ scope, initialQuery }: { scope: string; initialQue
         description="Хронология действий пользователей и системных операций в пределах вашей организации. Записи поступают из backend; состояние доступа и ошибки запроса показываются отдельно."
         actions={(
           <>
-            <Button variant="outline" onClick={() => auditQuery.refetch()} disabled={auditQuery.isFetching}>
+            <Button variant="outline" onClick={() => {
+              setSelectedEvent(null);
+              if (latest) void auditQuery.refetch();
+              else setCursors([null]);
+            }} disabled={auditQuery.isFetching}>
               {auditQuery.isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              Обновить
+              {latest ? 'Обновить' : 'К новым записям'}
             </Button>
-            <Button onClick={() => csv.run(filters)} disabled={csv.pending || auditQuery.isFetching || auditQuery.isError || !auditQuery.data || total === 0}>
+            <Button onClick={() => csv.run(filters)} disabled={csv.pending || auditQuery.isFetching || auditQuery.isError || !auditQuery.data || (latest && events.length === 0)}>
               <Download className="mr-2 h-4 w-4" />
               Экспорт CSV
 
@@ -119,14 +143,7 @@ function AuditInvestigation({ scope, initialQuery }: { scope: string; initialQue
         )}
       />
 
-      <section aria-label="Сводка журнала аудита" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <Card className="p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div><p className="text-sm font-medium text-muted-foreground">Всего событий</p><p className="mt-2 text-2xl font-semibold tabular-nums">{auditQuery.isError ? '—' : total.toLocaleString('ru-RU')}</p></div>
-            <span className="rounded-xl bg-primary/10 p-2.5 text-primary"><ShieldCheck className="h-5 w-5" /></span>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">Все события по применённым фильтрам</p>
-        </Card>
+      <section aria-label="Сводка журнала аудита" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div><p className="text-sm font-medium text-muted-foreground">Успешно</p><p className="mt-2 text-2xl font-semibold tabular-nums text-success">{auditQuery.isError ? '—' : summary.success}</p></div>
@@ -175,7 +192,7 @@ function AuditInvestigation({ scope, initialQuery }: { scope: string; initialQue
                 <th scope="col" className="w-[180px] px-4 py-3">Действие</th>
                 <th scope="col" className="w-[140px] px-4 py-3">Пользователь / ID</th>
                 <th scope="col" className="w-[170px] px-4 py-3">Ресурс</th>
-                <th scope="col" className="w-[130px] px-4 py-3">Источник</th>
+                <th scope="col" className="w-[130px] px-4 py-3">Источник / IP</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -187,17 +204,17 @@ function AuditInvestigation({ scope, initialQuery }: { scope: string; initialQue
                   <div className="mx-auto max-w-md"><XCircle className="mx-auto mb-3 h-8 w-8 text-destructive" /><p className="font-medium">Не удалось загрузить журнал аудита</p><p className="mt-1 text-sm text-muted-foreground">Проверьте доступ audit:read и соединение с backend. Пустой список не подменяет ошибку запроса.</p><Button className="mt-4" variant="outline" onClick={() => auditQuery.refetch()}>Повторить запрос</Button></div>
                 </td></tr>
               )}
-              {!auditQuery.isLoading && !auditQuery.isError && filteredEvents.map((event) => (
+              {!auditQuery.isLoading && !auditQuery.isError && events.map((event) => (
                 <tr key={event.id} className="group cursor-pointer transition-colors hover:bg-muted/45 focus-within:bg-muted/45" onClick={() => setSelectedEvent(event)} onKeyDown={(keyEvent) => { if (keyEvent.key === 'Enter' || keyEvent.key === ' ') { keyEvent.preventDefault(); setSelectedEvent(event); } }} tabIndex={0} aria-label={`Открыть событие ${event.action}`}>
                   <td className="whitespace-nowrap px-4 py-3.5 text-sm tabular-nums text-muted-foreground sm:px-5">{formatTimestamp(event.timestamp)}</td>
                   <td className="px-4 py-3.5"><StatusMark status={event.status} /></td>
                   <td className="max-w-[250px] px-4 py-3.5"><span className="block truncate font-medium group-hover:text-primary">{event.action}</span><span className="mt-1 block truncate font-mono text-[11px] text-muted-foreground">{event.id}</span></td>
-                  <td className="max-w-[180px] px-4 py-3.5"><span className="block truncate text-sm">{event.user}</span></td>
+                  <td className="max-w-[180px] px-4 py-3.5"><span className="block truncate text-sm">{event.taskReceipt ? '—' : event.user}</span></td>
                   <td className="max-w-[220px] px-4 py-3.5 text-sm text-muted-foreground"><span className="block truncate">{event.resource}</span></td>
-                  <td className="whitespace-nowrap px-4 py-3.5 text-sm text-muted-foreground">{event.ip || '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-3.5 text-sm text-muted-foreground">{event.taskReceipt ? 'Android-агент' : event.ip || '—'}</td>
                 </tr>
               ))}
-              {!auditQuery.isLoading && !auditQuery.isError && filteredEvents.length === 0 && (
+              {!auditQuery.isLoading && !auditQuery.isError && events.length === 0 && (
                 <tr><td colSpan={6} className="px-5 py-16 text-center">
                   <div className="mx-auto max-w-md"><ShieldCheck className="mx-auto mb-3 h-8 w-8 text-muted-foreground/60" /><p className="font-medium">{Object.keys(filters).length ? 'По этим условиям событий нет' : 'В журнале пока нет событий'}</p><p className="mt-1 text-sm text-muted-foreground">{Object.keys(filters).length ? 'Измените запрос или сбросьте фильтры.' : 'После действий в системе новые записи появятся здесь.'}</p></div>
                 </td></tr>
@@ -207,12 +224,12 @@ function AuditInvestigation({ scope, initialQuery }: { scope: string; initialQue
         </div>
 
         <footer className="flex flex-col gap-3 border-t border-border px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <p>{auditQuery.isError ? 'Данные недоступны' : `Показано ${filteredEvents.length} из ${events.length} на странице · по фильтрам ${total.toLocaleString('ru-RU')}`}</p>
+          <p>{auditQuery.isError ? 'Данные недоступны' : `На странице ${events.length} событий`}</p>
           <nav aria-label="Страницы журнала" className="flex items-center gap-2">
-            <Button variant="outline" size="sm" aria-label="Предыдущая страница" disabled={page <= 1 || auditQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft className="h-4 w-4" /><span className="sr-only">Предыдущая</span></Button>
-            <span className="min-w-24 text-center text-xs tabular-nums">Страница {totalPages === 0 ? 0 : page} из {totalPages}</span>
-            <Button variant="outline" size="sm" aria-label="Следующая страница" disabled={page >= totalPages || auditQuery.isFetching} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}><ChevronRight className="h-4 w-4" /><span className="sr-only">Следующая</span></Button>
-            <span className="ml-1 hidden text-xs md:inline">Автообновление: 30 сек · только пока страница открыта</span>
+            <Button variant="outline" size="sm" aria-label="Предыдущая страница" disabled={latest || auditQuery.isFetching} onClick={() => move('back')}><ChevronLeft className="h-4 w-4" /><span className="sr-only">Предыдущая</span></Button>
+            <span className="min-w-24 text-center text-xs tabular-nums" aria-live="polite">Страница {cursors.length}</span>
+            <Button variant="outline" size="sm" aria-label="Следующая страница" disabled={!nextCursor || auditQuery.isFetching} onClick={() => move('forward')}><ChevronRight className="h-4 w-4" /><span className="sr-only">Следующая</span></Button>
+            {latest && <span className="ml-1 hidden text-xs md:inline">Автообновление каждые 30 сек</span>}
           </nav>
         </footer>
       </Card>

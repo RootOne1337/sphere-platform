@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -22,6 +22,7 @@ class AuditLog(Base):
     Детальная логика: TZ-01 SPLIT-5.
     """
     __tablename__ = "audit_logs"
+    __table_args__ = (Index("ix_audit_logs_org_created_id", "org_id", "created_at", "id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,

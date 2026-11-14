@@ -12,7 +12,7 @@ jest.mock('next/navigation', () => ({
 const actor = { id: 'actor', org_id: 'org-a', role: 'org_owner', email: 'owner@example.org' };
 const row = { id: 'old-event', created_at: '2026-10-01T10:00:00Z', user_id: null,
   action: 'rare.action', resource_type: 'groups', meta: { status: 'failure' } };
-const envelope = { items: [row], total: 1, page: 1, per_page: 100, pages: 1 };
+const envelope = { items: [row], next_cursor: null };
 const receipt = () => ({ data: new Blob(['csv'], { type: 'text/csv' }), headers: {
   'content-type': 'text/csv; charset=utf-8', 'x-audit-rows': '1', 'x-audit-limit': '5000',
   'x-audit-truncated': 'false', 'x-audit-observed-at': '2026-10-02T10:00:00Z',
@@ -43,8 +43,8 @@ it('opens a shared exact request filter and retains the correlation link in the 
   mount();
   expect(screen.getByRole('searchbox')).toHaveValue('request:operator-fixture:17');
   fireEvent.click(await screen.findByText(row.action));
-  expect(api.get).toHaveBeenCalledWith('/audit/logs', expect.objectContaining({
-    params: { q: 'request:operator-fixture:17', page: 1, per_page: 100 },
+  expect(api.get).toHaveBeenCalledWith('/audit/logs/cursor', expect.objectContaining({
+    params: { q: 'request:operator-fixture:17', per_page: 100 },
   }));
   expect(await screen.findByRole('link', { name: 'Открыть события этого запроса' })).toHaveAttribute(
     'href', '/audit?request_id=operator-fixture%3A17',
@@ -57,8 +57,8 @@ it('applies server-wide DSL only on submit and finds older-page events', async (
   fireEvent.change(search, { target: { value: 'status:FAILED user:system' } });
   expect(api.get).toHaveBeenCalledTimes(1);
   apply();
-  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs', {
-    params: { q: 'status:FAILED user:system', page: 1, per_page: 100 }, signal: expect.any(AbortSignal),
+  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs/cursor', {
+    params: { q: 'status:FAILED user:system', per_page: 100 }, signal: expect.any(AbortSignal),
   }));
   expect(await screen.findByText(row.action)).toBeInTheDocument();
 });
@@ -72,19 +72,26 @@ it('validates time range and actor before sending then preserves UTC precision',
   fireEvent.change(screen.getByLabelText('По (UTC)'), { target: { value: '2026-10-01T10:00' } }); apply();
   expect(api.get).toHaveBeenCalledTimes(1);
   fireEvent.change(screen.getByLabelText('По (UTC)'), { target: { value: '2026-10-02T10:00:15' } }); apply();
-  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs', {
-    params: { from: '2026-10-02T10:00:00.000Z', to: '2026-10-02T10:00:15.000Z', page: 1, per_page: 100 }, signal: expect.any(AbortSignal),
+  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs/cursor', {
+    params: { from: '2026-10-02T10:00:00.000Z', to: '2026-10-02T10:00:15.000Z', per_page: 100 }, signal: expect.any(AbortSignal),
   }));
 });
 it('resets page to one on filter application and keeps paging filters', async () => {
-  jest.mocked(api.get).mockResolvedValue({ data: { ...envelope, total: 101, pages: 2 } } as never);
+  jest.mocked(api.get).mockImplementation(async (_path, config) => {
+    const params = config?.params as { cursor?: string; q?: string } | undefined;
+    return { data: {
+      ...envelope,
+      next_cursor: params?.cursor ? null : params?.q ? 'filtered-cursor' : 'all-cursor',
+    } } as never;
+  });
   mount(); await screen.findByText(row.action);
   fireEvent.click(screen.getByRole('button', { name: 'Следующая страница' }));
-  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs', expect.objectContaining({ params: { page: 2, per_page: 100 } })));
+  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs/cursor', expect.objectContaining({ params: { cursor: 'all-cursor', per_page: 100 } })));
   fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'rare' } }); apply();
-  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs', expect.objectContaining({ params: { q: 'rare', page: 1, per_page: 100 } })));
+  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs/cursor', expect.objectContaining({ params: { q: 'rare', per_page: 100 } })));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Следующая страница' })).toBeEnabled());
   fireEvent.click(screen.getByRole('button', { name: 'Следующая страница' }));
-  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs', expect.objectContaining({ params: { q: 'rare', page: 2, per_page: 100 } })));
+  await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs/cursor', expect.objectContaining({ params: { q: 'rare', cursor: 'filtered-cursor', per_page: 100 } })));
 });
 it('exports applied global filters with a declared cap, never current-page rows or draft', async () => {
   mount(); await screen.findByText(row.action);

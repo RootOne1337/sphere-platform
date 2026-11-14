@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   useDeviceEvents,
   useEventStats,
@@ -115,13 +116,26 @@ function formatDate(iso: string) {
 // ── Главная страница ─────────────────────────────────────────────────
 
 export default function EventsPage() {
+  return <Suspense fallback={<p role="status" className="p-6">Загружаем журнал событий…</p>}><ScopedEvents /></Suspense>;
+}
+
+function ScopedEvents() {
+  const params = useSearchParams();
+  const severity = params?.get("severity");
+  const processed = params?.get("processed");
+  const initialSeverity = severity && Object.hasOwn(SEVERITY_CONFIG, severity) ? severity : "__all__";
+  const initialProcessed = processed === "true" || processed === "false" ? processed : "__all__";
+  return <EventHistory key={`${initialSeverity}:${initialProcessed}`} initialSeverity={initialSeverity} initialProcessed={initialProcessed} />;
+}
+
+function EventHistory({ initialSeverity, initialProcessed }: { initialSeverity: string; initialProcessed: string }) {
   const access = useCapabilities();
   const canMark = access.can("event:write");
   // Фильтры и пагинация
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
-  const [filterSeverity, setFilterSeverity] = useState("__all__");
-  const [filterProcessed, setFilterProcessed] = useState("__all__");
+  const [filterSeverity, setFilterSeverity] = useState(initialSeverity);
+  const [filterProcessed, setFilterProcessed] = useState(initialProcessed);
   const [deviceFilter, setDeviceFilter] = useState("");
   const [accountFilter, setAccountFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");

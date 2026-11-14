@@ -38,7 +38,7 @@ export function FleetCoveragePanel() {
         {data && <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{PANELS.map(panel => {
                 const signal = data[panel.key];
-                return <article key={panel.key} aria-label={panel.title} className="min-w-0 rounded-xl border border-border/80 bg-card p-4 shadow-sm">
+                return <article key={panel.key} id={`fleet-coverage-${panel.key}`} aria-label={panel.title} className="min-w-0 scroll-mt-20 rounded-xl border border-border/80 bg-card p-4 shadow-sm">
                     <h3 className="text-sm font-semibold">{panel.title}</h3>
                     <p className={`mt-2 text-xs font-medium ${signal.state === 'ready' ? 'text-muted-foreground' : 'text-amber-800 dark:text-amber-300'}`}>{STATES[signal.state]}</p>
                     {signal.counts ? <dl className="mt-3 grid gap-2">{panel.fields.map(([key, label]) => <div key={key} className="flex items-baseline justify-between gap-3 text-sm"><dt className="min-w-0 text-muted-foreground">{label}</dt><dd className="shrink-0 font-mono font-semibold tabular-nums">{signal.counts![key].toLocaleString('ru-RU')}</dd></div>)}</dl>

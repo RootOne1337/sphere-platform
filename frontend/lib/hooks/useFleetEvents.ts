@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/lib/store';
 import { useQueryClient } from '@tanstack/react-query';
+import { applyFleetHeartbeat } from './fleetHeartbeat';
 
 export type FleetEventType =
-  | 'device.online' | 'device.offline' | 'device.status_change' | 'device.status_changed'
+  | 'device.online' | 'device.offline' | 'device.status_change' | 'device.status_changed' | 'device.heartbeat'
   | 'task.queued' | 'task.started' | 'task.progress' | 'task.completed' | 'task.failed'
   | 'command.started' | 'command.completed' | 'command.failed'
-  | 'vpn.assigned' | 'vpn.revoked' | 'vpn.failed'
+  | 'vpn.assigned' | 'vpn.revoked' | 'vpn.failed' | 'vpn.runtime_changed'
   | 'stream.started' | 'stream.stopped' | 'alert.triggered'
   | 'account.banned' | 'account.captcha' | 'account.phone_verify' | 'account.error'
   | 'account.assigned' | 'account.released' | 'account.rotated'
@@ -32,14 +33,15 @@ const REFRESH_BATCH_MS = 500;
 const LIVE_QUERY_ROOTS = [
   'devices', 'tasks', 'dashboard', 'device-events', 'vpn', 'batches',
   'pipeline-runs', 'orchestration-status', 'account-sessions', 'game-accounts', 'device-inspector', 'fleet-coverage',
-  'direct-probe-capabilities',
+  'direct-probe-capabilities', 'vpn-runtime',
 ];
 
 function eventQueryRoots(type: string): string[] {
   if (type.startsWith('device.')) return ['devices', 'dashboard', 'device-events', 'fleet-coverage', 'direct-probe-capabilities'];
   if (type.startsWith('task.')) return ['tasks', 'devices', 'dashboard', 'batches', 'pipeline-runs', 'orchestration-status', 'device-events', 'fleet-coverage'];
   if (type.startsWith('command.')) return ['device-inspector', 'device-events'];
-  if (type.startsWith('vpn.')) return ['vpn', 'devices', 'device-events', 'fleet-coverage'];
+  if (type === 'vpn.runtime_changed') return ['devices', 'vpn-runtime'];
+  if (type.startsWith('vpn.')) return ['vpn', 'vpn-runtime', 'devices', 'device-events', 'fleet-coverage'];
   if (type.startsWith('account.') || type.startsWith('session.')) return ['game-accounts', 'account-sessions', 'device-events'];
   if (type.startsWith('stream.') || type === 'game.crashed' || type === 'alert.triggered') return ['devices', 'device-events'];
   return [];
@@ -157,6 +159,10 @@ export function useFleetEvents(onEvent?: EventHandler) {
         if (wire.type === 'pong' || wire.type === 'snapshot') { confirm(ws); return; }
         const type = wire.event_type ?? wire.type;
         if (typeof type !== 'string') return;
+        if (type === 'device.heartbeat') {
+          if (authenticated && document.visibilityState !== 'hidden') applyFleetHeartbeat(qc, wire);
+          return;
+        }
         const roots = eventQueryRoots(type);
         if (!roots.length) return;
         confirm(ws);

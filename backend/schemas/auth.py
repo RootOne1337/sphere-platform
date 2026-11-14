@@ -9,6 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
 
+from backend.core.audit_identity import TASK_AGENT_RESULT, TASK_EXECUTION_REQUESTED
 from backend.core.rbac import Role
 from backend.middleware.request_id import REQUEST_ID_PATTERN
 
@@ -116,7 +117,7 @@ class APIKeyResponse(BaseModel):
 
 _AUDIT_STATUS_VALUES = frozenset({
     "success", "succeeded", "ok", "completed", "failed", "failure", "error", "rejected",
-    "warning", "degraded", "partial",
+    "warning", "degraded", "partial", "unknown",
 })
 _AUDIT_ROLES = frozenset(role.value for role in Role)
 _AUDITED_ROLE_ACTIONS = frozenset({"user.create", "user.role_change"})
@@ -166,7 +167,22 @@ class AuditLogResponse(BaseModel):
             raw = value.get(key)
             if isinstance(raw, str) and len(raw) <= 64 and re.fullmatch(pattern, raw):
                 visible[key] = raw
-        if info.data.get("action") in _AUDITED_VPN_ACTIONS and info.data.get("resource_type") == "vpn_profile":
+        action = info.data.get("action")
+        if info.data.get("resource_type") == "task" and action in {TASK_EXECUTION_REQUESTED, TASK_AGENT_RESULT}:
+            fields = ("device_id", "receipt_id", "requested_by") if action == TASK_AGENT_RESULT else ("device_id",)
+            for field in fields:
+                raw = value.get(field)
+                if isinstance(raw, str) and len(raw) == 36:
+                    try:
+                        visible[field] = str(uuid.UUID(raw))
+                    except ValueError:
+                        pass
+            outcome = value.get("agent_outcome")
+            if action == TASK_AGENT_RESULT and isinstance(outcome, str) and outcome in {
+                "completed", "failed", "cancelled", "unknown",
+            }:
+                visible["agent_outcome"] = outcome
+        if action in _AUDITED_VPN_ACTIONS and info.data.get("resource_type") == "vpn_profile":
             revision = value.get("revision")
             if type(revision) is int and 1 <= revision < 2**31:
                 visible["revision"] = revision

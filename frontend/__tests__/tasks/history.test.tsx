@@ -74,6 +74,18 @@ it('filters older failed rows on the server and sends sort direction', () => {
   expect(mockQueries).toHaveBeenCalledWith(expect.objectContaining({sort_by:'created_at',sort_dir:'asc'}));
 });
 
+it('opens dashboard status links with the matching server filter and resets on navigation', () => {
+  mockSearchParams = 'status=failed';
+  const { rerender } = render(<TaskEnginePage />);
+  expect(screen.getByText('Old failure')).toBeInTheDocument();
+  expect(mockQueries).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed', page: 1 }));
+  mockSearchParams = 'status=timeout';
+  rerender(<TaskEnginePage />);
+  expect(screen.queryByText('Old failure')).not.toBeInTheDocument();
+  expect(mockQueries).toHaveBeenLastCalledWith(expect.objectContaining({ active_only: true }));
+  expect(mockQueries).toHaveBeenCalledWith(expect.objectContaining({ status: 'timeout', page: 1 }));
+});
+
 it('uses script names and priority without inventing CRON or a future forecast', () => {
   render(<TaskEnginePage />);
   expect(screen.getAllByText('Safe system scenario').length).toBeGreaterThan(0);

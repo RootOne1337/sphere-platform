@@ -3,6 +3,15 @@ import { USER_ROLE_LABELS } from '@/src/features/users/access';
 export type AuditStatus = 'SUCCESS' | 'FAILED' | 'WARNING' | 'UNKNOWN';
 
 const USER_EFFECTS = new Set(['user.create', 'user.role_change', 'user.deactivate']);
+const UUID_PATTERN = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
+export const AGENT_OUTCOME_LABELS = {
+  completed: 'Выполнено',
+  failed: 'Ошибка выполнения',
+  cancelled: 'Остановлено агентом',
+  unknown: 'Исход неизвестен',
+} as const;
+
+type AgentOutcome = keyof typeof AGENT_OUTCOME_LABELS;
 
 export interface AuditEvent {
   id: string;
@@ -13,7 +22,8 @@ export interface AuditEvent {
   status: AuditStatus;
   ip: string;
   meta: Record<string, unknown>;
-  outcomeSource: 'http' | 'effect' | null;
+  outcomeSource: 'http' | 'effect' | 'admission' | 'agent' | null;
+  taskReceipt: { id: string; deviceId: string; outcome: AgentOutcome; requestedBy: string | null } | null;
   roleDiff: { before: string | null; after: string } | null;
 }
 
@@ -56,6 +66,21 @@ export function normalizeAuditEvent(value: unknown): AuditEvent {
   const hasHttpStatus = typeof httpStatus === 'number' && Number.isInteger(httpStatus)
     && httpStatus >= 100 && httpStatus <= 599;
   const status = normalizeStatus(item.status ?? meta.status);
+  const isTaskAdmission = !hasHttpStatus && resourceType === 'task' && action === 'task.execution_requested';
+  const receiptId = meta.receipt_id;
+  const deviceId = meta.device_id;
+  const agentOutcome = meta.agent_outcome;
+  const taskReceipt = !hasHttpStatus && resourceType === 'task' && action === 'task.agent_result'
+    && typeof receiptId === 'string' && UUID_PATTERN.test(receiptId) && receiptId === resourceId
+    && typeof deviceId === 'string' && UUID_PATTERN.test(deviceId)
+    && typeof agentOutcome === 'string' && Object.hasOwn(AGENT_OUTCOME_LABELS, agentOutcome)
+    ? {
+      id: receiptId,
+      deviceId,
+      outcome: agentOutcome as AgentOutcome,
+      requestedBy: typeof meta.requested_by === 'string' && UUID_PATTERN.test(meta.requested_by) ? meta.requested_by : null,
+    }
+    : null;
   const userEffect = !hasHttpStatus && resourceType === 'user' && USER_EFFECTS.has(action) && status === 'SUCCESS';
   let roleDiff: AuditEvent['roleDiff'] = null;
   if (userEffect && (action === 'user.role_change' || action === 'user.create')) {
@@ -75,22 +100,8 @@ export function normalizeAuditEvent(value: unknown): AuditEvent {
     status,
     ip: String(item.ip_address ?? item.ip ?? ''),
     meta,
-    outcomeSource: hasHttpStatus ? 'http' : userEffect ? 'effect' : null,
+    outcomeSource: hasHttpStatus ? 'http' : taskReceipt ? 'agent' : isTaskAdmission ? 'admission' : userEffect ? 'effect' : null,
+    taskReceipt,
     roleDiff,
-  };
-}
-
-export function normalizeAuditResponse(data: unknown): { items: AuditEvent[]; total: number; page: number; pages: number } {
-  const envelope = Array.isArray(data) ? { items: data, total: data.length, page: 1, pages: data.length ? 1 : 0 }
-    : data && typeof data === 'object' ? data as Record<string, unknown> : null;
-  if (!envelope || !Array.isArray(envelope.items)) {
-    throw new Error('Backend вернул некорректный список событий аудита.');
-  }
-
-  return {
-    items: envelope.items.map(normalizeAuditEvent),
-    total: Number.isFinite(Number(envelope.total)) ? Number(envelope.total) : envelope.items.length,
-    page: Number.isFinite(Number(envelope.page)) ? Number(envelope.page) : 1,
-    pages: Number.isFinite(Number(envelope.pages)) ? Number(envelope.pages) : (envelope.items.length ? 1 : 0),
   };
 }

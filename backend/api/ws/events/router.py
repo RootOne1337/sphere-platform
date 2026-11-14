@@ -10,8 +10,9 @@ import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.core.rbac import has_permission
 from backend.database.engine import AsyncSessionLocal
-from backend.schemas.events import FleetEvent
+from backend.schemas.events import EventType, FleetEvent
 
 logger = structlog.get_logger()
 
@@ -19,7 +20,10 @@ router = APIRouter(tags=["websocket"])
 
 
 class FrontendConnection:
-    def __init__(self, ws: WebSocket, org_id: str, filters: set[str]) -> None:
+    def __init__(
+        self, ws: WebSocket, org_id: str, filters: set[str], *, can_read_devices: bool = False,
+    ) -> None:
+        self.can_read_devices = can_read_devices
         self.ws = ws
         self.org_id = org_id
         self.filters = filters  # EventType фильтры, {} = все события
@@ -140,6 +144,8 @@ class EventsManager:
         dead: list[FrontendConnection] = []
 
         for conn in clients:
+            if event.event_type in (EventType.DEVICE_HEARTBEAT, EventType.VPN_RUNTIME_CHANGED) and not conn.can_read_devices:
+                continue
             if conn.filters and event.event_type not in conn.filters:
                 continue
             try:
@@ -303,6 +309,7 @@ async def fleet_events_ws(
                 await ws.close(code=4001, reason="invalid_token")
                 return
             org_id_str = str(user.org_id)
+            can_read_devices = has_permission(user.role, "device:read")
     except HTTPException:
         raise
     except Exception:
@@ -310,12 +317,12 @@ async def fleet_events_ws(
         return
     # DB session is now CLOSED — safe to enter long-lived WS loop
 
-    conn = FrontendConnection(ws, org_id_str, filters)
+    conn = FrontendConnection(ws, org_id_str, filters, can_read_devices=can_read_devices)
     await events_manager.add_client(org_id_str, conn)
 
     # Отправить текущий снапшот fleet при подключении
     try:
-        fleet_snap = await get_fleet_snapshot(org_id_str)
+        fleet_snap = await get_fleet_snapshot(org_id_str) if can_read_devices else {}
         await ws.send_json({"type": "snapshot", "data": fleet_snap})
     except Exception:
         pass

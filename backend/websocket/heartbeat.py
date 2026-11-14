@@ -14,21 +14,16 @@ from backend.metrics import (
     android_ws_keepalive_ack_rtt_seconds,
     android_ws_keepalive_ack_total,
 )
+from backend.schemas.events import EventType, FleetEvent
 from backend.services.device_status_cache import DeviceStatusCache
+from backend.websocket.event_publisher import get_event_publisher
 
 logger = structlog.get_logger()
 
-# ─── MERGE-2: HEARTBEAT CONTRACT ────────────────────────────────────────────
-# Эти константы — ЕДИНЫЙ ИСТОЧНИК ИСТИНЫ для таймаутов.
-# TZ-07 Android Agent (SPLIT-2) ОБЯЗАН использовать ИДЕНТИЧНЫЕ значения:
-#   HEARTBEAT_INTERVAL = 30с → Android: pong timeout = 30 + 15 = 45с
-#   HEARTBEAT_TIMEOUT  = 15с → Server закрывает WS через 45с без pong
-#
-# При merge: проверить что Android SPLIT-2 содержит:
-#   private val PONG_TIMEOUT_MS = 45_000L  // 30с interval + 15с timeout
-# ─────────────────────────────────────────────────────────────────────────────
-HEARTBEAT_INTERVAL = 30.0   # Секунды между ping
-HEARTBEAT_TIMEOUT = 15.0    # Секунды ожидания pong
+# Send telemetry more frequently while preserving the original 45s
+# transport failure budget shared with installed Android agents.
+HEARTBEAT_INTERVAL = 10.0
+HEARTBEAT_TIMEOUT = 35.0
 
 _SAFE_ERROR_TYPE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,63}\Z")
 
@@ -91,11 +86,14 @@ class HeartbeatManager:
         device_id: str,
         status_cache: DeviceStatusCache,
         session_id: str | None = None,
+        *,
+        org_id: str | None = None,
     ) -> None:
         self.ws = ws
         self.device_id = device_id
         self.status_cache = status_cache
         self._session_id = session_id
+        self._org_id = org_id
         self._last_agent_response: float = time.monotonic()
         self._first_pong_persisted = False
         self._previous_failure_reported = False
@@ -202,14 +200,14 @@ class HeartbeatManager:
 
         # Всегда обновляем last_heartbeat при получении pong
         first_pong_persisted = False
-        status_update_persisted = False
+        stored = None
         try:
             heartbeat_at = datetime.now(timezone.utc)
-            status_update_persisted = await self.status_cache.merge_agent_status(
+            stored = await self.status_cache.merge_agent_status(
                 self.device_id, status_update, session_id=self._session_id,
                 heartbeat_at=heartbeat_at,
             )
-            if status_update_persisted and not self._first_pong_persisted:
+            if stored and not self._first_pong_persisted:
                 self._first_pong_persisted = True
                 first_pong_persisted = True
         except Exception as exc:
@@ -217,7 +215,7 @@ class HeartbeatManager:
             # update on the next pong without accumulating an in-memory queue.
             logger.warning("Heartbeat presence update failed", device_id=self.device_id, error=str(exc))
 
-        if not status_update_persisted:
+        if not stored:
             return False  # A rejected old owner must not replace stream diagnostics either.
 
         if first_pong_persisted:
@@ -230,7 +228,22 @@ class HeartbeatManager:
                 agent_version_code=status_update.get("agent_version_code"),
             )
 
-        if status_update_persisted and not self._previous_failure_reported:
+        if self._org_id and (publisher := get_event_publisher()):
+            try:
+                async with asyncio.timeout(1):
+                    await publisher.emit(FleetEvent(
+                        event_type=EventType.DEVICE_HEARTBEAT, device_id=self.device_id,
+                        org_id=self._org_id, ts=heartbeat_at,
+                        payload=stored.model_dump(mode="json", include={
+                            "last_heartbeat", "vpn_active", "vpn_observed_at",
+                            "vpn_observation_state", "vpn_observation_max_age_seconds",
+                        }),
+                    ))
+            except TimeoutError:
+                # REST polling covers occasional missed events without logging per pong.
+                pass
+
+        if not self._previous_failure_reported:
             previous_failure = _bounded_previous_ws_failure(msg.get("previous_ws_failure"))
             if previous_failure is not None:
                 self._previous_failure_reported = True

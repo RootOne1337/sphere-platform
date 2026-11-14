@@ -23,7 +23,7 @@ class DeviceStatusCache:
         device:status:{device_id}       — DeviceLiveStatus (msgpack)
 
     TTL:
-        online  → 120s  (агент шлёт heartbeat каждые 30s)
+        online  → 120s  (полный heartbeat каждые 10s)
         connecting → 90s (transient socket state; expire after a failed handshake)
         другой  → 3600s (хранить оффлайн статус 1 час)
     """
@@ -106,15 +106,15 @@ class DeviceStatusCache:
     async def merge_agent_status(
         self, device_id: str, updates: dict[str, Any], *,
         session_id: str | None, heartbeat_at: datetime | None = None,
-    ) -> bool:
-        """Merge validated agent observations with atomic Redis session ownership.
+    ) -> DeviceLiveStatus | None:
+        """Return committed status after an atomic Redis session ownership check.
 
         A heartbeat can rebuild disposable presence after eviction. Standalone
         telemetry cannot create presence, confirm online or adopt another owner.
         WATCH retries are bounded; no pending observations are queued in memory.
         """
         if self.redis is None:
-            return False
+            return None
         from redis.exceptions import WatchError
 
         updates = {key: value for key, value in updates.items() if key in {
@@ -125,7 +125,7 @@ class DeviceStatusCache:
         if "vpn_active" in updates and updates["vpn_active"] is not None and not isinstance(updates["vpn_active"], bool):
             updates.pop("vpn_active")
         if not updates and heartbeat_at is None:
-            return False
+            return None
         observed_at = heartbeat_at or datetime.now(timezone.utc)
         key = self._key(device_id)
         for _attempt in range(3):
@@ -135,18 +135,18 @@ class DeviceStatusCache:
                     raw = await pipe.get(key)
                     if raw is None:
                         if heartbeat_at is None:
-                            return False
+                            return None
                         current = DeviceLiveStatus(device_id=device_id, status="online")
                     else:
                         try:
                             current = DeviceLiveStatus.model_validate(msgpack.unpackb(raw, raw=False))
                         except Exception:
-                            return False  # Unreadable ownership is not permission to replace it.
+                            return None  # Unreadable ownership is not permission to replace it.
                     if heartbeat_at is None:
                         if current.ws_session_id != session_id:
-                            return False
+                            return None
                     elif current.ws_session_id is not None and current.ws_session_id != session_id:
-                        return False
+                        return None
                     if heartbeat_at is not None:
                         if current.connected_since is None or current.status not in ("online", "busy") or current.ws_session_id != session_id:
                             current.connected_since = heartbeat_at
@@ -167,7 +167,7 @@ class DeviceStatusCache:
                     except ValidationError:
                         logger.warning("Invalid agent telemetry ignored", device_id=device_id)
                         if heartbeat_at is None:
-                            return False
+                            return None
                         # Transport presence stays independent of invalid telemetry.
                     data = msgpack.packb(current.model_dump(mode="json"), use_bin_type=True)
                     ttl = {"online": self.TTL_ONLINE, "busy": self.TTL_ONLINE,
@@ -175,10 +175,10 @@ class DeviceStatusCache:
                     pipe.multi()
                     pipe.set(key, data, ex=ttl)
                     await pipe.execute()
-                    return True
+                    return current.with_current_vpn_observation(observed_at)
                 except WatchError:
                     continue
-        return False
+        return None
 
     async def mark_offline(self, device_id: str, session_id: str | None = None) -> bool:
         """Mark a device offline only if the disconnect still owns its live session.

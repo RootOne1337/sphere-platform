@@ -34,6 +34,7 @@ from backend.schemas.task import (
     TaskScreenshotReference,
 )
 from backend.schemas.task_results import NodeExecutionLog
+from backend.services.audit_log_service import AuditLogService
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.services.task_queue import TaskQueue
 from backend.services.task_screenshots import (
@@ -161,6 +162,7 @@ async def create_task(
         account_id=body.account_id,
         expected_current_version_id=body.expected_current_version_id,
     )
+    AuditLogService(db).record_task_request(task, current_user.id)
     await db.commit()
     # Перезагрузить с relationships для сериализации (device_name, script_name)
     stmt = (
@@ -188,6 +190,7 @@ async def rerun_task(
     db: AsyncSession = Depends(get_db),
 ) -> TaskDetailResponse:
     task = await svc.rerun_task(task_id, current_user.org_id)
+    AuditLogService(db).record_task_request(task, current_user.id)
     await db.commit()
     task = await svc._get_task(task.id, current_user.org_id)
     return TaskDetailResponse.model_validate(task)

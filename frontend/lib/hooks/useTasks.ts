@@ -61,14 +61,15 @@ export function useTasks(params: {
   sort_dir?: 'asc' | 'desc';
   active_only?: boolean;
   include_counts?: boolean;
-}) {
+}, { enabled = true, refetchInterval = 10_000 }: { enabled?: boolean; refetchInterval?: number } = {}) {
   return useQuery<TasksResponse>({
     queryKey: ['tasks', params],
     queryFn: async () => {
       const { data } = await api.get('/tasks', { params });
       return data;
     },
-    refetchInterval: 10_000,
+    enabled,
+    refetchInterval,
   });
 }
 

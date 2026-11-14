@@ -23,7 +23,7 @@ function renderPage() {
 }
 
 beforeEach(() => {
-  jest.mocked(api.get).mockResolvedValue({ data: { items: [record()], total: 1, page: 1, per_page: 100, pages: 1 } });
+  jest.mocked(api.get).mockResolvedValue({ data: { items: [record()], next_cursor: null } });
 });
 
 afterEach(() => jest.clearAllMocks());
@@ -34,9 +34,9 @@ describe('Audit page', () => {
 
     expect(await screen.findByText('POST /devices/one/reboot')).toBeInTheDocument();
     expect(screen.getByText('Ошибка')).toBeInTheDocument();
-    expect(screen.getAllByText('1', { selector: 'p' })).toHaveLength(2);
-    expect(api.get).toHaveBeenCalledWith('/audit/logs', {
-      params: { page: 1, per_page: 100 },
+    expect(screen.getByText('1', { selector: 'p' })).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledWith('/audit/logs/cursor', {
+      params: { per_page: 100 },
       signal: expect.any(AbortSignal),
     });
   });
@@ -61,7 +61,7 @@ describe('Audit page', () => {
       old_value: { role: 'viewer', token: 'never-show-this' },
       new_value: { role: 'script_runner' },
       meta: { status: 'success', request_id: 'change-fixture:3' },
-    })], total: 1, page: 1, pages: 1 } });
+    })], next_cursor: null } });
     renderPage();
     fireEvent.click(await screen.findByText('user.role_change'));
     const dialog = await screen.findByRole('dialog', { name: 'user.role_change' });
@@ -82,11 +82,28 @@ describe('Audit page', () => {
     expect(await screen.findByText('Не удалось загрузить журнал аудита')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('audit:read');
     expect(screen.queryByText('В журнале пока нет событий')).not.toBeInTheDocument();
-    expect(screen.getAllByText('—', { selector: 'p' })).toHaveLength(5);
+    expect(screen.getAllByText('—', { selector: 'p' })).toHaveLength(4);
+  });
+
+  it('shows Android as the receipt source and keeps an HTTP result distinct', async () => {
+    const taskId = 'd494b5f6-39ec-41de-970d-9228a3b51588';
+    jest.mocked(api.get).mockResolvedValue({ data: { items: [record(), record({
+      id: 'agent-receipt', action: 'task.agent_result', resource_type: 'task', resource_id: taskId,
+      user_id: null, ip_address: null, meta: {
+        status: 'success', agent_outcome: 'completed', receipt_id: taskId,
+        device_id: 'c69ac427-01df-43be-bd95-bfbd24aad28f',
+      },
+    })], next_cursor: null } });
+    renderPage();
+    const row = await screen.findByRole('row', { name: 'Открыть событие task.agent_result' });
+    expect(within(row).getByText('Android-агент')).toBeInTheDocument();
+    expect(within(row).queryByText('system')).not.toBeInTheDocument();
+    const http = screen.getByRole('row', { name: 'Открыть событие POST /devices/one/reboot' });
+    expect(within(http).getByText('203.0.113.10')).toBeInTheDocument();
   });
 
   it('distinguishes an actual empty response from an API error', async () => {
-    jest.mocked(api.get).mockResolvedValue({ data: { items: [], total: 0, page: 1, pages: 0 } });
+    jest.mocked(api.get).mockResolvedValue({ data: { items: [], next_cursor: null } });
     renderPage();
 
     expect(await screen.findByText('В журнале пока нет событий')).toBeInTheDocument();
@@ -94,7 +111,7 @@ describe('Audit page', () => {
   });
 
   it('keeps an absent backend status unknown instead of raising a false warning', async () => {
-    jest.mocked(api.get).mockResolvedValue({ data: { items: [record({ meta: {} })], total: 1, page: 1, pages: 1 } });
+    jest.mocked(api.get).mockResolvedValue({ data: { items: [record({ meta: {} })], next_cursor: null } });
     renderPage();
 
     const row = await screen.findByRole('row', { name: /Открыть событие/ });
@@ -104,16 +121,30 @@ describe('Audit page', () => {
     expect(screen.getByText('Без результата')).toBeInTheDocument();
   });
 
-  it('loads another API page and keeps pagination controls aligned with the server response', async () => {
-    jest.mocked(api.get).mockResolvedValue({ data: { items: [record()], total: 101, page: 1, pages: 2 } });
+  it('seeks with the returned cursor, stops at the last page, and returns to newer entries', async () => {
+    jest.mocked(api.get).mockResolvedValueOnce({ data: { items: [record()], next_cursor: 'page-two' } });
+    jest.mocked(api.get).mockResolvedValueOnce({ data: { items: [record({ action: 'old record' })], next_cursor: null } });
     renderPage();
     await screen.findByText('POST /devices/one/reboot');
 
     fireEvent.click(screen.getByRole('button', { name: 'Следующая страница' }));
-    await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs', {
-      params: { page: 2, per_page: 100 },
+    await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs/cursor', {
+      params: { cursor: 'page-two', per_page: 100 },
       signal: expect.any(AbortSignal),
     }));
+    expect(await screen.findByText('old record')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Следующая страница' })).toBeDisabled();
+    expect(screen.queryByText(/Автообновление каждые/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'К новым записям' }));
+    expect(await screen.findByText('POST /devices/one/reboot')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Предыдущая страница' })).toBeDisabled();
+  });
+
+  it('does not silently accept a malformed cursor response as an empty page', async () => {
+    jest.mocked(api.get).mockResolvedValue({ data: { items: [], next_cursor: 5 } });
+    renderPage();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось загрузить журнал аудита');
+    expect(screen.queryByText('В журнале пока нет событий')).not.toBeInTheDocument();
   });
 
   it('applies global query DSL and renders the server-filtered result', async () => {
@@ -121,9 +152,9 @@ describe('Audit page', () => {
     await screen.findByText('POST /devices/one/reboot');
     fireEvent.change(screen.getByRole('searchbox', { name: 'Поиск по журналу аудита' }), { target: { value: 'status:FAILED' } });
     fireEvent.click(screen.getByRole('button', { name: 'Применить фильтры' }));
-    await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs', expect.objectContaining({ params: { q: 'status:FAILED', page: 1, per_page: 100 } })));
+    await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs/cursor', expect.objectContaining({ params: { q: 'status:FAILED', per_page: 100 } })));
     expect(await screen.findByText('POST /devices/one/reboot')).toBeInTheDocument();
-    jest.mocked(api.get).mockResolvedValue({ data: { items: [], total: 0, page: 1, pages: 0 } });
+    jest.mocked(api.get).mockResolvedValue({ data: { items: [], next_cursor: null } });
     fireEvent.change(screen.getByRole('searchbox', { name: 'Поиск по журналу аудита' }), { target: { value: 'status:SUCCESS' } });
     fireEvent.click(screen.getByRole('button', { name: 'Применить фильтры' }));
     await screen.findByText('По этим условиям событий нет');

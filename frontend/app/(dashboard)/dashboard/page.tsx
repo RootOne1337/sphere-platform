@@ -7,7 +7,6 @@ import {
   Activity,
   ArrowDownRight,
   ArrowRight,
-  ArrowUpRight,
   CircleAlert,
   Clock3,
   Cpu,
@@ -24,6 +23,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useDeviceEvents, type DeviceEvent, type EventSeverity } from '@/lib/hooks/useDeviceEvents';
+import { useTasks } from '@/lib/hooks/useTasks';
 import { usePoolStats, useVpnHealth } from '@/lib/hooks/useVpn';
 import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 import { formatDataAge, formatDataUpdatedAt, getDataFreshness, type DataFreshnessState } from '@/src/features/dashboard/dataFreshness';
@@ -172,6 +172,47 @@ type DataSourceSnapshot = {
   isFetching: boolean;
 };
 
+function AttentionSection({ items, unconfirmed }: {
+  items: { label: string; detail: string; href: string }[];
+  unconfirmed: string[];
+}) {
+  return (
+    <section aria-labelledby="dashboard-attention" className="rounded-xl border border-border bg-card px-5 py-4">
+      <h2 id="dashboard-attention" className="text-base font-semibold">Требуют проверки</h2>
+      {items.length > 0 ? (
+        <ul className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          {items.map(({ label, detail, href }) => (
+            <li key={label}>
+              <Link href={href} className="group flex h-full items-start justify-between gap-3 rounded-lg border border-border p-3 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-foreground">{label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{detail}</span>
+                </span>
+                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">{unconfirmed.length > 0
+          ? 'Для полной сводки ждём подтверждения источников.' : 'По проверенным источникам признаков для проверки нет.'}</p>
+      )}
+      {unconfirmed.length > 0 && <p className="mt-2 text-xs text-muted-foreground">Без свежего подтверждения · {unconfirmed.join(', ')}.</p>}
+    </section>
+  );
+}
+
+const ATTENTION_POLL_MS = API_POLL_INTERVALS.dashboardAttentionMs;
+
+function currentAttentionData<T>(query: { data?: T; dataUpdatedAt: number; isError: boolean }): T | undefined {
+  return !query.isError && query.dataUpdatedAt > 0 && Date.now() - query.dataUpdatedAt <= 2 * ATTENTION_POLL_MS
+    ? query.data : undefined;
+}
+
+function measuredCount(value: number | undefined): number | undefined {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
 const FRESHNESS_STYLES: Record<DataFreshnessState, string> = {
   waiting: 'border-border bg-muted text-muted-foreground',
   refreshing: 'border-sky-500/30 bg-sky-500/5 text-sky-700 dark:text-sky-300',
@@ -244,11 +285,16 @@ export default function DashboardPage() {
   const canReadVpn = access.can('vpn:read');
   const canReadEvents = access.canAccessRoute('/events');
   const canOpenDevices = access.canAccessRoute('/devices');
+  const canReadTasks = access.canAccessRoute('/tasks');
   const health = useSystemHealth();
   const pool = usePoolStats(canReadVpn);
   const vpnHealth = useVpnHealth(canReadVpn);
   const events = useDeviceEvents({ page: 1, per_page: 6, sort_by: 'occurred_at', sort_dir: 'desc' }, canReadEvents);
+  const errors = useDeviceEvents({ page: 1, per_page: 1, severity: 'error', processed: false }, canReadEvents, ATTENTION_POLL_MS);
+  const critical = useDeviceEvents({ page: 1, per_page: 1, severity: 'critical', processed: false }, canReadEvents, ATTENTION_POLL_MS);
+  const tasks = useTasks({ page: 1, per_page: 1, include_counts: true }, { enabled: canReadTasks, refetchInterval: ATTENTION_POLL_MS });
   const refreshing = fleet.isFetching || health.isFetching || events.isFetching
+    || (canReadEvents && (errors.isFetching || critical.isFetching)) || (canReadTasks && tasks.isFetching)
     || (canReadVpn && (pool.isFetching || vpnHealth.isFetching));
   const stats = snapshot?.presence.counts;
   const total = snapshot?.inventory.counts?.total;
@@ -259,15 +305,43 @@ export default function DashboardPage() {
     : 'Ожидаем первую сводку от API';
   const presenceMessage = snapshot?.presence.state === 'limited' ? 'Инвентарь превышает бюджет сбора статусов.'
     : snapshot ? 'Источник связи с Android недоступен.' : fleet.isLoading ? 'Получаем сводку устройств…' : 'Свежая сводка связи не получена.';
-  const recentSevereEvents = canReadEvents && !events.isError
-    ? events.data?.items.filter(({ severity }) => severity === 'error' || severity === 'critical').length ?? 0 : 0;
+  const errorTotal = canReadEvents ? measuredCount(currentAttentionData(errors)?.total) : undefined;
+  const criticalTotal = canReadEvents ? measuredCount(currentAttentionData(critical)?.total) : undefined;
+  const taskCounts = canReadTasks ? currentAttentionData(tasks)?.status_counts : undefined;
+  const failedTasks = measuredCount(taskCounts?.failed);
+  const timedOutTasks = measuredCount(taskCounts?.timeout);
+  const staleHandshakes = canReadVpn ? snapshot?.handshakes.counts?.stale : undefined;
+  const backendStatus = currentAttentionData(health)?.status;
+  const backendVersion = health.data?.version ? ` · версия ${health.data.version}` : '';
   const attention = [
-    { visible: !!stats?.error, label: `Ошибки связи · ${stats?.error}`, href: '/monitoring#fleet-coverage-title' },
-    { visible: !!stats?.unknown, label: `Связь не подтверждена · ${stats?.unknown}`, href: '/monitoring#fleet-coverage-title' },
-    { visible: canReadVpn && !pool.isError && (pool.data?.stale_handshakes ?? 0) > 0,
-      label: `Устаревшие handshake VPN · ${pool.data?.stale_handshakes}`, href: '/vpn' },
-    { visible: recentSevereEvents > 0, label: `Ошибки среди последних событий · ${recentSevereEvents}`, href: '/events' },
-  ].filter(({ visible, href }) => visible && access.canAccessRoute(href));
+    { visible: health.isError || (backendStatus !== undefined && backendStatus !== 'ok'),
+      label: 'Проверка API', detail: health.isError ? 'Запрос health не удался. Откройте проверки сервисов.' : `Статус ${backendStatus}${backendVersion}.`,
+      href: '/monitoring#service-checks-title' },
+    { visible: (criticalTotal ?? 0) > 0, label: `Критические события · ${criticalTotal}`, detail: 'Необработанные записи журнала организации.',
+      href: '/events?severity=critical&processed=false' },
+    { visible: (errorTotal ?? 0) > 0, label: `Ошибки в событиях · ${errorTotal}`, detail: 'Необработанные записи журнала организации.',
+      href: '/events?severity=error&processed=false' },
+    { visible: !!stats?.error, label: `Ошибки связи · ${stats?.error}`, detail: 'Агенты активного парка сообщили ошибку.',
+      href: '/monitoring#fleet-coverage-presence' },
+    { visible: !!stats?.connecting, label: `Подключаются · ${stats?.connecting}`, detail: 'Сеансы открыты, первый heartbeat ещё не подтверждён.',
+      href: '/monitoring#fleet-coverage-presence' },
+    { visible: !!stats?.unknown, label: `Связь не подтверждена · ${stats?.unknown}`, detail: 'У устройств активного парка нет актуального отчёта.',
+      href: '/monitoring#fleet-coverage-presence' },
+    { visible: (staleHandshakes ?? 0) > 0, label: `Устаревшие handshake VPN · ${staleHandshakes}`,
+      detail: `Назначения активного парка с сохранённым handshake старше ${snapshot?.handshakes.max_age_seconds} с.`,
+      href: '/monitoring#fleet-coverage-handshakes' },
+    { visible: (failedTasks ?? 0) > 0, label: `Задачи с ошибкой · ${failedTasks}`, detail: 'Все сохранённые исходы этого статуса в истории организации.',
+      href: '/tasks?status=failed' },
+    { visible: (timedOutTasks ?? 0) > 0, label: `Задачи с таймаутом · ${timedOutTasks}`, detail: 'Все сохранённые исходы этого статуса в истории организации.',
+      href: '/tasks?status=timeout' },
+  ].filter(({ visible }) => visible);
+  const attentionUnconfirmed = [
+    ...(backendStatus === undefined && !health.isError ? ['health API'] : []),
+    ...(canOpenDevices && !stats ? ['связь Android'] : []),
+    ...(canOpenDevices && canReadVpn && staleHandshakes === undefined ? ['сохранённые handshake VPN'] : []),
+    ...(canReadEvents && (errorTotal === undefined || criticalTotal === undefined) ? ['события'] : []),
+    ...(canReadTasks && (failedTasks === undefined || timedOutTasks === undefined) ? ['история задач'] : []),
+  ];
   const freshnessSources: DataSourceSnapshot[] = [
     { id: 'fleet', label: 'Каталог устройств', pollIntervalMs: API_POLL_INTERVALS.fleetCoverageMs, hasData: total !== undefined, dataUpdatedAt: Date.parse(snapshot?.inventory.observed_at ?? '') || 0, isError: fleet.isError || stale || snapshot?.inventory.state === 'unavailable', isFetching: fleet.isFetching },
     { id: 'presence', label: 'Связь с Android', pollIntervalMs: API_POLL_INTERVALS.fleetCoverageMs, hasData: !!stats, dataUpdatedAt: Date.parse(snapshot?.presence.observed_at ?? '') || 0, isError: fleet.isError || stale || (!!snapshot && !stats), isFetching: fleet.isFetching },
@@ -287,7 +361,8 @@ export default function DashboardPage() {
     await Promise.all([
       fleet.refetch(),
       health.refetch(),
-      ...(canReadEvents ? [events.refetch()] : []),
+      ...(canReadEvents ? [events.refetch(), errors.refetch(), critical.refetch()] : []),
+      ...(canReadTasks ? [tasks.refetch()] : []),
       ...(canReadVpn ? [pool.refetch(), vpnHealth.refetch()] : []),
     ]);
   };
@@ -319,18 +394,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {attention.length > 0 && (
-        <section aria-labelledby="dashboard-attention" className="rounded-xl border border-border bg-card px-5 py-4">
-          <h2 id="dashboard-attention" className="text-sm font-semibold">Требуют проверки</h2>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {attention.map(({ label, href }) => (
-              <Button key={label} asChild variant="outline" size="sm">
-                <Link href={href}>{label}<ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></Link>
-              </Button>
-            ))}
-          </div>
-        </section>
-      )}
+      <AttentionSection items={attention.filter(({ href }) => access.canAccessRoute(href))} unconfirmed={attentionUnconfirmed} />
 
       <section aria-label="Сводные показатели устройств" className="grid grid-cols-2 gap-2 xl:grid-cols-5">
         <MetricCard label="Всего устройств" value={total ?? '—'} detail="Активных записей в организации" icon={Smartphone} tone="text-foreground" />
@@ -420,12 +484,14 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between gap-4 border-0 p-5 pb-2">
             <div>
               <CardTitle className="font-sans text-base font-semibold normal-case tracking-tight text-foreground">Последние события</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">Журнал устройств, отсортированный backend по времени события</p>
+              <p className="mt-1 text-sm text-muted-foreground">{events.data
+                ? `Показано ${events.data.items.length} из ${events.data.total.toLocaleString('ru-RU')} записей журнала`
+                : 'До шести последних записей журнала'}</p>
             </div>
             <Button asChild variant="ghost" size="sm" className="shrink-0 rounded-lg text-primary"><Link href="/events">Все события <ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>
           </CardHeader>
           <CardContent className="px-5 pb-5 pt-1">
-            <QueryState loading={events.isLoading} error={events.isError && !events.data} empty={!events.data?.items.length}>
+            <QueryState loading={events.isLoading} error={events.isError && !events.data?.items.length} empty={!events.data?.items.length}>
               <>
                 {events.isError && events.data && <p role="status" className="mb-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2 text-xs text-amber-800 dark:text-amber-200">Не удалось обновить журнал; показаны последние полученные события.</p>}
                 <div>{events.data?.items.map((event) => <EventRow key={event.id} event={event} canOpenDevice={canOpenDevices} />)}</div>

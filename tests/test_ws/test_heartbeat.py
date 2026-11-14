@@ -41,8 +41,8 @@ class TestHeartbeatManager:
 
     def test_heartbeat_contract_values(self):
         """Проверить что константы не были случайно изменены (MERGE-2 contract)."""
-        assert HEARTBEAT_INTERVAL == 30.0
-        assert HEARTBEAT_TIMEOUT == 15.0
+        assert HEARTBEAT_INTERVAL == 10.0
+        assert HEARTBEAT_INTERVAL + HEARTBEAT_TIMEOUT == 45.0
 
     # ── handle_pong ───────────────────────────────────────────────────────────
 
@@ -174,6 +174,25 @@ class TestHeartbeatManager:
 
         ws.send_json.assert_awaited_once()
         assert ws.send_json.await_args.args[0]["type"] == "ping"
+
+    async def test_accepted_pong_broadcasts_bounded_live_fields(self, ws, fake_cache, monkeypatch):
+        publisher = AsyncMock()
+        monkeypatch.setattr("backend.websocket.heartbeat.get_event_publisher", lambda: publisher)
+        heartbeat = HeartbeatManager(ws, "dev-1", fake_cache, session_id="current", org_id="org-a")
+        await fake_cache.set_status("dev-1", DeviceLiveStatus(device_id="dev-1", status="connecting", ws_session_id="current"))
+        await heartbeat.handle_pong({"vpn_active": True, "battery": 90, "agent_version": "private-sentinel"})
+
+        event = publisher.emit.await_args.args[0]
+        assert event.event_type.value == "device.heartbeat"
+        assert event.org_id == "org-a" and event.device_id == "dev-1"
+        assert event.payload == {
+            "last_heartbeat": event.ts.isoformat().replace("+00:00", "Z"),
+            "vpn_active": True, "vpn_observed_at": event.ts.isoformat().replace("+00:00", "Z"),
+            "vpn_observation_state": "fresh", "vpn_observation_max_age_seconds": 120,
+        }
+        replaced = HeartbeatManager(ws, "dev-1", fake_cache, session_id="old", org_id="org-a")
+        await replaced.handle_pong({"vpn_active": False})
+        publisher.emit.assert_awaited_once()
 
     async def test_pong_updates_battery_in_cache(self, heartbeat, fake_cache):
         await fake_cache.set_status(
