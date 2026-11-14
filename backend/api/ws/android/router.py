@@ -153,12 +153,10 @@ async def handle_agent_message(
         if snapshot is not None and session_id:
             observation = AppVpnObservation(snapshot=snapshot, received_at=datetime.now(timezone.utc), ws_session_id=session_id)
             try:
-                previous = await status_cache.get_status(device_id)
-                previous_sample = previous.app_vpn.snapshot if previous and previous.app_vpn else None
                 stored = await status_cache.merge_agent_status(
                     device_id, {"app_vpn": observation.model_dump(mode="json")}, session_id=session_id,
                 )
-                if stored and (previous_sample is None or previous_sample.phase != snapshot.phase):
+                if stored and stored.app_vpn_phase_changed:
                     from backend.schemas.events import EventType, FleetEvent
                     from backend.websocket.event_publisher import get_event_publisher
 

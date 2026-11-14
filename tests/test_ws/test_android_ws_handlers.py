@@ -252,7 +252,7 @@ class TestAndroidAgentPresenceEvents:
         from datetime import datetime, timezone
 
         deps = route_dependencies
-        deps.status_cache.merge_agent_status = AsyncMock(return_value=True)
+        deps.status_cache.merge_agent_status = AsyncMock(return_value=SimpleNamespace(app_vpn_phase_changed=True))
         snapshot = {
             "requestId": "a27c2ce8-90fe-453e-b465-65f5efe5cd34",
             "phase": "IDLE", "providerPid": 23901,

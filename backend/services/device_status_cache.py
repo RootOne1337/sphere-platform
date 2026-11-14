@@ -2,6 +2,7 @@
 # ВЛАДЕЛЕЦ: TZ-02 SPLIT-3. Redis-backed device status cache with msgpack serialization.
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -13,6 +14,12 @@ from backend.schemas.device_status import DEVICE_HEARTBEAT_MAX_AGE_SECONDS, Devi
 from backend.schemas.stream_diagnostics import StoredStreamDiagnostics
 
 logger = structlog.get_logger()
+
+
+@dataclass(frozen=True)
+class AgentStatusWrite:
+    status: DeviceLiveStatus
+    app_vpn_phase_changed: bool
 
 
 class DeviceStatusCache:
@@ -106,7 +113,7 @@ class DeviceStatusCache:
     async def merge_agent_status(
         self, device_id: str, updates: dict[str, Any], *,
         session_id: str | None, heartbeat_at: datetime | None = None,
-    ) -> DeviceLiveStatus | None:
+    ) -> AgentStatusWrite | None:
         """Return committed status after an atomic Redis session ownership check.
 
         A heartbeat can rebuild disposable presence after eviction. Standalone
@@ -147,6 +154,7 @@ class DeviceStatusCache:
                             return None
                     elif current.ws_session_id is not None and current.ws_session_id != session_id:
                         return None
+                    previous_vpn_phase = current.app_vpn.snapshot.phase if current.app_vpn else None
                     if heartbeat_at is not None:
                         if current.connected_since is None or current.status not in ("online", "busy") or current.ws_session_id != session_id:
                             current.connected_since = heartbeat_at
@@ -175,7 +183,11 @@ class DeviceStatusCache:
                     pipe.multi()
                     pipe.set(key, data, ex=ttl)
                     await pipe.execute()
-                    return current.with_current_vpn_observation(observed_at)
+                    phase_changed = bool(
+                        "app_vpn" in telemetry and current.app_vpn
+                        and current.app_vpn.snapshot.phase != previous_vpn_phase
+                    )
+                    return AgentStatusWrite(current.with_current_vpn_observation(observed_at), phase_changed)
                 except WatchError:
                     continue
         return None

@@ -234,7 +234,7 @@ class HeartbeatManager:
                     await publisher.emit(FleetEvent(
                         event_type=EventType.DEVICE_HEARTBEAT, device_id=self.device_id,
                         org_id=self._org_id, ts=heartbeat_at,
-                        payload=stored.model_dump(mode="json", include={
+                        payload=stored.status.model_dump(mode="json", include={
                             "last_heartbeat", "vpn_active", "vpn_observed_at",
                             "vpn_observation_state", "vpn_observation_max_age_seconds",
                         }),
