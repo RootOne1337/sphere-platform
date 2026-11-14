@@ -164,9 +164,10 @@ internal class FileExchange(private val root: Path) {
         val staging = Files.createTempFile(root, TEMP_PREFIX, ".part")
         try {
             Files.write(staging, content)
-            // Publish with the filesystem's no-overwrite operation. A reader
-            // sees either the whole inode or no entry, including after a crash.
-            Files.createLink(target, staging)
+            // The app-private workspace and process lock own all product
+            // writers. The same-directory move publishes the complete file;
+            // omitting REPLACE_EXISTING rejects any already visible target.
+            Files.move(staging, target)
         } catch (_: FileAlreadyExistsException) {
             fail("file_exists")
         } finally {

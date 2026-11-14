@@ -12,6 +12,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 REQUEST_ID_PATTERN = r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}"
+_FILE_PATH = re.compile(r"(/api/v1/devices/[0-9a-fA-F-]{36}/files)/.*")
 
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
@@ -39,7 +40,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         structlog.contextvars.bind_contextvars(
             request_id=request_id,
             method=request.method,
-            path=request.scope["path"],
+            path=_FILE_PATH.sub(r"\1/{name}", request.scope["path"]),
         )
 
         response = await call_next(request)
