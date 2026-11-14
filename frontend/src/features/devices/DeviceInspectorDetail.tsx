@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { useDeviceSnapshot } from '@/lib/hooks/useDeviceSnapshot';
+import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 import { Button } from '@/src/shared/ui/button';
 import { Badge } from '@/src/shared/ui/badge';
 import { DeviceStatusBadge } from '@/components/sphere/DeviceStatusBadge';
@@ -95,7 +96,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
       <DeviceViewerPresence deviceId={deviceId} />
       <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words text-xl font-semibold tracking-tight">{device.name}</h3><p className="mt-1 text-sm text-muted-foreground">{getReportedDeviceModel(device) ?? 'Модель не сообщена'} · Android {device.android_version || 'не сообщён'}</p></div><DeviceStatusBadge status={status ?? 'unknown'} /></div>
       <div className="flex flex-wrap items-center gap-2"><Button variant="outline" size="sm" disabled={query.isFetching} onClick={() => { void query.refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Обновить карточку</Button>{!fullPage && <Button asChild variant="ghost" size="sm"><Link href={`/devices/${encodeURIComponent(deviceId)}`}><ExternalLink className="mr-2 h-4 w-4" aria-hidden />Полная карточка</Link></Button>}</div>
-      <p className="text-xs text-muted-foreground">Запрос API: {utcTime(new Date(query.dataUpdatedAt).toISOString())} · опрос каждые 15 секунд.</p>
+      <p className="text-xs text-muted-foreground">Запрос API: {utcTime(new Date(query.dataUpdatedAt).toISOString())} · сверка каждые {API_POLL_INTERVALS.deviceDetailMs / 1000} с.</p>
       {query.isError && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Обновление карточки не удалось. Показан сохранённый ответ; команды карточки заблокированы до успешной проверки. Состояние видеопотока проверяется при подключении.</p>}
     </header>
     <Tabs value={VIEWS.some(([key]) => key === view) ? view : 'summary'} onValueChange={(value) => setView(value as View)}>

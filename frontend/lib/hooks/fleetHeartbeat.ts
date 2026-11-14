@@ -30,14 +30,16 @@ export function applyFleetHeartbeat(client: QueryClient, event: Record<string, u
     }
     return reading;
   };
-  client.setQueriesData<DeviceReading | { items: DeviceReading[] }>({
-    queryKey: ['devices'], type: 'active',
-  }, old => {
-    if (!old) return old;
-    if (!('items' in old)) return update(old);
-    const row = old.items.find(device => device.id === id);
-    if (!row) return old;
+  type DeviceQuery = DeviceReading | { items: DeviceReading[] };
+  for (const query of client.getQueryCache().findAll({ queryKey: ['devices'], type: 'active' })) {
+    const old = query.state.data as DeviceQuery | undefined;
+    if (!old || query.state.status !== 'success' || query.state.isInvalidated) continue;
+    const row = 'items' in old ? old.items.find(device => device.id === id) : old;
+    if (!row) continue;
     const updated = update(row);
-    return updated === row ? old : { ...old, items: old.items.map(device => device === row ? updated : device) };
-  });
+    if (updated === row) continue;
+    const data = 'items' in old ? { ...old, items: old.items.map(device => device === row ? updated : device) } : updated;
+    // A heartbeat does not renew the REST authority for commands or metadata.
+    client.setQueryData(query.queryKey, data, { updatedAt: query.state.dataUpdatedAt });
+  }
 }
