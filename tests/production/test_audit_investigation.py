@@ -96,6 +96,51 @@ async def test_export_uses_all_matching_rows_and_excludes_payloads(investigation
     assert "must-not-enter-csv" not in response.text
 
 
+async def test_audit_listing_projects_legacy_metadata_and_only_known_role_values(investigation):
+    legacy = await get(investigation, "logs", {"q": "request:incident-fixture:51"})
+    assert legacy.status_code == 200, legacy.text
+    [row] = legacy.json()["items"]
+    assert row["old_value"] is row["new_value"] is None
+    assert row["meta"] == {"status": "failure", "request_id": "incident-fixture:51"}
+    assert "must-not-enter-csv" not in legacy.text
+
+    r, now, _ = investigation
+    async with r.world.sessions() as db:
+        row = AuditLog(org_id=r.world.org_a.id, created_at=now, action="user.role_change",
+                       resource_type="user", old_value={"role": "viewer", "private_payload": "hidden"},
+                       new_value={"role": "hidden"}, meta={"status": "hidden", "trace_id": ["hidden"],
+                       "http_status": True, "duration_ms": -1, "request_id": "invalid/id"})
+        db.add(row)
+        await db.commit()
+    response = await get(investigation, "logs", {"q": str(row.id)})
+    assert response.status_code == 200, response.text
+    [result] = response.json()["items"]
+    assert result["old_value"] == {"role": "viewer"}
+    assert result["new_value"] is None and result["meta"] == {}
+    assert "hidden" not in response.text
+
+
+async def test_committed_role_change_correlates_actor_diff_and_http_receipt(investigation):
+    r, _, _ = investigation
+    owner = r.world.users["org_owner"]
+    target = r.world.users["viewer"]
+    request_id = "role-change-fixture:52"
+    mutation = await r.world.client.put(f"/api/v1/users/{target.id}/role", json={"role": "script_runner"},
+                                       headers=r.world.auth(owner) | {"X-Request-ID": request_id})
+    assert mutation.status_code == 200, mutation.text
+    assert mutation.headers["X-Request-ID"] == request_id
+    response = await get(investigation, "logs", {"q": f"request:{request_id}"})
+    assert response.status_code == 200, response.text
+    by_action = {row["action"]: row for row in response.json()["items"]}
+    assert set(by_action) == {"user.role_change", "put.users.role"}
+    effect, receipt = by_action["user.role_change"], by_action["put.users.role"]
+    assert effect["user_id"] == receipt["user_id"] == str(owner.id)
+    assert effect["resource_id"] == receipt["resource_id"] == str(target.id)
+    assert effect["old_value"] == {"role": "viewer"} and effect["new_value"] == {"role": "script_runner"}
+    assert effect["meta"] == {"status": "success", "request_id": request_id}
+    assert receipt["old_value"] is receipt["new_value"] is None and receipt["meta"]["http_status"] == 200
+
+
 async def test_export_truncates_explicitly_in_one_bounded_projection_query(investigation):
     r, now, _ = investigation
     async with r.world.sessions() as db:

@@ -1,4 +1,8 @@
+import { USER_ROLE_LABELS } from '@/src/features/users/access';
+
 export type AuditStatus = 'SUCCESS' | 'FAILED' | 'WARNING' | 'UNKNOWN';
+
+const USER_EFFECTS = new Set(['user.create', 'user.role_change', 'user.deactivate']);
 
 export interface AuditEvent {
   id: string;
@@ -9,6 +13,15 @@ export interface AuditEvent {
   status: AuditStatus;
   ip: string;
   meta: Record<string, unknown>;
+  outcomeSource: 'http' | 'effect' | null;
+  roleDiff: { before: string | null; after: string } | null;
+}
+
+function readRoleLabel(value: unknown): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const role = (value as Record<string, unknown>).role;
+  if (typeof role !== 'string' || !Object.prototype.hasOwnProperty.call(USER_ROLE_LABELS, role)) return null;
+  return USER_ROLE_LABELS[role as keyof typeof USER_ROLE_LABELS];
 }
 
 function normalizeStatus(value: unknown): AuditStatus {
@@ -38,15 +51,32 @@ export function normalizeAuditEvent(value: unknown): AuditEvent {
     throw new Error('Backend вернул запись аудита без обязательных полей.');
   }
 
+  const action = String(item.action);
+  const httpStatus = meta.http_status;
+  const hasHttpStatus = typeof httpStatus === 'number' && Number.isInteger(httpStatus)
+    && httpStatus >= 100 && httpStatus <= 599;
+  const status = normalizeStatus(item.status ?? meta.status);
+  const userEffect = !hasHttpStatus && resourceType === 'user' && USER_EFFECTS.has(action) && status === 'SUCCESS';
+  let roleDiff: AuditEvent['roleDiff'] = null;
+  if (userEffect && (action === 'user.role_change' || action === 'user.create')) {
+    const before = readRoleLabel(item.old_value);
+    const after = readRoleLabel(item.new_value);
+    if (after && before !== after && (before || action === 'user.create')) {
+      roleDiff = { before, after };
+    }
+  }
+
   return {
     id: String(item.id),
     timestamp,
     user: String(item.user_id ?? item.user ?? 'system'),
-    action: String(item.action),
+    action,
     resource,
-    status: normalizeStatus(item.status ?? meta.status),
+    status,
     ip: String(item.ip_address ?? item.ip ?? ''),
     meta,
+    outcomeSource: hasHttpStatus ? 'http' : userEffect ? 'effect' : null,
+    roleDiff,
   };
 }
 

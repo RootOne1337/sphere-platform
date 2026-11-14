@@ -46,11 +46,33 @@ describe('Audit page', () => {
     fireEvent.click(await screen.findByText('POST /devices/one/reboot'));
 
     const dialog = await screen.findByRole('dialog', { name: 'POST /devices/one/reboot' });
+    expect(within(dialog).getByText('Ответ HTTP')).toBeInTheDocument();
+    expect(within(dialog).getByText(/отдельно от результата операции/)).toBeInTheDocument();
     expect(within(dialog).getByText('203.0.113.10')).toBeInTheDocument();
     expect(within(dialog).getByText('503')).toBeInTheDocument();
     expect(within(dialog).getByText('42')).toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: /повтор/i })).not.toBeInTheDocument();
     expect(within(dialog).getByText(/поля, которые фактически вернул endpoint/i)).toBeInTheDocument();
+  });
+
+  it('renders the committed role effect and correlation without showing arbitrary old payloads', async () => {
+    jest.mocked(api.get).mockResolvedValue({ data: { items: [record({
+      action: 'user.role_change', resource_type: 'user',
+      old_value: { role: 'viewer', token: 'never-show-this' },
+      new_value: { role: 'script_runner' },
+      meta: { status: 'success', request_id: 'change-fixture:3' },
+    })], total: 1, page: 1, pages: 1 } });
+    renderPage();
+    fireEvent.click(await screen.findByText('user.role_change'));
+    const dialog = await screen.findByRole('dialog', { name: 'user.role_change' });
+    expect(within(dialog).getByText('Изменение сохранено')).toBeInTheDocument();
+    const diff = within(dialog).getByRole('region', { name: 'Роль пользователя' });
+    expect(within(diff).getByText('Наблюдатель')).toBeInTheDocument();
+    expect(within(diff).getByText('Запуск сценариев')).toBeInTheDocument();
+    expect(within(dialog).queryByText('never-show-this')).not.toBeInTheDocument();
+    expect(within(dialog).getByRole('link', { name: 'Открыть события этого запроса' })).toHaveAttribute(
+      'href', '/audit?request_id=change-fixture%3A3',
+    );
   });
 
   it('shows backend failure instead of presenting it as an empty healthy journal', async () => {

@@ -12,7 +12,7 @@ interface AuditDrawerProps {
   onClose: () => void;
 }
 
-const VISIBLE_META_FIELDS = ['status', 'http_status', 'duration_ms', 'request_id', 'trace_id'] as const;
+const VISIBLE_META_FIELDS = ['status', 'http_status', 'duration_ms', 'request_id', 'trace_id', 'revision', 'revision_id'] as const;
 
 function displayValue(value: unknown) {
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
@@ -48,8 +48,9 @@ export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
               <p className="mt-2 break-words text-sm font-medium">{new Date(event.timestamp).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'medium' })}</p>
             </div>
             <div className="rounded-xl border border-border bg-muted/30 p-4">
-              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />Результат</div>
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />{event.outcomeSource === 'http' ? 'Ответ HTTP' : event.outcomeSource === 'effect' ? 'Изменение сохранено' : 'Статус записи'}</div>
               <Badge variant={event.status === 'FAILED' ? 'destructive' : event.status === 'WARNING' ? 'warning' : event.status === 'UNKNOWN' ? 'secondary' : 'success'} className="mt-2">{event.status === 'UNKNOWN' ? 'Не указано' : event.status === 'FAILED' ? 'Ошибка' : event.status === 'WARNING' ? 'Предупреждение' : 'Успешно'}</Badge>
+              {event.outcomeSource === 'http' && <p className="mt-2 text-xs text-muted-foreground">Ответ сервера фиксируется отдельно от результата операции.</p>}
             </div>
             <div className="rounded-xl border border-border bg-muted/30 p-4">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />Пользователь</div>
@@ -64,6 +65,16 @@ export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
               <p className="mt-2 break-all text-sm">{event.resource}</p>
             </div>
           </section>
+
+          {event.roleDiff && (
+            <section className="rounded-xl border border-border p-4" aria-labelledby="audit-diff-heading">
+              <h3 id="audit-diff-heading" className="text-sm font-semibold">Роль пользователя</h3>
+              <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div><dt className="text-muted-foreground">До</dt><dd className="font-medium">{event.roleDiff.before ?? '—'}</dd></div>
+                <div><dt className="text-muted-foreground">После</dt><dd className="font-medium">{event.roleDiff.after}</dd></div>
+              </dl>
+            </section>
+          )}
 
           {metadata.length > 0 && (
             <section className="overflow-hidden rounded-xl border border-border" aria-labelledby="audit-meta-heading">

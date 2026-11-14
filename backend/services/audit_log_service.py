@@ -3,9 +3,12 @@
 # Middleware автоматически пишет для HTTP-запросов — см. backend/middleware/audit.py.
 from __future__ import annotations
 
+import re
+
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.middleware.request_id import REQUEST_ID_PATTERN
 from backend.models.audit_log import AuditLog
 
 logger = structlog.get_logger()
@@ -45,6 +48,9 @@ class AuditLogService:
             meta: dict = {"status": status}
             if duration_ms is not None:
                 meta["duration_ms"] = duration_ms
+            request_id = structlog.contextvars.get_contextvars().get("request_id")
+            if isinstance(request_id, str) and re.fullmatch(REQUEST_ID_PATTERN, request_id):
+                meta["request_id"] = request_id
 
             entry = AuditLog(
                 org_id=org_id,
@@ -63,7 +69,7 @@ class AuditLogService:
         except Exception as exc:
             logger.error(
                 "audit_log_failed",
-                error=str(exc),
+                error_type=type(exc).__name__,
                 action=action,
                 org_id=str(org_id) if org_id else None,
                 user_id=str(user_id) if user_id else None,
