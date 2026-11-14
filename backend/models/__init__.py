@@ -58,6 +58,7 @@ from backend.models.script import Script, ScriptVersion  # noqa: F401
 from backend.models.task import Task, TaskStatus  # noqa: F401
 from backend.models.task_batch import TaskBatch, TaskBatchStatus  # noqa: F401
 from backend.models.user import User  # noqa: F401
+from backend.models.user_preferences import UserPreferences
 
 # --- VPN (TZ-06) ---
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus  # noqa: F401
@@ -76,6 +77,7 @@ __all__ = [
     "Organization",
     "ApplicationProfile",
     "User",
+    "UserPreferences",
     "APIKey",
     "RefreshToken",
     "AuditLog",

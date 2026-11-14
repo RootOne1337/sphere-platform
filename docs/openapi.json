@@ -10904,6 +10904,101 @@
         }
       }
     },
+    "/api/v1/user-preferences/me": {
+      "get": {
+        "tags": [
+          "user-preferences"
+        ],
+        "summary": "Get My Preferences",
+        "operationId": "get_my_preferences_api_v1_user_preferences_me_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferencesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "user-preferences"
+        ],
+        "summary": "Patch My Preferences",
+        "operationId": "patch_my_preferences_api_v1_user_preferences_me_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountAppearancePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferencesResponse"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "The preference revision changed"
+          },
+          "428": {
+            "description": "If-Match is required"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users": {
       "get": {
         "tags": [
@@ -13695,6 +13790,264 @@
         ],
         "title": "AWGObfuscationParamsSchema",
         "description": "Параметры обфускации AmneziaWG (read-only, возвращается в ответе)."
+      },
+      "AccountAppearance": {
+        "properties": {
+          "palette": {
+            "type": "string",
+            "enum": [
+              "neo-dark",
+              "matrix-green",
+              "deep-space",
+              "light-corporate",
+              "graphite",
+              "sandstone",
+              "dune",
+              "mist"
+            ],
+            "title": "Palette",
+            "default": "neo-dark"
+          },
+          "density": {
+            "type": "string",
+            "enum": [
+              "compact",
+              "cozy",
+              "spacious"
+            ],
+            "title": "Density",
+            "default": "cozy"
+          },
+          "accent_color": {
+            "type": "string",
+            "enum": [
+              "theme",
+              "violet",
+              "blue",
+              "emerald",
+              "rose",
+              "amber"
+            ],
+            "title": "Accent Color",
+            "default": "theme"
+          },
+          "font_size": {
+            "type": "string",
+            "enum": [
+              "sm",
+              "base",
+              "lg"
+            ],
+            "title": "Font Size",
+            "default": "base"
+          },
+          "sidebar_mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "pinned",
+              "rail"
+            ],
+            "title": "Sidebar Mode",
+            "default": "auto"
+          },
+          "inspector_mode": {
+            "type": "string",
+            "enum": [
+              "modal",
+              "drawer"
+            ],
+            "title": "Inspector Mode",
+            "default": "modal"
+          },
+          "surface_style": {
+            "type": "string",
+            "enum": [
+              "solid",
+              "glass"
+            ],
+            "title": "Surface Style",
+            "default": "glass"
+          },
+          "glass_strength": {
+            "type": "string",
+            "enum": [
+              "soft",
+              "balanced",
+              "vivid"
+            ],
+            "title": "Glass Strength",
+            "default": "balanced"
+          },
+          "motion_mode": {
+            "type": "string",
+            "enum": [
+              "system",
+              "reduced"
+            ],
+            "title": "Motion Mode",
+            "default": "system"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AccountAppearance"
+      },
+      "AccountAppearancePatch": {
+        "properties": {
+          "palette": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "neo-dark",
+                  "matrix-green",
+                  "deep-space",
+                  "light-corporate",
+                  "graphite",
+                  "sandstone",
+                  "dune",
+                  "mist"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Palette"
+          },
+          "density": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "compact",
+                  "cozy",
+                  "spacious"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Density"
+          },
+          "accent_color": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "theme",
+                  "violet",
+                  "blue",
+                  "emerald",
+                  "rose",
+                  "amber"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accent Color"
+          },
+          "font_size": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "sm",
+                  "base",
+                  "lg"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Font Size"
+          },
+          "sidebar_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "pinned",
+                  "rail"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sidebar Mode"
+          },
+          "inspector_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "modal",
+                  "drawer"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inspector Mode"
+          },
+          "surface_style": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "solid",
+                  "glass"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surface Style"
+          },
+          "glass_strength": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "soft",
+                  "balanced",
+                  "vivid"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Glass Strength"
+          },
+          "motion_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "reduced"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motion Mode"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AccountAppearancePatch"
       },
       "AccountSessionListResponse": {
         "properties": {
@@ -27555,6 +27908,45 @@
         },
         "type": "object",
         "title": "UpdateScriptRequest"
+      },
+      "UserPreferencesResponse": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Revision"
+          },
+          "appearance": {
+            "$ref": "#/components/schemas/AccountAppearance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "org_id",
+          "revision",
+          "appearance"
+        ],
+        "title": "UserPreferencesResponse"
       },
       "UserResponse": {
         "properties": {

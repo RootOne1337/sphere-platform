@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUIStore, type AccentColor, type FontScale, type SidebarMode, type SurfaceStyle, type GlassStrength, type MotionMode, type InspectorMode, type UIDensity } from '@/src/shared/store/useUIStore';
 import { isLightTheme } from '@/src/shared/theme';
 import { THEME_PRESETS, WORKSPACE_LOOKS } from '@/src/shared/themePresets';
+import { useAccountAppearance } from './AccountAppearanceSync';
 import { useThemeStore, type DensityType, type ThemeType } from '@/src/shared/store/themeStore';
 
 const ACCENTS: { id: AccentColor; label: string; color: string }[] = [
@@ -29,6 +30,15 @@ function Choices<T extends string>({ label, value, options, onChange }: { label:
 }
 
 export function AppearanceDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const sync = useAccountAppearance();
+  const syncLabel = {
+    local: 'Настройки пока доступны в этой вкладке.',
+    loading: 'Загружаем настройки аккаунта…',
+    saving: 'Сохраняем настройки аккаунта…',
+    saved: 'Настройки сохранены в аккаунте.',
+    offline: 'Сохранение на сервере не подтверждено. При загрузке сохранённых настроек текущие правки будут заменены.',
+    conflict: 'Настройки изменились в другом браузере. При загрузке сохранённых настроек текущие правки будут заменены.',
+  }[sync.status];
   const ui = useUIStore(); const { theme, setTheme, density, setDensity } = useThemeStore();
   const chooseTheme = (next: ThemeType) => { setTheme(next); ui.setTheme(isLightTheme(next) ? 'light' : 'dark'); };
   const chooseDensity = (next: DensityType, uiDensity: UIDensity) => { setDensity(next); ui.setDensity(uiDensity); };
@@ -44,7 +54,8 @@ export function AppearanceDrawer({ open, onClose }: { open: boolean; onClose: ()
     <DialogContent placement="right" className="z-[110] gap-0 overflow-hidden border-border">
       <header className="shrink-0 border-b border-border px-5 py-5 sm:px-6"><div className="flex items-center gap-3 pr-8">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Paintbrush className="h-5 w-5" aria-hidden /></span>
-        <div><DialogTitle className="text-base font-semibold tracking-tight">Внешний вид</DialogTitle><DialogDescription className="mt-1 text-xs">Ваше рабочее пространство. Сохраняется в этом браузере.</DialogDescription></div>
+        <div><DialogTitle className="text-base font-semibold tracking-tight">Внешний вид</DialogTitle><DialogDescription className="mt-1 text-xs"><span role="status">{syncLabel}</span></DialogDescription>
+          {(sync.status === 'offline' || sync.status === 'conflict') && <Button type="button" variant="outline" size="sm" className="mt-2" onClick={sync.reload}>Загрузить сохранённые настройки</Button>}</div>
       </div></header>
       <Tabs defaultValue="style" className="flex min-h-0 flex-1 flex-col">
         <div className="shrink-0 border-b px-5 py-3 sm:px-6"><TabsList className="grid h-auto w-full grid-cols-2"><TabsTrigger value="style" className="min-h-10">Стиль</TabsTrigger><TabsTrigger value="layout" className="min-h-10">Компоновка</TabsTrigger></TabsList></div>

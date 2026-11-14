@@ -5,7 +5,7 @@ Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**219 HTTP operations across 173 paths.**
+**221 HTTP operations across 174 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -210,6 +210,8 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/updates/recovery/{device_id}` | updates | 200, 422 | Get Recovery Status |
 | `POST` | `/api/v1/updates/recovery/{device_id}/dispatch` | updates | 202, 422 | Dispatch Recovery |
 | `DELETE` | `/api/v1/updates/{release_id}` | updates | 200, 422 | Delete Release |
+| `GET` | `/api/v1/user-preferences/me` | user-preferences | 200 | Get My Preferences |
+| `PATCH` | `/api/v1/user-preferences/me` | user-preferences | 200, 412, 422, 428 | Patch My Preferences |
 | `GET` | `/api/v1/users` | users | 200, 422 | Список пользователей организации |
 | `POST` | `/api/v1/users` | users | 201, 422 | Создать пользователя |
 | `GET` | `/api/v1/users/{user_id}` | users | 200, 422 | Профиль пользователя |

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { browserAppearanceStorage } from './browserAppearanceStorage';
 import { DEFAULT_THEME, DEFAULT_DENSITY, isTheme, isDensity, type ThemeType, type DensityType } from '@/src/shared/theme';
 
 export type { ThemeType, DensityType } from '@/src/shared/theme';
@@ -21,6 +22,7 @@ export const useThemeStore = create<ThemeState>()(
         }),
         {
             name: 'sphere-theme-preferences',
+            storage: createJSONStorage(() => browserAppearanceStorage),
             partialize: state => ({ theme: state.theme, density: state.density }),
             merge: (persisted, current) => {
                 const value = persisted && typeof persisted === 'object' ? persisted as Partial<ThemeState> : {};

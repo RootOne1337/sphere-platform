@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useInitAuth, useAuthStore } from '@/lib/store';
 import { Button } from '@/src/shared/ui/button';
+import { AccountAppearanceSync } from '@/src/features/preferences/AccountAppearanceSync';
 import { CapabilitiesProvider, useCapabilities } from '@/src/features/access/Capabilities';
 import { clearReturnDestination, readReturnDestination, rememberReturnDestination } from '@/src/features/access/returnDestination';
 
@@ -45,7 +46,8 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   if ((!ready && initialization.state !== 'unavailable') || (!isPublic && !authenticated)) return <AuthStatus title="Проверяем сессию…" />;
   const identity = authenticated ? JSON.stringify([sessionVersion, user!.org_id, user!.id, user!.role]) : 'anonymous';
   return <SessionQueries key={identity}>
-    {isPublic && authenticated ? <CapabilitiesProvider><LoginDestination /></CapabilitiesProvider> : children}
+    {isPublic && authenticated ? <CapabilitiesProvider><LoginDestination /></CapabilitiesProvider>
+      : authenticated ? <AccountAppearanceSync>{children}</AccountAppearanceSync> : children}
   </SessionQueries>;
 }
 

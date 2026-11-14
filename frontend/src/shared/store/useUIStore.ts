@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { browserAppearanceStorage } from './browserAppearanceStorage';
 import { isAccent, isFontScale, isGlassStrength, type AccentColor, type FontScale, type SurfaceStyle, type GlassStrength, type MotionMode } from '@/src/shared/theme';
 
 export type UIThemeMode = 'dark' | 'light' | 'system';
@@ -58,6 +59,7 @@ export const useUIStore = create<UIState>()(
         {
             name: 'sphere-ui-preferences',
             version: 2,
+            storage: createJSONStorage(() => browserAppearanceStorage),
             partialize: ({ theme, accentColor, density, fontSize, sidebarExpanded, sidebarMode, surfaceStyle, glassStrength, motionMode, inspectorMode }) =>
                 ({ theme, accentColor, density, fontSize, sidebarExpanded, sidebarMode, surfaceStyle, glassStrength, motionMode, inspectorMode }),
             migrate: (persisted) => {

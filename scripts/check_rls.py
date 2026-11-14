@@ -21,6 +21,7 @@ MIGRATIONS = (
     ROOT / "alembic/versions/20261114_automation_profiles.py",
     ROOT / "alembic/versions/20261114_schedule_fire_keys.py",
     ROOT / "alembic/versions/20261114_webhook_outbox.py",
+    ROOT / "alembic/versions/20261114_user_preferences.py",
 )
 
 
