@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 517,
+    "DATED_EVIDENCE": 518,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 92,
     "PROJECT_POLICY": 7,
@@ -2166,6 +2166,10 @@
     },
     {
       "file": "docs/audits/2026-11-14/ANDROID-AUTOMATION-RECEIPTS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/ANDROID-FILES-AND-PH025-VPN.md",
       "role": "DATED_EVIDENCE"
     },
     {

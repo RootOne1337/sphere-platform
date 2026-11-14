@@ -4630,12 +4630,13 @@
     {
       "id": "CHAT-29",
       "title": "Android файловый менеджер: папки, upload/download, очередь и resume",
-      "state": "OPEN",
+      "state": "PARTIAL",
       "productItems": [],
-      "acceptedScope": "Design prepared for browser explorer, typed Android storage provider, resumable HTTPS fallback and later direct file transport; current APK76 does not implement the proposed file protocol.",
-      "remaining": "Implement filesystem capability/API/APK, explorer, actual transfers with integrity/resume/cleanup/resource limits and stream-control regression acceptance.",
+      "acceptedScope": "Реализована вкладка «Файлы» для отдельной папки Android, список и двусторонняя передача с SHA-256. Chromium, HTTP и реальный WebSocket проверены с синтетическим агентом.",
+      "remaining": "Установка на рабочий APK, пользовательские папки, большие файлы, очередь, resume и тест под нагрузкой остаются открытыми.",
       "evidence": [
         "docs/design/ANDROID-FILE-MANAGER.md",
+        "docs/audits/2026-11-14/ANDROID-FILES-AND-PH025-VPN.md",
         "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
         "docs/design/CLIENT-STUDIO-PLATFORM.md"
       ],
