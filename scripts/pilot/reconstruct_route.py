@@ -78,7 +78,7 @@ def checkpoint(job, *, learned=False):
         raise RuntimeError('cancelled')
     if _TASK_RESOURCES is not None and Path(job).resolve() != _TASK_RESOURCE_JOB:
         raise RuntimeError('route_resource_task_mismatch')
-    snapshot = _TASK_RESOURCES.sample() if _TASK_RESOURCES is not None else collect(ROOT)
+    snapshot = _TASK_RESOURCES.sample() if _TASK_RESOURCES is not None else collect(job)
     _checkpoint_snapshot(job, snapshot, learned=learned)
 
 
@@ -103,7 +103,7 @@ def make_observation_checkpoint(job, *, learned=False):
         now = time.monotonic()
         if snapshot is None or refreshed is None or now - refreshed >= 3:
             try:
-                current = collect(ROOT)
+                current = collect(job)
             except (OSError, ValueError):
                 current = {'system': platform.system()}
             _checkpoint_snapshot(job, current, learned=learned)
@@ -116,7 +116,7 @@ def make_observation_checkpoint(job, *, learned=False):
                     'committedBytes', 'commitLimitBytes'):
             current.pop(key, None)
         try:
-            current['freeDiskBytes'] = shutil.disk_usage(ROOT).free
+            current['freeDiskBytes'] = shutil.disk_usage(job).free
             if current.get('system') == 'Windows':
                 current.update(windows_memory())
             elif current.get('system') == 'Linux':
@@ -235,7 +235,7 @@ def reconstruct(job, mask, steps, *, route_only=False):
     if not route_only:
         return _reconstruct_with_telemetry(job,mask,steps,route_only=False)
     from scripts.pilot.route_resource_monitor import TaskResourceMonitor
-    with TaskResourceMonitor(ROOT) as monitor:
+    with TaskResourceMonitor(job) as monitor:
         _TASK_RESOURCES=monitor
         _TASK_RESOURCE_JOB=Path(job).resolve()
         try:

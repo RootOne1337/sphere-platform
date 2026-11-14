@@ -359,7 +359,7 @@ class Jobs:
             raise ValueError('surface_openmvs_cpu_not_installed')
         if any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
             raise ValueError('one_active_job_only')
-        if evaluate(collect(ROOT)):
+        if evaluate(collect(job)):
             raise ValueError('resource_guard')
         folder = surface_output(job, fragment)
         folder.parent.mkdir(exist_ok=True)
@@ -389,7 +389,7 @@ class Jobs:
             reason = ('cancelled' if (folder / 'CANCEL').exists() else
                       'surface_time_budget' if time.monotonic() > deadline else
                       'surface_log_quota' if (folder / 'worker.log').stat().st_size > 32 * 1024**2 else
-                      'resource_guard' if evaluate(collect(ROOT)) else None)
+                      'resource_guard' if evaluate(collect(job)) else None)
             if reason:
                 (folder / 'CANCEL').touch(exist_ok=True)
                 if os.name == 'nt':
@@ -506,7 +506,7 @@ class Jobs:
                 write_json(path / 'state.json', dict(phase='failed', error='upload_idle_30_minutes'))
         if any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
             raise ValueError('one_active_job_only')
-        if route_resource_findings(collect(ROOT),route_resource_profile(job,route_only=body.get('route_only') is True,uploading=True),evaluate_fn=evaluate):
+        if route_resource_findings(collect(self.folder),route_resource_profile(job,route_only=body.get('route_only') is True,uploading=True),evaluate_fn=evaluate):
             raise ValueError('resource_guard')
         job.mkdir()
         (job / 'input').mkdir()
@@ -537,7 +537,7 @@ class Jobs:
             return status
         if any(not (job / 'input' / name).is_file() for name in LIMITS):
             raise ValueError('source_files_missing')
-        if route_resource_findings(collect(ROOT),route_resource_profile(job,route_only=control.get('route_only') is True),evaluate_fn=evaluate):
+        if route_resource_findings(collect(job),route_resource_profile(job,route_only=control.get('route_only') is True),evaluate_fn=evaluate):
             raise ValueError('resource_guard')
         # Durable one-shot intent precedes process creation. Ambiguity is failure.
         with (job / 'START').open('x') as file:
@@ -629,7 +629,7 @@ class Jobs:
             # CPU route reconstruction already uses task-scoped volume proof
             # inside its worker. Keep its supervisor equally bounded; native
             # RAM/commit/disk remain fresh without per-pass PowerShell startup.
-            with TaskResourceMonitor(ROOT) as monitor:
+            with TaskResourceMonitor(job) as monitor:
                 self._monitor_owned_worker(job, process, budget, monitor=monitor)
         else:
             self._monitor_owned_worker(job, process, budget)
@@ -651,7 +651,7 @@ class Jobs:
             elif (job / 'worker.log').stat().st_size > 32 * 1024**2:
                 reason = 'worker_log_quota'
             else:
-                snapshot = monitor.sample() if monitor is not None else collect(ROOT)
+                snapshot = monitor.sample() if monitor is not None else collect(job)
                 findings = route_resource_findings(snapshot, budget, evaluate_fn=evaluate)
                 if findings:
                     reason = 'resource_guard'

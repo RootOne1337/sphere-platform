@@ -30,6 +30,15 @@ def test_route_features_use_live_runtime_instead_of_heavy_gpu_interpreter(jobs):
     assert jobs.python != jobs.navigation.python
 
 
+def test_route_upload_admission_measures_the_configured_jobs_volume(jobs, monkeypatch):
+    measured = []
+    monkeypatch.setattr(service, 'collect', lambda path: measured.append(path) or {})
+
+    create(jobs)
+
+    assert measured == [jobs.folder]
+
+
 def test_creation_is_idempotent_and_only_one_active(jobs):
     job = create(jobs)
     assert create(jobs) == job
@@ -470,7 +479,7 @@ def test_cpu_route_finishing_during_supervisor_sleep_reaches_automatic_export(jo
 
     class Monitor:
         def __init__(self, root):
-            assert root == service.ROOT
+            assert root == job
 
         def __enter__(self):
             return self
@@ -596,7 +605,7 @@ def test_dense_supervision_keeps_original_full_collector(jobs, monkeypatch):
     monkeypatch.setattr(service, 'route_resource_findings', lambda *a, **k: ['ram_low'])
     monkeypatch.setattr(jobs, '_stop_worker', lambda _: None)
     jobs.monitor(job, SimpleNamespace(poll=lambda: None))
-    assert calls == [service.ROOT]
+    assert calls == [job]
     assert jobs.status(job)['error'] == 'resource_guard'
 
 

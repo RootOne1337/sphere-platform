@@ -69,7 +69,7 @@ def prepare(job, attempt):
     # One preparation owns one volume proof. Every callback still reads fresh
     # native RAM/commit/disk; a monitor never survives this call or feeds live
     # sessions. Its context closes/reaps its own probe on every exit path.
-    with TaskResourceMonitor(ROOT) as monitor:
+    with TaskResourceMonitor(job) as monitor:
         def bounded(target):
             if Path(target).resolve() != task_folder or folder.resolve() != task_folder:
                 raise RuntimeError('route_resource_task_mismatch')

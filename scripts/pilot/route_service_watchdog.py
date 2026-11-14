@@ -91,16 +91,31 @@ def can_start(state, owned_running, elapsed):
     return state == "absent" and not owned_running and elapsed >= 10
 
 
-def service_command(interpreter, origin):
-    return [str(interpreter), "-m", "scripts.pilot.reconstruction_service", "--origin", origin]
+def service_command(interpreter, origin, *, jobs=None, worker_python=None):
+    command = [str(interpreter), "-m", "scripts.pilot.reconstruction_service", "--origin", origin]
+    if jobs is not None:
+        command.extend(("--jobs", str(jobs)))
+    if worker_python is not None:
+        command.extend(("--python", str(worker_python)))
+    return command
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--origin", type=parse_origin, default=ORIGIN)
+    parser.add_argument("--jobs", type=Path, help="Use an existing reconstruction job store")
+    parser.add_argument("--api-python", type=Path, default=ROOT / ".local-pilot/motor-worker-venv/Scripts/python.exe")
+    parser.add_argument("--worker-python", type=Path, help="Use an installed reconstruction interpreter")
     args = parser.parse_args(argv)
     if os.name != "nt":
         raise RuntimeError("windows_task_only")
+    interpreter = args.api_python.resolve(strict=True)
+    worker_python = args.worker_python.resolve(strict=True) if args.worker_python is not None else None
+    jobs = args.jobs.resolve(strict=True) if args.jobs is not None else None
+    if not interpreter.is_file() or worker_python is not None and not worker_python.is_file():
+        parser.error("Use an installed Python interpreter")
+    if jobs is not None and not jobs.is_dir():
+        parser.error("Use an existing reconstruction job store")
     import msvcrt
 
     FOLDER.mkdir(parents=True, exist_ok=True)
@@ -121,9 +136,7 @@ def main(argv=None):
     )
     log.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
     logger.addHandler(log)
-    interpreter = ROOT / ".local-pilot/motor-worker-venv/Scripts/python.exe"
-    if not interpreter.is_file():
-        raise RuntimeError("route_interpreter_missing")
+    command = service_command(interpreter, args.origin, jobs=jobs, worker_python=worker_python)
     child = None
     previous = None
     last_start = -float("inf")
@@ -146,7 +159,7 @@ def main(argv=None):
                 attempts += 1
                 try:
                     child = subprocess.Popen(
-                        service_command(interpreter, args.origin),
+                        command,
                         cwd=ROOT,
                         stdin=subprocess.DEVNULL,
                         stdout=subprocess.DEVNULL,

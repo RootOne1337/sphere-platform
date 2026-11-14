@@ -79,7 +79,7 @@ def resource_checkpoint(folder, *, profile=None, snapshot=None):
     """
     if (folder/'CANCEL').exists():
         raise RuntimeError('cancelled')
-    snapshot = collect(ROOT) if snapshot is None else snapshot
+    snapshot = collect(folder) if snapshot is None else snapshot
     if type(snapshot) is not dict:
         raise ValueError('route_resource_snapshot')
     minimum = 12 if profile is None else profile['minRamGiB']
@@ -340,7 +340,7 @@ class RouteWorkspaces:
         # rather than launch a synchronous PowerShell discovery every 3 s.
         # Native RAM/commit/disk remain fresh on every sample; no proof is
         # shared across workers, and close reaps a pending owned probe.
-        with TaskResourceMonitor(ROOT) as monitor:
+        with TaskResourceMonitor(folder) as monitor:
             self._monitor_owned_process(folder, process, profile, monitor)
 
     def _monitor_owned_process(self, folder, process, profile, monitor):

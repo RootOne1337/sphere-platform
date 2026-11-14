@@ -62,6 +62,13 @@ class WatchdogTests(unittest.TestCase):
         ]:
             self.assertFalse(watchdog.can_start(state, owned, elapsed))
 
+    def test_worker_launch_keeps_the_configured_jobs_and_interpreter_as_single_arguments(self):
+        self.assertEqual(
+            watchdog.service_command("api python", watchdog.ORIGIN, jobs="route store", worker_python="gpu python"),
+            ["api python", "-m", "scripts.pilot.reconstruction_service", "--origin", watchdog.ORIGIN,
+             "--jobs", "route store", "--python", "gpu python"],
+        )
+
     def test_verified_health_never_needs_a_port_probe(self):
         response = MagicMock()
         response.__enter__.return_value = response
