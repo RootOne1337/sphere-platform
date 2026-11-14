@@ -7,8 +7,8 @@
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
     "items": 50,
-    "acceptedRecordedScope": 13,
-    "open": 37
+    "acceptedRecordedScope": 14,
+    "open": 36
   },
   "installed": {
     "lastObservedUtc": "2026-10-26T09:33:25.639677+00:00",
@@ -3409,10 +3409,10 @@
       "id": "EP-034",
       "title": "Audit journal semantic outcome и redacted diff",
       "priority": "P2",
-      "state": "OPEN",
-      "progress": "PARTIAL",
-      "currentScope": "Audit journal/investigation имеют предыдущие исправления.",
-      "remaining": "Полный redacted diff, actor/effect/result correlation и cursor export не закрыты.",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Приняты серверные фильтры, курсор и ограниченный CSV, diff роли без секретов, корреляция HTTP, ручного запуска и подтверждённого результата Android на PH025.",
+      "remaining": "Результаты других типов интерактивных команд и масштабирование журнала требуют отдельных проверок.",
       "acceptanceCriteria": [
         "Actor/effect/result/receipt correlations.",
         "Before/after diff без secrets.",
@@ -3422,7 +3422,8 @@
         "EP-021",
         "EP-032"
       ],
-      "acceptanceEvidence": null,
+      "acceptanceEvidence": "docs/audits/2026-11-14/AUDIT-CURSOR-AND-FLEET-ACCEPTANCE.json",
+      "acceptanceEvidenceSha256NormalizedLf": "9352427ae94daeb43135a75870ff806799acfbd9f78beb2cd8e7d8395f09bae9",
       "kind": "CAPABILITY_GAP",
       "estimatedScope": "M",
       "sourceRefs": [
@@ -3439,8 +3440,8 @@
       "priority": "P2",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Главная выделяет проблемы связи, устаревшие VPN-handshake и ошибки в последних событиях со ссылками по правам роли.",
-      "remaining": "Actionable attention queue с reason/version/affected scope и total/page acceptance нужна.",
+      "currentScope": "Главная показывает серверные итоги необработанных ошибок, критических событий, ошибок и таймаутов задач, с переходами по точным фильтрам и к источникам мониторинга.",
+      "remaining": "Открыты история переподключений и разбивка парка по версиям Android-агента.",
       "acceptanceCriteria": [
         "Reasons affected scope/version/reconnect/task outcomes.",
         "Link открывает конкретный filter/detail.",
@@ -3695,7 +3696,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Provision outcomes/assignment/Android VPN observation разделены.",
+      "currentScope": "Парк получает наблюдение VPN по WebSocket. Подтверждённая фаза app-scoped провайдера имеет приоритет над legacy-флагом. PH025 подтвердил неактивный VPN; назначенного профиля для него нет.",
       "remaining": "Actual applied/handshake/egress и partial/unknown recovery требуют live targets.",
       "acceptanceCriteria": [
         "Provision receipt иactual Android state раздельны.",

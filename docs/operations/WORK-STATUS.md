@@ -1,5 +1,7 @@
 # Работы, требования пользователя и границы приёмки
 
+**14 ноября — аудит, парк и обзор:** EP-034 принят на пилоте `99e57e04`. Проверены курсор, ограниченный CSV и результат реального запуска PH025. Парк получает heartbeat через WebSocket, обзор ведёт к серверным фильтрам. [Протокол проверки](../audits/2026-11-14/AUDIT-CURSOR-AND-FLEET-ACCEPTANCE.md).
+
 **14 ноября — поставка на пилот:** Web/API `f7c689b2`, миграции до `20261114_webhook_outbox`, ноды n8n и правила Prometheus. PH025 восстановил WebSocket. [Протокол поставки](../audits/2026-11-14/ENTERPRISE-PILOT-DELIVERY.md).
 
 **14 ноября — журнал аудита:** API скрывает произвольные поля старых записей. Смена роли связывает автора, пользователя, значения до и после и HTTP-запись по ID запроса. Прошли 57 Python-тестов и 38 Jest-тестов. EP-034 остаётся частичным до проверки курсора и итогов операций на устройствах.
@@ -885,13 +887,13 @@ bootstrap сохранены, новых images нет. Public stream/control/so
 
 ## Что означают числа и насколько велика работа
 
-**13 принято / 37 открыто из 50** — продуктовый план. Принятое означает только
+**14 принято / 36 открыто из 50** — продуктовый план. Принятое означает только
 scope доказательств конкретного пункта. В исходном аудите было шесть подтверждённых
 дефектов; все шесть имеют записанную приёмку EP-001–006. Остаток включает расширение
 возможностей, дизайн и будущие подсистемы. Новые дефекты могут возникать внутри
 частично выполненного пункта: пример — clock regression рекордера и idle timeout.
 
-Формально приняты 26% строк реестра. Ещё 29 строк в работе с частичным
+Формально приняты 28% строк реестра. Ещё 28 строк в работе с частичным
 результатом, семь открыты без частичной приёмки, одна отложена на уровне дизайна.
 Это доли строк, где задачи разного масштаба имеют равный вес.
 
@@ -970,7 +972,7 @@ Baseline [5 октября](../audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json
 | EP-031 | P1 | L | OPEN / OPEN | Thumbnail wall 128 вместо множества full video |
 | EP-032 | P1 | L | OPEN / PARTIAL | Общие structured logs всех разрешённых sources |
 | EP-033 | P1 | L | ACCEPTED_RECORDED_SCOPE / ACCEPTED_FINITE | Byte-bounded backend log reads и global retention |
-| EP-034 | P2 | M | OPEN / PARTIAL | Audit journal semantic outcome и redacted diff |
+| EP-034 | P2 | M | ACCEPTED_RECORDED_SCOPE / ACCEPTED_FINITE | Audit journal semantic outcome и redacted diff |
 | EP-035 | P2 | M | OPEN / PARTIAL | Dashboard attention queue и actionable drilldown |
 | EP-036 | P2 | M | OPEN / PARTIAL | Groups membership и bulk plan |
 | EP-037 | P2 | M | OPEN / PARTIAL | Locations hierarchy UX и validation |

@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 516,
+    "DATED_EVIDENCE": 517,
     "DESIGN_SPECIFICATION": 91,
     "OPERATING_GUIDE": 92,
     "PROJECT_POLICY": 7,
@@ -2170,6 +2170,10 @@
     },
     {
       "file": "docs/audits/2026-11-14/APPLICATION-AUTOMATION-ISOLATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-11-14/AUDIT-CURSOR-AND-FLEET-ACCEPTANCE.md",
       "role": "DATED_EVIDENCE"
     },
     {
