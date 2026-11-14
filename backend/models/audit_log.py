@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -17,10 +17,12 @@ class AuditLog(Base):
     Иммутабельный журнал аудита.
     НЕ наследует TimestampMixin (нет updated_at — immutable by design).
     НЕ наследует UUIDMixin — id задаётся явно для разделения ответственности.
-    RLS-политика (audit_log_policies.sql) запрещает UPDATE и DELETE.
+    Миграция 20260908_tenant_policies запрещает runtime UPDATE и DELETE через RLS.
+    Требуется non-owner роль без BYPASSRLS/TRUNCATE; владелец обходит защиту.
     Детальная логика: TZ-01 SPLIT-5.
     """
     __tablename__ = "audit_logs"
+    __table_args__ = (Index("ix_audit_logs_org_created_id", "org_id", "created_at", "id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,

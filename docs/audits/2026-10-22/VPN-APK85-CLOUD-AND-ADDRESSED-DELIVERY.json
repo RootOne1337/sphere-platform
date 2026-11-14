@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T12:08:42.323204+00:00",
+  "scope": "Four explicitly addressed pilot devices, not an automatic ordinary-channel fleet rollout.",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "46dd02fff711c1667b44520b85290226b7155287",
+    "apiSourceRevision": "cd2431e2ae0c719959147626981b00ac8f9703f5"
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Installed VPN diagnostics after explicit disconnect; no media/input/game acceptance.",
+    "origin": "http://127.0.0.1:3015",
+    "viewports": [
+      [
+        1440,
+        1000
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "apkVersionDisplayed": "1.2.85-dev",
+    "mobileDocumentWidth": 390,
+    "mobileDialogWidth": 390,
+    "mobileHorizontalOverflow": false,
+    "footerReachable": true,
+    "screenshots": [
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-ota85-live/desktop.png",
+        "sha256": "1dd17cc23e00009ea0b82d85b1b425c2ee33cd45c9aacd56ecbeafb897445862"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-ota85-live/mobile.png",
+        "sha256": "07f909176a94b057ce73806a2100ea404cd43b2cfb8d3968b2251b69d7cf1cd6"
+      }
+    ],
+    "browserClosed": true,
+    "directFramesPresented": 0,
+    "consoleCleanlinessClaimed": false,
+    "knownWordingIssue": "Требуется обновление labels a stale native sample and can be mistaken for an APK update requirement."
+  },
+  "apk": {
+    "version": "1.2.85-dev",
+    "versionCode": 10285,
+    "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+    "sha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+    "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "bytes": 73217607,
+    "installedDevices": [
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:30.867863+00:00",
+        "completedAddressedOta": true,
+        "commandId": "74bd69d1-5b6c-42b5-b102-b3059be7dfaa",
+        "dataClears": 0
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:38.101328+00:00",
+        "completedAddressedOta": true,
+        "commandId": "256a6674-b9ad-47e3-ab04-f7d38d523330",
+        "dataClears": 0
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:34.316120+00:00",
+        "completedAddressedOta": true,
+        "commandId": "6ab684dc-0ebc-46e4-ac7e-278ae9294098",
+        "dataClears": 0
+      },
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:27.366235+00:00",
+        "completedAddressedOta": true,
+        "commandId": "0618de83-ad41-429a-be3b-3839bca56840",
+        "dataClears": 0
+      }
+    ],
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "hostedCertificateSha256": "70e67b0395df3cf30feb1d10f06303a7598b8453e5d965db06a4d00defdbc3e7",
+    "cloudApkSha256": "7b98a6dffff8cb8b91a08d527b9fb131b0d69971ec18736365760db86668cc6c",
+    "builtByHostedCi": true,
+    "onlySignatureChangedLocally": true,
+    "unchangedPayloadEntries": 936
+  },
+  "fullAndroidCi": {
+    "observedAtUtc": "2026-10-22T11:32:32.319655+00:00",
+    "runId": 39764211758,
+    "sourceRevision": "79ba84f980f987d8d3429dbc082b07bf39bb2834",
+    "packagingSourceAtReadback": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+    "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+    "status": "completed",
+    "conclusion": "success",
+    "artifactId": 12421918307,
+    "githubArtifactDigest": "sha256:62f56592288a9ff89fca6b9f6888c5223179f7504ced32cff8262a23e787af57",
+    "githubArtifactDigestVerified": true,
+    "testResults": {
+      "dev": {
+        "tests": 1277,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 1277,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "nativeManifestSha256": "fb748c203c73dedfe65531648539b8d035243fe500b7abdbc2510e6edde45ea3",
+    "nativeAbis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86_64"
+    ],
+    "nativeHardeningVerified": true,
+    "ordinaryApkNativeExclusionPassed": true,
+    "releaseDenialsPassed": true,
+    "runtimeInstalled": false
+  },
+  "configuredCloudPackage": {
+    "runId": 39771397160,
+    "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+    "artifactId": 12423146129,
+    "githubArtifactDigest": "sha256:339d26d7e8ec02722f16048f5f7f672b047c818cf8989a17acae48facd8137f7",
+    "githubArtifactDigestVerified": true,
+    "receipt": {
+      "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+      "apkBytes": 73136814,
+      "apkSha256": "7b98a6dffff8cb8b91a08d527b9fb131b0d69971ec18736365760db86668cc6c",
+      "apkSignedByMaintainer": false,
+      "kind": "sphere-encrypted-android-pilot",
+      "nativeAbis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "nativeArtifactDigest": "sha256:62f56592288a9ff89fca6b9f6888c5223179f7504ced32cff8262a23e787af57",
+      "nativeArtifactId": 12421918307,
+      "nativeManifestSha256": "fb748c203c73dedfe65531648539b8d035243fe500b7abdbc2510e6edde45ea3",
+      "packageRunId": 39771397160,
+      "productionAccepted": false,
+      "repository": "RootOne1337/sphere-platform",
+      "runtimeInstalled": false,
+      "schemaVersion": 1,
+      "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+      "validationRunId": 39764211758,
+      "validationSource": "79ba84f980f987d8d3429dbc082b07bf39bb2834"
+    }
+  },
+  "configurationProtection": {
+    "githubArtifactEncryptedOnly": true,
+    "recipientPrivateKeyUploaded": false,
+    "signingPrivateKeyUploaded": false,
+    "wgProfileUploadedToCi": false,
+    "oneShotSecretDeletedAndReadBack": true
+  },
+  "fleetReadback": {
+    "total": 21,
+    "items": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "name": "auto-ph-030",
+        "versionCode": 10285,
+        "status": "online"
+      },
+      {
+        "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+        "name": "auto-ph-029",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "name": "auto-ph-028",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+        "name": "auto-ph-027",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+        "name": "auto-ph-026",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "name": "auto-ph-025",
+        "versionCode": 10285,
+        "status": "online"
+      },
+      {
+        "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+        "name": "auto-ph-024",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+        "name": "auto-ph-023",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "name": "auto-ph-022",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+        "name": "auto-ph-021",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "name": "auto-ph-020",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "name": "auto-ph-019",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "name": "auto-ph-018",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "name": "auto-ph-017",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "name": "auto-ph-016",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "name": "auto-ph-015",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "name": "auto-ph-014",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "name": "auto-ph-013",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "name": "auto-ph-012",
+        "versionCode": null,
+        "status": "offline"
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "versionCode": 10285,
+        "status": "online"
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "name": "auto-ph-010",
+        "versionCode": 10285,
+        "status": "online"
+      }
+    ]
+  },
+  "offlineDevicesNotUpdated": 17,
+  "ordinaryAndroidChannelUnchanged": true,
+  "emulatorRestarts": 0,
+  "gameDataClears": 0,
+  "universalFleetRollout": false,
+  "physicalVpnProductionAccepted": false,
+  "productionAccepted": false
+}

@@ -39,17 +39,16 @@ class CloneDetectorTest {
     }
 
     @Test
-    fun `fingerprint компоненты — все 7 присутствуют`() {
+    fun `fingerprint components use app and available image identifiers`() {
         val components = listOf(
             "instance:test-uuid",
             "android_id:abc123",
             "build_fp:google/sdk/generic:14",
-            "serial:HY5T23FJKL",
             "board:goldfish_x86_64",
             "bootloader:unknown",
             "host:build-host",
         )
-        assertEquals(7, components.size)
+        assertEquals(6, components.size)
         val raw = components.joinToString("|")
         val hash = sha256(raw)
         assertEquals(64, hash.length)

@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T18:23:12.534854+00:00",
+  "scope": "Installed API and finite existing read/first-frame return only. Direct echo connectivity FAILED; idle reliability and media/control acceptance OPEN.",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "d70f55c6de36a01801af201ea4d6ca42bff53549",
+    "apiSourceRevision": "9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
+    "uiContainer": {
+      "id": "bce05a6ec43b0fef913e499bd5e63261d98e0b11185e3d4d52d0aad6e50b3e62",
+      "imageId": "sha256:f30a661aea04c79758458f02ce73f6e58f9445232734916b5cc4e9360159864b",
+      "imageTag": "sphere-review-frontend:d70f55c6de36a01801af201ea4d6ca42bff53549",
+      "startedAt": "2026-10-09T16:58:35.324774492Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "058b03a52c16bc66ea530b1f5a4de41147d1c47e4ee8e7fc2b169f09ee35a3b9",
+      "imageId": "sha256:73ea8abcff6b3d4cb67c82a997e8f09da11c9313311dc44982348af2e928323b",
+      "imageTag": "sphere-reviewed-backend:9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
+      "startedAt": "2026-10-09T18:20:38.819449786Z",
+      "status": "running"
+    },
+    "otherContainersPreservedPerApply": 45,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "schemaMigrationPerformed": false,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "publicExactHostMapChanged": false,
+    "apiWsBootstrapRouteChanged": false,
+    "directProbeEnvironment": {
+      "enabled": false,
+      "deviceIds": []
+    },
+    "directProbeDisabledReceipt": {
+      "closeCode": 4003,
+      "reason": "direct_probe_disabled",
+      "jwtSent": false
+    },
+    "pilotApk": {
+      "device": "PH011",
+      "version": "1.2.49-dev",
+      "versionCode": 10249,
+      "observedAtUtc": "2026-10-09T18:19:47.490334+00:00",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "installedApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+      "sourceRevision": "d8023bce29c518cca7ab83b907c96e142081f106",
+      "restoredOriginalApk": true,
+      "appDataCleared": false,
+      "otaPublished": false,
+      "directProbeNativeInstalled": false,
+      "scope": "One pilot device restored; not fleet inventory"
+    }
+  },
+  "delivery": {
+    "sourceRevision": "9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
+    "runId": 37969383084,
+    "artifactId": 11635141248,
+    "compressedArchiveBytes": 236223249,
+    "compressedArchiveSha256": "2f817d4b536d381041cca81ccfacea567a2f72f434425001f34c50d956896eea",
+    "independentCiImageId": "sha256:f4ddcea7a2ab5382844b611328abd3542234fde64d59e48ae424f9cb8b03cfb0",
+    "completeBaselineRoundtripVerified": true,
+    "installedEnvironmentVerified": true,
+    "dockerBuildPerformed": false,
+    "dockerPrunePerformed": false,
+    "enabledInstallerReport": ".local-pilot/reviewed-backend-install-9ad3481c1173-a35da072/installed.json",
+    "disabledInstallerReport": ".local-pilot/reviewed-backend-install-9ad3481c1173-1ceac6a3/installed.json"
+  },
+  "ci": {
+    "exactSource": "9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
+    "conclusions": [
+      {
+        "name": "Backend",
+        "runId": 37969383084,
+        "conclusion": "success"
+      },
+      {
+        "name": "Frontend",
+        "runId": 37969383138,
+        "conclusion": "success"
+      },
+      {
+        "name": "Android",
+        "runId": 37969383314,
+        "conclusion": "success"
+      },
+      {
+        "name": "Preview",
+        "runId": 37969383077,
+        "conclusion": "success"
+      }
+    ]
+  },
+  "directPilot": {
+    "connectivityAccepted": false,
+    "mediaControlAccepted": false,
+    "attempts": 2,
+    "samples": 0,
+    "rttP95Ms": null,
+    "selectedPair": null,
+    "outcome": "connection_deadline",
+    "deadlineSeconds": 12,
+    "cause": "UNKNOWN",
+    "iceProfile": "host_only",
+    "nativeJniLoaded": true,
+    "signalingSecondAttempt": {
+      "offerBytes": 652,
+      "offerHostCandidates": 1,
+      "offerMdnsCandidates": 1,
+      "answerBytes": 723,
+      "answerHostCandidates": 2,
+      "answerMdnsCandidates": 0,
+      "publicationDeltaSeconds": 0.456,
+      "browserRemoteDescriptionProven": false,
+      "mediaSections": [
+        "application"
+      ],
+      "rawSdpRecorded": false
+    },
+    "nativeCanaryApkBytes": 57638900,
+    "nativeCanaryApkSha256": "225a0af45fab919f37f10570326bba730bcf1912262c5d91ac567c164ee9e26c",
+    "nativeCanaryCurrentlyInstalled": false,
+    "nativeInputSent": false,
+    "nativeNetworkObserverUnregisterObservedPerAttempt": [
+      true,
+      true
+    ],
+    "nativeResourceAcceptance": false,
+    "processSlices": [
+      {
+        "slice": "before-probe-native",
+        "observedAtUtc": "2026-10-09T18:12:14.232966+00:00",
+        "pid": 31940,
+        "process": {
+          "VmRSS": 123820,
+          "Threads": 41
+        }
+      },
+      {
+        "slice": "during-probe-native",
+        "observedAtUtc": "2026-10-09T18:13:25.383935+00:00",
+        "pid": 31940,
+        "process": {
+          "VmRSS": 129912,
+          "Threads": 42
+        }
+      },
+      {
+        "slice": "after-first-probe-native",
+        "observedAtUtc": "2026-10-09T18:13:51.937943+00:00",
+        "pid": 31940,
+        "process": {
+          "VmRSS": 131184,
+          "Threads": 39
+        }
+      },
+      {
+        "slice": "after-second-probe-native",
+        "observedAtUtc": "2026-10-09T18:16:47.792208+00:00",
+        "pid": 31940,
+        "process": {
+          "VmRSS": 133344,
+          "Threads": 37
+        }
+      }
+    ],
+    "rssChangeKiB": 9524,
+    "rssScope": "Includes JNI load and two attempts; not leak proof or host writer attribution",
+    "samePackageCertificateAndVersionPreserved": true,
+    "appDataCleared": false,
+    "otaPublished": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "acceptedScope": "Protected PH011 read200/online and existing first-frame path after native restore only; no direct/idle/steady-FPS acceptance",
+    "deviceRead": {
+      "httpStatus": 200,
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "name": "auto-ph-011",
+      "status": "online"
+    },
+    "decodedFrames": 13,
+    "drawnFrames": 13,
+    "videoPackets": 25,
+    "videoBytes": 355901,
+    "invalidPackets": 0,
+    "decodeErrors": 0,
+    "renderErrors": 0,
+    "idleFailureRepeated": true,
+    "idleFailure": "idle_receipt_timeout",
+    "lastAckRttMs": 256,
+    "oldestHeartbeatAgeMs": 512,
+    "deadlineMs": 512,
+    "heldPointer": false,
+    "awaitedTerminalAck": false,
+    "nativeActionsSent": false,
+    "privateEvidence": [
+      ".local-pilot/direct-probe-20261009/restored-stream.png",
+      ".local-pilot/direct-probe-20261009/restored-stream.txt"
+    ]
+  },
+  "sourceCorrections": {
+    "installed": false,
+    "exactSourceHostedCiAccepted": false,
+    "serverClose": "Best effort <=1s; disconnect/already closed/slow close do not escape or hang final close",
+    "installer": "Explicit one canonical device or disable[]; unrelated baseline preserved; environment drift rollback",
+    "ui": "Answer/connecting/open/RTT distinct; late completion fenced; unknown measurements visible",
+    "tests": {
+      "backendFocusedPassed": 81,
+      "reviewedOperationalPassed": 63,
+      "frontendFocusedPassed": 8,
+      "typescriptPassed": true,
+      "ruffPassed": true,
+      "scopedMypyPassed": true
+    },
+    "sourceVisualStand": {
+      "port": 3016,
+      "compiledRevision": "unknown",
+      "endpointEnabled": false,
+      "failedStateVisible": true,
+      "missingRttVisible": true,
+      "mobileAccepted": false,
+      "privateScreenshot": ".local-pilot/direct-probe-20261009/new-probe-ui.png",
+      "serverStopped": true,
+      "agentTabClosed": true
+    }
+  },
+  "ledger": {
+    "closedInThisBatch": [],
+    "acceptedProduct": 9,
+    "openProduct": 41,
+    "legacyUnclosed": 7
+  },
+  "hostStorageWriter": "UNKNOWN",
+  "notAccepted": [
+    "live direct RTT",
+    "native resource soak",
+    "upstream provenance/SBOM",
+    "LAN/WAN/relay matrix",
+    "STUN/TURN",
+    "direct video/input ownership",
+    "idle receipt reliability",
+    "fleet/SLA"
+  ]
+}

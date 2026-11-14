@@ -1,0 +1,717 @@
+{
+  "schema": "scooter-trajectory-evidence-index-v1",
+  "entries": [
+    {
+      "file": "172-readme.md",
+      "source": ".local-pilot/scooter-auto-gap-20261101-v1/README.md",
+      "source_sha256": "5fa52c318af9ad4e0a8f8ce2f34c35e4b1340f7825b74f5dc664a7399df8f282",
+      "sha256": "5fa52c318af9ad4e0a8f8ce2f34c35e4b1340f7825b74f5dc664a7399df8f282",
+      "bytes": 4567,
+      "transform": "copy"
+    },
+    {
+      "file": "172-receipt.json",
+      "source": ".local-pilot/scooter-auto-gap-20261101-v1/receipt.json",
+      "source_sha256": "a2aeebaebc33d938cae9df9295453e16ee3955eb34124a3520936e86d753c39e",
+      "sha256": "a2aeebaebc33d938cae9df9295453e16ee3955eb34124a3520936e86d753c39e",
+      "bytes": 579,
+      "transform": "copy"
+    },
+    {
+      "file": "172-common163.json",
+      "source": ".local-pilot/scooter-auto-gap-20261101-v1/common163-audit.json",
+      "source_sha256": "aee239d83ec9f3271dab3d340f577b7f30a964d93aed9ac5cf52dc8f98a55f61",
+      "sha256": "aee239d83ec9f3271dab3d340f577b7f30a964d93aed9ac5cf52dc8f98a55f61",
+      "bytes": 8848,
+      "transform": "copy"
+    },
+    {
+      "file": "172-comparison.json",
+      "source": ".local-pilot/scooter-auto-gap-20261101-v1/comparison.json",
+      "source_sha256": "ea9a9367b83098f6473531cf550febc5dd9f0d46de1a3346d3b1fac232af8684",
+      "sha256": "ea9a9367b83098f6473531cf550febc5dd9f0d46de1a3346d3b1fac232af8684",
+      "bytes": 11871,
+      "transform": "copy"
+    },
+    {
+      "file": "joint-ba-readme.md",
+      "source": ".local-pilot/scooter-joint-ba-20261101-v3/README.md",
+      "source_sha256": "5189ea2833be97cc6b248b78de729ca27ff01ecb5e9860b4b413f548a0565504",
+      "sha256": "5189ea2833be97cc6b248b78de729ca27ff01ecb5e9860b4b413f548a0565504",
+      "bytes": 6781,
+      "transform": "copy"
+    },
+    {
+      "file": "joint-ba-receipt.json",
+      "source": ".local-pilot/scooter-joint-ba-20261101-v3/receipt.json",
+      "source_sha256": "5c8f9e26ee60773c678a2a004b7f6e986057bcbd3c004de5846a564416a88cb3",
+      "sha256": "5c8f9e26ee60773c678a2a004b7f6e986057bcbd3c004de5846a564416a88cb3",
+      "bytes": 697,
+      "transform": "copy"
+    },
+    {
+      "file": "joint-ba-review.json",
+      "source": ".local-pilot/scooter-joint-ba-20261101-v3/review-comparison.json",
+      "source_sha256": "72a6642d30755dd250c29ae7cecd83cf7f9067b6f3e190d573250ef088f35e87",
+      "sha256": "72a6642d30755dd250c29ae7cecd83cf7f9067b6f3e190d573250ef088f35e87",
+      "bytes": 9193,
+      "transform": "copy"
+    },
+    {
+      "file": "spline-comparison.json",
+      "source": ".local-pilot/scooter-continuous-ba-20261101/comparison.json",
+      "source_sha256": "47f74cadf79730eed065db2b95b10fc9cdcd2e923f527d9ab1f72f3717622c1a",
+      "sha256": "47f74cadf79730eed065db2b95b10fc9cdcd2e923f527d9ab1f72f3717622c1a",
+      "bytes": 23645,
+      "transform": "copy"
+    },
+    {
+      "file": "spline-receipt.json",
+      "source": ".local-pilot/scooter-continuous-ba-20261101/receipt.json",
+      "source_sha256": "0f9be4c3c92fed2f5a6f71979e1d9b6de47564c5149ffd4a7ece8f7070ce52b3",
+      "sha256": "0f9be4c3c92fed2f5a6f71979e1d9b6de47564c5149ffd4a7ece8f7070ce52b3",
+      "bytes": 456,
+      "transform": "copy"
+    },
+    {
+      "file": "incremental-report.json",
+      "source": ".local-pilot/scooter-incremental-bounded-20261101/report.json",
+      "source_sha256": "7131fd762cbee73b2a620be27f528b9a88b257ec165de5d4f95dc0ca690e436e",
+      "sha256": "7131fd762cbee73b2a620be27f528b9a88b257ec165de5d4f95dc0ca690e436e",
+      "bytes": 10553,
+      "transform": "copy"
+    },
+    {
+      "file": "incremental-receipt.json",
+      "source": ".local-pilot/scooter-incremental-bounded-20261101/receipt.json",
+      "source_sha256": "9ebf7f58e10e227e0681083157875556ee5ee3c971fdad2d3e63dcc21cacec73",
+      "sha256": "9ebf7f58e10e227e0681083157875556ee5ee3c971fdad2d3e63dcc21cacec73",
+      "bytes": 267,
+      "transform": "copy"
+    },
+    {
+      "file": "orientation-check.json",
+      "source": ".local-pilot/scooter-incremental-merge-20261101/orientation-check.json",
+      "source_sha256": "f530c59cda709fd75fc9e8d1f1c0b9ba38302b62c0bde1dedda6e8ae79bdce4c",
+      "sha256": "f530c59cda709fd75fc9e8d1f1c0b9ba38302b62c0bde1dedda6e8ae79bdce4c",
+      "bytes": 2716,
+      "transform": "copy"
+    },
+    {
+      "file": "merge-receipt.json",
+      "source": ".local-pilot/scooter-incremental-merge-20261101/receipt.json",
+      "source_sha256": "fb2ffb55cbe5e937359017274b14a7f81c82949144506f3eebdd3be376bc215f",
+      "sha256": "fb2ffb55cbe5e937359017274b14a7f81c82949144506f3eebdd3be376bc215f",
+      "bytes": 200,
+      "transform": "copy"
+    },
+    {
+      "file": "vp-report.json",
+      "source": ".local-pilot/scooter-vp-calibration-20261101/report.json",
+      "source_sha256": "8774ada832620b2cd391f0c48c83a23e1a4f7720c892233785ae3d1320dfd733",
+      "sha256": "8774ada832620b2cd391f0c48c83a23e1a4f7720c892233785ae3d1320dfd733",
+      "bytes": 57672,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-summary.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v3/end-to-end-summary.json",
+      "source_sha256": "07bd1481a7dac98a0c970389c5e0428db6996620df7f201c5e811d8ac9d01182",
+      "sha256": "07bd1481a7dac98a0c970389c5e0428db6996620df7f201c5e811d8ac9d01182",
+      "bytes": 3998,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-cpu-receipt.json",
+      "source": ".local-pilot/scooter-disk-cpu-20261101/receipt.json",
+      "source_sha256": "0d2807e70393a8e88a14a9180c054608bff3567f4c49e139353580803fc55cde",
+      "sha256": "0d2807e70393a8e88a14a9180c054608bff3567f4c49e139353580803fc55cde",
+      "bytes": 308,
+      "transform": "copy"
+    },
+    {
+      "file": "attrition.json",
+      "source": ".local-pilot/scooter-observability-20261101/attrition.json",
+      "source_sha256": "bf4d9c4c8ed312820006197f727d0c1529cf7b3b414b4c2f76e75047fc6a33dc",
+      "sha256": "bf4d9c4c8ed312820006197f727d0c1529cf7b3b414b4c2f76e75047fc6a33dc",
+      "bytes": 2246,
+      "transform": "copy"
+    },
+    {
+      "file": "observability-summary.json",
+      "source": ".local-pilot/scooter-observability-20261101/observability.json",
+      "source_sha256": "ef935502241d4848e366c4851f2eb6a96b4a2b8c931fdf83abe8ec49fc8227d4",
+      "sha256": "3053ad0affb09fe76b456b62528c57e0f543f5b05c69f6ec65872b3427959d2b",
+      "bytes": 1189,
+      "transform": "observability-summary"
+    },
+    {
+      "file": "sources/scooter-auto-gap-20261101-v1--run.py",
+      "source": ".local-pilot/scooter-auto-gap-20261101-v1/run.py",
+      "source_sha256": "c88007d48b10b6155f037352ae858f262f90965907bac00f5a58e57322a814a5",
+      "sha256": "c88007d48b10b6155f037352ae858f262f90965907bac00f5a58e57322a814a5",
+      "bytes": 15225,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-auto-gap-20261101-v1--common163.py",
+      "source": ".local-pilot/scooter-auto-gap-20261101-v1/common163.py",
+      "source_sha256": "594578ba4046d7bb08abc4ae573746895b469a25d44f6aac104f7b5d53b39175",
+      "sha256": "594578ba4046d7bb08abc4ae573746895b469a25d44f6aac104f7b5d53b39175",
+      "bytes": 2776,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-joint-ba-20261101-v3--run.py",
+      "source": ".local-pilot/scooter-joint-ba-20261101-v3/run.py",
+      "source_sha256": "6c451531e49d25b5d40a106964cd4946eabe2ae28a692fd058e272b633927f62",
+      "sha256": "6c451531e49d25b5d40a106964cd4946eabe2ae28a692fd058e272b633927f62",
+      "bytes": 10517,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-joint-ba-20261101-v3--review.py",
+      "source": ".local-pilot/scooter-joint-ba-20261101-v3/review.py",
+      "source_sha256": "9c37ca67861f4dbcc5fc81f805088c408e7f1298fbb177f8bdcc076289ade3ed",
+      "sha256": "9c37ca67861f4dbcc5fc81f805088c408e7f1298fbb177f8bdcc076289ade3ed",
+      "bytes": 6681,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-continuous-ba-20261101--run.py",
+      "source": ".local-pilot/scooter-continuous-ba-20261101/run.py",
+      "source_sha256": "435fcc4298dae168cbc8d191298fbdd4765b011cd56c0dc10efb5e71e97e7c62",
+      "sha256": "435fcc4298dae168cbc8d191298fbdd4765b011cd56c0dc10efb5e71e97e7c62",
+      "bytes": 7391,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-incremental-bounded-20261101--run.py",
+      "source": ".local-pilot/scooter-incremental-bounded-20261101/run.py",
+      "source_sha256": "2a615a54c6f18e496c70527a9cedb1fb5ba71c5ef1503d1bee09fb65f31a418c",
+      "sha256": "2a615a54c6f18e496c70527a9cedb1fb5ba71c5ef1503d1bee09fb65f31a418c",
+      "bytes": 4315,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-incremental-merge-20261101--orientation-check.py",
+      "source": ".local-pilot/scooter-incremental-merge-20261101/orientation-check.py",
+      "source_sha256": "95a3dacbe0b4f990e7c8b885d9a28d881c2ab6d3cd36fea88eb187f79355c522",
+      "sha256": "95a3dacbe0b4f990e7c8b885d9a28d881c2ab6d3cd36fea88eb187f79355c522",
+      "bytes": 4502,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-vp-calibration-20261101--audit.py",
+      "source": ".local-pilot/scooter-vp-calibration-20261101/audit.py",
+      "source_sha256": "f075bf4592ee90c303166ef1c0191542602d939a2941339baaea69eadff78fd8",
+      "sha256": "f075bf4592ee90c303166ef1c0191542602d939a2941339baaea69eadff78fd8",
+      "bytes": 6816,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-disk-lg-20261101-v3--run.py",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v3/run.py",
+      "source_sha256": "ceec9f9e726e3cc27f5dba20c719a2d83eebe3564bac4ccb6aa62a194a3c5412",
+      "sha256": "ceec9f9e726e3cc27f5dba20c719a2d83eebe3564bac4ccb6aa62a194a3c5412",
+      "bytes": 13625,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-disk-cpu-20261101--run.py",
+      "source": ".local-pilot/scooter-disk-cpu-20261101/run.py",
+      "source_sha256": "f8878f71bbee2727308b78253551c10cf507f7222e244aa86f330be27cc5a985",
+      "sha256": "f8878f71bbee2727308b78253551c10cf507f7222e244aa86f330be27cc5a985",
+      "bytes": 6211,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-observability-20261101--audit.py",
+      "source": ".local-pilot/scooter-observability-20261101/audit.py",
+      "source_sha256": "cac709aee12987ad1f526103d4ee1d864af81e35b325f72e24e2ea4503857a7e",
+      "sha256": "cac709aee12987ad1f526103d4ee1d864af81e35b325f72e24e2ea4503857a7e",
+      "bytes": 9306,
+      "transform": "copy"
+    },
+    {
+      "file": "../assets/scooter-joint-ba-comparison.png",
+      "source": ".local-pilot/scooter-joint-ba-20261101-v3/review-comparison.png",
+      "source_sha256": "f270337c7805358d2cfc95c6f89dffa6b3f27229f1a851ed610feafbc6324b51",
+      "sha256": "f270337c7805358d2cfc95c6f89dffa6b3f27229f1a851ed610feafbc6324b51",
+      "bytes": 240078,
+      "transform": "copy"
+    },
+    {
+      "file": "calf-R-gp-summary.json",
+      "source": ".local-pilot/scooter-calf-orientation-gp-20261101/assessment.json",
+      "source_sha256": "2abe1172898daff4739ec15bb8bf85839ed52dd52a733bca9810e153d0be7c8e",
+      "sha256": "cb13c34c836076580845347d4bdb5e6a399b035440f52c39772482207a28e5b1",
+      "bytes": 13494,
+      "transform": "calf-summary"
+    },
+    {
+      "file": "calf-R-gp-receipt.json",
+      "source": ".local-pilot/scooter-calf-orientation-gp-20261101/receipt.json",
+      "source_sha256": "e848d97e9df7aa0cf4ddf4e889478084da6e3f730dd783721a73eba97787ed55",
+      "sha256": "e848d97e9df7aa0cf4ddf4e889478084da6e3f730dd783721a73eba97787ed55",
+      "bytes": 341,
+      "transform": "copy"
+    },
+    {
+      "file": "fresh-track-outcome.json",
+      "source": ".local-pilot/scooter-fresh-tracks-20261101/outcome.json",
+      "source_sha256": "32c28312aaa8f03131af0374cb7e28233001957a3c2deb5c6240d63d94246b82",
+      "sha256": "32c28312aaa8f03131af0374cb7e28233001957a3c2deb5c6240d63d94246b82",
+      "bytes": 6844,
+      "transform": "copy"
+    },
+    {
+      "file": "fresh-track-receipt.json",
+      "source": ".local-pilot/scooter-fresh-tracks-20261101/receipt.json",
+      "source_sha256": "d13435ba1a6d717ed0993a1bc66a6546c9afbbc8dc79adeba0373cd78d9f9ae5",
+      "sha256": "d13435ba1a6d717ed0993a1bc66a6546c9afbbc8dc79adeba0373cd78d9f9ae5",
+      "bytes": 740,
+      "transform": "copy"
+    },
+    {
+      "file": "fixed-calibration-assessment.json",
+      "source": ".local-pilot/scooter-incremental-fixed-calibration-20261101/assessment.json",
+      "source_sha256": "db2a94c210420cb868c8922a54b8a8c381c573bdfabfb86ec018546e100e17e5",
+      "sha256": "db2a94c210420cb868c8922a54b8a8c381c573bdfabfb86ec018546e100e17e5",
+      "bytes": 21924,
+      "transform": "copy"
+    },
+    {
+      "file": "fixed-calibration-options.txt",
+      "source": ".local-pilot/scooter-incremental-fixed-calibration-20261101/options.txt",
+      "source_sha256": "90b6bd52144a98c4afb80c029df95af952a3b96ac0c562462c59a2d8c9ff282a",
+      "sha256": "90b6bd52144a98c4afb80c029df95af952a3b96ac0c562462c59a2d8c9ff282a",
+      "bytes": 3017,
+      "transform": "copy"
+    },
+    {
+      "file": "guidenav-gap-memo.md",
+      "source": ".local-pilot/scooter-guidenav-review-20261101/GAP-MEMO.md",
+      "source_sha256": "b8c13befe3fb5d0417baec9b6e7f491bbb934f67b838c08fc02bd99a5d1d06e1",
+      "sha256": "b8c13befe3fb5d0417baec9b6e7f491bbb934f67b838c08fc02bd99a5d1d06e1",
+      "bytes": 10251,
+      "transform": "copy"
+    },
+    {
+      "file": "guidenav-snapshot-receipt.json",
+      "source": ".local-pilot/scooter-guidenav-review-20261101/snapshot-receipt.json",
+      "source_sha256": "96b65041939270d1f26c2535a7e7f11d2b4eb2a3545a08997f429413a98cf557",
+      "sha256": "96b65041939270d1f26c2535a7e7f11d2b4eb2a3545a08997f429413a98cf557",
+      "bytes": 2946,
+      "transform": "copy"
+    },
+    {
+      "file": "render-receipt.json",
+      "source": ".local-pilot/scooter-research-delivery-20261101/render-receipt.json",
+      "source_sha256": "138d3e02f10243dd60bc9a23b57aa64b2b8988c26faff40f2ad286266dd05a70",
+      "sha256": "138d3e02f10243dd60bc9a23b57aa64b2b8988c26faff40f2ad286266dd05a70",
+      "bytes": 902,
+      "transform": "copy"
+    },
+    {
+      "file": "productdiagnostics-receipt-v4.json",
+      "source": ".local-pilot/scooter-support-product-20261101/receipt-v4.json",
+      "source_sha256": "82431d5977c239e9fe1cd0c30839e1f5bb0ac7770e60c5e4360bc660553daaf5",
+      "sha256": "82431d5977c239e9fe1cd0c30839e1f5bb0ac7770e60c5e4360bc660553daaf5",
+      "bytes": 1820,
+      "transform": "copy"
+    },
+    {
+      "file": "production-check-smoke.json",
+      "source": ".local-pilot/scooter-support-product-20261101/production-check-smoke.json",
+      "source_sha256": "6c13704c0cb57269e08477547bf8835fd785398f7e5c0db17dfefc1e627d0519",
+      "sha256": "6c13704c0cb57269e08477547bf8835fd785398f7e5c0db17dfefc1e627d0519",
+      "bytes": 2305,
+      "transform": "copy"
+    },
+    {
+      "file": "productdiagnostics-comparison.json",
+      "source": ".local-pilot/scooter-support-product-20261101/comparison.json",
+      "source_sha256": "c5631eebc2b63a0c51016c5c65e295a9b25f7a3a7283c434a2abe0afac9b0bfd",
+      "sha256": "c5631eebc2b63a0c51016c5c65e295a9b25f7a3a7283c434a2abe0afac9b0bfd",
+      "bytes": 2603,
+      "transform": "copy"
+    },
+    {
+      "file": "productdiagnostics-smoke-summary.json",
+      "source": ".local-pilot/scooter-support-product-20261101/smoke.json",
+      "source_sha256": "8c66ce0d8671e34ace8b0614aaf57d80ab302fc56f001ab1cb2ba4d7ef864889",
+      "sha256": "67fd7650df4be36df608a19e7555ad232d2523886c738d290837f28467eb92ed",
+      "bytes": 4103,
+      "transform": "smoke-summary"
+    },
+    {
+      "file": "sky-report.json",
+      "source": ".local-pilot/scooter-night-sky-audit-20261101/report.json",
+      "source_sha256": "0873b09b8fce9e031fc43536da996b4bdc52b7e2be0e46d4dbfc98335c444173",
+      "sha256": "0873b09b8fce9e031fc43536da996b4bdc52b7e2be0e46d4dbfc98335c444173",
+      "bytes": 9251,
+      "transform": "copy"
+    },
+    {
+      "file": "sky-provenance.json",
+      "source": ".local-pilot/scooter-night-sky-audit-20261101/provenance.json",
+      "source_sha256": "7c439b63376c138d5e66bace0d555254645399d57fb3595d0676f6497144aa61",
+      "sha256": "7c439b63376c138d5e66bace0d555254645399d57fb3595d0676f6497144aa61",
+      "bytes": 7221,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-research-delivery-20261101--render_comparison.py",
+      "source": ".local-pilot/scooter-research-delivery-20261101/render_comparison.py",
+      "source_sha256": "b5c3a716c5352999cf0dd185c61e33e85384e89bbb704b6cb2f8e1d18076696c",
+      "sha256": "b5c3a716c5352999cf0dd185c61e33e85384e89bbb704b6cb2f8e1d18076696c",
+      "bytes": 5335,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-fresh-tracks-20261101--run.py",
+      "source": ".local-pilot/scooter-fresh-tracks-20261101/run.py",
+      "source_sha256": "dc9ecdfc3ec876280ae3f0d51983b403826e5d8c3c0c654ffaa008108570f1e1",
+      "sha256": "dc9ecdfc3ec876280ae3f0d51983b403826e5d8c3c0c654ffaa008108570f1e1",
+      "bytes": 12184,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-fresh-tracks-20261101--gp.py",
+      "source": ".local-pilot/scooter-fresh-tracks-20261101/gp.py",
+      "source_sha256": "a2bdb026926abbe4aae619154149e31f6c1c425db4fffe3bca53d832d46a0eb1",
+      "sha256": "a2bdb026926abbe4aae619154149e31f6c1c425db4fffe3bca53d832d46a0eb1",
+      "bytes": 9226,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-calf-orientation-gp-20261101--run.py",
+      "source": ".local-pilot/scooter-calf-orientation-gp-20261101/run.py",
+      "source_sha256": "0b71cd0549aa663a27cdb5a28a933148827e4008d4206a74b54b3d7fba803681",
+      "sha256": "0b71cd0549aa663a27cdb5a28a933148827e4008d4206a74b54b3d7fba803681",
+      "bytes": 5347,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-calf-orientation-gp-20261101--assess.py",
+      "source": ".local-pilot/scooter-calf-orientation-gp-20261101/assess.py",
+      "source_sha256": "85ceab0942fe603b1df94d062ea5575e8edd16d87a37c8a31fa883224cfe7cad",
+      "sha256": "85ceab0942fe603b1df94d062ea5575e8edd16d87a37c8a31fa883224cfe7cad",
+      "bytes": 3365,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-incremental-fixed-calibration-20261101--run.py",
+      "source": ".local-pilot/scooter-incremental-fixed-calibration-20261101/run.py",
+      "source_sha256": "561707d91f4914c654088649609dc8557f7055504b0dc5f5363e9602c621f423",
+      "sha256": "561707d91f4914c654088649609dc8557f7055504b0dc5f5363e9602c621f423",
+      "bytes": 4648,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-night-sky-audit-20261101--run.py",
+      "source": ".local-pilot/scooter-night-sky-audit-20261101/run.py",
+      "source_sha256": "a37090cce68b449b6104588007273328022d14c31967f90f9d8cf6301c70a711",
+      "sha256": "a37090cce68b449b6104588007273328022d14c31967f90f9d8cf6301c70a711",
+      "bytes": 7500,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-night-sky-audit-20261101--provenance.py",
+      "source": ".local-pilot/scooter-night-sky-audit-20261101/provenance.py",
+      "source_sha256": "2228342de7a9b337690d5ae537ea90fbc6f4a20a620dce2e2d8a06546708a4e9",
+      "sha256": "2228342de7a9b337690d5ae537ea90fbc6f4a20a620dce2e2d8a06546708a4e9",
+      "bytes": 4663,
+      "transform": "copy"
+    },
+    {
+      "file": "../assets/scooter-optimization-quality.png",
+      "source": ".local-pilot/scooter-research-delivery-20261101/quality-comparison.png",
+      "source_sha256": "aa60916d426967bc810d107e9be17d312b0fc4314ff77d68bee12a816e370a5e",
+      "sha256": "aa60916d426967bc810d107e9be17d312b0fc4314ff77d68bee12a816e370a5e",
+      "bytes": 235750,
+      "transform": "copy"
+    },
+    {
+      "file": "root-combined-tests-observed.json",
+      "source": null,
+      "source_sha256": null,
+      "sha256": "aaf78e6ce5477bfed770ef5a71d601280ae872fbdadd00bec723a03841197650",
+      "bytes": 326,
+      "transform": "observed_tool_result"
+    },
+    {
+      "file": "temporal-flow-report.json",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/flow-report.json",
+      "source_sha256": "e47e3807c94fc53313ddb26b012c071e359ff39cc4131cda0e4f38c31d6d1832",
+      "sha256": "e47e3807c94fc53313ddb26b012c071e359ff39cc4131cda0e4f38c31d6d1832",
+      "bytes": 278514,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-flow-receipt.json",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/flow-receipt.json",
+      "source_sha256": "e0f4f343d8e6cdcaff0bbebda5f1beabe0b9acdfca730366d8394f2cf193b02f",
+      "sha256": "e0f4f343d8e6cdcaff0bbebda5f1beabe0b9acdfca730366d8394f2cf193b02f",
+      "bytes": 384,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-flow-partial-manifest.json",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/partial-manifest.json",
+      "source_sha256": "617158d995f8345d9dcd0aa86c2df9c316f8659baf114a624e0ded59fef3bc25",
+      "sha256": "617158d995f8345d9dcd0aa86c2df9c316f8659baf114a624e0ded59fef3bc25",
+      "bytes": 338304,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-flow-handoff.json",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/handoff.json",
+      "source_sha256": "3a48ca81b73d502d7d2ab6329386ca712dae4d6ed2c9588326e9c3fd47e9f793",
+      "sha256": "3a48ca81b73d502d7d2ab6329386ca712dae4d6ed2c9588326e9c3fd47e9f793",
+      "bytes": 4972,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-flow-resume-receipt.json",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/resume-missing-edges/receipt.json",
+      "source_sha256": "7e2abeaa1d7efd4114f23be9170b175e060751a3e5991b6558e3140e48e74f1f",
+      "sha256": "7e2abeaa1d7efd4114f23be9170b175e060751a3e5991b6558e3140e48e74f1f",
+      "bytes": 597,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-flow-resume-result.json",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/resume-missing-edges/resume-worker-result.json",
+      "source_sha256": "3a4f1bc45f77f7f312b15909496f1dc8a8304214049703ca044686839d3f3c89",
+      "sha256": "3a4f1bc45f77f7f312b15909496f1dc8a8304214049703ca044686839d3f3c89",
+      "bytes": 8048,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-flow-mapping-assessment.json",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/mapping/assessment.json",
+      "source_sha256": "a72901d7b998aedc249b7eb1de24841f8d377d3d83178b76067a91de032c16fd",
+      "sha256": "a72901d7b998aedc249b7eb1de24841f8d377d3d83178b76067a91de032c16fd",
+      "bytes": 54402,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-flow-mapping-receipt.json",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/mapping/receipt.json",
+      "source_sha256": "a8f2391ab7d2c46164b31d82aece485829d4a12ab68ae95ff21572a51b62918c",
+      "sha256": "a8f2391ab7d2c46164b31d82aece485829d4a12ab68ae95ff21572a51b62918c",
+      "bytes": 301,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-frontier-plan.json",
+      "source": ".local-pilot/scooter-temporal-frontiers-20261101/plan.json",
+      "source_sha256": "43f0a1bf7dae262180e793631084a5c36e8996151a3acf9c7dcabe8766402ec9",
+      "sha256": "43f0a1bf7dae262180e793631084a5c36e8996151a3acf9c7dcabe8766402ec9",
+      "bytes": 6904,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-bridge-outcome.json",
+      "source": ".local-pilot/scooter-temporal-bridge-20261101/outcome.json",
+      "source_sha256": "76432b457da8701511b5e40643cada57e3bc57f3c8b06ba9a5dfa57f5f09dad2",
+      "sha256": "76432b457da8701511b5e40643cada57e3bc57f3c8b06ba9a5dfa57f5f09dad2",
+      "bytes": 7751,
+      "transform": "copy"
+    },
+    {
+      "file": "temporal-bridge-mapping-receipt.json",
+      "source": ".local-pilot/scooter-temporal-bridge-20261101/mapping/receipt.json",
+      "source_sha256": "22a868333cb60e6c75da6387d9697400c0fc89bcae643e8752e999202fc2f47f",
+      "sha256": "22a868333cb60e6c75da6387d9697400c0fc89bcae643e8752e999202fc2f47f",
+      "bytes": 299,
+      "transform": "copy"
+    },
+    {
+      "file": "runtime-check.json",
+      "source": ".local-pilot/scooter-research-delivery-20261101/runtime-check.json",
+      "source_sha256": "089be09ab934a2adc5587b98970c8f4ba5cf211c3b24179b1de2e60b981f04bf",
+      "sha256": "089be09ab934a2adc5587b98970c8f4ba5cf211c3b24179b1de2e60b981f04bf",
+      "bytes": 1021,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-flow-full-20261101--flow.py",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/flow.py",
+      "source_sha256": "2bbf27c2639939e619dabf20df5a3f90dc234e043f9d019a3db592bb5ad6ae7b",
+      "sha256": "2bbf27c2639939e619dabf20df5a3f90dc234e043f9d019a3db592bb5ad6ae7b",
+      "bytes": 15603,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-flow-full-20261101--resume.py",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/resume.py",
+      "source_sha256": "2c44a06411228d637eb7dcaac560a398d7a77da42f53a0203a59f55b211a3e1e",
+      "sha256": "2c44a06411228d637eb7dcaac560a398d7a77da42f53a0203a59f55b211a3e1e",
+      "bytes": 12837,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-flow-full-20261101--continue_cycles.py",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/continue_cycles.py",
+      "source_sha256": "438e3d61aa71d921b067409caf8b35fa8c94826c5f4fca401ed54cf59a61a967",
+      "sha256": "438e3d61aa71d921b067409caf8b35fa8c94826c5f4fca401ed54cf59a61a967",
+      "bytes": 6210,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-flow-full-20261101--mapping--run.py",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/mapping/run.py",
+      "source_sha256": "ca4d2bf9e566db3ba184f907f280937b3199db4e60a437b66d4a59ff5ccce796",
+      "sha256": "ca4d2bf9e566db3ba184f907f280937b3199db4e60a437b66d4a59ff5ccce796",
+      "bytes": 7248,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-flow-full-20261101--mapping--assess.py",
+      "source": ".local-pilot/scooter-temporal-flow-full-20261101/mapping/assess.py",
+      "source_sha256": "42bcc9c41e3bc828ae095e5327ae88a4a4d1d2cf5115f95d71281c35f62749a4",
+      "sha256": "42bcc9c41e3bc828ae095e5327ae88a4a4d1d2cf5115f95d71281c35f62749a4",
+      "bytes": 5649,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-frontiers-20261101--prepare.py",
+      "source": ".local-pilot/scooter-temporal-frontiers-20261101/prepare.py",
+      "source_sha256": "7cfdc48564a06f8cf78440d9fd5314f22cf75caf8c68ab01e97677ea77375778",
+      "sha256": "7cfdc48564a06f8cf78440d9fd5314f22cf75caf8c68ab01e97677ea77375778",
+      "bytes": 8971,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-bridge-20261101--feature_match.py",
+      "source": ".local-pilot/scooter-temporal-bridge-20261101/feature_match.py",
+      "source_sha256": "0b43a56f6d2a1373b8928eb86e67aacbe79f64993ac608612af656292c20bd65",
+      "sha256": "0b43a56f6d2a1373b8928eb86e67aacbe79f64993ac608612af656292c20bd65",
+      "bytes": 9851,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-bridge-20261101--new_flow.py",
+      "source": ".local-pilot/scooter-temporal-bridge-20261101/new_flow.py",
+      "source_sha256": "7ca4a8f21a8d3086c9ccb9324106daff864984c3d47b3be253add498bbc40d3a",
+      "sha256": "7ca4a8f21a8d3086c9ccb9324106daff864984c3d47b3be253add498bbc40d3a",
+      "bytes": 11421,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-bridge-20261101--mapping--run.py",
+      "source": ".local-pilot/scooter-temporal-bridge-20261101/mapping/run.py",
+      "source_sha256": "a94026aa558306a15391611b9a2158d00ce8a7336588d54e9f20426bc12924f7",
+      "sha256": "a94026aa558306a15391611b9a2158d00ce8a7336588d54e9f20426bc12924f7",
+      "bytes": 8988,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-temporal-bridge-20261101--mapping--assess.py",
+      "source": ".local-pilot/scooter-temporal-bridge-20261101/mapping/assess.py",
+      "source_sha256": "73d2133fdd44ed8de8b38ce153a99811ca13dc35b1fc6ee1e07bed39e1af83d7",
+      "sha256": "73d2133fdd44ed8de8b38ce153a99811ca13dc35b1fc6ee1e07bed39e1af83d7",
+      "bytes": 5648,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-resolution-comparison.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/comparison.json",
+      "source_sha256": "06aee6bb695d9711c9432a2aad8e7666fa7e586d0062ff2ba0674b2178ff221a",
+      "sha256": "812a2b38a589de660061b04048255c3e6c15fbbfc8b51b2237497b01b3bb57c7",
+      "bytes": 5127,
+      "transform": "compact-comparison"
+    },
+    {
+      "file": "disk-v4-gpu-result.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/result.json",
+      "source_sha256": "00f12c858412acc05cfdfd3f99f0660acd967b8e682589b94cdae869a5457ba2",
+      "sha256": "00f12c858412acc05cfdfd3f99f0660acd967b8e682589b94cdae869a5457ba2",
+      "bytes": 2644,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-v4-process-receipt.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/process-receipt.json",
+      "source_sha256": "06ae95affda814962512e2251da9a382a8db64ba6679df021c77160f832afe26",
+      "sha256": "06ae95affda814962512e2251da9a382a8db64ba6679df021c77160f832afe26",
+      "bytes": 224,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-v4-weights-receipt.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/weights.json",
+      "source_sha256": "1fc1170a90bfd099e37de61698a09a242f1e9097efd43882413f7d266b69ee99",
+      "sha256": "1fc1170a90bfd099e37de61698a09a242f1e9097efd43882413f7d266b69ee99",
+      "bytes": 1066,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-v4-weights-after.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/weights-after.json",
+      "source_sha256": "4f177fa5a754b5fabd854c7fad7e417b065f2a5213d4b2679e8f16b0a75821ef",
+      "sha256": "4f177fa5a754b5fabd854c7fad7e417b065f2a5213d4b2679e8f16b0a75821ef",
+      "bytes": 479,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-v4-prepared.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/prepared.json",
+      "source_sha256": "e7a417071e24d1ce658697a73122b5966b4b7fea4d600dca7c6d1a2551cfb863",
+      "sha256": "e7a417071e24d1ce658697a73122b5966b4b7fea4d600dca7c6d1a2551cfb863",
+      "bytes": 9944,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-v4-cpu-receipt.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/cpu/receipt.json",
+      "source_sha256": "b1f4ff78489d8953eec6337b8f4e2a56b1355e2e3b5a9b580e6c03e2c3413200",
+      "sha256": "b1f4ff78489d8953eec6337b8f4e2a56b1355e2e3b5a9b580e6c03e2c3413200",
+      "bytes": 308,
+      "transform": "copy"
+    },
+    {
+      "file": "disk-v4-verification.json",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/cpu/verification.json",
+      "source_sha256": "8a46644bb57383a9bb3b01e91b46b87b58893d6cc7b337b239afea86474b933f",
+      "sha256": "8a46644bb57383a9bb3b01e91b46b87b58893d6cc7b337b239afea86474b933f",
+      "bytes": 83,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-disk-lg-20261101-v4--run.py",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/run.py",
+      "source_sha256": "0183a8a496b07d159aeb95b76cac3ae17bd0582eaf7c59509a5af3d79ca7f937",
+      "sha256": "0183a8a496b07d159aeb95b76cac3ae17bd0582eaf7c59509a5af3d79ca7f937",
+      "bytes": 13624,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-disk-lg-20261101-v4--compare.py",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/compare.py",
+      "source_sha256": "cfb5403c1c7d2bc369c3a06253ec9971f9cd7be0aa0295684a5b39da762bc062",
+      "sha256": "cfb5403c1c7d2bc369c3a06253ec9971f9cd7be0aa0295684a5b39da762bc062",
+      "bytes": 2742,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-disk-lg-20261101-v4--cpu--run.py",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/cpu/run.py",
+      "source_sha256": "7a5ea109cf7feafd301858e988eb61876e493a9666558ac3625382b174008a5b",
+      "sha256": "7a5ea109cf7feafd301858e988eb61876e493a9666558ac3625382b174008a5b",
+      "bytes": 6317,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scooter-disk-lg-20261101-v4--cpu--assess.py",
+      "source": ".local-pilot/scooter-disk-lg-20261101-v4/cpu/assess.py",
+      "source_sha256": "48bdb65cfcd5ca04553cfd35904dd4dc49560f129dc11ebec79c42ba2de8aa09",
+      "sha256": "48bdb65cfcd5ca04553cfd35904dd4dc49560f129dc11ebec79c42ba2de8aa09",
+      "bytes": 4309,
+      "transform": "copy"
+    }
+  ]
+}

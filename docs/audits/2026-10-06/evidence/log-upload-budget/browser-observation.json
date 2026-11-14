@@ -1,0 +1,20 @@
+{
+  "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+  "uiSource": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "observedAt": "2026-10-05T20:45:16.234Z",
+  "layout": {
+    "height": 720,
+    "scrollWidth": 1280,
+    "width": 1280
+  },
+  "nonemptyLogsVisibleBeforeSearch": true,
+  "noMatchSearchVerified": true,
+  "manualRefreshSucceeded": true,
+  "boundedReadMetadataVisible": true,
+  "componentMismatchVisible": true,
+  "warnErrorEntriesReturned": 0,
+  "deviceCommandsSent": false,
+  "logsDeleted": false,
+  "themeChanged": false,
+  "rawLogsPublished": false
+}

@@ -1,0 +1,11 @@
+{
+  "exitCode": 0,
+  "seconds": 17.17200000002049,
+  "tests": 144,
+  "passed": 100,
+  "failed": 0,
+  "skipped": 44,
+  "success": true,
+  "source_test_unchanged": true,
+  "raw_jest_sha256": "a0d4c4dc6c2fc82b493707f8a99ff7849cf387f19b530d14a0eb70034da1de32"
+}

@@ -1,0 +1,19 @@
+{
+  "status": "incomplete_scaffold_logging_quota",
+  "cause": "Inherited fixed-K scaffold stored every resource checkpoint; guided chunk checkpoints exceeded4096 log-sample quota. Algorithm thresholds/resource fences did not fail.",
+  "workerExitCode": 1,
+  "wallSeconds": 54.125,
+  "resourceSamples": 4097,
+  "resourceFindings": 0,
+  "minAvailableRamGiB": 7.680019378662109,
+  "peakSampledPrivateBytes": 220819456,
+  "sourceUnchanged": true,
+  "runtimeSourcesUnchanged": true,
+  "routeProduced": false,
+  "localizationExecuted": false,
+  "provenanceProduced": false,
+  "actualCandidateQualityKnown": false,
+  "rerunPerformed": false,
+  "physicalActions": 0,
+  "productionApiTouched": false
+}

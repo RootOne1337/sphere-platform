@@ -6,11 +6,9 @@ from functools import lru_cache
 
 from cryptography.fernet import Fernet
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
-from backend.database.engine import get_db
-from backend.database.redis_client import get_redis
+from backend.database.engine import get_db_session
 from backend.services.vpn.awg_config import AWGConfigBuilder
 
 
@@ -51,31 +49,27 @@ def decrypt_private_key(encrypted: bytes, cipher: Fernet) -> str:
 
 # ── Pool Service DI ──────────────────────────────────────────────────────────
 
-async def get_ip_pool_allocator(redis=Depends(get_redis)):
-    """DI: IPPoolAllocator с Redis клиентом и настройками подсети."""
+async def get_ip_pool_allocator():
+    """DI: authoritative PostgreSQL allocation, independent of Redis availability."""
     from backend.services.vpn.ip_pool import IPPoolAllocator
-    return IPPoolAllocator(redis, subnet=settings.VPN_POOL_SUBNET)
+    return IPPoolAllocator(None, subnet=settings.VPN_POOL_SUBNET)
 
 
 async def get_vpn_pool_service(
-    db: AsyncSession = Depends(get_db),
     ip_pool=Depends(get_ip_pool_allocator),
     builder: AWGConfigBuilder = Depends(get_awg_config_builder),
 ):
     """DI: VPNPoolService — yield для корректного закрытия httpx.AsyncClient."""
     from backend.services.vpn.pool_service import VPNPoolService
-    service = VPNPoolService(
-        db=db,
-        ip_pool=ip_pool,
-        config_builder=builder,
-        key_cipher=get_key_cipher(),
-        wg_router_url=settings.WG_ROUTER_URL,
-        wg_router_api_key=settings.WG_ROUTER_API_KEY,
-    )
-    try:
-        yield service
-    finally:
-        await service.aclose()
+    async with get_db_session() as db:
+        service = VPNPoolService(
+            db=db, ip_pool=ip_pool, config_builder=builder, key_cipher=get_key_cipher(),
+            wg_router_url=settings.WG_ROUTER_URL, wg_router_api_key=settings.WG_ROUTER_API_KEY,
+        )
+        try:
+            yield service
+        finally:
+            await service.aclose()
 
 
 # ── Kill Switch DI ───────────────────────────────────────────────────────────

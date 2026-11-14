@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T10:19:14.210664+00:00",
+  "sourceRevision": "7b85aa5b1ac08ba1df0c8b673c4e924f24b34c86",
+  "runtimeInstalled": false,
+  "productionAccepted": false,
+  "issue": "During installed19a850f8 QA, changing ACK link/action text wrapped and moved the canvas mid-gesture. A straight CSS mouse path became a non-straight native path and was correctly rejected by recording.",
+  "correction": "Single-line truncated control status and horizontally scrollable no-wrap stream summary preserve canvas geometry during live metric changes.",
+  "sourcePreview": {
+    "swipesConfirmed": 5,
+    "rectProof": {
+      "samples": 200,
+      "unique": 1
+    },
+    "control": "ready",
+    "pageErrorCount": 0,
+    "totalConfirmedEntriesAfterClicksWheelHome": 10,
+    "commandsReplayed": false,
+    "taskExecuted": false
+  },
+  "limits": [
+    "This is source-preview observation, not installation proof.",
+    "No physical phone,20+ viewer, arbitrary gesture_path or WAN/relay acceptance."
+  ]
+}

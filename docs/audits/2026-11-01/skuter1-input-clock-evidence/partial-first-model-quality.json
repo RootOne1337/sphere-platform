@@ -1,0 +1,198 @@
+{
+  "registered": 144,
+  "selected": 173,
+  "coverage": 0.8323699421965318,
+  "points": 9529,
+  "mean_reprojection_px": 1.1534499163637089,
+  "components": 2,
+  "conditioning": {
+    "near_camera_points": 0,
+    "near_camera_fraction": 0.0,
+    "camera_span_units": 10.579208144437091,
+    "passed": true
+  },
+  "intrinsics_condition": {
+    "passed": true,
+    "focal_ratio": 1.0,
+    "horizontal_fov_degrees": 115.46731535654821,
+    "vertical_fov_degrees": 83.39858462712465,
+    "physical_calibration_verified": false
+  },
+  "selection": {
+    "schema": "sphere-route-geometry-selection-v1",
+    "registered": 144,
+    "selected": 173,
+    "coverage": 0.8323699421965318,
+    "points": 9529,
+    "reprojection_px": 1.1534499163637089,
+    "scene_admissible": true,
+    "route_admissible": false,
+    "scene_reasons": [],
+    "route_reasons": [
+      "route_endpoints_unobserved"
+    ],
+    "source_coverage": {
+      "first_seconds": 5.678,
+      "last_seconds": 36.404,
+      "missing_start_seconds": 5.678,
+      "missing_end_seconds": 0.4989999999999952,
+      "max_observed_gap_seconds": 0.2849999999999966,
+      "endpoints_observed": false,
+      "all_intervals_observed": true,
+      "endpoint_limit_seconds": 1.0,
+      "interval_limit_seconds": 1.0
+    },
+    "motion": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 144,
+      "first_seconds": 5.678,
+      "last_seconds": 36.404,
+      "path_units": 18.85485226260345,
+      "endpoint_displacement_units": 3.0526106933227704,
+      "median_step_units": 0.1397877165774429,
+      "max_step_units": 0.26161329579752207,
+      "rapid_reversals": [],
+      "median_rate_units_per_second": 0.6646564637135802,
+      "speed_outliers": [],
+      "warning": null,
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "poses_interpolated": false,
+    "navigation_qualified": false,
+    "execution_qualified": false,
+    "conditioning": {
+      "near_camera_points": 0,
+      "near_camera_fraction": 0.0,
+      "camera_span_units": 10.579208144437091,
+      "passed": true
+    },
+    "intrinsics_condition": {
+      "passed": true,
+      "focal_ratio": 1.0,
+      "horizontal_fov_degrees": 115.46731535654821,
+      "vertical_fov_degrees": 83.39858462712465,
+      "physical_calibration_verified": false
+    },
+    "observation_support": {
+      "status": "complete",
+      "schema": "sphere-observation-support-v1",
+      "summary": {
+        "min": 84,
+        "median": 436.5,
+        "p10": 310.3,
+        "count_under_6": 0,
+        "count_under_15": 0
+      },
+      "summary_measure": "reprojection_le_4px",
+      "track_observations": 69591,
+      "execution_qualified": false,
+      "admission_effect": "none",
+      "caveat": "In-sample diagnostic; counts do not certify camera pose or navigation.",
+      "frame_count": 144,
+      "worst_frames": [
+        {
+          "image": "00000153.png",
+          "ticks_90k": 511020,
+          "raw_eligible_tracks": 84,
+          "positive_depth_inside": 84,
+          "reprojection_le_4px": 84,
+          "occupied_grid_4x4": 5
+        },
+        {
+          "image": "00000157.png",
+          "ticks_90k": 527580,
+          "raw_eligible_tracks": 164,
+          "positive_depth_inside": 164,
+          "reprojection_le_4px": 164,
+          "occupied_grid_4x4": 5
+        },
+        {
+          "image": "00000163.png",
+          "ticks_90k": 546930,
+          "raw_eligible_tracks": 182,
+          "positive_depth_inside": 182,
+          "reprojection_le_4px": 182,
+          "occupied_grid_4x4": 5
+        },
+        {
+          "image": "00000169.png",
+          "ticks_90k": 564930,
+          "raw_eligible_tracks": 243,
+          "positive_depth_inside": 243,
+          "reprojection_le_4px": 243,
+          "occupied_grid_4x4": 5
+        },
+        {
+          "image": "00000516.png",
+          "ticks_90k": 1866870,
+          "raw_eligible_tracks": 245,
+          "positive_depth_inside": 245,
+          "reprojection_le_4px": 245,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000327.png",
+          "ticks_90k": 1097910,
+          "raw_eligible_tracks": 270,
+          "positive_depth_inside": 270,
+          "reprojection_le_4px": 270,
+          "occupied_grid_4x4": 7
+        },
+        {
+          "image": "00000332.png",
+          "ticks_90k": 1116000,
+          "raw_eligible_tracks": 277,
+          "positive_depth_inside": 277,
+          "reprojection_le_4px": 277,
+          "occupied_grid_4x4": 7
+        },
+        {
+          "image": "00000338.png",
+          "ticks_90k": 1135440,
+          "raw_eligible_tracks": 281,
+          "positive_depth_inside": 281,
+          "reprojection_le_4px": 281,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000321.png",
+          "ticks_90k": 1076940,
+          "raw_eligible_tracks": 288,
+          "positive_depth_inside": 288,
+          "reprojection_le_4px": 288,
+          "occupied_grid_4x4": 7
+        },
+        {
+          "image": "00000520.png",
+          "ticks_90k": 1880370,
+          "raw_eligible_tracks": 290,
+          "positive_depth_inside": 290,
+          "reprojection_le_4px": 290,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000513.png",
+          "ticks_90k": 1854990,
+          "raw_eligible_tracks": 301,
+          "positive_depth_inside": 301,
+          "reprojection_le_4px": 301,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000524.png",
+          "ticks_90k": 1898460,
+          "raw_eligible_tracks": 301,
+          "positive_depth_inside": 301,
+          "reprojection_le_4px": 301,
+          "occupied_grid_4x4": 6
+        }
+      ],
+      "worst_frames_truncated": true
+    },
+    "model": 0
+  },
+  "first_pass_only": true
+}

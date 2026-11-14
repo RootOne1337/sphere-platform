@@ -1,0 +1,94 @@
+"""Conservative reconstruction checks; finite exports alone are not a scene."""
+from __future__ import annotations
+
+import math
+
+TRAINING_STEPS = (3000, 5000, 10000, 30000)
+
+
+def pinhole_condition(width, height, fx, fy):
+    """Catch extreme camera calibration degeneracy, not certify the lens or pose.
+
+    These broad bounds only apply to our PINHOLE model of ordinary square-pixel
+    screen captures. Distorted/anamorphic recordings require another explicit
+    model, not a silent relaxation of these checks.
+    """
+    values = (width, height, fx, fy)
+    if (any(isinstance(value, bool) or not isinstance(value, (int, float))
+            or not math.isfinite(value) for value in values)
+            or width <= 0 or height <= 0 or fx <= 0 or fy <= 0):
+        raise ValueError('camera_intrinsics_invalid')
+    ratio = fx / fy
+    horizontal_fov = math.degrees(2 * math.atan2(width, 2 * fx))
+    vertical_fov = math.degrees(2 * math.atan2(height, 2 * fy))
+    passed = (math.isfinite(ratio) and .25 <= ratio <= 4
+              and 3 <= horizontal_fov <= 178 and 3 <= vertical_fov <= 178)
+    return dict(passed=passed, focal_ratio=ratio if math.isfinite(ratio) else None, horizontal_fov_degrees=horizontal_fov,
+                vertical_fov_degrees=vertical_fov, physical_calibration_verified=False)
+
+
+def export_interval(steps):
+    """Keep detail runs within the existing cumulative checkpoint disk budget.
+
+    Thirty full-size exports can exceed 2 GiB at the admitted splat limit.
+    Six exports retain recovery checkpoints without weakening resource guards.
+    """
+    if type(steps) is not int or steps not in TRAINING_STEPS:
+        raise ValueError('invalid_processing_options')
+    return 5000 if steps == 30000 else 1000
+
+
+def sparse_condition(camera_centers, points):
+    """Detect points collapsed onto camera centers, invariant to SfM scale/origin.
+
+    Low reprojection errors are meaningless for zero-length observation rays.
+    The 1e-5 path-span epsilon is a numerical degeneracy test, not metres.
+    """
+    import numpy as np
+
+    cameras, xyz = np.asarray(camera_centers, dtype=float), np.asarray(points, dtype=float)
+    if (cameras.ndim != 2 or cameras.shape[1] != 3 or not 2 <= len(cameras) <= 240
+            or xyz.ndim != 2 or xyz.shape[1] != 3 or not 1 <= len(xyz) <= 2000000
+            or not np.isfinite(cameras).all() or not np.isfinite(xyz).all()):
+        raise ValueError('sparse_geometry_invalid')
+    span = float(np.linalg.norm(np.ptp(cameras, axis=0)))
+    if not math.isfinite(span) or span <= 0:
+        raise ValueError('sparse_camera_path_degenerate')
+    near = 0
+    for start in range(0, len(xyz), 2048):
+        distance = np.linalg.norm(xyz[start:start + 2048, None, :] - cameras[None, :, :], axis=2)
+        near += int((distance.min(axis=1) < span * 1e-5).sum())
+    fraction = near / len(xyz)
+    return dict(near_camera_points=near, near_camera_fraction=fraction,
+                camera_span_units=span, passed=fraction <= .01)
+
+
+def reference_quality(metrics):
+    """Baseline appearance guard at recorded poses, not a held-out/navigation test.
+
+    These explicit thresholds catch grossly blurred/broken outputs; passing does
+    not certify unseen viewpoints, metric geometry or obstacle avoidance.
+    """
+    views = metrics.get('views', [])
+    if (metrics.get('schema') != 'sphere-reference-render-evaluation-v1'
+            or metrics.get('training') is not False or metrics.get('held_out') is not False
+            or metrics.get('resolution_limit') != 960 or not 3 <= len(views) <= 9):
+        raise ValueError('reference_metrics_invalid')
+    values = []
+    for view in views:
+        psnr, ssim = view.get('psnr'), view.get('ssim')
+        if (isinstance(psnr, bool) or isinstance(ssim, bool)
+                or not isinstance(psnr, (int, float)) or not isinstance(ssim, (int, float))
+                or not math.isfinite(psnr) or not math.isfinite(ssim)
+                or not 0 <= psnr <= 100 or not -1 <= ssim <= 1):
+            raise ValueError('reference_metrics_nonfinite_or_invalid')
+        values.append((psnr, ssim))
+    mean_psnr = sum(row[0] for row in values) / len(values)
+    mean_ssim = sum(row[1] for row in values) / len(values)
+    min_psnr, min_ssim = min(row[0] for row in values), min(row[1] for row in values)
+    passed = mean_psnr >= 22 and mean_ssim >= .75 and min_psnr >= 18 and min_ssim >= .65
+    return dict(state='passed' if passed else 'rejected', mean_psnr=mean_psnr, mean_ssim=mean_ssim,
+                min_psnr=min_psnr, min_ssim=min_ssim, reference_views=len(values),
+                held_out=False, resolution_limit=960,
+                policy=dict(mean_psnr=22, mean_ssim=.75, min_psnr=18, min_ssim=.65),
+                navigation_qualified=False)

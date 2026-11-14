@@ -1,0 +1,12 @@
+{
+  "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+  "startedAt": "2026-10-06T11:49:01.320977+00:00",
+  "completedAt": "2026-10-06T11:49:57.612135+00:00",
+  "exit": 0,
+  "installed": false,
+  "imageId": "sha256:9c408135c5bcee80814886361e4ec15934e94e407cb4509d9ada4b90209331ae",
+  "archiveBytes": 3471360,
+  "archiveSha256": "4c38b1e11e0fb059a17fe9f287052b1d1b81925b19e12569b21e97c101360975",
+  "gitArchiveHeadOnly": true,
+  "sourceRevision": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb"
+}

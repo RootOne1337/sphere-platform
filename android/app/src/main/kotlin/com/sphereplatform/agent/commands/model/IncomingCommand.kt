@@ -1,5 +1,7 @@
 package com.sphereplatform.agent.commands.model
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
@@ -12,10 +14,13 @@ data class IncomingCommand(
     val ttl_seconds: Int = 60,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class CommandAck(
     val command_id: String,
     val status: String,            // "received" | "running" | "completed" | "failed"
     val error: String? = null,
     val result: JsonObject? = null,
+    // Required by the server router even when Json.encodeDefaults is false.
+    @EncodeDefault val type: String = "command_result",
 )

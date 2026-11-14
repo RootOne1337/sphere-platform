@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "scope": "RECORDED_CAMERA_TRACE_NOT_NAVIGATION",
+  "width": 1920,
+  "height": 1080,
+  "lookaheadMs": 1200,
+  "geometrySha256": "be5815218e3280a370466489c732eb235d7ba0e4ca020a6cb79bcfbd47832f62",
+  "sourceManifestSha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+  "sameRecording": true,
+  "liveLocalization": false,
+  "groundRoute": false,
+  "occlusionChecked": false,
+  "physicalActions": 0,
+  "sourceFilesChanged": false,
+  "syntheticFrames": 0,
+  "frameCount": 512,
+  "framesWithPolyline": 494,
+  "videoBytes": 36462036,
+  "surfacePreview": {
+    "planes": 52,
+    "totalCameras": 89,
+    "framesWithGroundSegments": 189,
+    "lookaheadMs": 5000,
+    "cameraBodyCalibrated": false,
+    "occlusionChecked": false,
+    "geometryQualified": false,
+    "worldPointsDerivedFromPlaneHypotheses": true
+  },
+  "previewVideoReencoded": false,
+  "sourcePreviewVideoSha256": "c774a1ffcf5bb8ed8f74190020ad474f61e5134f2cc30377fcb17ea9669ebfa7"
+}

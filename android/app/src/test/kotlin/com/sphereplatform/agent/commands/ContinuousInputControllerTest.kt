@@ -1,0 +1,377 @@
+package com.sphereplatform.agent.commands
+
+import com.sphereplatform.agent.streaming.CaptureInputSession
+import com.sphereplatform.agent.streaming.StreamingManager
+import com.sphereplatform.agent.direct.DirectInputChannel
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.*
+import kotlinx.serialization.json.*
+import org.junit.Assert.*
+import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicLong
+
+class ContinuousInputControllerTest {
+    private class Fixture(enabled: Boolean = true, private val holdStartup: Boolean = false,
+                          private val cleanupConfirmed: Boolean = true) {
+        val job = SupervisorJob()
+        val scope = CoroutineScope(job + Dispatchers.Unconfined)
+        val now = AtomicLong(100)
+        @Volatile var connection: Long? = 1
+        @Volatile var capture: CaptureInputSession? = CaptureInputSession("epoch_1234", 960, 540, 1280, 720, 0)
+        @Volatile var outbound = true
+        @Volatile var opens = 0
+        @Volatile var closed = false
+        val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val receipts = CopyOnWriteArrayList<JsonObject>()
+        val samples = CopyOnWriteArrayList<TouchSample>()
+        val directReceipts = CopyOnWriteArrayList<JsonObject>()
+        var peerCurrent = true
+        val peerSession = "a".repeat(32)
+        val streaming = mockk<StreamingManager>()
+        init { every { streaming.getInputSession() } answers { capture } }
+        val controller = ContinuousInputController(scope, TouchPipeFactory {
+            opens++; entered.complete(Unit)
+            if (holdStartup) release.await()
+            object : TouchPipe {
+                override suspend fun send(sample: TouchSample): RootTouchWire.Ack {
+                    samples.add(sample)
+                    return java.io.ByteArrayOutputStream().let {
+                        RootTouchWire.ack(it, sample.sequence, when (sample.action) { 4 -> 2; 3 -> 3; else -> 1 }, now.get())
+                        RootTouchWire.readAck(java.io.ByteArrayInputStream(it.toByteArray()))
+                    }
+                }
+                override suspend fun closeAndConfirm(): Boolean { closed = true; return cleanupConfirmed }
+            }
+        }, streaming, { connection }, { expected, message ->
+            if (outbound && connection == expected) { receipts.add(message); true } else false
+        }, now::get, enabled)
+
+        fun enableDirect() {
+            val originalCapture = checkNotNull(capture)
+            val channel = object : DirectInputChannel {
+                override val session = peerSession
+                override val capture = originalCapture
+                override fun isCurrent() = peerCurrent
+                override fun send(message: JsonObject): Boolean { directReceipts.add(message); return peerCurrent }
+            }
+            controller.directChannel = { if (it == peerSession) channel else null }
+        }
+        fun directOpen() = JsonObject(open() + mapOf("direct_session" to JsonPrimitive(peerSession), "ttl_ms" to JsonPrimitive(1500)))
+        fun directEvent(sequence: Int, action: Int) = JsonObject(event(sequence, action).filterKeys { it !in setOf("owner", "capture_epoch") } + ("type" to JsonPrimitive("touch_event")))
+        fun authorize(sequence: Int, ttl: Int = 1500, owner: String = "owner_1234") = buildJsonObject {
+            put("type", "continuous_input_authorize"); put("owner", owner); put("sequence", sequence); put("ttl_ms", ttl)
+        }
+        suspend fun readyDirect() {
+            enableDirect(); controller.handle(directOpen())
+            eventually { receipts.any { it["stage"]?.jsonPrimitive?.content == "startup" && it["status"]?.jsonPrimitive?.int == 0 } }
+        }
+
+        fun open(owner: String = "owner_1234", epoch: String = "epoch_1234", width: Int = 1280) = buildJsonObject {
+            put("type", "continuous_input_open"); put("owner", owner); put("session_id", "viewer_1234")
+            put("capture_epoch", epoch); put("frame_width", width); put("frame_height", 720)
+        }
+        fun event(sequence: Int, action: Int, x: Int = 400, y: Int = 200, owner: String = "owner_1234", epoch: String = "epoch_1234") = buildJsonObject {
+            put("type", "continuous_input_event"); put("owner", owner); put("capture_epoch", epoch)
+            put("sequence", sequence); put("gesture", if (action == 4) 0 else 1)
+            put("action", action); put("x", x); put("y", y)
+        }
+        suspend fun ready() {
+            controller.handle(open())
+            eventually { receipts.any { it["stage"]?.jsonPrimitive?.content == "startup" && it["status"]?.jsonPrimitive?.int == 0 } }
+        }
+        suspend fun stop() { controller.invalidate(); if (opens != 0) eventually { closed }; job.cancelAndJoin() }
+    }
+
+    @Test fun `direct touches and native receipts bypass the management socket`() = runBlocking {
+        val f = Fixture(); f.readyDirect()
+        for ((sequence, action) in listOf(1 to 0, 2 to 2, 3 to 1)) {
+            assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(sequence, action)))
+            eventually { f.samples.size == sequence }
+        }
+        eventually { f.directReceipts.count { it["stage"] == JsonPrimitive("input") } == 3 }
+        assertEquals(listOf(0, 2, 1), f.samples.map { it.action })
+        assertTrue(f.receipts.none { it["stage"] == JsonPrimitive("input") })
+        f.stop()
+        assertTrue(f.receipts.any { it["stage"] == JsonPrimitive("release") && it["status"] == JsonPrimitive(3) })
+    }
+
+    @Test fun `a direct grant without a current matching peer never opens root`() = runBlocking {
+        val f = Fixture(); f.controller.handle(f.directOpen())
+        assertEquals(0, f.opens)
+        assertEquals(JsonPrimitive(5), f.receipts.single()["status"])
+        assertEquals(JsonPrimitive("admission"), f.receipts.single()["origin"])
+        val diagnostic = f.controller.diagnosticSnapshot()
+        assertEquals(JsonPrimitive("direct_channel_unavailable"), diagnostic["last_failure"])
+        assertEquals(JsonPrimitive(1), diagnostic["open_rejections_total"])
+        assertEquals(JsonPrimitive("idle"), diagnostic["state"])
+        f.stop()
+    }
+
+    @Test fun `diagnostics distinguish an active owner without retaining its identity or restarting it`() = runBlocking {
+        val f = Fixture()
+        try {
+            f.ready()
+            f.controller.handle(f.open("other_1234"))
+            val snapshot = f.controller.diagnosticSnapshot()
+            assertEquals(JsonPrimitive("ready"), snapshot["state"])
+            assertEquals(JsonPrimitive("active_owner"), snapshot["last_failure"])
+            assertEquals(JsonPrimitive(2), snapshot["open_attempts_total"])
+            assertEquals(JsonPrimitive(1), snapshot["startups_total"])
+            repeat(100) { f.controller.diagnosticSnapshot() }
+            assertEquals(1, f.opens)
+            assertFalse(snapshot.toString().contains("owner_1234"))
+            assertFalse(snapshot.toString().contains("epoch_1234"))
+            assertFalse(f.closed)
+        } finally { f.stop() }
+    }
+
+    @Test fun `unknown cleanup remains visible after release and blocks another injector`() = runBlocking {
+        val f = Fixture(cleanupConfirmed = false)
+        try {
+            f.ready()
+            f.controller.invalidate()
+            eventually { f.controller.diagnosticSnapshot()["unknown_releases_total"] == JsonPrimitive(1) }
+            val snapshot = f.controller.diagnosticSnapshot()
+            assertEquals(JsonPrimitive("cleanup_unknown"), snapshot["state"])
+            assertEquals(JsonPrimitive("cleanup_unknown"), snapshot["last_failure"])
+            assertEquals(JsonPrimitive(0), snapshot["releases_total"])
+            delay(20)
+            f.controller.handle(f.open("other_1234"))
+            eventually { f.receipts.any { it["owner"] == JsonPrimitive("other_1234") && it["status"] == JsonPrimitive(5) } }
+            assertEquals(1, f.opens)
+            assertEquals(JsonPrimitive("cleanup_unknown"), f.controller.diagnosticSnapshot()["last_failure"])
+            assertTrue(f.samples.isEmpty())
+        } finally { f.stop() }
+    }
+
+    @Test fun `direct owner rejects touches arriving on the server and foreign peers`() = runBlocking {
+        val f = Fixture(); f.readyDirect()
+        f.controller.handle(f.event(1, 0))
+        assertFalse(f.controller.directMessage("b".repeat(32), f.directEvent(1, 0)))
+        f.controller.directClosed("b".repeat(32))
+        assertTrue(f.samples.isEmpty()); assertFalse(f.closed)
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(1, 0)))
+        eventually { f.samples.size == 1 }; f.stop()
+    }
+
+    @Test fun `direct heartbeat cannot renew expired server authority`() = runBlocking {
+        val f = Fixture(); f.readyDirect(); f.now.set(1600)
+        assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
+        eventually { f.controller.diagnosticSnapshot()["last_release_reason"] == JsonPrimitive("authorization_expired") }
+        assertTrue(f.closed); assertTrue(f.samples.isEmpty()); f.stop()
+    }
+
+    @Test fun `direct viewer close and lost channel report distinct causes without changing receipt wire`() = runBlocking {
+        for (channelLost in listOf(false, true)) {
+            val f = Fixture(); f.readyDirect()
+            try {
+                if (channelLost) f.controller.directClosed(f.peerSession)
+                else assertTrue(f.controller.directMessage(f.peerSession, buildJsonObject { put("type", "touch_close") }))
+                val expected = if (channelLost) "direct_channel_unavailable" else "viewer_closed"
+                eventually { f.controller.diagnosticSnapshot()["last_release_reason"] == JsonPrimitive(expected) }
+                assertTrue(f.samples.isEmpty())
+                val release = f.receipts.last { it["stage"] == JsonPrimitive("release") }
+                assertEquals(setOf("type", "session_id", "owner", "capture_epoch", "sequence", "status", "stage", "origin", "device_uptime_ms"), release.keys)
+                assertEquals(JsonPrimitive(3), release["status"])
+            } finally { f.stop() }
+        }
+    }
+
+    @Test fun `only fresh sequenced server authorization renews a direct grant`() = runBlocking {
+        val f = Fixture(); f.readyDirect(); f.now.set(1400)
+        f.controller.handle(f.authorize(1))
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
+        eventually { f.samples.size == 1 }
+        // The independent input watchdog still needs the viewer's own heartbeat.
+        f.now.set(1700)
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(2, 4)))
+        eventually { f.samples.size == 2 }
+        f.controller.handle(f.authorize(1)) // A duplicate is ignored and cannot extend authority.
+        assertFalse(f.closed)
+        f.now.set(2901) // The original grant ended at 1400 + 1500, not 1700 + 1500.
+        assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(3, 4)))
+        eventually { f.closed }; f.stop()
+    }
+
+    @Test fun `coalesced fresh authorization accepts gaps while stale grants cannot extend or revoke it`() = runBlocking {
+        val f = Fixture(); f.readyDirect(); f.now.set(1400)
+        f.controller.handle(f.authorize(3)) // Server intentionally superseded grants 1 and 2.
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
+        eventually { f.samples.size == 1 }
+        f.now.set(1450); f.controller.handle(f.authorize(2))
+        assertFalse(f.closed)
+        f.now.set(1490); f.controller.handle(f.authorize(3))
+        assertFalse(f.closed)
+        f.now.set(1500); f.controller.handle(f.authorize(7))
+        f.now.set(1600)
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(2, 4)))
+        eventually { f.samples.size == 2 }
+        f.now.set(3001)
+        assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(3, 4)))
+        eventually { f.closed }; f.stop()
+    }
+
+    @Test fun `a sequence gap cannot revive expired authorization`() = runBlocking {
+        val f = Fixture(); f.readyDirect(); f.now.set(1601)
+        f.controller.handle(f.authorize(5))
+        assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
+        eventually { f.closed }; assertTrue(f.samples.isEmpty()); f.stop()
+    }
+
+    @Test fun `direct peer loss cancels held touch and reports release through server`() = runBlocking {
+        val f = Fixture(); f.readyDirect()
+        f.controller.directMessage(f.peerSession, f.directEvent(1, 0)); eventually { f.samples.size == 1 }
+        f.peerCurrent = false; f.controller.directClosed(f.peerSession)
+        eventually { f.closed }
+        eventually { f.receipts.any { it["stage"] == JsonPrimitive("release") && it["status"] == JsonPrimitive(3) } }
+        assertEquals(1, f.samples.size); f.stop()
+    }
+
+    @Test fun `direct channel cannot dispatch ordinary commands`() = runBlocking {
+        val f = Fixture(); f.readyDirect()
+        assertFalse(f.controller.directMessage(f.peerSession, buildJsonObject { put("type", "EXECUTE_DAG"); put("code", "fixture") }))
+        eventually { f.closed }; assertTrue(f.samples.isEmpty()); f.stop()
+    }
+
+    @Test fun `default build is silent and never accesses capture or root`() = runBlocking {
+        val f = Fixture(false)
+        assertTrue(f.controller.handle(f.open()))
+        assertTrue(f.controller.handle(buildJsonObject { put("type", "continuous_input_probe"); put("session_id", "viewer_1234") }))
+        assertTrue(f.controller.handle(f.event(1, 0)))
+        assertFalse(f.controller.handle(buildJsonObject { put("type", "touch_tap") }))
+        assertEquals(0, f.opens); assertTrue(f.receipts.isEmpty())
+        verify(exactly = 0) { f.streaming.getInputSession() }
+        f.stop()
+    }
+
+    @Test fun `probe reports a capture offer without claiming native readiness`() = runBlocking {
+        val f = Fixture()
+        f.controller.handle(buildJsonObject { put("type", "continuous_input_probe"); put("session_id", "viewer_1234") })
+        val offer = f.receipts.single()
+        assertEquals("continuous_input_offer", offer["type"]!!.jsonPrimitive.content)
+        assertFalse(offer["injector_ready"]!!.jsonPrimitive.boolean)
+        assertEquals(1280, offer["frame_width"]!!.jsonPrimitive.int)
+        assertEquals(960, offer["physical_width"]!!.jsonPrimitive.int)
+        assertEquals(0, f.opens)
+        f.stop()
+    }
+
+    @Test fun `old epoch frame size or malformed identity never starts a helper`() = runBlocking {
+        val f = Fixture()
+        for (message in listOf(f.open(epoch = "older_5678"), f.open(width = 960), f.open(owner = "short"),
+            JsonObject(f.open() + ("frame_width" to JsonPrimitive("1280"))), JsonObject(f.open() + ("extra" to JsonPrimitive(true))))) {
+            f.controller.handle(message)
+        }
+        assertEquals(0, f.opens)
+        f.stop()
+    }
+
+    @Test fun `movement is mapped to physical pixels and delivered before terminal event`() = runBlocking {
+        val f = Fixture(); f.ready()
+        f.controller.handle(f.event(1, 0))
+        eventually { f.samples.size == 1 }
+        f.controller.handle(f.event(2, 2, 800, 400))
+        eventually { f.samples.size == 2 }
+        assertEquals(listOf(0, 2), f.samples.map { it.action })
+        assertEquals(listOf(300, 600), f.samples.map { it.x })
+        assertEquals(listOf(150, 300), f.samples.map { it.y })
+        f.controller.handle(f.event(3, 1, 800, 400))
+        eventually { f.samples.size == 3 }
+        assertEquals(1, f.samples.last().action)
+        f.stop()
+    }
+
+    @Test fun `foreign owner cannot inject cancel or replace a legitimate owner`() = runBlocking {
+        val f = Fixture(); f.ready()
+        f.controller.handle(f.event(1, 0, owner = "foreign_5678"))
+        f.controller.handle(buildJsonObject { put("type", "continuous_input_close"); put("owner", "foreign_5678") })
+        f.controller.handle(f.open(owner = "foreign_5678"))
+        assertFalse(f.closed); assertTrue(f.samples.isEmpty()); assertEquals(1, f.opens)
+        f.controller.handle(f.event(1, 0))
+        eventually { f.samples.size == 1 }
+        f.stop()
+    }
+
+    @Test fun `same-size capture replacement releases old touch instead of retargeting it`() = runBlocking {
+        val f = Fixture(); f.ready()
+        f.controller.handle(f.event(1, 0)); eventually { f.samples.size == 1 }
+        f.capture = f.capture!!.copy(epoch = "epoch_5678")
+        f.controller.handle(f.event(2, 2))
+        eventually { f.closed }
+        assertEquals(1, f.samples.size)
+        f.stop()
+    }
+
+    @Test fun `owner malformed sequence action coordinates and metadata fail closed without coercion`() = runBlocking {
+        for ((key, value) in listOf("sequence" to JsonPrimitive("2"), "action" to JsonPrimitive(5),
+            "x" to JsonPrimitive(-1), "x" to JsonPrimitive(1280), "gesture" to JsonPrimitive(true), "extra" to JsonPrimitive(1))) {
+            val f = Fixture(); f.ready()
+            f.controller.handle(f.event(1, 0)); eventually { f.samples.size == 1 }
+            f.controller.handle(JsonObject(f.event(2, 2) + (key to value)))
+            eventually { f.closed }
+            assertEquals(1, f.samples.size)
+            assertTrue(f.receipts.any { it["origin"]?.jsonPrimitive?.content == "admission" && it["status"]?.jsonPrimitive?.int == 5 })
+            f.stop()
+        }
+    }
+
+    @Test fun `replacement WebSocket generation gets neither old input nor old receipts`() = runBlocking {
+        val f = Fixture(); f.ready()
+        f.controller.handle(f.event(1, 0)); eventually { f.samples.size == 1 }
+        eventually { f.receipts.any { it["stage"]?.jsonPrimitive?.content == "input" && it["sequence"]?.jsonPrimitive?.int == 1 } }
+        val count = f.receipts.size
+        f.connection = 2
+        f.controller.handle(f.event(2, 2))
+        eventually { f.closed }
+        assertEquals(1, f.samples.size); assertEquals(count, f.receipts.size)
+        f.stop()
+    }
+
+    @Test fun `capture invalidated while root starts cannot emit readiness or inject afterward`() = runBlocking {
+        val f = Fixture(holdStartup = true)
+        f.controller.handle(f.open()); f.entered.await()
+        f.controller.invalidate(); f.release.complete(Unit)
+        eventually { f.closed }
+        assertTrue(f.samples.isEmpty())
+        assertFalse(f.receipts.any { it["stage"]?.jsonPrimitive?.content == "startup" && it["status"]?.jsonPrimitive?.int == 0 })
+        f.stop()
+    }
+
+    @Test fun `DOWN before native readiness is refused without pending injection`() = runBlocking {
+        val f = Fixture(holdStartup = true)
+        f.controller.handle(f.open()); f.entered.await()
+        f.controller.handle(f.event(1, 0)); f.release.complete(Unit)
+        eventually { f.closed }
+        assertTrue(f.samples.isEmpty())
+        f.stop()
+    }
+
+    @Test fun `unavailable outbound ACK retires local input without reconnect replay`() = runBlocking {
+        val f = Fixture(); f.ready(); f.outbound = false
+        f.controller.handle(f.event(1, 0))
+        eventually { f.closed }
+        assertEquals(1, f.samples.size)
+        f.controller.handle(f.event(2, 2))
+        assertEquals(1, f.samples.size)
+        f.stop()
+    }
+
+    @Test fun `inactivity expires locally even when other owners send heartbeats`() = runBlocking {
+        val f = Fixture(); f.ready()
+        f.controller.handle(f.event(1, 0)); eventually { f.samples.size == 1 }
+        f.now.set(1600)
+        f.controller.handle(f.event(2, 4, owner = "foreign_5678"))
+        eventually { f.closed }
+        assertEquals(1, f.samples.size)
+        f.stop()
+    }
+
+    companion object {
+        private suspend fun eventually(check: () -> Boolean) = withTimeout(3_000) {
+            while (!check()) delay(5)
+        }
+    }
+}

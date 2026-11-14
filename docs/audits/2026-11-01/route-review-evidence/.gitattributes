@@ -1,0 +1,3 @@
+* -text
+# Captured subprocess logs may contain CRCRLF; retain exact hashed bytes.
+*.log -diff

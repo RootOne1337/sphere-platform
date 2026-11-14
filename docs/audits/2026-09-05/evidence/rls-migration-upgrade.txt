@@ -1,0 +1,3 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade 20260906_account_ciphertext -> 20260908_tenant_policies, Install complete tenant RLS policies, including associations and append-only audit.

@@ -10,19 +10,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * KillSwitchManager — TZ-06 SPLIT-4.
- *
- * Ensures all traffic is blocked when VPN tunnel drops unexpectedly.
- * Uses iptables rules (requires root) to drop non-tunnel traffic.
- *
- * Chain: SPHERE_KILLSWITCH
- *  - Allow loopback
- *  - Allow traffic through VPN interface (sphere0)
- *  - Allow management server(s) — prevents deadlock when VPN drops
- *  - Allow DHCP (UDP 67-68) for initial connectivity
- *  - Allow DNS (UDP/TCP 53) for hostname resolution
- *  - Allow traffic to VPN server for tunnel re-establishment
- *  - DROP everything else
+ * Legacy firewall recovery only. Enabling a global OUTPUT/FORWARD switch is
+ * prohibited because it can disconnect Sphere and native WebRTC. The future
+ * app-scoped provider must implement selected-app fail-closed independently.
  */
 @Singleton
 class KillSwitchManager @Inject constructor(
@@ -32,80 +22,13 @@ class KillSwitchManager @Inject constructor(
     var isEnabled = false
         private set
 
-    /**
-     * FIX E3: Валидация hostname/IP перед вставкой в iptables.
-     * Без проверки: payload `"endpoint": "1.1.1.1; rm -rf /"` → command injection через su.
-     */
-    private val SAFE_HOST_PATTERN = Regex("^[a-zA-Z0-9._\\-]+$")
-
-    private fun requireSafeHost(host: String) {
-        require(host.isNotBlank() && host.length < 256 && SAFE_HOST_PATTERN.matches(host)) {
-            "KillSwitch: невалидный hostname/IP: '$host'"
-        }
-    }
-
-    /**
-     * Enable kill switch — blocks all non-VPN traffic.
-     * @param vpnServerEndpoint WireGuard server endpoint (host:port) to allow through.
-     * @param managementHosts Management server hosts that must remain reachable even
-     *        when VPN is down (prevents deadlock where agent can't receive VPN_CONNECT).
-     */
+    /** Global firewall activation is unavailable; recovery cleanup stays callable. */
+    @Suppress("UNUSED_PARAMETER")
     suspend fun enable(
         vpnServerEndpoint: String,
         managementHosts: List<String> = emptyList(),
-    ) = withContext(Dispatchers.IO) {
-        try {
-            val serverHost = vpnServerEndpoint.substringBefore(":")
-            requireSafeHost(serverHost)
-
-            // Create chain
-            iptables("-N $CHAIN_NAME 2>/dev/null || true")
-            iptables("-F $CHAIN_NAME")
-
-            // Allow loopback
-            iptables("-A $CHAIN_NAME -o lo -j ACCEPT")
-            iptables("-A $CHAIN_NAME -i lo -j ACCEPT")
-
-            // Allow established connections on VPN interface
-            iptables("-A $CHAIN_NAME -o $VPN_INTERFACE -j ACCEPT")
-            iptables("-A $CHAIN_NAME -i $VPN_INTERFACE -j ACCEPT")
-
-            // Allow traffic to VPN server (for tunnel establishment/maintenance)
-            iptables("-A $CHAIN_NAME -d $serverHost -j ACCEPT")
-
-            // Allow management server(s) — CRITICAL: prevents deadlock
-            // Without this, VPN drop = no WS = no VPN_CONNECT command = permanent brick
-            for (host in managementHosts) {
-                val cleanHost = host.trim().substringBefore(":")
-                if (cleanHost.isNotEmpty()) {
-                    requireSafeHost(cleanHost)
-                    iptables("-A $CHAIN_NAME -d $cleanHost -j ACCEPT")
-                    Timber.i("Kill switch: allowing management host $cleanHost")
-                }
-            }
-
-            // Allow DNS (needed to resolve VPN server & management server hostnames)
-            iptables("-A $CHAIN_NAME -p udp --dport 53 -j ACCEPT")
-            iptables("-A $CHAIN_NAME -p tcp --dport 53 -j ACCEPT")
-
-            // Allow DHCP
-            iptables("-A $CHAIN_NAME -p udp --dport 67:68 -j ACCEPT")
-
-            // Drop everything else
-            iptables("-A $CHAIN_NAME -j DROP")
-
-            // Insert chain into OUTPUT and FORWARD
-            iptables("-I OUTPUT 1 -j $CHAIN_NAME")
-            iptables("-I FORWARD 1 -j $CHAIN_NAME")
-
-            isEnabled = true
-            Timber.i("Kill switch enabled, allowing VPN=$serverHost + mgmt=$managementHosts + $VPN_INTERFACE")
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to enable kill switch")
-            // Attempt cleanup on failure
-            disable()
-            throw e
-        }
+    ): Unit = withContext(Dispatchers.IO) {
+        VpnExecutionPolicy.requireAppScopedProvider()
     }
 
     /**
@@ -131,7 +54,6 @@ class KillSwitchManager @Inject constructor(
 
     private companion object {
         const val CHAIN_NAME = "SPHERE_KILLSWITCH"
-        const val VPN_INTERFACE = "sphere0"
         /** Таймаут на одну iptables-команду через su. На слабых эмуляторах su может зависнуть. */
         const val ROOT_CMD_TIMEOUT_SECONDS = 30L
     }

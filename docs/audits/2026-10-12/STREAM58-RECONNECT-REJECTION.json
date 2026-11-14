@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T21:13:32.285389+00:00",
+  "uiSourceRevision": "6e6381f1a72f85739788e452a96e135c88f8059c",
+  "apiSourceRevision": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+  "apkSourceRevision": "9cdb5257f9fd9f847c90cbd95c990f7fae037a40",
+  "versionCode": 10258,
+  "device": "PH010",
+  "controlledNumericIceChrome": true,
+  "modeRoundtrip": {
+    "at": "2026-10-11T21:02:27.673Z",
+    "previousOwnerReleased": true,
+    "peersBefore": 3,
+    "retiredPeers": 3,
+    "ready": true,
+    "control": "Непрерывное управление · зажмите и ведите мышь · ACK связи напрямую с APK: 13 мс",
+    "commandsReplayed": false
+  },
+  "gesture": {
+    "observedAtUtc": "2026-10-11T21:02:47.597Z",
+    "sentEvents": 12,
+    "nativeInputReceipts": 11,
+    "nativeUpConfirmed": true,
+    "serverTouchEvents": 0
+  },
+  "video": {
+    "observedAtUtc": "2026-10-11T21:04:21.840Z",
+    "peers": [
+      {
+        "state": "connected",
+        "ice": "connected",
+        "videoRows": [
+          {
+            "kind": "video",
+            "mediaType": "video",
+            "timestamp": 1791752661840.344,
+            "packetsReceived": 14581,
+            "bytesReceived": 16578726,
+            "framesDecoded": 886,
+            "framesDropped": 0,
+            "jitterBufferDelay": 70.592714,
+            "jitterBufferEmittedCount": 886,
+            "totalDecodeTime": 0.27502899999999997,
+            "framesPerSecond": 13,
+            "frameWidth": 960,
+            "frameHeight": 540,
+            "keyFramesDecoded": 114,
+            "freezeCount": 84,
+            "pauseCount": 0,
+            "packetsLost": 0,
+            "nackCount": 0,
+            "pliCount": 0,
+            "firCount": 0,
+            "framesReceived": 886,
+            "jitter": 0.029,
+            "retransmittedPacketsReceived": 99
+          }
+        ],
+        "receivers": 1
+      }
+    ]
+  },
+  "retiredNativeReceipts": [
+    {
+      "received": 1396,
+      "forwarded": 655,
+      "budgetRejected": 0,
+      "invalidAccessUnits": 0,
+      "failed": 0,
+      "retainedInputFrames": 0,
+      "retainedInputBytes": 0,
+      "retainedOutputFrames": 0,
+      "retainedOutputBytes": 0,
+      "encodeCalls": 1254,
+      "keyframeWaitDrops": 599,
+      "pausedFrames": 0,
+      "keyframeHints": 0,
+      "syncRequests": 82,
+      "forwardedBytes": 11824656,
+      "targetBitrateBps": 2000000,
+      "targetFramerate": 29
+    },
+    {
+      "received": 3051,
+      "forwarded": 1356,
+      "budgetRejected": 0,
+      "invalidAccessUnits": 0,
+      "failed": 0,
+      "retainedInputFrames": 0,
+      "retainedInputBytes": 0,
+      "retainedOutputFrames": 0,
+      "retainedOutputBytes": 0,
+      "encodeCalls": 2662,
+      "keyframeWaitDrops": 1306,
+      "pausedFrames": 0,
+      "keyframeHints": 0,
+      "syncRequests": 192,
+      "forwardedBytes": 26024598,
+      "targetBitrateBps": 1908180,
+      "targetFramerate": 29
+    }
+  ],
+  "sustainedCadenceAfterReconnectAccepted": false,
+  "fleetRolloutHeld": true,
+  "syntheticOnlineObserverAccepted": false,
+  "observerLimit": "The first observer retained at most four peer references and could not assert retirement of the primary peer after multiple mode transitions. This observer timeout is not classified as a product reconnect failure.",
+  "actualRejection": "Browser decoded 13 FPS with 84 freezes and no packet loss; native receipt received3051/encodeCalls2662/forwarded1356 with1306 keyframeWaitDrops, zero budget/invalid/failure and zero retained memory at retirement.",
+  "nextSourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+  "nextVersionCode": 10259,
+  "nextChange": "Bind WebRTC coded-frame field trials to every factory Environment. Runtime acceptance pending.",
+  "productionAccepted": false,
+  "physicalNetworkSwitchAccepted": false
+}

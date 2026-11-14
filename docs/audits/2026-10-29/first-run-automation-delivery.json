@@ -1,0 +1,204 @@
+{
+  "schema": "sphere-first-run-automation-delivery-v1",
+  "date": "2026-10-29",
+  "walking": {
+    "evidence": ".local-pilot/route-first-run-kakaska-http-20261029-v3",
+    "job": "f7ee8e107c054239be91f79bf093d427",
+    "outcome": "verified",
+    "quality": {
+      "registered": 174,
+      "selected": 174,
+      "coverage": 1.0,
+      "points": 24024,
+      "mean_reprojection_px": 0.8434003376027629,
+      "components": 1,
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 11.196993150739655,
+        "passed": true
+      },
+      "intrinsics_condition": {
+        "passed": true,
+        "focal_ratio": 1.0,
+        "horizontal_fov_degrees": 115.55387311384251,
+        "vertical_fov_degrees": 83.4938661552534,
+        "physical_calibration_verified": false
+      }
+    },
+    "sourceHashes": {
+      "manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      "frames.jsonl": "fa42b4fa9d92f51d104f3a0081e3b563dbdb6d0c904ba8b9f6047a4ae0082456",
+      "inputs.jsonl": "8bdeac5d699e6e5eb0a8a8bcffe16889c9c18846c118fa5f8ac6e2bf7f7354d3",
+      "video.h264": "5aeb8fe39c66ba7bf0a9fca037b14c6fdac71de92dde3fbd1d8748bd8fea2416",
+      "COMPLETE": "cba8825c24525654bc372e082ee4969dad5eb990aa417875d0bf3548aa840cbb"
+    },
+    "recipeSourceHashes": {
+      "scripts/pilot/check_route_first_run.py": "c26624bffaba74976c6fa55f861aa1e548174dfa21c1b8f89e2beab80d7871a3",
+      "scripts/pilot/reconstruction_service.py": "1fd86eb7301409788a7cfebfb4aaf1c61259d24d682d603807da7cfd95443bfb",
+      "scripts/pilot/reconstruct_route.py": "647b0b442a55f979f0eb63ef1ccac57ed9180b532cd514e4159e8f834aaf8dce",
+      "scripts/pilot/route_workspace.py": "12227a90ae6d9bac83873bed049b07da50edf21b0e10b850c6a92acdae56aa6e",
+      "scripts/pilot/prepare_route_workspace.py": "58b8ad203b72afac8a794008cd7484a5bc969da81ac250a9e3d7bf0fa0a1f247",
+      "scripts/pilot/route_video_tracks.py": "28459c122c8e5cd780ebc09f895493595d3819587a3125b59d6b0e06e18398b8",
+      "scripts/pilot/route_motion_sampling.py": "bc8fb20c9a736cf26a9f81b2864fcfaa8572c6204398ff3eba89ca320451e0b8",
+      "scripts/pilot/video_observations.py": "00ffe7ad2966dfba44d531f86fb8778b0a4bbeae3655341bba6005d046f3734d",
+      "scripts/pilot/camera_pixel_conventions.py": "c144d4e9771ba292528e52fa8e52aec5b2fb79e1baf448e2d77aa47f05f29c96",
+      "scripts/pilot/export_route_localization.py": "d55991fb16415cb3f59e65bfb5534aea3a9f2fe2e9c51dfca313711b27f093de",
+      "scripts/pilot/route_landmark_builder.py": "a91cbcbc9844134524fbf156235a5ae551a2151fb7ab5681970764ebfe672dfa",
+      "motor_worker/browser_teach.py": "9d680db03103173756b29f7d32b0b9258ddad201911dd7cd2d4666d96a1a1fe4",
+      "motor_worker/route_localization.py": "9e09a678aa4b26a3fd07556d450eb93561f395797ff575d18a69fd5c2e368e86"
+    },
+    "sourceUnchanged": true,
+    "recipeUnchanged": true,
+    "clientStartRequests": 1,
+    "clientPrepareRequests": 0,
+    "manualAdoption": false,
+    "manualModelSelection": false,
+    "sourcePoseEdits": false,
+    "registeredIntervalSeconds": [
+      0.0,
+      50.349
+    ],
+    "rapidReversals": 0,
+    "speedOutliers": 0,
+    "navigation": {
+      "phase": "ready",
+      "error": null,
+      "cameraTraceOnly": true,
+      "executionQualified": false
+    },
+    "landmarks": 4096,
+    "sourceCoverage": {
+      "recording_start_seconds": 0.0,
+      "recording_end_seconds": 50.349,
+      "uncovered_start_seconds": 0.0,
+      "uncovered_end_seconds": 0.0,
+      "limit_seconds": 1.0,
+      "endpoints_observed": true
+    },
+    "minimumNeighborhoodLandmarks": 61,
+    "neighborhoodsBelow24": 0,
+    "zeroLandmarkViews": 0,
+    "seconds": 349.5779999999795,
+    "cancelFiles": 0
+  },
+  "scooter": {
+    "evidence": ".local-pilot/route-first-run-fuflo-http-20261029-v5",
+    "job": "bcb7b8a22cd7781696e53477b41ed6f6",
+    "outcome": "not_confirmed",
+    "quality": {
+      "registered": 149,
+      "selected": 155,
+      "coverage": 0.9612903225806452,
+      "points": 15202,
+      "mean_reprojection_px": 0.8391706687392407,
+      "components": 1,
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 12.873294917612656,
+        "passed": true
+      },
+      "intrinsics_condition": {
+        "passed": true,
+        "focal_ratio": 1.0,
+        "horizontal_fov_degrees": 115.52206505528294,
+        "vertical_fov_degrees": 83.45884220491166,
+        "physical_calibration_verified": false
+      }
+    },
+    "sourceHashes": {
+      "manifest.json": "6600429df8f21fb079ca3c5256efa986ea702c6df9a9be984cf2a764639f7cd0",
+      "frames.jsonl": "4f83e9e99a7c3a67d6f27cae2dda6b2a2f74f44d5dc4409ce74e3a329aa8a271",
+      "inputs.jsonl": "b83b842a052aac25ecc7ebd1deafec4a94bc94f9b9fdf7315b58140ae47eb71b",
+      "video.h264": "a99b8af6daf1742347637159a04115a7bf030154d07e5adae9b40439e3f297fb",
+      "COMPLETE": "7db002dbac053725cda13d35d7c02f2bbe8f645b840b8df08b4fa7874fbb6f0f"
+    },
+    "recipeSourceHashes": {
+      "scripts/pilot/check_route_first_run.py": "c26624bffaba74976c6fa55f861aa1e548174dfa21c1b8f89e2beab80d7871a3",
+      "scripts/pilot/reconstruction_service.py": "1fd86eb7301409788a7cfebfb4aaf1c61259d24d682d603807da7cfd95443bfb",
+      "scripts/pilot/reconstruct_route.py": "647b0b442a55f979f0eb63ef1ccac57ed9180b532cd514e4159e8f834aaf8dce",
+      "scripts/pilot/route_workspace.py": "12227a90ae6d9bac83873bed049b07da50edf21b0e10b850c6a92acdae56aa6e",
+      "scripts/pilot/prepare_route_workspace.py": "58b8ad203b72afac8a794008cd7484a5bc969da81ac250a9e3d7bf0fa0a1f247",
+      "scripts/pilot/route_video_tracks.py": "28459c122c8e5cd780ebc09f895493595d3819587a3125b59d6b0e06e18398b8",
+      "scripts/pilot/route_motion_sampling.py": "bc8fb20c9a736cf26a9f81b2864fcfaa8572c6204398ff3eba89ca320451e0b8",
+      "scripts/pilot/video_observations.py": "00ffe7ad2966dfba44d531f86fb8778b0a4bbeae3655341bba6005d046f3734d",
+      "scripts/pilot/camera_pixel_conventions.py": "c144d4e9771ba292528e52fa8e52aec5b2fb79e1baf448e2d77aa47f05f29c96",
+      "scripts/pilot/export_route_localization.py": "d55991fb16415cb3f59e65bfb5534aea3a9f2fe2e9c51dfca313711b27f093de",
+      "scripts/pilot/route_landmark_builder.py": "a91cbcbc9844134524fbf156235a5ae551a2151fb7ab5681970764ebfe672dfa",
+      "motor_worker/browser_teach.py": "9d680db03103173756b29f7d32b0b9258ddad201911dd7cd2d4666d96a1a1fe4",
+      "motor_worker/route_localization.py": "9e09a678aa4b26a3fd07556d450eb93561f395797ff575d18a69fd5c2e368e86"
+    },
+    "sourceUnchanged": true,
+    "recipeUnchanged": true,
+    "clientStartRequests": 1,
+    "clientPrepareRequests": 0,
+    "manualAdoption": false,
+    "manualModelSelection": false,
+    "sourcePoseEdits": false,
+    "registeredIntervalSeconds": [
+      0.0,
+      31.791
+    ],
+    "rapidReversals": 0,
+    "speedOutliers": 0,
+    "navigation": {
+      "phase": "rejected",
+      "error": "route_map_has_unobserved_sections",
+      "cameraTraceOnly": true,
+      "executionQualified": false
+    },
+    "landmarks": 4096,
+    "sourceCoverage": {
+      "recording_start_seconds": 0.0,
+      "recording_end_seconds": 33.258,
+      "uncovered_start_seconds": 0.0,
+      "uncovered_end_seconds": 1.4670000000000023,
+      "limit_seconds": 1.0,
+      "endpoints_observed": false
+    },
+    "minimumNeighborhoodLandmarks": 8,
+    "neighborhoodsBelow24": 2,
+    "zeroLandmarkViews": 0,
+    "seconds": 266.344,
+    "cancelFiles": 0
+  },
+  "api": {
+    "outcome": "verified",
+    "launcherPid": 28896,
+    "physicalActions": 0,
+    "health": 200,
+    "missingCapability": 403,
+    "existingAssetsUnchanged": true,
+    "sourceHashes": {
+      "scripts/pilot/check_route_first_run.py": "c26624bffaba74976c6fa55f861aa1e548174dfa21c1b8f89e2beab80d7871a3",
+      "scripts/pilot/reconstruction_service.py": "1fd86eb7301409788a7cfebfb4aaf1c61259d24d682d603807da7cfd95443bfb",
+      "scripts/pilot/reconstruct_route.py": "647b0b442a55f979f0eb63ef1ccac57ed9180b532cd514e4159e8f834aaf8dce",
+      "scripts/pilot/route_workspace.py": "12227a90ae6d9bac83873bed049b07da50edf21b0e10b850c6a92acdae56aa6e",
+      "scripts/pilot/prepare_route_workspace.py": "58b8ad203b72afac8a794008cd7484a5bc969da81ac250a9e3d7bf0fa0a1f247",
+      "scripts/pilot/route_video_tracks.py": "28459c122c8e5cd780ebc09f895493595d3819587a3125b59d6b0e06e18398b8",
+      "scripts/pilot/route_motion_sampling.py": "bc8fb20c9a736cf26a9f81b2864fcfaa8572c6204398ff3eba89ca320451e0b8",
+      "scripts/pilot/video_observations.py": "00ffe7ad2966dfba44d531f86fb8778b0a4bbeae3655341bba6005d046f3734d",
+      "scripts/pilot/camera_pixel_conventions.py": "c144d4e9771ba292528e52fa8e52aec5b2fb79e1baf448e2d77aa47f05f29c96",
+      "scripts/pilot/export_route_localization.py": "d55991fb16415cb3f59e65bfb5534aea3a9f2fe2e9c51dfca313711b27f093de",
+      "scripts/pilot/route_landmark_builder.py": "a91cbcbc9844134524fbf156235a5ae551a2151fb7ab5681970764ebfe672dfa",
+      "motor_worker/browser_teach.py": "9d680db03103173756b29f7d32b0b9258ddad201911dd7cd2d4666d96a1a1fe4",
+      "motor_worker/route_localization.py": "9e09a678aa4b26a3fd07556d450eb93561f395797ff575d18a69fd5c2e368e86",
+      "motor_worker/walk_route.py": "ba8344fcc2601873d32cf88d23ff165b3005a0d89baf3f6ab9fd9178db32199c"
+    }
+  },
+  "tests": {
+    "pytest": 78,
+    "unittest": 73,
+    "frontendChanged": false
+  },
+  "limitations": {
+    "executionQualified": false,
+    "independentPositiveLiveCapture": false,
+    "metricAccuracyVerified": false,
+    "browserVisualAcceptance": false,
+    "universalFirstTryGuarantee": false,
+    "oldJobsSilentlyOverwritten": false
+  },
+  "physicalActions": 0
+}

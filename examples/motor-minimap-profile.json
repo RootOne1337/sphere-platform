@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "frame_width": 960,
+  "frame_height": 540,
+  "roi": [14, 18, 116, 116],
+  "center": [57, 57],
+  "radius": 49,
+  "player_radius": 7,
+  "hsv_lower": [130, 75, 90],
+  "hsv_upper": [165, 255, 255],
+  "forward_degrees": null,
+  "lookahead_px": 30,
+  "max_anchor_gap_px": 10,
+  "min_path_px": 10,
+  "max_frontier_spread_degrees": 35
+}

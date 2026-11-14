@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "kind": "VPN_SOURCE_PREFLIGHT_AND_QUARANTINE_NOT_RUNTIME_ACCEPTANCE",
+  "recordedAtUtc": "2026-10-21T08:48:15.578908+00:00",
+  "sourceBaseRevision": "6c5446bd",
+  "sourceFileSha256NormalizedLf": {
+    "backend/schemas/vpn/profile.py": "2f427c51f8d8d4c986cab110ea2d43459494d01a478bf5233a5045b2557e7489",
+    "backend/services/vpn/profile_preflight.py": "e6ca6536b5cd8ebd129628da496a9415cb81ba89b0f8214d6dd0d5ef544663c3",
+    "backend/api/v1/vpn/router.py": "0ea94c2407f5f0ccc07848d9e4bf319b5f6ee988159300281e5c24cf87fa7b11",
+    "frontend/src/features/vpn/VpnProfileInspector.tsx": "23285dbd16d636eedeeff3ac9eed79c29576d51f95d9362e96334f8ac2123ef7",
+    "frontend/app/(dashboard)/vpn/page.tsx": "f9620007a4bd62ce4037e62df4b199d50a628dd01ebc70d151e71f68f5252714",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/vpn/VpnExecutionPolicy.kt": "a192eb97890d4be0509415cb013cf1fc2a6599146df54f5a2cf0a727a2605cdb",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/vpn/SphereVpnManager.kt": "db5e2f81a120d36e4a1db509d1aadb130c4b1a2fee63ede7b24687fd3a51ed84",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/vpn/KillSwitchManager.kt": "d960ec5c02865d12c507ddb497e4690dfd3189db260fba9f75dfd7a0bbce218d",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandDispatcher.kt": "cdbebb65a4db8e2b7050c57838a815bc9151a3f6242827b3b7ea2ff94e403a02",
+    "tests/vpn/test_profile_preflight.py": "b801d935f683a169a25744bb29fe2c0c50947dd63220baff53d8f13be08b9057",
+    "frontend/__tests__/vpn/profile-inspector.test.tsx": "c0bc7ab7620427dfc747cea8082ce5dfc63216b6f6e77ce013b4a2a0f56c393f",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/vpn/VpnExecutionPolicyTest.kt": "5fe811e4109f339e515dfb20dd5a1bb2bd927569ec49e56e85f04d2c8d3e368a",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/vpn/KillSwitchManagerTest.kt": "e976bb7ebd686b893e52aca0e4695d185b2e53db047cb4b00ddaeda7ede4318f"
+  },
+  "implemented": {
+    "boundedWGAndAWGProfileInspector": true,
+    "recognizedConfigVersions": [
+      "wireguard:1",
+      "amneziawg:1",
+      "amneziawg:1.5",
+      "amneziawg:2",
+      "amneziawg:3.1"
+    ],
+    "recognitionIsNativeSupport": false,
+    "selectedAppPolicyContract": true,
+    "controlPackageAndVariantsRejected": true,
+    "secretFreeValidationErrorsAndReceipts": true,
+    "readOnlyCapabilityAndPreflightApi": true,
+    "transientWebInspector": true,
+    "legacyRootConnectReconnectBlockedBeforeSideEffects": true,
+    "globalFirewallEnableBlockedBeforeSideEffects": true
+  },
+  "checks": {
+    "backendVpnSuite": {
+      "passed": 156,
+      "warnings": 1,
+      "liveVpnProvider": false
+    },
+    "frontendSelectedVpnSuites": {
+      "suites": 3,
+      "passed": 36
+    },
+    "frontendTypeScript": {
+      "exitCode": 0,
+      "finalSourceCheck": true
+    },
+    "ruff": {
+      "exitCode": 0
+    },
+    "android": {
+      "buildSuccessful": true,
+      "variant": "devDebug",
+      "selectedTestsPassed": 29,
+      "junitSuites": [
+        {
+          "name": "com.sphereplatform.agent.commands.CommandDispatcherTest",
+          "tests": "16",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.providers.DeviceStatusProviderTest",
+          "tests": "9",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.vpn.KillSwitchManagerTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.vpn.VpnExecutionPolicyTest",
+          "tests": "3",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        }
+      ],
+      "apkPackaged": false,
+      "installed": false
+    },
+    "apiSchemaExport": {
+      "pinnedFastapi": "0.136.3",
+      "pinnedPydantic": "2.9.2",
+      "generated": true,
+      "startupHooksRun": false,
+      "matchesRegisteredApplication": true
+    },
+    "finalProfileAndSchemaToolchainTests": {
+      "passed": 60,
+      "warnings": 1
+    },
+    "finalBackendAndDocumentationSuite": {
+      "passed": 200,
+      "subtestsPassed": 94,
+      "warnings": 1,
+      "scope": "tests/vpn + documentation status + API schema toolchain"
+    }
+  },
+  "notImplementedOrAccepted": {
+    "androidAWGProvider": true,
+    "nativeConfigValidation": true,
+    "uidSharedUidLockdownPreflight": true,
+    "selectedAppFailClosedRuntime": true,
+    "encryptedPersistentProfileCatalog": true,
+    "durableUnifiedRotationJournal": true,
+    "externalProxyAdapter": true,
+    "udpProxyCompatibility": true,
+    "liveVpnIsolationFaultMatrix": true
+  },
+  "runtimeChanged": false,
+  "networkSettingsChanged": false,
+  "fleetVpnCommandsSent": 0,
+  "purchasesOrProviderProvisioning": 0,
+  "ph030Followup": {
+    "ownerReport": "Re-entry hangs again on mobile MTS after the successful first guest entry. Network-only root cause not established.",
+    "agentObservedAtUtc": "2026-10-21T08:38:03.512276+00:00",
+    "observedScene": "guest_launcher_vologda_play_button_not_connecting_scene",
+    "screenshotSha256": "eab3c0d4e99fa196550e0582c0c7c225186e03b465bee741019bd1b69e12fbfb",
+    "screenshotElapsedMs": 7184,
+    "xpathNodes": 12,
+    "xpathTextNodes": 0,
+    "readOnlyShellRequests": 7,
+    "shellRequestsRejectedForMetacharacters": 2,
+    "readOnlyShellRequestsSucceeded": 5,
+    "shellResponseIsGameLoginProof": false,
+    "currentLogcatProvesRootCause": false,
+    "androidNetworkValidatedWifi": true,
+    "hostMtsEgressIndependentlyProven": false,
+    "gameLaunches": 0,
+    "gameStops": 0,
+    "inputActions": 0,
+    "gameDataResets": 0,
+    "modelActions": 0,
+    "ipOnlyCauseConfirmed": false
+  },
+  "references": {
+    "amneziaDocs": "https://docs.amnezia.org/documentation/amnezia-wg/",
+    "androidVpn": "https://developer.android.com/develop/connectivity/vpn",
+    "upstreamRelease": "https://github.com/amnezia-vpn/amneziawg-android/releases/tag/v3.1.20260814",
+    "mavenPublicationIssue": "https://github.com/amnezia-vpn/amneziawg-android/issues/100",
+    "uidFilterPullRequest": "https://github.com/amnezia-vpn/amneziawg-android/pull/104",
+    "uidFilterMergedAtReview": false,
+    "mobileProxyRepo": "https://github.com/RootOne1337/mobileproxy.space_rust",
+    "validatorRepo": "https://github.com/RootOne1337/vpn_validator",
+    "mobileProxyReadmeBlob": "19ffe0a9dcc1b4dc6b8b1bdbace89205a5292264",
+    "validatorReadmeBlob": "3aa8288de9eacc2cdbb6cdc75314e51f5c4a56a2",
+    "goBackendBlob": "2bb8026ab3d4207eb465f7428de309a1671ed2ec"
+  },
+  "productAcceptanceChanged": false,
+  "openProductItems": 41,
+  "acceptedRecordedScopes": 9
+}

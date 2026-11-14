@@ -1,0 +1,26 @@
+{
+  "assets": [
+    {
+      "file": "depth-save.pth",
+      "url": "https://raw.githubusercontent.com/cvlab-epfl/disk/8dc6d4d65b47210f629e21ad1fbfb56944b11696/depth-save.pth",
+      "bytes": 4375832,
+      "sha256": "9c2ee4ded238892dfa51569941372601e35e4a74aa6f84ea80053d2ab1c07abe",
+      "git_blob_sha1": "0ae0911444297ea0fa5179ac7e9d0e8d7354d537",
+      "expected_git_blob_sha1": "0ae0911444297ea0fa5179ac7e9d0e8d7354d537",
+      "license": "Apache-2.0"
+    },
+    {
+      "file": "disk_lightglue.pth",
+      "url": "https://github.com/cvg/LightGlue/releases/download/v0.1_arxiv/disk_lightglue.pth",
+      "bytes": 47631405,
+      "sha256": "b5b21d47ea24f2c5e501aec9c91b9716e4c8c3429a4dc1e615c133c4c9378335",
+      "git_blob_sha1": "70c624494f3f9c2716c6552857dd09461c05a9ab",
+      "expected_git_blob_sha1": null,
+      "license": "Apache-2.0"
+    }
+  ],
+  "networkDownloads": 2,
+  "source_mutated": false,
+  "networkDownloadsThisProfile": 0,
+  "reused_receipt_sha256": "71227561f4431671d2c070107afcf36b070fbfb4dbf09928637a59660bb5991b"
+}

@@ -1,0 +1,12 @@
+{
+  "inputs_unchanged": true,
+  "initial_ram": 7761002496,
+  "initial_commit": 21588402176,
+  "min_ram": 7198220288,
+  "min_commit": 20951142400,
+  "exit": 0,
+  "stop": null,
+  "seconds": 33.40700000000652,
+  "owned_direct_child_only": true,
+  "no_device_or_network": true
+}

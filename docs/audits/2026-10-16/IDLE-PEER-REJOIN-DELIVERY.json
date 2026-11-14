@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-16T13:39:53.008964+00:00",
+  "runtimeInstalled": true,
+  "scope": "Idle ACK timeout before SCTP loss: fresh direct peer admitted without extra viewer restart; finite controlled checks, not all PH030 causes or production SLA.",
+  "runtime": {
+    "sourceRevision": "3a036170960e50559f16e34dd14077bb56a296ec",
+    "apiSourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+    "apkSourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
+    "health": [
+      {
+        "address": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "payload": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "address": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "payload": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+        }
+      },
+      {
+        "address": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "payload": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "address": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "payload": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+        }
+      }
+    ],
+    "apkReplacedForThisWebFix": false,
+    "uiContainer": {
+      "id": "de749eee84157c0ff4f490ef9366983e54e9781354cdc0cdc0669cb1ee1cab96",
+      "imageId": "sha256:15fc66b79634c5e06e18fdd94053eb51a8b4b2712dd7fd781d11c48e3db60a2c",
+      "status": "running",
+      "health": "healthy"
+    },
+    "apiContainer": {
+      "id": "c587915e67f9c6d2f7b244592c9700f1dc088c911e24caae1df91f2c4f753ec1",
+      "imageId": "sha256:972f779f74376f2e0442828d0602e62ea7fff458310b0608a4fb693caeb7e3c8",
+      "status": "running",
+      "health": "healthy"
+    }
+  },
+  "sourceFix": {
+    "revision": "3a036170960e50559f16e34dd14077bb56a296ec",
+    "changed": "Preserve pre-retirement proof of idle-only input, require closed old route and a new native READY.",
+    "exactUnknownCleanupStillFenced": true,
+    "heldKeyboardAndUncertainPointerExcluded": true,
+    "actionDeadlinesChanged": false,
+    "commandReplay": false
+  },
+  "ci": {
+    "frontend": {
+      "tests": 2523,
+      "passed": 2523,
+      "failures": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "suites": 172,
+      "success": true
+    },
+    "github": {
+      "id": 56525481776,
+      "context": "Sphere Local / Frontend regressions",
+      "state": "success",
+      "createdAt": "2026-10-16T13:28:36Z",
+      "readbackVerified": true,
+      "targetUrl": null
+    },
+    "receiptProof": {
+      "file": ".local-pilot/local-ci/runs/20261016T132622Z-cb097abb/receipt.json",
+      "sha256": "655f72903dae73b48d2df62ee9f1801f05069eb35fd76656defac1f0a7f3789c"
+    },
+    "hostedActionsStarted": false,
+    "completeCiMigrationAccepted": false,
+    "packageProof": {
+      "file": ".local-pilot/local-web-idle-rejoin79-3a036170/receipt.json",
+      "sha256": "675ae6352f013b29a4384f9ea937362c6b7e23d08a4c728adcf0c09eb4ed2bc2"
+    }
+  },
+  "install": {
+    "otherContainersPreserved": 45,
+    "apiPreserved": true,
+    "otaCatalogPreserved": true,
+    "previousUiImagePreserved": true,
+    "archivesCreated": 0,
+    "privateProof": {
+      "file": ".local-pilot/reviewed-web-install-3a036170960e-832cb5bf/installed.json",
+      "sha256": "3dcbae2c5d64a83529fbd09d2dc7909fe622f10a3f815dbcc255c4f22036e554"
+    }
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "directFramesPresented": 2492,
+    "controlledRecovery": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-16T13:34:59.553Z",
+        "mainPeersCreated": 2,
+        "nativeOpens": 2,
+        "viewerSocketsCreated": 1,
+        "nativeHomeApplied": true,
+        "recoveryMs": 1733.6,
+        "queuedOrReplayedActions": 0,
+        "phases": [
+          {
+            "at": 133.39999997615814,
+            "state": "idle",
+            "failure": null
+          },
+          {
+            "at": 804.0999999940395,
+            "state": "probing",
+            "failure": null
+          },
+          {
+            "at": 2839.2999999821186,
+            "state": "opening",
+            "failure": null
+          },
+          {
+            "at": 3060.399999976158,
+            "state": "ready",
+            "failure": null
+          },
+          {
+            "at": 4359.5999999940395,
+            "state": "fenced",
+            "failure": "idle_receipt_timeout"
+          },
+          {
+            "at": 5735.0999999940395,
+            "state": "idle",
+            "failure": null
+          },
+          {
+            "at": 5736.0999999940395,
+            "state": "probing",
+            "failure": null
+          },
+          {
+            "at": 5923.0999999940395,
+            "state": "opening",
+            "failure": null
+          },
+          {
+            "at": 6100.299999982119,
+            "state": "ready",
+            "failure": null
+          }
+        ],
+        "pageErrors": 0,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/idle-peer-rejoin-fixed-direct-system-input-local.private.json",
+          "sha256": "eb43c0efbff863db8f7a30bd5f352f5804f383f8d7d326241e3cfd85c1576797"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-16T13:36:27.378Z",
+        "mainPeersCreated": 2,
+        "nativeOpens": 2,
+        "viewerSocketsCreated": 1,
+        "nativeHomeApplied": true,
+        "recoveryMs": 2400.6,
+        "queuedOrReplayedActions": 0,
+        "phases": [
+          {
+            "at": 770.0999999940395,
+            "state": "idle",
+            "failure": null
+          },
+          {
+            "at": 2419.0999999940395,
+            "state": "probing",
+            "failure": null
+          },
+          {
+            "at": 4915.0999999940395,
+            "state": "opening",
+            "failure": null
+          },
+          {
+            "at": 5073.4000000059605,
+            "state": "ready",
+            "failure": null
+          },
+          {
+            "at": 6435.5,
+            "state": "fenced",
+            "failure": "idle_receipt_timeout"
+          },
+          {
+            "at": 8349.59999999404,
+            "state": "idle",
+            "failure": null
+          },
+          {
+            "at": 8350,
+            "state": "probing",
+            "failure": null
+          },
+          {
+            "at": 8730.5,
+            "state": "opening",
+            "failure": null
+          },
+          {
+            "at": 8843.5,
+            "state": "ready",
+            "failure": null
+          }
+        ],
+        "pageErrors": 0,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/idle-peer-rejoin-fixed-direct-system-input-tunnel.private.json",
+          "sha256": "f54a9bcf4290db4c771d3f7428d83b27244e2d493e6313407c110682326c1a4a"
+        }
+      }
+    ],
+    "previousWebRecovery": {
+      "webRevision": "982b2240",
+      "mainPeersCreated": 3,
+      "recoveryMs": 5366.1,
+      "privateProof": {
+        "file": ".local-pilot/idle-peer-rejoin-direct-system-input-local.private.json",
+        "sha256": "87338ae1da430617e581e0da473812b5c7a87637ee2106ac49559905c3f43f93"
+      }
+    },
+    "twoClient": {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "simultaneousRounds": 12,
+      "participants": 2,
+      "nativeNavigationAppliedEach": [
+        4,
+        4
+      ],
+      "survivorNavigationApplied": 5,
+      "mainPeersEach": [
+        1,
+        1
+      ],
+      "serverInputCommands": 0,
+      "pageErrors": 0,
+      "privateProof": {
+        "file": ".local-pilot/idle-rejoin-two-client-direct-system-input-tunnel.private.json",
+        "sha256": "1d460dd6a6d110e34fe8029e5961a461078385b1986364a6eb07806ae0a6f411"
+      }
+    }
+  },
+  "ph030ReadOnly": {
+    "observedAtUtc": "2026-10-16T13:36:29.904038+00:00",
+    "reportedVersionCode": 10279,
+    "activeViewerSessions": 0,
+    "observerCommands": 0,
+    "observerCreatedViewers": 0,
+    "userWebRevisionIndependentlyVerified": false,
+    "privateProof": {
+      "file": ".local-pilot/ph030-after-idle-rejoin-web.private.json",
+      "sha256": "befc37bc00743c5d13527668c0a4dbe22a2a3477869cc22ccefed9a4fb8bda26"
+    }
+  },
+  "apkEvidence": {
+    "path": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
+    "sha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+    "versionCode": 10279,
+    "completedUpdates": 4,
+    "exactInstalledHashes": 4,
+    "offlineNotUpdated": 17
+  },
+  "limits": [
+    "Controlled receipt suppression and owned-channel closure are not a physical network switch or an APK process restart.",
+    "PH030 earlier delayed post-OTA recovery remains separately recorded; its user-tab revision and absence of F5 were not independently proven.",
+    "The earlier APK79 five-minute soak and headless check retain their UI982 source boundary; the new UI has its own finite checks.",
+    "No 20-client load, long-duration production SLA, model/gameplay or full automatic CI migration is claimed."
+  ]
+}

@@ -1,0 +1,34 @@
+FFFF......                                                               [100%]
+================================== FAILURES ===================================
+________ test_pc_dispatch_result_reaches_waiting_server_channel[False] ________
+tests\production\test_pc_result_protocol.py:44: in test_pc_dispatch_result_reaches_waiting_server_channel
+    assert received is not None, "The PC executed/rejected the command but the backend discarded its result"
+E   AssertionError: The PC executed/rejected the command but the backend discarded its result
+E   assert None is not None
+________ test_pc_dispatch_result_reaches_waiting_server_channel[True] _________
+tests\production\test_pc_result_protocol.py:44: in test_pc_dispatch_result_reaches_waiting_server_channel
+    assert received is not None, "The PC executed/rejected the command but the backend discarded its result"
+E   AssertionError: The PC executed/rejected the command but the backend discarded its result
+E   assert None is not None
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 22:18:03.145 | ERROR    | agent.dispatcher:dispatch:48 - Команда 'ld_quit' упала: RuntimeError('isolated command failure')
+___________ test_server_accepts_legacy_pc_terminal_reply[completed] ___________
+tests\production\test_pc_result_protocol.py:67: in test_server_accepts_legacy_pc_terminal_reply
+    assert received is not None
+E   assert None is not None
+____________ test_server_accepts_legacy_pc_terminal_reply[failed] _____________
+tests\production\test_pc_result_protocol.py:67: in test_server_accepts_legacy_pc_terminal_reply
+    assert received is not None
+E   assert None is not None
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_pc_result_protocol.py::test_pc_dispatch_result_reaches_waiting_server_channel[False]
+FAILED tests/production/test_pc_result_protocol.py::test_pc_dispatch_result_reaches_waiting_server_channel[True]
+FAILED tests/production/test_pc_result_protocol.py::test_server_accepts_legacy_pc_terminal_reply[completed]
+FAILED tests/production/test_pc_result_protocol.py::test_server_accepts_legacy_pc_terminal_reply[failed]
+4 failed, 6 passed, 1 warning in 5.52s

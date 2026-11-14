@@ -1,0 +1,80 @@
+{
+  "observedAt": "2026-10-05T21:39:09.428Z",
+  "uiSource": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+  "apiSource": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+  "dimensions": {
+    "canvasHeight": 391,
+    "documentWidth": 1280,
+    "mainHeight": 656,
+    "mainScroll": 656,
+    "theme": "dark",
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  "mobile": {
+    "width": 390,
+    "height": 844,
+    "documentWidth": 390,
+    "canvasHeight": 380,
+    "mainScroll": 1570
+  },
+  "invalidJsonRetained": true,
+  "invalidJsonSaveBlocked": true,
+  "undoRestoredValidSource": true,
+  "visualSleepAdded": true,
+  "nodeParametersApplied": true,
+  "serverValidationHash": "6ba193f89e34a2b93efc41c60d547e21923d54417e69d3f6b795e8c7128c6916",
+  "savedReopenedAndRun": true,
+  "selectedTargets": 1,
+  "explicitRunTarget": "auto-ph-025",
+  "browserTaskObservedCompleted": true,
+  "importThroughFileChooser": true,
+  "exportButtonClicked": true,
+  "downloadEventTimedOut": true,
+  "exportFileObservedSeparately": true,
+  "roundtripReportedUnchanged": true,
+  "darkThemeRestored": true,
+  "viewportOverrideReset": true,
+  "recorderReplayImplemented": false,
+  "finalReopen": {
+    "observedAt": "2026-10-05T21:51:38.133Z",
+    "sourceReportedUnchanged": true,
+    "serverHashMatched": true,
+    "fitView": {
+      "allNodesInView": true,
+      "canvas": {
+        "bottom": 687,
+        "left": 504,
+        "right": 900,
+        "top": 296
+      },
+      "height": 720,
+      "nodes": [
+        {
+          "bottom": 379.4186096191406,
+          "id": "start-1",
+          "left": 643.8837280273438,
+          "right": 710.3023681640625,
+          "top": 313
+        },
+        {
+          "bottom": 670,
+          "id": "end-1",
+          "left": 643.8837280273438,
+          "right": 710.3023681640625,
+          "top": 603.5814208984375
+        },
+        {
+          "bottom": 528.8604736328125,
+          "id": "step_850394e2129d",
+          "left": 643.8837280273438,
+          "right": 760.1162719726562,
+          "top": 458.2907104492187
+        }
+      ],
+      "width": 1280
+    }
+  }
+}

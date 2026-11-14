@@ -1,0 +1,12 @@
+{
+  "source": "9ad0a69e729f9b4960bf8aea529a88e25e4f73cf",
+  "observedAt": "2026-10-05T18:57:28Z",
+  "coverageReadSuccessful": false,
+  "cause": "UnicodeDecodeError: text Redis client cannot decode MessagePack records",
+  "inventoryReady": true,
+  "presenceState": "unavailable",
+  "androidVpnState": "unavailable",
+  "partialCountsHidden": true,
+  "deviceCommandsSent": false,
+  "correctedSourceProven": false
+}

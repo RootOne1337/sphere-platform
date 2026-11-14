@@ -1,0 +1,35 @@
+=== jest-v2.log ===
+
+> sphere-frontend@0.1.0 test
+> jest --passWithNoTests --runInBand __tests__/stream/teaching-review.test.tsx
+
+PASS __tests__/stream/teaching-review.test.tsx
+  √ search filters the local list and deletion requires an explicit second action (201 ms)
+  √ the shared source is verified and cannot be relabeled as a newly selected clip (33 ms)
+  √ selected verified recording restores only its declared automatic intent: true (49 ms)
+  √ selected verified recording restores only its declared automatic intent: false (44 ms)
+  √ selected verified recording restores only its declared automatic intent: undefined (39 ms)
+  √ selected camera seeks the verified source and updates the adjacent original-frame viewer (69 ms)
+  √ a selected local geometry file opens the matching route and rejects other recordings (140 ms)
+  √ a saved alternative opens automatically from the linked job without a file picker (123 ms)
+  √ the current prepared map takes precedence over a stale experimental geometry (163 ms)
+  √ recommendation is explicit and never overrides operator or an accepted primary (1 ms)
+  √ refresh reads the updated list but preserves the manual choice (221 ms)
+  √ a recommended alternative from another source cannot open (45 ms)
+  √ deselect clears the diagnostic map and late geometry cannot restore it (73 ms)
+  √ switching the linked reconstruction clears a previously shown alternate (123 ms)
+  √ seeking clears the previous image before a failed decode (20 ms)
+  √ review decodes and navigates the sealed source, then renames without changing media integrity (87 ms)
+  √ search can find a recording older than the newest twenty without deleting it (17 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       17 passed, 17 total
+Snapshots:   0 total
+Time:        3.017 s
+Ran all test suites matching __tests__/stream/teaching-review.test.tsx.
+
+=== tsc-v2.log ===
+
+> sphere-frontend@0.1.0 type-check
+> tsc --noEmit
+

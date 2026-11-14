@@ -12,7 +12,9 @@ from starlette.background import BackgroundTask
 from starlette.requests import Request
 from starlette.responses import Response
 
+from backend.core.audit_identity import AuditIdentity
 from backend.database.engine import AsyncSessionLocal
+from backend.database.tenant import bind_tenant_context
 from backend.models.audit_log import AuditLog
 
 logger = structlog.get_logger()
@@ -38,12 +40,20 @@ _RESOURCE_RE = re.compile(r"/api/v\d+/([a-z_-]+)")
 _UUID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I
 )
+_ROUTE_SEGMENT_RE = re.compile(r"[a-z][a-z0-9_-]*")
 
 
-def _path_to_action(method: str, path: str) -> str:
-    """Нормализовать HTTP метод + path в action-строку типа 'post.devices'."""
+def _path_to_action(method: str, path: str, route_path: str | None) -> str:
+    """Keep the resource prefix and add static parts from the declared route."""
     resource = _extract_resource_type(path)
-    return f"{method.lower()}.{resource}"
+    action = f"{method.lower()}.{resource}"
+    if not route_path:
+        return action
+    match = _RESOURCE_RE.match(route_path)
+    if not match or match.group(1) != resource:
+        return action
+    parts = [part for part in route_path[match.end():].split("/") if _ROUTE_SEGMENT_RE.fullmatch(part)]
+    return ".".join([action, *parts])[:255]
 
 
 def _extract_resource_type(path: str) -> str:
@@ -75,45 +85,42 @@ async def audit_middleware(request: Request, call_next):
     Открывает НОВУЮ DB-сессию (не request-сессию) чтобы не зависеть
     от уже завершённой транзакции request.
     """
-    if request.method not in AUDITED_METHODS or request.url.path in SKIP_PATHS:
+    # Use the ASGI request target, not a URL reconstructed from the Host header.
+    path = request.scope["path"]
+    if request.method not in AUDITED_METHODS or path in SKIP_PATHS:
         return await call_next(request)
 
-    start = time.time()
+    start = time.monotonic()
     response: Response = await call_next(request)
-    duration_ms = int((time.time() - start) * 1000)
+    duration_ms = int((time.monotonic() - start) * 1000)
+    route_path = getattr(request.scope.get("route"), "path", None)
+    if request.method == "POST" and route_path == "/api/v1/devices/{device_id}/viewers":
+        return response  # Read-presence lease renewal runs for every open card.
+    action = _path_to_action(request.method, path, route_path)
+    request_id = getattr(request.state, "request_id", None)
 
-    # Логируем только если пользователь аутентифицирован.
-    # request.state.principal устанавливается в get_current_user / get_current_principal.
-    principal = getattr(request.state, "principal", None)
-    if not principal:
+    # Never read a closed/rolled-back ORM principal or decode unverified headers.
+    # Auth dependencies capture these identifiers before the endpoint transaction.
+    identity = getattr(request.state, "audit_identity", None)
+    if not isinstance(identity, AuditIdentity):
+        if getattr(request.state, "principal", None) is not None:
+            logger.error("audit_identity_missing", action=action)
         return response
-
-    # Определить user_id по типу principal (User vs APIKey).
-    # ВАЖНО: не использовать hasattr() — он вызывает SQLAlchemy дескриптор,
-    # который падает с DetachedInstanceError если сессия уже закрыта.
-    # isinstance() безопасен — использует Python type system, а не ORM атрибуты.
-    from backend.models.user import User as _UserModel
-    is_user = isinstance(principal, _UserModel)
-
-    # Читаем значения атрибутов напрямую из __dict__ (без lazy load через дескриптор).
-    # Если атрибут expired/detached — получаем None вместо исключения.
-    p_vars = vars(principal)
-    user_id = p_vars.get("id") if is_user else None
-    org_id_val = p_vars.get("org_id")
 
     # Фиксируем данные ДО возврата response (state может быть очищен)
     audit_data = {
-        "org_id": org_id_val,
-        "user_id": user_id,
+        "org_id": identity.org_id,
+        "user_id": identity.user_id,
         "ip_address": request.client.host if request.client else None,
         "user_agent": request.headers.get("user-agent"),
-        "action": _path_to_action(request.method, request.url.path),
-        "resource_type": _extract_resource_type(request.url.path),
-        "resource_id": _extract_resource_id(request.url.path),
+        "action": action,
+        "resource_type": _extract_resource_type(path),
+        "resource_id": _extract_resource_id(path),
         "meta": {
             "status": "success" if response.status_code < 400 else "failure",
             "duration_ms": duration_ms,
             "http_status": response.status_code,
+            **({"request_id": request_id} if request_id else {}),
         },
     }
 
@@ -123,6 +130,9 @@ async def audit_middleware(request: Request, call_next):
     async def _write_audit() -> None:
         async with AsyncSessionLocal() as audit_session:
             try:
+                # This is a fresh Session after the HTTP transaction. Capture and
+                # bind the principal's tenant before RLS checks the audit INSERT.
+                await bind_tenant_context(audit_session, str(audit_data["org_id"]))
                 audit_session.add(AuditLog(**audit_data))
                 await audit_session.commit()
             except Exception as exc:

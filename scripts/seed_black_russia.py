@@ -7,8 +7,7 @@ scripts/seed_black_russia.py
 Никаких ADB с сервера — агент выполняет DAG прямо на устройстве.
 
 Использование:
-    python scripts/seed_black_russia.py
-    python scripts/seed_black_russia.py --org-id <UUID>  # несколько организаций
+    python scripts/seed_black_russia.py --org-id <UUID> --apply
 
 Требования:
     — Активная виртуальная среда (.venv) с зависимостями backend
@@ -35,8 +34,9 @@ except ImportError:
 from sqlalchemy import select
 
 from backend.database.engine import AsyncSessionLocal
+from backend.database.tenant import bind_tenant_context
 from backend.models.organization import Organization  # noqa: E402
-from backend.models.script import Script, ScriptVersion
+from backend.services.script_version_admin import seed_preserved_source
 
 # ─── Black Russia DAG ────────────────────────────────────────────────────────
 #
@@ -510,87 +510,25 @@ BLACK_RUSSIA_DAG: dict = {
 SCRIPT_NAME = "Black Russia — Auto Login"
 
 
-async def seed(org_id_override: uuid.UUID | None = None) -> None:
+async def seed(org_id_override: uuid.UUID) -> None:
     async with AsyncSessionLocal() as db:
-        # Найти организацию
-        if org_id_override:
-            org = await db.scalar(
-                select(Organization).where(Organization.id == org_id_override)
-            )
-            if not org:
-                print(f"❌  Организация {org_id_override} не найдена.")
-                sys.exit(1)
-        else:
-            org = await db.scalar(select(Organization).limit(1))
-            if not org:
-                print("❌  Нет ни одной организации. Запусти приложение и зарегистрируйся.")
-                sys.exit(1)
+        await bind_tenant_context(db, str(org_id_override))
+        org = await db.scalar(select(Organization).where(Organization.id == org_id_override))
+        if not org:
+            print(f"❌  Организация {org_id_override} не найдена.")
+            sys.exit(1)
 
         org_id: uuid.UUID = org.id
         print(f"🏢  Организация: {org.name} ({org_id})")
 
-        # Проверить — существует ли уже
-        existing: Script | None = await db.scalar(
-            select(Script).where(
-                Script.org_id == org_id,
-                Script.name == SCRIPT_NAME,
-                Script.is_archived.is_(False),
-            )
+        script, version, created = await seed_preserved_source(
+            db, org_id=org_id, name=SCRIPT_NAME, dag=BLACK_RUSSIA_DAG,
+            notes="Seed source (seed_black_russia.py); preserved format, new immutable version",
         )
-        if existing:
-            # Скрипт уже есть — создаём новую версию с обновлённым DAG
-            # (stop_app → launch_app → основной флоу)
-            from sqlalchemy import func as sa_func
-            max_ver = await db.scalar(
-                select(sa_func.coalesce(sa_func.max(ScriptVersion.version), 0))
-                .where(ScriptVersion.script_id == existing.id)
-            )
-            new_ver_num = (max_ver or 0) + 1
-            new_version = ScriptVersion(
-                script_id=existing.id,
-                org_id=org_id,
-                version=new_ver_num,
-                dag=BLACK_RUSSIA_DAG,
-                notes=f"v{new_ver_num}: Восстановлен рабочий реактивный watchdog-DAG (v4) + добавлен kill_app → open_app перед стартом.",
-            )
-            db.add(new_version)
-            await db.flush()
-            existing.current_version_id = new_version.id
-            await db.commit()
-            print(f"🔄  Скрипт обновлён: {existing.id}")
-            print(f"   Новая версия: {new_version.id} (v{new_ver_num})")
-            print(f"   DAG-узлов: {len(BLACK_RUSSIA_DAG['nodes'])}")
-            print(f"   Изменение: добавлен stop_app → sleep → launch_app перед логин-флоу")
-            return
-
-        # Создать Script
-        script = Script(
-            org_id=org_id,
-            name=SCRIPT_NAME,
-            description=BLACK_RUSSIA_DAG["description"],
-            is_archived=False,
-        )
-        db.add(script)
-        await db.flush()
-
-        # Создать ScriptVersion c DAG
-        version = ScriptVersion(
-            script_id=script.id,
-            org_id=org_id,
-            version=1,
-            dag=BLACK_RUSSIA_DAG,
-            notes="Создано seed-скриптом. Скорректируй координаты под своё разрешение.",
-        )
-        db.add(version)
-        await db.flush()
-
-        # Установить текущую версию
-        script.current_version_id = version.id
-
         await db.commit()
 
-        print(f"✅  Скрипт создан: {script.id}")
-        print(f"   Версия:    {version.id} (v1)")
+        print(f"✅  Скрипт {'создан' if created else 'обновлён'}: {script.id}")
+        print(f"   Версия:    {version.id} (v{version.version})")
         print(f"   DAG-узлов: {len(BLACK_RUSSIA_DAG['nodes'])}")
         print()
         print("   Дальше:")
@@ -604,9 +542,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--org-id",
         type=uuid.UUID,
-        default=None,
-        help="UUID организации (если несколько; по умолчанию — первая в БД)",
+        required=True,
+        help="UUID единственной целевой организации",
     )
+    p.add_argument("--apply", action="store_true", required=True, help="Явно создать новую версию в БД")
     return p.parse_args()
 
 

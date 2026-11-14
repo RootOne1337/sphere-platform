@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # ── Запросы ──────────────────────────────────────────────────────────────────
 
@@ -50,7 +50,7 @@ class CreateScheduleRequest(BaseModel):
     # Лимит запусков
     max_runs: int | None = Field(None, ge=1, le=100_000)
 
-    @field_validator("one_shot_at", "active_from", "active_until", mode="before")
+    @field_validator("one_shot_at", "active_from", "active_until")
     @classmethod
     def _normalize_naive_datetime(cls, v: datetime | None) -> datetime | None:
         """Приводит naive datetime к UTC-aware.
@@ -102,6 +102,9 @@ class CreateScheduleRequest(BaseModel):
 
 class UpdateScheduleRequest(BaseModel):
     """Обновление расписания (частичное)."""
+    expected_updated_at: AwareDatetime | None = Field(
+        None, description="Optional revision timestamp from the inspected ScheduleResponse",
+    )
     name: str | None = Field(None, min_length=1, max_length=255)
     description: str | None = None
     cron_expression: str | None = None
@@ -122,7 +125,7 @@ class UpdateScheduleRequest(BaseModel):
     active_until: datetime | None = None
     max_runs: int | None = Field(None, ge=1, le=100_000)
 
-    @field_validator("one_shot_at", "active_from", "active_until", mode="before")
+    @field_validator("one_shot_at", "active_from", "active_until")
     @classmethod
     def _normalize_naive_datetime(cls, v: datetime | None) -> datetime | None:
         """Приводит naive datetime к UTC-aware.
@@ -173,6 +176,11 @@ class ScheduleResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ScheduleFireResponse(ScheduleResponse):
+    requested_fire_at: datetime
+    request_replayed: bool
 
 
 class ScheduleExecutionResponse(BaseModel):

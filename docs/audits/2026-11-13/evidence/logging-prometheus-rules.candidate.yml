@@ -1,0 +1,47 @@
+groups:
+  - name: sphere-collection
+    rules:
+      - alert: SphereBackendMetricsUnavailable
+        expr: up{job="sphere-backend"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: Backend /metrics cannot be scraped for at least one minute
+          description: This checks metrics delivery, not Android stream or script health.
+      - alert: SphereDeviceLogStorageQuotaRejected
+        expr: sum by (outcome) (increase(sphere_device_log_retention_events_total{outcome=~"daily_quota|volume_quota"}[15m])) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: Device diagnostic log uploads were rejected by a storage quota
+          description: Check the journal volume, retention, and incoming diagnostic bytes. Outcome {{ $labels.outcome }}.
+      - alert: SphereDeviceLogFilesystemLowSpace
+        expr: sphere_device_log_filesystem_free_bytes / sphere_device_log_filesystem_total_bytes < 0.1
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Device journal filesystem has less than 10% free space
+          description: Check the filesystem hosting the journal and competing writers on that filesystem.
+      - alert: SphereDeviceLogFilesystemUnobservable
+        expr: (sphere_device_log_filesystem_available == 0) or (up{job="sphere-backend"} == 1 unless on (job, instance) sphere_device_log_filesystem_available)
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Backend metrics are reachable but journal filesystem capacity is unavailable
+          description: Check the configured journal directory and whether the backend revision exports filesystem metrics.
+      - alert: SphereDeviceLogRetentionStalled
+        expr: >-
+          (sphere_device_log_filesystem_available == 1)
+          unless on (job, instance)
+          (time() - sphere_device_log_retention_last_success_timestamp_seconds < 300)
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: No recent device journal retention scan was confirmed
+          description: Check the journal lifecycle, filesystem permissions, and lock contention.
+      - alert: SphereAndroidOtaReceiptRepeated
+        expr: sum by (job, instance) (increase(sphere_android_ota_unrecognized_receipts_total{outcome="suppressed"}[15m])) >= 5
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Android keeps sending OTA receipts the backend cannot match
+          description: Look for android_ws.ota_recovery_receipt_unrecognized and its summaries in the backend journal.

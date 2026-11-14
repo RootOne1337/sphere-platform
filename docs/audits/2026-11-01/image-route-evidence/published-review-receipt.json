@@ -1,0 +1,8 @@
+{
+  "schema": "sphere-image-route-review-receipt-v1",
+  "scope": "DIAGNOSTIC_ONLY",
+  "execution_qualified": false,
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "review_sha256": "cb3d6d28a5e7fe151629dde6f6933ce6784b7b61b5b61ee9c10cb667c0ce2e4d",
+  "frames_sha256": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0"
+}

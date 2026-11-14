@@ -1,0 +1,32 @@
+{
+  "scope": "READ_ONLY_CODE_LEVEL_EXISTING_JOB_STATUS_NOT_AUTHENTICATED_HTTP",
+  "constructorsCalled": false,
+  "job": "6a77040681d142ec97d51831a22785fb",
+  "sourceManifestSha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "expectedSourceManifestSha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "sourceBound": true,
+  "mainPhase": "failed",
+  "navigationPhase": "not_prepared",
+  "geometryAvailable": true,
+  "sparseAvailable": false,
+  "jobOrCaptureChanged": false,
+  "protectedAssetHashesEqual": true,
+  "apiNewContracts": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true,
+    "route_camera_pipeline": "vehicle_geometry_v3_hud",
+    "creation_recovery_contract": "confirmed_absence_v1",
+    "route_lifecycle_contract": "owned_serial_handoff_v1",
+    "job_source_binding_contract": "manifest_sha256_status_v1",
+    "image_route_review_contract": "source_bound_offline_v1",
+    "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+    "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+    "alternative_catalog_contract": "source_bound_review_v1",
+    "vehicle_control_contract": "attached_camera_hud_binary_hold_v1",
+    "route_resource_monitor_contract": "task_volume30_fresh_native_v1",
+    "hud_speed_reference_contract": "source_bound_font_display_v1",
+    "live_session_active": false
+  },
+  "unauthenticatedHttp403": 403,
+  "physicalActions": 0
+}

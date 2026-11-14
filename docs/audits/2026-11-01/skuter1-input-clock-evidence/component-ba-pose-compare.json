@@ -1,0 +1,11 @@
+{
+  "common_cameras": 169,
+  "align_scale": 1.0086322263767473,
+  "center_residual_median": 0.7738988223984659,
+  "center_residual_p95": 1.7485361848993264,
+  "center_residual_max": 1.7509291723721725,
+  "rotation_residual_median_deg": 0.4904677773164392,
+  "rotation_residual_p95_deg": 1.125463574048782,
+  "rotation_residual_max_deg": 1.1387391643058624,
+  "meaning": "in-sample alignment, not independent truth"
+}

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T00:40:25.912592+00:00",
+  "runtimeInstalled": true,
+  "scope": "UI-only fleet/appearance refinement installed on3015/Tuna. Backend and APK catalog preserved. Finite browser UI and stream smoke only; earlier transport acceptance limits retained.",
+  "runtime": {
+    "sourceRevision": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "uiContainer": {
+      "sourceRevision": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
+      "containerId": "c55c5d491975babafc2458372d0649175e549eeed68f8a8dff2d2a690845277e",
+      "imageId": "sha256:af56814d817776a1ad43d4714e63d882e1c4eac242f1b6958718e64902e9e50d",
+      "status": "running"
+    },
+    "apiContainer": {
+      "sourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+      "containerId": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "status": "running"
+    },
+    "uiCiRunId": 38660271567,
+    "artifactDigest": "6a50d36904c328bb26f5e098443452ffa8bbadf26b43526d7fb7ce7b9669ea7c",
+    "githubDigestVerified": true,
+    "otherContainersPreservedPerInstall": 45,
+    "otaCatalogPreserved": true,
+    "schemaMigrationPerformed": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "productionAccepted": false,
+    "ordinaryChrome": true,
+    "transportOverrides": false,
+    "directFramesPresented": 2502,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0,
+        "columnWidthAfterF5": 333,
+        "menuSurvivedHeartbeatMs": 24657
+      }
+    ],
+    "mobile": {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "cardsReady": true,
+      "desktopGridMounted": false,
+      "rootOverflow": false,
+      "pageErrorCount": 0
+    },
+    "stream": {
+      "device": "auto-ph-011",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "origin": "http://127.0.0.1:3015",
+      "directFramesPresented": 2502,
+      "controlState": "ready",
+      "directNativeKeysReady": true,
+      "connections": 1,
+      "networkRttMs": 1,
+      "androidActionSent": false
+    },
+    "androidInputSent": false,
+    "commandsReplayed": false
+  },
+  "sourceValidation": "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json",
+  "apkBaselineEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+  "limits": [
+    "No new Android package or backend deployment.",
+    "Stream smoke does not repeat keyboard/gesture/multi-client/WAN acceptance.",
+    "UI audit remains partial; physical phone keyboard, remaining forms/roles, file explorer and performance soak open."
+  ]
+}

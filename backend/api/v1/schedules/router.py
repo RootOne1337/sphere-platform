@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 import uuid
+from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query
+from pydantic import AwareDatetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
@@ -18,7 +20,7 @@ from backend.models.user import User
 from backend.schemas.schedule import (
     CreateScheduleRequest,
     ScheduleExecutionListResponse,
-    ScheduleExecutionResponse,
+    ScheduleFireResponse,
     ScheduleListResponse,
     ScheduleResponse,
     UpdateScheduleRequest,
@@ -120,8 +122,10 @@ async def create_schedule(
         created_by_id=current_user.id,
         **fields,
     )
+    await db.refresh(schedule, ["updated_at"])
+    snapshot = ScheduleResponse.model_validate(schedule)
     await db.commit()
-    return ScheduleResponse.model_validate(schedule)
+    return snapshot
 
 
 @router.get(
@@ -142,6 +146,7 @@ async def get_schedule(
     "/{schedule_id}",
     response_model=ScheduleResponse,
     summary="Обновить расписание",
+    responses={409: {"description": "schedule_revision_conflict"}},
 )
 async def update_schedule(
     schedule_id: uuid.UUID,
@@ -150,10 +155,14 @@ async def update_schedule(
     svc: ScheduleService = Depends(get_schedule_service),
     db: AsyncSession = Depends(get_db),
 ) -> ScheduleResponse:
-    update_data = body.model_dump(exclude_unset=True)
-    schedule = await svc.update(schedule_id, current_user.org_id, **update_data)
+    update_data = body.model_dump(exclude_unset=True, exclude={"expected_updated_at"})
+    schedule = await svc.update(
+        schedule_id, current_user.org_id, expected_updated_at=body.expected_updated_at, **update_data,
+    )
+    await db.refresh(schedule, ["updated_at"])
+    snapshot = ScheduleResponse.model_validate(schedule)
     await db.commit()
-    return ScheduleResponse.model_validate(schedule)
+    return snapshot
 
 
 @router.delete(
@@ -161,14 +170,16 @@ async def update_schedule(
     status_code=204,
     response_model=None,
     summary="Деактивировать расписание",
+    responses={409: {"description": "schedule_revision_conflict"}},
 )
 async def delete_schedule(
     schedule_id: uuid.UUID,
+    expected_updated_at: Annotated[AwareDatetime | None, Query(description="Optional ScheduleResponse revision")] = None,
     current_user: User = require_permission("schedule:write"),
     svc: ScheduleService = Depends(get_schedule_service),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    await svc.delete(schedule_id, current_user.org_id)
+    await svc.delete(schedule_id, current_user.org_id, expected_updated_at=expected_updated_at)
     await db.commit()
 
 
@@ -181,33 +192,47 @@ async def delete_schedule(
     "/{schedule_id}/toggle",
     response_model=ScheduleResponse,
     summary="Включить / выключить расписание",
+    responses={409: {"description": "schedule_revision_conflict"}},
 )
 async def toggle_schedule(
     schedule_id: uuid.UUID,
     active: bool = Query(..., description="true=включить, false=выключить"),
+    expected_updated_at: Annotated[AwareDatetime | None, Query(description="Optional ScheduleResponse revision")] = None,
     current_user: User = require_permission("schedule:write"),
     svc: ScheduleService = Depends(get_schedule_service),
     db: AsyncSession = Depends(get_db),
 ) -> ScheduleResponse:
-    schedule = await svc.toggle(schedule_id, current_user.org_id, active)
+    schedule = await svc.toggle(schedule_id, current_user.org_id, active, expected_updated_at=expected_updated_at)
+    await db.refresh(schedule, ["updated_at"])
+    snapshot = ScheduleResponse.model_validate(schedule)
     await db.commit()
-    return ScheduleResponse.model_validate(schedule)
+    return snapshot
 
 
 @router.post(
     "/{schedule_id}/fire-now",
-    response_model=ScheduleResponse,
-    summary="Принудительно запустить расписание сейчас",
+    response_model=ScheduleFireResponse,
+    summary="Запросить ближайшее срабатывание активного расписания",
+    responses={
+        409: {"description": "Расписание выключено, вне окна, исчерпало лимит или schedule_revision_conflict"},
+        429: {"description": "Достигнут суточный предел ключей повторов расписания"},
+    },
 )
 async def fire_schedule_now(
     schedule_id: uuid.UUID,
     current_user: User = require_permission("schedule:write"),
     svc: ScheduleService = Depends(get_schedule_service),
     db: AsyncSession = Depends(get_db),
-) -> ScheduleResponse:
-    schedule = await svc.fire_now(schedule_id, current_user.org_id)
+    request_key: Annotated[uuid.UUID | None, Header(alias="Idempotency-Key")] = None,
+    expected_updated_at: Annotated[AwareDatetime | None, Query(description="Optional ScheduleResponse revision")] = None,
+) -> ScheduleFireResponse:
+    schedule, requested_fire_at, request_replayed = await svc.request_fire(
+        schedule_id, current_user.org_id, request_key, expected_updated_at=expected_updated_at,
+    )
+    await db.refresh(schedule, ["updated_at"])
+    snapshot = ScheduleResponse.model_validate(schedule)
     await db.commit()
-    return ScheduleResponse.model_validate(schedule)
+    return ScheduleFireResponse(**snapshot.model_dump(), requested_fire_at=requested_fire_at, request_replayed=request_replayed)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -235,7 +260,7 @@ async def list_schedule_executions(
     )
     pages = (total + per_page - 1) // per_page if total > 0 else 0
     return ScheduleExecutionListResponse(
-        items=[ScheduleExecutionResponse.model_validate(e) for e in items],
+        items=items,
         total=total,
         page=page,
         per_page=per_page,

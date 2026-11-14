@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "frozenAtUtc": "2026-10-11T11:38:30.531660+00:00",
+  "scope": "Prefix of the continuing limited observer, not a completed 24-hour observation or whole-PC writer attribution.",
+  "source": {
+    "directory": ".local-pilot/host-storage-limited-20261011T033533Z",
+    "prefixSamples": 237,
+    "prefixBytes": 3015077,
+    "prefixSha256Raw": "bb5f2c3a61558845c55b9dfa11426f22dc9dfa3286647217b64c1da36955b6b3",
+    "workerPid": 43984,
+    "redirectorPid": 22792,
+    "dueUtc": "2026-10-12T03:35:33.923320+00:00"
+  },
+  "window": {
+    "fromUtc": "2026-10-11T03:35:33.924349+00:00",
+    "toUtc": "2026-10-11T11:27:33.932155+00:00",
+    "freeDiskFirstBytes": 33418137600,
+    "freeDiskLastBytes": 31771045888,
+    "freeDiskDeltaBytes": -1647091712
+  },
+  "dockerVhdx": {
+    "allSamplesMeasured": true,
+    "identityStable": true,
+    "allocatedFirstBytes": 236073254912,
+    "allocatedLastBytes": 236073254912,
+    "allocatedMinBytes": 236073254912,
+    "allocatedMaxBytes": 236073254912,
+    "allocatedDeltaBytes": 0
+  },
+  "namedLdPlayer": {
+    "files": 6,
+    "allSamplesMeasured": true,
+    "netAllocationDeltaBytes": 0
+  },
+  "pagefile": {
+    "minAllocatedMiB": 48320,
+    "maxAllocatedMiB": 48320,
+    "scope": "CIM allocation counter; not direct NTFS physical allocation measurement."
+  },
+  "vss": {
+    "state": "unavailable",
+    "errorType": "CimException"
+  },
+  "processIoIsWriterAttribution": false,
+  "wholePcWriter": null,
+  "collectorContinuing": true,
+  "runtimeChangesPerformed": false,
+  "cleanupPerformed": false,
+  "limits": [
+    "Named files only; host VSS/USN/kernel attribution unavailable.",
+    "Stable VHDX allocation does not imply zero writes or zero growth inside its guest.",
+    "Changed SQLite WAL identities cannot be subtracted as the same file.",
+    "Configured deadline does not guarantee survival through Windows restart/sleep."
+  ]
+}

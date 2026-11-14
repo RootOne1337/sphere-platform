@@ -12,6 +12,8 @@ from backend.database.engine import get_db
 from backend.models.user import User
 from backend.schemas.groups import (
     CreateGroupRequest,
+    GroupMembershipRequest,
+    GroupMembershipResponse,
     GroupResponse,
     MoveDevicesRequest,
     SetTagsRequest,
@@ -85,6 +87,7 @@ async def update_group(
     status_code=204,
     response_model=None,
     summary="Удалить группу устройств",
+    responses={409: {"description": "Группа используется расписанием или изменяется"}},
 )
 async def delete_group(
     group_id: uuid.UUID,
@@ -100,7 +103,7 @@ async def delete_group(
 
 @router.post(
     "/{group_id}/devices/move",
-    summary="Переместить устройства в группу",
+    summary="Заменить все группы устройств выбранной группой",
 )
 async def move_devices(
     group_id: uuid.UUID,
@@ -114,6 +117,24 @@ async def move_devices(
     )
     await db.commit()
     return {"moved": moved}
+
+
+@router.post(
+    "/{group_id}/devices/membership",
+    response_model=GroupMembershipResponse,
+    summary="Добавить, удалить или заменить членства устройств в группах",
+    responses={404: {"description": "Группа не найдена"}, 409: {"description": "Состав групп меняется"}},
+)
+async def change_device_memberships(
+    group_id: uuid.UUID,
+    body: GroupMembershipRequest,
+    current_user: User = require_permission("device:write"),
+    svc: GroupService = Depends(get_group_service),
+    db: AsyncSession = Depends(get_db),
+) -> GroupMembershipResponse:
+    results = await svc.change_device_memberships(body.device_ids, group_id, current_user.org_id, body.operation)
+    await db.commit()
+    return GroupMembershipResponse(group_id=group_id, operation=body.operation, results=results)
 
 
 # ── Tags ──────────────────────────────────────────────────────────────────────

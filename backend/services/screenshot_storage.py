@@ -17,6 +17,7 @@ logger = structlog.get_logger()
 
 BUCKET = "sphere-screenshots"
 SCREENSHOT_TTL_SECONDS = 3600   # Presigned URL TTL: 1 час
+MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024
 
 
 class ScreenshotStorage:
@@ -63,6 +64,25 @@ class ScreenshotStorage:
             expires=timedelta(seconds=self.presign_ttl),
         )
         return url
+
+    async def read_screenshot(self, key: str) -> tuple[bytes, str]:
+        """Bound memory and close the SDK response even on rejected content."""
+        def read() -> tuple[bytes, str]:
+            response = self.client.get_object(BUCKET, key)
+            try:
+                data = response.read(MAX_SCREENSHOT_BYTES + 1)
+                if len(data) > MAX_SCREENSHOT_BYTES:
+                    raise ValueError("Screenshot exceeds the 5 MiB limit")
+                if data.startswith(b"\xff\xd8\xff"):
+                    return data, "image/jpeg"
+                if data.startswith(b"\x89PNG\r\n\x1a\n"):
+                    return data, "image/png"
+                raise ValueError("Stored screenshot is not a JPEG or PNG image")
+            finally:
+                response.close()
+                response.release_conn()
+
+        return await asyncio.to_thread(read)
 
     async def delete_screenshot(self, key: str) -> None:
         """Удалить скриншот (например, при очистке старых задач)."""

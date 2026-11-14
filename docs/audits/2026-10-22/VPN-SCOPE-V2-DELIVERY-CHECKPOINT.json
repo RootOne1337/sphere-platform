@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T17:17:12.560377+00:00",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "a239baa26c5d945a4e3b09f4596b94d4db0cada2",
+    "apiSourceRevision": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+    "uiImageId": "sha256:11ee80d0a3f2ef194bf840cf535e65c33f91bc4042055864d0dcad310d514781",
+    "uiInstalledAtUtc": "2026-10-22T17:06:27.476952922Z",
+    "backendUpdated": false,
+    "schemaMigrationPerformed": false,
+    "neighborContainersPreserved": 45
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Installed read-only VPN catalog, existing authenticated event connection, all-apps selector and close without save. No Android VPN or profile v2 save acceptance.",
+    "url": "http://127.0.0.1:3015/vpn",
+    "viewportWidth": 638,
+    "viewportHeight": 886,
+    "screenshotsSha256": {
+      "all-apps-policy.png": "62faf22b1ff006db8fcc538bfec88e7a25af4e3e2165bfc71ff8fc76922f3a42",
+      "all-apps.png": "e8acff7ff284c31fc9bf022be3dda0e8ac9e73fe0b55ae6ba2a885eb83ef2aff",
+      "catalog.png": "5e02a44d2f621faf54afacf7f557dd310b82f6851fad84ea07502b2b20495cf3"
+    },
+    "profileMutations": 0
+  },
+  "ci": {
+    "androidValidation": {
+      "runId": 39806178086,
+      "success": true
+    },
+    "androidConfigured": {
+      "runId": 39815925918,
+      "success": true
+    },
+    "backend": {
+      "runId": 39811323770,
+      "success": true
+    },
+    "frontend": {
+      "runId": 39814320199,
+      "success": true
+    }
+  },
+  "candidateApk": {
+    "versionCode": 10286,
+    "version": "1.2.86-dev",
+    "sourceRevision": "10d7d334e7a0cc440d498a6531ed79da83aff26e",
+    "sha256": "174f1f68afc37c90450e16a2142616869f5632f07b027cd4adaba0820c4b4229",
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signatureOnlyChanged": true,
+    "payloadEntriesPreserved": 936,
+    "installed": false
+  },
+  "delivery": {
+    "oneShotOwnedRepositorySecretDeleted": true,
+    "workflowConfigurationUploaded": true,
+    "providerApiKeyUploaded": false,
+    "vpnProfileUploaded": false,
+    "privateSignerUploaded": false,
+    "runtimeBuildsLocal": 0,
+    "hostRestarted": false,
+    "resourceGuardBypassed": false
+  },
+  "resourceBlock": {
+    "availableRamGiB": 3.61,
+    "commitPercent": 86.85,
+    "requiredRamGiB": 4,
+    "maximumCommitPercentExclusive": 85,
+    "backendReplacementPerformed": false
+  },
+  "deviceVersionsReported": [
+    {
+      "name": "auto-ph-030",
+      "versionCode": 10285,
+      "status": "online"
+    },
+    {
+      "name": "auto-ph-025",
+      "versionCode": 10285,
+      "status": "online"
+    },
+    {
+      "name": "auto-ph-011",
+      "versionCode": 10285,
+      "status": "online"
+    },
+    {
+      "name": "auto-ph-010",
+      "versionCode": 10285,
+      "status": "online"
+    }
+  ],
+  "ph030": {
+    "vpnNewScopeApplied": false,
+    "apk86Installed": false,
+    "lastObservedGuardPhase": "PAUSED_GUARD_HELD",
+    "lastObservedGuardPlan": 4,
+    "lastObservedTrafficScope": "com.br.top",
+    "newProviderPeerCount": 1,
+    "newProviderPeerName": "sphere-ph030-20261022",
+    "newProviderHostHttpsDnsConfirmed": true,
+    "browserEgressVerified": false,
+    "gameDataCleared": false
+  },
+  "productionAccepted": false,
+  "scope": "Delivery checkpoint while Android all-apps canary is blocked by local runtime resource admission. No fleet VPN activation."
+}

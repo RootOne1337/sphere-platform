@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
+from backend.schemas.batch import BatchExecutionRequest
 from backend.services.batch_service import BatchService
 
 
@@ -35,25 +36,25 @@ def _make_session_maker():
 
 
 def _make_request(
-    device_ids: list | None = None,
+    device_ids: list[uuid.UUID] | None = None,
     wave_size: int = 5,
     wave_delay_ms: int = 1000,
     jitter_ms: int = 0,
     priority: int = 5,
     stagger_by_workstation: bool = False,
     webhook_url: str | None = None,
-) -> MagicMock:
-    req = MagicMock()
-    req.script_id = uuid.uuid4()
-    req.device_ids = device_ids or [uuid.uuid4()]
-    req.wave_size = wave_size
-    req.wave_delay_ms = wave_delay_ms
-    req.jitter_ms = jitter_ms
-    req.priority = priority
-    req.stagger_by_workstation = stagger_by_workstation
-    req.webhook_url = webhook_url
-    req.name = "test-batch"
-    return req
+) -> BatchExecutionRequest:
+    return BatchExecutionRequest(
+        script_id=uuid.uuid4(),
+        device_ids=device_ids or [uuid.uuid4()],
+        wave_size=wave_size,
+        wave_delay_ms=wave_delay_ms,
+        jitter_ms=jitter_ms,
+        priority=priority,
+        stagger_by_workstation=stagger_by_workstation,
+        webhook_url=webhook_url,
+        name="test-batch",
+    )
 
 
 class TestStartBatch:

@@ -1,0 +1,119 @@
+{
+  "state": "delivered",
+  "frontendSourceRevision": "45801659e1d2122ed4aa50ffd89341074228e541",
+  "imageId": "sha256:fd8ba0f63407e496db40a47a46b3fbe5f77380c8a1c5aa2ff74ae869e4c87eeb",
+  "sourceArchiveSha256": "1a4ec90fe27e53e62cce5b4e1c042d6bbcc3e59ff06528b18f06ac0442a91e10",
+  "canonicalCi": {
+    "runId": "20261101T213810Z-fb28f9dc",
+    "receipt": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\local-ci\\runs\\20261101T213810Z-fb28f9dc\\receipt.json",
+    "tests": 3000,
+    "passed": 3000,
+    "failed": 0,
+    "suites": 224,
+    "skipped": 0,
+    "mandatorySteps": 7,
+    "github": {
+      "id": 57795808433,
+      "context": "Sphere Local / Frontend regressions",
+      "state": "success",
+      "createdAt": "2026-11-01T21:41:01Z",
+      "readbackVerified": true,
+      "targetUrl": null
+    },
+    "processSeconds": 177.40599999995902
+  },
+  "build": {
+    "processSeconds": 119.82800000009593,
+    "minAvailableRamGiB": 6.301982879638672,
+    "minFreeCommitGiB": 14.765636444091797,
+    "successfulBuilds": 1,
+    "rebuilds": 0,
+    "remoteDockerCpuLimitClaimed": false
+  },
+  "canonicalPackageProbe": {
+    "pages": 26,
+    "clientAssets": 72
+  },
+  "supplementalHttp": {
+    "pages": 2,
+    "clientAssets": 31,
+    "workerSha256": {
+      "teaching-recorder.worker.js": "4a327116bda4850b2aa4241784677837eb72e744f3ffd3c0755a7741e3975769",
+      "walk-frame-encoder.js": "299fd956df1bac46cad0736b7b109e1c9533e3b922ba30622cb7cb6d24daec69"
+    },
+    "bundleTokensVerified": [
+      "vehicle_live_v1",
+      "sphere-vehicle-plan-v1",
+      "vehicle-start",
+      "cameraFollowsBodyConfirmed",
+      "maxDecisionAgeMs",
+      "vehicle_speed_reference",
+      "Повторить подготовку записи",
+      "45801659e1d2122ed4aa50ffd89341074228e541"
+    ]
+  },
+  "preservation": {
+    "otherContainers": 45,
+    "fullUiConfigExceptExactImageComposeMetadata": true,
+    "uniqueCompleteEnvironmentMappingEqual": true,
+    "HostConfigAndMountsEqual": true,
+    "api": {
+      "pid": 1868,
+      "health": {
+        "service": "sphere-reconstruction-v1",
+        "one_active_job": true,
+        "route_camera_pipeline": "vehicle_geometry_v3_hud",
+        "creation_recovery_contract": "confirmed_absence_v1",
+        "image_route_review_contract": "source_bound_offline_v1",
+        "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+        "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+        "alternative_catalog_contract": "source_bound_review_v1",
+        "vehicle_control_contract": "attached_camera_hud_binary_hold_v1",
+        "route_resource_monitor_contract": "task_volume30_fresh_native_v1",
+        "hud_speed_reference_contract": "source_bound_font_display_v1",
+        "live_session_active": false
+      }
+    },
+    "protectedSourceFiles": 479,
+    "protectedHashesUnchanged": true,
+    "new20556PreferredGeometryAndHudPreserved": true,
+    "otaUnchanged": true,
+    "frontendWorkingTreeMatchesPinnedSource": true
+  },
+  "canonicalInstallReceipt": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-45801659e1d2-abcb2cc6/installed.json",
+  "supplementalInstallReceipt": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\vehicle-route-gap-delivery-20261102-v1\\install-v1-receipt.json",
+  "fixture": {
+    "scope": "COMPONENT_FIXTURE_NOT_IAB_ACCEPTANCE",
+    "source": "45801659e1d2122ed4aa50ffd89341074228e541",
+    "screenshot": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\vehicle-route-gap-45801659-20261102\\hud-continuity.png",
+    "sha256": "b263ae34353f5ae55b9e8f8e432fc2811fdae3715c6470f30e234b2feaab9bdf",
+    "actualHudDisplay": {
+      "accepted": 836,
+      "unknown": 21,
+      "displayedSamples": 429
+    },
+    "syntheticControl": {
+      "explicitlyLabelled": true,
+      "segments": [
+        3,
+        2
+      ],
+      "polylines": 2,
+      "dots": 5
+    },
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "visuallyInspected": true,
+    "hydrationVerified": false,
+    "iabAcceptance": false,
+    "physicalActions": 0,
+    "isolatedBrowserClosed": true,
+    "fixturePortClosed": true
+  },
+  "priorDeliveryReceiptsPreserved": true,
+  "rollbacksThisDelivery": 0,
+  "apiReloaded": false,
+  "productionNavigationPromoted": false,
+  "physicalActions": 0,
+  "archivesCreated": 0
+}

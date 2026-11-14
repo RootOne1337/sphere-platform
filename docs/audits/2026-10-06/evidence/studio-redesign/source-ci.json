@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-06T02:16:59.147582+00:00",
+  "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+  "scope": "github-source-workflows-not-runtime-fleet-or-full-security-acceptance",
+  "allFourCompletedSuccess": true,
+  "workflows": [
+    {
+      "workflow": "backend",
+      "runId": 37401985029,
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985029",
+      "jobs": [
+        {
+          "name": "Tests",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:00:16Z",
+          "completedAt": "2026-10-06T02:13:58Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985029/job/112071002646"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:00:16Z",
+          "completedAt": "2026-10-06T02:01:03Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985029/job/112071002800"
+        },
+        {
+          "name": "RLS Policy Coverage",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:00:16Z",
+          "completedAt": "2026-10-06T02:00:24Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985029/job/112071002866"
+        },
+        {
+          "name": "Production image bootstrap",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:00:16Z",
+          "completedAt": "2026-10-06T02:01:51Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985029/job/112071002874"
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:00:16Z",
+          "completedAt": "2026-10-06T02:00:44Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985029/job/112071002929"
+        },
+        {
+          "name": "Alembic Single Head",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:14:01Z",
+          "completedAt": "2026-10-06T02:14:47Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985029/job/112074547454"
+        }
+      ]
+    },
+    {
+      "workflow": "frontend",
+      "runId": 37401985124,
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985124",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:00:16Z",
+          "completedAt": "2026-10-06T02:03:03Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985124/job/112071002916"
+        }
+      ]
+    },
+    {
+      "workflow": "preview",
+      "runId": 37401985130,
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985130",
+      "jobs": [
+        {
+          "name": "guard",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:00:16Z",
+          "completedAt": "2026-10-06T02:00:19Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985130/job/112071002833"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "skipped",
+          "startedAt": "2026-10-06T02:00:20Z",
+          "completedAt": "2026-10-06T02:00:20Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985130/job/112071031657"
+        }
+      ]
+    },
+    {
+      "workflow": "android",
+      "runId": 37401985298,
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985298",
+      "jobs": [
+        {
+          "name": "Android tests and signed release smoke build",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T02:00:17Z",
+          "completedAt": "2026-10-06T02:11:53Z",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37401985298/job/112071003054"
+        }
+      ]
+    }
+  ],
+  "installedUiSource": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+  "installedApiSource": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+  "documentationHeadChecksSeparate": true,
+  "fleetSlaProven": false,
+  "allActionsProven": false,
+  "storageWriterIdentified": false,
+  "backendTestSummary": {
+    "passed": 2844,
+    "skipped": 30,
+    "warnings": 1
+  },
+  "backendTestSummarySource": "Tests / Unit and real-service regression tests / 2026-10-06T02:13:10.7073069Z",
+  "previewDeploymentPerformed": false,
+  "previewDeployCondition": "needs.guard.outputs.enabled == true not satisfied; deploy skipped"
+}

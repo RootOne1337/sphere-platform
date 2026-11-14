@@ -1,0 +1,38 @@
+{
+  "source_manifest_sha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "frames": [
+    {
+      "source_index": 0,
+      "ticks_90k": 0,
+      "source_access_unit_sha256": "f3a18b2829b80b1b5cc96e19c026638c6e7127514d78009625ca3b7815fe9664",
+      "actual_png_sha256": "5590757b15ab96799acd70df13a196480d10c4ee2b40b62fcdf40eaa7812424a",
+      "observation_npz_sha256": "db4fe3a87835fccac08822afdba7a7b1f70fc77499275e24afbe49c5402b080d"
+    },
+    {
+      "source_index": 6,
+      "ticks_90k": 18720,
+      "source_access_unit_sha256": "fb112ce28ff8e0c2e44a3943b34ce591d259ab28e0723ce1105f471c21c18a6c",
+      "actual_png_sha256": "48e79e927701714cfccf1d457235ec44c4f9ef9a6e9783143857f29bd39ecff9",
+      "observation_npz_sha256": "06c7bbe463ad1d67b0091775dcc4dcb1eb490074a78d756cfee526330ac6840d"
+    },
+    {
+      "source_index": 850,
+      "ticks_90k": 3297330,
+      "source_access_unit_sha256": "d920f11f28574dc794dfde4d288069023a1a4d5951b6bab01bfc1125f327a69f",
+      "actual_png_sha256": "7c117ff1aa6684889cfb4788b10a995297c2880fc1dbfcd42df17ac7cc5c1647",
+      "observation_npz_sha256": "17378794aef05f307824e00442d4767ee288a7b35910782ebdded6d11b18fbab"
+    },
+    {
+      "source_index": 856,
+      "ticks_90k": 3321270,
+      "source_access_unit_sha256": "d4d0cf676e40bf72a6f9b4f75fbceecbf8d63cd8ee165cb1df4c886e5464f153",
+      "actual_png_sha256": "2b9e41849cc05e2a588a1f20f5a003dacae122f068b5a10de167620eb0f1f3c6",
+      "observation_npz_sha256": "d3f542bf76f280a5665a7aeb3a35ddb2470e4f80b1df1d766f8db51546af3cec"
+    }
+  ],
+  "source_png_and_metadata_sha_match": true,
+  "landmark_coordinates_from": "ba100",
+  "pixel_convention": "LK on image pixels; COLMAP keypoints +0.5",
+  "no_db_keypoint_indices_reused": true,
+  "execution_qualified": false
+}

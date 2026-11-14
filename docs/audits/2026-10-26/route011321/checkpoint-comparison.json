@@ -1,0 +1,460 @@
+{
+  "schema": "sphere-route011321-heldout-checkpoints-v1",
+  "source_manifest_sha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+  "roundtrip": {
+    "label": "reference-roundtrip-30k",
+    "raw_metrics_sha256": "c3ba9f8c5b82beb65ddde39c82d19d274cd5a76810022cb82798d733ab64e78a",
+    "ply_sha256": "deb10632ac545e27845f8a7eab23b705d9f190087e4c75bdc2e1e4bfe4c4893d",
+    "seconds": 2.362736399998539,
+    "views": [
+      {
+        "image": "images/00000000.png",
+        "psnr": 33.75837326049805,
+        "ssim": 0.9331847429275513
+      },
+      {
+        "image": "images/00000062.png",
+        "psnr": 33.896671295166016,
+        "ssim": 0.9370396137237549
+      },
+      {
+        "image": "images/00000127.png",
+        "psnr": 32.61831283569336,
+        "ssim": 0.9360159635543823
+      },
+      {
+        "image": "images/00000190.png",
+        "psnr": 33.777587890625,
+        "ssim": 0.955558180809021
+      },
+      {
+        "image": "images/00000255.png",
+        "psnr": 34.19588088989258,
+        "ssim": 0.9425749182701111
+      },
+      {
+        "image": "images/00000321.png",
+        "psnr": 33.30010223388672,
+        "ssim": 0.946655809879303
+      },
+      {
+        "image": "images/00000383.png",
+        "psnr": 29.239334106445312,
+        "ssim": 0.9236811995506287
+      },
+      {
+        "image": "images/00000448.png",
+        "psnr": 32.914466857910156,
+        "ssim": 0.9483568668365479
+      },
+      {
+        "image": "images/00000511.png",
+        "psnr": 29.204126358032227,
+        "ssim": 0.9130417108535767
+      }
+    ],
+    "mean_psnr": 32.54498396979438,
+    "mean_ssim": 0.9373454451560974
+  },
+  "rows": [
+    {
+      "label": "heldout-05000",
+      "raw_metrics_sha256": "fbd398f103fa6e3f450504e1e20a2b8b1c34c9ff76065c26a7ba7a20815c4b85",
+      "ply_sha256": "b62cdc7da8b49861d1692de6021e2a50d1185259a47ada2fed0a67331839386e",
+      "seconds": 2.5072749000100885,
+      "views": [
+        {
+          "image": "images/00000001.png",
+          "psnr": 31.038955688476562,
+          "ssim": 0.8778642416000366
+        },
+        {
+          "image": "images/00000045.png",
+          "psnr": 31.17881202697754,
+          "ssim": 0.9094605445861816
+        },
+        {
+          "image": "images/00000112.png",
+          "psnr": 26.867643356323242,
+          "ssim": 0.824607789516449
+        },
+        {
+          "image": "images/00000179.png",
+          "psnr": 32.75284957885742,
+          "ssim": 0.9246307611465454
+        },
+        {
+          "image": "images/00000245.png",
+          "psnr": 32.23640060424805,
+          "ssim": 0.9226741194725037
+        },
+        {
+          "image": "images/00000289.png",
+          "psnr": 32.38037872314453,
+          "ssim": 0.9264270663261414
+        },
+        {
+          "image": "images/00000355.png",
+          "psnr": 26.33373260498047,
+          "ssim": 0.8869563341140747
+        },
+        {
+          "image": "images/00000444.png",
+          "psnr": 30.69342041015625,
+          "ssim": 0.904106080532074
+        },
+        {
+          "image": "images/00000510.png",
+          "psnr": 26.258413314819336,
+          "ssim": 0.8487599492073059
+        }
+      ],
+      "mean_psnr": 29.97117847866482,
+      "mean_ssim": 0.8917207651668124,
+      "steps": 5000
+    },
+    {
+      "label": "heldout-10000",
+      "raw_metrics_sha256": "ee98166cfeed0efc9d55a5bead64859a245b7305cbb9544a398b1e06d8946b4f",
+      "ply_sha256": "5403c0c2853bf250b85c04ea252647a949aca738148996876347e138dad46ca5",
+      "seconds": 2.4236028000013903,
+      "views": [
+        {
+          "image": "images/00000001.png",
+          "psnr": 32.26667785644531,
+          "ssim": 0.9016857743263245
+        },
+        {
+          "image": "images/00000045.png",
+          "psnr": 32.034446716308594,
+          "ssim": 0.9221674799919128
+        },
+        {
+          "image": "images/00000112.png",
+          "psnr": 28.03634262084961,
+          "ssim": 0.8479944467544556
+        },
+        {
+          "image": "images/00000179.png",
+          "psnr": 33.30375671386719,
+          "ssim": 0.9324508905410767
+        },
+        {
+          "image": "images/00000245.png",
+          "psnr": 33.227352142333984,
+          "ssim": 0.9293152093887329
+        },
+        {
+          "image": "images/00000289.png",
+          "psnr": 32.8232421875,
+          "ssim": 0.9352615475654602
+        },
+        {
+          "image": "images/00000355.png",
+          "psnr": 26.650793075561523,
+          "ssim": 0.8980613946914673
+        },
+        {
+          "image": "images/00000444.png",
+          "psnr": 31.19891357421875,
+          "ssim": 0.9174173474311829
+        },
+        {
+          "image": "images/00000510.png",
+          "psnr": 25.677610397338867,
+          "ssim": 0.8551594614982605
+        }
+      ],
+      "mean_psnr": 30.579903920491535,
+      "mean_ssim": 0.9043903946876526,
+      "steps": 10000
+    },
+    {
+      "label": "heldout-15000",
+      "raw_metrics_sha256": "db4497ad9216a51e9c17078ac93f2f00f09d157a787684701d8749b826b72ac8",
+      "ply_sha256": "393b9ff3a6e44fafe1640debf04a3b3ee20e583513e92cf57348f7f3191f889d",
+      "seconds": 2.461740800004918,
+      "views": [
+        {
+          "image": "images/00000001.png",
+          "psnr": 32.97085189819336,
+          "ssim": 0.9191986322402954
+        },
+        {
+          "image": "images/00000045.png",
+          "psnr": 32.467628479003906,
+          "ssim": 0.9269943833351135
+        },
+        {
+          "image": "images/00000112.png",
+          "psnr": 28.596908569335938,
+          "ssim": 0.8574869632720947
+        },
+        {
+          "image": "images/00000179.png",
+          "psnr": 33.42434310913086,
+          "ssim": 0.9357232451438904
+        },
+        {
+          "image": "images/00000245.png",
+          "psnr": 33.66786193847656,
+          "ssim": 0.9341608881950378
+        },
+        {
+          "image": "images/00000289.png",
+          "psnr": 32.54721450805664,
+          "ssim": 0.9346189498901367
+        },
+        {
+          "image": "images/00000355.png",
+          "psnr": 26.832218170166016,
+          "ssim": 0.9025331139564514
+        },
+        {
+          "image": "images/00000444.png",
+          "psnr": 32.0180549621582,
+          "ssim": 0.9286302328109741
+        },
+        {
+          "image": "images/00000510.png",
+          "psnr": 27.754104614257812,
+          "ssim": 0.8926816582679749
+        }
+      ],
+      "mean_psnr": 31.142131805419922,
+      "mean_ssim": 0.9146697852346632,
+      "steps": 15000
+    },
+    {
+      "label": "heldout-20000",
+      "raw_metrics_sha256": "3bc70448618dc1f553693910e36f98b0bead3238d850b14bdc7266677f4f7990",
+      "ply_sha256": "bad7553056b2292351d5336f91ef9e504778219ee3401f3e99abeaaad799899d",
+      "seconds": 2.684959499994875,
+      "views": [
+        {
+          "image": "images/00000001.png",
+          "psnr": 33.80799865722656,
+          "ssim": 0.9317469000816345
+        },
+        {
+          "image": "images/00000045.png",
+          "psnr": 32.747047424316406,
+          "ssim": 0.9291853308677673
+        },
+        {
+          "image": "images/00000112.png",
+          "psnr": 28.63678741455078,
+          "ssim": 0.8556408882141113
+        },
+        {
+          "image": "images/00000179.png",
+          "psnr": 33.427818298339844,
+          "ssim": 0.9379702806472778
+        },
+        {
+          "image": "images/00000245.png",
+          "psnr": 33.47285461425781,
+          "ssim": 0.9333838224411011
+        },
+        {
+          "image": "images/00000289.png",
+          "psnr": 33.136619567871094,
+          "ssim": 0.9377708435058594
+        },
+        {
+          "image": "images/00000355.png",
+          "psnr": 26.983274459838867,
+          "ssim": 0.9038464426994324
+        },
+        {
+          "image": "images/00000444.png",
+          "psnr": 31.997957229614258,
+          "ssim": 0.9290469884872437
+        },
+        {
+          "image": "images/00000510.png",
+          "psnr": 29.077425003051758,
+          "ssim": 0.9091811180114746
+        }
+      ],
+      "mean_psnr": 31.47642029656304,
+      "mean_ssim": 0.9186414016617669,
+      "steps": 20000
+    },
+    {
+      "label": "heldout-25000",
+      "raw_metrics_sha256": "3e1b6c455907fb2a17212f27931e16319458b4a6356135692f39ea5600f91e85",
+      "ply_sha256": "033dde4676494b3f2f11014b460e5e4b19cb20d40b2024623fd13d1bc77b02fc",
+      "seconds": 2.4625808999990113,
+      "views": [
+        {
+          "image": "images/00000001.png",
+          "psnr": 33.765846252441406,
+          "ssim": 0.9329386949539185
+        },
+        {
+          "image": "images/00000045.png",
+          "psnr": 32.88002395629883,
+          "ssim": 0.929904580116272
+        },
+        {
+          "image": "images/00000112.png",
+          "psnr": 28.8403377532959,
+          "ssim": 0.8562119007110596
+        },
+        {
+          "image": "images/00000179.png",
+          "psnr": 33.413543701171875,
+          "ssim": 0.9369667768478394
+        },
+        {
+          "image": "images/00000245.png",
+          "psnr": 33.8642463684082,
+          "ssim": 0.9340523481369019
+        },
+        {
+          "image": "images/00000289.png",
+          "psnr": 33.069427490234375,
+          "ssim": 0.9370546936988831
+        },
+        {
+          "image": "images/00000355.png",
+          "psnr": 27.03635025024414,
+          "ssim": 0.9037278294563293
+        },
+        {
+          "image": "images/00000444.png",
+          "psnr": 32.01179122924805,
+          "ssim": 0.927900493144989
+        },
+        {
+          "image": "images/00000510.png",
+          "psnr": 29.683074951171875,
+          "ssim": 0.9143159985542297
+        }
+      ],
+      "mean_psnr": 31.618293550279404,
+      "mean_ssim": 0.9192303684022691,
+      "steps": 25000
+    },
+    {
+      "label": "heldout-30000",
+      "raw_metrics_sha256": "b49439aee8d733bb3f3906b6bd38488b5c6b0b6283178db85ee0b3ae16efe49e",
+      "ply_sha256": "deb10632ac545e27845f8a7eab23b705d9f190087e4c75bdc2e1e4bfe4c4893d",
+      "seconds": 3.0000739000097383,
+      "views": [
+        {
+          "image": "images/00000001.png",
+          "psnr": 33.724449157714844,
+          "ssim": 0.9328914284706116
+        },
+        {
+          "image": "images/00000045.png",
+          "psnr": 32.81563186645508,
+          "ssim": 0.9287546873092651
+        },
+        {
+          "image": "images/00000112.png",
+          "psnr": 28.80373764038086,
+          "ssim": 0.8549979329109192
+        },
+        {
+          "image": "images/00000179.png",
+          "psnr": 33.602169036865234,
+          "ssim": 0.9372342228889465
+        },
+        {
+          "image": "images/00000245.png",
+          "psnr": 33.94778060913086,
+          "ssim": 0.9350551962852478
+        },
+        {
+          "image": "images/00000289.png",
+          "psnr": 33.19401550292969,
+          "ssim": 0.9376509189605713
+        },
+        {
+          "image": "images/00000355.png",
+          "psnr": 27.031841278076172,
+          "ssim": 0.9031701683998108
+        },
+        {
+          "image": "images/00000444.png",
+          "psnr": 32.07211685180664,
+          "ssim": 0.9298456907272339
+        },
+        {
+          "image": "images/00000510.png",
+          "psnr": 29.186777114868164,
+          "ssim": 0.9134079813957214
+        }
+      ],
+      "mean_psnr": 31.597613228691948,
+      "mean_ssim": 0.9192231363720365,
+      "steps": 30000
+    }
+  ],
+  "source_hashes": {
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/input/manifest.json": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/geometry.json": "be5815218e3280a370466489c732eb235d7ba0e4ca020a6cb79bcfbd47832f62",
+    ".local-pilot/route011321-audit-20261026/heldout/report.json": "101a4e5398bd3536604ad5ccd8f7dded1f8fef70138cd4fb13046008b7ffc9d2",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/dense/scene_05000.ply": "b62cdc7da8b49861d1692de6021e2a50d1185259a47ada2fed0a67331839386e",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/dense/scene_10000.ply": "5403c0c2853bf250b85c04ea252647a949aca738148996876347e138dad46ca5",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/dense/scene_15000.ply": "393b9ff3a6e44fafe1640debf04a3b3ee20e583513e92cf57348f7f3191f889d",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/dense/scene_20000.ply": "bad7553056b2292351d5336f91ef9e504778219ee3401f3e99abeaaad799899d",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/dense/scene_25000.ply": "033dde4676494b3f2f11014b460e5e4b19cb20d40b2024623fd13d1bc77b02fc",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/dense/scene_30000.ply": "deb10632ac545e27845f8a7eab23b705d9f190087e4c75bdc2e1e4bfe4c4893d",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000000.png": "04bac81a6492ae2a72b83604508580e6bf816fafc987de5861816e34d6c359e0",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000062.png": "272c1d007783106be8b866c2181b9c79987921b05ec2d162baed6d9b9a4e9b61",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000127.png": "e44955ae804d5c869fb62028176ce00b5c1980900e38e174d0db484af59ffcf0",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000190.png": "6cb3e5b5e31fe32059653f5c0cdccd6b88539e072a2a6ef201789e6424f72c0f",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000255.png": "2c11a4990e5748544eb419041aea61bf03ffa4281b76bb0c812abb178dbd4b0c",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000321.png": "b8d7c7deedeba8f537debf9a4d2666e73deb30e6dfbc4099b581a0e6ec2ae165",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000383.png": "1eaa9f1640bf4b3ea51c982afab32c5a23a8d4252c5add193bc85ec1a2820820",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000448.png": "c855b62b70895a1c80da88e7d30b052af735158c611a9a0ea143fd6f175957fd",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000511.png": "29abc53333fe2fccf397354dfa57132b1573e6f557e7c6272011517c56b970df",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000001.png": "5b93ab18d477d547a7aa42f302123b52c02d8eca00390bb04a77e5ff034699d3",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000045.png": "bb44db2a714de1e52f2e5d13fa587b8df0c852c275e5256195ecff578d066028",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000112.png": "6f6f48327a7c6a8cc06b139cde522e739e9daf2ab52d4a39ae8fa7b6a7048c89",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000179.png": "d86ab51cfd0c1defabefefae5be08851926773dfcabf73f6fb544ae759706031",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000245.png": "047cf762e8dcab86692436e249765d8fbaa8f759fe2855d848b904c1093a6002",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000289.png": "d3e7920422d86d264ceb11738a4c233123b34b3022b280721990cbf7cf6af340",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000355.png": "2388816d71d336afdd5932d97d6e6ca8cd4eddea0900ee4d5c754872a4ddb485",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000444.png": "a1d95920ee7f1c920abff11cb0f15ba6e1153d048f0d21529811ad0c11326de9",
+    ".local-pilot/route011321-audit-20261026/heldout/images/00000510.png": "40919f3b6f98a0de7e42c640237de74d9bbd729de5c76388a8aecae91481dd3d"
+  },
+  "source_unchanged": true,
+  "heldout_indices": [
+    1,
+    45,
+    112,
+    179,
+    245,
+    289,
+    355,
+    444,
+    510
+  ],
+  "excluded_pose_failure_indices": [
+    422
+  ],
+  "trained_on_evaluation_frames": false,
+  "fixed_poses": true,
+  "evaluated_long_side": 960,
+  "same_capture": true,
+  "new_session": false,
+  "navigation_qualified": false,
+  "training": false,
+  "physical_actions": 0,
+  "script_sha256": "1b0325ea555f591a22f8dfc0bea2f811984a89bca113d6c85bf91555976dd98f",
+  "paired_25k_to_30k": {
+    "mean_delta_psnr": -0.0206803215874566,
+    "min_delta_psnr": -0.49629783630371094,
+    "max_delta_psnr": 0.18862533569335938,
+    "views_improved": 4,
+    "views_worse": 5,
+    "same_frames_and_poses": true,
+    "formal_statistical_significance_test": false
+  },
+  "legacy_binary_held_out_field": "raw evaluator always writes false; wrapper checks exclusion of original89 source indices and never modifies raw reports"
+}

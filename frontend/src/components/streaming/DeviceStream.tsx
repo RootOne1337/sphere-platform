@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { H264Decoder } from "@/src/lib/streaming/H264Decoder";
 import { RemoteControlWidget } from "./RemoteControlWidget";
 
@@ -10,7 +10,9 @@ interface DeviceStreamProps {
   className?: string;
 }
 
-type StreamStatus = "connecting" | "streaming" | "reconnecting" | "offline";
+type StreamStatus = "connecting" | "waiting" | "streaming" | "stale" | "reconnecting" | "offline";
+
+const FRAME_STALE_TIMEOUT_MS = 10_000;
 
 /**
  * Renders a live H.264 stream from an Android device onto a canvas element.
@@ -29,31 +31,80 @@ export function DeviceStream({
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const decoderRef = useRef<H264Decoder | null>(null);
+  const frameReceivedRef = useRef(false);
+  const frameStaleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const statusRef = useRef<StreamStatus>("connecting");
   const [status, setStatus] = useState<StreamStatus>("connecting");
+  const transitionStatus = useCallback((next: StreamStatus) => {
+    if (statusRef.current === next) return;
+    statusRef.current = next;
+    setStatus(next);
+  }, []);
 
   useEffect(() => {
-    if (!canvasRef.current || !authToken) return;
+    if (!canvasRef.current) return;
+    if (!authToken) {
+      transitionStatus("offline");
+      return;
+    }
 
+    let disposed = false;
     const decoder = new H264Decoder(canvasRef.current);
     decoderRef.current = decoder;
+    frameReceivedRef.current = false;
+    transitionStatus("connecting");
+    if (frameStaleTimerRef.current) clearTimeout(frameStaleTimerRef.current);
+    frameStaleTimerRef.current = null;
 
-    decoder.onDisconnect = () => setStatus("offline");
-    // FIX-RECONNECT: обновляем статус при успешном reconnect
-    decoder.onReconnect = () => setStatus("streaming");
+    decoder.onDisconnect = () => {
+      if (disposed) return;
+      if (frameStaleTimerRef.current) clearTimeout(frameStaleTimerRef.current);
+      frameStaleTimerRef.current = null;
+      transitionStatus("offline");
+    };
+    decoder.onReconnectStart = () => {
+      if (disposed) return;
+      frameReceivedRef.current = false;
+      if (frameStaleTimerRef.current) clearTimeout(frameStaleTimerRef.current);
+      frameStaleTimerRef.current = null;
+      transitionStatus("reconnecting");
+    };
+    // Opening a WebSocket proves transport only; wait for decoded canvas output.
+    decoder.onReconnect = () => {
+      if (!disposed) transitionStatus("waiting");
+    };
+    decoder.onFrame = () => {
+      if (disposed) return;
+      frameReceivedRef.current = true;
+      if (frameStaleTimerRef.current) clearTimeout(frameStaleTimerRef.current);
+      frameStaleTimerRef.current = setTimeout(
+        () => {
+          if (!disposed && statusRef.current === "streaming") transitionStatus("stale");
+        },
+        FRAME_STALE_TIMEOUT_MS,
+      );
+      transitionStatus("streaming");
+    };
 
     decoder
       .init(deviceId, authToken)
-      .then(() => setStatus("streaming"))
+      .then(() => {
+        if (!disposed && !frameReceivedRef.current) transitionStatus("waiting");
+      })
       .catch((err: unknown) => {
+        if (disposed) return;
         console.error("[DeviceStream] init failed:", err);
-        setStatus("offline");
+        transitionStatus("offline");
       });
 
     return () => {
+      disposed = true;
+      if (frameStaleTimerRef.current) clearTimeout(frameStaleTimerRef.current);
+      frameStaleTimerRef.current = null;
       decoder.destroy();
       decoderRef.current = null;
     };
-  }, [deviceId, authToken]);
+  }, [deviceId, authToken, transitionStatus]);
 
   const pointerState = useRef<{ x: number; y: number; time: number } | null>(null);
 
@@ -124,9 +175,13 @@ export function DeviceStream({
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 text-foreground text-sm select-none">
           {status === "connecting"
             ? "Подключение..."
-            : status === "reconnecting"
-              ? "Переподключение..."
-              : "Нет сигнала"}
+            : status === "waiting"
+              ? "Ожидание видеокадра..."
+              : status === "stale"
+                ? "Нет новых видеокадров более 10 секунд"
+              : status === "reconnecting"
+                ? "Переподключение..."
+                : "Нет сигнала"}
         </div>
       )}
     </div>

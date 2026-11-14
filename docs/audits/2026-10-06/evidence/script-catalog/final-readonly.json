@@ -1,0 +1,66 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "observedAt": "2026-10-06T07:41:18.061449+00:00",
+  "deviceCommandsSent": false,
+  "apiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "ready": "ready",
+  "fleetTotal": 19,
+  "statusCounts": {
+    "online": 14,
+    "busy": 0,
+    "connecting": 0,
+    "offline": 5,
+    "issues": 0
+  },
+  "presenceAvailable": true,
+  "catalogRows": 22,
+  "catalogSchema": 1,
+  "catalogBytes": 14037,
+  "sourcesExcluded": true,
+  "cacheControl": "no-store",
+  "ciRuns": [
+    {
+      "conclusion": "success",
+      "databaseId": 37429532718,
+      "headSha": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "name": "Preview Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532718"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37429532728,
+      "headSha": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "name": "CI Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532728"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37429532773,
+      "headSha": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "name": "CI Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532773"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37429532716,
+      "headSha": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "name": "CI Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532716"
+    }
+  ],
+  "ciLabelsNormalized": true,
+  "ciIdsAndUrlsAreAuthoritative": true,
+  "finiteSnapshotNotSoakOrDeviceExecution": true,
+  "provenance": [
+    {
+      "retainedPrivateReceipt": "final-readonly.json",
+      "sha256": "2aacad7ab6fe5f7fcaa47b377bb485d273104bf953e9241885d428e5741036cc",
+      "bytes": 1733
+    }
+  ]
+}

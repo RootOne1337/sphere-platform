@@ -1,0 +1,20 @@
+{
+  "contract": "source_bound_font_display_v1",
+  "source_job": ".local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb",
+  "phase": "ready",
+  "accepted_count": 836,
+  "unknown_count": 21,
+  "selected_count": 857,
+  "sample_count": 429,
+  "unknown_display_buckets": 16,
+  "source_manifest_sha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "cold_milliseconds": 154.63810006622225,
+  "warm_median_milliseconds": 2.807250013574958,
+  "warm_p95_milliseconds": 3.37530008982867,
+  "warm_full_validation_calls": 0,
+  "source_sha256": {
+    "scripts/pilot/route_hud_profile.py": "116c319ed0676ad0761e6e40d0bab838e3504b5cdd1734431399ccf98bae97e4",
+    "scripts/pilot/reconstruction_service.py": "3f37aff22a71ef4c85f0d7b32ce3f2099de7609d21fb3e85c01438a376d00340",
+    "tests/test_route_hud_profile.py": "964727f6cbecafd3b06674a7910194c3212594af11a505cdfc43efbcfa81d45a"
+  }
+}

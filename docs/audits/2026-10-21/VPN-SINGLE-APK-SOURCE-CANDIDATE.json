@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T14:36:33.545235+00:00",
+  "kind": "single-apk-vpn-source-candidate",
+  "installed": false,
+  "mainApkLiveAcceptance": false,
+  "backendOrWebInstalled": false,
+  "proposedVersionCode": 10284,
+  "checks": {
+    "androidVpnAndJournal": {
+      "tests": 68,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "androidDevLint": "passed",
+    "backendVpnAndPresenceTests": 248,
+    "frontendVpnTests": 58,
+    "typescript": "passed",
+    "documentationTests": 41,
+    "documentationSubtests": 94
+  },
+  "kernelGuardV3": {
+    "operationId": "e3459a4b-ee6d-4810-a91e-a0c46004c079",
+    "device": "emulator-5554",
+    "selectedUid": 10107,
+    "controlUid": 10082,
+    "blocked": {
+      "selected": {
+        "uid": 10107,
+        "connected": false,
+        "socketError": 110,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      },
+      "ipv6": {
+        "uid": 10107,
+        "connected": false,
+        "socketError": 110,
+        "exitCode": 0
+      }
+    },
+    "allowedDummy": {
+      "ifindex": 16,
+      "mark": 253755392,
+      "table": 2624745,
+      "route": "default dev tun9999 scope link metric 10 linkdown \nblackhole default metric 32760",
+      "selected": {
+        "uid": 10107,
+        "connected": false,
+        "socketError": 110,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      }
+    },
+    "reusedName": {
+      "oldIfindex": 16,
+      "newIfindex": 17,
+      "routeStatus": 0,
+      "route": "blackhole default metric 32760",
+      "selected": {
+        "uid": 10107,
+        "connected": false,
+        "socketError": 110,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      }
+    },
+    "released": {
+      "selected": {
+        "uid": 10107,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      }
+    },
+    "privateTablesAfterRelease": {
+      "4": "",
+      "6": ""
+    },
+    "passed": true,
+    "cleanupRequired": false
+  },
+  "limits": [
+    "Finite kernel fixture is not main VpnService acceptance",
+    "APK84 not built or installed by this source receipt",
+    "Full current-source CI and immutable API/UI packaging remain required",
+    "Server operation journal and unique-client-key leases still open",
+    "UI/script/orchestration apply not enabled",
+    "DNS/IPv6/reboot/sleep/network faults and media/input acceptance still open"
+  ],
+  "rootPolling": "Main VPN monitor reads JNI only; no su health loop",
+  "telemetry": "Current authenticated WS only, native sample and receipt clocks, 15 second UI expiry, null for unavailable counters"
+}

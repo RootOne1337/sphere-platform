@@ -1,0 +1,37 @@
+{
+  "schema": "sphere-route-compass-delivery-v1",
+  "date": "2026-10-29",
+  "ui": {
+    "image": "sphere-route-local:route-compass-20261029-v1",
+    "imageId": "sha256:c8de01c7203442afa1ab79dcb372ea5b8ae8d3a32971bb87a70fc2801c6212b6",
+    "sourceSha256": "cb0ce10b2a109794cfa823dd411df5e9d14cb089c6b2b993e3f95ba29102a564",
+    "port": 3015,
+    "pagesVerified": 2,
+    "assetsVerified": 31,
+    "installed": true,
+    "healthy": true,
+    "sourceUnchangedDuringBuild": true,
+    "recorderWorkerUnchanged": true,
+    "otherContainersPreserved": true,
+    "nativeBrowserVisualAcceptance": "pending"
+  },
+  "localWorker": {"port": 3342, "health": 200, "missingCapability": 403, "sourceReloaded": true},
+  "verification": {"frontendStreamTests": 953, "frontendSuites": 67, "pythonWorkspaceTests": 38, "pythonReconstructionTests": 61, "typescript": "passed", "productionBuild": "passed"},
+  "compassEvidence": {
+    "source": "fuflo228/denseviews-123-v1",
+    "geometrySha256": "cc0e1694e5afdb5857364aac699248da4455114863bcfd270e219522560e2e77",
+    "cameras": 123,
+    "points": 22014,
+    "view": 75,
+    "seconds": 20.225,
+    "angleDegrees": -169.0675005745224,
+    "headingBefore": [-0.1896524011050599, -0.9818512956426169],
+    "headingAfter": [5.551115123125783e-17, 0.9999999999999999],
+    "sourceUnchanged": true,
+    "kind": "actual_data_plot_not_browser_screenshot"
+  },
+  "physicalDeviceActions": 0,
+  "newGithubJobs": 0,
+  "autonomousRouteAcceptance": "not_performed",
+  "executionQualified": false
+}

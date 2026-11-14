@@ -1,0 +1,649 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-25T15:54:15.004751+00:00",
+  "scope": "local route fragment coverage and diagnostics; not seamless geometric or autonomous driving acceptance",
+  "source": {
+    "manifestSha256": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b",
+    "geometrySha256": "f79f9380ac0362eea1038977f3570227e1f4560567accccd3f739ebefd4a89c0",
+    "sourceFramesChecked": 458,
+    "registeredViews": 81,
+    "seconds": 44.146,
+    "originalFragmentSeconds": [
+      10.914,
+      20.411
+    ],
+    "originalFragmentTimeFraction": 0.21512707833099262,
+    "sourceRgbPreserved": true,
+    "originalGaussianPreserved": true,
+    "controlFileSha256": "a4a654b1d5f80bbb059f4df116475d76354d2f29e994b739959fee7efa71d0ee"
+  },
+  "fragments": [
+    {
+      "id": "137c358f9c37f0961d49f0aeabf81717",
+      "firstView": 1,
+      "lastView": 18,
+      "seconds": [
+        0.0,
+        9.28
+      ],
+      "triangles": 60912,
+      "bytes": 11738488,
+      "sha256": "22175289bd71819b1d95ae4b4a8e3354b1c742a9c0b0da257d7e3edc763ae2bf",
+      "nativePipelineSeconds": 98.78,
+      "visualReview": {
+        "state": "issues_found",
+        "issues": [
+          "holes",
+          "stretched_triangles",
+          "pose_inconsistency",
+          "occluding_surfaces"
+        ]
+      },
+      "cpuTriangleRenders": [
+        {
+          "image": "00000000.png",
+          "visible_mesh_fraction": 0.39698302469135804
+        },
+        {
+          "image": "00000048.png",
+          "visible_mesh_fraction": 0.41585648148148147
+        },
+        {
+          "image": "00000097.png",
+          "visible_mesh_fraction": 0.33189043209876545
+        }
+      ],
+      "navigationQualified": false
+    },
+    {
+      "id": "1bbd3b6cfd0ef26d6ec9ac3b949f6880",
+      "firstView": 15,
+      "lastView": 32,
+      "seconds": [
+        7.663,
+        17.193
+      ],
+      "triangles": 115625,
+      "bytes": 15384684,
+      "sha256": "50b21bb5fcba089e01c9633c6d580c43500e400d39137cd6eb73156b3c6961b6",
+      "nativePipelineSeconds": 126.73,
+      "visualReview": {
+        "state": "issues_found",
+        "issues": [
+          "holes",
+          "stretched_triangles",
+          "pose_inconsistency"
+        ]
+      },
+      "cpuTriangleRenders": [
+        {
+          "image": "00000081.png",
+          "visible_mesh_fraction": 0.6806327160493827
+        },
+        {
+          "image": "00000125.png",
+          "visible_mesh_fraction": 0.7409799382716049
+        },
+        {
+          "image": "00000177.png",
+          "visible_mesh_fraction": 0.7229783950617283
+        }
+      ],
+      "navigationQualified": false
+    },
+    {
+      "id": "c01f4fec3c81461169629284b81177b9",
+      "firstView": 29,
+      "lastView": 46,
+      "seconds": [
+        15.525,
+        24.923
+      ],
+      "triangles": 42957,
+      "bytes": 10609096,
+      "sha256": "0dc04de770972d70c304bd698550de2c6c0b3843bed9367d77e28394c7157417",
+      "nativePipelineSeconds": 97.17,
+      "visualReview": {
+        "state": "issues_found",
+        "issues": [
+          "holes",
+          "stretched_triangles",
+          "pose_inconsistency",
+          "occluding_surfaces"
+        ]
+      },
+      "cpuTriangleRenders": [
+        {
+          "image": "00000161.png",
+          "visible_mesh_fraction": 0.9571064814814815
+        },
+        {
+          "image": "00000201.png",
+          "visible_mesh_fraction": 0.9055632716049383
+        },
+        {
+          "image": "00000254.png",
+          "visible_mesh_fraction": 0.8394598765432099
+        }
+      ],
+      "navigationQualified": false
+    },
+    {
+      "id": "a72f7f9445f2b08a8eb735cd27e2ad1c",
+      "firstView": 43,
+      "lastView": 60,
+      "seconds": [
+        23.242,
+        32.759
+      ],
+      "triangles": 101619,
+      "bytes": 15993044,
+      "sha256": "ba0423dacb6406fc3a962a1e3e2556a7a854c7e7bfeff3ee64392394e3ccee29",
+      "nativePipelineSeconds": 127.59,
+      "visualReview": {
+        "state": "issues_found",
+        "issues": [
+          "holes",
+          "stretched_triangles",
+          "pose_inconsistency",
+          "occluding_surfaces"
+        ]
+      },
+      "cpuTriangleRenders": [
+        {
+          "image": "00000236.png",
+          "visible_mesh_fraction": 0.24552469135802468
+        },
+        {
+          "image": "00000283.png",
+          "visible_mesh_fraction": 0.6804398148148149
+        },
+        {
+          "image": "00000337.png",
+          "visible_mesh_fraction": 1.0
+        }
+      ],
+      "navigationQualified": false
+    },
+    {
+      "id": "61e78b885e1effac7d9b6afb28455bba",
+      "firstView": 57,
+      "lastView": 74,
+      "seconds": [
+        31.045,
+        40.402
+      ],
+      "triangles": 67964,
+      "bytes": 13479588,
+      "sha256": "3ba90e84283d6dad5553ac21650f8fe8b755b22d74026e2d001f0206abb8e3ed",
+      "nativePipelineSeconds": 107.53,
+      "visualReview": {
+        "state": "issues_found",
+        "issues": [
+          "holes",
+          "stretched_triangles",
+          "pose_inconsistency",
+          "occluding_surfaces"
+        ]
+      },
+      "cpuTriangleRenders": [
+        {
+          "image": "00000319.png",
+          "visible_mesh_fraction": 0.1405787037037037
+        },
+        {
+          "image": "00000366.png",
+          "visible_mesh_fraction": 0.6927083333333334
+        },
+        {
+          "image": "00000417.png",
+          "visible_mesh_fraction": 0.6743055555555556
+        }
+      ],
+      "navigationQualified": false
+    },
+    {
+      "id": "cee9f50abf54d87e9a0b72e26e139ece",
+      "firstView": 64,
+      "lastView": 81,
+      "seconds": [
+        34.907,
+        44.146
+      ],
+      "triangles": 74609,
+      "bytes": 13509836,
+      "sha256": "02fb7d180d26f3420db140023564a7e0af700b1a75239e5dd84d00d6717d2695",
+      "nativePipelineSeconds": 133.72,
+      "visualReview": {
+        "state": "issues_found",
+        "issues": [
+          "holes",
+          "stretched_triangles",
+          "pose_inconsistency",
+          "occluding_surfaces"
+        ]
+      },
+      "cpuTriangleRenders": [
+        {
+          "image": "00000360.png",
+          "visible_mesh_fraction": 0.35517746913580245
+        },
+        {
+          "image": "00000405.png",
+          "visible_mesh_fraction": 0.5723611111111111
+        },
+        {
+          "image": "00000457.png",
+          "visible_mesh_fraction": 0.33733024691358027
+        }
+      ],
+      "navigationQualified": false
+    }
+  ],
+  "coverage": {
+    "selectedCameraUnion": 81,
+    "selectedCameraTotal": 81,
+    "firstSeconds": 0,
+    "lastSeconds": 44.146,
+    "contiguousTemporalIntervals": true,
+    "spatialCoverageAccepted": false,
+    "seamlessMergePerformed": false
+  },
+  "cameraMotion": {
+    "schema": "sphere-camera-temporal-audit-v1",
+    "views": 81,
+    "first_seconds": 0.0,
+    "last_seconds": 44.146,
+    "path_units": 94.78867617279964,
+    "endpoint_displacement_units": 6.576775630523094,
+    "median_step_units": 0.5280817833107277,
+    "max_step_units": 8.587381496874238,
+    "rapid_reversals": [
+      {
+        "view": 11,
+        "image": "00000060.png",
+        "seconds": 5.513
+      },
+      {
+        "view": 12,
+        "image": "00000065.png",
+        "seconds": 6.029
+      },
+      {
+        "view": 13,
+        "image": "00000070.png",
+        "seconds": 6.558
+      },
+      {
+        "view": 14,
+        "image": "00000076.png",
+        "seconds": 7.146
+      },
+      {
+        "view": 16,
+        "image": "00000087.png",
+        "seconds": 8.247
+      },
+      {
+        "view": 19,
+        "image": "00000102.png",
+        "seconds": 9.798
+      },
+      {
+        "view": 20,
+        "image": "00000108.png",
+        "seconds": 10.397
+      },
+      {
+        "view": 21,
+        "image": "00000113.png",
+        "seconds": 10.914
+      },
+      {
+        "view": 22,
+        "image": "00000119.png",
+        "seconds": 11.497
+      },
+      {
+        "view": 23,
+        "image": "00000125.png",
+        "seconds": 12.08
+      },
+      {
+        "view": 25,
+        "image": "00000137.png",
+        "seconds": 13.211
+      },
+      {
+        "view": 26,
+        "image": "00000143.png",
+        "seconds": 13.776
+      },
+      {
+        "view": 28,
+        "image": "00000155.png",
+        "seconds": 14.926
+      },
+      {
+        "view": 29,
+        "image": "00000161.png",
+        "seconds": 15.525
+      },
+      {
+        "view": 30,
+        "image": "00000166.png",
+        "seconds": 16.027
+      },
+      {
+        "view": 31,
+        "image": "00000171.png",
+        "seconds": 16.611
+      },
+      {
+        "view": 33,
+        "image": "00000182.png",
+        "seconds": 17.693
+      },
+      {
+        "view": 34,
+        "image": "00000187.png",
+        "seconds": 18.245
+      },
+      {
+        "view": 35,
+        "image": "00000191.png",
+        "seconds": 18.779
+      },
+      {
+        "view": 38,
+        "image": "00000207.png",
+        "seconds": 20.411
+      },
+      {
+        "view": 63,
+        "image": "00000355.png",
+        "seconds": 34.407
+      },
+      {
+        "view": 65,
+        "image": "00000366.png",
+        "seconds": 35.474
+      },
+      {
+        "view": 68,
+        "image": "00000382.png",
+        "seconds": 37.072
+      },
+      {
+        "view": 69,
+        "image": "00000388.png",
+        "seconds": 37.621
+      }
+    ],
+    "warning": "poses_require_temporal_review",
+    "heuristic_only": true,
+    "metric_scale": null,
+    "navigation_qualified": false,
+    "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction.",
+    "geometry_sha256": "f79f9380ac0362eea1038977f3570227e1f4560567accccd3f739ebefd4a89c0"
+  },
+  "localChecks": {
+    "pythonTests": 115,
+    "frontendSuites": 195,
+    "frontendTests": 2702,
+    "typesPassed": true,
+    "ruffPassed": true,
+    "newGithubActionsRuns": 0,
+    "runId": "20261025T154552Z-3338f57c"
+  },
+  "delivery": {
+    "source": "49f8b12abf77c2affd8584f72703b18bcbeb63f9",
+    "imageId": "sha256:c951da0b16e4467385f8b735cc5735831d4b86df68bc9f1b287358c0ac0fa2a5",
+    "containerId": "439455b9ec0a05f9abe688057e893faad165ab81cd9342e862a5525e2e8c8ab8",
+    "runtimeInstalled": true,
+    "otherContainersPreserved": 45,
+    "backendPreserved": true,
+    "otaCatalogSha256": "26c15c8e3c4ed22f805b5caab071897b6c12b56685e3214a3211377ef0710c52",
+    "browserVerified": false,
+    "browserLimitation": "Windows browser UI use stopped by tool because URL policy enforcement was unsupported; IAB profile did not contain route012; no bypass used",
+    "androidCommandsSent": false,
+    "vpnChanged": false
+  },
+  "navigationQualified": false,
+  "cameraTrackExperiments": [
+    {
+      "schema": "sphere-route-optical-track-probe-v1",
+      "source_geometry_sha256": "f79f9380ac0362eea1038977f3570227e1f4560567accccd3f739ebefd4a89c0",
+      "scope": "isolated 18-view temporal track experiment; no installed camera changes",
+      "selected": 18,
+      "matching": "KLT forward-backward .6px, <=20px patch residual, keep-mask, 4-neighbor tracks, calibrated RANSAC",
+      "initial_focal_from_installed": true,
+      "focal_refined": false,
+      "models": [
+        {
+          "id": 0,
+          "registered": 4,
+          "points": 68,
+          "error": 1.0102947675272689,
+          "motion": {
+            "schema": "sphere-camera-temporal-audit-v1",
+            "views": 4,
+            "first_seconds": 13.211,
+            "last_seconds": 14.926,
+            "path_units": 10.669026123152488,
+            "endpoint_displacement_units": 9.715918444528945,
+            "median_step_units": 3.748538755769938,
+            "max_step_units": 4.276892216279323,
+            "rapid_reversals": [],
+            "warning": null,
+            "heuristic_only": true,
+            "metric_scale": null,
+            "navigation_qualified": false,
+            "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+          }
+        }
+      ],
+      "seconds": 30.23,
+      "navigation_qualified": false,
+      "accepted_as_installed_map": false,
+      "decision": "insufficient_coverage_and_structure"
+    },
+    {
+      "schema": "sphere-route-optical-track-probe-v1",
+      "source_geometry_sha256": "f79f9380ac0362eea1038977f3570227e1f4560567accccd3f739ebefd4a89c0",
+      "scope": "isolated 18-view temporal track experiment; no installed camera changes",
+      "selected": 18,
+      "matching": "KLT on every original decoded frame, forward-backward .6px, <=20px residual, union of nearest two masks, calibrated RANSAC",
+      "initial_focal_from_installed": true,
+      "focal_refined": false,
+      "models": [
+        {
+          "id": 0,
+          "registered": 15,
+          "points": 549,
+          "error": 1.0627195454228513,
+          "motion": {
+            "schema": "sphere-camera-temporal-audit-v1",
+            "views": 15,
+            "first_seconds": 10.914,
+            "last_seconds": 18.779,
+            "path_units": 34.04456352071095,
+            "endpoint_displacement_units": 33.644018650678284,
+            "median_step_units": 0.8512670651980825,
+            "max_step_units": 23.348708548925266,
+            "rapid_reversals": [],
+            "warning": null,
+            "heuristic_only": true,
+            "metric_scale": null,
+            "navigation_qualified": false,
+            "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+          }
+        }
+      ],
+      "seconds": 140.76,
+      "navigation_qualified": false,
+      "accepted_as_installed_map": false,
+      "decision": "15_of_18_but_one_23_35_unit_step_vs_0_85_median_not_accepted"
+    }
+  ],
+  "imageMotionDiagnostic": {
+    "schema": "sphere-route-image-motion-diagnostic-v1",
+    "rows": [
+      {
+        "first": "00000113.png",
+        "last": "00000119.png",
+        "matches": 102,
+        "median_pixel_motion": 24.474323272705078,
+        "homography_inliers": 23,
+        "local_area_scale": 1.074720519827615,
+        "camera_step": 1.7353128304198402
+      },
+      {
+        "first": "00000119.png",
+        "last": "00000125.png",
+        "matches": 103,
+        "median_pixel_motion": 25.098209381103516,
+        "homography_inliers": 36,
+        "local_area_scale": 1.0095936224461712,
+        "camera_step": 2.1618007325201294
+      },
+      {
+        "first": "00000125.png",
+        "last": "00000131.png",
+        "matches": 112,
+        "median_pixel_motion": 27.395288467407227,
+        "homography_inliers": 32,
+        "local_area_scale": 1.7532150373529376,
+        "camera_step": 1.8380525913891121
+      },
+      {
+        "first": "00000131.png",
+        "last": "00000137.png",
+        "matches": 106,
+        "median_pixel_motion": 18.07335090637207,
+        "homography_inliers": 36,
+        "local_area_scale": 1.0566479084733094,
+        "camera_step": 1.8412011094165177
+      },
+      {
+        "first": "00000137.png",
+        "last": "00000143.png",
+        "matches": 107,
+        "median_pixel_motion": 20.639230728149414,
+        "homography_inliers": 37,
+        "local_area_scale": 1.050939438324204,
+        "camera_step": 2.864341334709009
+      },
+      {
+        "first": "00000143.png",
+        "last": "00000149.png",
+        "matches": 125,
+        "median_pixel_motion": 22.688323974609375,
+        "homography_inliers": 26,
+        "local_area_scale": 2.296713809438966,
+        "camera_step": 1.8156342164331496
+      },
+      {
+        "first": "00000149.png",
+        "last": "00000155.png",
+        "matches": 133,
+        "median_pixel_motion": 22.441192626953125,
+        "homography_inliers": 27,
+        "local_area_scale": 1.2015118872891979,
+        "camera_step": 1.7550016058303226
+      },
+      {
+        "first": "00000155.png",
+        "last": "00000161.png",
+        "matches": 121,
+        "median_pixel_motion": 33.547977447509766,
+        "homography_inliers": 21,
+        "local_area_scale": 2.369285055577314,
+        "camera_step": 2.950970133288149
+      },
+      {
+        "first": "00000161.png",
+        "last": "00000166.png",
+        "matches": 118,
+        "median_pixel_motion": 35.92705535888672,
+        "homography_inliers": 23,
+        "local_area_scale": 1.7460750968488077,
+        "camera_step": 2.2263963798981425
+      },
+      {
+        "first": "00000166.png",
+        "last": "00000171.png",
+        "matches": 93,
+        "median_pixel_motion": 63.55231475830078,
+        "homography_inliers": 21,
+        "local_area_scale": 0.9685089266117165,
+        "camera_step": 2.9501659489968723
+      },
+      {
+        "first": "00000171.png",
+        "last": "00000177.png",
+        "matches": 66,
+        "median_pixel_motion": 39.10527038574219,
+        "homography_inliers": 19,
+        "local_area_scale": 1.2316911871998464,
+        "camera_step": 1.6494469311934534
+      },
+      {
+        "first": "00000177.png",
+        "last": "00000182.png",
+        "matches": 92,
+        "median_pixel_motion": 30.178062438964844,
+        "homography_inliers": 23,
+        "local_area_scale": 0.9244326697342534,
+        "camera_step": 2.0812088129757336
+      },
+      {
+        "first": "00000182.png",
+        "last": "00000187.png",
+        "matches": 91,
+        "median_pixel_motion": 43.01838684082031,
+        "homography_inliers": 18,
+        "local_area_scale": 1.3333864564825257,
+        "camera_step": 2.711414875492313
+      },
+      {
+        "first": "00000187.png",
+        "last": "00000191.png",
+        "matches": 78,
+        "median_pixel_motion": 47.825897216796875,
+        "homography_inliers": 14,
+        "local_area_scale": 2.1884558786328934,
+        "camera_step": 1.9428369898721138
+      },
+      {
+        "first": "00000191.png",
+        "last": "00000196.png",
+        "matches": 50,
+        "median_pixel_motion": 87.59969329833984,
+        "homography_inliers": 12,
+        "local_area_scale": 0.9764409871269918,
+        "camera_step": 2.766992858667772
+      },
+      {
+        "first": "00000196.png",
+        "last": "00000201.png",
+        "matches": 68,
+        "median_pixel_motion": 36.965599060058594,
+        "homography_inliers": 24,
+        "local_area_scale": 1.1010780919216567,
+        "camera_step": 1.3246412934626326
+      },
+      {
+        "first": "00000201.png",
+        "last": "00000207.png",
+        "matches": 72,
+        "median_pixel_motion": 61.23672103881836,
+        "homography_inliers": 20,
+        "local_area_scale": 1.1436311221356987,
+        "camera_step": 2.575618779914853
+      }
+    ],
+    "read_only": true,
+    "correction_applied": false
+  }
+}

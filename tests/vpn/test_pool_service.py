@@ -102,34 +102,36 @@ class TestVPNPoolService:
     @pytest.mark.asyncio
     async def test_assign_pool_exhausted_raises_503(self, pool_service, test_org, test_device):
         from fastapi import HTTPException
-        # Pool empty  no initialize_pool call
+        pool_service.ip_pool.reserve_ip = AsyncMock(return_value=None)
         with pytest.raises(HTTPException) as exc_info:
             await pool_service.assign_vpn(str(test_device.id), test_org.id)
         assert exc_info.value.status_code == 503
 
     @pytest.mark.asyncio
-    async def test_assign_returns_ip_to_pool_on_failure(self, pool_service, test_org, test_device, pool_redis):
+    async def test_assign_retains_sql_reservation_on_failure(self, pool_service, test_org, test_device, pool_redis):
+        from sqlalchemy import select
+
+        device_id, org_id = test_device.id, test_org.id
         await pool_service.ip_pool.initialize_pool(str(test_org.id), count=3)
 
         # Make WG server call fail
         pool_service._add_peer_to_server = AsyncMock(side_effect=RuntimeError("WG down"))
 
         with pytest.raises(Exception):
-            await pool_service.assign_vpn(str(test_device.id), test_org.id)
+            await pool_service.assign_vpn(str(device_id), org_id)
 
-        # IP must be returned to pool
-        size = await pool_service.ip_pool.pool_size(str(test_org.id))
-        assert size == 3
+        peer = await pool_service.db.scalar(select(VPNPeer).where(VPNPeer.device_id == device_id))
+        assert peer.status == VPNPeerStatus.PROVISIONING
 
     @pytest.mark.asyncio
     async def test_revoke_frees_peer_and_returns_ip(self, pool_service, db_session, test_org, test_device, pool_redis):
         await pool_service.ip_pool.initialize_pool(str(test_org.id), count=5)
         assignment = await pool_service.assign_vpn(str(test_device.id), test_org.id)
-        size_after_assign = await pool_service.ip_pool.pool_size(str(test_org.id))
+        _, size_after_assign = await pool_service.ip_pool.capacity(db_session)
 
         await pool_service.revoke_vpn(str(test_device.id), test_org.id)
 
-        size_after_revoke = await pool_service.ip_pool.pool_size(str(test_org.id))
+        _, size_after_revoke = await pool_service.ip_pool.capacity(db_session)
         assert size_after_revoke == size_after_assign + 1
 
         from sqlalchemy import select

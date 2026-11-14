@@ -1,0 +1,51 @@
+{
+  "command": [
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-tools\\colmap-v4.2.1-cpu\\bin\\colmap.exe",
+    "global_mapper",
+    "--database_path",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\job\\prepared\\database.db",
+    "--image_path",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\job\\prepared\\images",
+    "--output_path",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\models",
+    "--default_random_seed",
+    "17",
+    "--log_target",
+    "stdout",
+    "--GlobalMapper.num_threads",
+    "2",
+    "--GlobalMapper.random_seed",
+    "17",
+    "--GlobalMapper.gp_use_gpu",
+    "0",
+    "--GlobalMapper.ba_ceres_use_gpu",
+    "0",
+    "--GlobalMapper.refine_sensor_from_rig",
+    "0",
+    "--GlobalMapper.track_intra_image_consistency_threshold",
+    "1.0",
+    "--GlobalMapper.tri_complete_max_reproj_error",
+    "1.0",
+    "--GlobalMapper.tri_merge_max_reproj_error",
+    "1.0"
+  ],
+  "maximumSeconds": 150,
+  "owned": true,
+  "creationflags": 134234112,
+  "requestedPriorityClass": 16384,
+  "environmentLimits": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "pid": 28140,
+  "actualPriorityClass": 16384,
+  "cpuAffinity": [
+    0,
+    1
+  ],
+  "returncode": 0,
+  "status": "completed",
+  "seconds": 117.10999999998603,
+  "logSha256": "ca1fa29407b716893de8d58ff384f67595ff05725b86d0b62423b2ce3e9cec08"
+}

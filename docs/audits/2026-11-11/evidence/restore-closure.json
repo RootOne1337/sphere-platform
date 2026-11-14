@@ -1,0 +1,9 @@
+{
+  "restore_cli_exit": 0,
+  "restored_database_owners": 2,
+  "restricted_reader_pg_login_and_pointer": true,
+  "restricted_reader_n8n_fixture_read": true,
+  "redis_aof_fixture_read": true,
+  "restored_minio_matches_postgres_pointer_sha256": true,
+  "real_s3_authenticated_manifest_content_and_missing_object": "1 passed"
+}

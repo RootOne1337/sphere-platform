@@ -1,0 +1,81 @@
+{
+  "parameters_fixed_before_first_metrics": {
+    "min_score": 0.35,
+    "relative_peak": 0.75,
+    "peak_radius_seconds": 0.6,
+    "max_frame_age": 0.25,
+    "max_observation_gap": 0.5,
+    "max_reference_speed": 5.0,
+    "reference_slack_seconds": 0.6,
+    "max_seen_sources": 4096
+  },
+  "results": {
+    "causal_source_order": {
+      "queries": 100,
+      "status_counts": {
+        "ambiguous": 78,
+        "unknown": 17,
+        "reference_selected": 5
+      },
+      "selected_count": 5,
+      "selected_fraction": 0.05,
+      "selected_time_proxy_within_0_6s": 5,
+      "selected_time_proxy_wrong_over_2s": 0,
+      "selected_time_proxy_median_error_seconds": 0.28300000000000125,
+      "baseline_top1_positive_count": 98,
+      "baseline_top1_time_proxy_within_0_6s": 70,
+      "baseline_top1_high_score_wrong_over_2s": 8,
+      "unknown_and_ambiguous_are_abstentions_not_successes": true,
+      "artificial_reorder_control": false
+    },
+    "artificial_abrupt_block_reorder": {
+      "queries": 100,
+      "status_counts": {
+        "ambiguous": 78,
+        "unknown": 18,
+        "reference_selected": 4
+      },
+      "selected_count": 4,
+      "selected_fraction": 0.04,
+      "selected_time_proxy_within_0_6s": 4,
+      "selected_time_proxy_wrong_over_2s": 0,
+      "selected_time_proxy_median_error_seconds": 0.23300000000000054,
+      "baseline_top1_positive_count": 98,
+      "baseline_top1_time_proxy_within_0_6s": 70,
+      "baseline_top1_high_score_wrong_over_2s": 8,
+      "unknown_and_ambiguous_are_abstentions_not_successes": true,
+      "artificial_reorder_control": true
+    },
+    "artificial_shuffled_source_order_seed_20261101": {
+      "queries": 100,
+      "status_counts": {
+        "ambiguous": 78,
+        "unknown": 22
+      },
+      "selected_count": 0,
+      "selected_fraction": 0.0,
+      "selected_time_proxy_within_0_6s": 0,
+      "selected_time_proxy_wrong_over_2s": 0,
+      "selected_time_proxy_median_error_seconds": null,
+      "baseline_top1_positive_count": 98,
+      "baseline_top1_time_proxy_within_0_6s": 70,
+      "baseline_top1_high_score_wrong_over_2s": 8,
+      "unknown_and_ambiguous_are_abstentions_not_successes": true,
+      "artificial_reorder_control": true
+    }
+  },
+  "inputs_sha256": {
+    ".local-pilot\\scooter-image-route-20261101\\scores.npz": "98734c9d8abd03c05b0c988762cf9eed5a7f308028b9363e79d540c6ae1ed462",
+    ".local-pilot\\scooter-image-route-20261101\\query-metrics.json": "523c46317d6a7e0e30c1d6cf1cfad5f2248440145c46d9c39e6c59910efd0f75",
+    ".local-pilot\\scooter-image-route-20261101\\reference-receipt.json": "3d095e2e0c43149cced7da026032d3644845a4f4345442e0c70198b3ad38e654",
+    "motor_worker\\image_route_sequence.py": "b3ecfd32bf95856b63d426d0e8905ccdbd271b82f872fff7eaa89c2ab837fee8",
+    "tests\\test_image_route_sequence.py": "5545f164440ae94a82f9c02279568e7ece3d002ec3ec33d4c46aef13ea03d192"
+  },
+  "inputs_unchanged": true,
+  "actual_query_sha_proof": "SHA256 of exact decoded source BGR from query-metrics.json; JPEG previews not hashed as source",
+  "receipt_clock": "Synthetic zero-latency source-PTS receipt timeline, not measured live delivery",
+  "interpretation": "Same-source temporal labels are a retrieval proxy, not spatial or independent traversal ground truth. Reorder controls are synthetic and not independent video. Unchecked references are untested; verified search only covers the producer shortlist. No pose, arrival, or execution qualification.",
+  "elapsed_seconds": 0.03100000007543713,
+  "first_events_sha256": "c0b85cf35933e12a849fa7fbfdacc25db9c082bfe567d76351d30b99c64326e4",
+  "receipt_recovery_note": "First replay wrote all events, then JSON summary failed on numpy int64; serialization-only repair reran identical fixed parameters and asserts byte-identical events."
+}

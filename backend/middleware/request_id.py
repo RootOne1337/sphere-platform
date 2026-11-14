@@ -3,12 +3,16 @@
 # Добавляет уникальный request_id к каждому запросу и ответу.
 # Привязывает request_id к structlog ContextVar — все логи в рамках запроса
 # автоматически включают этот ID без явной передачи.
+import re
 import uuid
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+
+REQUEST_ID_PATTERN = r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}"
+_FILE_PATH = re.compile(r"(/api/v1/devices/[0-9a-fA-F-]{36}/files)/.*")
 
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
@@ -17,7 +21,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
 
     Поведение:
     - Принимает `X-Request-ID` из входящего запроса (если есть).
-    - Если заголовка нет — генерирует короткий UUID (8 символов).
+    - При отсутствии корректного заголовка генерирует UUID.
     - Привязывает request_id, method, path к structlog ContextVar.
     - Добавляет `X-Request-ID` к каждому ответу.
 
@@ -27,14 +31,16 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next) -> Response:
         # Принять входящий ID или сгенерировать новый
-        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:8]
+        supplied_id = request.headers.get("X-Request-ID")
+        request_id = supplied_id if supplied_id and re.fullmatch(REQUEST_ID_PATTERN, supplied_id) else uuid.uuid4().hex
+        request.state.request_id = request_id
 
         # Очищаем контекст предыдущего запроса (важно для async workers)
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(
             request_id=request_id,
             method=request.method,
-            path=request.url.path,
+            path=_FILE_PATH.sub(r"\1/{name}", request.scope["path"]),
         )
 
         response = await call_next(request)

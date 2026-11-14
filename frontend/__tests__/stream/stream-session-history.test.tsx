@@ -1,0 +1,106 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StreamSessionHistoryPanel } from '@/src/features/stream/StreamSessionHistoryPanel';
+
+const mockGet = jest.fn();
+jest.mock('@/lib/api', () => ({ api: { get: (...args: unknown[]) => mockGet(...args) } }));
+jest.mock('@/lib/store', () => ({ useAuthStore: (select: (state: unknown) => unknown) => select({ sessionVersion: 1 }) }));
+let query: QueryClient;
+const device = 'fixture-device';
+beforeEach(() => { query = new QueryClient({ defaultOptions: { queries: { retry: false } } }); mockGet.mockReset(); });
+afterEach(() => query.clear());
+const view = () => render(<QueryClientProvider client={query}><StreamSessionHistoryPanel deviceId={device} /></QueryClientProvider>);
+
+test('shows missing browser/RTT data as unmeasured and stale observation as stale', async () => {
+  mockGet.mockResolvedValue({ data: { schema_version: 1, device_id: device, session_limit: 10, sessions: [{
+    session_id: 'viewer', opened_at: '2026-10-10T10:00:00Z', state: 'stale',
+    browser_summary: { max_decode_errors: 0, max_render_errors: 0 },
+    direct_diagnostics: [{ profile: 'host', path: 'unknown', presented_frames: 0, reason: 'connection_deadline' }],
+  }] } });
+  view();
+  expect(await screen.findByText('Связь с наблюдателем потеряна')).toBeInTheDocument();
+  expect(screen.getByText(/Метрики браузера ещё не получены/)).toHaveTextContent('RTT управления не измерен');
+  expect(screen.getByText(/Прямой тест:/)).toHaveTextContent('0 кадров');
+});
+
+test.each(['outage', 'foreign'])('does not turn an unavailable or foreign response into a healthy empty history: %s', async mode => {
+  if (mode === 'outage') mockGet.mockRejectedValue(Error('503'));
+  else mockGet.mockResolvedValue({ data: { schema_version: 1, device_id: 'another-device', session_limit: 10, sessions: [] } });
+  view();
+  expect(await screen.findByText(/История сейчас недоступна/)).toBeInTheDocument();
+  expect(screen.queryByText(/Сеансов ещё нет/)).not.toBeInTheDocument();
+});
+
+test.each([
+  ['direct_webrtc', 'Касания напрямую · WebRTC'],
+  ['server_websocket', 'Касания через сервер · WebSocket'],
+  [undefined, 'Маршрут касаний не сообщён'],
+])('primary picture never invents the independent touch route: %s', async (control, label) => {
+  mockGet.mockResolvedValue({ data: { schema_version: 1, device_id: device, session_limit: 10, sessions: [{
+    session_id: 'viewer', opened_at: '2026-10-10T10:00:00Z', state: 'closed', browser_samples: [{
+      transport: 'direct_webrtc', control_transport: control, rendered_frames: 1, incoming_fps: 0,
+      direct_frames: 120, direct_fps: 15, direct_path: 'nat', direct_network_rtt_ms: 2,
+      direct_state: 'failed', direct_failure: 'connection_deadline',
+      direct_network: { local_candidates: 5, remote_candidates: 1, pairs: 1, checking_pairs: 1,
+        failed_pairs: 0, succeeded_pairs: 0, requests_sent: 237, responses_received: null },
+    }],
+  }] } });
+  view();
+  expect(await screen.findByText(label!)).toBeInTheDocument();
+  expect(screen.getByText(/ICE-запросы \/ ответы:/)).toHaveTextContent('237 / —');
+  expect(screen.queryByText(/Управление через сервер/)).not.toBeInTheDocument();
+});
+
+test('native observation preserves known zero, unknown counters and the original stats request age', async () => {
+  mockGet.mockResolvedValue({ data: { schema_version: 1, device_id: device, session_limit: 10, sessions: [{
+    session_id: 'viewer', opened_at: '2026-10-10T10:00:00Z', state: 'closed', native_direct_samples: [{
+      received_at: '2026-10-10T10:00:05Z', stage: 'closed', kind: 'final', elapsed_ms: 5000,
+      answer_sent: true, network_sample_age_ms: 3100, network: { local_candidates: 3, remote_candidates: 1,
+        pairs: 1, checking_pairs: 1, failed_pairs: 0, succeeded_pairs: 0, requests_sent: 237,
+        requests_received: null, responses_sent: null, responses_received: 0, dtls_state: 'new' },
+    }],
+  }] } });
+  view();
+  expect(await screen.findByText(/исходящие \/ входящие: 237 \/ —/)).toHaveTextContent('ответы исходящие / входящие: — / 0');
+  expect(screen.getByText(/с момента запроса getStats до отправки отчёта/)).toHaveTextContent('3100 мс');
+  expect(screen.getByText(/Внутренний timestamp RTCStats здесь не измерен/)).toBeInTheDocument();
+  expect(screen.getByText(/Этап: Соединение закрыто/)).toHaveTextContent('итог при закрытии');
+});
+
+test('a retired idle failure stays visible after the rolling healthy samples replace it', async () => {
+  mockGet.mockResolvedValue({data:{schema_version:1,device_id:device,session_limit:10,sessions:[{
+    session_id:'viewer',opened_at:'2026-10-10T10:00:00Z',state:'closed',
+    browser_samples:[{received_at:'2026-10-10T10:05:00Z',transport:'direct_webrtc',rendered_frames:30,incoming_fps:30}],
+    browser_summary:{max_decode_errors:0,max_render_errors:0,last_control_failure_detail:'idle_receipt_timeout',
+      last_control_fence:{phase:'ready',pointer_held:false,idle_heartbeat_only:true,pending_count:5,
+        oldest_age_ms:1250,last_receipt_rtt_ms:null,tick_gap_ms:16,buffered_bytes:0}},
+  }]}});
+  view();
+  const failure = await screen.findByText(/Последний сбой в браузере:/);
+  expect(failure).toHaveTextContent('idle_receipt_timeout');
+  expect(failure).toHaveTextContent('только heartbeat без касания');
+  expect(failure).toHaveTextContent('последний RTT — мс');
+  expect(failure).toHaveTextContent('буфер отправки 0 B');
+});
+
+test.each([0, null])('a retained direct failure is dated separately from recovered video and unknown is not zero: %s', async responses => {
+  mockGet.mockResolvedValue({data:{schema_version:1,device_id:device,session_limit:10,sessions:[{
+    session_id:'viewer',opened_at:'2026-10-12T10:00:00Z',state:'closed',
+    browser_samples:[{received_at:'2026-10-12T10:05:00Z',transport:'direct_webrtc',rendered_frames:30,incoming_fps:30,
+      direct_state:'connected',direct_frames:120,direct_path:'host'}],
+    browser_summary:{max_decode_errors:0,max_render_errors:0,last_direct_failure:{
+      reason:'connection_deadline',received_at:'2026-10-12T10:00:12Z',attempt:1,ice_state:'checking',dtls_state:'new',
+      network:{local_candidates:5,remote_candidates:2,pairs:2,checking_pairs:2,failed_pairs:0,succeeded_pairs:0,
+        requests_sent:143,responses_received:responses},
+    }},
+  }]}});
+  view();
+  expect(await screen.findByText(/Последний отказ прямого канала/)).toBeInTheDocument();
+  expect(screen.getByText(/Прямой канал: connected/)).toBeInTheDocument();
+  expect(screen.getByText(/Прямой сетевой маршрут не установлен в срок/)).toHaveTextContent('Попытка 1. ICE checking · DTLS new.');
+  expect(screen.getByText(/Это сохранённый отказ/)).toHaveTextContent('а не текущее состояние соединения');
+  expect(screen.getByText(/При отказе · ICE-запросы/)).toHaveTextContent(`143 / ${responses === null ? '—' : '0'}`);
+  if (responses === 0) expect(screen.getByText(/причина ограничения сети этим не установлена/)).toBeInTheDocument();
+  else expect(screen.queryByText(/ответы не получены/)).not.toBeInTheDocument();
+});

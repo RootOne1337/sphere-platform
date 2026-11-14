@@ -1,0 +1,1000 @@
+{
+  "schema": "sphere-walk-continuous-delivery-v1",
+  "clientVersion": "walk_live_v8",
+  "physicalDeviceActions": 0,
+  "liveCompletionVerified": false,
+  "baseline": {
+    "snapshotSha256": "b04fd45827d8a30a1e4ebb0e6b4324756a2a86f37066a3b449d6258345664ef6",
+    "resourceRefusal": {
+      "snapshot": {
+        "observedAt": "2026-10-30T20:14:51.117564+00:00",
+        "system": "Windows",
+        "freeDiskBytes": 49756438528,
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ],
+        "availableRamBytes": 13023956992,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 85420097536,
+        "commitLimitBytes": 100060360704,
+        "kernelPagedBytes": 9329254400,
+        "kernelNonpagedBytes": 4707995648,
+        "processCount": 459,
+        "handleCount": 626706,
+        "memoryMeasurement": "GetPerformanceInfo"
+      },
+      "findings": [
+        "commit_headroom_low"
+      ],
+      "profile": {
+        "kind": "route_live",
+        "minRamGiB": 4.75,
+        "hostReserveGiB": 4.0,
+        "taskReserveGiB": 0.75,
+        "maxMapBytes": 4194304,
+        "maxFrameBytes": 393216,
+        "minDiskGiB": 1.0,
+        "modelLoaded": false,
+        "maxCommitPercent": 85
+      }
+    },
+    "reports": [
+      {
+        "id": "2783bee152094c929039295dde79de7b",
+        "time": "2026-10-31T01:10:32",
+        "version": "walk_live_v7",
+        "stop": "walk_recovery_time_budget",
+        "failure": null,
+        "release": "closed",
+        "count": 493,
+        "stored": 272,
+        "seconds": 56.8745,
+        "states": {
+          "confirming": 20,
+          "localized": 242,
+          "unknown": 10
+        },
+        "poseReasons": {
+          "relative_camera_pose_not_clearance_or_arrival": 262,
+          "route_observation_gap": 10
+        },
+        "reasons": {
+          "walk_confirming_start": 2,
+          "walk_confirming_current_position": 2,
+          "walk_camera_aligned": 145,
+          "walk_camera_waiting_feedback": 48,
+          "walk_camera_calibrating": 7,
+          "walk_camera_turning": 22,
+          "walk_relocalizing_neutral": 45,
+          "walk_recovery_time_budget": 1
+        },
+        "phases": {
+          "waiting": 49,
+          "following": 222,
+          "stopped": 1
+        },
+        "progress": [
+          0.2858927991522341
+        ],
+        "methods": {
+          "descriptor_pnp": 48,
+          "map_anchored_flow": 214,
+          "not_attempted": 10
+        },
+        "applied": 286,
+        "contact0": {
+          "2": 174
+        },
+        "motionSeconds": [
+          25.733607500675134
+        ]
+      },
+      {
+        "id": "9e1017834611414f927150fd501b3993",
+        "time": "2026-10-31T01:11:40",
+        "version": "walk_live_v7",
+        "stop": "walk_recovery_time_budget",
+        "failure": null,
+        "release": "closed",
+        "count": 376,
+        "stored": 376,
+        "seconds": 45.864,
+        "states": {
+          "confirming": 17,
+          "localized": 354,
+          "unknown": 5
+        },
+        "poseReasons": {
+          "relative_camera_pose_not_clearance_or_arrival": 371,
+          "route_observation_gap": 5
+        },
+        "reasons": {
+          "walk_confirming_start": 2,
+          "walk_confirming_current_position": 1,
+          "walk_camera_aligned": 309,
+          "walk_camera_calibrating": 6,
+          "walk_camera_waiting_feedback": 22,
+          "walk_relocalizing_neutral": 35,
+          "walk_recovery_time_budget": 1
+        },
+        "phases": {
+          "waiting": 38,
+          "following": 337,
+          "stopped": 1
+        },
+        "progress": [
+          0.5393403395816149
+        ],
+        "methods": {
+          "descriptor_pnp": 54,
+          "map_anchored_flow": 317,
+          "not_attempted": 5
+        },
+        "applied": 253,
+        "contact0": {
+          "2": 245
+        },
+        "motionSeconds": [
+          23.686801999807358
+        ]
+      },
+      {
+        "id": "6fb89eed8a204094ba9a2b725b2f7506",
+        "time": "2026-10-31T01:12:10",
+        "version": "walk_live_v7",
+        "stop": "contact_video_stale",
+        "failure": "contact_video_stale",
+        "release": "closed",
+        "count": 142,
+        "stored": 142,
+        "seconds": 21.793300000071525,
+        "states": {
+          "confirming": 14,
+          "localized": 122,
+          "unknown": 6
+        },
+        "poseReasons": {
+          "relative_camera_pose_not_clearance_or_arrival": 136,
+          "route_observation_gap": 6
+        },
+        "reasons": {
+          "walk_confirming_start": 2,
+          "walk_confirming_current_position": 2,
+          "walk_camera_aligned": 108,
+          "walk_relocalizing_neutral": 30
+        },
+        "phases": {
+          "waiting": 34,
+          "following": 108
+        },
+        "progress": [
+          0.6299120283743317
+        ],
+        "methods": {
+          "descriptor_pnp": 28,
+          "map_anchored_flow": 108,
+          "not_attempted": 6
+        },
+        "applied": 96,
+        "contact0": {
+          "0": 1,
+          "2": 95
+        },
+        "motionSeconds": [
+          7.19233200000599
+        ]
+      },
+      {
+        "id": "825be4dfd17340c5bed3346f58627c09",
+        "time": "2026-10-31T01:13:40",
+        "version": "walk_live_v7",
+        "stop": "walk_recovery_time_budget",
+        "failure": null,
+        "release": "closed",
+        "count": 550,
+        "stored": 299,
+        "seconds": 61.83770000004768,
+        "states": {
+          "confirming": 18,
+          "localized": 267,
+          "unknown": 14
+        },
+        "poseReasons": {
+          "relative_camera_pose_not_clearance_or_arrival": 285,
+          "route_pose_not_verified": 7,
+          "route_observation_gap": 7
+        },
+        "reasons": {
+          "walk_confirming_start": 2,
+          "walk_confirming_current_position": 2,
+          "walk_camera_aligned": 191,
+          "walk_relocalizing_neutral": 43,
+          "walk_camera_calibrating": 8,
+          "walk_camera_waiting_feedback": 31,
+          "walk_camera_turning": 19,
+          "walk_camera_waiting_neutral": 2,
+          "walk_recovery_time_budget": 1
+        },
+        "phases": {
+          "waiting": 47,
+          "following": 251,
+          "stopped": 1
+        },
+        "progress": [
+          0.949695861459046
+        ],
+        "methods": {
+          "descriptor_pnp": 56,
+          "map_anchored_flow": 236,
+          "not_attempted": 7
+        },
+        "applied": 294,
+        "contact0": {
+          "2": 178
+        },
+        "motionSeconds": [
+          31.42813969985582
+        ]
+      },
+      {
+        "id": "573484e0ab6d4a10a69e7d3aa62c4503",
+        "time": "2026-10-31T01:14:14",
+        "version": "walk_live_v7",
+        "stop": "walk_visibility_pause",
+        "failure": null,
+        "release": "closed",
+        "count": 60,
+        "stored": 60,
+        "seconds": 9.698899999976158,
+        "states": {
+          "confirming": 1,
+          "localized": 54,
+          "unknown": 5
+        },
+        "poseReasons": {
+          "relative_camera_pose_not_clearance_or_arrival": 55,
+          "route_pose_not_verified": 5
+        },
+        "reasons": {
+          "walk_confirming_start": 1,
+          "walk_confirming_current_position": 2,
+          "walk_camera_calibrating": 4,
+          "walk_camera_waiting_feedback": 12,
+          "walk_camera_waiting_neutral": 1,
+          "walk_camera_turning": 4,
+          "walk_camera_aligned": 27,
+          "walk_relocalizing_neutral": 9
+        },
+        "phases": {
+          "waiting": 12,
+          "following": 48
+        },
+        "progress": [
+          0.9737313974716694
+        ],
+        "methods": {
+          "descriptor_pnp": 16,
+          "map_anchored_flow": 44
+        },
+        "applied": 25,
+        "contact0": {
+          "0": 1,
+          "2": 24
+        },
+        "motionSeconds": [
+          2.1586223997874185
+        ]
+      },
+      {
+        "id": "1c376bed3bbf4271a659054e1134559b",
+        "time": "2026-10-31T01:14:52",
+        "version": "walk_live_v7",
+        "stop": "resource_guard",
+        "failure": null,
+        "release": "closed",
+        "count": 0,
+        "stored": 0,
+        "seconds": 0.0,
+        "states": {},
+        "poseReasons": {},
+        "reasons": {},
+        "phases": {},
+        "progress": [],
+        "methods": {},
+        "applied": 0,
+        "contact0": {},
+        "motionSeconds": []
+      }
+    ]
+  },
+  "sourceFiles": {
+    "frontend/src/features/stream/WalkingRoutePilot.tsx": "cdb18d55b707a7434a65b1b8f8aa01e8d1d9da75f606a6264aa0250eedef0102",
+    "frontend/src/features/stream/NavigationRouteContext.tsx": "395beb62ecba1597525db9368e390b5088ae442d77d398a5f1baf270d9cf30a6",
+    "frontend/src/features/stream/RouteGeometryMap.tsx": "4f6950b1cb9e2b11133cd8622083737a1ee759d71b15c50fffbb46e510c9235a",
+    "frontend/src/features/stream/TeachingWorkbench.tsx": "a93d3a5f9df1527c6f1eae38293f4cef3de185dff72e64ad69a4c93994de11d7",
+    "frontend/src/features/stream/walkCameraDrag.ts": "47ae0d9be662832987cf1012073009f066ff3cabe5cde33f31fad861112ee9ec",
+    "frontend/src/features/stream/walkPilot.ts": "3d69473ec84489a948ca711003a0e5a884afde95ddc097bfaaa9acd8af67a056",
+    "frontend/src/features/stream/teachingConnection.ts": "aa28f8a1b601400a551d9ea7c06cdb80988d42deb076f6394c1c757c7cfdbef2",
+    "frontend/src/features/stream/teachingContacts.ts": "3e2f794380a718aced4e04a379a0d904e470f8d206d50243037174dae5c99bed",
+    "frontend/public/teaching-recorder.worker.js": "7d4f8ff630f8ea17e38b718446faca941337e6011a51980dc34c38a9b75ecf65",
+    "motor_worker/walk_route.py": "f2eaea76a2ffc85810b1237a1bdebefdc14c6524f645aa8cab98f592352f0636",
+    "scripts/pilot/route_workspace.py": "bc8e9282b0d120a41ffe9c3da8a5376a8cb5d72465d59de08fa30ce786fc45d7",
+    "scripts/pilot/check_navigation_layout_browser.cjs": "159adfb0377b43de8fd7766d722c4a60bcc0a8a61e7c54dc563345d3241863d8",
+    "scripts/pilot/check_walk_camera_loop.cjs": "8baf7c8a2f4d0284144ce4697d1de567aa804edde9877002564cb1aa2d7f0e65",
+    "scripts/pilot/render_walk_continuity_evidence.py": "70de83d17e9a0862190b9b5ad62d9fe7b6215187827198cff6031a695d41cb35"
+  },
+  "tests": {
+    "frontend": {
+      "passed": 167,
+      "failed": 0,
+      "suites": 14,
+      "rawSha256": "fd13f8b86ce9c7a7b249650cbeb99bcfdf57c183c2ff8c2be18845ffbdc2610c"
+    },
+    "python": {
+      "passed": 151,
+      "subtestsPassed": 69,
+      "skipped": 1,
+      "logSha256": "421d34ec24037ef3da7b930c952c9537029502f795fe7adb2328806bfde771bc"
+    },
+    "scopedEslint": {
+      "errors": 0,
+      "warnings": 6,
+      "logSha256": "e7f6a9d0b40715c00080fa294e9494f3d165cecdeb68fedc36f1b14fef5f4802"
+    }
+  },
+  "simulation": {
+    "physicalActions": 0,
+    "simulatedPlant": true,
+    "realGame": false,
+    "passed": 25,
+    "total": 25,
+    "rawSha256": "2d1389d73f8dac35523f9e28a4b0ec659e2ee8b278bada76fe0118d3fb53726f",
+    "productionSources": {
+      "walkCameraDrag.ts": "47ae0d9be662832987cf1012073009f066ff3cabe5cde33f31fad861112ee9ec",
+      "teachingContacts.ts": "3e2f794380a718aced4e04a379a0d904e470f8d206d50243037174dae5c99bed",
+      "walkCamera.ts": "70da13467dbf8046b10d9fe3ebee4cf9193637ab207fcb8fe948f03ccc98fbf3"
+    },
+    "cases": [
+      {
+        "config": {
+          "gainX": 3,
+          "gainY": 4,
+          "visualMs": 60,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 3610,
+        "finalAngularError": 0.0603587653696298,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.0603587653696298,
+          "mean": 0.0603587653696298
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 3,
+          "gainY": 4,
+          "visualMs": 60,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 4410,
+        "finalAngularError": 0.07592673302695009,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.07592673302695009,
+          "mean": 0.07592673302695017
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 3,
+          "gainY": 4,
+          "visualMs": 160,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 4310,
+        "finalAngularError": 0.028726682081040286,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.028726682081040286,
+          "mean": 0.02872668208104032
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 3,
+          "gainY": 4,
+          "visualMs": 160,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 4310,
+        "finalAngularError": 0.04912061163608444,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.04912061163608444,
+          "mean": 0.04912061163608434
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 12,
+          "gainY": -8,
+          "visualMs": 60,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2510,
+        "finalAngularError": 0.056352159691435984,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.056352159691435984,
+          "mean": 0.056352159691435845
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 12,
+          "gainY": -8,
+          "visualMs": 60,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2660,
+        "finalAngularError": 0.033561374253822614,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.033561374253822614,
+          "mean": 0.03356137425382268
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 12,
+          "gainY": -8,
+          "visualMs": 160,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2610,
+        "finalAngularError": 0.046208871096219885,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.046208871096219885,
+          "mean": 0.04620887109621999
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 12,
+          "gainY": -8,
+          "visualMs": 160,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2660,
+        "finalAngularError": 0.06454079252483137,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.06454079252483137,
+          "mean": 0.06454079252483153
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": -6,
+          "gainY": 10,
+          "visualMs": 60,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2910,
+        "finalAngularError": 0.07613295268035905,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.07613295268035905,
+          "mean": 0.07613295268035895
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": -6,
+          "gainY": 10,
+          "visualMs": 60,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 2910,
+        "finalAngularError": 0.08101778531984835,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.08101778531984835,
+          "mean": 0.08101778531984821
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": -6,
+          "gainY": 10,
+          "visualMs": 160,
+          "slopPx": 8,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 3210,
+        "finalAngularError": 0.04278459698213958,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.04278459698213958,
+          "mean": 0.04278459698213951
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": -6,
+          "gainY": 10,
+          "visualMs": 160,
+          "slopPx": 16,
+          "descriptorMs": 130,
+          "noise": 0.004
+        },
+        "terminal": null,
+        "alignedAtMs": 3310,
+        "finalAngularError": 0.03941764135113919,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.03941764135113919,
+          "mean": 0.03941764135113921
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "gap": [
+            1100,
+            350
+          ],
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 3510,
+        "finalAngularError": 0.047936932722035114,
+        "neutralizations": 7,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.047936932722035114,
+          "mean": 0.047936932722035
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "gap": [
+            1100,
+            650
+          ],
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 3810,
+        "finalAngularError": 0.047936932722035114,
+        "neutralizations": 19,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.047936932722035114,
+          "mean": 0.047936932722035
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "gap": [
+            1100,
+            850
+          ],
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 4010,
+        "finalAngularError": 0.047936932722035114,
+        "neutralizations": 27,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.047936932722035114,
+          "mean": 0.047936932722035
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "gap": [
+            1100,
+            1100
+          ],
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 4260,
+        "finalAngularError": 0.047936932722035114,
+        "neutralizations": 37,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.047936932722035114,
+          "mean": 0.047936932722035
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "gap": [
+            1100,
+            2200
+          ],
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 5360,
+        "finalAngularError": 0.047936932722035114,
+        "neutralizations": 81,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.13624075148125828,
+          "mean": 0.05074861470657811
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "gap": [
+            1100,
+            3100
+          ],
+          "noise": 0.004,
+          "descriptorMs": 130,
+          "expectedFailure": "contact_video_stale"
+        },
+        "terminal": "contact_video_stale",
+        "alignedAtMs": null,
+        "finalAngularError": 0.5811548558937512,
+        "neutralizations": 429,
+        "closed": true,
+        "trackingError": null,
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 160,
+          "slopPx": 16,
+          "yaw": -1.1,
+          "pitch": -0.4,
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 3310,
+        "finalAngularError": 0.04924459480387049,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.04924459480387049,
+          "mean": 0.04924459480387059
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 160,
+          "slopPx": 16,
+          "yaw": -1.1,
+          "pitch": 0.55,
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 3760,
+        "finalAngularError": 0.05847891952398304,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.05847891952398304,
+          "mean": 0.058478919523983146
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 160,
+          "slopPx": 16,
+          "yaw": 1.5,
+          "pitch": -0.4,
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 4010,
+        "finalAngularError": 0.022621853740472014,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.022621853740472014,
+          "mean": 0.022621853740472056
+        },
+        "cameraDowns": 2,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 160,
+          "slopPx": 16,
+          "yaw": 1.5,
+          "pitch": 0.55,
+          "noise": 0.004,
+          "descriptorMs": 130
+        },
+        "terminal": null,
+        "alignedAtMs": 4010,
+        "finalAngularError": 0.0762183508770447,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.0762183508770447,
+          "mean": 0.07621835087704477
+        },
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "yaw": 1.5,
+          "pitch": 0.55,
+          "noise": 0.004,
+          "descriptorMs": 130,
+          "fault": "frozen"
+        },
+        "terminal": "walk_camera_response_not_observed",
+        "alignedAtMs": null,
+        "finalAngularError": 0.7658293161793076,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": null,
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "yaw": 1.5,
+          "pitch": 0.55,
+          "noise": 0.004,
+          "descriptorMs": 130,
+          "fault": "reversed"
+        },
+        "terminal": "walk_camera_response_wrong_direction",
+        "alignedAtMs": null,
+        "finalAngularError": 1.342752568788071,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": null,
+        "cameraDowns": 1,
+        "passed": true
+      },
+      {
+        "config": {
+          "gainX": 6,
+          "gainY": -5,
+          "visualMs": 100,
+          "slopPx": 16,
+          "noise": 0.004,
+          "descriptorMs": 130,
+          "movingReference": true,
+          "durationMs": 50000
+        },
+        "terminal": null,
+        "alignedAtMs": 3810,
+        "finalAngularError": 0.08762627419274385,
+        "neutralizations": 0,
+        "closed": true,
+        "trackingError": {
+          "maximum": 0.12211896254196578,
+          "mean": 0.06190423478927451
+        },
+        "cameraDowns": 1,
+        "passed": true
+      }
+    ]
+  },
+  "browserLayout": {
+    "physicalActions": 0,
+    "userTab": false,
+    "realComponents": true,
+    "mediaMocked": true,
+    "productionSources": {
+      "NavigationRouteContext.tsx": "395beb62ecba1597525db9368e390b5088ae442d77d398a5f1baf270d9cf30a6",
+      "routeMapProjection.ts": "6168718939a4d225065430cfdf58ad2d73e7b85e8b4f3bf544c733959e9c0aec",
+      "routeNavigation.ts": "41c35cba425f81c6bcab751372aaaf5f0ff728f56e6b6f12354eef2903205cc5",
+      "RouteGeometryMap.tsx": "4f6950b1cb9e2b11133cd8622083737a1ee759d71b15c50fffbb46e510c9235a"
+    },
+    "cases": [
+      {
+        "sourceCameras": 174,
+        "sourcePoints": 14622,
+        "viewport": [
+          1880,
+          1250
+        ],
+        "maximumShiftPx": 0,
+        "passed": true
+      },
+      {
+        "sourceCameras": 174,
+        "sourcePoints": 14622,
+        "viewport": [
+          760,
+          1250
+        ],
+        "maximumShiftPx": 0,
+        "passed": true
+      }
+    ]
+  },
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "dda3a0debd85e3ce3241a76acc4e341024a5871ef5a5bd573d92097df544ddb4",
+    "source_sha_after": "dda3a0debd85e3ce3241a76acc4e341024a5871ef5a5bd573d92097df544ddb4",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 6.5,
+      "stop_ram_gib": 5.5,
+      "max_commit_percent": 90,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "candidateProbe": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "workerMatches": true,
+    "encoderWorkerMatches": true,
+    "newBundlePresent": true
+  },
+  "installation": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:7e8088ebb2e2c9d20301225de65fc65a7ee0f9c1e40f99d07fedde8767a7ee9a",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "processorReload": {
+    "oldPid": 40992,
+    "watchdogPid": 4444,
+    "physicalActions": 0,
+    "sourceSha": "bc8e9282b0d120a41ffe9c3da8a5376a8cb5d72465d59de08fa30ce786fc45d7",
+    "outcome": "verified",
+    "newPid": 44128,
+    "existingAssetsUnchanged": true
+  }
+}

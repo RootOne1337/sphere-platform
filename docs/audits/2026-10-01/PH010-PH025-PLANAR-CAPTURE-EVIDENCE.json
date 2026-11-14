@@ -1,0 +1,959 @@
+{
+  "schema_version": 1,
+  "prepared_at": "2026-10-01T11:09:46.783206+00:00",
+  "scope": "bounded real MediaProjection to planar AVC to backend to native wire receiver; separate single-device static-input UI fix",
+  "source": "8a66afeb19c10be27c7bc7d83a3abd21348891bc",
+  "artifact": {
+    "file": "SphereAgent-pilot-candidate-1.2.39-dev-8a66afe.apk",
+    "sha256": "c9f4a5ef9652a2bb2b14765e4c91fa929d4e1b59e7645703be99ed64f8dcca07",
+    "version_code": 10239,
+    "version_name": "1.2.39-dev",
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "planar_input_enabled": true,
+    "gpu_bridge_enabled": false
+  },
+  "configured_android_tests": {
+    "per_flavor": 770,
+    "passed": 769,
+    "skipped": 1,
+    "failures": 0,
+    "errors": 0,
+    "flavors": [
+      "devDebug",
+      "enterpriseDebug"
+    ]
+  },
+  "ota": [
+    {
+      "device": "auto-ph-010",
+      "requested_version_code": 10239,
+      "terminal_status": "completed",
+      "installed_version_code": 10239,
+      "recovered_after_process_restart": true,
+      "terminal_at": "2026-10-01T10:23:49.951059+00:00",
+      "fresh_online_version_confirmed": true,
+      "global_channel_changed": false,
+      "authenticated_artifact_hash_verified": true
+    },
+    {
+      "device": "auto-ph-025",
+      "requested_version_code": 10239,
+      "terminal_status": "completed",
+      "installed_version_code": 10239,
+      "recovered_after_process_restart": true,
+      "terminal_at": "2026-10-01T10:32:56.946713+00:00",
+      "fresh_online_version_confirmed": true,
+      "global_channel_changed": false,
+      "authenticated_artifact_hash_verified": true
+    }
+  ],
+  "measurement_runtime": {
+    "backend_source": "85c8014",
+    "frontend_source": "c547f5d",
+    "ingress": "existing signed Tuna route; no endpoint change"
+  },
+  "configuration": {
+    "width": 960,
+    "height": 540,
+    "target_fps": 30,
+    "requested_bitrate_bps": 1500000,
+    "codec": "OMX.google.h264.encoder",
+    "input": "RGBA ImageReader to reused I420 ByteBuffer"
+  },
+  "trials": [
+    {
+      "device": "PH010 (operator-confirmed local)",
+      "observed_at": "2026-10-01T10:29:36.182607+00:00",
+      "reported_version_code": 10239,
+      "one_confirmed_private_motion_launch": true,
+      "input_events": 0,
+      "owned_viewer_closed": true,
+      "observer_shell_during_video": true,
+      "duration_seconds": 23.0,
+      "pictures_total": 668,
+      "first_picture_seconds": 0.766,
+      "window_overlaps_stream_startup": false,
+      "measurement_window_seconds": [
+        3,
+        13
+      ],
+      "window_pictures": 300,
+      "window_picture_fps": 30.0,
+      "one_second_windows": [
+        {
+          "from_seconds": 3,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 4,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 5,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 6,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 7,
+          "pictures": 31
+        },
+        {
+          "from_seconds": 8,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 9,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 10,
+          "pictures": 29
+        },
+        {
+          "from_seconds": 11,
+          "pictures": 31
+        },
+        {
+          "from_seconds": 12,
+          "pictures": 29
+        }
+      ],
+      "large_arrival_or_pts_gaps": [],
+      "relative_arrival_minus_pts_range_ms": [
+        -4.0,
+        79.0
+      ],
+      "relative_timing_is_not_absolute_input_or_video_latency": true,
+      "conversion_windows": [
+        {
+          "samples": 151,
+          "convert_mean_ms": 22.088,
+          "queue_mean_ms": 0.325
+        },
+        {
+          "samples": 150,
+          "convert_mean_ms": 20.989,
+          "queue_mean_ms": 0.147
+        },
+        {
+          "samples": 151,
+          "convert_mean_ms": 21.364,
+          "queue_mean_ms": 0.151
+        },
+        {
+          "samples": 151,
+          "convert_mean_ms": 20.754,
+          "queue_mean_ms": 0.133
+        }
+      ],
+      "cpu": {
+        "snapshots": 1,
+        "top_basis_logical_cpus": 2,
+        "apk_percent_of_one_core": 80.0,
+        "codec_percent_of_one_core": 12.0,
+        "includes_private_motion_rendering_and_observer_effects": true
+      },
+      "api_snapshot": {
+        "schema_version": 2,
+        "active": true,
+        "stage": "capture_encoder_ws_queue",
+        "encoder_fps": 30,
+        "encoded_frames_total": 343,
+        "encoded_bytes_total": 1485564,
+        "key_frame_ratio": 0.0029154520016163588,
+        "ws_queue_attempts_total": 345,
+        "ws_queue_accepted_total": 345,
+        "ws_queue_rejected_total": 0,
+        "ws_queue_accepted_bytes_total": 1490427,
+        "capture_fps": 60,
+        "render_fps": 30,
+        "capture_frames_total": 686,
+        "rendered_frames_total": 343,
+        "capture_read_failures_total": 0,
+        "render_failures_total": 0,
+        "encoder_errors_total": 0,
+        "frame_throttle_drops_total": 0
+      },
+      "api_snapshot_age_seconds": 10.875788,
+      "new_input_drop_field_present_in_running_api": false,
+      "packet_validation_errors": 0,
+      "browser_draw_fps_measured": false,
+      "video_pixels_saved": false
+    },
+    {
+      "device": "PH025 (operator-confirmed remote)",
+      "observed_at": "2026-10-01T10:34:08.936905+00:00",
+      "reported_version_code": 10239,
+      "one_confirmed_private_motion_launch": true,
+      "input_events": 0,
+      "owned_viewer_closed": true,
+      "observer_shell_during_video": true,
+      "duration_seconds": 23.0,
+      "pictures_total": 43,
+      "first_picture_seconds": 6.109,
+      "window_overlaps_stream_startup": true,
+      "measurement_window_seconds": [
+        3,
+        13
+      ],
+      "window_pictures": 19,
+      "window_picture_fps": 1.9,
+      "one_second_windows": [
+        {
+          "from_seconds": 3,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 4,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 5,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 6,
+          "pictures": 5
+        },
+        {
+          "from_seconds": 7,
+          "pictures": 2
+        },
+        {
+          "from_seconds": 8,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 9,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 10,
+          "pictures": 5
+        },
+        {
+          "from_seconds": 11,
+          "pictures": 5
+        },
+        {
+          "from_seconds": 12,
+          "pictures": 2
+        }
+      ],
+      "large_arrival_or_pts_gaps": [
+        {
+          "receiver_seconds": 7.5,
+          "arrival_gap_ms": 719.0,
+          "producer_pts_gap_ms": 715
+        },
+        {
+          "receiver_seconds": 10.593,
+          "arrival_gap_ms": 3078.0,
+          "producer_pts_gap_ms": 3053
+        },
+        {
+          "receiver_seconds": 13.156,
+          "arrival_gap_ms": 766.0,
+          "producer_pts_gap_ms": 771
+        },
+        {
+          "receiver_seconds": 14.468,
+          "arrival_gap_ms": 1296.0,
+          "producer_pts_gap_ms": 1083
+        },
+        {
+          "receiver_seconds": 16.25,
+          "arrival_gap_ms": 1782.0,
+          "producer_pts_gap_ms": 2003
+        },
+        {
+          "receiver_seconds": 16.953,
+          "arrival_gap_ms": 563.0,
+          "producer_pts_gap_ms": 198
+        },
+        {
+          "receiver_seconds": 18.515,
+          "arrival_gap_ms": 718.0,
+          "producer_pts_gap_ms": 735
+        },
+        {
+          "receiver_seconds": 21.625,
+          "arrival_gap_ms": 3032.0,
+          "producer_pts_gap_ms": 3024
+        }
+      ],
+      "relative_arrival_minus_pts_range_ms": [
+        -8.0,
+        369.0
+      ],
+      "relative_timing_is_not_absolute_input_or_video_latency": true,
+      "conversion_windows": [
+        {
+          "samples": 13,
+          "convert_mean_ms": 15.438,
+          "queue_mean_ms": 1.754
+        },
+        {
+          "samples": 10,
+          "convert_mean_ms": 11.322,
+          "queue_mean_ms": 1.212
+        },
+        {
+          "samples": 12,
+          "convert_mean_ms": 10.797,
+          "queue_mean_ms": 0.891
+        }
+      ],
+      "cpu": {
+        "snapshots": 1,
+        "top_basis_logical_cpus": 2,
+        "apk_percent_of_one_core": 3.8,
+        "codec_percent_of_one_core": null,
+        "includes_private_motion_rendering_and_observer_effects": true
+      },
+      "api_snapshot": {
+        "schema_version": 2,
+        "active": true,
+        "stage": "capture_encoder_ws_queue",
+        "encoder_fps": 2,
+        "encoded_frames_total": 21,
+        "encoded_bytes_total": 122448,
+        "key_frame_ratio": 0.0476190485060215,
+        "ws_queue_attempts_total": 23,
+        "ws_queue_accepted_total": 23,
+        "ws_queue_rejected_total": 0,
+        "ws_queue_accepted_bytes_total": 122803,
+        "capture_fps": 3,
+        "render_fps": 2,
+        "capture_frames_total": 23,
+        "rendered_frames_total": 21,
+        "capture_read_failures_total": 0,
+        "render_failures_total": 0,
+        "encoder_errors_total": 0,
+        "frame_throttle_drops_total": 0
+      },
+      "api_snapshot_age_seconds": 9.209513,
+      "new_input_drop_field_present_in_running_api": false,
+      "packet_validation_errors": 0,
+      "browser_draw_fps_measured": false,
+      "video_pixels_saved": false
+    },
+    {
+      "device": "PH025 independent repeat without observer shell",
+      "observed_at": "2026-10-01T10:40:49.825488+00:00",
+      "reported_version_code": 10239,
+      "one_confirmed_private_motion_launch": true,
+      "input_events": 0,
+      "owned_viewer_closed": true,
+      "observer_shell_during_video": false,
+      "duration_seconds": 18.0,
+      "pictures_total": 27,
+      "first_picture_seconds": 5.484,
+      "window_overlaps_stream_startup": true,
+      "measurement_window_seconds": [
+        3,
+        13
+      ],
+      "window_pictures": 17,
+      "window_picture_fps": 1.7,
+      "one_second_windows": [
+        {
+          "from_seconds": 3,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 4,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 5,
+          "pictures": 4
+        },
+        {
+          "from_seconds": 6,
+          "pictures": 4
+        },
+        {
+          "from_seconds": 7,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 8,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 9,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 10,
+          "pictures": 4
+        },
+        {
+          "from_seconds": 11,
+          "pictures": 4
+        },
+        {
+          "from_seconds": 12,
+          "pictures": 1
+        }
+      ],
+      "large_arrival_or_pts_gaps": [
+        {
+          "receiver_seconds": 10.609,
+          "arrival_gap_ms": 3937.0,
+          "producer_pts_gap_ms": 3943
+        },
+        {
+          "receiver_seconds": 12.422,
+          "arrival_gap_ms": 750.0,
+          "producer_pts_gap_ms": 763
+        },
+        {
+          "receiver_seconds": 15.594,
+          "arrival_gap_ms": 3172.0,
+          "producer_pts_gap_ms": 3157
+        },
+        {
+          "receiver_seconds": 17.719,
+          "arrival_gap_ms": 844.0,
+          "producer_pts_gap_ms": 848
+        }
+      ],
+      "relative_arrival_minus_pts_range_ms": [
+        -2.0,
+        13.0
+      ],
+      "relative_timing_is_not_absolute_input_or_video_latency": true,
+      "conversion_windows": [
+        {
+          "samples": 9,
+          "convert_mean_ms": 7.862,
+          "queue_mean_ms": 0.827
+        },
+        {
+          "samples": 10,
+          "convert_mean_ms": 9.347,
+          "queue_mean_ms": 0.365
+        },
+        {
+          "samples": 9,
+          "convert_mean_ms": 5.281,
+          "queue_mean_ms": 1.581
+        }
+      ],
+      "cpu": null,
+      "api_snapshot": {
+        "schema_version": 2,
+        "active": true,
+        "stage": "capture_encoder_ws_queue",
+        "encoder_fps": 0,
+        "encoded_frames_total": 0,
+        "encoded_bytes_total": 0,
+        "key_frame_ratio": 0.0,
+        "ws_queue_attempts_total": 0,
+        "ws_queue_accepted_total": 0,
+        "ws_queue_rejected_total": 0,
+        "ws_queue_accepted_bytes_total": 0,
+        "capture_fps": 0,
+        "render_fps": 0,
+        "capture_frames_total": 0,
+        "rendered_frames_total": 0,
+        "capture_read_failures_total": 0,
+        "render_failures_total": 0,
+        "encoder_errors_total": 0,
+        "frame_throttle_drops_total": 0
+      },
+      "api_snapshot_age_seconds": 14.427382,
+      "new_input_drop_field_present_in_running_api": false,
+      "packet_validation_errors": 0,
+      "browser_draw_fps_measured": false,
+      "video_pixels_saved": false
+    },
+    {
+      "device": "PH010 independent real-capture/offline-decode repeat",
+      "observed_at": "2026-10-01T10:56:16.133464+00:00",
+      "reported_version_code": 10239,
+      "one_confirmed_private_motion_launch": true,
+      "input_events": 0,
+      "owned_viewer_closed": true,
+      "observer_shell_during_video": false,
+      "duration_seconds": 16.0,
+      "pictures_total": 462,
+      "first_picture_seconds": 0.625,
+      "measurement_window_seconds": [
+        3,
+        13
+      ],
+      "window_pictures": 299,
+      "window_picture_fps": 29.9,
+      "window_overlaps_stream_startup": false,
+      "one_second_windows": [
+        {
+          "from_seconds": 3,
+          "pictures": 29
+        },
+        {
+          "from_seconds": 4,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 5,
+          "pictures": 31
+        },
+        {
+          "from_seconds": 6,
+          "pictures": 29
+        },
+        {
+          "from_seconds": 7,
+          "pictures": 31
+        },
+        {
+          "from_seconds": 8,
+          "pictures": 29
+        },
+        {
+          "from_seconds": 9,
+          "pictures": 31
+        },
+        {
+          "from_seconds": 10,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 11,
+          "pictures": 30
+        },
+        {
+          "from_seconds": 12,
+          "pictures": 29
+        }
+      ],
+      "large_arrival_or_pts_gaps": [],
+      "relative_arrival_minus_pts_range_ms": [
+        -3.0,
+        101.0
+      ],
+      "relative_timing_is_not_absolute_input_or_video_latency": true,
+      "conversion_windows": [
+        {
+          "samples": 150,
+          "convert_mean_ms": 21.434,
+          "queue_mean_ms": 0.169
+        },
+        {
+          "samples": 150,
+          "convert_mean_ms": 21.076,
+          "queue_mean_ms": 0.125
+        },
+        {
+          "samples": 151,
+          "convert_mean_ms": 20.956,
+          "queue_mean_ms": 0.125
+        }
+      ],
+      "packet_validation_errors": 0,
+      "browser_draw_fps_measured": false,
+      "backend_source": "85c8014",
+      "frontend_source": "b9a3f29",
+      "offline_decode": {
+        "decoder": "PyAV 19.0.0",
+        "decoded_frames": 462,
+        "sizes": [
+          [
+            960,
+            540
+          ]
+        ],
+        "errors": 0,
+        "picture_count_matches_wire": true,
+        "bitstream_sha256": "63265a31fc04e1879bb5e80b4a90c964b29f24dfd45f2cd7b15e7ba6b03b43b5",
+        "bitstream_bytes": 1971827,
+        "raw_video_published": false,
+        "sample_picture": "PH010-PLANAR-PATTERN.png",
+        "sample_origin": "one independently decoded frame of the owned private pattern; not a browser screenshot",
+        "sample_visual_review": "test text, cyan bar, yellow circle and thin lines are readable in this frame",
+        "quality_or_input_latency_acceptance": false
+      }
+    },
+    {
+      "device": "PH025 optional-field integration after backend rollout",
+      "observed_at": "2026-10-01T11:04:15.590557+00:00",
+      "reported_version_code": 10239,
+      "one_confirmed_private_motion_launch": true,
+      "input_events": 0,
+      "owned_viewer_closed": true,
+      "observer_shell_during_video": false,
+      "duration_seconds": 33.0,
+      "pictures_total": 49,
+      "first_picture_seconds": 7.375,
+      "measurement_window_seconds": [
+        3,
+        13
+      ],
+      "window_pictures": 12,
+      "window_picture_fps": 1.2,
+      "window_overlaps_stream_startup": true,
+      "one_second_windows": [
+        {
+          "from_seconds": 3,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 4,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 5,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 6,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 7,
+          "pictures": 3
+        },
+        {
+          "from_seconds": 8,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 9,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 10,
+          "pictures": 0
+        },
+        {
+          "from_seconds": 11,
+          "pictures": 4
+        },
+        {
+          "from_seconds": 12,
+          "pictures": 5
+        }
+      ],
+      "large_arrival_or_pts_gaps": [
+        {
+          "receiver_seconds": 11.687,
+          "arrival_gap_ms": 3969.0,
+          "producer_pts_gap_ms": 3908
+        },
+        {
+          "receiver_seconds": 13.672,
+          "arrival_gap_ms": 766.0,
+          "producer_pts_gap_ms": 757
+        },
+        {
+          "receiver_seconds": 16.781,
+          "arrival_gap_ms": 3109.0,
+          "producer_pts_gap_ms": 3107
+        },
+        {
+          "receiver_seconds": 18.968,
+          "arrival_gap_ms": 859.0,
+          "producer_pts_gap_ms": 852
+        },
+        {
+          "receiver_seconds": 22.078,
+          "arrival_gap_ms": 3094.0,
+          "producer_pts_gap_ms": 3097
+        },
+        {
+          "receiver_seconds": 24.234,
+          "arrival_gap_ms": 719.0,
+          "producer_pts_gap_ms": 719
+        },
+        {
+          "receiver_seconds": 27.312,
+          "arrival_gap_ms": 3078.0,
+          "producer_pts_gap_ms": 3082
+        },
+        {
+          "receiver_seconds": 29.75,
+          "arrival_gap_ms": 844.0,
+          "producer_pts_gap_ms": 835
+        },
+        {
+          "receiver_seconds": 32.89,
+          "arrival_gap_ms": 3140.0,
+          "producer_pts_gap_ms": 3144
+        }
+      ],
+      "relative_arrival_minus_pts_range_ms": [
+        -6.0,
+        86.0
+      ],
+      "relative_timing_is_not_absolute_input_or_video_latency": true,
+      "conversion_windows": [
+        {
+          "samples": 10,
+          "convert_mean_ms": 11.738,
+          "queue_mean_ms": 0.392
+        },
+        {
+          "samples": 9,
+          "convert_mean_ms": 12.43,
+          "queue_mean_ms": 1.785
+        },
+        {
+          "samples": 10,
+          "convert_mean_ms": 9.071,
+          "queue_mean_ms": 0.643
+        },
+        {
+          "samples": 9,
+          "convert_mean_ms": 11.633,
+          "queue_mean_ms": 1.907
+        },
+        {
+          "samples": 9,
+          "convert_mean_ms": 13.97,
+          "queue_mean_ms": 1.124
+        }
+      ],
+      "packet_validation_errors": 0,
+      "browser_draw_fps_measured": false,
+      "backend_source": "b9a3f29",
+      "frontend_source": "b9a3f29",
+      "video_pixels_saved": false,
+      "motion_scene_auto_finishes_after_seconds": 30,
+      "metadata_viewer_seconds_after_scene_finish": 3,
+      "diagnostic_samples": [
+        {
+          "receiver_seconds": 12.031,
+          "state": "active_report",
+          "age_seconds": 4.681949,
+          "observed_at": "2026-10-01T11:04:25.246363Z",
+          "telemetry": {
+            "schema_version": 2,
+            "active": true,
+            "stage": "capture_encoder_ws_queue",
+            "encoder_fps": 0,
+            "encoded_frames_total": 0,
+            "encoded_bytes_total": 0,
+            "key_frame_ratio": 0.0,
+            "ws_queue_attempts_total": 0,
+            "ws_queue_accepted_total": 0,
+            "ws_queue_rejected_total": 0,
+            "ws_queue_accepted_bytes_total": 0,
+            "capture_fps": 1,
+            "render_fps": 0,
+            "capture_frames_total": 1,
+            "rendered_frames_total": 0,
+            "capture_read_failures_total": 0,
+            "render_failures_total": 0,
+            "encoder_errors_total": 0,
+            "frame_throttle_drops_total": 0,
+            "capture_throttle_drops_total": 0,
+            "encoder_input_drops_total": 0
+          }
+        },
+        {
+          "receiver_seconds": 25.031,
+          "state": "active_report",
+          "age_seconds": 17.672221,
+          "observed_at": "2026-10-01T11:04:25.246363Z",
+          "telemetry": {
+            "schema_version": 2,
+            "active": true,
+            "stage": "capture_encoder_ws_queue",
+            "encoder_fps": 0,
+            "encoded_frames_total": 0,
+            "encoded_bytes_total": 0,
+            "key_frame_ratio": 0.0,
+            "ws_queue_attempts_total": 0,
+            "ws_queue_accepted_total": 0,
+            "ws_queue_rejected_total": 0,
+            "ws_queue_accepted_bytes_total": 0,
+            "capture_fps": 1,
+            "render_fps": 0,
+            "capture_frames_total": 1,
+            "rendered_frames_total": 0,
+            "capture_read_failures_total": 0,
+            "render_failures_total": 0,
+            "encoder_errors_total": 0,
+            "frame_throttle_drops_total": 0,
+            "capture_throttle_drops_total": 0,
+            "encoder_input_drops_total": 0
+          }
+        },
+        {
+          "receiver_seconds": 31.031,
+          "state": "active_report",
+          "age_seconds": 23.673158,
+          "observed_at": "2026-10-01T11:04:25.246363Z",
+          "telemetry": {
+            "schema_version": 2,
+            "active": true,
+            "stage": "capture_encoder_ws_queue",
+            "encoder_fps": 0,
+            "encoded_frames_total": 0,
+            "encoded_bytes_total": 0,
+            "key_frame_ratio": 0.0,
+            "ws_queue_attempts_total": 0,
+            "ws_queue_accepted_total": 0,
+            "ws_queue_rejected_total": 0,
+            "ws_queue_accepted_bytes_total": 0,
+            "capture_fps": 1,
+            "render_fps": 0,
+            "capture_frames_total": 1,
+            "rendered_frames_total": 0,
+            "capture_read_failures_total": 0,
+            "render_failures_total": 0,
+            "encoder_errors_total": 0,
+            "frame_throttle_drops_total": 0,
+            "capture_throttle_drops_total": 0,
+            "encoder_input_drops_total": 0
+          }
+        }
+      ],
+      "new_input_drop_field_present_in_running_api": true,
+      "post_encoding_heartbeat_observed": false,
+      "interpretation": "All three API reads contain the same early heartbeat: captured=1, rendered=0, encoded=0. Zero input drops is not evidence of no subsequent input drops."
+    }
+  ],
+  "source_display_hz": {
+    "PH010": 60.000004,
+    "PH025": 5.0
+  },
+  "operator_observations": [
+    {
+      "device": "PH010",
+      "observation": "Live browser video improved substantially; static-frame age banner then prevented pointer input",
+      "automated_browser_acceptance": false
+    }
+  ],
+  "ui_fix": {
+    "source": "b9a3f294843474fc71684536f9619a00877335fc",
+    "frontend_suites": 73,
+    "frontend_tests": 576,
+    "type_check_passed": true,
+    "targeted_legacy_eslint_passed": true,
+    "single_device_only": true,
+    "static_input_keeps_current_socket_first_frame_gate": true,
+    "errors_disconnect_decoder_recovery_still_block": true,
+    "fresh_png_remains_disabled_on_stale": true
+  },
+  "limits": [
+    "Not browser draw FPS or input-to-visible latency",
+    "Remote target 10-15/20-30 FPS is not accepted; remote display still reports 5 Hz",
+    "Matching arrival/PTS gaps locate gaps before the receiver but do not isolate compositor, capture, codec-input admission or transport loss",
+    "Remote no-observer API snapshot predates its first encoded picture; zero counters do not prove no later capture",
+    "Not a CPU/RAM budget or fleet capacity guarantee; local conversion moves CPU work into APK",
+    "Canary publication only; normal/global OTA and GitHub latest aliases are unchanged",
+    "One independently decoded pattern frame was visually reviewed; motion quality, browser readability and input latency are still open",
+    "The optional input-drop API field is deployed and observed; a fresh post-encoding snapshot is still needed to localize remote raw input skips",
+    "The post-rollout remote 3..13s window overlaps startup; its 1.2/s is not a steady-state regression comparison"
+  ],
+  "cleanup_readback": {
+    "observed_at": "2026-10-01T11:08:08.813296+00:00",
+    "devices": [
+      {
+        "device": "auto-ph-010",
+        "status": "online",
+        "version_code": 10239,
+        "stream_state": "not_streaming",
+        "launcher_confirmed": true
+      },
+      {
+        "device": "auto-ph-025",
+        "status": "online",
+        "version_code": 10239,
+        "stream_state": "not_streaming",
+        "launcher_confirmed": true
+      }
+    ],
+    "fleet_records": 19,
+    "fleet_status_counts": {
+      "offline": 5,
+      "online": 14
+    },
+    "finite_snapshot_not_uptime_sla": true,
+    "global_stop_sent": false
+  },
+  "ui_runtime": {
+    "source": "b9a3f294843474fc71684536f9619a00877335fc",
+    "observedAt": "2026-10-01T10:44:19.7437914+00:00",
+    "port": 3015,
+    "uiPort": 3022,
+    "ready": true,
+    "browserVerified": false,
+    "previousNextPreserved": true,
+    "api_revision_at_ui_switch": "85c8014e3ad9e86ff3139cc679618698f79b9aaa",
+    "current_api_revision": "b9a3f294843474fc71684536f9619a00877335fc"
+  },
+  "backend_rollout": {
+    "revision": "b9a3f294843474fc71684536f9619a00877335fc",
+    "at": "2026-10-01T11:01:53.469883+00:00",
+    "healthy": true,
+    "build_verified": true,
+    "db_head_unchanged": true,
+    "neighbours_unchanged": true,
+    "ota_catalog_and_artifacts_unchanged": true,
+    "compose_exit": 0
+  },
+  "accepted_code_ci": {
+    "source": "b9a3f294843474fc71684536f9619a00877335fc",
+    "checks": [
+      {
+        "name": "Alembic Single Head",
+        "state": "SUCCESS"
+      },
+      {
+        "name": "Production image bootstrap",
+        "state": "SUCCESS"
+      },
+      {
+        "name": "Security (bandit + pip-audit)",
+        "state": "SUCCESS"
+      },
+      {
+        "name": "RLS Policy Coverage",
+        "state": "SUCCESS"
+      },
+      {
+        "name": "Tests",
+        "state": "SUCCESS"
+      },
+      {
+        "name": "Lint (ruff + mypy)",
+        "state": "SUCCESS"
+      },
+      {
+        "name": "deploy",
+        "state": "SKIPPED"
+      },
+      {
+        "name": "Android tests and signed release smoke build",
+        "state": "SUCCESS"
+      },
+      {
+        "name": "Frontend tests, types and build",
+        "state": "SUCCESS"
+      },
+      {
+        "name": "guard",
+        "state": "SUCCESS"
+      }
+    ],
+    "backend_tests": {
+      "passed": 2135,
+      "skipped": 15,
+      "failures": 0,
+      "errors": 0
+    },
+    "runs": {
+      "backend": 36850795071,
+      "frontend": 36850795102,
+      "android": 36850795212
+    }
+  }
+}

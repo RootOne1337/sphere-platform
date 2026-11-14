@@ -1,0 +1,45 @@
+{
+  "status": "read_only_attrition_evidence",
+  "rows": [
+    {
+      "name": "00000054.png",
+      "seconds": 2.19,
+      "source_PTS": 197100,
+      "DISK_retained_2D_keypoints": 864,
+      "DISK_unique_keypoints_with_raw_match": 801,
+      "DISK_unique_keypoints_with_verified_inlier_match": 747,
+      "DISK_keypoints_with_inliers_to_at_least_2_other_frames": 584,
+      "DISK_final_ge3view_3D_observations": 1,
+      "SIFT_final_ge3view_3D_observations_same_frame": 514
+    },
+    {
+      "name": "00000550.png",
+      "seconds": 22.083,
+      "source_PTS": 1987470,
+      "DISK_retained_2D_keypoints": 847,
+      "DISK_unique_keypoints_with_raw_match": 747,
+      "DISK_unique_keypoints_with_verified_inlier_match": 723,
+      "DISK_keypoints_with_inliers_to_at_least_2_other_frames": 616,
+      "DISK_final_ge3view_3D_observations": 1,
+      "SIFT_final_ge3view_3D_observations_same_frame": 128
+    },
+    {
+      "name": "00000026.png",
+      "seconds": 1.076,
+      "source_PTS": 96840,
+      "DISK_retained_2D_keypoints": 1024,
+      "DISK_unique_keypoints_with_raw_match": 928,
+      "DISK_unique_keypoints_with_verified_inlier_match": 903,
+      "DISK_keypoints_with_inliers_to_at_least_2_other_frames": 832,
+      "DISK_final_ge3view_3D_observations": 364,
+      "SIFT_final_ge3view_3D_observations_same_frame": 1301
+    }
+  ],
+  "interpretation": "Verified neighbors do not prove globally cycle-consistent tracks, parallax, or valid 3D. These counts locate attrition between pairwise inliers and retained scene support; they do not identify one unique cause.",
+  "visual_review": {
+    "00000054.png": "2.190s: close building facades flank an intersection; windows repeat, broad road/sidewalk and dark sky. Source PNG is intact; one DISK tracked 3D projection remains.",
+    "00000550.png": "22.083s: straight roadway, long repeated right facade, left grass/wall and lamps; one DISK tracked 3D projection remains.",
+    "00000026.png": "1.076s control: close facade and visible distant facade/lamp structure; 364 DISK and 1301 SIFT supported observations.",
+    "caveat": "Visual scene description only; no semantic depth, static-world classification or calibration truth inferred."
+  }
+}

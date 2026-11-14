@@ -1,0 +1,2610 @@
+{
+  "schemaVersion": 1,
+  "scope": "Finite read-only visual/source audit; no runtime redesign, Android filesystem API or production/a11y signoff. Coverage of every tracked page template includes redirects and a staged standalone stream layout. Conditional dialogs and roles have explicit gaps.",
+  "runtime": {
+    "uiSourceRevision": "4b39c385f2d9600bbf8ad9e9c53453338af3367d",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "androidVersionHeld": "1.2.76-dev / 10276",
+    "runtimeChangedByAudit": false,
+    "nativeInputsSentByAudit": 0,
+    "androidProfileReadExecutedByAudit": false,
+    "ownedAuditBrowsersClosed": true
+  },
+  "sourceRevision": "f7dabf27cffba48fc2fe092fa771396446a9489b",
+  "uninstalledFrontendSourceChanges": [
+    "frontend/components/sphere/DeviceStream.tsx",
+    "frontend/components/sphere/NativeInputDiagnostic.tsx",
+    "frontend/src/features/devices/DeviceInspectorDetail.tsx"
+  ],
+  "inventory": {
+    "sourcePages": 29,
+    "nonTestJsxFiles": 151,
+    "buttonSites": 509,
+    "dialogContentSites": 47,
+    "screenshots": 127,
+    "buttonCrops": 2468,
+    "observedDialogScreens": 45,
+    "stagedScreens": 4,
+    "sourceInventory": "docs/audits/2026-10-15/UI-CONTROL-INVENTORY.json",
+    "sourceInventorySha256NormalizedLf": "6ccf73bc207733569b8cfb512a44d76f3a8e81b1ad11afee91ba255b85a19946",
+    "localArtifactBytes": 27614680,
+    "localGallery": "output/playwright/ui-audit-20261015/index.html",
+    "localControlDimensions": "output/playwright/ui-audit-20261015/controls.csv"
+  },
+  "measuredFindings": {
+    "themeAccentOrder": {
+      "blueSelected": true,
+      "primaryAfterMatrix": "120 100% 50%",
+      "evidenceCapture": "desktop-appearance-matrix-blue-selected"
+    },
+    "densityButton": [
+      {
+        "mode": "cozy",
+        "width": 178.1,
+        "height": 44,
+        "fontSize": "14px",
+        "spacingToken": "1"
+      },
+      {
+        "mode": "compact",
+        "width": 178.1,
+        "height": 44,
+        "fontSize": "14px",
+        "spacingToken": "0.75"
+      },
+      {
+        "mode": "spacious",
+        "width": 178.1,
+        "height": 44,
+        "fontSize": "14px",
+        "spacingToken": "1.25"
+      }
+    ],
+    "deviceActionsWidthPx": 497.3,
+    "deviceActionsHeightPx": 40,
+    "accountsPhoneCreate": {
+      "x": 348.8,
+      "right": 441.2,
+      "viewportWidth": 390
+    },
+    "gridPhoneStart": {
+      "x": 362.6,
+      "right": 442.1,
+      "viewportWidth": 390
+    },
+    "appearancePhoneHeight": 812,
+    "phoneViewportHeight": 844,
+    "sidebarCollapsedWidthPx": 76,
+    "sidebarAfterHoverWidthPx": 76,
+    "contrastTokenRatios": {
+      "matrixMutedOnCard": 3.68,
+      "lightPrimaryForegroundOnPrimary": 3.7,
+      "method": "WCAG relative luminance from actual computed opaque HSL tokens; not full DOM/composited glass verification"
+    },
+    "scrollReturn": {
+      "before": 650,
+      "after": 650,
+      "method": "Actual wheel, sidebar navigation and browser Back",
+      "observedAtUtc": "2026-10-14T23:02:11.852Z"
+    },
+    "coldLogin": {
+      "source": "Installed UI4b/API969, ordinary Chrome, initial GET http://127.0.0.1:3015/login before credentials",
+      "scope": "One Navigation Timing readback; attribution and repeated distribution not established",
+      "timingsMs": {
+        "responseStart": 23523.8,
+        "responseEnd": 23524.2,
+        "domContentLoadedEventEnd": 23540,
+        "loadEventEnd": 23588.3
+      },
+      "recordedFromReadback": true
+    }
+  },
+  "publicAssets": [
+    {
+      "capture": "desktop-devices",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/desktop-devices.png",
+      "bytes": 214968,
+      "sha256": "e1a5175e8007f035c80afe0388f80ad1b4b3ef29719aee2f886de456c4744cb1"
+    },
+    {
+      "capture": "phone-devices",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/phone-devices.png",
+      "bytes": 56010,
+      "sha256": "2af64999fe9842758bdeffb5220bbc7824751ee08d60360c7a095e15d14271ab"
+    },
+    {
+      "capture": "desktop-device-ph025",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/desktop-device-ph025.png",
+      "bytes": 176040,
+      "sha256": "de26650c783b73f3c897c242c124c3b713f2351ec7ac10f0196d9155651b4caa"
+    },
+    {
+      "capture": "desktop-appearance-matrix-blue-selected",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/desktop-appearance-matrix-blue-selected.png",
+      "bytes": 108225,
+      "sha256": "3f91224abf4d85a116f5d0e75f04b73674566c9bb1e4d79106c6b3f2b6743c3d"
+    },
+    {
+      "capture": "desktop-appearance-light",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/desktop-appearance-light.png",
+      "bytes": 191602,
+      "sha256": "356ba0331fe6cc0dcc3eb3a40d2d33e82411a830abedbcd6391b824678586171"
+    },
+    {
+      "capture": "phone-accounts",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/phone-accounts.png",
+      "bytes": 41849,
+      "sha256": "545acba8571277503a224a299df299c30d98959fd5a05e686bcd5c69126155ed"
+    },
+    {
+      "capture": "phone-devices-grid",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/phone-devices-grid.png",
+      "bytes": 57865,
+      "sha256": "93b7e22da006771998fee2999d14e70ef2d45f2ddf77eabf6e09d30b3a100837"
+    },
+    {
+      "capture": "laptop-scripts-builder",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/laptop-scripts-builder.png",
+      "bytes": 150786,
+      "sha256": "bfdf27055926c77b4bfea34b9584a2243bb7fe682280748821c22e3d70009714"
+    },
+    {
+      "capture": "phone-location-create",
+      "file": "docs/audits/2026-10-15/assets/ui-visual/phone-location-create.png",
+      "bytes": 49971,
+      "sha256": "ec6a287c5ec640b23beb973265315adf23d6e03b63a1387f76ebe75c9f898b63"
+    }
+  ],
+  "captures": [
+    {
+      "capture": "desktop-dashboard",
+      "route": "/dashboard",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:12:59.178Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "61793478aad7842e6971b02dce4937f5f7adcb8dc516da2a928dbe6e6bd4ee58",
+      "domButtons": 8,
+      "styledLinks": 5,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-monitoring",
+      "route": "/monitoring",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:12:59.985Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "872359ceff912253525a3f71961e8bddc43774ee03db4f65cdea919b959865d7",
+      "domButtons": 54,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-devices",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:00.810Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "e1a5175e8007f035c80afe0388f80ad1b4b3ef29719aee2f886de456c4744cb1",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-fleet",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:01.583Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "4b0ed1b8ace27d0a040ac6fe1b02bd4e45b65d7312d16d425dd86ae8a6b0d9fc",
+      "domButtons": 11,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-stream",
+      "route": "/stream",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:02.358Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "88fd30bbdddf93fd723b3cbdac3d208d8e6081ca1d6f6aba126b66ae4b56a85c",
+      "domButtons": 34,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-discovery",
+      "route": "/discovery",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:03.122Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "008d5a4a57d9b9f2376aff4e21cc068c0f99d83b33b7e21aae57ee19e18fffc5",
+      "domButtons": 8,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-groups",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:03.881Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "4b0ed1b8ace27d0a040ac6fe1b02bd4e45b65d7312d16d425dd86ae8a6b0d9fc",
+      "domButtons": 11,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-locations",
+      "route": "/locations",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:04.635Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "cd0f4d0cf43343624da639863c08c34c2e3441088e0f3e493a95b61c850b6d99",
+      "domButtons": 9,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-tasks",
+      "route": "/tasks",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:05.426Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "c240fcb27744f123ae8b70b345d715059ab10544b7a4dc051c8fce484a62dc47",
+      "domButtons": 65,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-orchestration",
+      "route": "/orchestration",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:06.208Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "a19781fe7d0b5e55dd10edcfc2039b7a1267f73e42591a2e1f7aed8faa22174e",
+      "domButtons": 32,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-pipeline-settings",
+      "route": "/pipeline-settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:06.975Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "626ed73568976fbf220bcbd4dc8bc0bd4b420dec716535fb271ee136e7a5e394",
+      "domButtons": 18,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-accounts",
+      "route": "/accounts",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:07.766Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "6831b050e0c3d69a4b1fc77e2726f4dc18dad90b92b8538c1259c4dc6384f4ed",
+      "domButtons": 13,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-scripts",
+      "route": "/scripts",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:08.576Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "096ffa4088e4c56fbf07aa73d00291f9afec8442f125ae82e098c421bba2bbe9",
+      "domButtons": 85,
+      "styledLinks": 24,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-events",
+      "route": "/events",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:09.365Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "ae18b9c1b88b8b7a6d2bb78389cfdbac321dd26d48e8a9a18279f05249d6640d",
+      "domButtons": 62,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-event-triggers",
+      "route": "/event-triggers",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:10.166Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "6a86bda9bf236a4d30f9ff0a1aab740cd529c14de232bf949279469ce472e84d",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-sessions",
+      "route": "/sessions",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:10.936Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "01f0610bb6454369030c9003c65bb0c328d0cb4641d483b52ca6cbcc6bacd95f",
+      "domButtons": 10,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-vpn",
+      "route": "/vpn",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:11.722Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "ad3efd22f8e1d6fc7ec82355e654d2a5c70edb35721e1637bee0da34b726b745",
+      "domButtons": 9,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-webhooks",
+      "route": "/webhooks",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:12.496Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "2fd53a28fb7e388748e5af6caea34cb36414076be6380f528ae68f841c0737a4",
+      "domButtons": 9,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-users",
+      "route": "/users",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:13.254Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "bcd05f83bb04b7987b15bed63ac9c4e71a22d70570ab696dc68c3d634f3f1293",
+      "domButtons": 9,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-audit",
+      "route": "/audit",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:14.051Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "e2262991e830f5ba739244418070e539c61ecf6e30be8cdd357de2f40ea11708",
+      "domButtons": 14,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-logs",
+      "route": "/logs",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:14.843Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "ea945642fefa9a71569c8f6f8a5b80853df613f1155458c93e0b280fb5f76bfb",
+      "domButtons": 14,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-updates",
+      "route": "/updates",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:15.641Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "0b328798fc9db9e181023e7457b2d9fe517aaf645e0fcf47613718bea26b41fe",
+      "domButtons": 118,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-settings",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:16.408Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "6378fa1676c23bfa6d3eef73fd8bba9f6d38fa89dad65b039c2cccd6876be34a",
+      "domButtons": 17,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-scripts-builder",
+      "route": "/scripts/builder",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:17.247Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "ab759c51700556d19b00a5ae04265a875b42c5ecf220c6fcd4698eb5c06088b4",
+      "domButtons": 67,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-ph025",
+      "route": "/devices/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:18.024Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "de26650c783b73f3c897c242c124c3b713f2351ec7ac10f0196d9155651b4caa",
+      "domButtons": 20,
+      "styledLinks": 3,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-dashboard",
+      "route": "/dashboard",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:10.236Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "c0e640dbf32686a4e75d78c9a5106a2adbfde7c452d42a983d54daed28c705d6",
+      "domButtons": 6,
+      "styledLinks": 5,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-monitoring",
+      "route": "/monitoring",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:10.989Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "b6027d23c296b0157454bd755836d928a95134ce79602a1757b83c746e22f21c",
+      "domButtons": 52,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-devices",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:11.737Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "2af64999fe9842758bdeffb5220bbc7824751ee08d60360c7a095e15d14271ab",
+      "domButtons": 88,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-fleet",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:12.468Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "69400572fdcf36c398588b003d9ac423497861c50e580704949be837adde66da",
+      "domButtons": 9,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-stream",
+      "route": "/stream",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:13.220Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "56d0b27c21435643599c4c5b4375176cf9e36d473f53f5c79d946915114880c8",
+      "domButtons": 32,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-discovery",
+      "route": "/discovery",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:13.954Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "217e5dec5230117afc3e650b7d9a1213804404ca428c77cddbf2e1dde6858fd6",
+      "domButtons": 6,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-groups",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:14.686Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "69400572fdcf36c398588b003d9ac423497861c50e580704949be837adde66da",
+      "domButtons": 9,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-locations",
+      "route": "/locations",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:15.420Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "2fd77f05996dd4ef6a33eb23a323b90713dd2622b1a1f54ea7917a42d2fd01cd",
+      "domButtons": 7,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-tasks",
+      "route": "/tasks",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:16.171Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "f24221aa4ca5d849f7b9f1b32d877a7a367516d8affdd47f6a3a8e17315c0160",
+      "domButtons": 63,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-orchestration",
+      "route": "/orchestration",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:16.921Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "a8c6ebbad457231099296608edbb70ce65f7b3f522680440313b8719a3a3d12a",
+      "domButtons": 30,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-pipeline-settings",
+      "route": "/pipeline-settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:17.687Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "73eb8916261a5a5266dece63dd10f919d0fd97e7358b1c4d96934899d333f048",
+      "domButtons": 16,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-accounts",
+      "route": "/accounts",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:18.436Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "545acba8571277503a224a299df299c30d98959fd5a05e686bcd5c69126155ed",
+      "domButtons": 11,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-scripts",
+      "route": "/scripts",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:19.188Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "65713e1d244eea1e60d564d50381e96cb5ac8c91445bc80dc8c1cae80bf8ce8c",
+      "domButtons": 83,
+      "styledLinks": 24,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-events",
+      "route": "/events",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:19.939Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "99c931d3559f0673db91ebb3917f3145d0d313e93e9e100479b6886c65b684ab",
+      "domButtons": 60,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-event-triggers",
+      "route": "/event-triggers",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:20.721Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "3719b9f57c935e66290fb74b8b475792e1639039293a626d402f3a56566f6c69",
+      "domButtons": 10,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-sessions",
+      "route": "/sessions",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:21.473Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "a267bd2a850b4a3def26b5d7a13f491e54b75b2a921f091512f389cf7e4ba11b",
+      "domButtons": 8,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-vpn",
+      "route": "/vpn",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:22.204Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "074644cf356861a1bd9a19a9a73e7e61e19b7f843c1925db492173124e39e12f",
+      "domButtons": 7,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-webhooks",
+      "route": "/webhooks",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:22.953Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "3585bb87a61ab7b72f130ec9c9ad1104177968a96a557f84dcc9e33850e99f5d",
+      "domButtons": 7,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-users",
+      "route": "/users",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:23.686Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "918660b7740448b2461af9da1b9cbe4da8895ac890c953041b7ec7f0d0060347",
+      "domButtons": 7,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-audit",
+      "route": "/audit",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:24.422Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "69a1781537d0cc86669c38242ee471e96f77756caa0cd57bbe4e3dd1c9b6b113",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-logs",
+      "route": "/logs",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:25.172Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "0f1c350e43a4a743d9faa9d022e8ca6b2f942b10ba5bca4cd60c5cc444c0fb97",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-updates",
+      "route": "/updates",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:25.929Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "4d9f22ba989efca4ac400f9dbe2775dc307c8e41fd177e9f9792af42754525e4",
+      "domButtons": 116,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-settings",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:26.671Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "f66eb500c06e32760be5553190c271eeaffb3bb9946ea794da14ffc100cd8c80",
+      "domButtons": 15,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-scripts-builder",
+      "route": "/scripts/builder",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:27.457Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "c26773da99892423b7600960bb4f22c9b6cd95dc56037c18e23e5efd7145e9bb",
+      "domButtons": 25,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-ph025",
+      "route": "/devices/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:28.222Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "3c7bb91dbe1f3c8cc04eb2cc1391fa89e3578d23e71bf177c33bcaf12da7b8b8",
+      "domButtons": 18,
+      "styledLinks": 3,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-devices-grid",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:46:47.702Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "2751723b31e0924c9d23269e5f20b07bcb0ae625589c91bcf5e2fcb29bea18a3",
+      "domButtons": 33,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-group-create",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:46:48.059Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "4ea7b5db13de655ae7b93b94b57a2bdfed4143e5944098d91dc099be1d522448",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 102,
+          "width": 358,
+          "height": 640,
+          "scrollHeight": 638,
+          "clientHeight": 638
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-group-create",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:46:48.932Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "3310287f9933dbbe099ddcb21a64b77620cf861b535f316871d3ce091e293caa",
+      "domButtons": 14,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 264,
+          "width": 512,
+          "height": 552,
+          "scrollHeight": 550,
+          "clientHeight": 550
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-appearance-default",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:47:52.888Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "3ec12ac5eb88d23a627d388b3910f3b6c1ae0e4b6ac6fd8bf6d7015c6dece629",
+      "domButtons": 27,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 1500,
+          "y": 0,
+          "width": 420,
+          "height": 1048,
+          "scrollHeight": 1046,
+          "clientHeight": 1046
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-appearance-blue",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:26.332Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "d267ebd00e9ccaf5c35a39cb5b7831e79029650f2cdf1e6cefd1b5ae0c155b54",
+      "domButtons": 27,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 1500,
+          "y": 0,
+          "width": 420,
+          "height": 1048,
+          "scrollHeight": 1046,
+          "clientHeight": 1046
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-appearance-matrix-blue-selected",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:26.618Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "3f91224abf4d85a116f5d0e75f04b73674566c9bb1e4d79106c6b3f2b6743c3d",
+      "domButtons": 27,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 1500,
+          "y": 0,
+          "width": 420,
+          "height": 1048,
+          "scrollHeight": 1046,
+          "clientHeight": 1046
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-appearance-light",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:26.959Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "356ba0331fe6cc0dcc3eb3a40d2d33e82411a830abedbcd6391b824678586171",
+      "domButtons": 27,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 1500,
+          "y": 0,
+          "width": 420,
+          "height": 1048,
+          "scrollHeight": 1046,
+          "clientHeight": 1046
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-appearance-space",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:27.270Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "931879a523e0e9f41756f1662b7171e1daef0203068565aeb22676f0809f354c",
+      "domButtons": 27,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 1500,
+          "y": 0,
+          "width": 420,
+          "height": 1048,
+          "scrollHeight": 1046,
+          "clientHeight": 1046
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-appearance-dark",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:27.578Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "6128c430229564616ef0e2a4de70ddf71a3136a253b50f8cc8da06ccc18e0ad4",
+      "domButtons": 27,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 1500,
+          "y": 0,
+          "width": 420,
+          "height": 1048,
+          "scrollHeight": 1046,
+          "clientHeight": 1046
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-density-cozy",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:28.440Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "9177b6b1c38bc61142f1d209ac7f1ef5a55d3ae124bd29a38f824e7a1cd193e9",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-density-compact",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:29.085Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "03109af08d7c4559a9a6fc92a269d7a700740cf97f7333d4ca66bb423aa302de",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-density-spacious",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:29.715Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "cebf7a5e21e57311a89ccf45ed323b692f5781edaf9bcafd3a924d6970dfa29d",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-sidebar-collapsed",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:58.847Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "157141d80d59babbd138b6d0501c394bd15198d8e8a4a9c77a89242729fcb3fc",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-sidebar-collapsed-hover",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:48:59.513Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "251fda6be246d618edca415d971f6cf3695c93d5cbfd36c58d58b8cf926fae21",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-sidebar-open",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:49:00.086Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "c5133ababe5236d6f5b1c073c3a7fb4b2ebb2d7a8f276bd34cc5aabff188c80a",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 272,
+          "height": 844,
+          "scrollHeight": 844,
+          "clientHeight": 844
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-appearance-over-sidebar",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:49:00.353Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "03aa5e3d30c41bc892478612da93392b78d750b4ba04ccb807ae98ec61c3bc59",
+      "domButtons": 25,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 812,
+          "scrollHeight": 810,
+          "clientHeight": 810
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-devices-grid",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:49:47.990Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "93b7e22da006771998fee2999d14e70ef2d45f2ddf77eabf6e09d30b3a100837",
+      "domButtons": 20,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-location-create",
+      "route": "/locations",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:50:56.082Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "2bcc3e29763d5bb31f4afc0dd891e990af785084ce1332851da477223fe301be",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 624,
+          "y": 175,
+          "width": 672,
+          "height": 730,
+          "scrollHeight": 728,
+          "clientHeight": 728
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-location-create",
+      "route": "/locations",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:50:56.913Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "ec6a287c5ec640b23beb973265315adf23d6e03b63a1387f76ebe75c9f898b63",
+      "domButtons": 10,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 16,
+          "width": 358,
+          "height": 812,
+          "scrollHeight": 860,
+          "clientHeight": 810
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-account-create",
+      "route": "/accounts",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:50:57.857Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "ab2b2520181f0a25bd785d0f7f0c2705b60ddd632c4e794d195fa33f3aa41a74",
+      "domButtons": 18,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 660,
+          "y": 273,
+          "width": 600,
+          "height": 534,
+          "scrollHeight": 532,
+          "clientHeight": 532
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-account-create",
+      "route": "/accounts",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:50:58.752Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "c1c8b9e679e60069ccf76ebd224b8d05f7a4d118915e677c55d8c7c7b6b3ca2c",
+      "domButtons": 16,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 121,
+          "width": 358,
+          "height": 602,
+          "scrollHeight": 600,
+          "clientHeight": 600
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-account-import",
+      "route": "/accounts",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:16.142Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "2329898707af53f003304ab1d56668b03ebcbf3ac97e454f9417a23271543172",
+      "domButtons": 16,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 680,
+          "y": 356,
+          "width": 560,
+          "height": 368,
+          "scrollHeight": 366,
+          "clientHeight": 366
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-account-import",
+      "route": "/accounts",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:17.037Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "4fe8254b443813b687a531f733ae467a58a40471ab36c29252ad130698edb9ca",
+      "domButtons": 14,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 212,
+          "width": 358,
+          "height": 420,
+          "scrollHeight": 418,
+          "clientHeight": 418
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-pipeline-create",
+      "route": "/orchestration",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:17.940Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "62aa9dcea4a62b0bc8bfe180ce7254f03379b71e22783cebb49a3c8fb0993c92",
+      "domButtons": 41,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 512,
+          "y": 104,
+          "width": 896,
+          "height": 872,
+          "scrollHeight": 870,
+          "clientHeight": 870
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-pipeline-create",
+      "route": "/orchestration",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:18.783Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "1b8e04256e1d7e36ef1ba647d113d61936099813d8defc0ed83235823908e307",
+      "domButtons": 39,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 42.2,
+          "width": 358,
+          "height": 759.6,
+          "scrollHeight": 758,
+          "clientHeight": 758
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-user-create",
+      "route": "/users",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:21.756Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "60a16fbbb2cba46f55d2aa659b44c23849c9276de19ac07fffb2785716989b11",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 305,
+          "width": 512,
+          "height": 470,
+          "scrollHeight": 468,
+          "clientHeight": 468
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-user-create",
+      "route": "/users",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:22.549Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "b19d15bd36829abd3d193c046dce20b2027b57b5cb00afee54b50a51ff2980ec",
+      "domButtons": 10,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 157,
+          "width": 358,
+          "height": 530,
+          "scrollHeight": 528,
+          "clientHeight": 528
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-release-create",
+      "route": "/updates",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:23.497Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "26aaadbab484b2543c6ce19cd4cac76f54165999852ad1beb98d927e279a4aa6",
+      "domButtons": 121,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 660,
+          "y": 151,
+          "width": 600,
+          "height": 778,
+          "scrollHeight": 776,
+          "clientHeight": 776
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-release-create",
+      "route": "/updates",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:24.350Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "e2499d9221a7a2c37a3ba1f03b19a84d3a8d61378b8419dc3a40f2616904c127",
+      "domButtons": 119,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 16,
+          "width": 358,
+          "height": 812,
+          "scrollHeight": 1092,
+          "clientHeight": 810
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-trigger-create",
+      "route": "/event-triggers",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:58.766Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "d91de349bff9ebe5fccf24fff022e40ac1aa70313f82781b9ee50c973207410e",
+      "domButtons": 16,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 150.5,
+          "width": 512,
+          "height": 779,
+          "scrollHeight": 777,
+          "clientHeight": 777
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-webhook-create",
+      "route": "/webhooks",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:51:59.603Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "61a3f4c9c37aa27e3472b43d0554de727ee3e072f78589689165c8e9291b8ab1",
+      "domButtons": 11,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 336,
+          "width": 512,
+          "height": 408,
+          "scrollHeight": 406,
+          "clientHeight": 406
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-reboot-confirm",
+      "route": "/devices/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:00.463Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "94e2afc5eb5e097f6165bbfa17fec198c33a5d45086e4aa031fd1cf41876a9f1",
+      "domButtons": 23,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 455,
+          "width": 512,
+          "height": 170,
+          "scrollHeight": 168,
+          "clientHeight": 168
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-system-profile",
+      "route": "/devices/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:00.939Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "3daee373979ed7467625ede87b566656041395c53ab376b7bfc182efdcaf82d9",
+      "domButtons": 15,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-trigger-create",
+      "route": "/event-triggers",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:01.736Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "7398fc15d7ba79185b5c13cdfb42b37e9844230a40904c82e876c42afd01ea8e",
+      "domButtons": 14,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 16,
+          "width": 358,
+          "height": 812,
+          "scrollHeight": 853,
+          "clientHeight": 810
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-webhook-create",
+      "route": "/webhooks",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:02.539Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "fb9fa35553931470a8a56a4bf5569aab96c70c967d3917cf186286641a0c8a58",
+      "domButtons": 9,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 210,
+          "width": 358,
+          "height": 424,
+          "scrollHeight": 422,
+          "clientHeight": 422
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-reboot-confirm",
+      "route": "/devices/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:03.343Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "a12bc8feb95fc487af7a810f97c6e972b08d46bfcfd0aaeff6835090f423bdfc",
+      "domButtons": 21,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 297,
+          "width": 358,
+          "height": 250,
+          "scrollHeight": 248,
+          "clientHeight": 248
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-system-profile",
+      "route": "/devices/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:03.803Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "a54cbea16203db23824611e501074f6fd0bd1290b34833f27453242c0ceb1356",
+      "domButtons": 13,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-columns-menu",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:33.136Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "924cdffed28404d260d1eaa20518a3021bd441f062a57a17f39406f2c0505111",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-rename",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:33.975Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "4bcd1e6e408b3d8479d6bb6d4f5d1a190d21362560c7eb8318d941d17555f623",
+      "domButtons": 92,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 434,
+          "width": 512,
+          "height": 212,
+          "scrollHeight": 210,
+          "clientHeight": 210
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-group",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:34.818Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "dea36db8309deb0b80372afa95ee2cb454a799a7b1075204e9b428313683d77e",
+      "domButtons": 99,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 418,
+          "width": 512,
+          "height": 244,
+          "scrollHeight": 242,
+          "clientHeight": 242
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-location",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:35.669Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "dd133a44752c8a9dd73d379e2cc538d693f24bd426beff33fd766112c6b76851",
+      "domButtons": 99,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 418,
+          "width": 512,
+          "height": 244,
+          "scrollHeight": 242,
+          "clientHeight": 242
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-server",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:36.522Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "80a0f239caa52320aac05ee33185092588cb26f2c007a6cc3b1e06441c8f7ef5",
+      "domButtons": 99,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 434,
+          "width": 512,
+          "height": 212,
+          "scrollHeight": 210,
+          "clientHeight": 210
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-columns-menu",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:37.395Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "f2ab3166a3aaf6d94b7369cb82046a2b07468a91eca198f4ab43fa8813d16517",
+      "domButtons": 88,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-rename",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:38.191Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "110f65a833b1c618e98c96047bd7661e3a208da10324ebb10f8776a8a74a3189",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 316,
+          "width": 358,
+          "height": 212,
+          "scrollHeight": 210,
+          "clientHeight": 210
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-group",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:38.978Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "cab69ca9e09ef9fe63b1af02c1d7419098ba89dcfa28db545fce4daa6e8c78f9",
+      "domButtons": 97,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 300,
+          "width": 358,
+          "height": 244,
+          "scrollHeight": 242,
+          "clientHeight": 242
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-location",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:39.742Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "2ac792a37e6e1977d5523ae9f2dadd61f68d08260d4b33244bf4229ec2b32496",
+      "domButtons": 97,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 292,
+          "width": 358,
+          "height": 260,
+          "scrollHeight": 258,
+          "clientHeight": 258
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-server",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:52:40.524Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "f4e62df5fca7253f3b8bde5e7c052a55a34927d106e5c62df97f57735ed4ee8e",
+      "domButtons": 97,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 316,
+          "width": 358,
+          "height": 212,
+          "scrollHeight": 210,
+          "clientHeight": 210
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-device-delete-confirm",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:53:12.578Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "945cc12236ac86b2fa01e9288ab2dd16805c379767aa33676da862477d007888",
+      "domButtons": 93,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 736,
+          "y": 436,
+          "width": 448,
+          "height": 208,
+          "scrollHeight": 206,
+          "clientHeight": 206
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-settings-api-keys",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:53:13.398Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "ebcd78bad6b8b863513f831a9cf61607d295cb9dbb65d7785f5b6d82056e2f52",
+      "domButtons": 14,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-device-delete-confirm",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:53:14.531Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "a840e8042bba3e9bfb41f7af203d098ba17f8c6fb1c3bf61ffa2d916a7c00504",
+      "domButtons": 91,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 288,
+          "width": 358,
+          "height": 268,
+          "scrollHeight": 266,
+          "clientHeight": 266
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-settings-api-keys",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:53:15.343Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "1b807844842a7d58bdb23fcefb0f6db35d28fbbaac662291c80040d936238a9d",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-login",
+      "route": "/login",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:02:10.207Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "c160998296e8214ffe5df973f29d7820c8ff3f7452097c40a151a85b6091e499",
+      "domButtons": 2,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-api-key-create",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:10.198Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "b78fb5206ba59b09ae9306a9b48d040a9f9b28eeb684cd83099c171521f0a390",
+      "domButtons": 17,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 389,
+          "width": 512,
+          "height": 302,
+          "scrollHeight": 300,
+          "clientHeight": 300
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-settings-security",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:10.686Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "8bc738fb76403ebe1e0a3683ae0d91ae36dc101a31e9d534c2f2ecce6b25a9c6",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-command-palette",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:10.993Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "08338859032ff544b3f2cc523ebee1624d0eb3d82abb51c4272cb7a35c0d3856",
+      "domButtons": 24,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 624,
+          "y": 160,
+          "width": 672,
+          "height": 520,
+          "scrollHeight": 518,
+          "clientHeight": 518
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-api-key-create",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:11.253Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "302e052003bf158795dabb25a27a88f7a17da6386d3da1f3f315d871373fcbd2",
+      "domButtons": 15,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 239,
+          "width": 358,
+          "height": 366,
+          "scrollHeight": 364,
+          "clientHeight": 364
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-settings-security",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:11.814Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "6e48ec8331aea467326be64e3b8e8ec52a49b097edcff8be995e11ff6d91f634",
+      "domButtons": 10,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-command-palette",
+      "route": "/settings",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:12.089Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "007efa1bfb6597a1583954470c6c51b043fc1d617e2ba1bcc1dda5ce52f8cf13",
+      "domButtons": 22,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 12,
+          "y": 135,
+          "width": 366,
+          "height": 520,
+          "scrollHeight": 519,
+          "clientHeight": 518
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-task-detail",
+      "route": "/tasks/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:13:18.808Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "6df890a7e5779fbbca23d308988cf3e1ccaf9cb89f21ba6836d519564fd020c8",
+      "domButtons": 8,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-task-detail",
+      "route": "/tasks/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:14:28.988Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "5fa2e0db6ab172703957bd251182dad7294016fb364bd762862d6356861535aa",
+      "domButtons": 6,
+      "styledLinks": 1,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "landscape-group-create",
+      "route": "/groups",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:44.505Z",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "screenshotSha256": "ee45518825a60f00a88e97c41300f6bdb3a88e4495b592b642a99b87bd3e9467",
+      "domButtons": 12,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 166,
+          "y": 16,
+          "width": 512,
+          "height": 358,
+          "scrollHeight": 550,
+          "clientHeight": 356
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "landscape-device-ph025",
+      "route": "/devices/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:45.266Z",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "screenshotSha256": "4ecc876a6e819da853d23fbe0a87f076b049971ea5a27c1e4b719476e19721dd",
+      "domButtons": 18,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "narrow-devices",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:46.017Z",
+      "viewport": {
+        "width": 360,
+        "height": 840
+      },
+      "screenshotSha256": "9793e43558be5eae496116d29823c3ee818711e9980bd8a109e71059c3c0506b",
+      "domButtons": 88,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "widephone-devices",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:46.255Z",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screenshotSha256": "2ffbb867c0fe834766dca3ac9aa1f14393095a80b005476ab7a2cd57b4734511",
+      "domButtons": 88,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "laptop-devices",
+      "route": "/devices",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:47.049Z",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotSha256": "2662bab7ab09c155df92a94f25f1beb9a8d7eba5f696977bb7d038e4e5c5fe28",
+      "domButtons": 90,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "laptop-scripts-builder",
+      "route": "/scripts/builder",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:54:47.878Z",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotSha256": "bfdf27055926c77b4bfea34b9584a2243bb7fe682280748821c22e3d70009714",
+      "domButtons": 67,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-builder-settled",
+      "route": "/scripts/builder",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T22:56:49.547Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "34558c82bd8f203b3f760545cb13610faa1c8f9a8e14ffc279c9f02b7cb55437",
+      "domButtons": 67,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-builder-palette-collapsed",
+      "route": "/scripts/builder",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:00:12.022Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "f7f84bcc9fe651e29928c1cac33dff341db3bd5153cd3b96c2002c9d78a27f5d",
+      "domButtons": 28,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-builder-device-workspace-empty",
+      "route": "/scripts/builder",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:00:12.362Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "60846dd51ed32658702feb0312fcfb54d190278f3e648d3ca9b8947d0b9c0d9c",
+      "domButtons": 86,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "phone-builder-actions-drawer",
+      "route": "/scripts/builder",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:00:13.163Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "a9fc660ca8f09d813499579c43bb88667fc0164ca50e6ba8e775df5be4af6ae1",
+      "domButtons": 59,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-stream-detail-paused",
+      "route": "/stream/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:00:14.018Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "05980398ed7e9e6d6aef38cd41bfce278c9e133c0f8d06c9dd5b9e211f7f17fe",
+      "domButtons": 24,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": true
+    },
+    {
+      "capture": "phone-stream-detail-paused",
+      "route": "/stream/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:00:14.263Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "9ed54cb52e0fc7ed37341d8444b6ea9b61c3805cf7145833fc251f8d58bee25b",
+      "domButtons": 22,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": true
+    },
+    {
+      "capture": "desktop-stream-quality",
+      "route": "/stream/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:00:45.340Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "ee08eadab8da82ea10ae6fe3c0710a03c1b0886aea80b447742e68318fc61c04",
+      "domButtons": 31,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 704,
+          "y": 300.5,
+          "width": 512,
+          "height": 479,
+          "scrollHeight": 477,
+          "clientHeight": 477
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": true
+    },
+    {
+      "capture": "phone-stream-quality",
+      "route": "/stream/{id}",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:00:45.588Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshotSha256": "a3f45a4dc1e7851a81d8743fcd05ff4404dc853666bcc9923a4dfccc9ccad997",
+      "domButtons": 29,
+      "styledLinks": 0,
+      "dialogBounds": [
+        {
+          "x": 16,
+          "y": 118.5,
+          "width": 358,
+          "height": 607,
+          "scrollHeight": 605,
+          "clientHeight": 605
+        }
+      ],
+      "pageHorizontalOverflow": false,
+      "staged": true
+    },
+    {
+      "capture": "desktop-root-redirect",
+      "route": "/dashboard",
+      "requestedRoute": "/",
+      "observedAtUtc": "2026-10-14T23:00:46.927Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "1cf38173a90627f48aabd92356b5860f03965ac1ab2709aa7f665315f9912480",
+      "domButtons": 8,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-fleet-redirect",
+      "route": "/groups",
+      "requestedRoute": "/fleet",
+      "observedAtUtc": "2026-10-14T23:00:47.701Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "4b0ed1b8ace27d0a040ac6fe1b02bd4e45b65d7312d16d425dd86ae8a6b0d9fc",
+      "domButtons": 11,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    },
+    {
+      "capture": "desktop-login",
+      "route": "/login",
+      "requestedRoute": null,
+      "observedAtUtc": "2026-10-14T23:02:09.969Z",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshotSha256": "21f2eb8bb9ba6e0599a9c5ada90a8abd7a60c13fc6df147626bb71ae574c47e9",
+      "domButtons": 2,
+      "styledLinks": 0,
+      "dialogBounds": [],
+      "pageHorizontalOverflow": false,
+      "staged": false
+    }
+  ],
+  "coverageGaps": [
+    "Real phone soft keyboard and OS/browser chrome",
+    "All role/capability variants",
+    "Conditional account/session/VPN/schedule records not created for this read-only pass",
+    "Live streaming, fullscreen frame and Android input not re-tested; four layout/quality screens deliberately block only the owned stream socket",
+    "Offscreen controls, native browser color/file pickers and every dynamic modal variant are not claimed visually observed",
+    "Long names, large production datasets, every theme/accent combination and full WCAG/axe audit are not accepted"
+  ],
+  "privacy": {
+    "publicImagesExcludeLogsSettingsCredentialsAndNetworkAddresses": true,
+    "rawSnapshotsCropsAndRuntimeNamesLocalOnly": true,
+    "noTokensSdpOrTypedValuesInPublishedJson": true
+  }
+}

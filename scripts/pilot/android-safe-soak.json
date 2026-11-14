@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "name": "Sphere pilot: Android system reliability",
+  "description": "Bounded system-UI exercise: HOME, notification shade, variables, branching and assertions. No games, settings changes, package management, network changes or file writes.",
+  "entry_node": "start",
+  "timeout_ms": 45000,
+  "nodes": [
+    {"id": "start", "action": {"type": "start"}, "on_success": "counter"},
+    {"id": "counter", "action": {"type": "set_variable", "key": "counter", "value": "0"}, "on_success": "home"},
+    {"id": "home", "action": {"type": "key_event", "keycode": 3}, "on_success": "settle", "timeout_ms": 5000},
+    {"id": "settle", "action": {"type": "sleep", "ms": 500}, "on_success": "expand"},
+    {"id": "expand", "action": {"type": "shell", "command": "cmd statusbar expand-notifications"}, "on_success": "observe", "timeout_ms": 5000},
+    {"id": "observe", "action": {"type": "sleep", "ms": 1500}, "on_success": "collapse"},
+    {"id": "collapse", "action": {"type": "shell", "command": "cmd statusbar collapse"}, "on_success": "increment", "timeout_ms": 5000},
+    {"id": "increment", "action": {"type": "increment_variable", "key": "counter", "step": 1}, "on_success": "branch"},
+    {"id": "branch", "action": {"type": "condition", "code": "return ctx.counter == '1'", "on_true": "echo", "on_false": "fail"}},
+    {"id": "echo", "action": {"type": "shell", "command": "echo SPHERE_SAFE_SOAK_OK", "save_to": "receipt"}, "on_success": "verify", "timeout_ms": 5000},
+    {"id": "verify", "action": {"type": "assert", "check": "variable_equals", "params": {"key": "receipt", "value": "SPHERE_SAFE_SOAK_OK"}}, "on_success": "sdk"},
+    {"id": "sdk", "action": {"type": "shell", "command": "getprop ro.build.version.sdk"}, "on_success": "end", "timeout_ms": 5000},
+    {"id": "fail", "action": {"type": "assert", "check": "variable_equals", "params": {"key": "counter", "value": "1"}, "message": "Counter branch contract failed"}, "on_success": "end"},
+    {"id": "end", "action": {"type": "end"}}
+  ]
+}

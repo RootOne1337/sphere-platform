@@ -1,0 +1,18 @@
+{
+  "schema": "sphere-selected-geometry-install-v1",
+  "web_source": "89b6965721ed14688ac008119bddb805374ac9d5",
+  "image": "sha256:f51cb69c0cff23f070e4ff46866d9cbc64a8423fc08b77796b5518c9f21a6b70",
+  "web_state": "installed_verified",
+  "api_source": "ce9cd58a2f273af8dd309e155df657330852050a",
+  "api_state": "verified",
+  "api_alternative_contract": "source_bound_native_reference_lk_v1",
+  "other_containers_preserved": 65,
+  "protected_assets_preserved": 843,
+  "served_client_assets": 31,
+  "physical_actions": 0,
+  "authenticated_user_browser_exercised": false,
+  "provenance": {
+    "api_receipt_sha256": "0193ca7c70760d79a4baa8a367026f9f03add0823a567e595c112eab60e24dc7",
+    "web_receipt_sha256": "01ca414fbaeea10644c689888ed426fb708fda9fa28c22ca78bbde84d87ab584"
+  }
+}

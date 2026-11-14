@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-01",
+  "scope": "Read-only review of upstream metadata, documentation, small source files and local Python package metadata; no code checkout, model download, install, model inference, device or browser interaction.",
+  "verdict": "Promising independent visual-odometry research candidate, but cannot run as a bounded offline experiment in the verified current environment. Required CalfVO code, checkpoint and compatible dependencies were not established locally. Upstream declares a pure-PyTorch RoPE fallback, not confirmed end-to-end ROCm/Windows support. First stage would require an explicitly provisioned isolated environment and locally cached verified checkpoint, then a tiny resource-limited compatibility smoke test; only if that succeeds consider the 901-frame clip. No speed, memory or accuracy guarantee on RX 9070.",
+  "upstream": {
+    "project": "https://vladimiryugay.github.io/calfvo/index.html",
+    "repository": "https://github.com/VladimirYugay/CalfVO",
+    "observed_main_commit": "64497981704a89dc1683dcbe7966fe809cfd1b49",
+    "readme": "https://github.com/VladimirYugay/CalfVO/blob/64497981704a89dc1683dcbe7966fe809cfd1b49/README.md",
+    "requirements": "https://github.com/VladimirYugay/CalfVO/blob/64497981704a89dc1683dcbe7966fe809cfd1b49/requirements.txt",
+    "demo": "https://github.com/VladimirYugay/CalfVO/blob/64497981704a89dc1683dcbe7966fe809cfd1b49/scripts/run_vo_demo.py",
+    "setup": "https://github.com/VladimirYugay/CalfVO/blob/64497981704a89dc1683dcbe7966fe809cfd1b49/scripts/setup_dependencies.sh",
+    "license": "https://github.com/VladimirYugay/CalfVO/blob/64497981704a89dc1683dcbe7966fe809cfd1b49/LICENSE",
+    "configuration": "https://github.com/VladimirYugay/CalfVO/blob/64497981704a89dc1683dcbe7966fe809cfd1b49/configs/calfvo_croco.yaml",
+    "testing": "README reports Ubuntu 22, A100-SXM4-40GB and PyTorch 2.5.1 CUDA 12.1, not Windows RX 9070. It states --with-curope builds an optional CUDA RoPE2D extension; without it CroCo uses a slower pure PyTorch RoPE. That does not prove all operations or dependencies work on ROCm.",
+    "demo_behavior": "run_vo_demo.py uses torchcodec VideoDecoder, num_workers=0, --batch_size default 16, --max_frames, --stride and --overlap; config has num_views=8 and 224x224 model input. It auto-resolves checkpoint from Hugging Face if --checkpoint omitted. Even with explicit checkpoint, get_model constructs the backbone via from_pretrained before loading the full checkpoint, which may separately access the Hub: both backbone and checkpoint need provision or a verified offline construction change, with network disabled. The demo uses torch.load(weights_only=False), so load only an authenticated checkpoint with verified hash. Outputs predicted trajectory, confidences and frame indices; frame timestamps require separate binding.",
+    "reported_speed": "Project claims 53 FPS under its reported conditions, not measured on this machine. No upstream peak VRAM or bounded runtime for this clip established. Model checkpoint disk bytes are not an inference VRAM budget."
+  },
+  "checkpoints": {
+    "metadata_url": "https://huggingface.co/api/models/voviktyl/CalfVO?blobs=true",
+    "model_card": "https://huggingface.co/voviktyl/CalfVO",
+    "observed_revision": "173e9d02503f69fb74296a8a4e26392a22e90901",
+    "public": true,
+    "gated": false,
+    "files": [
+      {
+        "name": "calfvo_croco.pth",
+        "bytes": 2073628881,
+        "sha256": "4796f6db4e98e4d54e8868054949d10e7f89439d12917d198ffe6d759d949104",
+        "license": "CC BY-NC-SA 4.0, non-commercial",
+        "note": "Model reported in paper; about 1.93 GiB on disk."
+      },
+      {
+        "name": "calfvo_dinov2.pth",
+        "bytes": 2079011438,
+        "sha256": "ca3531dbbdeec1e1ff3f5300ab236d3d529b413eb7fe89769a174def07f37ecd",
+        "license": "Apache-2.0 per model card",
+        "note": "README describes it as weaker on most metrics; about 1.94 GiB on disk."
+      }
+    ],
+    "availability_limit": "HF API reports files and hashes, public and ungated; actual full checkpoint download and contents were not tested or cached by this research. Metadata availability is not proof of offline local availability.",
+    "code_license": "MIT for CalfVO code; CroCo and DUSt3R have separate noncommercial CC BY-NC-SA 4.0 licensing according to upstream. Check licenses for all dependencies and intended use; do not apply one checkpoint license to the whole stack."
+  },
+  "local_environment": {
+    "python": "3.12.12 Windows AMD64",
+    "path": ".local-pilot/motor-amd-venv",
+    "package_metadata": {
+      "torch": "2.9.1+rocm7.2.1",
+      "torchvision": "0.24.1+rocm7.2.1",
+      "torchcodec": null,
+      "scipy": null,
+      "av": null,
+      "numpy": "2.2.6",
+      "huggingface-hub": "0.36.2",
+      "einops": "0.8.2",
+      "opencv-python-headless": "4.12.0.88"
+    },
+    "limitations": "Metadata-only inspection; GPU availability, free VRAM, actual runtime compatibility and any cached model or code elsewhere were not measured. Upstream pins torchcodec 0.1.1, NumPy 1.26.0 and other dependencies; local versions do not match and torchcodec, scipy and av are absent.",
+    "torchcodec_compatibility": "https://github.com/meta-pytorch/torchcodec#installing-torchcodec lists torchcodec 0.1 with torch 2.5 and torchcodec 0.8/0.9 with torch 2.9. Selecting a different codec version may require adaptation and validation; compatibility table does not establish Windows ROCm binary support."
+  },
+  "proposed_followup_not_executed": [
+    "Stage a separate isolated environment, pinned small source dependencies and a separately acquired checkpoint, verify hashes and applicable licenses; prevent implicit network access.",
+    "Check GPU recognition and VRAM in a controlled window, then run no more than one short 8-view window with batch size 1 and explicit memory/time limits; stop on failure or excessive resource use. Record peak memory and timing rather than extrapolating A100 performance.",
+    "Only after smoke test passes, run the 901-frame clip offline with bounded batches and saved frame/timestamp mapping. Preserve the unmodified input and report unprocessed gaps and any failures.",
+    "Compare relative camera rotation, image-space reprojection or independent correspondences and timing against the existing audit; use held-out observations/repeat recordings before drawing reliability conclusions. Treat learned metric scale and real-world/game transfer as unvalidated hypotheses, not route or autopilot qualification."
+  ]
+}

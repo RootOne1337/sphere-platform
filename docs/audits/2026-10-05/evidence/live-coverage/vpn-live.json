@@ -1,0 +1,12 @@
+{
+  "source": "66714f26a657e3600d10ee87bafa8ab3ed769294",
+  "observedAt": "2026-10-05T15:26:41.111611Z",
+  "handshakeMaxAgeSeconds": 180,
+  "peerCount": 0,
+  "activeCount": 0,
+  "staleCount": 0,
+  "assignedCount": 0,
+  "peerFlagsAgree": true,
+  "routerReadPerformed": false,
+  "androidCommandsSent": false
+}

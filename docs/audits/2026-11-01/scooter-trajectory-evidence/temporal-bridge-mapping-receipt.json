@@ -1,0 +1,12 @@
+{
+  "input_unchanged": true,
+  "initial_ram": 7924043776,
+  "initial_commit": 21675257856,
+  "min_ram": 7207587840,
+  "min_commit": 20935589888,
+  "exit": 0,
+  "stop": null,
+  "soft120_crossed": false,
+  "total_seconds_including_copy_hash": 41.78100000007544,
+  "owned_child_only": true
+}

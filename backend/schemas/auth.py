@@ -2,10 +2,16 @@
 # ВЛАДЕЛЕЦ: TZ-01. Pydantic schemas для auth endpoints.
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
+
+from backend.core.audit_identity import TASK_AGENT_RESULT, TASK_EXECUTION_REQUESTED
+from backend.core.rbac import Role
+from backend.middleware.request_id import REQUEST_ID_PATTERN
 
 # ── Login ────────────────────────────────────────────────────────────────────
 
@@ -109,6 +115,15 @@ class APIKeyResponse(BaseModel):
 
 # ── Audit Log ─────────────────────────────────────────────────────────────────
 
+_AUDIT_STATUS_VALUES = frozenset({
+    "success", "succeeded", "ok", "completed", "failed", "failure", "error", "rejected",
+    "warning", "degraded", "partial", "unknown",
+})
+_AUDIT_ROLES = frozenset(role.value for role in Role)
+_AUDITED_ROLE_ACTIONS = frozenset({"user.create", "user.role_change"})
+_AUDITED_VPN_ACTIONS = frozenset({"vpn.profile.created", "vpn.profile.revision_created", "vpn.profile.archived"})
+
+
 class AuditLogResponse(BaseModel):
     id: uuid.UUID
     created_at: datetime
@@ -123,6 +138,61 @@ class AuditLogResponse(BaseModel):
     meta: dict = {}
 
     model_config = {"from_attributes": True}
+
+    @field_validator("old_value", "new_value", mode="before")
+    @classmethod
+    def project_diff(cls, value: Any, info: ValidationInfo) -> dict[str, str] | None:
+        # Legacy JSON can include credentials or other arbitrary snapshots. Only
+        # publish fields with action-specific semantics and a closed value domain.
+        if (info.data.get("action") not in _AUDITED_ROLE_ACTIONS or info.data.get("resource_type") != "user"
+                or not isinstance(value, dict)):
+            return None
+        role = value.get("role")
+        return {"role": role} if isinstance(role, str) and role in _AUDIT_ROLES else None
+
+    @field_validator("meta", mode="before")
+    @classmethod
+    def project_metadata(cls, value: Any, info: ValidationInfo) -> dict[str, str | int]:
+        if not isinstance(value, dict):
+            return {}
+        visible: dict[str, str | int] = {}
+        status = value.get("status")
+        if isinstance(status, str) and len(status) <= 9 and status.lower() in _AUDIT_STATUS_VALUES:
+            visible["status"] = status
+        for key, lower, upper in (("http_status", 100, 599), ("duration_ms", 0, 2**31 - 1)):
+            raw = value.get(key)
+            if type(raw) is int and lower <= raw <= upper:
+                visible[key] = raw
+        for key, pattern in (("request_id", REQUEST_ID_PATTERN), ("trace_id", r"[0-9a-fA-F]{32}")):
+            raw = value.get(key)
+            if isinstance(raw, str) and len(raw) <= 64 and re.fullmatch(pattern, raw):
+                visible[key] = raw
+        action = info.data.get("action")
+        if info.data.get("resource_type") == "task" and action in {TASK_EXECUTION_REQUESTED, TASK_AGENT_RESULT}:
+            fields = ("device_id", "receipt_id", "requested_by") if action == TASK_AGENT_RESULT else ("device_id",)
+            for field in fields:
+                raw = value.get(field)
+                if isinstance(raw, str) and len(raw) == 36:
+                    try:
+                        visible[field] = str(uuid.UUID(raw))
+                    except ValueError:
+                        pass
+            outcome = value.get("agent_outcome")
+            if action == TASK_AGENT_RESULT and isinstance(outcome, str) and outcome in {
+                "completed", "failed", "cancelled", "unknown",
+            }:
+                visible["agent_outcome"] = outcome
+        if action in _AUDITED_VPN_ACTIONS and info.data.get("resource_type") == "vpn_profile":
+            revision = value.get("revision")
+            if type(revision) is int and 1 <= revision < 2**31:
+                visible["revision"] = revision
+            revision_id = value.get("revision_id")
+            if isinstance(revision_id, str) and len(revision_id) == 36:
+                try:
+                    visible["revision_id"] = str(uuid.UUID(revision_id))
+                except ValueError:
+                    pass
+        return visible
 
 
 # ── Pagination ────────────────────────────────────────────────────────────────

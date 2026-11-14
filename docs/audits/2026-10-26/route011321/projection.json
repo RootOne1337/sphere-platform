@@ -1,0 +1,1055 @@
+{
+  "schema": "sphere-offline-camera-trace-projection-audit-v1",
+  "rows": [
+    {
+      "source_index": 1,
+      "source_rgb_sha256": "5b93ab18d477d547a7aa42f302123b52c02d8eca00390bb04a77e5ff034699d3",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 0,
+      "cross_track_units": 0.00010566448443989411,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          1007.0366447082746,
+          518.3973468552578
+        ],
+        [
+          1052.446793953146,
+          471.7330035855675
+        ],
+        [
+          1091.0106348785612,
+          461.98163002967135
+        ],
+        [
+          1055.6171932645846,
+          456.04760869167967
+        ],
+        [
+          1046.999428693868,
+          451.47544550803866
+        ],
+        [
+          1048.4022245698668,
+          451.3917110704903
+        ],
+        [
+          1057.180751669987,
+          450.91588393886076
+        ]
+      ],
+      "visible_points": 7,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 22,
+      "source_rgb_sha256": "78d8b73dc0e931d2c2219e3a1631f24a556c5f97cf5bb536ad01e60d4560c3ad",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 3,
+      "cross_track_units": 0.0016795017161809359,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          986.2944289886253,
+          541.0672023122856
+        ],
+        [
+          849.529749784796,
+          538.2135125112036
+        ],
+        [
+          843.0387473231964,
+          535.2832498165096
+        ],
+        [
+          852.1719898708237,
+          538.7924443322831
+        ],
+        [
+          868.4046267158069,
+          540.0268976269455
+        ],
+        [
+          880.0890100165798,
+          538.3425536717224
+        ],
+        [
+          888.156335314269,
+          537.9113966748258
+        ],
+        [
+          905.2482657329499,
+          535.9116199017104
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 45,
+      "source_rgb_sha256": "bb44db2a714de1e52f2e5d13fa587b8df0c852c275e5256195ecff578d066028",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 7,
+      "cross_track_units": 0.008723736512815904,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          685.9302030298671,
+          631.345069030206
+        ],
+        [
+          710.6078174057342,
+          575.1828915434811
+        ],
+        [
+          716.5538560343732,
+          569.1662704840487
+        ],
+        [
+          747.8934016593497,
+          562.3843309914073
+        ],
+        [
+          776.1295310700331,
+          561.7468099822628
+        ],
+        [
+          812.3911632929361,
+          555.7098882386556
+        ],
+        [
+          864.9057827339393,
+          555.6684813281762
+        ],
+        [
+          923.9650664505665,
+          555.5395117946932
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 68,
+      "source_rgb_sha256": "ffa743fbbdf7abe797700202dbd00bd67d5902797ed54e46a11ad8a2e19b6821",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 12,
+      "cross_track_units": 0.006339362242140207,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          755.762298154341,
+          539.4384171528027
+        ],
+        [
+          852.6587828627094,
+          542.8809400676636
+        ],
+        [
+          938.746623360844,
+          543.4631685559709
+        ],
+        [
+          984.3519454792179,
+          543.2056579926369
+        ],
+        [
+          1013.6680928079744,
+          540.7996162176091
+        ],
+        [
+          1038.5976836130694,
+          535.5641896180055
+        ],
+        [
+          1052.7765585659429,
+          535.0631925388681
+        ],
+        [
+          1066.0228490272816,
+          534.9625611375859
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 89,
+      "source_rgb_sha256": "73be9daca7b52f4b76b965615e1bd366808b3fd1d64128b1ee2688bc9172d8db",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 15,
+      "cross_track_units": 0.007321497857426971,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          730.0881572506944,
+          573.5895212193263
+        ],
+        [
+          716.7952927572202,
+          528.2570138505607
+        ],
+        [
+          733.013648806538,
+          512.4152647271864
+        ],
+        [
+          732.0326551218111,
+          512.702902910343
+        ],
+        [
+          736.5618130996326,
+          513.4251496340563
+        ],
+        [
+          749.2690999551958,
+          517.7602069975032
+        ],
+        [
+          762.2605426713665,
+          517.8852717873754
+        ],
+        [
+          777.8115413716088,
+          516.8540432127857
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 112,
+      "source_rgb_sha256": "6f6f48327a7c6a8cc06b139cde522e739e9daf2ab52d4a39ae8fa7b6a7048c89",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 19,
+      "cross_track_units": 0.007626255783140788,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          707.8187935440635,
+          578.8513175577316
+        ],
+        [
+          748.005637028016,
+          619.711174448321
+        ],
+        [
+          768.4950000764638,
+          620.1845671618621
+        ],
+        [
+          790.2618317060795,
+          618.0308450524493
+        ],
+        [
+          800.9196887800766,
+          619.6069168707886
+        ],
+        [
+          816.9167126895715,
+          618.3792901686552
+        ],
+        [
+          825.4503972520653,
+          620.290279408037
+        ],
+        [
+          834.6848642235142,
+          621.4792403092854
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 134,
+      "source_rgb_sha256": "941613050b9b7f639360f4beaf1f75b45c51140389c7f3402ef885c8b6121ff8",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 23,
+      "cross_track_units": 0.006718248716879516,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          719.3169959813156,
+          515.4450053860189
+        ],
+        [
+          742.8451224918756,
+          494.71107550508145
+        ],
+        [
+          746.0512552724085,
+          496.388199836568
+        ],
+        [
+          752.803916707977,
+          496.51736793361124
+        ],
+        [
+          765.7982725949723,
+          500.66178444307513
+        ],
+        [
+          787.5158656659312,
+          490.1574836484586
+        ],
+        [
+          812.3109900943615,
+          494.55573385432314
+        ],
+        [
+          824.978987409012,
+          494.6286163362919
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 156,
+      "source_rgb_sha256": "676d53ae9c2ffffb7b7d15ccbca94a4ce13ce748e0fca663a41d542f96ad4ff1",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 27,
+      "cross_track_units": 0.008837209700836462,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          752.0732724869512,
+          538.1317730835668
+        ],
+        [
+          786.6069713617608,
+          511.5592936743146
+        ],
+        [
+          819.5212518940983,
+          532.417872541538
+        ],
+        [
+          824.1687301613912,
+          535.5585514241988
+        ],
+        [
+          826.5008796447232,
+          525.6919847241367
+        ],
+        [
+          825.1320366427015,
+          524.5478291879798
+        ],
+        [
+          830.1644019606632,
+          521.899369803441
+        ],
+        [
+          846.8009002281701,
+          515.9691528012992
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 179,
+      "source_rgb_sha256": "d86ab51cfd0c1defabefefae5be08851926773dfcabf73f6fb544ae759706031",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 31,
+      "cross_track_units": 0.006471490210009223,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          702.0916024201848,
+          520.3534862057277
+        ],
+        [
+          691.6131836462223,
+          547.3209483374744
+        ],
+        [
+          704.6764088897853,
+          551.7217573062551
+        ],
+        [
+          739.9716166807043,
+          545.7234456872318
+        ],
+        [
+          784.2491501859063,
+          546.4938270457061
+        ],
+        [
+          825.7565057744112,
+          551.5173370691823
+        ],
+        [
+          854.0852694598219,
+          551.2041402320496
+        ],
+        [
+          874.0779813085264,
+          544.1397818580443
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 200,
+      "source_rgb_sha256": "42b770f543529cc088181e8de0d822249fde9064c77224cacc2088ecfd880620",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 34,
+      "cross_track_units": 0.007255226366566972,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          751.1407733114413,
+          493.22977253720785
+        ],
+        [
+          803.5291505684171,
+          537.2029538139129
+        ],
+        [
+          845.0004201471761,
+          554.585927368256
+        ],
+        [
+          861.1908368027782,
+          553.8713330563036
+        ],
+        [
+          869.2483528714213,
+          541.3528775707498
+        ],
+        [
+          881.0159998514237,
+          549.2518714083031
+        ],
+        [
+          887.8001238311172,
+          547.4690586195393
+        ],
+        [
+          900.4977333660195,
+          542.9751577365099
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 222,
+      "source_rgb_sha256": "4656580a4fa852c5fe7f69dd4f27e359796305aa389f0e0d2a4f55d03d5fda12",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 38,
+      "cross_track_units": 0.003304327459622544,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          706.4588094291728,
+          379.9841421291364
+        ],
+        [
+          735.8302656816916,
+          431.79730048743266
+        ],
+        [
+          736.1993649739055,
+          424.01537174505773
+        ],
+        [
+          754.9649015986877,
+          413.9641379699582
+        ],
+        [
+          782.4447758760391,
+          451.3985057283935
+        ],
+        [
+          816.7863670047676,
+          470.9116321350158
+        ],
+        [
+          849.0801175148399,
+          475.12783067961374
+        ],
+        [
+          870.2970906335951,
+          477.2991174030143
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 245,
+      "source_rgb_sha256": "047cf762e8dcab86692436e249765d8fbaa8f759fe2855d848b904c1093a6002",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 42,
+      "cross_track_units": 0.006869648401741178,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          784.345979226915,
+          585.7005865721375
+        ],
+        [
+          836.6834699143157,
+          573.8480511718362
+        ],
+        [
+          868.2970811533713,
+          545.217307126295
+        ],
+        [
+          877.9211613354913,
+          529.8751840025681
+        ],
+        [
+          889.7607934708738,
+          520.192094771468
+        ],
+        [
+          909.5383127823388,
+          511.0128004371537
+        ],
+        [
+          934.1655884373387,
+          503.9250302658971
+        ],
+        [
+          953.6061193162952,
+          500.3303243560996
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 267,
+      "source_rgb_sha256": "42877d67e1f0bac93635fb71c37fd69ad7bb21f26b72d903bab598604c1aeccf",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 46,
+      "cross_track_units": 0.005374454181567061,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          738.8269199633843,
+          681.9393137567401
+        ],
+        [
+          777.0794236518834,
+          664.4905779417556
+        ],
+        [
+          813.8257840467393,
+          658.6243892773646
+        ],
+        [
+          834.4512238395206,
+          658.8916127952297
+        ],
+        [
+          845.9667401235594,
+          658.3146425724817
+        ],
+        [
+          855.63397167298,
+          657.9098854405585
+        ],
+        [
+          891.8655580949791,
+          658.0661047609332
+        ],
+        [
+          941.4409610717012,
+          663.405777770026
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 289,
+      "source_rgb_sha256": "d3e7920422d86d264ceb11738a4c233123b34b3022b280721990cbf7cf6af340",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 49,
+      "cross_track_units": 0.0034322573268029065,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          764.9576964075704,
+          584.6016967599026
+        ],
+        [
+          716.7198787608878,
+          564.0343699130487
+        ],
+        [
+          724.1621855092864,
+          562.4271466770955
+        ],
+        [
+          789.607048359051,
+          562.9468892875603
+        ],
+        [
+          875.046455520237,
+          573.1030808719019
+        ],
+        [
+          906.2446154377028,
+          579.5230829826351
+        ],
+        [
+          923.8561874431765,
+          582.5647835699092
+        ],
+        [
+          939.6901203650197,
+          581.8807010344167
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 311,
+      "source_rgb_sha256": "010efbe41e6a2e16ffd654bce489eba31b90703bcda0843e1b07a3e7f78a375d",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 53,
+      "cross_track_units": 0.009662967450182126,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          916.9885379111784,
+          618.6825926645017
+        ],
+        [
+          789.9018812976103,
+          618.3087756728061
+        ],
+        [
+          751.1790173351668,
+          615.4469484952702
+        ],
+        [
+          738.5011554300497,
+          607.8365046054363
+        ],
+        [
+          737.9711556779039,
+          604.9600480163626
+        ],
+        [
+          752.5250050158703,
+          606.9016293054508
+        ],
+        [
+          765.1600896661126,
+          608.9758233224042
+        ],
+        [
+          775.2108964529511,
+          610.8207401766896
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 332,
+      "source_rgb_sha256": "c78e0ca1ae9622b9de0c69c8a72d9807026ad039622e947a6a14cf8a2d2a1422",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 56,
+      "cross_track_units": 0.0037199131706889886,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          722.1045208833415,
+          617.7934419550148
+        ],
+        [
+          733.6085955543774,
+          667.8467469030196
+        ],
+        [
+          771.3546539769197,
+          681.4353459171598
+        ],
+        [
+          791.2791451939634,
+          687.9537483466377
+        ],
+        [
+          803.2459891715686,
+          692.0400241037294
+        ],
+        [
+          813.1917414255641,
+          688.3385926639413
+        ],
+        [
+          827.3263033084305,
+          684.5216651584748
+        ],
+        [
+          879.722794178429,
+          684.1297299782892
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 355,
+      "source_rgb_sha256": "2388816d71d336afdd5932d97d6e6ca8cd4eddea0900ee4d5c754872a4ddb485",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 60,
+      "cross_track_units": 0.0015105743556720276,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          667.3146361511809,
+          726.0541030389898
+        ],
+        [
+          710.1473074524854,
+          698.7220190689874
+        ],
+        [
+          738.3703116150256,
+          692.5315162079099
+        ],
+        [
+          861.0502920259628,
+          695.2471436413995
+        ],
+        [
+          920.3549899784101,
+          702.0747650432045
+        ],
+        [
+          980.7505462130212,
+          700.5679136278723
+        ],
+        [
+          1054.7661431929491,
+          704.9069077260822
+        ],
+        [
+          1104.0887566885483,
+          704.5941345543382
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 378,
+      "source_rgb_sha256": "d4084aa7e03cd25205470574ba7d60592f6b63b4185e07c3787572f9c4bb7997",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 65,
+      "cross_track_units": 0.006333854457744145,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          960.6281177429296,
+          732.0713590720799
+        ],
+        [
+          1056.5816851178372,
+          735.2113325525268
+        ],
+        [
+          1081.0283302485352,
+          728.4905554672368
+        ],
+        [
+          1082.445039729661,
+          730.4896608048903
+        ],
+        [
+          1096.3272957809193,
+          729.2776312743597
+        ],
+        [
+          1101.3480791770778,
+          728.294466881839
+        ],
+        [
+          1076.2216170584136,
+          727.4971269584967
+        ],
+        [
+          1108.629751522437,
+          728.4149137833087
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 399,
+      "source_rgb_sha256": "bb763d16b4f5d3b2e2a7eda23fd5cc2ffdb1a3db0de80d78c98e673f9d380226",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 68,
+      "cross_track_units": 0.006230715518429018,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          1017.6412879515224,
+          599.3045807386211
+        ],
+        [
+          1039.5912297022771,
+          627.1339037064587
+        ],
+        [
+          1030.511106525654,
+          630.9236517806497
+        ],
+        [
+          970.3326657278574,
+          632.7944796763242
+        ],
+        [
+          1031.604867649988,
+          634.4413635489504
+        ]
+      ],
+      "visible_points": 5,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 422,
+      "source_rgb_sha256": "0961d71578d912dcf5f49a03947ce1ddfda8059fb167e0601b22db5bc4cecb71",
+      "pose_accepted": false,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "polyline_px": [],
+      "visible_points": 0,
+      "state": "POSE UNKNOWN - NO LINE"
+    },
+    {
+      "source_index": 444,
+      "source_rgb_sha256": "a1d95920ee7f1c920abff11cb0f15ba6e1153d048f0d21529811ad0c11326de9",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 76,
+      "cross_track_units": 0.0034299320825139415,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          736.1644841654121,
+          613.1977175702948
+        ],
+        [
+          724.3847865845956,
+          636.096632955672
+        ],
+        [
+          745.1145151950097,
+          630.4079091246143
+        ],
+        [
+          784.189516166679,
+          643.3924034502176
+        ],
+        [
+          821.3609368755707,
+          644.485977781799
+        ],
+        [
+          854.2483001155707,
+          645.7271270510436
+        ],
+        [
+          873.4827313491159,
+          647.477950627637
+        ],
+        [
+          894.0791635699163,
+          648.090304237328
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 466,
+      "source_rgb_sha256": "234dc3766188fb368fe9e04b5459295b48eae82dfd788ecd54833318e1a79c1b",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 80,
+      "cross_track_units": 0.004451710755859969,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          903.5483845486958,
+          684.106720339028
+        ],
+        [
+          929.3239151168057,
+          672.6966111095345
+        ],
+        [
+          925.9431258552011,
+          671.5348064778598
+        ],
+        [
+          939.7928212021175,
+          669.7372135734663
+        ],
+        [
+          944.6127850282015,
+          670.9170135585019
+        ],
+        [
+          953.296781370293,
+          670.3094916347869
+        ],
+        [
+          954.6067528868841,
+          659.8220961236567
+        ],
+        [
+          954.0680029429667,
+          659.7759764905788
+        ]
+      ],
+      "visible_points": 8,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 488,
+      "source_rgb_sha256": "b181f43bd307b588ae5abcbde107a27298266d06757ea722cd33c6a0d406a09f",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 83,
+      "cross_track_units": 0.00257361659771022,
+      "progress_ambiguous": false,
+      "polyline_px": [
+        [
+          915.7154652562025,
+          576.7325655942594
+        ],
+        [
+          912.9547156159119,
+          652.0678256065601
+        ],
+        [
+          928.4812703516141,
+          653.4445933147285
+        ],
+        [
+          928.1969379463065,
+          627.9209387030752
+        ],
+        [
+          926.8811133984156,
+          627.7690257597199
+        ]
+      ],
+      "visible_points": 5,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    },
+    {
+      "source_index": 510,
+      "source_rgb_sha256": "40919f3b6f98a0de7e42c640237de74d9bbd729de5c76388a8aecae91481dd3d",
+      "pose_accepted": true,
+      "ground_route": false,
+      "occlusion_checked": false,
+      "segment": 87,
+      "cross_track_units": 0.00022114951718904825,
+      "progress_ambiguous": false,
+      "polyline_px": [],
+      "visible_points": 0,
+      "state": "CAMERA TRACE ONLY - NOT GROUND OR SAFE PATH"
+    }
+  ],
+  "source_manifest_sha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+  "source_hashes": {
+    "geometry.json": "be5815218e3280a370466489c732eb235d7ba0e4ca020a6cb79bcfbd47832f62",
+    "report.json": "101a4e5398bd3536604ad5ccd8f7dded1f8fef70138cd4fb13046008b7ffc9d2",
+    "heldout-rgb/00000001.png": "5b93ab18d477d547a7aa42f302123b52c02d8eca00390bb04a77e5ff034699d3",
+    "heldout-rgb/00000022.png": "78d8b73dc0e931d2c2219e3a1631f24a556c5f97cf5bb536ad01e60d4560c3ad",
+    "heldout-rgb/00000045.png": "bb44db2a714de1e52f2e5d13fa587b8df0c852c275e5256195ecff578d066028",
+    "heldout-rgb/00000068.png": "ffa743fbbdf7abe797700202dbd00bd67d5902797ed54e46a11ad8a2e19b6821",
+    "heldout-rgb/00000089.png": "73be9daca7b52f4b76b965615e1bd366808b3fd1d64128b1ee2688bc9172d8db",
+    "heldout-rgb/00000112.png": "6f6f48327a7c6a8cc06b139cde522e739e9daf2ab52d4a39ae8fa7b6a7048c89",
+    "heldout-rgb/00000134.png": "941613050b9b7f639360f4beaf1f75b45c51140389c7f3402ef885c8b6121ff8",
+    "heldout-rgb/00000156.png": "676d53ae9c2ffffb7b7d15ccbca94a4ce13ce748e0fca663a41d542f96ad4ff1",
+    "heldout-rgb/00000179.png": "d86ab51cfd0c1defabefefae5be08851926773dfcabf73f6fb544ae759706031",
+    "heldout-rgb/00000200.png": "42b770f543529cc088181e8de0d822249fde9064c77224cacc2088ecfd880620",
+    "heldout-rgb/00000222.png": "4656580a4fa852c5fe7f69dd4f27e359796305aa389f0e0d2a4f55d03d5fda12",
+    "heldout-rgb/00000245.png": "047cf762e8dcab86692436e249765d8fbaa8f759fe2855d848b904c1093a6002",
+    "heldout-rgb/00000267.png": "42877d67e1f0bac93635fb71c37fd69ad7bb21f26b72d903bab598604c1aeccf",
+    "heldout-rgb/00000289.png": "d3e7920422d86d264ceb11738a4c233123b34b3022b280721990cbf7cf6af340",
+    "heldout-rgb/00000311.png": "010efbe41e6a2e16ffd654bce489eba31b90703bcda0843e1b07a3e7f78a375d",
+    "heldout-rgb/00000332.png": "c78e0ca1ae9622b9de0c69c8a72d9807026ad039622e947a6a14cf8a2d2a1422",
+    "heldout-rgb/00000355.png": "2388816d71d336afdd5932d97d6e6ca8cd4eddea0900ee4d5c754872a4ddb485",
+    "heldout-rgb/00000378.png": "d4084aa7e03cd25205470574ba7d60592f6b63b4185e07c3787572f9c4bb7997",
+    "heldout-rgb/00000399.png": "bb763d16b4f5d3b2e2a7eda23fd5cc2ffdb1a3db0de80d78c98e673f9d380226",
+    "heldout-rgb/00000422.png": "0961d71578d912dcf5f49a03947ce1ddfda8059fb167e0601b22db5bc4cecb71",
+    "heldout-rgb/00000444.png": "a1d95920ee7f1c920abff11cb0f15ba6e1153d048f0d21529811ad0c11326de9",
+    "heldout-rgb/00000466.png": "234dc3766188fb368fe9e04b5459295b48eae82dfd788ecd54833318e1a79c1b",
+    "heldout-rgb/00000488.png": "b181f43bd307b588ae5abcbde107a27298266d06757ea722cd33c6a0d406a09f",
+    "heldout-rgb/00000510.png": "40919f3b6f98a0de7e42c640237de74d9bbd729de5c76388a8aecae91481dd3d"
+  },
+  "source_unchanged": true,
+  "same_capture": true,
+  "new_session": false,
+  "progress_selection": "nearest geometric camera-trace segment, ambiguous crossings rejected",
+  "training": false,
+  "depth_inferred": false,
+  "physical_actions": 0,
+  "ground_route": false,
+  "metric_scale_known": false,
+  "navigation_qualified": false,
+  "max_projection_formula_difference_px": 2.660101952835458e-11,
+  "projected_views": 22,
+  "pose_accepted": 23,
+  "script_sha256": "d2e7d99e7d7c8ef2ca7bbbf26059266acb8af0a2a6ca8c8f457110eed9265de1"
+}

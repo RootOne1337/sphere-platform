@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { toast } from 'sonner';
 
 // ── Типы ────────────────────────────────────────────────────────────────────
@@ -73,8 +74,8 @@ export interface ServerInfo {
 export function usePipelineSettings() {
   return useQuery<PipelineSettings>({
     queryKey: ['pipeline-settings'],
-    queryFn: async () => {
-      const { data } = await api.get('/pipeline-settings');
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get('/pipeline-settings', { signal });
       return data;
     },
     staleTime: 10_000,
@@ -85,6 +86,7 @@ export function usePipelineSettings() {
 export function useUpdatePipelineSettings() {
   const qc = useQueryClient();
   return useMutation({
+    onMutate: () => qc.cancelQueries({ queryKey: ['pipeline-settings'], exact: true }),
     mutationFn: async (updates: Partial<PipelineSettings>) => {
       const { data } = await api.patch('/pipeline-settings', updates);
       return data as PipelineSettings;
@@ -93,8 +95,8 @@ export function useUpdatePipelineSettings() {
       qc.setQueryData(['pipeline-settings'], data);
       toast.success('Настройки сохранены');
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.detail || 'Ошибка сохранения настроек');
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, 'Ошибка сохранения настроек'));
     },
   });
 }
@@ -103,6 +105,7 @@ export function useUpdatePipelineSettings() {
 export function useTogglePipeline() {
   const qc = useQueryClient();
   return useMutation({
+    onMutate: () => qc.cancelQueries({ queryKey: ['pipeline-settings'], exact: true }),
     mutationFn: async ({
       feature,
       enabled,
@@ -116,8 +119,8 @@ export function useTogglePipeline() {
     onSuccess: (data) => {
       qc.setQueryData(['pipeline-settings'], data);
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.detail || 'Ошибка переключения');
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, 'Ошибка переключения'));
     },
   });
 }

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "upstream": "amnezia-vpn/amneziawg-android",
+  "commit": "5c16489e2cd9ed3a0a7a27c7445bba5238132f86",
+  "release": "v3.1.20260814",
+  "sources": {
+    "tunnel/src/main/java/org/amnezia/awg/GoBackend.java": "464b6dc476d2bf2f3f6700fc7000f46b5b4fe56c17e1de45933aa296b56ba70c",
+    "tunnel/src/main/java/org/amnezia/awg/config/Attribute.java": "e606ac6a859c8b7a16ff4a528b22ca125c7a5a4ae789d2d75d9501c624adce39",
+    "tunnel/src/main/java/org/amnezia/awg/config/BadConfigException.java": "b061cc63389beab78163e13a8f3b75944e90a1aedc29c0372704a62503f69d82",
+    "tunnel/src/main/java/org/amnezia/awg/config/Config.java": "b0b39cf81cdb25fe18bf6ed5962d698cdef37b0ae0cc02f94ecc731cf426baf8",
+    "tunnel/src/main/java/org/amnezia/awg/config/InetAddresses.java": "67c2f205fe66b45b1531650ed2c5c14d292597c9eae6efa3f64fe9a85d2e8d2a",
+    "tunnel/src/main/java/org/amnezia/awg/config/InetEndpoint.java": "f452ac76c85dbbf50e53d58980a88f334cd97a11d04f2f4bccbdf83c4f621333",
+    "tunnel/src/main/java/org/amnezia/awg/config/InetNetwork.java": "2d04e8a11db8db84832fd6fd2b7fee402e2418e2d69fbf7c06dfb618a26421df",
+    "tunnel/src/main/java/org/amnezia/awg/config/Interface.java": "16ef784ed734ad71869f556dd84822bd551f4f55ba1c9dea75d0d90fcd05d80b",
+    "tunnel/src/main/java/org/amnezia/awg/config/ParseException.java": "3476197b25b23f2a92c08d7738f3851a001759d430554141b35392385e7e1de1",
+    "tunnel/src/main/java/org/amnezia/awg/config/Peer.java": "26dcf6901e68233f07b0a6c163a976979b30fe07f440d972b9ffb07a71be9b3b",
+    "tunnel/src/main/java/org/amnezia/awg/crypto/Curve25519.java": "a64ae7d098c1230ad9e583f21272cd179ff28fc0f214a64c558b518741379c07",
+    "tunnel/src/main/java/org/amnezia/awg/crypto/Key.java": "b05b076b6c3b802c5f401df4df76e6528a8db49a8b5595ff9670bb533d886b43",
+    "tunnel/src/main/java/org/amnezia/awg/crypto/KeyFormatException.java": "0ae89d4ba824a9959520d41839e9bc1b4936c9b28283c437b5b9685f6b4ccea3",
+    "tunnel/src/main/java/org/amnezia/awg/crypto/KeyPair.java": "19446af3c57f6e1a1b94b6f082cca314b98cb44f0d02e9174101347f24193a2b",
+    "tunnel/src/main/java/org/amnezia/awg/util/NonNullForAll.java": "b35449355bf8719a261e3cc11dafd44dcff6f21769ac03be1e1671befeec5067",
+    "COPYING": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  }
+}

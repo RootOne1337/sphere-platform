@@ -1,0 +1,496 @@
+{
+  "schemaVersion": 1,
+  "kind": "OPTIONAL_READ_ONLY_MINIMAP_ANALYSIS_NOT_GENERAL_AGENT_OR_GAMEPLAY",
+  "recordedAtUtc": "2026-10-20T19:51:17.527912+00:00",
+  "ownerCalendarDate": "2026-10-21",
+  "workerVersion": "0.7.0",
+  "deliveredWorkerRevision": "74742fd07412c509955f8d073aa08c6a6ca6138f",
+  "unifiedGuide": "docs/design/MOTOR-AI-PLATFORM.md",
+  "unifiedGuideVersion": "2.9",
+  "uiApiApkChanged": false,
+  "newModelWeightsDownloaded": false,
+  "gpuModelLoaded": false,
+  "inputCommandsSent": 0,
+  "gameRestartsPerformed": 0,
+  "gameDataCleared": false,
+  "vpnOrRoutesChanged": false,
+  "physicalExecutionSupportedByObserver": false,
+  "sourceCaptureAgeMeasured": false,
+  "obstacleClearanceAccepted": false,
+  "arrivalAccepted": false,
+  "goalNavigationAccepted": false,
+  "ph030ReconnectAccepted": false,
+  "tests": {
+    "motorTestsPassed": 184,
+    "addedTests": 31,
+    "failures": 0,
+    "skipped": 0,
+    "ruffPassed": true,
+    "unitLogSha256NormalizedLf": "b0c64d5ad6308de0342150313ac20575c363cdf0432040c7ec5daf3aab172730",
+    "realCodecIntegration": "H264/DTLS/SCTP fake APK paints route; decoded RGB analyzed; no native control or touch commands"
+  },
+  "sourceSha256NormalizedLf": {
+    "motor_worker/minimap.py": "727bf43d927f4b3719faf327fc00121a741661bda61600a429e2f2d8a3c87729",
+    "motor_worker/__main__.py": "4e4b164c9f2efde925a6bb30caed8707604799f41cf62c57e1b62c14d7929cdc",
+    "motor_worker/session.py": "523fd5b3af8e1f661e67e4d537b74206327c2305615f01b0614aeefaffeeb48f",
+    "motor_worker/stick_execution.py": "932b9dcef38a897b2d23e106f997447155cadedff771de7bd37b643229868ee2",
+    "motor_worker/protocol.py": "02ef7641af2940147344249d5d3ca7dd64e40b9121df3e69de0cc7ea5d9f197d",
+    "motor_worker/__init__.py": "ca43e6955a34d17f1aa182ddbe1112134b5b4694c685813928fd8eaa63cd284f",
+    "examples/motor-minimap-profile.json": "fb8daf48ab9cd8613b894744e0f904958f408c4503b41936f632516e625895ae",
+    "tests/test_motor_worker_minimap.py": "93b0d8b24fbcc8b341bd909a9e19844d9e5b1e49f67008c4f7e64449c46de45e",
+    "tests/test_motor_worker_cli.py": "53c45bd7be061908001d950728d5d2e2a574a17c2e77ab616ca52612f1a087dd",
+    "tests/test_motor_worker_integration.py": "62573a03ca3e427cd2a28b5dddf22059bf02e04c2b90f4d25536cd06dd40e104"
+  },
+  "primaryPublicCliProbe": {
+    "provenance": {
+      "workerRevision": "74742fd07412c509955f8d073aa08c6a6ca6138f",
+      "startedAtUtc": "2026-10-20T19:32:33.253983+00:00",
+      "cliExitCode": 0,
+      "cliStderrWasEmpty": true,
+      "resourceGuardPassed": true,
+      "resourceSnapshot": {
+        "observedAt": "2026-10-20T19:32:31.246861+00:00",
+        "system": "Windows",
+        "freeDiskBytes": 103344214016,
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "availableRamBytes": 7424610304,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 84518871040,
+        "commitLimitBytes": 101336473600,
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ]
+      },
+      "profileSha256NormalizedLf": "fb8daf48ab9cd8613b894744e0f904958f408c4503b41936f632516e625895ae"
+    },
+    "privateReportSha256NormalizedLf": "b8800bcff7ec0850ac80afc63c39e3ef0c939665f46132557e26c61c0bf8b9c1",
+    "snapshotSha256": "ccd94fa79498580e7f188eddae2536937eac79ed7970470788924f1ab4f85516",
+    "runnerSha256NormalizedLf": "4cfbc741625e362def8666f3c46683796b43ef2917cec14395619e9d1bdead35",
+    "observation": {
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "durationObservedSeconds": 20.007,
+      "success": true,
+      "sceneVisuallyReviewed": "Android Search UI, not game world; no route on screen",
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "lastMediaEchoRttMs": 21.75269997678697,
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 7,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": false,
+        "dataChannelId": null,
+        "maxPacketLifeTimeMs": null,
+        "dataChannelOpened": false,
+        "nativeAdmissionConfirmed": false,
+        "actorAliveReceipts": 0,
+        "lastActorRttMs": null,
+        "participantClosedConfirmed": false,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0,
+        "availabilityState": null,
+        "rttTail": [],
+        "rttTailLimit": 64
+      },
+      "acceptedResultTiming": {
+        "clock": "worker_monotonic_receiver_not_source_capture",
+        "meaning": "accepted_policy_results_not_android_applied_actions",
+        "measurementStarted": true,
+        "measurementClosed": true,
+        "clockReversalsIgnored": 0,
+        "elapsedSeconds": 19.794937,
+        "acceptedResults": 99,
+        "averageAcceptedHz": 5.001,
+        "requestedHz": 5.0,
+        "completeOneSecondWindows": 19,
+        "minimumAcceptedInCompleteWindow": 4,
+        "requiredCountPerCompleteWindow": 5,
+        "allCompleteWindowsMeetRequestedCount": false,
+        "maximumSilenceIncludingLeadingTrailingMs": 221.864,
+        "gapP50Ms": 201.306,
+        "gapP95Ms": 217.115,
+        "receiverAgeAtResultP50Ms": 20.677,
+        "receiverAgeAtResultP95Ms": 31.349,
+        "receiverAgeAtResultMaxMs": 53.899,
+        "percentileTailLimit": 128,
+        "gapTailSamples": 98,
+        "ageTailSamples": 99,
+        "sourceCaptureAgeKnown": false
+      },
+      "policyCleanupConfirmed": true,
+      "cpuBackgroundJobRetired": true,
+      "routeReasons": {
+        "route_not_anchored": 99
+      },
+      "sourceCaptureAgeMeasured": false,
+      "gameplayAccepted": false,
+      "learnedInference": false
+    },
+    "note": "Native participantClosedConfirmed=false means no participant was created; policy/peer/CPU cleanup succeeded. Strict five-per-complete-second gate failed (minimum 4)."
+  },
+  "supplementalPrototypeApiProbe": {
+    "sourceStatus": "Uncommitted initial prototype; NOT an execution of later delivered commit",
+    "resourceGuardPassed": true,
+    "privateReportSha256NormalizedLf": "b5dbc9acfdef69990c6a0b0b3b5cddd48890e35881e4a7d9a4de0f9ec0976b9b",
+    "snapshotSha256": "2f76024f29ca557ca011be3ff615218fbd0534e775e5a38832ef84e72dd6ce36",
+    "runnerSha256NormalizedLf": "0014fec8bc3fbea0875ca457c2b3e3a6c1d59c4a97440972e27751868f6159ce",
+    "observation": {
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "durationObservedSeconds": 20.014,
+      "success": true,
+      "sceneVisuallyReviewed": "Android Search UI, not game world; no route on screen",
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "lastMediaEchoRttMs": 21.03750000242144,
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 7,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": false,
+        "dataChannelId": null,
+        "maxPacketLifeTimeMs": null,
+        "dataChannelOpened": false,
+        "nativeAdmissionConfirmed": false,
+        "actorAliveReceipts": 0,
+        "lastActorRttMs": null,
+        "participantClosedConfirmed": false,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0,
+        "availabilityState": null,
+        "rttTail": [],
+        "rttTailLimit": 64
+      },
+      "acceptedResultTiming": {
+        "clock": "worker_monotonic_receiver_not_source_capture",
+        "meaning": "accepted_policy_results_not_android_applied_actions",
+        "measurementStarted": true,
+        "measurementClosed": true,
+        "clockReversalsIgnored": 0,
+        "elapsedSeconds": 19.985381,
+        "acceptedResults": 101,
+        "averageAcceptedHz": 5.054,
+        "requestedHz": 5,
+        "completeOneSecondWindows": 19,
+        "minimumAcceptedInCompleteWindow": 5,
+        "requiredCountPerCompleteWindow": 5,
+        "allCompleteWindowsMeetRequestedCount": true,
+        "maximumSilenceIncludingLeadingTrailingMs": 220.56,
+        "gapP50Ms": 200.655,
+        "gapP95Ms": 213.171,
+        "receiverAgeAtResultP50Ms": 20.089,
+        "receiverAgeAtResultP95Ms": 29.915,
+        "receiverAgeAtResultMaxMs": 50.329,
+        "percentileTailLimit": 128,
+        "gapTailSamples": 100,
+        "ageTailSamples": 101,
+        "sourceCaptureAgeKnown": false
+      },
+      "policyCleanupConfirmed": true,
+      "cpuBackgroundJobRetired": true,
+      "routeReasons": {
+        "route_not_anchored": 101
+      },
+      "sourceCaptureAgeMeasured": false,
+      "gameplayAccepted": false,
+      "learnedInference": false
+    }
+  },
+  "archivedReplay": {
+    "kind": "ARCHIVED_FRAME_REPLAY_NOT_GAMEPLAY",
+    "sourceWorkerRevision": "74742fd07412c509955f8d073aa08c6a6ca6138f",
+    "profile": {
+      "frame_width": 960,
+      "frame_height": 540,
+      "roi": [
+        14,
+        18,
+        116,
+        116
+      ],
+      "center": [
+        57,
+        57
+      ],
+      "radius": 49,
+      "player_radius": 7,
+      "hsv_lower": [
+        130,
+        75,
+        90
+      ],
+      "hsv_upper": [
+        165,
+        255,
+        255
+      ],
+      "forward_degrees": null,
+      "lookahead_px": 30,
+      "max_anchor_gap_px": 10,
+      "min_path_px": 10,
+      "max_frontier_spread_degrees": 35
+    },
+    "profileCalibratedForExecution": false,
+    "sourceFrameDate": "2026-10-17",
+    "framesProcessed": 20,
+    "reasonCounts": {
+      "orientation_not_calibrated": 18,
+      "route_not_anchored": 2
+    },
+    "frames": [
+      {
+        "file": "waypoint-cv-v1-000s.png",
+        "imageSha256": "2454e9ca96269b28635ad75789f8b9f29c9b37424f60821b26c796d253caac4b",
+        "wallMs": 15.014300006441772,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.384776310850242,
+        "route_pixels": 296
+      },
+      {
+        "file": "waypoint-cv-v1-005s.png",
+        "imageSha256": "5b5c4c61f3f60c824cdff775af3b298bfbc65acaaee69de08798812839f0ceb0",
+        "wallMs": 2.592200064100325,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.313708498984763,
+        "route_pixels": 419
+      },
+      {
+        "file": "waypoint-cv-v1-010s.png",
+        "imageSha256": "a581fe21cebbdd8ed0a1da22e60d10a3f803d84aa3448095cd5ebf22651b2995",
+        "wallMs": 2.0564000587910414,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 28.798989873223338,
+        "route_pixels": 476
+      },
+      {
+        "file": "waypoint-cv-v1-015s.png",
+        "imageSha256": "078dc552b78736824d9b1ec5e715a96851bdd667f9b6c206d009a85e4217ec24",
+        "wallMs": 1.9200999522581697,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.72792206135786,
+        "route_pixels": 277
+      },
+      {
+        "file": "waypoint-cv-v1-020s.png",
+        "imageSha256": "9df15b94ac99104419a68ae96e2f77aad82e0cced02f56409f1ea22258884202",
+        "wallMs": 2.015499980188906,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.55634918610405,
+        "route_pixels": 256
+      },
+      {
+        "file": "waypoint-cv-v1-025s.png",
+        "imageSha256": "861a290c85cf62f85128f94e542301fff0403b453611ec58f6ec16632f41f325",
+        "wallMs": 2.2818000288680196,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 28.72792206135786,
+        "route_pixels": 235
+      },
+      {
+        "file": "waypoint-cv-v1-030s.png",
+        "imageSha256": "f818187dbf2003f9644e6cd41554c65cb92b67c0fccf4c705cb960577f37a356",
+        "wallMs": 1.7459000227972865,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.313708498984763,
+        "route_pixels": 213
+      },
+      {
+        "file": "waypoint-cv-v1-035s.png",
+        "imageSha256": "26d2fe6bc7e1494be63a3182f03953d7d281fa5379783d20018930d9479c63a5",
+        "wallMs": 1.7262999899685383,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.313708498984763,
+        "route_pixels": 186
+      },
+      {
+        "file": "waypoint-cv-v1-040s.png",
+        "imageSha256": "99b890b1ab648940bbad2f2ba393462b1652d285c596f9c0345593430043f5ea",
+        "wallMs": 2.020200015977025,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 23.242640687119287,
+        "route_pixels": 124
+      },
+      {
+        "file": "waypoint-cv-v1-045s.png",
+        "imageSha256": "aaba43fec5f81e84379d402d9ed9736871a5011f727e93c51586c17fff9efe36",
+        "wallMs": 1.4542000135406852,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 13.899494936611667,
+        "route_pixels": 60
+      },
+      {
+        "file": "waypoint-cv-v1-050s.png",
+        "imageSha256": "299f4670044e686f2c05b3d4e22703fdec0e96a1fe1248332d6170f726a27029",
+        "wallMs": 1.6334999818354845,
+        "reason": "route_not_anchored",
+        "heading_error_degrees": null,
+        "path_length_px": 0,
+        "route_pixels": 0
+      },
+      {
+        "file": "waypoint-cv-v1-055s.png",
+        "imageSha256": "0ad006d658f20a56bd7b21d1479a6832edf40209a201569d42207acca77ad7f5",
+        "wallMs": 1.5339999226853251,
+        "reason": "route_not_anchored",
+        "heading_error_degrees": null,
+        "path_length_px": 0,
+        "route_pixels": 0
+      },
+      {
+        "file": "waypoint-cv-v2-000s.png",
+        "imageSha256": "eb2190df3d1d354aa58042feea375d2ea1bb8fbe2d1e3a16fca0e8e34136582c",
+        "wallMs": 2.2444999776780605,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.48528137423857,
+        "route_pixels": 184
+      },
+      {
+        "file": "waypoint-cv-v2-005s.png",
+        "imageSha256": "874f7df6ad0f2e95d2ff4558302d5205abbe74e0d90d806463cb69dd09e23ae2",
+        "wallMs": 1.8618999747559428,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 28.970562748477146,
+        "route_pixels": 196
+      },
+      {
+        "file": "waypoint-cv-v2-010s.png",
+        "imageSha256": "12083a11551c3051c3d6514d85026df155cdbfb3a409c6f6c1e419a862b8bb20",
+        "wallMs": 2.2498000180348754,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.384776310850242,
+        "route_pixels": 197
+      },
+      {
+        "file": "waypoint-cv-v2-015s.png",
+        "imageSha256": "3baa8e76eebb2e1c5859392cc8bfef1f177aa3e89af0e060e1bfa8f8196dbcfd",
+        "wallMs": 2.0849999273195863,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 28.798989873223338,
+        "route_pixels": 213
+      },
+      {
+        "file": "waypoint-cv-v2-020s.png",
+        "imageSha256": "5a6b3d74ab17b527ff3647e65045b55121f20a87934a19ee77715916b4830d4a",
+        "wallMs": 1.6976000042632222,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 28.72792206135786,
+        "route_pixels": 195
+      },
+      {
+        "file": "waypoint-cv-v2-025s.png",
+        "imageSha256": "a789311e076fcdcb984fd6fd22ba8fef2bccdb758e77b63ad02ea8cb00b77f77",
+        "wallMs": 1.9687999738380313,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 28.72792206135786,
+        "route_pixels": 176
+      },
+      {
+        "file": "waypoint-cv-v2-030s.png",
+        "imageSha256": "3a07467bf394537ca0750cdcb16ba5e1a51e906de17a2f16391520436cfb2d63",
+        "wallMs": 2.271600067615509,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 28.72792206135786,
+        "route_pixels": 246
+      },
+      {
+        "file": "waypoint-cv-v2-035s.png",
+        "imageSha256": "bf9091947ac97f62e9adb7ff41d5ff2a736258ffa12a2cd8e6637df943353a42",
+        "wallMs": 2.1828999742865562,
+        "reason": "orientation_not_calibrated",
+        "heading_error_degrees": null,
+        "path_length_px": 29.55634918610405,
+        "route_pixels": 242
+      }
+    ],
+    "positiveExtractionWallMs": {
+      "samples": 18,
+      "method": "nearest rank; PNG loading excluded",
+      "p50": 2.020200015977025,
+      "p95": 15.014300006441772,
+      "max": 15.014300006441772
+    },
+    "manualVisualReviewFiles": [
+      "waypoint-cv-v2-000s.png",
+      "waypoint-cv-v2-025s.png",
+      "waypoint-cv-v1-045s.png",
+      "waypoint-cv-v1-050s.png",
+      "waypoint-cv-v1-055s.png"
+    ],
+    "negativeExample": "At v1-050s no GPS line was found but 3D marker at 25m remained visible: route loss is NOT arrival",
+    "notDatasetAccuracy": true,
+    "directionsProduced": 0,
+    "physicalActionsSent": 0,
+    "allFiniteWaypointPngStorage": {
+      "filePattern": "waypoint-cv-v*.png",
+      "count": 24,
+      "totalBytes": 14520329,
+      "automaticServerArchive": false
+    }
+  },
+  "openGates": [
+    "ownership and ACK reliability incl PH030",
+    "goal/skill stdio-v2",
+    "dynamic heading and calibration",
+    "scene/clearance/progress/arrival",
+    "native multi-touch or gamepad",
+    "source/action clock correlation",
+    "separate GPU/LAN",
+    "learned goal semantics",
+    "capacity and unpaused game quality"
+  ],
+  "privacy": "No tokens, argv, raw RGB, screenshots or gameplay chat pixels committed; local files hashed only; no files deleted."
+}

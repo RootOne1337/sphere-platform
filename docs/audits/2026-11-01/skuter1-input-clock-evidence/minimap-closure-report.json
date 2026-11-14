@@ -1,0 +1,207 @@
+{
+  "method": "Masked minimap SIFT and ORB, heldout landmark Sim2, no meters or automatic loop closure",
+  "roi": [
+    0,
+    0,
+    310,
+    320
+  ],
+  "center": [
+    145,
+    165
+  ],
+  "outer_radius": 108,
+  "inner_exclusion_radius": 28,
+  "dynamic_color_and_badge_excluded": true,
+  "pairs": [
+    {
+      "head": 0,
+      "tail": 856,
+      "sift": {
+        "source_features": 45,
+        "target_features": 108,
+        "matches": 9,
+        "accepted": false,
+        "train": 6,
+        "heldout": 3,
+        "homography_train_inliers": 4,
+        "homography_heldout_le3": 0,
+        "homography_heldout_median_px": 140.0823516845703,
+        "train_inliers": 4,
+        "heldout_le3": 1,
+        "heldout_median_px": 48.01622029408366,
+        "heldout_p95_px": 140.02524699108133,
+        "heldout_cells": 1,
+        "scale": 1.0143659540578087,
+        "rotation_deg": 38.81688386200179,
+        "center_delta_pixels": [
+          -0.8694676770425929,
+          -18.475108686571446
+        ]
+      },
+      "orb": {
+        "source_features": 282,
+        "target_features": 864,
+        "matches": 12,
+        "accepted": false,
+        "train": 10,
+        "heldout": 2
+      }
+    },
+    {
+      "head": 6,
+      "tail": 850,
+      "sift": {
+        "source_features": 45,
+        "target_features": 115,
+        "matches": 7,
+        "accepted": false,
+        "train": 5,
+        "heldout": 2
+      },
+      "orb": {
+        "source_features": 280,
+        "target_features": 851,
+        "matches": 15,
+        "accepted": false,
+        "train": 11,
+        "heldout": 4,
+        "homography_train_inliers": 5,
+        "homography_heldout_le3": 0,
+        "homography_heldout_median_px": 88.86009216308594,
+        "train_inliers": 4,
+        "heldout_le3": 0,
+        "heldout_median_px": 62.954337629220404,
+        "heldout_p95_px": 174.112777489398,
+        "heldout_cells": 0,
+        "scale": 0.8076269768848462,
+        "rotation_deg": 25.226885074358492,
+        "center_delta_pixels": [
+          -22.57011060326485,
+          -9.941826995078515
+        ]
+      }
+    },
+    {
+      "head": 10,
+      "tail": 844,
+      "sift": {
+        "source_features": 46,
+        "target_features": 119,
+        "matches": 6,
+        "accepted": false,
+        "train": 3,
+        "heldout": 3
+      },
+      "orb": {
+        "source_features": 273,
+        "target_features": 857,
+        "matches": 13,
+        "accepted": false,
+        "train": 11,
+        "heldout": 2
+      }
+    },
+    {
+      "head": 0,
+      "tail": 6,
+      "sift": {
+        "source_features": 45,
+        "target_features": 45,
+        "matches": 40,
+        "accepted": true,
+        "train": 30,
+        "heldout": 10,
+        "homography_train_inliers": 30,
+        "homography_heldout_le3": 10,
+        "homography_heldout_median_px": 0.02321089804172516,
+        "train_inliers": 30,
+        "heldout_le3": 10,
+        "heldout_median_px": 0.03087104742251027,
+        "heldout_p95_px": 0.3753907802394576,
+        "heldout_cells": 4,
+        "scale": 1.0001250179079315,
+        "rotation_deg": 0.009520948034180472,
+        "center_delta_pixels": [
+          0.006645654371567389,
+          0.008884108962945447
+        ]
+      },
+      "orb": {
+        "source_features": 282,
+        "target_features": 280,
+        "matches": 233,
+        "accepted": true,
+        "train": 173,
+        "heldout": 60,
+        "homography_train_inliers": 172,
+        "homography_heldout_le3": 60,
+        "homography_heldout_median_px": 0.0,
+        "train_inliers": 172,
+        "heldout_le3": 60,
+        "heldout_median_px": 0.0,
+        "heldout_p95_px": 0.0,
+        "heldout_cells": 10,
+        "scale": 1.0,
+        "rotation_deg": 0.0,
+        "center_delta_pixels": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "head": 844,
+      "tail": 856,
+      "sift": {
+        "source_features": 119,
+        "target_features": 108,
+        "matches": 95,
+        "accepted": true,
+        "train": 70,
+        "heldout": 25,
+        "homography_train_inliers": 70,
+        "homography_heldout_le3": 25,
+        "homography_heldout_median_px": 0.05827268958091736,
+        "train_inliers": 70,
+        "heldout_le3": 25,
+        "heldout_median_px": 0.02815151820870541,
+        "heldout_p95_px": 0.8450658896599561,
+        "heldout_cells": 8,
+        "scale": 0.9999911807888514,
+        "rotation_deg": -0.0080610060363903,
+        "center_delta_pixels": [
+          -0.005139671708292326,
+          -0.011728495705625619
+        ]
+      },
+      "orb": {
+        "source_features": 857,
+        "target_features": 864,
+        "matches": 782,
+        "accepted": true,
+        "train": 546,
+        "heldout": 236,
+        "homography_train_inliers": 543,
+        "homography_heldout_le3": 235,
+        "homography_heldout_median_px": 0.0032253293320536613,
+        "train_inliers": 543,
+        "heldout_le3": 235,
+        "heldout_median_px": 0.0031985783849532564,
+        "heldout_p95_px": 0.004847260727737002,
+        "heldout_cells": 10,
+        "scale": 0.9999700114140729,
+        "rotation_deg": 0.0009691350258081396,
+        "center_delta_pixels": [
+          -0.00019902324183362907,
+          -0.0019209102230774988
+        ]
+      }
+    }
+  ],
+  "source_unchanged": true,
+  "duration_s": 0.7029999999795109,
+  "heading_comparison": "not established: minimap north-up/heading convention not verified",
+  "metric_truth": false,
+  "execution_qualified": false
+}

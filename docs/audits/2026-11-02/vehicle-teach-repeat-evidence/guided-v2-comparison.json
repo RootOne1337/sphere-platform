@@ -1,0 +1,111 @@
+{
+  "scope": "same-source-exact-reference-heldout-not-independent-gameplay",
+  "queryIndicesEqual": true,
+  "queryCount": 159,
+  "referenceIndicesEqual": true,
+  "referenceRGBHashesEqual": true,
+  "sourceModelBindingsEqual": true,
+  "KEqual": true,
+  "pipelineEqual": true,
+  "profileExceptRevisionEqual": true,
+  "baseline": {
+    "landmarks": 2026,
+    "counts": {
+      "confirming": 30,
+      "localized": 63,
+      "unknown": 66
+    },
+    "unsupportedNeighborhoods": 8,
+    "localizedFraction": 0.39622641509433965
+  },
+  "guided": {
+    "landmarks": 1168,
+    "counts": {
+      "confirming": 26,
+      "localized": 52,
+      "unknown": 81
+    },
+    "unsupportedNeighborhoods": 13,
+    "localizedFraction": 0.3270440251572327
+  },
+  "pairedPoseStates": [
+    {
+      "baseline": "confirming",
+      "guided": "confirming",
+      "count": 15
+    },
+    {
+      "baseline": "confirming",
+      "guided": "localized",
+      "count": 1
+    },
+    {
+      "baseline": "confirming",
+      "guided": "unknown",
+      "count": 14
+    },
+    {
+      "baseline": "localized",
+      "guided": "confirming",
+      "count": 3
+    },
+    {
+      "baseline": "localized",
+      "guided": "localized",
+      "count": 51
+    },
+    {
+      "baseline": "localized",
+      "guided": "unknown",
+      "count": 9
+    },
+    {
+      "baseline": "unknown",
+      "guided": "confirming",
+      "count": 8
+    },
+    {
+      "baseline": "unknown",
+      "guided": "unknown",
+      "count": 58
+    }
+  ],
+  "localizedOnlyBaselineIndices": [
+    87,
+    94,
+    479,
+    484,
+    489,
+    494,
+    499,
+    505,
+    509,
+    514,
+    521,
+    526
+  ],
+  "localizedOnlyGuidedIndices": [
+    745
+  ],
+  "fewerThanTwoEpipolarFraction": 0.7738722989398205,
+  "rejectedQueryOriginalGlobalRatioValidityKnown": false,
+  "minNeighborhoodSupport": {
+    "baseline": 14,
+    "guided": 20
+  },
+  "descriptorCandidatesOrRejectedEdgesSaved": false,
+  "proofKeys": [
+    "schema",
+    "candidates",
+    "selected_candidate_indices",
+    "feature_arrays",
+    "runtimeSources"
+  ],
+  "acceptedTrackProofCount": 1168,
+  "selectedTrackProofCount": 1168,
+  "allAcceptedTrackImagesUnique": true,
+  "allAcceptedTracksAtLeast3": true,
+  "parametersTunedAfterMetrics": false,
+  "physicalActions": 0,
+  "executionQualified": false
+}

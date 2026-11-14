@@ -1,0 +1,114 @@
+{
+  "method": "SIFT at each actual tracked 3D observation, scales 8/16/24, mutual ratio .75 across distinct point IDs, F RANSAC then fixedK PnP",
+  "pairs": [
+    {
+      "head": 0,
+      "tail": 856,
+      "head_landmarks": 582,
+      "tail_landmarks": 417,
+      "mutual_landmark_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "same_3d_ids": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 0,
+      "tail": 850,
+      "head_landmarks": 582,
+      "tail_landmarks": 417,
+      "mutual_landmark_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "same_3d_ids": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 0,
+      "tail": 844,
+      "head_landmarks": 582,
+      "tail_landmarks": 419,
+      "mutual_landmark_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "same_3d_ids": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 10,
+      "tail": 856,
+      "head_landmarks": 584,
+      "tail_landmarks": 417,
+      "mutual_landmark_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "same_3d_ids": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 10,
+      "tail": 844,
+      "head_landmarks": 584,
+      "tail_landmarks": 419,
+      "mutual_landmark_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "same_3d_ids": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 43,
+      "tail": 844,
+      "head_landmarks": 647,
+      "tail_landmarks": 419,
+      "mutual_landmark_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "same_3d_ids": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 43,
+      "tail": 850,
+      "head_landmarks": 647,
+      "tail_landmarks": 417,
+      "mutual_landmark_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "same_3d_ids": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    },
+    {
+      "head": 43,
+      "tail": 856,
+      "head_landmarks": 647,
+      "tail_landmarks": 417,
+      "mutual_landmark_ratio_pairs": 0,
+      "fundamental_inliers": 0,
+      "same_3d_ids": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_verified_landmark_pairs"
+      }
+    }
+  ],
+  "seconds": 1.8440000000409782,
+  "source_model_db_unchanged": true,
+  "head_tail_5m_used": false,
+  "metric_groundtruth": false,
+  "execution_qualified": false
+}

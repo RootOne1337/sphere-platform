@@ -18,14 +18,15 @@ from pathlib import Path
 
 import structlog
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select
+from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
+from backend.models.application_profile import ApplicationProfile
 from backend.models.device import Device
 from backend.models.game_account import AccountStatus, GameAccount
-from backend.models.task import Task, TaskStatus
+from backend.models.task import ORCHESTRATION_ASSIGNMENT_PARAM, Task, TaskStatus
 from backend.models.user import User
 from backend.schemas.pipeline_settings import (
     NickCheckRequest,
@@ -191,35 +192,29 @@ async def get_orchestration_status(
     settings = await svc.get_or_create(current_user.org_id)
     org_id = current_user.org_id
 
-    # Подсчёт активных регистраций (RUNNING + QUEUED задачи с registration_script_id)
-    active_reg = 0
-    if settings.registration_script_id:
-        result = await db.execute(
-            select(func.count()).select_from(Task).where(
-                Task.org_id == org_id,
-                Task.script_id == settings.registration_script_id,
-                Task.status.in_([TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            )
-        )
-        active_reg = result.scalar_one()
+    counts = {}
+    for role, script_id in (("register", settings.registration_script_id), ("farm", settings.farming_script_id)):
+        scope = Task.orchestration_kind == role
+        if script_id is not None:
+            scope = or_(scope, and_(Task.orchestration_kind.is_(None), Task.script_id == script_id,
+                                   ~Task.input_params.has_key(ORCHESTRATION_ASSIGNMENT_PARAM)))
+        counts[role] = await db.scalar(select(func.count()).select_from(Task).where(
+            Task.org_id == org_id,
+            Task.orchestration_profile_id.is_(None),
+            Task.status.in_((TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED)),
+            scope,
+        )) or 0
 
-    # Подсчёт активных фарм-сессий
-    active_farm = 0
-    if settings.farming_script_id:
-        result = await db.execute(
-            select(func.count()).select_from(Task).where(
-                Task.org_id == org_id,
-                Task.script_id == settings.farming_script_id,
-                Task.status.in_([TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            )
-        )
-        active_farm = result.scalar_one()
+    legacy_pool = ~exists().where(
+        ApplicationProfile.org_id == org_id, ApplicationProfile.key == GameAccount.game,
+    )
 
     # Аккаунты в pending_registration
     result = await db.execute(
         select(func.count()).select_from(GameAccount).where(
             GameAccount.org_id == org_id,
             GameAccount.status == AccountStatus.pending_registration,
+            legacy_pool,
         )
     )
     pending_reg = result.scalar_one()
@@ -230,6 +225,7 @@ async def get_orchestration_status(
             Device.org_id == org_id,
             Device.server_name.isnot(None),
             Device.is_active.is_(True),
+            Device.application_profile_id.is_(None),
         )
     )
     devices_with_server = result.scalar_one()
@@ -239,6 +235,7 @@ async def get_orchestration_status(
         select(func.count()).select_from(GameAccount).where(
             GameAccount.org_id == org_id,
             GameAccount.status == AccountStatus.free,
+            legacy_pool,
         )
     )
     free_accounts = result.scalar_one()
@@ -248,6 +245,7 @@ async def get_orchestration_status(
         select(func.count()).select_from(GameAccount).where(
             GameAccount.org_id == org_id,
             GameAccount.status == AccountStatus.banned,
+            legacy_pool,
         )
     )
     banned_accounts = result.scalar_one()
@@ -259,8 +257,8 @@ async def get_orchestration_status(
         scheduler_enabled=settings.scheduler_enabled,
         registration_enabled=settings.registration_enabled,
         farming_enabled=settings.farming_enabled,
-        active_registrations=active_reg,
-        active_farming_sessions=active_farm,
+        active_registrations=counts["register"],
+        active_farming_sessions=counts["farm"],
         pending_registrations=pending_reg,
         total_devices_with_server=devices_with_server,
         total_free_accounts=free_accounts,

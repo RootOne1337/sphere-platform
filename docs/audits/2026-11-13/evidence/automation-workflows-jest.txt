@@ -1,0 +1,6 @@
+PASS ../docs/audits/2026-11-13/evidence/automation-workflows.test.cjs
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Snapshots:   0 total
+Time:        2.364 s

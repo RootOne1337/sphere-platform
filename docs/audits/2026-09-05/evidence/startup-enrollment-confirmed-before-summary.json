@@ -1,0 +1,83 @@
+{
+  "baseline_sha": "8c2b647c93b09506f8266fd594beae5934232ed1",
+  "state": "startup-enrollment-confirmed-before",
+  "totals": {
+    "tests": 14,
+    "failures": 11,
+    "errors": 0,
+    "skipped": 0
+  },
+  "groups": {
+    "tests.production": 12,
+    "tests.deployment": 2
+  },
+  "failures": [
+    {
+      "name": "test_startup_uses_configured_key_for_actual_device_registration",
+      "failure": {
+        "message": "AssertionError: {\"detail\":\"\u041d\u0435\u0432\u0430\u043b\u0438\u0434\u043d\u044b\u0439 \u0438\u043b\u0438 \u0438\u0441\u0442\u0451\u043a\u0448\u0438\u0439 API-\u043a\u043b\u044e\u0447\"}\nassert 401 == 201\n +  where 401 = <Response [401 Unauthorized]>.status_code"
+      }
+    },
+    {
+      "name": "test_startup_uses_selected_organization_even_with_the_legacy_key",
+      "failure": {
+        "message": "AssertionError: assert UUID('83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5') == UUID('93fab112-c6c5-413d-8e1c-68cc62b81986')\n +  where UUID('83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5') = <backend.models.api_key.APIKey object at 0x000001FCE4361940>.org_id\n +  and   UUID('93fab112-c6c5-413d-8e1c-68cc62b81986') = <backend.models.organization.Organization object at 0x000001FCE4616DB0>.id\n +    where <backend.models.organization.Organization object at 0x000001FCE4616DB0> = namespace(make_url=<function make_url at 0x000001FCDEBAE480>, url=postgresql+asyncpg://audit:***@127.0.0.1:55432/spher...bind=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x000001FCE46FF7D0>, autoflush=True, expire_on_commit=False)).org_b"
+      }
+    },
+    {
+      "name": "test_cli_then_repeated_workers_keep_one_configured_key",
+      "failure": {
+        "message": "AssertionError: [IntegrityError('(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class \\'asyncpg.exceptions.UniqueViolationEr...ey_hash\"\n  DETAIL:  Key (key_hash)=(d7381c935f160c1515cca7a9409f6e593ac3f74bded45800bb8c91ee70c29b94) already exists.')]\nassert [IntegrityErr...ady exists.')] == [None, None, None, None]\n  \n  At index 0 diff: IntegrityError('(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class \\'asyncpg.exceptions.UniqueViolationError\\'>: duplicate key value violates unique constraint \"ix_api_keys_key_hash\"\\nDETAIL:  Key (key_hash)=(d7381c935f160c1515cca7a9409f6e593ac3f74bded45800bb8c91ee70c29b94) already exists.') != None\n  Use -v to get more diff"
+      }
+    },
+    {
+      "name": "test_simultaneous_first_workers_converge",
+      "failure": {
+        "message": "AssertionError: [IntegrityError('(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class \\'asyncpg.exceptions.UniqueViolationEr...ey_hash\"\n  DETAIL:  Key (key_hash)=(c4988311b31e41b41ff84ba904a9092aeb53f976f06ccb4547c2588218cf2cfb) already exists.')]\nassert [IntegrityErr...ady exists.')] == [None, None, None, None]\n  \n  At index 0 diff: IntegrityError('(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class \\'asyncpg.exceptions.UniqueViolationError\\'>: duplicate key value violates unique constraint \"ix_api_keys_key_hash\"\\nDETAIL:  Key (key_hash)=(c4988311b31e41b41ff84ba904a9092aeb53f976f06ccb4547c2588218cf2cfb) already exists.') != None\n  Use -v to get more diff"
+      }
+    },
+    {
+      "name": "test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[revoked]",
+      "failure": {
+        "message": "AssertionError: [{'event': 'ensure_enrollment_key: already exists', 'log_level': 'debug'}]\nassert False\n +  where False = any(<generator object test_conflicting_key_is_reported_without_reactivation_or_api_shutdown.<locals>.<genexpr> at 0x000001FCE4322740>)"
+      }
+    },
+    {
+      "name": "test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[expired]",
+      "failure": {
+        "message": "AssertionError: [{'event': 'ensure_enrollment_key: already exists', 'log_level': 'debug'}]\nassert False\n +  where False = any(<generator object test_conflicting_key_is_reported_without_reactivation_or_api_shutdown.<locals>.<genexpr> at 0x000001FCE4371560>)"
+      }
+    },
+    {
+      "name": "test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[permissions]",
+      "failure": {
+        "message": "AssertionError: [{'event': 'ensure_enrollment_key: already exists', 'log_level': 'debug'}]\nassert False\n +  where False = any(<generator object test_conflicting_key_is_reported_without_reactivation_or_api_shutdown.<locals>.<genexpr> at 0x000001FCE4370E10>)"
+      }
+    },
+    {
+      "name": "test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[organization]",
+      "failure": {
+        "message": "AssertionError: [{'event': 'ensure_enrollment_key: already exists', 'log_level': 'debug'}]\nassert False\n +  where False = any(<generator object test_conflicting_key_is_reported_without_reactivation_or_api_shutdown.<locals>.<genexpr> at 0x000001FCE51612F0>)"
+      }
+    },
+    {
+      "name": "test_missing_selected_organization_does_not_bind_to_another",
+      "failure": {
+        "message": "assert False\n +  where False = any(<generator object test_missing_selected_organization_does_not_bind_to_another.<locals>.<genexpr> at 0x000001FCE516DCB0>)"
+      }
+    },
+    {
+      "name": "test_backend_receives_the_selected_bootstrap_organization[full]",
+      "failure": {
+        "message": "AssertionError: assert None == 'audit-fixture'\n +  where None = <built-in method get of dict object at 0x000001FCE5208A40>('SPHERE_BOOTSTRAP_ORG_SLUG')\n +    where <built-in method get of dict object at 0x000001FCE5208A40> = {'ACCOUNT_CREDENTIAL_KEYS': 'audit-fixture', 'AWG_H1': 'audit-fixture', 'AWG_H2': 'audit-fixture', 'AWG_H3': 'audit-fixture', ...}.get"
+      }
+    },
+    {
+      "name": "test_backend_receives_the_selected_bootstrap_organization[production]",
+      "failure": {
+        "message": "AssertionError: assert None == 'audit-fixture'\n +  where None = <built-in method get of dict object at 0x000001FCE51DDE80>('SPHERE_BOOTSTRAP_ORG_SLUG')\n +    where <built-in method get of dict object at 0x000001FCE51DDE80> = {'ACCOUNT_CREDENTIAL_KEYS': 'audit-fixture', 'AGENT_CONFIG_ENV': 'production', 'AWG_H1': 'audit-fixture', 'AWG_H2': 'audit-fixture', ...}.get"
+      }
+    }
+  ],
+  "boundary": "Disposable loopback PostgreSQL/Redis; actual dev hook and ASGI registration, independent SQL Sessions. Compose config renderer only; process/HTTP doubles for deployment. No installed APK, API listener or full daemon deployment."
+}

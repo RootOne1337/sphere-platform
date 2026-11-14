@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T12:08:42.323204+00:00",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "46dd02fff711c1667b44520b85290226b7155287",
+    "apiSourceRevision": "cd2431e2ae0c719959147626981b00ac8f9703f5"
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Installed VPN diagnostics after explicit disconnect; no media/input/game acceptance.",
+    "origin": "http://127.0.0.1:3015",
+    "viewports": [
+      [
+        1440,
+        1000
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "apkVersionDisplayed": "1.2.85-dev",
+    "mobileDocumentWidth": 390,
+    "mobileDialogWidth": 390,
+    "mobileHorizontalOverflow": false,
+    "footerReachable": true,
+    "screenshots": [
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-ota85-live/desktop.png",
+        "sha256": "1dd17cc23e00009ea0b82d85b1b425c2ee33cd45c9aacd56ecbeafb897445862"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-ota85-live/mobile.png",
+        "sha256": "07f909176a94b057ce73806a2100ea404cd43b2cfb8d3968b2251b69d7cf1cd6"
+      }
+    ],
+    "browserClosed": true,
+    "directFramesPresented": 0,
+    "consoleCleanlinessClaimed": false,
+    "knownWordingIssue": "Требуется обновление labels a stale native sample and can be mistaken for an APK update requirement."
+  },
+  "deliveryEvidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+  "deliveryEvidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
+  "physicalVpnProductionAccepted": false,
+  "productionAccepted": false
+}

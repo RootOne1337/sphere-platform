@@ -1,0 +1,46 @@
+FFFFFF..                                                                 [100%]
+================================== FAILURES ===================================
+________ test_concurrent_refresh_consumes_one_parent_only_once[False] _________
+tests\production\test_session_rotation.py:72: in test_concurrent_refresh_consumes_one_parent_only_once
+    assert sorted(code for code, _ in results) == [200, 401]
+E   assert [200, 200] == [200, 401]
+E
+E     At index 1 diff: 200 != 401
+E     Use -v to get more diff
+_________ test_concurrent_refresh_consumes_one_parent_only_once[True] _________
+tests\production\test_session_rotation.py:72: in test_concurrent_refresh_consumes_one_parent_only_once
+    assert sorted(code for code, _ in results) == [200, 401]
+E   assert [200, 200] == [200, 401]
+E
+E     At index 1 diff: 200 != 401
+E     Use -v to get more diff
+_ test_refresh_rechecks_committed_revocation_or_expiry_after_wait[revoke-False] _
+tests\production\test_session_rotation.py:105: in test_refresh_rechecks_committed_revocation_or_expiry_after_wait
+    assert code == 401
+E   assert 200 == 401
+_ test_refresh_rechecks_committed_revocation_or_expiry_after_wait[revoke-True] _
+tests\production\test_session_rotation.py:105: in test_refresh_rechecks_committed_revocation_or_expiry_after_wait
+    assert code == 401
+E   assert 200 == 401
+_ test_refresh_rechecks_committed_revocation_or_expiry_after_wait[expire-False] _
+tests\production\test_session_rotation.py:105: in test_refresh_rechecks_committed_revocation_or_expiry_after_wait
+    assert code == 401
+E   assert 200 == 401
+_ test_refresh_rechecks_committed_revocation_or_expiry_after_wait[expire-True] _
+tests\production\test_session_rotation.py:105: in test_refresh_rechecks_committed_revocation_or_expiry_after_wait
+    assert code == 401
+E   assert 200 == 401
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_session_rotation.py::test_concurrent_refresh_consumes_one_parent_only_once[False]
+FAILED tests/production/test_session_rotation.py::test_concurrent_refresh_consumes_one_parent_only_once[True]
+FAILED tests/production/test_session_rotation.py::test_refresh_rechecks_committed_revocation_or_expiry_after_wait[revoke-False]
+FAILED tests/production/test_session_rotation.py::test_refresh_rechecks_committed_revocation_or_expiry_after_wait[revoke-True]
+FAILED tests/production/test_session_rotation.py::test_refresh_rechecks_committed_revocation_or_expiry_after_wait[expire-False]
+FAILED tests/production/test_session_rotation.py::test_refresh_rechecks_committed_revocation_or_expiry_after_wait[expire-True]
+6 failed, 2 passed, 1 warning in 3.63s

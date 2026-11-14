@@ -1,0 +1,944 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-14T01:17:54.423398+00:00",
+  "runtimeInstalled": true,
+  "scope": "UI37543bb2 / APIbe0578d0 installed on3015/Tuna. APK72 completed OTA on15 online emulators;14 exact installed SHA proofs,1 command/version-only proofs;6 offline pending. Both origins passed two-client real input/native keys. Ten Tuna clients passed40 keys,takeover and9 survivors; forced RTC loss recovered automatically. Physical keyboard/IME,audio,20+,real phone/hotspot,offline autonomy and full CI migration remain open.",
+  "runtime": {
+    "sourceRevision": "37543bb2ff2d81392be07003dbeaf53aa369ebe6",
+    "apiSourceRevision": "be0578d058948a40e3f922e347911ecf2bcd32cf",
+    "uiContainer": {
+      "id": "67426b6e10ae49b99d70cc4b01dbfddb0f14d208dab35418ab7b58502d869be5",
+      "imageId": "sha256:d6a7a27a768d0b7cda53667113b3cb904a15d0e113121218b85d4205f3d24a6f",
+      "imageTag": "sphere-review-frontend:37543bb2ff2d81392be07003dbeaf53aa369ebe6",
+      "startedAt": "2026-10-14T00:07:18.964226542Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "af14b8b4e1bfc25b0defa3627bbd8a0fad7bca94c912b229b0ddb239510635a3",
+      "imageId": "sha256:b57a87b0c0fbc8bfd5d30980944365bfbd66e5d6250f7dee66b0edb331e7ffde",
+      "imageTag": "sphere-reviewed-backend:be0578d058948a40e3f922e347911ecf2bcd32cf",
+      "startedAt": "2026-10-13T23:56:25.352917068Z",
+      "status": "running"
+    },
+    "uiCiRunId": 38486774021,
+    "apiCiRunId": 38485028365,
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otherContainersPreservedPerInstall": 45
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "productionAccepted": false,
+    "ordinaryChrome": true,
+    "transportOverrides": false,
+    "commandsReplayed": false,
+    "navigation": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-14T01:11:11.462Z",
+        "participants": 2,
+        "simultaneousMouseTouchRounds": 12,
+        "nativeKeysApplied": [
+          4,
+          4
+        ],
+        "survivorHomeApplied": true,
+        "serverInputCommands": 0,
+        "peersCreatedPerParticipant": [
+          1,
+          1
+        ],
+        "survivorVideo": [
+          {
+            "frames": 1818,
+            "fps": 58,
+            "lost": 0,
+            "freezes": 0
+          }
+        ],
+        "evidenceSha256NormalizedLf": "88f907f5fa874282c45d2b923d778351fa793a0d8f272b54816e7de33350d60a"
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-14T00:56:52.081Z",
+        "participants": 2,
+        "simultaneousMouseTouchRounds": 12,
+        "nativeKeysApplied": [
+          4,
+          4
+        ],
+        "survivorHomeApplied": true,
+        "serverInputCommands": 0,
+        "peersCreatedPerParticipant": [
+          1,
+          1
+        ],
+        "survivorVideo": [
+          {
+            "frames": 1816,
+            "fps": 58,
+            "lost": 0,
+            "freezes": 1
+          }
+        ],
+        "evidenceSha256NormalizedLf": "c74df6fb98f410f3f9d67b90c32b6a2319f244daca0e1bba7fabb5913ab05ae0"
+      }
+    ],
+    "sharedControl": {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "observedAtUtc": "2026-10-14T01:04:27.642Z",
+      "participants": 10,
+      "nativeKeysApplied": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "initialPeersCreated": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "opening": [
+        {
+          "elapsedMs": 4575,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 3798,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 3881,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 3680,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 3781,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 3915,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 3859,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 4099,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 4162,
+          "peersCreatedAtFirstReady": 1
+        },
+        {
+          "elapsedMs": 4965,
+          "peersCreatedAtFirstReady": 1
+        }
+      ],
+      "peerReplacementsAfterReady": 0,
+      "serverInputCommands": 0,
+      "overlappingTakeoverConfirmed": true,
+      "independentCloseSurvivors": 9,
+      "survivorSeconds": 30,
+      "survivorVideo": [
+        [
+          {
+            "frames": 3647,
+            "fps": 36,
+            "lost": 0,
+            "freezes": 1
+          }
+        ],
+        [
+          {
+            "frames": 3395,
+            "fps": 37,
+            "lost": 0,
+            "freezes": 2
+          }
+        ],
+        [
+          {
+            "frames": 3216,
+            "fps": 37,
+            "lost": 0,
+            "freezes": 1
+          }
+        ],
+        [
+          {
+            "frames": 3000,
+            "fps": 37,
+            "lost": 0,
+            "freezes": 1
+          }
+        ],
+        [
+          {
+            "frames": 2774,
+            "fps": 37,
+            "lost": 0,
+            "freezes": 1
+          }
+        ],
+        [
+          {
+            "frames": 2558,
+            "fps": 37,
+            "lost": 0,
+            "freezes": 1
+          }
+        ],
+        [
+          {
+            "frames": 2320,
+            "fps": 37,
+            "lost": 0,
+            "freezes": 1
+          }
+        ],
+        [
+          {
+            "frames": 2088,
+            "fps": 36,
+            "lost": 0,
+            "freezes": 0
+          }
+        ],
+        [
+          {
+            "frames": 1844,
+            "fps": 36,
+            "lost": 0,
+            "freezes": 0
+          }
+        ]
+      ],
+      "evidenceSha256NormalizedLf": "d32c6a2f0b1a3e5d090e52f7803ebd63a7f6c166e59c3d749923128f459353a1",
+      "scope": "Ten live browser contexts on one test PC. Initial attempts are recorded separately; no peer may restart after initial readiness during actual gestures, forty native keys, takeover and30-second independent-close survivor. Not20+, cross-geography or real-phone acceptance."
+    },
+    "automaticIdlePeerRecovery": {
+      "origin": "http://127.0.0.1:3015",
+      "injectedRtcLosses": 3,
+      "automaticNativeHomeAfterEach": true,
+      "viewerSocketsOpened": [
+        1,
+        1,
+        2
+      ],
+      "serverInputCommands": 0,
+      "physicalTabVisibilityAccepted": false,
+      "evidenceSha256NormalizedLf": "7ad0e59228ae2036a7c7d82e3000c76ea1ef5d08cd66821e937684a66edd1d46",
+      "scope": "Three actual owned RTC closures while idle, automatic fresh peer/native READY and Home ACK. Viewer reauthorization is recorded separately; at most one viewer socket remains open. Tests the PH010 rejoin boundary, not physical tab visibility. No held input or unknown result was replayed."
+    },
+    "serverLinkMetrics": {
+      "origins": [
+        {
+          "origin": "http://127.0.0.1:3015",
+          "serverRttMs": [
+            7.2,
+            1.7,
+            1.7
+          ],
+          "scope": "Actual authenticated PH028 viewer with natural failed direct ICE and server video fallback; server echo only, not Android or video latency."
+        },
+        {
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "serverRttMs": [
+            152.0,
+            154.0,
+            154.0
+          ],
+          "scope": "Actual authenticated PH028 viewer with natural failed direct ICE and server video fallback; server echo only, not Android or video latency."
+        }
+      ],
+      "evidenceSha256NormalizedLf": "acfc2366e7dd1d86248e457ba22accf360a7be5e10c4e391553d2dff8ca2f47f"
+    },
+    "nativeAckMeaning": "Ordered ASYNC live-event submission accepted by native input API, not application processing or displayed effect.",
+    "glassToGlassLatencyMeasured": false,
+    "physicalPhoneAccepted": false,
+    "physicalTabVisibilityAccepted": false
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+        "version": "1.2.72-dev",
+        "versionCode": 10272,
+        "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "bytes": 57786356,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1178,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1178,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T00:54:56.594246+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "device": "auto-ph-028",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:14:18.804396+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:14:45.282006+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "device": "auto-ph-022",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:14:57.725575+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "device": "auto-ph-020",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:04.205473+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "device": "auto-ph-019",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:07.800247+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "device": "auto-ph-018",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:13.918601+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "device": "auto-ph-017",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:18.935963+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "device": "auto-ph-016",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:19.493381+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "device": "auto-ph-015",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:21.199488+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "device": "auto-ph-014",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:24.950726+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "device": "auto-ph-013",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:26.193684+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "device": "auto-ph-012",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:21.366819+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:15:19.456179+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "packageProofRecordedAtUtc": "2026-10-14T01:16:06.006846+00:00"
+      }
+    ],
+    "installedCount": 14,
+    "completedOtaCount": 15,
+    "partialPackageProofs": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10272,
+        "otaResult": {
+          "status": "completed",
+          "installed_version_code": 10272,
+          "recorded_at": "2026-10-14T01:04:04.879740+00:00",
+          "sha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d"
+        },
+        "installedPackageHashVerified": false,
+        "reportedVersionCode": 10272,
+        "reason": "Fresh native input refuses shell read. Exact completed addressed OTA and signer-enforced version confirmed; current bytes not freshly read."
+      }
+    ],
+    "offlineDevices": [
+      {
+        "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+        "device": "auto-ph-029",
+        "grantIssued": false,
+        "currentPackageVerified": false,
+        "state": "pending_fresh_online_baseline"
+      },
+      {
+        "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+        "device": "auto-ph-027",
+        "grantIssued": false,
+        "currentPackageVerified": false,
+        "state": "pending_fresh_online_baseline"
+      },
+      {
+        "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+        "device": "auto-ph-026",
+        "grantIssued": false,
+        "currentPackageVerified": false,
+        "state": "pending_fresh_online_baseline"
+      },
+      {
+        "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+        "device": "auto-ph-024",
+        "grantIssued": false,
+        "currentPackageVerified": false,
+        "state": "pending_fresh_online_baseline"
+      },
+      {
+        "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+        "device": "auto-ph-023",
+        "grantIssued": false,
+        "currentPackageVerified": false,
+        "state": "pending_fresh_online_baseline"
+      },
+      {
+        "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+        "device": "auto-ph-021",
+        "grantIssued": false,
+        "currentPackageVerified": false,
+        "state": "pending_fresh_online_baseline"
+      }
+    ],
+    "offlineCount": 6,
+    "verifiedVersionCounts": {
+      "10272": 14
+    },
+    "ordinaryChannelUnchanged": true,
+    "adbInstalls": 0,
+    "dataClears": 0,
+    "exactCi": {
+      "runId": 38491514919,
+      "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+      "status": "completed",
+      "conclusion": "success",
+      "observedAtUtc": "2026-10-14T01:13:33.787589+00:00"
+    },
+    "liveInventory": {
+      "observedAtUtc": "2026-10-14T01:16:34.337409+00:00",
+      "devices": [
+        {
+          "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+          "device": "auto-ph-030",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": false,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+          "device": "auto-ph-029",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed72Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "device": "auto-ph-028",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+          "device": "auto-ph-027",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed72Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+          "device": "auto-ph-026",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed72Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "device": "auto-ph-025",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+          "device": "auto-ph-024",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed72Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+          "device": "auto-ph-023",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed72Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "device": "auto-ph-022",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+          "device": "auto-ph-021",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed72Ota": false,
+          "offlineRolloutPending": true
+        },
+        {
+          "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+          "device": "auto-ph-020",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "device": "auto-ph-019",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "device": "auto-ph-018",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "device": "auto-ph-017",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "device": "auto-ph-016",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "device": "auto-ph-015",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "device": "auto-ph-014",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "device": "auto-ph-013",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "device": "auto-ph-012",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "device": "auto-ph-011",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        },
+        {
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "device": "auto-ph-010",
+          "status": "online",
+          "reportedVersionCode": 10272,
+          "currentInstalledHashVerified": true,
+          "completed72Ota": true,
+          "offlineRolloutPending": false
+        }
+      ],
+      "deviceCommandsSent": 0,
+      "scope": "Read-only live inventory plus earlier exact package proofs. Completed OTA, reported version and fresh installed SHA are distinct; offline delivery is pending, not queued."
+    },
+    "offlineAutomaticDeliveryArmed": false
+  },
+  "downloads": {
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-14T00:54:46.949226+00:00",
+        "apiSourceRevision": "be0578d058948a40e3f922e347911ecf2bcd32cf",
+        "uiSourceRevision": "37543bb2ff2d81392be07003dbeaf53aa369ebe6",
+        "loginAssetHashes": {
+          "/_next/static/chunks/1255-7783d2635cd63343.js": "96dee89aaaa2dd3c48add536d4fc9bee2f5c2067b6c1fecbf82a9718c1832fe5",
+          "/_next/static/chunks/4545-753eca0214cc2f1e.js": "74994250e81f0f13014c6191a409eee997ccecd0cbc0036a7ea46f41163c73dd",
+          "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js": "5421e13a91a9389517b66179f3b4b5eaa0d95245438066d4d7b19ac30aeb809b",
+          "/_next/static/chunks/5718-16651f0353cbc87c.js": "d57e36d081d510e605b625463639db89d1f306021f878714cf2f0c0b2f440c15",
+          "/_next/static/chunks/5776-04ef09d5a87e6710.js": "390740518086c4ed38333b87ba5e03a22cd562d23424b7836a64dd0e3905448a",
+          "/_next/static/chunks/643-ac6cb88a22cb81ec.js": "ca821c0c816ed855a8b730a3bcbfbe9fa7ea64cbf7a6208c7cf83097ffb58c21",
+          "/_next/static/chunks/8720-c9ee040177c11cae.js": "5c5e3504935a574ca8219d40d3860ca39e02ac7e68b07024f6749f9aeac3826b",
+          "/_next/static/chunks/app/(auth)/login/page-3832c634bf766d30.js": "5241ba6c86be36470e0c0201d2a41a0a02932bfdac7b2b0941d2edca78f26248",
+          "/_next/static/chunks/app/layout-db491bcd0cf2c0d3.js": "a43960bd65effe9513fda30eae465d1e1e7f91799c4c3ac334be25e06e1da069",
+          "/_next/static/chunks/main-app-51acae7907d4f0ba.js": "be53511dbfec95b02aa1cbd3f64fe6684b82b7deb96958aa8a108fafe68d28e0",
+          "/_next/static/chunks/polyfills-42372ed130431b0a.js": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683",
+          "/_next/static/chunks/webpack-063896ccdf8e8196.js": "9e3105d43f0dd1ade90392e4206bfbc2d6f0e41997528c9e75401f680521074b",
+          "/_next/static/css/9cdcf5b295fd1124.css": "ed257e55f93d5c83d5e749373ef15f71b8f66517834c4ee3458a4f546c451dc5",
+          "/_next/static/css/ee1c600aa5123b7f.css": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855"
+        },
+        "downloadVersionCode": 10272,
+        "downloadedBytes": 57786356,
+        "downloadSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "downloadMs": 1016,
+        "fileWritten": false
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-14T00:55:03.513461+00:00",
+        "apiSourceRevision": "be0578d058948a40e3f922e347911ecf2bcd32cf",
+        "uiSourceRevision": "37543bb2ff2d81392be07003dbeaf53aa369ebe6",
+        "loginAssetHashes": {
+          "/_next/static/chunks/1255-7783d2635cd63343.js": "96dee89aaaa2dd3c48add536d4fc9bee2f5c2067b6c1fecbf82a9718c1832fe5",
+          "/_next/static/chunks/4545-753eca0214cc2f1e.js": "74994250e81f0f13014c6191a409eee997ccecd0cbc0036a7ea46f41163c73dd",
+          "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js": "5421e13a91a9389517b66179f3b4b5eaa0d95245438066d4d7b19ac30aeb809b",
+          "/_next/static/chunks/5718-16651f0353cbc87c.js": "d57e36d081d510e605b625463639db89d1f306021f878714cf2f0c0b2f440c15",
+          "/_next/static/chunks/5776-04ef09d5a87e6710.js": "390740518086c4ed38333b87ba5e03a22cd562d23424b7836a64dd0e3905448a",
+          "/_next/static/chunks/643-ac6cb88a22cb81ec.js": "ca821c0c816ed855a8b730a3bcbfbe9fa7ea64cbf7a6208c7cf83097ffb58c21",
+          "/_next/static/chunks/8720-c9ee040177c11cae.js": "5c5e3504935a574ca8219d40d3860ca39e02ac7e68b07024f6749f9aeac3826b",
+          "/_next/static/chunks/app/(auth)/login/page-3832c634bf766d30.js": "5241ba6c86be36470e0c0201d2a41a0a02932bfdac7b2b0941d2edca78f26248",
+          "/_next/static/chunks/app/layout-db491bcd0cf2c0d3.js": "a43960bd65effe9513fda30eae465d1e1e7f91799c4c3ac334be25e06e1da069",
+          "/_next/static/chunks/main-app-51acae7907d4f0ba.js": "be53511dbfec95b02aa1cbd3f64fe6684b82b7deb96958aa8a108fafe68d28e0",
+          "/_next/static/chunks/polyfills-42372ed130431b0a.js": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683",
+          "/_next/static/chunks/webpack-063896ccdf8e8196.js": "9e3105d43f0dd1ade90392e4206bfbc2d6f0e41997528c9e75401f680521074b",
+          "/_next/static/css/9cdcf5b295fd1124.css": "ed257e55f93d5c83d5e749373ef15f71b8f66517834c4ee3458a4f546c451dc5",
+          "/_next/static/css/ee1c600aa5123b7f.css": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855"
+        },
+        "downloadVersionCode": 10272,
+        "downloadedBytes": 57786356,
+        "downloadSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "downloadMs": 10094,
+        "fileWritten": false
+      }
+    ],
+    "identicalLoginAssets": true
+  },
+  "apiSchema": {
+    "paths": 149,
+    "operations": 188,
+    "canonicalSha256": "15d3b4353a934701751b5487839277af8cda42e9ec66195e9b48d5e5530bcb38",
+    "qualityMethods": [
+      "get",
+      "post"
+    ],
+    "viewersMethods": [
+      "post"
+    ],
+    "sourceRevision": "be0578d058948a40e3f922e347911ecf2bcd32cf",
+    "observedAtUtc": "2026-10-14T00:34:45.506587+00:00",
+    "applicationLifespanStarted": false,
+    "sameAsCommittedCanonicalJson": true
+  },
+  "ph030UserObservation": {
+    "readOnly": true,
+    "commandsSent": 0,
+    "viewerOpened": false,
+    "versionCode": 10272,
+    "fromUtc": "2026-10-14T01:14:43.553575+00:00",
+    "toUtc": "2026-10-14T01:16:14.042137+00:00",
+    "samples": [
+      {
+        "at": "2026-10-14T01:14:43.553575+00:00",
+        "videoFps": 55.866191070622,
+        "networkRttMs": 1,
+        "nativeAckRttMs": 13,
+        "directAttempts": 1,
+        "inputFailures": 0,
+        "unknownReleases": 0
+      },
+      {
+        "at": "2026-10-14T01:14:58.641572+00:00",
+        "videoFps": 55.891011197873,
+        "networkRttMs": 2,
+        "nativeAckRttMs": 3,
+        "directAttempts": 1,
+        "inputFailures": 0,
+        "unknownReleases": 0
+      },
+      {
+        "at": "2026-10-14T01:15:13.725934+00:00",
+        "videoFps": 55.710707813283,
+        "networkRttMs": 57,
+        "nativeAckRttMs": 6,
+        "directAttempts": 1,
+        "inputFailures": 0,
+        "unknownReleases": 0
+      },
+      {
+        "at": "2026-10-14T01:15:28.807077+00:00",
+        "videoFps": 54.888115794487,
+        "networkRttMs": 2,
+        "nativeAckRttMs": 13,
+        "directAttempts": 1,
+        "inputFailures": 0,
+        "unknownReleases": 0
+      },
+      {
+        "at": "2026-10-14T01:15:43.889324+00:00",
+        "videoFps": 55.299119892193,
+        "networkRttMs": 1,
+        "nativeAckRttMs": 7,
+        "directAttempts": 1,
+        "inputFailures": 0,
+        "unknownReleases": 0
+      },
+      {
+        "at": "2026-10-14T01:15:58.971155+00:00",
+        "videoFps": 56.11056009598,
+        "networkRttMs": 6,
+        "nativeAckRttMs": 12,
+        "directAttempts": 1,
+        "inputFailures": 0,
+        "unknownReleases": 0
+      },
+      {
+        "at": "2026-10-14T01:16:14.042137+00:00",
+        "videoFps": 55.885785226082,
+        "networkRttMs": 1,
+        "nativeAckRttMs": 9,
+        "directAttempts": 1,
+        "inputFailures": 0,
+        "unknownReleases": 0
+      }
+    ],
+    "evidenceSha256NormalizedLf": "2df9a057c86f201e84474fb17732c929a2239f4e45edfc9641de4f0bc95116bd",
+    "physicalUserActionsVerified": false,
+    "scope": "Seven read-only snapshots over90seconds of the actual PH030 user session onAPK72. One direct peer and ready input; no new control/video failure in that bounded window. Not an injected action or long-soak acceptance."
+  },
+  "boundaries": {
+    "sharedControlInstalled": true,
+    "finiteTenControlAccepted": true,
+    "directNavigationInstalled": true,
+    "physicalKeyboardInstalled": false,
+    "audioInstalled": false,
+    "brokerIndependentSessionInstalled": false,
+    "realPhoneNewBuildAccepted": false,
+    "twentyPlusAccepted": false,
+    "wideWanTurnAccepted": false,
+    "stable13ReleaseAccepted": false
+  },
+  "localCi": {
+    "fullCloudMigrationAccepted": false,
+    "selfHostedRunnerRegistered": false,
+    "scope": "Signed debug canary tests/lint/build run locally. Full exact Android workflow still hosted; unchanged UI/API evidence reused explicitly. Local statuses do not mean all Actions gates were migrated."
+  },
+  "volumeWarningException": {
+    "authority": "Explicit user authorization to continue builds/installation as-is",
+    "measuredVolumeWarningRetained": true
+  },
+  "privacy": {
+    "noTypedContents": true,
+    "noRawCandidateAddresses": true,
+    "noTokensOwnersOrSessionKeys": true
+  }
+}

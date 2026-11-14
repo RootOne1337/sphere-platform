@@ -1,0 +1,19 @@
+docs/openapi.json linguist-generated=true
+docs/api-endpoints.md linguist-generated=true
+
+# This evidence manifest hashes the exact UTF-8/LF JSON bytes.
+/docs/audits/2026-11-03/selected-geometry-evidence/*.json text eol=lf
+/docs/audits/2026-11-03/day-night-evidence/*.json text eol=lf
+/docs/audits/2026-11-03/evidence/skuter2-processing-repair/*.json text eol=lf
+
+# Bind-mounted Linux entrypoints must remain executable after Windows checkout.
+*.sh text eol=lf
+android/gradlew text eol=lf
+
+# The HUD glyph bank is byte-pinned by its runtime SHA on every platform.
+/scripts/pilot/black_russia_speed_font_v1.json -text whitespace=cr-at-eol
+
+# Pinned upstream file is byte-verified; retain its existing blank-line spaces.
+android/awg-sdk/src/main/java/org/amnezia/awg/config/Interface.java whitespace=-blank-at-eol
+# Unified diff context needs its leading space before Go tabs and blank lines.
+android/awg-sdk/patches/*.patch text eol=lf whitespace=-blank-at-eol,-space-before-tab

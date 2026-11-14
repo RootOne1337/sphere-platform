@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "status": "PARTIAL_EP_010_TENANT_COVERAGE_INSTALLED",
+  "source": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+  "uiSource": "9ad0a69e729f9b4960bf8aea529a88e25e4f73cf",
+  "observedAt": "2026-10-05T19:15:57.834381+00:00",
+  "criterionClosed": false,
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "immutableBaselineRetained": true
+  },
+  "previousEvidence": "ENTERPRISE-ANDROID-VPN-OBSERVATION-EVIDENCE.json",
+  "previousEvidenceSha256": "f12d41afba1501f976e52e5703f9c427a9fc73068569ead54caa74a29de21d0a",
+  "apiImage": {
+    "source": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+    "imageId": "sha256:f06fcc4e7fb6fa62164dbfd3dd6544093b4a26636fbaa0e8f80b750d27366c99",
+    "image": "sphere-pilot-20260911-backend:7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+    "exit": 0,
+    "gitArchive": true
+  },
+  "uiImage": {
+    "source": "9ad0a69e729f9b4960bf8aea529a88e25e4f73cf",
+    "imageId": "sha256:7558e79768872c13c64d0d9f413d361ca3eb54cbb510d3553c792d621ff7678e",
+    "image": "sphere-review-frontend:9ad0a69e729f9b4960bf8aea529a88e25e4f73cf",
+    "exit": 0,
+    "gitArchive": true
+  },
+  "sourceHashes": [
+    {
+      "file": "backend/api/v1/monitoring/router.py",
+      "sha256": "c7437058323f5ef2c9c360ce188b29c9deba1f0e0e468045507a6e74ffdc91c3"
+    },
+    {
+      "file": "backend/schemas/fleet_coverage.py",
+      "sha256": "7f0a5ef19091f29fe80c11fac9220cf454f46baa1b4c1059c7b0f1858715b208"
+    },
+    {
+      "file": "backend/services/fleet_coverage.py",
+      "sha256": "c3c10642c0b5b28e2353f4d1b918c05b2760b19da99a8a52f3320545d438381a"
+    },
+    {
+      "file": "backend/services/device_status_cache.py",
+      "sha256": "a2a0dc6b0ebb6c2413345cfa0228212ba2013a1e4c7c51feb573f295f2c577f9"
+    },
+    {
+      "file": "tests/devices/test_fleet_coverage.py",
+      "sha256": "d552a1e7bb26386f22bc26ecfd43da1d917acd7f10cd430764bdb9e7386f2465"
+    },
+    {
+      "file": "docs/openapi.json",
+      "sha256": "1ed2c8d8c9d9336599b2c2b3e5f1c9333af7e6f34a6a3cba6b55b2676bfac8d8"
+    },
+    {
+      "file": "docs/api-endpoints.md",
+      "sha256": "039ddc0ede8df8dc251f500bb911587a2280a4ecb075883de8b6fa34a2299faa"
+    },
+    {
+      "file": "frontend/src/features/monitoring/FleetCoveragePanel.tsx",
+      "sha256": "955dc5a55e1b189e616ae5ab2576211fadabcd8c1ffae2d585d3800057532412"
+    },
+    {
+      "file": "frontend/src/features/monitoring/fleetCoverageTypes.ts",
+      "sha256": "2eb2cae58b26f56d517df70a386cc97eb662ff37bbc6e6a5868e5a697714073c"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/fleet-coverage-panel.test.tsx",
+      "sha256": "7a496f267c3cc4881ca987f2e905ca2098b0e2b8a5d9678046eb7beee04fc970"
+    },
+    {
+      "file": "frontend/__tests__/hooks/useFleetEvents.test.tsx",
+      "sha256": "07f850d8bbd1f764b7257f59332ee759cf5a015167500910cca7135e6f9fd597"
+    },
+    {
+      "file": "frontend/lib/hooks/useFleetEvents.ts",
+      "sha256": "216d07b884c2231aad0600d2797bbd109d5b024745ed163cdaf3d18bb1dd0660"
+    },
+    {
+      "file": "frontend/lib/queryPollIntervals.ts",
+      "sha256": "6989f8c84b4d723c59b51807b7fd8ebc815d6ad042b5a2bfae41a7a2f358835c"
+    },
+    {
+      "file": "frontend/app/(dashboard)/monitoring/page.tsx",
+      "sha256": "8f987d27d0b5d46e338f54dd9a24296ae3131477e8c6dc39e7e7cc3305111d1f"
+    }
+  ],
+  "receipts": [
+    {
+      "file": "evidence/fleet-coverage/api-build.json",
+      "sha256": "9f5714bcc613809c52180bc1af6475bce2795238e5e48ee4e7fecb2eaa76999c"
+    },
+    {
+      "file": "evidence/fleet-coverage/agent-status-image-tests.json",
+      "sha256": "03422409f381649dbc293238ca64b5435daf2313e7c29bc706e20c145e009adc"
+    },
+    {
+      "file": "evidence/fleet-coverage/agent-status-image-tests.xml",
+      "sha256": "d9e230a41dc1d70989140388c720527fd1b412468b43134455c9de8c7397dbd5"
+    },
+    {
+      "file": "evidence/fleet-coverage/resource-image-tests.json",
+      "sha256": "b234bd92fc4b21dd1b47190a421eebb39066cbbbf1a49419fc98ebf9b3993a68"
+    },
+    {
+      "file": "evidence/fleet-coverage/resource-image-tests.xml",
+      "sha256": "0ed967bb557108ddc296044aad98aacada4e6e8e1650ba5414f1645bedf0a9ff"
+    },
+    {
+      "file": "evidence/fleet-coverage/mypy.json",
+      "sha256": "9ba5a1fa582003fc0930aea0d167ca2ccd5889bee089da18caada38ee5bd3cf5"
+    },
+    {
+      "file": "evidence/fleet-coverage/ruff.json",
+      "sha256": "7915947dafb7cf6cd64c7ef799e4273f20eb2112c25c9e93854da90d22c888e7"
+    },
+    {
+      "file": "evidence/fleet-coverage/api-schema-check.json",
+      "sha256": "9ba5a1fa582003fc0930aea0d167ca2ccd5889bee089da18caada38ee5bd3cf5"
+    },
+    {
+      "file": "evidence/fleet-coverage/api-installed.json",
+      "sha256": "ad8684e759269c307bfe0a178a4ef270e971d9e37c412e6bc9b9022340138e56"
+    },
+    {
+      "file": "evidence/fleet-coverage/ui-build.json",
+      "sha256": "0a78ae97ec46e86f28d3210ca2cabb7105e417fb3ea10bbf5ccf685f40a06e98"
+    },
+    {
+      "file": "evidence/fleet-coverage/ui-installed.json",
+      "sha256": "b38dbb303b9ffa0659056ca38b5fef1d70b8be97e87e106c261983279ad6b473"
+    },
+    {
+      "file": "evidence/fleet-coverage/frontend-validation.json",
+      "sha256": "c7b5835f27df0932e1f670aa7b58a5bbe544782656d59cd768c38d0f4d728ca8"
+    },
+    {
+      "file": "evidence/fleet-coverage/initial-live-failure.json",
+      "sha256": "a9b31c3967ceb564dbfdfed236b660e9fe544d99884b28a2a70289540042f72e"
+    },
+    {
+      "file": "evidence/fleet-coverage/live-observations.json",
+      "sha256": "d5d4d2665810cd127ee5e9d4c2abf234e6980bdc712c647d4a9534f2611de6c6"
+    },
+    {
+      "file": "evidence/fleet-coverage/browser-observation.json",
+      "sha256": "874ce14432d1d4dcec86c0d6f8e8a64e49a89e78de3602613559c348aa6d1745"
+    },
+    {
+      "file": "evidence/fleet-coverage/source-ci.json",
+      "sha256": "62c65d915cebd8d9039617f77685e0cb9b81d3231273aa3032fb23acd8a166b5"
+    },
+    {
+      "file": "evidence/fleet-coverage/initial-api-build.json",
+      "sha256": "f6a8a01166d21da1020ecd197f8f3ba0ccf28608f87c256a461903cdca2f6b08"
+    },
+    {
+      "file": "evidence/fleet-coverage/initial-api-installed.json",
+      "sha256": "369ed45ba51c30b9a7bc4c01eea2b9bedbedeb146a292f17c915315602ca7712"
+    },
+    {
+      "file": "evidence/fleet-coverage/document-links.json",
+      "sha256": "0130a0ed7120d2cb086795c8e7b7085aac37e2d35f9e19958a1078b870c242f3"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "assets/fleet-coverage/default-dark.jpg",
+      "sha256": "7301c6f4247ace0981d0f2bd112a7191ea82d1534d52603c7031b7637f078a72",
+      "width": 724,
+      "height": 884
+    },
+    {
+      "file": "assets/fleet-coverage/desktop-dark.jpg",
+      "sha256": "1923e76a05f154b869a193599a16f75268b783dbb8c2ef720b6007e4a67051c2",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "file": "assets/fleet-coverage/desktop-light.jpg",
+      "sha256": "b415ad6778c3bbc768b8b09ab2c6d177b90a7279be54daeab414aaa785be1af3",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "file": "assets/fleet-coverage/desktop-sources.jpg",
+      "sha256": "b00ab70790ff258646891a2db7d7096b72460bbb48cc4091ba768e51f59b660b",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "file": "assets/fleet-coverage/mobile-light.jpg",
+      "sha256": "9744809a560380ef23b2b724f0cf12c65b92b1f4e410ebbeda49ac67f8bc9a7a",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "limitations": [
+    "Request-time aggregate, not an independent producer",
+    "Public transport probes remain unmeasured",
+    "Fresh Android service flag and SQL handshakes do not prove traffic",
+    "No multi-operator/fleet load or mixed stream/script soak",
+    "New role/failure fixture uses SQLite/FakeRedis; real live reads are the existing admin tenant",
+    "Windows disk/RAM writer attribution remains unresolved",
+    "Docs-only follow-up CI must not inherit source success"
+  ]
+}

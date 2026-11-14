@@ -642,6 +642,29 @@ class TestToggleEventTrigger:
         )
         assert resp.status_code == 422
 
+    @pytest.mark.asyncio
+    async def test_inactive_pipeline_blocks_new_binding_or_activation_but_allows_cleanup(
+        self, authenticated_client, test_trigger, test_pipeline, second_pipeline, db_session,
+    ):
+        test_pipeline.is_active = False
+        second_pipeline.is_active = False
+        await db_session.flush()
+        path = f"/api/v1/event-triggers/{test_trigger.id}"
+        response = await authenticated_client.post("/api/v1/event-triggers", json={
+            "name": "Inactive target", "event_type_pattern": "task.failed", "pipeline_id": str(test_pipeline.id),
+        })
+        assert response.status_code == 409
+        assert (await authenticated_client.post(f"{path}/toggle?active=false")).status_code == 200
+        assert (await authenticated_client.post(f"{path}/toggle?active=true")).status_code == 409
+        assert (await authenticated_client.patch(path, json={"is_active": True})).status_code == 409
+        response = await authenticated_client.patch(path, json={"pipeline_id": str(second_pipeline.id)})
+        assert response.status_code == 409
+        response = await authenticated_client.patch(path, json={"description": "Replace later"})
+        assert response.status_code == 200
+        assert response.json()["description"] == "Replace later"
+        assert response.json()["is_active"] is False
+        assert response.json()["pipeline_id"] == str(test_pipeline.id)
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  Pipeline Toggle API — POST /pipelines/{pipeline_id}/toggle

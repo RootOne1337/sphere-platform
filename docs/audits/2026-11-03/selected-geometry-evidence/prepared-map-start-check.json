@@ -1,0 +1,41 @@
+{
+  "checks": [
+    {
+      "job": "6a77040681d142ec97d51831a22785fb",
+      "phase": "ready",
+      "source": {
+        "alternativeId": "fixed-k-fused-173-supported-diagnostic",
+        "geometry_sha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+        "runtime_family": "reference_lk"
+      },
+      "actualTracker": "ReferenceLKLocalizer",
+      "actualFollower": "VehicleRouteFollower",
+      "startSeconds": 3.4228215999901295,
+      "physicalActions": 0,
+      "observationsSubmitted": 0,
+      "vehicleSpeedReferenceLoaded": true,
+      "controlledExperimentalTestOnly": true,
+      "executionQualified": false
+    },
+    {
+      "job": "f3033bb704d4460fb8ed27a613427cc1",
+      "phase": "ready",
+      "source": {
+        "alternativeId": "fixed-k-fused-173-supported-diagnostic",
+        "geometry_sha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+        "runtime_family": "reference_lk"
+      },
+      "actualTracker": "ReferenceLKLocalizer",
+      "actualFollower": "VehicleRouteFollower",
+      "startSeconds": 2.570335200012778,
+      "physicalActions": 0,
+      "observationsSubmitted": 0,
+      "vehicleSpeedReferenceLoaded": true,
+      "controlledExperimentalTestOnly": true,
+      "executionQualified": false
+    }
+  ],
+  "physicalActions": 0,
+  "cacheEntriesAfter": 0,
+  "authenticatedHTTPExercised": false
+}

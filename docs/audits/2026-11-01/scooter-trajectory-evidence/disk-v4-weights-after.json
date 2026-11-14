@@ -1,0 +1,13 @@
+{
+  "assets": {
+    "depth-save.pth": {
+      "sha256": "9c2ee4ded238892dfa51569941372601e35e4a74aa6f84ea80053d2ab1c07abe",
+      "expected": "9c2ee4ded238892dfa51569941372601e35e4a74aa6f84ea80053d2ab1c07abe"
+    },
+    "disk_lightglue.pth": {
+      "sha256": "b5b21d47ea24f2c5e501aec9c91b9716e4c8c3429a4dc1e615c133c4c9378335",
+      "expected": "b5b21d47ea24f2c5e501aec9c91b9716e4c8c3429a4dc1e615c133c4c9378335"
+    }
+  },
+  "matches_pinned_before_and_after": true
+}

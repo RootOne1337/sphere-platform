@@ -1,0 +1,109 @@
+{
+  "schema": "sphere-automatic-postprocess-trial-v1",
+  "status": "completed",
+  "scope": "ISOLATED_OFFLINE_GEOMETRY_ONLY",
+  "selected": 173,
+  "merged_registered": 169,
+  "final_registered": 173,
+  "points": 10552,
+  "helper_source_sha256": {
+    "merge": "335020ee11cd9d07f36d29e53bc83205ebe169ba8e610519720e34aeae457150",
+    "endpoint": "94537aa4dc36369b4fb6790170e52c1cb983c3c233b344f75a78b09856fc96c8"
+  },
+  "helper_receipts": {
+    "merge": {
+      "path": "merge-receipt.json",
+      "sha256": "c6bbbde521fdfacaa713ffee2579b737f2bc10493f564b89b7355279489d5554"
+    },
+    "endpoints": {
+      "path": "endpoints-receipt.json",
+      "sha256": "9a5c8d75879c04cf2f9e6ebf339188468fb4ef479a25e94245d1e8096903f082"
+    }
+  },
+  "source_manifest_sha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "source_video_sha256": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+  "source_unchanged": true,
+  "protected_source_file_count": 203,
+  "model_files": {
+    "final-chosen/cameras.bin": "733e60dfa670ac83249f2ef3fa61a027a2d2b5ac2e6548282275c52a35259c2e",
+    "final-chosen/frames.bin": "72cf9c8fb9fa18ac9ffc6ebbaa6d7e43c81fdac6af6d2c7d4cbb5b1cbce289ed",
+    "final-chosen/images.bin": "535b67ebede812d4b693636b5d7100ee5d814ea15ddb3b1140baa17fb6b47c0a",
+    "final-chosen/points3D.bin": "b1d8aa26e90b63a9f75ca21afc35c6c5a46f1f4333a6720e4a5642ee0bf4f445",
+    "final-chosen/rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+  },
+  "endpoint_namespace": "ENDPOINT_LK",
+  "further_original_db_matching": false,
+  "added_source_indices": [
+    0,
+    856,
+    6,
+    850
+  ],
+  "source_start_seconds": 0.0,
+  "source_end_seconds": 36.903,
+  "source_coverage": {
+    "first_seconds": 0.0,
+    "last_seconds": 36.903,
+    "missing_start_seconds": 0.0,
+    "missing_end_seconds": 0.0,
+    "max_observed_gap_seconds": 0.2849999999999966,
+    "endpoints_observed": true,
+    "all_intervals_observed": true,
+    "endpoint_limit_seconds": 1.0,
+    "interval_limit_seconds": 1.0
+  },
+  "scene_admissible": true,
+  "route_admissible": true,
+  "observation_support": {
+    "min": 91,
+    "median": 438.0,
+    "p10": 270.2,
+    "count_under_6": 0,
+    "count_under_15": 0
+  },
+  "structural": {
+    "status": "complete",
+    "observations": 80602,
+    "duplicate_image_observations": 0,
+    "invalid_reciprocal_observations": 0,
+    "nonpositive_depth": 0
+  },
+  "all_observation_reprojection_px": {
+    "count": 80602,
+    "mean": 1.2765960949129833,
+    "median": 1.0282133348019264,
+    "p95": 3.1417087117287155,
+    "maximum": 3.9996494188957343,
+    "above4": 0
+  },
+  "new_endpoint_observation_reprojection_px": {
+    "count": 2034,
+    "mean": 0.6896644480072094,
+    "median": 0.6229558726048163,
+    "p95": 1.511179014462519,
+    "maximum": 2.91087437596338,
+    "above4": 0
+  },
+  "stored_mean_point_error_px": 1.2890821887913329,
+  "stored_point_error_caveat": "COLMAP point.error is unchanged on add_observation; use explicitly recomputed residuals above.",
+  "existing_pose_max_abs_delta": 0.0,
+  "existing_xyz_max_abs_delta": 0.0,
+  "worker_seconds_sum": 15.297000000020489,
+  "peak_worker_rss_bytes": 167182336,
+  "minimum_host_ram_bytes": 11058958336,
+  "cpu_affinity_limit": 2,
+  "feature_extractions": 0,
+  "mapping_repeats": 0,
+  "bundle_adjustment_runs": 0,
+  "gpu_used": false,
+  "torch_imported": false,
+  "physical_actions": 0,
+  "execution_qualified": false,
+  "navigation_qualified": false,
+  "poses_interpolated": false,
+  "metric_scale": null,
+  "production_publication": false,
+  "independent_ground_truth_available": false,
+  "caveat": "Measured in-sample geometry and same-record endpoint heldout landmarks; no independent pose/scale/navigation validation.",
+  "residual_audit_seconds": 0.4529999999795109
+}

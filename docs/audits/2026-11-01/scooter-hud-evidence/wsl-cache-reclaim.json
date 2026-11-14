@@ -1,0 +1,202 @@
+{
+  "action": "release_clean_file_page_cache_once",
+  "command_outcome": "client_timeout_after_20s_no_retry",
+  "before": {
+    "windows": {
+      "availableRamBytes": 12089806848,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 93727256576,
+      "commitLimitBytes": 103009927168,
+      "kernelPagedBytes": 10748440576,
+      "kernelNonpagedBytes": 5226299392,
+      "processCount": 524,
+      "handleCount": 699870
+    },
+    "wsl_bytes": {
+      "MemTotal": 24773996544,
+      "MemFree": 6388203520,
+      "MemAvailable": 19847737344,
+      "Buffers": 4141412352,
+      "Cached": 4222070784,
+      "SwapFree": 6399508480,
+      "Dirty": 372736,
+      "Writeback": 0,
+      "SReclaimable": 5546893312,
+      "SUnreclaim": 319954944
+    },
+    "container_identity": [
+      [
+        "0bf7b0be08bb44223480628e492dca644ee3a7300b3c44ccb07b8aa66f5984a6",
+        "sphere-pilot-20260911-n8n-1",
+        "n8nio/n8n:1.32.0"
+      ],
+      [
+        "207cb00d1dbe327aebbaa7d4d60108c074e14e9a6aaf99df9ad502fa151cc5f0",
+        "sphere-tuna-canary",
+        "yuccastream/tuna@sha256:bb214af134a42d8c6266ae3d9bf0e67b2c60db0dcbfa111ae8ef68b9ce956449"
+      ],
+      [
+        "424083add045e31d5618bb5c9ab3d4457ab2f36918532f4d33e4ff68eeae3527",
+        "sphere-pilot-20260911-frontend-1",
+        "sphere-pilot-20260911-frontend:8fef5eb"
+      ],
+      [
+        "4ac5d31bd57f09a97dcea8ba4eff32a3ca06ec465e79b797bfc1a9df1eb2a98c",
+        "sphere-pilot-20260911-backend-1",
+        "sphere-reviewed-backend:1afdc529e18cd34b5d8ee0919f217076a8592846"
+      ],
+      [
+        "6ed531e885818664cd32fe806c2993fd7a9c0b8d456969bfd1cbee517f05904d",
+        "sphere-pilot-20260911-minio-1",
+        "minio/minio:latest"
+      ],
+      [
+        "79171e5c371d46f60b87351f2676c6dd802d1b65315633dfc2e1767c123de5f5",
+        "sphere-observability-20260930-prometheus-1",
+        "prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e"
+      ],
+      [
+        "7d8866e37758ae3fc71225199852726f6f366e8b09af41a3c5d060fcb9b380ec",
+        "sphere-pilot-20260911-redis-1",
+        "redis:7.2-alpine"
+      ],
+      [
+        "879a728d94aacf998fa4e2a8d1abaff46d04ad003c5fbf322f4f058d90b15816",
+        "sphere-pilot-20260911-nginx-1",
+        "nginx:alpine"
+      ],
+      [
+        "c2b5b99bcf18bda3332079ecc2e4bb4bd6f5622e8c1cb9d3233ad092d2819048",
+        "sphere-pilot-20260911-postgres-1",
+        "postgres:15-alpine"
+      ],
+      [
+        "e17e787bb4f965dcd8f07763f22075058d051b692a1ded72b628df46e9ce940b",
+        "sphere-tunnel",
+        "sphere-tunnel:latest"
+      ],
+      [
+        "e90590095f43cebf0a151e8a304b381b3a5984f20a0e02deb96e551254747d17",
+        "sphere-review-20261002-review-ui-1",
+        "sphere-route-local:scooter-recovery-20261101"
+      ],
+      [
+        "ec2a4b7110ca60a0a89d41df105e3dee656666fff6090098d3756579ac972a2e",
+        "sphere-pilot-20260911-public-gateway-1",
+        "nginx:alpine"
+      ],
+      [
+        "f23bfb90a6d44b71668ac5768c34e0d5dad85a60da431aa4ea5b09933af415f7",
+        "sphere-observability-20260930-grafana-1",
+        "grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572"
+      ],
+      [
+        "fcf5818780a388f7fe3ef0ab290a99c4101cb281088fbe40551a3b3ab30990c8",
+        "sphere-review-20261002-review-gateway-1",
+        "nginx:alpine"
+      ]
+    ]
+  },
+  "after": {
+    "windows": {
+      "availableRamBytes": 8559669248,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 94004244480,
+      "commitLimitBytes": 103009927168,
+      "kernelPagedBytes": 10677075968,
+      "kernelNonpagedBytes": 5189734400,
+      "processCount": 521,
+      "handleCount": 696156
+    },
+    "wsl_bytes": {
+      "MemTotal": 24773996544,
+      "MemFree": 13846245376,
+      "MemAvailable": 19887722496,
+      "Buffers": 4730880,
+      "Cached": 1161666560,
+      "SwapFree": 6399508480,
+      "Dirty": 417792,
+      "Writeback": 0,
+      "SReclaimable": 5325922304,
+      "SUnreclaim": 319766528
+    },
+    "container_identity": [
+      [
+        "0bf7b0be08bb44223480628e492dca644ee3a7300b3c44ccb07b8aa66f5984a6",
+        "sphere-pilot-20260911-n8n-1",
+        "n8nio/n8n:1.32.0"
+      ],
+      [
+        "207cb00d1dbe327aebbaa7d4d60108c074e14e9a6aaf99df9ad502fa151cc5f0",
+        "sphere-tuna-canary",
+        "yuccastream/tuna@sha256:bb214af134a42d8c6266ae3d9bf0e67b2c60db0dcbfa111ae8ef68b9ce956449"
+      ],
+      [
+        "424083add045e31d5618bb5c9ab3d4457ab2f36918532f4d33e4ff68eeae3527",
+        "sphere-pilot-20260911-frontend-1",
+        "sphere-pilot-20260911-frontend:8fef5eb"
+      ],
+      [
+        "4ac5d31bd57f09a97dcea8ba4eff32a3ca06ec465e79b797bfc1a9df1eb2a98c",
+        "sphere-pilot-20260911-backend-1",
+        "sphere-reviewed-backend:1afdc529e18cd34b5d8ee0919f217076a8592846"
+      ],
+      [
+        "6ed531e885818664cd32fe806c2993fd7a9c0b8d456969bfd1cbee517f05904d",
+        "sphere-pilot-20260911-minio-1",
+        "minio/minio:latest"
+      ],
+      [
+        "79171e5c371d46f60b87351f2676c6dd802d1b65315633dfc2e1767c123de5f5",
+        "sphere-observability-20260930-prometheus-1",
+        "prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e"
+      ],
+      [
+        "7d8866e37758ae3fc71225199852726f6f366e8b09af41a3c5d060fcb9b380ec",
+        "sphere-pilot-20260911-redis-1",
+        "redis:7.2-alpine"
+      ],
+      [
+        "879a728d94aacf998fa4e2a8d1abaff46d04ad003c5fbf322f4f058d90b15816",
+        "sphere-pilot-20260911-nginx-1",
+        "nginx:alpine"
+      ],
+      [
+        "c2b5b99bcf18bda3332079ecc2e4bb4bd6f5622e8c1cb9d3233ad092d2819048",
+        "sphere-pilot-20260911-postgres-1",
+        "postgres:15-alpine"
+      ],
+      [
+        "e17e787bb4f965dcd8f07763f22075058d051b692a1ded72b628df46e9ce940b",
+        "sphere-tunnel",
+        "sphere-tunnel:latest"
+      ],
+      [
+        "e90590095f43cebf0a151e8a304b381b3a5984f20a0e02deb96e551254747d17",
+        "sphere-review-20261002-review-ui-1",
+        "sphere-route-local:scooter-recovery-20261101"
+      ],
+      [
+        "ec2a4b7110ca60a0a89d41df105e3dee656666fff6090098d3756579ac972a2e",
+        "sphere-pilot-20260911-public-gateway-1",
+        "nginx:alpine"
+      ],
+      [
+        "f23bfb90a6d44b71668ac5768c34e0d5dad85a60da431aa4ea5b09933af415f7",
+        "sphere-observability-20260930-grafana-1",
+        "grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572"
+      ],
+      [
+        "fcf5818780a388f7fe3ef0ab290a99c4101cb281088fbe40551a3b3ab30990c8",
+        "sphere-review-20261002-review-gateway-1",
+        "nginx:alpine"
+      ]
+    ]
+  },
+  "container_identities_unchanged": true,
+  "persistent_settings_changed": false,
+  "files_deleted": 0,
+  "device_actions": 0,
+  "interpretation": "Later cache decrease observed; process exit success was not confirmed. Host workload also changed, so the available-memory delta is not an isolated causal estimate.",
+  "reference": "https://devblogs.microsoft.com/commandline/memory-reclaim-in-the-windows-subsystem-for-linux-2/"
+}

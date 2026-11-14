@@ -1,0 +1,38 @@
+{
+  "observedAt": "2026-10-05T20:21:00.559434+00:00",
+  "source": "12915dd7f09f433d5c4585ac15263e841d20ce5c",
+  "workingTreeModified": false,
+  "workingFileHashes": {
+    "backend/api/v1/logs/router.py": "10c69bee50ce09e877fe24ea207b68d465f7d2fc1884f9a4eef62ef996f595cc"
+  },
+  "cases": [
+    {
+      "contentLengthDeclared": true,
+      "generatedBodyBytes": 8388608,
+      "chunkBytes": 65536,
+      "receiveCalls": 128,
+      "asgiBodyBytesConsumed": 8388608,
+      "requestBodyCached": true,
+      "pythonTracedPeakBytes": 8421847,
+      "status": 413,
+      "storedFiles": 0,
+      "temporaryFilesRemoved": true
+    },
+    {
+      "contentLengthDeclared": false,
+      "generatedBodyBytes": 8388608,
+      "chunkBytes": 65536,
+      "receiveCalls": 128,
+      "asgiBodyBytesConsumed": 8388608,
+      "requestBodyCached": true,
+      "pythonTracedPeakBytes": 8403361,
+      "status": 413,
+      "storedFiles": 0,
+      "temporaryFilesRemoved": true
+    }
+  ],
+  "liveServicesContacted": false,
+  "authorizationProven": false,
+  "hostDiskWriterIdentified": false,
+  "aggregateProcessRssBoundProven": false
+}

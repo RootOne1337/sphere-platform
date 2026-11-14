@@ -27,7 +27,7 @@ const MOCK_USER = {
   id: 'user-001',
   org_id: 'org-001',
   email: 'admin@sphere.io',
-  role: 'admin',
+  role: 'org_admin',
   is_active: true,
   mfa_enabled: false,
   last_login_at: '2026-03-04T08:00:00Z',
@@ -56,13 +56,14 @@ describe('useUsers', () => {
   });
 
   it('передаёт параметры пагинации', async () => {
-    mockApi.get.mockResolvedValueOnce({ data: MOCK_USERS_RESPONSE });
+    mockApi.get.mockResolvedValueOnce({ data: { ...MOCK_USERS_RESPONSE, page: 2, per_page: 10 } });
 
     renderQueryHook(() => useUsers(2, 10));
 
     await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
     expect(mockApi.get).toHaveBeenCalledWith('/users', {
       params: { page: 2, per_page: 10 },
+      signal: expect.any(AbortSignal),
     });
   });
 });
@@ -71,17 +72,17 @@ describe('useCreateUser', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('создаёт пользователя POST /users', async () => {
-    mockApi.post.mockResolvedValueOnce({ data: MOCK_USER });
+    mockApi.post.mockResolvedValueOnce({ data: { ...MOCK_USER, email: 'new@sphere.io', role: 'viewer' } });
 
     const { result } = renderQueryHook(() => useCreateUser());
 
-    result.current.mutate({ email: 'new@sphere.io', password: 'SecureP@ss123!', role: 'operator' });
+    result.current.mutate({ email: 'new@sphere.io', password: 'SecureP@ss123!', role: 'viewer' });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.post).toHaveBeenCalledWith('/users', {
       email: 'new@sphere.io',
       password: 'SecureP@ss123!',
-      role: 'operator',
+      role: 'viewer',
     });
   });
 });
@@ -105,7 +106,7 @@ describe('useDeactivateUser', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('деактивирует пользователя PATCH /users/{id}/deactivate', async () => {
-    mockApi.patch.mockResolvedValueOnce({ data: null });
+    mockApi.patch.mockResolvedValueOnce({ status: 204, data: null });
 
     const { result } = renderQueryHook(() => useDeactivateUser());
 

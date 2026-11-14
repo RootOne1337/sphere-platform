@@ -161,7 +161,7 @@ class ScriptCacheManager @Inject constructor(
         val index = readIndex().toMutableList()
         var evictName: String? = null
         if (name !in index && index.size >= MAX_ENTRIES) {
-            evictName = index.removeFirst()
+            evictName = index.removeAt(0)
             Timber.i("[ScriptCache] LRU evict: '$evictName' (лимит $MAX_ENTRIES достигнут)")
         }
         index.remove(name)  // убираем старую позицию если была

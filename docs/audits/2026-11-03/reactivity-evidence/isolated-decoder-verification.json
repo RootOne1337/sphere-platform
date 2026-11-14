@@ -1,0 +1,54 @@
+{
+  "outcome": "read_only_decode_and_hud_success",
+  "baseInterpreterHadAv": false,
+  "decoderVersion": "16.1.0",
+  "samples": [
+    {
+      "index": 0,
+      "ticks90k": 0,
+      "width": 1920,
+      "height": 1080,
+      "rgbSha256": "e6e6a289f9ab18509de9101cd1efe5c9abc13dbc0cae871704f362930b6bf28e",
+      "speedKmh": 0.0,
+      "speedConfidence": 100.0,
+      "speedState": "accepted"
+    },
+    {
+      "index": 1,
+      "ticks90k": 90,
+      "width": 1920,
+      "height": 1080,
+      "rgbSha256": "1671d646a38517920162029951fdb9464998bfe96b9765e30099af1fb4936686",
+      "speedKmh": 0.0,
+      "speedConfidence": 100.0,
+      "speedState": "accepted"
+    },
+    {
+      "index": 2,
+      "ticks90k": 3690,
+      "width": 1920,
+      "height": 1080,
+      "rgbSha256": "f8b77946759d11c24e5b8daacfee81b6dd47b0ad48466e86ab488abc4f3c6c85",
+      "speedKmh": 0.0,
+      "speedConfidence": 100.0,
+      "speedState": "accepted"
+    }
+  ],
+  "seconds": 0.23563909999938915,
+  "sourceManifestSha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "sourceUnchanged": true,
+  "stoppedBeforeImageIndexingAndSfm": true,
+  "physicalActions": 0,
+  "testSummary": {
+    "passed": 60,
+    "seconds": 5.76,
+    "suites": [
+      "test_reconstruct_route",
+      "test_route_only_recovery_pipeline",
+      "test_route_task_resources",
+      "test_route_hud_profile",
+      "test_route_hud_workspace"
+    ]
+  },
+  "boundary": "three real frames in actual offline AMD interpreter; not a full route rebuild"
+}

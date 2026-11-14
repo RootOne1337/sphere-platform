@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+  "implementationCommit": "0ea269ed568640584c0997e121f86a2733330d48",
+  "packagedChangesFromInstalledBaseline": ["backend/api/ws/android/router.py"],
+  "baseline": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+  "defect": "The real Android WebSocket receive loop did not dispatch app_vpn_status to the existing bounded/session-owned handler.",
+  "localRegressions": {
+    "beforeFix": {"failed": 2, "passed": 1},
+    "afterFixWebSocketAndRuntime": {"passed": 988, "subtestsPassed": 44},
+    "deviceStatus": {"passed": 48},
+    "cases": ["Valid report routed with authenticated device/session", "Extra secret-shaped field rejected", "Cache outage does not interrupt subsequent pong"]
+  },
+  "ci": {
+    "runId": 39681623774,
+    "runAttempt": 1,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/39681623774",
+    "conclusion": "success",
+    "passed": 4428,
+    "skipped": 107,
+    "subtestsPassed": 668,
+    "coveragePercent": 82.57,
+    "allSixJobsPassed": true,
+    "imageArtifactId": 12384122285,
+    "imageId": "sha256:cf84467ff9fe581f18cc67ecdb3a28a128466fd670d7de1737e26995d4f3f3b3",
+    "archiveSha256": "6f4b9186d0cb320b02532feda31a0fd5ff1b1c29dca4a41714e41af2e50776f9",
+    "githubArtifactZipSha256": "1eac2dee06333e129fc7304c716a330c1b99dab9cd2cad574c8f2a33c3ade6fc",
+    "githubArtifactDigestVerified": true,
+    "archiveAndSourceBoundaryAdmitted": true
+  },
+  "previousFailedCi": {
+    "runId": 39679775329,
+    "conclusion": "failure",
+    "passed": 4426,
+    "failed": 2,
+    "skipped": 107,
+    "cause": "ECR registry Data limit exceeded while pulling the pinned nginx gateway fixture",
+    "failedRunAdmittedForInstallation": false,
+    "fix": "Use the canonical official nginx/redis registry with the same pinned digests",
+    "nginxCanonicalManifestSha256": "0530961ff0592b58c10f767535cc0abdfccf9e389ff7cc90f87320c1bc7e8506",
+    "canonicalNginxManifestIndependentlyHashed": true
+  },
+  "migrationHeads": ["20261021_vpn_profiles"],
+  "migrationPerformed": false,
+  "runtimeInstalled": false,
+  "physicalVpnAccepted": false,
+  "productionAccepted": false,
+  "scope": "Immutable build/test admission only. Later live installation/readback requires its own receipt."
+}

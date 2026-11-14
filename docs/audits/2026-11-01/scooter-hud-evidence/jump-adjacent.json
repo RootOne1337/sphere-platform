@@ -1,0 +1,259 @@
+{
+  "status": "complete",
+  "frames_decoded_and_access_unit_hash_verified": 901,
+  "binding": {
+    "496": {
+      "relative_ticks_90k": 1785510,
+      "access_unit_sha256": "a3883323cee29b8b05caa4811658b268750fa6bcd1b1cb2d91579539ae460d31",
+      "pts": 1785510
+    },
+    "497": {
+      "relative_ticks_90k": 1790010,
+      "access_unit_sha256": "74c529c8518187059b06fbbcdbc9eb6cc9fad7199e1c64ff4b00f1aa74e7aa02",
+      "pts": 1790010
+    },
+    "498": {
+      "relative_ticks_90k": 1794420,
+      "access_unit_sha256": "f64a84724d9d8ba660b9aa49007c3af72dece3b5b466ebd74b9ff56a880f1f3b",
+      "pts": 1794420
+    },
+    "499": {
+      "relative_ticks_90k": 1797480,
+      "access_unit_sha256": "e85b7470f46e4a30870ce441e24278ae6263b0227c44aefb579676e09ea1a9b9",
+      "pts": 1797480
+    },
+    "500": {
+      "relative_ticks_90k": 1805040,
+      "access_unit_sha256": "75d725b758a850fd51f2eeea3a749e37b90b7c20ec886779f8964212c7170338",
+      "pts": 1805040
+    }
+  },
+  "source_sha256_before": {
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\manifest.json": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\frames.jsonl": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\inputs.jsonl": "c919e79aefc90ceda827d69142e8c7504ce3fb49fc27bc09ed341d38b241c2e8",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\COMPLETE": "31231b7a04f4bdd779637913f554c958f87e33988612b11808296384bcb206b5",
+    ".local-pilot\\scooter-precise-hud-20261101\\mask.png": "f638c5d6da826eebfae0f3be57784ea4518dfac4238a6bcddaffbfbed0fb1ec7"
+  },
+  "source_sha256_after": {
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\manifest.json": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\frames.jsonl": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\inputs.jsonl": "c919e79aefc90ceda827d69142e8c7504ce3fb49fc27bc09ed341d38b241c2e8",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\COMPLETE": "31231b7a04f4bdd779637913f554c958f87e33988612b11808296384bcb206b5",
+    ".local-pilot\\scooter-precise-hud-20261101\\mask.png": "f638c5d6da826eebfae0f3be57784ea4518dfac4238a6bcddaffbfbed0fb1ec7"
+  },
+  "source_unchanged": true,
+  "opencv_version": "4.13.0",
+  "scale": 0.5,
+  "focal_assumption_original_px": 603.2398818704738,
+  "features": "Shi-Tomasi max1600, original HUD allowed mask, LK 31x31 maxLevel=4, forward-backward <=1.5 original px, mask at both ends",
+  "diagnostic_gate": "at least 40 tracks, 30 essential inliers, 20 positive-depth, 40% positive of inliers and 6 occupied cells; not an observability proof",
+  "adjacent": [
+    {
+      "first": 496,
+      "second": 497,
+      "ticks": [
+        1785510,
+        1790010
+      ],
+      "detected": 430,
+      "fb_valid_and_masked": 150,
+      "tracking_diagnostics": {
+        "input": 430,
+        "lk_status_both": 371,
+        "in_bounds": 387,
+        "fb_pass_before_mask": 152,
+        "excluded_by_destination_mask_after_fb": 2
+      },
+      "retained_fraction": 0.3488372093023256,
+      "median_flow_original_px": 71.96821594238281,
+      "essential": {
+        "status": "estimate_only",
+        "tracks": 150,
+        "ransac_inliers": 122,
+        "positive_depth": 85,
+        "occupied_8x4": 10,
+        "rotation_degrees": 6.2073825822911495,
+        "translation_direction_unscaled": [
+          0.016718403330410293,
+          -0.12983275112257217,
+          -0.9913949524412691
+        ],
+        "rotation_matrix": [
+          [
+            0.9941802063261005,
+            -0.006909913996215286,
+            -0.10750800173921124
+          ],
+          [
+            0.005909254167083461,
+            0.9999362318590924,
+            -0.009623561223765259
+          ],
+          [
+            0.10756764413420111,
+            0.00893226197576269,
+            0.9941576417406921
+          ]
+        ]
+      }
+    },
+    {
+      "first": 497,
+      "second": 498,
+      "ticks": [
+        1790010,
+        1794420
+      ],
+      "detected": 460,
+      "fb_valid_and_masked": 221,
+      "tracking_diagnostics": {
+        "input": 460,
+        "lk_status_both": 444,
+        "in_bounds": 443,
+        "fb_pass_before_mask": 221,
+        "excluded_by_destination_mask_after_fb": 0
+      },
+      "retained_fraction": 0.48043478260869565,
+      "median_flow_original_px": 52.17160415649414,
+      "essential": {
+        "status": "estimate_only",
+        "tracks": 221,
+        "ransac_inliers": 204,
+        "positive_depth": 106,
+        "occupied_8x4": 16,
+        "rotation_degrees": 4.075466064017247,
+        "translation_direction_unscaled": [
+          -0.04491273198592585,
+          -0.05410877980071544,
+          -0.9975244791252184
+        ],
+        "rotation_matrix": [
+          [
+            0.9974718904181404,
+            0.0006237183701324417,
+            -0.07105940332605959
+          ],
+          [
+            -0.0007005548217421361,
+            0.9999991966397023,
+            -0.0010563819819639775
+          ],
+          [
+            0.07105868735490815,
+            0.0011034923401834693,
+            0.9974715260377374
+          ]
+        ]
+      }
+    },
+    {
+      "first": 498,
+      "second": 499,
+      "ticks": [
+        1794420,
+        1797480
+      ],
+      "detected": 477,
+      "fb_valid_and_masked": 180,
+      "tracking_diagnostics": {
+        "input": 477,
+        "lk_status_both": 451,
+        "in_bounds": 454,
+        "fb_pass_before_mask": 180,
+        "excluded_by_destination_mask_after_fb": 0
+      },
+      "retained_fraction": 0.37735849056603776,
+      "median_flow_original_px": 57.16322708129883,
+      "essential": {
+        "status": "estimate_only",
+        "tracks": 180,
+        "ransac_inliers": 146,
+        "positive_depth": 97,
+        "occupied_8x4": 12,
+        "rotation_degrees": 4.92632810145856,
+        "translation_direction_unscaled": [
+          0.002831698352148333,
+          -0.05509348745687077,
+          -0.9984771850795
+        ],
+        "rotation_matrix": [
+          [
+            0.9963063469220673,
+            -0.0011067482951841816,
+            -0.08586290346253173
+          ],
+          [
+            0.0011841937800870306,
+            0.9999989367084768,
+            0.0008510387810289066
+          ],
+          [
+            0.08586187027951432,
+            -0.0009495736552364506,
+            0.9963065981624216
+          ]
+        ]
+      }
+    },
+    {
+      "first": 499,
+      "second": 500,
+      "ticks": [
+        1797480,
+        1805040
+      ],
+      "detected": 460,
+      "fb_valid_and_masked": 35,
+      "tracking_diagnostics": {
+        "input": 460,
+        "lk_status_both": 356,
+        "in_bounds": 391,
+        "fb_pass_before_mask": 35,
+        "excluded_by_destination_mask_after_fb": 0
+      },
+      "retained_fraction": 0.07608695652173914,
+      "median_flow_original_px": 124.24517822265625,
+      "essential": {
+        "status": "insufficient_tracks",
+        "tracks": 35
+      }
+    }
+  ],
+  "direct_496_to_500": {
+    "detected": 430,
+    "retained": 8,
+    "tracking_diagnostics": {
+      "input": 430,
+      "lk_status_both": 313,
+      "in_bounds": 331,
+      "fb_pass_before_mask": 8,
+      "excluded_by_destination_mask_after_fb": 0
+    },
+    "essential": {
+      "status": "insufficient_tracks",
+      "tracks": 8
+    }
+  },
+  "chained_496_to_500": {
+    "detected": 430,
+    "survivors_after_each": [
+      150,
+      115,
+      83,
+      19
+    ],
+    "essential": {
+      "status": "insufficient_tracks",
+      "tracks": 19
+    }
+  },
+  "rotation_composed_adjacent_deg": null,
+  "rotation_direct_vs_composed_deg": null,
+  "rotation_chain_vs_composed_deg": null,
+  "rotation_chain_vs_direct_deg": null,
+  "elapsed_s": 3.9839999999385327,
+  "limitations": "Same video and approximate focal; rotation results share optical flow inputs. Essential geometry may be degenerate despite numerical support and positive depth. No metric translation, absolute heading, ground truth, vehicle trajectory, or evidence that a match is correct. Different detectors/retention make raw counts not a controlled matching quality comparison."
+}

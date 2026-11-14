@@ -1,0 +1,2 @@
+Tests	Unit and real-service regression tests	2026-09-08T22:58:10.7804515Z Required test coverage of 65% reached. Total coverage: 68.44%
+Tests	Unit and real-service regression tests	2026-09-08T22:58:10.7804929Z ================= 1251 passed, 4 warnings in 216.18s (0:03:36) =================

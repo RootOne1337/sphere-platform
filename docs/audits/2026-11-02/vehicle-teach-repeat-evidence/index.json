@@ -1,0 +1,1406 @@
+{
+  "schema": "sphere-vehicle-teach-repeat-evidence-v1",
+  "scope": "Recorded source observations, unit/fixture tests, synthetic oracle plant and failed geometry trials; no live game acceptance",
+  "bytes": 1944057,
+  "files": [
+    {
+      "file": "hud-outcome.json",
+      "source": ".local-pilot/hud-speed-profile-20261102/outcome.json",
+      "bytes": 2721,
+      "sha256": "0958a6ed1c7589c8a8e63c3697fb09c2fe208a27279d412ab69ced4c9b5a028a"
+    },
+    {
+      "file": "hud-publication.json",
+      "source": ".local-pilot/hud-speed-profile-20261102/publication.json",
+      "bytes": 6636,
+      "sha256": "f45131862ec6e30198d4288cfd0c5293ee4f45dc04e8e1eee6270b70713b81bd"
+    },
+    {
+      "file": "hud-profile-receipt.json",
+      "source": ".local-pilot/reconstruction-jobs/6a77040681d142ec97d51831a22785fb/vehicle-speed-reference/receipt.json",
+      "bytes": 1017,
+      "sha256": "968e267908606e2fe04dfcce40b50c53932b2a9c656f76af96f7693205ef03be"
+    },
+    {
+      "file": "hud-profile-COMPLETE.txt",
+      "source": ".local-pilot/reconstruction-jobs/6a77040681d142ec97d51831a22785fb/vehicle-speed-reference/COMPLETE",
+      "bytes": 66,
+      "sha256": "adcb5a2c9a12cce7f010d3130f85f2dacddd3aaa5091a2dd9dd744e57f670c11"
+    },
+    {
+      "file": "hud-visible-crops-provenance.json",
+      "source": "tests/fixtures/hud_speed_font_v1/provenance.json",
+      "bytes": 2243,
+      "sha256": "7bc0286e36a4a204879fc4253d47481b3e073552074426c7b6dde73e9ade441d"
+    },
+    {
+      "file": "backend-verification.json",
+      "source": ".local-pilot/vehicle-controller-plant-20261102/verification.json",
+      "bytes": 1936,
+      "sha256": "8fa49cd442b46fd34aa24f395417c033445385caee68cb24bf027f112a585d46"
+    },
+    {
+      "file": "backend-tests.txt",
+      "source": ".local-pilot/vehicle-controller-plant-20261102/backend-tests.txt",
+      "bytes": 214,
+      "sha256": "d58842dfbc6542ef1685ad758f051e14a5d9d99c73f1a07471a27cbd4375d4df"
+    },
+    {
+      "file": "frontend-verification.json",
+      "source": ".local-pilot/vehicle-route-frontend-20261102/verification.json",
+      "bytes": 4036,
+      "sha256": "55c9cdead9b47e9d0fd6ae668989ba4dee4e44d0eab39cf664122165b13f2e64"
+    },
+    {
+      "file": "delivery-preparation.json",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/preparation.json",
+      "bytes": 3580,
+      "sha256": "b50b6191a943fe6adf723b6f40c3cbee7dd87885d975d1e20343f1875aef2ef8"
+    },
+    {
+      "file": "loop-postprocess-result.json",
+      "source": ".local-pilot/skuter1-loop-graph-20261102-v3/postprocess-20261102-v1/result.json",
+      "bytes": 4501,
+      "sha256": "63e14f40802c1f5d757ebb041c906f6320dc6d1a5fd7f66ce5a6dec7b4f37add"
+    },
+    {
+      "file": "loop-observation-audits.json",
+      "source": ".local-pilot/skuter1-loop-graph-20261102-v3/postprocess-audit-20261102-v1/observation-audits.json",
+      "bytes": 2063,
+      "sha256": "dab6600c3d435f82d3f0ce0ae5282c49141007ab23359417b51ba2ff6219fb07"
+    },
+    {
+      "file": "loop-heldout-constraints.json",
+      "source": ".local-pilot/skuter1-loop-graph-20261102-v3/postprocess-audit-20261102-v1/loop-constraints.json",
+      "bytes": 5675,
+      "sha256": "df60f72581a6dc3c5ca28d29ad6b2fe7ce1b9ea8f6d179b77b559bb0e53b5eeb"
+    },
+    {
+      "file": "loop-alias-normalization.json",
+      "source": ".local-pilot/skuter1-loop-graph-20261102-v3/alias-normalize-20261102-v1/result.json",
+      "bytes": 3140,
+      "sha256": "ca119308cebe770bf588caaa6747fb2465fe4f26131168078dcf5a5168986f29"
+    },
+    {
+      "file": "global-mapper-help.txt",
+      "source": ".local-pilot/skuter1-global-capabilities-20261102/global_mapper-help.txt",
+      "bytes": 3153,
+      "sha256": "c898936bee89b7f376ab4854d01916b4caaac4ef25892b38d668fcbf1d4c36cf"
+    },
+    {
+      "file": "global-calibrator-help.txt",
+      "source": ".local-pilot/skuter1-global-capabilities-20261102/view_graph_calibrator-help.txt",
+      "bytes": 1898,
+      "sha256": "e7a2e4cf3d4217f128389449b41d8c6290560a1801ef395b1c802a85b3b7fbdc"
+    },
+    {
+      "file": "global-loop-calibration.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v1/database-calibration.json",
+      "bytes": 786,
+      "sha256": "e6c9464381d1a4ccc12063c67b14e47fc922c2d6c3ec6b599c4be46a2d018e23"
+    },
+    {
+      "file": "global-loop-calibrate-receipt.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v1/calibrate-receipt.json",
+      "bytes": 649,
+      "sha256": "55daa4e4c6e292c8ecb201793606c0609a9b84fe7d980f728ae8499877098486"
+    },
+    {
+      "file": "global-loop-mapping-receipt.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v1/global-map-receipt.json",
+      "bytes": 1392,
+      "sha256": "838b3f0e980f8f4a4a3c6caa9f849eddcf99073b5a5e4cd8ba1145b6bac2059b"
+    },
+    {
+      "file": "global-loop-calibrate.log",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v1/calibrate.log",
+      "bytes": 653,
+      "sha256": "70e22c7d8243a32b056e1141ce3ed9f06f577f3cadff3a2cb42ea152c116820f"
+    },
+    {
+      "file": "global-loop-mapping.log",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v1/global-map.log",
+      "bytes": 3420,
+      "sha256": "445f00808c85793d2800957b5dad93b3eff88dcc68a92fa8e125d3ba55349cf8"
+    },
+    {
+      "file": "../assets/skuter1-hud-speed-profile.png",
+      "source": ".local-pilot/hud-speed-profile-20261102/speed-profile-board.png",
+      "bytes": 194495,
+      "sha256": "3237afbd7ee3c683d1513546765bf8b6efe5364bd111d799bd6fd88203c74b2d"
+    },
+    {
+      "file": "../assets/vehicle-controller-oracle-plant.png",
+      "source": ".local-pilot/vehicle-controller-plant-20261102/simulation.png",
+      "bytes": 297071,
+      "sha256": "ee7422aaab82a1af094e1c0954324ebfe26db71a475bec2ebc50e2bdd5dea5b8"
+    },
+    {
+      "file": ".gitattributes",
+      "source": "package policy",
+      "bytes": 348,
+      "sha256": "0d438fda8c8397b57f503d60567ca7f58b5ad5a92001f3a1b8ffdf14e3db8b2a"
+    },
+    {
+      "file": "sources/motor_worker--vehicle_route.py.gz",
+      "source": "git:1b68f20d:motor_worker/vehicle_route.py",
+      "bytes": 4956,
+      "sha256": "a236c83caa40b209d22609854b0ea7010a6cf9eb2eadd3cbbea1dc7e940b6510",
+      "encoding": "gzip",
+      "source_bytes": 18069,
+      "source_sha256": "1b0caec535d2e5db758082f89eaa01a8f6729d3f85d1705d38e1edf381cf93bd",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/scripts--pilot--route_workspace.py.gz",
+      "source": "git:1b68f20d:scripts/pilot/route_workspace.py",
+      "bytes": 8773,
+      "sha256": "41b2774c4a002c0450d11b894576515e89b37febe035dddd7d41525e4ad17cc7",
+      "encoding": "gzip",
+      "source_bytes": 32676,
+      "source_sha256": "8f91f0c9e3e7b71652dd9ed6b20d827db8519d5c5bc3976aa07a2c3f96c2d121",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/scripts--pilot--reconstruction_service.py.gz",
+      "source": "git:1b68f20d:scripts/pilot/reconstruction_service.py",
+      "bytes": 10539,
+      "sha256": "a244b9f13c457a911093e52474fad94d21b1e636588e8a22ec3a50b3ed7c36fa",
+      "encoding": "gzip",
+      "source_bytes": 49260,
+      "source_sha256": "eea788c667cc9095e0a7438d72a25b9d9e6564edfae2149df6e779660a260d01",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/scripts--pilot--route_hud_profile.py.gz",
+      "source": "git:1b68f20d:scripts/pilot/route_hud_profile.py",
+      "bytes": 4778,
+      "sha256": "b7f25c786719e637e3e3779a384be0d97bc5b0fd58c725c6cbac9172dbb4c535",
+      "encoding": "gzip",
+      "source_bytes": 15261,
+      "source_sha256": "8f54bcf71a8ac74db46d57522ee0a84c5f5a59373069640e45c7e9e738e3a097",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/scripts--pilot--black_russia_speed_font_v1.json",
+      "source": "git:1b68f20d:scripts/pilot/black_russia_speed_font_v1.json",
+      "bytes": 27441,
+      "sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac"
+    },
+    {
+      "file": "sources/scripts--pilot--resource_guard.py.gz",
+      "source": "git:1b68f20d:scripts/pilot/resource_guard.py",
+      "bytes": 3685,
+      "sha256": "83fefa959b4fc4c664c2e0ecb105a5ef8e1161b872891ff61a14a72876a10960",
+      "encoding": "gzip",
+      "source_bytes": 10579,
+      "source_sha256": "421d3268ded34c3924919a6c4497d121904245de17c525c0eb77448b9e20906c",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/scripts--pilot--reconstruct_route.py.gz",
+      "source": "git:1b68f20d:scripts/pilot/reconstruct_route.py",
+      "bytes": 12801,
+      "sha256": "a693cfe8ac2311ad17ed7b14ea9074327e9ec351804e5666333e31d224eb64a8",
+      "encoding": "gzip",
+      "source_bytes": 45800,
+      "source_sha256": "c7ae0d43e3d5ec6237a7142feb94954d5c4f9f1060c251b9f4362e3eb3962497",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/scripts--pilot--check_route_first_run.py.gz",
+      "source": "git:1b68f20d:scripts/pilot/check_route_first_run.py",
+      "bytes": 4034,
+      "sha256": "5406c013430b1d864b443cea8afeab7537ac5a20c030776730a40d829bc5f2ce",
+      "encoding": "gzip",
+      "source_bytes": 11489,
+      "source_sha256": "55e305210640e9eaa711328d45cd3584b21ad4f34d68f88c912826f57d1d15a4",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/frontend--src--features--stream--vehiclePilot.ts.gz",
+      "source": "git:1b68f20d:frontend/src/features/stream/vehiclePilot.ts",
+      "bytes": 4241,
+      "sha256": "7eaaf96cc0a199965209da99c2ff7cd2ce0a72c0dbd43b583fc4822728c33919",
+      "encoding": "gzip",
+      "source_bytes": 13037,
+      "source_sha256": "6a30f4e7402b357ddcf62b7c4a7b3961be1933b1132a1a19834e945883c8bf84",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/frontend--src--features--stream--TeachingNavigation.tsx.gz",
+      "source": "git:1b68f20d:frontend/src/features/stream/TeachingNavigation.tsx",
+      "bytes": 9162,
+      "sha256": "428ecbece080f5795df94c120e28405201bec81525f2020ed6248854f3e11722",
+      "encoding": "gzip",
+      "source_bytes": 29687,
+      "source_sha256": "f135e06f1edc4f73d1d087b4c30be6fcb8195a22dc346b9ee59be2f833247679",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/frontend--src--features--stream--TeachingWorkbench.tsx.gz",
+      "source": "git:1b68f20d:frontend/src/features/stream/TeachingWorkbench.tsx",
+      "bytes": 19621,
+      "sha256": "056382c7557f37766b2b34864a213f7cdccd734263bf57c1da63f694e66fe7b2",
+      "encoding": "gzip",
+      "source_bytes": 69066,
+      "source_sha256": "3987fd8a201b64bd5d66ede6a6a2d2016ad4dc66fe432206517d6454021ffe17",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/frontend--src--features--stream--teachingContacts.ts.gz",
+      "source": "git:1b68f20d:frontend/src/features/stream/teachingContacts.ts",
+      "bytes": 5261,
+      "sha256": "068da95091190d90ded7ae5869858907aa97c804700c52dad9863c382097fced",
+      "encoding": "gzip",
+      "source_bytes": 18906,
+      "source_sha256": "ab04a7fcee480a89d392a080daaac7f8eec620886089b6f8a45a66757ef3cb13",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources/tests--containers--frontend_local.Dockerfile.gz",
+      "source": "git:1b68f20d:tests/containers/frontend_local.Dockerfile",
+      "bytes": 611,
+      "sha256": "433697f50a61bc155a1608cbc0fe50754e34a6b4c0ce7620c22384eaad486981",
+      "encoding": "gzip",
+      "source_bytes": 1042,
+      "source_sha256": "e743c579c3ca440bb38c21e4f8eda437faa7acd85eecf9344f54579712cbe9a7",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "joint-regression.txt",
+      "source": ".local-pilot\\vehicle-controller-joint-regression-20261102.txt",
+      "bytes": 283,
+      "sha256": "fafae7f683abf3bacf6e8c2da7a383b269002e7246f908161084ffb6737c0b2d"
+    },
+    {
+      "file": "font-byte-proof.json",
+      "source": "git/working/pinned comparison",
+      "bytes": 416,
+      "sha256": "e1d033bab8fa823df2d42b62b15030b5363ddd71c88793331acead13e1b40935"
+    },
+    {
+      "file": "frontend-first-full-ci.json",
+      "source": ".local-pilot/local-ci/runs/20261101T203006Z-55c0f188/receipt.json",
+      "bytes": 6138,
+      "sha256": "199473586ff62a7029180f8d2eeb8f746fbff1d9cd754d39bea00262cb0b938d"
+    },
+    {
+      "file": "frontend-first-full-profile.json",
+      "source": ".local-pilot/local-ci/runs/20261101T203006Z-55c0f188/frontend.json",
+      "bytes": 3192,
+      "sha256": "03c1f2fe5d9bbf7aa8bec54d103f252030aed605740a529f563b2a1217baa48f"
+    },
+    {
+      "file": "frontend-first-ci-events.log",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/ci.private.log",
+      "bytes": 279,
+      "sha256": "8f5eb639c0426f74b279d7b5e80f62e3ac6924a584860a04549fc53bcfae4004"
+    },
+    {
+      "file": "task-monitor-smoke.json",
+      "source": ".local-pilot/route-resource-monitor-20261102/smoke.json",
+      "bytes": 4664,
+      "sha256": "0cab1ea097d8750d58f7166a7cb7d95303f695904423469b32a3f385831663b3"
+    },
+    {
+      "file": "task-monitor-verification.json",
+      "source": ".local-pilot/route-resource-monitor-20261102/verification.json",
+      "bytes": 1131,
+      "sha256": "b997b96c6315b82ab29660cfa3d725b42bee355df9cf50b47f0da984312827a1"
+    },
+    {
+      "file": "task-monitor-tests.txt",
+      "source": ".local-pilot/route-resource-monitor-20261102/tests.txt",
+      "bytes": 182,
+      "sha256": "239127170414e3fe3260e2a92dd2bd10b826762f16a4693975694d0fd5b453c6"
+    },
+    {
+      "file": "global-resume-native-receipt.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/global-map-receipt.json",
+      "bytes": 1250,
+      "sha256": "a74b6d204fe95cb3bc3d6b62185318e774e8537d3f1f5ea119490b4b6aa1f694"
+    },
+    {
+      "file": "global-resume-native.log",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/global-map.log",
+      "bytes": 5158,
+      "sha256": "e9a3f4ffc8266655018d83d45f376b11cccda39f4a7ce0ed972ae8c88bad231f"
+    },
+    {
+      "file": "global-resume-assessment.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/assessment-0.json",
+      "bytes": 6340,
+      "sha256": "fb52842edefbf00279485e522cf209cb0c73f41ae6465ce226e80c25fb3df36c"
+    },
+    {
+      "file": "global-resume-observations.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/observations-0.json",
+      "bytes": 650,
+      "sha256": "b7222d91776297fe79fe7038645f5fb24cfefe76144f87035c4869e842596db9"
+    },
+    {
+      "file": "global-resume-endpoints.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/endpoint.json",
+      "bytes": 427,
+      "sha256": "65b3ecd60005f2a64f59e9f72295e244609a33f222771e6aba0318b06a6b207b"
+    },
+    {
+      "file": "global-resume-figure-receipt.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/figure-receipt.json",
+      "bytes": 594,
+      "sha256": "82d5e8b97c07d00219d3d145844dd349a292ffd49366f6e01e77309ca27a78ac"
+    },
+    {
+      "file": "sources-d1a4a1c2/scripts/pilot/route_resource_monitor.py.gz",
+      "source": "git:d1a4a1c2:scripts/pilot/route_resource_monitor.py",
+      "bytes": 3738,
+      "sha256": "57ce83678e6ebbf31fb36a9c091cca596be98a9596dfc27175b84f980685760c",
+      "encoding": "gzip",
+      "source_bytes": 13118,
+      "source_sha256": "a1d54fd6ab27c1e08ff14f4d82f1d7ec04dd1c5d8b5147b4d5dfeba975135bd5",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-d1a4a1c2/scripts/pilot/reconstruct_route.py.gz",
+      "source": "git:d1a4a1c2:scripts/pilot/reconstruct_route.py",
+      "bytes": 13084,
+      "sha256": "9a79d57a048d7b90a6873102e983b556c9f1a1118396da08fa01bb57615edab4",
+      "encoding": "gzip",
+      "source_bytes": 47235,
+      "source_sha256": "58f35b53624d363a2e516616c36c08383ee5d58701d140aed557ae72464a863c",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-d1a4a1c2/scripts/pilot/check_route_first_run.py.gz",
+      "source": "git:d1a4a1c2:scripts/pilot/check_route_first_run.py",
+      "bytes": 4045,
+      "sha256": "1e40eb92b2cdb41fcbed09f02d742a9c54c96ead3890f5ea362c81beb8a8ed41",
+      "encoding": "gzip",
+      "source_bytes": 11574,
+      "source_sha256": "b7291c8e57a28686d344a8d90d571b29c91d569a015f6f5de429d8821055a7e7",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "loop-v3-failure.json.gz",
+      "source": ".local-pilot/skuter1-loop-graph-20261102-v3/result.json",
+      "bytes": 2814,
+      "sha256": "bd07b45fb8c131f798f332b68284d1f54a2e07fc25577bf2c135075c5a117375",
+      "encoding": "gzip",
+      "source_bytes": 17852,
+      "source_sha256": "7b9a8036976d330db08077f7b2b0584cec21509561e3b9be949862e832ceb5e5",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "global-loop-result.json.gz",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v1/result.json",
+      "bytes": 2611,
+      "sha256": "3a0393038d13cd9af7876ba63c55d23a74b15061b4a7664547ebee8abd347eec",
+      "encoding": "gzip",
+      "source_bytes": 16332,
+      "source_sha256": "d1e90f8ed7de304f28df9bd332fa9ec8bb12d65bb65b47525a99d27a1957aaa2",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "loop-postprocess-endpoints.json.gz",
+      "source": ".local-pilot/skuter1-loop-graph-20261102-v3/postprocess-20261102-v1/endpoint.json",
+      "bytes": 2112,
+      "sha256": "95e35141fd2451d812754ba0b7b54c2c3ea2316f2d2a623397fe241af1c9653a",
+      "encoding": "gzip",
+      "source_bytes": 8352,
+      "source_sha256": "290c2f458157d93f9c051f8bd07bb7a62c8cd6f9f602b433b5ef6512b442556a",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "global-capabilities.json.gz",
+      "source": ".local-pilot/skuter1-global-capabilities-20261102/receipt.json",
+      "bytes": 3185,
+      "sha256": "6969dcfa06dbdb2d710b07e2eb46f3aa2e1657ade0e70b23d9b56050d0d69430",
+      "encoding": "gzip",
+      "source_bytes": 10287,
+      "source_sha256": "c0783316724b5d4c0cae232a2643113ac0c615202223dae42c8c52178dc1ec1c",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "global-resume-heldout.json.gz",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/loop-constraints.json",
+      "bytes": 1919,
+      "sha256": "b3f3777dc0723e0770dec9424fc1a406e5f2b9082cfafa47e9bd70dd2c12d26c",
+      "encoding": "gzip",
+      "source_bytes": 8106,
+      "source_sha256": "89c4bc67342e587c95ebed975b1bfe60828ab5b431b88e0e7d0f5f6a2b7df044",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "global-resume-result.json.gz",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/result.json",
+      "bytes": 11636,
+      "sha256": "ecbf38d390ec695ade8a4483be89306a5effd9a6da85b992e7ad832a1c2f7cd9",
+      "encoding": "gzip",
+      "source_bytes": 180928,
+      "source_sha256": "3511b44079c3fda29fcc048367096583cfe91de59afa49629d2233da43c49f9c",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "task-monitor-integration-tests.txt",
+      "source": ".local-pilot/route-task-monitor-regression-20261102.txt",
+      "bytes": 182,
+      "sha256": "62d5201efc631171128a1b16b55377df1383fb6d1f51f93def43c8f0f7f0adb3"
+    },
+    {
+      "file": "priority-regression-tests.txt",
+      "source": ".local-pilot/route-resource-monitor-20261102/priority-tests.txt",
+      "bytes": 183,
+      "sha256": "24af7b30e55e1946aa312e266d27faa18441f17e63d6392dfead58f9d85a5734"
+    },
+    {
+      "file": "api-reload-receipt.json.gz",
+      "source": ".local-pilot/vehicle-api-reload-20261102-v1/receipt.json",
+      "bytes": 41839,
+      "sha256": "131264c43defb0763bd3ed0a312be5339ef0fad3a0eae1c521ccf2b28f475367",
+      "encoding": "gzip",
+      "source_bytes": 212263,
+      "source_sha256": "b237ab8b35f3afce37efa5b22d38126faabd1dca208327e6366ea5c9f185472d",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "api-reload.log",
+      "source": ".local-pilot/vehicle-api-reload-20261102-v1/reload.log",
+      "bytes": 750,
+      "sha256": "9fec01c2806e2d23a97ecda86e36e423fdb1460fb8b811bac80a2c5807e61142"
+    },
+    {
+      "file": "api-reload-v2-receipt.json.gz",
+      "source": ".local-pilot/vehicle-api-reload-20261102-v2/receipt.json",
+      "bytes": 41939,
+      "sha256": "ad81fe907db77ad2ceae977e52cf26865032cff240c463aa51fe53c843053432",
+      "encoding": "gzip",
+      "source_bytes": 212620,
+      "source_sha256": "a00b5471288ce705cb4db514a991f5e6f785ba4d06d6908a1086ae46d124a8bc",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "api-reload-v2.log",
+      "source": ".local-pilot/vehicle-api-reload-20261102-v2/reload.log",
+      "bytes": 814,
+      "sha256": "1ed644a0f8aa8b806869e1e28544f52ee365803b0fd4965ac589b100f1a3930f"
+    },
+    {
+      "file": "api-reload-v3-receipt.json.gz",
+      "source": ".local-pilot/vehicle-api-reload-20261102-v3/receipt.json",
+      "bytes": 45700,
+      "sha256": "5c578ff78826d8de024cc6ddde606f13507e514516e504eafcfb17db1ac742e0",
+      "encoding": "gzip",
+      "source_bytes": 230364,
+      "source_sha256": "ac783a622f9d9b9aa866203fa983eab93110602e835a88b7eedc433668facc32",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "api-reload-v3.log",
+      "source": ".local-pilot/vehicle-api-reload-20261102-v3/reload.log",
+      "bytes": 814,
+      "sha256": "b01e9d58a9fb618df3ccb062b6cb0b074c4b18237e7bd4d87fd9e8ccd5bda5f8"
+    },
+    {
+      "file": "navigation-prep-monitor-verification.json",
+      "source": ".local-pilot/nav-preparation-monitor-20261102/verification.json",
+      "bytes": 1066,
+      "sha256": "0cf21837613f405dd25975dad8a7535e634afda8c50beb9effaf14f458043fe7"
+    },
+    {
+      "file": "navigation-prep-monitor-tests.txt",
+      "source": ".local-pilot/nav-preparation-monitor-20261102/tests.txt",
+      "bytes": 187,
+      "sha256": "6fb03f689b2fc964ee46c484b05ddc1b4b81326ed3feca3846c7e46eb7887fc1"
+    },
+    {
+      "file": "hud-display-workflow-tests.txt",
+      "source": ".local-pilot/hud-display-workflow-regression-20261102.txt",
+      "bytes": 194,
+      "sha256": "b0a41c4c93c4fd6a6a6fcc12634e27f4e9412b68ffddd901c1f11871eae12119"
+    },
+    {
+      "file": "frontend-first-full-jest.log.gz",
+      "source": ".local-pilot/local-ci/runs/20261101T203006Z-55c0f188/frontend-1.log",
+      "bytes": 7459,
+      "sha256": "90fad75ebe0b7585de82620e7d8ea85579baa8aec5976cf8e5acaa8158c108ce",
+      "encoding": "gzip",
+      "source_bytes": 169278,
+      "source_sha256": "879cfc522a95ab2f288e50a5915e91c1e8a268db47aa343b8193ab718784920b",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "hud-font-proxy-validation.json.gz",
+      "source": ".local-pilot/hud-digit-trial-half-20261102/results.json",
+      "bytes": 6409,
+      "sha256": "b03b3bfed3ed7f23cd920c452ee696998c0fb797cd3e8834d748ca4944dafe49",
+      "encoding": "gzip",
+      "source_bytes": 93562,
+      "source_sha256": "921b6f37743040660b7c4d80217e81889743e3511c7c422487bb0f0e53591c28",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "hud-profile.json.gz",
+      "source": ".local-pilot/reconstruction-jobs/6a77040681d142ec97d51831a22785fb/vehicle-speed-reference/profile.json",
+      "bytes": 10958,
+      "sha256": "dcd797ba9bfab19f0189feb7658af6bfcf6ed9096d33be2ca4d16bf85b043848",
+      "encoding": "gzip",
+      "source_bytes": 134308,
+      "source_sha256": "c51e849467777b3b316a0e1c50548618c9b87f933ac8dcb9e664c3871ed33536",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "controller-oracle-plant.json.gz",
+      "source": ".local-pilot/vehicle-controller-plant-20261102/result.json",
+      "bytes": 7023,
+      "sha256": "baea2fd0df9ff910799ff69cd42b9d9d2ac17b1cb7691c2634cb67ba001fc2cc",
+      "encoding": "gzip",
+      "source_bytes": 42007,
+      "source_sha256": "b239fb2ac0427bc2dfa271627cdd0fd8f087ab509d6a31c8dbd13a02ae2db909",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "loop-postprocess-merge.json.gz",
+      "source": ".local-pilot/skuter1-loop-graph-20261102-v3/postprocess-20261102-v1/merge.json",
+      "bytes": 10383,
+      "sha256": "e00cee0c834ad4c22ed71885f692dc7182c21abc604dce156894446c4a053f3a",
+      "encoding": "gzip",
+      "source_bytes": 46890,
+      "source_sha256": "368be61daf062822590cea9b8ec41856f853bd6b5ed934d39e263ef1cc71e144",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "frontend-final-full-jest.log.gz",
+      "source": ".local-pilot/local-ci/runs/20261101T203558Z-60cdcab0/frontend-1.log",
+      "bytes": 6657,
+      "sha256": "33215ba4241b9c431677b5954d10df2e71257275ae58a7e2c11ce9dc6608b975",
+      "encoding": "gzip",
+      "source_bytes": 165809,
+      "source_sha256": "9187bfa02ffc1a02946a5824f6aaca8d0b1d320739540db03c26e2474576adab",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "frontend-timing-repeated.json",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/timing-repeat-proof/receipt.json",
+      "bytes": 267,
+      "sha256": "cba2ab935525d7b0d53383d7ea635b33fea44bd57ea8ad873d9107186703b3f7"
+    },
+    {
+      "file": "frontend-timing-repeated-jest.json.gz",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/timing-repeat-proof/jest.json",
+      "bytes": 4198,
+      "sha256": "1148a71a026a36c76bbb5454b4844cbda7ad54435ab5269551e7d07e38807096",
+      "encoding": "gzip",
+      "source_bytes": 66783,
+      "source_sha256": "a0d4c4dc6c2fc82b493707f8a99ff7849cf387f19b530d14a0eb70034da1de32",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "frontend-timing-targeted.json",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/timing-targeted-node24-receipt.json",
+      "bytes": 740,
+      "sha256": "9294cd3fc3ea721fb1108cdfcfe6ad627721a12578baa93f09a1e7069708e85a"
+    },
+    {
+      "file": "delivery-summary.json",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/delivery-summary.json",
+      "bytes": 3426,
+      "sha256": "252c5be7d8841a33ae6f9e67d5c4d3dff28425009258b2af6da313d8cb36f940"
+    },
+    {
+      "file": "delivery-installed.json.gz",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/install-v3-receipt.json",
+      "bytes": 51811,
+      "sha256": "d369ff1cd6f228bc3fb1608217d464ab0af8d140d55d468665fc5f999d4790c8",
+      "encoding": "gzip",
+      "source_bytes": 262452,
+      "source_sha256": "665d886e9627eea863789f9db80f2a54e56acf90d5f7d8b86e9f8f0c800aabc2",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "delivery-install-preflight-failure.json",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/install-preflight-failure.json",
+      "bytes": 330,
+      "sha256": "e4db97c76c219661054f28e20ad24a11c2b622d854dea01b2bc524099ad110ff"
+    },
+    {
+      "file": "delivery-install-v2-failure.json",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/install-v2-failure-receipt.json",
+      "bytes": 1388,
+      "sha256": "b13415af4106b2fb32f0a2af985d3ee2018f4e5e83841855063ad04879992e60"
+    },
+    {
+      "file": "delivery-rollback.json",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/supplemental-rollback.json",
+      "bytes": 220,
+      "sha256": "299aaaecbf71de1ce882ee28dae1e1cf4064ec43a0c399fe00c97e38469f47c7"
+    },
+    {
+      "file": "delivery-packaging-tests.txt",
+      "source": ".local-pilot/vehicle-route-deployment-20261102-v1/packaging-regression-installer-fix.txt",
+      "bytes": 154,
+      "sha256": "dcd1c68b457fb828e92e49e168813f53416c61781befcedcd61a7941f504e80e"
+    },
+    {
+      "file": "ui458-delivery-summary.json",
+      "source": ".local-pilot/vehicle-route-gap-delivery-20261102-v1/delivery-summary.json",
+      "bytes": 4511,
+      "sha256": "ba545e774c8c9b5a44bae76aa20b94dbe871911bb9890c6ad56cd3a97871de70"
+    },
+    {
+      "file": "ui458-installed.json.gz",
+      "source": ".local-pilot/vehicle-route-gap-delivery-20261102-v1/install-v1-receipt.json",
+      "bytes": 54385,
+      "sha256": "8561dd70d8e5070cf456f89e66824172bf33adf46af0791c980017462bfdffc6",
+      "encoding": "gzip",
+      "source_bytes": 276572,
+      "source_sha256": "71df53424df45ff9a3d87b6a435418f06665920aebc55587c745629fce501ef3",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "ui458-full-jest.log.gz",
+      "source": ".local-pilot/local-ci/runs/20261101T213810Z-fb28f9dc/frontend-1.log",
+      "bytes": 6654,
+      "sha256": "7e404dbefcf5ea902410eacf173bf84045a0d9aca5cfe15359ca0160c8b7d53d",
+      "encoding": "gzip",
+      "source_bytes": 165810,
+      "source_sha256": "ccab53d83a68a99ffc6608a93409b34e31164de36d0a6ed7d247bb4be67fe6cf",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "hud-display-status-tests.txt",
+      "source": ".local-pilot/hud-display-status-20261102/tests.txt",
+      "bytes": 101,
+      "sha256": "7dc7513971d9fef56624a88529d0b195881b9ab44f83594a0d5662e6dce6c69c"
+    },
+    {
+      "file": "hud-display-status-smoke.json",
+      "source": ".local-pilot/hud-display-status-20261102/smoke.json",
+      "bytes": 928,
+      "sha256": "ef66b4733153aa088645be868344884554bbe8512c2074decf54203badfddb3d"
+    },
+    {
+      "file": "loop-alias-heldout-audit.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v1/alias-heldout-audit.json",
+      "bytes": 3374,
+      "sha256": "ce846233886a176270f0786b94817db1cf54a59d80d4b029ae171922701370b7"
+    },
+    {
+      "file": "global-resume-figure-qualified-receipt.json",
+      "source": ".local-pilot/skuter1-global-loop-20261102-v2/figure-qualified-receipt.json",
+      "bytes": 837,
+      "sha256": "ce32103b144c84b1d39fa7c15210d0aa8c1ad5cc7b21884a7ed1523d1529992c"
+    },
+    {
+      "file": "fused-graph-result.json.gz",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/result.json",
+      "bytes": 23836,
+      "sha256": "ba97969621881a380254aad06f3abd450f9789684b29e476a8e07ce6f0b29ead",
+      "encoding": "gzip",
+      "source_bytes": 430543,
+      "source_sha256": "3abc54376e6c40efc294ecda8a34797bf32ce45a4f80d5e3398dc0f903be7b5a",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "fused-graph-global-native-receipt.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/global-map-receipt.json",
+      "bytes": 1642,
+      "sha256": "61d3756a53f5ac71d8a6f16523a64cd8ac96b3e0f597f9f0b6d0f0a04169c74e"
+    },
+    {
+      "file": "fused-graph-global-native.log",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/global-map.log",
+      "bytes": 5164,
+      "sha256": "ca1fa29407b716893de8d58ff384f67595ff05725b86d0b62423b2ce3e9cec08"
+    },
+    {
+      "file": "fused-graph-assessment.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/assessment-0.json",
+      "bytes": 5115,
+      "sha256": "b272a7a407e77cb262e7b70a9eb429b1902104bda35dd7c5e9523e46c2057209"
+    },
+    {
+      "file": "fused-graph-observations.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/observations-0.json",
+      "bytes": 668,
+      "sha256": "6b73203a74d39b6e21b276ad2c38c91832ee1ccf8fd56c3377f18da8a3a3be24"
+    },
+    {
+      "file": "fused-graph-namespace.json.gz",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v1/namespace.json",
+      "bytes": 33014,
+      "sha256": "38b3664a1719bd4ddd873e5ed7abebd3c7f5770357c33b94f37de5a00c87288f",
+      "encoding": "gzip",
+      "source_bytes": 104467,
+      "source_sha256": "62cb79f1f7235b388f5ad36f681bc81ddeb2d5f77603e50a8649bceb4c4d20f7",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "fused-graph-namespace-audit.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v1/postverification-namespace-audit.json",
+      "bytes": 862,
+      "sha256": "0ac9c180f5e82d686a73c678618bc49495281b24d69ac5fec9555af409760d0f"
+    },
+    {
+      "file": "fused-graph-first-probe-refusal.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v1/preflight-refusal.json",
+      "bytes": 4807,
+      "sha256": "d3dfdaf6817811d7377052456caec839c5c044d6beb9b47152aeaeb74d933632"
+    },
+    {
+      "file": "fused-graph-figure-receipt.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/figure-receipt.json",
+      "bytes": 726,
+      "sha256": "e0f9f06546b91898b0fe7a2333b21e4fdcb142e668ce16a658f501890ec60d65"
+    },
+    {
+      "file": "fused-graph-scheduling-proof.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/scheduling-proof.json",
+      "bytes": 2286,
+      "sha256": "4a8ea7c01f7cf51b8d10381ea380dfd5f84200a31a3af7f5d764af9e9c04452b"
+    },
+    {
+      "file": "whole-track-ba-result.json.gz",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/result.json",
+      "bytes": 10408,
+      "sha256": "868f971914ae269105e6cc872732f2afa81955dbd839310148275334a88b9433",
+      "encoding": "gzip",
+      "source_bytes": 149135,
+      "source_sha256": "f5f7a48cf92aa28e21a958204776ae65bc78ddd75f73ca8467acd7fcc8b87ce5",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "whole-track-ba-observations.json.gz",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/observations.json",
+      "bytes": 237,
+      "sha256": "fe74ea06135ec8276b23cc736b3d19fb156796ba1675990d63c3417fd6f397ec",
+      "encoding": "gzip",
+      "source_bytes": 423,
+      "source_sha256": "64c19dec24d7c09e8fffc7ca6b170f151fed1a03a0fb2d6a74237b7c05f0382c",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "whole-track-ba-native-receipt.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/fixed-k-robust-ba-receipt.json",
+      "bytes": 1143,
+      "sha256": "31657ec3b0f05df71ab706760b144ae2604ec94e667d28e965fee2a4258d6139"
+    },
+    {
+      "file": "supported-3view-result.json.gz",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/result.json",
+      "bytes": 39535,
+      "sha256": "2c72376f2ddce0fed5e1c7ae9766b691d85caf278135f29ef84f21b250e5720f",
+      "encoding": "gzip",
+      "source_bytes": 1369919,
+      "source_sha256": "415c1fdfaeed54199cdedacff951c0b107b8617fd7d4409db1be6d5e0fc9ed6b",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "supported-3view-assessment.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/assessment.json",
+      "bytes": 5110,
+      "sha256": "c653eb6438c6582b29e5bac03744d0c5bc676b766081966961fce9e4fd25d1f2"
+    },
+    {
+      "file": "supported-3view-provenance.json.gz",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/support-filter-provenance.json",
+      "bytes": 8723,
+      "sha256": "9f5fb5eeb6cfb5984db10b4f715331deedfed58989e51885a98148727f13ada7",
+      "encoding": "gzip",
+      "source_bytes": 46071,
+      "source_sha256": "4cdccd22c876eac7225018912baa0bdf700d38f371a43b4982453e327b54d945",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "supported-3view-clean-heldout.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/loop-constraints.json",
+      "bytes": 6923,
+      "sha256": "7fcd22cd05010962513fcefa655a95e594e55eb741270efc588449ce4cbea9f4"
+    },
+    {
+      "file": "supported-3view-figure-receipt.json",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/comparison-figure-receipt.json",
+      "bytes": 968,
+      "sha256": "988bfa6bd192f79d61cd01c2a75611e5e61d4c46fd8567364fc826218b575792"
+    },
+    {
+      "file": "supported-diagnostic-publication.json",
+      "source": ".local-pilot/skuter1-supported-geometry-publication-20261102-v1/receipt.json",
+      "bytes": 7657,
+      "sha256": "039e609e835896e66201716b25a8f008416db00c5ffb014184271a06294ab5c0"
+    },
+    {
+      "file": "first-native-localization-export-outcome.json",
+      "source": ".local-pilot/skuter1-fixedk-localization-20261102-v1/outcome.json",
+      "bytes": 5896,
+      "sha256": "23e545404cdd43f8c7a3cdbd4369f52b8298183d8395b5f30569a416686a99fc"
+    },
+    {
+      "file": "measured-anchor-comparison.json",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/comparison.json",
+      "bytes": 2619,
+      "sha256": "a13c9aefe2e1b1b1257288b3f6091f18d8ebe4ba93e2a7fdca1c41208664cda6"
+    },
+    {
+      "file": "measured-anchor-builder-receipt.json",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/builder-receipt.json",
+      "bytes": 4527,
+      "sha256": "f277db22f66f185c22d6a3c811a8732a9bedaab97754fb72ac851b40a751b105"
+    },
+    {
+      "file": "measured-anchor-outcome.json",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/outcome.json",
+      "bytes": 2242,
+      "sha256": "1732b23cc25af4e7da119ced46da3800d4602a481395d5ce6b5f4c4de5c650cc"
+    },
+    {
+      "file": "measured-anchor-same-feature-baseline.json",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/same-features-baseline-receipt.json",
+      "bytes": 2408,
+      "sha256": "91b48ceccfb70484b212f98d218a548223d21d4972d1486879ea34da7236be5c"
+    },
+    {
+      "file": "measured-anchor-source-preservation.json.gz",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/source-preservation.json",
+      "bytes": 17869,
+      "sha256": "fd8f98f2090c93671bcd6c28f9ac7fb17bc74147bc3e69b391ccc651185ffa71",
+      "encoding": "gzip",
+      "source_bytes": 88852,
+      "source_sha256": "9878b1c6979c853cf8c718a9ff2c531f03fe5d741dec5d58d4767a7d196a51db",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "measured-anchor-runner-receipt.json",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/runner-receipt.json",
+      "bytes": 1099,
+      "sha256": "5c124810b380363821c9a35ea47967e10ca0838bdbd3a3b2a7fe54fb6b6a1ded"
+    },
+    {
+      "file": "measured-anchor-actually-tested-builder.py.gz",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/tested-builder-source.py",
+      "bytes": 4310,
+      "sha256": "aed0970a7a91ef662e1d425c9dcf4a03f26d4b4799f76adcb4f857f02bedca6d",
+      "encoding": "gzip",
+      "source_bytes": 13992,
+      "source_sha256": "3f94a83eec84361905dcf03c6e12fd27470149462a797a142cb2b0f9a995ef43",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "measured-anchor-actually-tested-baseline.py.gz",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/tested-baseline-source.py",
+      "bytes": 2472,
+      "sha256": "6388eee6f0e49cfb72648fdb03f2e2e3db168dcc334a8124768c1d011b30c579",
+      "encoding": "gzip",
+      "source_bytes": 6873,
+      "source_sha256": "063ed3b1b38c595a1a8b3638e7ed51c60e5e59dc136bcb390a65749459e72e4e",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "measured-anchor-corrected-unit-tests.txt",
+      "source": ".local-pilot/skuter1-measured-anchors-20261102-v1/corrected-module-tests.txt",
+      "bytes": 101,
+      "sha256": "aad0b5f2139035a7456331fa1023671cdc373d435c28b9159a33c74a27af36df"
+    },
+    {
+      "file": "guided-v1-scaffold-refusal.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v1/outcome.json",
+      "bytes": 710,
+      "sha256": "5e6049d5d945d0c534f2c38fbcdd9a2b8e10221f504f89b13abf1bccb512c4a4"
+    },
+    {
+      "file": "guided-v1-runner-receipt.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v1/runner-receipt.json",
+      "bytes": 1086,
+      "sha256": "33b22d5f27e87905f076443469e1233ab5cd8a6674ed75cb66f16fcde484781c"
+    },
+    {
+      "file": "guided-v2-comparison.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/comparison.json",
+      "bytes": 2399,
+      "sha256": "47d45afec92f5b13460e9017d558ef0cc433b6d26606029d2d829cb6ee384706"
+    },
+    {
+      "file": "guided-v2-outcome.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/outcome.json",
+      "bytes": 2082,
+      "sha256": "24bd263b3891fbca61a1cfd9cd10fc5705cf38fae38d81c6ce1e8b6cc3cbd3c0"
+    },
+    {
+      "file": "guided-v2-callback-metrics.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/callback-metrics.json",
+      "bytes": 514,
+      "sha256": "e318c77fc6f24d73372b76546b8ccc154ad793fecba89c7bbe173dca40b353de"
+    },
+    {
+      "file": "guided-v2-code-snapshot.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/code-snapshot.json",
+      "bytes": 540,
+      "sha256": "ea45e3bd22320dd53b0263c7d929d7e96f01cbdba7b925f5dc72835f05b05f54"
+    },
+    {
+      "file": "guided-v2-tested-builder.py.gz",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/tested-guided-source.py",
+      "bytes": 4487,
+      "sha256": "aa3c5c6843733f4fc43ae739adaa9192e53e2befab53abf2602176afad7b0a9f",
+      "encoding": "gzip",
+      "source_bytes": 14183,
+      "source_sha256": "361bec772cf9f689e2ca80cec44df68f0a83f44f973c2dff474eab34cf9f6953",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "guided-v2-tested-tests.py.gz",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/tested-guided-tests.py",
+      "bytes": 4012,
+      "sha256": "205a6e838dbbdf50feaeb34d5f1e4e8876893e4d3aa35da0d67150693c757473",
+      "encoding": "gzip",
+      "source_bytes": 13288,
+      "source_sha256": "479377b2161e38241f0c02e8acebcae02fcd422be921e66dd2914e7f0cca1b66",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "guided-v2-source-preservation.json.gz",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/source-preservation.json",
+      "bytes": 17248,
+      "sha256": "b797fe60d7b7357fa1d981a4f138e91c20dfc6a11a9ff2473218be2247a5b09f",
+      "encoding": "gzip",
+      "source_bytes": 87145,
+      "source_sha256": "be4252237e59e5c2cea34f21b9101fae8724cf62f70bae541aedff37241c1df0",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "guided-v2-scaffold-diff.patch",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/scaffold-diff.patch",
+      "bytes": 5694,
+      "sha256": "a5d924b14de818e91607d9e9a797b48dc2990fa9c59f9771a4004ee00d99a61e"
+    },
+    {
+      "file": "guided-v3-comparison.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v3/comparison.json",
+      "bytes": 5569,
+      "sha256": "0d63c8f7e7e534d4abd666fd1beb664f205b9044cd5cae43dfcd67c19f638363"
+    },
+    {
+      "file": "guided-v3-outcome.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v3/outcome.json",
+      "bytes": 3735,
+      "sha256": "dfc6497868e4c1b4bf34664eeab88bd4a3b74b9e82b802b583f6a576bb4e9708"
+    },
+    {
+      "file": "guided-v3-callback-metrics.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v3/callback-metrics.json",
+      "bytes": 514,
+      "sha256": "da05be2a6271b90b59b1c16f35ea81c69ceae74794138270ef3d0d457406de6d"
+    },
+    {
+      "file": "guided-v3-tested-builder.py.gz",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v3/tested-guided-source.py",
+      "bytes": 4649,
+      "sha256": "736e1795b9905026fc7abb014a19236b682e0c83e985d15981ab129baf8468b9",
+      "encoding": "gzip",
+      "source_bytes": 14672,
+      "source_sha256": "556da33079d494cfd982cb1e3fb308a93149a1e8deeaefdbdcd12fafb5d23b03",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "guided-v3-tested-tests.py.gz",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v3/tested-guided-tests.py",
+      "bytes": 4170,
+      "sha256": "3090167dfd4c5cd7eeb343d5fe9a26c3b8f81f491ecb0446965772ce2c8060c7",
+      "encoding": "gzip",
+      "source_bytes": 14846,
+      "source_sha256": "62308be30982105b59f8deb13e33fdf259795ec07092352095535e21212a69ad",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "guided-v3-runtime-source-preservation.json",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v3/runtime-source-preservation.json",
+      "bytes": 1438,
+      "sha256": "1085bf0d580d08731547c79699f305bc6252cd63d049c64696048a83a52c4c76"
+    },
+    {
+      "file": "guided-v3-algorithm-diff.patch",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v3/algorithm-diff-v2-v3.patch",
+      "bytes": 4714,
+      "sha256": "3529327e85114f38519adf94659c7434535e3440d10269854de9f30abca11a6f"
+    },
+    {
+      "file": "minimap-observation-summary.json",
+      "source": ".local-pilot/skuter1-minimap-observation-20261102-v1/evidence-summary.json",
+      "bytes": 7330,
+      "sha256": "6b804d6d7f604c12dc29c8c45013382c584800c830b20b1eb22212322a4bd72c"
+    },
+    {
+      "file": "minimap-observation-result.json.gz",
+      "source": ".local-pilot/skuter1-minimap-observation-20261102-v1/result.json",
+      "bytes": 125382,
+      "sha256": "9afca6f0fe46285df110c7014b5b14690dd3ea04f38b9684b7857740946ccb79",
+      "encoding": "gzip",
+      "source_bytes": 935570,
+      "source_sha256": "90de0bf1196da4d8beaa2417c63b77576da76310d9ab71fb1fc137cb120dd58c",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "minimap-observation-figure-receipt.json",
+      "source": ".local-pilot/skuter1-minimap-observation-20261102-v1/figure-receipt.json",
+      "bytes": 527,
+      "sha256": "c12aaee26b120c698873c022a5c3a75090ff1c81a39d083cc42fa3224799857e"
+    },
+    {
+      "file": "final-independent-readback.json",
+      "source": ".local-pilot/vehicle-turn-final-check-20261102-v1.json",
+      "bytes": 2452,
+      "sha256": "8281884f15797f95e77c5df9189604043c98f75358e9c272a60d23f68cdf01b0"
+    },
+    {
+      "file": "final-independent-readback-v2.json",
+      "source": ".local-pilot/vehicle-turn-final-check-20261102-v2.json",
+      "bytes": 2452,
+      "sha256": "8281884f15797f95e77c5df9189604043c98f75358e9c272a60d23f68cdf01b0"
+    },
+    {
+      "file": "isolated-vehicle-http-result.json",
+      "source": ".local-pilot/skuter1-guided-vehicle-http-20261102-v1/result.json",
+      "bytes": 2503,
+      "sha256": "8df1d91b9b99a234b1da78d0b02e892d7ad385614fc8a5fb9933961a1e21cedc"
+    },
+    {
+      "file": "isolated-vehicle-http-limits.json",
+      "source": ".local-pilot/skuter1-guided-vehicle-http-20261102-v1/evidence-limitations.json",
+      "bytes": 1844,
+      "sha256": "8f1fefe1a04eac31dcca643f3b3589eb4a9850c5562b5004aa102d6089ad61ab"
+    },
+    {
+      "file": "isolated-vehicle-http-artifact-hashes.json",
+      "source": ".local-pilot/skuter1-guided-vehicle-http-20261102-v1/final-artifact-hashes.json",
+      "bytes": 1380,
+      "sha256": "02efe5bfd9335d8045f0b2e5084e9457377d7bcb126afb408e94e68753374782"
+    },
+    {
+      "file": "isolated-vehicle-http-runner.json",
+      "source": ".local-pilot/skuter1-guided-vehicle-http-20261102-v1/runner-receipt.json",
+      "bytes": 363,
+      "sha256": "2d641182369ecc420d4edf27702e33a0ecfe6c474982491234f72207ba7ec238"
+    },
+    {
+      "file": "isolated-vehicle-http-start.json",
+      "source": ".local-pilot/skuter1-guided-vehicle-http-20261102-v1/start-receipt.json",
+      "bytes": 1385,
+      "sha256": "9fb3d98e6369b79fbcacea26111749e370fec3aac749efb9397288f82f4198f5"
+    },
+    {
+      "file": "isolated-vehicle-http-cleanup.json.gz",
+      "source": ".local-pilot/skuter1-guided-vehicle-http-20261102-v1/fixture-cleanup.json",
+      "bytes": 2568,
+      "sha256": "37a4403a100683a59303b872fa1b0f47b0d7216572d631fdd47d40ad8904832b",
+      "encoding": "gzip",
+      "source_bytes": 17158,
+      "source_sha256": "73c6e7c66d5ef7dd5a3f91a9ce1945b2a982c034c6561fe923163904e2e816cf",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "isolated-vehicle-http-terminal-audit.json.gz",
+      "source": ".local-pilot/skuter1-guided-vehicle-http-20261102-v1/terminal-audit.json",
+      "bytes": 3705,
+      "sha256": "bc9e0b38fc7d7f1cd8aece90b4dee0301fd16c98c2da56d67e26dcc2159d3b77",
+      "encoding": "gzip",
+      "source_bytes": 14181,
+      "source_sha256": "356b4debb9bc6d774796e6aab8777a38ff8d313dc74c0922a67f32bcf06f96e9",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "isolated-vehicle-http-terminal-reproducer.py.gz",
+      "source": ".local-pilot/skuter1-guided-vehicle-http-20261102-v1/terminal-reproducer.py",
+      "bytes": 2185,
+      "sha256": "0fb94024bbf2e1f335f949ee069faf93a83ccb85e4395bd0eca71da58403563e",
+      "encoding": "gzip",
+      "source_bytes": 4972,
+      "source_sha256": "16b8124ad5782b173aff50a8526a019622e034015a3703d07dbc4378387b67d3",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "../assets/skuter1-fused-loop-comparison.png",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/fused-comparison.png",
+      "bytes": 361133,
+      "sha256": "5d8dfcb713f6893128a18ee17884c64fcb7f9c661a46ea77b5cd75dcc3b74b71"
+    },
+    {
+      "file": "sources-c8847506/scripts/pilot/route_hud_profile.py.gz",
+      "source": "git:c8847506:scripts/pilot/route_hud_profile.py",
+      "bytes": 6128,
+      "sha256": "045d3da86339ff8eba3bcea91c3e78e37e53e54e4fdffbec48eb501361de8d04",
+      "encoding": "gzip",
+      "source_bytes": 20766,
+      "source_sha256": "116c319ed0676ad0761e6e40d0bab838e3504b5cdd1734431399ccf98bae97e4",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-c8847506/scripts/pilot/reconstruction_service.py.gz",
+      "source": "git:c8847506:scripts/pilot/reconstruction_service.py",
+      "bytes": 10769,
+      "sha256": "c74e1e921790ed72c55d7143942a42b0d6298ee0f1a7fb4c1cec55f78b78f661",
+      "encoding": "gzip",
+      "source_bytes": 50009,
+      "source_sha256": "2f76d641b06ef9cd9d2c16c6f490ed85f38ee32ff96acebea68a6965c8143771",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-c8847506/scripts/pilot/reconstruct_route.py.gz",
+      "source": "git:c8847506:scripts/pilot/reconstruct_route.py",
+      "bytes": 13002,
+      "sha256": "0f1e67bd31a6922757813950532583450b399971edc5e9cd57d2e5391cdd578f",
+      "encoding": "gzip",
+      "source_bytes": 47165,
+      "source_sha256": "2500a589685ede33bcd1a5e07d1e5031df017143976a4161ad79eab1db1428d0",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-c8847506/tests/test_route_hud_profile.py.gz",
+      "source": "git:c8847506:tests/test_route_hud_profile.py",
+      "bytes": 3398,
+      "sha256": "bcb623a616195cb7501f1f12be67f62fc7ca6e9fb4da9c6a8a0686797e43e5ee",
+      "encoding": "gzip",
+      "source_bytes": 11304,
+      "source_sha256": "964727f6cbecafd3b06674a7910194c3212594af11a505cdfc43efbcfa81d45a",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-c8847506/tests/test_route_only_recovery_pipeline.py.gz",
+      "source": "git:c8847506:tests/test_route_only_recovery_pipeline.py",
+      "bytes": 3393,
+      "sha256": "9e80ff3a1122ef4159001c7649dbac9cd85e215613213efbe09fca3666bd603a",
+      "encoding": "gzip",
+      "source_bytes": 15684,
+      "source_sha256": "e4177a73f396be47dcc319640157b7b59f9b6edf616615bab794881f8516327a",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-da15cf64/scripts/pilot/route_resource_monitor.py.gz",
+      "source": "git:da15cf64:scripts/pilot/route_resource_monitor.py",
+      "bytes": 3878,
+      "sha256": "41284206c101ecc6ebb7ade1cc4afd246a051ccdcffc9d098bd3d96b6e02c174",
+      "encoding": "gzip",
+      "source_bytes": 13432,
+      "source_sha256": "7e2bcce7b4581ccc8b9c1a9efea4cc9d12a45b86454a208b35c34d60864f3797",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-da15cf64/tests/test_route_resource_monitor.py.gz",
+      "source": "git:da15cf64:tests/test_route_resource_monitor.py",
+      "bytes": 3278,
+      "sha256": "1c8b95498984f57d72e1ea8b03250c3ccc479a01c4afc0026f11a2f673e55eeb",
+      "encoding": "gzip",
+      "source_bytes": 13391,
+      "source_sha256": "86dab30458cfe1ef06c20ae10f4aab3b8a273e1bc1d68aa5a21d08f6b644d736",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-da15cf64/tests/test_reconstruction_service.py.gz",
+      "source": "git:da15cf64:tests/test_reconstruction_service.py",
+      "bytes": 6065,
+      "sha256": "bfc0085a973dedda3b20644ca63ac8ae361e6e4a9d0afce1219a74731121ecee",
+      "encoding": "gzip",
+      "source_bytes": 25705,
+      "source_sha256": "1b13beafc9e33b3cd07e38c2925dd33cf9572f2f27c8f4112cc95b21e5363f99",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-45801659/frontend/src/features/stream/reconstructionClient.ts.gz",
+      "source": "git:45801659:frontend/src/features/stream/reconstructionClient.ts",
+      "bytes": 2851,
+      "sha256": "6d4319e6cd9ef512f4acfc09a3b4a33efc685749a256509997fbc72d32862606",
+      "encoding": "gzip",
+      "source_bytes": 7387,
+      "source_sha256": "142cd4e9b19631459ca2b3447ff19d3bff9b846bc82730225215fd9933e9b69a",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-45801659/frontend/__tests__/hudSpeedCard.test.tsx.gz",
+      "source": "git:45801659:frontend/__tests__/hudSpeedCard.test.tsx",
+      "bytes": 1269,
+      "sha256": "8fd28e5ad0ee987fcdcb2949b3bf95ef04caddd84c6fbd9c08f11c194fa34cb6",
+      "encoding": "gzip",
+      "source_bytes": 3271,
+      "source_sha256": "c15485017fb4c35a7d409c52f703b654baf3691e9bf58dd746ab47a4012f96dc",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-c02582bd/scripts/pilot/route_landmark_builder.py.gz",
+      "source": "git:c02582bd:scripts/pilot/route_landmark_builder.py",
+      "bytes": 2472,
+      "sha256": "6388eee6f0e49cfb72648fdb03f2e2e3db168dcc334a8124768c1d011b30c579",
+      "encoding": "gzip",
+      "source_bytes": 6873,
+      "source_sha256": "063ed3b1b38c595a1a8b3638e7ed51c60e5e59dc136bcb390a65749459e72e4e",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-c02582bd/tests/test_route_landmark_rejections.py.gz",
+      "source": "git:c02582bd:tests/test_route_landmark_rejections.py",
+      "bytes": 939,
+      "sha256": "357996e68c4d5b1ca9a11eb75cfd3700fffebab34d29d2fe71bfb609758f3454",
+      "encoding": "gzip",
+      "source_bytes": 2183,
+      "source_sha256": "3790a497d847019fb3b4c2c98baa354c311f5078e528bb803f55151b6824540c",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-bd3260a5/scripts/pilot/route_measured_landmarks.py.gz",
+      "source": "git:bd3260a5:scripts/pilot/route_measured_landmarks.py",
+      "bytes": 4492,
+      "sha256": "798364f6418bd96e8c15f0f5f5bb776216791c0dd0ddfaca0e2240488e85ead0",
+      "encoding": "gzip",
+      "source_bytes": 14631,
+      "source_sha256": "e460d172ed998e5578e41182873b41523f69d7c013f6fcbb42fe69851d7c2169",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-bd3260a5/tests/test_route_measured_landmarks.py.gz",
+      "source": "git:bd3260a5:tests/test_route_measured_landmarks.py",
+      "bytes": 3547,
+      "sha256": "6900cd255576c498ec06db8af377cf06b74baf69fd22cee471c5bdddad2be27a",
+      "encoding": "gzip",
+      "source_bytes": 12295,
+      "source_sha256": "3a4ee7739b2bce0da9a2188165ef513c2693e29e65f8d8f315ab3f0125308f21",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-3761ec17/scripts/pilot/route_guided_landmarks.py.gz",
+      "source": "git:3761ec17:scripts/pilot/route_guided_landmarks.py",
+      "bytes": 4487,
+      "sha256": "aa3c5c6843733f4fc43ae739adaa9192e53e2befab53abf2602176afad7b0a9f",
+      "encoding": "gzip",
+      "source_bytes": 14183,
+      "source_sha256": "361bec772cf9f689e2ca80cec44df68f0a83f44f973c2dff474eab34cf9f6953",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-3761ec17/tests/test_route_guided_landmarks.py.gz",
+      "source": "git:3761ec17:tests/test_route_guided_landmarks.py",
+      "bytes": 4012,
+      "sha256": "205a6e838dbbdf50feaeb34d5f1e4e8876893e4d3aa35da0d67150693c757473",
+      "encoding": "gzip",
+      "source_bytes": 13288,
+      "source_sha256": "479377b2161e38241f0c02e8acebcae02fcd422be921e66dd2914e7f0cca1b66",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-dac067dd/scripts/pilot/route_guided_landmarks.py.gz",
+      "source": "git:dac067dd:scripts/pilot/route_guided_landmarks.py",
+      "bytes": 4649,
+      "sha256": "736e1795b9905026fc7abb014a19236b682e0c83e985d15981ab129baf8468b9",
+      "encoding": "gzip",
+      "source_bytes": 14672,
+      "source_sha256": "556da33079d494cfd982cb1e3fb308a93149a1e8deeaefdbdcd12fafb5d23b03",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-dac067dd/tests/test_route_guided_landmarks.py.gz",
+      "source": "git:dac067dd:tests/test_route_guided_landmarks.py",
+      "bytes": 4170,
+      "sha256": "3090167dfd4c5cd7eeb343d5fe9a26c3b8f81f491ecb0446965772ce2c8060c7",
+      "encoding": "gzip",
+      "source_bytes": 14846,
+      "source_sha256": "62308be30982105b59f8deb13e33fdf259795ec07092352095535e21212a69ad",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-432aa6a1/scripts/pilot/prepare_route_workspace.py.gz",
+      "source": "git:432aa6a1:scripts/pilot/prepare_route_workspace.py",
+      "bytes": 2277,
+      "sha256": "1ebc871c2f2c9f97e835f7ce697dfd7dd5f7be16866e9e27e5b4fa24437e4857",
+      "encoding": "gzip",
+      "source_bytes": 6616,
+      "source_sha256": "ebb3c05b64bba75ca0d4390cbb6ef941bae0898fffbd8be6c07bbb4683c16bba",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-432aa6a1/scripts/pilot/route_workspace.py.gz",
+      "source": "git:432aa6a1:scripts/pilot/route_workspace.py",
+      "bytes": 8902,
+      "sha256": "eb338a3a058ccb9a67ff0770e78d7a74c7f5fb7e9ad550a3771b4558f07423c2",
+      "encoding": "gzip",
+      "source_bytes": 33060,
+      "source_sha256": "68340c9241781f72c2ec5538bca2c1e9127cf9c5ccc917e1dc7e53bbfa3cdb71",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "sources-432aa6a1/tests/test_nav_preparation_resource_monitor.py.gz",
+      "source": "git:432aa6a1:tests/test_nav_preparation_resource_monitor.py",
+      "bytes": 3133,
+      "sha256": "047acb53f7a780cb49805939cb79824adc8ad29eafb35c0e643ebe10f29ba086",
+      "encoding": "gzip",
+      "source_bytes": 11902,
+      "source_sha256": "2eeba3a68774cebddb23c3fd80dee6d20ac724f52d6ee62040cbf73eae77e530",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "frontend-final-full-ci.json.gz",
+      "source": ".local-pilot/local-ci/runs/20261101T203558Z-60cdcab0/receipt.json",
+      "bytes": 2234,
+      "sha256": "f9566408704b3d0ca41a52812fb22b280b1b13c8b5fb6888497cc0e6842431a2",
+      "encoding": "gzip",
+      "source_bytes": 12917,
+      "source_sha256": "bec8a32a920ce75519a156e66ea618aafbb00c60b23bb0aacab79ad132bd75c2",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "ui458-full-ci.json.gz",
+      "source": ".local-pilot/local-ci/runs/20261101T213810Z-fb28f9dc/receipt.json",
+      "bytes": 2221,
+      "sha256": "2f3008ced5b9af8377210e21ea8a6c86e4d5a22898262e698e2b3d66db193e99",
+      "encoding": "gzip",
+      "source_bytes": 12914,
+      "source_sha256": "e1d428d36a120c5c081c198da613ae3d86a6e68c8dc55721b3212d64749d7e8b",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "fused-graph-clean-heldout.json.gz",
+      "source": ".local-pilot/skuter1-fused-graph-20261102-v2/loop-constraints.json",
+      "bytes": 2259,
+      "sha256": "07a130e3845f14fed4a3fe0d1d57625a1f61212d195f031edad16f652c47f4f1",
+      "encoding": "gzip",
+      "source_bytes": 10954,
+      "source_sha256": "ad25f9c08e18ea6f67d51646fddea8d1beee2915fc3291c8db0e6e6769e56016",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "whole-track-filter-summary.json.gz",
+      "source": ".local-pilot/whole-track-filter-summary-20261102.json",
+      "bytes": 4715,
+      "sha256": "baaab5f6b13c177b7261711c737b83d96ca33a70d477594794bf77b034e457c6",
+      "encoding": "gzip",
+      "source_bytes": 16577,
+      "source_sha256": "1efc88dc799ec1daa327f7fdb56fbe301342c86598ccca299f16fad26b88c011",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "guided-v2-export-receipt.json.gz",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v2/export-receipt.json",
+      "bytes": 2418,
+      "sha256": "21236b4eac781b86fe269a8242b37b5f40a3c7f5c704abea3da410096150547a",
+      "encoding": "gzip",
+      "source_bytes": 9860,
+      "source_sha256": "4c7c99e163cba98b937a1ede6bda50bd95b212c1d0604e85af4ae9b452aeab59",
+      "lossless_roundtrip_verified": true
+    },
+    {
+      "file": "guided-v3-export-receipt.json.gz",
+      "source": ".local-pilot/skuter1-guided-runtime-20261102-v3/export-receipt.json",
+      "bytes": 2637,
+      "sha256": "50e71046e5f8fbc70f96b20a634dc0409cd77451be704a6c7c3021cf6dd29c92",
+      "encoding": "gzip",
+      "source_bytes": 10386,
+      "source_sha256": "34050975bac5c3c16150e4f3cd2422b42f0f82a5ad633e4cf3dd64859c9406d7",
+      "lossless_roundtrip_verified": true
+    }
+  ],
+  "rawBytesPreserved": true,
+  "excludes": [
+    "source video",
+    "full reconstructed models",
+    "private capabilities",
+    "browser profiles",
+    "device input authority"
+  ],
+  "sourceCommit": "1b68f20d"
+}

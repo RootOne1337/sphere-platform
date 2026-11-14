@@ -1,0 +1,28 @@
+{
+  "command": [
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\motor-worker-venv\\Scripts\\python.exe",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\track-filter-ba-20261102-v2\\ba-child.py",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\track-filter-ba-20261102-v2\\filtered-input",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\track-filter-ba-20261102-v2\\ba-output"
+  ],
+  "maximumSeconds": 60,
+  "owned": true,
+  "creationflags": 134234112,
+  "requestedPriorityClass": 16384,
+  "environmentLimits": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "pid": 17452,
+  "actualPriorityClass": 16384,
+  "cpuAffinity": [
+    0,
+    1
+  ],
+  "returncode": 0,
+  "status": "completed",
+  "seconds": 27.95299999997951,
+  "logSha256": "90cae2c61f1376debaf9a81bef785e090e2820a130d1ce206b46192d662d01e9"
+}

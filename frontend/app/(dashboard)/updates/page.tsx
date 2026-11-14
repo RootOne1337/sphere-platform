@@ -1,10 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useDevices } from '@/lib/hooks/useDevices';
+import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -12,15 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { useAuthStore } from '@/lib/store';
+import { CreateReleaseDialog } from '@/src/features/updates/CreateReleaseDialog';
+import { RecoveryDialog } from '@/src/features/updates/RecoveryDialog';
+import { isManagedAndroidRelease } from '@/src/features/updates/recovery';
+import { AgentDownloadPanel } from '@/src/features/updates/AgentDownloadPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,253 +41,168 @@ interface ReleasesResponse {
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
-function useReleases(platform?: string, flavor?: string) {
-  const [data, setData] = useState<ReleasesResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchReleases = async () => {
-    setLoading(true);
-    setError(null);
-    try {
+function useReleases(platform?: string, flavor?: string, scope?: string) {
+  return useQuery<ReleasesResponse>({
+    queryKey: ['ota-releases', scope, platform ?? 'all', flavor ?? 'all'],
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       if (platform) params.set('platform', platform);
       if (flavor) params.set('flavor', flavor);
-      const { data } = await api.get(`/updates/?${params}`);
-      setData(data);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchReleases(); }, [platform, flavor]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return { data, loading, error, refetch: fetchReleases };
-}
-
-// ── Push OTA command to device/group ─────────────────────────────────────────
-
-async function pushOtaUpdate(deviceId: string, release: Release) {
-  const { data } = await api.post('/tasks/', {
-    device_id: deviceId,
-    type: 'OTA_UPDATE',
-    payload: {
-      download_url: release.download_url,
-      version: release.version_name,
-      sha256: release.sha256,
-      force: release.mandatory,
+      const { data } = await api.get<ReleasesResponse>(`/updates/?${params}`, { signal });
+      if (!Array.isArray(data?.releases) || data.total !== data.releases.length
+        || data.releases.some(release => !release || typeof release.id !== 'string' || !release.id)) {
+        throw new Error('Invalid release catalog response');
+      }
+      return data;
     },
+    // Reconcile catalog changes while the operator watches; never replay writes.
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
   });
-  return data;
-}
-
-// ── Create Release Form ───────────────────────────────────────────────────────
-
-function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    platform: 'android',
-    flavor: 'enterprise',
-    version_code: '',
-    version_name: '',
-    download_url: '',
-    sha256: '',
-    mandatory: false,
-    changelog: '',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await api.post('/updates/', {
-          ...form,
-          version_code: parseInt(form.version_code, 10),
-        });
-      setOpen(false);
-      onCreated();
-    } catch (e: unknown) {
-      const msg = (e as any)?.response?.data?.detail ?? (e instanceof Error ? e.message : 'Error creating release');
-      alert(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>+ New Release</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>Register New APK Release</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Platform</Label>
-              <Select value={form.platform} onValueChange={(v) => setForm((f) => ({ ...f, platform: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="android">Android</SelectItem>
-                  <SelectItem value="pc">PC (Windows)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Flavor</Label>
-              <Select value={form.flavor} onValueChange={(v) => setForm((f) => ({ ...f, flavor: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="enterprise">enterprise</SelectItem>
-                  <SelectItem value="dev">dev</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Version Code</Label>
-              <Input
-                type="number"
-                required
-                placeholder="20260223"
-                value={form.version_code}
-                onChange={(e) => setForm((f) => ({ ...f, version_code: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label>Version Name</Label>
-              <Input
-                required
-                placeholder="1.5.0"
-                value={form.version_name}
-                onChange={(e) => setForm((f) => ({ ...f, version_name: e.target.value }))}
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Download URL (HTTPS only)</Label>
-            <Input
-              required
-              type="url"
-              placeholder="https://storage.example.com/sphere-1.5.0.apk"
-              value={form.download_url}
-              onChange={(e) => setForm((f) => ({ ...f, download_url: e.target.value }))}
-            />
-          </div>
-          <div>
-            <Label>SHA-256 Checksum</Label>
-            <Input
-              placeholder="a3f8... (64 hex chars)"
-              value={form.sha256}
-              onChange={(e) => setForm((f) => ({ ...f, sha256: e.target.value }))}
-            />
-          </div>
-          <div>
-            <Label>Changelog (optional)</Label>
-            <Input
-              placeholder="Bug fixes, new commands, …"
-              value={form.changelog}
-              onChange={(e) => setForm((f) => ({ ...f, changelog: e.target.value }))}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="mandatory"
-              checked={form.mandatory}
-              onChange={(e) => setForm((f) => ({ ...f, mandatory: e.target.checked }))}
-              className="h-4 w-4"
-            />
-            <Label htmlFor="mandatory">Mandatory update (force install)</Label>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating…' : 'Create Release'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function UpdatesPage() {
+  const actor = useAuthStore(state => state.user);
+  const sessionVersion = useAuthStore(state => state.sessionVersion);
+  const scope = `${actor?.id}:${actor?.org_id}:${actor?.role}:${sessionVersion}`;
+  const canRead = Boolean(actor && ['viewer', 'script_runner', 'device_manager', 'org_admin', 'org_owner', 'super_admin'].includes(actor.role));
+  return <UpdatesCatalog key={scope} scope={scope} canManage={actor?.role === 'super_admin'} canRead={canRead} />;
+}
+
+function UpdatesCatalog({ scope, canManage, canRead }: { scope: string; canManage: boolean; canRead: boolean }) {
+  const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [flavorFilter, setFlavorFilter] = useState<string>('all');
-  const { data, loading, error, refetch } = useReleases(
-    'android',
+  const [deleteTarget, setDeleteTarget] = useState<Release | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [unconfirmedDeletes, setUnconfirmedDeletes] = useState<ReadonlySet<string>>(() => new Set());
+  const [notice, setNotice] = useState('');
+  const deleteRequest = useRef<AbortController | null>(null);
+  const deleteTrigger = useRef<HTMLButtonElement | null>(null);
+  const refreshButton = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => () => { deleteRequest.current?.abort(); }, []);
+  const { data, isPending, isFetching, isError, error, refetch } = useReleases(
+    platformFilter === 'all' ? undefined : platformFilter,
     flavorFilter === 'all' ? undefined : flavorFilter,
+    scope,
   );
-  const { data: devicesData } = useDevices({});
-  const devices = devicesData?.items ?? [];
-  const [pushStatus, setPushStatus] = useState<Record<string, string>>({});
+  const [recoveryRelease, setRecoveryRelease] = useState<Release | null>(null);
 
-  const releases = data?.releases ?? [];
+  const releases = isError ? [] : data?.releases ?? [];
+  const filtered = platformFilter !== 'all' || flavorFilter !== 'all';
+  const deleteUnknown = Boolean(deleteTarget && unconfirmedDeletes.has(deleteTarget.id));
+  const targetPresent = Boolean(deleteTarget && releases.some(release => release.id === deleteTarget.id
+    && release.version_code === deleteTarget.version_code && release.sha256 === deleteTarget.sha256
+    && release.platform === deleteTarget.platform && release.flavor === deleteTarget.flavor));
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this release?')) return;
+  const confirmDelete = async (readOnly: boolean) => {
+    if (!canManage || !deleteTarget || deleteRequest.current || (!readOnly && (!targetPresent || isFetching || deleteUnknown))) return;
+    const target = deleteTarget;
+    const controller = new AbortController();
+    deleteRequest.current = controller;
+    setDeletePending(true);
+    setDeleteError('');
     try {
-      await api.delete(`/updates/${id}`);
-      refetch();
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Failed to delete');
-    }
-  };
-
-  const handlePushToDevice = async (release: Release, deviceId: string) => {
-    const key = `${release.id}:${deviceId}`;
-    setPushStatus((s) => ({ ...s, [key]: 'pushing' }));
-    try {
-      await pushOtaUpdate(deviceId, release);
-      setPushStatus((s) => ({ ...s, [key]: 'queued' }));
-    } catch (e: unknown) {
-      setPushStatus((s) => ({ ...s, [key]: 'error' }));
-      alert(e instanceof Error ? e.message : 'Push failed');
+      if (!readOnly) {
+        const response = await api.delete(`/updates/${target.id}`, { signal: controller.signal });
+        if (response.status !== 204) throw new Error('Unexpected delete status');
+      }
+      const snapshot = await refetch();
+      if (controller.signal.aborted) return;
+      if (!snapshot.isSuccess || !snapshot.data) throw new Error('Catalog refresh not confirmed');
+      setUnconfirmedDeletes(previous => {
+        const next = new Set(previous);
+        next.delete(target.id);
+        return next;
+      });
+      if (snapshot.data.releases.some(release => release.id === target.id)) {
+        setDeleteError('Релиз ещё есть в каталоге. Проверьте выбранную запись перед повтором.');
+        return;
+      }
+      setDeleteTarget(null);
+      setNotice(`Релиз ${target.version_name} отсутствует в обновлённом каталоге.`);
+    } catch (failure) {
+      if (!controller.signal.aborted) {
+        setUnconfirmedDeletes(previous => new Set(previous).add(target.id));
+        setDeleteError(getApiErrorMessage(failure, 'Результат удаления неизвестен. Перечитайте каталог перед повтором.'));
+      }
+    } finally {
+      deleteRequest.current = null;
+      if (!controller.signal.aborted) setDeletePending(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">OTA Updates</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Обновления и приложения</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage APK releases and push silent updates to devices
+            Скачивайте агент, управляйте релизами и проверяйте доставку обновлений.
           </p>
         </div>
-        <CreateReleaseDialog onCreated={refetch} />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button ref={refreshButton} variant="outline" aria-disabled={isFetching} onClick={() => { if (!isFetching) void refetch(); }}>
+            Обновить релизы
+          </Button>
+          {canManage && <CreateReleaseDialog available={!isPending && !isFetching && !isError} onCreated={() => { void refetch(); }} />}
+        </div>
+      </div>
+
+      <AgentDownloadPanel releases={filtered ? [] : releases} available={canRead} />
+      {notice && <p role="status" className="text-sm text-success">{notice}</p>}
+
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-muted-foreground">
+        Агенты обнаруживают опубликованный релиз при плановой проверке <strong>только при совпадении платформы и варианта сборки</strong>.
+        Регистрация релиза не загружает сам APK. Для адресной установки используйте «Адресное OTA»;
+        результат подтверждается ответом агента и установленной версией.
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 items-center">
-        <Select value={flavorFilter} onValueChange={setFlavorFilter}>
-          <SelectTrigger className="w-[160px]">
+      <div className="flex flex-wrap gap-3 items-center">
+        <Select value={platformFilter} onValueChange={setPlatformFilter}>
+          <SelectTrigger className="w-[180px]" aria-label="Фильтр по платформе">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All flavors</SelectItem>
+            <SelectItem value="all">Все платформы</SelectItem>
+            <SelectItem value="android">Android</SelectItem>
+            <SelectItem value="android-canary">Android canary</SelectItem>
+            <SelectItem value="pc">PC</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={flavorFilter} onValueChange={setFlavorFilter}>
+          <SelectTrigger className="w-[160px]" aria-label="Фильтр по сборке">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все сборки</SelectItem>
             <SelectItem value="enterprise">enterprise</SelectItem>
             <SelectItem value="dev">dev</SelectItem>
           </SelectContent>
         </Select>
-        <Badge variant="outline">{releases.length} release{releases.length !== 1 ? 's' : ''}</Badge>
+        <Badge variant="outline">
+          {isError || isPending ? 'Количество релизов неизвестно' : `Релизов: ${data?.total ?? 0}`}
+        </Badge>
       </div>
 
       {/* Content */}
-      {loading && <div className="text-muted-foreground">Loading releases…</div>}
-      {error && <div className="text-destructive">Error: {error}</div>}
-      {!loading && releases.length === 0 && (
+      {isPending && !isError && <div role="status" className="text-muted-foreground">Загружаем релизы…</div>}
+      {isError && (
+        <div role="alert" className="rounded-lg border border-destructive/30 p-4">
+          <p className="text-destructive">Не удалось загрузить релизы. Актуальный каталог неизвестен.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error, 'Проверьте подключение и права доступа, затем повторите запрос.')}</p>
+          <Button variant="outline" className="mt-3" disabled={isFetching} onClick={() => { void refetch(); }}>
+            Повторить загрузку релизов
+          </Button>
+        </div>
+      )}
+      {!isPending && !isError && releases.length === 0 && (
         <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-          No releases yet. Create one with &ldquo;+ New Release&rdquo;.
+          {filtered ? 'По выбранным фильтрам релизов нет.' : 'Опубликованных релизов пока нет.'}
         </div>
       )}
 
@@ -305,61 +217,69 @@ export default function UpdatesPage() {
                   <Badge variant="outline" className="text-xs">{release.flavor}</Badge>
                   <Badge variant="outline" className="text-xs">{release.platform}</Badge>
                   {release.mandatory && (
-                    <Badge variant="destructive" className="text-xs">Mandatory</Badge>
+                    <Badge variant="destructive" className="text-xs">Обязательное</Badge>
                   )}
                 </div>
+                {release.platform === 'android-canary' && (
+                  <div className="text-xs text-amber-500 mt-1">
+                    Пилотный канал: обычные Android-агенты не проверяют его.
+                  </div>
+                )}
                 <div className="text-xs text-muted-foreground mt-1">
-                  Version code {release.version_code} · Released {new Date(release.created_at).toLocaleString()}
+                  Код {release.version_code} · Опубликован {new Date(release.created_at).toLocaleString('ru-RU')}
                 </div>
                 {release.changelog && (
                   <div className="text-sm mt-1 text-muted-foreground">{release.changelog}</div>
                 )}
-                <div className="text-xs text-muted-foreground mt-1 font-mono truncate max-w-[400px]">
+                <div className="mt-1 break-all font-mono text-xs text-muted-foreground">
                   SHA-256: {release.sha256 || '—'}
                 </div>
               </div>
-              <Button
+              <div className="flex flex-wrap justify-end gap-2">
+              {canRead && isManagedAndroidRelease(release) && <Button variant="outline" size="sm" disabled={isFetching || isError} onClick={() => setRecoveryRelease({ ...release })}>{canManage ? 'Адресное OTA' : 'Состояние OTA'}</Button>}
+              {canManage && <Button
                 variant="ghost"
                 size="sm"
                 className="text-destructive hover:text-destructive shrink-0"
-                onClick={() => handleDelete(release.id)}
+                disabled={isFetching}
+                aria-label={`Удалить релиз ${release.version_name} · ${release.platform}/${release.flavor}`}
+                onClick={(event) => {
+                  deleteTrigger.current = event.currentTarget;
+                  setNotice('');
+                  setDeleteError('');
+                  setDeleteTarget(release);
+                }}
               >
-                Delete
-              </Button>
-            </div>
-
-            {/* Push to device */}
-            <div className="border-t pt-3">
-              <div className="text-xs font-medium text-muted-foreground mb-2">Push OTA to device:</div>
-              <div className="flex flex-wrap gap-2">
-                {devices.slice(0, 8).map((device) => {
-                  const key = `${release.id}:${device.id}`;
-                  const st = pushStatus[key];
-                  return (
-                    <Button
-                      key={device.id}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-7"
-                      disabled={st === 'pushing'}
-                      onClick={() => handlePushToDevice(release, device.id)}
-                    >
-                      {st === 'pushing' ? '⏳ ' : st === 'queued' ? '✓ ' : st === 'error' ? '✗ ' : ''}
-                      {device.name}
-                    </Button>
-                  );
-                })}
-                {devices.length === 0 && (
-                  <span className="text-xs text-muted-foreground">No enrolled devices</span>
-                )}
-                {devices.length > 8 && (
-                  <span className="text-xs text-muted-foreground">+{devices.length - 8} more</span>
-                )}
+                Удалить
+              </Button>}
               </div>
             </div>
+
           </div>
         ))}
       </div>
+      {recoveryRelease && <RecoveryDialog release={recoveryRelease} scope={scope} canManage={canManage}
+        available={!isError && !isFetching && Boolean(releases.find(value => value.id === recoveryRelease.id && value.sha256 === recoveryRelease.sha256 && value.version_code === recoveryRelease.version_code && value.version_name === recoveryRelease.version_name && value.download_url === recoveryRelease.download_url && value.flavor === recoveryRelease.flavor && value.platform === recoveryRelease.platform))}
+        onClose={() => setRecoveryRelease(null)} />}
+      <Dialog open={deleteTarget !== null} onOpenChange={open => { if (!open && !deleteRequest.current) setDeleteTarget(null); }}>
+        {deleteTarget && <DialogContent onCloseAutoFocus={event => {
+          event.preventDefault();
+          (deleteTrigger.current?.isConnected ? deleteTrigger.current : refreshButton.current)?.focus();
+        }}>
+          <DialogHeader>
+            <DialogTitle>Удалить релиз из каталога?</DialogTitle>
+            <DialogDescription>Агенты перестанут получать этот релиз при следующих проверках канала. Для уже установленных APK нужен отдельный процесс обновления.</DialogDescription>
+          </DialogHeader>
+          <p className="text-sm font-medium">{deleteTarget.version_name} · код {deleteTarget.version_code} · {deleteTarget.platform}/{deleteTarget.flavor}</p>
+          {deleteError && <p role="alert" className="text-sm text-destructive">{deleteError}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={deletePending} onClick={() => setDeleteTarget(null)}>Отмена</Button>
+            {deleteUnknown
+              ? <Button type="button" disabled={deletePending} onClick={() => { void confirmDelete(true); }}>Перечитать каталог</Button>
+              : <Button type="button" variant="destructive" disabled={deletePending || !targetPresent || isFetching} onClick={() => { void confirmDelete(false); }}>{deletePending ? 'Проверяем…' : 'Подтвердить удаление'}</Button>}
+          </DialogFooter>
+        </DialogContent>}
+      </Dialog>
     </div>
   );
 }

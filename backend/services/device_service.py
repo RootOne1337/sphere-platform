@@ -9,9 +9,11 @@ from fastapi import HTTPException
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.elements import ColumnElement
 
 from backend.models.device import Device, DeviceStatus
 from backend.models.device_group import DeviceGroup
+from backend.models.location import Location
 from backend.schemas.devices import (
     CreateDeviceRequest,
     DeviceResponse,
@@ -19,6 +21,7 @@ from backend.schemas.devices import (
     UpdateDeviceRequest,
 )
 from backend.services.cache_service import CacheService
+from backend.services.group_service import GroupService
 
 
 class DeviceService:
@@ -69,9 +72,88 @@ class DeviceService:
             tags=device.tags or [],
             notes=device.notes,
             server_name=device.server_name,
+            application_profile_id=getattr(device, "application_profile_id", None),
+            application_server_key=getattr(device, "application_server_key", None),
+            application_binding_revision=getattr(device, "application_binding_revision", 0),
             created_at=device.created_at,
             updated_at=device.updated_at,
         )
+
+    @staticmethod
+    def _listing_conditions(
+        org_id: uuid.UUID,
+        status: str | None = None,
+        group_id: uuid.UUID | None = None,
+        location_id: uuid.UUID | None = None,
+        type_filter: str | None = None,
+        search: str | None = None,
+    ) -> list[Any]:
+        conditions: list[Any] = [Device.org_id == org_id, Device.is_active.is_(True)]
+        if status:
+            try:
+                conditions.append(Device.last_status == DeviceStatus(status))
+            except ValueError:
+                # Preserve the existing forward-compatible behavior for legacy clients.
+                pass
+        if group_id:
+            conditions.append(Device.groups.any(DeviceGroup.id == group_id))
+        if location_id:
+            conditions.append(Device.locations.any(Location.id == location_id))
+        if type_filter:
+            conditions.append(Device.meta["type"].as_string() == type_filter)
+        if search:
+            like = f"%{search.strip()}%"
+            search_terms: list[ColumnElement[bool]] = [
+                Device.name.ilike(like), Device.serial.ilike(like), Device.model.ilike(like),
+            ]
+            try:
+                search_terms.append(Device.id == uuid.UUID(search.strip()))
+            except ValueError:
+                pass
+            conditions.append(or_(*search_terms))
+        return conditions
+
+    async def list_device_status_candidates(
+        self,
+        org_id: uuid.UUID,
+        status: str | None = None,
+        group_id: uuid.UUID | None = None,
+        location_id: uuid.UUID | None = None,
+        type_filter: str | None = None,
+        search: str | None = None,
+    ) -> list[tuple[uuid.UUID, str]]:
+        """Return the filtered active inventory's IDs and DB fallback status.
+
+        The list route overlays Redis live presence in one bulk read. Keeping this
+        small projection separate avoids loading/serializing every ORM relationship
+        just to produce exact fleet counts for a paginated response.
+        """
+        stmt = (
+            select(Device.id, Device.last_status)
+            .where(*self._listing_conditions(org_id, status, group_id, location_id, type_filter, search))
+            .order_by(Device.created_at.desc(), Device.id.desc())
+        )
+        rows = (await self.db.execute(stmt)).all()
+        return [(row.id, row.last_status.value if isinstance(row.last_status, DeviceStatus) else str(row.last_status)) for row in rows]
+
+    async def get_devices_by_ids(
+        self, device_ids: list[uuid.UUID], org_id: uuid.UUID
+    ) -> list[DeviceResponse]:
+        """Load only one already-authorized inventory page, preserving its order."""
+        if not device_ids:
+            return []
+        stmt = (
+            select(Device)
+            .options(selectinload(Device.groups), selectinload(Device.locations))
+            .where(
+                Device.org_id == org_id,
+                Device.is_active.is_(True),
+                Device.id.in_(device_ids),
+            )
+        )
+        rows = (await self.db.execute(stmt)).scalars().all()
+        by_id = {device.id: device for device in rows}
+        return [self._to_response(by_id[device_id]) for device_id in device_ids if device_id in by_id]
 
     async def _reload_with_groups(self, device_id: uuid.UUID) -> Device:
         """Перезагрузить устройство из БД вместе с группами и локациями."""
@@ -122,16 +204,10 @@ class DeviceService:
         self.db.add(device)
         await self.db.flush()  # получить device.id до group assignment
 
-        # M2M group assignment
+        # Serialize initial membership with group deletion and other writers.
         if data.group_id:
-            group = await self.db.get(DeviceGroup, data.group_id)
-            if not group or group.org_id != org_id:
-                raise HTTPException(status_code=404, detail="Group not found")
-            device = await self._reload_with_groups(device.id)
-            device.groups.append(group)
-            await self.db.flush()
-        else:
-            device = await self._reload_with_groups(device.id)
+            await GroupService(self.db).change_device_memberships([device.id], data.group_id, org_id, "add")
+        device = await self._reload_with_groups(device.id)
 
         return self._to_response(device)
 
@@ -142,18 +218,20 @@ class DeviceService:
         org_id: uuid.UUID,
         status: str | None = None,
         group_id: uuid.UUID | None = None,
+        location_id: uuid.UUID | None = None,
         type_filter: str | None = None,
         search: str | None = None,
         page: int = 1,
         per_page: int = 50,
     ) -> tuple[list[DeviceResponse], int]:
-        base_conditions = [Device.org_id == org_id]
-
-        if status:
-            try:
-                base_conditions.append(Device.last_status == DeviceStatus(status))
-            except ValueError:
-                pass  # неизвестный статус → пустой список (forward compat)
+        base_conditions = self._listing_conditions(
+            org_id,
+            status=status,
+            group_id=group_id,
+            location_id=location_id,
+            type_filter=type_filter,
+            search=search,
+        )
 
         stmt = (
             select(Device)
@@ -166,23 +244,10 @@ class DeviceService:
             .where(*base_conditions)
         )
 
-        if group_id:
-            stmt = stmt.where(Device.groups.any(DeviceGroup.id == group_id))
-            count_stmt = count_stmt.where(Device.groups.any(DeviceGroup.id == group_id))
-
-        if search:
-            like = f"%{search}%"
-            search_cond = or_(
-                Device.name.ilike(like),
-                Device.serial.ilike(like),
-            )
-            stmt = stmt.where(search_cond)
-            count_stmt = count_stmt.where(search_cond)
-
         total = (await self.db.execute(count_stmt)).scalar_one()
         rows = (
             await self.db.execute(
-                stmt.order_by(Device.created_at.desc())
+                stmt.order_by(Device.created_at.desc(), Device.id.desc())
                 .offset((page - 1) * per_page)
                 .limit(per_page)
             )
@@ -205,6 +270,12 @@ class DeviceService:
         data: UpdateDeviceRequest,
     ) -> DeviceResponse:
         device = await self._get_device(device_id, org_id)
+
+        # Preserve the legacy explicit group replacement contract.
+        if data.group_id is not None:
+            await GroupService(self.db).change_device_memberships(
+                [device_id], data.group_id, org_id, "replace", active_only=False,
+            )
 
         if data.name is not None:
             device.name = data.name
@@ -251,14 +322,9 @@ class DeviceService:
             meta["workstation_id"] = str(data.workstation_id)
         device.meta = meta
 
-        # Group assignment: заменить текущие группы
-        if data.group_id is not None:
-            group = await self.db.get(DeviceGroup, data.group_id)
-            if not group or group.org_id != org_id:
-                raise HTTPException(status_code=404, detail="Group not found")
-            device.groups = [group]
-
         await self.db.flush()
+        if data.group_id is not None:
+            device = await self._reload_with_groups(device_id)
         # Обновить client-side значение updated_at после server-side onupdate.
         # _to_response — синхронный метод; без refresh SQLAlchemy пытается lazy-load
         # обновлённого атрибута вне greenlet-контекста и падает с MissingGreenlet.
@@ -269,7 +335,8 @@ class DeviceService:
 
     async def delete_device(self, device_id: uuid.UUID, org_id: uuid.UUID) -> None:
         device = await self._get_device(device_id, org_id)
-        await self.db.delete(device)
+        self._retire_device(device)
+        await self.db.flush()
 
     # ── Status (live Redis) ──────────────────────────────────────────────────
 
@@ -336,10 +403,10 @@ class DeviceService:
         rows = (await self.db.execute(stmt)).scalars().all()
         return [str(r) for r in rows]
 
-    async def bulk_soft_delete(
+    async def bulk_delete(
         self, device_ids: list[str], org_id: uuid.UUID
     ) -> int:
-        """Delete all owned devices from the list. Returns count deleted."""
+        """Remove owned devices from active inventory while retaining task history."""
         uuids: list[uuid.UUID] = []
         for did in device_ids:
             try:
@@ -350,13 +417,27 @@ class DeviceService:
             return 0
         stmt = (
             select(Device)
-            .where(Device.id.in_(uuids), Device.org_id == org_id)
+            .where(
+                Device.id.in_(uuids),
+                Device.org_id == org_id,
+                Device.is_active.is_(True),
+            )
         )
         devices = (await self.db.execute(stmt)).scalars().all()
         for device in devices:
-            await self.db.delete(device)
+            self._retire_device(device)
         await self.db.flush()
         return len(devices)
+
+    @staticmethod
+    def _retire_device(device: Device) -> None:
+        """Deactivate an inventory record without deleting referenced history."""
+        device.is_active = False
+        device.last_status = DeviceStatus.OFFLINE
+        device.refresh_token_hash = None
+        device.refresh_previous_token_hash = None
+        device.refresh_rotation_key_hash = None
+        device.refresh_token_expires_at = None
 
     # ── Screenshot ───────────────────────────────────────────────────────────
 

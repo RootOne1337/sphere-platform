@@ -1,0 +1,121 @@
+{
+  "measurement": {
+    "status": "completed",
+    "physicalActions": 0,
+    "executionQualified": false,
+    "adopted": false,
+    "measurementNoveltyCertified": false,
+    "nativeObservationsConsumed": false,
+    "candidateAccepted": false,
+    "measurementSHA": "0943eae18dd3f3ec317d11ce231a511ef6792e539d7c63a1c9221d3df1a02787",
+    "selectedPairs": 32,
+    "selectedViews": 48,
+    "commonWorldFraction": 0.29659866898148146,
+    "commonBundleForAllCandidates": true,
+    "models": {
+      "oldgood": {
+        "cameras": 173,
+        "nativePoints": 20556,
+        "models": [
+          "SIMPLE_PINHOLE"
+        ],
+        "modelSHA": {
+          "cameras.bin": "b91cc00f86302d377a84293589630f17d8d6d1bf84641f8d27fcd8c2fd1be537",
+          "frames.bin": "f64e7a626e40c44c11c180f3391bdcca8965b387f765d652e55e56dad34286e5",
+          "images.bin": "ffd9fe00f97050e510a52252e775476f5f4ea5df1d0f3b71a14dac1df8b7c402",
+          "points3D.bin": "53de3a71e9f452dfa6b32360fc152ec22ec456e66c7603fea1e4cb6172cb12b2",
+          "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+        }
+      },
+      "fourth": {
+        "cameras": 173,
+        "nativePoints": 10630,
+        "models": [
+          "SIMPLE_PINHOLE"
+        ],
+        "modelSHA": {
+          "cameras.bin": "8d8936256e2a9333d4aa81ece0fa797fd3a32ad90b6e6deeb14450b6fd51c319",
+          "frames.bin": "0853e3aec0c85e3a53a05794926529e63a0980167dcdbfab4e211ec197fe2508",
+          "images.bin": "3f3ac683d82d7bbfa8133b3f816e5345ff0a8ed3639d1b167627ee9e17065d1a",
+          "points3D.bin": "11eef6bbdba1bd7c2103222f247a58b78e09beeb22d00f6b11eaeff554882916",
+          "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+        }
+      },
+      "lightglue": {
+        "cameras": 173,
+        "nativePoints": 20887,
+        "models": [
+          "SIMPLE_PINHOLE"
+        ],
+        "modelSHA": {
+          "cameras.bin": "566ff492c1483305f70d55b6eef5cd01b44a64d05a1368ac71955131f36d1b9d",
+          "frames.bin": "3c5224336a8f730ce36e621fa64cf453ab76f76d4457ca5b3312903d4b20159a",
+          "images.bin": "75f381515230c448b7eafda1e34441063f1050be36f350c5a2a5a2c6099dd56c",
+          "points3D.bin": "6251f10db192a0f24af41223e173aefed65b450c9b799573a640a33a22175817",
+          "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+        }
+      }
+    },
+    "comparisonStatus": "comparison_available",
+    "comparisons": [
+      {
+        "first": "fourth",
+        "second": "lightglue",
+        "common_pairs": 32,
+        "first_lower_pairs": 10,
+        "second_lower_pairs": 22,
+        "second_minus_first_median_error_px": {
+          "count": 32,
+          "median": -0.011058693689907667,
+          "mean": -0.10129713099766499,
+          "p95": 0.05669443890266322,
+          "maximum": 0.11818389753564729
+        }
+      },
+      {
+        "first": "fourth",
+        "second": "oldgood",
+        "common_pairs": 32,
+        "first_lower_pairs": 14,
+        "second_lower_pairs": 18,
+        "second_minus_first_median_error_px": {
+          "count": 32,
+          "median": -0.0054458148561399855,
+          "mean": -0.09343096297826123,
+          "p95": 0.08929813040195062,
+          "maximum": 0.15811333713470654
+        }
+      },
+      {
+        "first": "lightglue",
+        "second": "oldgood",
+        "common_pairs": 32,
+        "first_lower_pairs": 20,
+        "second_lower_pairs": 12,
+        "second_minus_first_median_error_px": {
+          "count": 32,
+          "median": 0.005327202671920362,
+          "mean": 0.007866168019403777,
+          "p95": 0.055641800732140485,
+          "maximum": 0.09006939652313059
+        }
+      }
+    ],
+    "winnerSelected": false,
+    "sourceUnchanged": true,
+    "seconds": 18.26599999999962,
+    "torchImported": false,
+    "maximumSampledPrivateBytes": 304672768,
+    "descriptorSupportCalls": 48
+  },
+  "supervision": {
+    "exitCode": 0,
+    "reason": null,
+    "seconds": 20.51600000000326,
+    "peakPrivateBytes": 307126272,
+    "peakRssBytes": 291835904,
+    "allOwnedProcessesClosed": true,
+    "physicalActions": 0,
+    "sourceModelAdopted": false
+  }
+}

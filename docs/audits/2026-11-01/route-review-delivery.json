@@ -1,0 +1,34 @@
+{
+  "schema": "sphere-route-review-delivery-v1",
+  "source_recording": "zaezd888",
+  "other_recording": "skuter1 not verified",
+  "runtime": {
+    "image_id": "sha256:cbd6374c9f1c5ffda6ba22bd6f52eae54e5ed4b5c5456a74b939201c9c033ef5",
+    "install_outcome": "verified",
+    "health_contract": "source_bound_review_v1"
+  },
+  "preferred_diagnostic": {
+    "id": "hud-gap-166-diagnostic",
+    "cameras": 166,
+    "points": 15164,
+    "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    "geometry_sha256": "a4cddab78876cef9183ec5beea94e6c7739e02173652ca4f0243f7e19aba9933",
+    "execution_qualified": false,
+    "navigation_changed": false
+  },
+  "frontend_tests": {
+    "total": 69,
+    "suites": 8,
+    "separate_review_tests_included_in_total": 17,
+    "typecheck_passed": true
+  },
+  "user_browser_acceptance": false,
+  "fixture": "COMPONENT_FIXTURE_NOT_IAB_ACCEPTANCE",
+  "evidence_index": "route-review-evidence/index.json",
+  "evidence_index_sha256": "3d0259e99947a738406c6841c13fa9a657a97281e9ad05de6bb6c0f166725248",
+  "backend_tests": {
+    "passed": 38,
+    "subtests_passed": 9,
+    "provenance": "parent agent observed tool output; no raw log"
+  }
+}

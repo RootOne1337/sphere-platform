@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-20T15:21:22.957148+00:00",
+  "runtimeInstalled": true,
+  "scope": "Finite build, managed delivery and PH030 control canary; no production latency or VPN migration SLA.",
+  "runtime": {
+    "sourceRevision": "5cbb4bba6229c433c1078742f81fddd4dcbd6bfa",
+    "apiSourceRevision": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+    "imageId": "sha256:416ed1ce56e85b127ef8f8fe0b53be9eda164100f48f7747011ec5e29cd2a542",
+    "installedUi": {
+      "id": "156915224c4a40f0da802c386f25aec1d4cc257aa07aea5c8a927a3c00511e8f",
+      "imageId": "sha256:416ed1ce56e85b127ef8f8fe0b53be9eda164100f48f7747011ec5e29cd2a542",
+      "imageTag": "sphere-review-frontend:5cbb4bba6229c433c1078742f81fddd4dcbd6bfa",
+      "startedAt": "2026-10-20T15:03:38.258024671Z",
+      "status": "running"
+    },
+    "otherContainersPreserved": 45,
+    "health": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "result": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "origin": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "result": {
+          "revision": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+          "service": "backend-api",
+          "version": "4.0.0"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "result": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "result": {
+          "revision": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+          "service": "backend-api",
+          "version": "4.0.0"
+        }
+      }
+    ],
+    "localAndTunaLoginAssetListsMatch": true,
+    "matchingScriptCount": 13,
+    "installEvidence": {
+      "sha256": "b35d799750d3d90f983b067255da7c24e6ca9b41f142b83f1854c5c4b1d8913a",
+      "scope": "private local evidence; payload not published"
+    }
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Earlier finite PH030 Home/Recents/Back/shade-drag canary accepted; later fresh viewer remained on server video without ready control. Not a general reconnection acceptance.",
+    "clients": [
+      {
+        "openedAtUtc": "2026-10-20T15:20:11.121803+00:00",
+        "receivedAtUtc": "2026-10-20T15:21:21.102701+00:00",
+        "transport": "server_websocket",
+        "control_transport": "server_websocket",
+        "control_state": "closed",
+        "control_failure": "other",
+        "direct_network_rtt_ms": null,
+        "control_rtt_ms": null,
+        "direct_attempts": 4,
+        "direct_frames": 0,
+        "direct_fps": null,
+        "direct_jitter_buffer_ms": null,
+        "control_action_latency": null,
+        "initialFailures": {
+          "network_age_at_stop_ms": 1998.9000000358,
+          "network": {
+            "local_candidates": 5,
+            "checking_pairs": 2,
+            "pairs": 2,
+            "remote_candidates": 2,
+            "requests_sent": 146,
+            "succeeded_pairs": 0,
+            "responses_received": 0,
+            "failed_pairs": 0
+          },
+          "network_sample_elapsed_ms": 10721.399999976,
+          "attempt": 4,
+          "reason": "connection_deadline",
+          "ice_state": "checking",
+          "received_at": "2026-10-20T15:21:21.102701+00:00",
+          "dtls_state": "connecting",
+          "transport": "server_websocket"
+        }
+      },
+      {
+        "openedAtUtc": "2026-10-20T15:18:43.017795+00:00",
+        "receivedAtUtc": "2026-10-20T15:21:17.635941+00:00",
+        "transport": "direct_webrtc",
+        "control_transport": "direct_webrtc",
+        "control_state": "ready",
+        "control_failure": "none",
+        "direct_network_rtt_ms": 4,
+        "control_rtt_ms": 28,
+        "direct_attempts": 1,
+        "direct_frames": 5970,
+        "direct_fps": 53.689510480755,
+        "direct_jitter_buffer_ms": 49.841276119403,
+        "control_action_latency": null,
+        "initialFailures": null
+      }
+    ],
+    "sessionsEvidence": {
+      "sha256": "76e5baa36b2bddee297633c30e01a5c41fb1cd6f0b1840d96d009951ec16ae75",
+      "scope": "private local evidence; payload not published"
+    },
+    "finiteCanaryEvidence": {
+      "accepted": true,
+      "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
+      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+      "observedAtUtc": "2026-10-20T15:15:45.349044+00:00",
+      "installedPackageHashVerified": false,
+      "installationEvidence": "completed managed OTA command + APK version heartbeat; independent pm hash refused while native input busy",
+      "successfulCurrentInput": true,
+      "directVideo": true,
+      "directControl": true,
+      "startupReliableAccepted": false,
+      "latencyImprovementAccepted": false,
+      "vpnMigrationAccepted": false,
+      "scope": "Finite functional canary only: Home/Recents/Back and visible notification-shade drag; initial native busy and ICE retries remain open. No latency, concurrency or VPN SLA.",
+      "evidenceSha256": "bc4de649f947cc2358afb282026c77fff8ccd3f2bbd9ef74f081b9009fd6fbfd"
+    },
+    "freshViewerReconnectionAccepted": false,
+    "directFramesPresented": 20610,
+    "directFramesScope": "Earlier finite PH030 canary session; not acceptance of every fresh connection."
+  },
+  "apk": {
+    "version": "1.2.83-dev",
+    "versionCode": 10283,
+    "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
+    "androidTree": "efa5a404836a51875135753ca4f0c66348cc1281",
+    "sha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
+    "bytes": 57868809,
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "tests": {
+      "dev": {
+        "tests": 1252,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1252,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "installedDevices": [
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "name": "auto-ph-025",
+        "versionCode": 10283,
+        "otaCommandId": "0bd0c582-cbec-471a-918e-a32b90ccea13",
+        "installedPackageSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35"
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "versionCode": 10283,
+        "otaCommandId": "cc1d2458-1a5f-477f-8880-05d2de50b624",
+        "installedPackageSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35"
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "name": "auto-ph-010",
+        "versionCode": 10283,
+        "otaCommandId": "7e8d931d-7349-48f4-8fa1-c181670934cc",
+        "installedPackageSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35"
+      }
+    ],
+    "completionOnlyDevices": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "name": "auto-ph-030",
+        "versionCode": 10283,
+        "otaCommandId": "62762028-ca79-4db3-9042-0abde656e134",
+        "installedPackageSha256": null,
+        "reason": "native_input_busy",
+        "evidence": "completed addressed OTA command and installed-version heartbeat"
+      }
+    ],
+    "completedOtaCount": 4,
+    "offlineExcluded": 17,
+    "dataClears": 0,
+    "adbInstalls": 0,
+    "ordinaryChannelUnchanged": true,
+    "deliveryEvidence": {
+      "sha256": "1519cd88319d7345ae3326b72e5a8077a5396cac3023c2b3ea0dacefc10ef0f6",
+      "scope": "private local evidence; payload not published"
+    }
+  },
+  "verification": {
+    "frontend": {
+      "tests": 2569,
+      "passed": 2569,
+      "failures": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "suites": 175,
+      "success": true
+    },
+    "frontendExecutorSteps": 7,
+    "frontendStatus": {
+      "id": 56798041282,
+      "context": "Sphere Local / Frontend regressions",
+      "state": "success",
+      "createdAt": "2026-10-20T14:59:37Z",
+      "readbackVerified": true,
+      "targetUrl": "https://github.com/RootOne1337/sphere-platform/tree/5cbb4bba6229c433c1078742f81fddd4dcbd6bfa/frontend"
+    },
+    "androidBuildStatus": {
+      "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
+      "context": "Sphere Local / Android candidate build",
+      "id": 56798036854,
+      "state": "success",
+      "readbackVerified": true,
+      "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
+      "metadataSha256": "050277a394a61ba7c08dd2080a062beab53c9b8fde85f9576022ce9d64518678"
+    },
+    "androidHeadEquivalenceStatus": {
+      "sourceRevision": "5cbb4bba6229c433c1078742f81fddd4dcbd6bfa",
+      "buildSourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
+      "androidTree": "efa5a404836a51875135753ca4f0c66348cc1281",
+      "componentTreeEquivalenceVerified": true,
+      "id": 56799999498,
+      "context": "Sphere Local / Android candidate build",
+      "state": "success",
+      "readbackVerified": true
+    },
+    "packagedRoutes": 26,
+    "packagedClientAssets": 72,
+    "historyTestsPassed": 69,
+    "hostedWorkflowsEnabled": false,
+    "statusPublicationUserApproved": true
+  },
+  "experiments": [
+    {
+      "name": "actor-before83",
+      "success": true,
+      "failure": null,
+      "physicalCommands": 0,
+      "closedConfirmed": true,
+      "aliveSampleCount": 49,
+      "aliveMedianMs": 34.88430002471432,
+      "aliveMaxMs": 221.1189999943599,
+      "echoRttMs": 54.18999999528751,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "rawEvidence": {
+        "sha256": "f800e7f61392e3613ce5cfcf8c56040f3bb787e6ad4d462edc5827412fe81318",
+        "scope": "private local evidence; payload not published"
+      }
+    },
+    {
+      "name": "actor-after83",
+      "success": true,
+      "failure": null,
+      "physicalCommands": 0,
+      "closedConfirmed": true,
+      "aliveSampleCount": 49,
+      "aliveMedianMs": 38.6772999772802,
+      "aliveMaxMs": 216.877700004261,
+      "echoRttMs": 56.30870000459254,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "rawEvidence": {
+        "sha256": "bf9849e63ae0f09ac897f1228960a271ef2ffd1b60d63085f6012ee350fc7778",
+        "scope": "private local evidence; payload not published"
+      }
+    }
+  ],
+  "accepted": {
+    "immutableBuilds": true,
+    "managedDelivery": true,
+    "finiteInput": true,
+    "sharedRouteObserverBrowserProbe": true,
+    "latencyImprovement": false,
+    "actualVpnMigration": false,
+    "shortestPossibleRoute": false,
+    "universalProductionReadiness": false
+  },
+  "openFindings": [
+    "PH030 initial native_startup_busy (root_input_busy) and ICE connection_deadline retries need owner/source localization.",
+    "Same APK has different measured RTT per client. NAT/private candidates do not prove LAN/VPN bypass.",
+    "APK actor queue still spikes; dedicated scheduling is not yet accepted as a latency improvement.",
+    "A route change retaining the same numeric candidate topology is not detected by the new observer.",
+    "Background tabs and unavailable/mDNS-only candidates limit local topology observation.",
+    "Actual VPN/interface transitions, 10/20 concurrent controllers, browser/mobile matrix and loss tests remain open.",
+    "PH030 independent installed package hash is unavailable while native input remains busy; 17 offline devices not updated.",
+    "Motor APK-side freshness deadline/clock mapping, navigation/perception and full gameplay acceptance remain open."
+  ],
+  "sources": [
+    "https://www.w3.org/TR/webrtc/#dom-rtcpeerconnection-restartice",
+    "https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/restartIce"
+  ]
+}

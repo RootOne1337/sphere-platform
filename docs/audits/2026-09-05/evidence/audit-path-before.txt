@@ -1,0 +1,36 @@
+.FFF                                                                     [100%]
+================================== FAILURES ===================================
+_ test_host_cannot_hide_or_relabel_an_authenticated_mutation[audit.local/metrics?ignored=] _
+tests\production\test_audit_path_integrity.py:31: in test_host_cannot_hide_or_relabel_an_authenticated_mutation
+    assert len(rows) == 1, "Mutation committed without its audit entry"
+E   AssertionError: Mutation committed without its audit entry
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_host_cannot_hide_or_relabel_an_authenticated_mutation[audit.local/api/v1/auth/refresh?ignored=] _
+tests\production\test_audit_path_integrity.py:31: in test_host_cannot_hide_or_relabel_an_authenticated_mutation
+    assert len(rows) == 1, "Mutation committed without its audit entry"
+E   AssertionError: Mutation committed without its audit entry
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_host_cannot_hide_or_relabel_an_authenticated_mutation[audit.local/api/v1/tasks/11111111-1111-4111-8111-111111111111?ignored=] _
+tests\production\test_audit_path_integrity.py:33: in test_host_cannot_hide_or_relabel_an_authenticated_mutation
+    assert row.action == "put.devices"
+E   AssertionError: assert 'put.tasks' == 'put.devices'
+E     
+E     - put.devices
+E     + put.tasks
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_audit_path_integrity.py::test_host_cannot_hide_or_relabel_an_authenticated_mutation[audit.local/metrics?ignored=]
+FAILED tests/production/test_audit_path_integrity.py::test_host_cannot_hide_or_relabel_an_authenticated_mutation[audit.local/api/v1/auth/refresh?ignored=]
+FAILED tests/production/test_audit_path_integrity.py::test_host_cannot_hide_or_relabel_an_authenticated_mutation[audit.local/api/v1/tasks/11111111-1111-4111-8111-111111111111?ignored=]
+3 failed, 1 passed, 485 warnings in 1.66s

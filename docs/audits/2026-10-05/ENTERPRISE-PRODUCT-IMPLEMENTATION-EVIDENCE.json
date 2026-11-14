@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-05T02:35:54.501Z",
+  "auditSource": "c3937a1abf55eca73662bdc720699eb29b6653a6",
+  "implementationSource": "6ff6bc28ceb0adf6fda0c4aa933546ae3e3a7dc0",
+  "sourceHashesMethod": "SHA-256 of committed Git blobs, independent of Windows checkout newlines",
+  "frontendGitBlobHashes": {
+    "frontend/__tests__/devices/device-search-select.test.tsx": "9d8388e8e4ee57aa98d2b98c35d7684ce6af4dc574ea91cefd62e55469fd277f",
+    "frontend/__tests__/devices/device-selector.test.tsx": "0bf957faf6d7e8d5efe7c7e4f4061407d73dea61c42bb589cad40b9b244774f8",
+    "frontend/__tests__/devices/fleet-matrix-real-data.test.tsx": "1816c24700fda4c1be4fbad62003c519592a1238313ffb39233efbc945d04642",
+    "frontend/__tests__/devices/fleet-table-preferences.test.ts": "3fb31eacc90138e72c1083afa88f92d3f5b0b9e2436e1df2925d846c011c3bfa",
+    "frontend/__tests__/devices/multi-stream-grid.test.tsx": "8cb7ecd3c829073937e8a9e51a62c77a1e10a659bb149a9381e5321dc98034d7",
+    "frontend/__tests__/fixtures/builder-canonical-dag.json": "e72e279acfa3e5b50024b598232b6c897b1be4e01610589425b61759156bd564",
+    "frontend/__tests__/orchestration/script-step-label.test.tsx": "a969481d25b1b80d300fea3aeb502deae371719a2ee907cc467fdb9725d8e989",
+    "frontend/__tests__/scripts/builder-contract.test.ts": "92f77dd8a278bc8c9b09890fcf10a57cbb30114a97ff4ca7e5e469e25ea532e3",
+    "frontend/__tests__/scripts/builder-load.test.tsx": "d48a2d6214465f6943b373d238c0a0227b949e8475422393d6b0396f0358909f",
+    "frontend/__tests__/stream/device-presence.test.tsx": "70508235fde42438185109908c95cf7024d0d4f4cbc2834cb10d43b5415443e1",
+    "frontend/app/(dashboard)/orchestration/page.tsx": "5474945a7d6f7d0933d0ae010c60e75bb7c12800744174ae9a04a0043a77f785",
+    "frontend/app/(dashboard)/scripts/builder/page.tsx": "12279b2b6c02a81e916e1eb9bc15b7de82bf24fa16f169221d56d6043bfcc75d",
+    "frontend/app/(dashboard)/stream/page.tsx": "2f92cd1c0a7f409c8730ad2cd23153834117816882d2a2ee31bca869ab85e195",
+    "frontend/components/sphere/DeviceSearchSelect.tsx": "2a72752a335b91186ed14732384d6fcf3e6bf6acd10e7d26bcc6aaf98abdafed",
+    "frontend/components/sphere/DeviceSelector.tsx": "4ffe8a377273a9bf76091b2baf304738f87f40efbe57178b9ccb3bd65a8b0aa6",
+    "frontend/components/sphere/dag/ActionNode.tsx": "dfac3c7190c8f6525ee17d8ca29bd5857df4bd4f79c8aad8ef8c6204829596c4",
+    "frontend/components/sphere/dag/ActionRoutes.tsx": "d92bd85989befdfc3ecba4ec9a4e3a9f53db455363da7b6f0d69517634a685f3",
+    "frontend/components/sphere/dag/ConditionNode.tsx": "0b2eaacf4eb220b32bd3773790e7d85636e11f6abe69baa86004dce7493ca1e4",
+    "frontend/components/sphere/dag/EndNode.tsx": "19c593808adedc3c119290910624aab917c5d61515929c339efd44ee65d4cb59",
+    "frontend/components/sphere/dag/LuaNode.tsx": "a53876ed0f9d1f01abdadbd3a511aaa8b681f0d0cce6335878c66618b7b1160f",
+    "frontend/components/sphere/dag/ScreenshotNode.tsx": "a728b4c586dc1b22250e959213f2ea15d5b7daa009173c812c44f02fd591b483",
+    "frontend/components/sphere/dag/SleepNode.tsx": "27b4b32955b89228b0d78671b2be89e30687fe634ccdd74e002579fe7a7dc7c1",
+    "frontend/components/sphere/dag/StartNode.tsx": "58f8194b43da201ee76ccc40175e40066241c1a706257b387f6bbaf7223964b8",
+    "frontend/components/sphere/dag/SwipeNode.tsx": "45bae7dc4d944bc3757ee82f3e011c9ff7db1e2e0e13485735ccec2bdc3962ed",
+    "frontend/components/sphere/dag/TapNode.tsx": "59b7a6c958769f0fea8bef2e88e4cf795941234c2bad556513d7ebe837fe25ae",
+    "frontend/lib/dag/export.ts": "ae107131936663804dea0eb944ba11d4cdcf1eb9f614e734eb8007279553fcbd",
+    "frontend/lib/dag/nodeTypes.ts": "9de9c6af0a0a9f4d291114667cd08f45908350ed5a76d28874b5eab05b5db84b",
+    "frontend/src/features/devices/DeviceInspectorDetail.tsx": "9b7d8114e02360671fe2e41ee33ffe8841ccc02d77b913abd781103fcde4ba5c",
+    "frontend/src/features/devices/FleetMatrix.tsx": "c3f381e2c51e47e90fe78fbf0c25b09daa2334ede5e7d66a97004245fab12729",
+    "frontend/src/features/devices/MultiStreamGrid.tsx": "ab462728128861b66a447f02397d21c7fed3a257f04014ec03b1f0c4c350cac8",
+    "frontend/src/features/devices/devicePresentation.ts": "8affb289c4f50afaae39ae1f7391cf5d05b5bb47c187c387b25990b38a416964",
+    "frontend/src/features/devices/fleetTablePreferences.ts": "60eee3ca4c97935a38f9738a8d4edb612dc5d79d3941ca2f147d4fbf9280b2ec"
+  },
+  "installed": {
+    "source": "6ff6bc28ceb0adf6fda0c4aa933546ae3e3a7dc0",
+    "observedAt": "2026-10-05T02:33:28.357582+00:00",
+    "url": "http://127.0.0.1:3015/devices",
+    "reviewUiHealthy": true,
+    "otherContainersPreserved": 45,
+    "apiSource": "c1a6e79a",
+    "uiContainer": "sphere-review-20261002-review-ui-1",
+    "comparison": [
+      "id",
+      "image",
+      "startedAt"
+    ],
+    "publicUi18080Updated": false,
+    "apkRebuiltOrInstalled": false,
+    "sameShaIsNotCompatibilityProof": true
+  },
+  "tests": {
+    "frontend": {
+      "numTotalTestSuites": 116,
+      "numPassedTestSuites": 116,
+      "numTotalTests": 1185,
+      "numPassedTests": 1185,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "command": "cd frontend && npm test -- --runInBand --json",
+    "typeScriptPassed": true,
+    "dockerProductionBuildExit": 0,
+    "httpAndAndroidMockedInFrontendTests": true,
+    "existingReactActWarningsPresent": true,
+    "builderBackendProbe": {
+      "backendAccepted": true,
+      "canonicalRoundtripAccepted": true,
+      "roundtripPreserved": true,
+      "actionCatalogueMatchesBackend": true
+    },
+    "backendProbeNetworkMocked": true,
+    "backendActionTypes": 32
+  },
+  "scriptLiveReceipt": {
+    "observedAt": "2026-10-05T02:20:14.654519+00:00",
+    "uiSource": "4367d41",
+    "apiSource": "c1a6e79a",
+    "createdAndSavedViaBrowser": true,
+    "catalogUpdatedWithoutRefresh": true,
+    "serverReadbackCanonical": true,
+    "nodeCount": 2,
+    "versionCountAfterUnchangedGraphSaves": 1,
+    "archivedWithVersionPrecondition": true,
+    "versionsAndDagPreserved": true,
+    "androidCommandsSent": false,
+    "dagSha256": "b0bdf6711b8ab9d4cff0350d57a18578881209794f24aa8d2aa5d66932997876"
+  },
+  "finalUiReceipt": {
+    "observedAt": "2026-10-05T02:35:54.501Z",
+    "uiSource": "6ff6bc2",
+    "apiSource": "c1a6e79a",
+    "finalFleetReadback": {
+      "headers": [
+        "",
+        "Устройство↑",
+        "Android / агент",
+        "Состояние",
+        "Заряд",
+        "Доступ",
+        "Heartbeat / контакт",
+        "CPU Android",
+        "RAM Android",
+        ""
+      ],
+      "sort": "ascending"
+    },
+    "modelSortReadback": [
+      {
+        "model": "samsung SM-A908N",
+        "name": "auto-ph-028"
+      },
+      {
+        "model": "samsung SM-G977N",
+        "name": "auto-ph-025"
+      },
+      {
+        "model": "vivo V2242A",
+        "name": "auto-ph-027"
+      },
+      {
+        "model": "Xiaomi MI 9",
+        "name": "auto-ph-026"
+      }
+    ],
+    "modelSearch": {
+      "query": "OnePlus",
+      "matches": 1,
+      "name": "auto-ph-010",
+      "model": "OnePlus HD1910",
+      "selected": 0
+    },
+    "runFormCancelled": true,
+    "streamsStarted": 0
+  },
+  "browser": {
+    "provider": "Codex in-app browser",
+    "consoleErrorsAtEnd": [],
+    "temporaryViewportReset": true,
+    "screenshotsVisuallyReviewed": 9
+  },
+  "ledger": {
+    "originalItems": 50,
+    "defectsFixedInThisBatch": [
+      "EP-001",
+      "EP-002",
+      "EP-003",
+      "EP-004",
+      "EP-005"
+    ],
+    "itemsWithOpenCriteria": 45,
+    "additionalLiveDefectsFixed": [
+      "scripts-cache-after-builder-write"
+    ],
+    "capabilitiesPartiallyAdvanced": [
+      "EP-011",
+      "EP-012"
+    ],
+    "frozenOriginalBacklogStatesRewritten": false
+  },
+  "runtimeObservation": {
+    "catalog": 19,
+    "online": 14,
+    "offline": 5,
+    "continuousSlaProven": false
+  },
+  "screenshots": [
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/fleet-fixed-persistence.jpg",
+      "uiSource": "6bad612",
+      "bytes": 134715,
+      "sha256": "8b07ae430a8b1d4b7a8a506dcfb51510b4e4e503340a0cb6abb417d065e4dab7",
+      "visuallyReviewed": true,
+      "purpose": "F5 retained access, CPU/RAM and ascending name sort"
+    },
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/builder-fixed-import.jpg",
+      "uiSource": "6bad612",
+      "bytes": 73771,
+      "sha256": "26bedfab2a58d076bc370c9330bc8db33f6f54b98455a3cc2ffc03e87f7be682",
+      "visuallyReviewed": true,
+      "purpose": "Existing canonical four-step graph opens"
+    },
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/builder-fixed-parameters.jpg",
+      "uiSource": "6bad612",
+      "bytes": 87662,
+      "sha256": "cf48ec6a9a3037f138cc8deb4a6ec85acd35d257d3d834367ef94444f78507e7",
+      "visuallyReviewed": true,
+      "purpose": "Generic action parameters, retry and timeout inspected"
+    },
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/pipeline-fixed-step-count.jpg",
+      "uiSource": "6bad612",
+      "bytes": 72143,
+      "sha256": "073f11c96c7ea66c1684139146703c93c13cdebbdd6143f1ee678775c0071e0a",
+      "visuallyReviewed": true,
+      "purpose": "Canonical step count in pipeline form; form cancelled"
+    },
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/builder-fixed-live-save.jpg",
+      "uiSource": "4367d41",
+      "bytes": 143889,
+      "sha256": "978d6b764c6337e6c0e9d1594de5f88704fede6fc4fca27799531f4cddcaa83a",
+      "visuallyReviewed": true,
+      "purpose": "Updated canary name visible without manual catalog refresh"
+    },
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/fleet-fixed-mobile.jpg",
+      "uiSource": "4367d41",
+      "bytes": 36548,
+      "sha256": "660f7270eaf247f889a31a911bcefb5355ec043c5d063c12164870e18b64732a",
+      "visuallyReviewed": true,
+      "purpose": "390 px viewport, internal table scroll without document overflow"
+    },
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/fleet-fixed-final.jpg",
+      "uiSource": "6ff6bc2",
+      "bytes": 135153,
+      "sha256": "ba250dba47f9c2c54f11f911ab7ab83ae52f6ac7d213a2a7942e32c045dc8f26",
+      "visuallyReviewed": true,
+      "purpose": "Installed UI and persisted columns, real device models"
+    },
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/device-picker-fixed-model.jpg",
+      "uiSource": "6ff6bc2",
+      "bytes": 54891,
+      "sha256": "2d2df78ad8bfdba2bf38442ecd34d93bcf223584712809254e21822ce071c4a6",
+      "visuallyReviewed": true,
+      "purpose": "API model search returns one device, no target selected"
+    },
+    {
+      "file": "docs/audits/2026-10-05/assets/product-audit/stream-fixed-model-sort.jpg",
+      "uiSource": "6ff6bc2",
+      "bytes": 123714,
+      "sha256": "c241caf72e5da5c14bce941d2ed33088e7c5a58af87e5bcffc674fea1c4f5af8",
+      "visuallyReviewed": true,
+      "purpose": "Real model metadata and page-local model sort, no streams started"
+    }
+  ],
+  "limitations": [
+    "Full Script Studio/recording/debug trace is not complete",
+    "No execution of all 32 actions on Android in this batch",
+    "No two-operator browser conflict test; HTTP 409 has regression coverage",
+    "No 500-1000-device load/long soak acceptance",
+    "Grafana EP-007 and legacy webhook EP-006 remain open",
+    "No all-table preferences/account sync acceptance",
+    "No disk-growth/RAM-root-cause closure"
+  ]
+}

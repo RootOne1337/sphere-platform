@@ -9,17 +9,31 @@
 #   -Rebuild    — пересобрать образы backend/frontend перед запуском
 #   -Down       — остановить весь стек
 #   -Status     — показать статус всех сервисов
+#   -ReadyTimeoutSec — срок ожидания running/healthy (по умолчанию 180 секунд)
 # =============================================================================
 
 param(
     [switch]$Tunnel,
     [switch]$Rebuild,
     [switch]$Down,
-    [switch]$Status
+    [switch]$Status,
+    [ValidateRange(1, 1800)]
+    [int]$ReadyTimeoutSec = 180
 )
 
 $ErrorActionPreference = "Stop"
 $ROOT = Split-Path $PSScriptRoot -Parent
+# Native tools report failures through exit codes, not PowerShell exceptions.
+$PSNativeCommandUseErrorActionPreference = $false
+$ComposeArgs = @('compose', '-f', (Join-Path $ROOT 'docker-compose.yml'),
+    '-f', (Join-Path $ROOT 'docker-compose.full.yml'))
+
+function Invoke-DockerChecked([string[]]$DockerArguments) {
+    & docker @DockerArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "Docker failed (exit $LASTEXITCODE). Startup stopped; inspect the command output above."
+    }
+}
 
 # ── Цвета ────────────────────────────────────────────────────────────────────
 function Write-Header {
@@ -50,7 +64,7 @@ function Write-Info([string]$msg) {
 function Assert-DockerRunning {
     Write-Step "Проверяю Docker Desktop..."
     try {
-        docker info 2>&1 | Out-Null
+        Invoke-DockerChecked @('info') | Out-Null
         Write-Ok "Docker запущен"
     } catch {
         Write-Err "Docker не запущен! Запусти Docker Desktop и повтори."
@@ -60,18 +74,24 @@ function Assert-DockerRunning {
 
 # ── Проверка .env ─────────────────────────────────────────────────────────────
 function Assert-EnvFile {
-    Write-Step "Проверяю .env файл..."
-    $envFile = Join-Path $ROOT ".env"
-    if (-not (Test-Path $envFile)) {
+    Write-Step "Проверяю .env.local / .env..."
+    $envFile = @('.env.local', '.env') | ForEach-Object {
+        $candidate = Join-Path $ROOT $_
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { $candidate }
+    } | Select-Object -First 1
+    if (-not $envFile) {
+        $envFile = Join-Path $ROOT ".env"
         if (Test-Path (Join-Path $ROOT ".env.example")) {
             Copy-Item (Join-Path $ROOT ".env.example") $envFile
-            Write-Info ".env создан из .env.example — заполни POSTGRES_PASSWORD и REDIS_PASSWORD!"
+            Write-Info ".env создан из .env.example — заполни обязательные параметры и повтори запуск."
+            exit 1
         } else {
             Write-Err ".env файл не найден! Создай его из .env.example"
             exit 1
         }
     } else {
-        Write-Ok ".env найден"
+        $script:ComposeArgs += @('--env-file', $envFile)
+        Write-Ok "Конфигурация выбрана: $(Split-Path $envFile -Leaf)"
     }
 }
 
@@ -176,50 +196,34 @@ function Start-Tunnel {
     }
 }
 
-# ── Ожидание healthy ──────────────────────────────────────────────────────────
-function Wait-ServiceHealthy([string]$serviceName, [int]$timeoutSec = 60) {
-    $deadline = (Get-Date).AddSeconds($timeoutSec)
-    Write-Host -NoNewline "  ⏳ Жду $serviceName healthy" -ForegroundColor Yellow
-    while ((Get-Date) -lt $deadline) {
-        $status = docker inspect --format "{{.State.Health.Status}}" $serviceName 2>$null
-        if ($status -eq "healthy") {
-            Write-Host " ✓" -ForegroundColor Green
-            return $true
-        }
-        Write-Host -NoNewline "." -ForegroundColor DarkGray
-        Start-Sleep 2
-    }
-    Write-Host " timeout" -ForegroundColor Red
-    return $false
-}
-
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 Write-Header
 
 if ($Status) { Show-Status; exit 0 }
 if ($Down)   { Stop-AllServices }
 
-Assert-DockerRunning
-Assert-EnvFile
+try {
+    Assert-DockerRunning
+    Assert-EnvFile
+    Write-Step "Проверяю Compose configuration..."
+    Invoke-DockerChecked ($ComposeArgs + @('config', '--quiet'))
 
-# Пересборка образов если запрошена
-if ($Rebuild) {
-    Write-Step "Пересобираю образы backend + frontend..."
-    docker compose -f (Join-Path $ROOT "docker-compose.yml") `
-                   -f (Join-Path $ROOT "docker-compose.full.yml") build
-    Write-Ok "Образы пересобраны"
+    if ($Rebuild) {
+        Write-Step "Пересобираю образы backend + frontend..."
+        Invoke-DockerChecked ($ComposeArgs + @('build'))
+        Write-Ok "Образы пересобраны"
+    }
+
+    Write-Step "Запускаю стек и жду readiness (до $ReadyTimeoutSec сек.)..."
+    # Compose resolves this project's service IDs; no hard-coded container names.
+    # Full overlay supplies API/frontend probes, base supplies PostgreSQL/Redis.
+    Invoke-DockerChecked ($ComposeArgs + @('up', '-d', '--wait', '--wait-timeout', "$ReadyTimeoutSec"))
+    Write-Ok "Compose readiness пройдена"
+} catch {
+    Write-Err $_.Exception.Message
+    Write-Info "Сервисы и volumes сохранены для диагностики. Проверь Compose ps/logs выбранного проекта."
+    exit 1
 }
-
-# Запуск основного стека
-Write-Step "Запускаю полный стек (infra + backend + frontend)..."
-docker compose -f (Join-Path $ROOT "docker-compose.yml") `
-               -f (Join-Path $ROOT "docker-compose.full.yml") up -d
-Write-Ok "Стек запущен"
-
-# Ждём критических сервисов
-Write-Host ""
-Wait-ServiceHealthy "sphere-platform-postgres-1" 60 | Out-Null
-Wait-ServiceHealthy "sphere-platform-redis-1" 30 | Out-Null
 
 # Туннель
 if ($Tunnel) {
@@ -246,7 +250,7 @@ Write-Host "  ║  🌐 Public:  $tunnelUrl" -ForegroundColor Cyan
 }
 Write-Host "  ╠══════════════════════════════════════════════════════════╣" -ForegroundColor Green
 Write-Host "  ║  Перекомпиляция — НЕ нужна при изменении кода:          ║" -ForegroundColor DarkGray
-Write-Host "  ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║" -ForegroundColor DarkGray
+Write-Host "  ║  · Backend reload: только ENVIRONMENT=development       ║" -ForegroundColor DarkGray
 Write-Host "  ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║" -ForegroundColor DarkGray
 Write-Host "  ║  Нужна только при: pip install / npm install             ║" -ForegroundColor DarkGray
 Write-Host "  ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║" -ForegroundColor DarkGray

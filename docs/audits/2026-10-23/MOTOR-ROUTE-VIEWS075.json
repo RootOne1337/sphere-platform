@@ -1,0 +1,568 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T17:14:44.659872+00:00",
+  "scope": "Opt-in immutable RGB sharing and bounded CPU visual checkpoint memory; no route execution or world-pose acceptance.",
+  "baseRevision": "97837ab53d19d9789a98430095d1f493d83ea4d0",
+  "workerVersion": "0.7.5",
+  "motorTestsPassed": 263,
+  "ruffPassed": true,
+  "sourceArtifacts": {
+    "motor_worker/__init__.py": "fc6ccef0ec7b762f90ed6de1e96f32fce48355a4a1896bc87464a85001567d8e",
+    "motor_worker/observation.py": "f10d76418452bde95e1337b700402c107ccbb5eea988f9c019468b0738ecbf89",
+    "motor_worker/session.py": "6b5d9df013b808d812fdd43972b0cf4f3d00e01700e6958961747a89bf83279e",
+    "motor_worker/landmarks.py": "e185229911df774b903e55b87d86dc79c0856331c2436d48bfe90a2c8a52046f",
+    "tests/test_motor_worker_rgb_slot.py": "95c469b95711f53f9ecf2d71a7a62998afc262d409e891aaad7dfbda6a4fbed7",
+    "tests/test_motor_worker_landmarks.py": "b7fc270b844b85ed9355eb62c9a6f5b24b21b297830c58336659ac65c6fc3944",
+    "tests/test_motor_worker_integration.py": "6bce8d83eb40edeba9eb9fee45c3f2f9cc8e8c3fcd21db4fc84a8eea699cce73"
+  },
+  "physicalActions": 0,
+  "productionAccepted": false,
+  "acceptance": {
+    "sharedImmutableRgbImplemented": true,
+    "visualCheckpointPrimitiveImplemented": true,
+    "persistentFeaturesReloadedAcrossCaptureEpoch": true,
+    "singleClientConcurrentMotorShadow": true,
+    "routeGraphImplemented": false,
+    "worldPoseLocalization": false,
+    "freeSpaceGeometry": false,
+    "goalConditioning": false,
+    "autonomousNavigation": false,
+    "arrival": false,
+    "fleetCapacity": false,
+    "sourceCaptureToActionLatency": false,
+    "originalOuterHangRootCauseResolved": false,
+    "allObservationWindows5Hz": false
+  },
+  "softwareBounds": {
+    "sharedImmutableRgbSlots": 1,
+    "consumerMaxReceiverAgeMs": 250,
+    "referenceMaxFeatures": 1500,
+    "descriptorMaxBytes": 48000,
+    "referenceJsonMaxBytes": 262144,
+    "profileJsonMaxBytes": 4096,
+    "maxReferencesPerComparison": 16,
+    "diskWritesAutomatic": false,
+    "noDetectionMeansClearance": false,
+    "ambiguousViewsMeanStopOrUnknown": true
+  },
+  "offlineFixtures": {
+    "historicalFixtures": true,
+    "physicalActions": 0,
+    "pipelineSha256": "35d8a95b7c5d517f7b0d2d15d8160c82463615f7830bec674275c5ecb1fed8b7",
+    "features": {
+      "fence": 601,
+      "market": 528,
+      "park": 1000,
+      "current": 712
+    },
+    "rows": [
+      {
+        "case": "fence",
+        "status": "matched",
+        "rightReference": true,
+        "inliers": 601,
+        "wallMs": 7.969099911861122
+      },
+      {
+        "case": "market",
+        "status": "matched",
+        "rightReference": true,
+        "inliers": 528,
+        "wallMs": 6.438100012019277
+      },
+      {
+        "case": "park",
+        "status": "matched",
+        "rightReference": true,
+        "inliers": 1000,
+        "wallMs": 10.534000000916421
+      },
+      {
+        "case": "current",
+        "status": "matched",
+        "rightReference": true,
+        "inliers": 712,
+        "wallMs": 7.711399928666651
+      },
+      {
+        "case": "brightness",
+        "status": "matched",
+        "rightReference": true,
+        "inliers": 418,
+        "wallMs": 6.869800039567053
+      },
+      {
+        "case": "shift",
+        "status": "matched",
+        "rightReference": true,
+        "inliers": 413,
+        "wallMs": 8.53110000025481
+      },
+      {
+        "case": "rotation",
+        "status": "matched",
+        "rightReference": true,
+        "inliers": 224,
+        "wallMs": 7.706100004725158
+      },
+      {
+        "case": "blank",
+        "status": "unknown",
+        "rightReference": false,
+        "inliers": 0,
+        "wallMs": 0.9156999876722693
+      }
+    ]
+  },
+  "runs": [
+    {
+      "label": "shared-route-r9a",
+      "atUtc": "2026-10-23T16:51:00.444661+00:00",
+      "completed": true,
+      "physicalActions": 0,
+      "timing": {
+        "samples": 61,
+        "matchedInitialView": 61,
+        "minPerFullSecond": 1,
+        "fullSecondWindows": 14,
+        "averageHz": 4.057973782561648,
+        "receiverAgeP95Ms": 89.24810006283224,
+        "maxResultGapMs": 1020.3936999896541,
+        "matchWallMedianMs": 7.736700004898012
+      },
+      "viewWindowBasis": "absolute integer worker perf_counter seconds",
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureEpoch": "b7aa13c1-a079-43d7-b414-641b86939043",
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 5,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "controlRequested": false,
+      "decodedFpsDuringMonitor": 31.929,
+      "decodedArrivalGaps": null,
+      "rgbClearedOnClose": true,
+      "mainReturnPendingTasks": [],
+      "interpreterExit": {
+        "asyncioRunReturned": true,
+        "atUtc": "2026-10-23T16:51:19.875719+00:00",
+        "threads": [
+          {
+            "name": "MainThread",
+            "daemon": false
+          }
+        ]
+      },
+      "resourceGuardFindings": [],
+      "privateReceiptSha256": "7f0684c6884fe3b0b2cecd9bd85e916f518b6e0340b6b491fa60e9ea8dacb04b",
+      "pipelineSha256": "35d8a95b7c5d517f7b0d2d15d8160c82463615f7830bec674275c5ecb1fed8b7",
+      "historicalDistractorCount": 3,
+      "learnedCurrentView": {
+        "id": "64744b36-6bb2-4b5d-877e-0d6c25946b05",
+        "features": 691,
+        "descriptorBytes": 22112,
+        "sourceImageSha256": "d60fc42c7eaaa528d95ecbbc19a6b3e98edc4fa302ea0935a856105e5af35b56"
+      }
+    },
+    {
+      "label": "shared-route-r9b",
+      "atUtc": "2026-10-23T16:54:52.013106+00:00",
+      "completed": true,
+      "physicalActions": 0,
+      "timing": {
+        "samples": 75,
+        "matchedInitialView": 75,
+        "minPerFullSecond": 5,
+        "fullSecondWindows": 14,
+        "averageHz": 5.004989433409959,
+        "receiverAgeP95Ms": 69.14669997058809,
+        "maxResultGapMs": 216.5528000332415,
+        "matchWallMedianMs": 14.571400010026991
+      },
+      "viewWindowBasis": "absolute integer worker perf_counter seconds",
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureEpoch": "f2af47fe-cf86-4edf-a9e2-44d8ff428ca5",
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 5,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "controlRequested": false,
+      "decodedFpsDuringMonitor": 26.196,
+      "decodedArrivalGaps": null,
+      "rgbClearedOnClose": true,
+      "mainReturnPendingTasks": [],
+      "interpreterExit": {
+        "asyncioRunReturned": true,
+        "atUtc": "2026-10-23T16:55:10.752757+00:00",
+        "threads": [
+          {
+            "name": "MainThread",
+            "daemon": false
+          }
+        ]
+      },
+      "resourceGuardFindings": [],
+      "privateReceiptSha256": "a16c0484c85855a665ccf669607f9028c700996a9c6a1c69b3cb452d1e45ac55",
+      "pipelineSha256": "35d8a95b7c5d517f7b0d2d15d8160c82463615f7830bec674275c5ecb1fed8b7",
+      "historicalDistractorCount": 3,
+      "learnedCurrentView": {
+        "id": "9ae527d5-d9f3-4a9e-a0bd-13d7ec888870",
+        "features": 1473,
+        "descriptorBytes": 47136,
+        "sourceImageSha256": "b7b38678d5f7f316aa77a881c5d5366844b806ace8055c0712bfa5d3bad2bc76"
+      },
+      "tracedMaxRecvGapMs": 124.05320000834763,
+      "samplingMisses": 0
+    },
+    {
+      "label": "shared-route-motor-r11",
+      "atUtc": "2026-10-23T17:00:01.790771+00:00",
+      "completed": true,
+      "physicalActions": 0,
+      "timing": {
+        "samples": 75,
+        "matchedInitialView": 75,
+        "minPerFullSecond": 4,
+        "fullSecondWindows": 13,
+        "averageHz": 5.005981843899309,
+        "receiverAgeP95Ms": 68.44220007769763,
+        "maxResultGapMs": 221.74419998191297,
+        "matchWallMedianMs": 16.418499988503754
+      },
+      "viewWindowBasis": "absolute integer worker perf_counter seconds",
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureEpoch": "6d0b558f-f05c-4fbc-bc01-628a73fdbb2c",
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 5,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "controlRequested": false,
+      "decodedFpsDuringMonitor": 25.191,
+      "decodedArrivalGaps": {
+        "scope": "unique_frame_recv_return_clock_not_android_capture",
+        "maxGapMs": 119.185,
+        "gapsOver250ms": 0
+      },
+      "rgbClearedOnClose": true,
+      "mainReturnPendingTasks": [],
+      "interpreterExit": {
+        "asyncioRunReturned": true,
+        "atUtc": "2026-10-23T17:00:35.873030+00:00",
+        "threads": [
+          {
+            "name": "MainThread",
+            "daemon": false
+          }
+        ]
+      },
+      "resourceGuardFindings": [],
+      "privateReceiptSha256": "688f6eb0156b93560f29fdb63f3ae8c472d485f1a6cda0155b0e671b4bfac6db",
+      "pipelineSha256": "35d8a95b7c5d517f7b0d2d15d8160c82463615f7830bec674275c5ecb1fed8b7",
+      "historicalDistractorCount": 3,
+      "learnedCurrentView": {
+        "id": "46c55baf-516b-4130-a13e-caa60ac1f539",
+        "features": 1474,
+        "descriptorBytes": 47168,
+        "sourceImageSha256": "8a328f15ebd59d54a246d4cf2062b1ab16ff00065fd3190fb57d8c4f8f589c38"
+      },
+      "motorCheckpointSha256": "2a3b43121144ca2d9c2b8aa605e313184c98ac5ef6d2c3b530c2d353d886c5bc",
+      "checkpointVerifiedAfterRun": true,
+      "motorGoalConditioning": false,
+      "postWarmupFindings": [],
+      "motorProvider": {
+        "responses": 74,
+        "lastInferenceWallMs": 138.36260000243783,
+        "cleanupConfirmed": true
+      },
+      "motorResultTiming": {
+        "clock": "worker_monotonic_receiver_not_source_capture",
+        "meaning": "accepted_policy_results_not_android_applied_actions",
+        "measurementStarted": true,
+        "measurementClosed": true,
+        "clockReversalsIgnored": 0,
+        "elapsedSeconds": 14.883888,
+        "acceptedResults": 74,
+        "averageAcceptedHz": 4.972,
+        "requestedHz": 5,
+        "completeOneSecondWindows": 14,
+        "minimumAcceptedInCompleteWindow": 5,
+        "requiredCountPerCompleteWindow": 5,
+        "allCompleteWindowsMeetRequestedCount": true,
+        "maximumSilenceIncludingLeadingTrailingMs": 223.84,
+        "gapP50Ms": 203.822,
+        "gapP95Ms": 214.319,
+        "receiverAgeAtResultP50Ms": 169.079,
+        "receiverAgeAtResultP95Ms": 198.084,
+        "receiverAgeAtResultMaxMs": 228.136,
+        "percentileTailLimit": 128,
+        "gapTailSamples": 73,
+        "ageTailSamples": 74,
+        "sourceCaptureAgeKnown": false
+      },
+      "tracedMaxRecvGapMs": 119.18510007672012,
+      "samplingMisses": 1
+    },
+    {
+      "label": "saved-route-r12a",
+      "atUtc": "2026-10-23T17:03:39.679440+00:00",
+      "completed": true,
+      "physicalActions": 0,
+      "timing": {
+        "samples": 25,
+        "matchedChosenReference": 25,
+        "minPerFullSecond": 5,
+        "fullSecondWindows": 4,
+        "averageHz": 5.025718591409586,
+        "receiverAgeP95Ms": 98.28450006898493,
+        "maxResultGapMs": 222.8783000027761,
+        "matchWallMedianMs": 13.789499993436038
+      },
+      "viewWindowBasis": "absolute integer worker perf_counter seconds",
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureEpoch": "28d8f7f1-aaeb-4118-bbf9-b39839c29d77",
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 2,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "controlRequested": false,
+      "decodedFpsDuringMonitor": 24.321,
+      "decodedArrivalGaps": {
+        "scope": "unique_frame_recv_return_clock_not_android_capture",
+        "maxGapMs": 321.846,
+        "gapsOver250ms": 1
+      },
+      "rgbClearedOnClose": true,
+      "mainReturnPendingTasks": [],
+      "interpreterExit": {
+        "asyncioRunReturned": true,
+        "atUtc": "2026-10-23T17:03:48.721220+00:00",
+        "threads": [
+          {
+            "name": "MainThread",
+            "daemon": false
+          }
+        ]
+      },
+      "resourceGuardFindings": [],
+      "privateReceiptSha256": "30d8a6f216ccc6bbfbeba1cca7d88064e397f1a8b1b9112cdc5dd7e9d9f6349b",
+      "pipelineSha256": "35d8a95b7c5d517f7b0d2d15d8160c82463615f7830bec674275c5ecb1fed8b7",
+      "historicalDistractorCount": 3,
+      "keyframeExport": {
+        "bytes": 107010,
+        "sha256": "96ac5da354c2dbabc6edf136d59353a1b5091babbf91617ba87e4c205ad9478a",
+        "roundtripValid": true,
+        "containsRGB": false
+      },
+      "learnedCurrentView": {
+        "id": "22cec825-e8ca-4e5d-a144-b4f29db58eba",
+        "features": 1478,
+        "descriptorBytes": 47296,
+        "sourceImageSha256": "af84f521b857d37d880c639abdb8dfbdf66167995c844720978f7847fa595148"
+      },
+      "tracedMaxRecvGapMs": 321.84610003605485,
+      "samplingMisses": 1
+    },
+    {
+      "label": "saved-route-r12b",
+      "atUtc": "2026-10-23T17:04:17.468682+00:00",
+      "completed": true,
+      "physicalActions": 0,
+      "timing": {
+        "samples": 50,
+        "matchedChosenReference": 50,
+        "minPerFullSecond": 5,
+        "fullSecondWindows": 9,
+        "averageHz": 5.003501583165015,
+        "receiverAgeP95Ms": 64.47540002409369,
+        "maxResultGapMs": 216.2921999115497,
+        "matchWallMedianMs": 14.985249959863722
+      },
+      "viewWindowBasis": "absolute integer worker perf_counter seconds",
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureEpoch": "912504ec-7b25-4b37-9db1-9633fa866c62",
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 4,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "controlRequested": false,
+      "decodedFpsDuringMonitor": 26.699,
+      "decodedArrivalGaps": {
+        "scope": "unique_frame_recv_return_clock_not_android_capture",
+        "maxGapMs": 88.297,
+        "gapsOver250ms": 0
+      },
+      "rgbClearedOnClose": true,
+      "mainReturnPendingTasks": [],
+      "interpreterExit": {
+        "asyncioRunReturned": true,
+        "atUtc": "2026-10-23T17:04:31.060685+00:00",
+        "threads": [
+          {
+            "name": "MainThread",
+            "daemon": false
+          }
+        ]
+      },
+      "resourceGuardFindings": [],
+      "privateReceiptSha256": "95724b8c471266a6c2f5580c424b6f526ac2775ef0aa45240db40f9d9262edbb",
+      "pipelineSha256": "35d8a95b7c5d517f7b0d2d15d8160c82463615f7830bec674275c5ecb1fed8b7",
+      "historicalDistractorCount": 3,
+      "referenceMode": "saved_keyframe_from_previous_capture",
+      "savedReferenceSourceEpoch": "28d8f7f1-aaeb-4118-bbf9-b39839c29d77",
+      "tracedMaxRecvGapMs": 88.29699992202222,
+      "samplingMisses": 0
+    }
+  ],
+  "frameStorage": {
+    "continuousArchiveEnabled": false,
+    "newPublicImages": 0,
+    "explicitPrivateFinalSnapshotsOnly": true
+  },
+  "runtimeChanges": {
+    "newModelWeightsDownloaded": false,
+    "pipPackagesChanged": false,
+    "apkOrVpnOrWebOrApiChanged": false,
+    "githubJobsDispatched": false,
+    "hostOrEmulatorRestarted": false,
+    "resourceThresholdsChanged": false
+  },
+  "unsafePatternNotReproduced": {
+    "success": true,
+    "remainingTasks": [],
+    "remainingThreads": [
+      {
+        "name": "MainThread",
+        "daemon": false
+      },
+      {
+        "name": "asyncio_0",
+        "daemon": false
+      },
+      {
+        "name": "asyncio_1",
+        "daemon": false
+      }
+    ],
+    "meaning": "Two native-frame consumers exited in this finite test; no causal proof of the old hang."
+  },
+  "persistentReloadEvidence": {
+    "differentCaptureEpochs": true,
+    "save": {
+      "bytes": 107010,
+      "sha256": "96ac5da354c2dbabc6edf136d59353a1b5091babbf91617ba87e4c205ad9478a",
+      "roundtripValid": true,
+      "containsRGB": false
+    },
+    "newSessionMatchedSavedReference": 50,
+    "queryObservations": 50,
+    "worldPoseOrMovementAccepted": false
+  },
+  "limitations": [
+    "First run had a1020ms observer gap and minimum1 result in a complete second; root cause unresolved.",
+    "Subsequent finite success and clean exits do not prove long-soak/reconnect robustness.",
+    "All live scenes were stationary; no native actions, obstacle recovery, route following or arrival.",
+    "Homography/ORB resemblance is not depth, free-space or world pose. Similar facades may alias.",
+    "Synthetic5degree/brightness/translation changes do not prove large physical camera changes.",
+    "P2P used unchanged zero text conditioning; no goal-conditioned policy claim.",
+    "Receiver clocks and recv gaps are not source Android capture latency."
+  ],
+  "finalWindowsMemory": {
+    "availableRamBytes": 10783076352,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 69822877696,
+    "commitLimitBytes": 101336473600,
+    "kernelPagedBytes": 10179977216,
+    "kernelNonpagedBytes": 5713367040,
+    "processCount": 445,
+    "handleCount": 1003437
+  }
+}

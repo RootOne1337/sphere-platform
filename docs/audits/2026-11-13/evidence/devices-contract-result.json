@@ -1,0 +1,104 @@
+{
+  "fresh_presence": {
+    "list": {
+      "card_viewers": null,
+      "stream_viewers": null,
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Fixture Android",
+      "serial": null,
+      "type": null,
+      "status": "online",
+      "is_active": true,
+      "ip_address": null,
+      "adb_port": null,
+      "android_version": null,
+      "device_model": null,
+      "workstation_id": null,
+      "group_ids": [],
+      "location_ids": [],
+      "tags": [],
+      "notes": null,
+      "server_name": null,
+      "created_at": "2026-11-13T18:10:42.138869Z",
+      "updated_at": "2026-11-13T18:10:42.138869Z",
+      "battery_level": null,
+      "cpu_usage": null,
+      "ram_usage_mb": null,
+      "screen_on": null,
+      "adb_connected": false,
+      "vpn_active": true,
+      "vpn_observed_at": "2026-11-13T18:10:42.138869Z",
+      "vpn_observation_state": "fresh",
+      "vpn_observation_max_age_seconds": 120,
+      "last_heartbeat": "2026-11-13T18:10:42.138869Z",
+      "connected_since": null,
+      "agent_version": null,
+      "agent_version_code": null
+    },
+    "detail": {
+      "card_viewers": null,
+      "stream_viewers": null,
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Fixture Android",
+      "serial": null,
+      "type": null,
+      "status": "online",
+      "is_active": true,
+      "ip_address": null,
+      "adb_port": null,
+      "android_version": null,
+      "device_model": null,
+      "workstation_id": null,
+      "group_ids": [],
+      "location_ids": [],
+      "tags": [],
+      "notes": null,
+      "server_name": null,
+      "created_at": "2026-11-13T18:10:42.138869Z",
+      "updated_at": "2026-11-13T18:10:42.138869Z",
+      "battery_level": null,
+      "cpu_usage": null,
+      "ram_usage_mb": null,
+      "screen_on": null,
+      "adb_connected": false,
+      "vpn_active": true,
+      "vpn_observed_at": "2026-11-13T18:10:42.138869Z",
+      "vpn_observation_state": "fresh",
+      "vpn_observation_max_age_seconds": 120,
+      "last_heartbeat": "2026-11-13T18:10:42.138869Z",
+      "connected_since": null,
+      "agent_version": null,
+      "agent_version_code": null
+    }
+  },
+  "redis_client_absent": {
+    "list_status": "unknown",
+    "presence_available": false,
+    "detail_status": "online",
+    "detail_heartbeat": null
+  },
+  "redis_device_key_absent": {
+    "list_status": "offline",
+    "presence_available": true,
+    "detail_status": "online",
+    "detail_heartbeat": null
+  },
+  "group_assignment": {
+    "before": [
+      "00000000-0000-0000-0000-000000000003",
+      "00000000-0000-0000-0000-000000000004"
+    ],
+    "after": [
+      "00000000-0000-0000-0000-000000000005"
+    ],
+    "moved": 1
+  },
+  "game_server_clear": {
+    "explicit_null_result": "RED",
+    "empty_string_result": null
+  },
+  "device_identifiers": {
+    "serial": "fixture-serial",
+    "android_id_in_contract": false
+  }
+}

@@ -1,0 +1,39 @@
+rule_files: [../infrastructure/monitoring/collection/rules.yml]
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'sphere_device_log_filesystem_free_bytes{job="sphere-backend",instance="declining"}'
+        values: '1000-10x60'
+      - series: 'sphere_device_log_filesystem_total_bytes{job="sphere-backend",instance="declining"}'
+        values: '2000+0x60'
+      - series: 'sphere_device_log_filesystem_available{job="sphere-backend",instance="declining"}'
+        values: '1+0x60'
+      - series: 'sphere_device_log_filesystem_free_bytes{job="sphere-backend",instance="stable"}'
+        values: '1000+0x60'
+      - series: 'sphere_device_log_filesystem_total_bytes{job="sphere-backend",instance="stable"}'
+        values: '2000+0x60'
+      - series: 'sphere_device_log_filesystem_available{job="sphere-backend",instance="stable"}'
+        values: '1+0x60'
+      - series: 'sphere_device_log_retention_events_total{job="sphere-backend",instance="declining",outcome="org_quota"}'
+        values: '0+0x29 1+0x30'
+      - series: 'sphere_device_log_retention_events_total{job="sphere-backend",instance="stable",outcome="expired"}'
+        values: '0+1x60'
+    alert_rule_test:
+      - alertname: SphereDeviceLogFilesystemDepleting
+        eval_time: 20m
+        exp_alerts: []
+      - alertname: SphereDeviceLogFilesystemDepleting
+        eval_time: 50m
+        exp_alerts:
+          - exp_labels: {job: sphere-backend, instance: declining, severity: warning}
+            exp_annotations:
+              summary: Device journal filesystem may fill within six hours
+              description: Estimate from recent free-space measurements. Check journal intake and other writers on the filesystem.
+      - alertname: SphereDeviceLogStorageQuotaRejected
+        eval_time: 35m
+        exp_alerts:
+          - exp_labels: {outcome: org_quota, severity: warning}
+            exp_annotations:
+              summary: Device diagnostic log uploads were rejected by a storage quota
+              description: Check the journal volume, retention, and incoming diagnostic bytes. Outcome org_quota.

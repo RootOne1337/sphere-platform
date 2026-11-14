@@ -1,0 +1,559 @@
+{
+  "observedAt": "2026-10-02T12:14:38.305365+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "finding": "F37",
+  "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
+  "auditCommit": "80fb365",
+  "source": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+  "backendSource": "39baa13a18a69999f4f2c9ac6fb63c1437956175",
+  "sourceFileSha256": {
+    "backend/api/v1/audit/router.py": "6e55c68c5be0dc2ff25f6f7b71241d1128fa363189320b7694f6e4f79c48227b",
+    "backend/schemas/audit.py": "a41a6b10be5e1b1d6d8b986631073bd1b008474c6a8c930bb14a252be1624e25",
+    "backend/services/audit_query.py": "ad166e02de912fbbcf01d77cfb237579e1c81657a0d22b3843b532a45603ae89",
+    "tests/production/test_audit_investigation.py": "6fb7f17254a76de02ba4f0ec5d86d59356bbba117bc3e082d827a0098d53fc15",
+    "frontend/app/(dashboard)/audit/page.tsx": "905d8e0a806e7be0af18cf555b9bf21369cf597202eeb032263eec3bdac32bf7",
+    "frontend/src/features/audit/AuditQueryBuilder.tsx": "36525b9f2d997b3b11929d607818205ec0d54337cb398d1163b9e890b831f408",
+    "frontend/src/features/audit/AuditFiltersForm.tsx": "006097c1776f1ec743c575877b9c6bcc67794742ba1230b6c558d7d85ffe2d0a",
+    "frontend/src/features/audit/investigation.ts": "673b5c110b6201bf60aee1095ba98f4f0bbb68d8354baf040302dd5511257db9",
+    "frontend/src/features/audit/useAuditExport.ts": "bacec6cb185447001072146d295c11581ac01ae6e425022ed8ba0f6e2122853f",
+    "frontend/__tests__/audit/investigation.test.tsx": "a3f4ee092bd3455384a8d44349d892c03609ef426059a479b90b471e69e9288b",
+    "frontend/__tests__/audit/investigation-validation.test.ts": "d9756ba136c2217d72d02676e4dd632f96b01943c3bdf8a9e8b31fb43340bf07",
+    "docs/operations/AUDIT-INVESTIGATION.md": "d6b41d4e5ea0dc1ecd2e3d94dc1dfa3d00185d5cb6618e84bedf020268c57501"
+  },
+  "before": {
+    "source": "5d27624861d377485d6a47525c98a2e98d17e522",
+    "frontendAssertionFailures": 11,
+    "frontendControlPasses": 0,
+    "frontendRuntimeErrors": 0,
+    "postgresAssertionFailures": 18,
+    "postgresControlPasses": 6,
+    "initialPostgresCases": 24
+  },
+  "after": {
+    "newUiWorkflowCasesPassed": 11,
+    "newUiValidationCasesPassed": 18,
+    "targetedFrontendPassed": 36,
+    "frontendSuitesPassed": 98,
+    "frontendTestsPassed": 806,
+    "frontendFailed": 0,
+    "frontendSkipped": 0,
+    "newPostgresCasesPassed": 37,
+    "combinedPostgresCasesPassed": 61,
+    "productionImagePostgresCasesPassed": 61,
+    "productionImagePostgresFailures": 0,
+    "typeCheckExit": 0,
+    "mypySourceFiles": 223,
+    "mypyExit": 0,
+    "productionRuffVersion": "0.15.2",
+    "productionRuffExit": 0,
+    "existingLintWarnings": 44
+  },
+  "compile": {
+    "source": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+    "backendSource": "39baa13a18a69999f4f2c9ac6fb63c1437956175",
+    "immutableGitArchives": true,
+    "productionConfigPreserved": true,
+    "platform": "Linux Docker",
+    "exit": 0,
+    "node": "v24.21.0",
+    "next": "15.5.26",
+    "imageOpenapiCheckPassed": true,
+    "httpOperations": 172,
+    "httpPaths": 135
+  },
+  "runtime": {
+    "observedAt": "2026-10-02T12:12:04.156004+00:00",
+    "phase": "investigation-installed",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+    "backendSource": "39baa13a18a69999f4f2c9ac6fb63c1437956175",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "oldDiscoveryPayloadStatus": 422,
+    "oldDiscoveryMissingRequiredField": "workstation_id",
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "fc25350d3ae4aa2cde23c6e3b164f8f6b5ac59760495b9cfed2be6b5b96654e4",
+        "imageId": "sha256:dc2d96018a625228514a5246e865ef9f4ecf51d36c3a818c6769560dc14d3f91",
+        "image": "sphere-review-frontend:67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+        "health": "healthy",
+        "startedAt": "2026-10-02T12:11:15.194388362Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "126c8120a4994390986c8ca7aeafa7634ecad64116de9dc1799c40d8feb52516",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T12:11:21.064092287Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "liveApi": {
+    "observedAt": "2026-10-02T12:10:44.560243+00:00",
+    "backendSource": "39baa13a18a69999f4f2c9ac6fb63c1437956175",
+    "loginPassed": true,
+    "catalogTotalAtFirstRead": 5386,
+    "selectedEventOriginalPage": 2,
+    "selectedEventNotInFirstPage": true,
+    "selectedEventIdSha256": "900f7a37d6db44a5bbd106320422d509dedf0f3a77ec58650e40bae1655f087f",
+    "globalCombinedFiltersReturnedExactlyOne": true,
+    "exportMatchedListEvent": true,
+    "exportColumnCount": 7,
+    "exportRows": 1,
+    "exportTruncated": false,
+    "exportLimit": 5000,
+    "noStore": true,
+    "csvFormulaProtectionProvenInPostgresTests": true,
+    "emptyExportCorrect": true,
+    "negativeStatuses": {
+      "zeroPageSize": 422,
+      "naiveDate": 422,
+      "reversedDate": 422,
+      "badDsl": 422,
+      "capExceeded": 422,
+      "unauthenticated": 401
+    },
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "liveCap": {
+    "observedAt": "2026-10-02T12:12:17.402269+00:00",
+    "exportRows": 5000,
+    "limit": 5000,
+    "truncated": true,
+    "uniqueEventIds": true,
+    "bytes": 995229,
+    "elapsedSeconds": 0.09,
+    "singleFiniteTrialNotSlo": true,
+    "rawRowsNotPublished": true
+  },
+  "backendInstallation": {
+    "source": "39baa13a18a69999f4f2c9ac6fb63c1437956175",
+    "previousSource": "933164e2929be0223b9a918902795ade7f0a6dfa",
+    "containerId": "746e41cb6ffaf237783d999e2090674221ade40bd5a8fc7e39c8cb5107a4112b",
+    "imageId": "sha256:4c698b9c694dc7256360df83207623bc08fe7f25f0614379d51cccf5082c06ff",
+    "observedAt": "2026-10-02T12:09:08.322824+00:00",
+    "ready": true,
+    "healthRevisionMatched": true,
+    "routes": {
+      "/api/v1/audit/logs": [
+        "get"
+      ],
+      "/api/v1/audit/logs/export": [
+        "get"
+      ]
+    },
+    "onlyBackendReplaced": true,
+    "screenshotStorageConfigured": false,
+    "apkOtaTunnelsPreserved": true,
+    "browserVerified": false
+  },
+  "preservation": {
+    "onlyOwnedServicesReplaced": [
+      "sphere-pilot-20260911-backend-1",
+      "sphere-review-20261002-review-gateway-1",
+      "sphere-review-20261002-review-ui-1"
+    ],
+    "otherContainerCount": 43,
+    "otherRunningCount": 13,
+    "preservedIdImageStartedAtRunning": true,
+    "containers": [
+      {
+        "id": "198ba01bcc9626208cc501fbb33f714ddd763c2e3fefeb3ff02ec180dbd24484",
+        "name": "sphere-observability-20260930-grafana-1",
+        "imageId": "sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572",
+        "image": "grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572",
+        "startedAt": "2026-09-30T14:04:47.940246857Z",
+        "running": true
+      },
+      {
+        "id": "3a8c35855670495381ee011ad9e0dc3d6dbc60f5c00c175e02eecbde55c3499d",
+        "name": "sphere-observability-20260930-prometheus-1",
+        "imageId": "sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e",
+        "image": "prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e",
+        "startedAt": "2026-09-30T03:28:16.688738513Z",
+        "running": true
+      },
+      {
+        "id": "207cb00d1dbe327aebbaa7d4d60108c074e14e9a6aaf99df9ad502fa151cc5f0",
+        "name": "sphere-tuna-canary",
+        "imageId": "sha256:bb214af134a42d8c6266ae3d9bf0e67b2c60db0dcbfa111ae8ef68b9ce956449",
+        "image": "yuccastream/tuna@sha256:bb214af134a42d8c6266ae3d9bf0e67b2c60db0dcbfa111ae8ef68b9ce956449",
+        "startedAt": "2026-09-27T20:49:07.63456204Z",
+        "running": true
+      },
+      {
+        "id": "424083add045e31d5618bb5c9ab3d4457ab2f36918532f4d33e4ff68eeae3527",
+        "name": "sphere-pilot-20260911-frontend-1",
+        "imageId": "sha256:1d452dfa6ae83c2fb501e4891c15b819184b6160ab5d88804362b242645b709f",
+        "image": "sphere-pilot-20260911-frontend:8fef5eb",
+        "startedAt": "2026-09-27T18:41:20.481313948Z",
+        "running": true
+      },
+      {
+        "id": "69bce2528de228686dfaa7a9c7573b56b4e7e0af9fcfafb7c5c9ed4c2513938e",
+        "name": "sphere-pilot-20260911-cloudflare-h2-ab",
+        "imageId": "sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4",
+        "image": "cloudflare/cloudflared:2026.9.1@sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4",
+        "startedAt": "2026-09-27T14:38:07.434575422Z",
+        "running": false
+      },
+      {
+        "id": "977c9567aadb3050773d83e6d05355d8def61adcdb5881f7e50c99a259c14b86",
+        "name": "sphere-pilot-20260911-serveo-ab",
+        "imageId": "sha256:b8d199e1a6182749c416a0feee8ea71ef6479f69cde527584e02fe7fe908633b",
+        "image": "sphere-pilot-20260911-ssh-tunnel:remote-v1",
+        "startedAt": "2026-09-27T14:36:51.680992799Z",
+        "running": false
+      },
+      {
+        "id": "577a03d96d4069b30b16a19a8b0818f56af3b5a31cc04f37248f6070973e5293",
+        "name": "sphere-pilot-alt-ingress-20260926",
+        "imageId": "sha256:e4bf2a82ad0a4037d28035ae71529873c069b13eb0455466ae0bc13363826e34",
+        "image": "node:22-alpine",
+        "startedAt": "2026-09-25T21:21:30.292341332Z",
+        "running": false
+      },
+      {
+        "id": "195c07987e10fb0eb8e584eee2c043e722e1e5a7a6f7a57e25ff022d5d88927f",
+        "name": "sphere-pilot-20260911-localhost-run-1",
+        "imageId": "sha256:b8d199e1a6182749c416a0feee8ea71ef6479f69cde527584e02fe7fe908633b",
+        "image": "sphere-pilot-20260911-ssh-tunnel:remote-v1",
+        "startedAt": "2026-09-27T11:25:13.36402546Z",
+        "running": false
+      },
+      {
+        "id": "97f31cf1c7738dbf96387224f7452ad227e663c0c5d158f61c2f4f8e9f3887cf",
+        "name": "sphere-pilot-20260911-cloudflare-quick-1",
+        "imageId": "sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4",
+        "image": "cloudflare/cloudflared:2026.9.1@sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4",
+        "startedAt": "2026-09-28T11:13:37.802948889Z",
+        "running": true
+      },
+      {
+        "id": "ec2a4b7110ca60a0a89d41df105e3dee656666fff6090098d3756579ac972a2e",
+        "name": "sphere-pilot-20260911-public-gateway-1",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "startedAt": "2026-09-21T19:06:46.139788532Z",
+        "running": true
+      },
+      {
+        "id": "879a728d94aacf998fa4e2a8d1abaff46d04ad003c5fbf322f4f058d90b15816",
+        "name": "sphere-pilot-20260911-nginx-1",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "startedAt": "2026-09-21T19:06:46.141880185Z",
+        "running": true
+      },
+      {
+        "id": "0bf7b0be08bb44223480628e492dca644ee3a7300b3c44ccb07b8aa66f5984a6",
+        "name": "sphere-pilot-20260911-n8n-1",
+        "imageId": "sha256:e01ebe6ac2014a4dcffe439e14211df1c15e6312f93ca8a985a128ab7feb2f08",
+        "image": "n8nio/n8n:1.32.0",
+        "startedAt": "2026-09-21T19:06:46.145972335Z",
+        "running": true
+      },
+      {
+        "id": "6ed531e885818664cd32fe806c2993fd7a9c0b8d456969bfd1cbee517f05904d",
+        "name": "sphere-pilot-20260911-minio-1",
+        "imageId": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "image": "minio/minio:latest",
+        "startedAt": "2026-09-21T19:06:46.148254072Z",
+        "running": true
+      },
+      {
+        "id": "c2b5b99bcf18bda3332079ecc2e4bb4bd6f5622e8c1cb9d3233ad092d2819048",
+        "name": "sphere-pilot-20260911-postgres-1",
+        "imageId": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+        "image": "postgres:15-alpine",
+        "startedAt": "2026-09-21T19:06:46.152449884Z",
+        "running": true
+      },
+      {
+        "id": "7d8866e37758ae3fc71225199852726f6f366e8b09af41a3c5d060fcb9b380ec",
+        "name": "sphere-pilot-20260911-redis-1",
+        "imageId": "sha256:65748f2ea686cb0e37a008cbe7024324db1d84abf57e917e1c2ec92b5e50f602",
+        "image": "redis:7.2-alpine",
+        "startedAt": "2026-09-21T19:06:46.115238685Z",
+        "running": true
+      },
+      {
+        "id": "88d26791554bbabf4cc990ebfabbf8887297e5c0dae910b33af10484f0e10a1f",
+        "name": "sphere-audit-20260905-redis",
+        "imageId": "sha256:65748f2ea686cb0e37a008cbe7024324db1d84abf57e917e1c2ec92b5e50f602",
+        "image": "redis:7.2-alpine",
+        "startedAt": "2026-09-21T19:53:31.71289706Z",
+        "running": true
+      },
+      {
+        "id": "26a49b0298fc4feb6ad879ed6ef15ac41daa25ad972f06a13e1064d39625e022",
+        "name": "sphere-audit-20260905-postgres",
+        "imageId": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+        "image": "postgres:15-alpine",
+        "startedAt": "2026-09-21T19:53:31.422753888Z",
+        "running": true
+      },
+      {
+        "id": "397ea15c00564c270c33777f0e1f1e3fdb93324b4a20e710bc719d9a03142a00",
+        "name": "sphere-mini-factory-factory-worker-1",
+        "imageId": "sha256:8f6c29266e8dbd6ffa981b0b9effa1677e2835b36c78bbb39eb329f68586d5b2",
+        "image": "sphere-mini-factory-factory-worker",
+        "startedAt": "2026-08-30T11:52:57.608608153Z",
+        "running": false
+      },
+      {
+        "id": "97dff5c0869135de1195b708c96135a03b0f5d3f8375ea9d7e5dce82825342a7",
+        "name": "sphere-mini-factory-factory-tool-worker-1",
+        "imageId": "sha256:13a6f595aec38f1472c7c40d110586ac02c1ae1a152fc018698c83f35c50cc5e",
+        "image": "sphere-mini-factory-factory-tool-worker",
+        "startedAt": "2026-09-05T17:53:01.896575011Z",
+        "running": false
+      },
+      {
+        "id": "257ee338bc805b683061a7cbe5072e36b6ce0ae39dd03ac282366d7cafcc0165",
+        "name": "sphere-mini-factory-factoryd-1",
+        "imageId": "sha256:5ac8462b319514ea31880ca26d8f1da81612c05708c82715573acec1a41208e8",
+        "image": "sphere-mini-factory-factoryd",
+        "startedAt": "2026-09-05T17:53:41.324106922Z",
+        "running": false
+      },
+      {
+        "id": "cd05a3485f76f813e01f45674355403fff2918e2200f5acf2fb88cabbd1843c2",
+        "name": "sphere-mini-factory-mission-control-1",
+        "imageId": "sha256:ffd29e637fb8f556345fa69111fac31450b3b10706e7c0ecd018e13b647fdf35",
+        "image": "sphere-mini-factory-mission-control",
+        "startedAt": "2026-09-05T17:52:42.142793324Z",
+        "running": false
+      },
+      {
+        "id": "c4d05b89d2cad17d8c9c5525f2f2b25eeb189fd313ad2a04dd45aed4110bfcb7",
+        "name": "sphere-mini-factory-factory-storage-init-1",
+        "imageId": "sha256:882236b897e39051d2368c5ccc6cda944904723506b2dfc97f2a8f5bc9afa382",
+        "image": "postgres:18.4-bookworm@sha256:882236b897e39051d2368c5ccc6cda944904723506b2dfc97f2a8f5bc9afa382",
+        "startedAt": "2026-08-30T11:52:56.567200284Z",
+        "running": false
+      },
+      {
+        "id": "249e2e9d7faf15748dfeb60f967da09555826e6cb96297390d659679e77dbae6",
+        "name": "ruflo-nginx-1",
+        "imageId": "sha256:9a335eadc3cff24775f2edff79a43953663bc69010d3f5ec1cad06b342950108",
+        "image": "ruflo-nginx",
+        "startedAt": "2026-08-25T18:24:58.092354708Z",
+        "running": false
+      },
+      {
+        "id": "142f733a9b3c612500ebce1561551c3dfca223000a73e4e89128ce2f0ad79635",
+        "name": "ruflo-chat-ui-1",
+        "imageId": "sha256:a4616a62d38f8218bb4f9dfed4922fac1037e4b98798ed0b7dcb37bd92862f63",
+        "image": "ruflo-chat-ui",
+        "startedAt": "2026-08-25T18:24:57.733693041Z",
+        "running": false
+      },
+      {
+        "id": "571f86d491cfddaaac1867fc4e77afc5ab9d4085ee4fa9f3c166f413d86f6cf5",
+        "name": "ruflo-mcp-bridge-1",
+        "imageId": "sha256:16398d7ae72d85b2e8bd04de5b5ae4298de84e01d678cf1139b49904291b2ec7",
+        "image": "ruflo-mcp-bridge",
+        "startedAt": "2026-08-25T18:24:57.507594525Z",
+        "running": false
+      },
+      {
+        "id": "7571dc267ae21433160302fd06c4f200ffa23b31f09d1fc3062501b481ddd00c",
+        "name": "ruflo-mongodb-1",
+        "imageId": "sha256:b6421fd6d1c5ded6377b397d8983e2f82e2100dc5123332dcfda2065a472be5b",
+        "image": "mongo:7",
+        "startedAt": "2026-08-25T18:18:04.88599585Z",
+        "running": false
+      },
+      {
+        "id": "7150dbb9b84a4f25906bc46a9863a36f67c8055d4c54411e48e0daa338b68c25",
+        "name": "sphere-mini-factory-tool-runtime-seed-python-1",
+        "imageId": "sha256:cab69e2d0a1a2ea9a1ce1060252f439e83483ae41ec09317aecb33b08a0656a5",
+        "image": "docker:29.2.1-cli@sha256:cab69e2d0a1a2ea9a1ce1060252f439e83483ae41ec09317aecb33b08a0656a5",
+        "startedAt": "2026-08-30T11:52:57.07669723Z",
+        "running": false
+      },
+      {
+        "id": "78772c986808fef88e6ee9c266a83fc329b34019ed3e2e7ac704e01b59e477db",
+        "name": "sphere-mini-factory-tool-runtime-seed-1",
+        "imageId": "sha256:cab69e2d0a1a2ea9a1ce1060252f439e83483ae41ec09317aecb33b08a0656a5",
+        "image": "docker:29.2.1-cli@sha256:cab69e2d0a1a2ea9a1ce1060252f439e83483ae41ec09317aecb33b08a0656a5",
+        "startedAt": "2026-08-30T11:52:57.073847588Z",
+        "running": false
+      },
+      {
+        "id": "a92d6737c7e53d8171be60537b01f6789c6d26628d47dd1937bfb6bad8a82f95",
+        "name": "sphere-mini-factory-tool-runtime-1",
+        "imageId": "sha256:67c4114553192e9072969fc347426048cfe4192385dc762d8eb449c05e904255",
+        "image": "docker:29.2.1-dind-rootless@sha256:67c4114553192e9072969fc347426048cfe4192385dc762d8eb449c05e904255",
+        "startedAt": "2026-09-05T17:52:42.147549169Z",
+        "running": false
+      },
+      {
+        "id": "87cf11e084c735cc10ced9e245fad6c7e5c456b5539f4d70059fee68191ff957",
+        "name": "sphere-mini-factory-postgres-1",
+        "imageId": "sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296",
+        "image": "postgres:18.4-bookworm",
+        "startedAt": "2026-09-05T17:52:42.106032223Z",
+        "running": false
+      },
+      {
+        "id": "15059157385a62b03831857cac7c2c9233799061e2566d9e2ca5a460c753402f",
+        "name": "sphere-mini-factory-otel-collector-1",
+        "imageId": "sha256:93aad750175cbf1a973ae1c5886c3371f4d800f61be25cdd26870b8441ffe9fa",
+        "image": "otel/opentelemetry-collector-contrib:0.153.0",
+        "startedAt": "2026-09-05T17:52:42.122306789Z",
+        "running": false
+      },
+      {
+        "id": "012a73284ad9443b2c673ed3ccc261b3efd65efdede008e32216470b40f15c5e",
+        "name": "sphere-mini-factory-prometheus-1",
+        "imageId": "sha256:f39df5334dee301b885f77e0ff1159f5d8a43bf9db518f885544594799a1e3c2",
+        "image": "prom/prometheus:v3.12.0-distroless",
+        "startedAt": "2026-09-05T17:52:42.136782595Z",
+        "running": false
+      },
+      {
+        "id": "77a9a73c401ea711b4313849931f07a1fd4b079868348a7cfeb45f4a250e3355",
+        "name": "sphere-mini-factory-jaeger-1",
+        "imageId": "sha256:8c593d8048d86334eb52dba26633b6c846b8ecbe5c22905702c932ae97baeb42",
+        "image": "jaegertracing/jaeger:2.10.0",
+        "startedAt": "2026-09-05T17:52:42.052644522Z",
+        "running": false
+      },
+      {
+        "id": "ff8f9d3f6e9082c79e495cb413b9e74c4cff66ed01ac9d64ee77598f034ec418",
+        "name": "sphere-local-pg-20260729",
+        "imageId": "sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296",
+        "image": "postgres@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296",
+        "startedAt": "2026-08-08T14:46:27.080369926Z",
+        "running": false
+      },
+      {
+        "id": "e17e787bb4f965dcd8f07763f22075058d051b692a1ded72b628df46e9ce940b",
+        "name": "sphere-tunnel",
+        "imageId": "sha256:c7edec240cf58789f5543f3b1801d3765796ff702f50e62ff4b91741ad12ab6c",
+        "image": "sphere-tunnel:latest",
+        "startedAt": "2026-09-21T19:06:46.121813991Z",
+        "running": false
+      },
+      {
+        "id": "20e5aa77249518a7db525a6cf67363b17a983af554381aca9dc7477db4ad2aa5",
+        "name": "sphere-platform-nginx-1",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "startedAt": "2026-07-29T17:25:38.776081681Z",
+        "running": false
+      },
+      {
+        "id": "f9dcb6e188292051fd2b6f6e974753027d7e76d821cb3b8e66ba2956292ce4b1",
+        "name": "sphere-platform-n8n-1",
+        "imageId": "sha256:e01ebe6ac2014a4dcffe439e14211df1c15e6312f93ca8a985a128ab7feb2f08",
+        "image": "n8nio/n8n:1.32.0",
+        "startedAt": "2026-07-29T17:26:40.006792082Z",
+        "running": false
+      },
+      {
+        "id": "5cbf6146c434cf5c06394f45e8db2f31bf37874974c43d6efb07f64d8bbd02f8",
+        "name": "sphere-platform-postgres-1",
+        "imageId": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+        "image": "postgres:15-alpine",
+        "startedAt": "2026-07-29T17:25:38.770677443Z",
+        "running": false
+      },
+      {
+        "id": "31d781a624fc952bb607285f28a528bc15e78ed64530d2bebd68199b7098a225",
+        "name": "sphere-platform-redis-1",
+        "imageId": "sha256:65748f2ea686cb0e37a008cbe7024324db1d84abf57e917e1c2ec92b5e50f602",
+        "image": "redis:7.2-alpine",
+        "startedAt": "2026-07-29T17:25:38.748107562Z",
+        "running": false
+      },
+      {
+        "id": "4682de3f5a65dfce91cf9bd7081598dc346e072447938e43925712fc786a142a",
+        "name": "sphere-platform-certbot-1",
+        "imageId": "sha256:8be9c9f10232e223acd84acdacc26858fcd46e8194c6dcdf99b2ddd231a362fe",
+        "image": "certbot/certbot:latest",
+        "startedAt": "2026-07-29T17:25:38.75476107Z",
+        "running": false
+      },
+      {
+        "id": "b02ca88995808d30e4dd4ca5936d5c92d193181dba1826d308e07ea89652ab2f",
+        "name": "sphere-platform-minio-1",
+        "imageId": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "image": "minio/minio:latest",
+        "startedAt": "2026-07-29T17:25:38.7333987Z",
+        "running": false
+      },
+      {
+        "id": "3ebaa6eed4779c5e33fb5161dd5570408a8f95abbb169e96d6467bcabda40781",
+        "name": "sphere-platform-frontend-1",
+        "imageId": "sha256:c2e4ae5cfa84cdd1cccb2aa7ede5aa98ed93bdac6b51390d18310107e63f0a42",
+        "image": "sphere-platform-frontend",
+        "startedAt": "2026-07-29T17:25:38.698920742Z",
+        "running": false
+      },
+      {
+        "id": "b13f3e075df130fdc9dd27ae1c7da076f243bb4b7d2515c50a46cb6e97874b36",
+        "name": "sphere-platform-backend-1",
+        "imageId": "sha256:f079a9127832e25715130cad22525d67672736bc0e1bd0ac1244183512bf9222",
+        "image": "sphere-platform-backend",
+        "startedAt": "2026-07-29T17:25:38.682015389Z",
+        "running": false
+      }
+    ]
+  },
+  "scope": {
+    "apkChanged": false,
+    "otaPromoted": false,
+    "tunnelsChanged": false,
+    "androidCommandsSent": false,
+    "publicFrontendReplaced": false
+  },
+  "limitations": [
+    "Fresh Sphere browser visual acceptance and browser download remain OPEN_URL_POLICY_BLOCKED; no bypass.",
+    "CSV cap is 5000; truncation requires narrowing time/filter conditions; no automatic continuation or unlimited archive.",
+    "Export SELECT is a statement snapshot; table total/offset pages remain a changing live view.",
+    "No new remote FPS, input latency, fleet soak, Android scripts or OTA result.",
+    "ILIKE search performance on millions of events and audit durable outbox remain separate gates."
+  ],
+  "ciAtDocumentCommit": {
+    "source": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+    "frontendRun": 37004977091,
+    "frontendConclusion": "success",
+    "backendRun": 37004977150,
+    "androidRun": 37004977161,
+    "backendAndAndroid": "IN_PROGRESS_AT_OBSERVATION",
+    "newDocsHead": "REQUIRES_OWN_CHECKS"
+  }
+}

@@ -1,0 +1,9 @@
+test_administrator_entry_point_reaches_input_validation (__main__.BackendBootstrapImageTests.test_administrator_entry_point_reaches_input_validation) ... ok
+test_enrollment_entry_point_reaches_config_validation (__main__.BackendBootstrapImageTests.test_enrollment_entry_point_reaches_config_validation) ... ok
+test_migration_cli_can_read_the_packaged_single_head (__main__.BackendBootstrapImageTests.test_migration_cli_can_read_the_packaged_single_head) ... ok
+test_runtime_user_cannot_write_the_application_directory (__main__.BackendBootstrapImageTests.test_runtime_user_cannot_write_the_application_directory) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 1.344s
+
+OK

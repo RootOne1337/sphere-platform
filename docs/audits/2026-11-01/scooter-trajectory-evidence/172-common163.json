@@ -1,0 +1,382 @@
+{
+  "original_163_count": 163,
+  "common_original_views": 163,
+  "baseline": {
+    "schema": "sphere-camera-temporal-audit-v1",
+    "views": 163,
+    "first_seconds": 0.0,
+    "last_seconds": 35.493,
+    "path_units": 49.57588121378824,
+    "endpoint_displacement_units": 4.794277960368671,
+    "median_step_units": 0.2297563169738638,
+    "max_step_units": 4.289771443026079,
+    "rapid_reversals": [
+      {
+        "view": 26,
+        "image": "00000145.png",
+        "seconds": 5.582
+      },
+      {
+        "view": 34,
+        "image": "00000187.png",
+        "seconds": 7.301
+      },
+      {
+        "view": 46,
+        "image": "00000257.png",
+        "seconds": 9.958
+      },
+      {
+        "view": 47,
+        "image": "00000263.png",
+        "seconds": 10.159
+      },
+      {
+        "view": 48,
+        "image": "00000269.png",
+        "seconds": 10.407
+      },
+      {
+        "view": 49,
+        "image": "00000275.png",
+        "seconds": 10.607
+      },
+      {
+        "view": 51,
+        "image": "00000287.png",
+        "seconds": 11.055
+      },
+      {
+        "view": 52,
+        "image": "00000293.png",
+        "seconds": 11.255
+      },
+      {
+        "view": 56,
+        "image": "00000316.png",
+        "seconds": 12.119
+      },
+      {
+        "view": 60,
+        "image": "00000340.png",
+        "seconds": 12.969
+      },
+      {
+        "view": 66,
+        "image": "00000371.png",
+        "seconds": 14.303
+      },
+      {
+        "view": 67,
+        "image": "00000377.png",
+        "seconds": 14.519
+      },
+      {
+        "view": 99,
+        "image": "00000539.png",
+        "seconds": 21.583
+      },
+      {
+        "view": 100,
+        "image": "00000544.png",
+        "seconds": 21.834
+      },
+      {
+        "view": 105,
+        "image": "00000572.png",
+        "seconds": 22.914
+      },
+      {
+        "view": 108,
+        "image": "00000590.png",
+        "seconds": 23.595
+      },
+      {
+        "view": 109,
+        "image": "00000596.png",
+        "seconds": 23.812
+      },
+      {
+        "view": 113,
+        "image": "00000621.png",
+        "seconds": 24.691
+      },
+      {
+        "view": 114,
+        "image": "00000626.png",
+        "seconds": 24.892
+      },
+      {
+        "view": 125,
+        "image": "00000689.png",
+        "seconds": 27.236
+      },
+      {
+        "view": 126,
+        "image": "00000694.png",
+        "seconds": 27.468
+      },
+      {
+        "view": 131,
+        "image": "00000722.png",
+        "seconds": 28.551
+      },
+      {
+        "view": 132,
+        "image": "00000727.png",
+        "seconds": 28.751
+      },
+      {
+        "view": 133,
+        "image": "00000734.png",
+        "seconds": 28.984
+      },
+      {
+        "view": 134,
+        "image": "00000740.png",
+        "seconds": 29.217
+      }
+    ],
+    "median_rate_units_per_second": 1.0624769223899713,
+    "speed_outliers": [
+      {
+        "view": 126,
+        "image": "00000694.png",
+        "seconds": 27.468,
+        "interval_seconds": 0.232,
+        "median_rate_ratio": 17.403101903975067
+      },
+      {
+        "view": 127,
+        "image": "00000700.png",
+        "seconds": 27.668,
+        "interval_seconds": 0.2,
+        "median_rate_ratio": 16.01071458632137
+      }
+    ],
+    "warning": "poses_require_temporal_review",
+    "heuristic_only": true,
+    "metric_scale": null,
+    "navigation_qualified": false,
+    "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+  },
+  "new": {
+    "schema": "sphere-camera-temporal-audit-v1",
+    "views": 163,
+    "first_seconds": 0.0,
+    "last_seconds": 35.493,
+    "path_units": 34.05969489050293,
+    "endpoint_displacement_units": 10.529305392686918,
+    "median_step_units": 0.12930412424154905,
+    "max_step_units": 1.7854956959165338,
+    "rapid_reversals": [
+      {
+        "view": 17,
+        "image": "00000092.png",
+        "seconds": 3.535
+      },
+      {
+        "view": 26,
+        "image": "00000145.png",
+        "seconds": 5.582
+      },
+      {
+        "view": 36,
+        "image": "00000200.png",
+        "seconds": 7.745
+      },
+      {
+        "view": 37,
+        "image": "00000207.png",
+        "seconds": 7.977
+      },
+      {
+        "view": 46,
+        "image": "00000257.png",
+        "seconds": 9.958
+      },
+      {
+        "view": 48,
+        "image": "00000269.png",
+        "seconds": 10.407
+      },
+      {
+        "view": 50,
+        "image": "00000280.png",
+        "seconds": 10.823
+      },
+      {
+        "view": 51,
+        "image": "00000287.png",
+        "seconds": 11.055
+      },
+      {
+        "view": 54,
+        "image": "00000306.png",
+        "seconds": 11.687
+      },
+      {
+        "view": 55,
+        "image": "00000311.png",
+        "seconds": 11.903
+      },
+      {
+        "view": 60,
+        "image": "00000340.png",
+        "seconds": 12.969
+      },
+      {
+        "view": 99,
+        "image": "00000539.png",
+        "seconds": 21.583
+      },
+      {
+        "view": 100,
+        "image": "00000544.png",
+        "seconds": 21.834
+      },
+      {
+        "view": 105,
+        "image": "00000572.png",
+        "seconds": 22.914
+      },
+      {
+        "view": 108,
+        "image": "00000590.png",
+        "seconds": 23.595
+      },
+      {
+        "view": 109,
+        "image": "00000596.png",
+        "seconds": 23.812
+      },
+      {
+        "view": 113,
+        "image": "00000621.png",
+        "seconds": 24.691
+      },
+      {
+        "view": 114,
+        "image": "00000626.png",
+        "seconds": 24.892
+      },
+      {
+        "view": 128,
+        "image": "00000707.png",
+        "seconds": 27.901
+      },
+      {
+        "view": 129,
+        "image": "00000713.png",
+        "seconds": 28.134
+      },
+      {
+        "view": 130,
+        "image": "00000718.png",
+        "seconds": 28.351
+      },
+      {
+        "view": 135,
+        "image": "00000746.png",
+        "seconds": 29.433
+      },
+      {
+        "view": 139,
+        "image": "00000767.png",
+        "seconds": 30.284
+      },
+      {
+        "view": 140,
+        "image": "00000773.png",
+        "seconds": 30.517
+      }
+    ],
+    "median_rate_units_per_second": 0.586771234044676,
+    "speed_outliers": [
+      {
+        "view": 140,
+        "image": "00000773.png",
+        "seconds": 30.517,
+        "interval_seconds": 0.233,
+        "median_rate_ratio": 13.059726195968699
+      },
+      {
+        "view": 141,
+        "image": "00000779.png",
+        "seconds": 30.75,
+        "interval_seconds": 0.233,
+        "median_rate_ratio": 11.728876619433064
+      },
+      {
+        "view": 142,
+        "image": "00000784.png",
+        "seconds": 30.986,
+        "interval_seconds": 0.236,
+        "median_rate_ratio": 11.409836931344246
+      },
+      {
+        "view": 143,
+        "image": "00000788.png",
+        "seconds": 31.199,
+        "interval_seconds": 0.213,
+        "median_rate_ratio": 12.21876777960164
+      },
+      {
+        "view": 144,
+        "image": "00000794.png",
+        "seconds": 31.399,
+        "interval_seconds": 0.2,
+        "median_rate_ratio": 11.031925367184686
+      },
+      {
+        "view": 145,
+        "image": "00000801.png",
+        "seconds": 31.631,
+        "interval_seconds": 0.232,
+        "median_rate_ratio": 9.84753092920482
+      }
+    ],
+    "warning": "poses_require_temporal_review",
+    "heuristic_only": true,
+    "metric_scale": null,
+    "navigation_qualified": false,
+    "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+  },
+  "flagged_intervals": [
+    {
+      "a": 689,
+      "b": 694,
+      "added_indices": [
+        690,
+        691,
+        692
+      ],
+      "baseline": {
+        "step": 4.289771443026079,
+        "step_over_common_median": 18.670961910980086
+      },
+      "new": {
+        "step": 0.128499595819385,
+        "step_over_common_median": 0.9937780142212546
+      }
+    },
+    {
+      "a": 694,
+      "b": 700,
+      "added_indices": [
+        695,
+        697,
+        699
+      ],
+      "baseline": {
+        "step": 3.4022029517877908,
+        "step_over_common_median": 14.807875563982044
+      },
+      "new": {
+        "step": 0.1147926847112224,
+        "step_over_common_median": 0.8877728021790066
+      }
+    }
+  ],
+  "note": "Same common original timestamps; heuristic changes are not verified physical errors, same video and model family."
+}

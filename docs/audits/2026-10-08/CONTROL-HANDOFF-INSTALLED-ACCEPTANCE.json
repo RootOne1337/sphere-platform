@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "observedDate": "2026-10-08",
+  "scope": "PH011 finite installed browser/native canary",
+  "web": {
+    "source": "e88c4db8633d8288d7bbea58da773eb52d5f0e8f",
+    "ciRunId": 37717225465,
+    "testsPassed": 1848,
+    "suitesPassed": 137,
+    "pagesProbed": 26,
+    "clientAssetsProbed": 73,
+    "archiveBytes": 120852437,
+    "configSha256": "88b0b84fd311e298c9410f250d5e6362bcb1fd7740e4fa6c7f7dd3e6e04b36a5",
+    "loadedManifestSha256": "d9326840eb36dedc3cfdf73f8a7f63628aa7b7ce4cd3333481770e2bb55be502",
+    "startedAtUtc": "2026-10-08T02:27:14.403216792Z",
+    "runtimeInstalled": true,
+    "browserVerified": true
+  },
+  "backend": {
+    "source": "2225f73b27f0c85130981d870cd85d37b1d47786",
+    "ciRunId": 37712824712,
+    "testsPassed": 3327,
+    "testsSkipped": 37,
+    "subtestsPassed": 229,
+    "implementationUnchangedThroughWebSource": true,
+    "schemaHeadPreserved": "20261006_script_catalog_metadata"
+  },
+  "apk": {
+    "versionCode": 10249,
+    "source": "d8023bc",
+    "sha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+    "installedOnlyOn": "PH011",
+    "normalOtaPromoted": false
+  },
+  "preservation": {
+    "otherContainers": 45,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "mainAgentDataCleared": false,
+    "testReceiverRemoved": true,
+    "temporaryProbeXmlRemoved": true
+  },
+  "checks": {
+    "automaticStartupWithoutGestureToggle": true,
+    "nativeReleaseBeforeInspection": true,
+    "pendingInspectionDrainedBeforeControl": true,
+    "reentryDuringDrainObtainedFreshTree": true,
+    "hierarchyNodes": 46,
+    "selectionHighlightedWithoutAndroidTap": true,
+    "dragDelta": { "down": 1, "move": 4, "up": 1, "cancel": 0 },
+    "dragDurationMs": 145,
+    "lastMoveBeforeUpMs": 9,
+    "wheelDelta": { "down": 1, "move": 1, "up": 1, "cancel": 0 },
+    "wheelDurationMs": 186,
+    "homeReceiptMs": 748,
+    "homeReturnedLauncherAndAutomaticReady": true,
+    "receiptIsVisualLatency": false
+  },
+  "open": [
+    "intermittent root hierarchy read exit1 cause",
+    "real idle receipt loss reconciliation canary",
+    "rich trajectory/XPath/pixel recording and correlated playback",
+    "remote/fleet fault qualification and soak",
+    "storage attribution and recurrent Git corruption cause"
+  ],
+  "productLedger": { "accepted": 9, "open": 41 },
+  "SF26-05": "OPEN"
+}

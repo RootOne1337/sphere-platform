@@ -77,10 +77,15 @@ class TestAuthenticate:
         db.execute.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_valid_key_found_in_db(self):
+    async def test_valid_key_found_in_db(self, monkeypatch):
         db = _make_db()
         fake_key = MagicMock()
         fake_key.id = uuid.uuid4()
+        fake_key.is_active = True
+        fake_key.expires_at = None
+        # This unit double covers the service after bootstrap; actual function
+        # permissions and tenant binding are exercised on PostgreSQL separately.
+        monkeypatch.setattr("backend.services.api_key_service.bind_credential_tenant", AsyncMock(return_value=uuid.uuid4()))
         # scalar_one_or_none returns the fake key
         db.execute.return_value.scalar_one_or_none = MagicMock(return_value=fake_key)
 
@@ -91,8 +96,9 @@ class TestAuthenticate:
         assert result is fake_key
 
     @pytest.mark.asyncio
-    async def test_key_not_found_returns_none(self):
+    async def test_key_not_found_returns_none(self, monkeypatch):
         db = _make_db()
+        monkeypatch.setattr("backend.services.api_key_service.bind_credential_tenant", AsyncMock(return_value=uuid.uuid4()))
         db.execute.return_value.scalar_one_or_none = MagicMock(return_value=None)
 
         svc = APIKeyService(db)

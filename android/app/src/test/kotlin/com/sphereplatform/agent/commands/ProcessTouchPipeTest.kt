@@ -1,0 +1,235 @@
+package com.sphereplatform.agent.commands
+
+import android.content.Context
+import io.mockk.*
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.*
+import org.junit.Test
+import java.io.*
+
+class ProcessTouchPipeTest {
+    private fun response(seq: Int, status: Int, time: Long = 1000): ByteArray = ByteArrayOutputStream().also {
+        RootTouchWire.ack(it,seq,status,time)
+    }.toByteArray()
+    private fun process(bytes: ByteArray, exit: Int = 0): Pair<Process,ByteArrayOutputStream> {
+        val output = ByteArrayOutputStream()
+        val p = mockk<Process>()
+        every {p.inputStream} returns ByteArrayInputStream(bytes)
+        every {p.errorStream} returns ByteArrayInputStream(ByteArray(0))
+        every {p.outputStream} returns output
+        every {p.isAlive} returns false
+        every {p.exitValue()} returns exit
+        return p to output
+    }
+
+    @Test fun `root factory construction does not access context or request root`() {
+        val context = mockk<Context>()
+        RootTouchPipeFactory(context)
+        verify { context wasNot Called }
+    }
+
+    @Test fun `packet is sent once and matching acknowledgement preserves device clock`() = runBlocking {
+        val (process,output) = process(response(1,1,1234))
+        val pipe = ProcessTouchPipe(process)
+        val ack = pipe.send(TouchSample(1,1,0,100,120,1000))
+        assertEquals(1,ack.status)
+        assertEquals(1234L,ack.uptimeMs)
+        val packet = RootTouchWire.read(ByteArrayInputStream(output.toByteArray()))
+        assertEquals(1,packet.sequence)
+        assertEquals(0,packet.action)
+        assertEquals(RootTouchWire.INPUT_LINE_BYTES,output.size())
+        assertTrue(pipe.closeAndConfirm())
+        assertFalse(pipe.closeAndConfirm())
+        Unit
+    }
+
+    @Test fun `reordered duplicate send never writes a second packet`() = runBlocking {
+        val (process,output) = process(response(2,1))
+        val pipe = ProcessTouchPipe(process)
+        pipe.send(TouchSample(2,1,0,100,120,1000))
+        assertThrows(IOException::class.java) { runBlocking {pipe.send(TouchSample(2,1,2,110,120,1000))} }
+        assertEquals(RootTouchWire.INPUT_LINE_BYTES,output.size())
+        pipe.closeAndConfirm()
+        Unit
+    }
+
+    @Test fun `wrong acknowledgement and action status are unknown rather than replayed`() = runBlocking {
+        for (bytes in listOf(response(0,4),response(2,1),response(1,0),response(1,2))) {
+            val (process,output) = process(bytes)
+            val pipe = ProcessTouchPipe(process)
+            assertThrows(IOException::class.java) { runBlocking {pipe.send(TouchSample(1,1,0,100,120,1000))} }
+            assertEquals(RootTouchWire.INPUT_LINE_BYTES,output.size())
+            pipe.closeAndConfirm()
+        }
+    }
+
+    @Test fun `negative acknowledgement returns outcome without resubmitting`() = runBlocking {
+        for (status in 4..6) {
+            val (process,output) = process(response(1,status))
+            val pipe = ProcessTouchPipe(process)
+            assertEquals(status,pipe.send(TouchSample(1,1,0,100,120,1000)).status)
+            assertEquals(RootTouchWire.INPUT_LINE_BYTES,output.size())
+            pipe.closeAndConfirm()
+        }
+    }
+
+    @Test fun `CRLF converted acknowledgement remains canonical`() = runBlocking {
+        val bytes = String(response(1,1),Charsets.US_ASCII).replace("\n","\r\n").toByteArray()
+        val (process,_) = process(bytes)
+        val pipe = ProcessTouchPipe(process)
+        assertEquals(1,pipe.send(TouchSample(1,1,0,100,120,1000)).sequence)
+        pipe.closeAndConfirm()
+        Unit
+    }
+
+    @Test fun `missing truncated and oversized acknowledgement never succeeds`() = runBlocking {
+        for (bytes in listOf(ByteArray(0),response(1,1).copyOf(10),ByteArray(100) {'a'.code.toByte()})) {
+            val (process,_) = process(bytes)
+            val pipe = ProcessTouchPipe(process)
+            assertThrows(IOException::class.java) { runBlocking {pipe.send(TouchSample(1,1,0,100,120,1000))} }
+            pipe.closeAndConfirm()
+        }
+    }
+
+    @Test fun `process failure is not cancellation confirmation and no cleanup starts a helper`() = runBlocking {
+        val (process,_) = process(ByteArray(0),exit=2)
+        val pipe = ProcessTouchPipe(process)
+        assertFalse(pipe.closeAndConfirm())
+        verify(exactly=0) {process.destroyForcibly()}
+        Unit
+    }
+
+    @Test fun `normal owned helper exit confirms cleanup when Android closes output pipes during drain`() = runBlocking {
+        val (process, _) = process(ByteArray(0))
+        val closedPipe = object : InputStream() {
+            override fun read(): Int = throw IOException("fixture stream already closed")
+            override fun available(): Int = throw IOException("fixture stream already closed")
+        }
+        every { process.inputStream } returns closedPipe
+        every { process.errorStream } returns closedPipe
+        every { process.isAlive } returnsMany listOf(true, false, false, false)
+        val pipe = ProcessTouchPipe(process)
+        assertTrue(pipe.closeAndConfirm())
+        verify(exactly = 0) { process.destroyForcibly() }
+        Unit
+    }
+
+    @Test fun `closed output pipes never convert failed helper exit to confirmed release`() = runBlocking {
+        val (process, _) = process(ByteArray(0), exit = 2)
+        val closedPipe = object : InputStream() {
+            override fun read(): Int = throw IOException("fixture stream already closed")
+            override fun available(): Int = throw IOException("fixture stream already closed")
+        }
+        every { process.inputStream } returns closedPipe
+        every { process.errorStream } returns closedPipe
+        every { process.isAlive } returnsMany listOf(true, false, false, false)
+        assertFalse(ProcessTouchPipe(process).closeAndConfirm())
+        Unit
+    }
+
+    @Test fun `stdin failure is not replayed and closure still checks owned process`() = runBlocking {
+        val (process,_) = process(ByteArray(0))
+        val broken = object : OutputStream() {
+            var calls = 0
+            override fun write(value: Int) {calls++;throw IOException("private pipe detail")}
+        }
+        every {process.outputStream} returns broken
+        val pipe = ProcessTouchPipe(process)
+        assertThrows(IOException::class.java) {runBlocking {pipe.send(TouchSample(1,1,0,100,120,1000))}}
+        assertEquals(1,broken.calls)
+        assertTrue(pipe.closeAndConfirm())
+        Unit
+    }
+
+    @Test fun `dedicated startup refusal exit is known only before any sample write`() = runBlocking {
+        val (refused, output) = process(response(0, 5), exit = 3)
+        val pipe = ProcessTouchPipe(refused)
+        assertEquals(5, pipe.awaitAck(500).status)
+        assertTrue(pipe.closeStartupRefusal())
+        assertEquals(0, output.size())
+        assertFalse(pipe.closeStartupRefusal())
+        for (code in listOf(0, 1, 2)) {
+            val (other, _) = process(response(0, 5), exit = code)
+            assertFalse(ProcessTouchPipe(other).closeStartupRefusal())
+        }
+        Unit
+    }
+
+    @Test fun `startup refusal exit never confirms execution or an already attempted write`() = runBlocking {
+        val (refused, _) = process(response(1, 1), exit = 3)
+        val pipe = ProcessTouchPipe(refused)
+        pipe.send(TouchSample(1, 1, 0, 100, 120, 1000))
+        assertFalse(pipe.closeStartupRefusal())
+        assertFalse(pipe.closeAndConfirm())
+        val (another, _) = process(ByteArray(0), exit = 3)
+        assertFalse(ProcessTouchPipe(another).closeAndConfirm())
+        Unit
+    }
+
+    @Test fun `only fixed startup detail survives bounded stderr parsing`() {
+        val (refused, _) = process(ByteArray(0), exit = 3)
+        every { refused.errorStream } returns ByteArrayInputStream(
+            "platform private address and exception\ntouch_startup_root_geometry\n".toByteArray(),
+        )
+        assertEquals(TouchStartupDetail.ROOT_GEOMETRY, ProcessTouchPipe(refused).startupDetail())
+        val (unknown, _) = process(ByteArray(0), exit = 1)
+        every { unknown.errorStream } returns ByteArrayInputStream("touch_adapter_failed private platform detail".toByteArray())
+        assertNull(ProcessTouchPipe(unknown).startupDetail())
+    }
+
+    @Test fun `cold startup timeout without any attempted packet is refused rather than input fenced`() = runBlocking {
+        val (process, output) = process(ByteArray(0), exit = 2)
+        val pipe = ProcessTouchPipe(process)
+        val failure = runCatching { awaitTouchPipeStartup(pipe, readyTimeoutMs = 0) }.exceptionOrNull()
+        assertTrue(failure is TouchStartupUnavailableException)
+        assertEquals(TouchStartupDetail.ROOT_READY_TIMEOUT, (failure as TouchStartupUnavailableException).detail)
+        assertEquals(0, output.size())
+        assertThrows(IllegalStateException::class.java) {
+            runBlocking { pipe.send(TouchSample(1, 1, RootTouchSession.DOWN, 20, 30, 1000)) }
+        }
+        Unit
+    }
+
+    @Test fun `retiring a never written helper separates no input proof from failed process cleanup`() = runBlocking {
+        val (process, output) = process(ByteArray(0), exit = 2)
+        val result = ProcessTouchPipe(process).retireBeforeHandoff()
+        assertTrue(result.noSampleAttempted)
+        assertFalse(result.processExitConfirmed)
+        assertEquals(0, output.size())
+        Unit
+    }
+
+    @Test fun `an attempted DOWN never gets pre input proof even when its write throws`() = runBlocking {
+        val (process, _) = process(ByteArray(0), exit = 2)
+        every { process.outputStream } returns object : OutputStream() {
+            override fun write(value: Int) { throw IOException("fixture uncertain write") }
+        }
+        val pipe = ProcessTouchPipe(process)
+        assertTrue(runCatching { pipe.send(TouchSample(1, 1, RootTouchSession.DOWN, 20, 30, 1000)) }.isFailure)
+        val result = pipe.retireBeforeHandoff()
+        assertFalse(result.noSampleAttempted)
+        assertFalse(result.processExitConfirmed)
+        Unit
+    }
+
+    @Test fun `attempted packet followed by startup wait failure retains unknown input cleanup`() = runBlocking {
+        val (process, _) = process(response(1, 1), exit = 2)
+        val pipe = ProcessTouchPipe(process)
+        pipe.send(TouchSample(1, 1, RootTouchSession.DOWN, 20, 30, 1000))
+        val failure = runCatching { awaitTouchPipeStartup(pipe, readyTimeoutMs = 0) }.exceptionOrNull()
+        assertTrue(failure is TouchPipeCleanupUnknownException)
+        assertEquals(TouchStartupDetail.ROOT_READY_TIMEOUT, (failure as TouchPipeCleanupUnknownException).startupDetail)
+        Unit
+    }
+
+    @Test fun `a sender cannot enter after pre handoff retirement has closed the pipe`() = runBlocking {
+        val (process, output) = process(ByteArray(0), exit = 0)
+        val pipe = ProcessTouchPipe(process)
+        assertTrue(pipe.retireBeforeHandoff().noSampleAttempted)
+        assertThrows(IllegalStateException::class.java) {
+            runBlocking { pipe.send(TouchSample(1, 0, RootTouchSession.HEARTBEAT, 0, 0, 1000)) }
+        }
+        assertEquals(0, output.size())
+        Unit
+    }
+}

@@ -1,0 +1,30 @@
+{
+  "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+  "observedAt": "2026-10-05T20:13:08.742643+00:00",
+  "workflowId": 37365950863,
+  "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37365950863",
+  "jobs": [
+    {
+      "checkId": 111951037479,
+      "name": "Security (bandit + pip-audit)",
+      "runnerAssigned": false,
+      "status": "completed",
+      "conclusion": "cancelled",
+      "failureAnnotations": [
+        "The job was not acquired by Runner of type hosted even after multiple attempts"
+      ]
+    },
+    {
+      "checkId": 111951037751,
+      "name": "Tests",
+      "runnerAssigned": false,
+      "status": "completed",
+      "conclusion": "cancelled",
+      "failureAnnotations": [
+        "The job was not acquired by Runner of type hosted even after multiple attempts"
+      ]
+    }
+  ],
+  "testsExecutedByTheseJobs": false,
+  "fullBackendCiPassed": false
+}

@@ -1,0 +1,36 @@
+{
+  "source": "60e7f6ffdab4265d3b838aa8ca1320e003289419",
+  "admittedConfigId": "sha256:5288835ba424dcdae75e28786134f8e8c7f0bd69ef1411285c345dd9fa943c4a",
+  "authenticatedBindingSha256": "20e866df75486885e7458ea2e9e20f0345bac785d62a30dc484eab1fb52cb942",
+  "resourceProfile": {
+    "kind": "bounded_ui_install_v1",
+    "minRamGiB": 4,
+    "minDiskGiB": 20,
+    "maxCommitPercent": 90,
+    "daemonImporterHardBound": false,
+    "minAbsoluteCommitGiB": 4,
+    "healthyVolumeRequired": true
+  },
+  "uiCaps": {
+    "memoryBytes": 805306368,
+    "memorySwapBytes": 1610612736,
+    "nanoCpus": 1000000000
+  },
+  "applyRequested": false,
+  "physicalActions": 0,
+  "daemonCancellationClaimed": false,
+  "compilerOrModelStarted": false,
+  "exitCode": 0,
+  "outcome": "verified",
+  "loadedRuntimeId": "sha256:5288835ba424dcdae75e28786134f8e8c7f0bd69ef1411285c345dd9fa943c4a",
+  "allContainersUnchanged": true,
+  "protectedAssetsUnchanged": true,
+  "protectedAssets": 562,
+  "apiUnchanged": true,
+  "otaUnchanged": true,
+  "seconds": 11.703,
+  "samples": 75,
+  "maxCommitPercent": 88.89922504990932,
+  "minRamBytes": 6104453120,
+  "minFreeCommitBytes": 11107475456
+}

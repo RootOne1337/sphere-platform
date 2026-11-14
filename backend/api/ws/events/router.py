@@ -10,8 +10,9 @@ import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.core.rbac import has_permission
 from backend.database.engine import AsyncSessionLocal
-from backend.schemas.events import FleetEvent
+from backend.schemas.events import EventType, FleetEvent
 
 logger = structlog.get_logger()
 
@@ -19,7 +20,10 @@ router = APIRouter(tags=["websocket"])
 
 
 class FrontendConnection:
-    def __init__(self, ws: WebSocket, org_id: str, filters: set[str]) -> None:
+    def __init__(
+        self, ws: WebSocket, org_id: str, filters: set[str], *, can_read_devices: bool = False,
+    ) -> None:
+        self.can_read_devices = can_read_devices
         self.ws = ws
         self.org_id = org_id
         self.filters = filters  # EventType фильтры, {} = все события
@@ -81,8 +85,23 @@ class EventsManager:
             return
         backoff = 1.0
         max_backoff = 30.0
+        recovery_needed = False
         while True:
             try:
+                # An unsuccessful resubscribe must remain in recovery even if
+                # the replacement connection has no (or only some) channels.
+                if recovery_needed:
+                    await self._pubsub.aclose()
+                    self._pubsub = self._redis.pubsub()
+                    for org_id in list(self._subscribed_orgs):
+                        from backend.websocket.channels import ChannelPattern
+                        await self._pubsub.subscribe(ChannelPattern.org_events(org_id))
+                    recovery_needed = False
+                    logger.info(
+                        "EventsManager listen loop restarted",
+                        subscribed_orgs=len(self._subscribed_orgs),
+                    )
+
                 # FIX: если нет подписок — ждём, иначе listen() вернётся немедленно
                 # и while True образует CPU spinloop без единого await, блокируя event loop.
                 if not self._pubsub.subscribed:
@@ -106,6 +125,7 @@ class EventsManager:
             except asyncio.CancelledError:
                 return
             except Exception as e:
+                recovery_needed = True
                 logger.error(
                     "EventsManager listen loop crashed — restarting",
                     error=str(e),
@@ -113,21 +133,6 @@ class EventsManager:
                 )
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, max_backoff)
-                # Re-create pubsub connection
-                try:
-                    if self._pubsub:
-                        await self._pubsub.aclose()
-                    self._pubsub = self._redis.pubsub()
-                    # Re-subscribe to org channels that still have clients
-                    for org_id in list(self._subscribed_orgs):
-                        from backend.websocket.channels import ChannelPattern
-                        await self._pubsub.subscribe(ChannelPattern.org_events(org_id))
-                    logger.info(
-                        "EventsManager listen loop restarted",
-                        subscribed_orgs=len(self._subscribed_orgs),
-                    )
-                except Exception as re_err:
-                    logger.error("EventsManager reconnect failed", error=str(re_err))
 
     async def _deliver_to_browsers(self, event: FleetEvent) -> None:
         """Доставить событие локальным browser-клиентам (без Redis, in-process)."""
@@ -139,6 +144,8 @@ class EventsManager:
         dead: list[FrontendConnection] = []
 
         for conn in clients:
+            if event.event_type in (EventType.DEVICE_HEARTBEAT, EventType.VPN_RUNTIME_CHANGED) and not conn.can_read_devices:
+                continue
             if conn.filters and event.event_type not in conn.filters:
                 continue
             try:
@@ -302,6 +309,7 @@ async def fleet_events_ws(
                 await ws.close(code=4001, reason="invalid_token")
                 return
             org_id_str = str(user.org_id)
+            can_read_devices = has_permission(user.role, "device:read")
     except HTTPException:
         raise
     except Exception:
@@ -309,12 +317,12 @@ async def fleet_events_ws(
         return
     # DB session is now CLOSED — safe to enter long-lived WS loop
 
-    conn = FrontendConnection(ws, org_id_str, filters)
+    conn = FrontendConnection(ws, org_id_str, filters, can_read_devices=can_read_devices)
     await events_manager.add_client(org_id_str, conn)
 
     # Отправить текущий снапшот fleet при подключении
     try:
-        fleet_snap = await get_fleet_snapshot(org_id_str)
+        fleet_snap = await get_fleet_snapshot(org_id_str) if can_read_devices else {}
         await ws.send_json({"type": "snapshot", "data": fleet_snap})
     except Exception:
         pass

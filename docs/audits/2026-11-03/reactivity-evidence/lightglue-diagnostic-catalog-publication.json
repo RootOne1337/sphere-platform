@@ -1,0 +1,159 @@
+{
+  "schema": "sphere-lightglue-diagnostic-publication-receipt-v1",
+  "status": "published_review_only",
+  "published": [
+    {
+      "job": "6a77040681d142ec97d51831a22785fb",
+      "info": {
+        "id": "lightglue-fused-173-20887-review",
+        "cameras": 173,
+        "points": 20887,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "LightGlue · полный маршрут · 173 камеры · 20 887 точек"
+      },
+      "geometry_sha256": "0579f9f5ddc899792fc366adcbbaa3bc8e8d7bca1dafa15bbbe9c9580d0faede"
+    },
+    {
+      "job": "f3033bb704d4460fb8ed27a613427cc1",
+      "info": {
+        "id": "lightglue-fused-173-20887-review",
+        "cameras": 173,
+        "points": 20887,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "LightGlue · полный маршрут · 173 камеры · 20 887 точек"
+      },
+      "geometry_sha256": "0579f9f5ddc899792fc366adcbbaa3bc8e8d7bca1dafa15bbbe9c9580d0faede"
+    }
+  ],
+  "catalogBefore": {
+    "6a77040681d142ec97d51831a22785fb": {
+      "alternatives": [
+        {
+          "id": "components-169-diagnostic",
+          "cameras": 169,
+          "points": 9987,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "Скутер: объединённые фрагменты (диагностика)"
+        },
+        {
+          "id": "fixed-k-fused-173-supported-diagnostic",
+          "cameras": 173,
+          "points": 20556,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "Совместная геометрия · 173 ракурса · 20 556 точек"
+        },
+        {
+          "id": "full-173-endpoints-diagnostic",
+          "cameras": 173,
+          "points": 9987,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "Полный временной охват · 173 ракурса"
+        }
+      ],
+      "preferredAlternativeId": "fixed-k-fused-173-supported-diagnostic"
+    },
+    "f3033bb704d4460fb8ed27a613427cc1": {
+      "alternatives": [],
+      "preferredAlternativeId": null
+    }
+  },
+  "catalogAfter": {
+    "6a77040681d142ec97d51831a22785fb": {
+      "alternatives": [
+        {
+          "id": "components-169-diagnostic",
+          "cameras": 169,
+          "points": 9987,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "Скутер: объединённые фрагменты (диагностика)"
+        },
+        {
+          "id": "fixed-k-fused-173-supported-diagnostic",
+          "cameras": 173,
+          "points": 20556,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "Совместная геометрия · 173 ракурса · 20 556 точек"
+        },
+        {
+          "id": "full-173-endpoints-diagnostic",
+          "cameras": 173,
+          "points": 9987,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "Полный временной охват · 173 ракурса"
+        },
+        {
+          "id": "lightglue-fused-173-20887-review",
+          "cameras": 173,
+          "points": 20887,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "LightGlue · полный маршрут · 173 камеры · 20 887 точек"
+        }
+      ],
+      "preferredAlternativeId": "fixed-k-fused-173-supported-diagnostic"
+    },
+    "f3033bb704d4460fb8ed27a613427cc1": {
+      "alternatives": [
+        {
+          "id": "lightglue-fused-173-20887-review",
+          "cameras": 173,
+          "points": 20887,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "LightGlue · полный маршрут · 173 камеры · 20 887 точек"
+        }
+      ],
+      "preferredAlternativeId": "lightglue-fused-173-20887-review"
+    }
+  },
+  "allProtectedUnchanged": true,
+  "protectedFiles": 1881,
+  "originalPreferredPreserved": true,
+  "secondDiagnosticPreferenceSet": true,
+  "primaryUnchanged": true,
+  "navigationUnchanged": true,
+  "sourceVideoUnchanged": true,
+  "nativeModelsUnchanged": true,
+  "canonicalHandlerReadVerified": true,
+  "unauthenticatedHttpChecks": [
+    {
+      "job": "6a77040681d142ec97d51831a22785fb",
+      "path": "geometry-alternatives",
+      "status": 403,
+      "authenticated": false
+    },
+    {
+      "job": "6a77040681d142ec97d51831a22785fb",
+      "path": "geometry-alternatives/lightglue-fused-173-20887-review",
+      "status": 403,
+      "authenticated": false
+    },
+    {
+      "job": "f3033bb704d4460fb8ed27a613427cc1",
+      "path": "geometry-alternatives",
+      "status": 403,
+      "authenticated": false
+    },
+    {
+      "job": "f3033bb704d4460fb8ed27a613427cc1",
+      "path": "geometry-alternatives/lightglue-fused-173-20887-review",
+      "status": 403,
+      "authenticated": false
+    }
+  ],
+  "authenticatedHttpVerified": false,
+  "authenticatedHttpLimitation": "Raw capabilities unavailable; browser profile and OPFS were not accessed.",
+  "browserAcceptance": false,
+  "physicalActions": 0,
+  "navigationQualified": false,
+  "executionQualified": false,
+  "seconds": 8.53099999999904
+}

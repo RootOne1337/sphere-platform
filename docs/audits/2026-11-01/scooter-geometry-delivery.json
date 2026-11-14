@@ -1,0 +1,95 @@
+{
+  "schema": "sphere-vehicle-geometry-delivery-v1",
+  "date": "2026-11-01",
+  "sourceJob": "c667f86cc9de4a378fb12e5269981a6e",
+  "sourceHashes": {
+    "COMPLETE": {
+      "bytes": 87,
+      "sha256": "31231b7a04f4bdd779637913f554c958f87e33988612b11808296384bcb206b5"
+    },
+    "frames.jsonl": {
+      "bytes": 245630,
+      "sha256": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0"
+    },
+    "inputs.jsonl": {
+      "bytes": 167,
+      "sha256": "c919e79aefc90ceda827d69142e8c7504ce3fb49fc27bc09ed341d38b241c2e8"
+    },
+    "manifest.json": {
+      "bytes": 3115,
+      "sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417"
+    },
+    "video.h264": {
+      "bytes": 40825272,
+      "sha256": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e"
+    }
+  },
+  "sourceFilesUnchanged": true,
+  "pythonTests": "165 passed, 2 skipped in 11.82s",
+  "nativeRuntimeTests": "15 passed in 1.31s",
+  "pipeline": "vehicle_geometry_v2",
+  "sourceHashesVerified": {
+    "scripts/pilot/learned_route_features.py": "614216cdb1a167e07b376855b82a4e9f6c8345fcb5f4edcaed5328c276541b74",
+    "scripts/pilot/prepare_route_workspace.py": "baf27d2c480831a9a48d29c391c9e36fb7494d2faa3efa292143315e19635666",
+    "scripts/pilot/reconstruct_route.py": "676743d25ba5e8353be1f3532c7018f38c2e58f20138c8c4ec6a72edc5530408",
+    "scripts/pilot/reconstruction_service.py": "31422da613f2686605f9d73eeba7e5e2f37347001eb0767daa30358e42ac6976",
+    "scripts/pilot/route_masks.py": "87a6402633ed6e9825757673395cb74e0e5a841d75623cc0c2658d34f340f752",
+    "scripts/pilot/route_motion_sampling.py": "63c18541ec64aaacb2bb664fdf45feca907a06c0dde62afc0b886e31eb532b0c",
+    "scripts/pilot/route_temporal_repair.py": "965c66905a855f28bfeb509fa5e633347d8b3f46bc81faaa783622277e39a8b4",
+    "scripts/pilot/route_video_tracks.py": "166e27a714d3c8add69556e1d4b6a9b1b6c9581446bbf94121477f7f00460eba",
+    "scripts/pilot/video_observations.py": "a546f7fd3ecabff8cde03e05284895f43e2990727d60d616b365b097a93a4761",
+    "scripts/pilot/route_geometry_selection.py": "20ea13152c7d44bef0f1488436ec510400d048d2f3d60bad0084c7df0c143720",
+    "scripts/pilot/route_learned_recovery.py": "2ca99f6f85daa06cb1ef59a1b1f261ec6b1f0da2e3991049ccb5313f500ee76e",
+    "scripts/pilot/route_reconstruction_resources.py": "731e87e08e1bbfca1afebb63059bbc1a81b2c7c278680df4b15432842773cd1b",
+    "scripts/pilot/audit_route_feature_graph.py": "a24847fa59015487287f3644805b8c5e6c91ebc1703c84f9cbe068b7e87ea0da",
+    "scripts/pilot/check_route_first_run.py": "ff4325303258239593318e6f8be04eca47810fd43527a994e4744464e847333b"
+  },
+  "runtime": {
+    "oldPid": 44128,
+    "watchdogPid": 4444,
+    "physicalActions": 0,
+    "outcome": "verified",
+    "newPid": 6696,
+    "existingAssetsUnchanged": true,
+    "health": {
+      "service": "sphere-reconstruction-v1",
+      "one_active_job": true,
+      "route_camera_pipeline": "vehicle_geometry_v2"
+    },
+    "verifiedAssets": 57
+  },
+  "webDiagnostic": {
+    "summary": {
+      "id": "global-163-requires-review",
+      "cameras": 163,
+      "points": 5544,
+      "scope": "diagnostic",
+      "executionQualified": false
+    },
+    "primary_unchanged": true,
+    "raw_video_changed": false,
+    "physical_actions": 0,
+    "automatic_route_enabled": false
+  },
+  "evidenceHashes": {
+    "global-estimated/report.json": "9c2dfb3c1b5391b0dcfd7ac7c8f75999a921c3d9e50b6a5ef2579f160ee801c0",
+    "global-variable/report.json": "602ff9df2edebea9406e78ec149e4ff5f3b3145aebe8f2cef0e5227cf3903d72",
+    "global-temporal/report.json": "65a2bc9c43ce03fccb2dd5a8cf829268915a935874c49ca6680a0611aed26775",
+    "baseline-feature-audit.json": "ee0160a0fa29798d00e852a251b77701c1fe148d4bc39cb21e86be86ff1079c3",
+    "wide-feature-audit.json": "6833200c0c28a1d02a4c23d76011289dad412a7293b1e083e1f769d82cfa210d",
+    "global-neighbor-pnp-audit/report.json": "89817275bd4571da7e6ca17382089a04652797aa947c000b682155200e2a33ad",
+    "minimap-motion/report.json": "2294de89beb0f2cd52a23bb586aada603280e37b637cef53e5e4e535c08ba1c5",
+    "recovery-audit.png": "b498d95b5114958ef4f3438edc87d8e8c4c7cc9995c7506b96b87dd8f18dfb94"
+  },
+  "experimentStorage": {
+    "files": 3772,
+    "logicalBytes": 2656959861,
+    "uniqueFileDataBytes": 707910625,
+    "hardlinkedImages": true,
+    "note": "Unique NTFS file identities; not an allocation/compression measurement."
+  },
+  "completeRouteAccepted": false,
+  "liveScooterExecutionTested": false,
+  "physicalActions": 0,
+  "browserVerification": "IAB tool reported Local browser use is disabled; no native-window fallback used"
+}

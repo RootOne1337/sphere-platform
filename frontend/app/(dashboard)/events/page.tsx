@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   useDeviceEvents,
   useEventStats,
@@ -10,6 +12,11 @@ import {
   type DeviceEventParams,
 } from "@/lib/hooks/useDeviceEvents";
 import { Button } from "@/src/shared/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageFrame, PageHeading } from "@/src/shared/ui/page-layout";
+import { PermissionNotice, useCapabilities } from "@/src/features/access/Capabilities";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/src/shared/ui/badge";
 import {
@@ -22,6 +29,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -50,31 +58,32 @@ const SEVERITY_CONFIG: Record<
   { label: string; color: string; icon: typeof Info }
 > = {
   debug: {
-    label: "Debug",
-    color: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+    label: "Отладка",
+    color: "bg-muted text-muted-foreground border-border",
     icon: Bug,
   },
   info: {
-    label: "Info",
-    color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    label: "Информация",
+    color: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/25",
     icon: Info,
   },
   warning: {
-    label: "Warning",
-    color: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    label: "Предупреждение",
+    color: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25",
     icon: AlertTriangle,
   },
   error: {
-    label: "Error",
-    color: "bg-red-500/20 text-red-400 border-red-500/30",
+    label: "Ошибка",
+    color: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/25",
     icon: AlertOctagon,
   },
   critical: {
-    label: "Critical",
-    color: "bg-rose-600/20 text-rose-400 border-rose-600/30",
+    label: "Критическое",
+    color: "bg-destructive/10 text-destructive border-destructive/25",
     icon: AlertOctagon,
   },
 };
+const UUID_PATTERN = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 
 function SeverityBadge({ severity }: { severity: EventSeverity }) {
   const cfg = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.info;
@@ -94,6 +103,7 @@ function SeverityBadge({ severity }: { severity: EventSeverity }) {
 
 function formatDate(iso: string) {
   const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleString("ru-RU", {
     day: "2-digit",
     month: "2-digit",
@@ -106,35 +116,49 @@ function formatDate(iso: string) {
 // ── Главная страница ─────────────────────────────────────────────────
 
 export default function EventsPage() {
+  return <Suspense fallback={<p role="status" className="p-6">Загружаем журнал событий…</p>}><ScopedEvents /></Suspense>;
+}
+
+function ScopedEvents() {
+  const params = useSearchParams();
+  const severity = params?.get("severity");
+  const processed = params?.get("processed");
+  const initialSeverity = severity && Object.hasOwn(SEVERITY_CONFIG, severity) ? severity : "__all__";
+  const initialProcessed = processed === "true" || processed === "false" ? processed : "__all__";
+  return <EventHistory key={`${initialSeverity}:${initialProcessed}`} initialSeverity={initialSeverity} initialProcessed={initialProcessed} />;
+}
+
+function EventHistory({ initialSeverity, initialProcessed }: { initialSeverity: string; initialProcessed: string }) {
+  const access = useCapabilities();
+  const canMark = access.can("event:write");
   // Фильтры и пагинация
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [filterSeverity, setFilterSeverity] = useState("__all__");
-  const [filterProcessed, setFilterProcessed] = useState("__all__");
+  const debouncedSearch = useDebounce(search, 300);
+  const [filterSeverity, setFilterSeverity] = useState(initialSeverity);
+  const [filterProcessed, setFilterProcessed] = useState(initialProcessed);
+  const [deviceFilter, setDeviceFilter] = useState("");
+  const [accountFilter, setAccountFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState({ device_id: "", account_id: "", event_type: "" });
   const [page, setPage] = useState(1);
   const [perPage] = useState(50);
   const [sortBy, setSortBy] = useState("occurred_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   // Диалоги
-  const [detailEvent, setDetailEvent] = useState<DeviceEvent | null>(null);
+  const [openedEvent, setDetailEvent] = useState<DeviceEvent | null>(null);
 
-  // Дебаунс поиска
-  const handleSearchChange = useCallback((val: string) => {
-    setSearch(val);
-    const timer = setTimeout(() => {
-      setDebouncedSearch(val);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+  useEffect(() => setPage(1), [debouncedSearch]);
 
   // Параметры запроса
   const params: DeviceEventParams = useMemo(
     () => ({
       page,
       per_page: perPage,
-      search: debouncedSearch || undefined,
+      search: debouncedSearch.trim() || undefined,
+      device_id: appliedFilters.device_id || undefined,
+      account_id: appliedFilters.account_id || undefined,
+      event_type: appliedFilters.event_type || undefined,
       severity: filterSeverity !== "__all__" ? filterSeverity : undefined,
       processed:
         filterProcessed === "true"
@@ -145,17 +169,23 @@ export default function EventsPage() {
       sort_by: sortBy,
       sort_dir: sortDir,
     }),
-    [page, perPage, debouncedSearch, filterSeverity, filterProcessed, sortBy, sortDir],
+    [page, perPage, debouncedSearch, appliedFilters, filterSeverity, filterProcessed, sortBy, sortDir],
   );
 
   // Данные
-  const { data, isLoading, refetch } = useDeviceEvents(params);
-  const { data: stats } = useEventStats();
+  const { data, isLoading, isFetching, isError, refetch } = useDeviceEvents(params);
+  const { data: stats, isError: statsError, isFetching: statsFetching, refetch: refetchStats } = useEventStats(appliedFilters.device_id || undefined);
   const markProcessed = useMarkEventProcessed();
 
   const events = data?.items ?? [];
+  const detailEvent = openedEvent ? events.find(event => event.id === openedEvent.id) ?? openedEvent : null;
+  const initialError = isError && !data;
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 0;
+  const refreshing = isFetching || statsFetching;
+  const invalidDevice = Boolean(deviceFilter.trim()) && !UUID_PATTERN.test(deviceFilter.trim());
+  const invalidAccount = Boolean(accountFilter.trim()) && !UUID_PATTERN.test(accountFilter.trim());
+  const refresh = async () => Promise.all([refetch(), refetchStats()]);
 
   // Сортировка
   const handleSort = (col: string) => {
@@ -171,29 +201,37 @@ export default function EventsPage() {
   const hasFilters =
     filterSeverity !== "__all__" ||
     filterProcessed !== "__all__" ||
-    debouncedSearch;
+    debouncedSearch || appliedFilters.device_id || appliedFilters.account_id || appliedFilters.event_type;
+
+  const handleMarkProcessed = (event: DeviceEvent) => {
+    if (!canMark || isError || markProcessed.isPending) return;
+    markProcessed.mutate(event.id, {
+      onSuccess: () => {
+        setDetailEvent(current => current?.id === event.id ? null : current);
+        toast.success("Событие отмечено как обработанное");
+      },
+      onError: () => {
+        toast.error("Обновление не подтверждено. Перечитываем журнал и сводку.");
+        void refresh();
+      },
+    });
+  };
 
   return (
-    <div className="p-4 md:p-6 space-y-4 font-mono">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Zap className="w-6 h-6 text-primary" />
-            Device Events
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Журнал событий устройств · {total} записей
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="w-3.5 h-3.5 mr-1" />
-          Обновить
-        </Button>
-      </div>
+    <PageFrame>
+      <PageHeading
+        eyebrow="События и диагностика"
+        title="События устройств"
+        description={data ? `Журнал · ${total.toLocaleString("ru-RU")} записей по фильтрам` : "Журнал событий парка"}
+        actions={<Button variant="outline" onClick={() => void refresh()} disabled={refreshing}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true" />Обновить
+        </Button>}
+      />
 
       {/* Статистика */}
-      {stats && (
+      <section aria-label="Сводка событий" className="space-y-2">
+      <p className="text-sm text-muted-foreground">{appliedFilters.device_id ? "Сводка по выбранному устройству" : "Сводка по всему парку"}. Остальные фильтры применяются к журналу.</p>
+      {stats && !statsError && (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           <StatCard
             label="Всего"
@@ -228,6 +266,10 @@ export default function EventsPage() {
           ))}
         </div>
       )}
+      {statsError && <p role="status" className="text-sm text-muted-foreground">Сводная статистика временно недоступна; журнал продолжает загружаться.</p>}
+      </section>
+      <PermissionNotice permission="event:write" action="отметить событие обработанным" />
+      {isError && data && <p role="status" className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-sm text-warning">Не удалось обновить журнал. Показаны ранее загруженные события.</p>}
 
       {/* Фильтры */}
       <div className="flex flex-wrap items-center gap-2">
@@ -236,7 +278,8 @@ export default function EventsPage() {
           <Input
             placeholder="Поиск по типу, сообщению..."
             value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            aria-label="Поиск событий"
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-9 text-xs font-mono bg-background border-border"
           />
         </div>
@@ -248,7 +291,7 @@ export default function EventsPage() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="h-9 w-[160px] text-xs font-mono">
+          <SelectTrigger aria-label="Уровень события" className="h-9 w-[160px] text-xs font-mono">
             <SelectValue placeholder="Все уровни" />
           </SelectTrigger>
           <SelectContent>
@@ -268,7 +311,7 @@ export default function EventsPage() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="h-9 w-[160px] text-xs font-mono">
+          <SelectTrigger aria-label="Состояние обработки события" className="h-9 w-[160px] text-xs font-mono">
             <SelectValue placeholder="Обработка" />
           </SelectTrigger>
           <SelectContent>
@@ -287,7 +330,10 @@ export default function EventsPage() {
               setFilterSeverity("__all__");
               setFilterProcessed("__all__");
               setSearch("");
-              setDebouncedSearch("");
+              setDeviceFilter("");
+              setAccountFilter("");
+              setTypeFilter("");
+              setAppliedFilters({ device_id: "", account_id: "", event_type: "" });
               setPage(1);
             }}
           >
@@ -296,9 +342,30 @@ export default function EventsPage() {
           </Button>
         )}
       </div>
+      <details className="rounded-lg border border-border bg-card p-3">
+        <summary className="cursor-pointer text-sm font-medium">Фильтры по объектам и типу</summary>
+        <form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={(event) => {
+          event.preventDefault();
+          if (invalidDevice || invalidAccount) return;
+          setAppliedFilters({ device_id: deviceFilter.trim(), account_id: accountFilter.trim(), event_type: typeFilter.trim() });
+          setPage(1);
+        }}>
+          <label className="min-w-0 flex-1 basis-48 space-y-1 text-sm">ID устройства
+            <Input value={deviceFilter} onChange={event => setDeviceFilter(event.target.value)} aria-invalid={invalidDevice} placeholder="UUID устройства" maxLength={64} />
+          </label>
+          <label className="min-w-0 flex-1 basis-48 space-y-1 text-sm">ID аккаунта
+            <Input value={accountFilter} onChange={event => setAccountFilter(event.target.value)} aria-invalid={invalidAccount} placeholder="UUID аккаунта" maxLength={64} />
+          </label>
+          <label className="min-w-0 flex-1 basis-48 space-y-1 text-sm">Тип события
+            <Input value={typeFilter} onChange={event => setTypeFilter(event.target.value)} placeholder="device.reconnected" maxLength={200} />
+          </label>
+          <Button type="submit" variant="outline" disabled={invalidDevice || invalidAccount}>Применить фильтры</Button>
+          {(invalidDevice || invalidAccount) && <p role="status" className="basis-full text-sm text-destructive">Укажите полный UUID устройства или аккаунта.</p>}
+        </form>
+      </details>
 
       {/* Таблица */}
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
+      <Card className="overflow-hidden shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -352,6 +419,17 @@ export default function EventsPage() {
                     Загрузка...
                   </td>
                 </tr>
+              ) : initialError ? (
+                <tr>
+                  <td colSpan={8} className="px-5 py-16 text-center" role="alert">
+                    <div className="mx-auto max-w-md">
+                      <AlertOctagon className="mx-auto mb-3 h-8 w-8 text-destructive" aria-hidden="true" />
+                      <p className="font-medium">Не удалось загрузить события</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Проверьте доступ event:read и соединение с backend.</p>
+                      <Button className="mt-4" variant="outline" onClick={() => void refetch()}>Повторить запрос</Button>
+                    </div>
+                  </td>
+                </tr>
               ) : events.length === 0 ? (
                 <tr>
                   <td
@@ -368,8 +446,7 @@ export default function EventsPage() {
                 events.map((evt) => (
                   <tr
                     key={evt.id}
-                    className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => setDetailEvent(evt)}
+                    className="border-b border-border/50 transition-colors hover:bg-muted/30"
                   >
                     <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
                       {formatDate(evt.occurred_at)}
@@ -414,16 +491,19 @@ export default function EventsPage() {
                           size="sm"
                           className="h-7 w-7 p-0"
                           onClick={() => setDetailEvent(evt)}
+                          aria-label={`Открыть событие ${evt.event_type}`}
                           title="Подробности"
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </Button>
-                        {!evt.processed && (
+                        {canMark && !evt.processed && (
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-emerald-400"
-                            onClick={() => markProcessed.mutate(evt.id)}
+                            onClick={() => handleMarkProcessed(evt)}
+                            disabled={markProcessed.isPending || isError}
+                            aria-label={`Отметить событие ${evt.event_type} обработанным`}
                             title="Отметить обработанным"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -451,6 +531,7 @@ export default function EventsPage() {
                 className="h-7"
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
+                aria-label="Предыдущая страница"
               >
                 <ChevronLeft className="w-3 h-3" />
               </Button>
@@ -460,25 +541,27 @@ export default function EventsPage() {
                 className="h-7"
                 disabled={page >= pages}
                 onClick={() => setPage(page + 1)}
+                aria-label="Следующая страница"
               >
                 <ChevronRight className="w-3 h-3" />
               </Button>
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Детали события */}
       <Dialog
         open={!!detailEvent}
         onOpenChange={(open) => !open && setDetailEvent(null)}
       >
-        <DialogContent className="max-w-lg font-mono">
+        <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-primary" />
               Событие: {detailEvent?.event_type}
             </DialogTitle>
+            <DialogDescription>Детали события, полученные из API Sphere.</DialogDescription>
           </DialogHeader>
           {detailEvent && (
             <div className="space-y-3 text-xs">
@@ -492,11 +575,13 @@ export default function EventsPage() {
                 />
                 <DetailRow
                   label="Устройство"
-                  value={detailEvent.device_name ?? detailEvent.device_id}
+                  value={access.can("device:read")
+                    ? <Link className="break-all text-primary underline" href={`/devices/${encodeURIComponent(detailEvent.device_id)}`}>{detailEvent.device_name ?? detailEvent.device_id}</Link>
+                    : detailEvent.device_name ?? detailEvent.device_id}
                 />
                 <DetailRow
                   label="Аккаунт"
-                  value={detailEvent.account_login ?? "—"}
+                  value={detailEvent.account_login ?? detailEvent.account_id ?? "—"}
                 />
                 <DetailRow
                   label="Время"
@@ -509,12 +594,16 @@ export default function EventsPage() {
                   value={detailEvent.processed ? "Да" : "Нет"}
                 />
                 {detailEvent.task_id && (
-                  <DetailRow label="Task ID" value={detailEvent.task_id} />
+                  <DetailRow label="Задание" value={access.can("script:read")
+                    ? <Link className="break-all text-primary underline" href={`/tasks/${encodeURIComponent(detailEvent.task_id)}`}>{detailEvent.task_id}</Link>
+                    : detailEvent.task_id} />
                 )}
                 {detailEvent.pipeline_run_id && (
                   <DetailRow
-                    label="Pipeline Run"
-                    value={detailEvent.pipeline_run_id}
+                    label="Запуск пайплайна"
+                    value={access.can("pipeline:read")
+                      ? <Link className="break-all text-primary underline" href={`/orchestration?run_id=${encodeURIComponent(detailEvent.pipeline_run_id)}`}>{detailEvent.pipeline_run_id}</Link>
+                      : detailEvent.pipeline_run_id}
                   />
                 )}
               </div>
@@ -539,14 +628,12 @@ export default function EventsPage() {
                     </pre>
                   </div>
                 )}
-              {!detailEvent.processed && (
+              {canMark && !detailEvent.processed && (
                 <Button
                   size="sm"
                   className="w-full"
-                  onClick={() => {
-                    markProcessed.mutate(detailEvent.id);
-                    setDetailEvent(null);
-                  }}
+                  onClick={() => handleMarkProcessed(detailEvent)}
+                  disabled={markProcessed.isPending || isError}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                   Отметить обработанным
@@ -556,7 +643,7 @@ export default function EventsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageFrame>
   );
 }
 

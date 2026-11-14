@@ -1,0 +1,125 @@
+# Android без локального ADB: фактическая готовность
+
+**13 сентября 2026 · AUD-102 · High · исправлено и принято на двух Android 9/API 28.**
+
+[Аудит](AUDIT-REPORT.md) · [Локальный стенд](../../operations/LOCAL-PILOT.md) ·
+[Подключение и резервные адреса](../../operations/READINESS.md)
+
+**Текущий pilot: APK 1.2.5 (`343c6e8`) на обоих Android через OTA.**
+После наблюдавшихся SIGSEGV исправлено владение native frame buffers;
+10 capture lifecycle trials прошли с прежними PID. Это отдельная проверка
+от root permission AUD-102: [AUD-112](ANDROID-CAPTURE-LIFECYCLE.md).
+
+## Что действительно независимо от станции
+
+APK хранит свою регистрацию, получает подписанный discovery, открывает исходящий
+HTTPS/WebSocket и выполняет команды через Android `su`. Windows, LDPlayer console
+и внешний ADB не входят в этот runtime-путь. Устройство может находиться в другой
+сети, если оно может достичь сервера. Наличие root само по себе не означает, что
+root manager разрешил `su` именно UID приложения.
+
+Windows NAT watchdog — отдельный ремонт конкретной виртуальной сети двух локальных
+LDPlayer. Он не нужен физическому телефону и не заменяет восстановление связи APK.
+
+## Самозапуск после Android boot
+
+AUD-103 подтверждён на двух Android 9: APK `8d93e48` самостоятельно возвращает
+команды через 20.859 / 25.375 s после reboot, при отключённом Windows watchdog.
+Android запустил именно persisted `BootRecoveryJobService`. SIGKILL второго APK
+восстановлен за 5.453 s через service recovery. Это не host launcher и не OTA;
+first launch, force-stop и совместимость других OS остаются отдельными условиями.
+[Root cause, tests и native evidence](ANDROID-BOOT-RECOVERY.md).
+
+## AUD-102: новый Android требует ручной кнопки для стрима
+
+**Root cause.** `CommandDispatcher` открывал `ScreenCaptureRequestActivity`, которая
+сразу запускала стандартный projection intent. `RootAutoStart.grantPermissions`
+не настраивал `PROJECT_MEDIA`. Ранее выданное вручную разрешение скрывало дефект.
+
+**Воспроизведение до fix.** На втором зарегистрированном Android 9/API 28 временно
+сброшен только app-op нашего пакета в `default`. Через серверный Redis publisher
+отправлен `start_stream` в уже существующий WebSocket APK. Пять проверок с интервалом
+секунда: системный `MediaProjectionPermissionActivity` активен, projection отсутствует,
+APK не выставила `allow`. PID не менялся. В `finally` диалог отменён и прежний app-op
+восстановлен. ADB применялся для внесения fault/наблюдения/cleanup; команду APK
+получила от сервера, не от ADB.
+
+[Native before](evidence/native-projection-permission-before.json).
+
+**Affected files / fix.** Новая `RootScreenCapturePermission` запускает внутри APK
+ограниченный по времени `su -c`, меняет только свой package/user `PROJECT_MEDIA`
+и проверяет реальный режим через `cmd appops get`. Работа идёт на IO dispatcher;
+таймаут 8 секунд, временный диагностический файл удаляется, чтение ограничено 4 KiB.
+`ScreenCaptureRequestActivity` ждёт подготовку, затем получает новый projection token
+обычным Android intent. При недоступном/неразрешённом root сохраняется системный
+consent flow. Повторное создание Activity не запускает второй запрос.
+
+`android/version.properties`: следующий APK имеет **10201 / 1.2.1-dev**. Это важно
+для OTA: несколько разных сборок с прежним одинаковым 10200 не считались обновлением.
+Само повышение версии не публикует релиз на сервере.
+
+**Regression tests.** `RootScreenCapturePermissionTest` вызывает настоящий production
+helper с контролируемым процессом и настоящими временными файлами: свой package,
+отдельный Android user, ложный exit 0, deny/default/unsupported, неуспех root,
+таймаут с остановкой процесса, отсутствие su, недопустимый target, ограничение чтения.
+8 tests pass; полная dev JVM suite: **523 tests / 38 suites, 0 failures/errors/skips**.
+[JUnit summary](evidence/root-projection-full-summary.json). Signed dev и enterprise
+builds проходят по 37 тестов: 19 discovery + 10 logger + 8 root permission.
+
+**Native после fix.** APK `ce26a9e` установлена поверх старой на обоих устройствах
+по одному через ADB; self-install OTA этим не проверялся. Автоматический возврат
+команд от начала установки: 7.640 s (первый), 7.813 s (второй), прежние device IDs
+и signed cache v8, без ручного запуска приложения/очистки данных/новой регистрации.
+На каждом снова сброшен только `PROJECT_MEDIA` в `default`, затем сервер отправил
+`start_stream`. APK сама выставила `allow`: во всех 5 наблюдениях на каждом
+projection активен, системный dialog отсутствует, PID тот же. После теста серверный
+`stop_stream` остановил projection; оба устройства выполнили ещё 12/12 команд,
+API вернул настоящие 100-строчные журналы. ADB не выдавал разрешение в проверяемом
+пути: только fault, read-only inspection и восстановление исходного app-op после теста.
+
+[После — первый](evidence/native-projection-permission-after-index0.json) ·
+[После — второй](evidence/native-projection-permission-after.json) ·
+[Установка и команды](evidence/apk-projection-native-rollout-20260913.json) ·
+[APK manifest](evidence/apk-ce26a9e-manifest.json).
+
+Историческая APK приёмки AUD-102: `SphereAgent-signed-discovery-ce26a9e-dev-debug.apk`, 8,380,169 bytes,
+SHA-256 `24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d`.
+`LATEST-SphereAgent-pilot.apk` переключён только после приёмки обоих устройств.
+
+**Residual risk.** Проверка Android 9 не доказывает поведение всех OEM и Android 14+.
+Обычный Android требует consent и новый token для каждой projection session;
+приложение не переиспользует старый token.
+[Официальный контракт MediaProjection](https://developer.android.com/media/grow/media-projection).
+Этот fix не подтверждает ещё передачу/декодирование кадров в браузере.
+
+## OTA принято на двух устройствах
+
+Текущая APK `fdd26c5` / 1.2.4-dev установлена обоими Android самостоятельно
+через сервер, HTTPS и свой su. Команды вернулись за 10.266 / 9.844 s, ADB install
+и manual UI не использовались. В каталоге 2 release: актуальный 10204 и прежний
+10203. После обрыва staging пуст, одновременно принятые OTA дают одну загрузку
+до replacement. Reboot после OTA → команда за 21.094 s; финальные 12/12 команд.
+[Evidence](ANDROID-OTA-RECOVERY.md). Persistence bind mount при replacement
+backend ранее проверен с 10203 [отдельно](ANDROID-OTA-DELIVERY.md).
+
+## Открытые эксплуатационные блокеры
+
+| Приоритет | Подтверждённое состояние | Следующая приёмка |
+| --- | --- | --- |
+| High | REST controls исправлены в AUD-108: 24/24 keyframe, реальный start/stop обоих Android pass. Frame bridge, viewer WebSocket lifecycle и stream status остаются локальными | Доставка кадров и viewer control между workers, reconnect, stop и отсутствие фонового стрима без viewer |
+| High | OTA self-install принят на двух Android 9, 10204 опубликован, 10203 сохранён. Полный естественный период 6 h не выжидался; будущие builds требуют публикации | Natural periodic update, staged fleet rollout, ограничения package/flavor/signing identity |
+| High | Pilot persistent bind mount пережил replacement; default `/tmp` других deployments и конкурентная запись JSON остаются ограничениями | Concurrent publication и durable installer session/dedup после process loss |
+| High | Есть подписанные discovery/cache/mirror, но pilot имеет один временный ingress | Отказ независимого пути без потери обоих каналов; текущий резерв адресов не является отдельным живым сервером |
+| High | VPN manager вызывает `wg-quick`; одного root недостаточно для наличия подходящего WireGuard backend | Native VPN на целевой Android-сборке, recovery, проверка сохранения канала управления |
+
+[Native worker routing](evidence/stream-worker-routing-before.json).
+Расписание `UpdateCheckWorker` — 6 часов при доступной сети, а не немедленная доставка
+каждого изменения Git. Нельзя считать OTA рабочим только по наличию класса Worker.
+Нельзя считать приложение независимым от всех ограничений Android только из-за root.
+
+## Порядок дальнейшей проверки
+
+1. Выполнено на двух Android 9: новый root permission flow после сброса app-op, без ручной кнопки. Другие версии/OEM и recreation Activity во время задержанного su требуют отдельной проверки.
+2. Исправить межпроцессный путь стрима и проверить реальные кадры в viewer.
+3. OTA опубликовано и принято на двух Android; обрыв и overlapping attempts приняты в AUD-107; далее durable session/dedup, natural periodic cycle и rollout на больший парк.
+4. Проверить VPN и независимый резервный ingress на целевой конфигурации.

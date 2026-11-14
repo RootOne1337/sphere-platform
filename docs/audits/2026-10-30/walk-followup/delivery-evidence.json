@@ -1,0 +1,201 @@
+{
+  "schema": "sphere-walk-continuity-delivery-v1",
+  "baseline": "7c5fa377",
+  "date": "2026-10-30",
+  "timezone": "Asia/Yekaterinburg",
+  "clientVersion": "walk_live_v5",
+  "physicalDeviceActions": 0,
+  "postFixRealGamePassVerified": false,
+  "reportCoverage": {
+    "count": 12,
+    "first": "2026-10-30T23:13:40",
+    "last": "2026-10-30T23:22:22",
+    "allClientVersionsMissing": true,
+    "stopCounts": {
+      "walk_manual_stop": 11,
+      "walk_no_route_progress": 1
+    },
+    "legacyManualStopIncludesBlurAndHidden": true,
+    "rawArchiveSha256": "a9c26fed277fbb8658ce0580cdf91f075ec44f3a0bf317a40081a2d65d9a88ec"
+  },
+  "tests": {
+    "frontend": {
+      "success": true,
+      "passed": 133,
+      "suites": 13,
+      "sha256": "1e412f7301a02f0cc3d7c8ef9cb503522d7c33da64d0fca1e735bf24409fd0f2"
+    },
+    "python": {
+      "passed": 155,
+      "skipped": 1,
+      "subtests": 60,
+      "xmlSha256": "85a69209328654c87f7d5ad0aad88df321d22bb76d8263999bd071d268c925ac",
+      "logSha256": "a19d7d66933a4be1d8704c6029998e678e49d1e37be073c7109c1dc2f7b8edde"
+    },
+    "reportCounterAfterFinalChange": {
+      "passed": 10,
+      "subtests": 5,
+      "overlapsMainRun": true,
+      "sha256": "8084a23a5dbaeaf7561a6a0322eea3a197548b3b89c2fd863bf01c28342e515e"
+    },
+    "camera": {
+      "cases": 23,
+      "passed": 23,
+      "simulatedPlant": true,
+      "actualLocalization": false,
+      "sha256": "06b825510c0e478399fd62313c0ef9270119f4d7ca6322feac28fb0ca9be2da0"
+    }
+  },
+  "comparison": {
+    "schema": "sphere-camera-continuity-comparison-v1",
+    "simulatedPlant": true,
+    "realGame": false,
+    "actualLocalization": false,
+    "inputSha256": [
+      "4413a4abaeec7f38a80935a768cfd8466400dacefbd24892ec03e02d12548f0f",
+      "06b825510c0e478399fd62313c0ef9270119f4d7ca6322feac28fb0ca9be2da0"
+    ],
+    "config": {
+      "gainX": 6,
+      "gainY": -5,
+      "visualMs": 100,
+      "slopPx": 16,
+      "noise": 0.004,
+      "descriptorMs": 130,
+      "movingReference": true,
+      "durationMs": 50000
+    },
+    "cases": [
+      {
+        "label": "before",
+        "cameraDowns": 12,
+        "moves": 199,
+        "terminal": null,
+        "trackingError": {
+          "maximum": 0.3133376640220886,
+          "mean": 0.11761319979253336
+        }
+      },
+      {
+        "label": "after",
+        "cameraDowns": 1,
+        "moves": 229,
+        "terminal": null,
+        "trackingError": {
+          "maximum": 0.12211896254196578,
+          "mean": 0.06190423478927451
+        }
+      }
+    ]
+  },
+  "initialBuild": {
+    "path": ".local-pilot/walk-followup-build-20261030-v5.json",
+    "sha256": "ea8d3b8d0d463496e2a03883f8f695625aed09b0448d49bc991131f8a48fd861",
+    "value": {
+      "exit_code": 1,
+      "stopped_reason": "resource_guard",
+      "source_sha_before": "f82cf1d222f53b2380d319b6cf707fc116e19000141c7c5ca72bb986a823ea38",
+      "source_sha_after": "f82cf1d222f53b2380d319b6cf707fc116e19000141c7c5ca72bb986a823ea38",
+      "source_unchanged": true,
+      "local_only": true,
+      "installed": false,
+      "resource_profile": {
+        "kind": "bounded_frontend_only",
+        "workers": 1,
+        "node_heap_mib": 1024,
+        "start_ram_gib": 6.5,
+        "stop_ram_gib": 5.5,
+        "max_commit_percent": 85,
+        "android_and_reconstruction_guards_unchanged": true
+      }
+    }
+  },
+  "build": {
+    "path": ".local-pilot/walk-followup-build-20261030-v5c.json",
+    "sha256": "1a74e5cac4e1a4aab7d2ae63cfc6169167d1fa57bdb889b1cba0a4e1e747bbfb",
+    "value": {
+      "exit_code": 0,
+      "stopped_reason": null,
+      "source_sha_before": "630fb410acc3b9f352b8865c49d2b3bd5dbc22d70fb691027cfa671506a34f64",
+      "source_sha_after": "630fb410acc3b9f352b8865c49d2b3bd5dbc22d70fb691027cfa671506a34f64",
+      "source_unchanged": true,
+      "local_only": true,
+      "installed": false,
+      "resource_profile": {
+        "kind": "bounded_frontend_only",
+        "workers": 1,
+        "node_heap_mib": 1024,
+        "start_ram_gib": 6.5,
+        "stop_ram_gib": 5.5,
+        "max_commit_percent": 90,
+        "android_and_reconstruction_guards_unchanged": true
+      }
+    }
+  },
+  "probe": {
+    "path": ".local-pilot/walk-followup-image-20261030-v5b/probe3.json",
+    "sha256": "cdf4603114bba5c624e5a430c215115fbed817204d087fe89274106f8d1daed9",
+    "value": {
+      "outcome": "verified",
+      "physicalActions": 0,
+      "pages": 2,
+      "assets": 31,
+      "workerMatches": true,
+      "encoderWorkerMatches": true,
+      "newBundlePresent": true
+    }
+  },
+  "installation": {
+    "path": ".local-pilot/walk-followup-image-20261030-v5b/install-receipt.json",
+    "sha256": "8d0bd6bd4f6e7d986b5552dddb0affd2bd06ed741188fabfb9c990e0a492d6ec",
+    "value": {
+      "outcome": "verified",
+      "candidateImageId": "sha256:bbf94d0a1b268bb9e439d2538c0f8cc508805f877acf8a81578510778f2a2257",
+      "physicalDeviceActions": 0,
+      "pages": 2,
+      "assets": 31,
+      "uiHealthy": true,
+      "otherContainersPreserved": true,
+      "sourceMatches": true
+    }
+  },
+  "runtime": {
+    "path": ".local-pilot/walk-followup-runtime-reload-20261030-v5.json",
+    "sha256": "854bb448453845b2b07f664faf3a157875636f6314f2af32f185933126f0c045",
+    "value": {
+      "oldPid": 49764,
+      "watchdogPid": 4444,
+      "physicalActions": 0,
+      "sourceSha": "57771ddcf908b88bb196d65898164ccd673c3ab7679d926ac39beca57bfa4701",
+      "outcome": "verified",
+      "newPid": 38716,
+      "existingAssetsUnchanged": true
+    }
+  },
+  "processorHealth": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true
+  },
+  "sourceHashes": {
+    "frontend/src/features/stream/TeachingWorkbench.tsx": "eee13ca730298debf5bed14f2a473cc97e65863497a21458d69de902f6d5ec57",
+    "frontend/src/features/stream/RecordedRouteFrame.tsx": "25006dc7e10c622b17381044000886bd518c71fa289ae876eefaf4950dc6eaf6",
+    "frontend/src/features/stream/WalkingRoutePilot.tsx": "92e00003f21b3a6c86526e9c3f1d174f0625e5ca8f6924478a2b5a30411c3343",
+    "frontend/src/features/stream/walkCameraDrag.ts": "4395ab905065de709ed87e002ac4122975c07b5bd57167f4d6aa5e924053fcec",
+    "frontend/src/features/stream/walkPilot.ts": "8dad757c4077011a86bbae68bc707909c1bd61b4455bae032f14bc87605deb1b",
+    "frontend/src/features/stream/NavigationRouteContext.tsx": "65be378918fabbb6fb1e442ad4d6bff4e1ccc63b3a39fe59ea9e92ee7ecf771e",
+    "frontend/src/features/stream/RouteGeometryMap.tsx": "552b037c17bc96ffcd519a8ee278eadce0e92f30095ce0706e61dac1c2611dc2",
+    "scripts/pilot/route_workspace.py": "57771ddcf908b88bb196d65898164ccd673c3ab7679d926ac39beca57bfa4701",
+    "scripts/pilot/reconstruction_service.py": "2bc673997c6c0ccc68fe27bfcb4a2dbaff03add2a029bfe7aca31f44094ee79d",
+    "scripts/pilot/route_walk_reports.py": "2349fe810194b28ececa20d006b7d8938c3e1ee9395f754af9eed16e929c804c",
+    "scripts/pilot/walk_diagnostics.py": "0bf0f4e2cb50b0e30e3f075dbae840becebfd931bf533ab91d948fe43f898ca5",
+    "motor_worker/walk_route.py": "f505c3c0f86f52543e5a11e82fc3714bab6a0b1e917420c161855af2eba894ae",
+    "scripts/pilot/check_walk_camera_loop.cjs": "6d524101cc4b4a213258bd7e1823941a2dd5d0c170bc504f9627a49782a3bfe1",
+    "scripts/pilot/analyze_walk_live_reports.py": "c28ccfb89e945e67bafe1bd9ebb1e52fa57ef21b9e9e418b049a007375409ce4",
+    "scripts/pilot/render_walk_camera_continuity.py": "8dd4812c4e393b93e80f6b275b2b0e2e006c3843554fb40eabd8a8309e2c5e87"
+  },
+  "browserAcceptance": {
+    "userTabInspected": false,
+    "reason": "cua_kernel_assets_path_error"
+  },
+  "analysisSha256": "ebe8a94a8cb0745eab0afba34e120d9f3a23fce0ad1057d903cb8c02fe3d8281"
+}

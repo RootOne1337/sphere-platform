@@ -1,0 +1,74 @@
+{
+  "schema": "sphere-dense-reconstruction-v1",
+  "quality": {
+    "registered": 89,
+    "selected": 89,
+    "coverage": 1.0,
+    "points": 26228,
+    "mean_reprojection_px": 0.8546949474572549,
+    "components": 1,
+    "conditioning": {
+      "near_camera_points": 0,
+      "near_camera_fraction": 0.0,
+      "camera_span_units": 10.930574454493275,
+      "passed": true
+    }
+  },
+  "source_manifest_sha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+  "ply_sha256": "deb10632ac545e27845f8a7eab23b705d9f190087e4c75bdc2e1e4bfe4c4893d",
+  "ply_bytes": 113996466,
+  "vertices": 749970,
+  "scene_file": "dense/scene.ply",
+  "geometry_sha256": "be5815218e3280a370466489c732eb235d7ba0e4ca020a6cb79bcfbd47832f62",
+  "metric_scale": null,
+  "masks": "none",
+  "dynamic_objects_removed": false,
+  "collision_map": false,
+  "execution_qualified": false,
+  "tools": {
+    "pycolmap": "4.2.1",
+    "brush": "0.3.0"
+  },
+  "training_steps": 30000,
+  "autotune": "balanced",
+  "engine": "brush-0.3.0-system-timing-1",
+  "periodic_export_steps": 5000,
+  "appearance": {
+    "state": "passed",
+    "mean_psnr": 32.54498651292589,
+    "mean_ssim": 0.9373455842336019,
+    "min_psnr": 29.20414161682129,
+    "min_ssim": 0.9130418300628662,
+    "reference_views": 9,
+    "held_out": false,
+    "resolution_limit": 960,
+    "policy": {
+      "mean_psnr": 22,
+      "mean_ssim": 0.75,
+      "min_psnr": 18,
+      "min_ssim": 0.65
+    },
+    "navigation_qualified": false
+  },
+  "feature_matching": {
+    "method": "opencv-rootsift-lightglue",
+    "lightglue_source": "eb42fee2d71449efb0aa5c10549752b5d75384d8",
+    "weights_sha256": "5b52b8d9982d43532dc042606b346bb9594c9f5a4bd6f64362c63866287b4ac0",
+    "opencv": "4.12.0",
+    "torch": "2.9.1+rocm7.2.1",
+    "views": 89,
+    "pairs": 426,
+    "median_raw_matches": 833.0,
+    "max_features": 4096,
+    "gpu_memory_fraction": 0.65,
+    "footer_exclusion_fraction": 0.025,
+    "semantic_dynamic_mask": false,
+    "network_downloads": false,
+    "geometric_verification_complete": true
+  },
+  "record_title": "Маршрут 011321",
+  "audit_date": "2026-10-26",
+  "audit_code_revision": "e3edd22b8158eb15b3e3e07120b43061b290e5af",
+  "heavy_training_launched_by_audit": false,
+  "browser_scene_acceptance_performed_by_audit": false
+}

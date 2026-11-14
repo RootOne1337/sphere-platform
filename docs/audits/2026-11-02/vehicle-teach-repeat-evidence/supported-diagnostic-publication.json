@@ -1,0 +1,146 @@
+{
+  "observedAtUtc": "2026-11-01T21:36:34.311418+00:00",
+  "outcome": "published_diagnostic_preferred",
+  "selected": "fixed-k-fused-173-supported-diagnostic",
+  "label": "Совместная геометрия · 173 ракурса · 20 556 точек",
+  "cameras": 173,
+  "points": 20556,
+  "geometryBytes": 2800121,
+  "geometrySha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "sourceManifestSha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "firstTicks": 0,
+  "lastTicks": 3321270,
+  "catalogBefore": {
+    "alternatives": [
+      {
+        "id": "components-169-diagnostic",
+        "cameras": 169,
+        "points": 9987,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "Скутер: объединённые фрагменты (диагностика)"
+      },
+      {
+        "id": "full-173-endpoints-diagnostic",
+        "cameras": 173,
+        "points": 9987,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "Полный временной охват · 173 ракурса"
+      }
+    ],
+    "preferredAlternativeId": "full-173-endpoints-diagnostic"
+  },
+  "catalogAfter": {
+    "alternatives": [
+      {
+        "id": "components-169-diagnostic",
+        "cameras": 169,
+        "points": 9987,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "Скутер: объединённые фрагменты (диагностика)"
+      },
+      {
+        "id": "fixed-k-fused-173-supported-diagnostic",
+        "cameras": 173,
+        "points": 20556,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "Совместная геометрия · 173 ракурса · 20 556 точек"
+      },
+      {
+        "id": "full-173-endpoints-diagnostic",
+        "cameras": 173,
+        "points": 9987,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "Полный временной охват · 173 ракурса"
+      }
+    ],
+    "preferredAlternativeId": "fixed-k-fused-173-supported-diagnostic"
+  },
+  "protectedBefore": {
+    "alternatives\\components-169-diagnostic\\geometry.json": "74b25f83bd8771fe25695eec95430b8fccb254414890e5c9807fc925b93acaca",
+    "alternatives\\components-169-diagnostic\\receipt.json": "f09c46b2473efe5babdf3d6a40d07c6ea070c46110551909642b1d1fad995d5b",
+    "alternatives\\full-173-endpoints-diagnostic\\geometry.json": "52088388dc0097b9bfdbc24a60aa51b858fef35845424c989198e4b6d3f45140",
+    "alternatives\\full-173-endpoints-diagnostic\\receipt.json": "e4bd9dd598d7dee86709234c180b50bd6022f140ecd516f414490c6a6c4c64f8",
+    "CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control.json": "0407672a9e12b7a29f1a4dab98a9a0bc72dd4b67f8717d62b2259e772650834f",
+    "geometry.json": "f0558a9dee168d9216534bdae15ea463c0612f3eb0002d9ef8ee7bd3621dbd6a",
+    "input\\COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "input\\frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "input\\inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "input\\manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "input\\video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "prepared\\reconstruction-input.json": "fd1b80002f79c3957001b99ed561d4449e91cbc7828fe1e3a143fca78ce1f7cf",
+    "quality.json": "51b1425d2c959d8311247c28cccd6354579d9d943f699227e5a41d82ba0fce74",
+    "START": "8b43ec9dba5945f6d33fcfc62e9228da9198ff4fe3187b466e35519feafc77bc",
+    "state.json": "1f4b809096a638fb1600b9d53af795cf4af8d7724ec717c87fb4e87906065ede"
+  },
+  "protectedAfter": {
+    "alternatives\\components-169-diagnostic\\geometry.json": "74b25f83bd8771fe25695eec95430b8fccb254414890e5c9807fc925b93acaca",
+    "alternatives\\components-169-diagnostic\\receipt.json": "f09c46b2473efe5babdf3d6a40d07c6ea070c46110551909642b1d1fad995d5b",
+    "alternatives\\full-173-endpoints-diagnostic\\geometry.json": "52088388dc0097b9bfdbc24a60aa51b858fef35845424c989198e4b6d3f45140",
+    "alternatives\\full-173-endpoints-diagnostic\\receipt.json": "e4bd9dd598d7dee86709234c180b50bd6022f140ecd516f414490c6a6c4c64f8",
+    "CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control.json": "0407672a9e12b7a29f1a4dab98a9a0bc72dd4b67f8717d62b2259e772650834f",
+    "geometry.json": "f0558a9dee168d9216534bdae15ea463c0612f3eb0002d9ef8ee7bd3621dbd6a",
+    "input\\COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "input\\frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "input\\inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "input\\manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "input\\video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "prepared\\reconstruction-input.json": "fd1b80002f79c3957001b99ed561d4449e91cbc7828fe1e3a143fca78ce1f7cf",
+    "quality.json": "51b1425d2c959d8311247c28cccd6354579d9d943f699227e5a41d82ba0fce74",
+    "START": "8b43ec9dba5945f6d33fcfc62e9228da9198ff4fe3187b466e35519feafc77bc",
+    "state.json": "1f4b809096a638fb1600b9d53af795cf4af8d7724ec717c87fb4e87906065ede"
+  },
+  "allProtectedUnchanged": true,
+  "oldPreferenceBackup": "previous-alternative-selection.json",
+  "newPreferenceSha256": "4ffc792895ea14b07565d836cc7d430270ccfdb159990a95af9b94a028cf7efd",
+  "apiBefore": {
+    "pid": 1868,
+    "health": {
+      "service": "sphere-reconstruction-v1",
+      "one_active_job": true,
+      "route_camera_pipeline": "vehicle_geometry_v3_hud",
+      "creation_recovery_contract": "confirmed_absence_v1",
+      "image_route_review_contract": "source_bound_offline_v1",
+      "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+      "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+      "alternative_catalog_contract": "source_bound_review_v1",
+      "vehicle_control_contract": "attached_camera_hud_binary_hold_v1",
+      "route_resource_monitor_contract": "task_volume30_fresh_native_v1",
+      "hud_speed_reference_contract": "source_bound_font_display_v1",
+      "live_session_active": false
+    }
+  },
+  "apiAfter": {
+    "pid": 1868,
+    "health": {
+      "service": "sphere-reconstruction-v1",
+      "one_active_job": true,
+      "route_camera_pipeline": "vehicle_geometry_v3_hud",
+      "creation_recovery_contract": "confirmed_absence_v1",
+      "image_route_review_contract": "source_bound_offline_v1",
+      "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+      "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+      "alternative_catalog_contract": "source_bound_review_v1",
+      "vehicle_control_contract": "attached_camera_hud_binary_hold_v1",
+      "route_resource_monitor_contract": "task_volume30_fresh_native_v1",
+      "hud_speed_reference_contract": "source_bound_font_display_v1",
+      "live_session_active": false
+    }
+  },
+  "primaryUnchanged": true,
+  "navigationUnchanged": true,
+  "cancelUnchanged": true,
+  "inputUnchanged": true,
+  "navigationQualified": false,
+  "executionQualified": false,
+  "physicalActions": 0,
+  "uiRestarted": false,
+  "httpAuthenticatedReadVerified": false,
+  "browserAcceptance": false
+}

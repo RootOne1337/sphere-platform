@@ -4,9 +4,14 @@
 
 name: preview-${PR_NUMBER}
 
+x-bounded-logs: &bounded-logs
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+
 services:
 
   postgres:
+    logging: *bounded-logs
     image: postgres:15-alpine
     container_name: preview-${PR_NUMBER}-postgres
     environment:
@@ -30,6 +35,7 @@ services:
           memory: 768M
 
   redis:
+    logging: *bounded-logs
     image: redis:7.2-alpine
     container_name: preview-${PR_NUMBER}-redis
     networks:
@@ -46,6 +52,7 @@ services:
           memory: 128M
 
   backend:
+    logging: *bounded-logs
     image: ghcr.io/${GITHUB_OWNER}/sphere-platform-backend:pr-${PR_NUMBER}
     container_name: preview-${PR_NUMBER}-backend
     environment:
@@ -85,6 +92,7 @@ services:
           memory: 1G
 
   frontend:
+    logging: *bounded-logs
     image: ghcr.io/${GITHUB_OWNER}/sphere-platform-frontend:pr-${PR_NUMBER}
     container_name: preview-${PR_NUMBER}-frontend
     environment:
@@ -110,6 +118,7 @@ services:
           memory: 1.5G
 
   n8n:
+    logging: *bounded-logs
     image: n8nio/n8n:1.70.2
     container_name: preview-${PR_NUMBER}-n8n
     environment:

@@ -1,0 +1,27 @@
+{
+  "state": "installed_verified",
+  "source": "08caf8d891fc3efb370dac773d0f0586c2cc48aa",
+  "otherContainersUnchanged": 65,
+  "fullUiApplicationConfigPreserved": true,
+  "uiHostConfigMountsPreserved": true,
+  "protectedAssetsUnchanged": true,
+  "protectedAssetCount": 596,
+  "otaUnchanged": true,
+  "apiReloaded": false,
+  "physicalActions": 0,
+  "archivesCreated": 0,
+  "imageId": "sha256:8669e14ea1fabc6e2dd4e4ad518217fb35ba5340b43cde08bfbf2cac71b524f2",
+  "http": {
+    "pages": [
+      "/login",
+      "/stream/414ce0e9-4b93-4f96-b9ca-ee675f53835e?teach=1"
+    ],
+    "clientAssets": 31,
+    "workerSha256": {
+      "teaching-recorder.worker.js": "4a327116bda4850b2aa4241784677837eb72e744f3ffd3c0755a7741e3975769",
+      "walk-frame-encoder.js": "299fd956df1bac46cad0736b7b109e1c9533e3b922ba30622cb7cb6d24daec69"
+    },
+    "browserHydrationVerified": false
+  },
+  "privateReceiptSha256": "7d74e9452797cb9e45c5b067b89c78260d792a9a7fee2b9f9d81295becb65d2b"
+}

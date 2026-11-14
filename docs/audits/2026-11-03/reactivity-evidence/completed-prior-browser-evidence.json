@@ -1,0 +1,95 @@
+{
+  "checks": [
+    {
+      "name": "completed_rejected_attempt_remains_selected_until_explicit_click",
+      "passed": true
+    },
+    {
+      "name": "prior_result_is173_and_not_navigation_ready",
+      "passed": true
+    },
+    {
+      "name": "foreign_source_prior_attempt_excluded",
+      "passed": true
+    },
+    {
+      "name": "actual_saved_video_decodes_with_current173_10630",
+      "passed": true
+    },
+    {
+      "name": "rejected_navigation_is_not_ready",
+      "passed": true
+    },
+    {
+      "name": "no_files_written_before_click",
+      "passed": true
+    },
+    {
+      "name": "explicit_open_selects_original173",
+      "passed": true
+    },
+    {
+      "name": "historical_resource_failure_not_current_ram_reading",
+      "passed": true
+    },
+    {
+      "name": "canonical_preferred_selected",
+      "passed": true
+    },
+    {
+      "name": "no_http_mutations_or_external_connections",
+      "passed": true
+    },
+    {
+      "name": "only_fixture_link_metadata_written",
+      "passed": true
+    },
+    {
+      "name": "no_page_errors",
+      "passed": true
+    }
+  ],
+  "pageErrors": [],
+  "blocked": [],
+  "boundary": "ACTUAL_REACT_WITH_REAL_SAVED_GEOMETRY_AND_H264_MOCKED_API_FAKE_LINK_WRITES_ONLY",
+  "physicalActions": 0,
+  "fixture": {
+    "apiReads": [
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1",
+      "/jobs/11111111111111111111111111111111",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1/geometry-alternatives",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1/geometry",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/11111111111111111111111111111111",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry",
+      "/jobs/f3033bb704d4460fb8ed27a613427cc1/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives/fixed-k-fused-173-supported-diagnostic"
+    ],
+    "apiWrites": [],
+    "fileWrites": [
+      "reconstruction-attempt-f3033bb704d4460fb8ed27a613427cc1.json",
+      "reconstruction-link.json"
+    ],
+    "sourceRangeReadCount": 5
+  },
+  "sourceCommit": "19ee3b847f7069f278fd720f84d0daacda5cce79",
+  "sourcePatch": "Use terminalReconstruction for prior-result inspection including sparse_complete/complete with navigation rejection; 85 targeted tests pass.",
+  "actualCurrentGeometrySource": ".local-pilot/reconstruction-jobs/f3033bb704d4460fb8ed27a613427cc1/geometry.json",
+  "currentGeometrySha256": "9d99d00f9a9b5550f6a448b87e188b270e7aa09b011e3b8a51a7ae4fea0da788",
+  "componentSha256": {
+    "frontend\\src\\features\\stream\\TeachingReconstruction.tsx": "94008cf492345ab836f5cd43304f2e2f28ce6d3c9d07be9893984a5fd3077572",
+    "frontend\\src\\features\\stream\\TeachingReview.tsx": "a89995d8a8301b8b09a94cded870b6422fc7e4d32e1c1212b68ca676f6dd5dfb",
+    "frontend\\src\\features\\stream\\savedRouteResults.ts": "8222aa72ae788fbeb5c0f8528f6b3a621c75c42d3dbd6e89b1fc646f03e6266d"
+  },
+  "screenshots": {
+    "output\\playwright\\completed-prior-20261103-v1\\failed-attempt-retained-source.png": "be843c37a9fd08338af22d5be251822ac4c31d6be2ca2aed1d2abb3a7b88e019",
+    "output\\playwright\\completed-prior-20261103-v1\\prior-173-explicitly-opened.png": "92e5098ecdd1da8445dc2c5f158885924bab7e58279adbe7db64489b12ed0134"
+  }
+}

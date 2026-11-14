@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-12T02:37:58.696326+00:00",
+  "scope": "Finite ordinary Chrome read-only check from main PC to remote PH025; no direct-route or input acceptance",
+  "runtime": {
+    "uiSourceRevision": "331bac0a9dada03148b50f802123226d92d54b22",
+    "apiSourceRevision": "98370d437de5802c7ea1d35da459783db5d95570",
+    "apkVersionCode": 10260
+  },
+  "device": {
+    "name": "PH025",
+    "id": "b410464a-5f26-4803-a756-7840cc17b128"
+  },
+  "viewer": {
+    "observedForSeconds": 30,
+    "commandsSent": 0,
+    "inputOwnershipPresentAtLastSample": false,
+    "directFramesPresented": 0,
+    "serverCanvasFrames": 764,
+    "serverVideoPackets": 768,
+    "serverVideoBytes": 5968795,
+    "socketClosedNormally": true
+  },
+  "browser": {
+    "receivedAtUtc": "2026-10-12T02:35:37.261751+00:00",
+    "state": "failed",
+    "failure": "connection_deadline",
+    "ice": "checking",
+    "dtls": "new",
+    "network": {
+      "local_candidates": 5,
+      "checking_pairs": 2,
+      "pairs": 2,
+      "remote_candidates": 2,
+      "requests_sent": 146,
+      "succeeded_pairs": 0,
+      "responses_received": 0,
+      "failed_pairs": 0
+    }
+  },
+  "native": {
+    "receivedAtUtc": "2026-10-12T02:34:48.501052+00:00",
+    "answerSent": true,
+    "stage": "answer_sent",
+    "sampleElapsedMs": 11319,
+    "network": {
+      "local_candidates": 3,
+      "responses_received": 0,
+      "pairs": 2,
+      "succeeded_pairs": 0,
+      "requests_received": 0,
+      "checking_pairs": 2,
+      "remote_candidates": 2,
+      "requests_sent": 226,
+      "dtls_state": "new",
+      "responses_sent": 0,
+      "failed_pairs": 0
+    }
+  },
+  "configuration": {
+    "turnUrlsConfigured": false,
+    "turnCredentialSecretConfigured": false
+  },
+  "actualNetworkCause": "UNDETERMINED",
+  "provenBoundary": "Authenticated signaling delivered an Android answer; ICE connectivity checks got no responses. DTLS and direct media were not established.",
+  "hypotheses": [
+    "NAT mapping or filtering",
+    "Route/firewall/VPN reachability"
+  ],
+  "hypothesesProven": false,
+  "rawCandidateAddressesPublished": false,
+  "peerIdentifiersPublished": false,
+  "productionAccepted": false,
+  "directRouteAccepted": false,
+  "inputAccepted": false,
+  "nextRequired": "Independent reachable ICE pair/network matrix and operator-owned TURN fallback; long-lived live-media TURN renewal remains separate from the read-only probe grant"
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T13:15:27.979104+00:00",
+  "sourceParent": "0b321d490a76dafb37d1f71d37557a69fa955dfd",
+  "state": "SOURCE_VALIDATED_RUNTIME_PENDING",
+  "runtimeInstalled": false,
+  "sourceSha256NormalizedLf": {
+    "frontend/components/sphere/DeviceStream.tsx": "319f7c3934e320ea601e11580b680f4d36bea03000ce5af34c73c98502fd2b09",
+    "frontend/src/features/stream/ContinuousInputDiagnostics.tsx": "b013bbc06b4b74da3b12de66e9aa13909101926eb8a8842ec938d4e3cd92941d",
+    "frontend/__tests__/stream/diagnostics.test.tsx": "e6ebd8564290e19d37c9a7b33aa6d3ef1706641198674feacada8e8b4cb6dac9"
+  },
+  "focused": {
+    "testsPassed": 151,
+    "suitesPassed": 3
+  },
+  "frontend": {
+    "testsPassed": 1948,
+    "suitesPassed": 139,
+    "seconds": 79.076
+  },
+  "typeScript": {
+    "incremental": false,
+    "exitCode": 0
+  },
+  "priorInstalled": "0b321d490a76dafb37d1f71d37557a69fa955dfd",
+  "idleCanary": {
+    "baselineUtc": "2026-10-09T13:02:43.959Z",
+    "failureObservedUtc": "2026-10-09T13:13:05.288Z",
+    "device": "PH011",
+    "apk": "1.2.49-dev",
+    "reason": "native_receipt_timeout",
+    "idleRecoveries": 1,
+    "offeredSequence": 1340,
+    "acknowledgedSequence": 1338,
+    "pending": 2,
+    "oldestAction": "HEARTBEAT",
+    "oldestAgeMs": 512,
+    "browserTickGapMs": 15,
+    "lastReceiptRttMs": 248,
+    "lastReceiptAgeMs": 521,
+    "lastSendAgeMs": 256,
+    "held": false,
+    "terminal": null,
+    "socketState": "OPEN",
+    "bufferedBytes": 0,
+    "commandsReplayed": false,
+    "failureTimestampExact": false,
+    "idleCauseResolved": false
+  },
+  "visualDefect": {
+    "viewport": [
+      1280,
+      720
+    ],
+    "panelClippedInsideVideo": true,
+    "installedFixAccepted": false
+  },
+  "ledger": {
+    "accepted": 9,
+    "open": 41
+  }
+}

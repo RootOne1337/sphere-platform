@@ -11,6 +11,8 @@ export interface Location {
   longitude: number | null;
   parent_location_id: string | null;
   org_id: string;
+  created_at: string;
+  updated_at: string;
   total_devices: number;
   online_devices: number;
 }
@@ -33,9 +35,9 @@ export function useCreateLocation() {
       description?: string;
       color?: string;
       address?: string;
-      latitude?: number;
-      longitude?: number;
-      parent_location_id?: string;
+      latitude?: number | null;
+      longitude?: number | null;
+      parent_location_id?: string | null;
     }) => {
       const { data } = await api.post('/locations', body);
       return data;
@@ -47,7 +49,7 @@ export function useCreateLocation() {
 export function useUpdateLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: { id: string; name?: string; description?: string; color?: string; address?: string }) => {
+    mutationFn: async ({ id, ...body }: { id: string; name?: string; description?: string | null; color?: string | null; address?: string | null; latitude?: number | null; longitude?: number | null; parent_location_id?: string | null; expected_updated_at?: string }) => {
       const { data } = await api.put(`/locations/${id}`, body);
       return data;
     },
@@ -66,9 +68,9 @@ export function useDeleteLocation() {
 export function useAssignDevicesToLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ locationId, deviceIds }: { locationId: string; deviceIds: string[] }) => {
+    mutationFn: async ({ locationId, deviceIds }: { locationId: string; deviceIds: string[] }): Promise<{ assigned: number }> => {
       const { data } = await api.post(`/locations/${locationId}/devices`, { device_ids: deviceIds });
-      return data;
+      return data as { assigned: number };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['locations'] });

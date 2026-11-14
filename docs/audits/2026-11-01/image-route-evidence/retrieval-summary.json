@@ -1,0 +1,25 @@
+{
+  "reference_views": 169,
+  "requested_queries": 100,
+  "completed_queries": 100,
+  "duplicates_excluded": 0,
+  "all_901_frames_decoded": true,
+  "score_threshold_high": 0.35,
+  "hits_within_0_6s": 70,
+  "high_score_wrong_over_2s": 8,
+  "queries_without_positive_score": 2,
+  "timings": {
+    "decode_and_queries_s": 15.297000000020489,
+    "extract_s": 6.938999999896623,
+    "coarse_s": 0.06300000008195639,
+    "matching_s": 4.312999999849126
+  },
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "interpretation": "Same-source temporal labels only; no independent repeated traversal or localization truth. \u00b10.15s excluded per query; no elapsed-time ranking or filter feedback; excluded/unchecked candidate scores are zero but tracked separately. No pose/control inference, no promotion.",
+  "queries_with_time_proxy_candidate_in_top8": 96,
+  "process_memory": {
+    "working_set_bytes": 144756736,
+    "peak_working_set_bytes": 270712832,
+    "peak_pagefile_bytes": 256577536
+  }
+}

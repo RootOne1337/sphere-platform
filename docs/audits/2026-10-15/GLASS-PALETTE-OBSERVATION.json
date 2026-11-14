@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T01:38:18.494645+00:00",
+  "sourceWorkingTreeBase": "a29e26c3f0fae9a9f6f5837d43c401d6ba5f025b",
+  "runtimeInstalled": false,
+  "scope": "Finite strongest-glass palette screenshot sampling after limiting dark sheen and using light Matrix glass text. Not full WCAG or browser compatibility acceptance.",
+  "themeChecks": [
+    {
+      "palette": "Тёмная",
+      "minContrast": 6.66
+    },
+    {
+      "palette": "Светлая",
+      "minContrast": 6.19
+    },
+    {
+      "palette": "Deep Space",
+      "minContrast": 6.77
+    },
+    {
+      "palette": "Matrix",
+      "minContrast": 5.56
+    },
+    {
+      "palette": "Графит",
+      "minContrast": 5.93
+    },
+    {
+      "palette": "Туман",
+      "minContrast": 5.7
+    },
+    {
+      "palette": "Дюна",
+      "minContrast": 5.32
+    },
+    {
+      "palette": "Песочная",
+      "minContrast": 5.48
+    }
+  ],
+  "samplesPerTheme": 12,
+  "correctedFindings": {
+    "Matrix": {
+      "before": 2.43,
+      "after": 5.56
+    },
+    "Graphite": {
+      "before": 4.49,
+      "after": 5.93
+    },
+    "Dune": {
+      "before": 4.13,
+      "after": 5.32
+    }
+  },
+  "notes": [
+    "Sampling uses adjacent screenshot pixels and computed foreground alpha.",
+    "Old HMR bundle probe was rejected; accepted run explicitly verified fresh CSS rules.",
+    "No business records, OTA releases or Android commands were written."
+  ]
+}

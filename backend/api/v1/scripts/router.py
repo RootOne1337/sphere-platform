@@ -4,23 +4,33 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
-from backend.models.script import ScriptVersion
+from backend.models.script import Script, ScriptVersion
 from backend.models.user import User
 from backend.schemas.script import (
     CreateScriptRequest,
+    RollbackScriptRequest,
+    ScriptActionContractResponse,
+    ScriptCatalogResponse,
     ScriptDetailResponse,
     ScriptListResponse,
     ScriptResponse,
+    ScriptValidationResponse,
     ScriptVersionResponse,
     UpdateScriptRequest,
+    ValidateScriptRequest,
 )
-from backend.services.script_service import ScriptService, _compute_dag_hash
+from backend.services.script_service import (
+    ScriptService,
+    _compute_dag_hash,
+    validate_publication_dag,
+)
 
 router = APIRouter(prefix="/scripts", tags=["scripts"])
 
@@ -42,6 +52,13 @@ def _to_version_response(v: ScriptVersion, include_dag: bool = True) -> ScriptVe
     )
 
 
+def _to_script_response(script: Script) -> ScriptResponse:
+    response = ScriptResponse.model_validate(script)
+    if script.current_version:
+        response.current_version = _to_version_response(script.current_version)
+    return response
+
+
 # ── List ──────────────────────────────────────────────────────────────────────
 
 @router.get(
@@ -53,6 +70,7 @@ async def list_scripts(
     query: str | None = None,
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=200),
+    state: Literal["active", "archived", "all"] = "active",
     current_user: User = require_permission("script:read"),
     svc: ScriptService = Depends(get_script_service),
 ) -> ScriptListResponse:
@@ -61,11 +79,12 @@ async def list_scripts(
         query=query,
         page=page,
         per_page=per_page,
+        state=state,
     )
     pages = (total + per_page - 1) // per_page if total > 0 else 0
     return ScriptListResponse(
         items=[
-            ScriptResponse.model_validate(s) for s in scripts
+            _to_script_response(s) for s in scripts
         ],
         total=total,
         page=page,
@@ -75,6 +94,29 @@ async def list_scripts(
 
 
 # ── Create ────────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/catalog", response_model=ScriptCatalogResponse,
+    summary="Каталог скриптов без загрузки DAG",
+    responses={503: {"description": "Script catalog metadata unavailable"}},
+)
+async def list_script_catalog(
+    response: Response,
+    query: str | None = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=200),
+    state: Literal["active", "archived", "all"] = "active",
+    current_user: User = require_permission("script:read"),
+    svc: ScriptService = Depends(get_script_service),
+) -> ScriptCatalogResponse:
+    response.headers["Cache-Control"] = "no-store"
+    items, total = await svc.list_script_catalog(
+        org_id=current_user.org_id, query=query, page=page, per_page=per_page, state=state,
+    )
+    return ScriptCatalogResponse(
+        items=items, total=total, page=page, per_page=per_page,
+        pages=(total + per_page - 1) // per_page if total else 0,
+    )
 
 @router.post(
     "",
@@ -91,7 +133,36 @@ async def create_script(
     script = await svc.create_script(current_user.org_id, current_user.id, body)
     await db.commit()
     await db.refresh(script)
-    return ScriptResponse.model_validate(script)
+    await db.refresh(script, attribute_names=["current_version"])
+    return _to_script_response(script)
+
+
+@router.get("/action-contract", response_model=ScriptActionContractResponse,
+    summary="Контракт параметров опубликованных действий Android без проверки APK")
+async def get_action_contract(
+    response: Response,
+    current_user: User = require_permission("script:read"),
+) -> ScriptActionContractResponse:
+    from backend.schemas.action_parameters import CONTRACT
+
+    response.headers["Cache-Control"] = "no-store"
+    return ScriptActionContractResponse(contract=CONTRACT)
+
+
+@router.post("/validate", response_model=ScriptValidationResponse,
+    summary="Проверить черновик без сохранения и выполнения",
+    responses={422: {"description": "Invalid DAG structure, references, action parameters or Lua safety"}})
+async def validate_script_draft(
+    body: ValidateScriptRequest,
+    current_user: User = require_permission("script:read"),
+) -> ScriptValidationResponse:
+    # Pure validation after ordinary identity/RBAC reads: no ScriptService,
+    # database mutation or task/device admission.
+    # Reuse the same normalizer as create/update, but never reflect input payloads
+    # in errors (a draft can contain private text, headers or code).
+    dag = validate_publication_dag(body.dag)
+    return ScriptValidationResponse(dag=dag, dag_hash=_compute_dag_hash(dag),
+        node_count=len(dag["nodes"]), action_types=sorted({node["action"]["type"] for node in dag["nodes"]}))
 
 
 # ── Get one ───────────────────────────────────────────────────────────────────
@@ -141,7 +212,7 @@ async def update_script(
     )
     await db.commit()
     await db.refresh(script)
-    return ScriptResponse.model_validate(script)
+    return _to_script_response(script)
 
 
 # ── Archive (soft delete) ─────────────────────────────────────────────────────
@@ -154,11 +225,12 @@ async def update_script(
 )
 async def archive_script(
     script_id: uuid.UUID,
+    expected_current_version_id: uuid.UUID | None = None,
     current_user: User = require_permission("script:write"),
     svc: ScriptService = Depends(get_script_service),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    await svc.archive_script(script_id, current_user.org_id)
+    await svc.archive_script(script_id, current_user.org_id, expected_current_version_id)
     await db.commit()
 
 
@@ -179,6 +251,18 @@ async def list_versions(
     return [_to_version_response(v, include_dag=include_dag) for v in versions]
 
 
+@router.get("/{script_id}/versions/{version_id}", response_model=ScriptVersionResponse,
+    summary="Прочитать одну неизменяемую версию с DAG и хешем")
+async def get_version(
+    script_id: uuid.UUID,
+    version_id: uuid.UUID,
+    current_user: User = require_permission("script:read"),
+    svc: ScriptService = Depends(get_script_service),
+) -> ScriptVersionResponse:
+    version = await svc.get_version(script_id, version_id, current_user.org_id)
+    return _to_version_response(version)
+
+
 @router.post(
     "/{script_id}/versions/{version_id}/rollback",
     response_model=ScriptResponse,
@@ -187,13 +271,15 @@ async def list_versions(
 async def rollback(
     script_id: uuid.UUID,
     version_id: uuid.UUID,
+    body: RollbackScriptRequest | None = None,
     current_user: User = require_permission("script:write"),
     svc: ScriptService = Depends(get_script_service),
     db: AsyncSession = Depends(get_db),
 ) -> ScriptResponse:
     script = await svc.rollback_to_version(
-        script_id, version_id, current_user.org_id, current_user.id
+        script_id, version_id, current_user.org_id, current_user.id,
+        body.expected_current_version_id if body else None,
     )
     await db.commit()
     await db.refresh(script)
-    return ScriptResponse.model_validate(script)
+    return _to_script_response(script)

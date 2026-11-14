@@ -1,0 +1,190 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "tenantIdentifiersRedacted": true,
+  "scripts": 22,
+  "versions": 25,
+  "alembicHeadBefore": "20260921_watchdog_stop",
+  "alembicHeadAfter": "20261006_script_catalog_metadata",
+  "sourceVersionSnapshotsWereComparedPrivately": true,
+  "rawSourceSnapshotsPublished": false,
+  "runs": [
+    {
+      "observedAt": "2026-10-06T07:32:44.877317+00:00",
+      "stages": {
+        "dryRun": {
+          "schema": 1,
+          "apply": false,
+          "reconcile": true,
+          "scanned": 25,
+          "would_update": 25,
+          "updated": 0,
+          "failed": 0,
+          "stopped": "complete",
+          "source_changed": false,
+          "tasks_created": 0,
+          "readiness": {
+            "scripts": 22,
+            "invalid_current_pointers": 0,
+            "current_metadata_missing": 22,
+            "version_metadata_missing": 25,
+            "catalog_ready": false,
+            "source_hashes_reconciled": false
+          }
+        },
+        "applied": {
+          "schema": 1,
+          "apply": true,
+          "reconcile": true,
+          "scanned": 25,
+          "would_update": 25,
+          "updated": 25,
+          "failed": 0,
+          "stopped": "complete",
+          "source_changed": false,
+          "tasks_created": 0,
+          "readiness": {
+            "scripts": 22,
+            "invalid_current_pointers": 0,
+            "current_metadata_missing": 0,
+            "version_metadata_missing": 0,
+            "catalog_ready": true,
+            "source_hashes_reconciled": false
+          }
+        },
+        "reconciled": {
+          "schema": 1,
+          "apply": false,
+          "reconcile": true,
+          "scanned": 25,
+          "would_update": 0,
+          "updated": 0,
+          "failed": 0,
+          "stopped": "complete",
+          "source_changed": false,
+          "tasks_created": 0,
+          "readiness": {
+            "scripts": 22,
+            "invalid_current_pointers": 0,
+            "current_metadata_missing": 0,
+            "version_metadata_missing": 0,
+            "catalog_ready": true,
+            "source_hashes_reconciled": false
+          }
+        }
+      },
+      "sourceDigestBefore": "f017e765338fda0f0c2e8efab2e4b5565bf930377e11736891f65fe705820179",
+      "sourceDigestAfter": "f017e765338fda0f0c2e8efab2e4b5565bf930377e11736891f65fe705820179",
+      "sourceVersionsPointersDatesPreserved": true,
+      "tasksBefore": 445,
+      "tasksAfter": 445,
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "metadata-ready-first-attempt.json",
+          "sha256": "e0963da99c73d93e8068f5082dc494e0e351129b8708881ace11bac9abb692c5",
+          "bytes": 2409
+        }
+      ]
+    },
+    {
+      "observedAt": "2026-10-06T07:34:55.032886+00:00",
+      "stages": {
+        "dryRun": {
+          "schema": 1,
+          "apply": false,
+          "reconcile": true,
+          "scanned": 25,
+          "would_update": 0,
+          "updated": 0,
+          "failed": 0,
+          "stopped": "complete",
+          "source_changed": false,
+          "tasks_created": 0,
+          "readiness": {
+            "scripts": 22,
+            "invalid_current_pointers": 0,
+            "current_metadata_missing": 0,
+            "version_metadata_missing": 0,
+            "catalog_ready": true,
+            "source_hashes_reconciled": false
+          }
+        },
+        "applied": {
+          "schema": 1,
+          "apply": true,
+          "reconcile": true,
+          "scanned": 25,
+          "would_update": 0,
+          "updated": 0,
+          "failed": 0,
+          "stopped": "complete",
+          "source_changed": false,
+          "tasks_created": 0,
+          "readiness": {
+            "scripts": 22,
+            "invalid_current_pointers": 0,
+            "current_metadata_missing": 0,
+            "version_metadata_missing": 0,
+            "catalog_ready": true,
+            "source_hashes_reconciled": false
+          }
+        },
+        "reconciled": {
+          "schema": 1,
+          "apply": false,
+          "reconcile": true,
+          "scanned": 25,
+          "would_update": 0,
+          "updated": 0,
+          "failed": 0,
+          "stopped": "complete",
+          "source_changed": false,
+          "tasks_created": 0,
+          "readiness": {
+            "scripts": 22,
+            "invalid_current_pointers": 0,
+            "current_metadata_missing": 0,
+            "version_metadata_missing": 0,
+            "catalog_ready": true,
+            "source_hashes_reconciled": false
+          }
+        }
+      },
+      "sourceDigestBefore": "f017e765338fda0f0c2e8efab2e4b5565bf930377e11736891f65fe705820179",
+      "sourceDigestAfter": "f017e765338fda0f0c2e8efab2e4b5565bf930377e11736891f65fe705820179",
+      "sourceVersionsPointersDatesPreserved": true,
+      "tasksBefore": 445,
+      "tasksAfter": 445,
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "metadata-ready.json",
+          "sha256": "250a1cb042d49614907e9a500f0f6722622a3c68ae3749db21065cd698ec280c",
+          "bytes": 2403
+        }
+      ]
+    }
+  ],
+  "readinessBoundary": "Scalar readiness source_hashes_reconciled is intentionally false. Separately, --reconcile scanned all 25 versions with zero mismatches after apply.",
+  "provenance": [
+    {
+      "retainedPrivateReceipt": "source-before-first-attempt.private.json",
+      "sha256": "a39570c6d621ba32563a9c556aa65b2aa781ce9f077363eaff51a1a66d02888d",
+      "bytes": 39914
+    },
+    {
+      "retainedPrivateReceipt": "source-after-first-attempt.private.json",
+      "sha256": "7ac4b75089b9fb534a2766c1e320e71fa3e9eeede39e2b17ea1a9f48efd0702e",
+      "bytes": 39924
+    },
+    {
+      "retainedPrivateReceipt": "source-before.private.json",
+      "sha256": "7ac4b75089b9fb534a2766c1e320e71fa3e9eeede39e2b17ea1a9f48efd0702e",
+      "bytes": 39924
+    },
+    {
+      "retainedPrivateReceipt": "source-after.private.json",
+      "sha256": "7ac4b75089b9fb534a2766c1e320e71fa3e9eeede39e2b17ea1a9f48efd0702e",
+      "bytes": 39924
+    }
+  ]
+}

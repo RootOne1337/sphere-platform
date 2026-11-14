@@ -1,0 +1,477 @@
+# Веб-панель Sphere: аудит операционной глубины и наблюдаемости
+
+**Дата среза:** 29 сентября 2026 года
+
+**Исходный срез аудита:** `e27d5621e5e5431583b472a432e32a4be6e0911c` (`codex/enterprise-audit-20260905`). Последующие проверки и изменения отмечены отдельными follow-up ниже.
+
+**Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
+**Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
+
+> Latest UI follow-up 30 сентября, 22:21–22:29 UTC+5: UI **`3132afc`** / API
+> **`85c8014`**, `3015 → UI 3018 / API 18080`. Выбор service inspector сохраняется
+> после полного пустого фильтра и после ошибки API; cached health при error
+> скрыт. Два regressions failed на baseline; 70 monitoring / 528 full Jest tests,
+> types/lint/build/Node relay test passed, frontend CI success. Browser подтвердил
+> filter restore PostgreSQL + fresh probe data при viewport 647×884; API outage
+> проверен через React Query regression, live backend не останавливался. Login
+> через общий relay работает; срез 22:29:40 — 14 online / 5 offline / 0 connecting.
+> Открытые APK/process/dump/log budgets, grid/detail profiles и реальная UIA2
+> интеграция вынесены в [Android inspection / video audit](../2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
+> Source-аудит не считается новым APK rollout или новым stream/scripts acceptance.
+
+> Backend follow-up 30 сентября, 21:37–21:44 UTC+5: UI `4024ccf` / backend
+> `85c8014` реально работают на `3015 → UI 3017 / API 18080`. PyJWT 2.15.1 и
+> cryptography 50.0.2 проверены в exact image; backend 2124 passed / 15 skipped /
+> 5 warnings, coverage 77.87%, обязательные CI jobs success. Вход со старым
+> access token, реальные probe details, обновляемые метрики и Grafana работают.
+> DB head/соседние контейнеры/OTA hashes сохранены. Первые recovery срезы
+> 21:38:10–21:39:10 показали 14 → 11 → 14 → 12; этот failure сохранён.
+> Семь срезов 21:40:40–21:41:40 подтвердили 14 **новых** sessions и свежие
+> heartbeat при scope 19. Это конечная recovery acceptance, не длительный SLA.
+> Unknown OTA receipts сохраняются как отдельный gate; нет нового APK/OTA
+> rollout. Полные версии и evidence: [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> [dependency follow-up](../2026-09-30/PYJWT-ADVISORY-FOLLOW-UP.md).
+
+> Исторический follow-up 30 сентября, 20:49–21:05 UTC+5: UI и API `4024ccf` приняты
+> в local pilot, browser WEB/API 4024ccf8. Service inspector раскрывает настоящие
+> pool/PING/memory/disk поля; исправление Redis false zero развёрнуто. Frontend
+> 71 suites / 526 Jest tests + Node transport/types/build; backend 2120 passed /
+> 15 skipped / 5 warnings, coverage 77.87%; остальные обязательные CI jobs success.
+> Exact image lifecycle / multiprocess acceptance passed. DB head, соседние
+> контейнеры и OTA/APK сохранены. Семь recovery срезов 21:04:49–21:05:49 —
+> 14 online / 5 offline при scope 19. Это не длительная fleet/stream/scripts/OTA
+> acceptance. Выбор inspector сбросился после полной потери API; сохранение
+> выбора через outage и desktop-width QA остаются UX gates. Детали и receipts:
+> [CURRENT-STATE](../../operations/CURRENT-STATE.md).
+
+> Исторический follow-up 30 сентября, 18:55–20:23 UTC+5: frontend `b650c03` реально
+> обслуживает `3015`; direct Next `3016` без API relay не является адресом входа.
+> Backend/frontend/Android CI success; frontend 71 suites / 523 Jest tests +
+> Node transport test, types/build passed. Browser WEB b650c03a / API 1ac06acb:
+> реальные обновляемые TX+RX отдельно от неизвестного числа туннелей, актуальный
+> coverage warning. Grafana сохраняла старую панель при новом JSON в bind mount:
+> provider polling 30 s и один guarded restart в 19:04 сохранили image/auth/
+> соседние контейнеры. Iframe в 20:23 подтвердил новую панель и реальные графики.
+> Probe `details` пока не раскрыты карточками: отдельный UI gap. Точные версии,
+> даты и gates — в [CURRENT-STATE](../../operations/CURRENT-STATE.md).
+
+> Исторический follow-up 30 сентября, 18:09–18:33 UTC+5: pilot backend действительно
+> обновлён до `1ac06ac` после successful CI. Linux suite: 2118 passed / 15
+> Windows-only skipped / 5 warnings, coverage 77.80%; dependency-aware mypy
+> 219 files clean. Exact packaged image и fresh PG/Redis lifecycle прошли;
+> schema/соседние контейнеры/OTA/APK не изменились. Native browser `3015`
+> показывает RAM cgroup, Redis, TX/RX и четыре probes с provenance; anonymous
+> monitoring endpoints теперь 401. Новые scope/as-of/presence и session fields
+> реально видны в реестре: online filter 14/14, область 19. До rollout было
+> 12 online, восстановление до 14 подтверждено семью срезами за одну минуту, не SLA.
+> Найден отдельный unhandled Socket ECONNRESET, завершивший local preview relay;
+> guarded relay восстановлен без остановки Next владельца, RST/no-replay tests
+> добавлены в CI. Exact rare crash синтетически не воспроизведён. Frontend
+> на момент этого среза `ea7f9cf`, его предупреждение worker-local устарело; разные SHA в header
+> не являются health signal. Public UI/APK/tunnels не обновлялись. Capacity
+> alerts/master maintenance, долгий fleet soak и новые RPS/p95/Android SLO
+> остаются gates. Подробнее: [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> [relay runbook](../../operations/OBSERVABILITY.md#локальный-uiapi-relay-и-обрывы-websocket).
+
+> Follow-up 30 сентября, 17:26 UTC+5: source `dac2319` устранил 14 dependency-aware
+> type errors и включил проверку тел нетипизированных функций: 219 модулей clean,
+> 372 targeted / 2123 full tests passed. Source `aac52c2` принят в Linux image:
+> две серии по 64 worker replacements сохранили request totals; secondary master
+> подтвердил graceful cleanup, SIGKILL residual/container restart и сохранение
+> активного neighbour/operator data. Registry growth измерен: 128 KiB на
+> replacement в fixture; 128 MiB tmpfs не снимает high-load maintenance gate.
+> Live backend остаётся `40357ca`, его DB head совпал с source. Browser `3015`
+> показывает 19 / 14 online / 5 offline и свежие heartbeat; новые API metadata
+> и session/scope fields ещё не развёрнуты. Подробные границы приёмки:
+> [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> [metrics lifecycle](../../operations/OBSERVABILITY.md#multiprocess-contract--исходники-30-сентября-2026).
+
+> Follow-up 30 сентября, 16:42–16:45 UTC+5: production образ source `e3b4fe7`
+> прошёл изолированную multiprocess acceptance. Четыре HTTP workers обработали
+> по 32 запросов, totals пережили child replacement (128 → 160), после рестарта
+> master registry начал с нуля. Подробная device диагностика остаётся в API;
+> Prometheus получает bounded fleet counters. Отдельный packaged PG/Redis
+> lifecycle probe passed. Это **не rollout** в pilot `40357ca`: старый backend
+> остаётся worker-local, поэтому новые aggregate панели/алерты ещё не включены.
+> 194 targeted regressions passed; окончательный общий suite — **2120 passed**,
+> 5 deprecation warnings, 608.15 s. Это не load/soak или coverage acceptance.
+> Retention mmap files и dependency-aware type debt остаются gates. Все
+> обновлённые факты и версии — в [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> семантика метрик — в [runbook](../../operations/OBSERVABILITY.md#multiprocess-contract--исходники-30-сентября-2026).
+
+> Follow-up 30 сентября, 15:49 UTC+5: отдельные Prometheus 3.15.0 / Grafana 13.2.3
+> работают; после запуска владельцем `ab0724d` встроенная Grafana и обновление
+> истории каждые 15 s подтверждены в живом Sphere на `3015`. Старый monitoring payload отвергается в новом
+> source. Обнаружен отдельный P1: worker-local Prometheus registry при четырёх
+> Gunicorn workers без multiprocess aggregation. Общие RPS/p95/CPU по нему не
+> показываются. Проверки, runtime/CI даты и открытые gates — в
+> [CURRENT-STATE](../../operations/CURRENT-STATE.md), безопасная конфигурация,
+> права доступа и лицензии — в [runbook](../../operations/OBSERVABILITY.md).
+
+## Вывод для оператора
+
+> Live follow-up: веб `3015` показывает 19 устройств / 14 online / 5 offline,
+> подтверждённый канал событий и 241 точку Prometheus; iframe открылся после
+> перехода между разделами. На mobile 390 px document overflow отсутствует.
+> Browser console выявила OFREP POST, ошибочно блокируемый read-only bridge:
+> текущая сборка 405, native Grafana 200. Узкий source fix для bulk evaluation
+> `default` прошёл 71 suites / 523 tests, types/lint и direct upstream canary;
+> browser-selected identity/context отбрасывается, writes остаются 405.
+> Исправление OFREP ещё не объявляется развёрнутым. Различия live/source и
+> оставшиеся backend gates указаны в CURRENT-STATE. Raw receipts приватны.
+
+> Закрытие локального OFREP rollout gate, 30 сентября 15:56 UTC+5: владелец
+> обновил Next до `ea7f9cf`, browser build stamp совпал. HTTP через живой Next
+> подтвердил flags 200/378, graph query 200/1 frame, anonymous 401 и Viewer
+> без права редактирования. Новых OpenFeature errors после переключения нет,
+> automatic history polling и mobile 390 px проверены повторно. Backend/публичный
+> веб/Android не обновлялись; остальные P1 не объявляются закрытыми.
+
+> Follow-up 30 сентября, 15:33 UTC+5: `/ws/events` через proxy 3012 подтвердил
+> snapshot и три ping/pong за 20 секунд; канал доступен. Source-аудит выявил
+> отсутствие reconciliation после reconnect, неполные invalidations смежных
+> экранов и отсутствие таймаута молча разорванного WS. Исправления и сценарии
+> background/foreground проверены регрессионно; полный frontend 71/511 passed.
+> Live rollout нового frontend заблокирован automatic approval review и не
+> объявляется выполненным. Актуальный статус и проверяемые интервалы обновления:
+> [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> [realtime contract](../../operations/OBSERVABILITY.md#обновление-данных-в-открытом-вебе).
+
+> Актуализация 30 сентября: основной frontend `3012` пересобирается из проверенных source SHA; последний build и его canary receipt — в [CURRENT-STATE](../../operations/CURRENT-STATE.md). Авторизованные страницы используют настоящий pilot API, API/WS relay включён. Backend остаётся `40357ca`, поэтому согласованная приёмка всей пары source/runtime ещё открыта. Настройки, читаемость таблицы и новые карточки описаны в [отчёте настроек](../2026-09-30/WEB-SETTINGS-ACCOUNT-SECURITY.md), [Fleet Matrix](../2026-09-30/WEB-FLEET-READABILITY.md), [инспекторе](../2026-09-30/WEB-DEVICE-INSPECTOR.md) и [контракте каталога](../../operations/DEVICE-CATALOG.md). Исторические наблюдения ниже сохраняют исходную дату.
+
+Главный риск сейчас — не только недостаток визуальной плотности. Браузерный preview на `3012` и checkout, который разработчик проверяет и меняет, **не согласованы по данным и поведению**. В browser snapshot инфраструктура показывает пять зелёных компонентов, графики истории, `0` туннелей и ресурсы отдельных worker/edge. Текущий backend source возвращает четыре проверки (API responder, PostgreSQL, Redis, диск), пустые массивы истории и `activeTunnels: null`. Локальные pilot-образы помечены `sphere-pilot-20260911-frontend:8fef5eb` и `sphere-pilot-20260911-backend:40357ca`, тогда как source checkout — commit `e27d562` от 29 сентября. Это доказывает расхождение preview/runtime с checkout; пока оно не устранено, screenshot с `3012` нельзя считать приёмкой текущего кода.
+
+Снимок реестра на `3012` в момент проверки: 19 записей, 14 online/busy, 5 offline; среди показанных устройств смешаны Agent `1.2.22-dev`, `1.2.30-dev`, `1.2.32-dev` и `1.2.34-dev`. Это моментальное состояние текущего локального pilot API, а не гарантия стабильности парка, не 24-часовая статистика и не подтверждение удалённого production.
+
+В source уже есть полезные основы: настоящий API-реестр устройств, heartbeat-возраст, события, диагностические ответы APK/браузера, DAG сценариев и виртуализация строк в Fleet Matrix. Но часть интерфейса пока не раскрывает имеющиеся данные; часть желаемых метрик ещё не существует; отдельный стек Prometheus/Grafana описан, но не работает в локальном pilot. Первое исправление — убрать портретный формат из страницы видеопотоков: viewport будет сначала `16:9`, затем примет реальные размеры декодированного кадра. Второе — не считать зелёные health probes полной наблюдаемостью при неполном payload метрик.
+
+## Границы и доказательства
+
+Проверены source на указанном commit, API-обработчики/клиенты, тесты frontend, Compose monitoring, локальные контейнеры и доступные страницы `/devices`, `/monitoring`, `/scripts` в браузере. Просмотр браузера не запускал stream, script, reboot, удаление, OTA или иные команды. Производственный URL и Android-устройства не менялись.
+
+Факты из source можно проверить по следующим местам:
+
+| Область | Текущий source |
+| --- | --- |
+| Страница реестра | `frontend/app/(dashboard)/devices/page.tsx`, `frontend/src/features/devices/FleetMatrix.tsx`, `frontend/lib/hooks/useDevices.ts` |
+| Видео / H.264 | `frontend/app/(dashboard)/stream/page.tsx`, `frontend/components/sphere/DeviceStream.tsx`, `frontend/src/features/stream/streamAspectRatio.ts` |
+| Метрики и health checks | `backend/api/v1/monitoring/router.py`, `frontend/app/(dashboard)/monitoring/page.tsx`, `frontend/src/features/monitoring/monitoringTypes.ts` |
+| Сценарии | `frontend/app/(dashboard)/scripts/page.tsx`, `backend/api/v1/scripts/router.py` |
+| Эксплуатационный контракт | [Fleet operations и observability](../../architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md) |
+
+Два набора данных нельзя смешивать: «source имеет endpoint/поле» не означает «метрика записывается», «контейнер запущен» или «оператор видит её в текущем browser build». Пустой график, `null`, нулевое измерение и ошибка запроса — четыре разных состояния.
+
+## Реестр проблем по приоритету
+
+| ID | Приоритет | Подтверждённый факт | Пользовательский/операционный риск | Статус |
+| --- | --- | --- | --- | --- |
+| WEB-01 | P1 | `/stream` жёстко задавал `aspect-[9/16]`, хотя `DeviceStream` уже знает `VideoFrame.displayWidth/Height`. | Горизонтальный экран эмулятора терял площадь; поток выглядел как узкая вертикальная колонка. | Исправлено в source: fallback `16:9`, далее aspect ratio по реальному декодированному кадру. |
+| WEB-02 | P1 | Monitoring считал все health probes healthy достаточным основанием для общего зелёного статуса, когда `/monitoring/metrics` успешно ответил, но большинство измерений было `null`/истории пусты. | Оператор мог принять «сервисы ответили» за «получены CPU/RAM/Redis/network/tunnel метрики». | Исправлено в source: неполное покрытие метрик отдельно подсвечивается; здоровье probes сохраняется отдельным фактом. |
+| WEB-03 | P1 | До 29 сентября `/devices` и `/stream` запрашивали по несколько тысяч записей и фильтровали их в браузере. Fleet Matrix уже переведена на серверный срез; страница потоков до этого follow-up всё ещё грузила до 5000 записей. | На 500–1000 устройствах избыточный JSON и частые полные обновления, лишняя нагрузка на backend/browser, задержка до актуального статуса. DOM virtualization не уменьшает объём сетевого ответа. | **Частично закрыто в source:** реестр и страница потоков теперь запрашивают API-страницы, а счётчики строятся по серверной области фильтров. Точная live-агрегация backend остаётся O(N); нагрузка на 1 000+ устройств не заявлена. |
+| WEB-04 | P1 | В browser `3012/monitoring` были 5 зелёных узлов (включая Worker и Edge), история `12/8` точек и `0` туннелей. Source checkout содержит `history: []`, `activeTunnels: None`, а `/nodes` создаёт только API/PostgreSQL/Redis/disk probes. Локальные frontend/backend images датированы `20260911`; исходный снимок был на `e27d562` от 29 сентября. | Проверяется и обсуждается интерфейс, который не соответствует исходникам; графики и число туннелей могут выглядеть правдоподобно, но не доказывают текущие измерения. | Частично закрыто 30 сентября: local frontend `3012` пересобран из `96ea973`, с авторизацией и настоящим API. Pilot backend `1ac06ac` развёрнут в 18:09, preview frontend `b650c03` в 18:55: metadata/session/scope и настоящие monitoring probes приняты в browser 3015. Разные SHA явно показаны в header. Public production, полное coverage и массовая Android acceptance остаются открытыми. |
+| WEB-05 | P1 | Monitoring API даёт host load per reported CPU (не CPU utilization), cgroup memory, Redis info и накопительные сетевые byte counters; durable history отсутствует, активные туннели не инструментированы. `/nodes` не проверяет отдельный worker/edge. | Страница инфраструктуры не отвечает на вопросы «как менялось», «насколько быстро», «какой worker», «почему device offline/stream stale». Накопительный счётчик — не Mbps. | **Частично закрыто в source:** API добавляет UTC `observedAt`; UI считает TX/RX rate по двум измеренным счетчикам (максимум 60 с интервала), отдельно показывает накопленные байты и явно скрывает rate при старом API, разрыве, сбросе или ошибке. Это короткий live-срез только в открытой вкладке; durable history, worker/edge и tunnel instrumentation остаются открытыми. |
+| WEB-06 | P1 перед включением monitoring stack | В `infrastructure/monitoring/docker-compose.monitoring.yml` заданы прямые host-публикации Prometheus/Grafana/Alertmanager, fallback admin/database credentials и отдельная external Docker network. В локальном `docker ps` этих трёх сервисов, exporters, Loki и OTel Collector нет. | Compose-файл не означает, что стек запущен или защищён. Его развёртывание без private bind, обязательных секретов, network policy и проверки маршрутизации создаст ненужную поверхность доступа. | Частично закрыто отдельным collection профилем: Prometheus/Grafana на loopback, обязательный private admin secret, Viewer bridge с super-admin проверкой и блокировкой writes; browser acceptance выше. Legacy full-stack Compose, exporters/Alertmanager/Loki/tracing отдельно не приняты. Значения секретов здесь не копируются. |
+| WEB-07 | P2 | Сценарии показывают имя/описание/число шагов и кнопки «Запустить»/«Открыть». Backend отдаёт текущую версию и DAG через `GET /scripts/{id}?include_dag=true`; до исправления frontend типизировал `current_version` как число и ожидал отсутствующий `node_count`. | Нельзя было достоверно увидеть структуру, версию и hash сценария; ложное число шагов расходилось с фактическим DAG. | Исправлено в source: тип контракта принимает version object, шаги выводятся только из имеющегося DAG/legacy count; добавлен явный read-only инспектор с version/hash и редактированием нечувствительных значений через маскировку. Receipt/run detail и ссылки на execution logs остаются открытыми. |
+| WEB-08 | P2 | Dashboard регулярно показывает fleet summary, health и device events, но не сводит stream first-frame/stale age, reconnects, command/OTA receipts и queue age в один operator drill-down. | Для RCA приходится переходить по страницам и вручную сопоставлять временные точки. | Частично закрыто 30 сентября: карточка выбранного ID объединяет телеметрию, задачи/события, APK diagnostics, сохранённые логи и общий viewer. Открыты общий incident timeline, pipeline/OTA receipts, reconnect history, stream session/trace correlation и долговременные метрики. |
+| WEB-09 | P2 | Settings смешивал языки и области изменения; даты сессии и VERIFIED не имели источника API; включённая MFA показывалась как не настроенная. | Неверное представление защиты аккаунта; ошибка списка ключей выглядела как пустой ответ. | Исправлено в source 30 сентября: общая компоновка, `/auth/me`, подтверждения, validation, ошибки/предыдущие снимки и защита от double-submit. [Доказательства и пределы приёмки](../2026-09-30/WEB-SETTINGS-ACCOUNT-SECURITY.md). |
+| WEB-10 | P1 | В Compose monitoring зафиксированы версии Prometheus 2.48.0, Grafana 10.2.0, Alertmanager 0.26.0 и exporters 2023/2024 поколений; stack не запущен для проверки совместимости. | README/Compose могут быть устаревшим планом, а «обновить latest» без проверки — риск несовместимости/разрыва конфигурации. | Частично закрыто collection профилем: actual Prometheus 3.15.0 / Grafana OSS 13.2.3 с pinned digests и healthy/browser smoke. Legacy full stack, остальные exporters/Alertmanager и upgrade matrix/SBOM acceptance остаются открытыми; см. OBSERVABILITY runbook. |
+| WEB-11 | P1 | API `ScriptResponse` возвращает `current_version` как объект версии/DAG и не объявляет `node_count`; предыдущий frontend contract ожидал число версии и использовал `node_count` как всегда доступное поле. `include_dag=true/false` также разделяли один query key и могли читать друг у друга кэш с неполной формой ответа. | Ошибочное представление количества шагов, скрытая структура сценария или кэширование ответа без DAG в инспекторе. | Исправлено в source: тип контракта, distinct query keys, count только из фактического DAG/legacy count; read-only inspector с version/hash и маскированием очевидных credential-ключей. Инспектор не запускает сценарий. |
+| WEB-12 | P1 security | `GET /api/v1/monitoring/metrics` и `/nodes` не подключали уже существующее право `monitoring:read`, хотя маршруты доступны через общий API ingress. | Неавторизованный клиент мог прочитать состояние зависимостей и инфраструктурные показатели; наличие RBAC permission в матрице создавало ложное ожидание защиты. | Исправлено в source: оба read endpoint требуют действительную user-аутентификацию и `monitoring:read`; добавлены API-регрессии на 401, 403 и успешный Viewer read. |
+| WEB-13 | P1 | Dashboard показывал единственную метку «последняя проверка» из `fleet.dataUpdatedAt`, хотя здоровье backend, VPN, пул VPN и журнал событий обновляются отдельными запросами с интервалами 15–60 секунд. Метка показывала только время суток и не отличала задержанный ответ или ошибку обновления при сохранённых данных. | Оператор мог принять свежий ответ каталога за подтверждение свежести всей панели; возраст HTTP-ответа при этом не доказывает свежесть heartbeat или видеокадра. | Исправлено в source: добавлена независимая свежесть пяти источников с возрастом, временем и часовым поясом последнего успешного ответа, состояниями ожидания/обновления/задержки/ошибки и явной границей между API-ответом, heartbeat и кадром. |
+| WEB-14 | P1 | Хуки Orchestration ловили ошибку `/pipelines`, `/pipelines/runs` и `/schedules` и возвращали `[]`; отсутствующий/неверно сформированный `items` также считался пустым списком. Ошибки API смешивались с успешным ответом `items: []`. | Отказ сети, право доступа или несовместимый backend выглядел как удалённый каталог и нулевые показатели; оператору предлагалось создать pipeline вместо диагностики. | Исправлено в source: ошибки теперь сохраняются в React Query, envelope валидируется, API-сбой отделён от подтверждённо пустого списка, добавлен ручной retry по каждому источнику, сохранённый снимок при фоновом сбое помечается как последний успешный; KPI остаются `—`, пока нет успешного снимка. Проверено регрессиями: три отказавших API отдельно отображают ошибку, успешный retry одного источника подтверждает пустой каталог только для него; malformed envelope не превращается в пустой список. |
+| WEB-15 | P1 | Боковой инспектор читал сохранённый payload; полной странице heartbeat подменялся last_seen; screenshot toast выдавал запрос старой workstation заглушки за сохранённое изображение. Viewer выставлял live до успешного drawImage. | Старое состояние могло открыть управление; «успех» не доказывал кадр. | Исправлено в source: общий GET по ID, freshness gate, отдельные источники времени, общий decoder и PNG только после успешного render. В browser получена картинка одного удалённого canary; полная история и независимое Android screenshot API остаются отдельными работами. |
+| WEB-16 | P1 | Terminal печатал Connected по таймеру без ответа APK; shell продолжал цепочку после device error; 5 s HTTP timeout был меньше backend waits 30/15/10 s. | Ложное подключение/успех, неизвестный результат раньше серверного deadline и отправка следующих действий после сбоя. | Исправлено: result envelope validation, stop on error/unmount, синхронный lock, отдельные HTTP budgets и отсутствие auto replay. Одна read-only команда выбранному удалённому APK вернула Android 9; журнальный запрос вернул 500 строк. Это не autonomous task/OTA acceptance. |
+| WEB-17 | P2 | На мобильном browser Escape закрывал inspector, но live refresh/resize заменял сохранённую кнопку строки и фокус оставался body. | Клавиатурная навигация теряла выбранное устройство. | Исправлено в source: поиск текущего opener по ID устройства или main при смене route; регрессия заменяет DOM opener во время открытого dialog. Browser acceptance записывается в отчёт инспектора. |
+
+### Follow-up: service details и Redis producer — source 30 сентября
+
+Live browser `b650c03` показал пустые CPU/RAM и нераскрытый `details`, хотя API
+реально отдавал pool_size/checked_out, pong/memory и disk free/total/usage. Source
+inspector теперь раскрывает эти scalar поля, сохраняет выбор при refresh,
+уточняет возраст API worker и не печатает arbitrary exception/credentials.
+Три UI regressions failed на baseline → 19 targeted passed, types/lint passed.
+
+Отдельно подтверждён producer defect: health INFO memory не содержит
+connected_clients, однако `.get(..., 0)` возвращал 0. Live receipt имел это
+значение, пока общий metrics endpoint сообщал реальные clients через INFO
+clients. Также missing used_memory считался 0. Оба fallback удалены из source;
+два producer regressions failed на baseline → 73 monitoring passed / 1 warning,
+Ruff/mypy 219 clean. Inspector игнорирует историческое clients поле. Эти новые
+изменения позже приняты отдельным rollout `4024ccf`: UI 20:49 / API 21:02
+UTC+5. Это не ретроактивная приёмка `1ac06ac` или `b650c03`; фактические
+проверки и границы — в [CURRENT-STATE](../../operations/CURRENT-STATE.md).
+
+### Отдельно: что означает зелёный статус
+
+Health check отвечает на ограниченный вопрос: «этот probe в данный момент получил ожидаемый ответ?». Он не доказывает полноту метрик, свежесть каждого источника, работу мобильного стрима, корректность task worker или стабильность OTA. В интерфейсе эти факты теперь отделены: статус сервисных проб остаётся health-сводкой, а отсутствие конкретных измерений показывает предупреждение о покрытии.
+
+## Изменения этого прохода
+
+1. Страница потоков больше не ограничивает viewport вертикальным `9:16`. До первого кадра применяется `16:9`, при первом декодированном кадре берутся его реальные размеры, при смене ориентации ratio обновляется. Одинаковые размеры повторных кадров не создают React state updates. Подключение потока по-прежнему выполняется только явным действием оператора.
+2. Для infrastructure UI добавлен список недостающих сигналов: значения не превращаются в ноль, а «healthy checks» не выдаются за полную телеметрию. Состояние ожидания метрик остаётся состоянием проверки, а не ложной зелёной отметкой.
+3. Добавлены regression tests на landscape/portrait frame shape, отсутствие лишнего dimension callback для каждого кадра, null/history gaps и расхождение между healthy probe и неполными метриками.
+4. Сценарии теперь читают форму `current_version` из backend API, выводят число узлов DAG только при наличии данных, а иначе честно показывают «Шаги не указаны». Read-only inspector раскрывается по явному запросу и показывает DAG, версию, hash и доступную историю; значения полей с именами `password`, `token`, `secret`, `credential` и другими распространёнными credential-ключами маскируются. Панель не исполняет и не меняет сценарий.
+5. Добавлены unit/page tests на форму версии, отдельные cache keys `include_dag` режимов, подсчёт массива и keyed-object nodes, отсутствие ложного значения и credential redaction.
+
+Это изменения source текущего checkout. Они не являются сборкой/раскаткой в контейнеры `18080`, облачный web endpoint или на APK.
+
+## Целевая модель веб-панели
+
+### 1. Сигналы и временная шкала
+
+Для каждой цифры интерфейс должен показывать источник, время измерения, возраст данных и точный смысл единицы. Нужны отдельные бейджи «probe healthy», «metrics partial», «data stale», «API request failed» и «value is zero». Ноль допустим только после успешного измерения; unknown остаётся unknown. Тренд рисуется только по хранимому временному ряду, а не по случайным/синтетическим значениям.
+
+Операторский сквозной идентификатор — `device_id`, `task_id`/`run_id`, `stream_session_id`, `command_id`, `artifact_version` и `trace_id`; интерфейс должен уметь связать timeline, APK diagnostics, backend logs, command receipts и browser decoder stats. Это не означает помещать каждый ID в label каждой временной серии.
+
+### 2. Наблюдаемость Android fleet
+
+В существующем Android-only агенте полезны ограниченные и versioned snapshots: последняя успешная регистрация/heartbeat, возраст heartbeat, connect/reconnect reason, stream requested/started, capture/encode frames, очередь/отброшенные кадры, переданные bytes, first-frame time, decode/render FPS в viewer, last rendered frame, command accepted/started/result ACK, OTA offered/downloaded/verified/install/boot confirmation, crash ANR и permission state. У каждого события — UTC timestamp, schema/app version, bounded payload и correlation IDs. APK обязан продолжать работать без verbose-логов; диагностический режим и upload должны быть ограниченными, с TTL, лимитом байтов, redaction и запретом на секреты.
+
+Оператор открывает детальную карточку устройства и видит последнюю точку каждого этапа и промежуток, где цепочка оборвалась: capture → encode → agent queue → transport → backend bridge → browser WS → decoder → canvas. То же для task: accepted → leased → started → step receipts → terminal result. До появления фактического источника шаг отображается «не инструментирован», а не зелёным.
+
+### 3. Fleet scale 500–1000 и выше
+
+- API выдаёт ограниченную страницу и агрегаты, а не 5000 полных записей раз в 30 секунд. Поиск, status/group/location/version фильтры, сортировка и counts должны иметь server-side contract; cursor pagination предпочтительна для часто меняющегося парка, если backend может обеспечить стабильный порядок.
+- Сводка парка обновляется лёгкими агрегатами и событиями изменения; подробная карточка устройства загружается по требованию. В UI у каждого ответа есть `as_of` / cursor / age; устаревший кэш виден.
+- Таблица остаётся виртуализированной, с закреплённым идентификатором и компактным режимом; колонки можно скрывать, длинные значения доступны в карточке/tooltip/copy. Для мобильного экрана таблица превращается в информационную карточку с теми же полями.
+- Video viewer отделён от Fleet Matrix: грид не открывает WebSockets сам по себе. Сессия должна иметь видимые лимиты, budget по bitrate/FPS, stop-all, ошибки подписки и сетевую оценку. Автоматически масштабировать просмотр до сотен потоков нельзя без замеров CPU/канала браузера.
+- Сравнивать rollout по версии APK/backend/frontend нужно по cohort и receipt; успешный update — это не только download, а checksum/signature verification, install result и подтверждённая работа нового процесса.
+
+### 4. Monitoring stack и технологическая граница
+
+В source уже есть отдельный Compose набросок Prometheus/Grafana/Alertmanager/exporters и Prometheus exposition у backend. Он не запущен в локальном pilot окружении, а browser `3012` отдаёт противоречивую картину. Предлагаемый следующий шаг — сначала зафиксировать build provenance и безопасно поднять этот стек в изолированной среде, затем добавить реальные API/worker/DB/Redis/host targets и тест «каждый dashboard panel ссылается на существующую метрику».
+
+Для инструментирования сервисов можно использовать OpenTelemetry API/SDK и Collector gateway для приёма traces, metrics и logs от backend/worker; Prometheus/Grafana остаются возможным metrics/dashboard backend, Alertmanager — маршрутизация оповещений. Это не требует отдельного Windows PC Agent и не заменяет Android APK: Android сообщает только те app/device telemetry, которые уже разрешены его протоколом и настройками приватности. Collector — инфраструктурный сервис, который нужно включать после threat/config review, capacity и egress-тестов.
+
+Для метрик оставлять низкую кардинальность: service, environment, region, status/result class, operation. Не добавлять `device_id`, `task_id`, `run_id`, raw URL, request/trace ID в labels без отдельной cardinality модели. Пер-устройственные детали держать в bounded event/receipt store или logs/traces и искать по structured metadata/фильтру. Число устройств/стримов не должно умножаться на все метрики API и HTTP пути.
+
+## Очерёдность следующей работы
+
+| Волна | Что делаем | Критерий приёмки |
+| --- | --- | --- |
+| A — доверие к сборке | **Source plumbing реализован**; CI build/security/lint на commit `8c8a5b2` прошли. Runtime preview и сверка WEB/API SHA остаются открыты: preview deploy skipped, `3012` показывает старый pilot. | UI, API, артефакты и git commit должны совпасть на целевом runtime; никакого доказательства deployment пока нет. |
+| B — реестр | **Первый source increment реализован**: серверная страница, server-side поиск/group/location, live-status counts/filter, API snapshot time, unknown при недоступном Redis; оставшийся O(N) Redis scan и нагрузочный тест 1 000 ID открыты. | HTTP payload ограничен страницей; total/filter/status counts согласованы; отдельно пройдены location/group, concurrency, 1 000 synthetic IDs и query/byte budgets. |
+| C — Device Stream | Первый кадр/last frame/fps/reconnect/decoder/output в едином Inspector; landscape/portrait auto ratio уже исправляется; состояния без кадров, stale, offline и transport error различимы. | 1/4/8 потоков проверены на реальном browser; кадры движутся; при 32 viewer есть профили нагрузки и отказы; за пределом лимита стримы не стартуют скрытно. |
+| D — Infrastructure | Безопасно развернуть observability stack; API/worker/DB/Redis/host probes и scrape labels; история, p95/p99 и алерты только по реально измеренным сигналам. | Compose config проверен без fallback secret, сервисы bind к private network, Grafana доступна с auth; scrape targets healthy; worker метрики агрегируются ровно один раз. |
+| E — Scripts/tasks | Read-only DAG source inspector, version/hash реализованы в source. Следом добавить run detail, terminal receipt и логи выполнения. Отдельно предусмотреть future config bundle как версионируемый, dry-run/validated artifact. | Оператор видит фактический DAG и завершение; просмотр не запускает сценарий; повторный run требует отдельного явного действия. |
+| F — UX Settings/dashboard | Перегруппировать по scope (профиль/безопасность/организация), нормализовать локализацию; dashboard с degraded fleet, свежестью, недавними инцидентами и прямым RCA drilldown. | Каждая кнопка имеет проверенную API-мутацию или объяснённое read-only состояние; нет циклических ссылок и декоративных псевдометрик. |
+| G — масштаб | Нагрузочная матрица 32 → 100 → 500 → 1000 устройств: heartbeat, DB/API, очередь, stream sessions, события, браузер и retention. | Заданы KPI после baseline; p95/p99, error budget, resource budget, reconnect/queue age и recovery проходят пороги без потери команд/receipt. |
+
+Сначала выполняются A и B: иначе тяжело доказать, что наблюдаем нужный код, и текущая загрузка устройств не масштабируется. Параллельно можно закрывать C и E на уровне source, но массовый rollout не считается завершённым без canary и terminal receipts. Thresholds для SLO нужно вывести из baseline 20–30 устройств и профиля нагрузки; произвольные числа в dashboard здесь не назначены.
+
+## Обязательные проверки перед каждым rollout
+
+1. Unit/contract tests: null, zero, empty history, stale timestamp, error, retry, duplicates, late receipt и version skew.
+2. API integration: pagination/filter totals, tenant isolation, stream diagnostics, script DAG/version, terminal task/OTA receipts; query count/response-size budgets.
+3. Browser: 1440×900, 1280×720, 390×844; landscape и portrait кадр, loading/error/empty/degraded, keyboard, reduced motion, overflow, long identifiers и таблица 1000 записей.
+4. Observability config: `promtool check config`/rules, secret absence, no public bind without gateway auth, exporter connectivity, restart/reload, retention and disk cap; compose services must be actually running before UI can claim they are.
+5. Pilot: build SHA/versions, один canary, подтверждённая новая версия, stream moving-frame proof, safe DAG, receipts, reconnect/rollback; далее 20–30 устройств с явным resource budget. Запуск на 500–1000 не является продолжением маленького canary автоматически.
+
+## Рекомендации и лицензии
+
+Здесь используется документация проектов, а не копирование закрытых шаблонов/кода. Основные ориентиры:
+
+- [OpenTelemetry Collector deployment patterns](https://opentelemetry.io/docs/collector/deploy/) и [agent-to-gateway pattern](https://opentelemetry.io/docs/collector/deploy/other/agent-to-gateway/) — разделение лёгкого сбора и централизованной обработки.
+- [Prometheus instrumentation practices](https://prometheus.io/docs/practices/instrumentation/) — ограничение cardinality и выбор метрик для online-serving систем.
+- [Grafana Loki label best practices](https://grafana.com/docs/loki/latest/get-started/labels/bp-labels/) и [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) — высококардинальные поля не превращать в индексные labels.
+
+При выборе библиотек и контейнеров фиксировать точные версии/digests, license identifier, upstream и SBOM в PR. Данный аудит не добавляет внешние frontend-компоненты и не копирует исходный код AdminCN/Studio Admin; для этой работы это архитектурные рекомендации, а не runtime dependency.
+
+## Подтверждение после source изменений
+
+### Follow-up: provenance baseline (29 сентября 2026)
+
+До этого изменения CI мог передать `BUILD_SHA` только в backend build action,
+но backend Dockerfile не объявлял аргумент, frontend action не передавал SHA,
+а UI не показывал ни одну из ревизий. Следовательно, старый pilot `3012` нельзя
+было надёжно отличить от текущего checkout по интерфейсу.
+
+В PR #19 добавлен публичный `/api/v1/health/build` с валидацией Git SHA,
+маркировка `WEB`/`API` в общей шапке и передача `github.sha` в оба preview image
+build. Исправлен также backend build context на корень репозитория, которого
+требует `backend/Dockerfile`. Это закрывает source/build plumbing, но не является
+доказательством работающего preview: требуется успешный image build/deploy и
+сверка двух значений на target runtime. См. [runbook provenance](../../operations/BUILD-PROVENANCE.md).
+
+- `npm run type-check` — **PASS** после всех текущих изменений.
+- Целевые regression tests — **7 suites / 35 tests PASS** до дополнительного cache-key теста; затем сценарные suites — **3 suites / 19 tests PASS**.
+- Полный `npm test -- --runInBand` — **57 suites / 371 tests PASS** после всех frontend изменений.
+- `npm run build` на копии текущего frontend source — **exit 0**; Next.js 15.5.26 скомпилировал приложение и сформировал все 30 маршрутов. Во время Windows standalone tracing были предупреждения `EPERM` на junction `node_modules` и `ENOENT` при копировании client-reference manifest в standalone output. Поэтому это подтверждает compilation/routes, но артефакт standalone не принимается как чистая сборка для release.
+- Source preview на `3013` корректно потребовал отдельную авторизацию и перенаправил на `/login`; пароль не вводился. Нельзя заявить, что изменённые страницы визуально приняты через аутентифицированный браузер. Имеющаяся вкладка `3012` показывает отдельный старый pilot runtime, не этот build.
+- Производственный URL, контейнеры production и Android-устройства не менялись. Сборка/rollout на `18080` или облачный домен не выполнялись.
+
+### Follow-up: server-paged fleet catalogue (29 сентября 2026)
+
+Страница устройств перестала запрашивать `per_page=5000` и фильтровать всю выборку в браузере. Она запрашивает 100 строк по умолчанию, даёт выбор 50/100/200, отправляет search/group/location/live-status фильтры на API и оставляет выбор операций внутри страницы. API возвращает точные для текущей DB-области live-счётчики, `scope_total`, filtered `total/pages`, `presence_available` и время `as_of`. Redis-состояния читаются единым MGET, а в страницу гидратируются только выбранные строки. Поиск теперь включает модель и полный UUID.
+
+Live-фильтр использует Redis presence, а не DB `last_status`: при активном Redis отсутствующий ключ отображается как offline; при недоступном Redis отображается unknown, чтобы старый DB-статус не выглядел живым. Ошибки/maintenance без live-key остаются в группе внимания. В видеосетке busy корректно считается достижимым и может открыть viewer; ранее карточки считали его online, но сами не создавали поток.
+
+Это уменьшает JSON payload и работу по ORM-гидратации, но полный scope всё ещё просматривается по ID и MGET для точных счётчиков. Backend cost остаётся O(N); нагрузка на 1 000+ устройств не заявлена. Следующий этап — проверка групп/локаций, гонок изменения реестра, network payload/latency на синтетическом масштабе и только затем индексированные live-агрегаты при необходимости. См. [контракт Fleet Matrix](../../operations/DEVICE-CATALOG.md).
+
+Дополнительная проверка того же среза закрыла два contract/recovery edge case: hook приводит API `per_page` к используемому страницами `page_size`, а ошибки Redis `MGET`/соединения возвращают каталог со статусом `unknown` и `presence_available=false`, вместо ошибки всей страницы или ложного offline. Итоговые проверки после этих исправлений: `tests/devices/test_devices.py` — 46 passed; полный frontend suite — 58 suites / 377 tests; целевые device/hook suites — 3 suites / 18 tests; `npm run type-check`, Ruff и сверка сгенерированной API schema — passed. Backend выводит две существующие deprecation warnings в соседнем game_accounts/dateutil коде.
+
+Изолированный production Docker build из `frontend/` завершился с exit 0 и включил все 30 Next.js маршрутов. Next.js напечатал предупреждение standalone tracing (`ENOENT` при копировании одного client-reference manifest), но последующая сборка runner-образа прошла. Образ был временно запущен на loopback-порту, `/login` вернул HTTP 200, после smoke test контейнер остановлен. Предупреждение tracing оставлено как открытый build hygiene item; smoke test не означает runtime acceptance авторизованных страниц или реального API. Контекст сборки был ограничен `frontend/`; случайную попытку с корневым контекстом остановили при обнаружении почти 1 GB локальных артефактов.
+
+Изменения относятся к исходникам этого checkout. GitHub Actions на source head `cf01671` подтвердил Frontend tests/types/build, backend real-service tests, Android tests и release-smoke сборку, Alembic single-head, Ruff/mypy, security, production-image bootstrap, RLS и Preview guard; все перечисленные проверки прошли. Preview deployment был skipped. Публичный сайт, local pilot `3012`/`18080`, Cloudflare/Tuna и APK не обновлялись; runtime rollout остаётся не подтверждённым.
+
+### Follow-up: server-paged Device Stream (29 сентября 2026)
+
+Проверка полного UI-маршрута выявила, что Fleet Matrix уже отправлял фильтры на API, но `/stream` оставался отдельным потребителем `useDevices({ page_size: 5000 })`. При включённой серверной пагинации такая страница могла получать только одну ограниченную выборку, а последующие локальные фильтры, счётчики и страницы считались бы только по ней. Это особенно опасно при обзоре удалённых устройств: нулевой счётчик текущей выборки мог выглядеть как отсутствие устройств в парке.
+
+Stream page теперь запрашивает только выбранную grid-страницу (`1…64` записей), передаёт в API live-status, поиск, группу и локацию, а переходы страниц используют `total/pages` backend. Поиск задерживается на 300 мс, чтобы не создавать запрос на каждый символ. Сводные числа берутся из `status_counts` по всей области поиска/группы/локации, а не из видимой страницы. Если API не подтверждает Redis presence, UI показывает отдельное предупреждение и не рисует отсутствующие агрегаты как нули.
+
+Сортировка в `/stream` пока ограничена текущей страницей и так прямо подписана; backend не объявляет глобальный сорт-контракт. Стримы по-прежнему создаются только действием «Смотреть», а ограничение DOM/HTTP размера не означает доказанную пропускную способность видеотранспорта или backend-агрегации. Regression suite `frontend/__tests__/stream/device-presence.test.tsx` проверяет серверную пагинацию, фильтры и их счётчики, debounce поиска, reconnect выбранного viewer, busy-доступность и деградированное presence-состояние. Это source-level доказательство; локальный/облачный runtime rollout и 20–30 физических эмуляторов этим изменением не проверялись.
+
+Проверка этого follow-up: полный frontend набор — **58 suites / 380 tests PASS**; `npm run type-check` и ESLint на изменённых файлах — **PASS**. Production `next build` скомпилировал все 30 маршрутов; остаются существующие lint warnings по другим страницам/компонентам и Windows standalone tracing warning `ENOENT` для client-reference manifest, поэтому это подтверждает compilation/routes, но не чистоту standalone release bundle. Локальный Next dev на отдельном порту `3033` визуально проверен Playwright с изолированными API fixtures (без доступа к production, без команд устройствам и без открытия WebSocket stream): отображаются summary, фильтры, границы карточек и placeholder видеокадра с отношением сторон `16:9`; страницы `/stream` и фильтры изолированно покрыты Jest. Preview остановлен после проверки. Снимок оставлен в локальном `output/playwright/sphere-stream/`, не включён в source/PR.
+
+### Follow-up: безопасная граница массового запуска скрипта (29 сентября 2026)
+
+Контракт API ограничивает `POST /batches` одной тысячей уникальных `device_ids` (`backend/schemas/batch.py`, `BatchExecutionRequest`). До этого `RunScriptModal` запрашивал 5 000 строк и отображал число полученного массива как число всех целей. Для области свыше 1 000 UI мог показать активный запуск с неподдерживаемым объёмом, после чего backend отклонял запрос валидацией; при каталоге свыше 5 000 список целей дополнительно был бы неполным. Это не запуск частичного задания: FastAPI/Pydantic возвращает ошибку до вызова сервиса, однако интерфейс не объяснял ограничение заранее.
+
+В follow-up компонент запрашивает не более 1 000 строк, считает scope по `total`, блокирует режим «все»/группа при превышении или неполном ответе, сообщает точное число и не отправляет мутацию. Ручной выбор получил debounced server-search; если результатов больше лимита ответа, UI явно говорит, что показывает первые 1 000, и запуск остаётся основан только на отмеченных ID. Ошибка загрузки каталога также блокирует запуск. Регрессионные тесты проверяют границу 1 000/1 001 и отсутствие вызова batch mutation для неполной области.
+
+Локальная проверка этого исправления: тесты окна запуска — **2 passed**; полный frontend suite — **59 suites / 382 tests passed**; `npm run type-check` — **passed**; ESLint для изменённых файлов — **0 errors / 0 warnings** в legacy `.eslintrc` режиме (Node сообщает только о скором удалении legacy-режима). `npm run build` завершился с exit 0 и собрал 30 маршрутов. Новый multi-stage Docker image `sphere-frontend-stream-check:batch-cap-20260929` также собран из ограниченного `frontend/` context, запущен на отдельном loopback-порту и вернул `/login` **HTTP 200**; контейнер остановлен. Windows и Linux сборки снова сообщили существующий standalone tracing `ENOENT` для client-reference manifest, поэтому чистота standalone bundle остаётся отдельным открытым build hygiene вопросом. GitHub Actions run `36563602292` подтвердил все проверки на предыдущем source head `632d68e` (Frontend, Backend/real-service, Android smoke, Alembic, lint/mypy, security, RLS и production image bootstrap); Preview deployment пропущен. Новый modal follow-up вошёл в следующий исходный коммит и требует собственного завершённого CI до acceptance.
+
+Остаются три независимых потребителя, которые всё ещё просят до 5 000 устройств: общий `DeviceSelector` (используется несколькими сценариями orchestration), выбор устройства в accounts и Provision в основном VPN page. Их нельзя механически перевести на первую страницу: это изменит смысл «все устройства» и может скрыто сузить цели. Также разные API имеют разные предельные размеры массивов. Следующий архитектурный шаг — единый контракт серверного targeting (явные ID, группа/теги, snapshot выборки, политика online и лимит/волны) и пагинация ручного выбора с сохранением отмеченных ID; каждый потребитель должен сверять свою семантику и лимит перед мутацией.
+
+### Follow-up: VPN массовые операции и частичные исходы (29 сентября 2026)
+
+Проверка `VpnBatchTab` нашла отказный путь: Assign и Revoke делали последовательные одиночные запросы, но первая rejection выходила из цикла до `setProcessing(false)`. После одной ошибки кнопки оставались в `Processing…`; UI не сообщал, какие устройства уже успешно прошли операцию. При этом backend и hook уже предоставляли `POST /vpn/revoke/bulk` с per-device receipts и лимитом **500** UUID, который вкладка не использовала.
+
+Исправление использует bulk receipt для Revoke, сохраняет в выборе только неуспешные ID при полном receipt и оставляет весь набор выделенным при неполном/неполученном receipt. Никаких автоматических повторов мутирующего запроса нет. Assign остаётся последовательным, чтобы не создавать всплеск запросов к VPN provider; частичные ошибки не прекращают остальные независимые ID, а выбор остаётся только на ID с неподтверждённым исходом. В обоих путях `finally` снимает busy-state. Цели ограничены API-лимитом 500; каталог запрашивает до 500 строк с debounced server-search, отдельно сигнализирует о частичном результате и блокирует команды при ошибке загрузки.
+
+Regression tests проверяют частичный сбой Assign, per-device receipts Revoke и request-level timeout без автоповтора. Совместно с metadata fallback follow-up локально проверено: **60 suites / 386 tests passed**, `npm run type-check` passed, ESLint трёх изменённых device-файлов — **0 errors / 0 warnings** (только предупреждение Node о legacy ESLint config). `npm run build` скомпилировал 30 маршрутов. Production Docker image `sphere-frontend-devices-check:metadata-20260929` собран из ограниченного frontend context; контейнер под пользователем `nextjs` вернул `/login` **HTTP 200** и был остановлен. Сборка всё ещё выводит Next standalone tracing `ENOENT` для client-reference manifest и lint warnings в прежних соседних страницах; это остаётся отдельной задачей качества сборки. HTTP smoke подтверждает только запуск login route, не авторизованный интерфейс, живой backend, VPN provider или реальные устройства. API в regressions замокан; VPN provider и живые устройства не затрагивались. CI для текущего набора source changes должен быть оценён по новому exact head после отправки.
+
+### Runtime preview discrepancy: порт 3012 (29 сентября 2026)
+
+Для проверки результата отдельно открыта read-only вкладка `http://127.0.0.1:3012/devices`. API-сводка отдала 19 записей и 14 доступных устройств; в строках без model поле отображалось буквально как `undefined`. После изменения Fleet Matrix страница была полностью перезагружена, но по-прежнему вернула старую строку `undefined • Android 9 • Agent …` вместо fallback-подписей из текущего source. Listener порта 3012 — локальный Node read-only preview proxy; его поведение не доказывает, что текущий source build обслуживается этим портом. Поэтому 3012 не принят как визуальная проверка нового изменения и не считается production rollout. Порт не перезапускался, Docker pilot stack/18080, публичный URL, VPN и эмуляторы не менялись. Для runtime acceptance сначала требуется установить однозначное соответствие preview-процесса source SHA и API origin; после этого повторить read-only проверку строки устройства и авторизованных действий.
+
+### Follow-up: source preview и завершение exact-head CI (29 сентября 2026)
+
+После исправлений `74f6115`, `cf1db65` и `6e3fa60` проверки GitHub Actions на точном head `6e3fa6042f099dae507060dae27de8c5c01955fb` завершились успешно: frontend tests/types/build, backend unit и real-service regressions, Alembic single-head, Ruff/mypy, Bandit/pip-audit, RLS, production-image bootstrap, Android tests и signed release smoke build, а также preview guard. Preview deploy был штатно пропущен; CI использовал одноразовый тестовый ключ, не production signer. Следовательно, это source/CI evidence, а не опубликованный APK или развернутое веб-приложение.
+
+Для визуальной проверки текущего checkout отдельно запущен Next dev preview на `127.0.0.1:3033`. `/login` вернул HTTP 200 и отрисовал форму. Защищённый `/devices` нельзя принять как подтверждённый экран: новый preview не имеет авторизованной сессии, а локальный `/api/v1/health/build` получил HTTP 500, поскольку backend на ожидаемом `localhost:8000` не запущен. Устройства, авторизация и операции в preview не проверялись. Listener `3012`, pilot `18080`, публичный endpoint и реальные устройства не перезапускались и не менялись.
+
+Следующий runtime-критерий остаётся прежним: связать идентификатор сборки UI и API с конкретными image digests/source SHA, поднять отдельный авторизованный test stack с тестовыми данными, затем повторить браузерные проверки read-only страниц и безопасных API-мутаций. До этого обновление нельзя считать видимым в пользовательском интерфейсе.
+
+### Follow-up: точность общего выбора устройств в orchestration (29 сентября 2026)
+
+Аудит `DeviceSelector`, общего для создания pipeline и запуска/планирования orchestration, выявил риск неполного target: компонент ранее загружал только `page=1, per_page=5000`, а group/location/search фильтровал уже в браузере. При размере области более 5 000 устройств выбор «все» или группы мог выглядеть полным, хотя содержал лишь первую страницу. Проверка backend-контракта подтверждает: `GET /devices` принимает `per_page` максимум 5 000; `total` вычисляется по всей серверной области до пагинации; серверные `group_id`, `location_id` и `search` составляют фильтр до выборки. Сервис ограничивает каталог активными устройствами (`Device.is_active IS TRUE`). Таким образом, безопасная граница определяется сравнением `items.length` и `total`, а не только длиной массива.
+
+Общий selector теперь запрашивает group/location и ручной поиск через серверный фильтр, ждёт завершения запроса перед массовым выбором, считает полученный scope по `total`, блокирует выбор неполной области и сообщает точные загруженное/общее числа. В ручном поиске используется debounce; пока ответ не соответствует введённой строке или идёт refetch, выбор заблокирован. Ошибка каталога закрывает мутационные действия и даёт только явную кнопку повтора. Пустой каталог больше не выглядит как подтверждённая команда «все устройства». Внутренние кнопки selector получили `type="button"`, чтобы не отправлять окружающую форму при нажатии «Выбрать все»/«Снять все».
+
+Восемь регрессионных тестов на общий компонент подтверждают: кнопки не отправляют форму; полный серверно подтверждённый каталог выбирается; неполный all/group scope отклоняется; group и search передаются backend; search блокирует действие до debounce; при ошибке списка выбор недоступен до явного повтора; пустой каталог явно обозначен. Локальная проверка: **61 suite / 394 tests passed**, `npm run type-check` passed, ESLint на двух изменённых файлах — **0 errors / 0 warnings** (Node оставляет предупреждение о legacy `.eslintrc` режиме). `npm run build` завершился с **exit 0** и скомпилировал 30 маршрутов; при создании standalone bundle сохранился известный Windows `ENOENT` для `page_client-reference-manifest.js`, а проектные lint warnings вне изменённых файлов не устранены этим follow-up. Эти тесты используют mock hook/API и не доказывают авторизованный runtime или работу настоящей мутации.
+
+Ограничение остаётся намеренным и видимым: если группа/каталог больше 5 000, компонент не может выбрать её целиком как массив ID и предлагает точечный ручной поиск. Контракт массового таргетинга со snapshot/query token, лимитами конкретной команды и устойчивой пагинацией ещё не реализован. Backend для точных live-counts сейчас материализует ID всей области и делает Redis bulk lookup; этот `O(N)` путь и нагрузка на большие парки остаются отдельным scaling risk. На момент этого orchestration follow-up Accounts и VPN Provision ещё имели два самостоятельных списка устройств с `per_page=5000`; отдельное исправление этих двух picker-сценариев записано следующим ниже.
+
+Source-коммит `25c069e208a534dcbebc46990a2ea312576891bd` прошёл exact-head GitHub Actions: Frontend tests/types/build, backend unit и real-service tests, Alembic Single Head, Ruff/mypy, Bandit/pip-audit, RLS, production-image bootstrap, Android tests и signed release smoke build, Preview guard. Preview deploy был skipped. Это подтверждает сборку и CI source, но не пользовательский rollout. Runtime-порт `3012`, pilot `18080`, публичный URL, backend, APK, VPN/tunnel и реальные Android-устройства этим follow-up не изменялись; он не считается deployed или production-accepted.
+
+### Follow-up: ограниченный поиск устройств в Accounts и VPN Provision (29 сентября 2026)
+
+Повторная проверка оставшихся точек выбора подтвердила ещё два независимых запроса `per_page=5000`: страница аккаунтов загружала полный большой список уже при открытии страницы, а VPN Provision отдельно загружал его для нативного `<select>`. Это лишний сетевой объём и тяжёлый dropdown; если парк превышал лимит или результат обрезался, устройства за пределом первой страницы нельзя было найти. Кроме того, VPN Provision не показывал ошибку чтения списка, а отказ `POST /vpn/assign` из `mutateAsync` не перехватывался в обработчике кнопки.
+
+Обе формы теперь используют общий `DeviceSearchSelect`: серверный поиск по имени, serial, модели или полному UUID, debounce 300 мс и не более 100 результатов в одном списке. Компонент сообщает количество совпадений и явно предупреждает о частичной странице; при ошибке блокирует выбор и предлагает только явный повтор. В VPN Provision уже назначенные peer-устройства исключаются; перед отправкой проверка повторяется против актуального набора peer ID. Ошибка назначения остаётся в форме, диалог не закрывается, автоматического повтора изменяющего POST нет. Страница Accounts больше не загружает устройства вне диалога, а неиспользуемый список из `EditAccountDialog` удалён.
+
+Контракт проверен в `backend/api/v1/devices/router.py` (`per_page <= 5000`, server-side search), `backend/services/device_service.py` (имя/serial/model и точный полный UUID) и `frontend/lib/hooks/useDevices.ts` (передача `page_size` как API `per_page`). Пять тестов нового picker проверяют ограниченный запрос и выбор ID, debounce, блокировку до актуального результата, исключение назначенных устройств, явную частичность, retry при ошибке и отличие пустого каталога от сетевого отказа. Отдельный VPN page regression проверяет, что отклонённый `POST /vpn/assign` оставляет диалог открытым, показывает API-ошибку и не запускает повторный изменяющий запрос. После этого теста: **63 suites / 400 tests passed**, `npm run type-check` passed, ESLint для всех изменённых frontend-файлов — **0 errors / 0 warnings** (Node сообщает только о deprecated legacy `.eslintrc` compatibility mode). `npm run build` скомпилировал 30 маршрутов; сборка вывела прежнее предупреждение Windows standalone tracing `ENOENT` для `page_client-reference-manifest.js` и lint warnings в других, не изменённых страницах. `git diff --check` чист.
+
+Это доказывает локальные компоненты/сборку, но не авторизованное поведение на production backend: UI regressions используют mock hook, реальные устройства/VPN provider не затрагивались. Изменения ещё должны пройти CI на новом exact head; публичный веб, preview listeners и deployment этим изменением не обновлялись. Оставшийся функциональный предел — один поиск показывает до 100 строк; для неоднозначных или крупных выдач оператор должен уточнить запрос. Для полного курсорного просмотра очень больших совпадающих наборов понадобится отдельный backend/API contract.
+
+### Follow-up: фактический контракт и честность VPN telemetry (29 сентября 2026)
+
+Сверка frontend с `backend/schemas/vpn/peer.py` и `backend/api/v1/vpn/router.py` обнаружила contract drift: `/vpn/peers` возвращает nullable `device_id`/`assigned_ip`, статусы `free|assigned|error|provisioning|revoking`, флаг `is_active` и `last_handshake_at`; поле `device_name` отсутствует. Frontend до этого ожидал `device_name`, `last_handshake` и статусы `active|inactive`, из-за чего идентификаторы, handshake и карточки могли показываться неверно; фильтр status=`active` против backend enum мог дать HTTP 422. В `VpnAgentsTab`, `VpnRotateTab` и `VpnKillSwitchTab` те же старые состояния использовались в отображении/выборе действий.
+
+На главной VPN-странице TX/RX отображались как `0 B`, графики рисовали массивы нулей, а `VPNMap` генерировал seeded случайные дуги, показывал неподключённые к данным 8 туннелей и статическую задержку `<45ms`. Реальный API не возвращает peer byte counters, географические координаты, gateway topology или latency samples, поэтому эти цифры и «глобальная карта» не были наблюдаемостью.
+
+Исправление синхронизирует `VpnPeer` с backend schema, оставляет только допустимые фильтр-статусы, показывает nullable device/address безопасно и различает `assigned` state от недавнего handshake (`is_active`, который list endpoint вычисляет по timestamp <3 минут). Ротация и killswitch ограничены устройствами с назначенным peer; действия по null device ID недоступны. Seeded карта и нулевые TX/RX-графики заменены ограниченным peer snapshot с реальным ID/IP/status/handshake timestamp и отдельной панелью «Telemetry coverage», где per-peer bytes обозначены `Not exposed`. Поиск и карточки устройств строятся из того же снимка API; неутверждённая network/geo информация не подставляется.
+
+Page regression фиксирует сразу два случая: rejected VPN assignment показывает ошибку без повторного POST; реальный shape `/vpn/peers` отображается по handshake и не рисует `0 B`, throughput chart или latency. Hook fixtures теперь используют фактический backend shape. Итоговый локальный прогон этого изменения: **63 suites / 401 tests passed**, `npm run type-check` passed, ESLint на 8 затронутых файлах — **0 errors / 0 warnings** (Node всё ещё предупреждает о deprecated `.eslintrc` compatibility mode). `npm run build` завершился exit 0 и скомпилировал 30 маршрутов; сохраняется известное Windows standalone tracing `ENOENT` для `page_client-reference-manifest.js` и lint warnings в не изменённых legacy страницах.
+
+Остаточный API пробел зафиксирован, а не замаскирован: для реального traffic rate backend/provider должен собирать и возвращать монотонные per-peer RX/TX byte counters с временной меткой, а для настоящей карты — фактические endpoint/geolocation metadata с политикой приватности. `GET /vpn/peers` сейчас не имеет pagination и возвращает все peer rows организации; это отдельный scaling issue для крупных парков. Это source change; exact-head CI ожидает новый commit. Публичный сайт, VPN provider, tunnel, backend и Android устройства не менялись.
+
+### Follow-up: повторный browser smoke локального preview (29 сентября 2026)
+
+В Codex browser повторно открыты только для чтения маршруты /devices, /stream, /monitoring и /scripts на 127.0.0.1:3012. На /devices выбор одной строки показал bulk toolbar, первый клик по Delete открыл окно подтверждения. Проверка остановлена на Cancel: запрос DELETE /devices/bulk не отправлялся и данные не менялись. Таким образом подтверждена только работа первого клика и отображение диалога; успешное удаление на этом runtime не доказано.
+
+На /stream видны API timestamp каталога, live-status summary, heartbeat age и отдельные кнопки запуска потоков. Ни один поток не запускался, поэтому видеокадры и WebSocket на этом проходе не проверялись. Узкий снимок viewport показал адаптивную двухколоночную сводку, но это не заменяет проверку остальных брейкпоинтов.
+
+На /monitoring runtime показывает пять групп, включая Task Worker и Nginx Edge, проценты CPU/RAM и 0 активных туннелей; при этом Linux load отображается как отсутствующий, память контейнера как unavailable, а Redis operations не сообщаются. Текущий backend source в backend/api/v1/monitoring/router.py публикует только проверки реально измеряемых компонентов и activeTunnels: null; frontend source должен показывать неполное покрытие метрик как degraded. Страницу /scripts заполняют 14 записей с датами обновления от 21 сентября. Эти формы данных не совпадают с проверяемым source и сами по себе не доказывают поведение текущего checkout.
+
+Проверка provenance: в узком browser viewport элемент Build revisions не был виден в проверявшейся сборке; точный frontend/backend SHA preview подтвердить не удалось. После этого снимка `BuildProvenance` в source получил компактную пару frontend/API revision на узкой ширине, сохранив полный формат на desktop; до повторной проверки страницы на свежей сборке это лишь source fix, не runtime-доказательство.
+
+Дополнительная сверка старого runtime `127.0.0.1:18080` (29 сентября 2026): `/monitoring` показывает CPU/RAM/network показатели, пять групп компонентов с Worker/Edge и `0` активных туннелей как готовые значения. Backend-контракт текущего checkout в `backend/api/v1/monitoring/router.py` этих CPU/container/network-rate и Worker/Edge health probes не публикует, а `network.activeTunnels` возвращает `null`; такие цифры нельзя выдавать за измеренную телеметрию текущего source. На `/devices` accessibility DOM показывал выбранными все 19 записей. Состояние выбора было неоднозначным, поэтому массовую кнопку Delete не нажимали и API не вызывали; результат удаления на `18080` неизвестен. Этот runtime не использовался как доказательство поведения PR.
+
+### Follow-up: видимость build provenance на узком экране (29 сентября 2026)
+
+Чтобы оператор мог отличить нужную frontend-сборку от старого runtime без широкого desktop header, `BuildProvenance` теперь показывает компактную пару `W:<frontend revision> A:<API revision>` ниже breakpoint `lg`; на desktop остаётся полный WEB/API label, а mismatch подсвечивается. Оба значения по-прежнему берутся из build metadata и `/api/v1/health/build`; при отсутствии API ответа отображается `unavailable`, ревизия не выдумывается. Regression проверяет компактное представление и поясняющий title.
+
+Проверки после изменения: полный frontend Jest — **63 suites / 402 tests passed**; `npm run type-check` и targeted ESLint на изменённом компоненте/тесте прошли; `npm run build` завершился exit 0 и сгенерировал 30 маршрутов. Сохраняется известное Windows tracing предупреждение `ENOENT` при копировании `page_client-reference-manifest.js`, а сборка сообщает legacy lint warnings в незатронутых страницах. Exact-head GitHub CI ещё выполняется. Изменения source-only: запущенные `3012`/`18080`, production, backend, tunnel и Android не менялись; реальный SHA runtime остаётся неподтверждённым.
+
+### Follow-up: Dependabot baseline и PR dependency tree (29 сентября 2026)
+
+Read-only запрос GitHub Dependabot для default branch `main` вернул **145 открытых alert records**: 5 critical, 64 high, 63 moderate, 13 low. Пять critical records относятся к двум advisory для Next.js (каждый отражён в `package.json` и lockfile) и одному advisory для Handlebars. На `main` зафиксированы Next.js `15.5.13` и Handlebars `4.7.8`; в этом PR package manifest/lock обновлены до Next.js `15.5.26` и Handlebars `4.7.9`, которые удовлетворяют опубликованным для этих alerts fixed-version floors. Для текущего PR frontend lockfile оба `npm audit --json` и `npm audit --omit=dev --json` возвратили ноль уязвимостей по всем severity.
+
+Это закрывает проверяемые frontend dependency findings только в source PR. Открытые alerts default branch не будут считаться устранёнными до попадания изменений в `main` и повторного сканирования; аудит remaining 140 alert records и backend/Android dependency inventories сюда не входит.
+
+### Follow-up: RBAC для API инфраструктурного мониторинга (29 сентября 2026)
+
+Проверка полного пути UI → API → ingress выявила, что `/api/v1/monitoring/metrics` и `/api/v1/monitoring/nodes` не использовали зарегистрированное в `backend/core/rbac.py` разрешение `monitoring:read`. При этом внешний pilot ingress передаёт прочие `/api/v1/*` маршруты в backend, а публично скрыт только корневой scrape-путь `/metrics`; отсутствие проверки на самих API handler означало, что сведения о health checks и ресурсах могли читаться без пользовательской авторизации.
+
+Оба read endpoint теперь используют общий `require_permission("monitoring:read")`. Это сохраняет доступ разрешённым ролям из центральной RBAC-матрицы и не меняет внутренний Prometheus scrape endpoint, который закрыт на ingress отдельно. В `tests/test_monitoring/test_dashboard_telemetry.py` добавлены проверки обоих endpoint: отсутствие bearer identity → 401, роль без monitoring permission → 403, разрешённый Viewer → 200. Целевой прогон: **14 passed**; Ruff на изменённых Python-файлах: **PASS**. Остаются две существующие deprecation warnings из несвязанных `game_accounts` и `dateutil` модулей.
+
+Exact-head backend CI обнаружил drift в сгенерированной API-документации после появления bearer dependency. `docs/openapi.json` обновлён в изолированном окружении с зафиксированными CI-версиями FastAPI 0.136.3 и Pydantic 2.9.2; генератор добавил только `HTTPBearer` security metadata двум защищённым endpoint. `python -m scripts.export_api_docs --check` теперь проходит; ручной endpoint catalog не изменился.
+
+Проверено на source-контракте и тестовом ASGI приложении; публичная production конфигурация не менялась и не проверялась активным запросом. Этот fix не добавляет ещё отсутствующую историю метрик, tunnel/worker instrumentation или production rollout; эти задачи остаются открытыми по WEB-04…WEB-06 и WEB-10.
+
+### Follow-up: измеренная скорость сети на странице инфраструктуры (29 сентября 2026)
+
+Чтобы не выдавать накопительные байты за скорость сети, API мониторинга теперь маркирует каждый снимок UTC timestamp `observedAt`. Страница показывает TX/RX cumulative отдельно от скорости, которую вычисляет только по двум снимкам и их интервалу. Счётчик уменьшился — это reset и новая база; пропуск больше 60 секунд — скорость скрыта; невалидный timestamp/значение или backend error — `unavailable`. Пока открыта вкладка, браузер хранит только два последних снимка, не строит фиктивную историю и не выдаёт метрику за Mbps канала/физического хоста: `/proc/net/dev` здесь отражает сеть namespace backend-контейнера. Active tunnels остаются `Не измеряется`, пока источник не инструментирован.
+
+Параллельно карточки Redis, RAM и сети перестали отображать закэшированные значения как текущие после ошибки последнего запроса; ошибка API явно заменяет их на `Недоступно`. Regression coverage проверяет начальное ожидание второго снимка, rate, неправильную дату, counter reset, длинный интервал и устаревшие значения после ошибки. Проверки: полный frontend Jest — **63 suites / 406 tests passed**; `npm run type-check` — **PASS**; целевой ESLint — **PASS** (только стандартное предупреждение ESLint о deprecated `.eslintrc` compatibility mode); backend monitoring tests — **59 passed**; Ruff — **PASS**. `npm run build` завершился с exit 0 и собрал 30 маршрутов; сохраняются lint warnings в незатронутых страницах и известный Windows standalone tracing `ENOENT` при копировании client-reference manifest. Две backend deprecation warnings относятся к несвязанным зависимостям/маршруту.
+
+Браузерная проверка выявила и устранила визуальный дефект: длинный статус здоровья обрезался, скрывая часть предупреждения. Теперь статус переносится в пределах компактного бейджа; текст полностью виден на 1440 px и 390 px. Playwright также подтвердил отсутствие горизонтального переполнения страницы на этих ширинах.
+
+### Локальная browser-проверка
+
+Локальный Next preview (`127.0.0.1:3047`) проверен через Playwright с перехваченными в браузере **синтетическими** ответами auth, build, health nodes и metrics. Эти значения не получены от production API, туннеля или Android-устройств. Два timestamped counter-ответа дали около 1 KB/s TX и 0.5 KB/s RX; карточка активных туннелей показала `Не измеряется`; после включения fixtures браузер не зарегистрировал page exceptions или console errors. В dev preview отсутствует внедрённый Git SHA frontend, поэтому он корректно отображается как `WEB unknown`; `API abcdef12` на скриншоте тоже синтетический fixture, а не версия развёрнутого backend.
+
+Скриншоты сохранены как визуальная проверка макета, не как свидетельство live-сервиса:
+
+- [Desktop, 1440×1000 — синтетические данные](screenshots/monitoring-desktop-fixture-1440x1000.png)
+- [Desktop, нижняя часть страницы, 1440×1000 — синтетические данные](screenshots/monitoring-desktop-lower-fixture-1440x1000.png)
+- [Mobile, 390×844 — синтетические данные](screenshots/monitoring-mobile-fixture-390x844.png)
+
+Сетевой rate — оценка по двум снимкам в текущей вкладке, не долговременный ряд и не распределённая агрегация. Нужные дальнейшие шаги WEB-05: постоянная history в Prometheus/совместимом TSDB, measurement labels/retention, реальные worker/edge/tunnel метрики и проверка multi-worker collection. Runtime и production не изменялись.
+
+### Follow-up: устранение security blocker в мониторинговом PR (30 сентября 2026)
+
+Exact-head backend CI на `0489f550b84ea5dabd5afea7630e69b6b5ced5b9` завершил `Security (bandit + pip-audit)` с ошибкой. Сверка активных manifests показала прямую зависимость `pyjwt[crypto]==2.13.0` в `backend/requirements.txt`; `pip-audit` отдельно воспроизвёл advisory PyJWT и указал исправленную версию `2.14.0`. Патч `2.14.0` является минимальной версией, которую maintainer пометил исправленной в [GHSA-r6x4-923q-g947](https://github.com/jpadilla/pyjwt/security/advisories/GHSA-r6x4-923q-g947); обновление этого pin не меняет JWT claims, алгоритм Sphere или срок жизни токенов.
+
+Активный backend manifest закреплён на `pyjwt[crypto]==2.14.0`. После изменения локальные проверки дали `pip-audit -r backend/requirements.txt -r pc-agent/requirements.txt` — **No known vulnerabilities found** и **134 passed** для `tests/auth`, auth service, users API и OTA token-recovery regressions. Остаются две уже существовавшие deprecation warnings в соседнем `game_accounts` router и установленном `dateutil`. Исторический файл `docs/audits/2026-09-05/requirements-candidate.txt` оставлен неизменным: он не является manifest сборки.
+
+Exact-head GitHub Actions для `e6193a4550c6155d9eadf0f36f56b556d48b2638` завершились успешно: Backend run `36616215324` (security, Ruff/mypy, RLS, production-image bootstrap, PostgreSQL/Redis regression suite, generated API docs, Redis persistence acceptance и Alembic Single Head), Frontend run `36616215371` (tests/types/build), Android run `36616215513` (variants и signed release smoke), Preview run `36616215673` (guard passed; deploy skipped). Source PR CI зелёный; PR остаётся draft. Это не production rollout: backend/container, публичный preview, APK и эмуляторы этим follow-up не обновлялись.
+
+### Follow-up: проверка пути массового удаления и границы live runtime (30 сентября 2026)
+
+Проверен путь bulk delete от реестра до API: `DevicesPage` ограничивает выделение видимыми строками, `DeviceBulkDeleteButton` требует подтверждение и блокирует повторную отправку, `useBulkDeleteDevices` делает один `DELETE /devices/bulk`, а авто-discovery подключает `backend/api/v1/bulk/router.py` под `/api/v1/devices/bulk`. Backend требует `device:delete`, ограничивает удаление организацией и деактивирует записи с отзывом refresh credentials, сохраняя историю. Первоначальное предположение об отсутствующем route handler не подтвердилось: handler расположен в отдельном `bulk` router, поэтому менять backend contract не потребовалось.
+
+Изолированные проверки: frontend — **19 passed** в page/button/hook suites; backend bulk API — **20 passed** на авторизации, tenant isolation, idempotence и выводе из каталога. Дополнительно полный exact-head backend CI прошёл всю PostgreSQL/Redis regression suite, включая проверки сохранения связанной task history. Это доказывает source/API контракт и поведение тестового приложения, но не успешный DELETE на пользовательском сайте.
+
+Read-only проверка provenance endpoint `/api/v1/health/build` вернула 404 для локальных `127.0.0.1:3012` и `127.0.0.1:18080`; публичный trycloudflare URL из этой среды не установил соединение. В live runtime не отправлялись DELETE или иные изменяющие запросы. До развёртывания текущего build и успешной сверки WEB/API revisions нельзя считать видимую пользователю кнопку подтверждённо работающей в том runtime, который сейчас открыт в браузере.
+
+### Follow-up: per-source freshness on the operational dashboard (30 September 2026)
+
+В текущем локальном browser runtime `127.0.0.1:3012/dashboard` заголовок показывал время проверки без даты, а в source это значение бралось только из `fleet.dataUpdatedAt`. Остальные источники страницы являются отдельными React Query запросами: backend health и VPN health опрашиваются каждые 30 секунд, каталог и журнал событий — каждые 15 секунд, пул VPN — каждые 60 секунд. Поэтому одна временная метка и подпись «автообновление 15 с» не сообщали оператору, какой источник действительно ответил последним. Увиденные даты событий относятся ко времени самих событий и не доказывают возраст HTTP-ответа.
+
+Dashboard теперь показывает отдельные карточки для каталога устройств, backend health, VPN health, пула VPN и журнала событий. Для каждой карточки берётся фактический `dataUpdatedAt` соответствующего React Query источника, показывается полная локальная дата/время с часовым поясом, возраст последнего успешного ответа и настроенный интервал опроса. Состояние считается задержанным после двух пропущенных интервалов; ошибка текущего запроса остаётся ошибкой, даже если Query cache сохраняет прошлые данные. Отсутствующая загрузка отделена от сбоя. Под панелью явно сказано, что время ответа браузера не измеряет heartbeat Android-устройства или возраст видеокадра.
+
+Локальные проверки после изменения: **64 Jest suites / 411 tests passed**, `npm run type-check` — **PASS**, targeted ESLint на четырёх затронутых frontend-файлах — **0 errors / 0 warnings** (ESLint сообщает о legacy `.eslintrc` compatibility, это отдельный миграционный долг). В существующем frontend checkout работает `next start` на 3000/3011, использующий стандартный `.next`; локальный production build в этом же каталоге не запускался, чтобы не очистить артефакт работающего runtime. Production compile должен быть подтверждён exact-head CI после нового commit SHA. Browser runtime `3012` не перестраивался и не перезапускался; новый интерфейс на нём пока не развёрнут. Реальные API/Android данные этой визуальной доработкой не подменяются.
+
+### Follow-up: orchestration API failure states (30 September 2026)
+
+В source страницы `/orchestration` три React Query функции до исправления превращали любой отказ API в `[]`. В результате сетевой сбой, 403 или серверная ошибка были неотличимы от успешного ответа без pipelines, runs или schedules; `items` с неверной формой тоже проваливались в пустой каталог.
+
+Пустой fallback в query functions удалён. Ответы списка теперь требуют реальный paginated envelope с массивом `items`; иначе React Query фиксирует ошибку контракта. Интерфейс показывает отдельное повторное действие, не сообщает «пустой каталог» до успешного ответа, сохраняет последний успешно загруженный снимок при ошибке фонового обновления и скрывает неизвестные KPI как `—`, когда предыдущего подтверждённого снимка нет. Это только read-side/UI изменение; команды pipeline, расписаний и API их мутаций не менялись.
+
+Новые regression tests покрывают envelope validation, API failures трёх источников, сохранение `unknown` KPI, изолированный retry и подтверждение пустого списка только после успешного ответа. На source commit `e8b4c40` локально прошли **66 Jest suites / 418 tests** и `npm run type-check`. Exact-head GitHub Actions для `e8b4c4094031f2004df1fdd58e67fc0e2f5d3b16` завершили успешно Frontend tests/types/production build, Backend real-service tests (12m47s), Alembic Single Head, Android signed release smoke (9m48s), lint/mypy, security, RLS и production image bootstrap. Preview guard прошёл, deploy пропущен. Targeted ESLint на затронутой странице показал **0 ошибок / 22 предупреждения** в существующем legacy-файле; отдельный ESLint 9 warning сообщает о миграции `.eslintrc` на flat config. Эти предупреждения остаются видимым техническим долгом, а не скрытой успешной проверкой.
+
+Работа осталась в source/PR #19: локальные `127.0.0.1:3012` и `127.0.0.1:18080` не пересобирались и не перезапускались, deployment skipped, PR остаётся draft. Реальные API ошибки и пустые результаты разделяются в коде и тестах; это не является доказательством работы удалённого парка или живого production runtime. В этом проходе не выполнялись изменяющие pipeline, schedule или устройство операции.

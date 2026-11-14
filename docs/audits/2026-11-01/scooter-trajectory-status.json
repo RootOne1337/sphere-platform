@@ -1,0 +1,76 @@
+{
+  "schema": "scooter-trajectory-status-v1",
+  "source_recording": "zaezd888",
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "product_code_commit_at_report": "62015c49",
+  "runtime_preferred_diagnostic": "hud-gap-166-diagnostic",
+  "preferred_evidence": "route-review-delivery.json",
+  "execution_qualified": false,
+  "autonomous_route_ready": false,
+  "independent_pose_ground_truth": false,
+  "disk_resolution_study": {
+    "models": [
+      "640x360",
+      "1024x576"
+    ],
+    "route_admissible": [
+      false,
+      false
+    ],
+    "published_new_candidate": false
+  },
+  "temporal_flow_807": {
+    "complete": true,
+    "connected_full_route": false
+  },
+  "evidence_index": "scooter-trajectory-evidence/index.json",
+  "evidence_index_sha256": "c789fe3ed96d51700ab93bc9ea934f2986705abdf773456ab7df1015ed80fc38",
+  "fresh_local_verification": {
+    "status": "source_and_archive_verified",
+    "protected_files_unchanged": {
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": true,
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\manifest.json": true,
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\frames.jsonl": true,
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\inputs.jsonl": true,
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\COMPLETE": true,
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\geometry.json": true,
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\quality.json": true,
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\state.json": true,
+      "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\control.json": true
+    },
+    "archive_entries": 89,
+    "archive_errors": [],
+    "catalog": {
+      "alternatives": [
+        {
+          "id": "global-163-requires-review",
+          "cameras": 163,
+          "points": 5544,
+          "scope": "diagnostic",
+          "executionQualified": false
+        },
+        {
+          "id": "hud-focal-603-diagnostic",
+          "cameras": 163,
+          "points": 15041,
+          "scope": "diagnostic",
+          "executionQualified": false
+        },
+        {
+          "id": "hud-gap-166-diagnostic",
+          "cameras": 166,
+          "points": 15164,
+          "scope": "diagnostic",
+          "executionQualified": false,
+          "label": "zaezd888 · исходные кадры и уточнение поворота · диагностика"
+        }
+      ],
+      "preferredAlternativeId": "hud-gap-166-diagnostic"
+    },
+    "new_failed_experiments_published": false,
+    "source_video_unchanged": true,
+    "autonomous_route_qualified": false,
+    "physical_actions": 0,
+    "UI_acceptance": "unavailable: CUA reports local browser use disabled; no native bypass"
+  }
+}

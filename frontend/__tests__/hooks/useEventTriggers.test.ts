@@ -87,7 +87,7 @@ describe('useEventTriggers', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.items).toHaveLength(2);
     expect(result.current.data?.total).toBe(2);
-    expect(mockApi.get).toHaveBeenCalledWith('/event-triggers', { params: {} });
+    expect(mockApi.get).toHaveBeenCalledWith('/event-triggers', { params: {}, signal: expect.any(AbortSignal) });
   });
 
   it('передаёт фильтры в query params', async () => {
@@ -100,6 +100,7 @@ describe('useEventTriggers', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.get).toHaveBeenCalledWith('/event-triggers', {
       params: { is_active: true, per_page: 50 },
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -232,11 +233,11 @@ describe('useToggleEventTrigger', () => {
     const { result } = renderQueryHook(() => useToggleEventTrigger());
 
     await act(async () => {
-      result.current.mutate('trig-001');
+      result.current.mutate({ id: 'trig-001', active: false });
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockApi.post).toHaveBeenCalledWith('/event-triggers/trig-001/toggle');
+    expect(mockApi.post).toHaveBeenCalledWith('/event-triggers/trig-001/toggle', undefined, { params: { active: false } });
     expect(result.current.data?.is_active).toBe(false);
   });
 
@@ -248,9 +249,18 @@ describe('useToggleEventTrigger', () => {
     const { result } = renderQueryHook(() => useToggleEventTrigger());
 
     await act(async () => {
-      result.current.mutate('nonexistent-id');
+      result.current.mutate({ id: 'nonexistent-id', active: true });
     });
 
+    await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+
+  it('rejects a successful HTTP response that did not confirm the desired state', async () => {
+    mockApi.post.mockResolvedValueOnce({ data: MOCK_TRIGGER });
+    const { result } = renderQueryHook(() => useToggleEventTrigger());
+    await act(async () => {
+      result.current.mutate({ id: MOCK_TRIGGER.id, active: false });
+    });
     await waitFor(() => expect(result.current.isError).toBe(true));
   });
 });

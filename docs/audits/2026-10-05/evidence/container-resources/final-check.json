@@ -1,0 +1,82 @@
+{
+  "observedAt": "2026-10-05T14:51:34.672139+00:00",
+  "samples": [
+    {
+      "observedAt": "2026-10-05T14:51:19.567581+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "onlineDeviceCount": 14
+    },
+    {
+      "observedAt": "2026-10-05T14:51:22.584941+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "onlineDeviceCount": 14
+    },
+    {
+      "observedAt": "2026-10-05T14:51:25.599266+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "onlineDeviceCount": 14
+    },
+    {
+      "observedAt": "2026-10-05T14:51:28.615655+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "onlineDeviceCount": 14
+    },
+    {
+      "observedAt": "2026-10-05T14:51:31.629036+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "onlineDeviceCount": 14
+    },
+    {
+      "observedAt": "2026-10-05T14:51:34.640763+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "onlineDeviceCount": 14
+    }
+  ],
+  "ownSessionLogout": 204,
+  "ownSessionRevokedResourceRequest": 401,
+  "resourcePanelReady": true,
+  "continuousUptimeClaimed": false,
+  "deviceCommandsSent": false
+}

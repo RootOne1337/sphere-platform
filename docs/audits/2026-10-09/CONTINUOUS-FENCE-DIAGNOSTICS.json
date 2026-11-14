@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T12:53:29.154375+00:00",
+  "sourceParent": "99220a104e24b459958bcdefc2f00a36eb9ac026",
+  "state": "SOURCE_VALIDATED_RUNTIME_PENDING",
+  "runtimeInstalled": false,
+  "idleCauseResolved": false,
+  "nativeDeadlinesChanged": false,
+  "sourceSha256NormalizedLf": {
+    "frontend/src/features/stream/continuousPointer.ts": "c7ddf043884be646d187a1915f9db34e00303eb097be104f7b7b3c28b828349b",
+    "frontend/src/features/stream/ContinuousInputDiagnostics.tsx": "e87f1f28da702b992faf285f3db29647b75a14e38a5345d53339775019a61b97",
+    "frontend/components/sphere/DeviceStream.tsx": "7808aa00deb60ae351bf977c75a7b95f31e8ede016ba6cfdf408faeb4ca2940c",
+    "frontend/__tests__/stream/continuous-pointer.test.ts": "4485d6022eb32a98884e80e3759d22766680ef606062724dd0176dee1a3a026e",
+    "frontend/__tests__/stream/pointer-control.test.tsx": "2f5a365cfabe85c0b5f3e111ddbc4cc9a9a0871ba0a035b7aeb6c73ec97f2f64"
+  },
+  "focused": {
+    "testsPassed": 136,
+    "suitesPassed": 2
+  },
+  "frontend": {
+    "testsPassed": 1947,
+    "suitesPassed": 139,
+    "seconds": 85.629
+  },
+  "typeScript": {
+    "incremental": false,
+    "exitCode": 0
+  },
+  "remaining": [
+    "backend/APK/native/browser time correlation",
+    "idle failure correction",
+    "finite installed browser acceptance",
+    "fleet soak",
+    "rich recording",
+    "global input owner"
+  ]
+}

@@ -1,0 +1,991 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T17:05:07.157470+00:00",
+  "scope": "Prepared idle-frame and presentation recovery, compatible telemetry and combined Android profile. Source and CI acceptance only; pilot APK55 signing/installation and native direct-path acceptance remain pending.",
+  "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+  "productionTrees": {
+    "android": "5a7aabad42b30dd4bb8295b02057b87b36272fec",
+    "backend": "c6cc51fdf04f5510696442e317de9929a98eb7a6",
+    "frontend": "cc9c89765cdbb521bd3f3a77f36ca94da555b71e"
+  },
+  "runs": [
+    {
+      "name": "android",
+      "runId": 38155828219,
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "completedObservationUtc": "2026-10-11T17:03:01Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38155828219",
+      "jobs": [
+        {
+          "name": "Android tests and signed release smoke build",
+          "conclusion": "success",
+          "completedAtUtc": "2026-10-11T17:03:00Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v7",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-java@v6",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run gradle/actions/setup-gradle@v6",
+              "conclusion": "success"
+            },
+            {
+              "name": "Create a disposable CI-only signing key",
+              "conclusion": "success"
+            },
+            {
+              "name": "Test all variants and build signed release smoke APKs",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify release smoke APK signatures",
+              "conclusion": "success"
+            },
+            {
+              "name": "Upload debug-only APKs and unit-test reports",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify ordinary APKs exclude experimental WebRTC JNI",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and test isolated direct-transport debug canary",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify canary JNI packaging and release denial",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify controlled local STUN build gates",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and test the controlled local STUN debug profile",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and test the explicit public STUN debug profile",
+              "conclusion": "success"
+            },
+            {
+              "name": "Test the combined planar video and continuous direct-input debug profile",
+              "conclusion": "success"
+            },
+            {
+              "name": "Upload direct-transport canary diagnostics",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run gradle/actions/setup-gradle@v6",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-java@v6",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v7",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 11709551620,
+          "name": "android-direct-probe-public-stun-5223998002451b935a25e01f1034b727561588bd",
+          "size_in_bytes": 31351703,
+          "digest": "sha256:d84752fceff495c33ac4bc1bbeec0f5c5f395a993479e5d39e03556f0a540a04",
+          "created_at": "2026-10-11T17:02:58Z",
+          "expires_at": "2026-10-14T17:02:55Z"
+        },
+        {
+          "id": 11708830870,
+          "name": "android-ci-diagnostics-5223998002451b935a25e01f1034b727561588bd",
+          "size_in_bytes": 15415345,
+          "digest": "sha256:fbdd55bad6f6f39155086c84eb0a5df5119b3262c20846e21cb5fcf949018bba",
+          "created_at": "2026-10-11T16:46:17Z",
+          "expires_at": "2026-10-25T16:46:16Z"
+        }
+      ]
+    },
+    {
+      "name": "backend",
+      "runId": 38155832799,
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "completedObservationUtc": "2026-10-11T16:48:52Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38155832799",
+      "jobs": [
+        {
+          "name": "Production image bootstrap",
+          "conclusion": "success",
+          "completedAtUtc": "2026-10-11T16:34:10Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Reviewed archive admission regressions",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify private local pilot files are excluded from Docker context",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build the shipped production image",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run bootstrap entry points without network or source mounts",
+              "conclusion": "success"
+            },
+            {
+              "name": "Fresh packaged SQL bootstrap and application process restart",
+              "conclusion": "success"
+            },
+            {
+              "name": "Four HTTP workers, child replacement and fresh master metrics",
+              "conclusion": "success"
+            },
+            {
+              "name": "PostgreSQL entrypoint initialization and persistent-volume restart",
+              "conclusion": "success"
+            },
+            {
+              "name": "Retain the same probed backend image without rebuilding",
+              "conclusion": "success"
+            },
+            {
+              "name": "Keep the admitted backend for operator review",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "RLS Policy Coverage",
+          "conclusion": "success",
+          "completedAtUtc": "2026-10-11T16:32:04Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run python scripts/check_rls.py",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "Tests",
+          "conclusion": "success",
+          "completedAtUtc": "2026-10-11T16:47:59Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Initialize containers",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip install -r backend/requirements.txt -r pc-agent/requirements.txt",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip check",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run alembic -c alembic/alembic.ini upgrade head",
+              "conclusion": "success"
+            },
+            {
+              "name": "Unit and real-service regression tests",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify generated HTTP API documentation",
+              "conclusion": "success"
+            },
+            {
+              "name": "Redis container memory and persistence acceptance",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run codecov/codecov-action@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Stop containers",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "conclusion": "success",
+          "completedAtUtc": "2026-10-11T16:32:40Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip install -r backend/requirements.txt",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip check",
+              "conclusion": "success"
+            },
+            {
+              "name": "Documentation status and closure integrity",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run python scripts/sync_action_contract.py --check",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run ruff check backend/ tests/ scripts/check_documentation_status.py scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run mypy backend/ --ignore-missing-imports",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "conclusion": "success",
+          "completedAtUtc": "2026-10-11T16:32:24Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip install bandit pip-audit",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run bandit -r backend/ -c .bandit -ll",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip-audit -r backend/requirements.txt -r pc-agent/requirements.txt",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "Alembic Single Head",
+          "conclusion": "success",
+          "completedAtUtc": "2026-10-11T16:48:51Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Initialize containers",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip install -r backend/requirements.txt",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run make alembic-check",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Stop containers",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 11709155879,
+          "name": "backend-test-results",
+          "size_in_bytes": 110153,
+          "digest": "sha256:49340a9e00cef3ed3149041f6f60629aa8f12e0396de6e987fc5a61f3f6db04f",
+          "created_at": "2026-10-11T16:47:52Z",
+          "expires_at": "2027-01-09T16:31:38Z"
+        },
+        {
+          "id": 11707834240,
+          "name": "image-bootstrap-probe",
+          "size_in_bytes": 10494,
+          "digest": "sha256:ae0f611a369af6f1bac65b27a74da94871185d698a2ebc859ffa7e2d24f352e2",
+          "created_at": "2026-10-11T16:34:08Z",
+          "expires_at": "2027-01-09T16:31:38Z"
+        },
+        {
+          "id": 11707774565,
+          "name": "sphere-reviewed-backend-5223998002451b935a25e01f1034b727561588bd",
+          "size_in_bytes": 236443721,
+          "digest": "sha256:6589b95c989de0f583830f1a922952e3312d98c9dddaa1e2f7306a8f16a2595c",
+          "created_at": "2026-10-11T16:34:07Z",
+          "expires_at": "2026-10-14T16:34:05Z"
+        }
+      ]
+    },
+    {
+      "name": "frontend",
+      "runId": 38155832805,
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "completedObservationUtc": "2026-10-11T16:35:28Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38155832805",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "conclusion": "success",
+          "completedAtUtc": "2026-10-11T16:35:27Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm ci --ignore-scripts --no-audit --no-fund",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify canonical action contract build copy",
+              "conclusion": "success"
+            },
+            {
+              "name": "React and transport regressions",
+              "conclusion": "success"
+            },
+            {
+              "name": "Loopback preview relay survives WebSocket resets",
+              "conclusion": "success"
+            },
+            {
+              "name": "Packaged HTTP probe rejects incomplete artifacts",
+              "conclusion": "success"
+            },
+            {
+              "name": "Packaging failures retain bounded non-sensitive diagnosis",
+              "conclusion": "success"
+            },
+            {
+              "name": "Reviewed image admission rejects mismatched archives",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm run type-check",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm run build",
+              "conclusion": "success"
+            },
+            {
+              "name": "Check standalone entry point",
+              "conclusion": "success"
+            },
+            {
+              "name": "Exercise packaged pages and client assets",
+              "conclusion": "success"
+            },
+            {
+              "name": "Package and test the reviewed runtime image",
+              "conclusion": "success"
+            },
+            {
+              "name": "Keep the admitted image for operator review",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 11707744738,
+          "name": "sphere-reviewed-web-5223998002451b935a25e01f1034b727561588bd",
+          "size_in_bytes": 120925225,
+          "digest": "sha256:358b0c1ceba3e82370bba63dfbf0746eee0976c01f662d94e41228448796ed10",
+          "created_at": "2026-10-11T16:35:25Z",
+          "expires_at": "2026-10-14T16:35:24Z"
+        }
+      ]
+    }
+  ],
+  "android": {
+    "sourceAndroidTree": "5a7aabad42b30dd4bb8295b02057b87b36272fec",
+    "candidateVersionCode": 10255,
+    "candidateVersion": "1.2.55-dev",
+    "combinedProfileCIValidated": true,
+    "ordinaryJUnit": {
+      "observedAtUtc": "2026-10-11T16:50:08.540466+00:00",
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "runId": 38155828219,
+      "runConclusionAtRead": null,
+      "artifactId": 11708830870,
+      "artifactName": "android-ci-diagnostics-5223998002451b935a25e01f1034b727561588bd",
+      "artifactSha256": "sha256:fbdd55bad6f6f39155086c84eb0a5df5119b3262c20846e21cb5fcf949018bba",
+      "archiveBytesReadInMemory": 15415345,
+      "downloadedApksWritten": false,
+      "imageArchivesDownloaded": false,
+      "junitFiles": 368,
+      "variants": {
+        "testDevDebugUnitTest": {
+          "tests": 1033,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "testDevReleaseUnitTest": {
+          "tests": 1033,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "testEnterpriseDebugUnitTest": {
+          "tests": 1033,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "testEnterpriseReleaseUnitTest": {
+          "tests": 1033,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        }
+      },
+      "scopedSuites": [
+        {
+          "variant": "testDevDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.PlanarKeyFrameRefreshTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testDevDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamQualityMonitorTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testDevDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamingCaptureLifecycleTest",
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testDevReleaseUnitTest",
+          "name": "com.sphereplatform.agent.streaming.PlanarKeyFrameRefreshTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testDevReleaseUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamQualityMonitorTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testDevReleaseUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamingCaptureLifecycleTest",
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testEnterpriseDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.PlanarKeyFrameRefreshTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testEnterpriseDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamQualityMonitorTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testEnterpriseDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamingCaptureLifecycleTest",
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testEnterpriseReleaseUnitTest",
+          "name": "com.sphereplatform.agent.streaming.PlanarKeyFrameRefreshTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testEnterpriseReleaseUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamQualityMonitorTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testEnterpriseReleaseUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamingCaptureLifecycleTest",
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "localNativeExecutionVerified": false
+    },
+    "combinedDevDebugJUnit": {
+      "observedAtUtc": "2026-10-11T17:04:08.601815+00:00",
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "runId": 38155828219,
+      "runConclusionAtRead": "success",
+      "artifactId": 11709551620,
+      "artifactName": "android-direct-probe-public-stun-5223998002451b935a25e01f1034b727561588bd",
+      "artifactSha256": "sha256:d84752fceff495c33ac4bc1bbeec0f5c5f395a993479e5d39e03556f0a540a04",
+      "archiveBytesReadInMemory": 31351703,
+      "downloadedApksWritten": false,
+      "imageArchivesDownloaded": false,
+      "junitFiles": 93,
+      "variants": {
+        "testDevDebugUnitTest": {
+          "tests": 1038,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        }
+      },
+      "scopedSuites": [
+        {
+          "variant": "testDevDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.PlanarKeyFrameRefreshTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testDevDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamQualityMonitorTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "variant": "testDevDebugUnitTest",
+          "name": "com.sphereplatform.agent.streaming.StreamingCaptureLifecycleTest",
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "localNativeExecutionVerified": false
+    },
+    "combinedEnterpriseDebugUnitLintAssembleStepPassed": true,
+    "combinedEnterpriseJUnitArchiveRetained": false,
+    "profile": {
+      "directTransport": true,
+      "planarInput": true,
+      "continuousInput": true,
+      "gpuBridge": false,
+      "stun": "public-cloudflare",
+      "devPackageSuffix": ".pilot"
+    },
+    "ciSigner": "disposable_fixture_only_not_pilot",
+    "pilotApkBuilt": false,
+    "pilotApkSigned": false,
+    "pilotApkInstalled": false
+  },
+  "backend": {
+    "tests": {
+      "tests": 4028,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 43
+    },
+    "testArtifact": {
+      "id": 11709155879,
+      "name": "backend-test-results",
+      "size_in_bytes": 110153,
+      "digest": "sha256:49340a9e00cef3ed3149041f6f60629aa8f12e0396de6e987fc5a61f3f6db04f"
+    },
+    "bootstrapArtifact": {
+      "id": 11707834240,
+      "name": "image-bootstrap-probe",
+      "size_in_bytes": 10494,
+      "digest": "sha256:ae0f611a369af6f1bac65b27a74da94871185d698a2ebc859ffa7e2d24f352e2"
+    },
+    "productionImageBootstrapPassed": true,
+    "fourWorkersReplacementPassed": true,
+    "postgresPersistentRestartPassed": true,
+    "redisMemoryPersistenceStepPassed": true,
+    "freshnessMeasurements": {
+      "developmentPrometheusDeviceGauges": 4,
+      "productionMultiprocessDeviceSnapshots": "bounded Redis diagnostics/history API",
+      "newFleetFreshnessAlertsInstalled": false
+    }
+  },
+  "frontend": {
+    "runId": 38155832805,
+    "conclusion": "success",
+    "jestSuites": 154,
+    "jestTests": 2226,
+    "httpPagesVerified": 26,
+    "clientAssetsVerified": 73,
+    "browserHydrationVerified": false,
+    "backendExecutionVerifiedByHttpProbe": false
+  },
+  "localValidation": {
+    "transportControl": {
+      "suites": 7,
+      "tests": 274,
+      "failed": 0
+    },
+    "actualDeviceStreamReconnectDiagnostics": {
+      "suites": 2,
+      "tests": 28,
+      "failed": 0
+    },
+    "websocket": {
+      "tests": 695,
+      "subtests": 44,
+      "failed": 0
+    },
+    "reviewedInstallersArtifacts": {
+      "tests": 58,
+      "subtests": 151,
+      "failed": 0
+    },
+    "historyWorstCaseMeasurements": {
+      "tests": 45,
+      "failed": 0,
+      "uncommittedTestExtensionAtCiSource": true
+    },
+    "typescriptPassed": true,
+    "scopedEslintPassed": true,
+    "scopedRuffMypyPassed": true,
+    "openapiExporterCheckPassed": true,
+    "localAndroidGradleExecuted": false
+  },
+  "repairedCiAttempts": [
+    {
+      "sourceRevision": "2d7464c4cdf030877694193f8adb2b18bbfab535",
+      "runId": 38153537198,
+      "outcome": "Kotlin expression compile error corrected by explicit Unit"
+    },
+    {
+      "sourceRevision": "d487902d86409df12f76ba6690b5c0248b9494e9",
+      "runId": 38153960442,
+      "outcome": "Test idled a quitting Looper; real saved late Runnable now tested after stop and new start"
+    }
+  ],
+  "hostPreflight": {
+    "observedAt": "2026-10-11T16:39:48.091736+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 45332242432,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "availableRamBytes": 15494434816,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 67901251584,
+    "commitLimitBytes": 101336473600,
+    "volumeHealthStatus": "Warning",
+    "volumeOperationalStatus": [
+      "Full Repair Needed"
+    ],
+    "findings": [
+      "volume_not_ready"
+    ],
+    "buildAllowed": false
+  },
+  "storageCollector": {
+    "observedAtUtc": "2026-10-11T17:05:07.157470+00:00",
+    "workerPid": 13708,
+    "visibleWorkers": [
+      {
+        "ProcessId": 13708,
+        "createdAtUtc": "2026-10-11T12:24:25.3436460Z"
+      }
+    ],
+    "startedUtc": "2026-10-11T12:24:25.488849+00:00",
+    "dueUtc": "2026-10-12T12:24:25.488849+00:00",
+    "completeSamples": 141,
+    "firstSampleUtc": "2026-10-11T12:24:25.489871+00:00",
+    "lastSampleUtc": "2026-10-11T17:04:25.487185+00:00",
+    "prefixBytes": 1969020,
+    "prefixSha256": "594be85b78c1c86e52e6910189b79468c5c604973c601c8b41116a60e11ca8b1",
+    "sourceSha256": "3a6bf900a04051dd624ee762cffa60e697b887a893cfb23e969ee968787b853d",
+    "freeDiskFirstBytes": 31020109824,
+    "freeDiskLastBytes": 45329227776,
+    "freeDiskDeltaBytes": 14309117952,
+    "freeDiskMinBytes": 30842302464,
+    "freeDiskMaxBytes": 46484320256,
+    "reportBudgetBytes": 16777216,
+    "sampleLimit": 721,
+    "intervalSeconds": 120,
+    "autostartConfigured": false,
+    "fullDirectoryScans": false,
+    "writerAttribution": "UNDETERMINED",
+    "scope": "Read-only bounded prefix and live worker identity, not whole-PC writer attribution or leak resolution. Secondary hourly13732 is not presumed alive from its historical start.",
+    "lastVssObservation": {
+      "sampleUtc": "2026-10-11T17:04:25.487185+00:00",
+      "state": "measured",
+      "rows": [
+        {
+          "usedBytes": 4977442816,
+          "allocatedBytes": 5306597376,
+          "maxBytes": 20461912064
+        }
+      ]
+    }
+  },
+  "installation": {
+    "state": "VOLUME_REPAIR_PENDING_REBOOT",
+    "runtimeInstalled": false,
+    "userDecision": "Manual reboot later; continue preparation",
+    "localBuilderPrepared": ".local-pilot/build-idle-apk55-20261011.py",
+    "builderRequires": [
+      "healthy_volume",
+      "clean_git_fsck",
+      "matching_android_tree",
+      "all_three_ci_success",
+      "combined_profile_pass",
+      "same_pilot_signer"
+    ],
+    "rebootPerformed": false,
+    "gitObjectRecoveryApplied": false,
+    "heavyHostBuildStarted": false,
+    "imagesLoaded": false,
+    "fleetOta55Issued": false,
+    "enrollmentKeysSentToGitHub": false,
+    "pilotSigningKeysSentToGitHub": false,
+    "imageArchivesDownloaded": false,
+    "downloadedCiApksWritten": false
+  },
+  "runtime": {
+    "sourceRevision": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
+    "apiSourceRevision": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
+    "readsEvidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
+    "directInputInstalled": false
+  },
+  "fleetApk54": {
+    "evidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
+    "evidenceSha256NormalizedLf": "5c17a86840a0d620ed3f4000aa54d81065a2247a2c23317f0816af33752f6fcc",
+    "observedAtUtc": "2026-10-11T16:26:10.350615+00:00",
+    "installedVerified": 15,
+    "versionCode": 10254,
+    "offlineNotDispatched": 6,
+    "queued": 0
+  },
+  "remainingAcceptance": [
+    "signed configured APK55 canary",
+    "both origins exact image installation",
+    "60s static producer and external Android visual change",
+    "held CANCEL and fresh STARTUP",
+    "frame stall fallback and fresh peer",
+    "multi-viewer controller arbitration",
+    "localhost LAN WAN selected ICE route",
+    "TURN fallback",
+    "latency and resource soak"
+  ],
+  "directVideoAccepted": false,
+  "directInputAccepted": false,
+  "nearestPathAccepted": false,
+  "latencyAccepted": false,
+  "productionAccepted": false,
+  "soakAccepted": false
+}

@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T01:04:45.792438+00:00",
+  "state": "SOURCE_VALIDATED_NOT_INSTALLED",
+  "runtimeInstalled": false,
+  "sourceBase": "bdeaac70",
+  "scope": "Material and inspector UI wave; no APK/API change.",
+  "tests": {
+    "suites": 169,
+    "passed": 2464,
+    "failed": 0,
+    "typeCheckExitCode": 0,
+    "finalTargetedTestsPassed": 35
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "checks": [
+      {
+        "check": "desktop inspector centered and wider than side panel",
+        "bounds": {
+          "x": 120,
+          "y": 24,
+          "width": 1200,
+          "height": 852
+        },
+        "passed": true
+      },
+      {
+        "check": "modal/drawer switch keeps active detail tab",
+        "passed": true
+      },
+      {
+        "check": "Escape returns focus to device opener",
+        "passed": true
+      },
+      {
+        "check": "matte and glass have different paint and actual backdrop filters",
+        "glass": {
+          "bg": "rgba(252, 251, 248, 0.72)",
+          "blur": "blur(28px) saturate(1.25)",
+          "aura": "radial-gradient(at 4% 0%, rgba(135, 78, 29, 0.22), rgba(0, 0, 0, 0) 52%), radial-gradient(at 95% 70%, rgba(214, 163, 113, 0.22), rgba(0, 0, 0, 0) 58%)"
+        },
+        "matte": {
+          "bg": "rgb(252, 251, 248)",
+          "blur": "none",
+          "aura": "none"
+        },
+        "passed": true
+      },
+      {
+        "check": "material and reduced motion survive F5",
+        "theme": "mist",
+        "motion": "reduced",
+        "passed": true
+      },
+      {
+        "check": "wide modal uses four metric columns",
+        "passed": true
+      },
+      {
+        "check": "user reduced motion disables normal entrance duration",
+        "duration": "1e-05s",
+        "passed": true
+      },
+      {
+        "check": "system reduced motion overrides smooth preference",
+        "duration": "1e-05s",
+        "passed": true
+      },
+      {
+        "check": "64 wall slots retain their own rows without overlap at1440",
+        "slots": 64,
+        "passed": true
+      },
+      {
+        "check": "phone inspector fills viewport with large text",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        "passed": true
+      },
+      {
+        "check": "landscape dialog stays in viewport",
+        "bounds": {
+          "x": 27,
+          "y": 27,
+          "width": 790,
+          "height": 336
+        },
+        "passed": true
+      },
+      {
+        "check": "360px large text inspector fits after compiled registry link correction",
+        "client": 358,
+        "scroll": 358,
+        "passed": true
+      },
+      {
+        "check": "reduced transparency removes backdrop filtering and aura",
+        "supported": true,
+        "blur": "none",
+        "aura": "none",
+        "passed": true
+      },
+      {
+        "check": "quick theme toggle after final bundle reload pairs warm palettes",
+        "dark": "dune",
+        "light": "sandstone",
+        "passed": true
+      }
+    ],
+    "correctedProbes": [
+      "360px large-text detail overflow came from the long registry link; compiled fix confirmed358/358.",
+      "Quick theme toggle was first sampled before HMR completed; fresh bundle proved dune/sandstone pairing."
+    ],
+    "desktopErrors": [],
+    "mobileErrors": [],
+    "limitations": [
+      "Development3016 has no events WebSocket proxy.",
+      "One development post-login redirect stayed Loading until explicit navigation; packaged login is tested separately.",
+      "No Android actions, record creation or script save during source visual QA.",
+      "Mobile Chromium emulation, not physical OS keyboard acceptance."
+    ],
+    "screenshots": [
+      {
+        "path": "docs/audits/2026-10-15/assets/materials/appearance.png",
+        "sha256": "f1217a690c4f8464e50826359fd78872dd85a9dc8c9ccf75149cb55729686bf0"
+      },
+      {
+        "path": "docs/audits/2026-10-15/assets/materials/device-modal.png",
+        "sha256": "6504143cadb0792ec4f8a2c049a19bc785843fb61007d0430dce341f17735a1e"
+      },
+      {
+        "path": "docs/audits/2026-10-15/assets/materials/wall64.png",
+        "sha256": "39a947ae5166c3aa6b546bef1755a1366a3142fe707f623ba6648d4566a3d73d"
+      },
+      {
+        "path": "docs/audits/2026-10-15/assets/materials/phone-layout.png",
+        "sha256": "b06a903a8c1112a9aa0ab4f309a4a450ce2e1f706f7423da5a448d89c27fcb2b"
+      }
+    ]
+  },
+  "remaining": [
+    "Physical OS keyboard and all conditional forms/roles not accepted.",
+    "No64-live-decoder capacity or long performance soak.",
+    "Clean packaged login and runtime UI acceptance pending exact-source CI.",
+    "File explorer and read-only Android profile ownership remain open."
+  ]
+}

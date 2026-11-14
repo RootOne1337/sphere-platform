@@ -1,5 +1,8 @@
 # 🎯 SPHERE PLATFORM — Полный анализ возможностей для игрового фарминга
 
+> Исторический анализ2025, не актуальный каталог runtime-возможностей.
+> Действующие требования и границы: [WORK-STATUS](operations/WORK-STATUS.md).
+
 > **Дата:** 2025-06  
 > **Версия платформы:** v0.x (pre-release, ~120 API endpoints, 23 таблицы БД)  
 > **Анализируемые слои:** Android Agent (APK), Backend (FastAPI), Frontend (Next.js), PC Agent (Python), DAG Engine, Pipeline Orchestrator, WebSocket, Redis, PostgreSQL  

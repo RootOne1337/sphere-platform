@@ -1,0 +1,65 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+  "textDigestMode": "sha256-after-CRLF-to-LF",
+  "binaryDigestMode": "sha256-raw",
+  "secretsOrPrivatePackageBackupPublished": false,
+  "evidenceFiles": [
+    {
+      "file": "evidence/android-clear-installed/installation.json",
+      "bytesNormalized": 1701,
+      "sha256": "be54fe96c9a24c3d09993679162100ffbd223c38914ac16c44b4e2ca5e757b79"
+    },
+    {
+      "file": "evidence/android-clear-installed/task.json",
+      "bytesNormalized": 850,
+      "sha256": "608e8f51bc1800b13f7e4f921dec3f546de4e628207926fb89a9da3569a7393f"
+    },
+    {
+      "file": "evidence/android-clear-installed/native-png-recovery.json",
+      "bytesNormalized": 516,
+      "sha256": "fc86317f1873e9e918d08e6b29ab58003d9c5b90535b7e3bd837aff26dc6e4c7"
+    },
+    {
+      "file": "evidence/android-clear-installed/dag-and-reports.json",
+      "bytesNormalized": 18643,
+      "sha256": "f59042c0a8a5d03385069abc1baf652266dbb653491cd5a97ca6e4d983177706"
+    },
+    {
+      "file": "evidence/android-clear-installed/native-browser.json",
+      "bytesNormalized": 649,
+      "sha256": "1a264e9de6ac4297e04240d620cfc8c1832de5bf4482b4b69e52ef6daa1957e6"
+    }
+  ],
+  "assets": [
+    {
+      "file": "assets/android-clear-installed/task-completed.jpg",
+      "bytes": 38545,
+      "sha256": "59d7c9fd2e0b1697338976cb2877e635865735c3c33a7f4ee815732819262112",
+      "source": "Codex native browser screenshot"
+    },
+    {
+      "file": "assets/android-clear-installed/task-desktop.jpg",
+      "bytes": 72724,
+      "sha256": "077931ea7fe941434d79797485d1718c5803e3ea91828caf731f1af8dc1dff07",
+      "source": "Codex native browser screenshot"
+    },
+    {
+      "file": "assets/android-clear-installed/task-field-and-missing-artifact.jpg",
+      "bytes": 63643,
+      "sha256": "791e9926be5bd5a37d8d20abb642ab4a641827718fe0061f147bc18d952306f5",
+      "source": "Codex native browser screenshot"
+    },
+    {
+      "file": "assets/android-clear-installed/final-field-original.png",
+      "bytes": 17441,
+      "sha256": "6a5f4e6de6d44a49f3c93f970a880f9fcce618cda78e6f7819e615d1604fd2ee",
+      "source": "Android screencap; manual ADB recovery"
+    }
+  ],
+  "backlog": {
+    "accepted": 9,
+    "openCriteria": 41,
+    "wholeItemsClosedByThisStage": false
+  }
+}

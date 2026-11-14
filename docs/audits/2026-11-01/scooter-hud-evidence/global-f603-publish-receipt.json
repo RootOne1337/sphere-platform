@@ -1,0 +1,45 @@
+{
+  "status": "diagnostic_alternative_published",
+  "id": "hud-focal-603-diagnostic",
+  "metadata": {
+    "id": "hud-focal-603-diagnostic",
+    "cameras": 163,
+    "points": 15041,
+    "scope": "diagnostic",
+    "executionQualified": false
+  },
+  "primary_source_and_state_unchanged": true,
+  "source_geometry_sha256": "daa78df1661571a9e0a394fbb1c387b4e78c28108928b92d7cdbd34ea47b7ef2",
+  "protected_file_hashes": {
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\manifest.json": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\frames.jsonl": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\inputs.jsonl": "c919e79aefc90ceda827d69142e8c7504ce3fb49fc27bc09ed341d38b241c2e8",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\COMPLETE": "31231b7a04f4bdd779637913f554c958f87e33988612b11808296384bcb206b5",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\geometry.json": "f3e44be939bf2bfc8094263350765827af0007cafe3195fbb07aed9dd120ef64",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\state.json": "b8e29dbbc9c282ec55852a0ee124d16f8f45a0a119f0905ff0ed9c7d26e271ba",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\control.json": "dcff322d99902ea46387083192aee14eb2e2f537c558b6117611cb97e680aace",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\telemetry\\speed.csv": "4cffd7bbdedc4a2cfd4d2d2046256c1bcbc9ff1325fd3910f53dacca9d2bbf5a",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\telemetry\\speed.csv.receipt.json": "1bd66edf8580fbaedf012c7743cec7a1181ccabf7feba48b18c284488dad9ae7"
+  },
+  "source_receipt_sha256": "f60429494587708aa5bde1741ee2e6bbf0090b4748c324e49fe7dd2bdc8d13cf",
+  "available_alternatives": [
+    {
+      "id": "global-163-requires-review",
+      "cameras": 163,
+      "points": 5544,
+      "scope": "diagnostic",
+      "executionQualified": false
+    },
+    {
+      "id": "hud-focal-603-diagnostic",
+      "cameras": 163,
+      "points": 15041,
+      "scope": "diagnostic",
+      "executionQualified": false
+    }
+  ],
+  "device_actions": 0,
+  "live_browser_validation": "unavailable",
+  "navigation_replaced": false
+}

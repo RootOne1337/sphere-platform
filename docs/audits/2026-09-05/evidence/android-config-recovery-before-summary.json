@@ -1,0 +1,64 @@
+{
+  "name": "com.sphereplatform.agent.provisioning.ConfigRecoveryTest",
+  "tests": "13",
+  "skipped": "0",
+  "failures": "9",
+  "errors": "0",
+  "timestamp": "2026-09-10T10:15:30",
+  "hostname": "NIFILIM1337",
+  "time": "32.025",
+  "cases": [
+    {
+      "name": "invalid discovered URL cannot replace a usable route",
+      "failure": "org.junit.ComparisonFailure: expected:<[https://primary.invalid]> but was:<[not-a-server]>"
+    },
+    {
+      "name": "response from earlier route cannot overwrite a local route change",
+      "failure": "org.junit.ComparisonFailure: expected:<https://[operator-select]ed.invalid> but was:<https://[discover]ed.invalid>"
+    },
+    {
+      "name": "same route does not reconnect or change credentials",
+      "failure": null
+    },
+    {
+      "name": "malformed response preserves current route",
+      "failure": null
+    },
+    {
+      "name": "server unavailable preserves current route",
+      "failure": null
+    },
+    {
+      "name": "enrolled watchdog discovers public config without misusing device JWT as API key",
+      "failure": "java.lang.AssertionError: Discovery must not forward device JWT to the config host expected null, but was:<issued-device-jwt>"
+    },
+    {
+      "name": "sixty four forced checks share one pending HTTP request",
+      "failure": "java.lang.AssertionError: Reconnect signals must not create parallel config calls expected:<1> but was:<64>"
+    },
+    {
+      "name": "blank config endpoint performs no network request",
+      "failure": null
+    },
+    {
+      "name": "ten second discovery deadline cancels stuck HTTP and permits another request",
+      "failure": "java.lang.AssertionError: HTTP must finish while headers are still held expected:<true> but was:<null>"
+    },
+    {
+      "name": "stopped watchdog ignores further circuit notifications",
+      "failure": "java.lang.AssertionError"
+    },
+    {
+      "name": "oversized chunked config is rejected before reading the entire body",
+      "failure": "java.lang.AssertionError: Truncating after string() accepts an oversized JSON prefix expected null, but was:<ServerConfig(serverUrl=https://discovered.invalid, environment=unknown, autoRegister=false, enrollmentAllowed=false, enrollmentApiKey=null, wsPath=/ws/android, configPollIntervalSeconds=86400)>"
+    },
+    {
+      "name": "parent cancellation cancels discovery without waiting for held headers",
+      "failure": "java.lang.AssertionError: expected:<true> but was:<null>"
+    },
+    {
+      "name": "stop cancels pending discovery and late response cannot change route",
+      "failure": "kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 3000 ms"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+FFFFFFF                                                                  [100%]
+================================== FAILURES ===================================
+________ test_backend_healthcheck_requires_readiness_response[ready-0] ________
+tests\deployment\test_dev_readiness.py:43: in test_backend_healthcheck_requires_readiness_response
+    assert check.get("test"), "Backend has no readiness gate in the effective Compose configuration"
+E   AssertionError: Backend has no readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x00000260812CAA40>('test')
+E    +    where <built-in method get of dict object at 0x00000260812CAA40> = {}.get
+_______ test_backend_healthcheck_requires_readiness_response[unready-1] _______
+tests\deployment\test_dev_readiness.py:43: in test_backend_healthcheck_requires_readiness_response
+    assert check.get("test"), "Backend has no readiness gate in the effective Compose configuration"
+E   AssertionError: Backend has no readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x0000026081334B80>('test')
+E    +    where <built-in method get of dict object at 0x0000026081334B80> = {}.get
+________ test_backend_healthcheck_requires_readiness_response[error-1] ________
+tests\deployment\test_dev_readiness.py:43: in test_backend_healthcheck_requires_readiness_response
+    assert check.get("test"), "Backend has no readiness gate in the effective Compose configuration"
+E   AssertionError: Backend has no readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x00000260812CBA40>('test')
+E    +    where <built-in method get of dict object at 0x00000260812CBA40> = {}.get
+_ test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[200] _
+tests\deployment\test_dev_readiness.py:66: in test_frontend_healthcheck_rejects_redirects_errors_and_network_failure
+    assert check.get("test"), "Frontend has no HTTP readiness gate in the effective Compose configuration"
+E   AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x0000026081361200>('test')
+E    +    where <built-in method get of dict object at 0x0000026081361200> = {}.get
+_ test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[302] _
+tests\deployment\test_dev_readiness.py:66: in test_frontend_healthcheck_rejects_redirects_errors_and_network_failure
+    assert check.get("test"), "Frontend has no HTTP readiness gate in the effective Compose configuration"
+E   AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x0000026081354280>('test')
+E    +    where <built-in method get of dict object at 0x0000026081354280> = {}.get
+_ test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[503] _
+tests\deployment\test_dev_readiness.py:66: in test_frontend_healthcheck_rejects_redirects_errors_and_network_failure
+    assert check.get("test"), "Frontend has no HTTP readiness gate in the effective Compose configuration"
+E   AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x0000026081359940>('test')
+E    +    where <built-in method get of dict object at 0x0000026081359940> = {}.get
+_ test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[error] _
+tests\deployment\test_dev_readiness.py:66: in test_frontend_healthcheck_rejects_redirects_errors_and_network_failure
+    assert check.get("test"), "Frontend has no HTTP readiness gate in the effective Compose configuration"
+E   AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x00000260812A5800>('test')
+E    +    where <built-in method get of dict object at 0x00000260812A5800> = {}.get
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_dev_readiness.py::test_backend_healthcheck_requires_readiness_response[ready-0]
+FAILED tests/deployment/test_dev_readiness.py::test_backend_healthcheck_requires_readiness_response[unready-1]
+FAILED tests/deployment/test_dev_readiness.py::test_backend_healthcheck_requires_readiness_response[error-1]
+FAILED tests/deployment/test_dev_readiness.py::test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[200]
+FAILED tests/deployment/test_dev_readiness.py::test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[302]
+FAILED tests/deployment/test_dev_readiness.py::test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[503]
+FAILED tests/deployment/test_dev_readiness.py::test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[error]
+7 failed, 1 warning in 0.74s

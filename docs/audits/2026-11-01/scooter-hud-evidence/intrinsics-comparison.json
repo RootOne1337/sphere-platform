@@ -1,0 +1,465 @@
+{
+  "models": {
+    "baseline": {
+      "report": {
+        "model": 0,
+        "schema": "sphere-route-geometry-selection-v1",
+        "registered": 163,
+        "selected": 163,
+        "coverage": 1.0,
+        "points": 5546,
+        "reprojection_px": 1.0323216883263229,
+        "scene_admissible": true,
+        "route_admissible": false,
+        "scene_reasons": [],
+        "route_reasons": [
+          "route_camera_reversals",
+          "route_camera_speed_outliers"
+        ],
+        "source_coverage": {
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "missing_start_seconds": 0.0,
+          "missing_end_seconds": 0.0,
+          "max_observed_gap_seconds": 0.266,
+          "endpoints_observed": true,
+          "all_intervals_observed": true,
+          "endpoint_limit_seconds": 1.0,
+          "interval_limit_seconds": 1.0
+        },
+        "motion": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 163,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 36.05402903161768,
+          "endpoint_displacement_units": 14.890228357346,
+          "median_step_units": 0.07574402677715043,
+          "max_step_units": 8.030383073950041,
+          "rapid_reversals": [
+            {
+              "view": 16,
+              "image": "00000086.png",
+              "seconds": 3.318
+            },
+            {
+              "view": 32,
+              "image": "00000178.png",
+              "seconds": 6.881
+            },
+            {
+              "view": 127,
+              "image": "00000700.png",
+              "seconds": 27.668
+            }
+          ],
+          "median_rate_units_per_second": 0.3552523101872595,
+          "speed_outliers": [
+            {
+              "view": 15,
+              "image": "00000079.png",
+              "seconds": 3.087,
+              "interval_seconds": 0.232,
+              "median_rate_ratio": 8.681150435650004
+            },
+            {
+              "view": 16,
+              "image": "00000086.png",
+              "seconds": 3.318,
+              "interval_seconds": 0.231,
+              "median_rate_ratio": 97.85598036609068
+            },
+            {
+              "view": 21,
+              "image": "00000115.png",
+              "seconds": 4.418,
+              "interval_seconds": 0.217,
+              "median_rate_ratio": 8.707474074281865
+            },
+            {
+              "view": 24,
+              "image": "00000132.png",
+              "seconds": 5.083,
+              "interval_seconds": 0.216,
+              "median_rate_ratio": 8.580950316294084
+            },
+            {
+              "view": 50,
+              "image": "00000280.png",
+              "seconds": 10.823,
+              "interval_seconds": 0.216,
+              "median_rate_ratio": 29.715624524380683
+            }
+          ],
+          "warning": "poses_require_temporal_review",
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+        },
+        "poses_interpolated": false,
+        "navigation_qualified": false,
+        "execution_qualified": false,
+        "conditioning": {
+          "near_camera_points": 0,
+          "near_camera_fraction": 0.0,
+          "camera_span_units": 19.116794773943273,
+          "passed": true
+        },
+        "intrinsics_condition": {
+          "passed": true,
+          "focal_ratio": 1.0,
+          "horizontal_fov_degrees": 115.609553112844,
+          "vertical_fov_degrees": 83.55520383905427,
+          "physical_calibration_verified": false
+        }
+      },
+      "hud": {
+        "edges": 125,
+        "ratio_p90_p10": 13.872326226927415,
+        "same_data_median": 0.04212468092812103,
+        "train_edges": 65,
+        "test_edges": 60,
+        "train_fit_median": 0.0520717490141276,
+        "test_median_abs_log_ratio": 1.1915343304479131,
+        "test_factor_outside_4": 10,
+        "evaluation": "same HUD edge distances for each reconstruction; first half temporal edges fit, second half held out only from scale fit; reconstruction and sampling use same video, not independent validation"
+      }
+    },
+    "960": {
+      "report": {
+        "model": 0,
+        "schema": "sphere-route-geometry-selection-v1",
+        "registered": 163,
+        "selected": 163,
+        "coverage": 1.0,
+        "points": 5375,
+        "reprojection_px": 1.2007208315478508,
+        "scene_admissible": true,
+        "route_admissible": false,
+        "scene_reasons": [],
+        "route_reasons": [
+          "route_camera_reversals",
+          "route_camera_speed_outliers"
+        ],
+        "source_coverage": {
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "missing_start_seconds": 0.0,
+          "missing_end_seconds": 0.0,
+          "max_observed_gap_seconds": 0.266,
+          "endpoints_observed": true,
+          "all_intervals_observed": true,
+          "endpoint_limit_seconds": 1.0,
+          "interval_limit_seconds": 1.0
+        },
+        "motion": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 163,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 45.30581535826059,
+          "endpoint_displacement_units": 7.917234059187983,
+          "median_step_units": 0.17799238401230033,
+          "max_step_units": 3.017243014321465,
+          "rapid_reversals": [
+            {
+              "view": 16,
+              "image": "00000086.png",
+              "seconds": 3.318
+            },
+            {
+              "view": 32,
+              "image": "00000178.png",
+              "seconds": 6.881
+            },
+            {
+              "view": 33,
+              "image": "00000183.png",
+              "seconds": 7.097
+            },
+            {
+              "view": 35,
+              "image": "00000193.png",
+              "seconds": 7.53
+            },
+            {
+              "view": 36,
+              "image": "00000200.png",
+              "seconds": 7.745
+            },
+            {
+              "view": 85,
+              "image": "00000469.png",
+              "seconds": 18.555
+            },
+            {
+              "view": 92,
+              "image": "00000500.png",
+              "seconds": 20.056
+            },
+            {
+              "view": 93,
+              "image": "00000504.png",
+              "seconds": 20.271
+            }
+          ],
+          "median_rate_units_per_second": 0.8082804185185961,
+          "speed_outliers": [
+            {
+              "view": 16,
+              "image": "00000086.png",
+              "seconds": 3.318,
+              "interval_seconds": 0.231,
+              "median_rate_ratio": 8.33413406389471
+            },
+            {
+              "view": 24,
+              "image": "00000132.png",
+              "seconds": 5.083,
+              "interval_seconds": 0.216,
+              "median_rate_ratio": 14.67089556978033
+            },
+            {
+              "view": 92,
+              "image": "00000500.png",
+              "seconds": 20.056,
+              "interval_seconds": 0.217,
+              "median_rate_ratio": 9.738620907476406
+            },
+            {
+              "view": 93,
+              "image": "00000504.png",
+              "seconds": 20.271,
+              "interval_seconds": 0.215,
+              "median_rate_ratio": 17.362400618865934
+            }
+          ],
+          "warning": "poses_require_temporal_review",
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+        },
+        "poses_interpolated": false,
+        "navigation_qualified": false,
+        "execution_qualified": false,
+        "conditioning": {
+          "near_camera_points": 0,
+          "near_camera_fraction": 0.0,
+          "camera_span_units": 13.943490007247314,
+          "passed": true
+        },
+        "intrinsics_condition": {
+          "passed": true,
+          "focal_ratio": 1.0,
+          "horizontal_fov_degrees": 90.0,
+          "vertical_fov_degrees": 58.71550708558255,
+          "physical_calibration_verified": false
+        }
+      },
+      "hud": {
+        "edges": 125,
+        "ratio_p90_p10": 8.525747612912692,
+        "same_data_median": 0.04530360390890163,
+        "train_edges": 65,
+        "test_edges": 60,
+        "train_fit_median": 0.057843892661573776,
+        "test_median_abs_log_ratio": 0.42659798181084063,
+        "test_factor_outside_4": 3,
+        "evaluation": "same HUD edge distances for each reconstruction; first half temporal edges fit, second half held out only from scale fit; reconstruction and sampling use same video, not independent validation"
+      }
+    },
+    "1280": {
+      "report": {
+        "model": 0,
+        "schema": "sphere-route-geometry-selection-v1",
+        "registered": 163,
+        "selected": 163,
+        "coverage": 1.0,
+        "points": 4914,
+        "reprojection_px": 1.2941375100717492,
+        "scene_admissible": true,
+        "route_admissible": false,
+        "scene_reasons": [],
+        "route_reasons": [
+          "route_camera_reversals",
+          "route_camera_speed_outliers"
+        ],
+        "source_coverage": {
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "missing_start_seconds": 0.0,
+          "missing_end_seconds": 0.0,
+          "max_observed_gap_seconds": 0.266,
+          "endpoints_observed": true,
+          "all_intervals_observed": true,
+          "endpoint_limit_seconds": 1.0,
+          "interval_limit_seconds": 1.0
+        },
+        "motion": {
+          "schema": "sphere-camera-temporal-audit-v1",
+          "views": 163,
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "path_units": 44.20468397843759,
+          "endpoint_displacement_units": 8.913468136392133,
+          "median_step_units": 0.14775049833285703,
+          "max_step_units": 3.739098502070033,
+          "rapid_reversals": [
+            {
+              "view": 15,
+              "image": "00000079.png",
+              "seconds": 3.087
+            },
+            {
+              "view": 35,
+              "image": "00000193.png",
+              "seconds": 7.53
+            },
+            {
+              "view": 36,
+              "image": "00000200.png",
+              "seconds": 7.745
+            },
+            {
+              "view": 85,
+              "image": "00000469.png",
+              "seconds": 18.555
+            },
+            {
+              "view": 87,
+              "image": "00000479.png",
+              "seconds": 19.005
+            },
+            {
+              "view": 88,
+              "image": "00000484.png",
+              "seconds": 19.238
+            },
+            {
+              "view": 91,
+              "image": "00000496.png",
+              "seconds": 19.839
+            },
+            {
+              "view": 92,
+              "image": "00000500.png",
+              "seconds": 20.056
+            },
+            {
+              "view": 93,
+              "image": "00000504.png",
+              "seconds": 20.271
+            },
+            {
+              "view": 94,
+              "image": "00000509.png",
+              "seconds": 20.471
+            },
+            {
+              "view": 129,
+              "image": "00000713.png",
+              "seconds": 28.134
+            }
+          ],
+          "median_rate_units_per_second": 0.6598533945902608,
+          "speed_outliers": [
+            {
+              "view": 26,
+              "image": "00000145.png",
+              "seconds": 5.582,
+              "interval_seconds": 0.266,
+              "median_rate_ratio": 9.149888183943544
+            },
+            {
+              "view": 50,
+              "image": "00000280.png",
+              "seconds": 10.823,
+              "interval_seconds": 0.216,
+              "median_rate_ratio": 11.707937325855765
+            },
+            {
+              "view": 58,
+              "image": "00000327.png",
+              "seconds": 12.535,
+              "interval_seconds": 0.216,
+              "median_rate_ratio": 8.114943804655546
+            },
+            {
+              "view": 91,
+              "image": "00000496.png",
+              "seconds": 19.839,
+              "interval_seconds": 0.2,
+              "median_rate_ratio": 10.121697905847522
+            },
+            {
+              "view": 92,
+              "image": "00000500.png",
+              "seconds": 20.056,
+              "interval_seconds": 0.217,
+              "median_rate_ratio": 19.28363642075147
+            },
+            {
+              "view": 93,
+              "image": "00000504.png",
+              "seconds": 20.271,
+              "interval_seconds": 0.215,
+              "median_rate_ratio": 26.356090559147116
+            }
+          ],
+          "warning": "poses_require_temporal_review",
+          "heuristic_only": true,
+          "metric_scale": null,
+          "navigation_qualified": false,
+          "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+        },
+        "poses_interpolated": false,
+        "navigation_qualified": false,
+        "execution_qualified": false,
+        "conditioning": {
+          "near_camera_points": 0,
+          "near_camera_fraction": 0.0,
+          "camera_span_units": 14.684693454400971,
+          "passed": true
+        },
+        "intrinsics_condition": {
+          "passed": true,
+          "focal_ratio": 1.0,
+          "horizontal_fov_degrees": 73.73979529168804,
+          "vertical_fov_degrees": 45.74733038125343,
+          "physical_calibration_verified": false
+        }
+      },
+      "hud": {
+        "edges": 125,
+        "ratio_p90_p10": 15.39150588281393,
+        "same_data_median": 0.04431064947216615,
+        "train_edges": 65,
+        "test_edges": 60,
+        "train_fit_median": 0.0632492631219523,
+        "test_median_abs_log_ratio": 0.9201947724865833,
+        "test_factor_outside_4": 20,
+        "evaluation": "same HUD edge distances for each reconstruction; first half temporal edges fit, second half held out only from scale fit; reconstruction and sampling use same video, not independent validation"
+      }
+    }
+  },
+  "source_sha256_against_prior_yaw_audit": {
+    ".local-pilot/reconstruction-jobs/c667f86cc9de4a378fb12e5269981a6e/input/video.h264": {
+      "current": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+      "prior": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+      "matches_prior": true
+    },
+    ".local-pilot/reconstruction-jobs/c667f86cc9de4a378fb12e5269981a6e/alternatives/global-163-requires-review/geometry.json": {
+      "current": "af0e8d2d934c0dad311846698b35db83bd25dc6b87691d80d6710571bef29a9a",
+      "prior": "af0e8d2d934c0dad311846698b35db83bd25dc6b87691d80d6710571bef29a9a",
+      "matches_prior": true
+    },
+    ".local-pilot/reconstruction-jobs/c667f86cc9de4a378fb12e5269981a6e/input/manifest.json": {
+      "current": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+      "prior": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+      "matches_prior": true
+    }
+  },
+  "warning": "Fixed FOV hypotheses, not calibration or scale proof. Camera center movement is not vehicle speed; HUD speed is unverified game output. No independent recording; no acceptance or autoplay. Previous LK used f=604 and should not be treated as independent for new focal settings."
+}

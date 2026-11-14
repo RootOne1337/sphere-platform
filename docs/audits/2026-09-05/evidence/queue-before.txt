@@ -1,0 +1,34 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_____________________ test_single_device_queue_is_atomic ______________________
+tests\production\test_queue_recovery.py:37: in test_single_device_queue_is_atomic
+    assert sum(value is not None for value in results) == 1
+E   assert 2 == 1
+E    +  where 2 = sum(<generator object test_single_device_queue_is_atomic.<locals>.<genexpr> at 0x00000166B3F71700>)
+_________________ test_old_result_does_not_release_new_lease __________________
+tests\production\test_queue_recovery.py:46: in test_old_result_does_not_release_new_lease
+    assert await world.redis.get(queue.RUNNING_KEY.format(device_id=device)) == "new-task"
+E   AssertionError: assert None == 'new-task'
+_____________________ test_rollback_never_publishes_task ______________________
+tests\production\test_queue_recovery.py:56: in test_rollback_never_publishes_task
+    assert await queue.dequeue_for_device(str(w.dev_a.id), str(w.org_a.id)) is None
+E   AssertionError: assert 'cb40a83a-fcef-42c9-9776-8c0558e52ae0' is None
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "cb40a83a-fcef-42c9-9776-8c0558e52ae0", "device_id": "8eeece59-f9c9-4b6a-8f59-31cd56bf8264", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T08:57:39.061717Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:270 {'task_id': 'cb40a83a-fcef-42c9-9776-8c0558e52ae0', 'device_id': '8eeece59-f9c9-4b6a-8f59-31cd56bf8264', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T08:57:39.061717Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_queue_recovery.py::test_single_device_queue_is_atomic
+FAILED tests/production/test_queue_recovery.py::test_old_result_does_not_release_new_lease
+FAILED tests/production/test_queue_recovery.py::test_rollback_never_publishes_task
+3 failed, 485 warnings in 0.78s

@@ -7,17 +7,21 @@
 # DEL  /batches/:id — отменить батч
 from __future__ import annotations
 
+import asyncio
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
+from backend.core.lifespan_registry import register_shutdown, register_startup
 from backend.database.engine import AsyncSessionLocal, get_db
+from backend.models.task_batch import TaskBatchStatus
 from backend.models.user import User
 from backend.schemas.batch import (
     BatchDetailResponse,
     BatchExecutionRequest,
+    BatchListResponse,
     BatchResponse,
     BroadcastBatchRequest,
     BroadcastBatchResponse,
@@ -25,6 +29,28 @@ from backend.schemas.batch import (
 from backend.services.batch_service import BatchService
 
 router = APIRouter(prefix="/batches", tags=["batches"])
+_admission_task: asyncio.Task | None = None
+
+
+async def _startup_batch_admission() -> None:
+    global _admission_task
+    from backend.services.batch_admission import BatchAdmissionWorker
+
+    if _admission_task is not None and not _admission_task.done():
+        raise RuntimeError("Batch admission is already running")
+    _admission_task = asyncio.create_task(BatchAdmissionWorker(AsyncSessionLocal).run(), name="batch_admission")
+
+
+async def _shutdown_batch_admission() -> None:
+    global _admission_task
+    if _admission_task is not None:
+        _admission_task.cancel()
+        await asyncio.gather(_admission_task, return_exceptions=True)
+        _admission_task = None
+
+
+register_startup("batch_admission", _startup_batch_admission)
+register_shutdown("batch_admission", _shutdown_batch_admission)
 
 
 def get_batch_service(db: AsyncSession = Depends(get_db)) -> BatchService:
@@ -51,7 +77,7 @@ async def start_batch(
     Прогресс: GET /batches/{id} или Events WebSocket.
     """
     batch = await svc.start_batch(body, current_user.org_id, current_user.id)
-    await db.commit()
+    # The plan is committed; an independent startup worker discovers it.
     return BatchResponse.model_validate(batch)
 
 
@@ -77,13 +103,28 @@ async def broadcast_batch(
     batch, online_count = await svc.broadcast_batch(
         body, current_user.org_id, current_user.id
     )
-    await db.commit()
-    resp = BroadcastBatchResponse.model_validate(batch)
-    resp.online_devices = online_count
-    return resp
+    # The batch is already committed. Supply the required broadcast-only field
+    # before validation, so a successful durable admission is not reported as 500.
+    return BroadcastBatchResponse(
+        **BatchResponse.model_validate(batch).model_dump(), online_devices=online_count,
+    )
 
 
-# ── Get batch status ───────────────────────────────────────────────────────────
+# ── Batch history and status ───────────────────────────────────────────────────
+
+@router.get("", response_model=BatchListResponse, summary="История пакетов заданий")
+async def list_batches(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(25, ge=1, le=100),
+    status: TaskBatchStatus | None = None,
+    script_id: uuid.UUID | None = None,
+    current_user: User = require_permission("script:read"),
+    svc: BatchService = Depends(get_batch_service),
+) -> BatchListResponse:
+    items, total = await svc.list_batches(current_user.org_id, page=page, per_page=per_page,
+                                          status=status, script_id=script_id)
+    return BatchListResponse(items=items, total=total, page=page, per_page=per_page,
+                             pages=(total + per_page - 1) // per_page)
 
 @router.get(
     "/{batch_id}",
@@ -95,8 +136,7 @@ async def get_batch_status(
     current_user: User = require_permission("script:read"),
     svc: BatchService = Depends(get_batch_service),
 ) -> BatchDetailResponse:
-    batch = await svc.get_batch(batch_id, current_user.org_id)
-    return BatchDetailResponse.model_validate(batch)
+    return await svc.get_batch_detail(batch_id, current_user.org_id)
 
 
 # ── Cancel batch ───────────────────────────────────────────────────────────────

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-25T13:27:14.094912+00:00",
+  "scope": "bounded geometric-surface direction experiment; no installed runtime change",
+  "source": {
+    "manifestSha256": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b",
+    "sourceFrames": 458,
+    "selectedTrainingViews": 81,
+    "geometricProbeViews": 18,
+    "probeResolution": 960,
+    "sourcePreserved": true
+  },
+  "tool": {
+    "repo": "cdcseacave/openMVS",
+    "tag": "v2.4.0",
+    "archiveSha256": "0c31660c15c9ebc4c106873cf67564d9570d404aef7a6403451da1b6178b2167",
+    "cpuThreads": 4,
+    "productionIntegration": false
+  },
+  "geometry": {
+    "schema": "sphere-surface-geometry-proof-v1",
+    "embedded_glb_sha256": "4cd2014b748a2aede45d542eea861e729ba6ec2d85f09cf515d49483f72837e8",
+    "embedded_glb_bytes": 8386228,
+    "source_parts": {
+      "surface_textured.glb": "62092c9bf783e8df55f86507711bbf1f8cff047928148b828150022e56020525",
+      "surface_textured_0.png": "7b731a13e7024ec5c30c359c800ecccb7c7b18b5f111369a45ee438b9d8c8582",
+      "surface_textured_1.png": "d4021f0c562ef501beca1177c558eaeb716f324ca512d0e62efb0478bad08cd9",
+      "surface_textured_2.png": "8865a6c0b42c40482c5297626d9bca6418b8e9c23a6ccbce7df83409020722ea"
+    },
+    "split_uv_vertices": 67197,
+    "triangles": 99564,
+    "embedded_textures": 3,
+    "external_uris": 0,
+    "triangle_cpu_renders": [
+      {
+        "image": "00000113.png",
+        "visible_mesh_fraction": 0.742824074074074
+      },
+      {
+        "image": "00000161.png",
+        "visible_mesh_fraction": 0.7228472222222222
+      },
+      {
+        "image": "00000201.png",
+        "visible_mesh_fraction": 0.721766975308642
+      }
+    ],
+    "hole_closure": false,
+    "smoothing": false,
+    "projection_uses_recovered_cameras": true,
+    "geometry_qualified": false,
+    "navigation_qualified": false,
+    "initialSparsePoints": 2781,
+    "densePoints": 66812,
+    "meshVertices": 49863
+  },
+  "nativeProbe": {
+    "state": "mesh_exported",
+    "seconds": 124.01499999999942,
+    "source_rgb_preserved": true,
+    "installed_scene_preserved": true,
+    "navigation_qualified": false,
+    "outputs": {
+      "scene_dense.ply": {
+        "bytes": 4714002,
+        "sha256": "b0a2b0c02fef2f67dcb89fcf602efef742abfd3221cdb621e90b9dc9ea341841"
+      },
+      "scene_mesh.ply": {
+        "bytes": 1893654,
+        "sha256": "fc011fc8face86bbad11ef0d9262923bcff803617e9d7803c090c584d3774c94"
+      }
+    }
+  },
+  "review": {
+    "state": "rejected_for_delivery",
+    "reason": "textured CPU triangle render does not reproduce reference; V-flip diagnostic also rejected",
+    "observedAtUtc": "2026-10-25T13:26:40.023032+00:00",
+    "geometryNumericallyFinite": true,
+    "metricAccuracyAccepted": false,
+    "navigationQualified": false,
+    "sourceVideoUnchanged": true,
+    "installedSceneUnchanged": true
+  },
+  "evidenceFiles": {
+    "INTENT.json": "18dc2deda9f521080599f2a1ee224a954197bd47448f686c0340793a21414eb4",
+    "report.json": "4426bcc01a8792a7bf86e77c020ce96f7f63c72975b7a1722ca0b0b0cda81d23",
+    "SURFACE-PROOF.json": "a1e39c1fe23955639ee1109c6181928908308d8437dec7193a356e39829050bf",
+    "SURFACE-PROOF-VFLIP.json": "64eaeeb62812544edf343d34d6cf37e97bb8e1a995254be69198be9131afd72d",
+    "surface-comparison.jpg": "be70335942d21e5ec4ea9272e1a25cfc9c4c12a34a21d6a971f3b65f9d954f98",
+    "surface-comparison-vflip.jpg": "fa51221508826ecd8a7bc3605a295434ef612b853e5c50b392df6f5253d60151",
+    "SURFACE-REVIEW.json": "ce909b07026f05d01360d406b00c21a1e55aa9ad6ba1fbc97c21445139c26359"
+  },
+  "sourceRuntime": {
+    "installedSceneRevision": 2,
+    "installedSceneUnchanged": true,
+    "androidCommandsSent": false,
+    "apkChanged": false,
+    "vpnChanged": false,
+    "newGithubActionRuns": 0
+  }
+}

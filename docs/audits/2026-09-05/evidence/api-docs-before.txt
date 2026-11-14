@@ -1,0 +1,3 @@
+C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+  sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+Stale API documentation: docs/openapi.json, docs/api-endpoints.md

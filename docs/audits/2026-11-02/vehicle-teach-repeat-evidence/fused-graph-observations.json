@@ -1,0 +1,27 @@
+{
+  "residualPixels": {
+    "count": 138116,
+    "mean": 0.8921032052509155,
+    "median": 0.5402742288448419,
+    "p95": 3.076859240966617,
+    "maximum": 6.0353329622969705,
+    "le2": 120831,
+    "le4": 135783
+  },
+  "nonpositiveDepth": 0,
+  "duplicateImageGroups": 1268,
+  "extraDuplicateImageObservations": 1281,
+  "duplicateGroupDiameterPixels": {
+    "count": 1268,
+    "mean": 3.1573250775480393,
+    "median": 3.419502825391686,
+    "p95": 5.935255528894286,
+    "maximum": 7.923202140139494,
+    "le2": 366,
+    "le4": 818
+  },
+  "structural": {
+    "passed": false,
+    "reason": "component_merge_duplicate_image_observation"
+  }
+}

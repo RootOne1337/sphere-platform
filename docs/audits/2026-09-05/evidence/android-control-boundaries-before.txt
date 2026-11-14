@@ -1,0 +1,105 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+Calculating task graph as no cached configuration is available for tasks: :app:testEnterpriseDebugUnitTest --tests *ControlCommandTargetTest
+WARNING: We recommend using a newer Android Gradle plugin to use compileSdk = 35
+
+This Android Gradle plugin (8.3.2) was tested up to compileSdk = 34.
+
+You are strongly encouraged to update your project to use a newer
+Android Gradle plugin that has been tested with compileSdk = 35.
+
+If you are already using the latest version of the Android Gradle plugin,
+you may need to wait until a newer version with support for compileSdk = 35 is available.
+
+To suppress this warning, add/update
+    android.suppressUnsupportedCompileSdk=35
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+to this project's gradle.properties.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preEnterpriseDebugBuild UP-TO-DATE
+> Task :app:preEnterpriseDebugUnitTestBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:javaPreCompileEnterpriseDebugUnitTest UP-TO-DATE
+> Task :app:generateEnterpriseDebugResValues UP-TO-DATE
+> Task :app:createEnterpriseDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksEnterpriseDebug UP-TO-DATE
+> Task :app:generateEnterpriseDebugResources UP-TO-DATE
+> Task :app:generateEnterpriseDebugBuildConfig
+> Task :app:packageEnterpriseDebugResources UP-TO-DATE
+> Task :app:javaPreCompileEnterpriseDebug UP-TO-DATE
+> Task :app:parseEnterpriseDebugLocalResources UP-TO-DATE
+> Task :app:mapEnterpriseDebugSourceSetPaths UP-TO-DATE
+> Task :app:checkEnterpriseDebugAarMetadata UP-TO-DATE
+> Task :app:mergeEnterpriseDebugResources UP-TO-DATE
+> Task :app:processEnterpriseDebugMainManifest UP-TO-DATE
+> Task :app:processEnterpriseDebugManifest UP-TO-DATE
+> Task :app:processEnterpriseDebugManifestForPackage UP-TO-DATE
+
+> Task :app:processEnterpriseDebugResources UP-TO-DATE
+WARNING: We recommend using a newer Android Gradle plugin to use compileSdk = 35
+
+This Android Gradle plugin (8.3.2) was tested up to compileSdk = 34.
+
+You are strongly encouraged to update your project to use a newer
+Android Gradle plugin that has been tested with compileSdk = 35.
+
+If you are already using the latest version of the Android Gradle plugin,
+you may need to wait until a newer version with support for compileSdk = 35 is available.
+
+To suppress this warning, add/update
+    android.suppressUnsupportedCompileSdk=35
+to this project's gradle.properties.
+
+> Task :app:kspEnterpriseDebugKotlin
+> Task :app:compileEnterpriseDebugKotlin
+> Task :app:compileEnterpriseDebugJavaWithJavac
+> Task :app:hiltAggregateDepsEnterpriseDebug UP-TO-DATE
+> Task :app:hiltJavaCompileEnterpriseDebug UP-TO-DATE
+> Task :app:processEnterpriseDebugJavaRes UP-TO-DATE
+> Task :app:transformEnterpriseDebugClassesWithAsm
+> Task :app:bundleEnterpriseDebugClassesToCompileJar
+> Task :app:bundleEnterpriseDebugClassesToRuntimeJar
+> Task :app:kspEnterpriseDebugUnitTestKotlin
+> Task :app:compileEnterpriseDebugUnitTestKotlin
+> Task :app:compileEnterpriseDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:hiltAggregateDepsEnterpriseDebugUnitTest UP-TO-DATE
+> Task :app:hiltJavaCompileEnterpriseDebugUnitTest NO-SOURCE
+> Task :app:processEnterpriseDebugUnitTestJavaRes UP-TO-DATE
+> Task :app:transformEnterpriseDebugUnitTestClassesWithAsm
+
+> Task :app:testEnterpriseDebugUnitTest
+
+ControlCommandTargetTest > wireCancelReleasesAPausedLoopWithoutResumingActions FAILED
+    java.lang.AssertionError at ControlCommandTargetTest.kt:206
+
+ControlCommandTargetTest > wireCancelStopsBeforeTheNextLoopBodyActionAndPersistsFailure FAILED
+    java.lang.AssertionError at ControlCommandTargetTest.kt:171
+
+ControlCommandTargetTest > cancellationDuringRetryBackoffCannotSendAnotherDeviceAction FAILED
+    java.lang.AssertionError at ControlCommandTargetTest.kt:231
+
+ControlCommandTargetTest > wireCancelEscapesNestedLoopBodies FAILED
+    java.lang.AssertionError at ControlCommandTargetTest.kt:185
+
+ControlCommandTargetTest > wirePauseStopsInsideLoopUntilMatchingResume FAILED
+    java.lang.AssertionError at ControlCommandTargetTest.kt:194
+
+ControlCommandTargetTest > cancellationDuringFinalActionCannotReturnSuccessfulDag FAILED
+    org.junit.ComparisonFailure at ControlCommandTargetTest.kt:216
+
+13 tests completed, 6 failed
+
+> Task :app:testEnterpriseDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testEnterpriseDebugUnitTest'.
+> There were failing tests. See the report at: file:///C:/Users/dimas/Documents/ChatGPT/sphere-platform/android/app/build/reports/tests/testEnterpriseDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 28s
+32 actionable tasks: 12 executed, 20 up-to-date
+Configuration cache entry stored.

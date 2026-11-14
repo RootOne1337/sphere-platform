@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T16:24:33.963498+00:00",
+  "source": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
+  "ciRun": "20261021T155852Z-b40e9952",
+  "ciReceiptSha256": "b5c03b4742ea71fe87dc6c89f6acc998a2635fb629d82b5823692ffad8fe9582",
+  "profiles": {
+    "frontend": {
+      "state": "success",
+      "tests": {
+        "tests": 2606,
+        "passed": 2606,
+        "failures": 0,
+        "failedSuites": 0,
+        "skipped": 0,
+        "suites": 180,
+        "success": true
+      },
+      "github": {
+        "id": 56903826312,
+        "context": "Sphere Local / Frontend regressions",
+        "state": "success"
+      }
+    },
+    "backend": {
+      "state": "success",
+      "tests": {
+        "tests": 4462,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 63
+      },
+      "github": {
+        "id": 56905304742,
+        "context": "Sphere Local / Backend regressions",
+        "state": "success"
+      }
+    }
+  },
+  "backendCoveragePercent": 82.46,
+  "backendPassed": 4399,
+  "backendSubtestsPassed": 645,
+  "backendSkipped": 63,
+  "isolatedServicesRemoved": true,
+  "runtimeChanged": false,
+  "webPackaging": {
+    "imageBuilt": true,
+    "imageId": "sha256:525bde2e68917606b80ced820136eb99c4f4e0c6bfbaf4a62ac366b09b0c2589",
+    "sourceArchiveSha256": "79403720f31abeba70e2ddcdf738281dfaac6af5c73cdc65a124bdb44740507c",
+    "cachedRebuildMatchedImageId": true,
+    "httpProbePassed": false,
+    "admitted": false,
+    "installed": false,
+    "lastRefusal": "Host resources not admitted before packaged HTTP probe",
+    "firstAttemptLogsPreserved": true,
+    "resourceGuardWeakened": false
+  },
+  "themeContrast": {
+    "scope": "default HSL tokens only; opaque card and 10% status tint; no custom accent/glass compositing certification",
+    "themes": [
+      {
+        "theme": "neo-dark",
+        "ratios": {
+          "body": 17.9,
+          "mutedOnCard": 7.47,
+          "button": 8.87,
+          "successBadge": 7.66,
+          "warningBadge": 8.47,
+          "destructiveBadge": 5.64
+        }
+      },
+      {
+        "theme": "matrix-green",
+        "ratios": {
+          "body": 9.23,
+          "mutedOnCard": 7.86,
+          "button": 14.66,
+          "successBadge": 11.27,
+          "warningBadge": 13.96,
+          "destructiveBadge": 6.07
+        }
+      },
+      {
+        "theme": "deep-space",
+        "ratios": {
+          "body": 15.92,
+          "mutedOnCard": 6.71,
+          "button": 6.89,
+          "successBadge": 6.95,
+          "warningBadge": 9.67,
+          "destructiveBadge": 6.5
+        }
+      },
+      {
+        "theme": "light-corporate",
+        "ratios": {
+          "body": 15.43,
+          "mutedOnCard": 5.65,
+          "button": 5.47,
+          "successBadge": 5.3,
+          "warningBadge": 6.18,
+          "destructiveBadge": 5.17
+        }
+      },
+      {
+        "theme": "graphite",
+        "ratios": {
+          "body": 16.83,
+          "mutedOnCard": 7.9,
+          "button": 8.94,
+          "successBadge": 7.91,
+          "warningBadge": 8.51,
+          "destructiveBadge": 5.64
+        }
+      },
+      {
+        "theme": "sandstone",
+        "ratios": {
+          "body": 13.23,
+          "mutedOnCard": 5.87,
+          "button": 6.7,
+          "successBadge": 5.12,
+          "warningBadge": 5.98,
+          "destructiveBadge": 5.0
+        }
+      },
+      {
+        "theme": "dune",
+        "ratios": {
+          "body": 16.24,
+          "mutedOnCard": 8.03,
+          "button": 10.04,
+          "successBadge": 7.33,
+          "warningBadge": 8.07,
+          "destructiveBadge": 5.36
+        }
+      },
+      {
+        "theme": "mist",
+        "ratios": {
+          "body": 13.85,
+          "mutedOnCard": 6.41,
+          "button": 7.72,
+          "successBadge": 5.18,
+          "warningBadge": 6.04,
+          "destructiveBadge": 5.05
+        }
+      }
+    ]
+  },
+  "android": {
+    "localDebugBuild": "docs/audits/2026-10-21/VPN-APK84-LOCAL-BUILD.json",
+    "completeAndroidCiAccepted": false,
+    "minimumFreeRamGiBForFullCi": 12,
+    "installed": false,
+    "mainVpnServiceAccepted": false
+  },
+  "open": [
+    "Packaged web HTTP probe after host resources are admitted",
+    "Full Android CI and finite main-APK VPN pilot",
+    "Coordinated API/catalog migration, encryption key recovery and non-owner runtime role validation",
+    "Durable server operation journal, unique client-key leases and script/orchestration execution"
+  ]
+}

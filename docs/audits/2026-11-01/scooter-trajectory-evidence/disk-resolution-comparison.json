@@ -1,0 +1,160 @@
+{
+  "models": {
+    "640x360": {
+      "features": {
+        "keypoint_observations": 133999,
+        "raw_matches": 273585,
+        "gpu_seconds": 63.59299999999348,
+        "peak_gpu_reserved_GiB": 2.314453125,
+        "min_gpu_free_GiB": 13.21759033203125,
+        "min_host_ram_GiB": 5.187511444091797,
+        "pair_sha256": "75f35f628242d8d45eaee2f7f1a03e3e18c7c9d2733b4b519c547c8b99a97384"
+      },
+      "verification": {
+        "raw": 811,
+        "verified_nonempty": 764,
+        "all_verification_records": 811
+      },
+      "model": {
+        "registered": 166,
+        "selected": 166,
+        "coverage": 1.0,
+        "points": 4475,
+        "reprojection_px": 1.2871100100945976,
+        "scene_admissible": true,
+        "route_admissible": false,
+        "scene_reasons": [],
+        "route_reasons": [
+          "route_camera_reversals",
+          "route_camera_speed_outliers"
+        ],
+        "source_coverage": {
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "missing_start_seconds": 0.0,
+          "missing_end_seconds": 0.0,
+          "max_observed_gap_seconds": 0.266,
+          "endpoints_observed": true,
+          "all_intervals_observed": true,
+          "endpoint_limit_seconds": 1.0,
+          "interval_limit_seconds": 1.0
+        }
+      },
+      "motion166": {
+        "rapid_reversals_count": 39,
+        "speed_outliers_count": 10
+      },
+      "hud": {
+        "edges": 125,
+        "fit_count": 65,
+        "test_count": 60,
+        "test_median_abs_log": 0.7024213424168357,
+        "test_factor4": 5
+      },
+      "observation_support": {
+        "status": "complete",
+        "summary": {
+          "min": 1,
+          "median": 111.0,
+          "p10": 19.0,
+          "count_under_6": 8,
+          "count_under_15": 15
+        },
+        "summary_measure": "reprojection_le_4px",
+        "frame_count": 166,
+        "execution_qualified": false,
+        "admission_effect": "none"
+      },
+      "direct_E": {
+        "tested_adjacent_intervals": 165,
+        "estimated": 165,
+        "median_disagreement_deg": 0.40152244589997405,
+        "p95_disagreement_deg": 8.50689038649525,
+        "over_10deg": 7
+      },
+      "cheirality": {
+        "observations": 31970,
+        "behind": 0
+      }
+    },
+    "1024x576": {
+      "features": {
+        "keypoint_observations": 168802,
+        "raw_matches": 336661,
+        "gpu_seconds": 80.28100000007544,
+        "peak_gpu_reserved_GiB": 5.70703125,
+        "min_gpu_free_GiB": 9.93048095703125,
+        "min_host_ram_GiB": 8.923011779785156,
+        "pair_sha256": "75f35f628242d8d45eaee2f7f1a03e3e18c7c9d2733b4b519c547c8b99a97384"
+      },
+      "verification": {
+        "raw": 811,
+        "verified_nonempty": 782,
+        "all_verification_records": 811
+      },
+      "model": {
+        "registered": 166,
+        "selected": 166,
+        "coverage": 1.0,
+        "points": 6612,
+        "reprojection_px": 1.2444359916902956,
+        "scene_admissible": true,
+        "route_admissible": false,
+        "scene_reasons": [],
+        "route_reasons": [
+          "route_camera_reversals",
+          "route_camera_speed_outliers"
+        ],
+        "source_coverage": {
+          "first_seconds": 0.0,
+          "last_seconds": 35.493,
+          "missing_start_seconds": 0.0,
+          "missing_end_seconds": 0.0,
+          "max_observed_gap_seconds": 0.266,
+          "endpoints_observed": true,
+          "all_intervals_observed": true,
+          "endpoint_limit_seconds": 1.0,
+          "interval_limit_seconds": 1.0
+        }
+      },
+      "motion166": {
+        "rapid_reversals_count": 39,
+        "speed_outliers_count": 17
+      },
+      "hud": {
+        "edges": 125,
+        "fit_count": 65,
+        "test_count": 60,
+        "test_median_abs_log": 1.066933650028894,
+        "test_factor4": 14
+      },
+      "observation_support": {
+        "status": "complete",
+        "summary": {
+          "min": 14,
+          "median": 198.0,
+          "p10": 48.0,
+          "count_under_6": 0,
+          "count_under_15": 1
+        },
+        "summary_measure": "reprojection_le_4px",
+        "frame_count": 166,
+        "execution_qualified": false,
+        "admission_effect": "none"
+      },
+      "direct_E": {
+        "tested_adjacent_intervals": 165,
+        "estimated": 165,
+        "median_disagreement_deg": 0.5117769665436889,
+        "p95_disagreement_deg": 3.541778523325297,
+        "over_10deg": 4
+      },
+      "cheirality": {
+        "observations": 41617,
+        "behind": 0
+      }
+    }
+  },
+  "caveat": "Same DISK/LG, masked 166 source frames, graph of 811 candidate pairs and fixed max1024; analysis resolution and GPU resource cap differ. Geometric verification and pose outputs are not independently ground truth; HUD same video posthoc fit65/test60. More support alone is not route acceptance.",
+  "transform_note": "motion event arrays and HUD edge IDs omitted; counts and scalar metrics retained"
+}

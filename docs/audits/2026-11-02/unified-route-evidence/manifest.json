@@ -1,0 +1,67 @@
+{
+  "scope": "AUDIT_EVIDENCE_NOT_AUTOPILOT_QUALIFICATION",
+  "browserSource": "132c4acbbcee048c5cb2b9189d026390d19ce4bc",
+  "subsequentDeclarationOnlyFix": "15ce01edc7846f2842e52c3ad37df1b77cfafbd0",
+  "backendRuntimeSource": "60e7f6ffdab4265d3b838aa8ca1320e003289419",
+  "physicalActions": 0,
+  "sourceCaptureFilesChanged": false,
+  "files": {
+    "backend-runtime.json": {
+      "bytes": 4367,
+      "sha256": "8a384326c2e231ca939686193c32629b0d7e373710d50fd238b3a3e242f8200b"
+    },
+    "backend-tests.txt": {
+      "bytes": 249,
+      "sha256": "c761d2d9d01b5c3b084e72f16ae5d26e13dca58330d6acf92baa3c0f8fc756b4"
+    },
+    "browser-evidence.json": {
+      "bytes": 14126,
+      "sha256": "c3025a07bdf87ed9c73b30c91966356c41e29a6705837288e0ed768fb409c4ba"
+    },
+    "cloud-archive-admission.json": {
+      "bytes": 400,
+      "sha256": "e0616264ec634cd4ccecb20fa42b1619a893de1c2b5b692373f9266345a23ebc"
+    },
+    "cloud-ci-image-binding.json": {
+      "bytes": 812,
+      "sha256": "b12cbda88f1c813d8654e6cf73d3b5baf0c7b139e50852d012e23e767fdefd0b"
+    },
+    "final-map-173.png": {
+      "bytes": 317302,
+      "sha256": "4c1a9616c088e5a7cfe57504d4fb9f4be473cde964d847a23f0f5e45609111e1"
+    },
+    "final-mobile-390.png": {
+      "bytes": 46430,
+      "sha256": "a98c905446ad0c08ecab580ae39c8f7be7ffddae8848c797295d8e95d6371f66"
+    },
+    "final-primary-144-range.png": {
+      "bytes": 112247,
+      "sha256": "b7dcbd19e750d873cc82a751878f0b8b7fc804066c336f726e8ee26fae9175a5"
+    },
+    "final-scene-173.png": {
+      "bytes": 195154,
+      "sha256": "35778d53ad46eddad9f5f61439475672a0ee8a7005dc3edd8d70ce88e7456813"
+    },
+    "fused-attempt-summary.json": {
+      "bytes": 4966,
+      "sha256": "cbe458e46a6dca8136cb0ec986dcaef5240e6f54f514b3efd624ed1b47f407c1"
+    },
+    "fused-implementation-verification.json": {
+      "bytes": 1450,
+      "sha256": "b4d4dbe07b69b815a47f3d12e60cd972fefa3c8a002ef7d7fd3cbde9bd896f58"
+    },
+    "ui-image-import.json": {
+      "bytes": 1155,
+      "sha256": "dc63d843d8a1ae621d3dfd6568a76767910cd6f7c1c85243628ef542f8aada3a"
+    },
+    "ui-runtime.json": {
+      "bytes": 21344,
+      "sha256": "3fe7df119761c71c6b77f5408770132c2434fc465ab2f5ad2b2c4fda83b01546"
+    }
+  },
+  "frontendRuntimeSource": "60e7f6ffdab4265d3b838aa8ca1320e003289419",
+  "installerSource": "e83223cd086054cbb7d56ff441d406fed89b9c81",
+  "runtimeBrowserHydrationVerified": false,
+  "autonomousRepeatQualified": false,
+  "publicEvidenceHashConvention": "UTF-8 text normalized to LF; binary PNG raw bytes; private receipt hashes retain original bytes"
+}

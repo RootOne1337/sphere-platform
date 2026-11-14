@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "92df9aafcc87c1e72f72762692dab37106a9e732",
+  "productionAccepted": false,
+  "scope": "Ordinary Chrome before the correction: one standalone viewer, then two; editor View transition observed separately with bounded channel instrumentation.",
+  "singleAndTwoSamples": [
+    {
+      "at": "2026-10-15T19:24:02.919Z",
+      "tag": "single-initial",
+      "elapsedMs": 2,
+      "state": "probing",
+      "frames": 0,
+      "connections": 1,
+      "failure": null,
+      "recovery": 0
+    },
+    {
+      "at": "2026-10-15T19:24:19.125Z",
+      "tag": "single-observation",
+      "elapsedMs": 16208,
+      "state": "ready",
+      "frames": 81,
+      "connections": 2,
+      "failure": null,
+      "recovery": 0
+    },
+    {
+      "at": "2026-10-15T19:25:23.880Z",
+      "tag": "single-idle",
+      "elapsedMs": 80963,
+      "state": "ready",
+      "frames": 1200,
+      "connections": 2,
+      "failure": null,
+      "recovery": 0
+    },
+    {
+      "at": "2026-10-15T19:26:07.559Z",
+      "tag": "single-before-second",
+      "elapsedMs": 124642,
+      "state": "ready",
+      "frames": 1950,
+      "connections": 2,
+      "failure": null,
+      "recovery": 0
+    },
+    {
+      "at": "2026-10-15T19:26:42.229Z",
+      "tag": "two-initial",
+      "elapsedMs": 159312,
+      "state": "ready",
+      "frames": 2760,
+      "connections": 2,
+      "failure": null,
+      "recovery": 0
+    },
+    {
+      "at": "2026-10-15T19:27:29.851Z",
+      "tag": "two-idle",
+      "elapsedMs": 206934,
+      "state": "ready",
+      "frames": 3960,
+      "connections": 2,
+      "failure": null,
+      "recovery": 0
+    },
+    {
+      "at": "2026-10-15T19:28:38.506Z",
+      "tag": "two-before-editor",
+      "elapsedMs": 275589,
+      "state": "ready",
+      "frames": 5712,
+      "connections": 2,
+      "failure": null,
+      "recovery": 2
+    },
+    {
+      "at": "2026-10-15T19:31:18.217Z",
+      "tag": "baseline-end",
+      "elapsedMs": 435300,
+      "state": "ready",
+      "frames": 9465,
+      "connections": 2,
+      "failure": null,
+      "recovery": 0
+    }
+  ],
+  "controlTransitions": [
+    {
+      "at": 1792092475173,
+      "state": "fenced",
+      "failure": "idle_receipt_timeout"
+    },
+    {
+      "at": 1792092475391,
+      "state": "closed",
+      "failure": "idle_receipt_timeout"
+    },
+    {
+      "at": 1792092476147,
+      "state": "opening",
+      "failure": null
+    },
+    {
+      "at": 1792092476364,
+      "state": "ready",
+      "failure": null
+    },
+    {
+      "at": 1792092504803,
+      "state": "fenced",
+      "failure": "idle_receipt_timeout"
+    },
+    {
+      "at": 1792092505022,
+      "state": "closed",
+      "failure": "idle_receipt_timeout"
+    },
+    {
+      "at": 1792092506525,
+      "state": "opening",
+      "failure": null
+    },
+    {
+      "at": 1792092506744,
+      "state": "ready",
+      "failure": null
+    },
+    {
+      "at": 1792092607375,
+      "state": "fenced",
+      "failure": "idle_receipt_timeout"
+    },
+    {
+      "at": 1792092607591,
+      "state": "closed",
+      "failure": "idle_receipt_timeout"
+    },
+    {
+      "at": 1792092608348,
+      "state": "opening",
+      "failure": null
+    },
+    {
+      "at": 1792092608816,
+      "state": "ready",
+      "failure": null
+    }
+  ],
+  "editorViewChannelsBefore": [
+    {
+      "index": 1,
+      "label": "sphere-video-v1",
+      "state": "open",
+      "sent": 4,
+      "received": 5
+    },
+    {
+      "index": 2,
+      "label": "sphere-control-v2",
+      "state": "open",
+      "sent": 97,
+      "received": 97
+    }
+  ],
+  "editorViewChannelsAfter": [
+    {
+      "index": 1,
+      "label": "sphere-video-v1",
+      "state": "closed",
+      "sent": 4,
+      "received": 5
+    },
+    {
+      "index": 2,
+      "label": "sphere-control-v2",
+      "state": "closed",
+      "sent": 97,
+      "received": 97
+    },
+    {
+      "index": 3,
+      "label": "sphere-video-v1",
+      "state": "closed",
+      "sent": 0,
+      "received": 0
+    },
+    {
+      "index": 4,
+      "label": "sphere-video-v1",
+      "state": "open",
+      "sent": 21,
+      "received": 22
+    }
+  ],
+  "limits": [
+    "Recovery counters reset after sustained receipts; samples do not count all lifetime failures.",
+    "The two-client phase does not isolate native CPU from network/SCTP loss.",
+    "Channel numbers are viewer-local diagnostic ordinals, never authority or session identifiers."
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "sphere-skuter2-public-evidence-manifest-v1",
+  "files": [
+    {
+      "file": "delivery.json",
+      "bytes": 37735,
+      "sha256": "980381da5cbfdd808c70d0ac1a983a9eebd2dd23379c7a0e6c1c051cf9fe0b7d"
+    },
+    {
+      "file": "global-candidate.png",
+      "bytes": 735434,
+      "sha256": "662f0fa4bc22d3f0ef7be02f04c167ccfceb96f77e9f5384020669ee77a4d9b6"
+    },
+    {
+      "file": "masks.png",
+      "bytes": 2017889,
+      "sha256": "908389adf822862fe8d64fdaad578b04d3b8678784693669fd3ff2d54294809d"
+    },
+    {
+      "file": "summary.json",
+      "bytes": 3104,
+      "sha256": "dbfc783ba9cda62be03f92e576fd66a060b49c960ffb03236677f1df50304933"
+    }
+  ]
+}

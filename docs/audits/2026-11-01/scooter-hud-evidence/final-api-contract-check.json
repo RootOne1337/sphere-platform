@@ -1,0 +1,8 @@
+{
+  "missing_status": 404,
+  "missing_error": "job_not_found",
+  "wrong_capability_status": 403,
+  "job_directories_unchanged": true,
+  "created_jobs": 0,
+  "physical_actions": 0
+}

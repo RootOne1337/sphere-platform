@@ -1,0 +1,9 @@
+Android PR run 34466367295, head e68ec0ae0b17105d2c77f78239defc3ba70bd3dd, attempt 1
+Task excerpts; per-case counts come from the separate local XML summary.
+
+Build APK	Build debug APK	2026-09-10T10:34:03.1126723Z BUILD SUCCESSFUL in 3m 17s
+Build APK	Run unit tests	2026-09-10T10:35:28.8157105Z > Task :app:testDevDebugUnitTest
+Build APK	Run unit tests	2026-09-10T10:35:28.8188801Z > Task :app:testEnterpriseDebugUnitTest
+Build APK	Run unit tests	2026-09-10T10:36:00.0967558Z > Task :app:testEnterpriseReleaseUnitTest
+Build APK	Run unit tests	2026-09-10T10:36:00.9966240Z > Task :app:testDevReleaseUnitTest
+Build APK	Run unit tests	2026-09-10T10:36:31.6980816Z BUILD SUCCESSFUL in 2m 28s

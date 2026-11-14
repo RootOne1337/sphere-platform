@@ -1,8 +1,9 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { MoveHorizontal } from 'lucide-react';
+import { ActionRoutes } from './ActionRoutes';
 
 export function SwipeNode({ data, selected }: NodeProps) {
-  const d = data as { x1?: number; y1?: number; x2?: number; y2?: number; duration_ms?: number };
+  const d = data.action as { x1?: number; y1?: number; x2?: number; y2?: number; duration_ms?: number };
   return (
     <div
       className={`rounded-lg border-2 p-3 bg-purple-950 min-w-32 text-center ${
@@ -20,7 +21,7 @@ export function SwipeNode({ data, selected }: NodeProps) {
       {d.duration_ms != null && (
         <p className="text-xs text-gray-500 mt-1">{d.duration_ms}ms</p>
       )}
-      <Handle type="source" position={Position.Bottom} />
+      <ActionRoutes />
     </div>
   );
 }

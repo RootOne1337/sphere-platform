@@ -1,0 +1,41 @@
+{
+  "schema": "sphere-reviewed-reference-lk-import-receipt-v1",
+  "status": "imported_controlled_test_assets",
+  "id": "cd37b1d2606ff063963bb0454d39abd2",
+  "sourceBinding": {
+    "schema": "sphere-route-preparation-source-v1",
+    "kind": "alternative",
+    "alternative_id": "fixed-k-fused-173-supported-diagnostic",
+    "runtime_family": "reference_lk",
+    "geometry_sha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+    "source_manifest_sha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "reconstruction_input_sha256": "fd1b80002f79c3957001b99ed561d4449e91cbc7828fe1e3a143fca78ce1f7cf",
+    "native_source_sha256": "5394ec43ff6c36f0a368a4c270386a51082a6e765354dc7f11e5260eab09dfae",
+    "model_sha256": {
+      "cameras.bin": "b91cc00f86302d377a84293589630f17d8d6d1bf84641f8d27fcd8c2fd1be537",
+      "frames.bin": "f64e7a626e40c44c11c180f3391bdcca8965b387f765d652e55e56dad34286e5",
+      "images.bin": "ffd9fe00f97050e510a52252e775476f5f4ea5df1d0f3b71a14dac1df8b7c402",
+      "points3D.bin": "53de3a71e9f452dfa6b32360fc152ec22ec456e66c7603fea1e4cb6172cb12b2",
+      "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+    }
+  },
+  "importedArtifactSha256": {
+    "route.json": "b18ec0e33e9297728e6760c702e97567bed074fb5f0094e76c33f58f4cc801a0",
+    "reference-lk.npz": "fef2fad739b1df7cfe20ed3d056dca83962310c15805a69c2bdcbb917688af74",
+    "receipt.json": "8e4db287c7da9f4fb786c8f59f02a4cdc1a9b27798246f90f212d5ba3bfcf669",
+    "reference-lk-positive.json": "401f32e17800581293682e219fe59f69271e2aedef647efaff1c9d5129759252",
+    "reference-lk-transport.json": "33e6651fd8f8d1e6876fc08eb91081952ce47fb6afdf0010a0f32cd25281e3f7",
+    "reference-lk-negative.json": "1e7fb9e999e2cc73e29e35f82730bb700913e897d90ec4816723f4828a0ccce6",
+    "controlled-test-qualification.json": "d02b26b838d9ddfef16caf7241821a4bd4fa522dec1915e1dbe5b929c439b06a"
+  },
+  "allOtherPreviouslyProtectedUnchanged": true,
+  "oldParentCancelPreserved": true,
+  "oldAttemptsPreserved": true,
+  "primaryUnchanged": true,
+  "origin": "imported_verified_offline_export",
+  "workerStatus": "not_started_imported_verified_export",
+  "historicalWorkerExitInvented": false,
+  "physicalActions": 0,
+  "executionQualified": false,
+  "seconds": 8.452999999994063
+}

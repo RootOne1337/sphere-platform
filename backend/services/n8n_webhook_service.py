@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.webhook import Webhook
+from backend.services.webhook_outbox import enforce_active_subscription_limit
 
 if TYPE_CHECKING:
     pass
@@ -56,6 +57,7 @@ class N8nWebhookService:
         plain_secret = secret or secrets.token_hex(32)
         secret_hash = hashlib.sha256(plain_secret.encode()).hexdigest()
 
+        await enforce_active_subscription_limit(db, org_id)
         webhook = Webhook(
             org_id=org_id,
             name=name,
@@ -87,11 +89,12 @@ class N8nWebhookService:
         self,
         db: AsyncSession,
         org_id: uuid.UUID,
+        *,
+        active_only: bool = False,
     ) -> list[Webhook]:
-        stmt = select(Webhook).where(
-            Webhook.org_id == org_id,
-            Webhook.is_active == True,  # noqa: E712
-        )
+        stmt = select(Webhook).where(Webhook.org_id == org_id)
+        if active_only:
+            stmt = stmt.where(Webhook.is_active.is_(True))
         result = await db.execute(stmt)
         return list(result.scalars().all())
 
@@ -108,7 +111,7 @@ class N8nWebhookService:
         Fire-and-forget: find matching webhooks and schedule delivery tasks.
         Safe to call from sync or async context.
         """
-        webhooks = await self.get_org_webhooks(db, org_id)
+        webhooks = await self.get_org_webhooks(db, org_id, active_only=True)
         for webhook in webhooks:
             if not self._matches(webhook, event_type, payload):
                 continue

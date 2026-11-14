@@ -1,0 +1,749 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T01:32:56.432784+00:00",
+  "sourceWorkingTreeBase": "3dde634a",
+  "runtimeInstalled": false,
+  "scope": "Source UI finite checks for workspace forms and stronger glass material; not a transport or complete audit signoff.",
+  "frontendTests": {
+    "suites": 170,
+    "tests": 2467,
+    "passed": true
+  },
+  "typescriptPassed": true,
+  "browser": {
+    "engine": "Desktop Chrome, headless; explicit viewport sizes, no physical phone keyboard",
+    "finiteAccepted": true,
+    "javascriptErrors": 0,
+    "geometryChecks": [
+      {
+        "label": "release-desktop",
+        "width": 1440,
+        "height": 900,
+        "dialog": {
+          "x": 400,
+          "y": 16,
+          "w": 640,
+          "h": 868,
+          "right": 1040,
+          "bottom": 884,
+          "client": 638,
+          "scroll": 638
+        },
+        "header": {
+          "x": 401,
+          "y": 17,
+          "w": 638,
+          "h": 101,
+          "right": 1039,
+          "bottom": 118,
+          "client": 638,
+          "scroll": 638
+        },
+        "body": {
+          "x": 401,
+          "y": 118,
+          "w": 638,
+          "h": 694,
+          "right": 1039,
+          "bottom": 812,
+          "client": 638,
+          "scroll": 638,
+          "scrollHeight": 766,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 401,
+          "y": 812,
+          "w": 638,
+          "h": 71,
+          "right": 1039,
+          "bottom": 883,
+          "client": 638,
+          "scroll": 638
+        },
+        "rootScroll": 1440
+      },
+      {
+        "label": "release-phone-long-notes",
+        "width": 390,
+        "height": 844,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844,
+          "client": 388,
+          "scroll": 388
+        },
+        "header": {
+          "x": 1,
+          "y": 1,
+          "w": 388,
+          "h": 117,
+          "right": 389,
+          "bottom": 118,
+          "client": 388,
+          "scroll": 388
+        },
+        "body": {
+          "x": 1,
+          "y": 118,
+          "w": 388,
+          "h": 648,
+          "right": 389,
+          "bottom": 766,
+          "client": 388,
+          "scroll": 388,
+          "scrollHeight": 1014,
+          "scrollTop": 103
+        },
+        "footer": {
+          "x": 1,
+          "y": 766,
+          "w": 388,
+          "h": 77,
+          "right": 389,
+          "bottom": 843,
+          "client": 388,
+          "scroll": 388
+        },
+        "rootScroll": 390
+      },
+      {
+        "label": "release-keyboard-height",
+        "width": 390,
+        "height": 420,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 420,
+          "right": 390,
+          "bottom": 420,
+          "client": 388,
+          "scroll": 388
+        },
+        "header": {
+          "x": 1,
+          "y": 1,
+          "w": 388,
+          "h": 117,
+          "right": 389,
+          "bottom": 118,
+          "client": 388,
+          "scroll": 388
+        },
+        "body": {
+          "x": 1,
+          "y": 118,
+          "w": 388,
+          "h": 224,
+          "right": 389,
+          "bottom": 342,
+          "client": 388,
+          "scroll": 388,
+          "scrollHeight": 992,
+          "scrollTop": 146
+        },
+        "footer": {
+          "x": 1,
+          "y": 342,
+          "w": 388,
+          "h": 77,
+          "right": 389,
+          "bottom": 419,
+          "client": 388,
+          "scroll": 388
+        },
+        "rootScroll": 390
+      },
+      {
+        "label": "location-360-large",
+        "width": 360,
+        "height": 800,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 800,
+          "right": 360,
+          "bottom": 800,
+          "client": 358,
+          "scroll": 358
+        },
+        "header": {
+          "x": 1,
+          "y": 1,
+          "w": 358,
+          "h": 176.5,
+          "right": 359,
+          "bottom": 177.5,
+          "client": 358,
+          "scroll": 358
+        },
+        "body": {
+          "x": 1,
+          "y": 177.5,
+          "w": 358,
+          "h": 535,
+          "right": 359,
+          "bottom": 712.5,
+          "client": 358,
+          "scroll": 358,
+          "scrollHeight": 763,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 1,
+          "y": 712.5,
+          "w": 358,
+          "h": 86.5,
+          "right": 359,
+          "bottom": 799,
+          "client": 358,
+          "scroll": 358
+        },
+        "rootScroll": 360
+      },
+      {
+        "label": "location-landscape",
+        "width": 844,
+        "height": 390,
+        "dialog": {
+          "x": 44,
+          "y": 18,
+          "w": 756,
+          "h": 354,
+          "right": 800,
+          "bottom": 372,
+          "client": 754,
+          "scroll": 754
+        },
+        "header": {
+          "x": 45,
+          "y": 19,
+          "w": 754,
+          "h": 113.5,
+          "right": 799,
+          "bottom": 132.5,
+          "client": 754,
+          "scroll": 754
+        },
+        "body": {
+          "x": 45,
+          "y": 132.5,
+          "w": 754,
+          "h": 158.75,
+          "right": 799,
+          "bottom": 291.25,
+          "client": 754,
+          "scroll": 754,
+          "scrollHeight": 644,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 45,
+          "y": 291.25,
+          "w": 754,
+          "h": 79.75,
+          "right": 799,
+          "bottom": 371,
+          "client": 754,
+          "scroll": 754
+        },
+        "rootScroll": 844
+      },
+      {
+        "label": "create-pipeline-phone",
+        "width": 390,
+        "height": 844,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844,
+          "client": 388,
+          "scroll": 388
+        },
+        "header": {
+          "x": 1,
+          "y": 1,
+          "w": 388,
+          "h": 107,
+          "right": 389,
+          "bottom": 108,
+          "client": 388,
+          "scroll": 388
+        },
+        "body": {
+          "x": 1,
+          "y": 108,
+          "w": 388,
+          "h": 626,
+          "right": 389,
+          "bottom": 734,
+          "client": 388,
+          "scroll": 388,
+          "scrollHeight": 845,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 1,
+          "y": 734,
+          "w": 388,
+          "h": 109,
+          "right": 389,
+          "bottom": 843,
+          "client": 388,
+          "scroll": 388
+        },
+        "rootScroll": 390
+      },
+      {
+        "label": "pipeline-with-step",
+        "width": 390,
+        "height": 844,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844,
+          "client": 388,
+          "scroll": 388
+        },
+        "header": {
+          "x": 1,
+          "y": 1,
+          "w": 388,
+          "h": 107,
+          "right": 389,
+          "bottom": 108,
+          "client": 388,
+          "scroll": 388
+        },
+        "body": {
+          "x": 1,
+          "y": 108,
+          "w": 388,
+          "h": 626,
+          "right": 389,
+          "bottom": 734,
+          "client": 388,
+          "scroll": 388,
+          "scrollHeight": 1216,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 1,
+          "y": 734,
+          "w": 388,
+          "h": 109,
+          "right": 389,
+          "bottom": 843,
+          "client": 388,
+          "scroll": 388
+        },
+        "rootScroll": 390
+      },
+      {
+        "label": "create-pipeline-laptop",
+        "width": 1366,
+        "height": 768,
+        "dialog": {
+          "x": 235,
+          "y": 16,
+          "w": 896,
+          "h": 736,
+          "right": 1131,
+          "bottom": 752,
+          "client": 894,
+          "scroll": 894
+        },
+        "header": {
+          "x": 236,
+          "y": 17,
+          "w": 894,
+          "h": 95,
+          "right": 1130,
+          "bottom": 112,
+          "client": 894,
+          "scroll": 894
+        },
+        "body": {
+          "x": 236,
+          "y": 112,
+          "w": 894,
+          "h": 568,
+          "right": 1130,
+          "bottom": 680,
+          "client": 894,
+          "scroll": 894,
+          "scrollHeight": 1054,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 236,
+          "y": 680,
+          "w": 894,
+          "h": 71,
+          "right": 1130,
+          "bottom": 751,
+          "client": 894,
+          "scroll": 894
+        },
+        "rootScroll": 1366
+      },
+      {
+        "label": "schedule-phone",
+        "width": 390,
+        "height": 844,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844,
+          "client": 388,
+          "scroll": 388
+        },
+        "header": {
+          "x": 1,
+          "y": 1,
+          "w": 388,
+          "h": 91,
+          "right": 389,
+          "bottom": 92,
+          "client": 388,
+          "scroll": 388
+        },
+        "body": {
+          "x": 1,
+          "y": 92,
+          "w": 388,
+          "h": 688,
+          "right": 389,
+          "bottom": 780,
+          "client": 388,
+          "scroll": 388,
+          "scrollHeight": 1338,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 1,
+          "y": 780,
+          "w": 388,
+          "h": 63,
+          "right": 389,
+          "bottom": 843,
+          "client": 388,
+          "scroll": 388
+        },
+        "rootScroll": 390
+      },
+      {
+        "label": "event-trigger-phone",
+        "width": 390,
+        "height": 844,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844,
+          "client": 388,
+          "scroll": 388
+        },
+        "header": {
+          "x": 1,
+          "y": 1,
+          "w": 388,
+          "h": 99,
+          "right": 389,
+          "bottom": 100,
+          "client": 388,
+          "scroll": 388
+        },
+        "body": {
+          "x": 1,
+          "y": 100,
+          "w": 388,
+          "h": 680,
+          "right": 389,
+          "bottom": 780,
+          "client": 388,
+          "scroll": 388,
+          "scrollHeight": 713,
+          "scrollTop": 33
+        },
+        "footer": {
+          "x": 1,
+          "y": 780,
+          "w": 388,
+          "h": 63,
+          "right": 389,
+          "bottom": 843,
+          "client": 388,
+          "scroll": 388
+        },
+        "rootScroll": 390
+      },
+      {
+        "label": "trigger-landscape",
+        "width": 844,
+        "height": 390,
+        "dialog": {
+          "x": 134,
+          "y": 16,
+          "w": 576,
+          "h": 358,
+          "right": 710,
+          "bottom": 374,
+          "client": 574,
+          "scroll": 574
+        },
+        "header": {
+          "x": 135,
+          "y": 17,
+          "w": 574,
+          "h": 87,
+          "right": 709,
+          "bottom": 104,
+          "client": 574,
+          "scroll": 574
+        },
+        "body": {
+          "x": 135,
+          "y": 104,
+          "w": 574,
+          "h": 198,
+          "right": 709,
+          "bottom": 302,
+          "client": 574,
+          "scroll": 574,
+          "scrollHeight": 629,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 135,
+          "y": 302,
+          "w": 574,
+          "h": 71,
+          "right": 709,
+          "bottom": 373,
+          "client": 574,
+          "scroll": 574
+        },
+        "rootScroll": 844
+      },
+      {
+        "label": "glass-inspector-phone",
+        "width": 390,
+        "height": 844,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844,
+          "client": 388,
+          "scroll": 388
+        },
+        "header": null,
+        "body": null,
+        "footer": null,
+        "rootScroll": 390
+      },
+      {
+        "label": "pipeline-definition-invalid",
+        "width": 1440,
+        "height": 900,
+        "dialog": {
+          "x": 170,
+          "y": 16,
+          "w": 1100,
+          "h": 868,
+          "right": 1270,
+          "bottom": 884,
+          "client": 1098,
+          "scroll": 1098
+        },
+        "header": {
+          "x": 171,
+          "y": 17,
+          "w": 1098,
+          "h": 81,
+          "right": 1269,
+          "bottom": 98,
+          "client": 1098,
+          "scroll": 1098
+        },
+        "body": {
+          "x": 171,
+          "y": 98,
+          "w": 1098,
+          "h": 714,
+          "right": 1269,
+          "bottom": 812,
+          "client": 1098,
+          "scroll": 1098,
+          "scrollHeight": 1228,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 171,
+          "y": 812,
+          "w": 1098,
+          "h": 71,
+          "right": 1269,
+          "bottom": 883,
+          "client": 1098,
+          "scroll": 1098
+        },
+        "rootScroll": 1440
+      },
+      {
+        "label": "pipeline-definition-phone",
+        "width": 360,
+        "height": 800,
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 800,
+          "right": 360,
+          "bottom": 800,
+          "client": 358,
+          "scroll": 358
+        },
+        "header": {
+          "x": 1,
+          "y": 1,
+          "w": 358,
+          "h": 155,
+          "right": 359,
+          "bottom": 156,
+          "client": 358,
+          "scroll": 358
+        },
+        "body": {
+          "x": 1,
+          "y": 156,
+          "w": 358,
+          "h": 566,
+          "right": 359,
+          "bottom": 722,
+          "client": 358,
+          "scroll": 358,
+          "scrollHeight": 1844,
+          "scrollTop": 0
+        },
+        "footer": {
+          "x": 1,
+          "y": 722,
+          "w": 358,
+          "h": 77,
+          "right": 359,
+          "bottom": 799,
+          "client": 358,
+          "scroll": 358
+        },
+        "rootScroll": 360
+      }
+    ],
+    "glassChecks": [
+      {
+        "label": "dark-balanced",
+        "material": {
+          "background": "rgba(8, 8, 23, 0.66)",
+          "filter": "blur(24px) saturate(1.45)",
+          "overlayFilter": "none",
+          "strength": ".66",
+          "theme": "deep-space"
+        },
+        "sampledMinContrast": 5.3,
+        "accepted": true
+      },
+      {
+        "label": "sand-vivid",
+        "material": {
+          "background": "rgba(252, 251, 248, 0.48)",
+          "filter": "blur(32px) saturate(1.45)",
+          "overlayFilter": "none",
+          "strength": ".48",
+          "theme": "sandstone"
+        },
+        "sampledMinContrast": 5.48,
+        "accepted": true
+      },
+      {
+        "label": "sand-soft",
+        "material": {
+          "background": "rgba(252, 251, 248, 0.84)",
+          "filter": "blur(16px) saturate(1.45)",
+          "overlayFilter": "none",
+          "strength": ".84",
+          "theme": "sandstone"
+        },
+        "sampledMinContrast": 6.24,
+        "accepted": true
+      },
+      {
+        "label": "sand-solid",
+        "material": {
+          "background": "rgb(252, 251, 248)",
+          "filter": "none",
+          "overlayFilter": "blur(4px)",
+          "strength": ".84",
+          "theme": "sandstone"
+        },
+        "sampledMinContrast": 5.68,
+        "accepted": true
+      },
+      {
+        "label": "dark-reduced-transparency",
+        "material": {
+          "background": "rgb(8, 8, 23)",
+          "filter": "none",
+          "overlayFilter": "none",
+          "strength": ".48",
+          "theme": "deep-space"
+        },
+        "sampledMinContrast": 9.12,
+        "accepted": true
+      },
+      {
+        "label": "dark-vivid-contrast-corrected",
+        "material": {
+          "background": "rgba(8, 8, 23, 0.48)",
+          "filter": "blur(32px) saturate(1.45)",
+          "overlayFilter": "none",
+          "strength": ".48",
+          "theme": "deep-space"
+        },
+        "sampledMinContrast": 4.74,
+        "accepted": true
+      }
+    ],
+    "correctedProbe": {
+      "label": "dark-vivid",
+      "previousContrast": 3.72,
+      "fix": "Raised muted text opacity for dark glass",
+      "verifiedContrast": 4.74
+    }
+  },
+  "limits": [
+    "Conditional schedule-edit and pipeline-run dialogs covered by workflow tests, not actual mutations.",
+    "390x420 simulates available screen height; physical OS keyboard and mobile browser engine behavior not accepted.",
+    "Sampled adjacent screenshot pixels for selected text; not full WCAG certification or arbitrary media-background contrast.",
+    "No Android input commands, release publication or business record writes in browser QA."
+  ]
+}

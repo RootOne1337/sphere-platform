@@ -1,5 +1,13 @@
 # ADR-005 — Use Hilt for Android Agent Dependency Injection
 
+> Historical decision record: Hilt and KSP appear in the current Android build,
+> but the dependency graph, scope list, module layout and build-time estimates
+> below are not a current inventory or benchmark. For example, the current
+> [StreamingModule](../../android/app/src/main/kotlin/com/sphereplatform/agent/di/StreamingModule.kt)
+> binds its streaming manager in `SingletonComponent` with `@Singleton`, not
+> the proposed `@ServiceScoped`. See the [current DI directory](../../android/app/src/main/kotlin/com/sphereplatform/agent/di/)
+> and [Android guide](../android-agent.md).
+
 **Status:** Accepted  
 **Date:** 2024-03-20  
 **Deciders:** Android Team Lead  
@@ -146,7 +154,7 @@ di/
 
 ## Links
 
-- [android/app/src/main/java/.../di/](../../android/app/)
+- [Android DI modules](../../android/app/src/main/kotlin/com/sphereplatform/agent/di/)
 - [Hilt documentation](https://dagger.dev/hilt/)
 - [docs/android-agent.md](../android-agent.md)
 - [ADR-001: FastAPI choice](ADR-001-fastapi-over-django.md)

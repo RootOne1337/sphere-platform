@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="650" viewBox="0 0 1120 650" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Архитектура Sphere Platform</title>
+  <desc id="desc">Три основных компонента: Web UI, backend и Android APK. Backend сохраняет задания в PostgreSQL и использует Redis для presence и PubSub. Signed discovery передаёт Android маршруты. PC-agent отдельно управляет рабочей станцией. Схема ответственности, без заявления о высокой доступности.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1120" y2="650" gradientUnits="userSpaceOnUse"><stop stop-color="#11182D"/><stop offset="1" stop-color="#0A1020"/></linearGradient>
+    <linearGradient id="core" x1="408" y1="159" x2="711" y2="315" gradientUnits="userSpaceOnUse"><stop stop-color="#282653"/><stop offset="1" stop-color="#182644"/></linearGradient>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M1 1L7 4L1 7" stroke="#92A2D7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="cyan-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1L7 4L1 7" stroke="#5EC9DC" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+  <rect x="1" y="1" width="1118" height="648" rx="22" fill="url(#bg)" stroke="#2C3650"/>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="40" y="42" fill="#A5B4FC" font-size="13" font-weight="600" letter-spacing="2">SPHERE / SYSTEM MAP</text>
+    <text x="40" y="85" fill="#F1F5FF" font-size="30" font-weight="700">Один контур. Разные роли.</text>
+    <text x="40" y="116" fill="#A8B6D0" font-size="16">Исполнение на Android · состояние на сервере · контроль в браузере</text>
+    <rect x="40" y="176" width="266" height="151" rx="14" fill="#141E33" stroke="#4D5A83"/>
+    <text x="60" y="203" fill="#9DAECD" font-size="12" letter-spacing="1.5">01 / РАБОЧЕЕ МЕСТО</text>
+    <text x="60" y="239" fill="#F3F6FF" font-size="26" font-weight="600">Web UI</text>
+    <text x="60" y="270" fill="#B7C5DE" font-size="16">Парк · экраны · сценарии</text>
+    <text x="60" y="297" fill="#B7C5DE" font-size="16">История и диагностика</text>
+    <rect x="409" y="176" width="302" height="151" rx="14" fill="url(#core)" stroke="#8B8BF0" stroke-width="1.5"/>
+    <text x="431" y="203" fill="#C0C4FF" font-size="12" letter-spacing="1.5">02 / УПРАВЛЕНИЕ</text>
+    <text x="431" y="239" fill="#F3F6FF" font-size="26" font-weight="600">Backend</text>
+    <text x="431" y="270" fill="#D2D8F0" font-size="16">API · доставка · scheduler</text>
+    <text x="431" y="297" fill="#D2D8F0" font-size="16">Pipeline execution / recovery</text>
+    <rect x="814" y="176" width="266" height="151" rx="14" fill="#102530" stroke="#368A9D"/>
+    <text x="835" y="203" fill="#8DDDE6" font-size="12" letter-spacing="1.5">03 / ИСПОЛНЕНИЕ</text>
+    <text x="835" y="239" fill="#F3F6FF" font-size="26" font-weight="600">Android APK</text>
+    <text x="835" y="270" fill="#B9DDE5" font-size="16">DAG · capture · OTA</text>
+    <text x="835" y="297" fill="#B9DDE5" font-size="16">Identity и журнал результатов</text>
+    <path d="M312 250H401" stroke="#92A2D7" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <text x="357" y="224" text-anchor="middle" fill="#ADBBDB" font-size="12">API / WS</text>
+    <path d="M719 250H806" stroke="#92A2D7" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <text x="762" y="220" text-anchor="middle" fill="#ADBBDB" font-size="12">Команды</text>
+    <text x="762" y="281" text-anchor="middle" fill="#ADBBDB" font-size="12">Видео / ACK</text>
+    <path d="M467 335V383" stroke="#92A2D7" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M653 335V383" stroke="#92A2D7" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <rect x="381" y="391" width="172" height="97" rx="12" fill="#121C30" stroke="#46577C"/>
+    <text x="400" y="425" fill="#E1E8FA" font-size="20" font-weight="600">PostgreSQL</text>
+    <text x="400" y="453" fill="#A8B6D0" font-size="14">Задания, результаты,</text>
+    <text x="400" y="475" fill="#A8B6D0" font-size="14">checkpoints</text>
+    <rect x="567" y="391" width="172" height="97" rx="12" fill="#121C30" stroke="#46577C"/>
+    <text x="586" y="425" fill="#E1E8FA" font-size="20" font-weight="600">Redis</text>
+    <text x="586" y="453" fill="#A8B6D0" font-size="14">Presence, PubSub,</text>
+    <text x="586" y="475" fill="#A8B6D0" font-size="14">временные данные</text>
+    <rect x="814" y="391" width="266" height="97" rx="12" fill="#10202E" stroke="#335B72"/>
+    <text x="835" y="425" fill="#C9E6F2" font-size="20" font-weight="600">Signed discovery</text>
+    <text x="835" y="454" fill="#A5C9D6" font-size="14">Источники конфигурации</text>
+    <text x="835" y="476" fill="#A5C9D6" font-size="14">Подписанные маршруты</text>
+    <path d="M947 390V335" stroke="#5EC9DC" stroke-width="1.5" stroke-dasharray="4 5" marker-end="url(#cyan-arrow)"/>
+    <rect x="40" y="391" width="266" height="97" rx="12" fill="#141E33" stroke="#46577C"/>
+    <text x="60" y="425" fill="#E1E8FA" font-size="20" font-weight="600">PC-agent</text>
+    <text x="60" y="454" fill="#A8B6D0" font-size="14">Станция · LDPlayer / ADB</text>
+    <text x="60" y="476" fill="#A8B6D0" font-size="14">Host telemetry и операции</text>
+    <path d="M306 411H340V307Q340 296 351 296H401" stroke="#92A2D7" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M40 533H1080" stroke="#29354C"/>
+    <circle cx="49" cy="570" r="4" fill="#818CF8"/>
+    <text x="64" y="575" fill="#B8C6DE" font-size="15">LAN или WAN через доступный ingress</text>
+    <circle cx="582" cy="570" r="4" fill="#5EC9DC"/>
+    <text x="597" y="575" fill="#B8C6DE" font-size="15">Маршруты обновляются отдельно от APK</text>
+    <text x="40" y="615" fill="#8595B3" font-size="13">Схема ответственности компонентов. Независимый резерв инфраструктуры проверяется отдельно.</text>
+  </g>
+</svg>

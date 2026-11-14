@@ -1,0 +1,123 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "startedAt": "2026-10-06T07:34:38.656364+00:00",
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "deviceCommandsSent": false,
+  "schemaDowngradePerformed": false,
+  "afterApiFleet": {
+    "observedAt": "2026-10-06T07:34:49.135066+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 9,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 10,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "finishedAt": "2026-10-06T07:35:02.783465+00:00",
+  "ready": true,
+  "beforeFleet": {
+    "observedAt": "2026-10-06T07:34:38.894783+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "afterFleet": {
+    "observedAt": "2026-10-06T07:35:02.819519+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 10,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 9,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "changedContainers": [
+    "sphere-pilot-20260911-backend-1",
+    "sphere-review-20261002-review-ui-1"
+  ],
+  "otherContainersPreserved": 44,
+  "sourceVersionsPointersDatesPreserved": true,
+  "taskCountPreserved": true,
+  "catalogSchema": 1,
+  "catalogRows": 22,
+  "legacyRawBytes": 34553,
+  "catalogRawBytes": 14037,
+  "cacheControl": "no-store",
+  "apiImageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+  "uiImageId": "sha256:63159a43a6dde21edc4950b0dd33aa99e01e04ad06e6643d7bf572fba087b1b6",
+  "url": "http://127.0.0.1:3015/scripts",
+  "migrationHead": "20261006_script_catalog_metadata",
+  "firstAttempt": {
+    "result": "Automatically rolled UI and API back to prior images after preservation assertion.",
+    "reason": "Equivalent Windows bind sources used Linux Docker Desktop and Windows path spellings.",
+    "bindSourcesChecked": [
+      "/app/agent-config",
+      "/var/lib/sphere/updates"
+    ],
+    "secondAttemptVerifiedPriorImagesWereRestored": true,
+    "correction": "Normalize only drive-path aliases and case before comparing; preserve other mount fields and configuration.",
+    "schemaDowngradePerformed": false
+  },
+  "finalFleetRecovery": {
+    "status": "finite_observation_received",
+    "observedAt": "2026-10-06T07:41:18.061449+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true,
+    "healthyFleetOrSoakClaimed": false,
+    "receipt": "final-readonly.json"
+  },
+  "nativeBrowserQa": {
+    "status": "finite_visual_receipt_verified",
+    "receipt": "native-ui.json",
+    "visualAcceptanceClaimed": "listed checks only; no whole-product acceptance"
+  },
+  "preservationBoundary": "Only API and review UI images changed; 44 neighboring container snapshots and non-image configuration compared. No APK, tunnel or Android command changed.",
+  "provenance": [
+    {
+      "retainedPrivateReceipt": "installed.json",
+      "sha256": "444d5a31fd8eb1729fb23cbd29ed280960215d1d957b71880a9073c68dcca61a",
+      "bytes": 1643
+    },
+    {
+      "retainedPrivateReceipt": "runtime-before-first-attempt.json",
+      "sha256": "28cc399166ea0f5b3779854a9f204d81672b1bb890d8bb392748ad3fb1fe11bd",
+      "bytes": 63844
+    },
+    {
+      "retainedPrivateReceipt": "runtime-after-attempt.json",
+      "sha256": "10d0ddf41678c2359b331ca1830a15e1b5bcab4e250f1b273f8dfed33c854263",
+      "bytes": 63558
+    },
+    {
+      "retainedPrivateReceipt": "runtime-before.json",
+      "sha256": "07db769a349e14a32d8a61394df335448c11dcaeb2153629512ff5ac610975e0",
+      "bytes": 63559
+    },
+    {
+      "retainedPrivateReceipt": "runtime-after.json",
+      "sha256": "10d0ddf41678c2359b331ca1830a15e1b5bcab4e250f1b273f8dfed33c854263",
+      "bytes": 63558
+    }
+  ]
+}

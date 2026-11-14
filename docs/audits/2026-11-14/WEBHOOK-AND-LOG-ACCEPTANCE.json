@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-14",
+  "sourceBase": "ab5236c6",
+  "source": "Working tree on top of the source base",
+  "report": "docs/audits/2026-11-14/WEBHOOK-AND-LOG-ACCEPTANCE.md",
+  "runtime": {
+    "scope": "Isolated PostgreSQL 15, Redis 7.2, shared journal directory, Chromium and n8n 1.32.0",
+    "runtimeRoleRls": true,
+    "installedOnPilot": false,
+    "fleetAccepted": false
+  },
+  "ledger": {
+    "closedInThisBatch": ["EP-025", "EP-033"]
+  },
+  "acceptance": {
+    "EP-025": {
+      "migration": "20261114_webhook_outbox",
+      "criteria": [
+        "Browser history exposes delivery UUID, outcomes, attempt times and retry deadlines. A 403 to replay to 204 uses the same UUID.",
+        "Legacy callback keeps its body. n8n 1.32.0 registers the canonical subscription and completes one workflow after signed delivery.",
+        "PostgreSQL RLS proves atomic result/outbox, bounded retries and replay, lease fencing, queue limits and TTL. A test receiver performs one effect across two requests with the same UUID."
+      ]
+    },
+    "EP-033": {
+      "focusedTestsPassed": 87,
+      "criteria": [
+        "Byte-bounded read and upload, fixed concurrency and bounded ownership lookup.",
+        "Tenant-specific, daily and shared quota under a shared filesystem lock, including legacy and retired device journals.",
+        "Independent offline expiry, copy and restore, concurrent process writes, fixed label counts and forecast rule tested with promtool."
+      ]
+    }
+  }
+}

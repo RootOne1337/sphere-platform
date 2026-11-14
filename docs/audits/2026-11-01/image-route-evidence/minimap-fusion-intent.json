@@ -1,0 +1,37 @@
+{
+  "roi_original_px": [
+    0,
+    0,
+    310,
+    320
+  ],
+  "center_original": [
+    145,
+    165
+  ],
+  "outer_radius": 108,
+  "center_exclusion_radius": 28,
+  "badge_exclusion_center": [
+    241,
+    238
+  ],
+  "badge_exclusion_radius": 57,
+  "dynamic_HSV_exclusion": "S>55 or V>205 or V<25; erode 3x3",
+  "crop_original_xyxy": [
+    37,
+    57,
+    253,
+    273
+  ],
+  "resized": [
+    96,
+    96
+  ],
+  "matching": "masked zero-normalized correlation of Gaussian-smoothed Sobel edge magnitudes; center-fixed rotate [-30,-20,-10,0,10,20,30], scale [.9,1,1.1], choose maximum",
+  "min_valid_fraction_of_static_geometry": 0.3,
+  "min_edge_std": 0.02,
+  "fusion": "world**.7 * max(0,(NCC+1)/2)**.3 for valid auxiliary, otherwise world unchanged; unchecked remains unchecked",
+  "evaluation": "same-video proxy only, 100 forward/reverse causal DP unchanged",
+  "no_pose_or_action": true,
+  "frozen_before_evaluation": true
+}

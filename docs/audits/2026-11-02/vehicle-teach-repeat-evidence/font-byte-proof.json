@@ -1,0 +1,9 @@
+{
+  "schema": "sphere-font-committed-byte-proof-v1",
+  "sourceCommit": "1b68f20d",
+  "expected": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+  "committedBlobSHA256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+  "workingFileSHA256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+  "committedMatchesPinned": true,
+  "workingMatchesPinned": true
+}

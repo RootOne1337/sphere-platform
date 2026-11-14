@@ -1,0 +1,14 @@
+{
+  "purpose": "Preserve exact tested ratio-after-epipolar negative variant before any future source correction",
+  "files": {
+    "tested-guided-source.py": {
+      "original": "scripts/pilot/route_guided_landmarks.py",
+      "sha256": "361bec772cf9f689e2ca80cec44df68f0a83f44f973c2dff474eab34cf9f6953"
+    },
+    "tested-guided-tests.py": {
+      "original": "tests/test_route_guided_landmarks.py",
+      "sha256": "479377b2161e38241f0c02e8acebcae02fcd422be921e66dd2914e7f0cca1b66"
+    }
+  },
+  "productCodeModified": false
+}

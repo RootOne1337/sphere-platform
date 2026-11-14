@@ -1,0 +1,39 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "properties": {
+    "fixture_rows": 100,
+    "nodes_per_version": 500,
+    "name_characters": 64,
+    "description_characters": 256,
+    "minimal_source_utf8_bytes_per_version": 33307,
+    "heavy_source_utf8_bytes_per_version": 491520,
+    "minimal_legacy_raw_utf8_bytes": 3068057,
+    "heavy_legacy_raw_utf8_bytes": 48889157,
+    "minimal_catalog_raw_utf8_bytes": 85176,
+    "heavy_catalog_raw_utf8_bytes": 85176,
+    "heavy_raw_reduction_percent": 99.8258,
+    "local_asgi_minimal_catalog_ms_single_request": 47.31,
+    "local_asgi_heavy_catalog_ms_single_request": 48.859,
+    "local_asgi_minimal_legacy_ms_single_request": 298.027,
+    "local_asgi_heavy_legacy_ms_single_request": 689.896
+  },
+  "catalogPage256KiBBudgetPassed": true,
+  "sqlProjectionCountPerRequest": 1,
+  "pageSizesVerified": [
+    25,
+    50,
+    100,
+    200
+  ],
+  "dagSelectedOrReadTimeHashComputed": false,
+  "measurement": "One local ASGI request for each minimal/heavy source case; raw UTF-8 body bytes, not compressed WAN transfer.",
+  "deployedLatencyRssBrowserReleaseGatesMeasured": false,
+  "provenance": [
+    {
+      "retainedPrivateReceipt": "catalog-shipped-dependencies.xml",
+      "sha256": "8d175e99de38912f7d6225c8b12a0931533d8c99e55118b475f40faee860fdaf",
+      "bytes": 26838
+    }
+  ]
+}

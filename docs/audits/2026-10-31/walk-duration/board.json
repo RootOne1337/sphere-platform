@@ -1,0 +1,12 @@
+{
+  "schema": "sphere-walk-duration-board-v1",
+  "physicalActions": 0,
+  "reportSha256": "619af5459c7864674131415f5b9bf6ca38c0d7e781ce632d09463dd5d2b81fb1",
+  "benchmarkSha256": "f566cb96ca4fa21716c900fee3016135c21f1f693dac3e6b73f677b023159f3d",
+  "wholeRunReplies": 519,
+  "retainedRows": 278,
+  "motionSeconds": 31.252908399910666,
+  "stopReason": "walk_time_limit",
+  "stopProgress": 0.3425733333289887,
+  "liveCompletionVerified": false
+}

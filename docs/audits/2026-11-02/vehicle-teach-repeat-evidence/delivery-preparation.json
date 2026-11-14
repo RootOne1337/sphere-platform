@@ -1,0 +1,78 @@
+{
+  "schema": "sphere-vehicle-ui-delivery-preparation-v1",
+  "recorded_at": 1793563903.2703373,
+  "build_started": false,
+  "waiting_for_commit_sha": true,
+  "installed_node": {
+    "path": "C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+    "version": "v24.22.1",
+    "sha256": "b59feb2088f80e1fa431c8f9c316861e660e5936f968fd97b802e550fed356c5",
+    "downloaded": false
+  },
+  "current_ui": {
+    "container_id": "986198b4909b2e9f51404ba2d53104ceb542e1585815516148c4ca99a29d3fa7",
+    "image_id": "sha256:61bdd78299702ee2b812a53ebc9556cd7eac44cec0e03093efacd891da436cf2",
+    "image_tag": "sphere-route-local:recorder-clock-20261101-v1",
+    "health": "healthy"
+  },
+  "resource_snapshot": {
+    "observedAt": "2026-11-01T20:11:41.557469+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 37791399936,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "availableRamBytes": 9665404928,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 77608476672,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 11012562944,
+    "kernelNonpagedBytes": 5303369728,
+    "processCount": 477,
+    "handleCount": 707310,
+    "memoryMeasurement": "GetPerformanceInfo"
+  },
+  "resource_findings": [],
+  "dependency_cache": {
+    "state": "verified",
+    "lockSha256": "d04493d745f1d6200a51e7c0a661a9a5feda0552225bd4d01b3490f9455cfc78",
+    "installedManifestSha256": "6df90657826862e17a0829227b1246183eda98fc334c3172681569527a2b127f",
+    "installedPackages": 880,
+    "optionalPackagesAbsent": 49,
+    "contentIntegrityAttested": false
+  },
+  "tool_sha256_before_root_commit": {
+    "scripts/pilot/local_ci.py": "0707af71ea05ba3b80d7a564774d7a2cd7972cc2d613e0e43a4309fff651acc4",
+    "scripts/pilot/package_local_web.py": "95451c4a69bfc204f9c11afa6fabe640d28111ce7a95ae80c5ef7d64ee8b2bba",
+    "scripts/pilot/local_web_artifact.py": "3d873e25714f3062cb3d08a3328f4858c56419892a4fdcd1742552772640f5d8",
+    "scripts/pilot/install_reviewed_web.py": "de407907a97dbb483375107a11aa735d8e4253711cb1cd573e0ad721d188b5e7",
+    "tests/containers/frontend_local.Dockerfile": "d39056c90159291c9a7e5fbc5bc2f3af4c0af84e9e9ce85abbe8d3ddec2b8088",
+    "tests/containers/probe_local_web_image.mjs": "be04e350cc3a03549240cefba8c0fb7f5d0d0d0874c5a0386acdf9f23f740726"
+  },
+  "canonical_node_base_available_as_image": false,
+  "canonical_base_digest": "public.ecr.aws/docker/library/node@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20",
+  "canonical_path": [
+    "committed trusted SHA",
+    "full local_ci frontend --publish status +readback",
+    "package_local_web canonical source+image+HTTP probe",
+    "isolated fixture (not IAB acceptance)",
+    "install_reviewed_web --local-execution UI-only"
+  ],
+  "supplemental_checks": [
+    "canonical full Mounts sorting",
+    "complete uniqueEnv KEY->VALUE comparison in memory; redacted receipts",
+    "all othercontainerConfig+HostConfig+Mounts unchanged",
+    "nativeAPIidentity+sourceinputSHA+OTA unchanged",
+    "gateway pages/clientassets/public workers source bound"
+  ],
+  "known_limits": [
+    "Canonical Docker build currently lacks explicit Node heap/remote-daemon CPU cap; parent informed.",
+    "No IAB/native PC/profile access used.",
+    "No committed-source packaging started before parent provides SHA."
+  ],
+  "production_mutations": 0,
+  "frontend_source_edits": 0
+}

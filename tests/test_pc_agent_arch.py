@@ -100,28 +100,17 @@ class TestExponentialBackoff:
         async def fake_connect():
             raise ConnectionRefusedError("refused")
 
-        async def fake_wait_for(coro, timeout):
-            raise asyncio.TimeoutError()
-
-        async def fake_sleep(delay):
+        async def observe_delay(delay):
             delays_recorded.append(delay)
-            if len(delays_recorded) >= 6:
-                ws_client._stop_event.set()
+            return len(delays_recorded) == 6
 
         ws_client._connect_once = fake_connect
+        # Execute the actual reconnect loop. Patching the outer wait_for used
+        # to skip it entirely and let an empty observation list pass.
+        with patch.object(ws_client, "_wait_for_stop", side_effect=observe_delay):
+            await asyncio.wait_for(ws_client.run(), timeout=3.0)
 
-        with patch("asyncio.sleep", side_effect=fake_sleep), \
-             patch("asyncio.wait_for", side_effect=fake_wait_for):
-            try:
-                await asyncio.wait_for(ws_client.run(), timeout=3.0)
-            except asyncio.TimeoutError:
-                pass
-
-        expected = [1.0, 2.0, 4.0, 8.0, 16.0, 30.0]
-        for i, exp in enumerate(expected):
-            if i < len(delays_recorded):
-                assert delays_recorded[i] == pytest.approx(exp, rel=0.05), \
-                    f"backoff[{i}] ожидали {exp}, получили {delays_recorded[i]}"
+        assert delays_recorded == [1.0, 2.0, 4.0, 8.0, 16.0, 30.0]
 
     def test_delay_capped_at_max(self, cfg):
         """После 20 итераций задержка равна max."""

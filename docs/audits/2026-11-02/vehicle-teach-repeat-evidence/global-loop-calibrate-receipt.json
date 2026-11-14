@@ -1,0 +1,19 @@
+{
+  "command": [
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-tools\\colmap-v4.2.1-cpu\\bin\\colmap.exe",
+    "view_graph_calibrator",
+    "--database_path",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-global-loop-20261102-v1\\job\\prepared\\database.db",
+    "--default_random_seed",
+    "17",
+    "--log_target",
+    "stdout"
+  ],
+  "maximumSeconds": 45,
+  "owned": true,
+  "pid": 16184,
+  "returncode": 0,
+  "status": "completed",
+  "seconds": 12.46799999999348,
+  "logSha256": "70e22c7d8243a32b056e1141ce3ed9f06f577f3cadff3a2cb42ea152c116820f"
+}

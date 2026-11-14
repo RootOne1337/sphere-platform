@@ -1,0 +1,617 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T23:07:36.638670+00:00",
+  "runtimeInstalled": true,
+  "scope": "One diagnostic-only host ICE window with real native counters; failed channel. Original APK restored and probe disabled; ordinary public video returned. No direct media/control, idle reliability, latency, resource soak or fleet acceptance.",
+  "runtime": {
+    "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "apiSourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "uiContainer": {
+      "id": "ab99e502bd25ba176c485847ccedaff1933495c4533b25c2111a4e31b34792f6",
+      "imageId": "sha256:aab964f9218f3911f4f35f4aec8ed63898cbf673a7a4c122c01b3016b65e94bb",
+      "imageTag": "sphere-review-frontend:369654a0be4bded35e299062badc9bfe95101f1e",
+      "startedAt": "2026-10-09T21:35:07.521123551Z",
+      "status": "running"
+    },
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "containerCount": 46,
+    "apiContainer": {
+      "id": "aaf5b22a8901c412a08e3f3c8604798ea0fcef836fb3f549ef548d9ef5297182",
+      "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+      "startedAt": "2026-10-09T23:01:33.29485218Z",
+      "status": "running"
+    },
+    "otherContainersPreservedPerInstallation": 45,
+    "schemaMigrationPerformed": false,
+    "directProbeEnabled": false,
+    "directProbeDeviceIds": [],
+    "nativeCanaryCurrentlyInstalled": false,
+    "originalApkRestored": true,
+    "publicHostMapChanged": false,
+    "apiWsBootstrapRoutesChanged": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Post-cleanup ordinary public viewer: 662 decoded/drawn frames, no invalid/decode/render errors, View mode; not steady FPS or Android input acceptance.",
+    "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+    "observedAtUtc": "2026-10-09T23:03:13.860Z",
+    "decodedFrames": 662,
+    "drawnFrames": 662,
+    "invalidPackets": 0,
+    "decodeErrors": 0,
+    "renderErrors": 0,
+    "normalBuildNetworkProbePanelVisible": false,
+    "controlClosed": true,
+    "cachedAndroidTelemetryIsFreshCaptureProof": false
+  },
+  "sourceAdmission": {
+    "revision": "8447c9078eaff138d60e9cfe0a47867f67278d03",
+    "hostedCi": [
+      {
+        "runId": 38000574521,
+        "conclusion": "success",
+        "headSha": "8447c9078eaff138d60e9cfe0a47867f67278d03",
+        "name": "CI вЂ” Android",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38000574521"
+      },
+      {
+        "runId": 38000574533,
+        "conclusion": "success",
+        "headSha": "8447c9078eaff138d60e9cfe0a47867f67278d03",
+        "name": "CI вЂ” Backend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38000574533"
+      },
+      {
+        "runId": 38000574514,
+        "conclusion": "success",
+        "headSha": "8447c9078eaff138d60e9cfe0a47867f67278d03",
+        "name": "CI вЂ” Frontend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38000574514"
+      },
+      {
+        "runId": 38000574536,
+        "conclusion": "success",
+        "headSha": "8447c9078eaff138d60e9cfe0a47867f67278d03",
+        "name": "Preview вЂ” Deploy",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/38000574536"
+      }
+    ],
+    "artifactSha256": "0230fc5dc60119e4459de76f1e3370e668ee87784f1ec13a45538c847f5c8968",
+    "artifactBytes": 57655284,
+    "originalSignerMatched": true,
+    "applicationVersionUnchanged": true,
+    "jniAbis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "localUnitTests": {
+      "dev": {
+        "tests": 990,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 990,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "androidLint": {
+      "dev": {
+        "errors": 0,
+        "warnings": 37
+      },
+      "enterprise": {
+        "errors": 0,
+        "warnings": 37
+      }
+    },
+    "previousRejectedSource": "0abe15ce1e8ab82ab9ac232ce42b7c65b1055bdc",
+    "windowsXmlPathIssue": {
+      "characters": 262,
+      "extendedPathReadSucceeded": true,
+      "gradleBuildRepeated": false,
+      "filesystemCorruptionProven": false
+    }
+  },
+  "diagnosticUi": {
+    "temporaryDevelopmentServer": true,
+    "productionArtifact": false,
+    "frontendEquivalentSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "standardRuntimeBuildFlagEnabled": false,
+    "temporaryPorts": [
+      3016,
+      3017
+    ],
+    "temporaryListenersStopped": true
+  },
+  "probe": {
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "attempts": 1,
+    "iceServers": [],
+    "signalingObserverSeconds": 35,
+    "mediaOrAndroidInputSentOnNewChannel": false,
+    "tapKeyTextScenarioSent": false,
+    "legacyVideoContinuedDuringProbe": true,
+    "legacyControlMode": "View; no held input or terminal command",
+    "offerBytes": 652,
+    "offerCandidates": 1,
+    "offerMdnsCandidates": 1,
+    "answerBytes": 723,
+    "answerCandidates": 2,
+    "answerMdnsCandidates": 0,
+    "authorizedPublicationGapMs": 566,
+    "outcome": "CONNECTION_DEADLINE",
+    "setupDeadlineMs": 12000,
+    "echoSamples": 0,
+    "rttP95Ms": null,
+    "selectedCandidatePair": null,
+    "lastBrowserSnapshot": {
+      "iceState": "checking",
+      "dtlsState": "connecting",
+      "localCandidates": 4,
+      "remoteCandidates": 2,
+      "pairs": 2,
+      "checkingPairs": 2,
+      "failedPairs": 0,
+      "succeededPairs": 0,
+      "requestsSent": 177,
+      "responsesReceived": 0,
+      "snapshotAgeAtStopMs": 279
+    },
+    "nativeNetwork": {
+      "samples": [
+        {
+          "deviceEpochSeconds": 1791586745.99,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586746.996,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 0,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586748.003,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586749.009,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586750.016,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586751.023,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 0,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586752.03,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586753.037,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586754.044,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586755.052,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586756.058,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 0,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        },
+        {
+          "deviceEpochSeconds": 1791586757.066,
+          "event": "native_ice_summary",
+          "sampleAgeMs": 1,
+          "network": {
+            "localCandidates": 4,
+            "remoteCandidates": 0,
+            "pairs": 0,
+            "checkingPairs": 0,
+            "failedPairs": 0,
+            "succeededPairs": 0,
+            "requestsSent": null,
+            "requestsReceived": null,
+            "responsesSent": null,
+            "responsesReceived": null,
+            "dtlsState": "new"
+          }
+        }
+      ],
+      "maxSampleAgeMs": 1,
+      "rawStatsExported": false,
+      "missingPairCountersRemainUnknown": true
+    },
+    "localization": "Native stats contain no remote candidate or pair across all 12 reports while browser checks two pairs. Native packet counters are unavailable, not zero. Candidate resolution/processing and routing are hypotheses; no packet attribution or proven mDNS/firewall/NAT/VPN cause.",
+    "candidateAddressesSdpCredentialsPublished": false
+  },
+  "routing": {
+    "recordedAtUtc": "2026-10-09T22:45:53.473887+00:00",
+    "scope": "Read-only IPv4 routing evidence; not packet delivery or causal proof.",
+    "androidHasPolicyRouting": true,
+    "androidDefaultRouteInInterfaceTable": true,
+    "androidMainTableAloneInsufficient": true,
+    "windowsGuestAddressRoutePrefix": "0.0.0.0/0",
+    "windowsGuestRouteInterfaceKind": "vpn",
+    "routeChanged": false,
+    "firewallChanged": false,
+    "vpnChanged": false,
+    "rawAddressesPublished": false,
+    "privateReadHashes": {
+      "ipv4-rules.txt": "93c1545820ab84751bf38022a838aa9402cdfc75f1c59cc89eead66aefd9bfd5",
+      "ipv4-all-tables.txt": "52fe374803c600114f6c0579b0b70460b8fa9ffac11073a2ee8e3760a086bb67"
+    },
+    "windowsRouteObservedAtUtc": "2026-10-09T22:53:22.859346+00:00"
+  },
+  "native": {
+    "sourceRevision": "8447c9078eaff138d60e9cfe0a47867f67278d03",
+    "apkSha256": "0230fc5dc60119e4459de76f1e3370e668ee87784f1ec13a45538c847f5c8968",
+    "originalApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+    "restoredApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+    "installedAtUtc": "2026-10-09T22:57:11.864645+00:00",
+    "restoredAtUtc": "2026-10-09T23:00:42.001857+00:00",
+    "appDataCleared": false,
+    "otaPublished": false,
+    "otherDevicesUpdated": false,
+    "sameProcessResourceSamples": [
+      {
+        "observedAtUtc": "2026-10-09T22:58:35.066241+00:00",
+        "vmRssKiB": 121040,
+        "threads": 42
+      },
+      {
+        "observedAtUtc": "2026-10-09T22:59:13.969069+00:00",
+        "vmRssKiB": 132432,
+        "threads": 44
+      },
+      {
+        "observedAtUtc": "2026-10-09T23:00:09.492954+00:00",
+        "vmRssKiB": 137900,
+        "threads": 41
+      }
+    ],
+    "resourceAcceptance": "Three finite readings include JNI initialization and legacy capture. No sustained CPU, memory plateau or leak acceptance."
+  },
+  "cleanup": {
+    "apiEnable": {
+      "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "runId": 37993531649,
+      "imageId": "sha256:ca33376383d9ddb0bb9596dcb4a465d29192ae801d7f17d227f6d46cf7100cdd",
+      "archiveBytes": 236273409,
+      "previousBackend": {
+        "id": "5b602999c25f60cc12e6a82b52b1004a5957d22eff688dc0509e52aa8bfcf83c",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T22:01:57.41721921Z",
+        "status": "running"
+      },
+      "sourceChanges": [],
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false,
+      "resourceFindings": [],
+      "observedAtUtc": "2026-10-09T22:57:25.499488+00:00",
+      "applyRequested": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "directProbeDevice": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "directProbeMediaControlEnabled": false,
+      "directProbeExplicitlyDisabled": false,
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-backend-install-369654a0be4b-2e23b090",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "installedBackend": {
+        "id": "ea6da6757e4531ded1eb6997a6ca9c77c0ce884899aca45ba93dc6af3b2c8689",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T22:58:03.596167869Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "liveContractVerified": false,
+      "agentReconnectVerified": false
+    },
+    "apiDisable": {
+      "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "runId": 37993531649,
+      "imageId": "sha256:ca33376383d9ddb0bb9596dcb4a465d29192ae801d7f17d227f6d46cf7100cdd",
+      "archiveBytes": 236273409,
+      "previousBackend": {
+        "id": "ea6da6757e4531ded1eb6997a6ca9c77c0ce884899aca45ba93dc6af3b2c8689",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T22:58:03.596167869Z",
+        "status": "running"
+      },
+      "sourceChanges": [],
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false,
+      "resourceFindings": [],
+      "observedAtUtc": "2026-10-09T23:00:55.363806+00:00",
+      "applyRequested": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "directProbeDevice": null,
+      "directProbeMediaControlEnabled": false,
+      "directProbeExplicitlyDisabled": true,
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-backend-install-369654a0be4b-b9c6091e",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "installedBackend": {
+        "id": "aaf5b22a8901c412a08e3f3c8604798ea0fcef836fb3f549ef548d9ef5297182",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T23:01:33.29485218Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "liveContractVerified": false,
+      "agentReconnectVerified": false
+    },
+    "postCleanupContract": {
+      "observedAtUtc": "2026-10-09T23:02:30.387211+00:00",
+      "requestsStartedUtc": "2026-10-09T23:02:27.977833+00:00",
+      "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "reads": [
+        {
+          "origin": "http://127.0.0.1:3015",
+          "healthStatus": 200,
+          "buildSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+          "missingScriptVerified": true,
+          "broadcastStatus": 404,
+          "broadcastDetail": "Script not found",
+          "requestMs": 10.95,
+          "deviceName": "auto-ph-011",
+          "deviceStatus": "online",
+          "androidInputSent": false
+        },
+        {
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "healthStatus": 200,
+          "buildSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+          "missingScriptVerified": true,
+          "broadcastStatus": 404,
+          "broadcastDetail": "Script not found",
+          "requestMs": 247.78,
+          "deviceName": "auto-ph-011",
+          "deviceStatus": "online",
+          "androidInputSent": false
+        }
+      ],
+      "probeDisabled": {
+        "code": 4003,
+        "reason": "direct_probe_disabled",
+        "jwtSent": false
+      },
+      "apiContainer": {
+        "id": "aaf5b22a8901c412a08e3f3c8604798ea0fcef836fb3f549ef548d9ef5297182",
+        "image": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "startedAtUtc": "2026-10-09T23:01:33.29485218Z"
+      },
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "scope": "Invalid script after real presence resolution; no durable intent or Android execution requested. Real committed HTTP202 verified in isolated CI.",
+      "boundedLogCheck": {
+        "linesRead": 5,
+        "tailLimit": 2000,
+        "broadcastUnhandledErrors": 0,
+        "rawLogsPublished": false
+      }
+    },
+    "finalState": {
+      "observedAtUtc": "2026-10-09T23:07:36.638670+00:00",
+      "apiContainer": {
+        "id": "aaf5b22a8901c412a08e3f3c8604798ea0fcef836fb3f549ef548d9ef5297182",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "startedAt": "2026-10-09T23:01:33.29485218Z",
+        "status": "running"
+      },
+      "uiContainerId": "ab99e502bd25ba176c485847ccedaff1933495c4533b25c2111a4e31b34792f6",
+      "containerCount": 46,
+      "probeEnabled": false,
+      "probeDeviceIds": [],
+      "originalApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+      "temporaryListenersStopped": true,
+      "agentCreatedTabsClosed": true,
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "generatedBuildCleanup": {
+        "removed": false,
+        "automaticReviewRejected": true,
+        "statedReason": "blocked by policy",
+        "commandsExecuted": false
+      }
+    },
+    "originalApkRestored": true,
+    "temporaryListenersStopped": true,
+    "agentCreatedTabsClosed": true,
+    "inputReplayPerformed": false
+  },
+  "acceptance": {
+    "nativeDiagnosticCallback": "ACCEPTED_FINITE_SCOPE",
+    "directChannel": "OPEN",
+    "publicIdleReliability": "OPEN",
+    "productAccepted": 9,
+    "productOpen": 41,
+    "legacyUnclosed": 7,
+    "newProductItemsClosed": []
+  },
+  "previousInstalledObservation": "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json"
+}
