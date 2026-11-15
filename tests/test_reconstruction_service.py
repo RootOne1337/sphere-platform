@@ -30,6 +30,30 @@ def test_route_features_use_live_runtime_instead_of_heavy_gpu_interpreter(jobs):
     assert jobs.python != jobs.navigation.python
 
 
+@pytest.mark.parametrize('hidden_hud', [False, True])
+def test_new_vehicle_capture_selects_the_native_route_source(jobs, monkeypatch, hidden_hud):
+    from types import SimpleNamespace
+    from scripts.pilot import route_primary_reference
+
+    jobs.create(dict(id='a' * 32, key='b' * 64, mask='game', steps=3000,
+                     prepare_route=True, route_only=True))
+    job = jobs.path('a' * 32)
+    service.write_json(job / 'input/manifest.json', dict(config=dict(hud_hidden_declared=hidden_hud,
+        profile=dict(mode='vehicle_buttons', steering='stick', hudProfile='black_russia_scooter_v1'))))
+    service.write_json(job / 'state.json', dict(phase='sparse_complete'))
+    service.write_json(job / 'sparse-receipt.json', {'fixture': True})
+    sources, intents = [], []
+    monkeypatch.setattr(route_primary_reference, 'publish_primary_reference_source',
+                        lambda source: sources.append(source) or 'primary-native')
+    monkeypatch.setattr(jobs.navigation, 'prepare', lambda target, intent: intents.append((target, intent)))
+
+    jobs._monitor_owned_worker(job, SimpleNamespace(poll=lambda: 0), None)
+
+    assert len(intents) == 1 and intents[0][0] == job
+    assert intents[0][1].get('alternativeId') == ('primary-native' if hidden_hud else None)
+    assert sources == ([job] if hidden_hud else [])
+
+
 def test_route_upload_admission_measures_the_configured_jobs_volume(jobs, monkeypatch):
     measured = []
     monkeypatch.setattr(service, 'collect', lambda path: measured.append(path) or {})

@@ -691,8 +691,16 @@ class Jobs:
                 elif not any(self.active(p) for p in self.folder.iterdir() if p.is_dir() and p != job):
                     identity = hashlib.sha256((job.name+':initial-route').encode()).hexdigest()[:32]
                     try:
-                        self.navigation.prepare(job, dict(id=identity))
-                    except (ValueError, RuntimeError) as error:
+                        intent = dict(id=identity)
+                        try:
+                            hudless_vehicle = self.navigation._visual_tempo_source(job)
+                        except (OSError, ValueError):
+                            hudless_vehicle = False
+                        if hudless_vehicle:
+                            from scripts.pilot.route_primary_reference import publish_primary_reference_source
+                            intent['alternativeId'] = publish_primary_reference_source(job)
+                        self.navigation.prepare(job, intent)
+                    except (OSError, ValueError, RuntimeError) as error:
                         reason = str(error) if str(error) in {'resource_guard', 'cancelled',
                             'route_camera_recovery_required', 'route_preparation_attempt_quota',
                             'route_workspace_busy'} else 'route_preparation_not_started'
@@ -799,6 +807,7 @@ def handler(jobs, origin, port):
                                              route_confirmation_runtime_sha256=CONFIRMATION_RUNTIME_SHA256,
                                              route_descriptor_recovery_policy=DESCRIPTOR_RECOVERY_POLICY,
                                              route_xfeat_vehicle_contract='reviewed_source_bound_onnx_v1',
+                                             route_hudless_auto_prepare_contract='primary_native_with_replay_v1',
                                              route_subpixel_motion_contract=MOTION_TOLERANCE_POLICY,
                                              route_source_motion_contract=SOURCE_MOTION_POLICY,
                                              hud_speed_reference_contract='source_bound_font_display_v1',

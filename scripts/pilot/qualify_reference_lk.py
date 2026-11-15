@@ -29,6 +29,11 @@ def _digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def _video_digest(capture):
+    with (capture.root / "video.h264").open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
 def _replay(route, capture, kind, check, deadline):
     import cv2 as cv
 
@@ -133,7 +138,7 @@ def qualify(job, attempt, unrelated, *, deadline=None):
     positive, negative = validate_browser(job / "input"), validate_browser(unrelated)
     sha = lambda capture: _digest(capture.originals["manifest.json"])
     if (sha(positive) != receipt["source_capture_sha256"] or sha(positive) == sha(negative)
-            or positive.manifest["files"]["video.h264"]["sha256"] == negative.manifest["files"]["video.h264"]["sha256"]):
+            or _video_digest(positive) == _video_digest(negative)):
         raise ValueError("reference_lk_replay_source_binding")
 
     profile = route_resource_profile(job, "live")

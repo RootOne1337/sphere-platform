@@ -269,6 +269,7 @@ class AlternativePreparationTests(unittest.TestCase):
              patch('scripts.pilot.prepare_route_workspace.resource_checkpoint'), \
              patch('scripts.pilot.prepare_route_workspace.route_source_model') as primary, \
              patch('scripts.pilot.route_masks.capture_exclusions', return_value=()), \
+             patch('scripts.pilot.prepare_route_workspace.ROOT', self.job), \
              patch('scripts.pilot.prepare_route_workspace.TaskResourceMonitor'):
             prepare(self.job, self.attempt)
         primary.assert_not_called()
