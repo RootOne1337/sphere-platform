@@ -498,19 +498,27 @@ class VehicleRouteFollower:
         if np.linalg.norm(camera_delta[[0, 2]]) < self.step * .01 and not near_end:
             return self._neutral('vehicle_target_direction_unknown', terminal=True)
         yaw = float(math.atan2(camera_delta[0], camera_delta[2])) if not near_end else 0.
+        straight_rejoin = False
         if not near_end and cross > .5 * self.step and self.observed_speed <= self.REJOIN_SPEED_KMH:
             # A close target can be almost sideways even when the vehicle
             # faces along the route. At low speed, choose a farther point
             # on the same straight portion. Keep the original cone and
             # corridor limits, and avoid cutting across a bend.
-            rejoin_arc = min(self.total, progress + min(3. * self.step, self.step + cross))
+            rejoin_distance = min(3. * self.step, self.step + cross)
+            if self.adaptive_throttle and cross <= 2. * self.step:
+                # Give a low-speed lateral correction room to converge on a
+                # verified straight span without pointing back at the curb.
+                rejoin_distance = min(5. * self.step, self.step + 3.5 * cross)
+            rejoin_arc = min(self.total, progress + rejoin_distance)
             if rejoin_arc > look_arc:
                 rejoin_point = self._point_at_arc(rejoin_arc)
                 chord = rejoin_point - self._point_at_arc(progress)
                 if np.linalg.norm(chord) >= .995 * (rejoin_arc - progress):
                     rejoin_delta = rotation @ (rejoin_point - center)
                     rejoin_yaw = math.atan2(rejoin_delta[0], rejoin_delta[2])
-                    if rejoin_delta[2] > self.step * .01 and abs(rejoin_yaw) <= self.PURSUIT_CONE:
+                    if (rejoin_delta[2] > self.step * .01
+                            and abs(rejoin_yaw) <= min(self.PURSUIT_CONE, abs(yaw))):
+                        straight_rejoin = True
                         look_arc, yaw = rejoin_arc, rejoin_yaw
                         self.target_speed = min(self.target_speed, self.REJOIN_SPEED_KMH)
         # A large error calls for operator review, not a sharp blind U-turn.
@@ -579,7 +587,8 @@ class VehicleRouteFollower:
                         and predicted_speed < self.target_speed * .85):
                     pulse = self.CRUISE_PULSE_MS
             elif (pose.inliers >= 28 and pose.median_error_px is not None and pose.median_error_px <= 1.8
-                    and abs(yaw) <= .55 and cross <= self.step
+                    and abs(yaw) <= .55
+                    and (cross <= self.step or straight_rejoin and cross <= 2. * self.step)
                     and self.observed_speed < self.target_speed * .45
                     and predicted_speed < self.target_speed * .65):
                 # A confirmed, slow launch gets enough time to move from rest.

@@ -610,6 +610,20 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual((result['phase'], result['pedal'], result['steering']), ('waiting', 'coast', 0.))
         self.assertIsNone(result['targetViewCamera'])
 
+    def test_rgb_rejoins_a_straight_trace_from_more_than_one_step_off_center(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(start_mode='recognized_route', max_speed_kmh=5,
+                                  visual_speed=True, adaptive_throttle=True)
+        step = self.follower.step
+        yaw = math.radians(-18.)
+        rotation = (math.cos(yaw), 0., math.sin(yaw), 0., 1., 0., -math.sin(yaw), 0., math.cos(yaw))
+        for _ in range(6):
+            plan = self.observe(speed=None, center=(1.2 * step, 0., 0.),
+                cross_track_units=1.2 * step, rotation=rotation, inliers=34, median_error_px=1.4)
+            self.now += .17
+        self.assertEqual((plan['phase'], plan['pedal'], plan['throttlePulseMs']), ('following', 'throttle', 180))
+        self.assertTrue(-.33 < plan['steering'] < -.1)
+
     def test_rejoin_does_not_aim_across_a_nearby_right_angle(self):
         trace = ((0., 0., 0.), (0., 0., .65), (0., 0., 1.3),
                  *((i * .65, 0., 1.3) for i in range(1, 6)))
@@ -617,11 +631,16 @@ class VehicleRouteTests(unittest.TestCase):
         self.follower = self.make()
         yaw = math.radians(-3.)
         rotation = (math.cos(yaw), 0., -math.sin(yaw), 0., 1., 0., math.sin(yaw), 0., math.cos(yaw))
-        for _ in range(3):
-            plan = self.observe(speed=0., center=(-1.25, 0., 0.), cross_track_units=1.25, rotation=rotation)
-            self.now += .1
-        self.assertEqual((plan['phase'], plan['reason'], plan['pedal'], plan['steering']),
-                         ('waiting', 'vehicle_heading_outside_pursuit_cone', 'coast', 0.))
+        for visual in (False, True):
+            with self.subTest(visual=visual):
+                if visual:
+                    self.reference = ConservativeTempoReference(self.route)
+                    self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)
+                for _ in range(6):
+                    plan = self.observe(speed=0., center=(-1.25, 0., 0.), cross_track_units=1.25, rotation=rotation)
+                    self.now += .15
+                self.assertEqual((plan['phase'], plan['reason'], plan['pedal'], plan['steering']),
+                                 ('waiting', 'vehicle_heading_outside_pursuit_cone', 'coast', 0.))
 
     def test_unknown_source_speed_is_unknown_not_replaced_by_last_known_target(self):
         self.acquire()
