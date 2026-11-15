@@ -56,7 +56,7 @@ test('selects only source-backed camera timestamps by pointer, keyboard or slide
   fireEvent.change(screen.getByLabelText('Ракурс на схеме ориентиров'),{target:{value:'1'}});expect(seek).toHaveBeenCalledTimes(2);
   fireEvent.change(screen.getByLabelText('Ракурс на схеме ориентиров'),{target:{value:'2'}});expect(seek).toHaveBeenLastCalledWith(200000);
   view.rerender(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={100000} validTicks={new Set([0,200000])} onSeekCamera={seek}/>);
-  expect(screen.getByText(/разница с текущим кадром 0.61 с/)).toBeInTheDocument();
+  expect(screen.getByText(/разница со временем просмотра 0\.61 с/)).toBeInTheDocument();
   expect(screen.getByText(/Разрывы больше секунды не соединяются: 1/)).toBeInTheDocument();
 });
 test('without verified source binding map stays read-only',()=>{
