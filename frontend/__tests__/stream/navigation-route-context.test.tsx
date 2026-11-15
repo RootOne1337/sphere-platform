@@ -110,6 +110,35 @@ test('a newly qualified alternative replaces the default without overriding an e
   expect(chooser).toHaveValue('partial');
   expect(screen.queryByText('Выбранная карта готова к живой проверке.')).not.toBeInTheDocument();
 });
+
+test('a new run resumes following even when the recorded frame was moved by hand',async()=>{
+  const raw=new TextEncoder().encode(JSON.stringify(data));
+  const sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
+  jest.mocked(reconstructionRequest).mockResolvedValue({
+    json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),
+    arrayBuffer:async()=>Uint8Array.from(raw).buffer,
+  } as Response);
+  const props={job,source,assetsReady:true};
+  const view=render(<NavigationRouteContext {...props} observation={null}/>);
+  await screen.findByText('source-frame-0');
+  const slider=screen.getByRole('slider',{name:'Ракурс на схеме ориентиров'});
+  const follow=screen.getByRole('checkbox',{name:/Опорный кадр вслед за локализацией/});
+  fireEvent.change(slider,{target:{value:'1'}});
+  expect(screen.getByText('source-frame-90000')).toBeInTheDocument();
+  expect(follow).not.toBeChecked();
+  const capturedAt=performance.now();
+  const reply=navigationReply({id:'run',captureEpoch:'epoch',sequence:1,jpegSha256:'f'.repeat(64),geometrySha256:sha,
+    referenceTicks90k:0,computeMs:10,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
+    pose:{state:'localized',reason:'verified',inliers:40,segment:0,progress_units:0,polyline_px:[],center:[0,0,0],rotation:[1,0,0,0,1,0,0,0,1]}},'run','epoch',1,'f'.repeat(64))!;
+  view.rerender(<NavigationRouteContext {...props} observation={{reply,capturedAt,answeredAt:capturedAt+10}}/>);
+  await screen.findByText('source-frame-0');
+  expect(follow).toBeChecked();
+  fireEvent.change(slider,{target:{value:'1'}});
+  expect(follow).not.toBeChecked();
+  view.rerender(<NavigationRouteContext {...props} observation={{reply:{...reply,sequence:2},capturedAt,answeredAt:capturedAt+10}}/>);
+  expect(screen.getByText('source-frame-90000')).toBeInTheDocument();
+  expect(follow).not.toBeChecked();
+});
 test('the saved map, source frame and stream share one view while a live pin is bound to the exact geometry',async()=>{
   const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
   jest.mocked(reconstructionRequest).mockImplementation(async()=>({json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);

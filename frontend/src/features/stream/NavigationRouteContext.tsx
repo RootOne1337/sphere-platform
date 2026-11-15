@@ -34,6 +34,7 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
   const [,setMeasurementExpiry]=useState(0);
   const [recentPose,setRecentPose]=useState<{camera:RouteMapCamera;at:number;epoch:string}|null>(null);
   const lastReferenceAt=useRef(-Infinity),validTicks=useMemo(()=>new Set(source.rows.map(row=>row.relative_ticks_90k)),[source.rows]);
+  const referenceSession=useRef<string|null>(null);
   const recordingRange=useMemo(()=>source.rows.length?{firstTicks:source.rows[0].relative_ticks_90k,lastTicks:source.rows.at(-1)!.relative_ticks_90k,frames:source.rows.length}:undefined,[source.rows]);
   const cameraCoverage=useMemo(()=>geometry?sceneCameraCoverage(geometry.data.cameras,recordingRange,validTicks):null,[geometry,recordingRange,validTicks]);
   const selectedGeometry=useMemo<NavigationGeometrySelection|null>(()=>geometry?{
@@ -80,15 +81,24 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
   },[identity,requestJob,source.manifestSha,choice,validTicks]);
   useEffect(()=>{
     setLive(null);if(!observation||!geometry||!geometryReady)return;
-    const {reply,capturedAt}=observation,p=reply.pose,camera=boundLiveRouteCamera(observation,geometry.sha,performance.now());
+    const {reply,capturedAt}=observation;
+    if(reply.geometrySha256!==geometry.sha)return;
+    const session=JSON.stringify([identity,reply.id,reply.captureEpoch]);
+    const newSession=referenceSession.current!==session;
+    if(newSession){
+      referenceSession.current=session;
+      lastReferenceAt.current=-Infinity;
+      setFollow(true);
+    }
+    const p=reply.pose,camera=boundLiveRouteCamera(observation,geometry.sha,performance.now());
     if(!camera)return;setLive(camera);setOrientation(camera);setRecentPose({camera,at:capturedAt,epoch:reply.captureEpoch});
-    if(follow&&performance.now()-lastReferenceAt.current>=1000){
+    if((follow||newSession)&&performance.now()-lastReferenceAt.current>=1000){
       const index=Math.min(p.segment??0,geometry.data.cameras.length-1),reference=reply.referenceTicks90k??geometry.data.cameras[index].ticks_90k;
       if(validTicks.has(reference)){setTicks(reference);lastReferenceAt.current=performance.now();}
     }
     const timeout=setTimeout(()=>setLive(null),Math.max(0,250-(performance.now()-capturedAt)));
     return()=>clearTimeout(timeout);
-  },[observation,geometry,geometryReady,follow,validTicks]);
+  },[identity,observation,geometry,geometryReady,follow,validTicks]);
   useEffect(()=>{
     if(!recentPose)return;
     const timeout=setTimeout(()=>setRecentPose(null),Math.max(0,1000-(performance.now()-recentPose.at)));

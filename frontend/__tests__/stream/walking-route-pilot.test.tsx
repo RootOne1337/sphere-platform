@@ -110,7 +110,7 @@ test('vehicle mode uses a separate opt-in contract, capped speed and held pedal 
 test.each([true,false])('visual tempo sends a 5 km/h cap and requires mode echo (%s)',async echo=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);
   const f=vehicleFixture({visualTempo:true,start:value=>echo?value:{...value,speedMode:undefined}});
-  expect(screen.getByText(/консервативный тестовый предел 5 км\/ч/)).toBeInTheDocument();
+  expect(screen.getByText(/тестовая цель до 5 км\/ч/)).toHaveTextContent('Включите спидометр в игре.');
   expect(screen.queryByLabelText('Предел скорости транспорта')).not.toBeInTheDocument();
   f.startVehicle();
   if(echo)await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalled());
