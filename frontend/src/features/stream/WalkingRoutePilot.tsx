@@ -24,13 +24,13 @@ type Sample={elapsedMs:number;sequence:number;ageMs:number;computeMs:number;stat
   motionActive:boolean;motionSeconds:number|null;
   captureMode:string|null;captureMs:number|null;workerMs:number|null;encodeMs:number|null;hashMs:number|null;method:string;runtimePolicy:string|null;
   sourcePresented:number|null;sourceMediaTime:number|null;decodeMs:number|null;receiveAgeMs:number|null;captureAgeMs:number|null;
-  poseState:'unknown'|'confirming'|'localized';positionPreviouslyConfirmed:boolean;localizationDiagnostic:LocalizationDiagnostic|null;
+  romaStatus?:'warming'|'ready'|'matching'|'unavailable';poseState:'unknown'|'confirming'|'localized';positionPreviouslyConfirmed:boolean;localizationDiagnostic:LocalizationDiagnostic|null;
   inliers:number;progress:number|null;stick:[number,number];jpegSha256:string;image?:string;
   vehicle?:VehicleCommand&{targetSpeedKmh:number|null;observedSpeedKmh:number|null;speedAccepted:boolean;targetTempo?:number|null;observedTempo?:number|null};
   poseReason:string;plannerReason:string;cameraYawRadians:number|null;cameraPitchRadians:number|null;segment:number|null;medianErrorPx:number|null;crossTrackUnits:number|null;center:number[]|null;rotation:number[]|null;geometrySha256:string|null};
 type Run={id:string;job:ReconstructionJob;abort:AbortController;lease:WalkInputLease|null;opening:Promise<WalkInputLease>|null;began:number;
   binding:Binding;deadline:number;permitUntil:number;moving:boolean;lastSequence:number;clip:string|null;scope:string|null;
-  freshUntil:number|null;freshWaits:number;trace:WalkRunDiagnostics;maxSeconds:number;maxSpeedKmh?:number;observationCount:number;positionConfirmed:boolean;
+  freshUntil:number|null;freshWaits:number;trace:WalkRunDiagnostics;maxSeconds:number;maxSpeedKmh?:number;romaRecovery?:boolean;observationCount:number;positionConfirmed:boolean;
   observe:(()=>void)|null;inFlight:boolean;nextObservationAt:number;startMode:StartMode;camera:WalkCameraServo|null;binaryJpeg?:boolean;lastPreviewAt?:number;diagnosticVideo?:DiagnosticVideoCapture};
 type ResumeIntent={job:string;key:string;clip:string|null;epoch:string;width:number;height:number;remainingMs:number};
 const gapReason=(active:Run|null)=>{
@@ -44,10 +44,10 @@ type PilotProps={
   job:ReconstructionJob|null;clip:string|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;
   binding:Binding|null;assetsReady:boolean;input:WalkInputControl;observerBusy:boolean;onBusyChange:(busy:boolean)=>void;
   onObservation?:(observation:LiveRouteObservation|null)=>void;renderView?:(view:ReactNode)=>ReactNode;
-  scope?:string|null;preparationIssue?:string|null;mode?:'foot'|'vehicle';expectedSource?:NavigationMapSource;visualTempo?:boolean;rgbTempo?:boolean;adaptiveThrottle?:boolean;
+  scope?:string|null;preparationIssue?:string|null;mode?:'foot'|'vehicle';expectedSource?:NavigationMapSource;visualTempo?:boolean;rgbTempo?:boolean;adaptiveThrottle?:boolean;romaAvailable?:boolean;
   beginVehicleVideo?:(config:DiagnosticVideoConfig)=>DiagnosticVideoCapture|null;
 };
-export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot',expectedSource,beginVehicleVideo,visualTempo=false,rgbTempo=false,adaptiveThrottle=false}:PilotProps) {
+export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot',expectedSource,beginVehicleVideo,visualTempo=false,rgbTempo=false,adaptiveThrottle=false,romaAvailable=false}:PilotProps) {
   const vehicleMode=mode==='vehicle';
   const expectedSourceIdentity=expectedSource?JSON.stringify([expectedSource.alternativeId,expectedSource.geometry_sha256,expectedSource.runtime_family]):null;
   const reasonLabel=(reason:string,positionPreviouslyConfirmed=false)=>vehicleMode?(vehicleReasonLabel(reason,positionPreviouslyConfirmed)??(reason.startsWith('vehicle_')?`Транспорт: ${reason}`:walkReasonLabel(reason))):walkReasonLabel(reason);
@@ -56,6 +56,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const [cameraEnabled,setCameraEnabled]=useState(!vehicleMode&&input.cameraIssue!==undefined);
   const [speedChoice,setSpeedChoice]=useState('15');
   const useAdaptiveThrottle=rgbTempo&&adaptiveThrottle;
+  const [romaSelected,setRomaSelected]=useState(false);
+  const useRoma=vehicleMode&&rgbTempo&&romaAvailable&&romaSelected;
   const visualSpeedMode=rgbTempo?'visual_tempo_rgb':'visual_tempo_live_hud';
   const maxSpeedKmh=visualTempo?5:speedChoice==='recorded'?50:Number(speedChoice);
   const [durationSeconds,setDurationSeconds]=useState(300);
@@ -165,7 +167,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       if(!released)setNotice('Освобождение ввода НЕ подтверждено. Новый запуск заблокирован; переподключите поток.');
       const report={schema:vehicleMode?'sphere-vehicle-debug-v1':'sphere-walk-debug-v1',clientVersion:vehicleMode?'vehicle_live_v1':'walk_live_v8',beganAtMs:performance.timeOrigin+active.began,scope:vehicleMode?'supervised_vehicle_camera_trace_pilot':'supervised_camera_trace_pilot',clip:active.clip,job:active.job.id,
           executionQualified:false,metricAccuracyKnown:false,sourceCaptureAgeKnown:false,release:released?'closed':'unknown',stopReason:reason,
-          ...(vehicleMode?{maxSpeedKmh:active.maxSpeedKmh,cameraFollowsBodyConfirmed:true,hudProfile:(input as VehicleInputControl).hudProfile,contactRoles:['pedal','steering','manual_camera']} : {}),
+          ...(vehicleMode?{maxSpeedKmh:active.maxSpeedKmh,romaRecovery:active.romaRecovery===true,cameraFollowsBodyConfirmed:true,hudProfile:(input as VehicleInputControl).hudProfile,contactRoles:['pedal','steering','manual_camera']} : {}),
           ...(vehicleMode?{maxDecisionAgeMs:450,maxAnswerHoldMs:350,replyAdmissionMs:250,sourceFreshMs:250}:{}),
           stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,inputFailure,startMode:active.startMode,camera:active.camera?.snapshot()??null,cameraInput:walkCameraInputSummary(inputs.current,vehicleMode?2:1),stages:active.trace.snapshot(),
           stageSummary:active.trace.summary(),observationCount:active.observationCount,durationBudgetSeconds:Math.ceil((active.deadline-active.began)/1000),maxSeconds:active.maxSeconds,observations:history.current.map(row=>({...row,center:row.center?[...row.center]:null,rotation:row.rotation?[...row.rotation]:null})),nativeInputs:inputs.current.map(row=>({...row})),nativeInputTailLimit:4096};
@@ -193,7 +195,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   };
   stopRef.current=stop;
   useEffect(()=>()=>{void stopRef.current('walk_stream_changed');},[]);
-  useEffect(()=>{setConfirmed(false);void stopRef.current('walk_stream_changed');},[job?.id,job?.key,clip,binding?.captureEpoch,binding?.width,binding?.height,input.revision,expectedSourceIdentity,visualTempo,visualSpeedMode,useAdaptiveThrottle]);
+  useEffect(()=>{setConfirmed(false);void stopRef.current('walk_stream_changed');},[job?.id,job?.key,clip,binding?.captureEpoch,binding?.width,binding?.height,input.revision,expectedSourceIdentity,visualTempo,visualSpeedMode,useAdaptiveThrottle,useRoma]);
   useEffect(()=>{if(binding?.captureEpoch)setRelease('none');},[binding?.captureEpoch]);
   useEffect(()=>{
     recent.current={sequence:0,at:0};setPreviewFrame(null);const element=video.current;
@@ -253,7 +255,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     resumeIntent.current=null;setVisibilityPaused(false);
     const began=performance.now();
     const active:Run={id:crypto.randomUUID().replaceAll('-',''),job,abort:new AbortController(),lease:null,opening:null,began,
-      binding:{...binding},deadline:began+600000,permitUntil:0,moving:false,lastSequence:0,clip,scope,freshUntil:null,freshWaits:0,trace:new WalkRunDiagnostics(began),maxSeconds:60,...(vehicleMode?{maxSpeedKmh}:{}),observationCount:0,positionConfirmed:false,observe:null,inFlight:false,nextObservationAt:0,startMode:options?.mode??startMode,camera:cameraEnabled&&!vehicleMode?new WalkCameraServo():null};
+      binding:{...binding},deadline:began+600000,permitUntil:0,moving:false,lastSequence:0,clip,scope,freshUntil:null,freshWaits:0,trace:new WalkRunDiagnostics(began),maxSeconds:60,...(vehicleMode?{maxSpeedKmh,romaRecovery:useRoma}:{}),observationCount:0,positionConfirmed:false,observe:null,inFlight:false,nextObservationAt:0,startMode:options?.mode??startMode,camera:cameraEnabled&&!vehicleMode?new WalkCameraServo():null};
     run.current=active;setBusy(true);busyChange.current(true);setRelease('none');setStopDetail(null);setPreviewFrame(null);clear();setNotice(vehicleMode?'Открываем отдельный тест транспорта. До подтверждения текущего места и скорости педали отпущены.':'Открываем отдельный пеший тест. До узнавания старта стик нейтрален.');
     history.current=[];inputs.current=[];images.current=0;lastImageAt.current=-Infinity;lastReport.current=null;lastUiPaint.current=-Infinity;setSamples([]);setEvents(0);
     const signal=active.abort.signal,alive=()=>run.current===active&&!signal.aborted;
@@ -267,7 +269,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     try{
       const state=await(await reconstructionRequest(`/jobs/${job.id}/navigation/${vehicleMode?'vehicle-start':'walk-start'}`,job,{method:'POST',signal,
         body:JSON.stringify({id:active.id,clientVersion:vehicleMode?'vehicle_live_v1':'walk_live_v8',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,...(expectedSource?{expectedSource}:{}),
-          ...(vehicleMode?{vehicleCameraAssumptionConfirmed:true,cameraFollowsBodyConfirmed:true,hudProfile:(input as VehicleInputControl).hudProfile,maxSpeedKmh,maxSeconds:durationSeconds,...(visualTempo?{speedMode:visualSpeedMode,...(useAdaptiveThrottle?{adaptiveThrottle:true}:{})}:{})}:{footCameraAssumptionConfirmed:true}),
+          ...(vehicleMode?{vehicleCameraAssumptionConfirmed:true,cameraFollowsBodyConfirmed:true,hudProfile:(input as VehicleInputControl).hudProfile,maxSpeedKmh,maxSeconds:durationSeconds,...(visualTempo?{speedMode:visualSpeedMode,...(useAdaptiveThrottle?{adaptiveThrottle:true}:{}),...(active.romaRecovery?{romaRecovery:true}:{})}:{})}:{footCameraAssumptionConfirmed:true}),
           diagnosticFrames:saveFrames,startMode:active.startMode,cameraTracking:vehicleMode||!!active.camera,...(vehicleMode||active.camera?{cameraControl:'continuous_drag_v1'}:{})})})).json();
       if(!alive())return;
       if(state.id!==active.id||state.phase!=='observing'||state.mode!==(vehicleMode?'vehicle_camera_trace_v1':'foot_camera_trace_v1')||state.physicalActions!==0||!Number.isInteger(state.maxSeconds)||state.maxSeconds<60||state.maxSeconds>(vehicleMode?1800:600)||vehicleMode&&state.maxSeconds!==durationSeconds||state.startMode!==active.startMode)throw Error(vehicleMode?'vehicle_start_unconfirmed':'walk_start_unconfirmed');
@@ -275,6 +277,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       if(vehicleMode||active.camera?state.cameraTracking!==true:state.cameraTracking===true)throw Error('walk_start_unconfirmed');
       if((vehicleMode||active.camera)&&state.cameraControl!=='continuous_drag_v1')throw Error('walk_start_unconfirmed');
       if(vehicleMode&&state.maxSpeedKmh!==maxSpeedKmh)throw Error('vehicle_start_unconfirmed');
+      if(vehicleMode&&(state.romaRecovery===true)!==!!active.romaRecovery)throw Error('vehicle_roma_recovery_unavailable');
       if(vehicleMode&&visualTempo&&(state.speedMode!==visualSpeedMode||useAdaptiveThrottle&&state.adaptiveThrottle!==true))throw Error('vehicle_start_unconfirmed');
       if(vehicleMode&&(state.job!==job.id||state.cameraFollowsBodyConfirmed!==true||state.hudProfile!==(input as VehicleInputControl).hudProfile||state.clientVersion!=='vehicle_live_v1'))throw Error('vehicle_start_unconfirmed');
       if(state.motionProtocol!==(vehicleMode?'applied_vehicle_v1':'applied_stick_v1'))throw Error(vehicleMode?'vehicle_motion_feedback_required':'walk_motion_feedback_required');
@@ -361,6 +364,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
             poseState:reply.pose.state,inliers:reply.pose.inliers,progress:plan.progressFraction,stick:command,jpegSha256:sha,
             poseReason:reply.pose.reason,plannerReason:plan.reason,cameraYawRadians:cameraStep?.yaw??null,cameraPitchRadians:cameraStep?.pitch??null,segment:reply.pose.segment,medianErrorPx:reply.pose.median_error_px??null,
             crossTrackUnits:reply.pose.cross_track_units??null,center:reply.pose.center?[...reply.pose.center]:null,rotation:reply.pose.rotation?[...reply.pose.rotation]:null,geometrySha256:reply.geometrySha256??null};
+          if(active.romaRecovery&&['warming','ready','matching','unavailable'].includes(value.romaStatus))sample.romaStatus=value.romaStatus;
           if(vehiclePlan&&vehicleCommand)sample.vehicle={...vehicleCommand,targetSpeedKmh:vehiclePlan.targetSpeedKmh,
             observedSpeedKmh:vehiclePlan.speedAccepted?vehiclePlan.observedSpeedKmh:null,speedAccepted:vehiclePlan.speedAccepted,
             ...(vehiclePlan.tempoAccepted!==undefined?{targetTempo:vehiclePlan.targetTempo,observedTempo:vehiclePlan.observedTempo}:{})};
@@ -475,6 +479,13 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     <p className="text-xs leading-5 text-muted-foreground">{vehicleMode?(rgbTempo?'Газ и руль корректируются по подтверждённым положениям камеры. Для движения нужен измеренный визуальный темп. Камера следует корпусу.':visualTempo?'Газ и руль корректируются по новым кадрам; скорость контролируется по живому HUD. Неизвестное значение отпускает педали. Камера должна следовать корпусу. Миникарта не подтверждает положение. Объезд препятствий и метрическая точность не проверены.':'Газ удерживается, руль корректируется по новым кадрам. Скорость игрового спидометра сравнивается с записью; неизвестное значение отпускает педали. Камера должна следовать корпусу: свободный поворот во время движения не выполняется. Миникарта не подтверждает положение. Объезд препятствий и метрическая точность не проверены.'):'Стик удерживается, свежие кадры корректируют движение. Умеренные повороты камеры выполняются на ходу. При задержке кадров стик уходит в центр и ждёт до 3 секунд. Потеря геометрии проверяется отдельно: три свежих подтверждения перед продолжением, 2 секунды без совместимых ориентиров и до 6 секунд на серию поиска. Объезд препятствий не реализован, точность в метрах ещё не измерена.'}</p>
     <label className="flex flex-wrap items-center gap-2 text-xs">Начало движения<select aria-label={vehicleMode?'Точка запуска транспорта':'Точка запуска пешего теста'} className="rounded-lg border bg-background p-2" value={startMode} disabled={busy} onChange={e=>{setStartMode(e.target.value as StartMode);setConfirmed(false);}}><option value="recognized_route">С текущей узнанной точки маршрута</option><option value="beginning">Только у начала записи</option></select></label>
     {vehicleMode&&(visualTempo?<p className="text-xs text-amber-500">{rgbTempo?'Движение без HUD · темп относительно записи, короткие импульсы газа.':'Визуальный темп · тестовая цель до 5 км/ч. Включите спидометр в игре. При разгоне возможно превышение цели.'}</p>:<><label className="flex flex-wrap items-center gap-2 text-xs">Скорость по записи и предел HUD<select aria-label="Предел скорости транспорта" className="rounded-lg border bg-background p-2" value={speedChoice} disabled={busy} onChange={e=>{setSpeedChoice(e.target.value);setConfirmed(false);}}>{[5,10,15,20,25,30,40,50].map(v=><option value={v} key={v}>{v} км/ч</option>)}<option value="recorded">По записи · до 50 км/ч</option></select></label><p className="text-xs text-muted-foreground">Во всех вариантах цель берётся из записи; число ограничивает её сверху. «По записи» использует тот же профиль с пределом 50 км/ч. Точность ±5 км/ч ещё не подтверждена.</p></>)}
+    {vehicleMode&&rgbTempo&&<div className="space-y-1 rounded-lg border bg-background/40 p-2.5 text-xs">
+      <label className="flex items-center gap-2 font-medium">
+        <input type="checkbox" checked={useRoma} disabled={!romaAvailable||busy||visibilityPaused} onChange={e=>{setRomaSelected(e.target.checked);setConfirmed(false);}}/>
+        RoMa v2 для восстановления позиции
+      </label>
+      <p className="text-muted-foreground">{!romaAvailable?'GPU-режим недоступен для этой карты.':!useRoma?'Включается для следующего заезда.':last?.romaStatus==='warming'?'Модель загружается на GPU.':last?.romaStatus==='matching'?'GPU проверяет опорные кадры.':last?.romaStatus==='unavailable'?'RoMa v2 недоступна в этом заезде. Локализация продолжается по XFeat.':last?.method==='roma_v2_lk_pnp'?'Поза восстановлена RoMa v2 и проверена на свежем кадре.':'RoMa v2 подхватывает поиск при потере позиции.'}</p>
+    </div>}
     {vehicleMode&&<label className="flex flex-wrap items-center gap-2 text-xs">Предел времени<select aria-label="Предел времени транспорта" className="rounded-lg border bg-background p-2" value={durationSeconds} disabled={busy} onChange={e=>{setDurationSeconds(Number(e.target.value));setConfirmed(false);}}>{[180,300,600,1200,1800].map(v=><option value={v} key={v}>{v/60} мин</option>)}</select></label>}
     {vehicleMode&&<p className="text-xs text-muted-foreground">Касание живого экрана или назначенная клавиша движения останавливает поездку. После подтверждения освобождения включите ручное управление для свободного поворота камеры.</p>}
     <p className="text-xs text-muted-foreground">После обрыва можно снова нажать запуск на записанном участке. Положение определяется заново по живым кадрам; цель выбирается дальше по записи. При неоднозначном месте движение не начинается.</p>

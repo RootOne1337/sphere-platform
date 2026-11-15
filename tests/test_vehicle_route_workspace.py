@@ -155,6 +155,11 @@ class VehicleWorkspaceTests(unittest.TestCase):
             self.workspace.start_vehicle(self.job, dict(visual, maxSpeedKmh=6, expectedSource=source))
         self.assertIsNone(self.workspace.live)
 
+    def test_roma_is_refused_without_rgb_mode(self):
+        with self.assertRaisesRegex(ValueError, 'explicit_confirmation'):
+            self.workspace.start_vehicle(self.job, dict(self.body, romaRecovery=True))
+        self.assertIsNone(self.workspace.live)
+
     def test_explicit_longer_budget_is_echoed_and_cannot_change_in_place(self):
         body = dict(self.body, maxSeconds=1200)
         result = self.workspace.start_vehicle(self.job, body)

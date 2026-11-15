@@ -35,7 +35,7 @@ const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job
 function fresh(){act(()=>frames.shift()!(performance.now(),{} as VideoFrameCallbackMetadata));}
 function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить проход'}));}
 
-function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(value:Record<string,unknown>)=>Record<string,unknown>;assetsReady?:boolean;expectedSource?:NavigationMapSource;visualTempo?:boolean;rgbTempo?:boolean;adaptiveThrottle?:boolean}={}){
+function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(value:Record<string,unknown>)=>Record<string,unknown>;assetsReady?:boolean;expectedSource?:NavigationMapSource;visualTempo?:boolean;rgbTempo?:boolean;adaptiveThrottle?:boolean;romaAvailable?:boolean}={}){
   const vehicleLease:VehicleInputLease={...lease,setVehicle:jest.fn(),neutral:jest.fn(),drag2:jest.fn(async()=>true)};
   const vehicleOpen=jest.fn(async()=>vehicleLease),starts:Record<string,unknown>[]=[];
   let id='',cap=15,duration=300;
@@ -45,7 +45,7 @@ function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(v
       const body=JSON.parse(String(init?.body));starts.push(body);id=body.id;cap=body.maxSpeedKmh;duration=body.maxSeconds;
       const value={phase:'observing',id,job:job.id,physicalActions:0,mode:'vehicle_camera_trace_v1',maxSeconds:duration,startMode:body.startMode,
         cameraFollowsBodyConfirmed:true,hudProfile:body.hudProfile,clientVersion:'vehicle_live_v1',
-        cameraTracking:true,cameraControl:'continuous_drag_v1',motionProtocol:'applied_vehicle_v1',maxSpeedKmh:cap,...(body.speedMode?{speedMode:body.speedMode}:{}),adaptiveThrottle:body.adaptiveThrottle};
+        cameraTracking:true,cameraControl:'continuous_drag_v1',motionProtocol:'applied_vehicle_v1',maxSpeedKmh:cap,...(body.speedMode?{speedMode:body.speedMode}:{}),adaptiveThrottle:body.adaptiveThrottle,romaRecovery:body.romaRecovery};
       return {json:async()=>options.start?options.start(value):value} as Response;
     }
     const response=await original(path,j,init);
@@ -59,7 +59,7 @@ function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(v
     return {json:async()=>value} as Response;
   });
   const rendered=render(<VehicleRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding}
-    assetsReady={options.assetsReady!==false} visualTempo={options.visualTempo} rgbTempo={options.rgbTempo} adaptiveThrottle={options.adaptiveThrottle} expectedSource={options.expectedSource} preparationIssue="Основная обработка остановлена: resource_guard. Диагностическая схема не заменяет ориентиры."
+    assetsReady={options.assetsReady!==false} visualTempo={options.visualTempo} rgbTempo={options.rgbTempo} adaptiveThrottle={options.adaptiveThrottle} romaAvailable={options.romaAvailable} expectedSource={options.expectedSource} preparationIssue="Основная обработка остановлена: resource_guard. Диагностическая схема не заменяет ориентиры."
     input={{issue:null,hudProfile:'black_russia_scooter_v1',open:vehicleOpen}} observerBusy={false} onBusyChange={busy}/>);
   const startVehicle=()=>{fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));fireEvent.click(screen.getByRole('button',{name:'Запустить транспорт'}));};
   return {vehicleLease,vehicleOpen,starts,startVehicle,...rendered};
@@ -141,6 +141,25 @@ test('longer gas decisions are negotiated before the browser opens the input own
   await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledWith({pedal:'throttle',steering:.2,throttlePulseMs:180}));
   expect(f.starts[0]).toMatchObject({speedMode:'visual_tempo_rgb',adaptiveThrottle:true,expectedSource});
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
+test.each([true,false])('RoMa is opt-in and requires the worker to echo the selected mode (%s)',async echo=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const f=vehicleFixture({visualTempo:true,rgbTempo:true,romaAvailable:true,expectedSource,
+    start:value=>({...value,romaRecovery:echo}),
+    plan:plan=>({...plan,throttlePulseMs:120,targetSpeedKmh:null,observedSpeedKmh:null,speedAccepted:false,
+      tempoAccepted:true,targetTempo:.2,observedTempo:.12})});
+  const checkbox=screen.getByRole('checkbox',{name:'RoMa v2 для восстановления позиции'});
+  expect(checkbox).not.toBeChecked();
+  fireEvent.click(checkbox);
+  f.startVehicle();
+  await waitFor(()=>expect(f.starts[0]).toMatchObject({speedMode:'visual_tempo_rgb',romaRecovery:true}));
+  if(echo){
+    await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalled());
+    fireEvent.keyDown(window,{code:'Escape'});
+  }
+  await screen.findByText('Освобождение: CLOSED');
+  if(!echo)expect(f.vehicleOpen).not.toHaveBeenCalled();
 });
 
 test('the actual failed-source shape cannot promote diagnostic173 into a vehicle input lease',async()=>{

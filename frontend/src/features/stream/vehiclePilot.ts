@@ -157,6 +157,7 @@ export function vehicleReasonLabel(reason:string,positionPreviouslyConfirmed=fal
     vehicle_source_profile_mismatch:'Профиль транспорта записи не совпадает с выбранным HUD. Используйте запись с тем же режимом скутера.',
     vehicle_hud_profile_required:'Нужен явно выбранный профиль HUD скутера для записи и живого экрана',
     vehicle_controls_not_calibrated_or_bounded:'Точки транспорта не подтверждены для текущего экрана',
+    vehicle_roma_recovery_unavailable:'RoMa v2 не подтверждена обработчиком. Проверьте доступность GPU-режима.',
     vehicle_start_unconfirmed:'Запуск транспорта не подтверждён; контакты освобождаются',
     vehicle_reply_not_bound:'Ответ транспорта не связан с этим кадром и сеансом',
     vehicle_motion_feedback_required:'Обновите страницу и локальный обработчик: протокол транспорта не совпадает',

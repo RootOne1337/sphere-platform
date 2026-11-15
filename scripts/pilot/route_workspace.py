@@ -216,10 +216,13 @@ class RouteWorkspaces:
                     validate_reference_lk_qualification(receipt, folder, source_binding=selected['binding'])
                 except (OSError, ValueError, TypeError, KeyError):
                     return dict(result, phase='awaiting_qualification', error='route_reference_lk_unqualified')
+                from scripts.pilot.route_roma_runtime import configured_runtime
                 tempo_source = self._visual_tempo_source(job)
+                roma_available = bool(tempo_source and (folder/'route-xfeat.onnx').is_file()
+                                      and configured_runtime(ROOT))
                 return dict(result, phase='ready', error=None, controlledExperimentalTestOnly=True,
                             vehicleVisualTempoAvailable=tempo_source, vehicleRgbTempoAvailable=tempo_source,
-                            vehicleAdaptiveThrottleAvailable=tempo_source)
+                            vehicleAdaptiveThrottleAvailable=tempo_source, vehicleRomaRecoveryAvailable=roma_available)
             if receipt.get('pipeline_sha256') == native_reference_pipeline_id():
                 from scripts.pilot.route_native_landmarks import validate_reference_receipt
                 try:
@@ -463,7 +466,7 @@ class RouteWorkspaces:
                     physicalActions=0)
 
     def start_live(self, job, body, *, mode='live', observation_only=True, vehicle_xfeat=False,
-                   fast_vehicle_xfeat=False):
+                   fast_vehicle_xfeat=False, roma_runtime=None):
         import cv2 as cv
         from motor_worker.route_localization import SparseRoute
         from motor_worker.route_tracking import AnchoredRouteLocalizer
@@ -540,7 +543,20 @@ class RouteWorkspaces:
                     from scripts.pilot.route_descriptor_attachment import load_descriptor_recovery
                     sidecar, recovery_paths, recovery_stamp = load_descriptor_recovery(
                         folder, receipt, stamp=self._runtime_source_stamp)
-                if learned_model is not None and fast_vehicle_xfeat:
+                if roma_runtime is not None:
+                    from motor_worker.route_roma_recovery import RomaVehicleLocalizer, ROMA_POLICY
+                    from scripts.pilot.route_roma_runtime import RomaProcess
+                    if learned_model is None or not fast_vehicle_xfeat:
+                        raise ValueError('vehicle_roma_recovery_unavailable')
+                    gpu = RomaProcess(roma_runtime)
+                    try:
+                        tracker = RomaVehicleLocalizer(route, model=learned_model, roma_process=gpu,
+                                                       reference_images=selected['images_path'], **options)
+                    except BaseException:
+                        gpu.close()
+                        raise
+                    recovery_policy = ROMA_POLICY
+                elif learned_model is not None and fast_vehicle_xfeat:
                     from motor_worker.route_xfeat_fast import FastReferenceLKXFeatLocalizer, FAST_XFEAT_POLICY
                     tracker = FastReferenceLKXFeatLocalizer(route, model=learned_model, **options)
                     recovery_policy = FAST_XFEAT_POLICY
@@ -579,6 +595,9 @@ class RouteWorkspaces:
                     ROOT/'motor_worker/route_confirmation.py', ROOT/'motor_worker/vehicle_route.py', *recovery_paths)
                 if fast_vehicle_xfeat and learned_model is not None:
                     source_paths += (ROOT/'motor_worker/route_xfeat_fast.py',)
+                if roma_runtime is not None:
+                    source_paths += (ROOT/'motor_worker/route_roma_recovery.py',
+                                     ROOT/'scripts/pilot/route_roma_runtime.py')
                 if selected['index_path'] != job/'prepared/reconstruction-input.json':
                     source_paths += (selected['index_path'],
                                      selected['index_path'].parent.parent/'input/manifest.json')
@@ -719,7 +738,8 @@ class RouteWorkspaces:
                     'vehicleCameraAssumptionConfirmed', 'cameraFollowsBodyConfirmed',
                     'hudProfile', 'maxSpeedKmh', 'cameraTracking', 'cameraControl', 'clientVersion'}
         if (type(body) is not dict or not required <= body.keys()
-                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds', 'expectedSource', 'speedMode', 'adaptiveThrottle'}
+                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds', 'expectedSource', 'speedMode',
+                                                 'adaptiveThrottle', 'romaRecovery'}
                 or body.get('vehicleCameraAssumptionConfirmed') is not True
                 or body.get('cameraFollowsBodyConfirmed') is not True
                 or body.get('hudProfile') != 'black_russia_scooter_v1'
@@ -728,6 +748,8 @@ class RouteWorkspaces:
                 or body.get('cameraControl') != 'continuous_drag_v1'
                 or body.get('clientVersion') != 'vehicle_live_v1'
                 or body.get('speedMode', 'recorded_hud') not in ('recorded_hud', 'visual_tempo_live_hud', 'visual_tempo_rgb')
+                or type(body.get('romaRecovery', False)) is not bool
+                or body.get('romaRecovery') is True and body.get('speedMode') != 'visual_tempo_rgb'
                 or type(body.get('adaptiveThrottle', False)) is not bool
                 or body.get('adaptiveThrottle') is True and body.get('speedMode') != 'visual_tempo_rgb'
                 or body.get('startMode', 'beginning') not in {'beginning', 'recognized_route'}
@@ -755,6 +777,13 @@ class RouteWorkspaces:
         settings['maxSeconds'] = body.get('maxSeconds')
         settings['speedMode'] = speed_mode
         settings['adaptiveThrottle'] = body.get('adaptiveThrottle', False)
+        settings['romaRecovery'] = body.get('romaRecovery', False)
+        roma_runtime = None
+        if settings['romaRecovery']:
+            from scripts.pilot.route_roma_runtime import configured_runtime
+            roma_runtime = configured_runtime(ROOT)
+            if roma_runtime is None:
+                raise ValueError('vehicle_roma_recovery_unavailable')
         self._expire()
         if self.live and self.live['id'] == request['id']:
             if 'vehicle' not in self.live:
@@ -765,7 +794,7 @@ class RouteWorkspaces:
         if not visual_tempo and reference is None:
             raise ValueError('vehicle_source_speed_not_prepared')
         self.start_live(job, request, observation_only=False, vehicle_xfeat=visual_tempo,
-                        fast_vehicle_xfeat=visual_speed)
+                        fast_vehicle_xfeat=visual_speed, roma_runtime=roma_runtime)
         try:
             if 'vehicle' not in self.live:
                 route = self.live['tracker'].route
@@ -794,7 +823,7 @@ class RouteWorkspaces:
                         startMode=settings['startMode'], cameraTracking=True,
                         cameraControl='continuous_drag_v1', cameraFollowsBodyConfirmed=True,
                         hudProfile=body['hudProfile'], speedMode=speed_mode, adaptiveThrottle=settings['adaptiveThrottle'],
-                        observationProtocol='jpeg_binary_v1',
+                        romaRecovery=settings['romaRecovery'], observationProtocol='jpeg_binary_v1',
                         motionProtocol='applied_vehicle_v1', clientVersion='vehicle_live_v1')
         except BaseException:
             self._retire_live(self.live, self.clock())
@@ -920,6 +949,8 @@ class RouteWorkspaces:
             result['vehicle']['motionActive'] = body.get('motionActive')
             result['vehicle']['motionSeconds'] = follower.motion_seconds
             result['speedObservation'] = speed
+            if session['vehicle_settings']['romaRecovery']:
+                result['romaStatus'] = session['tracker'].roma_status
             result['computeMs'] = (self.clock() - now) * 1000
         if session.get('frame_archive'):
             session['frame_archive'].offer(raw,sequence=body['sequence'],pose=pose,plan=result.get('walk', result.get('vehicle')),
