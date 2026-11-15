@@ -78,6 +78,7 @@ export class VehicleContacts {
   private gasTimer:ReturnType<typeof setTimeout>|null=null;
   private gasUntil=0;
   private nextGasAt=0;
+  private lastGasDecision:VehicleCommand|null=null;
   constructor(private control:{hasContact(id:number):boolean;set(id:number,point:TeachingPoint|null,notAfter?:number):void},
     private profile:TeachingProfile,private geometry:{width:number;height:number}){}
   private endGas(now:number) {
@@ -94,7 +95,13 @@ export class VehicleContacts {
     if(Math.abs(steering)>=.001&&!this.control.hasContact(1))this.control.set(1,center,notAfter);
     if(Math.abs(steering)>=.001||this.control.hasContact(1))this.control.set(1,target,notAfter);
     const capped=command.throttlePulseMs===120;
-    const requested=capped&&command.pedal==='throttle'&&(now<this.nextGasAt||now>=this.gasUntil&&this.gasUntil>0)?'coast':command.pedal;
+    let requested=command.pedal;
+    if(capped&&requested==='throttle'){
+      const freshDecision=command!==this.lastGasDecision;
+      this.lastGasDecision=command;
+      const canPress=this.gasUntil>0?now<this.gasUntil:freshDecision&&now>=this.nextGasAt;
+      if(!canPress)requested='coast';
+    }
     if(requested!=='throttle')this.endGas(now);
     if(requested!==this.pedal&&this.control.hasContact(0))this.control.set(0,null,notAfter);
     if(capped&&requested==='throttle'&&!this.gasUntil){
@@ -107,6 +114,7 @@ export class VehicleContacts {
     }
     const pedal=requested==='coast'?null:fromPercent(this.profile.vehicle[requested==='throttle'?'forward':'reverse'],this.geometry);
     this.control.set(0,pedal,Math.min(this.gasUntil||notAfter,notAfter));this.pedal=requested;
+    return requested;
   }
 }
 
@@ -116,7 +124,7 @@ export function vehicleReasonLabel(reason:string,positionPreviouslyConfirmed=fal
     vehicle_fresh_pose_required:'Ожидаем свежее положение; движение приостановлено',
     vehicle_visual_tempo_unconfirmed:'Ждём подтверждённый темп по нескольким кадрам, газ отпущен',
     vehicle_speed_unconfirmed:'Скорость не подтверждена — газ отпущен; ждём свежие показания',
-    vehicle_continuous_pursuit:'Следуем маршруту: газ удерживается, руль корректируется по свежим кадрам',
+    vehicle_continuous_pursuit:'Следуем маршруту по свежим кадрам',
     vehicle_confirming_end:'Подтверждаем конец маршрута и остановку транспорта',
     vehicle_camera_trace_end_confirmed:'Конец записанного пути подтверждён; транспорт остановлен',
     vehicle_relocalization_timeout:'Положение не восстановилось за 15 секунд; сеанс завершён с отпущенными педалями',
@@ -126,6 +134,7 @@ export function vehicleReasonLabel(reason:string,positionPreviouslyConfirmed=fal
     vehicle_motion_without_route_progress:'Продвижение по маршруту не подтверждается; педали отпущены',
     vehicle_outside_control_corridor:'Положение найдено за пределами коридора управления. Ждём подтверждения возврата',
     vehicle_pose_or_corridor_unqualified:'Положение выходит за подтверждённый участок маршрута; движение остановлено',
+    vehicle_waiting_for_consistent_position:'Получена несовместимая поза. Педали отпущены, ждём повторное подтверждение участка',
     vehicle_pose_discontinuity:'Положение изменилось скачком; требуется повторная проверка места',
     vehicle_progress_discontinuity:'Обнаружен скачок по маршруту; движение остановлено',
     vehicle_pose_binding_or_age:'Источник или последовательность кадров изменились; прежний сеанс остановлен',

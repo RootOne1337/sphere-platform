@@ -175,10 +175,16 @@ class RuntimeMetadataRing:
                 reason = plan.get('reason')
                 if type(reason) is str and re.fullmatch(r'(?:vehicle|route|walk)_[a-z_]{1,72}', reason):
                     safe['reason'] = reason
-                for key, maximum in (('progressFraction',1.),('targetSpeedKmh',350.),('observedSpeedKmh',350.)):
+                for key, minimum, maximum in (
+                        ('progressFraction',0.,1.),('targetSpeedKmh',0.,350.),('observedSpeedKmh',0.,350.),
+                        ('targetTempo',0.,.25),('observedTempo',0.,17.5),('steering',-.35,.35),
+                        ('throttlePulseMs',120,120)):
                     value = plan.get(key)
-                    if type(value) in {int,float} and math.isfinite(value) and 0 <= value <= maximum:
+                    if type(value) in {int,float} and math.isfinite(value) and minimum <= value <= maximum:
                         safe[key] = value
+                for key in ('tempoAccepted','speedAccepted','motionActive'):
+                    if type(plan.get(key)) is bool:
+                        safe[key] = plan[key]
                 row['plan'] = safe
             if isinstance(source_binding, dict):
                 safe = {}
@@ -356,7 +362,8 @@ class WalkFrameArchive:
             row['plan'] = {key: plan.get(key) for key in (
                 'schema', 'phase', 'reason', 'pedal', 'steering', 'progressFraction',
                 'motionActive', 'motionSeconds', 'targetSpeedKmh', 'observedSpeedKmh',
-                'speedAccepted', 'maxSpeedKmh', 'targetViewCamera', 'maxDecisionAgeMs', 'maxAnswerHoldMs')}
+                'speedAccepted', 'maxSpeedKmh', 'targetViewCamera', 'maxDecisionAgeMs', 'maxAnswerHoldMs',
+                'throttlePulseMs', 'targetTempo', 'observedTempo', 'tempoAccepted')}
         self.rows.append((raw,row));self.bytes+=len(raw)
         while len(self.rows)>self.MAX_FRAMES or self.bytes>self.MAX_BYTES-64*1024:
             # Preserve acquisition evidence alongside the recent failure tail.

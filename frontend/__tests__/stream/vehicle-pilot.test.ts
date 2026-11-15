@@ -70,15 +70,21 @@ test('visual tempo requires a measured rate and a nonrenewable throttle pulse',(
   jest.useFakeTimers();
   try{
     const f=driver(),gas={pedal:'throttle',steering:0,throttlePulseMs:120} as const;
-    const apply=()=>f.controller.apply(gas,performance.now(),performance.now()+250);
+    const apply=(decision=gas)=>f.controller.apply(decision,performance.now(),performance.now()+250);
     apply();
     expect(f.held.has(0)).toBe(true);
-    jest.advanceTimersByTime(100);apply();
+    jest.advanceTimersByTime(100);
+    const duringPulse={...gas};
+    apply(duringPulse);
     jest.advanceTimersByTime(20);
     expect(f.held.has(0)).toBe(false);
-    apply();
+    const duringCooldown={...gas};
+    apply(duringCooldown);
     expect(f.held.has(0)).toBe(false);
-    jest.advanceTimersByTime(180);apply();
+    jest.advanceTimersByTime(180);
+    expect(apply(duringCooldown)).toBe('coast');
+    expect(f.held.has(0)).toBe(false);
+    apply({...gas});
     expect(f.held.has(0)).toBe(true);
   }finally{jest.useRealTimers();}
 });

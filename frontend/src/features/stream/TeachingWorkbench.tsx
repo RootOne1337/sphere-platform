@@ -343,7 +343,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       conn.observeControl?.(state==='failed'?'fenced':state,reason);
       setNative(state==='ready'?(vehicleMode?'READY · транспорт':'READY · пеший тест'):state==='closed'?'CLOSED · освобождено':state);
       if(state==='ready'&&phaseRef.current==='opening'&&!signal.aborted){change('piloting');settle(lease);}
-      if(['failed','closed','closing'].includes(state)){commandLoop?.close();settle(lease);}
+      if(['failed','closed','closing'].includes(state)){commandLoop?.close();vehicleContacts?.neutral(performance.now());settle(lease);}
       if(state==='failed')queueMicrotask(()=>{void stopCallback.current(reason??'walk_native_closed');});
       if(state==='closed'&&active(phaseRef.current)&&phaseRef.current!=='stopping'&&!expectedOwnerClose.current)queueMicrotask(()=>{void stopCallback.current('walk_native_closed');});
     },rtt=>conn.observeControl?.('ready',undefined,rtt),()=>conn.idleInputFresh?.()===true,center,true,vehicleMode?'vehicle':'walking');
@@ -351,7 +351,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     commandLoop=new PilotCommandLoop({maxHoldMs:vehicleMode?350:250,ready:()=>lease.active(),fresh:()=>conn.fresh(),neutral,
       failure:error=>{void stopCallback.current(error instanceof Error?error.message:'pilot_command_failed');},
       apply:(command,now,notAfter)=>{
-        if('vehicle' in command){vehicleContacts!.apply(command.vehicle,now,notAfter);requestedMotion=command.vehicle.pedal==='throttle';}
+        if('vehicle' in command){requestedMotion=vehicleContacts!.apply(command.vehicle,now,notAfter)==='throttle';}
         else{const sent=stickSlew.next(command.stick,now);requestedMotion=Math.hypot(...sent)>.001;
           applyWalkingStick({hasContact:id=>control.hasContact(id),set:(id,point)=>control.set(id,point,notAfter)},p,b,sent);}
       }});

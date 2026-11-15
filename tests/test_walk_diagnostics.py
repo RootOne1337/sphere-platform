@@ -37,7 +37,8 @@ def test_runtime_ring_keeps_alternating_outcomes_metadata_only_and_bounds_disk(t
                     targetSpeedKmh=10,observedSpeedKmh=0,secret='DO_NOT_STORE'),compute_ms=91.)
         assert ring.offer(sequence=99,pose=dict(state='confirming',reason='route_pose_discontinuity',inliers=0),
             diagnostic=dict(verifiedInliersBeforeTemporalGate=512),
-            plan=dict(phase='following',reason='vehicle_continuous_pursuit',pedal='throttle'))
+            plan=dict(phase='following',reason='vehicle_continuous_pursuit',pedal='throttle',
+                targetTempo=.25,observedTempo=.1,tempoAccepted=True,steering=-.2,throttlePulseMs=120,motionActive=False))
         deadline=time.monotonic()+2.5
         while time.monotonic()<deadline:
             path=tmp_path/ring.FILE
@@ -49,6 +50,8 @@ def test_runtime_ring_keeps_alternating_outcomes_metadata_only_and_bounds_disk(t
         rows=json.loads(raw)['rows'];assert len(rows)<=64 and rows[-1]['sequence']==99
         assert {'unknown','confirming'}<={row['poseState']for row in rows}
         assert rows[-1]['plan']['pedal']=='throttle'
+        assert rows[-1]['plan']['observedTempo']==.1 and rows[-1]['plan']['steering']==-.2
+        assert rows[-1]['plan']['throttlePulseMs']==120 and rows[-1]['plan']['motionActive'] is False
         assert rows[-1]['localizationDiagnostic']['verifiedInliersBeforeTemporalGate']==512
         assert ring.writes<=2
     finally:ring.close()

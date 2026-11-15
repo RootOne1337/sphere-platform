@@ -62,6 +62,29 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual((missing['phase'], missing['pedal']), ('waiting', 'coast'))
         self.assertFalse(missing['tempoAccepted'])
 
+    def test_visual_tempo_uses_recent_acceleration_after_stationary_frames(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=5, visual_speed=True)
+        self.assertEqual(self.acquire(speed=None)['pedal'], 'throttle')
+        self.now += .04
+        progress = self.reference.source_rate * .14 * .5
+        accelerated = self.observe(progress=progress, speed=None)
+        self.assertGreater(accelerated['observedTempo'], .45)
+        self.assertEqual(accelerated['pedal'], 'brake')
+
+    def test_visual_alias_pauses_then_reacquires_without_admitting_the_jump(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=5, visual_speed=True)
+        self.assertEqual(self.acquire(speed=None)['pedal'], 'throttle')
+        outside = self.observe(progress=self.follower.step * 7., speed=None)
+        self.assertEqual((outside['phase'], outside['reason'], outside['pedal']),
+                         ('waiting', 'vehicle_waiting_for_consistent_position', 'coast'))
+        self.assertEqual(self.follower.high_water, 0.)
+        self.now += .1
+        resumed = self.acquire(speed=None)
+        self.assertEqual((resumed['phase'], resumed['pedal']), ('following', 'throttle'))
+        self.assertEqual(self.follower.high_water, 0.)
+
     def test_acquires_three_fresh_poses_and_holds_throttle_across_updates(self):
         replies = []
         for i in range(30):

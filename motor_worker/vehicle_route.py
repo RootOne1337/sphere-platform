@@ -186,16 +186,19 @@ class VehicleRouteFollower:
         if len(positions) < 2:
             return None
         rates = [
-            max(abs(progress - previous_progress), self.np.linalg.norm(center - previous_center)) / (at - previous_at)
+            (at - previous_at, max(abs(progress - previous_progress),
+                                   self.np.linalg.norm(center - previous_center)) / (at - previous_at))
             for previous_at, previous_center, previous_progress, _ in positions
             if .12 <= at - previous_at <= .5
         ]
         if not rates:
             return None
-        # Use both arc progress and camera travel so lateral motion cannot be
-        # interpreted as standing still just because along-route progress stalls.
-        return min(350., float(self.np.median(rates)) * self.VISUAL_UNITS_PER_SOURCE_RATE
-                   / self.speed_reference.source_rate)
+        # Keep recent measured acceleration visible when the longer window
+        # still contains several poses from before the gas pulse.
+        rate = float(self.np.median([value for _, value in rates]))
+        if rates[-1][0] <= .25:
+            rate = max(rate, rates[-1][1])
+        return min(350., rate * self.VISUAL_UNITS_PER_SOURCE_RATE / self.speed_reference.source_rate)
 
     def _neutral(self, reason, *, terminal=False, arrived=False):
         self.steering, self.pedal = 0., 'coast'
@@ -355,6 +358,12 @@ class VehicleRouteFollower:
                     # Reject the tentative jump without replacing the last
                     # verified position or allowing it to vote for movement.
                     return self._wait('vehicle_confirming_position', now)
+                elif self.visual_speed:
+                    # A contradictory localized pose is still rejected. Hold
+                    # the last verified anchor so a new in-corridor series
+                    # can recover during the existing neutral wait.
+                    self.visual_positions.clear()
+                    return self._wait('vehicle_waiting_for_consistent_position', now)
                 else:
                     return self._neutral(discontinuity, terminal=True)
         if not self.started and self.start_mode == 'beginning':
