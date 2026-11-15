@@ -162,6 +162,34 @@ test.each([true,false])('RoMa is opt-in and requires the worker to echo the sele
   if(!echo)expect(f.vehicleOpen).not.toHaveBeenCalled();
 });
 
+test('a slow cold RoMa reply remains neutral and accepts a later fresh frame on the same lease',async()=>{
+  let now=1000, queries=0;
+  jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const f=vehicleFixture({visualTempo:true,rgbTempo:true,romaAvailable:true,expectedSource,
+    plan:plan=>({...plan,throttlePulseMs:120,targetSpeedKmh:null,observedSpeedKmh:null,speedAccepted:false,
+      tempoAccepted:true,targetTempo:.2,observedTempo:.12})});
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);
+    if(args[0].endsWith('/observe')&&++queries===1)now+=260;
+    return response;
+  });
+  fireEvent.click(screen.getByRole('checkbox',{name:'RoMa v2 для восстановления позиции'}));
+  f.startVehicle();
+  await screen.findByText(/Ждём свежее решение до 30 с/);
+  expect(f.vehicleLease.neutral).toHaveBeenCalled();
+  expect(f.vehicleLease.setVehicle).not.toHaveBeenCalled();
+
+  // The video is still arriving. Advance across the old three-second limit
+  // without letting a pre-warm result acquire steering or pedal authority.
+  now+=3100;
+  fresh();
+  await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledTimes(1));
+  expect(f.starts).toHaveLength(1);
+  expect(f.vehicleLease.close).not.toHaveBeenCalled();
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
 test('the actual failed-source shape cannot promote diagnostic173 into a vehicle input lease',async()=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);const f=vehicleFixture({assetsReady:false});fresh();
   fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));

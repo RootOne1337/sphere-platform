@@ -73,7 +73,8 @@ class _RomaSolve(_FastMeasuredSolve):
         return self._rgb[index]
 
     def _queue_roma(self, frame):
-        if not self.roma_process.available or frame.received_at < self._roma_next_at:
+        if (not self.roma_process.available or frame.received_at < self._roma_next_at
+                or not self._fresh(frame)):
             return
         rank = self.last_diagnostic.get("candidateReferenceIndices") or ()
         prior = self._last_ordinary
@@ -173,6 +174,10 @@ class _RomaSolve(_FastMeasuredSolve):
                     or np.trace(best[1] @ other[1].T) < 1 + 2 * math.cos(math.radians(6))):
                 return None
         return best, tuple(row[2] for row in verified)
+
+    def _candidates_ranked(self):
+        if self.confirmations < 3:
+            self._queue_roma(self._roma_frame)
 
     def _solve(self, *args):
         frame = self._roma_frame

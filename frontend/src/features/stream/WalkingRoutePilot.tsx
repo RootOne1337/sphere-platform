@@ -118,7 +118,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   };
   const neutralUntilFresh=(active:Run,reason='permit_expired')=>{
     if(!active.lease?.active())return false;
-    if(active.freshUntil===null){active.freshWaits++;active.freshUntil=performance.now()+3000;
+    const waitMs=vehicleMode&&active.romaRecovery&&!active.positionConfirmed?30000:3000;
+    if(active.freshUntil===null){active.freshWaits++;active.freshUntil=performance.now()+waitMs;
       active.trace.add('neutral_wait',performance.now(),{reason,sequence:active.lastSequence});}
     active.moving=false;
     if(active.lease.neutral){active.camera?.interrupt();active.lease.neutral();}
@@ -126,7 +127,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     // A late delivery is not loss of geometric localization. The server still
     // requires three poses after an actual loss. Resume only on a NEW, fresh,
     // bound localized/following reply, never on the expired command.
-    setNotice(vehicleMode?'Газ отпущен, руль по центру: ждём новое свежее решение, до 3 секунд.': 'Стик в центре: ждём новое свежее решение, до 3 секунд. Повторного нажатия нет.');
+    setNotice(vehicleMode?`Газ отпущен, руль по центру. Ждём свежее решение до ${waitMs/1000} с.`: 'Стик в центре: ждём новое свежее решение, до 3 секунд. Повторного нажатия нет.');
     return true;
   };
   const stop=async(reason:string)=>{
