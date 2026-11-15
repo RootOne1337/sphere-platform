@@ -901,7 +901,7 @@ class RouteWorkspaces:
                 forward = np.asarray(pose.rotation, dtype=float).reshape(3, 3)[2]
                 candidates = range(max(0, index-1), min(len(trace), index+3))
                 nearest = min(candidates, key=lambda i:
-                    np.linalg.norm(trace[i]-pose.center)
+                    np.linalg.norm(vehicle.trace[i] - pose.center)
                     + vehicle.step * (1. - np.clip(vehicle.views[i, 2] @ forward, -1., 1.)))
             result['referenceTicks90k']=round(session['tracker'].route.source_seconds[nearest]*90000)
         if 'walk' in session:

@@ -111,6 +111,29 @@ class VehicleWorkspaceTests(unittest.TestCase):
         self.assertNotIn('walk', result)
         self.assertEqual(result['speedObservation']['source_rgb_sha256'], result['pose']['source_rgb_sha256'])
 
+    def test_confirmed_vehicle_pose_returns_nearest_reference_for_tuple_trace(self):
+        import cv2 as cv
+        import numpy as np
+
+        from motor_worker.route_localization import RoutePose
+
+        self.workspace.start_vehicle(self.job, self.body)
+        tracker = self.workspace.live['tracker']
+        trace = tracker.route.camera_trace
+        _, encoded = cv.imencode('.jpg', np.zeros((540, 960, 3), np.uint8))
+        frame = dict(id=self.body['id'], captureEpoch=self.body['captureEpoch'], sequence=1,
+                     motionActive=False)
+        pose = RoutePose('localized', 'test', tracker.route.id, tracker.route.world_revision,
+                         frame['captureEpoch'], frame['sequence'], 1., 1., '1' * 64, (960, 540),
+                         center=trace[2], rotation=tuple(np.eye(3).flat), segment=1)
+        speed = {'status': 'unknown', 'speed_kmh': None, 'confidence': 0.}
+        with patch.object(tracker, 'observe', return_value=pose), patch(
+                'scripts.pilot.route_hud_profile.read_live_speed', return_value=speed):
+            result = self.workspace.observe_jpeg(self.job, frame, encoded.tobytes())
+        self.assertEqual(result['pose']['state'], 'localized')
+        self.assertEqual(result['referenceTicks90k'], round(tracker.route.source_seconds[2] * 90000))
+        self.assertEqual(result['physicalActions'], 0)
+
     def test_no_source_speed_profile_does_not_create_vehicle_session(self):
         with patch('scripts.pilot.route_hud_profile.load_speed_reference', return_value=None):
             with self.assertRaisesRegex(ValueError, 'source_speed_not_prepared'):
