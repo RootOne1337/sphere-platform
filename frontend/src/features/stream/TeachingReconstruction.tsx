@@ -269,6 +269,16 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   };
   const surfaceLabels:Record<string,string>={starting:'Подготовка 3D-модели',preparing:'Проверка камер и оригинальных кадров',densifying:'Многовидовое восстановление глубины',meshing:'Построение треугольных поверхностей',baking:'Проекция фотографий на видимые поверхности',ready:'Текстурированная 3D-модель сохранена',review_required:'Пробная модель сохранена · проверьте поверхности визуально',failed:'Построение модели остановлено',cancelled:'Построение модели отменено'};
   const navigationBusy=['pending_auto_prepare','preparing','features'].includes(status?.navigation?.phase??'');
+  const confirmedSource=!!sourceManifestSha&&status?.source_manifest_sha256===sourceManifestSha;
+  const activeAlternative=status?.navigation?.source?.alternativeId;
+  const mapConfirmed=confirmedSource&&status?.navigation?.phase==='ready'&&
+    (!!activeAlternative||!cameraMotionRequiresReview(status.camera_motion));
+  const reconstructionFailure=status?.error?(
+    mapConfirmed?<details className="text-xs text-muted-foreground">
+      <summary className="cursor-pointer">История реконструкции</summary>
+      <p className="mt-1">{reasons[status.error]??status.error} Исходное видео сохранено.</p>
+    </details>:<p role="alert" className="text-destructive">{reasons[status.error]??status.error} Исходное видео сохранено.</p>
+  ):null;
   const canPrepareMap=!!job&&!!status?.geometry_available&&!busy&&!!(status.dense_available||status.sparse_available)
     &&!cameraMotionRequiresReview(status.camera_motion)&&!['route_camera_motion_requires_review','route_preparation_attempt_quota','route_map_has_unobserved_sections'].includes(status.navigation?.error??'')
     &&quotaJob!==job.id&&status.navigation?.phase!=='ready';
@@ -276,8 +286,6 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const sceneNode=visible&&job&&(selectedGeometry!==undefined||status?.geometry_available)?<Scene job={job} status={{...status??{phase:'review_required'},surface:selectedModel??status?.surface}} sourceManifestSha={sourceManifestSha} selectedTicks={selectedTicks} onSeekCamera={onSeekCamera} validTicks={validTicks} sourcePreview={sourcePreview} showGeometryMap={alternativeCameraCount===null} sourceKey={`${scope}:${clip}`} selectedGeometry={selectedGeometry}/>:null;
   const scene=sceneContainer===undefined?sceneNode:sceneContainer?createPortal(sceneNode,sceneContainer):null;
   if(presentation==='compact'){
-    const sourceBound=!!sourceManifestSha&&status?.source_manifest_sha256===sourceManifestSha;
-    const mapConfirmed=sourceBound&&status?.navigation?.phase==='ready'&&!cameraMotionRequiresReview(status.camera_motion);
     const selectedPreview=selectedGeometry&&selectedGeometry.id!=='primary'&&selectedGeometry.sourceKey===`${scope}:${clip}`
       &&selectedGeometry.jobId===job?.id&&!!sourceManifestSha&&selectedGeometry.sourceManifestSha===sourceManifestSha
       &&selectedGeometry.geometry?.source_manifest_sha256===sourceManifestSha&&Array.isArray(selectedGeometry.geometry.cameras)&&Array.isArray(selectedGeometry.geometry.points)
@@ -293,16 +301,16 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       else if(mapConfirmed)primary={label:'Карта подготовлена',disabled:true,onClick:()=>{}};
       else if(job&&!busy)primary={label:'Проверить состояние',variant:'outline',onClick:()=>setRefresh(value=>value+1)};
     }
-    const workflowStatus=recovering?'Проверяем сохранённую обработку…':workingSurface?(surfaceLabels[workingSurface.phase]??workingSurface.phase):navigationBusy?`Камеры рассчитаны · ${navigationPhaseLabel(status?.navigation?.phase)}`:status?(phases[status.phase]??status.phase):job?.creation?autoStopped.current?'Автоматическая подготовка остановлена.':'Ожидаем локальный обработчик; сохранённая подготовка продолжится автоматически.':complete?'Исходная запись сохранена. Подготовьте камеры и карту.':'Исходная запись не подтверждена; обработка недоступна.';
+    const workflowStatus=recovering?'Проверяем сохранённую обработку…':mapConfirmed?'Карта готова к живой проверке':workingSurface?(surfaceLabels[workingSurface.phase]??workingSurface.phase):navigationBusy?`Камеры рассчитаны · ${navigationPhaseLabel(status?.navigation?.phase)}`:status?(phases[status.phase]??status.phase):job?.creation?autoStopped.current?'Автоматическая подготовка остановлена.':'Ожидаем локальный обработчик; сохранённая подготовка продолжится автоматически.':complete?'Исходная запись сохранена. Подготовьте камеры и карту.':'Исходная запись не подтверждена; обработка недоступна.';
     return <><CompactReconstructionWorkflow status={workflowStatus+(uploading&&progress?` · ${progress}`:'')} busy={busy} sourceComplete={complete}
-      camerasReady={sourceBound&&!!(status?.sparse_available||status?.dense_available)} mapReady={mapConfirmed} primary={primary}
+      camerasReady={mapConfirmed||confirmedSource&&!!(status?.sparse_available||status?.dense_available)} mapReady={mapConfirmed} primary={primary}
       metrics={<>{status?.quality&&<p>Основная попытка: {status.quality.registered}/{status.quality.selected} камер · {status.quality.points?.toLocaleString('ru')??'—'} точек · ошибка {status.quality.mean_reprojection_px.toFixed(2)} px</p>}
         {selectedPreview&&<p className="mt-1 text-cyan-700 dark:text-cyan-300">Выбранный просмотр: {selectedPreview.label} · {selectedPreview.geometry!.cameras.length} камер · {selectedPreview.geometry!.points.length.toLocaleString('ru')} точек</p>}
-        {routeCoverageLabel(status?.navigation?.summary)&&<p className="mt-1">Основная карта: {routeCoverageLabel(status?.navigation?.summary)}</p>}</>}
+        {routeCoverageLabel(status?.navigation?.summary)&&<p className="mt-1">Карта ориентиров: {routeCoverageLabel(status?.navigation?.summary)}</p>}</>}
       notices={<>
         {error&&<p role="alert" className="text-destructive">{error}</p>}
         {preparationNotice&&preparationNotice.jobId===job?.id&&<p role="alert" className="text-destructive">{preparationNotice.message}</p>}
-        {status?.error&&<p role="alert" className="text-destructive">{reasons[status.error]??status.error} Исходное видео сохранено.</p>}
+        {reconstructionFailure}
         {mayInspectPrior&&priorResults.length>0&&<section aria-label="Сохранённые результаты предыдущих попыток" className="space-y-2 rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-3">
           <p className="font-medium">Предыдущий результат этой записи сохранён</p><p>Новая попытка не заменила его. Можно открыть результат без повторной обработки.</p>
           {priorResults.map(item=><div key={item.job.id} className="space-y-1 border-t border-border pt-2">
@@ -312,7 +320,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
           </div>)}
         </section>}
         {status?.navigation?.error&&<p role="status" className="text-amber-600 dark:text-amber-400">Карта: {navigationErrorLabel(status.navigation.error)}.</p>}
-        {cameraMotionRequiresReview(status?.camera_motion)&&<p role="status" className="text-amber-600 dark:text-amber-400">Траектория камер требует проверки. Движение по этой версии карты выключено.</p>}
+        {!mapConfirmed&&cameraMotionRequiresReview(status?.camera_motion)&&<p role="status" className="text-amber-600 dark:text-amber-400">Траектория камер требует проверки. Движение по этой версии карты выключено.</p>}
         {status?.dense_partial_available&&status.checkpoint&&<p role="status">Промежуточный рендер: {status.checkpoint.steps}/{status.checkpoint.target_steps} итераций. Расчёт ещё не завершён.</p>}
         {models.filter(item=>item.error).map(item=><p key={item.id??'legacy'} role="alert" className="text-destructive">Поверхности: {reasons[item.error!]??item.error}. Предыдущие результаты сохранены.</p>)}
       </>}
@@ -361,7 +369,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       <p className="w-full text-xs leading-5 text-muted-foreground">Подготовка ориентиров строит камеры и точки без долгого плотного рендера, затем автоматически проверяет карту. Точность пути и готовность управления проверяются отдельно.</p>
       </div></details>
     </div>}
-    {status&&<div className="flex flex-wrap items-center gap-3"><p role="status" className="flex items-center gap-2 text-sm font-medium">{busy&&<Loader2 size={16} className="animate-spin"/>}{phases[status.phase]??status.phase}{uploading&&` · ${progress}`}{Number.isSafeInteger(status.completed_items)&&Number.isSafeInteger(status.total_items)&&(status.total_items??0)>0&&` · ${status.completed_items}/${status.total_items}`}</p>
+    {status&&<div className="flex flex-wrap items-center gap-3"><p role="status" className="flex items-center gap-2 text-sm font-medium">{busy&&<Loader2 size={16} className="animate-spin"/>}{mapConfirmed?'Карта готова к живой проверке':phases[status.phase]??status.phase}{uploading&&` · ${progress}`}{!mapConfirmed&&Number.isSafeInteger(status.completed_items)&&Number.isSafeInteger(status.total_items)&&(status.total_items??0)>0&&` · ${status.completed_items}/${status.total_items}`}</p>
       {busy&&!['pending_auto_prepare','preparing','features'].includes(status.navigation?.phase??'')&&<Button variant="outline" size="sm" onClick={()=>{void cancel();}}>Отменить обработку</Button>}
       {['pending_auto_prepare','preparing','features'].includes(status.navigation?.phase??'')&&<span className="text-xs text-muted-foreground">Подготовка ориентиров выполняется отдельно; её состояние обновляется автоматически.</span>}
       {status.phase==='uploading'&&!uploading&&<Button size="sm" onClick={()=>{void start();}}>Продолжить передачу</Button>}
@@ -370,7 +378,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     <HudSpeedCard telemetry={status?.telemetry} sourceManifestSha={sourceManifestSha}/>
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     {preparationNotice&&preparationNotice.jobId===job?.id&&<p role="alert" className="text-sm text-destructive">{preparationNotice.message}</p>}
-    {status?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.error]??status.error} Исходное видео не изменено.</p>}
+    {reconstructionFailure}
     {status?.dense_partial_available&&status.checkpoint&&<p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">Доступна проверенная промежуточная сцена: {status.checkpoint.steps} / {status.checkpoint.target_steps} итераций. Обработка не завершена успешно; это не окончательный результат.</p>}
     {status?.quality&&<p className="text-xs text-muted-foreground">Камеры {status.quality.registered}/{status.quality.selected} · покрытие {(status.quality.coverage*100).toFixed(0)}% · ошибка {status.quality.mean_reprojection_px.toFixed(2)} px</p>}
     {cameraMotionRequiresReview(status?.camera_motion)&&<p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-5 text-amber-500">Расчёт камер дал неоднозначный путь{status?.camera_motion?.rapid_reversals?`: ${status.camera_motion.rapid_reversals} подозрительных обратных скачка`:''}. Это диагностика восстановленных поз, а не утверждение о ваших движениях. Исходное видео сохранено. Движение по этой версии карты пока выключено.</p>}

@@ -83,6 +83,33 @@ test('same camera counts cannot carry old choices or late geometry into another 
   expect(screen.getByLabelText('Схема для живой проверки')).toHaveValue('saved');
   expect(screen.queryByRole('option',{name:/skuter1/})).not.toBeInTheDocument();
 });
+
+test('a newly qualified alternative replaces the default without overriding an explicit preview choice',async()=>{
+  const raw=new TextEncoder().encode(JSON.stringify(data));
+  const sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
+  let qualified=false;
+  jest.mocked(reconstructionRequest).mockImplementation(async path=>({
+    json:async()=>path.endsWith('/geometry-alternatives')?{
+      preferredAlternativeId:'partial',
+      alternatives:[{id:'partial',cameras:139},...(qualified?[{id:'qualified',cameras:161}]:[])],
+    }:{source_manifest_sha256:manifestSha},
+    arrayBuffer:async()=>Uint8Array.from(raw).buffer,
+  }) as Response);
+  const props={job,source,assetsReady:false,observation:null};
+  const view=render(<NavigationRouteContext {...props}/>);
+  const chooser=screen.getByLabelText('Схема для живой проверки');
+  await waitFor(()=>expect(chooser).toHaveValue('partial'));
+  qualified=true;
+  const preparedSource={alternativeId:'qualified',geometry_sha256:sha,runtime_family:'reference_lk' as const};
+  view.rerender(<NavigationRouteContext {...props} assetsReady preparedSource={preparedSource}/>);
+  await screen.findByText('Выбранная карта готова к живой проверке.');
+  expect(chooser).toHaveValue('qualified');
+  expect(screen.getByRole('option',{name:/161 камер · карта для живого теста/})).toBeInTheDocument();
+  fireEvent.change(chooser,{target:{value:'partial'}});
+  await screen.findByText(/Сохранённая схема связана с исходной записью/);
+  expect(chooser).toHaveValue('partial');
+  expect(screen.queryByText('Выбранная карта готова к живой проверке.')).not.toBeInTheDocument();
+});
 test('the saved map, source frame and stream share one view while a live pin is bound to the exact geometry',async()=>{
   const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
   jest.mocked(reconstructionRequest).mockImplementation(async()=>({json:async()=>({source_manifest_sha256:manifestSha,alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);

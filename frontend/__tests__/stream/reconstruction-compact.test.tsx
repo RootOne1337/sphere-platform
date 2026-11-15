@@ -22,6 +22,15 @@ beforeEach(()=>{
   Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'});
 });
 afterEach(()=>{jest.restoreAllMocks();});
+test('a bound ready alternative takes precedence over the recorded resource refusal',async()=>{
+  status={phase:'failed',source_manifest_sha256:manifest,error:'resource_guard',
+    navigation:{phase:'ready',source:{alternativeId:'qualified',geometry_sha256:'1'.repeat(64),runtime_family:'reference_lk'}}};
+  render(<TeachingReconstruction {...props}/>);
+  await screen.findByRole('button',{name:'Карта подготовлена'});
+  expect(screen.getByText('Карта готова к живой проверке')).toBeInTheDocument();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  expect(screen.getByText('История реконструкции').closest('details')).not.toHaveAttribute('open');
+});
 test('compact mode has one workflow card and keeps Gaussian controls collapsed without sending intents',async()=>{
   jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);
   render(<TeachingReconstruction {...props}/>);

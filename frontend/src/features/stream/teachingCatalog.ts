@@ -83,10 +83,11 @@ export function teachingCatalogPresentation(entry: TeachingCatalogEntry, options
   const processing = current && (!!entry.preparation && processingPhases.has(entry.preparation.phase)
     || !!entry.navigation && navigationProcessing.has(entry.navigation.phase));
   const mapForReview = current && entry.sourceState === 'saved' && entry.navigation?.phase === 'ready';
-  const failed = current && (entry.preparation?.phase === 'failed' || entry.navigation?.phase === 'failed' || entry.navigation?.phase === 'rejected');
+  const failed = current && !mapForReview && (entry.preparation?.phase === 'failed' || entry.navigation?.phase === 'failed' || entry.navigation?.phase === 'rejected');
   const attention = entry.sourceState === 'incomplete' || entry.sourceState === 'unavailable' || failed;
   const historical = (label: string) => current ? label : `Ранее: ${label.toLocaleLowerCase('ru')}`;
-  const reconstruction: TeachingCatalogBadge = entry.preparation
+  const reconstruction: TeachingCatalogBadge = mapForReview&&entry.preparation?.phase === 'failed'
+    ? {label: 'Предыдущая реконструкция остановлена', tone: 'neutral'} : entry.preparation
     ? {label: historical(entry.preparation.phase === 'unavailable' && entry.preparation.reason && statusReasonLabels[entry.preparation.reason]
       || preparationLabels[entry.preparation.phase]), tone: !current ? 'neutral' : entry.preparation.phase === 'failed' ? 'error'
       : processingPhases.has(entry.preparation.phase) ? 'working' : entry.preparation.phase === 'ready' ? 'success' : 'warning'}

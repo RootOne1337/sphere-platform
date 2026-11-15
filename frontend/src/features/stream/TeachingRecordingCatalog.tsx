@@ -59,7 +59,7 @@ export function TeachingRecordingCatalog({entries, selectedId, onSelect, onPrepa
       : <ul aria-label="Сохранённые записи" className="grid min-w-0 gap-3 md:grid-cols-2 2xl:grid-cols-3">{catalog.rows.map(({entry}) => {
         const view = teachingCatalogPresentation(entry, {nowMs, statusStaleAfterMs, readOnly});
         const selected = selectedId === entry.id;
-        const reason = teachingCatalogReason(entry.sourceFailure || entry.preparation?.reason || entry.navigation?.error);
+        const reason = teachingCatalogReason(entry.sourceFailure || (!view.mapForReview&&(entry.preparation?.reason||entry.navigation?.error)) || undefined);
         const prepare = view.action.kind === 'prepare' && !!onPrepare && !readOnly;
         return <li key={entry.id} className={`flex min-w-0 flex-col overflow-hidden rounded-xl border bg-background/65 ${selected ? 'border-primary/60 ring-1 ring-primary/20' : 'border-border'}`}>
           <div className="flex min-w-0 items-start gap-3 p-4 pb-3"><span aria-hidden="true" className={`rounded-lg border p-2 ${selected ? 'border-primary/25 bg-primary/10 text-primary' : 'border-border bg-muted/35 text-muted-foreground'}`}><Film size={18}/></span><div className="min-w-0 flex-1"><h4 className="break-words text-sm font-semibold leading-5">{entry.title || 'Без названия'}</h4><p className="mt-1 break-words text-[10px] text-muted-foreground">{teachingCatalogDate(entry.createdAt)} · {entry.id.slice(0, 8)}</p></div>{selected && <span className="flex shrink-0 items-center gap-1 text-[10px] font-medium text-primary"><Check size={13} aria-hidden="true"/>Выбрана</span>}</div>

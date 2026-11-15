@@ -217,6 +217,8 @@ test('recommendation is explicit and never overrides operator or an accepted pri
   expect(chooseReviewGeometry(items,'new',true,null)).toBe('primary');
   expect(chooseReviewGeometry(items,'new',true,'old')).toBe('old');
   expect(chooseReviewGeometry(items,'new',false,'removed')).toBeNull();
+  expect(chooseReviewGeometry(items,'old',false,null,false,'new')).toBe('new');
+  expect(chooseReviewGeometry(items,'new',false,'old',false,'new')).toBe('old');
 });
 test('refresh reads the updated list but preserves the manual choice',async()=>{
   const {manifest}=await library(),source=await hash(manifest),job={id:'c'.repeat(32),key:'d'.repeat(64)};

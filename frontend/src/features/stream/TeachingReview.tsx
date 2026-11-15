@@ -24,8 +24,9 @@ import {cameraMotionRequiresReview} from './routePreparation';
 type Row = { index: number; offset: number; bytes: number; relative_ticks_90k: number; key: boolean; seekable?: boolean; sha256: string; worker_observed_at_ms: number };
 type Clip = TeachingLibraryRecord;
 type Alternative = {id:string;cameras:number;points:number;label?:string};
-export function chooseReviewGeometry(items:Alternative[], preferred:unknown, primary:boolean|null, manual:string|null,visualPrimary=false):string|null {
+export function chooseReviewGeometry(items:Alternative[], preferred:unknown, primary:boolean|null, manual:string|null,visualPrimary=false,activeAlternative?:string|null):string|null {
   if(manual!==null)return manual==='primary'?(primary===true||visualPrimary?'primary':null):items.some(item=>item.id===manual)?manual:null;
+  if(activeAlternative&&items.some(item=>item.id===activeAlternative))return activeAlternative;
   if(primary===true)return 'primary';
   if(primary!==false)return null;
   return typeof preferred==='string'&&items.some(item=>item.id===preferred)?preferred:visualPrimary?'primary':null;
@@ -59,6 +60,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   const [loadedSourceKey,setLoadedSourceKey]=useState<string|null>(null);
   const [importedGeometry,setImportedGeometry]=useState<ImportedRouteGeometry|null>(null),[importError,setImportError]=useState<string|null>(null),[importedCanvas,setImportedCanvas]=useState<HTMLCanvasElement|null>(null);
   const [alternatives,setAlternatives]=useState<Alternative[]>([]),[alternativeId,setAlternativeId]=useState<string|null>(null),[alternativeStatus,setAlternativeStatus]=useState('');
+  const [preparedAlternative,setPreparedAlternative]=useState<{jobId:string;id:string}|null>(null);
   const [alternativesRefresh,setAlternativesRefresh]=useState(0);
   const [geometryRefresh,setGeometryRefresh]=useState(0);
   const manualAlternative=useRef<string|null>(null);
@@ -228,10 +230,18 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
       // An admitted current map must not be hidden by an older experiment.
       const status=await reconstructionRequest(`/jobs/${linkedJob.id}`,linkedJob,{signal:request.signal}).then(r=>r.json()).catch(()=>null);
       assertReconstructionSource(status,sourceManifestSha);
-      const primary=status===null?null:status?.navigation?.phase==='ready'&&status?.geometry_available===true;
+      const activeAlternative=status?.navigation?.phase==='ready'?status.navigation.source?.alternativeId??null:null;
+      const primary=status===null?null:status?.navigation?.phase==='ready'&&!activeAlternative&&status?.geometry_available===true;
       const available=status?.geometry_available===true;
-      if(!retired){const choice=chooseReviewGeometry(items,data.preferredAlternativeId,primary,manualAlternative.current,available);setPrimaryAvailable(available);setPrimaryReady(primary===true);setPrimaryMotionWarning(cameraMotionRequiresReview(status?.camera_motion));setAlternatives(items);if(manualAlternative.current==='__file__'){setAlternativeStatus('Схема из файла связана с выбранной записью.');return;}setAlternativeId(choice);if(choice)setGeometryRefresh(v=>v+1);if(!choice){importGeneration.current++;setImportedGeometry(null);}setAlternativeStatus(choice?'Загружаем выбранную схему…':manualAlternative.current===''?'Выберите схему.':manualAlternative.current!==null?'Выбранная схема больше недоступна. Выберите другую.':primary===null?'Не удалось подтвердить состояние основной карты. Выберите схему вручную.':items.length?'Выберите экспериментальную схему: рекомендация отсутствует.':'Дополнительных схем для этой реконструкции нет.');}
-    })().catch(error=>{if(!retired){setAlternatives([]);setAlternativeId(null);setImportedGeometry(null);setLoadedGeometryIdentity(null);setAlternativeStatus(error instanceof Error?error.message:'Не удалось проверить дополнительные схемы.');}});
+      if(!retired){
+        const choice=chooseReviewGeometry(items,data.preferredAlternativeId,primary,manualAlternative.current,available,activeAlternative);
+        setPreparedAlternative(activeAlternative?{jobId:linkedJob.id,id:activeAlternative}:null);
+        setPrimaryAvailable(available);setPrimaryReady(primary===true);setPrimaryMotionWarning(cameraMotionRequiresReview(status?.camera_motion));setAlternatives(items);
+        if(manualAlternative.current==='__file__'){setAlternativeStatus('Схема из файла связана с выбранной записью.');return;}
+        setAlternativeId(choice);if(choice)setGeometryRefresh(v=>v+1);if(!choice){importGeneration.current++;setImportedGeometry(null);}
+        setAlternativeStatus(choice?'Загружаем выбранную схему…':manualAlternative.current===''?'Выберите схему.':manualAlternative.current!==null?'Выбранная схема больше недоступна. Выберите другую.':primary===null?'Не удалось подтвердить состояние основной карты. Выберите схему вручную.':items.length?'Выберите экспериментальную схему: рекомендация отсутствует.':'Дополнительных схем для этой реконструкции нет.');
+      }
+    })().catch(error=>{if(!retired){setPreparedAlternative(null);setAlternatives([]);setAlternativeId(null);setImportedGeometry(null);setLoadedGeometryIdentity(null);setAlternativeStatus(error instanceof Error?error.message:'Не удалось проверить дополнительные схемы.');}});
     return()=>{retired=true;request.abort();};
   },[visible,linkedJob,sourceManifestSha,rows,alternativesRefresh]);
   useEffect(()=>{
@@ -257,6 +267,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   const selectedStatus=selectedRecord?teachingCatalogPresentation(selectedRecord,{nowMs:catalogNow}):null;
   const sourceKey=storageScope&&selected?`${storageScope}:${selected}`:null;
   const choiceId=alternativeId??(manualAlternative.current==='__file__'?'file':null);
+  const preparedAlternativeId=preparedAlternative?.jobId===linkedJob?.id?preparedAlternative?.id:null;
   const expectedGeometryIdentity=choiceId?JSON.stringify([storageScope,selected,linkedJob?.id,sourceManifestSha,choiceId]):null;
   const currentGeometry=expectedGeometryIdentity&&loadedGeometryIdentity===expectedGeometryIdentity&&loadedSourceKey===sourceKey?importedGeometry:null;
   const geometryLabel=choiceId==='primary'?(primaryReady?'Основная подготовленная карта':'Основная реконструкция · проверка'):
@@ -305,7 +316,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end"><label className="min-w-0 flex-1 space-y-1 text-xs"><span>Результат восстановления</span>
           <select aria-label="Сохранённая схема ориентиров" value={choiceId??''} onChange={event=>chooseGeometry(event.target.value)} className="block h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm">
             <option value="">Выберите результат</option>{primaryAvailable&&<option value="primary">{primaryReady?'Основная подготовленная карта':'Основная реконструкция · проверка'}</option>}
-            {alternatives.map(item=><option key={item.id} value={item.id}>{item.label||'Дополнительный результат'} · {item.cameras} камер · {item.points} точек</option>)}
+            {alternatives.map(item=><option key={item.id} value={item.id}>{item.label||'Дополнительный результат'} · {item.cameras} камер · {item.points} точек{item.id===preparedAlternativeId?' · карта для живого теста':''}</option>)}
             {choiceId==='file'&&<option value="file">Геометрия из файла</option>}
           </select></label>
           <div role="group" aria-label="Вид выбранного результата" className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/25 p-1">{[
