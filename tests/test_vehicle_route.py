@@ -75,7 +75,7 @@ class VehicleRouteTests(unittest.TestCase):
     def test_visual_cruise_gas_uses_longer_decisions_only_with_strong_in_corridor_pose(self):
         self.reference = ConservativeTempoReference(self.route)
         self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)
-        self.assertEqual(self.acquire(speed=None)['throttlePulseMs'], 120)
+        self.assertEqual(self.acquire(speed=None)['throttlePulseMs'], 180)
         rate = self.reference.source_rate * .12
         for i in range(1, 8):
             reply = self.observe(progress=rate * .1 * i, speed=None)
@@ -83,6 +83,23 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertEqual((reply['pedal'], reply['throttlePulseMs']), ('throttle', 240))
         weaker = self.observe(progress=rate * .8, speed=None, inliers=38)
         self.assertEqual(weaker['throttlePulseMs'], 120)
+
+    def test_adaptive_launch_tolerates_camera_sway_and_brakes_for_sustained_speed(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)
+        self.acquire(speed=None)
+        launch = self.observe(speed=None, inliers=30, median_error_px=1.4)
+        self.assertEqual((launch['pedal'], launch['throttlePulseMs']), ('throttle', 180))
+        self.now += .1
+        noisy = self.observe(speed=None, center=(.08, 0., 0.), inliers=30, median_error_px=1.4)
+        self.assertEqual(noisy['pedal'], 'throttle')
+        self.now += .1
+        weak = self.observe(speed=None, inliers=27, median_error_px=1.4)
+        self.assertEqual(weak['throttlePulseMs'], 120)
+        for i in range(1, 10):
+            self.now += .1
+            sustained = self.observe(progress=.1 * i * self.reference.source_rate * .6, speed=None)
+        self.assertEqual(sustained['pedal'], 'brake')
 
     def test_visual_alias_pauses_then_reacquires_without_admitting_the_jump(self):
         self.reference = ConservativeTempoReference(self.route)
@@ -96,6 +113,22 @@ class VehicleRouteTests(unittest.TestCase):
         resumed = self.acquire(speed=None)
         self.assertEqual((resumed['phase'], resumed['pedal']), ('following', 'throttle'))
         self.assertEqual(self.follower.high_water, 0.)
+
+    def test_visual_continuous_rollback_does_not_pin_to_historical_high_water(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(start_mode='recognized_route', max_speed_kmh=5, visual_speed=True)
+        step = self.follower.step
+        peak = 4. * step
+        self.assertEqual(self.acquire(progress=peak, speed=None)['phase'], 'following')
+        for idx in range(1, 8):
+            self.now += .15
+            updated = self.observe(progress=peak - .4 * idx * step, speed=None)
+            self.assertEqual(updated['phase'], 'following')
+        self.assertAlmostEqual(self.follower.high_water, peak)
+        self.now += .15
+        far_alias = self.observe(progress=4. * step, speed=None,
+                                 center=(12. * step, 0., 4. * step))
+        self.assertEqual((far_alias['phase'], far_alias['pedal']), ('waiting', 'coast'))
 
     def test_acquires_three_fresh_poses_and_holds_throttle_across_updates(self):
         replies = []

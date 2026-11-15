@@ -140,6 +140,7 @@ class VehicleRouteFollower:
         self._confirmation = ConfirmationEvidence()
         self.waiting_since = None
         self.high_water = 0.
+        self.last_qualified_progress = 0.
         self.steering = 0.
         self.pedal = 'coast'
         self.pedal_at = self.began - .4
@@ -200,10 +201,10 @@ class VehicleRouteFollower:
         ]
         if not rates:
             return None
-        # Keep recent measured acceleration visible when the longer window
-        # still contains several poses from before the gas pulse.
         rate = float(self.np.median([value for _, value in rates]))
-        if rates[-1][0] <= .25:
+        # The adaptive pulse mode uses the window estimate. A single short
+        # displacement can reflect camera sway and must not cancel a launch.
+        if not self.adaptive_throttle and rates[-1][0] <= .25:
             rate = max(rate, rates[-1][1])
         return min(350., rate * self.VISUAL_UNITS_PER_SOURCE_RATE / self.speed_reference.source_rate)
 
@@ -343,9 +344,14 @@ class VehicleRouteFollower:
             self.target_speed = self.observed_speed = None
             return self._wait('vehicle_outside_control_corridor', now)
         within_forward_coast = False
+        # Preserve the furthest progress for diagnostics. In RGB mode an
+        # observed rollback must be compared with the last accepted position,
+        # or a sequence of small valid steps can leave the controller stuck
+        # behind its own historical maximum.
+        previous_progress = self.last_qualified_progress if self.visual_speed else self.high_water
         if self.started:
             discontinuity = None
-            if progress < self.high_water - self.step * 2 or progress > self.high_water + self.step * 6:
+            if progress < previous_progress - self.step * 2 or progress > previous_progress + self.step * 6:
                 discontinuity = 'vehicle_progress_discontinuity'
             elif self.last_center is not None and np.linalg.norm(center - self.last_center) > self.step * 6:
                 discontinuity = 'vehicle_pose_discontinuity'
@@ -469,8 +475,9 @@ class VehicleRouteFollower:
         elif self.last_qualified_at is not None:
             interval = pose.received_at - self.last_qualified_at
             if 0 < interval <= .5:
-                self.recent_progress_rates.append(max(0., progress - self.high_water) / interval)
+                self.recent_progress_rates.append(max(0., progress - previous_progress) / interval)
         self.last_qualified_at = pose.received_at
+        self.last_qualified_progress = progress
         self._forward_recovery = False
         self.last_center = center.copy()
         self.high_water = max(self.high_water, progress)
@@ -562,14 +569,21 @@ class VehicleRouteFollower:
         # Extend only a new gas decision during steady in-corridor travel.
         # The client still releases at a nonrenewable edge deadline.
         pulse = self.THROTTLE_PULSE_MS
-        if (self.adaptive_throttle and self.pedal == 'throttle' and self.confirmations >= 3
-                and pose.inliers >= 40 and not near_end and abs(yaw) <= .52
-                and cross <= 2. * self.step and .4 <= self.observed_speed < self.target_speed * .90
-                and predicted_speed < self.target_speed * .95):
-            pulse = self.FOLLOW_PULSE_MS
-            if (pose.inliers >= 48 and abs(yaw) <= .24 and cross <= self.step
-                    and .5 <= self.observed_speed < self.target_speed * .75
-                    and predicted_speed < self.target_speed * .85):
-                pulse = self.CRUISE_PULSE_MS
+        if self.adaptive_throttle and self.pedal == 'throttle' and self.confirmations >= 3 and not near_end:
+            if (pose.inliers >= 40 and abs(yaw) <= .52 and cross <= 2. * self.step
+                    and .4 <= self.observed_speed < self.target_speed * .90
+                    and predicted_speed < self.target_speed * .95):
+                pulse = self.FOLLOW_PULSE_MS
+                if (pose.inliers >= 48 and abs(yaw) <= .24 and cross <= self.step
+                        and .5 <= self.observed_speed < self.target_speed * .75
+                        and predicted_speed < self.target_speed * .85):
+                    pulse = self.CRUISE_PULSE_MS
+            elif (pose.inliers >= 28 and pose.median_error_px is not None and pose.median_error_px <= 1.8
+                    and abs(yaw) <= .55 and cross <= self.step
+                    and self.observed_speed < self.target_speed * .45
+                    and predicted_speed < self.target_speed * .65):
+                # A confirmed, slow launch gets enough time to move from rest.
+                # Release, freshness and re-arm remain bounded by the client.
+                pulse = self.FOLLOW_PULSE_MS
         return self._reply('following', 'vehicle_continuous_pursuit', progress,
                            target_view=None, speed_accepted=True, throttle_pulse_ms=pulse)
