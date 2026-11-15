@@ -181,7 +181,7 @@ class RuntimeMetadataRing:
                     value = plan.get(key)
                     if type(value) in {int,float} and math.isfinite(value) and minimum <= value <= maximum:
                         safe[key] = value
-                for key in ('tempoAccepted','speedAccepted','motionActive'):
+                for key in ('tempoAccepted','speedAccepted','motionActive','holdThrottle'):
                     if type(plan.get(key)) is bool:
                         safe[key] = plan[key]
                 if type(plan.get('throttlePulseMs')) is int and plan['throttlePulseMs'] in (120,180,240):
@@ -364,7 +364,7 @@ class WalkFrameArchive:
                 'schema', 'phase', 'reason', 'pedal', 'steering', 'progressFraction',
                 'motionActive', 'motionSeconds', 'targetSpeedKmh', 'observedSpeedKmh',
                 'speedAccepted', 'maxSpeedKmh', 'targetViewCamera', 'maxDecisionAgeMs', 'maxAnswerHoldMs',
-                'throttlePulseMs', 'targetTempo', 'observedTempo', 'tempoAccepted')}
+                'throttlePulseMs', 'holdThrottle', 'targetTempo', 'observedTempo', 'tempoAccepted')}
         self.rows.append((raw,row));self.bytes+=len(raw)
         while len(self.rows)>self.MAX_FRAMES or self.bytes>self.MAX_BYTES-64*1024:
             # Preserve acquisition evidence alongside the recent failure tail.

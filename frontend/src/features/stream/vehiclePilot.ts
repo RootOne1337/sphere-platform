@@ -2,7 +2,7 @@ import {calibrated,fromPercent,profileIssue,type TeachingProfile} from './teachi
 import {WalkStickSlew,walkingCameraIssue,type WalkInputControl,type WalkInputLease} from './walkPilot';
 import type {TeachingPoint} from './teachingContacts';
 
-export type VehicleCommand={pedal:'coast'|'throttle'|'brake';steering:number;throttlePulseMs?:120|180|240};
+export type VehicleCommand={pedal:'coast'|'throttle'|'brake';steering:number;throttlePulseMs?:120|180|240;holdThrottle?:true};
 export type VehiclePlan=VehicleCommand&{schema:'sphere-vehicle-plan-v1';phase:'waiting'|'following'|'stopped'|'arrived';reason:string;
   progressFraction:number|null;maxSteering:.35;maxSpeedKmh:number;maxSeconds:number;maxDecisionAgeMs:450;maxAnswerHoldMs:350;groundRoute:false;executionQualified:false;cameraBodyAssumption:true;
   targetSpeedKmh:number|null;observedSpeedKmh:number|null;speedAccepted:boolean;targetViewCamera:[number,number,number]|null;
@@ -31,6 +31,9 @@ export function readVehiclePlan(value:unknown):VehiclePlan|null {
       ||p.targetSpeedKmh!==null||p.observedSpeedKmh!==null||!tempo(p.targetTempo,.25)||!tempo(p.observedTempo,17.5)
       ||p.tempoAccepted!==(p.observedTempo!==null))
     ||!visual&&(p.targetTempo!==undefined||p.observedTempo!==undefined)
+    ||p.holdThrottle!==undefined&&(p.holdThrottle!==true||!visual||p.phase!=='following'
+      ||p.pedal!=='throttle'||(p.throttlePulseMs??0)<180||p.tempoAccepted!==true
+      ||p.observedTempo==null||p.targetTempo==null||p.observedTempo>=p.targetTempo*.72)
     ||p.progressFraction!==null&&(!Number.isFinite(p.progressFraction)||p.progressFraction<0||p.progressFraction>1)
     ||p.targetViewCamera!==null&&(!Array.isArray(p.targetViewCamera)||p.targetViewCamera.length!==3||p.targetViewCamera.some(n=>!Number.isFinite(n)||Math.abs(n)>1e9))
     ||p.phase==='following'&&(visual?(!p.tempoAccepted||p.targetTempo===null):(!p.speedAccepted||p.targetSpeedKmh===null||p.observedSpeedKmh===null))
@@ -70,8 +73,8 @@ export function vehicleSteeringTarget(profile:TeachingProfile,geometry:{width:nu
   return {center,target:Math.abs(steering)<.001?center:{x:Math.round(center.x+steering*radius),y:center.y}};
 }
 
-/** Binary pedals use separate contacts. Visual tempo can authorize a short,
- * nonrenewable gas pulse; an ordinary renewed plan cannot extend it. */
+/** Binary pedals use separate contacts. A weak visual plan gets a fixed pulse.
+ * A confirmed hold is renewed only by a fresh permit from the command loop. */
 export class VehicleContacts {
   private pedal:VehicleCommand['pedal']='coast';
   private slew=new WalkStickSlew();
@@ -79,6 +82,7 @@ export class VehicleContacts {
   private gasUntil=0;
   private pulseWidth=0;
   private nextGasAt=0;
+  private holdingGas=false;
   private lastGasDecision:VehicleCommand|null=null;
   constructor(private control:{hasContact(id:number):boolean;set(id:number,point:TeachingPoint|null,notAfter?:number):void},
     private profile:TeachingProfile,private geometry:{width:number;height:number}){}
@@ -90,7 +94,7 @@ export class VehicleContacts {
       this.pulseWidth=0;
     }
   }
-  neutral(now:number){this.endGas(now);this.pedal='coast';this.slew.next([0,0],now);}
+  neutral(now:number){this.endGas(now);this.holdingGas=false;this.pedal='coast';this.slew.next([0,0],now);}
   apply(command:VehicleCommand,now:number,notAfter:number){
     if(!['coast','throttle','brake'].includes(command.pedal)||!Number.isFinite(notAfter)||notAfter<=now||notAfter-now>350)throw Error('vehicle_decision_expired');
     // Returning to straight while driving is an ordinary steering correction.
@@ -99,7 +103,12 @@ export class VehicleContacts {
     const {center,target}=vehicleSteeringTarget(this.profile,this.geometry,steering);
     if(Math.abs(steering)>=.001&&!this.control.hasContact(1))this.control.set(1,center,notAfter);
     if(Math.abs(steering)>=.001||this.control.hasContact(1))this.control.set(1,target,notAfter);
-    const pulseWidth=command.throttlePulseMs;
+    const hold=command.holdThrottle===true&&command.pedal==='throttle';
+    if(hold)this.endGas(now);
+    if(this.holdingGas&&!hold&&command.throttlePulseMs&&command.pedal==='throttle')
+      this.nextGasAt=now+80;
+    this.holdingGas=hold;
+    const pulseWidth=hold?undefined:command.throttlePulseMs;
     let requested=command.pedal;
     if(pulseWidth&&requested==='throttle'){
       const freshDecision=command!==this.lastGasDecision;

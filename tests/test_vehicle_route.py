@@ -84,6 +84,30 @@ class VehicleRouteTests(unittest.TestCase):
         weaker = self.observe(progress=rate * .8, speed=None, inliers=38)
         self.assertEqual(weaker['throttlePulseMs'], 120)
 
+    def test_confirmed_visual_hold_releases_on_pose_loss_or_when_applied_gas_cannot_move(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)
+        self.assertIs(self.acquire(speed=None)['holdThrottle'], True)
+        for _ in range(35):
+            idle = self.observe(speed=None, motion_active=False)
+            self.now += .1
+        self.assertIs(idle['holdThrottle'], True)
+        lost = self.observe(speed=None, state='unknown', reason='route_pose_not_verified', inliers=0)
+        self.assertEqual((lost['phase'], lost['pedal']), ('waiting', 'coast'))
+        self.assertNotIn('holdThrottle', lost)
+        self.now += .1
+        self.assertIs(self.acquire(speed=None)['holdThrottle'], True)
+        for _ in range(29):
+            idle = self.observe(speed=None, motion_active=True)
+            self.assertIs(idle['holdThrottle'], True)
+            self.now += .1
+        for _ in range(4):
+            stopped = self.observe(speed=None, motion_active=True)
+            self.now += .1
+        self.assertEqual((stopped['phase'], stopped['pedal'], stopped['reason']),
+                         ('stopped', 'coast', 'vehicle_motion_without_route_progress'))
+        self.assertNotIn('holdThrottle', stopped)
+
     def test_adaptive_launch_tolerates_camera_sway_and_brakes_for_sustained_speed(self):
         self.reference = ConservativeTempoReference(self.route)
         self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)

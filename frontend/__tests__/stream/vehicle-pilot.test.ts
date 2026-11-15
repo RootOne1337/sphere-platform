@@ -88,6 +88,14 @@ test('visual tempo requires a measured rate and a nonrenewable throttle pulse',(
     expect(f.held.has(0)).toBe(true);
   }finally{jest.useRealTimers();}
 });
+test('only a measured underspeed plan can authorize a continuous visual hold',()=>{
+  const hold={...plan,maxSpeedKmh:5,tempoAccepted:true,observedTempo:.10,targetTempo:.25,throttlePulseMs:180,
+    holdThrottle:true,targetSpeedKmh:null,observedSpeedKmh:null,speedAccepted:false};
+  expect(readVehiclePlan(hold)).toEqual(hold);
+  for(const change of [{observedTempo:.2},{tempoAccepted:false},{pedal:'coast'},{throttlePulseMs:120},{holdThrottle:1}])
+    expect(readVehiclePlan({...hold,...change})).toBeNull();
+  expect(readVehiclePlan({...plan,holdThrottle:true})).toBeNull();
+});
 test('pedal transitions release before the next button while steering remains on its calibrated horizontal axis',()=>{
   const f=driver();f.controller.apply({pedal:'throttle',steering:.3},1000,1200);
   expect(f.events[0]).toEqual({id:1,point:{x:288,y:885}});

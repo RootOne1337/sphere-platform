@@ -151,9 +151,10 @@ class VehicleRouteFollower:
         self.arrival = 0
         self.motion_seconds = 0.
         self.history = deque(maxlen=64)
+        self._held_motion = None
 
     def _reply(self, phase, reason, progress=None, *, target_view=None, speed_accepted=False,
-               throttle_pulse_ms=THROTTLE_PULSE_MS):
+               throttle_pulse_ms=THROTTLE_PULSE_MS, hold_throttle=False):
         result = dict(schema='sphere-vehicle-plan-v1', phase=phase, reason=reason,
                     pedal=self.pedal, steering=float(self.steering),
                     progressFraction=None if progress is None else float(progress / self.total),
@@ -169,6 +170,8 @@ class VehicleRouteFollower:
                     targetViewCamera=None if target_view is None else list(map(float, target_view)))
         if self.pulse_throttle:
             result['throttlePulseMs'] = throttle_pulse_ms
+        if hold_throttle:
+            result['holdThrottle'] = True
         if self.visual_speed:
             result.update(speedAccepted=False, targetSpeedKmh=None, observedSpeedKmh=None,
                           tempoAccepted=speed_accepted, targetTempo=self._tempo_ratio(self.target_speed),
@@ -210,6 +213,7 @@ class VehicleRouteFollower:
 
     def _neutral(self, reason, *, terminal=False, arrived=False):
         self.steering, self.pedal = 0., 'coast'
+        self._held_motion = None
         if terminal:
             self._confirmation.clear()
             self.terminal = (reason, 'arrived' if arrived else 'stopped')
@@ -574,8 +578,8 @@ class VehicleRouteFollower:
                 and self.high_water - self.history[0][1] < self.step * .35
                 and self.observed_speed >= 3.):
             return self._neutral('vehicle_motion_without_route_progress', terminal=True)
-        # Extend only a new gas decision during steady in-corridor travel.
-        # The client still releases at a nonrenewable edge deadline.
+        # Weaker measurements get a bounded pulse. A well-observed route
+        # can hold the pedal under the ordinary fresh-reply lease below.
         pulse = self.THROTTLE_PULSE_MS
         if self.adaptive_throttle and self.pedal == 'throttle' and self.confirmations >= 3 and not near_end:
             if (pose.inliers >= 40 and abs(yaw) <= .52 and cross <= 2. * self.step
@@ -594,5 +598,17 @@ class VehicleRouteFollower:
                 # A confirmed, slow launch gets enough time to move from rest.
                 # Release, freshness and re-arm remain bounded by the client.
                 pulse = self.FOLLOW_PULSE_MS
+        hold_throttle = (pulse >= self.FOLLOW_PULSE_MS and pose.inliers >= 32
+                         and pose.median_error_px is not None and pose.median_error_px <= 1.8
+                         and cross <= self.step and abs(yaw) <= .40
+                         and self.observed_speed < self.target_speed * .72
+                         and predicted_speed < self.target_speed * .80)
+        if not hold_throttle or not motion_active or dt > .5:
+            self._held_motion = None
+        elif self._held_motion is None or progress - self._held_motion[1] >= self.step * .35:
+            self._held_motion = (now, progress)
+        elif now - self._held_motion[0] >= 3.:
+            return self._neutral('vehicle_motion_without_route_progress', terminal=True)
         return self._reply('following', 'vehicle_continuous_pursuit', progress,
-                           target_view=None, speed_accepted=True, throttle_pulse_ms=pulse)
+                           target_view=None, speed_accepted=True, throttle_pulse_ms=pulse,
+                           hold_throttle=hold_throttle)
