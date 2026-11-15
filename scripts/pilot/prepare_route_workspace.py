@@ -64,12 +64,17 @@ def prepare(job, attempt):
     if intent['id'] != attempt:
         raise ValueError('route_intent_missing')
     task_folder = folder.resolve(strict=True)
-    from scripts.pilot.route_preparation_source import attempt_cancelled
-    profile_budget = route_resource_profile(job)
+    from scripts.pilot.route_preparation_source import attempt_cancelled, attempt_source
     # One preparation owns one volume proof. Every callback still reads fresh
     # native RAM/commit/disk; a monitor never survives this call or feeds live
     # sessions. Its context closes/reaps its own probe on every exit path.
     with TaskResourceMonitor(job) as monitor:
+        if attempt_cancelled(job, folder, intent=intent):
+            raise RuntimeError('cancelled')
+        selected = attempt_source(job, folder)
+        profile_budget = (route_resource_profile(job, 'reference_lk') if selected['binding'] is not None
+                          else route_resource_profile(job))
+
         def bounded(target):
             if Path(target).resolve() != task_folder or folder.resolve() != task_folder:
                 raise RuntimeError('route_resource_task_mismatch')
@@ -84,8 +89,6 @@ def prepare(job, attempt):
         bounded(folder)
         sys.path.insert(0, str(ROOT/'.local-pilot/reconstruction-tools/pycolmap-4.2.1'))
         cv2.setNumThreads(2)
-        from scripts.pilot.route_preparation_source import attempt_source
-        selected = attempt_source(job, folder)
         model = selected['model_path'] or route_source_model(job)
         geometry_raw = selected['geometry_path'].read_bytes()
         geometry = json.loads(geometry_raw)

@@ -57,7 +57,7 @@ def route_resource_profile(job, kind='features'):
         # available for the host plus a conservative 768 MiB task allowance.
         return dict(kind='route_live', minRamGiB=4.75, hostReserveGiB=4., taskReserveGiB=.75, maxMapBytes=4*1024**2,
                     maxFrameBytes=384*1024, minDiskGiB=1., modelLoaded=False, maxCommitPercent=90)
-    if kind != 'features':
+    if kind not in {'features', 'reference_lk'}:
         raise ValueError('route_resource_profile')
     video = job/'input/video.h264'
     size = video.stat().st_size if video.is_file() and not video.is_symlink() else None
@@ -66,9 +66,13 @@ def route_resource_profile(job, kind='features'):
     else:
         tables = 2*256*2048*128*4
         required = max(6., math.ceil((4+1.5+(3*size+tables)/1024**3)*4)/4)
-    return dict(kind='route_features', minRamGiB=required, hostReserveGiB=4.,
-                sourceVideoBytes=size, maxViews=256, maxFeaturesPerView=2048,
-                modelLoaded=False, maxCommitPercent=85)
+    # Exporting bound native geometry does no reconstruction or inference.
+    # Keep the existing byte reserve and use the bounded route CPU ceiling.
+    native_export = kind == 'reference_lk'
+    return dict(kind='route_reference_lk_export' if native_export else 'route_features',
+                minRamGiB=required, hostReserveGiB=4., sourceVideoBytes=size,
+                maxViews=256, maxFeaturesPerView=2048, modelLoaded=False,
+                maxCommitPercent=90 if native_export else 85)
 
 
 def resource_checkpoint(folder, *, profile=None, snapshot=None):
@@ -79,7 +83,11 @@ def resource_checkpoint(folder, *, profile=None, snapshot=None):
     """
     if (folder/'CANCEL').exists():
         raise RuntimeError('cancelled')
-    snapshot = collect(folder) if snapshot is None else snapshot
+    if snapshot is None:
+        # A new attempt directory does not exist at preflight. Measure the
+        # volume where it will be created and keep cancellation on that attempt.
+        volume_path = next((path for path in (folder, *folder.parents) if path.is_dir()), folder)
+        snapshot = collect(volume_path)
     if type(snapshot) is not dict:
         raise ValueError('route_resource_snapshot')
     minimum = 12 if profile is None else profile['minRamGiB']
@@ -94,8 +102,9 @@ def resource_checkpoint(folder, *, profile=None, snapshot=None):
             or disk_minimum < 20 and profile.get('kind') != 'route_live'):
         raise ValueError('route_resource_profile')
     commit_max=85 if profile is None else profile.get('maxCommitPercent',85)
-    if (type(commit_max) not in {int,float} or not 0<commit_max<=90
-            or commit_max!=85 and (profile is None or profile.get('kind')!='route_live')):
+    bounded_cpu = profile is not None and profile.get('kind') in {'route_live', 'route_reference_lk_export'}
+    if (type(commit_max) not in {int, float} or not 0 < commit_max <= 90
+            or commit_max != 85 and not bounded_cpu):
         raise ValueError('route_resource_profile')
     findings = evaluate(snapshot, min_ram_gib=minimum, min_disk_gib=disk_minimum,max_commit_percent=commit_max)
     if (snapshot.get('system')=='Windows' and type(snapshot.get('committedBytes'))is int
@@ -165,6 +174,8 @@ class RouteWorkspaces:
         try:
             selected = attempt_source(job, folder, digest=digest)
             result['source'] = public_source(selected, digest=digest)
+            if selected['binding'] is not None:
+                result['resourceProfile'] = route_resource_profile(job, 'reference_lk')
         except (OSError, ValueError, TypeError, KeyError):
             return dict(result, phase='rejected', error='route_preparation_source_changed')
         if result['phase'] == 'ready' and not (folder/'receipt.json').is_file():
@@ -265,7 +276,7 @@ class RouteWorkspaces:
         if ((alternative_id is None and len(intents) >= 3)
                 or (alternative_id is not None and (source_attempts >= 3 or len(intents) >= 16))):
             raise ValueError('route_preparation_attempt_quota')
-        profile = route_resource_profile(job)
+        profile = route_resource_profile(job, 'reference_lk') if alternative_id is not None else route_resource_profile(job)
         source_intent = {}
         if alternative_id is not None:
             from scripts.pilot.route_preparation_source import cancel_marker, resolve_alternative_source

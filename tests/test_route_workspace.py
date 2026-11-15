@@ -23,6 +23,31 @@ class RouteWorkspaceTests(unittest.TestCase):
             snapshot['commitLimitBytes']=20*2**30;snapshot['committedBytes']=17*2**30
             with self.assertRaisesRegex(RuntimeError,'resource_guard'):resource_checkpoint(self.job,profile=profile)
 
+    def test_native_export_admits_a_new_directory_at_eighty_six_percent_commit(self):
+        gib = 2**30
+        attempt = self.job/'navigation'/self.identity
+        (self.job/'CANCEL').touch()
+        snapshot = dict(system='Windows', freeDiskBytes=88*gib, availableRamBytes=12*gib,
+            totalRamBytes=48*gib, committedBytes=86*gib, commitLimitBytes=100*gib,
+            volumeHealthStatus='Healthy', volumeOperationalStatus=['OK'])
+        (self.job/'input/video.h264').write_bytes(b'capture')
+        native = route_resource_profile(self.job, 'reference_lk')
+        ordinary = route_resource_profile(self.job)
+        with patch('scripts.pilot.route_workspace.collect', return_value=snapshot) as sample:
+            resource_checkpoint(attempt, profile=native)
+            sample.assert_called_once_with(self.job)
+            with self.assertRaisesRegex(RuntimeError, 'resource_guard'):
+                resource_checkpoint(attempt, profile=ordinary)
+        for changed in (
+                dict(committedBytes=90*gib),
+                dict(committedBytes=35*gib, commitLimitBytes=40*gib),
+                dict(availableRamBytes=5*gib),
+                dict(freeDiskBytes=None),
+        ):
+            with self.subTest(changed=changed), self.assertRaisesRegex(RuntimeError, 'resource_guard'):
+                resource_checkpoint(attempt, profile=native, snapshot=snapshot | changed)
+        self.assertFalse(attempt.exists())
+
     def test_short_cpu_export_and_live_budget_do_not_require_twelve_gib(self):
         (self.job/'input/video.h264').write_bytes(b'x'*1024)
         profile=route_resource_profile(self.job)

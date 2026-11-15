@@ -105,7 +105,7 @@ def test_preparation_uses_one_monitor_and_fresh_snapshot_for_every_callback(envi
     preparation.prepare(job, attempt)
     assert len(env['monitors']) == 1
     monitor = env['monitors'][0]
-    assert monitor.root == env['root'] and monitor.close_count == 1
+    assert monitor.root == job and monitor.close_count == 1
     assert len(monitor.samples) == 13  # admission, ten callbacks, two publication fences
     assert len({s['memoryObservedAt'] for s in monitor.samples}) == 13
     assert json.loads((folder/'state.json').read_text())['phase'] == 'ready'
@@ -278,7 +278,7 @@ def test_default_checkpoint_still_collects_fresh_full_snapshot(tmp_path, monkeyp
     monkeypatch.setattr(workspace, 'collect', lambda root: calls.append(root) or healthy())
     workspace.resource_checkpoint(tmp_path)
     workspace.resource_checkpoint(tmp_path, profile=BUDGET)
-    assert calls == [workspace.ROOT, workspace.ROOT]
+    assert calls == [tmp_path, tmp_path]
 
 
 def test_injected_snapshot_never_causes_an_extra_full_collection(tmp_path, monkeypatch):

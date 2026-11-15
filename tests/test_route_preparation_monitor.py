@@ -26,7 +26,7 @@ def supervision(tmp_path, monkeypatch):
 
     class Monitor:
         def __init__(self, root):
-            assert root == workspace.ROOT
+            assert root == folder
             self.closed = False
             instances.append(self)
 
