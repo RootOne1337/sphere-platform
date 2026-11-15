@@ -66,13 +66,13 @@ def route_resource_profile(job, kind='features'):
     else:
         tables = 2*256*2048*128*4
         required = max(6., math.ceil((4+1.5+(3*size+tables)/1024**3)*4)/4)
-    # Exporting bound native geometry does no reconstruction or inference.
-    # Keep the existing byte reserve and use the bounded route CPU ceiling.
+    # Both CPU exports have fixed view and descriptor limits. Reserve the
+    # calculated bytes in addition to checking the Windows commit percentage.
     native_export = kind == 'reference_lk'
     return dict(kind='route_reference_lk_export' if native_export else 'route_features',
                 minRamGiB=required, hostReserveGiB=4., sourceVideoBytes=size,
                 maxViews=256, maxFeaturesPerView=2048, modelLoaded=False,
-                maxCommitPercent=90 if native_export else 85)
+                maxCommitPercent=90)
 
 
 def resource_checkpoint(folder, *, profile=None, snapshot=None):
@@ -102,7 +102,8 @@ def resource_checkpoint(folder, *, profile=None, snapshot=None):
             or disk_minimum < 20 and profile.get('kind') != 'route_live'):
         raise ValueError('route_resource_profile')
     commit_max=85 if profile is None else profile.get('maxCommitPercent',85)
-    bounded_cpu = profile is not None and profile.get('kind') in {'route_live', 'route_reference_lk_export'}
+    bounded_cpu = profile is not None and profile.get('kind') in {
+        'route_features', 'route_live', 'route_reference_lk_export'}
     if (type(commit_max) not in {int, float} or not 0 < commit_max <= 90
             or commit_max != 85 and not bounded_cpu):
         raise ValueError('route_resource_profile')
@@ -459,7 +460,7 @@ class RouteWorkspaces:
                     descriptorRecoveryPolicy=self.live.get('descriptor_recovery_policy'),
                     physicalActions=0)
 
-    def start_live(self, job, body, *, mode='live', observation_only=True):
+    def start_live(self, job, body, *, mode='live', observation_only=True, vehicle_xfeat=False):
         import cv2 as cv
         from motor_worker.route_localization import SparseRoute
         from motor_worker.route_tracking import AnchoredRouteLocalizer
@@ -527,12 +528,20 @@ class RouteWorkspaces:
         try:
             options = dict(capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=self.clock)
             if reference_lk:
-                sidecar = None
+                sidecar, learned_model = None, None
+                if mode == 'live' and vehicle_xfeat:
+                    from scripts.pilot.route_xfeat_attachment import load_vehicle_xfeat
+                    learned_model, recovery_paths, recovery_stamp = load_vehicle_xfeat(
+                        folder, receipt, stamp=self._runtime_source_stamp)
                 if mode == 'live' and observation_only:
                     from scripts.pilot.route_descriptor_attachment import load_descriptor_recovery
                     sidecar, recovery_paths, recovery_stamp = load_descriptor_recovery(
                         folder, receipt, stamp=self._runtime_source_stamp)
-                if sidecar is None:
+                if learned_model is not None:
+                    from motor_worker.route_xfeat import ReferenceLKXFeatLocalizer, XFEAT_POLICY
+                    tracker = ReferenceLKXFeatLocalizer(route, model=learned_model, **options)
+                    recovery_policy = XFEAT_POLICY
+                elif sidecar is None:
                     tracker = ReferenceLKConfirmationLocalizer(route, **options)
                 else:
                     from motor_worker.route_descriptor_recovery import (
@@ -742,7 +751,7 @@ class RouteWorkspaces:
         reference = None if visual_tempo else load_speed_reference(job)
         if not visual_tempo and reference is None:
             raise ValueError('vehicle_source_speed_not_prepared')
-        self.start_live(job, request, observation_only=False)
+        self.start_live(job, request, observation_only=False, vehicle_xfeat=visual_tempo)
         try:
             if 'vehicle' not in self.live:
                 route = self.live['tracker'].route

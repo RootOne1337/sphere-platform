@@ -36,8 +36,9 @@ class RouteWorkspaceTests(unittest.TestCase):
         with patch('scripts.pilot.route_workspace.collect', return_value=snapshot) as sample:
             resource_checkpoint(attempt, profile=native)
             sample.assert_called_once_with(self.job)
+            resource_checkpoint(attempt, profile=ordinary)
             with self.assertRaisesRegex(RuntimeError, 'resource_guard'):
-                resource_checkpoint(attempt, profile=ordinary)
+                resource_checkpoint(attempt)
         for changed in (
                 dict(committedBytes=90*gib),
                 dict(committedBytes=35*gib, commitLimitBytes=40*gib),

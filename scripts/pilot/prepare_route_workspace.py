@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import sys
+import time
 import uuid
 from pathlib import Path
 
@@ -50,6 +51,7 @@ def route_source_model(job, alternative_id=None):
 
 
 def prepare(job, attempt):
+    deadline = time.monotonic() + 315
     import cv2
 
     from motor_worker.browser_teach import validate_browser
@@ -140,6 +142,24 @@ def prepare(job, attempt):
         write_json(folder/'state.json', dict(phase=phase,
             error=None if supported else 'route_map_has_unobserved_sections',
             cameraTraceOnly=True, executionQualified=False))
+
+    fixture = ROOT / '.local-pilot/route-qualification-reference.json'
+    if phase == 'awaiting_qualification' and fixture.is_file():
+        from scripts.pilot.qualify_reference_lk import qualify
+        # Keep the finished export usable when an independently sourced
+        # negative clip is unavailable or the replay cannot earn admission.
+        try:
+            review = checked_json(fixture)
+            negative = Path(review['capture']).resolve(strict=True)
+            if hashlib.sha256((negative / 'manifest.json').read_bytes()).hexdigest() != review['manifest_sha256']:
+                raise ValueError('route_qualification_reference_changed')
+            if time.monotonic() + receipt['last_seconds'] >= deadline:
+                raise RuntimeError('route_qualification_worker_deadline')
+            qualify(job, attempt, negative, deadline=deadline)
+        except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
+            if attempt_cancelled(job, folder):
+                raise RuntimeError('cancelled') from error
+            print('route qualification replay failed:', type(error).__name__, str(error), file=sys.stderr)
 
 
 def main():

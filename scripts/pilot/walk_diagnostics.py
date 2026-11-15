@@ -19,7 +19,8 @@ SOURCE_MOTION_TELEMETRY_POLICY = 'bounded_source_arc_preimage_local_speed_v1'
 def bounded_localization_diagnostic(value, *, reason=None, source_family='unknown'):
     """Allowlisted scalar/small-count telemetry, never descriptors or authority."""
     value = value if isinstance(value, dict) else {}
-    methods = {'not_attempted', 'descriptor_pnp', 'map_anchored_flow', 'measured_reference_lk'}
+    methods = {'not_attempted', 'descriptor_pnp', 'map_anchored_flow', 'measured_reference_lk',
+               'xfeat_measured', 'xfeat_anchored_flow'}
     reasons = {'route_binding_retired', 'route_observation_gap', 'route_scene_geometry_or_age_unqualified',
                'route_repeated_rgb_not_independent', 'route_frame_expired_during_localization',
                'route_pose_not_verified', 'route_progress_ambiguous', 'route_outside_observed_corridor',

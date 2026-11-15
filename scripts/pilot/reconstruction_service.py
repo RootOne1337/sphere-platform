@@ -798,6 +798,7 @@ def handler(jobs, origin, port):
                                              route_confirmation_contract=CONFIRMATION_POLICY,
                                              route_confirmation_runtime_sha256=CONFIRMATION_RUNTIME_SHA256,
                                              route_descriptor_recovery_policy=DESCRIPTOR_RECOVERY_POLICY,
+                                             route_xfeat_vehicle_contract='reviewed_source_bound_onnx_v1',
                                              route_subpixel_motion_contract=MOTION_TOLERANCE_POLICY,
                                              route_source_motion_contract=SOURCE_MOTION_POLICY,
                                              hud_speed_reference_contract='source_bound_font_display_v1',
