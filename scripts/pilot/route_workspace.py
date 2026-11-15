@@ -216,8 +216,9 @@ class RouteWorkspaces:
                     validate_reference_lk_qualification(receipt, folder, source_binding=selected['binding'])
                 except (OSError, ValueError, TypeError, KeyError):
                     return dict(result, phase='awaiting_qualification', error='route_reference_lk_unqualified')
+                tempo_source = self._visual_tempo_source(job)
                 return dict(result, phase='ready', error=None, controlledExperimentalTestOnly=True,
-                            vehicleVisualTempoAvailable=self._visual_tempo_source(job))
+                            vehicleVisualTempoAvailable=tempo_source, vehicleRgbTempoAvailable=tempo_source)
             if receipt.get('pipeline_sha256') == native_reference_pipeline_id():
                 from scripts.pilot.route_native_landmarks import validate_reference_receipt
                 try:
@@ -460,7 +461,8 @@ class RouteWorkspaces:
                     descriptorRecoveryPolicy=self.live.get('descriptor_recovery_policy'),
                     physicalActions=0)
 
-    def start_live(self, job, body, *, mode='live', observation_only=True, vehicle_xfeat=False):
+    def start_live(self, job, body, *, mode='live', observation_only=True, vehicle_xfeat=False,
+                   fast_vehicle_xfeat=False):
         import cv2 as cv
         from motor_worker.route_localization import SparseRoute
         from motor_worker.route_tracking import AnchoredRouteLocalizer
@@ -537,7 +539,11 @@ class RouteWorkspaces:
                     from scripts.pilot.route_descriptor_attachment import load_descriptor_recovery
                     sidecar, recovery_paths, recovery_stamp = load_descriptor_recovery(
                         folder, receipt, stamp=self._runtime_source_stamp)
-                if learned_model is not None:
+                if learned_model is not None and fast_vehicle_xfeat:
+                    from motor_worker.route_xfeat_fast import FastReferenceLKXFeatLocalizer, FAST_XFEAT_POLICY
+                    tracker = FastReferenceLKXFeatLocalizer(route, model=learned_model, **options)
+                    recovery_policy = FAST_XFEAT_POLICY
+                elif learned_model is not None:
                     from motor_worker.route_xfeat import ReferenceLKXFeatLocalizer, XFEAT_POLICY
                     tracker = ReferenceLKXFeatLocalizer(route, model=learned_model, **options)
                     recovery_policy = XFEAT_POLICY
@@ -570,6 +576,8 @@ class RouteWorkspaces:
                     selected['model_path'].parent/'assessment.json', selected['model_path'].parent/'producer-proof.json',
                     *(selected['model_path']/name for name in sorted(MODEL_FILES)),
                     ROOT/'motor_worker/route_confirmation.py', ROOT/'motor_worker/vehicle_route.py', *recovery_paths)
+                if fast_vehicle_xfeat and learned_model is not None:
+                    source_paths += (ROOT/'motor_worker/route_xfeat_fast.py',)
                 if selected['index_path'] != job/'prepared/reconstruction-input.json':
                     source_paths += (selected['index_path'],
                                      selected['index_path'].parent.parent/'input/manifest.json')
@@ -718,14 +726,15 @@ class RouteWorkspaces:
                 or body.get('cameraTracking') is not True
                 or body.get('cameraControl') != 'continuous_drag_v1'
                 or body.get('clientVersion') != 'vehicle_live_v1'
-                or body.get('speedMode', 'recorded_hud') not in ('recorded_hud', 'visual_tempo_live_hud')
+                or body.get('speedMode', 'recorded_hud') not in ('recorded_hud', 'visual_tempo_live_hud', 'visual_tempo_rgb')
                 or body.get('startMode', 'beginning') not in {'beginning', 'recognized_route'}
                 or 'maxSeconds' in body and (type(body['maxSeconds']) is not int or not 60 <= body['maxSeconds'] <= 1800)
                 or type(body.get('diagnosticFrames', False)) is not bool):
             raise ValueError('vehicle_explicit_confirmation_required')
         manifest = checked_json(job / 'input/manifest.json')
         speed_mode = body.get('speedMode', 'recorded_hud')
-        visual_tempo = speed_mode == 'visual_tempo_live_hud'
+        visual_speed = speed_mode == 'visual_tempo_rgb'
+        visual_tempo = visual_speed or speed_mode == 'visual_tempo_live_hud'
         if visual_tempo and (body['maxSpeedKmh'] != ConservativeTempoReference.MAX_SPEED_KMH
                 or not self._visual_tempo_source(job, manifest=manifest)
                 or not isinstance(body.get('expectedSource'), dict)
@@ -751,7 +760,8 @@ class RouteWorkspaces:
         reference = None if visual_tempo else load_speed_reference(job)
         if not visual_tempo and reference is None:
             raise ValueError('vehicle_source_speed_not_prepared')
-        self.start_live(job, request, observation_only=False, vehicle_xfeat=visual_tempo)
+        self.start_live(job, request, observation_only=False, vehicle_xfeat=visual_tempo,
+                        fast_vehicle_xfeat=visual_speed)
         try:
             if 'vehicle' not in self.live:
                 route = self.live['tracker'].route
@@ -765,7 +775,7 @@ class RouteWorkspaces:
                     math.ceil((route.source_seconds[-1] - route.source_seconds[0]) * 5 + 30))))
                 self.live['vehicle'] = VehicleRouteFollower(route, reference, clock=self.clock,
                     reference_rotations=views, start_mode=settings['startMode'],
-                    max_seconds=budget, max_speed_kmh=body['maxSpeedKmh'])
+                    max_seconds=budget, max_speed_kmh=body['maxSpeedKmh'], visual_speed=visual_speed)
                 self.live['vehicle_settings'] = settings
                 self.live['deadline'] = self.clock() + budget
                 self.live['observation_limit'] = budget * 30
@@ -883,13 +893,16 @@ class RouteWorkspaces:
             result['walk']['motionActive']=body.get('motionActive')
             result['walk']['motionSeconds']=session['walk'].motion_seconds
         if 'vehicle' in session:
-            from scripts.pilot.route_hud_profile import read_live_speed
-            speed = read_live_speed(image, epoch=session['epoch'], sequence=body['sequence'],
-                received_at=now, jpeg_sha256=result['jpegSha256'])
-            speed = {**speed, 'source_rgb_sha256': pose.source_rgb_sha256}
-            result['vehicle'] = session['vehicle'].observe(pose, speed, motion_active=body.get('motionActive'))
+            follower = session['vehicle']
+            speed = None
+            if not follower.visual_speed:
+                from scripts.pilot.route_hud_profile import read_live_speed
+                speed = read_live_speed(image, epoch=session['epoch'], sequence=body['sequence'],
+                    received_at=now, jpeg_sha256=result['jpegSha256'])
+                speed['source_rgb_sha256'] = pose.source_rgb_sha256
+            result['vehicle'] = follower.observe(pose, speed, motion_active=body.get('motionActive'))
             result['vehicle']['motionActive'] = body.get('motionActive')
-            result['vehicle']['motionSeconds'] = session['vehicle'].motion_seconds
+            result['vehicle']['motionSeconds'] = follower.motion_seconds
             result['speedObservation'] = speed
             result['computeMs'] = (self.clock() - now) * 1000
         if session.get('frame_archive'):

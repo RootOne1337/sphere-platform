@@ -2,8 +2,8 @@
 
 The recorded trace is not a metric road or a collision map. A caller must own
 calibrated pedal/steering/camera contacts, enforce fresh plans and actual ACKs,
-and confirm the camera-to-vehicle assumption. Speed is a fresh HUD observation,
-not a consequence inferred from throttle or replayed recording timestamps.
+and confirm the camera-to-vehicle assumption. Live tempo is measured from
+either fresh HUD pixels or independent camera positions in the route scale.
 """
 
 from __future__ import annotations
@@ -51,10 +51,10 @@ class ConservativeTempoReference:
         positive = rates[rates > 1e-12]
         if not len(positive) or not np.isfinite(rates).all():
             raise ValueError('vehicle_tempo_reference_invalid')
-        scale = float(np.median(positive))
+        self.source_rate = float(np.median(positive))
         self.route = route
         self.times = tuple(map(float, times))
-        self.targets = tuple(float(2. + 3. * min(1., rate / scale)) if rate > 1e-12 else 0.
+        self.targets = tuple(float(2. + 3. * min(1., rate / self.source_rate)) if rate > 1e-12 else 0.
                              for rate in rates) + (0.,)
 
     def sample(self, ticks):
@@ -75,6 +75,10 @@ class ConservativeTempoReference:
 
 
 class VehicleRouteFollower:
+    # The same pursuit policy uses five internal units for a quarter of the
+    # typical recorded rate. Publish ratios only in the visual mode.
+    VISUAL_UNITS_PER_SOURCE_RATE = 20.
+    THROTTLE_PULSE_MS = 120
     MAX_STEERING = .35
     PURSUIT_CONE = math.pi / 3
     REJOIN_SPEED_KMH = 5.
@@ -86,13 +90,15 @@ class VehicleRouteFollower:
     LOCALIZED_CORRIDOR_STEPS = 5.
 
     def __init__(self, route, speed_reference, *, clock, reference_rotations,
-                 start_mode='beginning', max_seconds=120, max_speed_kmh=15):
+                 start_mode='beginning', max_seconds=120, max_speed_kmh=15, visual_speed=False):
         import numpy as np
 
         if type(route) not in (SparseRoute, ReferenceLKRoute) or not callable(getattr(speed_reference, 'sample', None)):
             raise ValueError('vehicle_route_or_speed_reference_required')
         if isinstance(speed_reference, ConservativeTempoReference) and speed_reference.route is not route:
             raise ValueError('vehicle_tempo_route_mismatch')
+        if type(visual_speed) is not bool or visual_speed and not isinstance(speed_reference, ConservativeTempoReference):
+            raise ValueError('vehicle_visual_tempo_unavailable')
         if start_mode not in {'beginning', 'recognized_route'}:
             raise ValueError('vehicle_start_mode')
         if type(max_seconds) is not int or not 60 <= max_seconds <= 1800:
@@ -107,6 +113,9 @@ class VehicleRouteFollower:
         self.route, self.speed_reference, self.clock, self.np = route, speed_reference, clock, np
         self.views, self.start_mode, self.max_seconds = views, start_mode, max_seconds
         self.max_speed_kmh = max_speed_kmh
+        self.visual_speed = visual_speed
+        self.pulse_throttle = isinstance(speed_reference, ConservativeTempoReference)
+        self.visual_positions = deque(maxlen=8)
         self.trace = np.asarray(route.camera_trace, float)
         self.steps = np.linalg.norm(np.diff(self.trace, axis=0), axis=1)
         self.step = trace_step_scale(self.steps)
@@ -137,7 +146,7 @@ class VehicleRouteFollower:
         self.history = deque(maxlen=64)
 
     def _reply(self, phase, reason, progress=None, *, target_view=None, speed_accepted=False):
-        return dict(schema='sphere-vehicle-plan-v1', phase=phase, reason=reason,
+        result = dict(schema='sphere-vehicle-plan-v1', phase=phase, reason=reason,
                     pedal=self.pedal, steering=float(self.steering),
                     progressFraction=None if progress is None else float(progress / self.total),
                     maxSteering=self.MAX_STEERING, maxSeconds=self.max_seconds,
@@ -150,6 +159,43 @@ class VehicleRouteFollower:
                     confirmationValidCount=len(self._confirmation.votes),
                     confirmationObservationCount=len(self._confirmation.slots),
                     targetViewCamera=None if target_view is None else list(map(float, target_view)))
+        if self.pulse_throttle:
+            result['throttlePulseMs'] = self.THROTTLE_PULSE_MS
+        if self.visual_speed:
+            result.update(speedAccepted=False, targetSpeedKmh=None, observedSpeedKmh=None,
+                          tempoAccepted=speed_accepted, targetTempo=self._tempo_ratio(self.target_speed),
+                          observedTempo=self._tempo_ratio(self.observed_speed) if speed_accepted else None)
+        return result
+
+    def _tempo_ratio(self, value):
+        return None if value is None else float(value / self.VISUAL_UNITS_PER_SOURCE_RATE)
+
+    def _visual_speed(self, pose, center, progress):
+        positions = self.visual_positions
+        at = pose.received_at
+        while positions and at - positions[0][0] > .5:
+            positions.popleft()
+        if positions and (at - positions[-1][0] > .35
+                          or progress < positions[-1][2] - self.step):
+            positions.clear()
+        if any(row[3] == pose.source_rgb_sha256 for row in positions):
+            return None
+        positions.append((at, center, progress, pose.source_rgb_sha256))
+        # Two distinct poses measure a rate. The independent three-vote
+        # geometry gate below still controls whether that rate can move input.
+        if len(positions) < 2:
+            return None
+        rates = [
+            max(abs(progress - previous_progress), self.np.linalg.norm(center - previous_center)) / (at - previous_at)
+            for previous_at, previous_center, previous_progress, _ in positions
+            if .12 <= at - previous_at <= .5
+        ]
+        if not rates:
+            return None
+        # Use both arc progress and camera travel so lateral motion cannot be
+        # interpreted as standing still just because along-route progress stalls.
+        return min(350., float(self.np.median(rates)) * self.VISUAL_UNITS_PER_SOURCE_RATE
+                   / self.speed_reference.source_rate)
 
     def _neutral(self, reason, *, terminal=False, arrived=False):
         self.steering, self.pedal = 0., 'coast'
@@ -255,6 +301,7 @@ class VehicleRouteFollower:
         dt = .1 if self.last_at is None else pose.received_at - self.last_at
         self.last_at, self.sequence = pose.received_at, pose.receiver_sequence
         if now - pose.received_at > .25 or dt > .5:
+            self.visual_positions.clear()
             return self._wait('vehicle_fresh_pose_required', now)
         if pose.state not in {'localized', 'confirming'} or pose.inliers < 24:
             soft = pose.state == 'unknown' and pose.reason in SOFT_VISUAL_MISSES
@@ -282,6 +329,7 @@ class VehicleRouteFollower:
             # A measured pose may leave the narrower control corridor. Keep
             # the last qualified position and require fresh in-corridor votes.
             self.recent_progress_rates.clear()
+            self.visual_positions.clear()
             self.target_speed = self.observed_speed = None
             return self._wait('vehicle_outside_control_corridor', now)
         within_forward_coast = False
@@ -323,8 +371,8 @@ class VehicleRouteFollower:
             if votes and pose.received_at - votes[-1][0] <= 1.0:
                 if np.linalg.norm(center - votes[-1][3][0]) > self.step * 6:
                     return self._wait('vehicle_confirming_position', now)
-        current_speed = speed if self._speed_is_current(pose, speed, now) else None
-        self.observed_speed = self._speed(current_speed)
+        current_speed = speed if not self.visual_speed and self._speed_is_current(pose, speed, now) else None
+        self.observed_speed = self._visual_speed(pose, center, progress) if self.visual_speed else self._speed(current_speed)
         acceleration = 0.
         if self.observed_speed is not None:
             if self.speed_sample is not None:
@@ -350,7 +398,8 @@ class VehicleRouteFollower:
                 self._confirmation.prepare(binding, pose.receiver_sequence, pose.received_at)
                 self._confirmation.append(pose.source_rgb_sha256, valid=False)
                 self.confirmations = len(self._confirmation.votes)
-            return self._wait('vehicle_speed_unconfirmed', now, preserve_confirmation=soft_hud_miss)
+            return self._wait('vehicle_visual_tempo_unconfirmed' if self.visual_speed else 'vehicle_speed_unconfirmed',
+                              now, preserve_confirmation=self.visual_speed or soft_hud_miss)
         # Preview slower source speeds before a corner, indexed by localized
         # progress. Never advance the recorded clock because live time passed.
         preview = getattr(self.speed_reference, 'preview', None)

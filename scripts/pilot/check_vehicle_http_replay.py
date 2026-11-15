@@ -62,9 +62,9 @@ def run(job, output, *, diagnostic=None, holdout=None, from_seconds=0, max_secon
             or not 0 <= from_seconds <= max_seconds - 1 or max_seconds > 55
             or (diagnostic is not None and holdout is not None)
             or start_mode not in ('beginning', 'recognized_route')
-            or speed_mode not in ('visual_tempo_live_hud', 'recorded_hud')
+            or speed_mode not in ('visual_tempo_rgb', 'visual_tempo_live_hud', 'recorded_hud')
             or type(max_speed_kmh) is not int or not 1 <= max_speed_kmh <= 50
-            or speed_mode == 'visual_tempo_live_hud' and max_speed_kmh != 5
+            or speed_mode != 'recorded_hud' and max_speed_kmh != 5
             or windows_memory()['availableRamBytes'] < 4.75 * 1024**3):
         raise ValueError('vehicle_replay_scope_or_resources')
     active = json.loads((job / 'navigation/active.json').read_bytes())['id']
@@ -141,7 +141,8 @@ def run(job, output, *, diagnostic=None, holdout=None, from_seconds=0, max_secon
                   speedMode=speed_mode, maxSpeedKmh=max_speed_kmh,
                   observations=len(rows), skippedLate=skipped,
                   firstTerminalPlan=first_terminal,
-                  speedCounts=dict(Counter(row['speedObservation']['status'] for row in rows)),
+                  speedCounts=dict(Counter(row['speedObservation']['status'] for row in rows if row['speedObservation'])),
+                  visualTempoAccepted=sum(row['vehicle'].get('tempoAccepted') is True for row in rows),
                   poseCounts=dict(Counter(row['pose']['state'] for row in rows)),
                   planReasons=dict(Counter(row['vehicle']['reason'] for row in rows)), samples=rows)
     (output / 'result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
@@ -222,6 +223,9 @@ def replay_http(target, key, active, expected, geometry, frames, excluded, from_
             timing = observation_timing(presented, sent, time.perf_counter())
             if result['physicalActions'] != 0 or result['jpegSha256'] != hashlib.sha256(raw).hexdigest():
                 raise RuntimeError('vehicle_replay_scope_or_hash')
+            if speed_mode == 'visual_tempo_rgb' and (result['speedObservation'] is not None
+                    or type(result['vehicle'].get('tempoAccepted')) is not bool):
+                raise RuntimeError('vehicle_replay_visual_isolation')
             rows.append(dict(index=row['index'], seconds=seconds, pose=result['pose'], vehicle=result['vehicle'],
                              speedObservation=result['speedObservation'], method=result['method'], **timing))
     finally:
@@ -249,7 +253,7 @@ def main():
     parser.add_argument('--from-seconds', type=float, default=0, help='first source timestamp to observe')
     parser.add_argument('--max-seconds', type=float, default=15, help='last source timestamp to observe')
     parser.add_argument('--start-mode', choices=('beginning', 'recognized_route'), default='beginning')
-    parser.add_argument('--speed-mode', choices=('visual_tempo_live_hud', 'recorded_hud'),
+    parser.add_argument('--speed-mode', choices=('visual_tempo_rgb', 'visual_tempo_live_hud', 'recorded_hud'),
                         default='visual_tempo_live_hud')
     parser.add_argument('--max-speed-kmh', type=int, default=5)
     args = parser.parse_args()

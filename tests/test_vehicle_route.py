@@ -48,6 +48,20 @@ class VehicleRouteTests(unittest.TestCase):
             self.now += .1
         return replies[-1]
 
+    def test_visual_tempo_moves_without_hud_and_releases_on_lost_pose(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=5, visual_speed=True)
+        reply = self.acquire(speed=None)
+        self.assertEqual((reply['phase'], reply['pedal']), ('following', 'throttle'))
+        self.assertEqual(reply['throttlePulseMs'], 120)
+        self.assertTrue(reply['tempoAccepted'])
+        self.assertEqual(reply['observedTempo'], 0.)
+        self.assertFalse(reply['speedAccepted'])
+        self.assertIsNone(reply['observedSpeedKmh'])
+        missing = self.observe(speed=None, state='unknown', reason='route_pose_not_verified', inliers=0)
+        self.assertEqual((missing['phase'], missing['pedal']), ('waiting', 'coast'))
+        self.assertFalse(missing['tempoAccepted'])
+
     def test_acquires_three_fresh_poses_and_holds_throttle_across_updates(self):
         replies = []
         for i in range(30):

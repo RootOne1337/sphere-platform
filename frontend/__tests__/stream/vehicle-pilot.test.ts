@@ -59,6 +59,29 @@ function driver(){
   const controller=new VehicleContacts(control,blackRussiaScooterProfile(geometry),geometry);
   return {controller,events,held};
 }
+test('visual tempo requires a measured rate and a nonrenewable throttle pulse',()=>{
+  const visual={...plan,maxSpeedKmh:5,tempoAccepted:true,observedTempo:.12,targetTempo:.2,throttlePulseMs:120,
+    targetSpeedKmh:null,observedSpeedKmh:null,speedAccepted:false};
+  expect(readVehiclePlan(visual)).toEqual(visual);
+  expect(readVehiclePlan({...visual,observedTempo:null})).toBeNull();
+  expect(readVehiclePlan({...visual,throttlePulseMs:350})).toBeNull();
+  expect(readVehiclePlan({...visual,observedSpeedKmh:2})).toBeNull();
+
+  jest.useFakeTimers();
+  try{
+    const f=driver(),gas={pedal:'throttle',steering:0,throttlePulseMs:120} as const;
+    const apply=()=>f.controller.apply(gas,performance.now(),performance.now()+250);
+    apply();
+    expect(f.held.has(0)).toBe(true);
+    jest.advanceTimersByTime(100);apply();
+    jest.advanceTimersByTime(20);
+    expect(f.held.has(0)).toBe(false);
+    apply();
+    expect(f.held.has(0)).toBe(false);
+    jest.advanceTimersByTime(180);apply();
+    expect(f.held.has(0)).toBe(true);
+  }finally{jest.useRealTimers();}
+});
 test('pedal transitions release before the next button while steering remains on its calibrated horizontal axis',()=>{
   const f=driver();f.controller.apply({pedal:'throttle',steering:.3},1000,1200);
   expect(f.events[0]).toEqual({id:1,point:{x:288,y:885}});

@@ -35,7 +35,7 @@ const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job
 function fresh(){act(()=>frames.shift()!(performance.now(),{} as VideoFrameCallbackMetadata));}
 function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить проход'}));}
 
-function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(value:Record<string,unknown>)=>Record<string,unknown>;assetsReady?:boolean;expectedSource?:NavigationMapSource;visualTempo?:boolean}={}){
+function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(value:Record<string,unknown>)=>Record<string,unknown>;assetsReady?:boolean;expectedSource?:NavigationMapSource;visualTempo?:boolean;rgbTempo?:boolean}={}){
   const vehicleLease:VehicleInputLease={...lease,setVehicle:jest.fn(),neutral:jest.fn(),drag2:jest.fn(async()=>true)};
   const vehicleOpen=jest.fn(async()=>vehicleLease),starts:Record<string,unknown>[]=[];
   let id='',cap=15,duration=300;
@@ -59,7 +59,7 @@ function vehicleFixture(options:{plan?:(plan:VehiclePlan)=>VehiclePlan;start?:(v
     return {json:async()=>value} as Response;
   });
   const rendered=render(<VehicleRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding}
-    assetsReady={options.assetsReady!==false} visualTempo={options.visualTempo} expectedSource={options.expectedSource} preparationIssue="Основная обработка остановлена: resource_guard. Диагностическая схема не заменяет ориентиры."
+    assetsReady={options.assetsReady!==false} visualTempo={options.visualTempo} rgbTempo={options.rgbTempo} expectedSource={options.expectedSource} preparationIssue="Основная обработка остановлена: resource_guard. Диагностическая схема не заменяет ориентиры."
     input={{issue:null,hudProfile:'black_russia_scooter_v1',open:vehicleOpen}} observerBusy={false} onBusyChange={busy}/>);
   const startVehicle=()=>{fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Скутер на записанном участке/}));fireEvent.click(screen.getByRole('button',{name:'Запустить транспорт'}));};
   return {vehicleLease,vehicleOpen,starts,startVehicle,...rendered};
@@ -117,6 +117,19 @@ test.each([true,false])('visual tempo sends a 5 km/h cap and requires mode echo 
   else {await screen.findByText('Освобождение: CLOSED');expect(f.vehicleOpen).not.toHaveBeenCalled();}
   expect(f.starts[0]).toMatchObject({speedMode:'visual_tempo_live_hud',maxSpeedKmh:5});
   if(echo){fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');}
+});
+
+test('RGB tempo negotiates the camera-rate mode and passes the gas limit to the input owner',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const f=vehicleFixture({visualTempo:true,rgbTempo:true,expectedSource,
+    plan:plan=>({...plan,throttlePulseMs:120,targetSpeedKmh:null,observedSpeedKmh:null,speedAccepted:false,
+      tempoAccepted:true,targetTempo:.2,observedTempo:.12})});
+  f.startVehicle();
+  await waitFor(()=>expect(f.vehicleLease.setVehicle).toHaveBeenCalledWith({pedal:'throttle',steering:.2,throttlePulseMs:120}));
+  expect(f.starts[0]).toMatchObject({speedMode:'visual_tempo_rgb',expectedSource});
+  expect(screen.getByLabelText('Визуальный темп транспорта')).toHaveTextContent('12%');
+  expect(screen.queryByLabelText('Скорость транспорта по последнему ответу')).not.toBeInTheDocument();
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
 });
 
 test('the actual failed-source shape cannot promote diagnostic173 into a vehicle input lease',async()=>{

@@ -2,10 +2,11 @@ import {calibrated,fromPercent,profileIssue,type TeachingProfile} from './teachi
 import {WalkStickSlew,walkingCameraIssue,type WalkInputControl,type WalkInputLease} from './walkPilot';
 import type {TeachingPoint} from './teachingContacts';
 
-export type VehicleCommand={pedal:'coast'|'throttle'|'brake';steering:number};
+export type VehicleCommand={pedal:'coast'|'throttle'|'brake';steering:number;throttlePulseMs?:120};
 export type VehiclePlan=VehicleCommand&{schema:'sphere-vehicle-plan-v1';phase:'waiting'|'following'|'stopped'|'arrived';reason:string;
   progressFraction:number|null;maxSteering:.35;maxSpeedKmh:number;maxSeconds:number;maxDecisionAgeMs:450;maxAnswerHoldMs:350;groundRoute:false;executionQualified:false;cameraBodyAssumption:true;
-  targetSpeedKmh:number|null;observedSpeedKmh:number|null;speedAccepted:boolean;targetViewCamera:[number,number,number]|null};
+  targetSpeedKmh:number|null;observedSpeedKmh:number|null;speedAccepted:boolean;targetViewCamera:[number,number,number]|null;
+  tempoAccepted?:boolean;targetTempo?:number|null;observedTempo?:number|null};
 export type VehicleInputLease=WalkInputLease&{setVehicle(command:VehicleCommand):void};
 export type VehicleInputControl=Omit<WalkInputControl,'open'>&{hudProfile:'black_russia_scooter_v1';open(...args:Parameters<WalkInputControl['open']>):Promise<VehicleInputLease>};
 
@@ -13,6 +14,8 @@ export type VehicleInputControl=Omit<WalkInputControl,'open'>&{hudProfile:'black
 export function readVehiclePlan(value:unknown):VehiclePlan|null {
   const p=value as VehiclePlan&{stick?:unknown};
   const speed=(v:unknown)=>v===null||typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=350;
+  const tempo=(v:unknown, ceiling:number)=>v===null||typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=ceiling;
+  const visual=p?.tempoAccepted!==undefined;
   if(!p||p.schema!=='sphere-vehicle-plan-v1'||!['waiting','following','stopped','arrived'].includes(p.phase)
     ||typeof p.reason!=='string'||!/^[a-z0-9_]{1,100}$/.test(p.reason)
     ||!['coast','throttle','brake'].includes(p.pedal)||!Number.isFinite(p.steering)||Math.abs(p.steering)>.35
@@ -23,9 +26,14 @@ export function readVehiclePlan(value:unknown):VehiclePlan|null {
     ||typeof p.speedAccepted!=='boolean'||!speed(p.targetSpeedKmh)||!speed(p.observedSpeedKmh)
     ||p.targetSpeedKmh!==null&&p.targetSpeedKmh>p.maxSpeedKmh
     ||p.speedAccepted&&p.observedSpeedKmh===null
+    ||p.throttlePulseMs!==undefined&&p.throttlePulseMs!==120
+    ||visual&&(p.throttlePulseMs!==120||typeof p.tempoAccepted!=='boolean'||p.speedAccepted
+      ||p.targetSpeedKmh!==null||p.observedSpeedKmh!==null||!tempo(p.targetTempo,.25)||!tempo(p.observedTempo,17.5)
+      ||p.tempoAccepted!==(p.observedTempo!==null))
+    ||!visual&&(p.targetTempo!==undefined||p.observedTempo!==undefined)
     ||p.progressFraction!==null&&(!Number.isFinite(p.progressFraction)||p.progressFraction<0||p.progressFraction>1)
     ||p.targetViewCamera!==null&&(!Array.isArray(p.targetViewCamera)||p.targetViewCamera.length!==3||p.targetViewCamera.some(n=>!Number.isFinite(n)||Math.abs(n)>1e9))
-    ||p.phase==='following'&&(!p.speedAccepted||p.targetSpeedKmh===null||p.observedSpeedKmh===null)
+    ||p.phase==='following'&&(visual?(!p.tempoAccepted||p.targetTempo===null):(!p.speedAccepted||p.targetSpeedKmh===null||p.observedSpeedKmh===null))
     ||p.phase!=='following'&&(p.pedal!=='coast'||p.steering!==0)
     ||p.stick!==undefined&&(!Array.isArray(p.stick)||p.stick.length!==2||p.stick[0]!==p.steering||p.stick[1]!==0))return null;
   return p;
@@ -62,14 +70,21 @@ export function vehicleSteeringTarget(profile:TeachingProfile,geometry:{width:nu
   return {center,target:Math.abs(steering)<.001?center:{x:Math.round(center.x+steering*radius),y:center.y}};
 }
 
-/** Held binary pedals, never PWM or recorded-key playback. Pedal changes use
- * UP then DOWN: dragging a finger from gas to brake is not a new button press. */
+/** Binary pedals use separate contacts. Visual tempo can authorize a short,
+ * nonrenewable gas pulse; an ordinary renewed plan cannot extend it. */
 export class VehicleContacts {
   private pedal:VehicleCommand['pedal']='coast';
   private slew=new WalkStickSlew();
+  private gasTimer:ReturnType<typeof setTimeout>|null=null;
+  private gasUntil=0;
+  private nextGasAt=0;
   constructor(private control:{hasContact(id:number):boolean;set(id:number,point:TeachingPoint|null,notAfter?:number):void},
     private profile:TeachingProfile,private geometry:{width:number;height:number}){}
-  neutral(now:number){this.pedal='coast';this.slew.next([0,0],now);}
+  private endGas(now:number) {
+    if(this.gasTimer!==null){clearTimeout(this.gasTimer);this.gasTimer=null;}
+    if(this.gasUntil){this.gasUntil=0;this.nextGasAt=now+180;}
+  }
+  neutral(now:number){this.endGas(now);this.pedal='coast';this.slew.next([0,0],now);}
   apply(command:VehicleCommand,now:number,notAfter:number){
     if(!['coast','throttle','brake'].includes(command.pedal)||!Number.isFinite(notAfter)||notAfter<=now||notAfter-now>350)throw Error('vehicle_decision_expired');
     // Returning to straight while driving is an ordinary steering correction.
@@ -78,9 +93,20 @@ export class VehicleContacts {
     const {center,target}=vehicleSteeringTarget(this.profile,this.geometry,steering);
     if(Math.abs(steering)>=.001&&!this.control.hasContact(1))this.control.set(1,center,notAfter);
     if(Math.abs(steering)>=.001||this.control.hasContact(1))this.control.set(1,target,notAfter);
-    if(command.pedal!==this.pedal&&this.control.hasContact(0))this.control.set(0,null,notAfter);
-    const pedal=command.pedal==='coast'?null:fromPercent(this.profile.vehicle[command.pedal==='throttle'?'forward':'reverse'],this.geometry);
-    this.control.set(0,pedal,notAfter);this.pedal=command.pedal;
+    const capped=command.throttlePulseMs===120;
+    const requested=capped&&command.pedal==='throttle'&&(now<this.nextGasAt||now>=this.gasUntil&&this.gasUntil>0)?'coast':command.pedal;
+    if(requested!=='throttle')this.endGas(now);
+    if(requested!==this.pedal&&this.control.hasContact(0))this.control.set(0,null,notAfter);
+    if(capped&&requested==='throttle'&&!this.gasUntil){
+      this.gasUntil=Math.min(now+120,notAfter);
+      this.gasTimer=setTimeout(()=>{
+        this.endGas(performance.now());
+        this.pedal='coast';
+        this.control.set(0,null);
+      },Math.max(0,this.gasUntil-performance.now()));
+    }
+    const pedal=requested==='coast'?null:fromPercent(this.profile.vehicle[requested==='throttle'?'forward':'reverse'],this.geometry);
+    this.control.set(0,pedal,Math.min(this.gasUntil||notAfter,notAfter));this.pedal=requested;
   }
 }
 
@@ -88,6 +114,7 @@ export function vehicleReasonLabel(reason:string,positionPreviouslyConfirmed=fal
   return ({vehicle_confirming_current_position:'Три свежих подтверждения текущего места перед движением',
     vehicle_confirming_position:positionPreviouslyConfirmed?'Положение потеряно: газ отпущен, ожидаем подтверждённые ориентиры':'Ищем положение по ориентирам; педали отпущены',
     vehicle_fresh_pose_required:'Ожидаем свежее положение; движение приостановлено',
+    vehicle_visual_tempo_unconfirmed:'Ждём подтверждённый темп по нескольким кадрам, газ отпущен',
     vehicle_speed_unconfirmed:'Скорость не подтверждена — газ отпущен; ждём свежие показания',
     vehicle_continuous_pursuit:'Следуем маршруту: газ удерживается, руль корректируется по свежим кадрам',
     vehicle_confirming_end:'Подтверждаем конец маршрута и остановку транспорта',
