@@ -62,6 +62,8 @@ def check(capture_dir, route, output, *, start=0., end=600., tracker_kind="descr
     taught_indices = set(route.source_frame_indices) if capture_sha == route.source_capture_sha256 else set()
     if jpeg_roundtrip:
         # Match the analysis size used by the live HTTP JPEG receiver.
+        if route.profile.width * SIZE[1] != route.profile.height * SIZE[0]:
+            raise ProtocolError("localization_probe_aspect_mismatch")
         route = replace(route, profile=replace(route.profile, width=SIZE[0], height=SIZE[1]))
     now = 0.
     epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
