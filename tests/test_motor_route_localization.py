@@ -613,6 +613,11 @@ class SparseLocalizationTests(unittest.TestCase):
                 self.assertEqual(other["counts"], {"unknown": 3})
                 self.assertEqual(other["candidate_limit"], 3)
                 self.assertEqual(other["compute_freshness_lower_bound"]["scope"], "compute_only_lower_bound")
+                jpeg = check("fixture", route, Path(folder)/"confirmed", tracker_kind="confirmed_flow",
+                             candidate_limit=8, jpeg_roundtrip=True)
+                self.assertEqual(jpeg["reference_indices_excluded"], 6)
+                self.assertEqual(jpeg["counts"], {})
+                self.assertEqual(jpeg["transport"], dict(codec="jpeg", quality=86, width=960, height=540))
 
     def test_offline_compute_budget_is_lower_bound_not_a_freshness_claim(self):
         from scripts.pilot.check_route_localization import compute_freshness_lower_bound

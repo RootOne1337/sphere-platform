@@ -19,6 +19,7 @@ from motor_worker.route_localization import (
     trace_step_scale,
 )
 from motor_worker.route_reference_lk import REFERENCE_LK_VERIFICATION_POLICY, ReferenceLKLocalizer
+from motor_worker.route_tracking import AnchoredRouteLocalizer
 
 CONFIRMATION_POLICY = 'distinct_current_pose_3of5_source_bound_1second_v1'
 MOTION_TOLERANCE_POLICY = 'current_inlier_center_subpixel_0p5px_1pct_moving_step_v2'
@@ -307,8 +308,15 @@ class _BoundedConfirmationMixin:
         self._verified_current.clear()
         self._subpixel_allowance = False
         self._winner_current_verified = False
-        super().close()
+        self.retired = True
+        close = getattr(super(), 'close', None)
+        if close is not None:
+            close()
 
 
 class ReferenceLKConfirmationLocalizer(_BoundedConfirmationMixin, ReferenceLKLocalizer):
     """Same measured-image family and geometry with bounded soft-miss evidence."""
+
+
+class AnchoredConfirmationLocalizer(_BoundedConfirmationMixin, AnchoredRouteLocalizer):
+    """Apply the browser lab's confirmation rules to sparse-map observations."""
