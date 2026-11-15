@@ -30,6 +30,7 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
   const [storedGeometry,setStoredGeometry]=useState<{identity:string;data:ImportedRouteGeometry;sha:string;choice:string}|null>(null),[notice,setNotice]=useState('Загружаем связанную карту…');
   const geometry=currentCatalog&&storedGeometry?.identity===identity&&storedGeometry.choice===choice?storedGeometry:null;
   const [ticks,setTicks]=useState<number|null>(null),[follow,setFollow]=useState(true),[live,setLive]=useState<RouteMapCamera|null>(null);
+  const [matchedReference,setMatchedReference]=useState<number|null>(null);
   const [orientation,setOrientation]=useState<RouteMapCamera|null>(null);
   const [,setMeasurementExpiry]=useState(0);
   const [recentPose,setRecentPose]=useState<{camera:RouteMapCamera;at:number;epoch:string}|null>(null);
@@ -69,7 +70,7 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
     return()=>{retired=true;abort.abort();};
   },[identity,requestJob,source.manifestSha,activeAlternative]);
   useEffect(()=>{
-    const abort=new AbortController();let retired=false;setStoredGeometry(null);setLive(null);setOrientation(null);setRecentPose(null);setTicks(null);setFollow(true);lastReferenceAt.current=-Infinity;setNotice('Загружаем связанную карту…');
+    const abort=new AbortController();let retired=false;setStoredGeometry(null);setLive(null);setOrientation(null);setRecentPose(null);setTicks(null);setMatchedReference(null);setFollow(true);lastReferenceAt.current=-Infinity;setNotice('Загружаем связанную карту…');
     void(async()=>{
       const response=await reconstructionRequest(`/jobs/${requestJob.id}/${choice==='primary'?'geometry':`geometry-alternatives/${choice}`}`,requestJob,{signal:abort.signal});
       const raw=await response.arrayBuffer();if(raw.byteLength>16*1024**2)throw Error('Размер карты превышает предел.');
@@ -88,13 +89,18 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
     if(newSession){
       referenceSession.current=session;
       lastReferenceAt.current=-Infinity;
+      setMatchedReference(null);
       setFollow(true);
     }
     const p=reply.pose,camera=boundLiveRouteCamera(observation,geometry.sha,performance.now());
     if(!camera)return;setLive(camera);setOrientation(camera);setRecentPose({camera,at:capturedAt,epoch:reply.captureEpoch});
-    if((follow||newSession)&&performance.now()-lastReferenceAt.current>=1000){
-      const index=Math.min(p.segment??0,geometry.data.cameras.length-1),reference=reply.referenceTicks90k??geometry.data.cameras[index].ticks_90k;
-      if(validTicks.has(reference)){setTicks(reference);lastReferenceAt.current=performance.now();}
+    const index=Math.min(p.segment??0,geometry.data.cameras.length-1);
+    const reference=reply.referenceTicks90k??geometry.data.cameras[index].ticks_90k;
+    if(validTicks.has(reference)){
+      setMatchedReference(reference);
+      if((follow||newSession)&&performance.now()-lastReferenceAt.current>=1000){
+        setTicks(reference);lastReferenceAt.current=performance.now();
+      }
     }
     const timeout=setTimeout(()=>setLive(null),Math.max(0,250-(performance.now()-capturedAt)));
     return()=>clearTimeout(timeout);
@@ -105,6 +111,7 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
     return()=>clearTimeout(timeout);
   },[recentPose]);
   const recent=busy&&recentPose&&geometry&&geometryReady&&geometry.sha===observation?.reply.geometrySha256&&recentPose.epoch===observation.reply.captureEpoch&&performance.now()-recentPose.at<1000?recentPose.camera:null;
+  const matchedIndex=matchedReference===null?-1:(geometry?.data.cameras.findIndex(camera=>camera.ticks_90k===matchedReference)??-1);
   return <div aria-label="Карта и опорный кадр в живой проверке" className="space-y-2">
     <p aria-label="Запись и обработка живой карты" className="break-words text-xs font-medium text-cyan-600 dark:text-cyan-400">{routeRecordingIdentity(recordingTitle,source.clip,job.id)}</p>
     <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -121,6 +128,10 @@ export function NavigationRouteContext({job,source,recordingTitle,assetsReady,ob
       <label className="flex items-center gap-2"><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/>Опорный кадр вслед за локализацией · до 1/с</label>
       <span className="inline-block w-64 shrink-0 truncate text-muted-foreground">{live||recent?'Слежение за маршрутом':'Живое положение не нанесено'}</span>
     </div>
+    {matchedIndex>=0&&<p aria-label="Распознанный ракурс" className="text-xs text-muted-foreground">
+      {live?'Подтверждён ракурс':'Последний подтверждённый ракурс'} {matchedIndex+1} из {geometry?.data.cameras.length}
+      {!follow&&' · опорный кадр выбран вручную'}
+    </p>}
     <p className="text-xs text-muted-foreground">{geometryReady?'Выбранная карта готова к живой проверке.':notice}</p>
     {cameraCoverage&&<CameraCoverageNotice coverage={cameraCoverage}/>}
     <div aria-label="Состояние локализации" className="flex h-10 items-center overflow-hidden text-xs leading-5">

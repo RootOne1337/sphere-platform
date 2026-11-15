@@ -218,7 +218,8 @@ class RouteWorkspaces:
                     return dict(result, phase='awaiting_qualification', error='route_reference_lk_unqualified')
                 tempo_source = self._visual_tempo_source(job)
                 return dict(result, phase='ready', error=None, controlledExperimentalTestOnly=True,
-                            vehicleVisualTempoAvailable=tempo_source, vehicleRgbTempoAvailable=tempo_source)
+                            vehicleVisualTempoAvailable=tempo_source, vehicleRgbTempoAvailable=tempo_source,
+                            vehicleAdaptiveThrottleAvailable=tempo_source)
             if receipt.get('pipeline_sha256') == native_reference_pipeline_id():
                 from scripts.pilot.route_native_landmarks import validate_reference_receipt
                 try:
@@ -718,7 +719,7 @@ class RouteWorkspaces:
                     'vehicleCameraAssumptionConfirmed', 'cameraFollowsBodyConfirmed',
                     'hudProfile', 'maxSpeedKmh', 'cameraTracking', 'cameraControl', 'clientVersion'}
         if (type(body) is not dict or not required <= body.keys()
-                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds', 'expectedSource', 'speedMode'}
+                or not body.keys() <= required | {'startMode', 'diagnosticFrames', 'maxSeconds', 'expectedSource', 'speedMode', 'adaptiveThrottle'}
                 or body.get('vehicleCameraAssumptionConfirmed') is not True
                 or body.get('cameraFollowsBodyConfirmed') is not True
                 or body.get('hudProfile') != 'black_russia_scooter_v1'
@@ -727,6 +728,8 @@ class RouteWorkspaces:
                 or body.get('cameraControl') != 'continuous_drag_v1'
                 or body.get('clientVersion') != 'vehicle_live_v1'
                 or body.get('speedMode', 'recorded_hud') not in ('recorded_hud', 'visual_tempo_live_hud', 'visual_tempo_rgb')
+                or type(body.get('adaptiveThrottle', False)) is not bool
+                or body.get('adaptiveThrottle') is True and body.get('speedMode') != 'visual_tempo_rgb'
                 or body.get('startMode', 'beginning') not in {'beginning', 'recognized_route'}
                 or 'maxSeconds' in body and (type(body['maxSeconds']) is not int or not 60 <= body['maxSeconds'] <= 1800)
                 or type(body.get('diagnosticFrames', False)) is not bool):
@@ -751,6 +754,7 @@ class RouteWorkspaces:
                     for key in ('startMode', 'maxSpeedKmh', 'diagnosticFrames', 'hudProfile')}
         settings['maxSeconds'] = body.get('maxSeconds')
         settings['speedMode'] = speed_mode
+        settings['adaptiveThrottle'] = body.get('adaptiveThrottle', False)
         self._expire()
         if self.live and self.live['id'] == request['id']:
             if 'vehicle' not in self.live:
@@ -775,7 +779,8 @@ class RouteWorkspaces:
                     math.ceil((route.source_seconds[-1] - route.source_seconds[0]) * 5 + 30))))
                 self.live['vehicle'] = VehicleRouteFollower(route, reference, clock=self.clock,
                     reference_rotations=views, start_mode=settings['startMode'],
-                    max_seconds=budget, max_speed_kmh=body['maxSpeedKmh'], visual_speed=visual_speed)
+                    max_seconds=budget, max_speed_kmh=body['maxSpeedKmh'], visual_speed=visual_speed,
+                    adaptive_throttle=settings['adaptiveThrottle'])
                 self.live['vehicle_settings'] = settings
                 self.live['deadline'] = self.clock() + budget
                 self.live['observation_limit'] = budget * 30
@@ -788,7 +793,8 @@ class RouteWorkspaces:
                         maxSeconds=self.live['vehicle'].max_seconds, maxSpeedKmh=body['maxSpeedKmh'],
                         startMode=settings['startMode'], cameraTracking=True,
                         cameraControl='continuous_drag_v1', cameraFollowsBodyConfirmed=True,
-                        hudProfile=body['hudProfile'], speedMode=speed_mode, observationProtocol='jpeg_binary_v1',
+                        hudProfile=body['hudProfile'], speedMode=speed_mode, adaptiveThrottle=settings['adaptiveThrottle'],
+                        observationProtocol='jpeg_binary_v1',
                         motionProtocol='applied_vehicle_v1', clientVersion='vehicle_live_v1')
         except BaseException:
             self._retire_live(self.live, self.clock())
@@ -886,7 +892,17 @@ class RouteWorkspaces:
         if pose.state=='localized' and pose.segment is not None:
             trace=session['tracker'].route.camera_trace;index=min(pose.segment,len(trace)-2)
             candidates=(index,index+1)
-            nearest=min(candidates,key=lambda i:sum((a-b)**2 for a,b in zip(trace[i],pose.center)))
+            vehicle = session.get('vehicle')
+            if vehicle is None:
+                nearest=min(candidates,key=lambda i:sum((a-b)**2 for a,b in zip(trace[i],pose.center)))
+            else:
+                # Look only around the confirmed route segment. The heading
+                # distinguishes nearby reference views on turns and loops.
+                forward = np.asarray(pose.rotation, dtype=float).reshape(3, 3)[2]
+                candidates = range(max(0, index-1), min(len(trace), index+3))
+                nearest = min(candidates, key=lambda i:
+                    np.linalg.norm(trace[i]-pose.center)
+                    + vehicle.step * (1. - np.clip(vehicle.views[i, 2] @ forward, -1., 1.)))
             result['referenceTicks90k']=round(session['tracker'].route.source_seconds[nearest]*90000)
         if 'walk' in session:
             result['walk'] = session['walk'].observe(pose,motion_active=body.get('motionActive'))

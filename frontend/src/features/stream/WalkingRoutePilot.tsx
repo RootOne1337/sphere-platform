@@ -44,10 +44,10 @@ type PilotProps={
   job:ReconstructionJob|null;clip:string|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;
   binding:Binding|null;assetsReady:boolean;input:WalkInputControl;observerBusy:boolean;onBusyChange:(busy:boolean)=>void;
   onObservation?:(observation:LiveRouteObservation|null)=>void;renderView?:(view:ReactNode)=>ReactNode;
-  scope?:string|null;preparationIssue?:string|null;mode?:'foot'|'vehicle';expectedSource?:NavigationMapSource;visualTempo?:boolean;rgbTempo?:boolean;
+  scope?:string|null;preparationIssue?:string|null;mode?:'foot'|'vehicle';expectedSource?:NavigationMapSource;visualTempo?:boolean;rgbTempo?:boolean;adaptiveThrottle?:boolean;
   beginVehicleVideo?:(config:DiagnosticVideoConfig)=>DiagnosticVideoCapture|null;
 };
-export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot',expectedSource,beginVehicleVideo,visualTempo=false,rgbTempo=false}:PilotProps) {
+export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null,mode='foot',expectedSource,beginVehicleVideo,visualTempo=false,rgbTempo=false,adaptiveThrottle=false}:PilotProps) {
   const vehicleMode=mode==='vehicle';
   const expectedSourceIdentity=expectedSource?JSON.stringify([expectedSource.alternativeId,expectedSource.geometry_sha256,expectedSource.runtime_family]):null;
   const reasonLabel=(reason:string,positionPreviouslyConfirmed=false)=>vehicleMode?(vehicleReasonLabel(reason,positionPreviouslyConfirmed)??(reason.startsWith('vehicle_')?`Транспорт: ${reason}`:walkReasonLabel(reason))):walkReasonLabel(reason);
@@ -55,6 +55,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const [startMode,setStartMode]=useState<StartMode>('recognized_route');
   const [cameraEnabled,setCameraEnabled]=useState(!vehicleMode&&input.cameraIssue!==undefined);
   const [speedChoice,setSpeedChoice]=useState('15');
+  const useAdaptiveThrottle=rgbTempo&&adaptiveThrottle;
   const visualSpeedMode=rgbTempo?'visual_tempo_rgb':'visual_tempo_live_hud';
   const maxSpeedKmh=visualTempo?5:speedChoice==='recorded'?50:Number(speedChoice);
   const [durationSeconds,setDurationSeconds]=useState(300);
@@ -192,7 +193,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   };
   stopRef.current=stop;
   useEffect(()=>()=>{void stopRef.current('walk_stream_changed');},[]);
-  useEffect(()=>{setConfirmed(false);void stopRef.current('walk_stream_changed');},[job?.id,job?.key,clip,binding?.captureEpoch,binding?.width,binding?.height,input.revision,expectedSourceIdentity,visualTempo,visualSpeedMode]);
+  useEffect(()=>{setConfirmed(false);void stopRef.current('walk_stream_changed');},[job?.id,job?.key,clip,binding?.captureEpoch,binding?.width,binding?.height,input.revision,expectedSourceIdentity,visualTempo,visualSpeedMode,useAdaptiveThrottle]);
   useEffect(()=>{if(binding?.captureEpoch)setRelease('none');},[binding?.captureEpoch]);
   useEffect(()=>{
     recent.current={sequence:0,at:0};setPreviewFrame(null);const element=video.current;
@@ -266,7 +267,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     try{
       const state=await(await reconstructionRequest(`/jobs/${job.id}/navigation/${vehicleMode?'vehicle-start':'walk-start'}`,job,{method:'POST',signal,
         body:JSON.stringify({id:active.id,clientVersion:vehicleMode?'vehicle_live_v1':'walk_live_v8',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,...(expectedSource?{expectedSource}:{}),
-          ...(vehicleMode?{vehicleCameraAssumptionConfirmed:true,cameraFollowsBodyConfirmed:true,hudProfile:(input as VehicleInputControl).hudProfile,maxSpeedKmh,maxSeconds:durationSeconds,...(visualTempo?{speedMode:visualSpeedMode}:{})}:{footCameraAssumptionConfirmed:true}),
+          ...(vehicleMode?{vehicleCameraAssumptionConfirmed:true,cameraFollowsBodyConfirmed:true,hudProfile:(input as VehicleInputControl).hudProfile,maxSpeedKmh,maxSeconds:durationSeconds,...(visualTempo?{speedMode:visualSpeedMode,...(useAdaptiveThrottle?{adaptiveThrottle:true}:{})}:{})}:{footCameraAssumptionConfirmed:true}),
           diagnosticFrames:saveFrames,startMode:active.startMode,cameraTracking:vehicleMode||!!active.camera,...(vehicleMode||active.camera?{cameraControl:'continuous_drag_v1'}:{})})})).json();
       if(!alive())return;
       if(state.id!==active.id||state.phase!=='observing'||state.mode!==(vehicleMode?'vehicle_camera_trace_v1':'foot_camera_trace_v1')||state.physicalActions!==0||!Number.isInteger(state.maxSeconds)||state.maxSeconds<60||state.maxSeconds>(vehicleMode?1800:600)||vehicleMode&&state.maxSeconds!==durationSeconds||state.startMode!==active.startMode)throw Error(vehicleMode?'vehicle_start_unconfirmed':'walk_start_unconfirmed');
@@ -274,7 +275,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       if(vehicleMode||active.camera?state.cameraTracking!==true:state.cameraTracking===true)throw Error('walk_start_unconfirmed');
       if((vehicleMode||active.camera)&&state.cameraControl!=='continuous_drag_v1')throw Error('walk_start_unconfirmed');
       if(vehicleMode&&state.maxSpeedKmh!==maxSpeedKmh)throw Error('vehicle_start_unconfirmed');
-      if(vehicleMode&&visualTempo&&state.speedMode!==visualSpeedMode)throw Error('vehicle_start_unconfirmed');
+      if(vehicleMode&&visualTempo&&(state.speedMode!==visualSpeedMode||useAdaptiveThrottle&&state.adaptiveThrottle!==true))throw Error('vehicle_start_unconfirmed');
       if(vehicleMode&&(state.job!==job.id||state.cameraFollowsBodyConfirmed!==true||state.hudProfile!==(input as VehicleInputControl).hudProfile||state.clientVersion!=='vehicle_live_v1'))throw Error('vehicle_start_unconfirmed');
       if(state.motionProtocol!==(vehicleMode?'applied_vehicle_v1':'applied_stick_v1'))throw Error(vehicleMode?'vehicle_motion_feedback_required':'walk_motion_feedback_required');
       active.binaryJpeg=state.observationProtocol==='jpeg_binary_v1';
@@ -328,7 +329,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           active.trace.add('http',performance.now(),{sequence:frame.sequence,durationMs:performance.now()-sentAt,ageMs:performance.now()-frame.at});
           const reply=navigationReply(value,active.id,binding.captureEpoch,frame.sequence,sha),vehiclePlan=vehicleMode?readVehiclePlan(value.vehicle):null,
             plan=vehicleMode?vehiclePlan:readWalkPlan(value.walk),rawPlan=vehicleMode?value.vehicle:value.walk,now=performance.now();
-          if(!reply||!plan||plan.maxSeconds!==active.maxSeconds||vehiclePlan&&(vehiclePlan.maxSpeedKmh!==active.maxSpeedKmh||rgbTempo!==(vehiclePlan.tempoAccepted!==undefined)))throw Error(vehicleMode?'vehicle_reply_not_bound':'walk_reply_not_bound');
+          if(!reply||!plan||plan.maxSeconds!==active.maxSeconds||vehiclePlan&&(vehiclePlan.maxSpeedKmh!==active.maxSpeedKmh||rgbTempo!==(vehiclePlan.tempoAccepted!==undefined)||!useAdaptiveThrottle&&Number(vehiclePlan.throttlePulseMs)>120))throw Error(vehicleMode?'vehicle_reply_not_bound':'walk_reply_not_bound');
           if(!lease.active())throw Error(lease.failure?.()??'walk_native_closed');
           const permitUntil=vehicleMode?vehicleDecisionDeadline(frame.at,now):walkDecisionDeadline(frame.at,now);
           if(permitUntil===null)throw Error('walk_decision_expired');
@@ -505,7 +506,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     {vehicleMode&&videoNotice&&<p role="status" className="text-[11px] text-muted-foreground">{videoNotice}</p>}
     {vehicleMode&&scope&&<VehicleDiagnosticVideoArchive scope={scope} refresh={videoRefresh}/>}
     <div className="grid grid-cols-3 gap-2 text-xs tabular-nums"><div>Прогресс: {last?.progress==null?'—':`${(last.progress*100).toFixed(1)}%`}</div><div>Инлайеры позы {last&&last.poseState!=='unknown'?last.inliers:'—'}</div><div>Кадр → ответ: {last?`${last.ageMs.toFixed(0)} мс`:'—'}</div><div>Стик: {release==='unknown'?'UNKNOWN':busy&&last?last.stick.map(v=>v.toFixed(2)).join(' / '):'0 / 0'}</div><div>Камера X / Y: {last?.cameraYawRadians==null?"—":`${(last.cameraYawRadians*180/Math.PI).toFixed(1)}°`} / {last?.cameraPitchRadians==null?"—":`${(last.cameraPitchRadians*180/Math.PI).toFixed(1)}°`}</div><div>События ввода: {events}</div><div>Освобождение: {({none:'—',pending:'ожидается',closed:'CLOSED',unknown:'UNKNOWN'})[release]}</div></div>
-    {(()=>{const preview=<figure className="space-y-2"><figcaption className="text-xs text-muted-foreground">{busy?(vehicleMode?'Транспорт: исходный кадр и подтверждённое направление':'Пеший тест: исходный кадр и подтверждённое направление'):'Просмотр источника · автоматическое движение выключено'}</figcaption><canvas ref={output} width={960} height={540} aria-label={vehicleMode?'Диагностика транспорта на свежем кадре':'Диагностика пешего теста на свежем кадре'} className={previewFrame?'hidden':'aspect-video w-full rounded-lg border bg-black'}/>{previewFrame&&<WalkLivePreview frame={previewFrame} active={busy}/>}</figure>;return renderView?renderView(preview):preview;})()}
+    {(()=>{const preview=<figure className="space-y-2"><figcaption className="text-xs text-muted-foreground">{busy?(vehicleMode?'Транспорт: исходный кадр и подтверждённое направление':'Пеший тест: исходный кадр и подтверждённое направление'):previewFrame?'Последний кадр проверки · движение выключено':'Просмотр источника · автоматическое движение выключено'}</figcaption><canvas ref={output} width={960} height={540} aria-label={vehicleMode?'Диагностика транспорта на свежем кадре':'Диагностика пешего теста на свежем кадре'} className={previewFrame?'hidden':'aspect-video w-full rounded-lg border bg-black'}/>{previewFrame&&<WalkLivePreview frame={previewFrame} active={busy}/>}</figure>;return renderView?renderView(preview):preview;})()}
     {!busy&&samples.length>0&&<details><summary className="cursor-pointer text-xs">Кадры диагностики · {images.current}</summary><div className="mt-2 grid grid-cols-2 gap-2">{history.current.filter(s=>s.image).map(s=><figure key={s.sequence}><Image src={s.image!} width={960} height={540} unoptimized alt={`Кадр теста ${(s.elapsedMs/1000).toFixed(1)} с`} className="w-full rounded border"/><figcaption className="text-[10px]">{(s.elapsedMs/1000).toFixed(1)} с · инлайеры позы {s.poseState==='unknown'?'—':s.inliers} · {s.progress==null?'позиция неизвестна':`${(s.progress*100).toFixed(1)}%`}</figcaption></figure>)}</div></details>}
     {!!samples.length&&<div className="overflow-auto"><table className="w-full text-left text-[11px] tabular-nums"><caption className="pb-2 text-left text-muted-foreground">Последние наблюдения · относительный прогресс, без метров</caption><thead><tr><th>Время</th><th>Инлайеры позы</th><th>{vehicleMode?'Педаль / руль':'Стик X/Y'}</th><th>Состояние</th></tr></thead><tbody>{samples.map(s=><tr key={s.sequence}><td>{(s.elapsedMs/1000).toFixed(1)} с</td><td>{s.poseState==='unknown'?'—':s.inliers}</td><td>{s.vehicle?`${s.vehicle.pedal} / ${s.vehicle.steering.toFixed(2)}`:s.stick.map(n=>n.toFixed(2)).join(' / ')}</td><td>{reasonLabel(s.reason,s.positionPreviouslyConfirmed)}</td></tr>)}</tbody></table></div>}
   </section>;

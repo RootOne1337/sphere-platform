@@ -2,7 +2,7 @@ import {calibrated,fromPercent,profileIssue,type TeachingProfile} from './teachi
 import {WalkStickSlew,walkingCameraIssue,type WalkInputControl,type WalkInputLease} from './walkPilot';
 import type {TeachingPoint} from './teachingContacts';
 
-export type VehicleCommand={pedal:'coast'|'throttle'|'brake';steering:number;throttlePulseMs?:120};
+export type VehicleCommand={pedal:'coast'|'throttle'|'brake';steering:number;throttlePulseMs?:120|180|240};
 export type VehiclePlan=VehicleCommand&{schema:'sphere-vehicle-plan-v1';phase:'waiting'|'following'|'stopped'|'arrived';reason:string;
   progressFraction:number|null;maxSteering:.35;maxSpeedKmh:number;maxSeconds:number;maxDecisionAgeMs:450;maxAnswerHoldMs:350;groundRoute:false;executionQualified:false;cameraBodyAssumption:true;
   targetSpeedKmh:number|null;observedSpeedKmh:number|null;speedAccepted:boolean;targetViewCamera:[number,number,number]|null;
@@ -26,8 +26,8 @@ export function readVehiclePlan(value:unknown):VehiclePlan|null {
     ||typeof p.speedAccepted!=='boolean'||!speed(p.targetSpeedKmh)||!speed(p.observedSpeedKmh)
     ||p.targetSpeedKmh!==null&&p.targetSpeedKmh>p.maxSpeedKmh
     ||p.speedAccepted&&p.observedSpeedKmh===null
-    ||p.throttlePulseMs!==undefined&&p.throttlePulseMs!==120
-    ||visual&&(p.throttlePulseMs!==120||typeof p.tempoAccepted!=='boolean'||p.speedAccepted
+    ||p.throttlePulseMs!==undefined&&p.throttlePulseMs!==120&&p.throttlePulseMs!==180&&p.throttlePulseMs!==240
+    ||visual&&(p.throttlePulseMs===undefined||typeof p.tempoAccepted!=='boolean'||p.speedAccepted
       ||p.targetSpeedKmh!==null||p.observedSpeedKmh!==null||!tempo(p.targetTempo,.25)||!tempo(p.observedTempo,17.5)
       ||p.tempoAccepted!==(p.observedTempo!==null))
     ||!visual&&(p.targetTempo!==undefined||p.observedTempo!==undefined)
@@ -77,13 +77,18 @@ export class VehicleContacts {
   private slew=new WalkStickSlew();
   private gasTimer:ReturnType<typeof setTimeout>|null=null;
   private gasUntil=0;
+  private pulseWidth=0;
   private nextGasAt=0;
   private lastGasDecision:VehicleCommand|null=null;
   constructor(private control:{hasContact(id:number):boolean;set(id:number,point:TeachingPoint|null,notAfter?:number):void},
     private profile:TeachingProfile,private geometry:{width:number;height:number}){}
   private endGas(now:number) {
     if(this.gasTimer!==null){clearTimeout(this.gasTimer);this.gasTimer=null;}
-    if(this.gasUntil){this.gasUntil=0;this.nextGasAt=now+180;}
+    if(this.gasUntil){
+      this.gasUntil=0;
+      this.nextGasAt=now+(this.pulseWidth===240?80:this.pulseWidth===180?110:180);
+      this.pulseWidth=0;
+    }
   }
   neutral(now:number){this.endGas(now);this.pedal='coast';this.slew.next([0,0],now);}
   apply(command:VehicleCommand,now:number,notAfter:number){
@@ -94,18 +99,19 @@ export class VehicleContacts {
     const {center,target}=vehicleSteeringTarget(this.profile,this.geometry,steering);
     if(Math.abs(steering)>=.001&&!this.control.hasContact(1))this.control.set(1,center,notAfter);
     if(Math.abs(steering)>=.001||this.control.hasContact(1))this.control.set(1,target,notAfter);
-    const capped=command.throttlePulseMs===120;
+    const pulseWidth=command.throttlePulseMs;
     let requested=command.pedal;
-    if(capped&&requested==='throttle'){
+    if(pulseWidth&&requested==='throttle'){
       const freshDecision=command!==this.lastGasDecision;
       this.lastGasDecision=command;
-      const canPress=this.gasUntil>0?now<this.gasUntil:freshDecision&&now>=this.nextGasAt;
+      const canPress=this.gasUntil>0?now<this.gasUntil&&pulseWidth>=this.pulseWidth:freshDecision&&now>=this.nextGasAt;
       if(!canPress)requested='coast';
     }
     if(requested!=='throttle')this.endGas(now);
     if(requested!==this.pedal&&this.control.hasContact(0))this.control.set(0,null,notAfter);
-    if(capped&&requested==='throttle'&&!this.gasUntil){
-      this.gasUntil=Math.min(now+120,notAfter);
+    if(pulseWidth&&requested==='throttle'&&!this.gasUntil){
+      this.pulseWidth=pulseWidth;
+      this.gasUntil=Math.min(now+pulseWidth,notAfter);
       this.gasTimer=setTimeout(()=>{
         this.endGas(performance.now());
         this.pedal='coast';

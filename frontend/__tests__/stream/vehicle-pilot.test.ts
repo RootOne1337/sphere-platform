@@ -100,6 +100,22 @@ test('pedal transitions release before the next button while steering remains on
   expect(f.events.at(-1)).toEqual({id:0,point:null});
 });
 
+test('a steady cruise pulse keeps its original deadline and drops on a cautious decision',()=>{
+  jest.useFakeTimers();
+  try{
+    const f=driver(),cruise={pedal:'throttle',steering:0,throttlePulseMs:240} as const;
+    const apply=(decision=cruise)=>f.controller.apply(decision,performance.now(),performance.now()+350);
+    expect(apply()).toBe('throttle');
+    jest.advanceTimersByTime(200);apply({...cruise});
+    jest.advanceTimersByTime(40);
+    expect(f.held.has(0)).toBe(false);
+    jest.advanceTimersByTime(80);apply({...cruise});
+    expect(f.held.has(0)).toBe(true);
+    expect(f.controller.apply({...cruise,throttlePulseMs:120},performance.now(),performance.now()+350)).toBe('coast');
+    expect(f.held.has(0)).toBe(false);
+  }finally{jest.useRealTimers();}
+});
+
 test('straightening while driving ramps steering; explicit neutral still resets immediately',()=>{
   const f=driver();
   for(let at=1000;at<=1300;at+=20)f.controller.apply({pedal:'throttle',steering:.35},at,at+200);

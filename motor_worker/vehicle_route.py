@@ -79,6 +79,8 @@ class VehicleRouteFollower:
     # typical recorded rate. Publish ratios only in the visual mode.
     VISUAL_UNITS_PER_SOURCE_RATE = 20.
     THROTTLE_PULSE_MS = 120
+    FOLLOW_PULSE_MS = 180
+    CRUISE_PULSE_MS = 240
     MAX_STEERING = .35
     PURSUIT_CONE = math.pi / 3
     REJOIN_SPEED_KMH = 5.
@@ -90,7 +92,8 @@ class VehicleRouteFollower:
     LOCALIZED_CORRIDOR_STEPS = 5.
 
     def __init__(self, route, speed_reference, *, clock, reference_rotations,
-                 start_mode='beginning', max_seconds=120, max_speed_kmh=15, visual_speed=False):
+                 start_mode='beginning', max_seconds=120, max_speed_kmh=15, visual_speed=False,
+                 adaptive_throttle=False):
         import numpy as np
 
         if type(route) not in (SparseRoute, ReferenceLKRoute) or not callable(getattr(speed_reference, 'sample', None)):
@@ -99,6 +102,8 @@ class VehicleRouteFollower:
             raise ValueError('vehicle_tempo_route_mismatch')
         if type(visual_speed) is not bool or visual_speed and not isinstance(speed_reference, ConservativeTempoReference):
             raise ValueError('vehicle_visual_tempo_unavailable')
+        if type(adaptive_throttle) is not bool or adaptive_throttle and not visual_speed:
+            raise ValueError('vehicle_adaptive_throttle_unavailable')
         if start_mode not in {'beginning', 'recognized_route'}:
             raise ValueError('vehicle_start_mode')
         if type(max_seconds) is not int or not 60 <= max_seconds <= 1800:
@@ -114,6 +119,7 @@ class VehicleRouteFollower:
         self.views, self.start_mode, self.max_seconds = views, start_mode, max_seconds
         self.max_speed_kmh = max_speed_kmh
         self.visual_speed = visual_speed
+        self.adaptive_throttle = adaptive_throttle
         self.pulse_throttle = isinstance(speed_reference, ConservativeTempoReference)
         self.visual_positions = deque(maxlen=8)
         self.trace = np.asarray(route.camera_trace, float)
@@ -145,7 +151,8 @@ class VehicleRouteFollower:
         self.motion_seconds = 0.
         self.history = deque(maxlen=64)
 
-    def _reply(self, phase, reason, progress=None, *, target_view=None, speed_accepted=False):
+    def _reply(self, phase, reason, progress=None, *, target_view=None, speed_accepted=False,
+               throttle_pulse_ms=THROTTLE_PULSE_MS):
         result = dict(schema='sphere-vehicle-plan-v1', phase=phase, reason=reason,
                     pedal=self.pedal, steering=float(self.steering),
                     progressFraction=None if progress is None else float(progress / self.total),
@@ -160,7 +167,7 @@ class VehicleRouteFollower:
                     confirmationObservationCount=len(self._confirmation.slots),
                     targetViewCamera=None if target_view is None else list(map(float, target_view)))
         if self.pulse_throttle:
-            result['throttlePulseMs'] = self.THROTTLE_PULSE_MS
+            result['throttlePulseMs'] = throttle_pulse_ms
         if self.visual_speed:
             result.update(speedAccepted=False, targetSpeedKmh=None, observedSpeedKmh=None,
                           tempoAccepted=speed_accepted, targetTempo=self._tempo_ratio(self.target_speed),
@@ -552,5 +559,17 @@ class VehicleRouteFollower:
                 and self.high_water - self.history[0][1] < self.step * .35
                 and self.observed_speed >= 3.):
             return self._neutral('vehicle_motion_without_route_progress', terminal=True)
+        # Extend only a new gas decision during steady in-corridor travel.
+        # The client still releases at a nonrenewable edge deadline.
+        pulse = self.THROTTLE_PULSE_MS
+        if (self.adaptive_throttle and self.pedal == 'throttle' and self.confirmations >= 3
+                and pose.inliers >= 40 and not near_end and abs(yaw) <= .52
+                and cross <= 2. * self.step and .4 <= self.observed_speed < self.target_speed * .90
+                and predicted_speed < self.target_speed * .95):
+            pulse = self.FOLLOW_PULSE_MS
+            if (pose.inliers >= 48 and abs(yaw) <= .24 and cross <= self.step
+                    and .5 <= self.observed_speed < self.target_speed * .75
+                    and predicted_speed < self.target_speed * .85):
+                pulse = self.CRUISE_PULSE_MS
         return self._reply('following', 'vehicle_continuous_pursuit', progress,
-                           target_view=None, speed_accepted=True)
+                           target_view=None, speed_accepted=True, throttle_pulse_ms=pulse)

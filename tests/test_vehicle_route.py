@@ -72,6 +72,18 @@ class VehicleRouteTests(unittest.TestCase):
         self.assertGreater(accelerated['observedTempo'], .45)
         self.assertEqual(accelerated['pedal'], 'brake')
 
+    def test_visual_cruise_gas_uses_longer_decisions_only_with_strong_in_corridor_pose(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)
+        self.assertEqual(self.acquire(speed=None)['throttlePulseMs'], 120)
+        rate = self.reference.source_rate * .12
+        for i in range(1, 8):
+            reply = self.observe(progress=rate * .1 * i, speed=None)
+            self.now += .1
+        self.assertEqual((reply['pedal'], reply['throttlePulseMs']), ('throttle', 240))
+        weaker = self.observe(progress=rate * .8, speed=None, inliers=38)
+        self.assertEqual(weaker['throttlePulseMs'], 120)
+
     def test_visual_alias_pauses_then_reacquires_without_admitting_the_jump(self):
         self.reference = ConservativeTempoReference(self.route)
         self.follower = self.make(max_speed_kmh=5, visual_speed=True)

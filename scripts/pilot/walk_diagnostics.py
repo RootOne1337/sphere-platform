@@ -177,14 +177,15 @@ class RuntimeMetadataRing:
                     safe['reason'] = reason
                 for key, minimum, maximum in (
                         ('progressFraction',0.,1.),('targetSpeedKmh',0.,350.),('observedSpeedKmh',0.,350.),
-                        ('targetTempo',0.,.25),('observedTempo',0.,17.5),('steering',-.35,.35),
-                        ('throttlePulseMs',120,120)):
+                        ('targetTempo',0.,.25),('observedTempo',0.,17.5),('steering',-.35,.35)):
                     value = plan.get(key)
                     if type(value) in {int,float} and math.isfinite(value) and minimum <= value <= maximum:
                         safe[key] = value
                 for key in ('tempoAccepted','speedAccepted','motionActive'):
                     if type(plan.get(key)) is bool:
                         safe[key] = plan[key]
+                if type(plan.get('throttlePulseMs')) is int and plan['throttlePulseMs'] in (120,180,240):
+                    safe['throttlePulseMs'] = plan['throttlePulseMs']
                 row['plan'] = safe
             if isinstance(source_binding, dict):
                 safe = {}
