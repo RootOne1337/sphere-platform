@@ -10,6 +10,7 @@ import { renameTeachingLabel, seekTeachingSecond } from './teachingMetadata';
 import {readTeachingLibrary,type TeachingLibraryRecord} from './teachingLibrary';
 import {readTeachingCatalogStatuses,type TeachingCatalogStatus} from './teachingCatalogStatus';
 import {TeachingRecordingCatalog} from './TeachingRecordingCatalog';
+import {ScooterFiveMapRoute} from './ScooterFiveMapRoute';
 import {teachingCatalogPresentation,type TeachingCatalogEntry} from './teachingCatalog';
 import type {TeachingQueueSnapshot} from './teachingQueue';
 import {exactRecordedFrame,readImportedRouteGeometry,type ImportedRouteGeometry} from './routeMapProjection';
@@ -294,6 +295,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         {onOpenNavigation&&<Button size="sm" disabled={operationBusy||!linkedJob||selectedRecord.sourceState!=='saved'} onClick={()=>{setPlaying(false);onOpenNavigation();}}>Живая проверка</Button>}
         <Button size="sm" variant="ghost" disabled={operationBusy} onClick={()=>onSelect(null)}>Закрыть запись</Button></div>
     </header>}
+    {(!selected||catalogOpen)&&<ScooterFiveMapRoute/>}
     {(!selected||catalogOpen)&&<TeachingRecordingCatalog entries={catalogEntries} selectedId={selected} onSelect={chooseClip}
       onReload={()=>setLocalRefresh(value=>value+1)} loading={libraryLoading} refreshing={statusRefreshing}
       disabled={operationBusy} truncated={libraryTruncated} nowMs={catalogNow}/>}
