@@ -10,7 +10,7 @@ import { renameTeachingLabel, seekTeachingSecond } from './teachingMetadata';
 import {readTeachingLibrary,type TeachingLibraryRecord} from './teachingLibrary';
 import {readTeachingCatalogStatuses,type TeachingCatalogStatus} from './teachingCatalogStatus';
 import {TeachingRecordingCatalog} from './TeachingRecordingCatalog';
-import {ScooterFiveMapRoute} from './ScooterFiveMapRoute';
+import {ScooterFiveMapRoute,scooterFiveCatalogEntry} from './ScooterFiveMapRoute';
 import {teachingCatalogPresentation,type TeachingCatalogEntry} from './teachingCatalog';
 import type {TeachingQueueSnapshot} from './teachingQueue';
 import {exactRecordedFrame,readImportedRouteGeometry,type ImportedRouteGeometry} from './routeMapProjection';
@@ -35,6 +35,7 @@ export function chooseReviewGeometry(items:Alternative[], preferred:unknown, pri
 export type TeachingClipChoice = Pick<Clip,'id'|'title'|'complete'|'frames'> &
   Partial<Pick<Clip,'hudHidden'|'manifestSha'>>;
 const emptyClips:Clip[]=[];
+const mapRoutes = [{...scooterFiveCatalogEntry, preview: <ScooterFiveMapRoute/>}];
 const names = ['video.h264','frames.jsonl','inputs.jsonl','manifest.json','COMPLETE'];
 const digest = async (buffer: ArrayBuffer) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)), v => v.toString(16).padStart(2,'0')).join('');
 export function h264Codec(data: Uint8Array): string | null {
@@ -295,8 +296,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         {onOpenNavigation&&<Button size="sm" disabled={operationBusy||!linkedJob||selectedRecord.sourceState!=='saved'} onClick={()=>{setPlaying(false);onOpenNavigation();}}>Живая проверка</Button>}
         <Button size="sm" variant="ghost" disabled={operationBusy} onClick={()=>onSelect(null)}>Закрыть запись</Button></div>
     </header>}
-    {(!selected||catalogOpen)&&<ScooterFiveMapRoute/>}
-    {(!selected||catalogOpen)&&<TeachingRecordingCatalog entries={catalogEntries} selectedId={selected} onSelect={chooseClip}
+    {(!selected||catalogOpen)&&<TeachingRecordingCatalog entries={catalogEntries} mapRoutes={mapRoutes} selectedId={selected} onSelect={chooseClip}
       onReload={()=>setLocalRefresh(value=>value+1)} loading={libraryLoading} refreshing={statusRefreshing}
       disabled={operationBusy} truncated={libraryTruncated} nowMs={catalogNow}/>}
     {selected&&!selectedRecord&&<p role="status" className="rounded-xl border border-border p-4 text-sm text-muted-foreground">{libraryLoading?'Читаем выбранную запись…':'Выбранная запись не найдена в библиотеке этого аккаунта.'}<Button variant="link" size="sm" onClick={()=>onSelect(null)}>Открыть библиотеку</Button></p>}

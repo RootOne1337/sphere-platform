@@ -20,6 +20,14 @@ export type TeachingCatalogEntry = {
   /** Successful read time, not the last time a persistent job changed phase. */
   statusCheckedAt?: number | null;
 };
+export type TeachingMapCatalogEntry = {
+  id: string;
+  title: string;
+  createdAt: number;
+  game: string;
+  sourceName: string;
+  length: number;
+};
 export type TeachingCatalogSort = 'newest' | 'oldest' | 'title';
 export type TeachingCatalogFilter = 'all' | 'saved' | 'processing' | 'map' | 'attention';
 export type TeachingCatalogTone = 'neutral' | 'success' | 'working' | 'warning' | 'error';
@@ -161,22 +169,33 @@ export function teachingCatalogReason(code: string | null | undefined): string |
   };
   return labels[code] ?? 'Подробности доступны при открытии записи.';
 }
-export function selectTeachingCatalog(entries: readonly TeachingCatalogEntry[], options: {
+export function selectTeachingCatalog<MapEntry extends TeachingMapCatalogEntry>(entries: readonly TeachingCatalogEntry[], options: {
+  mapRoutes?: readonly MapEntry[]; readOnly?: boolean;
   query?: string; sort?: TeachingCatalogSort; filter?: TeachingCatalogFilter; page?: number; nowMs: number; statusStaleAfterMs?: number;
 }) {
   const query = (options.query ?? '').trim().toLocaleLowerCase('ru');
-  const presented = entries.map(entry => ({entry, view: teachingCatalogPresentation(entry, options)}));
+  const recordings = entries.map(entry => ({kind: 'recording' as const, entry, view: teachingCatalogPresentation(entry, options)}));
+  const maps = (options.mapRoutes ?? []).map(entry => ({kind: 'map' as const, entry}));
   const counts = {
-    all: entries.length, saved: presented.filter(row => row.entry.sourceState === 'saved').length,
-    processing: presented.filter(row => row.view.processing).length, map: presented.filter(row => row.view.mapForReview).length,
-    attention: presented.filter(row => row.view.attention).length,
+    all: recordings.length + maps.length,
+    saved: recordings.filter(row => row.entry.sourceState === 'saved').length,
+    processing: recordings.filter(row => row.view.processing).length,
+    map: recordings.filter(row => row.view.mapForReview).length + maps.length,
+    attention: recordings.filter(row => row.view.attention).length,
   };
-  const rows = presented.filter(({entry, view}) => {
-    const filter = options.filter ?? 'all';
+  const filter = options.filter ?? 'all';
+  const matches = (values: (string | null | undefined)[]) =>
+    !query || values.some(value => value?.toLocaleLowerCase('ru').includes(query));
+  const rows = [...recordings, ...maps].filter(row => {
+    if (row.kind === 'map') {
+      const {title, id, game, sourceName} = row.entry;
+      return (filter === 'all' || filter === 'map') && matches([title, id, game, sourceName]);
+    }
+    const {entry, view} = row;
     if (filter === 'saved' && entry.sourceState !== 'saved' || filter === 'processing' && !view.processing
       || filter === 'map' && !view.mapForReview || filter === 'attention' && !view.attention) return false;
-    return !query || [entry.title, entry.id, entry.deviceId, entry.deviceName, teachingCatalogControlLabel(entry.controlMode), teachingCatalogHudLabel(entry)]
-      .some(value => value?.toLocaleLowerCase('ru').includes(query));
+    return matches([entry.title, entry.id, entry.deviceId, entry.deviceName,
+      teachingCatalogControlLabel(entry.controlMode), teachingCatalogHudLabel(entry)]);
   }).sort((a, b) => options.sort === 'title' ? a.entry.title.localeCompare(b.entry.title, 'ru') || a.entry.id.localeCompare(b.entry.id)
     : (options.sort === 'oldest' ? 1 : -1) * ((finite(a.entry.createdAt) ? a.entry.createdAt : 0) - (finite(b.entry.createdAt) ? b.entry.createdAt : 0)) || a.entry.id.localeCompare(b.entry.id));
   const pages = Math.max(1, Math.ceil(rows.length / TEACHING_CATALOG_PAGE_SIZE));

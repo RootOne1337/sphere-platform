@@ -47,8 +47,10 @@ describe('catalog state presentation', () => {
       saved({id: 'b', statusCheckedAt: now - 30001, navigation: {phase: 'ready'}})];
     const result = selectTeachingCatalog(entries, {nowMs: now});
     expect(result.counts).toEqual({all: 2, saved: 2, processing: 0, map: 0, attention: 0});
-    expect(result.rows[0].view.freshness).toBe('stale');
-    expect(result.rows[0].view.reconstruction.label).toContain('Ранее:');
+    const [first] = result.rows;
+    if (first.kind !== 'recording') throw new Error('Expected a recording');
+    expect(first.view.freshness).toBe('stale');
+    expect(first.view.reconstruction.label).toContain('Ранее:');
     expect(teachingCatalogPresentation({...entries[1], statusCheckedAt: now - 30000}, {nowMs: now}).mapForReview).toBe(true);
   });
   test('source failures and current map rejection are distinct attention states', () => {
@@ -154,10 +156,10 @@ describe('recording catalog interaction', () => {
     const entries = Array.from({length: 25}, (_, i) => saved({id: String(i), title: `Запись ${i}`, createdAt: now + i}));
     const select = jest.fn();
     render(<TeachingRecordingCatalog entries={entries} selectedId="24" onSelect={select} nowMs={now}/>);
-    expect(within(screen.getByRole('list', {name: 'Сохранённые записи'})).getAllByRole('listitem')).toHaveLength(12);
+    expect(within(screen.getByRole('list', {name: 'Маршруты'})).getAllByRole('listitem')).toHaveLength(12);
     fireEvent.click(screen.getByRole('button', {name: 'Далее'}));
     expect(screen.getByText(/страница 2 из 3/)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Найти запись'), {target: {value: 'Запись 24'}});
+    fireEvent.change(screen.getByLabelText('Найти маршрут'), {target: {value: 'Запись 24'}});
     expect(screen.getByText(/страница 1 из 1/)).toBeInTheDocument();
     expect(screen.getByText('Выбрана')).toBeInTheDocument();
     expect(select).not.toHaveBeenCalled();
@@ -191,8 +193,8 @@ describe('recording catalog interaction', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Обновить библиотеку'}));
     expect(reload).toHaveBeenCalledTimes(1);
     view.rerender(<TeachingRecordingCatalog entries={fixture} selectedId={null} onSelect={select} nowMs={now}/>);
-    fireEvent.change(screen.getByLabelText('Найти запись'), {target: {value: 'Совсем другой маршрут'}});
-    expect(screen.getByText('Записи не найдены')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Найти маршрут'), {target: {value: 'Совсем другой маршрут'}});
+    expect(screen.getByText('Маршруты не найдены')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', {name: 'Сбросить поиск и фильтр'}));
     expect(screen.getByRole('button', {name: 'Открыть запись «Спокойный заезд»'})).toBeInTheDocument();
   });
@@ -202,11 +204,11 @@ describe('recording catalog interaction', () => {
     expect(screen.getByText(/Состояние обработки устарело/)).toBeInTheDocument();
     expect(screen.getByText(/достигнут предел безопасного чтения/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', {name: /Карта для проверки 0/}));
-    expect(screen.getByText('Записи не найдены')).toBeInTheDocument();
+    expect(screen.getByText('Маршруты не найдены')).toBeInTheDocument();
   });
   test('long titles and metadata use wrapping and a single-column mobile grid', () => {
     render(<TeachingRecordingCatalog entries={[saved({title: 'ОченьДлинноеНазвание'.repeat(20), deviceName: 'ДлинноеУстройство'.repeat(20)})]} selectedId={null} onSelect={jest.fn()} nowMs={now}/>);
-    const grid = screen.getByRole('list', {name: 'Сохранённые записи'});
+    const grid = screen.getByRole('list', {name: 'Маршруты'});
     expect(grid).toHaveClass('grid', 'min-w-0', 'md:grid-cols-2');
     expect(grid).not.toHaveClass('grid-cols-2');
     expect(screen.getByRole('heading', {level: 4})).toHaveClass('break-words');

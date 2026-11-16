@@ -77,9 +77,9 @@ test('search filters the local list and deletion requires an explicit second act
   render(<TeachingReview selected={id} refresh={0} onSelect={onSelect} storageScope={scope}/>);
   await openCatalog();await openArchive();
   await screen.findByRole('button',{name:'Открыть запись «Маршрут 011321»'});
-  fireEvent.change(screen.getByLabelText('Найти запись'),{target:{value:'нет такого'}});
-  expect(screen.getByText('Записи не найдены')).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Найти запись'),{target:{value:'011321'}});
+  fireEvent.change(screen.getByLabelText('Найти маршрут'),{target:{value:'нет такого'}});
+  expect(screen.getByText('Маршруты не найдены')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Найти маршрут'),{target:{value:'011321'}});
   expect(screen.getByRole('button',{name:'Открыть запись «Маршрут 011321»'})).toBeInTheDocument();
   await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeEnabled());
   fireEvent.click(screen.getByRole('button',{name:'Удалить выбранный локальный материал'}));
@@ -353,8 +353,8 @@ test('search can find a recording older than the newest twenty without deleting 
   })};
   Object.defineProperty(navigator,'storage',{configurable:true,value:{getDirectory:async()=>root}});
   render(<TeachingReview selected={null} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
-  await screen.findByText(/Найдено 25 из 25 прочитанных записей/);
-  fireEvent.change(screen.getByLabelText('Найти запись'),{target:{value:'Маршрут 0'}});
+  await screen.findByText(/Найдено 26 из 26 маршрутов/);
+  fireEvent.change(screen.getByLabelText('Найти маршрут'),{target:{value:'Маршрут 0'}});
   expect(screen.getByRole('button',{name:'Открыть запись «Маршрут 0»'})).toBeInTheDocument();
 });
 
@@ -413,13 +413,13 @@ test('a late ready result for an old job cannot freshen navigation for a differe
   const props={selected:id,refresh:0,onSelect:jest.fn(),storageScope:scope,manageAutomaticPreparation:false};
   const view=render(<TeachingReview {...props}/>);
   await openCatalog();
-  await screen.findByRole('button',{name:/Карта для проверки 1/});
+  await screen.findByRole('button',{name:/Карта для проверки 2/});
   now+=100;
   view.rerender(<TeachingReview {...props} processingQueue={{scope,activeClip:id,items:[{clip:id,jobId:newJobId,phase:'processing',updatedAt:now}]}}/>);
   await waitFor(()=>expect(reads).toBeGreaterThanOrEqual(2));
   now+=100;
   await act(async()=>{release();await gate;await new Promise<void>(resolve=>setTimeout(resolve,0));});
-  expect(screen.getByRole('button',{name:/Карта для проверки 0/})).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:/Карта для проверки 1/})).toBeInTheDocument();
   expect(screen.queryByRole('button',{name:'Открыть карту'})).not.toBeInTheDocument();
   expect(jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0].processingJobId).toBe(newJobId);
 });
