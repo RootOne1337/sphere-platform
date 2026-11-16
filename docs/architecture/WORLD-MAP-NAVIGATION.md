@@ -64,6 +64,18 @@
 Критерий первого живого выпуска — завершение нового маршрута в допуске к цели, ноль столкновений в проверенных сценариях и подтверждённая работа по игровым кадрам. Отчёт должен позволять сравнить повтор запуска по версии карты, профилю камеры и контрольным кадрам.
 
 
+## Покрытие исходников Ariane
+
+Аудит активных IPL нашёл 97 136 наружных размещений без LOD. Для всех разрешаются ссылки на визуальные модели, у 96 820 есть одноимённая запись в COL. Количество записей COL измеряет покрытие исходников. Проходимость требует проверки формы коллизий, уклона, просвета и связности.
+
+При импорте тип модели берётся из активных IDE. Для статических объектов Ariane заменяет исходный кадр атомика трансформацией IPL. У clump заменяется корень, а дочерние смещения остаются. Старый обзор применял кадр модели и IPL вместе. У новогоднего покрытия это повторно прибавляло позицию на тысячи игровых единиц. Пересчёт сетки проезда у Кремля с исправленным импортом дал те же шесть растров, включая проходимость, высоту и зазор. [Ariane, размещение объекта](https://github.com/Dryxio/ariane/blob/ff702f096b6a1751cdb418bdfc71fc3441457407/tools/euryopa/objectinst.cpp#L834-L856)
+
+В первом обзоре по именам материалов пропускались `asfcrbtraskc1` и `perroad_01` в Батырево, `lf_arzasf7` на севере Арзамаса, `t_nn_pavem_a` и `t_nn_pavem_c` в Нижегородске. Исправленный обзор показывает три визуальных слоя. Совпадение по материалу и горизонтальная проекция позволяют искать участки для проверки. Для построения маршрута используются только проверенные поверхности отдельного тайла. Региональные цифры группируются по координатам размещения, а площадь проекции треугольников может включать перекрытия.
+
+Замер исходной разметки на набережной даёт два центра полос длиной около 99,6 игровой единицы. Пример A→B проходит 83,1 единицы внутри каждой полосы. Связи между полосами и направления движения пока не подтверждены. Для пешего тайла у Кремля дополнительно проверены опора на исходную коллизию, препятствия и боковой зазор. В наружном слое осталось 6 763 ячейки с шагом 0,5 единицы после проверки. На них построен пример длиной 153,7 единицы. Многоуровневые связки, переходы, лестницы и входы требуют отдельной разметки и проверки.
+
+В `README_RU.txt` 22.10.2026 относится к исправлению рендера земли MatFX9. У сборки есть известные пропуски. В README указаны 558 исходных размещений без моделей, среди них 499 интерьерных. Граф для всей карты требует чтения слоёв земли и их масок, проверки коллизий по фактическим границам мешей, а также выделения дорог, полос и пешеходных переходов на правильной высоте.
+
 ## Воспроизведение
 
 Команды запускаются из корня репозитория. Для аудита нужны архив Ariane, закреплённый бинарный граф браузерного стенда San Andreas и подготовленная сетка квартала. Для сборки предпросмотра нужны та же сетка и вид сверху, выровненный в её координатах.
@@ -77,3 +89,17 @@ node scripts/pilot/world_map_lab/verify_ariane_routes.mjs <ariane-kremlin-surfac
 ~~~
 
 Пути в угловых скобках обозначают входы стенда и имена выходных файлов. Сборщик выпускает автономный HTML, который открывается локально. Сетка и снимок карты входят в HTML. Статический планировщик работает в браузере без подключения к игровому окну.
+
+Для расширенного обзора используется локальный адаптер разбора оригинальных моделей Ariane. Для пешего примера нужен снимок коллизий квартала `scooter4-source-collision.npz`, рассчитанный этим же адаптером. Совпадение границ, шага и контрольную сумму снимка видно в отчёте.
+
+~~~powershell
+python -m scripts.pilot.world_map_lab.audit_ariane_surface_coverage --source <ariane-root> --geometry-tools <local-adapter-directory> --report <artifact-directory>/ariane-surface-coverage.json
+python -m scripts.pilot.world_map_lab.project_ariane_roads --source <ariane-root> --geometry-tools <local-adapter-directory> --placement-index <placement-index.json> --output <artifact-directory>
+python -m scripts.pilot.world_map_lab.extract_ariane_lane_preview --surface <artifact-directory>/ariane-kremlin-surface.json --orthomap <orthomap.jpg> --output <artifact-directory>/ariane-kremlin-lanes.json
+python -m scripts.pilot.world_map_lab.build_ariane_preview --grid <grid.json> --raster <drivable.npz> --orthomap <orthomap.jpg> --lanes <artifact-directory>/ariane-kremlin-lanes.json --world-overview <artifact-directory>/ariane-world-road-materials.json --output <artifact-directory>
+python -m scripts.pilot.world_map_lab.audit_ariane_footways --source <ariane-root> --geometry-tools <local-adapter-directory> --collision <scooter4-source-collision.npz> --output <artifact-directory>
+python -m scripts.pilot.world_map_lab.build_ariane_preview --mode walk --grid <artifact-directory>/ariane-kremlin-footways-grid.json --raster <artifact-directory>/ariane-kremlin-footways-grid.npz --orthomap <orthomap.jpg> --world-overview <artifact-directory>/ariane-world-road-materials.json --output <artifact-directory>
+python -m unittest scripts.pilot.world_map_lab.test_ariane_geometry
+node --test scripts/pilot/world_map_lab/lane_preview.test.mjs
+node scripts/pilot/world_map_lab/verify_ariane_surfaces.mjs <artifact-directory>
+~~~

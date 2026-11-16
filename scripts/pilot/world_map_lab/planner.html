@@ -16,6 +16,7 @@ h1{margin:0;font-size:clamp(29px,4vw,43px);font-weight:680;letter-spacing:-.042e
 header p:last-child{margin:8px 0 0;color:var(--muted);font-size:14px}
 .board{display:grid;grid-template-columns:minmax(480px,1.75fr) minmax(295px,1fr);gap:18px;align-items:start}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.view-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.view-actions button[hidden]{display:none}
 .topline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 17px;border-bottom:1px solid var(--line)}
 h2{font-size:16px;font-weight:650;margin:0}
 small{color:var(--muted);font-size:12px}
@@ -27,7 +28,10 @@ canvas{display:block;width:auto;max-width:100%;height:min(65vh,690px);aspect-rat
 .legend{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
 .key{display:flex;align-items:center;gap:7px}
 .line{width:18px;height:4px;border-radius:3px;background:var(--accent)}
-.area{width:12px;height:10px;border-radius:2px;background:#719ab5;border:1px solid #c0dce7}
+.legend [hidden], .view-actions [hidden]{display:none}.area{width:12px;height:10px;border-radius:2px;background:#719ab5;border:1px solid #c0dce7}
+.area.additional{background:#dda367;border-color:#dda367}.area.pedestrian{background:#d39acd;border-color:#d39acd}
+.area.road{background:#53b8b1;border-color:#53b8b1}
+select{border:1px solid var(--line);color:var(--text);background:#1b2830;border-radius:7px;padding:7px;font:inherit;font-size:13px}
 .side{padding:18px}
 .side h2{font-size:18px;margin:0}
 .side p.hint{color:var(--muted);margin:5px 0 16px;font-size:13px}
@@ -68,12 +72,31 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
 </header>
 <div class="board">
   <section class="card" aria-labelledby="map-title">
-    <div class="topline"><h2 id="map-title">Карта квартала</h2><label class="toggle"><input type="checkbox" id="surface" checked> Проезжая зона</label></div>
+    <div class="topline">
+      <h2 id="map-title">Карта квартала</h2>
+      <div class="view-actions">
+        <label class="toggle" id="surfaceToggle"><input type="checkbox" id="surface" checked> <span id="surfaceLabel">Проезжая зона</span></label>
+        <select id="overviewArea" aria-label="Участок обзора" hidden>
+          <option value="world">Основная территория</option>
+          <option value="extent">Все границы мешей</option>
+          <option value="batyrevo">Батырево</option>
+          <option value="arzamas_north">Север Арзамаса</option>
+          <option value="nizhny">Нижегородск</option>
+        </select>
+        <button type="button" id="worldToggle" hidden>Вся карта</button>
+      </div>
+    </div>
     <div class="stage">
       <canvas id="map" width="675" height="960" aria-label="Карта квартала Кремля. Выберите точку мышью или укажите координаты."></canvas>
       <span class="north" aria-hidden="true">↑ +Y</span>
     </div>
-    <div class="legend"><span class="key"><i class="line"></i>Маршрут</span><span class="key"><i class="area"></i>Проезжая зона по моделям и коллизиям</span><span id="scale"></span></div>
+    <div class="legend">
+      <span class="key"><i class="line"></i>Маршрут</span>
+      <span class="key"><i class="area" id="areaColor"></i><span id="geometryLabel">Проезжая зона по моделям и коллизиям</span></span>
+      <span class="key" id="additional" hidden><i class="area additional"></i>Другие покрытия</span>
+      <span class="key" id="pedestrian" hidden><i class="area pedestrian"></i>Материалы тротуаров</span>
+      <span id="scale"></span>
+    </div>
   </section>
   <section class="card side" aria-labelledby="route-title">
     <h2 id="route-title">Откуда и куда</h2>
@@ -86,21 +109,41 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
     <p class="hint" id="snaps"></p>
     <dl class="metrics"><div><dt>Длина маршрута</dt><dd id="length">—</dd></div><div><dt>Мин. отступ до границы зоны</dt><dd id="clearance">—</dd></div></dl>
     <div class="source">
-      <p>Маршрут для транспорта по статической поверхности. Отступ измерен по ячейкам карты.</p>
+      <p id="scope">Маршрут для транспорта по статической поверхности. Отступ измерен по ячейкам карты.</p>
       <p id="revision"></p>
     </div>
   </section>
 </div>
 </main>
 <script id="tile" type="application/json">__TILE__</script>
+<script id="lanes" type="application/json">__LANES__</script>
+<script id="world" type="application/json">__WORLD__</script>
 <script>__PLANNER__</script>
+<script>__LANE_PLANNER__</script>
 <script>
 "use strict";
 const tile=JSON.parse(document.getElementById("tile").textContent), planner=createPlanner(tile), G=tile.grid;
 const $=id=>document.getElementById(id);
-const canvas=$("map"), ctx=canvas.getContext("2d"), W=canvas.width, H=canvas.height;
-const mapWidth=G.width*G.step, mapHeight=G.height*G.step;
-const toPx=([x,y])=>[(x-G.left)*W/mapWidth,(G.top-y)*H/mapHeight];
+const canvas=$("map"), ctx=canvas.getContext("2d");
+const laneData=JSON.parse($("lanes").textContent);
+const world=JSON.parse($("world").textContent);
+const lanePlanner=laneData && createLanePlanner(tile,laneData);
+const localBounds={left:G.left,top:G.top,right:G.left+G.width*G.step,bottom:G.top-G.height*G.step};
+const localSize=[canvas.width,canvas.height];
+let view="local";
+const overviewAreas=__REGIONS__;
+function viewBounds(){
+  if(view==="local")return localBounds;
+  if(view==="world")return world.placementBounds;
+  return overviewAreas[view]??world.bounds;
+}
+function mapPixel(x, y, bounds, width, height) {
+  return [(x-bounds.left)*width/(bounds.right-bounds.left),(bounds.top-y)*height/(bounds.top-bounds.bottom)];
+}
+function toPx([x,y]){
+  const area=viewBounds();
+  return mapPixel(x,y,area,canvas.width,canvas.height);
+}
 const defaultPoints=__EXAMPLE__;
 const labels=["A","B"], accents=["#64e4c9","#f8c47e"];
 const fmt=new Intl.NumberFormat("ru-RU",{maximumFractionDigits:1,minimumFractionDigits:1});
@@ -110,6 +153,21 @@ const background=new Image();
 background.onload=draw;
 background.onerror=()=>{$("status").textContent="Не удалось открыть фон карты."};
 background.src="data:image/jpeg;base64,__MAP__";
+const worldBackground=new Image();
+if(world){
+  worldBackground.onload=draw;
+  worldBackground.src=world.image;
+  $("worldToggle").hidden=false;
+  const extent=$("overviewArea").querySelector('option[value="extent"]');
+  extent.hidden=Object.keys(world.bounds).every(key=>world.bounds[key]===world.placementBounds[key]);
+}
+if(tile.mode==="walk"){
+  $("surfaceLabel").textContent="Пешеходная зона";
+  $("scope").textContent="Предпросмотр по статическим коллизиям квартала. Показан один наружный уровень.";
+}
+if(lanePlanner){
+  $("scope").textContent="Центр полосы рассчитан по исходной разметке. Направление движения и соединения на перекрёстках ещё проверяются.";
+}
 const mask=document.createElement("canvas");
 mask.width=G.width; mask.height=G.height;
 const mc=mask.getContext("2d"), layer=mc.createImageData(G.width,G.height);
@@ -159,15 +217,38 @@ function pathLine(points){
 function marker(coord,i){
   if(!coord.every(Number.isFinite)) return;
   const [x,y]=toPx(coord);
-  ctx.beginPath();ctx.arc(x,y,16,0,Math.PI*2);ctx.fillStyle=accents[i];ctx.fill();
+  const radius=view==="local"?16:Math.max(10,canvas.width*.016);
+  ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fillStyle=accents[i];ctx.fill();
   ctx.lineWidth=3;ctx.strokeStyle="#14282c";ctx.stroke();
-  ctx.fillStyle="#0e2428";ctx.font="750 21px Segoe UI, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillStyle="#0e2428";ctx.font="750 "+Math.round(radius*1.25)+"px Segoe UI, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
   ctx.fillText(labels[i],x,y+1);
 }
 function draw(){
+  const W=canvas.width,H=canvas.height;
   ctx.fillStyle="#19262b";ctx.fillRect(0,0,W,H);
-  if(background.complete && background.naturalWidth) ctx.drawImage(background,0,0,W,H);
-  if($("surface").checked) ctx.drawImage(mask,0,0,W,H);
+  if(view!=="local"){
+    const area=viewBounds();
+    if(worldBackground.complete && worldBackground.naturalWidth){
+      const sourcePixel=(x,y)=>mapPixel(x,y,world.bounds,world.imageWidth,world.imageHeight);
+      const [x,y]=sourcePixel(area.left,area.top);
+      const [right,bottom]=sourcePixel(area.right,area.bottom);
+      ctx.drawImage(worldBackground,x,y,right-x,bottom-y,0,0,W,H);
+    }
+    const [left,top]=toPx([localBounds.left,localBounds.top]);
+    const [right,bottom]=toPx([localBounds.right,localBounds.bottom]);
+    ctx.strokeStyle="#f8c47e";ctx.lineWidth=5;
+    ctx.strokeRect(left,top,right-left,bottom-top);
+  }else{
+    if(background.complete && background.naturalWidth) ctx.drawImage(background,0,0,W,H);
+    if($("surface").checked) ctx.drawImage(mask,0,0,W,H);
+    if(laneData){
+      ctx.setLineDash([8,4]);
+      for(const divider of laneData.separators){
+        pathLine(divider.ends);ctx.lineWidth=2;ctx.strokeStyle="#eec283";ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+  }
   if(saved?.points){
     ctx.lineCap="round";ctx.lineJoin="round";
     pathLine(saved.points);ctx.lineWidth=10;ctx.strokeStyle="#0d3d38";ctx.stroke();
@@ -188,9 +269,18 @@ function draw(){
   });
 }
 function calculate(){
-  saved=planner.plan(coordinates(0),coordinates(1));
+  saved=(lanePlanner||planner).plan(coordinates(0),coordinates(1));
   const reasons={start:"Рядом со стартом нет проезжей поверхности на указанной высоте.",goal:"Рядом с финишем нет проезжей поверхности на указанной высоте.",disconnected:"Между точками нет связного пути в проверенной зоне."};
-  const message=saved.reason?reasons[saved.reason]:"Маршрут построен.";
+  if(tile.mode==="walk"){
+    reasons.start="Рядом с точкой A нет проверенной пешеходной поверхности на указанной высоте.";
+    reasons.goal="Рядом с точкой B нет проверенной пешеходной поверхности на указанной высоте.";
+  }
+  if(lanePlanner){
+    reasons.start="Точка A за пределами проверенных полос или на другой высоте.";
+    reasons.goal="Точка B за пределами проверенных полос или на другой высоте.";
+    reasons.no_verified_lane_connection="Переход между выбранными полосами ещё не проверен.";
+  }
+  const message=saved.reason?reasons[saved.reason]:lanePlanner?"Траектория по центру полосы построена.":tile.mode==="walk"?"Пеший маршрут построен.":"Маршрут построен.";
   $("status").textContent=message;
   $("status").classList.toggle("error",Boolean(saved.reason));
   $("snaps").textContent=saved.points
@@ -216,14 +306,43 @@ $("example").addEventListener("click",reset);
 $("surface").addEventListener("change",draw);
 canvas.addEventListener("click",e=>{
   const rect=canvas.getBoundingClientRect();
-  const x=G.left+(e.clientX-rect.left)*mapWidth/rect.width;
-  const y=G.top-(e.clientY-rect.top)*mapHeight/rect.height;
-  const target=planner.snap([x,y]);
+  const area=viewBounds();
+  const x=area.left+(e.clientX-rect.left)*(area.right-area.left)/rect.width;
+  const y=area.top-(e.clientY-rect.top)*(area.top-area.bottom)/rect.height;
+  const target=(lanePlanner||planner).snap([x,y]);
   setPoint(picking,[x,y]);
   calculate();
-  if(target)choose(1-picking);
+  if(target || view!=="local")choose(1-picking);
 });
-$("scale").textContent="Шаг сетки "+pretty(G.step);
+function updateView(next){
+  view=next;
+  const overview=view!=="local";
+  if(overview){
+    const bounds=viewBounds(), source=world.bounds;
+    canvas.width=Math.round((bounds.right-bounds.left)*world.imageWidth/(source.right-source.left));
+    canvas.height=Math.round((bounds.top-bounds.bottom)*world.imageHeight/(source.top-source.bottom));
+  }else{
+    [canvas.width,canvas.height]=localSize;
+  }
+  canvas.style.aspectRatio=canvas.width+" / "+canvas.height;
+  canvas.setAttribute("aria-label",overview?"Обзор Black Russia. Щёлкните, чтобы поставить метку.":"Карта квартала Кремля. Выберите точку мышью или укажите координаты.");
+  $("map-title").textContent=overview?"Покрытия по моделям Ariane":lanePlanner?"Полосы на набережной":tile.mode==="walk"?"Пешеходные поверхности квартала":"Карта квартала";
+  $("worldToggle").textContent=overview?"Участок у Кремля":"Вся карта";
+  $("overviewArea").hidden=!overview;
+  if(overview)$("overviewArea").value=view;
+  $("surfaceToggle").style.display=overview?"none":"";
+  $("areaColor").classList.toggle("road",overview);
+  $("additional").hidden=!overview||!world.layered;
+  $("pedestrian").hidden=!overview||!world.layered;
+  $("geometryLabel").textContent=overview?"Дорожные материалы"
+    :lanePlanner?"Поверхность и линии исходной разметки"
+      :tile.mode==="walk"?"Проверено по моделям и коллизиям":"Проезжая зона по моделям и коллизиям";
+  $("scale").textContent=overview?"A→B проверяется на участке у Кремля":"Шаг сетки "+pretty(G.step);
+  draw();
+}
+$("worldToggle").addEventListener("click",()=>updateView(view==="local"?"world":"local"));
+$("overviewArea").addEventListener("change",e=>updateView(e.target.value));
+updateView("local");
 $("revision").textContent="Версия участка "+tile.mapRevision.slice(0,12);
 reset();
 </script>
