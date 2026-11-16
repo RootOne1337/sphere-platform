@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Планировщик · Нижегородск</title>
+<style>
+:root{color-scheme:dark;--bg:#0d141a;--card:#131c24;--line:#293944;--text:#e9f0f2;--muted:#9cabb4;--accent:#64e4c9;--amber:#f8c47e;--map:#18252c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 "Geist","Inter","Segoe UI",system-ui,sans-serif}
+main{max-width:1260px;margin:auto;padding:30px 30px 36px}
+header{margin:0 0 23px}
+.kicker{margin:0 0 6px;color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{margin:0;font-size:clamp(29px,4vw,43px);font-weight:680;letter-spacing:-.042em;line-height:1.1}
+header p:last-child{margin:8px 0 0;color:var(--muted);font-size:14px}
+.board{display:grid;grid-template-columns:minmax(480px,1.75fr) minmax(295px,1fr);gap:18px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 17px;border-bottom:1px solid var(--line)}
+h2{font-size:16px;font-weight:650;margin:0}
+small{color:var(--muted);font-size:12px}
+.toggle{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;min-height:26px;cursor:pointer}
+.toggle input{accent-color:var(--accent)}
+.stage{position:relative;background:#19262b;display:flex;align-items:center;justify-content:center;min-height:420px}
+canvas{display:block;width:auto;max-width:100%;height:min(65vh,690px);aspect-ratio:675/960;cursor:crosshair;touch-action:manipulation}
+.north{position:absolute;left:15px;top:15px;border-radius:7px;background:#0d151cde;border:1px solid #34464f;color:#efeee7;padding:4px 9px;font-size:13px;pointer-events:none}
+.legend{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+.key{display:flex;align-items:center;gap:7px}
+.line{width:18px;height:4px;border-radius:3px;background:var(--accent)}
+.area{width:12px;height:10px;border-radius:2px;background:#719ab5;border:1px solid #c0dce7}
+.side{padding:18px}
+.side h2{font-size:18px;margin:0}
+.side p.hint{color:var(--muted);margin:5px 0 16px;font-size:13px}
+.points{display:grid;gap:9px}
+.point{background:#101920;padding:10px 11px 11px;border-radius:10px;border:1px solid #263844;min-width:0}
+.point.active{border-color:#6dd6c8}
+.point-head{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:650;margin-bottom:6px}
+.marker{width:23px;height:23px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:#102620;font-weight:780}
+.marker.goal{background:var(--amber);color:#342516}
+.coords{display:grid;grid-template-columns:1fr 1fr .9fr;gap:8px}
+label.coord{display:flex;align-items:center;gap:5px;color:var(--muted);font:13px "Geist Mono",Consolas,monospace}
+input[type=number]{background:#1d2933;color:var(--text);min-width:0;width:100%;font:inherit;padding:7px 6px;border-radius:5px;border:1px solid transparent}
+button{appearance:none;border:1px solid #3b4c56;background:#1b2830;color:#dce7eb;padding:8px 10px;font:600 13px/1.4 inherit;font-family:inherit;border-radius:7px;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{background:#25343e}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.point-head button{padding:4px 7px;margin-left:auto;font-size:11px}
+.actions{display:flex;gap:8px;margin:12px 0 13px}
+.primary{background:var(--accent);color:#082e26;border-color:var(--accent);flex:1;font-weight:700}
+.primary:hover{background:#a0ecde;border-color:#a0ecde}
+#status{font-size:13px;font-weight:600;color:var(--accent);margin:0;min-height:3.1em}
+#status.error{color:var(--amber)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0;margin:0}
+.metrics div{min-width:0}
+.metrics dt{font-size:11px;color:var(--muted);line-height:1.25;min-height:2.45em}
+.metrics dd{margin:0;font-size:20px;font-weight:670;color:#f1f7f9;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.source{margin-top:13px;color:var(--muted);font-size:12px}
+.source p{margin:0 0 8px}
+@media(max-width:800px){main{padding:18px 13px 22px}.board{grid-template-columns:1fr}.stage{min-height:0}canvas{width:auto;height:min(57vh,540px);min-height:295px}.side{padding:15px}}
+@media(max-width:360px){canvas{width:100%;height:auto}.topline{padding:9px 10px}header p:last-child{font-size:13px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <p class="kicker">Black Russia · Нижегородск</p>
+  <h1>Планировщик маршрутов</h1>
+  <p>Карта Ariane · Нижегородск, участок вокруг Кремля</p>
+</header>
+<div class="board">
+  <section class="card" aria-labelledby="map-title">
+    <div class="topline"><h2 id="map-title">Карта квартала</h2><label class="toggle"><input type="checkbox" id="surface" checked> Проезжая зона</label></div>
+    <div class="stage">
+      <canvas id="map" width="675" height="960" aria-label="Карта квартала Кремля. Выберите точку мышью или укажите координаты."></canvas>
+      <span class="north" aria-hidden="true">↑ +Y</span>
+    </div>
+    <div class="legend"><span class="key"><i class="line"></i>Маршрут</span><span class="key"><i class="area"></i>Проезжая зона по моделям и коллизиям</span><span id="scale"></span></div>
+  </section>
+  <section class="card side" aria-labelledby="route-title">
+    <h2 id="route-title">Откуда и куда</h2>
+    <p class="hint" id="pickHint">Укажи точки A и B на карте или введи координаты. Высоту Z можно оставить пустой.</p>
+    <form id="route">
+      <div class="points" id="inputs"></div>
+      <div class="actions"><button class="primary" type="submit">Построить маршрут</button><button type="button" id="example">Пример</button></div>
+    </form>
+    <p id="status" role="status" aria-live="polite"></p>
+    <p class="hint" id="snaps"></p>
+    <dl class="metrics"><div><dt>Длина маршрута</dt><dd id="length">—</dd></div><div><dt>Мин. отступ до границы зоны</dt><dd id="clearance">—</dd></div></dl>
+    <div class="source">
+      <p>Маршрут для транспорта по статической поверхности. Отступ измерен по ячейкам карты.</p>
+      <p id="revision"></p>
+    </div>
+  </section>
+</div>
+</main>
+<script id="tile" type="application/json">__TILE__</script>
+<script>__PLANNER__</script>
+<script>
+"use strict";
+const tile=JSON.parse(document.getElementById("tile").textContent), planner=createPlanner(tile), G=tile.grid;
+const $=id=>document.getElementById(id);
+const canvas=$("map"), ctx=canvas.getContext("2d"), W=canvas.width, H=canvas.height;
+const mapWidth=G.width*G.step, mapHeight=G.height*G.step;
+const toPx=([x,y])=>[(x-G.left)*W/mapWidth,(G.top-y)*H/mapHeight];
+const defaultPoints=__EXAMPLE__;
+const labels=["A","B"], accents=["#64e4c9","#f8c47e"];
+const fmt=new Intl.NumberFormat("ru-RU",{maximumFractionDigits:1,minimumFractionDigits:1});
+const pretty=n=>fmt.format(n)+" ед.";
+let picking=0, saved=null;
+const background=new Image();
+background.onload=draw;
+background.onerror=()=>{$("status").textContent="Не удалось открыть фон карты."};
+background.src="data:image/jpeg;base64,__MAP__";
+const mask=document.createElement("canvas");
+mask.width=G.width; mask.height=G.height;
+const mc=mask.getContext("2d"), layer=mc.createImageData(G.width,G.height);
+for(let i=0;i<G.width*G.height;i++){
+  if(!planner.available(i)) continue;
+  const border=i%G.width===0 || i%G.width===G.width-1 ||
+    !planner.available(i-1) || !planner.available(i+1) || !planner.available(i-G.width) || !planner.available(i+G.width);
+  layer.data.set([102,169,199,border?150:64],i*4);
+}
+mc.putImageData(layer,0,0);
+for(let i=0;i<labels.length;i++){
+  const name=labels[i], row=document.createElement("div");
+  row.className="point"; row.id="point"+i;
+  row.innerHTML='<div class="point-head"><span class="marker '+(i?'goal':'')+'">'+name+'</span>'+
+    (i?'Финиш':'Старт')+'<button type="button" id="pick'+i+'">Указать на карте</button></div>'+
+    '<div class="coords"><label class="coord">X <input aria-label="'+name+' X" id="x'+i+'" type="number" step="any"></label>'+
+    '<label class="coord">Y <input aria-label="'+name+' Y" id="y'+i+'" type="number" step="any"></label>'+
+    '<label class="coord">Z <input aria-label="'+name+' Z" id="z'+i+'" type="number" step="any" placeholder="Авто"></label></div>';
+  $("inputs").append(row);
+  $("pick"+i).addEventListener("click",()=>choose(i));
+}
+function choose(i){
+  picking=i;
+  for(let j=0;j<labels.length;j++) {
+    $("point"+j).classList.toggle("active",i===j);
+    $("pick"+j).setAttribute("aria-pressed",String(i===j));
+  }
+  $("pickHint").textContent="На карте ставится точка "+labels[i]+". Координаты можно ввести вручную. Z необязательна.";
+}
+function coordinates(i) {
+  const xy = [$("x"+i).valueAsNumber, $("y"+i).valueAsNumber];
+  const z = $("z"+i);
+  return z.value === "" ? xy : [...xy, z.valueAsNumber];
+}
+function setPoint(i, [x, y, z]) {
+  $("x"+i).value = x.toFixed(2);
+  $("y"+i).value = y.toFixed(2);
+  $("z"+i).value = z === undefined ? "" : z.toFixed(2);
+}
+function pathLine(points){
+  ctx.beginPath();
+  for(let i=0;i<points.length;i++){
+    const [x,y]=toPx(points[i]);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+}
+function marker(coord,i){
+  if(!coord.every(Number.isFinite)) return;
+  const [x,y]=toPx(coord);
+  ctx.beginPath();ctx.arc(x,y,16,0,Math.PI*2);ctx.fillStyle=accents[i];ctx.fill();
+  ctx.lineWidth=3;ctx.strokeStyle="#14282c";ctx.stroke();
+  ctx.fillStyle="#0e2428";ctx.font="750 21px Segoe UI, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(labels[i],x,y+1);
+}
+function draw(){
+  ctx.fillStyle="#19262b";ctx.fillRect(0,0,W,H);
+  if(background.complete && background.naturalWidth) ctx.drawImage(background,0,0,W,H);
+  if($("surface").checked) ctx.drawImage(mask,0,0,W,H);
+  if(saved?.points){
+    ctx.lineCap="round";ctx.lineJoin="round";
+    pathLine(saved.points);ctx.lineWidth=10;ctx.strokeStyle="#0d3d38";ctx.stroke();
+    ctx.lineWidth=5;ctx.strokeStyle="#70f7d9";ctx.stroke();
+  }
+  const endpoints = [saved?.start, saved?.goal];
+  endpoints.forEach((snap, i) => {
+    const requested = coordinates(i);
+    if (snap?.distance > .35 && requested.every(Number.isFinite)) {
+      ctx.setLineDash([3, 5]);
+      pathLine([requested, snap.xyz]);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = accents[i];
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    marker(saved?.points ? snap.xyz : requested, i);
+  });
+}
+function calculate(){
+  saved=planner.plan(coordinates(0),coordinates(1));
+  const reasons={start:"Рядом со стартом нет проезжей поверхности на указанной высоте.",goal:"Рядом с финишем нет проезжей поверхности на указанной высоте.",disconnected:"Между точками нет связного пути в проверенной зоне."};
+  const message=saved.reason?reasons[saved.reason]:"Маршрут построен.";
+  $("status").textContent=message;
+  $("status").classList.toggle("error",Boolean(saved.reason));
+  $("snaps").textContent=saved.points
+    ? [saved.start, saved.goal].map((s, i) => labels[i] + " · " + pretty(s.distance) + " до маршрута").join("  |  ")
+    : "";
+  $("length").textContent=saved.points?pretty(saved.length):"—";
+  $("clearance").textContent=saved.points?pretty(saved.minClearance):"—";
+  canvas.dataset.routePoints=String(saved.points?.length??0);
+  draw();
+}
+function reset(){defaultPoints.forEach((p,i)=>setPoint(i,p));choose(0);calculate()}
+$("route").addEventListener("input", () => {
+  saved = null;
+  $("status").textContent = "Координаты изменились. Построй маршрут.";
+  $("status").classList.remove("error");
+  for (const id of ["length", "clearance"]) $(id).textContent = "—";
+  $("snaps").textContent = "";
+  canvas.dataset.routePoints = "0";
+  draw();
+});
+$("route").addEventListener("submit",e=>{e.preventDefault();calculate()});
+$("example").addEventListener("click",reset);
+$("surface").addEventListener("change",draw);
+canvas.addEventListener("click",e=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=G.left+(e.clientX-rect.left)*mapWidth/rect.width;
+  const y=G.top-(e.clientY-rect.top)*mapHeight/rect.height;
+  const target=planner.snap([x,y]);
+  setPoint(picking,[x,y]);
+  calculate();
+  if(target)choose(1-picking);
+});
+$("scale").textContent="Шаг сетки "+pretty(G.step);
+$("revision").textContent="Версия участка "+tile.mapRevision.slice(0,12);
+reset();
+</script>
+</body>
+</html>

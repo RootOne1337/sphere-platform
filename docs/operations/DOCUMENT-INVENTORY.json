@@ -7,7 +7,7 @@
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 519,
     "DESIGN_SPECIFICATION": 91,
-    "OPERATING_GUIDE": 92,
+    "OPERATING_GUIDE": 93,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -158,6 +158,10 @@
     },
     {
       "file": "docs/architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/WORLD-MAP-NAVIGATION.md",
       "role": "OPERATING_GUIDE"
     },
     {
