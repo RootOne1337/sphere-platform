@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Атлас Black Russia</title>
+<style>
+:root{color-scheme:dark;--bg:#10181f;--panel:#19262e;--border:#33464f;--text:#eef2ed;--muted:#b2c1c6;--accent:#a8f3d9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Geist,Inter,'Segoe UI',system-ui,sans-serif}
+main{max-width:1520px;margin:auto;padding:clamp(12px,2.8vw,32px)}
+header{display:flex;justify-content:space-between;align-items:end;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+h1{margin:0;font-size:clamp(26px,4vw,39px);letter-spacing:-.035em;line-height:1.15}
+header p{margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:650}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav a,#detail,button,select{font:inherit;color:var(--text);text-decoration:none;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:7px 11px}
+nav a[aria-current="page"]{background:var(--accent);color:#10251c;border-color:var(--accent);font-weight:650}
+button,select{cursor:pointer}a:hover,button:hover,select:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#152129}
+.tools,.legend{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px}
+.tools{border-bottom:1px solid var(--border)}.legend{border-top:1px solid var(--border);justify-content:start;color:var(--muted);font-size:13px}
+.tools>div,.legend span{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+i{display:inline-block;width:13px;height:5px;border-radius:2px}
+canvas,.fallback img{display:block;width:100%;height:min(72vh,1000px);min-height:340px;object-fit:contain;background:#1c2e36}
+canvas{cursor:grab;touch-action:none}canvas:active{cursor:grabbing}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;padding:10px 2px}
+.foot a{color:#b9e1df}.foot p{margin:0}[hidden]{display:none!important}
+@media(max-width:560px){.tools,.legend{padding:8px}canvas{height:64vh;min-height:295px}button,select{padding:5px 8px}}
+</style>
+</head>
+<body>
+<main>
+  <header><div><p>BLACK RUSSIA · АТЛАС ARIANE</p><h1 id="heading">Вид сверху</h1></div>
+    <nav aria-label="Карты"><a id="worldLink" href="../ariane-world-map.html" hidden>Весь мир</a><a id="topLink" href="ariane-world-map.html">Карта сверху</a><a id="threeLink" href="ariane-world-3d.html">Цветной 3D-мир</a></nav>
+  </header>
+  <section class="card" aria-labelledby="heading">
+    <div class="tools">
+      <div>
+        <label for="area">Область</label>
+        <select id="area">
+          <option value="world">Вся карта</option>
+          <option value="nizhny">Нижегородск</option>
+          <option value="batyrevo">Батырево</option>
+          <option value="uzhny">Южный</option>
+          <option value="arzamas_north">Север Арзамаса</option>
+          <option value="kremlin">Набережная у Кремля</option>
+        </select>
+        <a id="detail" hidden></a>
+        <label id="roadSwitch"><input type="checkbox" id="roads" checked> Дорожный слой</label>
+      </div>
+      <div>
+        <button id="zoomIn" type="button" aria-label="Приблизить">+</button><button id="zoomOut" type="button" aria-label="Отдалить">−</button>
+        <button id="camera" type="button" hidden>Сверху</button><button id="reset" type="button">Вписать</button>
+      </div>
+    </div>
+    <canvas id="canvas" tabindex="0" aria-label="Карта Black Russia"></canvas>
+    <div id="fallback" class="fallback" hidden><img src="ariane-world-color-3d.png" alt="Цветной 3D-рендер внешней карты"></div>
+    <div class="legend" id="legend">
+      <span><i style="background:#68d8ef"></i>Дорожные материалы</span>
+      <span><i style="background:#ffbb74"></i>Дополнительные покрытия</span>
+      <span><i style="background:#e6a1da"></i>Материалы тротуаров</span>
+      <span><i style="background:#b6ffe6"></i>Проверенные центры полос</span>
+    </div>
+  </section>
+  <div class="foot"><p id="scope"></p><a id="picture" href="ariane-world-map-with-roads.png">Открыть изображение</a></div>
+</main>
+<script id="meta" type="application/json">__METADATA__</script>
+<script id="terrain" type="application/octet-stream">__TERRAIN__</script>
+<script>
+const data = JSON.parse(document.getElementById("meta").textContent);
+const byId = id => document.getElementById(id);
+const canvas = byId("canvas"), area = byId("area");
+const is3d = data.view === "3d";
+byId(is3d ? "threeLink" : "topLink").setAttribute("aria-current","page");
+if (is3d) {
+  byId("heading").textContent = "Цветной 3D-мир";
+  byId("picture").href = "ariane-world-color-3d.png";
+  byId("picture").textContent = "Открыть рендер исходных мешей";
+  byId("legend").hidden = byId("roadSwitch").hidden = true;
+  byId("camera").hidden = false;
+}
+if(data.area){
+  byId("heading").textContent += " · " + data.areaName;
+  byId("worldLink").hidden=false;
+  area.replaceChildren(new Option(data.areaName,"world"));
+}
+const bounds = data.bounds;
+const centerOf = box => [(box[0]+box[1])/2,(box[2]+box[3])/2];
+const whole = [bounds.left,bounds.right,bounds.bottom,bounds.top];
+const worldSpan = Math.max(whole[1]-whole[0],whole[3]-whole[2]);
+const state = {center:centerOf(whole), span:worldSpan, angle:-.41, pitch:.9};
+let redraw = () => {};
+let disabled = false;
+function dimensions() {
+  const r = canvas.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio||1);
+  const w = Math.round(r.width*dpr), h = Math.round(r.height*dpr);
+  if (w && h && (canvas.width!==w || canvas.height!==h)) {
+    canvas.width=w;canvas.height=h;
+  }
+}
+function fit(){
+  const box=data.areas[area.value]||whole;
+  state.center=centerOf(box);
+  state.span=Math.max(box[1]-box[0],box[3]-box[2]);
+  const detail=data.details[area.value], link=byId("detail");
+  link.hidden=!detail;
+  if(detail){
+    link.href=detail.path+(is3d?"ariane-world-3d.html":"ariane-world-map.html");
+    link.textContent="Детальный вид · 4000 px";
+  }
+  redraw();
+}
+function zoom(factor) {
+  state.span=Math.max(42, Math.min(worldSpan*2.4, state.span*factor));
+  redraw();
+}
+function draw2d(){
+  const ctx=canvas.getContext("2d"), base=new Image(), road=new Image();
+  base.onload=road.onload=()=>redraw();
+  base.src="ariane-world-top.png";road.src="ariane-world-road-overlay.png";
+  const tiles=new Map();
+  function tileFor(key){
+    const detail=data.details[key];
+    if(!detail)return null;
+    if(!tiles.has(key)){
+      const image=new Image(), overlay=new Image();
+      image.onload=overlay.onload=()=>redraw();
+      image.src=detail.path+"ariane-world-top.png";
+      overlay.src=detail.path+"ariane-world-road-overlay.png";
+      tiles.set(key,{image,overlay,bounds:detail.bounds});
+    }
+    return tiles.get(key);
+  }
+  byId("scope").textContent="Перетаскивание перемещает карту. Колесо меняет масштаб. Цвет дорожного покрытия сам по себе не подтверждает проезд.";
+  return () => {
+    dimensions();
+    const w=canvas.width,h=canvas.height;
+    ctx.fillStyle="#1c2e36";ctx.fillRect(0,0,w,h);
+    const scale=.93*Math.min(w,h)/state.span;
+    const tx=w/2-(state.center[0]-whole[0])*scale;
+    const ty=h/2+(state.center[1]-whole[3])*scale;
+    const width=(whole[1]-whole[0])*scale,height=(whole[3]-whole[2])*scale;
+    const detail=tileFor(area.value);
+    const paintRoads=byId("roads").checked;
+    if(base.complete&&base.naturalWidth)ctx.drawImage(base,tx,ty,width,height);
+    if(paintRoads&&road.complete&&road.naturalWidth)ctx.drawImage(road,tx,ty,width,height);
+    if(detail?.image.complete&&detail.image.naturalWidth){
+      const [left,right,bottom,top]=detail.bounds;
+      const tile=[tx+(left-whole[0])*scale,ty+(whole[3]-top)*scale,(right-left)*scale,(top-bottom)*scale];
+      ctx.drawImage(detail.image,...tile);
+      if(paintRoads&&detail.overlay.complete&&detail.overlay.naturalWidth)
+        ctx.drawImage(detail.overlay,...tile);
+    }
+  };
+}
+function gpuShader(gl,type,source){
+  const s=gl.createShader(type);
+  gl.shaderSource(s,source);gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));
+  return s;
+}
+function draw3d(){
+  const gl=canvas.getContext("webgl2",{antialias:true,alpha:false});
+  if (!gl) throw Error("WebGL 2 unavailable");
+  const vs=gpuShader(gl,gl.VERTEX_SHADER,
+    '#version 300 es\nin vec3 xyz; in vec3 rgb; uniform vec3 center, rightAxis, upAxis, forwardAxis; uniform vec2 scale; out vec3 shade; void main(){vec3 p=xyz-center; gl_Position=vec4(dot(p,rightAxis)*scale.x,dot(p,upAxis)*scale.y,dot(p,forwardAxis)/11000.,1.);shade=rgb;}');
+  const fs=gpuShader(gl,gl.FRAGMENT_SHADER,
+    '#version 300 es\nprecision highp float; in vec3 shade; out vec4 color; void main(){color=vec4(shade,1.);}');
+  const prog=gl.createProgram();
+  gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  const bytes=Uint8Array.from(atob(byId("terrain").textContent.trim()),c=>c.charCodeAt(0));
+  const grid=data.grid, width=grid.width,height=grid.height, n=width*height;
+  if(bytes.length!==n*5)throw Error("Incomplete terrain mesh");
+  const xyz=new Float32Array(n*3), colors=new Uint8Array(n*3), valid=new Uint8Array(n);
+  for(let y=0,k=0;y<height;y++)for(let x=0;x<width;x++,k++){
+    const z=bytes[k*5]+256*bytes[k*5+1];
+    xyz[k*3]=grid.x+x*grid.dx;
+    xyz[k*3+1]=grid.y-y*grid.dy;
+    xyz[k*3+2]=z*.05-512;
+    valid[k]=z!==0;
+    colors.set(bytes.subarray(k*5+2,k*5+5),k*3);
+  }
+  const indices=new Uint32Array((width-1)*(height-1)*6);
+  let count=0;
+  for(let y=0;y<height-1;y++)for(let x=0;x<width-1;x++){
+    const a=y*width+x,b=a+1,c=a+width,d=c+1;
+    if(valid[a]&&valid[b]&&valid[c]){indices[count++]=a;indices[count++]=b;indices[count++]=c;}
+    if(valid[b]&&valid[c]&&valid[d]){indices[count++]=b;indices[count++]=d;indices[count++]=c;}
+  }
+  function bind(name,d,type,normalized){
+    const buffer=gl.createBuffer(), loc=gl.getAttribLocation(prog,name);
+    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,d,gl.STATIC_DRAW);
+    gl.vertexAttribPointer(loc,3,type,normalized,0,0);gl.enableVertexAttribArray(loc);
+  }
+  bind("xyz",xyz,gl.FLOAT,false);bind("rgb",colors,gl.UNSIGNED_BYTE,true);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,gl.createBuffer());
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices.subarray(0,count),gl.STATIC_DRAW);
+  gl.enable(gl.DEPTH_TEST);
+  const uniform=Object.fromEntries(["center","rightAxis","upAxis","forwardAxis","scale"].map(k=>[k,gl.getUniformLocation(prog,k)]));
+  canvas.dataset.triangles=String(count/3);
+  canvas.addEventListener("webglcontextlost",fallback,{once:true});
+  byId("scope").textContent="Перетаскивание вращает модель. Shift и перетаскивание двигают карту. Интерактивная сетка показывает верхнюю поверхность. Полный рендер сохраняет фасады и перекрытия.";
+  return ()=>{
+    dimensions();gl.viewport(0,0,canvas.width,canvas.height);
+    gl.clearColor(.11,.18,.21,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    const a=state.angle,p=state.pitch,c=Math.cos(a),s=Math.sin(a),vertical=Math.sin(p),horizontal=Math.cos(p);
+    gl.uniform3f(uniform.center,...state.center,0);
+    gl.uniform3f(uniform.rightAxis,c,s,0);
+    gl.uniform3f(uniform.upAxis,-s*vertical,c*vertical,horizontal);
+    gl.uniform3f(uniform.forwardAxis,-s*horizontal,c*horizontal,-vertical);
+    const span=state.span*1.36, pixels=Math.min(canvas.width,canvas.height);
+    gl.uniform2f(uniform.scale,2*pixels/canvas.width/span,2*pixels/canvas.height/span);
+    gl.drawElements(gl.TRIANGLES,count,gl.UNSIGNED_INT,0);
+  };
+}
+function fallback(){
+  disabled=true;redraw=()=>{};
+  canvas.hidden=byId("camera").hidden=true;
+  byId("fallback").hidden=false;
+  for(const id of ["area","zoomIn","zoomOut","reset"])byId(id).disabled=true;
+  byId("scope").textContent="Показан цветной рендер исходных мешей. Интерактивное вращение требует WebGL 2.";
+}
+try{redraw=is3d?draw3d():draw2d()}catch(error){if(!is3d)throw error;fallback()}
+let drag=null;
+canvas.addEventListener("pointerdown",e=>{
+  drag={x:e.clientX,y:e.clientY};
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove",e=>{
+  if (!drag||disabled) return;
+  const x=e.clientX-drag.x,y=e.clientY-drag.y;
+  if(is3d&&!e.shiftKey){
+    state.angle+=x*.006;
+    state.pitch=Math.min(1.55,Math.max(.18,state.pitch-y*.006));
+  }else{
+    const scale=state.span/Math.min(canvas.clientWidth,canvas.clientHeight);
+    const c=is3d?Math.cos(state.angle):1,s=is3d?Math.sin(state.angle):0;
+    state.center[0]-=(c*x+s*y)*scale;
+    state.center[1]+=(c*y-s*x)*scale;
+  }
+  drag={x:e.clientX,y:e.clientY};redraw();
+});
+for(const e of ["pointerup","pointercancel","lostpointercapture"])canvas.addEventListener(e,()=>{drag=null});
+canvas.addEventListener("wheel",e=>{e.preventDefault();zoom(Math.exp(Math.min(300,Math.max(-300,e.deltaY))*.0015))},{passive:false});
+area.addEventListener("change",fit);
+byId("camera").addEventListener("click",()=>{
+  const top=state.pitch<1.5;
+  state.pitch=top?Math.PI/2:.9;state.angle=top?0:-.41;
+  byId("camera").textContent=top?"Под углом":"Сверху";redraw();
+});
+byId("roads").addEventListener("change",()=>redraw());
+byId("zoomIn").addEventListener("click",()=>zoom(.75));
+byId("zoomOut").addEventListener("click",()=>zoom(1.33));
+byId("reset").addEventListener("click",fit);
+new ResizeObserver(()=>redraw()).observe(canvas);
+fit();
+</script>
+</body>
+</html>

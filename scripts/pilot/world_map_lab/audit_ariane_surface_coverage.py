@@ -11,7 +11,7 @@ from struct import Struct
 
 import numpy as np
 
-from scripts.pilot.world_map_lab.ariane_geometry import instance_parts, model_types
+from scripts.pilot.world_map_lab.ariane_geometry import REGIONS, instance_parts, model_types
 from scripts.pilot.world_map_lab.index_ariane_world import inventory
 from scripts.pilot.world_map_lab.project_ariane_roads import (
     ROAD_MATERIAL,
@@ -23,11 +23,6 @@ COL_HEADER = Struct("<4sI22sH")
 SURFACE_NAME_HINT = re.compile(
     r"(?:road|asf|asph|walk|curb|kerb|pave|bord|trass|bridg|pavem|zemla|sidewalk|pesh)", re.I
 )
-REGIONS = {
-    "batyrevo": (1374.0, 2957.0, 1505.0, 3000.0),
-    "arzamas_north": (-1034.0, 984.0, 1068.0, 2091.0),
-    "nizhny": (-3035.0, -1680.0, 2140.0, 3139.0),
-}
 
 
 def in_region(placement, bounds):

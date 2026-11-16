@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from scripts.pilot.world_map_lab.audit_ariane_surface_coverage import REGIONS
+from scripts.pilot.world_map_lab.ariane_geometry import REGIONS
 
 HERE = Path(__file__).resolve().parent
 EXAMPLE = [[-2915.0, 2412.0], [-2867.0, 2645.0]]

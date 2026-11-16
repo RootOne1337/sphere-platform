@@ -14,14 +14,16 @@ from pathlib import Path
 
 import numpy as np
 
-from scripts.pilot.world_map_lab.ariane_geometry import instance_parts, model_types
+from scripts.pilot.world_map_lab.ariane_geometry import REGIONS, instance_parts, model_types
 from scripts.pilot.world_map_lab.index_ariane_world import inventory
 
 # This is a material survey. Direction, connectivity, and collision clearance are checked separately.
 ROAD_MATERIAL = re.compile(
     r"(?:t_nn_road_[abcd](?:_[1-4])?|t_nn_roada_[ab]|t_lnd_asphalt[a-z0-9_]*|"
     r"t_asphalt[a-z0-9_]*|a889_newroad[0-9]+|r3_(?:dirtroad|roadcountry|newasphalt|oldasphalt)[a-z0-9_]*|"
-    r"road_2_2_wt_lines|road_by_ank_[0-9]+|arz_road_clear[a-z0-9_]*|country_road[0-9]+|village_road)"
+    r"road_2_2_wt_lines|road_by_ank_[0-9]+|arz_road_clear[a-z0-9_]*|country_road[0-9]+|village_road|"
+    # Verified at road-surface samples in the northeast and southeast.
+    r"nbt_rd6|t_asph_drt_lin[ab])"
 )
 # Kept as distinct visual hypotheses until collider, height and access checks.
 ADDITIONAL_PAVEMENT = re.compile(
@@ -33,7 +35,7 @@ ADDITIONAL_PAVEMENT = re.compile(
 PEDESTRIAN_MATERIAL = re.compile(
     r"(?:t_nn_pavem_[abc]|pavement-small|pavementluk|t_nn_roadside_[ab])"
 )
-POSSIBLE_MARKER = re.compile(rb"road|asphalt|asf|pavem")
+POSSIBLE_MARKER = re.compile(rb"road|asph|asf|pavem|nbt_rd")
 PIXELS_PER_UNIT = 0.35
 
 
@@ -89,6 +91,8 @@ def project(args):
     occupied = [entry["tile"] for entry in index["tiles"]]
     left, right = min(x for x, _ in occupied) * size, (max(x for x, _ in occupied) + 1) * size
     bottom, top = min(y for _, y in occupied) * size, (max(y for _, y in occupied) + 1) * size
+    if args.area:
+        left, right, bottom, top = REGIONS[args.area]
     placement_bounds = {"left": left, "right": right, "bottom": bottom, "top": top}
 
     by_model = defaultdict(list)
@@ -124,6 +128,11 @@ def project(args):
                 flat = np.cross(points[:, 1] - points[:, 0], points[:, 2] - points[:, 0])
                 area = np.linalg.norm(flat, axis=1)
                 keep = (area > 1e-6) & (np.abs(flat[:, 2]) >= 0.82 * area)
+                if args.area:
+                    xy = points[:, :, :2]
+                    keep &= (xy.max(axis=1) >= [left, bottom]).all(axis=1) & (
+                        xy.min(axis=1) <= [right, top]
+                    ).all(axis=1)
                 if not keep.any():
                     continue
                 xy = points[keep, :, :2]
@@ -146,13 +155,18 @@ def project(args):
             print(dict(counts), flush=True)
     if not counts["faces"]:
         raise ValueError("the source did not resolve any selected surface geometry")
-    left = min(left, math.floor(extent_min[0] / size) * size)
-    right = max(right, math.ceil(extent_max[0] / size) * size)
-    bottom = min(bottom, math.floor(extent_min[1] / size) * size)
-    top = max(top, math.ceil(extent_max[1] / size) * size)
-    scale = min(PIXELS_PER_UNIT, 4096 / max(right - left, top - bottom))
-    width = math.ceil((right - left) * scale)
-    height = math.ceil((top - bottom) * scale)
+    if not args.area:
+        left = min(left, math.floor(extent_min[0] / size) * size)
+        right = max(right, math.ceil(extent_max[0] / size) * size)
+        bottom = min(bottom, math.floor(extent_min[1] / size) * size)
+        top = max(top, math.ceil(extent_max[1] / size) * size)
+    if args.width:
+        width = args.width
+        height = math.ceil((top - bottom) * width / (right - left))
+    else:
+        scale = min(PIXELS_PER_UNIT, 4096 / max(right - left, top - bottom))
+        width = math.ceil((right - left) * scale)
+        height = math.ceil((top - bottom) * scale)
     background = np.full((height, width, 3), (29, 23, 16), dtype=np.uint8)
 
     def pixels(xy):
@@ -187,6 +201,7 @@ def project(args):
         "placementRevision": index["placement_revision"],
         "bounds": {"left": left, "right": right, "bottom": bottom, "top": top},
         "placementBounds": placement_bounds,
+        "area": args.area,
         "faces_extending_beyond_placement_bounds": outlier_models.total(),
         "models_extending_beyond_placement_bounds": outlier_models.most_common(30),
         "selectedTrianglesBounds": {
@@ -223,7 +238,12 @@ def main():
     parser.add_argument("--geometry-tools", required=True, type=Path)
     parser.add_argument("--placement-index", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    project(parser.parse_args())
+    parser.add_argument("--area", choices=REGIONS)
+    parser.add_argument("--width", type=int)
+    args = parser.parse_args()
+    if args.width is not None and not 320 <= args.width <= 4800:
+        parser.error("--width must be between 320 and 4800")
+    project(args)
 
 
 if __name__ == "__main__":

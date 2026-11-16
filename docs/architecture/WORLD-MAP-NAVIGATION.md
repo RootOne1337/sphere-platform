@@ -103,3 +103,23 @@ python -m unittest scripts.pilot.world_map_lab.test_ariane_geometry
 node --test scripts/pilot/world_map_lab/lane_preview.test.mjs
 node scripts/pilot/world_map_lab/verify_ariane_surfaces.mjs <artifact-directory>
 ~~~
+
+
+## Цветной атлас
+
+Рендер использует исходные наружные размещения, меши DFF и воду. Базовые текстуры TXD берутся из mip-уровней до 64 пикселей, у грунта дополнительно читаются цветовые маски MatFX9 и слои из родительских словарей. Это обзорное освещение с приближённым смешиванием слоёв. Рендер исходных треугольников показывает объём зданий и перекрытий. Интерактивный вид использует упрощённую сетку верхней поверхности для быстрого вращения всей карты.
+
+На 2D-виде можно выключить дорожный слой. Цвета покрытия помогают искать участки для измерений. Отдельным цветом показаны проверенные центры двух полос на набережной. Узлы перекрёстков и направления движения проходят отдельную проверку до допуска к управлению.
+
+~~~powershell
+python -m scripts.pilot.world_map_lab.render_ariane_world --source <ariane-root> --geometry-tools <local-adapter-directory> --road-report <artifact-directory>/ariane-world-road-materials.json --output <atlas-directory>
+python -m scripts.pilot.world_map_lab.build_ariane_atlas --output <atlas-directory> --road-report <artifact-directory>/ariane-world-road-materials.json --lane-report <artifact-directory>/ariane-kremlin-lanes.json
+python -m unittest scripts.pilot.world_map_lab.test_ariane_world_render
+~~~
+
+Два HTML и изображения открываются из одного каталога. Если браузер не поддерживает WebGL 2, 3D-страница показывает исходный цветной рендер.
+
+
+Для проверки Южного и Батырева оба слоя пересчитываются на ширину 4000 пикселей по исходным треугольникам. В 2D-атласе выбор района подгружает детальные текстуры и дорожное покрытие. Нижний уровень MatFX9 может храниться в основном архиве DFF, поэтому маски читаются из обеих разновидностей архива. Точечная проверка исходных поверхностей показала пропуски `nbt_rd6` на северном подъезде к Батырево и `t_asph_drt_lina/b` на юго-восточных дорогах. Эти участки добавлены в дорожный слой.
+
+Чтобы собрать крупный план, обеим командам проекции и рендера передаются одна область `--area batyrevo` или `--area uzhny`, `--width 4000` и каталог района внутри атласа. Сначала собираются страницы районов по их дорожным манифестам, затем общий атлас подключает эти страницы и текстуры.

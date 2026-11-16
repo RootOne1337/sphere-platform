@@ -6,6 +6,13 @@ from importlib import import_module
 
 import numpy as np
 
+REGIONS = {
+    "batyrevo": (1374.0, 2957.0, 1505.0, 3000.0),
+    "arzamas_north": (-1034.0, 984.0, 1068.0, 2091.0),
+    "nizhny": (-3035.0, -1680.0, 2140.0, 3139.0),
+    "uzhny": (1550.0, 3060.0, -2960.0, -1510.0),
+}
+
 
 def model_types(source):
     types = {}
