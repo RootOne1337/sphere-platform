@@ -122,6 +122,7 @@ class VehicleRouteFollower:
         self.adaptive_throttle = adaptive_throttle
         self.pulse_throttle = isinstance(speed_reference, ConservativeTempoReference)
         self.visual_positions = deque(maxlen=8)
+        self._visual_forward_speed = self._visual_forward_peak = 0.
         self.trace = np.asarray(route.camera_trace, float)
         self.steps = np.linalg.norm(np.diff(self.trace, axis=0), axis=1)
         self.step = trace_step_scale(self.steps)
@@ -151,7 +152,6 @@ class VehicleRouteFollower:
         self.arrival = 0
         self.motion_seconds = 0.
         self.history = deque(maxlen=64)
-        self._held_motion = None
 
     def _reply(self, phase, reason, progress=None, *, target_view=None, speed_accepted=False,
                throttle_pulse_ms=THROTTLE_PULSE_MS, hold_throttle=False):
@@ -183,6 +183,7 @@ class VehicleRouteFollower:
 
     def _visual_speed(self, pose, center, progress):
         positions = self.visual_positions
+        self._visual_forward_speed = self._visual_forward_peak = 0.
         at = pose.received_at
         while positions and at - positions[0][0] > .5:
             positions.popleft()
@@ -205,15 +206,27 @@ class VehicleRouteFollower:
         if not rates:
             return None
         rate = float(self.np.median([value for _, value in rates]))
+        # Use recent translation along the mapped route to arm a gas hold.
+        # Sideways camera motion and an almost stationary noisy estimate can
+        # still affect measured tempo, but cannot authorize sustained gas.
+        recent_forward = [(at - previous_at, (progress - previous_progress) / (at - previous_at))
+                          for previous_at, _, previous_progress, _ in positions
+                          if .12 <= at - previous_at <= .34
+                          and progress - previous_progress >= self.step * .02]
+        scale = self.VISUAL_UNITS_PER_SOURCE_RATE / self.speed_reference.source_rate
+        if recent_forward:
+            short_rates = (rate for age, rate in recent_forward if age <= .25)
+            self._visual_forward_peak = max(short_rates, default=0.) * scale
+            if len(recent_forward) >= 2:
+                self._visual_forward_speed = float(self.np.median([rate for _, rate in recent_forward])) * scale
         # The adaptive pulse mode uses the window estimate. A single short
         # displacement can reflect camera sway and must not cancel a launch.
         if not self.adaptive_throttle and rates[-1][0] <= .25:
             rate = max(rate, rates[-1][1])
-        return min(350., rate * self.VISUAL_UNITS_PER_SOURCE_RATE / self.speed_reference.source_rate)
+        return min(350., rate * scale)
 
     def _neutral(self, reason, *, terminal=False, arrived=False):
         self.steering, self.pedal = 0., 'coast'
-        self._held_motion = None
         if terminal:
             self._confirmation.clear()
             self.terminal = (reason, 'arrived' if arrived else 'stopped')
@@ -284,7 +297,7 @@ class VehicleRouteFollower:
             return False
         reach = min(self.step * 16., self.total * .10, recorded['limit'],
                     epsilon + max(self.recent_progress_rates) * elapsed)
-        return max(progress - self.high_water, self.np.linalg.norm(center - self.last_center)) <= reach
+        return max(progress - self.high_water, float(self.np.linalg.norm(center - self.last_center))) <= reach
 
     def observe(self, pose, speed, *, motion_active=None):
         np, now = self.np, self.clock()
@@ -546,7 +559,10 @@ class VehicleRouteFollower:
         # It predicts speed only, never position or a pose through missing RGB.
         # Without two nearby same-source readings the trend is exactly zero.
         predicted_speed = max(0., self.observed_speed + acceleration * min(.35, now - pose.received_at + .15))
-        error = self.target_speed - predicted_speed
+        pedal_speed = predicted_speed
+        if self.adaptive_throttle:
+            pedal_speed = max(pedal_speed, self._visual_forward_peak)
+        error = self.target_speed - pedal_speed
         observed_error = self.target_speed - self.observed_speed
         desired_pedal = self.pedal
         if self.target_speed <= .25:
@@ -576,7 +592,7 @@ class VehicleRouteFollower:
             self.history.popleft()
         if (self.motion_seconds - self.history[0][0] >= 3.
                 and self.high_water - self.history[0][1] < self.step * .35
-                and self.observed_speed >= 3.):
+                and (self.observed_speed >= 3. or self.adaptive_throttle and self._visual_forward_speed < .2)):
             return self._neutral('vehicle_motion_without_route_progress', terminal=True)
         # Weaker measurements get a bounded pulse. A well-observed route
         # can hold the pedal under the ordinary fresh-reply lease below.
@@ -602,13 +618,8 @@ class VehicleRouteFollower:
                          and pose.median_error_px is not None and pose.median_error_px <= 1.8
                          and cross <= self.step and abs(yaw) <= .40
                          and self.observed_speed < self.target_speed * .72
-                         and predicted_speed < self.target_speed * .80)
-        if not hold_throttle or not motion_active or dt > .5:
-            self._held_motion = None
-        elif self._held_motion is None or progress - self._held_motion[1] >= self.step * .35:
-            self._held_motion = (now, progress)
-        elif now - self._held_motion[0] >= 3.:
-            return self._neutral('vehicle_motion_without_route_progress', terminal=True)
+                         and self._visual_forward_speed >= self.target_speed * .08
+                         and pedal_speed < self.target_speed * .80)
         return self._reply('following', 'vehicle_continuous_pursuit', progress,
                            target_view=None, speed_accepted=True, throttle_pulse_ms=pulse,
                            hold_throttle=hold_throttle)

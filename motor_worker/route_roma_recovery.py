@@ -164,7 +164,7 @@ class _RomaSolve(_FastMeasuredSolve):
             if (np.linalg.norm(best[0] - seed.prior.center) > 6 * step
                     or abs(near[1] - seed.prior.progress_units) > 6 * step):
                 return None
-        elif len(verified) != 2:
+        elif len(verified) != 2 or best[2] < 48:
             return None
         if len(verified) == 2:
             other, other_near, other_data = verified[1]
@@ -203,7 +203,9 @@ class RomaVehicleLocalizer(ReferenceLKXFeatLocalizer, _RomaSolve):
 
     def observe(self, frame, **binding):
         pose = super().observe(frame, **binding)
-        if pose.state == "localized" and self.last_diagnostic.get("method") != "roma_v2_lk_pnp":
+        # Only a strong ordinary pose can authorize one-reference recovery.
+        if (pose.state == "localized" and pose.inliers >= 32
+                and self.last_diagnostic.get("method") != "roma_v2_lk_pnp"):
             self._last_ordinary = pose
         if pose.reason in {"route_binding_retired", "route_scene_geometry_or_age_unqualified",
                            "route_pose_discontinuity", "route_observation_gap"}:

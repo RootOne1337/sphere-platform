@@ -84,29 +84,51 @@ class VehicleRouteTests(unittest.TestCase):
         weaker = self.observe(progress=rate * .8, speed=None, inliers=38)
         self.assertEqual(weaker['throttlePulseMs'], 120)
 
-    def test_confirmed_visual_hold_releases_on_pose_loss_or_when_applied_gas_cannot_move(self):
+    def test_confirmed_visual_hold_needs_forward_motion_and_releases_on_loss(self):
         self.reference = ConservativeTempoReference(self.route)
         self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)
-        self.assertIs(self.acquire(speed=None)['holdThrottle'], True)
-        for _ in range(35):
-            idle = self.observe(speed=None, motion_active=False)
+        launch = self.acquire(speed=None)
+        self.assertEqual((launch['pedal'], launch['throttlePulseMs']), ('throttle', 180))
+        self.assertNotIn('holdThrottle', launch)
+        rate = self.reference.source_rate * .12
+        for i in range(1, 8):
+            advancing = self.observe(progress=i * .1 * rate, speed=None, motion_active=True)
             self.now += .1
-        self.assertIs(idle['holdThrottle'], True)
+        self.assertIs(advancing['holdThrottle'], True)
         lost = self.observe(speed=None, state='unknown', reason='route_pose_not_verified', inliers=0)
         self.assertEqual((lost['phase'], lost['pedal']), ('waiting', 'coast'))
         self.assertNotIn('holdThrottle', lost)
-        self.now += .1
-        self.assertIs(self.acquire(speed=None)['holdThrottle'], True)
+
+    def test_confirmed_stationary_pulses_stop_if_applied_gas_cannot_move(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)
+        self.acquire(speed=None)
+        for _ in range(35):
+            idle = self.observe(speed=None, motion_active=False)
+            self.now += .1
+        self.assertEqual(idle['phase'], 'following')
+        self.assertNotIn('holdThrottle', idle)
         for _ in range(29):
             idle = self.observe(speed=None, motion_active=True)
-            self.assertIs(idle['holdThrottle'], True)
             self.now += .1
+            self.assertEqual(idle['phase'], 'following')
         for _ in range(4):
             stopped = self.observe(speed=None, motion_active=True)
             self.now += .1
         self.assertEqual((stopped['phase'], stopped['pedal'], stopped['reason']),
                          ('stopped', 'coast', 'vehicle_motion_without_route_progress'))
-        self.assertNotIn('holdThrottle', stopped)
+
+    def test_recent_path_motion_cuts_gas_before_the_long_tempo_window_catches_up(self):
+        self.reference = ConservativeTempoReference(self.route)
+        self.follower = self.make(max_speed_kmh=5, visual_speed=True, adaptive_throttle=True)
+        self.acquire(speed=None)
+        for _ in range(6):
+            self.observe(speed=None)
+            self.now += .06
+        # A fresh path displacement arrives while older samples were still.
+        surge = self.observe(progress=self.reference.source_rate * .040, speed=None)
+        self.assertEqual(surge['pedal'], 'coast')
+        self.assertNotIn('holdThrottle', surge)
 
     def test_adaptive_launch_tolerates_camera_sway_and_brakes_for_sustained_speed(self):
         self.reference = ConservativeTempoReference(self.route)
@@ -538,6 +560,15 @@ class VehicleRouteTests(unittest.TestCase):
             self.now += .1
         self.assertEqual((result['phase'], result['pedal']), ('following', 'throttle'))
         self.assertAlmostEqual(self.follower.high_water, 2.7)
+
+    def test_forward_recovery_accepts_lateral_coast_without_non_bool_vote_error(self):
+        self._acquire_moving_dense_trace()
+        for i in range(3):
+            progress = 2.45 + i * .1
+            recovered = self.observe(progress, speed=4., center=(.15, 0., progress),
+                cross_track_units=.15, state='confirming' if i < 2 else 'localized')
+            self.now += .1
+        self.assertEqual((recovered['phase'], recovered['confirmationValidCount']), ('following', 3))
 
     def test_forward_recovery_keeps_earlier_post_loss_votes_inside_ordinary_limit(self):
         self._acquire_moving_dense_trace()

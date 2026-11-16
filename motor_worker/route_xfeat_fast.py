@@ -131,9 +131,21 @@ class _FastMeasuredSolve(_XFeatMeasuredSolve):
         if self.clock() - self.last_received > .25 or not candidates:
             return None
         best = self._rank_proposals([row[0] for row in candidates])
-        if best is not None:
-            _, points, image = next(row for row in candidates if row[0] is best)
-            self.current = points, image, True
+        if best is None:
+            return None
+        _, points, image = next(row for row in candidates if row[0] is best)
+        # A repeated facade can yield a valid PnP fit using just one side of
+        # the image. When retrieval also sees a distant route neighborhood,
+        # a weak cold start needs inliers on both sides to seed a pose.
+        if self.confirmations < 3 and best[2] < 32:
+            left = int(np.count_nonzero(image[:, 0] < self.route.profile.width * .5))
+            if min(left, len(image) - left) < 2:
+                times = self.route.source_seconds
+                origin = times[self.bank[ranked[0]][0]]
+                if any(abs(times[self.bank[index][0]] - origin) >= 2.
+                       and votes[index] >= .65 * votes[ranked[0]] for index in ranked[1:]):
+                    return None
+        self.current = points, image, True
         return best
 
 

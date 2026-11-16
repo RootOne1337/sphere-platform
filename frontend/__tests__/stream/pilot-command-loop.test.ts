@@ -83,7 +83,7 @@ test('slow native ACKs coalesce steering MOVE updates; held gas and steering do 
 });
 
 
-test('fresh visual holds keep one gas contact through a turn and release at the last permit',()=>{
+test('fresh decisions cannot renew gas past the original press cap or rearm it during the coast',()=>{
   const held=new Map<number,{x:number;y:number}>();
   const edges:{id:number;down:boolean;at:number}[]=[];
   const profile=blackRussiaScooterProfile({width:1920,height:1080});
@@ -97,15 +97,17 @@ test('fresh visual holds keep one gas contact through a turn and release at the 
     apply:(command,now,until)=>contacts.apply(command,now,until)});
   const send=(steering:number)=>loop.update({pedal:'throttle',steering,holdThrottle:true,throttlePulseMs:180},performance.now()+275);
   send(0);jest.advanceTimersByTime(200);send(-.20);
-  jest.advanceTimersByTime(220);send(-.20);jest.advanceTimersByTime(210);send(.20);
-  jest.advanceTimersByTime(200);
-  expect(held.get(1)!.x).toBeGreaterThan(288);
+  jest.advanceTimersByTime(119);
   expect(edges.filter(e=>e.id===0)).toEqual([{id:0,down:true,at:0}]);
-  jest.advanceTimersByTime(95);
-  expect(edges.filter(e=>e.id===0)).toEqual([{id:0,down:true,at:0},{id:0,down:false,at:920}]);
+  expect(held.get(1)!.x).toBeLessThan(288);
+  jest.advanceTimersByTime(1);
+  expect(edges.filter(e=>e.id===0)).toEqual([{id:0,down:true,at:0},{id:0,down:false,at:320}]);
+  send(.20);jest.advanceTimersByTime(125);
   expect(held.has(0)).toBe(false);
-  send(0);jest.advanceTimersByTime(60);loop.pause();
-  expect(held.has(0)).toBe(false);
+  send(.20);jest.advanceTimersByTime(200);
+  expect(held.get(1)!.x).toBeGreaterThan(288);
+  expect(held.has(0)).toBe(true);
+  loop.pause();expect(held.has(0)).toBe(false);
   jest.advanceTimersByTime(600);expect(held.has(0)).toBe(false);
   loop.close();
 });
