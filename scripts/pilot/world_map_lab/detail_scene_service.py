@@ -52,8 +52,16 @@ def journey_files(folder, revision):
         for name in ("gameplay.html", "gameplay-proof.json", "engine-boot.json")
     ):
         files["/gameplay"] = folder / "gameplay.html"
-        for name in ("engine-boot.json", "gameplay-proof.json"):
-            files["/journey/" + name] = folder / name
+        for name in (
+            "engine-boot.json",
+            "gameplay-proof.json",
+            "displacement-probes.json",
+            "displacement-holdout.json",
+            "native-boot-gxt/engine-boot.json",
+            "native-trace/engine-boot.json",
+        ):
+            if (folder / name).is_file():
+                files["/journey/" + name] = folder / name
     report = folder / "journey-report.json"
     try:
         results = json.loads(report.read_bytes())

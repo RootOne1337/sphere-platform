@@ -133,6 +133,7 @@ impl Journey {
             return;
         };
         let Some(ped) = player.handle else { return };
+        let mut camera_on_head = false;
         if self.first_person {
             if let (Some(head), Some(body)) =
                 (objects::ped_bone_matrix(ped, 5), state::ped_matrix(ped))
@@ -167,6 +168,8 @@ impl Journey {
                     self.first_person = false;
                     let _ = script::run(0x02eb, &[]);
                     sa_mod::info("sphere_scenario event=camera_command_failed");
+                } else {
+                    camera_on_head = true;
                 }
             }
         }
@@ -245,8 +248,8 @@ impl Journey {
             sa_mod::info("sphere_scenario event=goal_on_foot");
         }
         sa_mod::info(&format!(
-            "sphere_truth t={} pos={:.3},{:.3},{:.3} mounted={} health={:.1}",
-            w.time_ms, p.x, p.y, p.z, mounted, player.ped.health
+            "sphere_truth t={} pos={:.3},{:.3},{:.3} mounted={} health={:.1} head={}",
+            w.time_ms, p.x, p.y, p.z, mounted, player.ped.health, camera_on_head
         ));
     }
 }

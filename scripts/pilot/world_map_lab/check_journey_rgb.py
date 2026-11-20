@@ -62,7 +62,7 @@ class Lane:
         return self.arc[start + i] + f[i] * self.ds[start + i], errors[i]
 
 
-def correct(pose, images, focal):
+def correct(pose, images, focal, descriptors=False):
     ref, dep, live = [
         np.frombuffer(base64.b64decode(x), dtype="<u2" if i == 1 else "u1").reshape(H, W)
         for i, x in enumerate(images)
@@ -73,13 +73,39 @@ def correct(pose, images, focal):
         * 255
     )
     mask[int(H * 0.78) :] = 0
-    pts = cv2.goodFeaturesToTrack(ref, 220, 0.006, 5, mask=mask)
-    if pts is None or len(pts) < 10:
-        return None
-    q, hit, _ = cv2.calcOpticalFlowPyrLK(ref, live, pts, None, winSize=(21, 21), maxLevel=3)
-    back, ret, _ = cv2.calcOpticalFlowPyrLK(live, ref, q, None, winSize=(21, 21), maxLevel=3)
-    ok = (hit.ravel() > 0) & (ret.ravel() > 0) & (np.linalg.norm(back - pts, axis=2).ravel() < 0.8)
-    xy, uv = pts[:, 0][ok], q[:, 0][ok]
+    if descriptors:
+        detector = cv2.SIFT_create(nfeatures=600, contrastThreshold=0.018)
+        k1, d1 = detector.detectAndCompute(ref, mask)
+        k2, d2 = detector.detectAndCompute(live, None)
+        if d1 is None or d2 is None or min(len(d1), len(d2)) < 18:
+            return None
+        matcher = cv2.BFMatcher(cv2.NORM_L2)
+
+        def unique(left, right):
+            return {
+                a.queryIdx: a.trainIdx
+                for a, b in matcher.knnMatch(left, right, k=2)
+                if a.distance < 0.8 * b.distance
+            }
+
+        matches = unique(d1, d2)
+        reverse = unique(d2, d1)
+        pairs = [(k1[i].pt, k2[j].pt) for i, j in matches.items() if reverse.get(j) == i]
+        if len(pairs) < 18:
+            return None
+        xy, uv = np.float32(pairs).transpose(1, 0, 2)
+    else:
+        pts = cv2.goodFeaturesToTrack(ref, 220, 0.006, 5, mask=mask)
+        if pts is None or len(pts) < 10:
+            return None
+        q, hit, _ = cv2.calcOpticalFlowPyrLK(ref, live, pts, None, winSize=(21, 21), maxLevel=3)
+        back, ret, _ = cv2.calcOpticalFlowPyrLK(live, ref, q, None, winSize=(21, 21), maxLevel=3)
+        ok = (
+            (hit.ravel() > 0)
+            & (ret.ravel() > 0)
+            & (np.linalg.norm(back - pts, axis=2).ravel() < 0.8)
+        )
+        xy, uv = pts[:, 0][ok], q[:, 0][ok]
     if len(xy) < 10:
         return None
     y, x = np.rint(xy).astype(int).T[::-1]
@@ -111,7 +137,9 @@ def correct(pose, images, focal):
     d = -(rot.T @ t).ravel() @ axes
     heading = rot[2] @ axes
     yaw = math.atan2(heading[1], heading[0])
-    if np.linalg.norm(d) > 2.6 or abs(angle(yaw - a)) > 0.27:
+    if np.linalg.norm(d) > (7 if descriptors else 2.6) or abs(angle(yaw - a)) > (
+        0.42 if descriptors else 0.27
+    ):
         return None
     return np.array(pose[:3]) + d, yaw, len(ids)
 
@@ -170,10 +198,30 @@ def reacquire(page, prior, lane, station, eye):
     return np.array(best[:3]), best[3], 0
 
 
-def wide_pose(page, prior, surfaces, focal, eye):
+# When stopped, use contrasting views to expose vertical structure hidden in
+# the direction of travel. Each candidate needs a second independent image.
+RECOVERY_PANS = (0, 55, -55, 105, -105, 160)
+RECOVERY_START = 12
+
+
+def recovery_camera(misses):
+    scan = misses - RECOVERY_START
+    if 0 <= scan < 2 * len(RECOVERY_PANS):
+        return math.radians(RECOVERY_PANS[scan // 2]) + (0.18 if scan % 2 else 0)
+    sweep = (0, 0, 12, -18, 28, -36, 52, -56, 78, -82, 110, -115, 155, -155)
+    return math.radians(sweep[misses % len(sweep)])
+
+
+def scan_due(misses):
+    return (
+        0 <= misses - RECOVERY_START < 2 * len(RECOVERY_PANS) and (misses - RECOVERY_START) % 2 == 0
+    )
+
+
+def wide_pose(page, prior, surfaces, focal, eye, pan=0):
     """Rank nearby map views, then require a well-conditioned depth-backed fit."""
     yaw = prior[3]
-    forward = np.array([math.cos(yaw), math.sin(yaw)])
+    forward = np.array([math.cos(yaw - pan), math.sin(yaw - pan)])
     right = np.array([-forward[1], forward[0]])
     candidates = []
     for along in range(-12, 13, 4):
@@ -200,6 +248,8 @@ def wide_pose(page, prior, surfaces, focal, eye):
         cand = candidates[idx]
         pair = page.evaluate("p=>mapPairWithLastImage(p)", cand)
         fit = correct(cand, pair, focal)
+        if not fit or fit[2] < 18:
+            fit = correct(cand, pair, focal, descriptors=True)
         if not fit or fit[2] < 18:
             continue
         pose = [*fit[0], fit[1], prior[4]]
@@ -475,6 +525,7 @@ def run(args):
         unseen = 0
         since_fix = 0.0
         frame = 0
+        disturbance = None
         for phase, lane in enumerate(lanes):
             s = 0
             stalled = 0
@@ -491,17 +542,29 @@ def run(args):
                 if args.run_dir and (args.run_dir / "stop").is_file():
                     result = "stopped"
                     break
+                if args.displace and disturbance is None and moving and s >= args.displace[0]:
+                    # Test plant only. Neither the shift nor the target is supplied to localization.
+                    side = np.array([-math.sin(yaw), math.cos(yaw)])
+                    xy = actual[:2] + side * args.displace[1]
+                    surfaces = [z for z in nets["drive"].levels(*xy) if abs(z - actual[2]) < 1.5]
+                    if not surfaces:
+                        result = "displacement_without_drivable_surface"
+                        break
+                    actual = np.array([*xy, min(surfaces, key=lambda z: abs(z - actual[2]))])
+                    disturbance = dict(frame=frame + 1, station=float(s), offset=args.displace[1])
                 prior = [*estimated[:2], estimated[2] + eye, angle_est, -0.045]
                 live = [*actual[:2], actual[2] + eye, yaw, -0.045 + 0.004 * math.sin(frame * 0.13)]
-                sweep = (0, 0, 12, -18, 28, -36, 52, -56, 78, -82, 110, -115, 155, -155)
-                pan = math.radians(sweep[unseen % len(sweep)])
+                pan = recovery_camera(unseen)
                 prior[3] += pan
                 live[3] += pan
                 begin = time.perf_counter()
                 imgs = rgb_pair(page, prior, live, vehicle_info(phase, pan))
                 t0 = time.perf_counter()
-                fit = correct(prior, imgs, focal)
-                source = "pnp"
+                verifying = pending_wide is not None or (
+                    unseen >= RECOVERY_START and abs(estimated_speed) < 0.3
+                )
+                fit = None if verifying else correct(prior, imgs, focal)
+                source = "wide_search" if verifying else "pnp"
                 if fit and (
                     np.linalg.norm(fit[0] - prior[:3]) > 0.6
                     or abs(angle(fit[1] - prior[3])) > 0.045
@@ -511,7 +574,7 @@ def run(args):
                     scores = page.evaluate("q=>rankRenderedPoses(q)", [candidate, prior])
                     if scores[0] > 9 or scores[0] > scores[1] + 0.5:
                         fit = None
-                if fit is None and unseen in (2, 6, 10, 16, 22, 27):
+                if not verifying and fit is None and unseen in (2, 6, 10, 16, 22, 27):
                     fit = reacquire(page, prior, lane, s, eye)
                     if fit:
                         source = "render_search"
@@ -522,8 +585,8 @@ def run(args):
                         fit = second
                         source = "two_frame_recovery"
                     pending_wide = None
-                if fit is None and unseen in (15, 24) and abs(estimated_speed) < 0.3:
-                    found = wide_pose(page, prior, nets.values(), focal, eye)
+                if fit is None and scan_due(unseen) and abs(estimated_speed) < 0.3:
+                    found = wide_pose(page, prior, nets.values(), focal, eye, pan)
                     if found:
                         pending_wide = (found[0], angle(found[1] - pan))
                 match_ms = (time.perf_counter() - t0) * 1000
@@ -622,8 +685,10 @@ def run(args):
                     target_speed = min(
                         target_speed, 7.0 if moving else 1.0, math.sqrt(8 * remaining)
                     )
-                    if cross > (1.3 if moving else 0.7) or gap < 1.0:
+                    if unseen >= 6 or cross > (1.3 if moving else 0.7) or gap < 1.0:
                         target_speed = 0.0
+                if unseen >= 6:
+                    maneuver_left = 0
                 if unseen >= 30:
                     result = "localization_lost"
                     break
@@ -704,6 +769,9 @@ def run(args):
                         groundSpeed=body_speed,
                         source=source if fit else "prediction",
                         visualConfirmed=bool(fit),
+                        disturbance=disturbance
+                        if disturbance and disturbance["frame"] == frame
+                        else None,
                         lostTicks=unseen,
                         distanceSinceFix=since_fix,
                         commandMs=command_ms,
@@ -757,7 +825,8 @@ def run(args):
         publish_status(output_dir, result, rows[-1] if rows else None)
     out = output_dir / "rgb-drive.json"
     out.write_text(
-        json.dumps(dict(result=result, rows=rows), separators=(",", ":")), encoding="utf8"
+        json.dumps(dict(result=result, rows=rows, disturbance=disturbance), separators=(",", ":")),
+        encoding="utf8",
     )
     print(result, len(rows), rows[-1] if rows else "", flush=True)
 
@@ -776,6 +845,13 @@ if __name__ == "__main__":
     )
     c.add_argument("--adapter", type=Path)
     c.add_argument("--run-dir", type=Path)
+    c.add_argument(
+        "--displace",
+        type=float,
+        nargs=2,
+        metavar=("DRIVE_STATION", "SIDE_OFFSET"),
+        help="inject one lateral offset into the test body",
+    )
     c.add_argument("--realtime", action="store_true")
     c.add_argument("--model", choices=["faggio", "premier"], default="faggio")
     run(c.parse_args())

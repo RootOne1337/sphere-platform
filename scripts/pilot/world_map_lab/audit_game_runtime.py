@@ -9,7 +9,9 @@ from pathlib import Path
 # The IMG may contain vehicle-specific animation groups. The main pedestrian
 # package and simulation configuration are opened as loose files by the game.
 GAME_FILES = {
+    "models/coll/peds.col": "исходный файл коллизий персонажей",
     "models/gta3.img": "основной архив",
+    "text/american.gxt": "английский словарь игрового клиента",
     "anim/ped.ifp": "основная анимация персонажа",
     "data/default.dat": "основные определения",
     "data/gta.dat": "список ресурсов мира",
@@ -56,6 +58,10 @@ def inspect_source(root):
                 "faggio.txd",
                 "bikev.ifp",
                 "ped.ifp",
+                "peds.col",
+                "american.gxt",
+                "handling.cfg",
+                "main.scm",
                 "nodes0.dat",
             )
         },
