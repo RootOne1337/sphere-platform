@@ -41,6 +41,33 @@ python -m scripts.pilot.world_map_lab.open_classic_stand --game $game --quarter 
 
 ## Игровой стенд GTA San Andreas
 
+### Проверка ресурсов Black Russia и отклика Faggio
+
+Центральный каталог исходного ZIP Ariane (7 939 970 250 байт) содержит 149 файлов, включая 87 IMG. Упомянутого в README каталога `original/data` в этом ZIP нет. В каталогах IMG есть модель и текстуры Faggio, группа анимаций `bikev.ifp` и коллизии мира. Встроенная COL3 скутера из `models/gta3.img` содержит 13 сфер и 10 треугольников. В переданном комплекте отсутствуют `data/handling.cfg`, `data/vehicles.ide`, `anim/ped.ifp`, `models/coll/peds.col` и исполняемый игровой клиент. По коллизии можно определить форму контакта. Для разгона, торможения, баланса и посадки требуются код игры и соответствующие данные.
+
+Для проверки браузерного OpenSA взяты два DFF из одного IMG и неизменённые функции `parseDff`, `parseDffCollision`, `buildVehicle` и `PhysicsWorld` ревизии `d30f4e8a`. У каждого прогона одна плоская поверхность, 120 шагов до подачи команды и ещё 180 шагов по 1/60 с. Для сравнения заданы одинаковые тестовые масса 1000, масштаб колёс 0,55 и сила 4200 либо 0. Расстояние измерено между конечными горизонтальными положениями в двух запусках. Эти параметры служат только для проверки реакции на ввод.
+
+| Модель | Узлы колёс в DFF | Колёса в контроллере | Разница с газом и без, ед. |
+| --- | --- | ---: | ---: |
+| Faggio | `wheel_front`, `wheel_rear` | 0 | 0,00 |
+| Premier | четыре угловых узла `wheel_*_dummy` | 4 | 17,25 |
+
+Для повтора `$opensa` указывает на чистый checkout OpenSA указанной ревизии, `$probe` — на отдельный каталог теста, `$ariane` — на распакованную карту. Для вывода результатов в локальном веб-отчёте используйте каталог `vehicle-physics-audit` внутри собранного стенда и повторно запустите `report_classic_scenario`.
+
+~~~powershell
+npm.cmd install --prefix $probe --no-audit --no-fund --save-exact esbuild@0.27.7 three@0.177.0 @dimforge/rapier3d-compat@0.19.3
+$env:NODE_PATH = "$probe/node_modules"
+$env:OPENSA_REVISION = (git -C $opensa rev-parse HEAD)
+& "$probe/node_modules/.bin/esbuild.cmd" scripts/pilot/world_map_lab/probe_opensa_vehicle.mjs --bundle --platform=node --format=esm --external:@dimforge/rapier3d-compat "--alias:renderware=$opensa/packages/renderware/src" "--alias:game=$opensa/packages/game/src" "--outfile=$probe/probe.mjs"
+node "$probe/probe.mjs" "$ariane/models/gta3.img" "$probe/result.json"
+~~~
+
+У Faggio корпус сместился одинаково в обоих запусках. В этой версии OpenSA распознавание колёс ориентировано на автомобильные имена, а усилие передаётся через созданные колёса Rapier. Добавление двух узлов исправило бы один этап импорта. Отдельной проверки всё равно требуют наклон скутера, устойчивость и анимации водителя. [Загрузчик модели](https://github.com/Avatarchik/opensa/blob/d30f4e8ad2d41a9c7965c1416d7e857b5ef5f7e6/packages/renderware/src/three/build-vehicle.ts) · [Управление физикой](https://github.com/Avatarchik/opensa/blob/d30f4e8ad2d41a9c7965c1416d7e857b5ef5f7e6/packages/game/src/physics/physics-world.ts)
+
+Для эталонной поездки с механикой San Andreas подготовлен перенос квартала и сценария в совместимую классическую GTA SA для Windows. У актуального Ariane есть интеграция Test in Game, которая запускает установленную игру через ASI. Альтернативный браузерный sa-engine содержит порт двухколёсного контроллера и читает ресурсы классической версии 1.0 US. С имеющимися ресурсами загрузка квартала остановилась до первого игрового кадра. Для проверки поведения Black Russia в онлайне нужен замер в её собственном клиенте. [Интеграция Ariane](https://github.com/Dryxio/ariane#download-and-usage) · [Контроллер двухколёсного транспорта sa-engine](https://github.com/ghosty2004/sa-engine/blob/d66f65e1937516320d6f3cc6a6cab2a7671e018e/crates/sa-veh/src/bike_control.rs) · [Запуск sa-engine в браузере](https://github.com/ghosty2004/sa-engine/blob/d66f65e1937516320d6f3cc6a6cab2a7671e018e/web/README.md)
+
+### Подготовка и загрузка квартала
+
 В браузере собран sa-engine на ревизии `d66f65e1937516320d6f3cc6a6cab2a7671e018e`. Для этой версии нужен каталог данных классической GTA San Andreas 1.0 US. Исполняемый файл Windows браузеру не требуется. Сборка для WebAssembly включает поддержку модов. Порт ещё развивается, поэтому поведение скутера, анимации и управление требуют проверки в игровом мире. [Инструкции разработчика](https://github.com/ghosty2004/sa-engine/blob/d66f65e1937516320d6f3cc6a6cab2a7671e018e/web/README.md)
 
 В комплекте Ariane найдены Faggio, модели людей и группа анимаций `bikev.ifp`. Отдельные файлы `anim/ped.ifp`, `data/handling.cfg`, определения транспорта и людей, параметры поверхностей и основной сценарий отсутствуют. Предварительная инвентаризация проверяет необходимые файлы, а запуск в Chrome независимо проверяет загрузку движка. В локальном запуске браузер загрузил мод и выполнил 1666 статических инициализаторов. Управляемый персонаж в этом запуске не появился. Страница `/gameplay` содержит журнал, результат проверки игрового комплекта и состояние проверки вождения.

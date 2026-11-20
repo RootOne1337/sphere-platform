@@ -10,6 +10,28 @@ from pathlib import Path
 from scripts.pilot.world_map_lab.native_route import native_route
 
 
+def vehicle_probe_section(folder):
+    path = folder / "vehicle-physics-audit/result.json"
+    if not path.is_file():
+        return ""
+    probe = json.loads(path.read_bytes())
+    rows = []
+    for name, trial in probe["models"].items():
+        wheels = int(trial["power"]["controllerWheels"])
+        distance = float(trial["inputEffectXY"])
+        rows.append(
+            f"<tr><th>{html.escape(name)}</th><td>{wheels}</td><td>{distance:.2f}</td></tr>"
+        )
+    seconds = float(probe["parameters"]["commandSeconds"])
+    rev = html.escape(probe["openSARevision"][:8])
+    return f"""<section><h2>Отклик моделей на газ в OpenSA</h2>
+<p>Версия {rev}. Два запуска каждой модели на плоской поверхности с одинаковыми начальными условиями.
+Через {seconds:g} с измерено расстояние по горизонтали между положениями с газом и без газа.</p>
+<table><thead><tr><th>Модель из IMG</th><th>Колёса в физике</th><th>Разница, ед.</th></tr></thead>
+<tbody>{"".join(rows)}</tbody></table>
+<p>Массу и масштаб колёс задали одинаковыми для сравнения. Замер проверяет работу загрузчика и контроллера OpenSA.</p></section>"""
+
+
 def publish(folder):
     def read(name):
         return json.loads((folder / name).read_bytes())
@@ -66,6 +88,7 @@ def publish(folder):
 <section><h2>Запуск игры</h2><p><strong>Проезд в оригинальной GTA SA ожидает проверки.</strong></p>
 <p>Для Windows собран игровой сценарий с персонажем, припаркованным Faggio 462 и камерой от первого лица. Посадку, ускорение, поворот и выход обрабатывает игра.</p>
 <p>Браузерный порт выполнил {len(boot["completedBootSteps"])} шагов контрольной загрузки. {boot_info} Последний запрос движка<br><code>{latest}</code></p></section>
+{vehicle_probe_section(folder)}
 <h2>Опора под маршрутом</h2><p>Высоты измерены по треугольникам коллизий упакованной карты. Длины и высоты приведены в единицах игрового мира.</p>
 <table><thead><tr><th>Участок</th><th>Длина</th><th>Точки с опорой</th><th>Макс. разница высот</th></tr></thead><tbody>{"".join(rows)}</tbody></table>
 <p>{map_proof["instances"]} размещений · {map_proof["models"]} моделей · {map_proof["colliders"]} моделей коллизий.</p>
