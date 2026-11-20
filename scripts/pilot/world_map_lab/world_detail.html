@@ -87,6 +87,26 @@
     input {
       width: 100px;
     }
+    [hidden] {
+      display: none !important;
+    }
+    body.capture main {
+      padding: 0;
+      max-width: none;
+    }
+    body.capture header,
+    body.capture .tools,
+    body.capture .foot {
+      display: none;
+    }
+    body.capture .card {
+      border: 0;
+      border-radius: 0;
+    }
+    body.capture canvas {
+      width: 100vw;
+      height: 100vh;
+    }
     canvas {
       display: block;
       width: 100%;
@@ -147,11 +167,34 @@
             </select></label
           ><button>Открыть участок</button>
         </form>
+        <div>
+          <label
+            >Камера
+            <select id="view">
+              <option value="orbit">Обзор</option>
+              <option value="first">От первого лица</option>
+            </select></label
+          >
+          <span id="angles" hidden
+            ><label
+              >Курс, ° <input type="number" step="any" id="yaw" value="0"
+            /></label>
+            <label
+              >Наклон, °
+              <input
+                type="number"
+                min="-85"
+                max="85"
+                step="any"
+                id="pitch"
+                value="2" /></label
+          ></span>
+        </div>
         <span id="status" role="status">Загрузка участка…</span>
       </div>
       <canvas aria-label="Трёхмерная сцена выбранного участка"></canvas>
       <div class="foot">
-        <span
+        <span id="hint"
           >Перетаскивание — поворот · Колесо — приближение · Правая кнопка —
           сдвиг</span
         ><span>Координаты и расстояния в игровых единицах</span>
@@ -171,6 +214,13 @@
       params = new URLSearchParams(location.search);
     for (const k of ["x", "y", "z", "radius"])
       if (params.has(k)) $("#" + k).value = params.get(k);
+    const capture = params.get("capture") === "1";
+    document.body.classList.toggle("capture", capture);
+    for (const id of ["view", "yaw", "pitch"])
+      if (params.has(id)) $("#" + id).value = params.get(id);
+    const hfov = Number(params.get("hfov") ?? 90);
+    if (!Number.isFinite(hfov) || hfov < 30 || hfov > 145)
+      throw Error("Invalid horizontal field of view");
     let renderer;
     try {
       renderer = new T.WebGLRenderer({ canvas, antialias: true });
@@ -178,11 +228,52 @@
       status.textContent = "Для вращения сцены требуется WebGL 2.";
       throw Error("WebGL unavailable");
     }
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
+    renderer.setPixelRatio(capture ? 1 : Math.min(devicePixelRatio, 1.6));
     renderer.setClearColor(0x99b7c3);
     const scene = new T.Scene(),
       camera = new T.PerspectiveCamera(49, 1, 0.25, 4000);
     camera.up.set(0, 0, 1);
+    const eye = new T.PerspectiveCamera(60, 1, 0.15, 4000);
+    eye.up.set(0, 0, 1);
+    let ready = false,
+      sector = null;
+    function positionEye(x, y, z, yaw, pitch, roll = 0) {
+      if (
+        ![x, y, z, yaw, pitch, roll].every(Number.isFinite) ||
+        Math.abs(pitch) > 85
+      )
+        throw Error("Invalid viewpoint");
+      const a = T.MathUtils.degToRad(yaw),
+        v = T.MathUtils.degToRad(pitch);
+      eye.position.set(x, y, z);
+      eye.lookAt(
+        x + Math.cos(a) * Math.cos(v),
+        y + Math.sin(a) * Math.cos(v),
+        z + Math.sin(v),
+      );
+      eye.rotateZ(-T.MathUtils.degToRad(roll));
+    }
+    function syncView() {
+      const first = $("#view").value === "first";
+      controls.enabled = !first;
+      $("#angles").hidden = !first;
+      $("#hint").textContent = first
+        ? "Камера на 1,48 ед. выше выбранной отметки Z. Курс 0° направлен вдоль +X, 90° вдоль +Y."
+        : "Перетаскивание — поворот · Колесо — приближение · Правая кнопка — сдвиг";
+      if (sector)
+        positionEye(
+          sector.x,
+          sector.y,
+          sector.z + 1.48,
+          Number($("#yaw").value),
+          Number($("#pitch").value),
+        );
+      const url = new URL(location.href);
+      for (const id of ["view", "yaw", "pitch"])
+        url.searchParams.set(id, $("#" + id).value);
+      history.replaceState(null, "", url);
+      draw();
+    }
     const controls = new OrbitControls(camera, canvas);
     controls.maxPolarAngle = Math.PI * 0.96;
     controls.maxDistance = 1100;
@@ -201,7 +292,7 @@
         pending = true;
         requestAnimationFrame(() => {
           pending = false;
-          renderer.render(scene, camera);
+          renderer.render(scene, $("#view").value === "first" ? eye : camera);
         });
       }
     }
@@ -212,6 +303,11 @@
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      eye.aspect = w / h;
+      eye.fov = T.MathUtils.radToDeg(
+        2 * Math.atan(Math.tan(T.MathUtils.degToRad(hfov) / 2) / eye.aspect),
+      );
+      eye.updateProjectionMatrix();
       draw();
     }).observe(canvas);
     const manager = new T.LoadingManager();
@@ -245,15 +341,20 @@
     async function load() {
       const submit = $("button");
       submit.disabled = true;
+      ready = false;
       resourceError = false;
       try {
         const p = new URLSearchParams();
         for (const k of ["x", "y", "z", "radius"]) p.set(k, $("#" + k).value);
-        history.replaceState(null, "", "?" + p);
+        const addr = new URL(location.href);
+        for (const [key, v] of p) addr.searchParams.set(key, v);
+        history.replaceState(null, "", addr);
         const x = +p.get("x"),
           y = +p.get("y"),
           z = +p.get("z"),
           rad = +p.get("radius");
+        sector = { x, y, z, rad };
+        syncView();
         status.textContent = "Поиск видимых моделей…";
         const res = await fetch("/api/neighborhood?" + p);
         if (!res.ok) throw Error("neighborhood");
@@ -322,6 +423,7 @@
           " объектов · " +
           tris.toLocaleString("ru") +
           " треугольников";
+        ready = n > 0;
         if (!n) status.textContent = "В выбранном объёме исходных моделей нет.";
         draw();
       } catch (e) {
@@ -330,6 +432,29 @@
       } finally {
         submit.disabled = false;
       }
+    }
+    for (const id of ["view", "yaw", "pitch"]) $("#" + id).onchange = syncView;
+    if (capture) {
+      // Only the simulated camera uses truth. The observer receives decoded RGB alone.
+      window.captureMapEye = async ({ x, y, z, yaw, pitch, roll = 0 }) => {
+        if (!ready || !sector || ![x, y, z].every(Number.isFinite))
+          throw Error("Camera or scene unavailable");
+        if (
+          Math.max(Math.abs(x - sector.x), Math.abs(y - sector.y)) >
+            sector.rad * 0.72 ||
+          Math.abs(z - sector.z) > 36
+        ) {
+          // The simulator streams geometry around its camera. Only the resulting RGB leaves this renderer.
+          $("#x").value = x;
+          $("#y").value = y;
+          $("#z").value = z - 1.48;
+          await load();
+          if (!ready) throw Error("Cannot load the next exterior sector");
+        }
+        positionEye(x, y, z, yaw, pitch, roll);
+        renderer.render(scene, eye);
+        return canvas.toDataURL("image/png");
+      };
     }
     $("#params").onsubmit = (e) => {
       e.preventDefault();

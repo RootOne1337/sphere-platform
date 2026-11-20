@@ -3,6 +3,7 @@
 import argparse
 import json
 import mimetypes
+import re
 import shutil
 from contextlib import ExitStack
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -12,6 +13,22 @@ from urllib.parse import parse_qs, urlsplit
 from scripts.pilot.world_map_lab.detail_scene_service import read_scene, scene_files
 from scripts.pilot.world_map_lab.world_navmesh import Network, checksum
 from scripts.pilot.world_map_lab.world_trip import TripPlanner
+
+
+def movie_range(header, size):
+    match = re.fullmatch(r"bytes=(\d{0,18})-(\d{0,18})", header.strip())
+    if not match or not any(match.groups()) or size <= 0:
+        raise ValueError("unsupported byte range")
+    start, end = match.groups()
+    if start:
+        lo = int(start)
+        hi = min(size - 1, int(end)) if end else size - 1
+    else:
+        lo = max(0, size - int(end))
+        hi = size - 1
+    if not 0 <= lo <= hi < size:
+        raise ValueError("range outside movie")
+    return lo, hi
 
 
 class PlannerServer(ThreadingHTTPServer):
@@ -98,7 +115,23 @@ def serve(folder, port):
                 req = urlsplit(self.path)
                 if req.path in files:
                     path = files[req.path]
-                    self.send_response(200)
+                    size = path.stat().st_size
+                    request_range = self.headers.get("Range") if path.suffix == ".mp4" else None
+                    try:
+                        lo, hi = (
+                            movie_range(request_range, size) if request_range else (0, size - 1)
+                        )
+                    except ValueError:
+                        self.send_response(416)
+                        self.send_header("Content-Range", f"bytes */{size}")
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                        return
+                    self.send_response(206 if request_range else 200)
+                    if path.suffix == ".mp4":
+                        self.send_header("Accept-Ranges", "bytes")
+                    if request_range:
+                        self.send_header("Content-Range", f"bytes {lo}-{hi}/{size}")
                     self.send_header(
                         "Content-Type",
                         (
@@ -107,10 +140,23 @@ def serve(folder, port):
                             else mimetypes.guess_type(path)[0] or "application/octet-stream"
                         ),
                     )
-                    self.send_header("Content-Length", str(path.stat().st_size))
+                    self.send_header("Content-Length", str(hi - lo + 1))
                     self.end_headers()
                     with path.open("rb") as f:
-                        shutil.copyfileobj(f, self.wfile)
+                        try:
+                            if not request_range:
+                                shutil.copyfileobj(f, self.wfile)
+                            else:
+                                f.seek(lo)
+                                remaining = hi - lo + 1
+                                while remaining:
+                                    chunk = f.read(min(remaining, 256 * 1024))
+                                    if not chunk:
+                                        break
+                                    self.wfile.write(chunk)
+                                    remaining -= len(chunk)
+                        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                            return
                     return
                 if req.path == "/api/world":
                     self.send_json(
@@ -119,6 +165,7 @@ def serve(folder, port):
                             "examples": list(examples),
                             "review": "/review" in files,
                             "detail": "/detail" in files,
+                            "firstPersonReport": "/first-person/report.html" in files,
                             "report": "/navigation-report.html" in files,
                         }
                     )

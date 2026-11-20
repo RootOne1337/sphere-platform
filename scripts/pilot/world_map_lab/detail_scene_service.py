@@ -1,5 +1,6 @@
 """Read a bounded neighborhood of the offline geometry pack for the local viewer."""
 
+import hashlib
 import json
 import math
 import re
@@ -42,6 +43,35 @@ def scene_files(folder, nets):
             for name, rel in VENDOR.items():
                 path = "/detail/utils/" if name == "BufferGeometryUtils.js" else "/detail/js/"
                 files[path + name] = vendor / rel
+    receipt = folder / "first-person" / "published.json"
+    if receipt.is_file():
+        try:
+            record = json.loads(receipt.read_bytes())
+        except (OSError, ValueError):
+            return files
+        if not isinstance(record, dict):
+            return files
+        if (
+            record.get("revision") == nets["drive"].meta["placementRevision"]
+            and isinstance(record.get("files"), dict)
+            and "report.html" in record["files"]
+        ):
+            media = {}
+            for name, sha in record["files"].items():
+                if not re.fullmatch(
+                    r"report-[a-z0-9-]+\.mp4|game-(?:map-comparison|coverage)\.png|report\.html",
+                    name,
+                ):
+                    break
+                path = receipt.parent / name
+                if not path.is_file():
+                    break
+                with path.open("rb") as stream:
+                    if hashlib.file_digest(stream, "sha256").hexdigest() != sha:
+                        break
+                media["/first-person/" + name] = path
+            else:
+                files.update(media)
     return files
 
 

@@ -144,6 +144,9 @@
           <a id="reportLink" hidden href="/navigation-report.html">Отчёт</a>
           <a href="/review" id="reviewLink" hidden>Карта разрывов</a>
           <a href="/detail" id="detailLink" hidden>Детальная 3D-сцена</a>
+          <a href="/first-person/report.html" id="firstPersonLink" hidden
+            >Заезд от первого лица</a
+          >
         </p>
         <h1>Маршрут между точками</h1>
       </div>
@@ -531,6 +534,7 @@
       world = m;
       $("reviewLink").hidden = !m.review;
       $("detailLink").hidden = !m.detail;
+      $("firstPersonLink").hidden = !m.firstPersonReport;
       $("reportLink").hidden = !m.report;
       bounds = m.drive.bounds;
       [base, ink.drive, ink.walk] = await Promise.all(
