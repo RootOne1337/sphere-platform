@@ -53,6 +53,35 @@ def full_world_section(path, route_id):
 Физический проезд по полной карте ожидает запуска совместимой игровой базы с расширенными лимитами.</p></section>"""
 
 
+def controller_section(folder, route_id):
+    path = folder / "native-acceptance.json"
+    if not path.is_file():
+        return ""
+    data = json.loads(path.read_bytes())
+    if data["routeSha256"] != route_id:
+        raise ValueError("controller evidence belongs to a different native route")
+    load = data["fullWorld"]
+    before = data["original"]
+    after = data["preindexedRecovery"]
+    walking = data["walking"]
+    automatic = data["automaticLens"]
+    survey = data["stationaryStart"]
+    return f"""<section id="native-tests"><h2>Подготовка физического заезда</h2>
+<p>Полная карта прошла испытание с занятыми номерами всех импортируемых моделей.
+Проверены {load["scenes"]} сцен, {load["binding"]["remappedInstances"]:,} размещений и {load["binding"]["checkedCollisions"]:,} привязок коллизий.</p>
+<table><thead><tr><th>Исходное видео Scooter 4</th><th>Первый тест</th><th>С индексами и восстановлением</th></tr></thead>
+<tbody><tr><th>Обработано кадров</th><td>{before["frames"]}</td><td>{after["frames"]}</td></tr>
+<tr><th>Кадров с позой</th><td>{before["located"]}</td><td>{after["located"]}</td></tr>
+<tr><th>Задержка решения, p95</th><td>{before["p95ms"]:.0f} мс</td><td>{after["p95ms"]:.0f} мс</td></tr></tbody></table>
+<p>Сравнение использует один и тот же поток длительностью {data["sourceSeconds"]:.1f} с. Устаревшие кадры пропускаются. Движение на этой записи задавал игрок.</p>
+<p>С автоматической калибровкой угол обзора определился на {automatic["calibratedAt"]:.1f} с.
+Поза получена на {automatic["located"]} из {automatic["frames"]} обработанных кадров.
+Контроллер сформировал {automatic["commandCounts"].get("throttle",0)} команды газа и {automatic["commandCounts"].get("brake",0)} команд торможения.
+На отдельной проверке неподвижного старта с осмотром по модели карты первая команда шага получена на {survey["t"]:.1f} с.</p>
+<p>На исходной геометрии проверены оба пеших участка. Положение восстановлено для {walking["located"]} из {walking["tested"]} отложенных ракурсов.
+Игровой скрипт проверяет посадку, {data["gates"]} дорожные точки, остановку и пеший финиш. Живой проезд в классическом клиенте ожидает проверки.</p></section>"""
+
+
 def publish(folder, world_manifest=None):
     def read(name):
         return json.loads((folder / name).read_bytes())
@@ -109,6 +138,7 @@ def publish(folder, world_manifest=None):
 <section><h2>Запуск игры</h2><p><strong>Проезд в оригинальной GTA SA ожидает проверки.</strong></p>
 <p>Для Windows собран игровой сценарий с персонажем, припаркованным Faggio 462 и камерой от первого лица. Посадку, ускорение, поворот и выход обрабатывает игра.</p>
 <p>Браузерный порт выполнил {len(boot["completedBootSteps"])} шагов контрольной загрузки. {boot_info} Последний запрос движка<br><code>{latest}</code></p></section>
+{controller_section(folder, route_id)}
 {full_world_section(world_manifest, route_id)}
 {vehicle_probe_section(folder)}
 <h2>Опора под маршрутом</h2><p>Высоты измерены по треугольникам коллизий упакованной карты. Длины и высоты приведены в единицах игрового мира.</p>

@@ -7,6 +7,7 @@ import pytest
 from scripts.pilot.world_map_lab.audit_game_runtime import GAME_FILES
 from scripts.pilot.world_map_lab.export_full_game_world import build, check_scene, img_directory
 from scripts.pilot.world_map_lab.native_collisions import COL, ENTRY, SECTOR
+from scripts.pilot.world_map_lab.open_classic_stand import prepare_full
 from scripts.pilot.world_map_lab.stage_full_game_world import stage
 
 
@@ -49,7 +50,7 @@ def test_full_map_preserves_overrides_independent_scenes_and_gameplay(tmp_path):
             f"inst\n1000,shop,{i},1,2,3,0,0,0,1,1\n1000,shop,{i},1,2,3,0,0,0,1,-1\nend\n"
         )
     for name in ("water.dat", "timecyc.dat"):
-        (data / name).write_text("world settings")
+        (data / name).write_text("processed\n" if name == "water.dat" else "world settings")
     scenario = tmp_path / "scenario"
     scenario.mkdir()
     route = tmp_path / "route.json"
@@ -85,12 +86,32 @@ def test_full_map_preserves_overrides_independent_scenes_and_gameplay(tmp_path):
         target.write_bytes(b"fixture")
     for name in ("gta.dat", "default.dat"):
         (game / "data" / name).write_text("IPL old.ipl\nEXIT\n")
+    (game / "data/default.dat").write_text("IDE data/stock.ide\nEXIT\n")
+    (game / "data/stock.ide").write_text("objs\n1000,stock,tex,100,0\nend\n")
     dest = tmp_path / "merged"
     stage(game, world, dest, scenario)
     dat = (dest / "data/gta.dat").read_text()
     assert dat.count("IMG ") == 2 and dat.count("IPL ") == 2 and "old.ipl" not in dat
     assert (game / "data/gta.dat").read_text() == "IPL old.ipl\nEXIT\n"
     assert (dest / "data/script/main.scm").read_bytes() == b"main.scm"
+    final_map = dest / "data/maps/brworld"
+    assert "1001, shop," in (final_map / "brworld.ide").read_text()
+    assert all("1001,shop," in f.read_text() for f in final_map.glob("*.ipl"))
+    index = {}
+    for a in info["archives"]:
+        index.update(img_directory(final_map / a["name"]))
+    archive_file, off, _ = index["models.col"]
+    with archive_file.open("rb") as f:
+        f.seek(off)
+        assert COL.unpack(f.read(COL.size))[-1] == 1001
+    details = json.loads((dest / "sphere-full-world.json").read_text())
+    assert details["binding"]["remappedInstances"] == 4
+    assert details["binding"]["remappedCollisions"] == 1
+    assert not details["gameplayVerified"]
+    assert prepare_full(game, world, scenario, dest) == dest / "gta_sa.exe"
+    (dest / "data/gta.dat").write_text("EXIT\n")
+    with pytest.raises(ValueError, match="стенда"):
+        prepare_full(game, world, scenario, dest)
     damaged = world / "data/maps/brworld/brw00.img"
     damaged.write_bytes(b"invalid")
     with pytest.raises(ValueError, match="checksum mismatch"):

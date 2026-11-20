@@ -10,10 +10,11 @@ import numpy as np
 class IndexedLandmarks:
     """One shared descriptor index per neighborhood. No access to simulator state."""
 
-    def __init__(self, atlas):
+    def __init__(self, atlas, *, cache_tiles=2):
         self.atlas = atlas
         self.views = tuple(atlas.views)
         self.cache = OrderedDict()
+        self.cache_tiles = cache_tiles
         self.detector = cv2.SIFT_create(nfeatures=1400, contrastThreshold=0.022)
         self.last_reason = "no_frame"
 
@@ -25,7 +26,10 @@ class IndexedLandmarks:
                 return None
             ids = np.concatenate([np.arange(*v["range"], dtype=np.int32) for v in views])
             locations = np.concatenate(
-                [np.full(v["range"][1] - v["range"][0], v["s"], np.float32) for v in views]
+                [
+                    np.full(v["range"][1] - v["range"][0], v.get("support", v["s"]), np.float32)
+                    for v in views
+                ]
             )
             if len(ids) < 8:
                 return None
@@ -34,7 +38,7 @@ class IndexedLandmarks:
             matcher.add([desc])
             matcher.train()
             self.cache[tile] = matcher, ids, locations
-            if len(self.cache) > 2:
+            if len(self.cache) > self.cache_tiles:
                 self.cache.popitem(last=False)
         self.cache.move_to_end(tile)
         return self.cache[tile]
@@ -64,27 +68,35 @@ class IndexedLandmarks:
             return None
         matcher, ids, stations = bank
         matches = matcher.knnMatch(desc, k=8)
-        chosen = {}
-        for row in matches:
-            if len(row) < 2:
-                continue
-            best = row[0]
-            xyz = m.xyz[ids[best.trainIdx]]
-            competing = next(
-                (a for a in row[1:] if np.max(abs(m.xyz[ids[a.trainIdx]] - xyz)) > 0.30), None
-            )
-            if competing is None or best.distance >= 0.77 * competing.distance:
-                continue
-            key = tuple(np.rint(xyz / 0.20).astype(int))
-            if key not in chosen or best.distance < chosen[key][0]:
-                chosen[key] = (best.distance, xyz, uv[best.queryIdx], stations[best.trainIdx])
-        self.evidence["distinct"] = len(chosen)
-        if len(chosen) < 30:
+        batch = [
+            (row[0].queryIdx, tuple(row) + (row[0],) * (8 - len(row)))
+            for row in matches
+            if len(row) >= 2
+        ]
+        if not batch:
             return None
-        vals = list(chosen.values())
-        points = np.float32([v[1] for v in vals])
-        pixels = np.float32([v[2] for v in vals])
-        views = np.asarray([v[3] for v in vals])
+        q = np.array([i for i, _ in batch])
+        ii = np.array([[hit.trainIdx for hit in row] for _, row in batch])
+        ds = np.array([[hit.distance for hit in row] for _, row in batch])
+        positions = m.xyz[ids[ii]]
+        distinct = np.max(np.abs(positions[:, 1:] - positions[:, :1]), axis=2) > 0.30
+        rival = distinct.argmax(axis=1) + 1
+        accepted = distinct.any(axis=1) & (ds[:, 0] < 0.77 * ds[np.arange(len(q)), rival])
+        # Pick the closest descriptor per spatial cell. Keep original query order for RANSAC.
+        selected = np.flatnonzero(accepted)
+        cells = np.rint(positions[selected, 0] / 0.2).astype(np.int32)
+        _, first, inverse = np.unique(cells, axis=0, return_index=True, return_inverse=True)
+        order = np.lexsort((ds[selected, 0], inverse))
+        keep = (
+            selected[order[np.r_[True, np.diff(inverse[order]) != 0]]] if len(order) else selected
+        )
+        keep = keep[np.argsort(first)]
+        self.evidence["distinct"] = len(keep)
+        if len(keep) < 30:
+            return None
+        points = np.float32(positions[keep, 0])
+        pixels = np.float32(uv[q[keep]])
+        views = stations[ii[keep, 0]]
         self.putatives = points, pixels
         ok, r, t, idx = cv2.solvePnPRansac(
             points,
@@ -98,7 +110,7 @@ class IndexedLandmarks:
         )
         self.last_reason = "insufficient_geometric_support"
         self.evidence["inliers"] = len(idx) if ok and idx is not None else 0
-        if not ok or idx is None or len(idx) < 30 or len(idx) < 0.28 * len(vals):
+        if not ok or idx is None or len(idx) < 30 or len(idx) < 0.28 * len(keep):
             return None
         use = idx.ravel()
         coords, screen = points[use], pixels[use]

@@ -1,4 +1,4 @@
-"""Compose a verified full-world overlay with an isolated clean classic GTA SA installation."""
+"""Compose a verified full-world overlay with an isolated classic GTA SA installation."""
 
 import argparse
 import json
@@ -7,7 +7,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from scripts.pilot.world_map_lab.audit_game_runtime import inspect_runtime
-from scripts.pilot.world_map_lab.export_full_game_world import definitions, digest, source_file
+from scripts.pilot.world_map_lab.classic_world_binding import bind_world
+from scripts.pilot.world_map_lab.classic_world_limits import CONFIG_NAME, merge_limits, requirements
+from scripts.pilot.world_map_lab.export_full_game_world import digest, source_file
 from scripts.pilot.world_map_lab.stage_game_quarter import base_ids, directives
 
 
@@ -33,6 +35,7 @@ def stage(game, world, destination, scenario):
     manifest = json.loads((world / "world-manifest.json").read_bytes())
     if manifest.get("scope") != "all-active-source-scenes":
         raise ValueError("full-world manifest required")
+    scenario = scenario.resolve(strict=True)
     scripts = json.loads((scenario / "classic-scenario.json").read_bytes())
     if not manifest["routeSha256"] or manifest["routeSha256"] != scripts["routeSha256"]:
         raise ValueError("world and compiled scenario belong to different routes")
@@ -45,13 +48,7 @@ def stage(game, world, destination, scenario):
     if missing:
         raise ValueError("missing classic gameplay files: " + ", ".join(missing))
     map_dir = "data/maps/brworld/"
-    ids, _, _ = definitions(world / map_dir / "brworld.ide")
-    occupied = base_ids(game) & set(ids.values())
-    if occupied:
-        raise ValueError(
-            f"base IDE still occupies {len(occupied)} world IDs, first {min(occupied)}; "
-            "use a cleaned total-conversion base"
-        )
+    occupied = base_ids(game)
     if (game / map_dir).exists():
         raise ValueError("base already contains a Black Russia conversion")
     if any(p.is_symlink() or p.is_junction() for p in game.rglob("*")):
@@ -70,14 +67,17 @@ def stage(game, world, destination, scenario):
     wanted = [a.replace("\\", "/").lower() for a in additions]
     if [f"{k} {v}".lower() for k, v in directives(world / "world-fragment.dat")] != wanted:
         raise ValueError("map directives differ from manifest")
-    # Keep the base scripts, DLLs, adjuster configuration and gameplay assets in the clone.
-    # Only the two new script binaries, environment and map directives are replaced.
+    # All changes, including model bindings and the capacity profile, belong to the clone.
     destination.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=destination.parent) as temp:
         root = Path(temp) / "game"
         shutil.copytree(game, root)
         for rel, checksum in expected.items():
-            src = source_file(world, rel)
+            src = (
+                source_file(scenario, Path(rel).name)
+                if rel.startswith("data/script/")
+                else source_file(world, rel)
+            )
             target = (root / rel).resolve()
             if not target.is_relative_to(root):
                 raise ValueError("overlay path outside destination")
@@ -85,6 +85,23 @@ def stage(game, world, destination, scenario):
             shutil.copyfile(src, target)
             if digest(target) != checksum:
                 raise ValueError(f"overlay checksum mismatch: {rel}")
+        binding = bind_world(root / map_dir, manifest, occupied)
+        archives = {
+            value.lower()
+            for dat in ("default.dat", "gta.dat")
+            for kind, value in directives(game / "data" / dat)
+            if kind == "IMG"
+        }
+        needed = requirements(
+            manifest,
+            max(max(occupied), binding["highestModelId"]),
+            root / map_dir / "brworld.ide",
+            root / "data/water.dat",
+            len(archives),
+        )
+        config = root / CONFIG_NAME
+        existing = config.read_text(encoding="cp1252") if config.is_file() else ""
+        config.write_text(merge_limits(existing, needed), encoding="cp1252")
         for name in ("default.dat", "gta.dat"):
             path = Path("data") / name
             content = merge_layout(game / path, additions if name == "gta.dat" else ())
@@ -96,6 +113,18 @@ def stage(game, world, destination, scenario):
                     "routeSha256": scripts["routeSha256"],
                     "additionalImageArchives": len(manifest["archives"]),
                     "largestSceneInstances": max(s["instances"] for s in manifest["scenes"]),
+                    "sourceGameDirectory": str(game),
+                    "gameExecutableSha256": digest(root / "gta_sa.exe"),
+                    "scenarioFiles": {
+                        n: digest(root / "data/script" / n) for n in ("main.scm", "script.img")
+                    },
+                    "layoutSha256": {
+                        n: digest(root / "data" / n) for n in ("default.dat", "gta.dat")
+                    },
+                    "binding": binding,
+                    "limitsFile": CONFIG_NAME,
+                    "limitsSha256": digest(config),
+                    "limitAdjusterPresent": (root / "$fastman92limitAdjuster.asi").is_file(),
                     "gameplayVerified": False,
                 },
                 indent=2,
