@@ -32,7 +32,28 @@ def vehicle_probe_section(folder):
 <p>Массу и масштаб колёс задали одинаковыми для сравнения. Замер проверяет работу загрузчика и контроллера OpenSA.</p></section>"""
 
 
-def publish(folder):
+def full_world_section(path, route_id):
+    if path is None:
+        return ""
+    world = json.loads(path.read_bytes())
+    if world["scope"] != "all-active-source-scenes" or world["routeSha256"] != route_id:
+        raise ValueError("full world and spawn scenario differ")
+    scenes = world["scenes"]
+    size = sum(a["bytes"] for a in world["archives"]) / 1024**3
+    peak = max(s["instances"] for s in scenes)
+    return f"""<section id="whole-world"><h2>Вся карта Black Russia</h2>
+<p>В пакет GTA SA вошли все {len(scenes)} активных сцен Ariane. Расстановки, координаты,
+повороты и ссылки на дальние модели сохранены в исходных файлах сцен.</p>
+<table><tbody><tr><th>Размещения / определения моделей</th><td>{world["instances"]:,} / {world["modelDefinitions"]:,}</td></tr>
+<tr><th>Связи с дальними моделями</th><td>{world["lodLinks"]:,}</td></tr>
+<tr><th>Коллизии, привязанные к моделям</th><td>{world["collisions"]:,}</td></tr>
+<tr><th>Архивы GTA / объём</th><td>{len(world["archives"])} / {size:.2f} ГиБ</td></tr>
+<tr><th>Размещений в крупнейшей сцене</th><td>{peak:,}</td></tr></tbody></table>
+<p>В исходнике у {world["unavailableSourceRows"]} размещений отсутствует геометрия.
+Физический проезд по полной карте ожидает запуска совместимой игровой базы с расширенными лимитами.</p></section>"""
+
+
+def publish(folder, world_manifest=None):
     def read(name):
         return json.loads((folder / name).read_bytes())
 
@@ -88,6 +109,7 @@ def publish(folder):
 <section><h2>Запуск игры</h2><p><strong>Проезд в оригинальной GTA SA ожидает проверки.</strong></p>
 <p>Для Windows собран игровой сценарий с персонажем, припаркованным Faggio 462 и камерой от первого лица. Посадку, ускорение, поворот и выход обрабатывает игра.</p>
 <p>Браузерный порт выполнил {len(boot["completedBootSteps"])} шагов контрольной загрузки. {boot_info} Последний запрос движка<br><code>{latest}</code></p></section>
+{full_world_section(world_manifest, route_id)}
 {vehicle_probe_section(folder)}
 <h2>Опора под маршрутом</h2><p>Высоты измерены по треугольникам коллизий упакованной карты. Длины и высоты приведены в единицах игрового мира.</p>
 <table><thead><tr><th>Участок</th><th>Длина</th><th>Точки с опорой</th><th>Макс. разница высот</th></tr></thead><tbody>{"".join(rows)}</tbody></table>
@@ -103,4 +125,6 @@ def publish(folder):
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--folder", type=Path, required=True)
-    publish(cli.parse_args().folder)
+    cli.add_argument("--world-manifest", type=Path)
+    args = cli.parse_args()
+    publish(args.folder, args.world_manifest)
