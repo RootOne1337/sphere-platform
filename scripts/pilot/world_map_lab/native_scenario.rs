@@ -3,6 +3,7 @@ use sa_mod::script::Arg::{Float, Int};
 use sa_mod::{
     Event, Mod, Vec3, VehicleRef, entities, event_kind, models, objects, script, state, world,
 };
+mod native_progress;
 include!("points.rs");
 
 #[derive(Default)]
@@ -19,6 +20,8 @@ struct Journey {
     pending: bool,
     wait_frames: u16,
     finished: bool,
+    course: native_progress::Course,
+    rode_course: bool,
     last_sample: u32,
 }
 
@@ -79,7 +82,10 @@ impl Journey {
         })?;
         self.bike = Some(bike);
         self.first_person = true;
-        sa_mod::info("sphere_scenario event=start");
+        sa_mod::info(&format!(
+            "sphere_scenario event=start route={ROUTE_SHA256} gates={}",
+            GATES.len()
+        ));
         Ok(())
     }
 
@@ -188,6 +194,10 @@ impl Journey {
             sa_mod::info("sphere_scenario event=boarded");
         }
         let p = player.ped.pos;
+        if mounted && !self.rode_course && self.course.sample(GATES, w.time_ms, [p.x, p.y, p.z]) {
+            self.rode_course = true;
+            sa_mod::info("sphere_scenario event=drive_route_complete");
+        }
         if mounted && self.displaced && !self.recovered {
             let distance = ROAD
                 .windows(2)
@@ -221,11 +231,12 @@ impl Journey {
         }
         if !mounted && self.was_mounted {
             let q = ROAD.last().unwrap();
-            let parked = state::vehicle(bike).is_some_and(|v| {
-                (v.pos.x - q[0]).hypot(v.pos.y - q[1]) < 3.0
-                    && (v.pos.z - q[2]).abs() < 1.5
-                    && v.move_speed.x.hypot(v.move_speed.y) < 0.025
-            });
+            let parked = self.rode_course
+                && state::vehicle(bike).is_some_and(|v| {
+                    (v.pos.x - q[0]).hypot(v.pos.y - q[1]) < 3.0
+                        && (v.pos.z - q[2]).abs() < 1.5
+                        && v.move_speed.x.hypot(v.move_speed.y) < 0.025
+                });
             self.exited = parked;
             sa_mod::info(if parked {
                 "sphere_scenario event=parked_and_exited"

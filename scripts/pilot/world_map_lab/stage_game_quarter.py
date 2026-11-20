@@ -10,6 +10,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from scripts.pilot.world_map_lab.audit_game_runtime import inspect_runtime
+from scripts.pilot.world_map_lab.native_collisions import bind_collisions, write_game_img
 
 MODEL_LIMIT = 20000
 
@@ -63,71 +64,136 @@ def remap(ide, ipl, used):
     return rewrite(ide, True), rewrite(ipl, False), names
 
 
-def stage(game, quarter, dest):
-    game = game.resolve(strict=True)
+def stage(game, quarter, dest, classic=None):
+    game = game.resolve(strict=True) if game else None
     quarter = quarter.resolve(strict=True)
     dest = dest.resolve()
-    if dest.exists() or dest.is_relative_to(game) or dest.is_relative_to(quarter):
+    if dest.exists() or (game and dest.is_relative_to(game)) or dest.is_relative_to(quarter):
         raise ValueError("select a new directory outside the inputs")
     missing = [p for p, ok in inspect_runtime(game).items() if not ok]
-    if missing:
+    if classic and game:
+        missing = [p for p in missing if p != "data/script/main.scm"]
+        if not (game / "gta_sa.exe").is_file():
+            missing.append("gta_sa.exe")
+        if not (game / "models/player.img").is_file():
+            missing.append("models/player.img")
+    if game and missing:
         raise ValueError("missing gameplay inputs: " + ", ".join(missing))
     proof = json.loads((quarter / "manifest.json").read_bytes())
-    for name in ("brquarter.col", "brquarter.img", "brquarter.ide", "brquarter.ipl"):
+    environment = [name for name in ("water.dat", "timecyc.dat") if name in proof["hashes"]]
+    packaged_route = proof.get("routeSha256")
+    scripts = {}
+    if classic:
+        proof_scm = json.loads((classic / "classic-scenario.json").read_bytes())
+        if not packaged_route or proof_scm["routeSha256"] != packaged_route:
+            raise ValueError("classic scenario belongs to a different route")
+        for name in ("main.scm", "script.img"):
+            payload = (classic / name).read_bytes()
+            if not payload or hashlib.sha256(payload).hexdigest() != proof_scm["files"][name]:
+                raise ValueError("classic script changed: " + name)
+            scripts[name] = payload
+    if packaged_route and packaged_route != proof["hashes"].get("route.json"):
+        raise ValueError("route differs from the exported world")
+    for name in [
+        "brquarter.col",
+        "brquarter.img",
+        "brquarter.ide",
+        "brquarter.ipl",
+        *environment,
+        *(["route.json"] if packaged_route else []),
+    ]:
         with (quarter / name).open("rb") as f:
             if hashlib.file_digest(f, "sha256").hexdigest() != proof["hashes"][name]:
                 raise ValueError("native quarter changed: " + name)
     ide, ipl, ids = remap(
         (quarter / "brquarter.ide").read_text("ascii"),
         (quarter / "brquarter.ipl").read_text("ascii"),
-        base_ids(game),
+        base_ids(game) if game else set(),
     )
     dest.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=dest.parent) as temp:
         root = Path(temp) / "game"
         root.mkdir()
         # Link only immutable, unmodified assets. Generated config always gets a new file.
-        for group in ("anim", "audio", "data", "models", "text", "movies"):
+        replaced = {"data/gta.dat", "data/default.dat", *("data/" + name for name in environment)}
+        replaced.update("data/script/" + name for name in scripts)
+        if classic and game:
+            # Run the cloned base with its own stock runtime libraries.
+            for src in game.iterdir():
+                if src.is_file() and (
+                    src.name.lower() in ("gta_sa.exe", "stream.ini") or src.suffix.lower() == ".dll"
+                ):
+                    shutil.copyfile(src, root / src.name)
+        for group in ("anim", "audio", "data", "models", "text", "movies") if game else ():
             for src in (game / group).rglob("*"):
                 if not src.is_file():
                     continue
                 rel = src.relative_to(game)
-                if rel.as_posix().lower() in ("data/gta.dat", "data/default.dat"):
+                if rel.as_posix().lower() in replaced:
                     continue
                 dst = root / rel
                 dst.parent.mkdir(parents=True, exist_ok=True)
+                if classic and game:
+                    shutil.copyfile(src, dst)
+                    continue
                 try:
                     os.link(src, dst)
                 except OSError:
                     shutil.copyfile(src, dst)
+        if scripts:
+            target = root / "data/script"
+            target.mkdir(parents=True, exist_ok=True)
+            for name, payload in scripts.items():
+                (target / name).write_bytes(payload)
+        (root / "data").mkdir(exist_ok=True)
+        for name in environment:
+            shutil.copyfile(quarter / name, root / "data" / name)
+        if packaged_route:
+            shutil.copyfile(quarter / "route.json", root / "sphere-route.json")
         relative = Path("data/maps/sphere_native")
         patch = root / relative
         patch.mkdir(parents=True, exist_ok=False)
-        for name in ("brquarter.col", "brquarter.img"):
-            shutil.copyfile(quarter / name, patch / name)
+        collision = bind_collisions((quarter / "brquarter.col").read_bytes(), ids)
+        collision_hash = write_game_img(
+            quarter / "brquarter.img", patch / "brquarter.img", collision
+        )
         (patch / "brquarter.ide").write_text(ide, encoding="ascii")
         (patch / "brquarter.ipl").write_text(ipl, encoding="ascii")
         additions = [
-            "IMG data/maps/sphere_native/brquarter.img",
-            "IDE data/maps/sphere_native/brquarter.ide",
-            "COLFILE 0 data/maps/sphere_native/brquarter.col",
-            "IPL data/maps/sphere_native/brquarter.ipl",
+            r"IMG DATA\MAPS\SPHERE_NATIVE\BRQUARTER.IMG",
+            r"IDE DATA\MAPS\SPHERE_NATIVE\BRQUARTER.IDE",
+            r"IPL DATA\MAPS\SPHERE_NATIVE\BRQUARTER.IPL",
         ]
-        for filename in ("default.dat", "gta.dat"):
-            base = (game / "data" / filename).read_text(encoding="cp1252").splitlines()
-            remaining = [line for line in base if not re.match(r"^\s*IPL\s+", line, re.I)]
-            if filename == "gta.dat":
-                exit_at = next(
-                    (i for i, line in enumerate(remaining) if line.strip().upper() == "EXIT"),
-                    len(remaining),
+        if not game:
+            (root / "sphere-map-fragment.dat").write_text(
+                "\n".join(additions) + "\n", encoding="ascii"
+            )
+        else:
+            for filename in ("default.dat", "gta.dat"):
+                base = (game / "data" / filename).read_text(encoding="cp1252").splitlines()
+                remaining = [line for line in base if not re.match(r"^\s*IPL\s+", line, re.I)]
+                if filename == "gta.dat":
+                    exit_at = next(
+                        (i for i, line in enumerate(remaining) if line.strip().upper() == "EXIT"),
+                        len(remaining),
+                    )
+                    remaining[exit_at:exit_at] = additions
+                (root / "data" / filename).write_text(
+                    "\n".join(remaining) + "\n", encoding="cp1252"
                 )
-                remaining[exit_at:exit_at] = additions
-            (root / "data" / filename).write_text("\n".join(remaining) + "\n", encoding="cp1252")
         (root / "sphere-scenario.json").write_text(
             json.dumps(
                 dict(
                     quarterRevision=proof["revision"],
+                    routeSha256=packaged_route,
                     models=ids,
+                    gameplayBasePresent=bool(game),
+                    classicScenario=bool(classic),
+                    sourceGameDirectory=str(game) if game else None,
+                    mapManifestSha256=hashlib.sha256(
+                        (quarter / "manifest.json").read_bytes()
+                    ).hexdigest(),
+                    streamedCollisionSha256=collision_hash,
                     start=proof["start"],
                     vehicle=proof["vehicle"],
                     end=proof["end"],
@@ -143,7 +209,15 @@ def stage(game, quarter, dest):
 
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
-    for key in ("game", "quarter", "output"):
+    mode = cli.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--game", type=Path)
+    mode.add_argument(
+        "--map-only", action="store_true", help="prepare a map without a gameplay base"
+    )
+    cli.add_argument(
+        "--classic-scenario", type=Path, help="compiled main.scm for the original PC game"
+    )
+    for key in ("quarter", "output"):
         cli.add_argument("--" + key, required=True, type=Path)
     args = cli.parse_args()
-    stage(args.game, args.quarter, args.output)
+    stage(args.game, args.quarter, args.output, args.classic_scenario)

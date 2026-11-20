@@ -259,6 +259,10 @@ def build(args):
                 mesh=checksum(dest),
             )
         print(meta, flush=True)
+    if set(args.modes) == {"walk", "drive"}:
+        from scripts.pilot.world_map_lab.build_taxi_transfers import build as build_transfers
+
+        build_transfers(folder, folder / "ariane-nav.dll")
 
 
 class Network:

@@ -48,3 +48,26 @@ def test_terminal_result_survives_locked_snapshot_and_service_restart(tmp_path, 
     monkeypatch.setattr(Path, "replace", locked)
     publish_status(dest, "arrived", {"frame": 8})
     assert manager.state("test") == {"id": "test", "state": "arrived", "row": {"frame": 8}}
+
+
+def test_image_standstill_distinguishes_stationary_and_translating_textures():
+    import base64
+
+    import cv2
+    import numpy as np
+
+    from scripts.pilot.world_map_lab.check_journey_rgb import H, W, image_standstill
+
+    image = np.random.default_rng(614).integers(0, 256, (H, W), dtype=np.uint8)
+
+    def encode(array):
+        return base64.b64encode(array.tobytes()).decode()
+
+    depth = np.full((H, W), 12 * 128, dtype="<u2")
+    previous = (encode(image), encode(depth), [1, 0, 4, 0, 0])
+    camera = [1, -0.6, 4, 0, 0]
+    assert image_standstill(previous, encode(image), camera, 200)
+    moved = cv2.warpAffine(image, np.float32([[1, 0, -10], [0, 1, 0]]), (W, H))
+    assert not image_standstill(previous, encode(moved), camera, 200)
+    assert not image_standstill(previous, encode(image), [1, 0, 4, 0, 0], 200)
+    assert not image_standstill(None, encode(image), camera, 200)

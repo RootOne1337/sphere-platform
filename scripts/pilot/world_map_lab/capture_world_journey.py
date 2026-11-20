@@ -60,6 +60,7 @@ def render(args):
                 base / n
                 for n in (
                     "journey_record.mjs",
+                    "journey_dashboard.mjs",
                     "journey_scene.mjs",
                     "journey_vehicle.mjs",
                     "journey_path.mjs",
@@ -103,6 +104,8 @@ def render(args):
         )
         if served != route_hash:
             raise ValueError("capture server is serving another route")
+        if payload:
+            page.evaluate((base / "journey_dashboard.mjs").read_text(encoding="utf8"))
         record = page.evaluate(
             (base / "journey_record.mjs").read_text(encoding="utf-8"),
             dict(width=args.width, height=args.height, fps=30, bitrate=args.bitrate),

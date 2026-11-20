@@ -52,6 +52,7 @@ def meshes(tmp_path_factory):
             ]
             for kind in (COLLISION, DRIVE):
                 put(write, kind, strip, stats)
+        put(write, COLLISION, deck(7, 53, 22, 69, 0), stats)
         put(write, COLLISION, deck(210, 53, 240, 69, 0), stats)
         put(write, DRIVE, deck(5, 65, 60, 75, 2), stats)
         put(write, COLLISION, deck(4, 85, 70, 105, 0), stats)
@@ -155,3 +156,43 @@ def test_local_body_motion_respects_deck_and_requested_distance(meshes):
             pos = step["position"]
         with pytest.raises(ValueError):
             movement_step(nav, pos, [pos[0] + 20, pos[1]], "drive")
+
+
+def test_taxi_picks_up_between_two_pedestrian_endpoints(meshes):
+    from scripts.pilot.world_map_lab.world_trip import TripPlanner
+
+    with Network(meshes, "drive") as drive, Network(meshes, "walk") as walk:
+        planner = TripPlanner({"drive": drive, "walk": walk}, meshes)
+        a, b = [15, 63, 0], [225, 64, 0]
+        assert not drive.levels(*a[:2]) and not drive.levels(*b[:2])
+        route = planner.taxi(a, b)
+        assert [leg["mode"] for leg in route["legs"]] == ["walk", "drive", "walk"]
+        for first, second in zip(route["legs"], route["legs"][1:]):
+            assert first["path"][-1] == pytest.approx(second["path"][0], abs=0.375)
+        route["legs"].clear()
+        assert len(planner.taxi(a, b)["legs"]) == 3
+        assert planner.taxi(b, b)["status"] == "already_there"
+        assert planner.taxi([15, 63, 100], b)["status"] == "endpoint_unavailable"
+        assert planner.taxi([25, 95, 0], b)["reason"] == "no_walk_to_road"
+        assert planner.taxi(b, [25, 95, 0])["reason"] == "no_road_to_goal"
+
+
+def test_reachable_map_does_not_include_an_isolated_pavement(meshes):
+    from io import BytesIO
+
+    from PIL import Image
+
+    from scripts.pilot.world_map_lab.taxi_surface import TaxiSurface
+    from scripts.pilot.world_map_lab.world_trip import TripPlanner
+
+    with Network(meshes, "drive") as drive, Network(meshes, "walk") as walk:
+        surface = TaxiSurface(TripPlanner({"drive": drive, "walk": walk}, meshes), size=511)
+        with Image.open(BytesIO(surface.png([25, 95, 0]))) as image:
+
+            def index(x, y):
+                return image.getpixel((round(x / 256 * 510), round((128 - y) / 128 * 510)))
+
+            assert index(25, 95) == 1
+            assert index(225, 64) == 0
+        with pytest.raises(ValueError):
+            surface.png([25, 95, 100])

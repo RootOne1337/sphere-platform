@@ -15,6 +15,7 @@ import numpy as np
 
 from scripts.pilot.world_map_lab.detail_scene_service import read_scene, scene_files
 from scripts.pilot.world_map_lab.journey_runs import JourneyRuns
+from scripts.pilot.world_map_lab.taxi_surface import TaxiSurface
 from scripts.pilot.world_map_lab.world_navmesh import FLOATS, Network, checksum
 from scripts.pilot.world_map_lab.world_trip import TripPlanner
 
@@ -84,6 +85,7 @@ def serve(folder, port, adapter=None):
         if nets["drive"].meta["geometrySha256"] != nets["walk"].meta["geometrySha256"]:
             raise ValueError("travel modes are from different source revisions")
         trip = TripPlanner(nets, folder)
+        accessible = TaxiSurface(trip)
         files = {
             "/": Path(__file__).with_name("world_nav_planner.html"),
             "/world.png": folder / "atlas/ariane-world-top.png",
@@ -141,6 +143,20 @@ def serve(folder, port, adapter=None):
             mixed = json.loads(mixed_file.read_bytes())
             if all(mixed["meshes"].get(m) == checksum(folder / f"{m}.nav.zip") for m in nets):
                 examples["trip"] = {key: mixed[key] for key in ("start", "vehicle", "end")}
+                examples["taxi"] = {key: mixed[key] for key in ("start", "end")}
+
+        parked = None
+        if "/journey/route.json" in files:
+            scene = json.loads(files["/journey/route.json"].read_bytes())
+            spot = scene.get("vehicle")
+            if (
+                scene.get("revision") == nets["drive"].meta["placementRevision"]
+                and isinstance(spot, list)
+                and len(spot) == 3
+                and all(isinstance(n, (float, int)) and math.isfinite(n) for n in spot)
+                and any(abs(z - spot[2]) <= 0.375 for z in nets["drive"].levels(*spot[:2]))
+            ):
+                parked = spot
 
         runs = JourneyRuns(folder, port, adapter)
         stack.callback(runs.close)
@@ -182,8 +198,14 @@ def serve(folder, port, adapter=None):
                         self.send_json(runs.stop(data["id"]))
                         return
                     mode = data.get("mode", "trip")
+                    if mode == "taxi" and (
+                        "start" not in data or "end" not in data or "vehicle" in data
+                    ):
+                        raise ValueError("taxi mode requires both endpoints and automatic pickup")
                     if "start" not in data and "end" not in data:
                         route = json.loads(files["/journey/route.json"].read_bytes())
+                    elif mode == "taxi":
+                        route = trip.taxi(data["start"], data["end"])
                     elif mode == "trip":
                         route = trip.route(data["start"], data["end"], vehicle=data.get("vehicle"))
                     else:
@@ -279,11 +301,16 @@ def serve(folder, port, adapter=None):
                         {
                             **{m: n.meta for m, n in nets.items()},
                             "examples": list(examples),
+                            "parkedVehicle": parked,
                             "review": "/review" in files,
                             "detail": "/detail" in files,
                             "explore": "/explore" in files,
                             "gameplay": "/gameplay" in files,
+                            "classicGame": "/classic-game" in files,
                             "journeyReport": "/journey/journey-report.html" in files,
+                            "archiveMovie": "/journey/scooter4-observations.mp4" in files,
+                            "crossMovie": "/journey/cross-camera.mp4" in files,
+                            "taxiReport": "/taxi-report" in files,
                             "journeyMovie": "/journey/film.mp4" in files,
                             "firstPersonReport": "/first-person/report.html" in files,
                             "report": "/navigation-report.html" in files,
@@ -314,13 +341,29 @@ def serve(folder, port, adapter=None):
                         self.end_headers()
                         self.wfile.write(body)
                         return
+                if req.path == "/api/taxi-surface.png":
+                    try:
+                        value = parse_qs(req.query, strict_parsing=True, max_num_fields=1)["start"][
+                            0
+                        ]
+                        png = accessible.png([float(v) for v in value.split(",")])
+                    except (ValueError, KeyError, OverflowError):
+                        self.send_json({"error": "invalid origin"}, 400)
+                        return
+                    self.send_response(200)
+                    self.send_header("Content-Type", "image/png")
+                    self.send_header("Cache-Control", "no-cache")
+                    self.send_header("Content-Length", str(len(png)))
+                    self.end_headers()
+                    self.wfile.write(png)
+                    return
                 if req.path not in ("/api/levels", "/api/path", "/api/example", "/api/step"):
                     self.send_error(404)
                     return
                 try:
                     args = parse_qs(req.query, strict_parsing=True, max_num_fields=4)
                     mode = args["mode"][0]
-                    nav = nets["walk" if mode == "trip" else mode]
+                    nav = nets["walk" if mode in ("trip", "taxi") else mode]
                     if req.path == "/api/example":
                         self.send_json(examples[mode])
                     elif req.path == "/api/step":
@@ -339,7 +382,11 @@ def serve(folder, port, adapter=None):
                             raise ValueError("vehicle requires mixed mode")
                         point = [float(n) for n in vehicle[0].split(",")] if vehicle else None
                         self.send_json(
-                            trip.route(*ends, vehicle=point) if mode == "trip" else nav.route(*ends)
+                            trip.taxi(*ends)
+                            if mode == "taxi"
+                            else trip.route(*ends, vehicle=point)
+                            if mode == "trip"
+                            else nav.route(*ends)
                         )
                 except (KeyError, TypeError, ValueError, OverflowError):
                     self.send_json({"error": "invalid query"}, 400)

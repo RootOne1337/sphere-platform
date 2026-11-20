@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ru">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+  <title>Поездки A → B · Sphere Lab</title>
+  <style>
+    :root {
+      font:
+        16px/1.5 system-ui,
+        sans-serif;
+      color: #e5eff3;
+      background: #0a161f;
+      color-scheme: dark;
+    }
+    body {
+      max-width: 1200px;
+      margin: auto;
+      padding: 24px;
+    }
+    a {
+      color: #7fe0ed;
+    }
+    header {
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      font-size: clamp(27px, 4vw, 42px);
+      margin: 0.5em 0;
+    }
+    h2 {
+      font-size: 20px;
+      margin: 0 0 10px;
+    }
+    h3 {
+      font-size: 16px;
+    }
+    aside,
+    section {
+      padding: 20px;
+      background: #11232e;
+      border: 1px solid #2a404c;
+      border-radius: 10px;
+    }
+    main {
+      display: grid;
+      gap: 18px;
+    }
+    figure {
+      margin: 0;
+    }
+    video {
+      width: 100%;
+      border-radius: 6px;
+    }
+    small,
+    p,
+    figcaption {
+      color: #b1c9d2;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 16px;
+    }
+    .map {
+      position: relative;
+    }
+    .map img,
+    .map svg {
+      width: 100%;
+      display: block;
+    }
+    .map svg {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    td,
+    th {
+      text-align: left;
+      padding: 7px;
+      border-bottom: 1px solid #304652;
+    }
+    button {
+      background: #183340;
+      color: #e2f3f7;
+      border: 1px solid #45616e;
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 0.25em 0.55em;
+    }
+    button:focus-visible,
+    button[aria-pressed="true"] {
+      outline: 2px solid #ffcf8a;
+    }
+    .case-list {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .case {
+      color: #ffcd87;
+    }
+    #detail {
+      min-height: 3.4em;
+      font-size: 14px;
+    }
+    #stats {
+      font-weight: 600;
+    }
+    @media (max-width: 760px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      body {
+        padding: 12px;
+      }
+    }
+  </style>
+  <header>
+    <a href="/">← К выбору A и B</a>
+    <h1>Проверка поездок по карте</h1>
+  </header>
+  <main>
+    <section>
+      <h2 id="journey">Поездка от первого лица</h2>
+      <video
+        controls
+        playsinline
+        preload="metadata"
+        src="/journey/taxi-camera.mp4"
+      ></video>
+      <p id="featured"></p>
+    </section>
+    <div class="grid">
+      <section>
+        <h2>Где маршрут прерывается</h2>
+        <figure>
+          <div class="map">
+            <img src="/world.png" alt="Карта Black Russia сверху" /><svg
+              id="pins"
+              aria-label="Точки с разрывами"
+            ></svg>
+          </div>
+          <figcaption>
+            Оранжевым показан конец маршрута, у которого отсутствует связный
+            пеший подход. Выберите номер, чтобы увидеть вторую точку пары.
+          </figcaption>
+        </figure>
+      </section>
+      <section>
+        <h2>Построение A → B</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Выборка</th>
+              <th>Путь есть</th>
+              <th>С транспортом</th>
+            </tr>
+          </thead>
+          <tbody id="sets"></tbody>
+        </table>
+        <h3>Точки с разрывом</h3>
+        <div class="case-list" id="cases"></div>
+        <p id="detail"></p>
+        <h3>Проезды по изображению</h3>
+        <p id="stats"></p>
+        <p>
+          <a hidden id="archiveFilm" href="/journey/scooter4-observations.mp4"
+            >Архив Scooter 4 · игровые кадры и поиск позиции</a
+          >
+        </p>
+        <h3 id="trialHeading" hidden>Длинный маршрут</h3>
+        <table id="trials" hidden>
+          <thead>
+            <tr>
+              <th>Попытка</th>
+              <th>Прогресс</th>
+              <th>Исход</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p>
+          <a hidden id="longFilm" href="/journey/cross-camera.mp4"
+            >Полное видео ранее пройденного маршрута через карту</a
+          >
+        </p>
+        <p>
+          На стенде Faggio размещается в найденном месте посадки. Время и
+          отклонение измерены на геометрии Ariane.
+        </p>
+        <a href="/journey/taxi-report.json">Все пары, координаты и измерения</a>
+      </section>
+    </div>
+  </main>
+  <script type="module">
+    const id = (name) => document.getElementById(name);
+    const get = async (url) => {
+      const r = await fetch(url);
+      if (!r.ok) throw Error("Ошибка загрузки " + r.status);
+      return r.json();
+    };
+    try {
+      const [report, world] = await Promise.all([
+        get("/journey/taxi-report.json"),
+        get("/api/world"),
+      ]);
+      const rows = report.pairs.filter((r) => r.mode === "taxi");
+      const labels = {
+        local: "Контрольные участки",
+        previous: "Прежние пары",
+        random: "Случайные по карте",
+      };
+      for (const group of new Set(rows.map((r) => r.group))) {
+        const sample = rows.filter((r) => r.group === group);
+        const tr = id("sets").insertRow();
+        for (const value of [
+          labels[group] || group,
+          sample.filter((r) => r.status === "complete").length +
+            " / " +
+            sample.length,
+          sample.filter((r) => r.legs.includes("drive")).length,
+        ])
+          tr.insertCell().textContent = value;
+      }
+      const trials = report.trials || [];
+      for (const trial of trials) {
+        const tr = id("trials").tBodies[0].insertRow();
+        for (const val of [
+          trial.title,
+          ((100 * trial.progress) / trial.planned).toFixed(1) + " %",
+          trial.outcome === "arrived"
+            ? "Финиш"
+            : trial.outcome === "localization_lost"
+              ? "Потеря позиции"
+              : trial.outcome,
+        ])
+          tr.insertCell().textContent = val;
+      }
+      id("trials").hidden = id("trialHeading").hidden = !trials.length;
+      id("longFilm").hidden = !world.crossMovie;
+      id("archiveFilm").hidden = !world.archiveMovie;
+      const movie = report.featured;
+      id("featured").textContent =
+        "Геометрический стенд · " +
+        movie.seconds.toFixed(1) +
+        " с · " +
+        Math.round(movie.planned) +
+        " ед. карты · отклонение на финише " +
+        movie.finishError.toFixed(2) +
+        " ед.";
+      id("stats").textContent =
+        "Дошли до цели в " +
+        report.attempts.filter((r) => r.outcome === "arrived").length +
+        " из " +
+        report.attempts.length +
+        " попыток.";
+      const [left, right, bottom, top] = world.drive.bounds;
+      const xy = ([x, y]) => [
+        ((x - left) / (right - left)) * 1000,
+        ((top - y) / (top - bottom)) * 1000,
+      ];
+      const svg = id("pins");
+      svg.setAttribute("viewBox", "0 0 1000 1000");
+      svg.setAttribute("preserveAspectRatio", "none");
+      const failures = rows.filter((r) => r.status !== "complete");
+      const reasons = {
+        no_walk_to_road: "Со стороны старта нет пешего подхода к посадке.",
+        no_road_to_goal: "Со стороны цели нет пешего подхода от высадки.",
+        no_common_road: "У посадки и высадки разные дорожные сети.",
+        transfer_path_unavailable: "Поиск не подтвердил путь через пересадку.",
+      };
+      const el = (tag, attrs) => {
+        const node = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          tag,
+        );
+        for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+        return node;
+      };
+      function select(n) {
+        svg.replaceChildren();
+        for (const [i, r] of failures.entries()) {
+          const bad = r.reason === "no_road_to_goal" ? r.end : r.start;
+          const [x, y] = xy(bad);
+          svg.append(
+            el("circle", {
+              cx: x,
+              cy: y,
+              r: i === n ? 11 : 6,
+              fill: "#ffbf70",
+              stroke: "#291a12",
+              "stroke-width": 2,
+            }),
+          );
+          if (i !== n) continue;
+          const [ox, oy] = xy(bad === r.start ? r.end : r.start);
+          svg.prepend(
+            el("line", {
+              x1: x,
+              y1: y,
+              x2: ox,
+              y2: oy,
+              stroke: "#f5fbff",
+              "stroke-width": 2,
+              "stroke-dasharray": "7 6",
+            }),
+          );
+          svg.append(
+            el("circle", {
+              cx: ox,
+              cy: oy,
+              r: 8,
+              fill: "#193749",
+              stroke: "#e6f9ff",
+              "stroke-width": 2,
+            }),
+          );
+          const samples = r.geometry?.samples || [];
+          const obstructions = samples.filter((s) => s.bodyHits > 0).length;
+          const unsupported = samples.filter((s) => s.unsupported > 0).length;
+          const water = samples.filter((s) => s.submerged > 0).length;
+          const survey = samples.length
+            ? " Проверено ближайших переходов — " +
+              samples.length +
+              ". Препятствие на " +
+              obstructions +
+              ", разрыв опоры на " +
+              unsupported +
+              ", вода на " +
+              water +
+              "."
+            : "";
+          id("detail").textContent =
+            i +
+            1 +
+            ". " +
+            (reasons[r.reason] || r.status) +
+            " A (" +
+            r.start.map(Math.round).join(", ") +
+            ") → B (" +
+            r.end.map(Math.round).join(", ") +
+            ")." +
+            survey;
+        }
+        [...id("cases").children].forEach((b, i) =>
+          b.setAttribute("aria-pressed", String(i === n)),
+        );
+      }
+      failures.forEach((r, i) => {
+        const b = document.createElement("button");
+        b.textContent = i + 1;
+        b.onclick = () => select(i);
+        id("cases").append(b);
+      });
+      select(0);
+    } catch (e) {
+      id("featured").textContent = e.message;
+    }
+  </script>
+</html>

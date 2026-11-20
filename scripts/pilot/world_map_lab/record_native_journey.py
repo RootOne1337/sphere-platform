@@ -54,6 +54,7 @@ def validate(events):
     points = [[], [], []]
     previous = None
     goal_sample = False
+    rode_course = False
     for event in events:
         line = event["line"]
         found = re.search(r"sphere_scenario event=(\w+)", line)
@@ -65,6 +66,12 @@ def validate(events):
                 "ground_or_vehicle_not_loaded",
             ):
                 raise ValueError(name)
+            if name == "drive_route_complete":
+                if phase != 1 or rode_course:
+                    raise ValueError("out-of-order course completion")
+                rode_course = True
+            if name == "parked_and_exited" and not rode_course:
+                raise ValueError("unverified progress along the selected driving route")
             if name in PHASES:
                 if phase + 1 >= len(PHASES) or PHASES[phase + 1] != name:
                     raise ValueError("out-of-order native event " + name)
@@ -84,7 +91,7 @@ def validate(events):
             points[min(phase, 2)].append(tuple(map(float, (x, y, z))))
     if phase != 3 or not goal_sample:
         raise ValueError("incomplete journey: " + ", ".join(PHASES[: phase + 1]))
-    lengths = [math.dist(p[0], p[-1]) if p else 0 for p in points]
+    lengths = [sum(math.dist(a, b) for a, b in zip(p, p[1:])) for p in points]
     if min(lengths) < 1:
         raise ValueError("movement missing from a walking or driving leg")
     return lengths
@@ -185,7 +192,7 @@ def capture(page, folder, timeout, start_scene):
         with (folder / "journey.mp4").open("rb") as f:
             movie["sha256"] = hashlib.file_digest(f, "sha256").hexdigest()
         (folder / "recording.json").write_text(
-            json.dumps(dict(movie=movie, legDisplacements=lengths, events=PHASES), indent=2),
+            json.dumps(dict(movie=movie, legDistances=lengths, events=PHASES), indent=2),
             encoding="utf8",
         )
         return movie

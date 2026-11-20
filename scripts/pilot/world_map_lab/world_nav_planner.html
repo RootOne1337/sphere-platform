@@ -118,6 +118,30 @@
       align-items: center;
       gap: 8px;
     }
+    .dispatch {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .dispatch .status {
+      min-height: 0;
+      margin: 0;
+      flex: 1 1 230px;
+    }
+    #depart {
+      background: #b4e9d5;
+      color: #112d26;
+      font-weight: 650;
+      border-color: #b4e9d5;
+    }
+    #depart:disabled {
+      background: #223638;
+      color: #9caeaf;
+      border-color: #3d5051;
+      cursor: default;
+    }
     #levels {
       margin-top: 8px;
     }
@@ -142,8 +166,14 @@
         <p class="subtitle">
           Black Russia · Карта Ariane
           <a id="reportLink" hidden href="/navigation-report.html">Отчёт</a>
+          <a id="taxiReport" hidden href="/taxi-report"
+            >Поездки A → B и видео</a
+          >
+          <a id="classicGame" hidden href="/classic-game">Scooter 5 в GTA SA</a>
           <a id="gameplayLink" hidden href="/gameplay">Игровая физика</a>
-          <a id="exploreLink" href="/explore" hidden>Открыть геометрический стенд</a>
+          <a id="exploreLink" href="/explore" hidden
+            >Открыть геометрический стенд</a
+          >
           <a href="/review" id="reviewLink" hidden>Карта разрывов</a>
           <a href="/detail" id="detailLink" hidden>Детальная 3D-сцена</a>
           <a href="/first-person/report.html" id="firstPersonLink" hidden
@@ -155,6 +185,7 @@
       <div class="mode">
         <label for="mode">Способ движения</label
         ><select id="mode">
+          <option value="taxi" selected>Откуда → куда · автоподбор</option>
           <option value="drive">На транспорте</option>
           <option value="walk">Пешком</option>
           <option value="trip">Транспорт и пешком</option>
@@ -173,8 +204,8 @@
         </div>
         <div class="pick">
           <label
-            ><input id="overlay" type="checkbox" checked /> Доступная
-            поверхность</label
+            ><input id="overlay" type="checkbox" checked />
+            <span id="surfaceLabel">Доступная поверхность</span></label
           ><button id="minus" aria-label="Отдалить">−</button
           ><button id="plus" aria-label="Приблизить">+</button
           ><select id="view" aria-label="Область карты">
@@ -199,7 +230,10 @@
         >
       </div>
     </section>
-    <p id="status" role="status" class="status">Загрузка карты…</p>
+    <div class="dispatch">
+      <button id="depart" disabled>Начать поездку на стенде</button>
+      <p id="status" role="status" class="status">Загрузка карты…</p>
+    </div>
     <div id="levels" hidden>
       <label
         >Уровень поверхности
@@ -220,6 +254,7 @@
     let world,
       base,
       ink = {},
+      reachable,
       bounds,
       scale = 1,
       cx = 0,
@@ -227,6 +262,7 @@
       active = "a",
       ends = {},
       path = [],
+      itinerary,
       pending,
       request = 0,
       drag;
@@ -267,14 +303,13 @@
       const [l, r, b, t] = bounds,
         [px, py] = pixel(l, t);
       ctx.drawImage(base, px, py, (r - l) * scale, (t - b) * scale);
-      if ($("overlay").checked && ink[mode() === "trip" ? "walk" : mode()])
-        ctx.drawImage(
-          ink[mode() === "trip" ? "walk" : mode()],
-          px,
-          py,
-          (r - l) * scale,
-          (t - b) * scale,
-        );
+      const mask =
+        mode() === "taxi" && ends.a
+          ? reachable
+          : ink[mode() === "drive" ? "drive" : "walk"];
+      if ($("overlay").checked && mask) {
+        ctx.drawImage(mask, px, py, (r - l) * scale, (t - b) * scale);
+      }
       for (const leg of path) {
         ctx.beginPath();
         leg.path.forEach(([x, y], i) =>
@@ -348,12 +383,22 @@
       for (const id of ["a", "b", "v"])
         $(id).setAttribute("aria-pressed", String(k === id));
     }
+    function clearItinerary() {
+      itinerary = null;
+      $("depart").disabled = true;
+    }
     function reset() {
+      clearItinerary();
       $("v").hidden = mode() !== "trip";
       if (world?.examples)
         $("example").disabled = !world.examples.includes(mode());
       request++;
-      ends = {};
+      ends =
+        mode() === "trip" && world?.parkedVehicle
+          ? { v: world.parkedVehicle }
+          : {};
+      reachable = null;
+      $("surfaceLabel").textContent = "Доступная поверхность";
       path = [];
       $("exploreLink").href = "/explore";
       pending = null;
@@ -366,7 +411,27 @@
     }
     async function accept(x, y, z, k, token) {
       if (token !== request) return;
+      clearItinerary();
       ends[k] = [x, y, z];
+      if (mode() === "taxi" && k === "a") {
+        const origin = ends.a;
+        reachable = null;
+        $("surfaceLabel").textContent = "Загрузка доступных от A участков…";
+        loadImg(
+          "/api/taxi-surface.png?" +
+            new URLSearchParams({ start: origin.join(",") }),
+        )
+          .then((im) => {
+            if (mode() !== "taxi" || ends.a !== origin) return;
+            reachable = im;
+            $("surfaceLabel").textContent = "Доступные от A участки";
+            draw();
+          })
+          .catch(() => {
+            if (mode() === "taxi" && ends.a === origin)
+              $("surfaceLabel").textContent = "Заливка от A недоступна";
+          });
+      }
       path = [];
       const freeLink = ends.a
         ? "/explore?" +
@@ -404,7 +469,29 @@
       draw();
       $("exploreLink").href =
         result.status === "complete" ? "/explore?" + query : freeLink;
+      if (
+        result.status === "complete" &&
+        result.length > 0.01 &&
+        world.explore
+      ) {
+        itinerary = {
+          mode: mode(),
+          start: ends.a,
+          end: ends.b,
+          ...(ends.v ? { vehicle: ends.v } : {}),
+        };
+        $("depart").disabled = false;
+      }
       const labels = {
+        already_there: "Старт и цель совпадают.",
+        no_walk_to_road:
+          "От старта нет связного пешего подхода к дороге в обработанной карте.",
+        no_road_to_goal:
+          "От дороги нет связного пешего подхода к цели в обработанной карте.",
+        no_common_road:
+          "Места посадки и высадки относятся к разным дорожным сетям.",
+        transfer_path_unavailable:
+          "На выбранных уровнях не подтверждён непрерывный путь через пересадку.",
         no_itinerary:
           "Для этих точек не найден непрерывный путь пешком или с пересадкой.",
         disconnected:
@@ -423,8 +510,12 @@
               path
                 .map((l) => (l.mode === "walk" ? "пешком" : "на транспорте"))
                 .join(" → ") +
-              ". Статическая проверка геометрии."
-          : labels[result.status] || "Не удалось построить путь.",
+              (mode() === "taxi" && result.pickup
+                ? ". Место подачи скутера выбрано на карте стенда."
+                : ".")
+          : labels[result.reason] ||
+              labels[result.status] ||
+              "Не удалось построить путь.",
       );
     }
     async function pick(x, y) {
@@ -433,6 +524,7 @@
         k = active;
       pending = null;
       $("levels").hidden = true;
+      clearItinerary();
       delete ends[k];
       $("exploreLink").href = ends.a
         ? "/explore?" +
@@ -496,6 +588,38 @@
         status(e.message);
       }
     };
+    $("depart").onclick = async () => {
+      if (!itinerary || $("depart").disabled) return;
+      const target = $("exploreLink").href;
+      $("depart").disabled = true;
+      const fields = [document.querySelector(".card"), $("levels"), $("mode")];
+      fields.forEach((el) => {
+        el.inert = true;
+      });
+      try {
+        const res = await fetch("/api/journey/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...itinerary, model: "faggio" }),
+        });
+        const value = await res.json();
+        if (!res.ok) throw Error(value.error || "Не удалось запустить поездку");
+        sessionStorage.setItem(
+          "journey-rgb:" + new URL(target).search,
+          value.id,
+        );
+        location.assign(target);
+      } catch (e) {
+        status(e.message);
+        $("depart").disabled = false;
+        fields.forEach((el) => {
+          el.inert = false;
+        });
+      }
+    };
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) location.reload();
+    });
     $("clear").onclick = reset;
     $("mode").onchange = reset;
     $("overlay").onchange = draw;
@@ -546,8 +670,13 @@
     (async () => {
       const m = await get("/api/world");
       world = m;
+      if (m.parkedVehicle)
+        $("mode").querySelector("[value=trip]").textContent =
+          "К припаркованному скутеру → до цели";
+      $("taxiReport").hidden = !m.taxiReport;
       $("reviewLink").hidden = !m.review;
       $("gameplayLink").hidden = !m.gameplay;
+      $("classicGame").hidden = !m.classicGame;
       $("detailLink").hidden = !m.detail;
       $("exploreLink").hidden = !m.explore;
       $("firstPersonLink").hidden = !m.firstPersonReport;

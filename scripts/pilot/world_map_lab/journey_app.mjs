@@ -43,8 +43,9 @@ async function main() {
   const replay = capture ? window.captureAttempt : null;
   let route = replay?.route ?? config;
   if (params.has("start") && params.has("end")) {
-    const q = new URLSearchParams(params);
-    q.delete("capture");
+    const q = new URLSearchParams();
+    for (const key of ["mode", "start", "end", "vehicle"])
+      if (params.has(key)) q.set(key, params.get(key));
     const result = await get("/api/path", q);
     if (result.status !== "complete")
       throw Error("Для выбранных точек нет связного маршрута");
@@ -557,12 +558,29 @@ async function main() {
       t,
       ...world.stats(),
     }),
+    projectRoute(sample) {
+      const leg = trip.legs[sample.index];
+      const station = Math.max(0, sample.distance - leg.distance);
+      const end = Math.min(leg.length, station + (sample.mounted ? 34 : 15));
+      const pixels = [];
+      const v = world.camera.position.clone();
+      for (let d = station; d <= end; d += 0.7) {
+        const p = trip.at(leg, d);
+        v.set(p[0], p[1], p[2] + 0.07).project(world.camera);
+        pixels.push(
+          v.z > -1 && v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1
+            ? [(v.x + 1) / 2, (1 - v.y) / 2]
+            : null,
+        );
+      }
+      return pixels;
+    },
     async frame(time, w, h) {
       if (!trip) throw Error("В свободном режиме маршрут не выбран");
       if (replay) {
         const rows = replay.rows;
         const sampleIndex = clamp(
-          Math.floor(time / replay.dt) - 1,
+          Math.floor((time + 1e-7) / replay.dt) - 1,
           0,
           rows.length - 1,
         );

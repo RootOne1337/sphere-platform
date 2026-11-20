@@ -62,14 +62,19 @@ class Lane:
         return self.arc[start + i] + f[i] * self.ds[start + i], errors[i]
 
 
-def correct(pose, images, focal, descriptors=False):
+def correct(pose, images, focal, descriptors=False, *, sparse_scene=False):
     ref, dep, live = [
         np.frombuffer(base64.b64decode(x), dtype="<u2" if i == 1 else "u1").reshape(H, W)
         for i, x in enumerate(images)
     ]
     dep = dep.astype(np.float32) / 128.0
+    # Far surfaces on an incline can vary by several map units across three
+    # pixels. Keep close depth boundaries masked in both tracking passes.
+    depth_limit = np.maximum(1.4, dep * 0.065) if sparse_scene else 1.4
     mask = (
-        np.uint8((dep > 1.3) & (dep < 130) & (cv2.dilate(dep, None) - cv2.erode(dep, None) < 1.4))
+        np.uint8(
+            (dep > 1.3) & (dep < 130) & (cv2.dilate(dep, None) - cv2.erode(dep, None) < depth_limit)
+        )
         * 255
     )
     mask[int(H * 0.78) :] = 0
@@ -95,7 +100,8 @@ def correct(pose, images, focal, descriptors=False):
             return None
         xy, uv = np.float32(pairs).transpose(1, 0, 2)
     else:
-        pts = cv2.goodFeaturesToTrack(ref, 220, 0.006, 5, mask=mask)
+        corners, quality, separation = (400, 0.002, 3) if sparse_scene else (220, 0.006, 5)
+        pts = cv2.goodFeaturesToTrack(ref, corners, quality, separation, mask=mask)
         if pts is None or len(pts) < 10:
             return None
         q, hit, _ = cv2.calcOpticalFlowPyrLK(ref, live, pts, None, winSize=(21, 21), maxLevel=3)
@@ -142,6 +148,75 @@ def correct(pose, images, focal, descriptors=False):
     ):
         return None
     return np.array(pose[:3]) + d, yaw, len(ids)
+
+
+def image_standstill(previous, current_image, prior, focal):
+    """Check commanded translation against live inter-frame tracks after camera rotation."""
+    if previous is None:
+        return False
+    old, depth, camera = previous
+    translation = np.asarray(prior[:3]) - camera[:3]
+    if np.linalg.norm(translation) < 0.24 or abs(angle(prior[3] - camera[3])) > 0.18:
+        return False
+
+    def axes(pose):
+        a, pitch = pose[3:]
+        c, s = math.cos(a), math.sin(a)
+        cp, sp = math.cos(pitch), math.sin(pitch)
+        return np.array([[s, -c, 0], [sp * c, sp * s, -cp], [cp * c, cp * s, sp]])
+
+    near = (
+        np.frombuffer(base64.b64decode(depth), dtype="<u2").reshape(H, W).astype(np.float32) / 128
+    )
+    mask = np.uint8((near > 2.5) & (near < 70)) * 255
+    mask[int(0.78 * H) :] = 0
+
+    def gray(data):
+        return np.frombuffer(base64.b64decode(data), dtype="u1").reshape(H, W)
+
+    ref, live = gray(old), gray(current_image)
+    pts = cv2.goodFeaturesToTrack(ref, 120, 0.004, 6, mask=mask)
+    if pts is None or len(pts) < 12:
+        return False
+    nxt, hit, _ = cv2.calcOpticalFlowPyrLK(ref, live, pts, None, winSize=(17, 17), maxLevel=2)
+    good = hit.ravel() > 0
+    if good.sum() < 12:
+        return False
+    xy, nxt = pts[:, 0][good], nxt[:, 0][good]
+    center = np.array([(W - 1) / 2, (H - 1) / 2])
+    ij = np.rint(xy).astype(int)
+    points = (
+        np.column_stack([(xy - center) / focal, np.ones(len(xy))]) * near[ij[:, 1], ij[:, 0], None]
+    )
+    current_axes = axes(prior)
+    rotated = points @ axes(camera) @ current_axes.T
+    moved = rotated - translation @ current_axes.T
+
+    def project(points):
+        return center + focal * points[:, :2] / np.maximum(0.1, points[:, 2:])
+
+    rot, motion = project(rotated), project(moved)
+    useful = np.linalg.norm(motion - rot, axis=1) > 1.2
+    if useful.sum() < 12 or np.ptp(xy[useful, 0]) < W * 0.15 or np.ptp(xy[useful, 1]) < H * 0.08:
+        return False
+    stationary_error = np.median(np.linalg.norm(nxt[useful] - rot[useful], axis=1))
+    moving_error = np.median(np.linalg.norm(nxt[useful] - motion[useful], axis=1))
+    return stationary_error < 0.6 and moving_error > stationary_error + 0.9
+
+
+def sparse_correction(page, prior, images, focal):
+    """Accept a small update on weakly textured surfaces only after rendering it back."""
+    fit = correct(prior, images, focal, sparse_scene=True)
+    if (
+        not fit
+        or fit[2] < 18
+        or np.linalg.norm(fit[0] - prior[:3]) > 0.75
+        or abs(angle(fit[1] - prior[3])) > 0.065
+    ):
+        return None
+    corrected = [*fit[0], fit[1], prior[4]]
+    after, before = page.evaluate("q=>rankRenderedPoses(q)", [corrected, prior])
+    return fit if after <= 9 and after <= before + 0.5 else None
 
 
 def rgb_pair(page, prior, live, phase):
@@ -218,7 +293,7 @@ def scan_due(misses):
     )
 
 
-def wide_pose(page, prior, surfaces, focal, eye, pan=0):
+def wide_pose(page, prior, surfaces, focal, eye, pan=0, *, sparse=False):
     """Rank nearby map views, then require a well-conditioned depth-backed fit."""
     yaw = prior[3]
     forward = np.array([math.cos(yaw - pan), math.sin(yaw - pan)])
@@ -288,7 +363,10 @@ def wide_pose(page, prior, surfaces, focal, eye, pan=0):
                     xy = seed[:2] + step * (ax * forward + bx * right)
                     choices.append([*xy, seed[2], seed[3] + da * turn, seed[4]])
                 seed = choices[int(rank(choices).argmin())]
-            fit = correct(seed, page.evaluate("p=>mapPairWithLastImage(p)", seed), focal)
+            pair = page.evaluate("p=>mapPairWithLastImage(p)", seed)
+            fit = correct(seed, pair, focal)
+            if sparse and (not fit or fit[2] < 18):
+                fit = sparse_correction(page, seed, pair, focal)
             if fit and fit[2] >= 18:
                 loss = float(rank([[*fit[0], fit[1], seed[4]]])[0])
                 if loss < 9:
@@ -306,8 +384,11 @@ def wide_pose(page, prior, surfaces, focal, eye, pan=0):
     return best
 
 
-def confirm_recovery(page, candidate, focal):
-    fit = correct(candidate, page.evaluate("p=>mapPairWithLastImage(p)", candidate), focal)
+def confirm_recovery(page, candidate, focal, *, sparse=False):
+    pair = page.evaluate("p=>mapPairWithLastImage(p)", candidate)
+    fit = correct(candidate, pair, focal)
+    if sparse and (not fit or fit[2] < 18):
+        fit = sparse_correction(page, candidate, pair, focal)
     if (
         not fit
         or fit[2] < 18
@@ -322,6 +403,39 @@ def confirm_recovery(page, candidate, focal):
     if min(before, after) >= 9:
         return None
     return fit if after <= before else (np.array(candidate[:3]), candidate[3], fit[2])
+
+
+def corridor_target(network, lane, station, position, target, side, offset, look):
+    """Check the next section longitudinally before committing to a lateral clearance offset."""
+    end = lane.arc[-1]
+    forward = lane.at(min(end, station + look + 5)) - lane.at(min(end, station + look))
+    if np.linalg.norm(forward[:2]) < 1 or abs(np.dot(forward[:2], side)) > 1:
+        return target, False
+    preview = [lane.at(min(end, station + look + d)) for d in (0, 2.5, 5)]
+
+    def open_strip(shift):
+        current = position
+        for center in preview:
+            candidate = center[:2] + side * shift
+            distance = np.linalg.norm(candidate - current[:2])
+            if distance > 5.99:
+                return False
+            if distance < 0.025:
+                continue
+            result = movement_step(network, current.tolist(), candidate.tolist(), "drive")
+            current = np.asarray(result["position"])
+            if np.linalg.norm(current[:2] - candidate) > 0.075:
+                return False
+        return True
+
+    if open_strip(offset):
+        return target, False
+    for shift in sorted(np.arange(-1.5, 1.51, 0.15), key=lambda x: abs(x - offset)):
+        if open_strip(shift):
+            aligned = target.copy()
+            aligned[:2] += side * (shift - offset)
+            return aligned, True
+    return target, True
 
 
 def reachable_heading(network, position, target, heading):
@@ -415,6 +529,7 @@ def publish_status(folder, state, last):
 
 
 def run(args):
+    sparse = getattr(args, "experimental_tracking", False)
     output_dir = args.run_dir or args.folder / "journey"
     config = json.loads((output_dir / "route.json").read_bytes())
     profiles = json.loads((args.folder / "journey/vehicles.json").read_bytes())
@@ -534,6 +649,8 @@ def run(args):
             maneuver_cmd = None
             confirmed_at = None
             still_ticks = 0
+            previous_view = None
+            clearance_ticks = 0
             moving = lane.mode == "drive"
             eye = mounted_eye if moving else 1.68
             stations, caps = lane.curve_limits()
@@ -560,15 +677,33 @@ def run(args):
                 begin = time.perf_counter()
                 imgs = rgb_pair(page, prior, live, vehicle_info(phase, pan))
                 t0 = time.perf_counter()
+                stopped_in_image = (
+                    sparse and moving and image_standstill(previous_view, imgs[2], prior, focal)
+                )
+                if stopped_in_image:
+                    prior[:3] = previous_view[2][:3]
+                    estimated = np.asarray(prior[:3]) - [0, 0, eye]
+                    estimated_speed = 0.0
+                    reference = page.evaluate("p=>mapPairWithLastImage(p)", prior)
+                    imgs = reference
+                    clearance_ticks = 35
                 verifying = pending_wide is not None or (
                     unseen >= RECOVERY_START and abs(estimated_speed) < 0.3
                 )
                 fit = None if verifying else correct(prior, imgs, focal)
                 source = "wide_search" if verifying else "pnp"
-                if fit and (
-                    np.linalg.norm(fit[0] - prior[:3]) > 0.6
-                    or abs(angle(fit[1] - prior[3])) > 0.045
-                    or fit[2] < 20
+                if sparse and not verifying and fit is None:
+                    fit = sparse_correction(page, prior, imgs, focal)
+                    if fit:
+                        source = "sparse_pnp"
+                if (
+                    fit
+                    and source == "pnp"
+                    and (
+                        np.linalg.norm(fit[0] - prior[:3]) > 0.6
+                        or abs(angle(fit[1] - prior[3])) > 0.045
+                        or fit[2] < 20
+                    )
                 ):
                     candidate = [*fit[0], fit[1], prior[4]]
                     scores = page.evaluate("q=>rankRenderedPoses(q)", [candidate, prior])
@@ -580,13 +715,13 @@ def run(args):
                         source = "render_search"
                 if fit is None and pending_wide is not None:
                     candidate = [*pending_wide[0], pending_wide[1] + pan, prior[4]]
-                    second = confirm_recovery(page, candidate, focal)
+                    second = confirm_recovery(page, candidate, focal, sparse=sparse)
                     if second:
                         fit = second
                         source = "two_frame_recovery"
                     pending_wide = None
                 if fit is None and scan_due(unseen) and abs(estimated_speed) < 0.3:
-                    found = wide_pose(page, prior, nets.values(), focal, eye, pan)
+                    found = wide_pose(page, prior, nets.values(), focal, eye, pan, sparse=sparse)
                     if found:
                         pending_wide = (found[0], angle(found[1] - pan))
                 match_ms = (time.perf_counter() - t0) * 1000
@@ -610,6 +745,7 @@ def run(args):
                     break
                 look = min(4.0, max(0.48, 0.36 * estimated_speed)) if moving else 0.42
                 target = lane.at(min(s + look, lane.arc[-1]))
+                narrow_ahead = False
                 if moving:
                     lo = lane.at(max(0, s + look - 1))
                     hi = lane.at(s + look + 1)
@@ -627,7 +763,13 @@ def run(args):
                             )
                         )
                     target = target.copy()
-                    target[:2] += side * (clearance[1] - clearance[0]) * 0.48 * min(1.0, gap / 4.0)
+                    offset = (clearance[1] - clearance[0]) * 0.48 * min(1.0, gap / 4.0)
+                    target[:2] += side * offset
+                    if sparse and clearance_ticks:
+                        target, narrow_ahead = corridor_target(
+                            nets["drive"], lane, s, estimated, target, side, offset, look
+                        )
+                        clearance_ticks -= 1
                 delta = target - estimated
                 cmd_yaw = angle(math.atan2(delta[1], delta[0]) - angle_est)
                 constrained = False
@@ -648,7 +790,9 @@ def run(args):
                             else 0
                         )
                         confirmed_at = estimated[:2].copy()
-                    if not maneuver_left and (constrained or still_ticks >= 3):
+                    if constrained or still_ticks >= 3:
+                        clearance_ticks = 35
+                    if not maneuver_left and (constrained or still_ticks >= 3 or stopped_in_image):
                         maneuver_cmd = maneuver(
                             nets["drive"],
                             estimated,
@@ -675,6 +819,8 @@ def run(args):
                 )
                 if not moving and abs(cmd_yaw) > 0.55:
                     target_speed *= 0.15
+                if narrow_ahead:
+                    target_speed = min(target_speed, 3.0)
                 if constrained:
                     target_speed = min(target_speed, 1.5)
                 if maneuver_left:
@@ -726,6 +872,11 @@ def run(args):
                     stalled = 0
                 elif observed_speed > 0.2 and unseen == 0:
                     stalled += 1
+                previous_view = (
+                    imgs[2],
+                    imgs[1],
+                    [*estimated[:2], estimated[2] + eye, angle_est + pan, prior[4]],
+                )
                 predicted = estimated[:2] + estimated_speed * DT * np.array(
                     [math.cos(angle_est + turn * 0.5), math.sin(angle_est + turn * 0.5)]
                 )
@@ -755,6 +906,8 @@ def run(args):
                         steering=float(turn / DT),
                         pan=pan,
                         clearanceLimited=constrained,
+                        narrowAhead=narrow_ahead,
+                        imageStationary=bool(stopped_in_image),
                         estimatedYaw=angle_est,
                         distance=float(sum(x.arc[-1] for x in lanes[:phase]) + s),
                         phase=phase,
@@ -851,6 +1004,11 @@ if __name__ == "__main__":
         nargs=2,
         metavar=("DRIVE_STATION", "SIDE_OFFSET"),
         help="inject one lateral offset into the test body",
+    )
+    c.add_argument(
+        "--experimental-tracking",
+        action="store_true",
+        help="test sparse and temporal recovery on the geometric stand",
     )
     c.add_argument("--realtime", action="store_true")
     c.add_argument("--model", choices=["faggio", "premier"], default="faggio")

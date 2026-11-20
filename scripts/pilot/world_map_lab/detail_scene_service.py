@@ -17,6 +17,27 @@ VENDOR = {
 }
 
 
+def recorded_movie(folder, item):
+    ident = item["id"]
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,70}", ident):
+        raise ValueError("invalid run identifier")
+    archive = folder / "runs" / ident
+    if not (archive / "film.json").is_file():
+        return None
+    receipt = json.loads((archive / "film.json").read_bytes())
+    if receipt["mode"] != "recorded_rgb_control" or receipt["result"] != item["outcome"]:
+        return None
+    for file, expected in (
+        (archive / "film.mp4", receipt["movieSha256"]),
+        (archive / "telemetry.jsonl", receipt["sourceHashes"]["telemetry.jsonl"]),
+        (archive / "route.json", receipt["sourceHashes"]["attemptRoute"]),
+    ):
+        with file.open("rb") as stream:
+            if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
+                raise ValueError("attempt movie or source changed")
+    return archive / "film.mp4"
+
+
 def journey_files(folder, revision):
     assets = (
         "route.json",
@@ -62,34 +83,41 @@ def journey_files(folder, revision):
         ):
             if (folder / name).is_file():
                 files["/journey/" + name] = folder / name
+    if (folder / "native-stand.html").is_file():
+        files["/classic-game"] = folder / "native-stand.html"
     report = folder / "journey-report.json"
     try:
         results = json.loads(report.read_bytes())
         for group in ("city", "cross"):
-            ident = results[group]["id"]
-            if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,70}", ident):
-                raise ValueError("invalid run identifier")
-            archive = folder / "runs" / ident
-            if not (archive / "film.json").is_file():
-                continue
-            receipt = json.loads((archive / "film.json").read_bytes())
-            if (
-                receipt["mode"] != "recorded_rgb_control"
-                or receipt["result"] != results[group]["outcome"]
-            ):
-                continue
-            for file, expected in (
-                (archive / "film.mp4", receipt["movieSha256"]),
-                (archive / "telemetry.jsonl", receipt["sourceHashes"]["telemetry.jsonl"]),
-                (archive / "route.json", receipt["sourceHashes"]["attemptRoute"]),
-            ):
-                with file.open("rb") as stream:
-                    if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
-                        raise ValueError("attempt movie or source changed")
-            files[f"/journey/{group}-camera.mp4"] = archive / "film.mp4"
+            movie = recorded_movie(folder, results[group])
+            if movie:
+                files[f"/journey/{group}-camera.mp4"] = movie
         for name in ("journey-report.html", "journey-overview.jpg"):
             if (folder / name).is_file():
                 files["/journey/" + name] = folder / name
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    try:
+        report = folder / "taxi-report.json"
+        data = json.loads(report.read_bytes())
+        if data["revision"] == revision and (movie := recorded_movie(folder, data["featured"])):
+            files["/journey/taxi-camera.mp4"] = movie
+            files["/journey/taxi-report.json"] = report
+            files["/taxi-report"] = Path(__file__).with_name("taxi_report.html")
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    try:
+        record = folder / "scooter4-observations.mp4"
+        info = json.loads(record.with_suffix(".json").read_bytes())
+        data = (folder.parent / "first-person" / "shortlisted-game-replay.json").read_bytes()
+        if (
+            info["mode"] == "archived_game_observation"
+            and info["observationsSha256"] == hashlib.sha256(data).hexdigest()
+            and info["sourceSha256"] == json.loads(data)["videoSha256"]
+        ):
+            with record.open("rb") as stream:
+                if info["movieSha256"] == hashlib.file_digest(stream, "sha256").hexdigest():
+                    files["/journey/scooter4-observations.mp4"] = record
     except (OSError, ValueError, KeyError, TypeError):
         pass
     return files

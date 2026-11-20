@@ -51,6 +51,8 @@ def observations():
     lines = []
     for i in range(12):
         phase = {0: "start", 3: "boarded", 8: "parked_and_exited", 11: "goal_on_foot"}.get(i)
+        if i == 7:
+            lines.append("sphere_scenario event=drive_route_complete")
         if phase:
             lines.append("sphere_scenario event=" + phase)
         lines.append(
@@ -65,6 +67,7 @@ def test_native_journey_requires_motorcycle_and_both_walks():
         ("parked_and_exited", "unplanned_dismount"),
         ("head=true", "head=false"),
         ("event=boarded", "event=irrelevant"),
+        ("event=drive_route_complete", "event=irrelevant"),
         ("t=800", "t=8000"),
         ("goal_on_foot", "stalled"),
     ):

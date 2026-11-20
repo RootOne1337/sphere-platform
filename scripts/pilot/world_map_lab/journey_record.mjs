@@ -54,68 +54,81 @@ async ({ width, height, fps, bitrate }) => {
       for (let i = start; i < start + count; i++) {
         const t = i / fps,
           s = await journey.frame(t, width, height);
-        ctx.drawImage(world, 0, 0, width, height);
-        ctx.save();
-        ctx.scale(scale, scale);
-        const h = height / scale;
-        ctx.fillStyle = "rgba(10,23,31,.93)";
-        ctx.fillRect(0, h - heightBar, 1600, heightBar);
-        ctx.fillStyle = "#9ce7d4";
-        ctx.font = "600 16px Segoe UI";
-        ctx.fillText("SPHERE LAB   /   BLACK RUSSIA", 25, h - 43);
-        ctx.fillStyle = "#fff";
-        ctx.font = "600 24px Segoe UI";
-        ctx.fillText(
-          window.captureAttempt?.title ?? "Южный → Нижний",
-          25,
-          h - 13,
-        );
-        ctx.font = "600 23px Segoe UI";
-        ctx.fillText(
-          s.done
-            ? "Финиш"
-            : s.transfer
-              ? s.mounted
-                ? "Парковка и выход"
-                : "Посадка · " + journey.vehicleName
-              : labels[s.index],
-          488,
-          h - 33,
-        );
-        ctx.font = "15px Segoe UI";
-        ctx.fillStyle = "#b2c8cc";
-        ctx.fillText(
-          s.observed
-            ? "Камера 5 Гц  ·  " +
-                s.observed.inliers +
-                " опор  ·  " +
-                Math.round(s.observed.commandMs) +
-                " мс до команды"
-            : "Проезд по рассчитанному пути",
-          488,
-          h - 12,
-        );
-        ctx.fillStyle = "#fff";
-        ctx.font = "600 22px Segoe UI";
-        ctx.fillText(
-          format(s.distance) + " / " + format(journey.length) + " ед.",
-          1054,
-          h - 32,
-        );
-        ctx.font = "15px Segoe UI";
-        ctx.fillStyle = "#b2c8cc";
-        ctx.fillText(s.speed.toFixed(1) + " ед./с", 1054, h - 12);
-        ctx.textAlign = "right";
-        ctx.fillText(clock(t) + " / " + clock(journey.duration), 1572, h - 20);
-        ctx.fillStyle = "#66daca";
-        ctx.fillRect(0, h - heightBar, (1600 * s.distance) / journey.length, 3);
-        const side = 176,
-          x = 1600 - side - 25,
-          y = 22;
-        ctx.fillStyle = "rgba(12,27,36,.9)";
-        ctx.fillRect(x - 4, y - 4, side + 8, side + 8);
-        journey.drawMap(ctx, x, y, side, s.p, s.yaw);
-        ctx.restore();
+        if (window.paintJourneyDashboard) {
+          window.paintJourneyDashboard(ctx, world, s, t, width, height);
+        } else {
+          ctx.drawImage(world, 0, 0, width, height);
+          ctx.save();
+          ctx.scale(scale, scale);
+          const h = height / scale;
+          ctx.fillStyle = "rgba(10,23,31,.93)";
+          ctx.fillRect(0, h - heightBar, 1600, heightBar);
+          ctx.fillStyle = "#9ce7d4";
+          ctx.font = "600 16px Segoe UI";
+          ctx.fillText("SPHERE LAB   /   BLACK RUSSIA", 25, h - 43);
+          ctx.fillStyle = "#fff";
+          ctx.font = "600 24px Segoe UI";
+          ctx.fillText(
+            window.captureAttempt?.title ?? "Южный → Нижний",
+            25,
+            h - 13,
+          );
+          ctx.font = "600 23px Segoe UI";
+          ctx.fillText(
+            s.done
+              ? "Финиш"
+              : s.transfer
+                ? s.mounted
+                  ? "Парковка и выход"
+                  : "Посадка · " + journey.vehicleName
+                : labels[s.index],
+            488,
+            h - 33,
+          );
+          ctx.font = "15px Segoe UI";
+          ctx.fillStyle = "#b2c8cc";
+          ctx.fillText(
+            s.observed
+              ? "Камера 5 Гц  ·  " +
+                  s.observed.inliers +
+                  " опор  ·  " +
+                  Math.round(s.observed.commandMs) +
+                  " мс до команды"
+              : "Проезд по рассчитанному пути",
+            488,
+            h - 12,
+          );
+          ctx.fillStyle = "#fff";
+          ctx.font = "600 22px Segoe UI";
+          ctx.fillText(
+            format(s.distance) + " / " + format(journey.length) + " ед.",
+            1054,
+            h - 32,
+          );
+          ctx.font = "15px Segoe UI";
+          ctx.fillStyle = "#b2c8cc";
+          ctx.fillText(s.speed.toFixed(1) + " ед./с", 1054, h - 12);
+          ctx.textAlign = "right";
+          ctx.fillText(
+            clock(t) + " / " + clock(journey.duration),
+            1572,
+            h - 20,
+          );
+          ctx.fillStyle = "#66daca";
+          ctx.fillRect(
+            0,
+            h - heightBar,
+            (1600 * s.distance) / journey.length,
+            3,
+          );
+          const side = 176,
+            x = 1600 - side - 25,
+            y = 22;
+          ctx.fillStyle = "rgba(12,27,36,.9)";
+          ctx.fillRect(x - 4, y - 4, side + 8, side + 8);
+          journey.drawMap(ctx, x, y, side, s.p, s.yaw);
+          ctx.restore();
+        }
         const frame = new VideoFrame(film, {
           timestamp: Math.round((i * 1e6) / fps),
           duration: Math.round(1e6 / fps),
