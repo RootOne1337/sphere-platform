@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="ru">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+  <link rel="icon" href="data:," /><title>
+    Black Russia · Планировщик маршрутов
+  </title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font:
+        15px/1.45 "Segoe UI",
+        system-ui,
+        sans-serif;
+      color: #eff3ed;
+      background: #10191c;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+    }
+    main {
+      max-width: 1580px;
+      margin: auto;
+      padding: clamp(14px, 2vw, 34px);
+    }
+    header,
+    .bar,
+    .foot,
+    .pick {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header {
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(25px, 3.3vw, 44px);
+      letter-spacing: -0.04em;
+    }
+    p {
+      margin: 0;
+    }
+    .subtitle,
+    .foot,
+    .status {
+      color: #b5c8c9;
+    }
+    #reportLink {
+      color: #a9ead4;
+      margin-left: 10px;
+    }
+    .card {
+      border: 1px solid #35494b;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .bar,
+    .foot {
+      padding: 12px 15px;
+      background: #18282a;
+      justify-content: space-between;
+    }
+    .pick {
+      gap: 6px;
+    }
+    button,
+    select {
+      color: inherit;
+      background: #213437;
+      border: 1px solid #476064;
+      border-radius: 7px;
+      padding: 8px 11px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button[aria-pressed="true"] {
+      background: #b4e9d5;
+      color: #15392f;
+      border-color: #c6f6e3;
+    }
+    button:focus-visible,
+    select:focus-visible,
+    canvas:focus-visible {
+      outline: 2px solid #ffce79;
+    }
+    canvas {
+      width: 100%;
+      height: 67vh;
+      min-height: 330px;
+      display: block;
+      background: #0b171c;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .status {
+      min-height: 52px;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+    .foot {
+      gap: 8px;
+      font-size: 13px;
+    }
+    .coords {
+      font-variant-numeric: tabular-nums;
+    }
+    .mode {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #levels {
+      margin-top: 8px;
+    }
+    label {
+      cursor: pointer;
+    }
+    .sample {
+      color: #b1dfce;
+    }
+    .key {
+      display: inline-block;
+      background: #ffcb68;
+      width: 20px;
+      height: 3px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+  </style>
+  <main>
+    <header>
+      <div>
+        <p class="subtitle">
+          Black Russia · Карта Ariane
+          <a id="reportLink" hidden href="/navigation-report.html">Отчёт</a>
+        </p>
+        <h1>Маршрут между точками</h1>
+      </div>
+      <div class="mode">
+        <label for="mode">Способ движения</label
+        ><select id="mode">
+          <option value="drive">На транспорте</option>
+          <option value="walk">Пешком</option>
+          <option value="trip">Транспорт и пешком</option>
+        </select>
+      </div>
+    </header>
+    <section class="card">
+      <div class="bar">
+        <div class="pick">
+          <button id="a" aria-pressed="true">A · Старт</button
+          ><button id="b" aria-pressed="false">B · Цель</button
+          ><button id="example">Пример маршрута</button
+          ><button id="clear">Сбросить точки</button>
+        </div>
+        <div class="pick">
+          <label
+            ><input id="overlay" type="checkbox" checked /> Доступная
+            поверхность</label
+          ><button id="minus" aria-label="Отдалить">−</button
+          ><button id="plus" aria-label="Приблизить">+</button
+          ><select id="view" aria-label="Область карты">
+            <option value="world">Вся карта</option>
+            <option value="bat">Батырево</option>
+            <option value="south">Южный</option>
+            <option value="north">Нижегородск</option>
+          </select>
+        </div>
+      </div>
+      <canvas
+        id="map"
+        tabindex="0"
+        aria-label="Карта для выбора старта и цели"
+      ></canvas>
+      <div class="foot">
+        <span class="coords" id="coords">Координаты карты</span
+        ><span
+          ><i class="key"></i> На транспорте ·
+          <span style="color: #c5ffac">пешком</span> · расстояние в единицах
+          карты</span
+        >
+      </div>
+    </section>
+    <p id="status" role="status" class="status">Загрузка карты…</p>
+    <div id="levels" hidden>
+      <label
+        >Уровень поверхности
+        <select id="elevation"></select
+      ></label>
+      <button id="choose">Выбрать</button>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const canvas = $("map"),
+      ctx = canvas.getContext("2d");
+    const districts = {
+      bat: [1374, 2957, 1505, 3000],
+      south: [1550, 3060, -2960, -1510],
+      north: [-3035, -1680, 2140, 3139],
+    };
+    let world,
+      base,
+      ink = {},
+      bounds,
+      scale = 1,
+      cx = 0,
+      cy = 0,
+      active = "a",
+      ends = {},
+      path = [],
+      pending,
+      request = 0,
+      drag;
+    const status = (t) => ($("status").textContent = t);
+    const get = async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw Error("Запрос к планировщику завершился ошибкой.");
+      return res.json();
+    };
+    const loadImg = (src) =>
+      new Promise((resolve, reject) => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = reject;
+        im.src = src;
+      });
+    const mode = () => $("mode").value;
+    function pixel(x, y) {
+      return [
+        (x - cx) * scale + canvas.clientWidth / 2,
+        (cy - y) * scale + canvas.clientHeight / 2,
+      ];
+    }
+    function coord(x, y) {
+      return [
+        (x - canvas.clientWidth / 2) / scale + cx,
+        cy - (y - canvas.clientHeight / 2) / scale,
+      ];
+    }
+    function draw() {
+      if (!base) return;
+      const w = canvas.clientWidth,
+        h = canvas.clientHeight,
+        ratio = devicePixelRatio || 1;
+      canvas.width = Math.round(w * ratio);
+      canvas.height = Math.round(h * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const [l, r, b, t] = bounds,
+        [px, py] = pixel(l, t);
+      ctx.drawImage(base, px, py, (r - l) * scale, (t - b) * scale);
+      if ($("overlay").checked && ink[mode() === "trip" ? "walk" : mode()])
+        ctx.drawImage(
+          ink[mode() === "trip" ? "walk" : mode()],
+          px,
+          py,
+          (r - l) * scale,
+          (t - b) * scale,
+        );
+      for (const leg of path) {
+        ctx.beginPath();
+        leg.path.forEach(([x, y], i) =>
+          ctx[i ? "lineTo" : "moveTo"](...pixel(x, y)),
+        );
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#192124";
+        ctx.stroke();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = leg.mode === "walk" ? "#c5ffac" : "#ffcb68";
+        ctx.stroke();
+      }
+      if (path.length > 1) {
+        const [x, y] = pixel(...path[1].path[0]);
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+      }
+
+      for (const [key, v] of Object.entries(ends)) {
+        const [x, y] = pixel(...v);
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = key === "a" ? "#c3ffdb" : "#ffcd88";
+        ctx.fill();
+        ctx.fillStyle = "#14232a";
+        ctx.font = "bold 12px Segoe UI";
+        ctx.textAlign = "center";
+        ctx.fillText(key.toUpperCase(), x, y + 4);
+      }
+    }
+    function fit() {
+      if (!bounds) return;
+      const [l, r, b, t] = districts[$("view").value] || bounds;
+      cx = (l + r) / 2;
+      cy = (t + b) / 2;
+      scale =
+        0.98 *
+        Math.min(canvas.clientWidth / (r - l), canvas.clientHeight / (t - b));
+      draw();
+    }
+    function zoom(f, x = canvas.clientWidth / 2, y = canvas.clientHeight / 2) {
+      const old = coord(x, y);
+      scale = Math.min(32, Math.max(0.045, scale * f));
+      const now = coord(x, y);
+      cx += old[0] - now[0];
+      cy += old[1] - now[1];
+      draw();
+    }
+    function framePoints(points) {
+      const xs = points.map((p) => p[0]),
+        ys = points.map((p) => p[1]);
+      const l = Math.min(...xs),
+        r = Math.max(...xs),
+        b = Math.min(...ys),
+        t = Math.max(...ys);
+      cx = (l + r) / 2;
+      cy = (b + t) / 2;
+      scale =
+        0.85 *
+        Math.min(
+          canvas.clientWidth / Math.max(65, r - l),
+          canvas.clientHeight / Math.max(65, t - b),
+        );
+      draw();
+    }
+    function select(k) {
+      active = k;
+      for (const id of ["a", "b"])
+        $(id).setAttribute("aria-pressed", String(k === id));
+    }
+    function reset() {
+      if (world?.examples)
+        $("example").disabled = !world.examples.includes(mode());
+      request++;
+      ends = {};
+      path = [];
+      pending = null;
+      $("levels").hidden = true;
+      select("a");
+      draw();
+      status(
+        "Выберите старт на карте. Колесо приближает, перетаскивание сдвигает карту.",
+      );
+    }
+    async function accept(x, y, z, k, token) {
+      if (token !== request) return;
+      ends[k] = [x, y, z];
+      path = [];
+      pending = null;
+      $("levels").hidden = true;
+      draw();
+      if (!ends.a || !ends.b) {
+        select(ends.a ? "b" : "a");
+        status(
+          ends.a
+            ? "Старт выбран. Укажите цель."
+            : "Цель выбрана. Укажите старт.",
+        );
+        return;
+      }
+      status("Поиск связного пути…");
+      const query = new URLSearchParams({
+        mode: mode(),
+        start: ends.a.join(","),
+        end: ends.b.join(","),
+      });
+      const result = await get("/api/path?" + query);
+      if (token !== request) return;
+      path =
+        result.legs ||
+        (result.path.length ? [{ mode: mode(), path: result.path }] : []);
+      draw();
+      const labels = {
+        no_itinerary:
+          "Для этих точек не найден непрерывный путь пешком или с пересадкой.",
+        disconnected:
+          "Старт и цель лежат в разных частях сети. Непрерывного пути в этом режиме нет.",
+        endpoint_unavailable:
+          "Для одного из концов не найдена подходящая поверхность.",
+        search_limit: "Поиск достиг вычислительного лимита.",
+      };
+      status(
+        result.status === "complete"
+          ? "Путь построен · " +
+              Math.round(result.length).toLocaleString("ru-RU") +
+              " ед. карты · " +
+              path
+                .map((l) => (l.mode === "walk" ? "пешком" : "на транспорте"))
+                .join(" → ") +
+              ". Статическая проверка геометрии."
+          : labels[result.status] || "Не удалось построить путь.",
+      );
+    }
+    async function pick(x, y) {
+      if (!bounds) return;
+      const token = ++request,
+        k = active;
+      pending = null;
+      $("levels").hidden = true;
+      delete ends[k];
+      path = [];
+      draw();
+      const { levels } = await get(
+        "/api/levels?" + new URLSearchParams({ mode: mode(), x, y }),
+      );
+      if (token !== request) return;
+      if (!levels.length) {
+        status(
+          "В выбранной точке поверхность для этого режима не найдена. Приблизьте карту и выберите участок с цветной заливкой.",
+        );
+        return;
+      }
+      if (levels.length === 1) {
+        await accept(x, y, levels[0], k, token);
+        return;
+      }
+      pending = { x, y, k, token };
+      $("elevation").replaceChildren(
+        ...levels.map((z) => new Option("Z " + z.toFixed(2), z)),
+      );
+      $("levels").hidden = false;
+      status("Здесь несколько уровней. Выберите высоту точки.");
+    }
+    $("choose").onclick = () => {
+      if (pending) {
+        const { x, y, k, token } = pending;
+        accept(x, y, Number($("elevation").value), k, token).catch((e) =>
+          status(e.message),
+        );
+      }
+    };
+    $("a").onclick = () => {
+      request++;
+      pending = null;
+      $("levels").hidden = true;
+      select("a");
+    };
+    $("b").onclick = () => {
+      request++;
+      pending = null;
+      $("levels").hidden = true;
+      select("b");
+    };
+    $("example").onclick = async () => {
+      reset();
+      const token = request;
+      try {
+        const ex = await get("/api/example?mode=" + mode());
+        if (token !== request) return;
+        ends.a = ex.start;
+        await accept(...ex.end, "b", token);
+        if (token === request && path.length)
+          framePoints(path.flatMap((l) => l.path));
+      } catch (e) {
+        status(e.message);
+      }
+    };
+    $("clear").onclick = reset;
+    $("mode").onchange = reset;
+    $("overlay").onchange = draw;
+    $("plus").onclick = () => zoom(1.6);
+    $("minus").onclick = () => zoom(1 / 1.6);
+    $("view").onchange = fit;
+    canvas.onwheel = (e) => {
+      e.preventDefault();
+      zoom(Math.exp(-Math.sign(e.deltaY) * 0.22), e.offsetX, e.offsetY);
+    };
+    canvas.onpointerdown = (e) => {
+      if (e.button !== 0) return;
+      drag = { x: e.clientX, y: e.clientY, cx, cy, moved: false };
+      canvas.setPointerCapture(e.pointerId);
+    };
+    canvas.onpointermove = (e) => {
+      if (!base) return;
+      const [x, y] = coord(e.offsetX, e.offsetY);
+      $("coords").textContent =
+        "X " + x.toFixed(1) + "   ·   Y " + y.toFixed(1);
+      if (drag) {
+        const dx = e.clientX - drag.x,
+          dy = e.clientY - drag.y;
+        drag.moved ||= Math.hypot(dx, dy) > 4;
+        if (drag.moved) {
+          cx = drag.cx - dx / scale;
+          cy = drag.cy + dy / scale;
+          draw();
+        }
+      }
+    };
+    canvas.onpointerup = (e) => {
+      if (!drag) return;
+      const clicked = !drag.moved;
+      drag = null;
+      if (clicked)
+        pick(...coord(e.offsetX, e.offsetY)).catch((e) => status(e.message));
+    };
+    canvas.onpointercancel = () => (drag = null);
+    canvas.onkeydown = (e) => {
+      if (e.key === "+" || e.key === "=") zoom(1.5);
+      if (e.key === "-") zoom(1 / 1.5);
+      if (e.key === "0") fit();
+    };
+    new ResizeObserver(() => {
+      if (base) draw();
+    }).observe(canvas);
+    (async () => {
+      const m = await get("/api/world");
+      world = m;
+      $("reportLink").hidden = !m.report;
+      bounds = m.drive.bounds;
+      [base, ink.drive, ink.walk] = await Promise.all(
+        ["/world.png", "/drive.png", "/walk.png"].map(loadImg),
+      );
+      fit();
+      reset();
+    })().catch(() =>
+      status(
+        "Карта не загрузилась. Проверьте доступность локального планировщика.",
+      ),
+    );
+  </script>
+</html>

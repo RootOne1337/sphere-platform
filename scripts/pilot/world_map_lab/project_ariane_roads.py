@@ -23,19 +23,27 @@ ROAD_MATERIAL = re.compile(
     r"t_asphalt[a-z0-9_]*|a889_newroad[0-9]+|r3_(?:dirtroad|roadcountry|newasphalt|oldasphalt)[a-z0-9_]*|"
     r"road_2_2_wt_lines|road_by_ank_[0-9]+|arz_road_clear[a-z0-9_]*|country_road[0-9]+|village_road|"
     # Verified at road-surface samples in the northeast and southeast.
-    r"nbt_rd6|t_asph_drt_lin[ab])"
+    r"nbt_rd[5679]|t_asph_drt_lin[ab]|lf_arzrd[1-9]|lf_newrd[13]|"
+    r"t_asphlt_notrcs_d(?:_alb)?|t_asph_d_(?:linb|dira)|crb_roadsv1(?:str2?)?|"
+    r"crbroads66[467]|wolv_roads(?:cr4|_cross)|wolv_dr_(?:2|0b)|road_sel23_[12]|"
+    r"arz_per_2|lf_arzper2|zebr5323|t_nn_road_[yz]|srd_terrpick_road[23]?|sv_asph2|dt_road2|sber_road2_a889)"
 )
 # Kept as distinct visual hypotheses until collider, height and access checks.
 ADDITIONAL_PAVEMENT = re.compile(
     r"(?:asfcrbtraskc[0-9][a-z0-9]*|perroad_[a-z0-9_]+|znam_asfalt|gso_perroad[0-9]+|"
     r"grnd_asphalt_mix|wolv_roads(?:_per)?|road_2_2|roadasf[0-9]+|"
     r"lf_arzasf[0-9]+|pikland_newasf[0-9]+|new_asf_center[0-9]+|"
-    r"t_nn_dirtroad_[a-z]+|a889_dirtroad[0-9]+|ruscount_road[0-9]+)"
+    r"t_nn_dirtroad_[a-z]+|a889_dirtroad[0-9]+(?:_[234])?|ruscount_road[0-9]+|"
+    r"road_sel(?:23(?:_end)?)?|svalka_road[12]|a889_dirtr[0-9]+|a889_sandroad1|"
+    r"vad_dirtroad[67]|prich_dirtroad7|bys_sandyroad[23]|village_road2|"
+    r"nbt_rd[123]_a889|auto_roadbet|park_road3|t_asphtransit_a|r3_roadsidetransita_c)"
 )
 PEDESTRIAN_MATERIAL = re.compile(
-    r"(?:t_nn_pavem_[abc]|pavement-small|pavementluk|t_nn_roadside_[ab])"
+    r"(?:t_nn_pavem_[abcd]|pavement-small|pavementluk|t_nn_roadside_[ab]|"
+    r"dc_sidewalk001|t_sidewalks_a|wolv_trot(?:[23]?_srd)?|lf_newpav[12]|"
+    r"t_pav_slabs_[abd]_alb|a889_newtrop(?:3|4|7|8|9|14)|lf_arztropa1|"
+    r"bys_sandytropa[1-4]|arz_trot_[23]|egorovkatropa2)"
 )
-POSSIBLE_MARKER = re.compile(rb"road|asph|asf|pavem|nbt_rd")
 PIXELS_PER_UNIT = 0.35
 
 
@@ -59,8 +67,6 @@ SURFACE_LAYERS = {
 
 
 def surface_triangles(blob, kind):
-    if not POSSIBLE_MARKER.search(blob.lower()):
-        return []
     output = []
     for vertices, mesh in instance_parts(blob, kind):
         names = [item.textures[0].name.lower() if item.textures else "" for item in mesh.materials]

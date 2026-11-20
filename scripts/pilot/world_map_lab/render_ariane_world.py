@@ -354,6 +354,11 @@ def main():
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--width", type=int, default=3200)
     parser.add_argument("--area", choices=REGIONS)
+    parser.add_argument(
+        "--navigation-geometry",
+        type=Path,
+        help="Render the elevation band containing the authored road surfaces",
+    )
     args = parser.parse_args()
     if not 320 <= args.width <= 4800:
         parser.error("--width must be between 320 and 4800")
@@ -374,6 +379,38 @@ def main():
         raise ValueError("the overlay belongs to another world or map revision")
     views = {"top": View(bounds, args.width), "color-3d": View(bounds, args.width, -24)}
     water = np.asarray(list(water_triangles(source)))
+    street_band = None
+    if args.navigation_geometry:
+        from scripts.pilot.world_map_lab.world_navmesh import checksum, spatial_index
+
+        directory = args.navigation_geometry
+        geo = json.loads((directory / "geometry.json").read_bytes())
+        binary = directory / "world-geometry.bin"
+        if (
+            geo["placementRevision"] != expected["placement_revision"]
+            or checksum(binary) != geo["geometrySha256"]
+        ):
+            raise ValueError("street elevation source does not match the rendered world")
+        raw = np.memmap(binary, dtype="u1", mode="r")
+        _, batches = spatial_index(raw, [bounds[k] for k in ("left", "right", "bottom", "top")])
+        bands = []
+        for _, n, kind, low, high in sorted(
+            (row for row in batches if row[2] in (0, 1, 3)), key=lambda row: row[3]
+        ):
+            if not bands or low > bands[-1][1] + 2:
+                bands.append([low, high, 0])
+            else:
+                bands[-1][1] = max(bands[-1][1], high)
+            if kind == 3:
+                bands[-1][2] += n
+        low, high, roads = max(bands, key=lambda band: band[2])
+        if not roads:
+            raise ValueError("no road height band")
+        street_band = (low - 2, high + 2)
+        water = water[
+            (water[:, :, 2].max(axis=1) >= street_band[0])
+            & (water[:, :, 2].min(axis=1) <= street_band[1])
+        ]
     water[:, :, 2] -= 0.04
     water_atlas = pack_textures([np.asarray([*WATER, 255], np.uint8).reshape(1, 1, 4)])
     for view in views.values():
@@ -417,6 +454,11 @@ def main():
                 position = (geometry.ariane_rotation(placed.quat).apply(local) + placed.position)[
                     corners
                 ]
+                if street_band and (
+                    position[:, :, 2].max() < street_band[0]
+                    or position[:, :, 2].min() > street_band[1]
+                ):
+                    continue
                 shade = shaded(position)
                 for view in views.values():
                     view.draw(raster, position, uv, shade, assigned, atlas)
@@ -439,6 +481,7 @@ def main():
         "geometry": dict(counts),
         "texture_materials": dict(textures.stats),
         "water_triangles": len(water),
+        "streetHeightBand": street_band,
         "views": {},
     }
     for name, view in views.items():
@@ -450,6 +493,8 @@ def main():
             "populated_pixels": int(np.isfinite(view.depth).sum()),
         }
     top = views["top"]
+    if street_band:
+        np.savez_compressed(output / "ariane-world-visible-height.npz", height=-top.depth)
     np.savez_compressed(
         output / "ariane-world-heightfield.npz",
         height=-top.depth[::3, ::3],
