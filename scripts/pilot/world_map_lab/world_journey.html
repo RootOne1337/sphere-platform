@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>Геометрический стенд · Black Russia</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #09131b;
+        color: #edf4f5;
+        font:
+          16px/1.4 "Segoe UI",
+          sans-serif;
+      }
+      main {
+        height: 100dvh;
+        min-height: 420px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      header,
+      footer {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 12px 22px;
+        background: #11202a;
+      }
+      header {
+        justify-content: space-between;
+      }
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      a {
+        color: #a2e9db;
+      }
+      nav {
+        display: flex;
+        gap: 16px;
+      }
+      .viewport {
+        position: relative;
+        overflow: hidden;
+      }
+      #world {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        outline-offset: -4px;
+      }
+      #world:focus-visible {
+        outline: 2px solid #6bddc6;
+      }
+      aside {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: min(24vw, 235px);
+        background: #101d27ed;
+        border: 1px solid #68838b;
+        border-radius: 10px;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      #radar {
+        width: 100%;
+        display: block;
+        aspect-ratio: 1;
+      }
+      aside span {
+        display: block;
+        padding: 5px 10px;
+        font-size: 14px;
+      }
+      .readout {
+        position: absolute;
+        bottom: 14px;
+        left: 16px;
+        background: #101d27ed;
+        border-radius: 9px;
+        padding: 8px 14px;
+        max-width: 80%;
+      }
+      #mode {
+        color: #8ae7ce;
+        font-weight: 650;
+        margin-right: 10px;
+      }
+      button {
+        font: inherit;
+        border: 1px solid #49616b;
+        border-radius: 7px;
+        padding: 7px 13px;
+        background: #1a303c;
+        color: #edf4f5;
+        cursor: pointer;
+      }
+      select {
+        color: inherit;
+        background: #1a303c;
+        border: 1px solid #49616b;
+        border-radius: 6px;
+        padding: 7px;
+        font: inherit;
+      }
+      footer label {
+        font-size: 14px;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      #pilot,
+      #follow {
+        background: #a0ebd7;
+        color: #102a26;
+      }
+      #help {
+        font-size: 14px;
+        color: #bcd1d3;
+      }
+      .pad {
+        display: flex;
+        gap: 5px;
+      }
+      .pad button {
+        touch-action: none;
+        user-select: none;
+      }
+      #world:focus {
+        outline: none;
+      }
+      @media (max-width: 680px) {
+        header,
+        footer {
+          padding: 8px 10px;
+          gap: 6px;
+        }
+        h1 {
+          font-size: 18px;
+        }
+        #help {
+          font-size: 12px;
+        }
+        aside {
+          width: 115px;
+        }
+        nav {
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Геометрический стенд · Black Russia</h1>
+        <nav>
+          <a href="/">Выбрать точки на карте</a
+          ><a hidden id="gameplayLink" href="/gameplay">Игровая физика</a
+          ><a id="movieLink" href="/journey/film.mp4" hidden>Видео плана</a
+          ><a id="reportLink" hidden href="/journey/journey-report.html"
+            >Результаты по камере</a
+          >
+        </nav>
+      </header>
+      <section class="viewport">
+        <canvas
+          id="world"
+          tabindex="0"
+          aria-label="Перемещение по миру от первого лица"
+        ></canvas>
+        <aside>
+          <canvas id="radar" width="320" height="320"></canvas
+          ><span id="progress">Загрузка карты</span>
+        </aside>
+        <div class="readout" role="status">
+          <span id="mode">Подготовка</span
+          ><span id="message">Загрузка исходной сцены…</span>
+        </div>
+      </section>
+      <footer>
+        <button id="pilot" disabled>Запустить по изображению</button
+        ><a id="traceLink" hidden>Журнал</a
+        ><button id="follow" disabled>Показать маршрут</button
+        ><button id="board" disabled>Сесть в машину · F</button
+        ><label
+          >Транспорт
+          <select id="model">
+            <option value="faggio">Скутер Faggio</option>
+            <option value="premier">Premier</option>
+          </select></label
+        ><button id="reset" disabled>На старт</button>
+        <div class="pad" aria-label="Управление движением">
+          <button data-code="KeyA" aria-label="Влево">←</button
+          ><button data-code="KeyW" aria-label="Вперёд">↑</button
+          ><button data-code="KeyS" aria-label="Назад">↓</button
+          ><button data-code="KeyD" aria-label="Вправо">→</button>
+        </div>
+        <span id="help"
+          >Кинематическая модель · W/S — движение · A/D — поворот · Перетащите вид, чтобы осмотреться ·
+          Esc — остановка</span
+        >
+      </footer>
+    </main>
+    <script type="importmap">
+      { "imports": { "three": "/detail/js/three.module.js" } }
+    </script>
+    <script type="module" src="/journey/app.mjs"></script>
+  </body>
+</html>

@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import math
 import mimetypes
 import re
 import shutil
@@ -10,8 +11,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+import numpy as np
+
 from scripts.pilot.world_map_lab.detail_scene_service import read_scene, scene_files
-from scripts.pilot.world_map_lab.world_navmesh import Network, checksum
+from scripts.pilot.world_map_lab.journey_runs import JourneyRuns
+from scripts.pilot.world_map_lab.world_navmesh import FLOATS, Network, checksum
 from scripts.pilot.world_map_lab.world_trip import TripPlanner
 
 
@@ -31,14 +35,52 @@ def movie_range(header, size):
     return lo, hi
 
 
+def movement_step(network, start, xy, mode):
+    if len(start) != 3 or len(xy) != 2 or not all(map(math.isfinite, (*start, *xy))):
+        raise ValueError("invalid movement coordinates")
+    step = math.dist(start[:2], xy)
+    if step > 6 or mode not in ("walk", "drive"):
+        raise ValueError("invalid movement step")
+    if hasattr(network.dll, "move_body"):
+        xyz = np.asarray(start, dtype=np.float32)
+        dest = np.asarray([*xy, start[2]], dtype=np.float32)
+        out = np.zeros(3, np.float32)
+        ok = network.dll.move_body(
+            network.handle,
+            xyz.ctypes.data_as(FLOATS),
+            dest.ctypes.data_as(FLOATS),
+            out.ctypes.data_as(FLOATS),
+        )
+        if ok < 0:
+            raise RuntimeError("local motion query failed")
+        moved = ok == 1 and math.dist(start[:2], out[:2]) > max(0.0001, step * 0.02)
+        return {"position": out.tolist() if moved else start, "moved": bool(moved)}
+    for height in sorted(network.levels(*xy), key=lambda z: abs(z - start[2])):
+        if abs(height - start[2]) > 0.55 + step * (0.7 if mode == "walk" else 0.45):
+            continue
+        dest = [*xy, height]
+        route = network.route(start, dest)
+        if (
+            route["status"] == "complete"
+            and route["path"]
+            and route["length"] <= 1.15 * math.dist(start, dest) + 0.12
+            and math.dist(route["path"][-1], dest) < 0.15
+        ):
+            return {"position": route["path"][-1], "moved": True}
+    return {"position": start, "moved": False}
+
+
 class PlannerServer(ThreadingHTTPServer):
     # Avoid SYN retries when multiple clients request a route at once.
     request_queue_size = 64
 
 
-def serve(folder, port):
+def serve(folder, port, adapter=None):
     with ExitStack() as stack:
-        nets = {mode: stack.enter_context(Network(folder, mode)) for mode in ("drive", "walk")}
+        nets = {
+            mode: stack.enter_context(Network(folder, mode, adapter=adapter))
+            for mode in ("drive", "walk")
+        }
         if nets["drive"].meta["geometrySha256"] != nets["walk"].meta["geometrySha256"]:
             raise ValueError("travel modes are from different source revisions")
         trip = TripPlanner(nets, folder)
@@ -100,6 +142,9 @@ def serve(folder, port):
             if all(mixed["meshes"].get(m) == checksum(folder / f"{m}.nav.zip") for m in nets):
                 examples["trip"] = {key: mixed[key] for key in ("start", "vehicle", "end")}
 
+        runs = JourneyRuns(folder, port, adapter)
+        stack.callback(runs.close)
+
         class Handler(BaseHTTPRequestHandler):
             disable_nagle_algorithm = True
 
@@ -111,8 +156,77 @@ def serve(folder, port):
                 self.end_headers()
                 self.wfile.write(body)
 
+            def do_POST(self):
+                req = urlsplit(self.path)
+                if (
+                    req.path not in ("/api/journey/start", "/api/journey/stop")
+                    or "/explore" not in files
+                ):
+                    self.send_error(404)
+                    return
+                if (
+                    self.headers.get("Origin")
+                    not in (f"http://127.0.0.1:{port}", f"http://localhost:{port}")
+                    or self.headers.get_content_type() != "application/json"
+                ):
+                    self.send_error(403)
+                    return
+                try:
+                    size = int(self.headers.get("Content-Length", "0"))
+                    if not 0 < size <= 4096:
+                        raise ValueError("invalid request size")
+                    data = json.loads(self.rfile.read(size))
+                    if not isinstance(data, dict):
+                        raise ValueError("invalid request")
+                    if req.path.endswith("/stop"):
+                        self.send_json(runs.stop(data["id"]))
+                        return
+                    mode = data.get("mode", "trip")
+                    if "start" not in data and "end" not in data:
+                        route = json.loads(files["/journey/route.json"].read_bytes())
+                    elif mode == "trip":
+                        route = trip.route(data["start"], data["end"], vehicle=data.get("vehicle"))
+                    else:
+                        result = nets[mode].route(data["start"], data["end"])
+                        route = {
+                            "status": result["status"],
+                            "legs": [{"mode": mode, "path": result["path"]}],
+                        }
+                    self.send_json(runs.start(route, data.get("model", "faggio")), 201)
+                except (ValueError, KeyError, TypeError, OverflowError):
+                    self.send_json(
+                        {"error": "Неверные точки, транспорт или недоступный маршрут"}, 400
+                    )
+                except RuntimeError as exc:
+                    self.send_json({"error": str(exc)}, 409)
+
             def do_GET(self):
                 req = urlsplit(self.path)
+                if req.path in ("/api/journey/state", "/api/journey/trace"):
+                    try:
+                        ident = parse_qs(req.query, strict_parsing=True, max_num_fields=1)["id"][0]
+                        if req.path.endswith("/state"):
+                            self.send_json(runs.state(ident))
+                        else:
+                            path = runs.directory(ident) / "telemetry.jsonl"
+                            if not path.is_file():
+                                raise KeyError("no telemetry")
+                            with path.open("rb") as stream:
+                                size = path.stat().st_size
+                                self.send_response(200)
+                                self.send_header("Content-Type", "application/x-ndjson")
+                                self.send_header("Content-Length", str(size))
+                                self.end_headers()
+                                remaining = size
+                                while remaining:
+                                    chunk = stream.read(min(65536, remaining))
+                                    if not chunk:
+                                        break
+                                    self.wfile.write(chunk)
+                                    remaining -= len(chunk)
+                    except (KeyError, ValueError, TypeError):
+                        self.send_json({"error": "Попытка не найдена"}, 404)
+                    return
                 if req.path in files:
                     path = files[req.path]
                     size = path.stat().st_size
@@ -137,6 +251,8 @@ def serve(folder, port):
                         (
                             "text/html; charset=utf-8"
                             if path.suffix == ".html"
+                            else "text/javascript"
+                            if path.suffix in (".js", ".mjs")
                             else mimetypes.guess_type(path)[0] or "application/octet-stream"
                         ),
                     )
@@ -165,6 +281,10 @@ def serve(folder, port):
                             "examples": list(examples),
                             "review": "/review" in files,
                             "detail": "/detail" in files,
+                            "explore": "/explore" in files,
+                            "gameplay": "/gameplay" in files,
+                            "journeyReport": "/journey/journey-report.html" in files,
+                            "journeyMovie": "/journey/film.mp4" in files,
                             "firstPersonReport": "/first-person/report.html" in files,
                             "report": "/navigation-report.html" in files,
                         }
@@ -186,13 +306,15 @@ def serve(folder, port):
                         code, body, mime, encoding = resource
                         self.send_response(code)
                         self.send_header("Content-Type", mime)
+                        if req.path.startswith("/detail/texture/"):
+                            self.send_header("Cache-Control", "public, max-age=31536000, immutable")
                         self.send_header("Content-Length", str(len(body)))
                         if encoding:
                             self.send_header("Content-Encoding", encoding)
                         self.end_headers()
                         self.wfile.write(body)
                         return
-                if req.path not in ("/api/levels", "/api/path", "/api/example"):
+                if req.path not in ("/api/levels", "/api/path", "/api/example", "/api/step"):
                     self.send_error(404)
                     return
                 try:
@@ -201,6 +323,11 @@ def serve(folder, port):
                     nav = nets["walk" if mode == "trip" else mode]
                     if req.path == "/api/example":
                         self.send_json(examples[mode])
+                    elif req.path == "/api/step":
+                        start, xy = (
+                            [float(n) for n in args[k][0].split(",")] for k in ("start", "xy")
+                        )
+                        self.send_json(movement_step(nav, start, xy, mode))
                     elif req.path == "/api/levels":
                         self.send_json(
                             {"levels": nav.levels(float(args["x"][0]), float(args["y"][0]))}
@@ -226,5 +353,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--folder", type=Path, required=True)
     parser.add_argument("--port", type=int, default=8817)
+    parser.add_argument("--adapter", type=Path)
     args = parser.parse_args()
-    serve(args.folder, args.port)
+    serve(args.folder, args.port, args.adapter)

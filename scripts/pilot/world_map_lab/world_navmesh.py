@@ -62,6 +62,8 @@ def library(path):
         "query_levels": (integer, [void, real, real, FLOATS, integer]),
         "query_path": (integer, [void, FLOATS, FLOATS, FLOATS, integer, ct.POINTER(integer)]),
     }
+    if hasattr(dll, "move_body"):
+        signatures["move_body"] = (integer, [void, FLOATS, FLOATS, FLOATS])
     if hasattr(dll, "bake_cell_size"):
         signatures["bake_cell_size"] = (real, [integer])
     if hasattr(dll, "collect_labels"):

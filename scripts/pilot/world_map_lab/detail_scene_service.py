@@ -17,6 +17,76 @@ VENDOR = {
 }
 
 
+def journey_files(folder, revision):
+    assets = (
+        "route.json",
+        "premier.glb",
+        "faggio.glb",
+        "vehicles.json",
+        "horizon.bin",
+        "terrain.jpg",
+    )
+    if any(not (folder / name).is_file() for name in assets):
+        return {}
+    config = (folder / "route.json").read_bytes()
+    try:
+        if json.loads(config).get("revision") != revision:
+            return {}
+    except (ValueError, AttributeError):
+        return {}
+    files = {"/journey/" + name: folder / name for name in assets}
+    files["/explore"] = Path(__file__).with_name("world_journey.html")
+    for name in ("app", "scene", "path", "vehicle"):
+        files["/journey/" + name + ".mjs"] = Path(__file__).with_name("journey_" + name + ".mjs")
+    try:
+        receipt = json.loads((folder / "film.json").read_bytes())
+        movie = folder / "film.mp4"
+        if receipt.get("routeSha256") == hashlib.sha256(config).hexdigest():
+            with movie.open("rb") as stream:
+                if hashlib.file_digest(stream, "sha256").hexdigest() == receipt.get("movieSha256"):
+                    files["/journey/film.mp4"] = movie
+    except (ValueError, OSError, AttributeError):
+        pass
+    if all(
+        (folder / name).is_file()
+        for name in ("gameplay.html", "gameplay-proof.json", "engine-boot.json")
+    ):
+        files["/gameplay"] = folder / "gameplay.html"
+        for name in ("engine-boot.json", "gameplay-proof.json"):
+            files["/journey/" + name] = folder / name
+    report = folder / "journey-report.json"
+    try:
+        results = json.loads(report.read_bytes())
+        for group in ("city", "cross"):
+            ident = results[group]["id"]
+            if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,70}", ident):
+                raise ValueError("invalid run identifier")
+            archive = folder / "runs" / ident
+            if not (archive / "film.json").is_file():
+                continue
+            receipt = json.loads((archive / "film.json").read_bytes())
+            if (
+                receipt["mode"] != "recorded_rgb_control"
+                or receipt["result"] != results[group]["outcome"]
+            ):
+                continue
+            for file, expected in (
+                (archive / "film.mp4", receipt["movieSha256"]),
+                (archive / "telemetry.jsonl", receipt["sourceHashes"]["telemetry.jsonl"]),
+                (archive / "route.json", receipt["sourceHashes"]["attemptRoute"]),
+            ):
+                with file.open("rb") as stream:
+                    if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
+                        raise ValueError("attempt movie or source changed")
+            files[f"/journey/{group}-camera.mp4"] = archive / "film.mp4"
+        for name in ("journey-report.html", "journey-overview.jpg"):
+            if (folder / name).is_file():
+                files["/journey/" + name] = folder / name
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return files
+
+
 def scene_files(folder, nets):
     files = {}
     review = folder / "review.json"
@@ -40,6 +110,7 @@ def scene_files(folder, nets):
         package = vendor / "package.json"
         if package.exists() and json.loads(package.read_bytes())["version"] == "0.180.0":
             files["/detail"] = Path(__file__).with_name("world_detail.html")
+            files.update(journey_files(folder / "journey", record["revision"]))
             for name, rel in VENDOR.items():
                 path = "/detail/utils/" if name == "BufferGeometryUtils.js" else "/detail/js/"
                 files[path + name] = vendor / rel
@@ -98,7 +169,7 @@ def read_scene(folder, req, args):
             )
         x, y, z = [float(args[k][0]) for k in ("x", "y", "z")]
         radius = int(args.get("radius", ["96"])[0])
-        if radius not in (48, 96, 160) or not all(
+        if radius not in (48, 96, 160, 320) or not all(
             math.isfinite(v) and abs(v) < 10000 for v in (x, y, z)
         ):
             raise ValueError("invalid detail viewport")

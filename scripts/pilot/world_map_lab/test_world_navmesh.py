@@ -134,3 +134,24 @@ def test_material_boundary_does_not_remove_physical_clearance(meshes):
     with Network(meshes, "drive") as nav:
         assert nav.route([17, 21, 0], [67, 21, 0])["status"] == "complete"
         assert not nav.levels(40, 16)
+
+
+def test_local_body_motion_respects_deck_and_requested_distance(meshes):
+    from scripts.pilot.world_map_lab.serve_world_navmesh import movement_step
+
+    with Network(meshes, "drive") as nav:
+        if not hasattr(nav.dll, "move_body"):
+            pytest.skip("adapter predates local surface motion")
+        z = nav.levels(98, 44)[-1]
+        upper = movement_step(nav, [98, 44, z], [99, 44], "drive")
+        assert upper["moved"]
+        assert upper["position"][2] == pytest.approx(z, abs=0.15)
+        assert upper["position"][:2] == pytest.approx([99, 44], abs=0.1)
+        pos = upper["position"]
+        for _ in range(20):
+            step = movement_step(nav, pos, [pos[0], pos[1] + 1], "drive")
+            assert abs(step["position"][1] - pos[1]) <= 1.02
+            assert abs(step["position"][2] - z) < 0.25
+            pos = step["position"]
+        with pytest.raises(ValueError):
+            movement_step(nav, pos, [pos[0] + 20, pos[1]], "drive")

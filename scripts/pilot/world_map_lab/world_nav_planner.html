@@ -142,6 +142,8 @@
         <p class="subtitle">
           Black Russia · Карта Ariane
           <a id="reportLink" hidden href="/navigation-report.html">Отчёт</a>
+          <a id="gameplayLink" hidden href="/gameplay">Игровая физика</a>
+          <a id="exploreLink" href="/explore" hidden>Открыть геометрический стенд</a>
           <a href="/review" id="reviewLink" hidden>Карта разрывов</a>
           <a href="/detail" id="detailLink" hidden>Детальная 3D-сцена</a>
           <a href="/first-person/report.html" id="firstPersonLink" hidden
@@ -353,6 +355,7 @@
       request++;
       ends = {};
       path = [];
+      $("exploreLink").href = "/explore";
       pending = null;
       $("levels").hidden = true;
       select("a");
@@ -365,6 +368,11 @@
       if (token !== request) return;
       ends[k] = [x, y, z];
       path = [];
+      const freeLink = ends.a
+        ? "/explore?" +
+          new URLSearchParams({ start: ends.a.join(","), mode: mode() })
+        : "/explore";
+      $("exploreLink").href = freeLink;
       pending = null;
       $("levels").hidden = true;
       draw();
@@ -394,6 +402,8 @@
         result.legs ||
         (result.path.length ? [{ mode: mode(), path: result.path }] : []);
       draw();
+      $("exploreLink").href =
+        result.status === "complete" ? "/explore?" + query : freeLink;
       const labels = {
         no_itinerary:
           "Для этих точек не найден непрерывный путь пешком или с пересадкой.",
@@ -424,6 +434,10 @@
       pending = null;
       $("levels").hidden = true;
       delete ends[k];
+      $("exploreLink").href = ends.a
+        ? "/explore?" +
+          new URLSearchParams({ start: ends.a.join(","), mode: mode() })
+        : "/explore";
       path = [];
       draw();
       const { levels } = await get(
@@ -533,7 +547,9 @@
       const m = await get("/api/world");
       world = m;
       $("reviewLink").hidden = !m.review;
+      $("gameplayLink").hidden = !m.gameplay;
       $("detailLink").hidden = !m.detail;
+      $("exploreLink").hidden = !m.explore;
       $("firstPersonLink").hidden = !m.firstPersonReport;
       $("reportLink").hidden = !m.report;
       bounds = m.drive.bounds;

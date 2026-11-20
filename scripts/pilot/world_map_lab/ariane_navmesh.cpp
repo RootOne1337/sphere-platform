@@ -616,6 +616,45 @@ API int query_path(const dtNavMesh *nav, const float *start, const float *goal, 
                    int *points) {
     return query_cluster_path(nav, nullptr, start, goal, out, cap, points);
 }
+// Constrain a small input displacement to connected polygons, including a slide along an edge.
+API int move_body(const dtNavMesh *nav, const float *start, const float *target, float *out) {
+    dtNavMeshQuery query;
+    if (dtStatusFailed(query.init(nav, 128))) return -1;
+    dtQueryFilter filter;
+    dtPolyRef ref = 0;
+    float origin[3], desired[3], landed[3];
+    if (dtStatusFailed(endpoint(query, filter, start, ref, origin)) || !ref) return 0;
+    if (std::hypot(origin[0] - start[0], origin[2] + start[1]) > .16f ||
+        std::abs(origin[1] - start[2]) > .45f) return 0;
+    toNav(target, desired);
+    dtPolyRef visited[128];
+    int count = 0;
+    float fraction, normal[3];
+    auto st = query.raycast(ref, origin, desired, &filter, &fraction, normal, visited, &count, 128);
+    if (dtStatusFailed(st) || (st & DT_BUFFER_TOO_SMALL) || !count) return 0;
+    if (fraction >= 1.f) {
+        dtVcopy(landed, desired);
+    } else {
+        const auto hitRef = visited[count - 1];
+        st = query.moveAlongSurface(ref, origin, desired, &filter, landed, visited, &count, 128);
+        const float step = std::hypot(desired[0] - origin[0], desired[2] - origin[2]);
+        if (dtStatusFailed(st) || (st & DT_BUFFER_TOO_SMALL) || !count ||
+            std::hypot(landed[0] - origin[0], landed[2] - origin[2]) > step + .01f ||
+            std::hypot(landed[0] - desired[0], landed[2] - desired[2]) > step + .01f) {
+            dtVlerp(landed, origin, desired, std::max(0.f, fraction - .0001f));
+            visited[0] = hitRef;
+            count = 1;
+        }
+    }
+    float height;
+    if (dtStatusFailed(query.getPolyHeight(visited[count-1], landed, &height))) {
+        float closest[3];
+        if (dtStatusFailed(query.closestPointOnPoly(visited[count-1], landed, closest, nullptr))) return 0;
+        height = closest[1];
+    }
+    out[0] = landed[0]; out[1] = -landed[2]; out[2] = height;
+    return 1;
+}
 API int query_levels(const dtNavMesh *nav, float x, float y, float *heights, int capacity) {
     dtNavMeshQuery q;
     if (dtStatusFailed(q.init(nav, 64)))
