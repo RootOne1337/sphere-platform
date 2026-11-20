@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="ru">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+  <link rel="icon" href="data:," /><title>
+    Black Russia · Детальная 3D-сцена
+  </title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #101a20;
+      color: #edf2ed;
+      font:
+        16px/1.5 "Segoe UI",
+        sans-serif;
+    }
+    main {
+      max-width: 1600px;
+      margin: auto;
+      padding: clamp(12px, 2.4vw, 34px);
+    }
+    header,
+    .tools,
+    .foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header {
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: clamp(26px, 4vw, 44px);
+      line-height: 1.05;
+      margin: 4px 0;
+    }
+    small,
+    .foot {
+      color: #b4c6ca;
+    }
+    .card {
+      background: #18282e;
+      border: 1px solid #3a4a50;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .tools,
+    .foot {
+      padding: 12px 16px;
+    }
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    nav,
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    a,
+    button,
+    select,
+    input {
+      font: inherit;
+      border: 1px solid #475b60;
+      border-radius: 7px;
+      background: #14232a;
+      color: #e6f4ee;
+      padding: 6px 10px;
+      text-decoration: none;
+    }
+    button {
+      background: #a8ecd4;
+      color: #16372c;
+      cursor: pointer;
+    }
+    input {
+      width: 100px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: clamp(360px, 64vh, 820px);
+      touch-action: none;
+    }
+    #status {
+      font-variant-numeric: tabular-nums;
+    }
+    .foot {
+      font-size: 14px;
+    }
+    a:hover {
+      border-color: #a8ecd4;
+    }
+  </style>
+  <main>
+    <header>
+      <div>
+        <small>BLACK RUSSIA · ИСХОДНЫЕ МОДЕЛИ ARIANE</small>
+        <h1>Детальная 3D-сцена</h1>
+      </div>
+      <nav><a href="/review">Карта разрывов</a><a href="/">Планировщик</a></nav>
+    </header>
+    <section class="card">
+      <div class="tools">
+        <form id="params">
+          <label
+            >X
+            <input
+              id="x"
+              type="number"
+              step="any"
+              required
+              value="562" /></label
+          ><label
+            >Y
+            <input
+              id="y"
+              type="number"
+              step="any"
+              required
+              value="2560" /></label
+          ><label
+            >Z
+            <input
+              id="z"
+              type="number"
+              step="any"
+              required
+              value="12.4" /></label
+          ><label
+            >Радиус
+            <select id="radius">
+              <option>48</option>
+              <option selected>96</option>
+              <option>160</option>
+            </select></label
+          ><button>Открыть участок</button>
+        </form>
+        <span id="status" role="status">Загрузка участка…</span>
+      </div>
+      <canvas aria-label="Трёхмерная сцена выбранного участка"></canvas>
+      <div class="foot">
+        <span
+          >Перетаскивание — поворот · Колесо — приближение · Правая кнопка —
+          сдвиг</span
+        ><span>Координаты и расстояния в игровых единицах</span>
+      </div>
+    </section>
+  </main>
+  <script type="importmap">
+    { "imports": { "three": "/detail/js/three.module.js" } }
+  </script>
+  <script type="module">
+    import * as T from "three";
+    import { GLTFLoader } from "/detail/js/GLTFLoader.js";
+    import { OrbitControls } from "/detail/js/OrbitControls.js";
+    const $ = (s) => document.querySelector(s),
+      canvas = $("canvas"),
+      status = $("#status"),
+      params = new URLSearchParams(location.search);
+    for (const k of ["x", "y", "z", "radius"])
+      if (params.has(k)) $("#" + k).value = params.get(k);
+    let renderer;
+    try {
+      renderer = new T.WebGLRenderer({ canvas, antialias: true });
+    } catch {
+      status.textContent = "Для вращения сцены требуется WebGL 2.";
+      throw Error("WebGL unavailable");
+    }
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
+    renderer.setClearColor(0x99b7c3);
+    const scene = new T.Scene(),
+      camera = new T.PerspectiveCamera(49, 1, 0.25, 4000);
+    camera.up.set(0, 0, 1);
+    const controls = new OrbitControls(camera, canvas);
+    controls.maxPolarAngle = Math.PI * 0.96;
+    controls.maxDistance = 1100;
+    const hemi = new T.HemisphereLight(0xffffff, 0xb3a69a, 2.15);
+    hemi.up.set(0, 0, 1);
+    hemi.position.set(0, 0, 1);
+    scene.add(hemi);
+    const sun = new T.DirectionalLight(0xffedd5, 1.75);
+    sun.position.set(-80, -60, 150);
+    scene.add(sun);
+    let group = new T.Group();
+    scene.add(group);
+    let pending = false;
+    function draw() {
+      if (!pending) {
+        pending = true;
+        requestAnimationFrame(() => {
+          pending = false;
+          renderer.render(scene, camera);
+        });
+      }
+    }
+    controls.addEventListener("change", draw);
+    new ResizeObserver(() => {
+      const w = canvas.clientWidth,
+        h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      draw();
+    }).observe(canvas);
+    const manager = new T.LoadingManager();
+    let resourceError = false;
+    manager.onError = () => {
+      resourceError = true;
+    };
+    const loader = new GLTFLoader(manager);
+    function disposeGroup(root) {
+      const mats = new Set(),
+        geos = new Set(),
+        textures = new Set();
+      root.traverse((obj) => {
+        if (obj.isMesh) {
+          if (obj.isInstancedMesh) obj.dispose();
+          geos.add(obj.geometry);
+          for (const mat of [].concat(obj.material)) {
+            mats.add(mat);
+            if (mat.map) textures.add(mat.map);
+          }
+        }
+      });
+      geos.forEach((g) => g.dispose());
+      mats.forEach((m) => m.dispose());
+      textures.forEach((t) => {
+        t.dispose();
+        t.source.data?.close?.();
+      });
+      root.clear();
+    }
+    async function load() {
+      const submit = $("button");
+      submit.disabled = true;
+      resourceError = false;
+      try {
+        const p = new URLSearchParams();
+        for (const k of ["x", "y", "z", "radius"]) p.set(k, $("#" + k).value);
+        history.replaceState(null, "", "?" + p);
+        const x = +p.get("x"),
+          y = +p.get("y"),
+          z = +p.get("z"),
+          rad = +p.get("radius");
+        status.textContent = "Поиск видимых моделей…";
+        const res = await fetch("/api/neighborhood?" + p);
+        if (!res.ok) throw Error("neighborhood");
+        const data = await res.json();
+        scene.remove(group);
+        disposeGroup(group);
+        group = new T.Group();
+        scene.add(group);
+        let cursor = 0,
+          done = 0,
+          tris = 0,
+          n = 0;
+        renderer.clippingPlanes = [
+          new T.Plane(new T.Vector3(1, 0, 0), rad - x),
+          new T.Plane(new T.Vector3(-1, 0, 0), x + rad),
+          new T.Plane(new T.Vector3(0, 1, 0), rad - y),
+          new T.Plane(new T.Vector3(0, -1, 0), y + rad),
+        ];
+        controls.target.set(x, y, z);
+        camera.position.set(x + rad * 0.6, y - rad * 0.72, z + rad * 0.58);
+        controls.update();
+        async function worker() {
+          while (cursor < data.length) {
+            const entry = data[cursor++],
+              asset = await loader.loadAsync(
+                new URL("/detail/model/" + entry.id + ".glb", location.href)
+                  .href,
+              );
+            asset.scene.updateMatrixWorld(true);
+            asset.scene.traverse((mesh) => {
+              if (!mesh.isMesh) return;
+              if (!mesh.geometry.attributes.normal)
+                mesh.geometry.computeVertexNormals();
+              const inst = new T.InstancedMesh(
+                mesh.geometry,
+                mesh.material,
+                entry.instances.length,
+              );
+              const matrix = new T.Matrix4(),
+                pos = new T.Vector3(),
+                quat = new T.Quaternion(),
+                scale = new T.Vector3(1, 1, 1);
+              entry.instances.forEach((t, i) => {
+                pos.fromArray(t);
+                quat.fromArray(t, 3);
+                matrix.compose(pos, quat, scale).multiply(mesh.matrixWorld);
+                inst.setMatrixAt(i, matrix);
+              });
+              inst.computeBoundingSphere();
+              group.add(inst);
+            });
+            tris += entry.triangles * entry.instances.length;
+            n += entry.instances.length;
+            done++;
+            status.textContent = done + "/" + data.length + " моделей";
+            draw();
+          }
+        }
+        const all = await Promise.allSettled(
+          Array.from({ length: Math.min(6, data.length) }, worker),
+        );
+        if (resourceError || all.some((v) => v.status === "rejected"))
+          throw Error("model");
+        status.textContent =
+          n.toLocaleString("ru") +
+          " объектов · " +
+          tris.toLocaleString("ru") +
+          " треугольников";
+        if (!n) status.textContent = "В выбранном объёме исходных моделей нет.";
+        draw();
+      } catch (e) {
+        status.textContent = "Не удалось загрузить все модели участка.";
+        console.error(e);
+      } finally {
+        submit.disabled = false;
+      }
+    }
+    $("#params").onsubmit = (e) => {
+      e.preventDefault();
+      load();
+    };
+    load();
+  </script>
+</html>

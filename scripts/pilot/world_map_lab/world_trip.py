@@ -12,7 +12,17 @@ class TripPlanner:
         with np.load(folder / "drive-faces.npz", allow_pickle=False) as cache:
             if str(cache["geometry"]) != self.drive.meta["geometrySha256"]:
                 raise ValueError("drive index does not match loaded mesh")
+            if "mesh" in cache:
+                from scripts.pilot.world_map_lab.world_navmesh import checksum
+
+                if str(cache["mesh"]) != checksum(folder / "drive.nav.zip"):
+                    raise ValueError("stale road index")
             faces = cache["faces"]
+            if len(faces) != self.drive.meta["polygons"] or (
+                self.drive.labels is not None
+                and not np.array_equal(faces["group"], self.drive.labels)
+            ):
+                raise ValueError("stale component assignments")
         # Polygon centres propose transfers. Both legs still need full Detour paths.
         self.centers = faces["xyz"].sum(axis=1) / faces["vertices"][:, None]
         self.groups = faces["group"]
@@ -28,10 +38,34 @@ class TripPlanner:
     def leg(mode, route):
         return {"mode": mode, "length": route["length"], "path": route["path"]}
 
-    def route(self, start, end):
+    def route(self, start, end, vehicle=None):
+        if vehicle is None:
+            return self.from_vehicle(start, end, allow_walk=True)
+        if np.shape(vehicle) != (3,) or not np.isfinite(vehicle).all():
+            raise ValueError("expected finite vehicle XYZ")
+        unavailable = {"status": "no_itinerary", "legs": [], "length": 0.0, "path": []}
+        ds = [z for z in self.drive.levels(*vehicle[:2]) if abs(z - vehicle[2]) <= 0.375]
+        if not ds:
+            return unavailable
+        dz = min(ds, key=lambda z: abs(z - vehicle[2]))
+        ws = [h for h in self.walk.levels(*vehicle[:2]) if abs(h - dz) <= 0.375]
+        if not ws:
+            return unavailable
+        first = self.walk.route(start, [*vehicle[:2], min(ws, key=lambda h: abs(h - dz))])
+        if first["status"] != "complete":
+            return unavailable
+        onward = self.from_vehicle([*vehicle[:2], dz], end, allow_walk=False)
+        if onward["status"] != "complete":
+            return unavailable
+        if first["length"] > 0.01:
+            onward["legs"].insert(0, self.leg("walk", first))
+            onward["length"] += first["length"]
+        return onward
+
+    def from_vehicle(self, start, end, allow_walk):
         if len(start) != 3 or len(end) != 3 or not np.isfinite([start, end]).all():
             raise ValueError("finite XYZ needed for both endpoints")
-        walk = self.walk.route(start, end)
+        walk = self.walk.route(start, end) if allow_walk else {"status": "unavailable"}
         best = [self.leg("walk", walk)] if walk["status"] == "complete" else []
         score = walk["length"] if best else math.inf
         # Select only surfaces actually underneath the starting point.

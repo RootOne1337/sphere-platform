@@ -20,7 +20,13 @@ TILE = 128
 BORDER = 3.0
 FLOATS = ct.POINTER(ct.c_float)
 FACE = np.dtype([("xyz", "<f4", (6, 3)), ("vertices", "<u4"), ("group", "<u4")])
-CODES = {0: "endpoint_unavailable", 1: "complete", 2: "disconnected", 3: "search_limit"}
+CODES = {
+    0: "endpoint_unavailable",
+    1: "complete",
+    2: "disconnected",
+    3: "search_limit",
+    4: "surface_unconfirmed",
+}
 
 
 class Chunk(ct.Structure):
@@ -56,6 +62,18 @@ def library(path):
         "query_levels": (integer, [void, real, real, FLOATS, integer]),
         "query_path": (integer, [void, FLOATS, FLOATS, FLOATS, integer, ct.POINTER(integer)]),
     }
+    if hasattr(dll, "bake_cell_size"):
+        signatures["bake_cell_size"] = (real, [integer])
+    if hasattr(dll, "collect_labels"):
+        signatures["collect_labels"] = (integer, [void, void, integer])
+        signatures["endpoint_index"] = (integer, [void, FLOATS])
+    if hasattr(dll, "index_clusters"):
+        signatures["index_clusters"] = (void, [void])
+        signatures["free_clusters"] = (None, [void])
+        signatures["query_cluster_path"] = (
+            integer,
+            [void, void, FLOATS, FLOATS, FLOATS, integer, ct.POINTER(integer)],
+        )
     for name, (result, args) in signatures.items():
         fn = getattr(dll, name)
         fn.argtypes, fn.restype = args, result
@@ -124,6 +142,11 @@ def build(args):
     index, chunks = spatial_index(data, bounds)
     dll = library(folder / "ariane-nav.dll")
     for mode in args.modes:
+        fine = mode == "walk" and getattr(args, "walk_cell", 0.25) == 0.125
+        if not hasattr(dll, "bake_cell_size") or dll.bake_cell_size(
+            2 if fine else int(mode == "drive")
+        ) != (0.125 if fine else 0.25):
+            raise ValueError("rebuild the native adapter for this voxel profile")
         jobs = []
         for (tx, ty), ids in sorted(index.items()):
             selected = [
@@ -170,7 +193,7 @@ def build(args):
                 lo,
                 hi,
                 layer,
-                mode == "drive",
+                2 if fine else int(mode == "drive"),
                 ct.byref(pointer),
                 ct.byref(size),
             )
@@ -212,7 +235,7 @@ def build(args):
                 "mode": mode,
                 "bounds": bounds,
                 "tileWidth": TILE,
-                "cell": 0.5,
+                "cell": 0.125 if fine else 0.25,
                 "heightStep": 0.125,
                 "radius": 1.5 if mode == "drive" else 0.5,
                 "height": 2.0 if mode == "drive" else 1.875,
@@ -228,16 +251,21 @@ def build(args):
             f = network.faces()
             assert len(f) == polygons
             np.savez_compressed(
-                folder / f"{mode}-faces.npz", faces=f, geometry=geo["geometrySha256"]
+                folder / f"{mode}-faces.npz",
+                faces=f,
+                geometry=geo["geometrySha256"],
+                mesh=checksum(dest),
             )
         print(meta, flush=True)
 
 
 class Network:
-    def __init__(self, folder, mode):
+    def __init__(self, folder, mode, *, adapter=None):
         if mode not in ("drive", "walk"):
             raise ValueError("unknown transport mode")
-        self.dll = library(folder / "ariane-nav.dll")
+        self.dll = library(adapter or folder / "ariane-nav.dll")
+        self.labels = None
+        self.graph = None
         self.handle = None
         with ZipFile(folder / f"{mode}.nav.zip") as archive:
             self.meta = json.loads(archive.read("manifest.json"))
@@ -253,11 +281,24 @@ class Network:
                         blob = archive.read(name)
                         if not self.dll.add_tile(self.handle, blob, len(blob)):
                             raise ValueError("invalid navigation tile " + name)
+                if hasattr(self.dll, "collect_labels"):
+                    self.labels = np.empty(self.meta["polygons"], dtype=np.uint32)
+                    if self.dll.collect_labels(
+                        self.handle, self.labels.ctypes.data, len(self.labels)
+                    ) != len(self.labels):
+                        raise ValueError("unexpected component index size")
+                if hasattr(self.dll, "index_clusters"):
+                    self.graph = self.dll.index_clusters(self.handle)
+                    if not self.graph:
+                        raise MemoryError("could not index tile portals")
             except BaseException:
                 self.close()
                 raise
 
     def close(self):
+        if self.graph:
+            self.dll.free_clusters(self.graph)
+            self.graph = None
         if self.handle:
             self.dll.free_nav(self.handle)
             self.handle = None
@@ -284,14 +325,37 @@ class Network:
             raise RuntimeError("level lookup failed")
         return out[:count].tolist()
 
+    def component(self, point):
+        if self.labels is None:
+            raise ValueError("component lookup requires an indexed adapter")
+        xyz = np.ascontiguousarray(point, dtype=np.float32)
+        if xyz.shape != (3,) or not np.isfinite(xyz).all():
+            raise ValueError("expected finite XYZ")
+        i = self.dll.endpoint_index(self.handle, xyz.ctypes.data_as(FLOATS))
+        if i == -1:
+            return None
+        if not 0 <= i < len(self.labels):
+            raise RuntimeError("endpoint lookup failed")
+        return int(self.labels[i])
+
     def route(self, start, end):
         ends = [np.ascontiguousarray(p, dtype=np.float32) for p in (start, end)]
         if any(p.shape != (3,) or not np.isfinite(p).all() for p in ends):
             raise ValueError("expected finite XYZ for both endpoints")
+        if self.labels is not None:
+            a, b = map(self.component, ends)
+            if a is None or b is None or a != b:
+                return {
+                    "status": "endpoint_unavailable" if a is None or b is None else "disconnected",
+                    "length": 0.0,
+                    "path": [],
+                }
         out = np.empty((16384, 3), np.float32)
         count = ct.c_int()
-        status = self.dll.query_path(
-            self.handle,
+        fn = self.dll.query_cluster_path if self.graph else self.dll.query_path
+        handles = (self.handle, self.graph) if self.graph else (self.handle,)
+        status = fn(
+            *handles,
             *(p.ctypes.data_as(FLOATS) for p in ends),
             out.ctypes.data_as(FLOATS),
             len(out),
@@ -315,6 +379,7 @@ def main():
     b.add_argument("--road-report", required=True, type=Path)
     b.add_argument("--workers", type=int, default=2, choices=range(1, 9))
     b.add_argument("--modes", nargs="+", choices=["drive", "walk"], default=["drive", "walk"])
+    b.add_argument("--walk-cell", type=float, choices=(0.125, 0.25), default=0.25)
     q = sub.add_parser("route")
     q.add_argument("--folder", required=True, type=Path)
     q.add_argument("--mode", required=True, choices=["drive", "walk"])

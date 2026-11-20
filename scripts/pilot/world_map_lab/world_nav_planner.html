@@ -54,7 +54,7 @@
     .status {
       color: #b5c8c9;
     }
-    #reportLink {
+    .subtitle a {
       color: #a9ead4;
       margin-left: 10px;
     }
@@ -142,6 +142,8 @@
         <p class="subtitle">
           Black Russia · Карта Ariane
           <a id="reportLink" hidden href="/navigation-report.html">Отчёт</a>
+          <a href="/review" id="reviewLink" hidden>Карта разрывов</a>
+          <a href="/detail" id="detailLink" hidden>Детальная 3D-сцена</a>
         </p>
         <h1>Маршрут между точками</h1>
       </div>
@@ -159,6 +161,8 @@
         <div class="pick">
           <button id="a" aria-pressed="true">A · Старт</button
           ><button id="b" aria-pressed="false">B · Цель</button
+          ><button id="v" aria-pressed="false" hidden>
+            V · Где стоит транспорт</button
           ><button id="example">Пример маршрута</button
           ><button id="clear">Сбросить точки</button>
         </div>
@@ -278,8 +282,8 @@
         ctx.strokeStyle = leg.mode === "walk" ? "#c5ffac" : "#ffcb68";
         ctx.stroke();
       }
-      if (path.length > 1) {
-        const [x, y] = pixel(...path[1].path[0]);
+      for (const leg of path.slice(1)) {
+        const [x, y] = pixel(...leg.path[0]);
         ctx.beginPath();
         ctx.arc(x, y, 6, 0, 2 * Math.PI);
         ctx.fillStyle = "#fff";
@@ -290,7 +294,8 @@
         const [x, y] = pixel(...v);
         ctx.beginPath();
         ctx.arc(x, y, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = key === "a" ? "#c3ffdb" : "#ffcd88";
+        ctx.fillStyle =
+          key === "a" ? "#c3ffdb" : key === "v" ? "#c2bcff" : "#ffcd88";
         ctx.fill();
         ctx.fillStyle = "#14232a";
         ctx.font = "bold 12px Segoe UI";
@@ -335,10 +340,11 @@
     }
     function select(k) {
       active = k;
-      for (const id of ["a", "b"])
+      for (const id of ["a", "b", "v"])
         $(id).setAttribute("aria-pressed", String(k === id));
     }
     function reset() {
+      $("v").hidden = mode() !== "trip";
       if (world?.examples)
         $("example").disabled = !world.examples.includes(mode());
       request++;
@@ -362,9 +368,13 @@
       if (!ends.a || !ends.b) {
         select(ends.a ? "b" : "a");
         status(
-          ends.a
-            ? "Старт выбран. Укажите цель."
-            : "Цель выбрана. Укажите старт.",
+          k === "v"
+            ? ends.a
+              ? "Транспорт указан. Укажите цель."
+              : "Транспорт указан. Укажите старт."
+            : ends.a
+              ? "Старт выбран. Укажите цель."
+              : "Цель выбрана. Укажите старт.",
         );
         return;
       }
@@ -374,6 +384,7 @@
         start: ends.a.join(","),
         end: ends.b.join(","),
       });
+      if (ends.v) query.set("vehicle", ends.v.join(","));
       const result = await get("/api/path?" + query);
       if (token !== request) return;
       path =
@@ -387,6 +398,8 @@
           "Старт и цель лежат в разных частях сети. Непрерывного пути в этом режиме нет.",
         endpoint_unavailable:
           "Для одного из концов не найдена подходящая поверхность.",
+        surface_unconfirmed:
+          "На выбранном уровне не подтверждена высота опоры.",
         search_limit: "Поиск достиг вычислительного лимита.",
       };
       status(
@@ -411,7 +424,8 @@
       path = [];
       draw();
       const { levels } = await get(
-        "/api/levels?" + new URLSearchParams({ mode: mode(), x, y }),
+        "/api/levels?" +
+          new URLSearchParams({ mode: k === "v" ? "drive" : mode(), x, y }),
       );
       if (token !== request) return;
       if (!levels.length) {
@@ -439,18 +453,17 @@
         );
       }
     };
-    $("a").onclick = () => {
-      request++;
-      pending = null;
-      $("levels").hidden = true;
-      select("a");
-    };
-    $("b").onclick = () => {
-      request++;
-      pending = null;
-      $("levels").hidden = true;
-      select("b");
-    };
+    for (const id of ["a", "b", "v"])
+      $(id).onclick = () => {
+        request++;
+        pending = null;
+        $("levels").hidden = true;
+        select(id);
+        if (id === "v")
+          status(
+            "Укажите место, где стоит транспорт. К нему будет построен пеший участок.",
+          );
+      };
     $("example").onclick = async () => {
       reset();
       const token = request;
@@ -458,6 +471,7 @@
         const ex = await get("/api/example?mode=" + mode());
         if (token !== request) return;
         ends.a = ex.start;
+        if (ex.vehicle) ends.v = ex.vehicle;
         await accept(...ex.end, "b", token);
         if (token === request && path.length)
           framePoints(path.flatMap((l) => l.path));
@@ -515,6 +529,8 @@
     (async () => {
       const m = await get("/api/world");
       world = m;
+      $("reviewLink").hidden = !m.review;
+      $("detailLink").hidden = !m.detail;
       $("reportLink").hidden = !m.report;
       bounds = m.drive.bounds;
       [base, ink.drive, ink.walk] = await Promise.all(

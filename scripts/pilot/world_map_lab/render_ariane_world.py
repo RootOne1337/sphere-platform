@@ -105,7 +105,8 @@ def texture_parents(source):
 
 
 class Textures:
-    def __init__(self, source, geometry):
+    def __init__(self, source, geometry, texture_size=64, pack_cache=2048):
+        self.texture_size = texture_size
         folder = source / "models/img"
         self.geometry = geometry
         self.entries = geometry.index_files(
@@ -114,7 +115,7 @@ class Textures:
         self.parents = texture_parents(source)
         self.txd = import_module("gtaLib.txd")
         self.stats = Counter()
-        self.packs = lru_cache(maxsize=2048)(self.read_pack)
+        self.packs = lru_cache(maxsize=pack_cache)(self.read_pack)
 
     def read_pack(self, pack):
         key = pack + ".txd"
@@ -132,7 +133,7 @@ class Textures:
                 (
                     i
                     for i in range(tex.num_levels)
-                    if max(tex.get_width(i), tex.get_height(i)) <= 64
+                    if max(tex.get_width(i), tex.get_height(i)) <= self.texture_size
                 ),
                 max(0, tex.num_levels - 1),
             )

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ru">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><link rel="icon" href="data:," /><title>
+    Black Russia · Проверка доступности
+  </title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    :root {
+      color-scheme: dark;
+      --bg: #101b22;
+      --panel: #182930;
+      --edge: #385058;
+      --muted: #b1c7cb;
+      --ok: #9de6b2;
+      --bad: #ffb37d;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: #eff2ed;
+      font:
+        16px/1.5 "Segoe UI",
+        system-ui,
+        sans-serif;
+    }
+    main {
+      max-width: 1560px;
+      padding: clamp(12px, 2.6vw, 38px);
+      margin: auto;
+    }
+    header,
+    nav,
+    .bar,
+    .key {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    header,
+    .bar {
+      justify-content: space-between;
+    }
+    header {
+      margin-bottom: 22px;
+    }
+    h1 {
+      font-size: clamp(32px, 4vw, 52px);
+      letter-spacing: -0.045em;
+      line-height: 1.05;
+      margin: 5px 0;
+    }
+    small,
+    .muted,
+    .key {
+      color: var(--muted);
+    }
+    h2 {
+      font-size: 23px;
+      line-height: 1.15;
+      margin: 0 0 12px;
+    }
+    p {
+      margin: 10px 0;
+    }
+    a,
+    button,
+    select {
+      font: inherit;
+      color: #e6f4ee;
+      background: #1c3036;
+      border: 1px solid var(--edge);
+      border-radius: 7px;
+      padding: 7px 12px;
+      text-decoration: none;
+    }
+    button,
+    select {
+      cursor: pointer;
+    }
+    a:hover,
+    button:hover {
+      border-color: #a2deca;
+    }
+    .stats {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin: 14px 0 20px;
+    }
+    .stats div {
+      flex: 1 1 190px;
+      border-left: 3px solid #88c8b3;
+      padding: 3px 12px;
+    }
+    .stats b {
+      font-size: 25px;
+      display: block;
+      line-height: 1.25;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+      gap: 16px;
+    }
+    .card {
+      border: 1px solid var(--edge);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .bar,
+    .key {
+      padding: 10px 14px;
+    }
+    .key {
+      font-size: 14px;
+    }
+    svg {
+      display: block;
+      width: 100%;
+      height: clamp(380px, 60vh, 720px);
+      background: #101d23;
+      touch-action: none;
+    }
+    .info {
+      padding: 20px;
+    }
+    .info dl {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 7px 11px;
+      font-size: 14px;
+    }
+    .info dt {
+      color: var(--muted);
+    }
+    dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .info a {
+      display: inline-block;
+    }
+    .points {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 14px 0;
+    }
+    .points button {
+      font-size: 14px;
+      padding: 5px 9px;
+    }
+    .points button[aria-pressed="true"] {
+      border-color: white;
+      color: white;
+    }
+    .ok {
+      color: var(--ok);
+    }
+    .bad {
+      color: var(--bad);
+    }
+    details {
+      margin-top: 18px;
+    }
+    summary {
+      cursor: pointer;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 14px;
+    }
+    td,
+    th {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid var(--edge);
+    }
+    :focus-visible {
+      outline: 2px solid #b7efe6;
+    }
+    @media (max-width: 820px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .info {
+        padding: 15px;
+      }
+      .stats {
+        gap: 9px;
+      }
+      .stats div {
+        flex: 1 1 128px;
+      }
+      main {
+        padding: 12px;
+      }
+      .key {
+        gap: 7px;
+      }
+    }
+  </style>
+  <main>
+    <header>
+      <div>
+        <small>SPHERE LAB · BLACK RUSSIA</small>
+        <h1>Где маршрут проходит</h1>
+      </div>
+      <nav>
+        <a href="/">Планировщик A → B</a
+        ><a href="/detail">Детальная 3D-сцена</a>
+      </nav>
+    </header>
+    <div class="stats" id="stats"></div>
+    <section class="layout">
+      <section class="card">
+        <div class="bar">
+          <select id="filter" aria-label="Показать на карте">
+            <option value="remaining">Оставшиеся маршруты</option>
+            <option value="fixed">Восстановленные маршруты</option>
+            <option value="sites">Исходные 19 разрывов</option>
+          </select>
+          <nav>
+            <button id="zoom">Участок крупно</button
+            ><button id="all">Вся карта</button>
+          </nav>
+        </div>
+        <svg
+          id="map"
+          aria-label="Карта контрольных участков"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <image
+            href="atlas/ariane-world-top.png"
+            x="-3072"
+            y="-3584"
+            width="6144"
+            height="6656"
+            opacity=".79"
+          />
+          <g id="markers"></g>
+        </svg>
+        <div class="key">
+          <span class="bad">● Связь отсутствует</span
+          ><span class="ok">● Путь построен</span
+          ><span style="color: #56e4ef">━ Транспорт</span
+          ><span style="color: #ffe2a1">┄ Пешком</span
+          ><span>A и B · концы выбранного маршрута</span>
+        </div>
+      </section>
+      <aside class="card info" aria-live="polite">
+        <small id="type"></small>
+        <h2 id="title"></h2>
+        <strong id="status"></strong>
+        <p id="reason"></p>
+        <dl id="values"></dl>
+        <nav id="links"></nav>
+      </aside>
+    </section>
+    <div class="points" id="choices"></div>
+    <details open>
+      <summary>Точность и скорость планирования</summary>
+      <p id="performance"></p>
+      <p>
+        Шаг сетки указан в игровых единицах. Точность движения в Black Russia
+        измеряется по фактическому боковому отклонению, задержке от кадра до
+        команды и точности остановки у цели. Эта проверка выполнена по
+        статической карте.
+      </p>
+    </details>
+    <details>
+      <summary>Физический профиль выбранного места</summary>
+      <p>
+        Материалы измерены на девяти лучах, высота опоры — в 17 точках.
+        Пересечения относятся к прямому коридору с габаритами выбранного
+        профиля. Длина объезда измеряется между точками внутри прежних частей
+        сети.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Доля прямой</th>
+            <th>Высота опоры</th>
+            <th>Дорожный слой</th>
+            <th>Вода</th>
+          </tr>
+        </thead>
+        <tbody id="profile"></tbody>
+      </table>
+    </details>
+    <p class="muted">
+      Щелчок по свободному месту карты открывает выбор высоты для просмотра
+      исходной геометрии. Колесо меняет масштаб, перетаскивание сдвигает карту.
+    </p>
+    <div id="place"></div>
+  </main>
+  <script type="application/json" id="data">
+    __REVIEW_DATA__
+  </script>
+  <script>
+    __REVIEW_JS__
+  </script>
+</html>

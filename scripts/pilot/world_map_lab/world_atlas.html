@@ -33,7 +33,7 @@ canvas{cursor:grab;touch-action:none}canvas:active{cursor:grabbing}
 <body>
 <main>
   <header><div><p>BLACK RUSSIA · АТЛАС ARIANE</p><h1 id="heading">Вид сверху</h1></div>
-    <nav aria-label="Карты"><a id="worldLink" href="../ariane-world-map.html" hidden>Весь мир</a><a id="topLink" href="ariane-world-map.html">Карта сверху</a><a id="threeLink" href="ariane-world-3d.html">Цветной 3D-мир</a></nav>
+    <nav aria-label="Карты"><a id="worldLink" href="../ariane-world-map.html" hidden>Весь мир</a><a id="topLink" href="ariane-world-map.html">Карта сверху</a><a id="threeLink" href="ariane-world-3d.html">Цветной 3D-мир</a><a id="streetDetail" hidden href="/detail">Детальная 3D-сцена</a></nav>
   </header>
   <section class="card" aria-labelledby="heading">
     <div class="tools">
@@ -260,4 +260,6 @@ new ResizeObserver(()=>redraw()).observe(canvas);
 fit();
 </script>
 </body>
-</html>
+<script>
+if(location.protocol!=="file:")fetch("/api/world").then(r=>r.ok?r.json():{}).then(w=>{if(w.detail)document.getElementById("streetDetail").hidden=false}).catch(()=>{});
+</script></html>

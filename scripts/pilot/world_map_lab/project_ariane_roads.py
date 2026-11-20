@@ -26,7 +26,7 @@ ROAD_MATERIAL = re.compile(
     r"nbt_rd[5679]|t_asph_drt_lin[ab]|lf_arzrd[1-9]|lf_newrd[13]|"
     r"t_asphlt_notrcs_d(?:_alb)?|t_asph_d_(?:linb|dira)|crb_roadsv1(?:str2?)?|"
     r"crbroads66[467]|wolv_roads(?:cr4|_cross)|wolv_dr_(?:2|0b)|road_sel23_[12]|"
-    r"arz_per_2|lf_arzper2|zebr5323|t_nn_road_[yz]|srd_terrpick_road[23]?|sv_asph2|dt_road2|sber_road2_a889)"
+    r"reshnaaspha2|arz_per_2|lf_arzper2|zebr5323|t_nn_road_[yz]|srd_terrpick_road[23]?|sv_asph2|dt_road2|sber_road2_a889)"
 )
 # Kept as distinct visual hypotheses until collider, height and access checks.
 ADDITIONAL_PAVEMENT = re.compile(

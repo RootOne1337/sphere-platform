@@ -9,8 +9,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from scripts.pilot.world_map_lab.world_navmesh import Network
+from scripts.pilot.world_map_lab.detail_scene_service import read_scene, scene_files
+from scripts.pilot.world_map_lab.world_navmesh import Network, checksum
 from scripts.pilot.world_map_lab.world_trip import TripPlanner
+
+
+class PlannerServer(ThreadingHTTPServer):
+    # Avoid SYN retries when multiple clients request a route at once.
+    request_queue_size = 64
 
 
 def serve(folder, port):
@@ -29,6 +35,7 @@ def serve(folder, port):
             if not file.is_file():
                 raise FileNotFoundError(file)
 
+        files.update(scene_files(folder, nets))
         examples = {}
         for name in (
             "navigation-report.html",
@@ -70,7 +77,15 @@ def serve(folder, port):
             if transfer:
                 examples["trip"] = {"start": transfer["start"], "end": transfer["goal"]}
 
+        mixed_file = folder / "mixed-validation.json"
+        if mixed_file.is_file():
+            mixed = json.loads(mixed_file.read_bytes())
+            if all(mixed["meshes"].get(m) == checksum(folder / f"{m}.nav.zip") for m in nets):
+                examples["trip"] = {key: mixed[key] for key in ("start", "vehicle", "end")}
+
         class Handler(BaseHTTPRequestHandler):
+            disable_nagle_algorithm = True
+
             def send_json(self, document, status=200):
                 body = json.dumps(document, ensure_ascii=False, allow_nan=False).encode()
                 self.send_response(status)
@@ -85,7 +100,12 @@ def serve(folder, port):
                     path = files[req.path]
                     self.send_response(200)
                     self.send_header(
-                        "Content-Type", mimetypes.guess_type(path)[0] or "application/octet-stream"
+                        "Content-Type",
+                        (
+                            "text/html; charset=utf-8"
+                            if path.suffix == ".html"
+                            else mimetypes.guess_type(path)[0] or "application/octet-stream"
+                        ),
                     )
                     self.send_header("Content-Length", str(path.stat().st_size))
                     self.end_headers()
@@ -97,10 +117,34 @@ def serve(folder, port):
                         {
                             **{m: n.meta for m, n in nets.items()},
                             "examples": list(examples),
+                            "review": "/review" in files,
+                            "detail": "/detail" in files,
                             "report": "/navigation-report.html" in files,
                         }
                     )
                     return
+                if "/detail" in files and (
+                    req.path.startswith("/detail/") or req.path == "/api/neighborhood"
+                ):
+                    try:
+                        resource = read_scene(
+                            folder,
+                            req.path,
+                            parse_qs(req.query, strict_parsing=True, max_num_fields=4),
+                        )
+                    except (ValueError, KeyError, OverflowError):
+                        self.send_json({"error": "invalid detail request"}, 400)
+                        return
+                    if resource is not None:
+                        code, body, mime, encoding = resource
+                        self.send_response(code)
+                        self.send_header("Content-Type", mime)
+                        self.send_header("Content-Length", str(len(body)))
+                        if encoding:
+                            self.send_header("Content-Encoding", encoding)
+                        self.end_headers()
+                        self.wfile.write(body)
+                        return
                 if req.path not in ("/api/levels", "/api/path", "/api/example"):
                     self.send_error(404)
                     return
@@ -116,11 +160,17 @@ def serve(folder, port):
                         )
                     else:
                         ends = [[float(n) for n in args[k][0].split(",")] for k in ("start", "end")]
-                        self.send_json((trip if mode == "trip" else nav).route(*ends))
+                        vehicle = args.get("vehicle")
+                        if vehicle and mode != "trip":
+                            raise ValueError("vehicle requires mixed mode")
+                        point = [float(n) for n in vehicle[0].split(",")] if vehicle else None
+                        self.send_json(
+                            trip.route(*ends, vehicle=point) if mode == "trip" else nav.route(*ends)
+                        )
                 except (KeyError, TypeError, ValueError, OverflowError):
                     self.send_json({"error": "invalid query"}, 400)
 
-        http = stack.enter_context(ThreadingHTTPServer(("127.0.0.1", port), Handler))
+        http = stack.enter_context(PlannerServer(("127.0.0.1", port), Handler))
         print(f"http://127.0.0.1:{http.server_port}/", flush=True)
         http.serve_forever()
 

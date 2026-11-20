@@ -1,4 +1,6 @@
-// Native adapter for Recast/Detour 1.6.0. Public coordinates remain in the game's XYZ frame.
+// Native adapter for Recast/Detour 1.6.0. Public coordinates remain in the
+// game's XYZ frame.
+#include "DetourCommon.h"
 #include "DetourNavMesh.h"
 #include "DetourNavMeshBuilder.h"
 #include "DetourNavMeshQuery.h"
@@ -22,9 +24,8 @@ struct Chunk {
     uint32_t count, kind;
 };
 enum Source { Collision, Obstacle, Water, Road, Paving, Foot };
-constexpr float cs = 0.5f, ch = 0.125f;
-constexpr int tileCells = 256;
-constexpr float tileWidth = tileCells * cs;
+constexpr float ch = 0.125f;
+constexpr float tileWidth = 128.f;
 
 static void toNav(const float *xyz, float *v) {
     v[0] = xyz[0];
@@ -37,12 +38,18 @@ static void toGame(const float *v, float *xyz) {
     xyz[2] = v[1];
 }
 
+API float bake_cell_size(int profile) { return profile == 2 ? 0.125f : 0.25f; }
 API int build_tile(const Chunk *chunks, int count, float originX, float originY, int tx, int ty,
-                   float ymin, float ymax, int layer, int drive, unsigned char **out, int *bytes) {
+                   float ymin, float ymax, int layer, int profile, unsigned char **out,
+                   int *bytes) {
     *out = nullptr;
     *bytes = 0;
     rcContext ctx(false);
-    const int radius = drive ? 3 : 1;
+    const bool drive = profile == 1;
+    const bool fine = profile == 2;
+    const int tileCells = fine ? 1024 : 512;
+    const float cs = bake_cell_size(profile);
+    const int radius = drive ? 6 : (fine ? 4 : 2);
     const int climb = drive ? 2 : 3;
     const int height = drive ? 16 : 15;
     const int border = radius + 3;
@@ -95,33 +102,45 @@ API int build_tile(const Chunk *chunks, int count, float originX, float originY,
             for (rcSpan *w = water.spans[i]; w; w = w->next)
                 if (w->smax >= s->smax)
                     s->area = RC_NULL_AREA;
-            if (drive && s->area) {
-                bool match = false;
-                for (rcSpan *r = roads.spans[i]; r; r = r->next)
-                    if (std::abs((int)r->smax - (int)s->smax) <= 3) {
-                        match = true;
-                        break;
-                    }
-                if (!match)
-                    s->area = RC_NULL_AREA;
-            }
         }
     }
     // This filter compares opposite neighbours, a two-cell baseline. Applying
     // the per-link climb here cuts ordinary road ramps into disconnected bands.
     // Compact-field links and cross-tile portals still use the single-step limit.
-    rcFilterLedgeSpans(&ctx, height, drive ? 2 * climb : climb, solid);
+    rcFilterLedgeSpans(&ctx, height, 2 * climb, solid);
     rcFilterWalkableLowHeightSpans(&ctx, height, solid);
     rcCompactHeightfield compact;
     if (!rcBuildCompactHeightfield(&ctx, height, climb, solid, compact))
         return -4;
     if (!compact.spanCount)
         return 0;
-    if (!rcErodeWalkableArea(&ctx, radius, compact) ||
-        !rcBuildRegionsMonotone(&ctx, compact, border, 12, 64))
+    // Erode the physically traversable floor with the complete body radius.
+    // Paint seams and the roadside material boundary are not vertical obstacles.
+    if (!rcErodeWalkableArea(&ctx, radius, compact))
+        return -5;
+    if (drive) {
+        for (int cell = 0; cell < side * side; ++cell) {
+            const auto &column = compact.cells[cell];
+            for (unsigned j = column.index; j < column.index + column.count; ++j) {
+                if (!compact.areas[j])
+                    continue;
+                bool road = false;
+                for (auto *r = roads.spans[cell]; r; r = r->next) {
+                    if (std::abs(int(r->smax) - int(compact.spans[j].y)) <= 3) {
+                        road = true;
+                        break;
+                    }
+                }
+                if (!road)
+                    compact.areas[j] = RC_NULL_AREA;
+            }
+        }
+    }
+    if (!rcBuildRegionsMonotone(&ctx, compact, border, fine ? 48 : 12, fine ? 256 : 64))
         return -5;
     rcContourSet contours;
-    if (!rcBuildContours(&ctx, compact, 0.75f, 32, contours, RC_CONTOUR_TESS_WALL_EDGES))
+    if (!rcBuildContours(&ctx, compact, 0.75f, fine ? 64 : 32, contours,
+                         RC_CONTOUR_TESS_WALL_EDGES))
         return -6;
     if (!contours.nconts)
         return 0;
@@ -192,12 +211,13 @@ API int add_tile(dtNavMesh *nav, const unsigned char *bytes, int size) {
 }
 API void free_nav(dtNavMesh *nav) { dtFreeNavMesh(nav); }
 
-// Collect exact static connectivity including cross-tile portals. Isolated polygons stay isolated.
+// Collect exact static connectivity including cross-tile portals. Isolated
+// polygons stay isolated.
 struct Face {
     float xyz[18];
     uint32_t vertices, group;
 };
-API int collect_faces(const dtNavMesh *nav, Face *faces, int capacity) {
+static int enumerate_components(const dtNavMesh *nav, Face *faces, unsigned *labels, int capacity) {
     std::vector<int> base(nav->getMaxTiles(), -1);
     int n = 0;
     for (int i = 0; i < nav->getMaxTiles(); ++i) {
@@ -207,7 +227,7 @@ API int collect_faces(const dtNavMesh *nav, Face *faces, int capacity) {
             n += t->header->polyCount;
         }
     }
-    if (!faces || capacity < n)
+    if ((!faces && !labels) || capacity < n)
         return n;
     std::vector<int> parent(n);
     for (int i = 0; i < n; ++i)
@@ -225,10 +245,12 @@ API int collect_faces(const dtNavMesh *nav, Face *faces, int capacity) {
         auto *t = nav->getTile(i);
         for (int p = 0; p < t->header->polyCount; ++p) {
             auto &poly = t->polys[p];
-            auto &f = faces[base[i] + p];
-            f.vertices = poly.vertCount;
-            for (int v = 0; v < poly.vertCount; ++v)
-                toGame(t->verts + poly.verts[v] * 3, f.xyz + v * 3);
+            if (faces) {
+                auto &f = faces[base[i] + p];
+                f.vertices = poly.vertCount;
+                for (int v = 0; v < poly.vertCount; ++v)
+                    toGame(t->verts + poly.verts[v] * 3, f.xyz + v * 3);
+            }
             for (auto l = poly.firstLink; l != DT_NULL_LINK; l = t->links[l].next) {
                 auto ref = t->links[l].ref;
                 if (!ref)
@@ -240,11 +262,52 @@ API int collect_faces(const dtNavMesh *nav, Face *faces, int capacity) {
             }
         }
     }
-    for (int i = 0; i < n; ++i)
-        faces[i].group = root(i);
+    for (int i = 0; i < n; ++i) {
+        unsigned label = root(i);
+        if (faces)
+            faces[i].group = label;
+        if (labels)
+            labels[i] = label;
+    }
     return n;
 }
 
+API int collect_faces(const dtNavMesh *nav, Face *faces, int capacity) {
+    return enumerate_components(nav, faces, nullptr, capacity);
+}
+API int collect_labels(const dtNavMesh *nav, unsigned *labels, int capacity) {
+    return enumerate_components(nav, nullptr, labels, capacity);
+}
+static dtStatus endpoint(dtNavMeshQuery &q, const dtQueryFilter &filter, const float *xyz,
+                         dtPolyRef &ref, float *hit) {
+    const float extents[] = {1.5f, 1.0f, 1.5f};
+    float point[3];
+    toNav(xyz, point);
+    auto status = q.findNearestPoly(point, extents, &filter, &ref, hit);
+    if (ref && (std::hypot(point[0] - hit[0], point[2] - hit[2]) > 1.5f ||
+                std::abs(point[1] - hit[1]) > 1.0f))
+        ref = 0;
+    return status;
+}
+API int endpoint_index(const dtNavMesh *nav, const float *xyz) {
+    dtNavMeshQuery q;
+    if (dtStatusFailed(q.init(nav, 64)))
+        return -2;
+    dtPolyRef ref = 0;
+    float hit[3];
+    dtQueryFilter filter;
+    if (dtStatusFailed(endpoint(q, filter, xyz, ref, hit)))
+        return -2;
+    if (!ref)
+        return -1;
+    int index = nav->decodePolyIdPoly(ref);
+    for (unsigned i = 0; i < nav->decodePolyIdTile(ref); ++i) {
+        const auto *tile = nav->getTile(i);
+        if (tile->header)
+            index += tile->header->polyCount;
+    }
+    return index;
+}
 struct RouteNode {
     float cost;
     dtPolyRef previous;
@@ -276,10 +339,124 @@ static float distance(const float *a, const float *b) {
     return std::sqrt(rcVdot(d, d));
 }
 
+// Each high-level node is a connected set of polygons inside one tile.
+// Only real Detour links can connect clusters or form the detailed path.
+struct ClusterGraph {
+    std::vector<int> offsets, membership;
+    std::vector<std::vector<int>> edges;
+    struct Position {
+        float xyz[3]{};
+    };
+    std::vector<Position> centers;
+    int cluster(const dtNavMesh *nav, dtPolyRef ref) const {
+        return membership[offsets[nav->decodePolyIdTile(ref)] + nav->decodePolyIdPoly(ref)];
+    }
+};
+API ClusterGraph *index_clusters(const dtNavMesh *nav) {
+    auto *g = new ClusterGraph;
+    int total = 0;
+    for (int i = 0; i < nav->getMaxTiles(); ++i) {
+        const auto *tile = nav->getTile(i);
+        g->offsets.push_back(total);
+        if (tile->header)
+            total += tile->header->polyCount;
+    }
+    g->membership.assign(total, -1);
+    std::vector<int> stack;
+    for (int i = 0; i < nav->getMaxTiles(); ++i) {
+        auto *tile = nav->getTile(i);
+        if (!tile->header)
+            continue;
+        for (int j = 0; j < tile->header->polyCount; ++j) {
+            if (g->membership[g->offsets[i] + j] >= 0)
+                continue;
+            int id = g->edges.size();
+            g->edges.emplace_back();
+            g->centers.emplace_back();
+            int count = 0;
+            stack.push_back(j);
+            g->membership[g->offsets[i] + j] = id;
+            while (!stack.empty()) {
+                int v = stack.back();
+                stack.pop_back();
+                auto &poly = tile->polys[v];
+                float xyz[3];
+                center(tile, &poly, xyz);
+                rcVadd(g->centers[id].xyz, g->centers[id].xyz, xyz);
+                ++count;
+                for (auto l = poly.firstLink; l != DT_NULL_LINK; l = tile->links[l].next) {
+                    auto ref = tile->links[l].ref;
+                    if (!ref || nav->decodePolyIdTile(ref) != (unsigned)i)
+                        continue;
+                    int w = nav->decodePolyIdPoly(ref);
+                    auto &m = g->membership[g->offsets[i] + w];
+                    if (m < 0) {
+                        m = id;
+                        stack.push_back(w);
+                    }
+                }
+            }
+            for (float &v : g->centers[id].xyz)
+                v /= count;
+        }
+    }
+    for (int i = 0; i < nav->getMaxTiles(); ++i) {
+        auto *tile = nav->getTile(i);
+        if (!tile->header)
+            continue;
+        for (int j = 0; j < tile->header->polyCount; ++j) {
+            auto &peers = g->edges[g->membership[g->offsets[i] + j]];
+            for (auto l = tile->polys[j].firstLink; l != DT_NULL_LINK; l = tile->links[l].next) {
+                auto ref = tile->links[l].ref;
+                if (!ref || nav->decodePolyIdTile(ref) == (unsigned)i)
+                    continue;
+                int next = g->cluster(nav, ref);
+                if (std::find(peers.begin(), peers.end(), next) == peers.end())
+                    peers.push_back(next);
+            }
+        }
+    }
+    return g;
+}
+API void free_clusters(ClusterGraph *graph) { delete graph; }
+static std::vector<unsigned char> cluster_corridor(const ClusterGraph &g, int start, int end) {
+    std::vector<int> parent(g.edges.size(), -1);
+    std::vector<float> cost(g.edges.size(), INFINITY);
+    std::priority_queue<OpenPoly> open;
+    cost[start] = 0;
+    open.push({0, 0, (dtPolyRef)start});
+    while (!open.empty()) {
+        auto n = open.top();
+        open.pop();
+        int v = (int)n.ref;
+        if (n.cost > cost[v])
+            continue;
+        if (v == end) {
+            std::vector<unsigned char> allowed(g.edges.size(), 0);
+            for (; v >= 0; v = parent[v]) {
+                allowed[v] = 1;
+                for (int neighbor : g.edges[v])
+                    allowed[neighbor] = 1;
+            }
+            return allowed;
+        }
+        for (int w : g.edges[v]) {
+            float c = n.cost + distance(g.centers[v].xyz, g.centers[w].xyz);
+            if (c >= cost[w])
+                continue;
+            cost[w] = c;
+            parent[w] = v;
+            open.push({c + distance(g.centers[w].xyz, g.centers[end].xyz), c, (dtPolyRef)w});
+        }
+    }
+    return {};
+}
 // Detour's native query pool has a 16-bit node index. Recover long world routes
-// using the same per-profile mesh and its actual portal links, with a growable pool.
+// using the same per-profile mesh and its actual portal links, with a growable
+// pool.
 static bool world_corridor(const dtNavMesh *nav, dtPolyRef start, dtPolyRef end,
-                           std::vector<dtPolyRef> &path) {
+                           std::vector<dtPolyRef> &path, const ClusterGraph *graph = nullptr,
+                           const std::vector<unsigned char> *allowed = nullptr) {
     const dtMeshTile *tile;
     const dtPoly *poly;
     float goal[3];
@@ -306,7 +483,7 @@ static bool world_corridor(const dtNavMesh *nav, dtPolyRef start, dtPolyRef end,
         center(tile, poly, current);
         for (auto l = poly->firstLink; l != DT_NULL_LINK; l = tile->links[l].next) {
             auto next = tile->links[l].ref;
-            if (!next)
+            if (!next || (allowed && !(*allowed)[graph->cluster(nav, next)]))
                 continue;
             const dtMeshTile *nextTile;
             const dtPoly *nextPoly;
@@ -326,50 +503,118 @@ static bool world_corridor(const dtNavMesh *nav, dtPolyRef start, dtPolyRef end,
     return false;
 }
 
-// Codes: 1 complete, 0 endpoint outside tolerance, 2 disconnected, 3 query budget exhausted.
-API int query_path(const dtNavMesh *nav, const float *start, const float *goal, float *output,
-                   int capacity, int *points) {
+// Codes: 1 complete, 0 endpoint outside tolerance, 2 disconnected, 3 query
+// budget exhausted.
+API int query_cluster_path(const dtNavMesh *nav, const ClusterGraph *graph, const float *start,
+                           const float *goal, float *output, int capacity, int *points) {
     *points = 0;
     dtNavMeshQuery q;
     if (dtStatusFailed(q.init(nav, 65535)))
         return -1;
     dtQueryFilter filter;
-    const float bounds[] = {1.5f, 1.0f, 1.5f};
-    float a[3], b[3], nearA[3], nearB[3];
-    toNav(start, a);
-    toNav(goal, b);
+    float nearA[3], nearB[3];
     dtPolyRef af = 0, bf = 0;
-    if (dtStatusFailed(q.findNearestPoly(a, bounds, &filter, &af, nearA)) ||
-        dtStatusFailed(q.findNearestPoly(b, bounds, &filter, &bf, nearB)))
+    if (dtStatusFailed(endpoint(q, filter, start, af, nearA)) ||
+        dtStatusFailed(endpoint(q, filter, goal, bf, nearB)))
         return -2;
-    auto close = [](const float *p, const float *n) {
-        return std::hypot(p[0] - n[0], p[2] - n[2]) <= 1.5f && std::abs(p[1] - n[1]) <= 1.0f;
-    };
-    if (!af || !bf || !close(a, nearA) || !close(b, nearB))
+    if (!af || !bf)
         return 0;
     std::vector<dtPolyRef> corridor(capacity);
     int count = 0;
-    auto result = q.findPath(af, bf, nearA, nearB, &filter, corridor.data(), &count, capacity);
-    if (dtStatusFailed(result))
-        return -3;
-    if (result & (DT_OUT_OF_NODES | DT_BUFFER_TOO_SMALL)) {
-        if (!world_corridor(nav, af, bf, corridor))
+    if (graph && distance(nearA, nearB) > 256) {
+        auto allowed = cluster_corridor(*graph, graph->cluster(nav, af), graph->cluster(nav, bf));
+        if (!allowed.empty() && world_corridor(nav, af, bf, corridor, graph, &allowed))
+            count = corridor.size();
+    }
+    dtStatus result;
+    if (!count) {
+        corridor.resize(capacity);
+        result = q.findPath(af, bf, nearA, nearB, &filter, corridor.data(), &count, capacity);
+        if (dtStatusFailed(result))
+            return -3;
+        if (result & (DT_OUT_OF_NODES | DT_BUFFER_TOO_SMALL)) {
+            if (!world_corridor(nav, af, bf, corridor))
+                return 2;
+            count = (int)corridor.size();
+        } else if ((result & DT_PARTIAL_RESULT) || !count || corridor[count - 1] != bf)
             return 2;
-        count = (int)corridor.size();
-    } else if ((result & DT_PARTIAL_RESULT) || !count || corridor[count - 1] != bf)
-        return 2;
-    result = q.findStraightPath(nearA, nearB, corridor.data(), count, output, nullptr, nullptr,
-                                points, capacity, DT_STRAIGHTPATH_ALL_CROSSINGS);
+    }
+    std::vector<dtPolyRef> entered(capacity);
+    std::vector<float> bends(3 * capacity);
+    result = q.findStraightPath(nearA, nearB, corridor.data(), count, bends.data(), nullptr,
+                                entered.data(), points, capacity, DT_STRAIGHTPATH_ALL_CROSSINGS);
     if (dtStatusFailed(result))
         return -4;
     if (result & DT_BUFFER_TOO_SMALL)
         return 3;
-    for (int i = 0; i < *points; ++i) {
-        float v[3];
-        std::memcpy(v, output + i * 3, sizeof(v));
-        toGame(v, output + i * 3);
+    // Portal vertices carry coarse contour heights. Sample the detail surface
+    // along each straight segment on this very corridor to preserve flyovers.
+    int bendsCount = *points;
+    *points = 0;
+    auto emit = [&](const float *v) {
+        if (*points >= capacity)
+            return false;
+        toGame(v, output + 3 * (*points)++);
+        return true;
+    };
+    if (!emit(nearA))
+        return 3;
+    int cursor = 0;
+    for (int i = 0; i + 1 < bendsCount; ++i) {
+        auto ref = entered[i] ? entered[i] : af;
+        while (cursor + 1 < count && corridor[cursor] != ref)
+            ++cursor;
+        const float *a = &bends[i * 3], *b = &bends[i * 3 + 3];
+        float len = std::hypot(b[0] - a[0], b[2] - a[2]);
+        int steps = std::max(1, (int)std::ceil(len));
+        float last[3] = {a[0], output[(*points - 1) * 3 + 2], a[2]};
+        float anchorY = last[1], minSlope = -INFINITY, maxSlope = INFINITY;
+        int anchor = 0;
+        for (int k = 1; k <= steps; ++k) {
+            float p[3];
+            dtVlerp(p, a, b, (float)k / steps);
+            if (i + 2 == bendsCount && k == steps)
+                dtVcopy(p, nearB);
+            else {
+                float h = 0;
+                if (dtStatusFailed(q.getPolyHeight(ref, p, &h))) {
+                    bool found = false;
+                    for (int j = std::max(0, cursor - 2); j < std::min(count, cursor + 4); ++j) {
+                        float hit[3];
+                        bool over = false;
+                        if (dtStatusSucceed(q.closestPointOnPoly(corridor[j], p, hit, &over)) &&
+                            (over || std::hypot(hit[0] - p[0], hit[2] - p[2]) < 0.03f)) {
+                            h = hit[1];
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                        return 4;
+                }
+                p[1] = h;
+            }
+            float slope = (p[1] - anchorY) / (k - anchor);
+            if (k > anchor + 1 && (slope < minSlope || slope > maxSlope)) {
+                if (!emit(last))
+                    return 3;
+                anchor = k - 1;
+                anchorY = last[1];
+                minSlope = -INFINITY;
+                maxSlope = INFINITY;
+            }
+            minSlope = std::max(minSlope, (p[1] - anchorY - 0.04f) / (k - anchor));
+            maxSlope = std::min(maxSlope, (p[1] - anchorY + 0.04f) / (k - anchor));
+            dtVcopy(last, p);
+            if (k == steps && !emit(p))
+                return 3;
+        }
     }
     return 1;
+}
+API int query_path(const dtNavMesh *nav, const float *start, const float *goal, float *out, int cap,
+                   int *points) {
+    return query_cluster_path(nav, nullptr, start, goal, out, cap, points);
 }
 API int query_levels(const dtNavMesh *nav, float x, float y, float *heights, int capacity) {
     dtNavMeshQuery q;

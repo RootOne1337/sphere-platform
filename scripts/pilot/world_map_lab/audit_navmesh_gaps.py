@@ -54,7 +54,7 @@ def gaps(faces):
     return output
 
 
-def record_hits(vertices, mesh, queries, where, hits):
+def record_hits(vertices, mesh, queries, where, hits, model):
     low, high = vertices[:, :2].min(axis=0), vertices[:, :2].max(axis=0)
     where = where[((queries[where, :2] >= low) & (queries[where, :2] <= high)).all(axis=1)]
     if not len(where):
@@ -74,26 +74,11 @@ def record_hits(vertices, mesh, queries, where, hits):
             z = a[i, 2] + s[i] * u[i, 2] + t[i] * v[i, 2]
             mat = faces[i, 3]
             hits[j].append(
-                [round(float(z), 3), names[mat] if 0 <= mat < len(names) else "(unknown)"]
+                [round(float(z), 3), names[mat] if 0 <= mat < len(names) else "(unknown)", model]
             )
 
 
-def audit(source, adapter, folder):
-    geometry = load_local_adapter(source, adapter)
-    manifest = json.loads((folder / "geometry.json").read_bytes())
-    with np.load(folder / "drive-faces.npz", allow_pickle=False) as cache:
-        if str(cache["geometry"]) != manifest["geometrySha256"]:
-            raise ValueError("obsolete mesh cache")
-        rows = gaps(cache["faces"])
-    if not rows:
-        return rows
-    queries = np.asarray(
-        [
-            np.asarray(r["a"]) * (1 - f) + np.asarray(r["b"]) * f
-            for r in rows
-            for f in (0.15, 0.5, 0.85)
-        ]
-    )
+def source_hits(source, geometry, queries):
     queries_xy = cKDTree(queries[:, :2])
     hits = [[] for _ in queries]
     by_name = defaultdict(list)
@@ -118,12 +103,34 @@ def audit(source, adapter, folder):
                 if not where:
                     continue
                 world = geometry.ariane_rotation(place.quat).apply(vertices) + place.position
-                record_hits(world, mesh, queries, np.asarray(where), hits)
+                record_hits(world, mesh, queries, np.asarray(where), hits, model=name)
+    return hits
+
+
+def audit(source, adapter, folder):
+    geometry = load_local_adapter(source, adapter)
+    manifest = json.loads((folder / "geometry.json").read_bytes())
+    with np.load(folder / "drive-faces.npz", allow_pickle=False) as cache:
+        if str(cache["geometry"]) != manifest["geometrySha256"]:
+            raise ValueError("obsolete mesh cache")
+        rows = gaps(cache["faces"])
+    if not rows:
+        return rows
+    queries = np.asarray(
+        [
+            np.asarray(r["a"]) * (1 - f) + np.asarray(r["b"]) * f
+            for r in rows
+            for f in (0.15, 0.5, 0.85)
+        ]
+    )
+    hits = source_hits(source, geometry, queries)
     for i, row in enumerate(rows):
         row["samples"] = [
             {
                 "xyz": queries[j].tolist(),
-                "nearestSurfaces": sorted(hits[j], key=lambda s: abs(s[0] - queries[j, 2]))[:3],
+                "nearestSurfaces": [
+                    h[:2] for h in sorted(hits[j], key=lambda s: abs(s[0] - queries[j, 2]))[:3]
+                ],
             }
             for j in range(3 * i, 3 * i + 3)
         ]

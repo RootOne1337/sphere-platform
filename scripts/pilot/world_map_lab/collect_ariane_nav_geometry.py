@@ -27,7 +27,7 @@ KINDS = {"selected_road": DRIVE, "additional_pavement": PAVING, "pedestrian_cand
 # Separately reviewed TXD swatches: marked lanes, paved carriageways and bridge decks.
 # Mixed grass atlases, yards, parking areas and kerb blends stay out of this promotion.
 REVIEWED_DRIVE = re.compile(
-    r"(?:asfcrbtraskc[15](?:1suj|suj)?|perroad_01(?:_new)?|gso_perroad1|"
+    r"(?:asfcrbtraskc[15](?:1suj|suj)?|perroad_01(?:_new)?|perroad_77|gso_perroad1|"
     r"wolv_roads(?:_per)?|road_2_2|roadasf[1-3]|ruscount_road1|lf_arzasf(?:1|2|6|7|11))"
 )
 
