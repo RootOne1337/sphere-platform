@@ -7,6 +7,7 @@ import type { VehicleInputLease } from './vehiclePilot';
 import { runWorldTrip, worldRequest, type Decision, type WorldInfo, type XYZ } from './worldDestination';
 
 const reasons: Record<string,string> = {
+  no_motion:'Поездка остановлена. Газ был запрошен, но скутер не сдвинулся. Проверьте топливо и калибровку педали.',
   following:'Движение по маршруту', confirming_position:'Подтверждаем положение по следующему кадру',
   position_unknown:'Ищем ориентиры в кадре', road_level_unknown:'Под скутером не подтверждена проезжая дорога',
   no_road_path:'До цели нет связной дороги', endpoint_off_road:'Конец пути выходит за проезжую часть',
@@ -89,7 +90,7 @@ export function WorldDestinationPilot({video,ready,inputIssue,openInput}:{
   const goWide=()=>{if(info){const [l,r,b,t]=info.bounds;setView([l,-t,r-l,t-b]);}};
   const zoom=(factor:number)=>{if(view){const [x,y,w,h]=view;setView([x+w*(1-factor)/2,y+h*(1-factor)/2,w*factor,h*factor]);}};
   const bounds=info?.bounds;
-  const dot=Math.max(1.2,(view?.[2]??0)/220);
+  const dot=Math.max(2.4,(view?.[3]??0)/70);
   return <section aria-label="Поездка к метке" className="min-w-0 space-y-3 rounded-2xl border border-border bg-card p-4">
     <h2 className="text-lg font-semibold">Поездка к метке</h2>
     {info&&view&&bounds&&<>
