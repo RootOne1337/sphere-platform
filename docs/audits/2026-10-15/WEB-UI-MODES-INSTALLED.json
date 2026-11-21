@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T08:53:17.236Z",
+  "runtimeInstalled": true,
+  "scope": "UI forms, glass, mobile table/fullscreen and preserved direct peer across recorder/XPath installed on3015/Tuna. Bounded browser checks, not full direct recorder or production SLA.",
+  "runtime": {
+    "sourceRevision": "a21177882f4194bb6c97c86f69a8df3684ebb91f",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "uiCiRunId": 38707752865,
+    "uiContainer": {
+      "sourceRevision": "a21177882f4194bb6c97c86f69a8df3684ebb91f",
+      "containerId": "135080a860d3ff1fb7aa060faaa4acfe93eba09f9c87ba3594e8b79d30102a76",
+      "imageId": "sha256:70c2058733d6e2a04fd524c7ff866493b9bf7df485bdb23fd0adfc900bf582b3",
+      "status": "running"
+    },
+    "apiContainer": {
+      "sourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+      "containerId": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "status": "running"
+    },
+    "artifactDigest": "8f0dd5b04c670452ba2ea07d5f694fd0a5e69b51d6bfba8d647454e2b9dd8359",
+    "githubDigestVerified": true,
+    "otherContainersPreservedPerInstall": 45,
+    "otaCatalogPreserved": true,
+    "schemaMigrationPerformed": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "productionAccepted": false,
+    "ordinaryChrome": true,
+    "transportOverrides": false,
+    "directFramesPresented": 3150,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0
+      }
+    ],
+    "mobile": {
+      "table": {
+        "x": 30,
+        "y": 566,
+        "width": 330,
+        "height": 240
+      },
+      "rootOverflow": false,
+      "javascriptErrors": 0
+    },
+    "fullscreen": {
+      "viewportHeight": 900,
+      "canvasHeight": 900,
+      "statusHeight": 1,
+      "keyboardEnabled": "true",
+      "inputMode": "none",
+      "qualityContained": true,
+      "canvasRetained": true
+    },
+    "materialChecks": null,
+    "stream": {
+      "device": "auto-ph-011",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "directFramesPresented": 3150,
+      "connections": 1,
+      "recording": {
+        "prepared": true,
+        "direct": true,
+        "nativeReleaseState": "closed"
+      },
+      "xpath": {
+        "direct": true,
+        "nativeReleaseState": "closed",
+        "treeReceived": true
+      },
+      "androidActionsSent": false,
+      "restoredControl": "ready"
+    },
+    "androidActionsSent": false,
+    "commandsReplayed": false
+  },
+  "sourceValidation": [
+    {
+      "file": "docs/audits/2026-10-15/DIALOGS-GLASS-OBSERVATION.json",
+      "sha256NormalizedLf": "c604a34abd56af50fe01993a086479b5af6e61f38a8f3c88697db844e490b0d5"
+    },
+    {
+      "file": "docs/audits/2026-10-15/GLASS-PALETTE-OBSERVATION.json",
+      "sha256NormalizedLf": "d3fdda83aeadf2d604af30cf80b9976f6716412d933315b04d8efe8802368717"
+    },
+    {
+      "file": "docs/audits/2026-10-15/MODE-PEER-OBSERVATION.json",
+      "sha256NormalizedLf": "563345ce743b50cb33a973a536a1c4a7845f84ea31c65acfa462773e249987d0"
+    }
+  ],
+  "apkBaselineEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+  "limits": [
+    "Recorder taps/swipes/wheel still use legacy server WS without native execution ACK.",
+    "XPath tree is read with a separate API/root command; the video peer remains direct.",
+    "No physical phone IME, broad WAN/TURN,20+ viewers or long soak signoff.",
+    "API969/APK76 unchanged."
+  ]
+}

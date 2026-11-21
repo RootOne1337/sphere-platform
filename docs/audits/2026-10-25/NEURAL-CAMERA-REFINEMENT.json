@@ -1,0 +1,596 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-25T16:39:09.938269+00:00",
+  "sourceRevision": "ff72c31314dd13f9a58de605315c9718a2a9c910",
+  "scope": "isolated neural camera and native mesh comparison of the original 18-view fragment; no installed map replacement",
+  "sourcePreservation": {
+    "framesValidated": 458,
+    "selectedPngsRehashed": 81,
+    "bindings": {
+      "geometry.json": "f79f9380ac0362eea1038977f3570227e1f4560567accccd3f739ebefd4a89c0",
+      "input/manifest.json": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b",
+      "control.json": "a4a654b1d5f80bbb059f4df116475d76354d2f29e994b739959fee7efa71d0ee",
+      "dense-attempt-2/scene.ply": "d5a061f10b18c7b9731757b351a6e4816ecb0266780cbed3fecad6f3836e1d0e",
+      "surface/scene.glb": "7ffb6792504721d606581d8cb550be1e9a7e4d9adde65a7af7c386a293e156e8"
+    },
+    "sourceVideoUnchanged": true
+  },
+  "models": [
+    {
+      "model": "DA3-SMALL",
+      "reportSha256": "e90b0d87aaa9b29a6e35ad1fdc5f941a987a9f5d78a99a80e232beb94cc421cc",
+      "depthShape": [
+        18,
+        224,
+        392
+      ],
+      "weightsSha256": "364492e38a3a06d221ac75da7f6621ada3f2361cd24fde11ba79091e9f40efcf",
+      "frames": 18,
+      "seconds": 4.460601200000383,
+      "torchPeakAllocatedBytes": 731430912,
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 18,
+        "first_seconds": 10.914,
+        "last_seconds": 20.411,
+        "path_units": 3.980051907477698,
+        "endpoint_displacement_units": 1.272857255958032,
+        "median_step_units": 0.20273762882008375,
+        "max_step_units": 0.7434222116477894,
+        "rapid_reversals": [
+          {
+            "view": 3,
+            "image": "00000125.png",
+            "seconds": 12.08
+          },
+          {
+            "view": 11,
+            "image": "00000171.png",
+            "seconds": 16.611
+          },
+          {
+            "view": 14,
+            "image": "00000187.png",
+            "seconds": 18.245
+          },
+          {
+            "view": 15,
+            "image": "00000191.png",
+            "seconds": 18.779
+          }
+        ],
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "trackComparison": {
+        "median_pair_epipolar_px": 6.312888737802552,
+        "median_pair_depth_projection_px": 20.234672332041818
+      },
+      "adopted": false
+    },
+    {
+      "model": "DA3-BASE",
+      "reportSha256": "29b3a77761736d77e216697961b68f7107dc8fda43a4b42600be120e8e97fa62",
+      "depthShape": [
+        18,
+        224,
+        392
+      ],
+      "weightsSha256": "e01067dc1659613083d9145a9a2547ccdbe6ccbbf83c4fe7b3e8a4e2bdae78b5",
+      "frames": 18,
+      "seconds": 19.736678400004166,
+      "torchPeakAllocatedBytes": 1631964160,
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 18,
+        "first_seconds": 10.914,
+        "last_seconds": 20.411,
+        "path_units": 3.8780332191489615,
+        "endpoint_displacement_units": 1.5117639269887277,
+        "median_step_units": 0.21217556044761524,
+        "max_step_units": 0.43898116013544214,
+        "rapid_reversals": [
+          {
+            "view": 3,
+            "image": "00000125.png",
+            "seconds": 12.08
+          },
+          {
+            "view": 5,
+            "image": "00000137.png",
+            "seconds": 13.211
+          },
+          {
+            "view": 9,
+            "image": "00000161.png",
+            "seconds": 15.525
+          },
+          {
+            "view": 10,
+            "image": "00000166.png",
+            "seconds": 16.027
+          }
+        ],
+        "median_rate_units_per_second": 0.3763426768289601,
+        "speed_outliers": [],
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "trackComparison": {
+        "median_pair_epipolar_px": 2.494792806657753,
+        "median_pair_depth_projection_px": 17.593620822097726
+      },
+      "adopted": false
+    },
+    {
+      "model": "DA3-BASE-ray",
+      "reportSha256": "2f393b180bdf3d697ec3dfb5dd2a31921f66d8f3f441ba072596ca869ef7b543",
+      "depthShape": [
+        18,
+        224,
+        392
+      ],
+      "weightsSha256": "e01067dc1659613083d9145a9a2547ccdbe6ccbbf83c4fe7b3e8a4e2bdae78b5",
+      "frames": 18,
+      "seconds": 5.853423399996245,
+      "torchPeakAllocatedBytes": 2364350976,
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 18,
+        "first_seconds": 10.914,
+        "last_seconds": 20.411,
+        "path_units": 3.1216801603691233,
+        "endpoint_displacement_units": 1.8940330910363072,
+        "median_step_units": 0.22997452963159146,
+        "max_step_units": 0.3163200745344705,
+        "rapid_reversals": [
+          {
+            "view": 9,
+            "image": "00000161.png",
+            "seconds": 15.525
+          }
+        ],
+        "median_rate_units_per_second": 0.40574560301672186,
+        "speed_outliers": [],
+        "warning": null,
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "trackComparison": {
+        "median_pair_epipolar_px": 2.3298865338286756,
+        "median_pair_depth_projection_px": 17.589497075125472
+      },
+      "adopted": false
+    },
+    {
+      "model": "DA3-LARGE-1.1-ray",
+      "reportSha256": "3925b1ecbdbc616d30bcf9a229a3302cd10218c4661a56fcec912b15a97dc2d1",
+      "depthShape": [
+        18,
+        280,
+        504
+      ],
+      "weightsSha256": "739905c423cf0d6ccaf9e61a8401d82ba1ac32d7f4d3ee6dca8f92b377633f64",
+      "frames": 18,
+      "seconds": 94.44241469999542,
+      "torchPeakAllocatedBytes": 4441881600,
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 18,
+        "first_seconds": 10.914,
+        "last_seconds": 20.411,
+        "path_units": 3.432107730010942,
+        "endpoint_displacement_units": 2.8733030727339925,
+        "median_step_units": 0.20524235826409257,
+        "max_step_units": 0.2867800607875436,
+        "rapid_reversals": [
+          {
+            "view": 7,
+            "image": "00000149.png",
+            "seconds": 14.343
+          }
+        ],
+        "median_rate_units_per_second": 0.37926224861128166,
+        "speed_outliers": [],
+        "warning": null,
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "trackComparison": {
+        "median_pair_epipolar_px": 1.216634927006559,
+        "median_pair_depth_projection_px": 11.582506424781158
+      },
+      "adopted": false
+    }
+  ],
+  "comparisonCaveat": "One run per configuration; resolution, camera head and warmup differ. Not a model-only benchmark or live-control throughput.",
+  "trackingMetricCaveat": "Independent KLT tracks from same clip, below sky ROI, adjacent selected frames; not metric ground truth or a new-session repeat.",
+  "learnedPoseRefinement": {
+    "schema": "sphere-ray-seeded-ba-probe-v1",
+    "seconds": 0.5310000000026776,
+    "post_adjustment_invalid_tracks_removed": 2,
+    "training_tracks_before": 423,
+    "training_tracks_after": 356,
+    "heldout_tracks": 94,
+    "heldout_tracks_in_front": 94,
+    "heldout_median_reprojection_px": 1.0684859504202877,
+    "heldout_p90_reprojection_px": 7.2599324231343845,
+    "mean_training_reprojection_px": 1.1055485953755957,
+    "database_coordinate_scale": 0.5,
+    "square_pixel_constraint": true,
+    "observations_per_image": {
+      "00000113.png": 79,
+      "00000119.png": 88,
+      "00000125.png": 88,
+      "00000131.png": 96,
+      "00000137.png": 86,
+      "00000143.png": 60,
+      "00000149.png": 44,
+      "00000155.png": 66,
+      "00000161.png": 66,
+      "00000166.png": 83,
+      "00000171.png": 60,
+      "00000177.png": 78,
+      "00000182.png": 62,
+      "00000187.png": 66,
+      "00000191.png": 78,
+      "00000196.png": 73,
+      "00000201.png": 76,
+      "00000207.png": 77
+    },
+    "initial_pinhole": [
+      [
+        446.07040659586585,
+        0.0,
+        480.0
+      ],
+      [
+        0.0,
+        446.07040659586585,
+        270.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "refined_pinhole": [
+      [
+        446.07040659586585,
+        0.0,
+        480.0
+      ],
+      [
+        0.0,
+        446.07040659586585,
+        270.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "motion": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 18,
+      "first_seconds": 10.914,
+      "last_seconds": 20.411,
+      "path_units": 4.550099446725302,
+      "endpoint_displacement_units": 4.514788219833104,
+      "median_step_units": 0.28486305518245614,
+      "max_step_units": 0.38892831052343574,
+      "rapid_reversals": [],
+      "median_rate_units_per_second": 0.5304841713315679,
+      "speed_outliers": [],
+      "warning": null,
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "adopted": false,
+    "navigation_qualified": false
+  },
+  "meshCandidate": {
+    "schema": "sphere-private-neural-camera-surface-probe-v1",
+    "vertices": 10512,
+    "triangles": 3504,
+    "textures": 18,
+    "texture_pixels": 37324800,
+    "mesh_faces": 3659,
+    "unknown_faces": 155,
+    "multiview_supported_faces": 3450,
+    "source_images": [
+      "00000113.png",
+      "00000119.png",
+      "00000125.png",
+      "00000131.png",
+      "00000137.png",
+      "00000143.png",
+      "00000149.png",
+      "00000155.png",
+      "00000161.png",
+      "00000166.png",
+      "00000171.png",
+      "00000177.png",
+      "00000182.png",
+      "00000187.png",
+      "00000191.png",
+      "00000196.png",
+      "00000201.png",
+      "00000207.png"
+    ],
+    "texture_images": [
+      "00000113.png",
+      "00000119.png",
+      "00000125.png",
+      "00000131.png",
+      "00000137.png",
+      "00000143.png",
+      "00000149.png",
+      "00000155.png",
+      "00000161.png",
+      "00000166.png",
+      "00000171.png",
+      "00000177.png",
+      "00000182.png",
+      "00000187.png",
+      "00000191.png",
+      "00000196.png",
+      "00000201.png",
+      "00000207.png"
+    ],
+    "texture_sizes": [
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ],
+      [
+        1920,
+        1080
+      ]
+    ],
+    "sha256": "45ef2da64ff61e24f74029fc212b791732ef8ada1bd53d538788a6bcf610260b",
+    "bytes": 7456540,
+    "seconds": 90.45300000000861,
+    "frames": 18,
+    "source_interval_seconds": [
+      10.914,
+      20.411
+    ],
+    "adopted": false,
+    "navigation_qualified": false,
+    "geometric_accuracy_accepted": false,
+    "metric_scale": null,
+    "visualReview": {
+      "schema": "sphere-surface-visual-review-v1",
+      "asset_sha256": "45ef2da64ff61e24f74029fc212b791732ef8ada1bd53d538788a6bcf610260b",
+      "state": "issues_found",
+      "issues": [
+        "holes",
+        "stretched_triangles",
+        "pose_inconsistency"
+      ],
+      "reviewed_source_views": 3,
+      "conclusion": "Large missing facade/ground surfaces and deformation remain; not adopted."
+    },
+    "cpuProof": {
+      "schema": "sphere-surface-geometry-proof-v1",
+      "embedded_glb_sha256": "45ef2da64ff61e24f74029fc212b791732ef8ada1bd53d538788a6bcf610260b",
+      "embedded_glb_bytes": 7456540,
+      "source_parts": {
+        "scene.glb": "45ef2da64ff61e24f74029fc212b791732ef8ada1bd53d538788a6bcf610260b"
+      },
+      "split_uv_vertices": 10512,
+      "triangles": 3504,
+      "embedded_textures": 18,
+      "external_uris": 0,
+      "triangle_cpu_renders": [
+        {
+          "image": "00000113.png",
+          "visible_mesh_fraction": 0.1136574074074074
+        },
+        {
+          "image": "00000161.png",
+          "visible_mesh_fraction": 0.6556018518518518
+        },
+        {
+          "image": "00000196.png",
+          "visible_mesh_fraction": 0.5507175925925926
+        }
+      ],
+      "hole_closure": false,
+      "smoothing": false,
+      "projection_uses_recovered_cameras": true,
+      "diagnostic_texture_v_flip": false,
+      "geometry_qualified": false,
+      "navigation_qualified": false
+    },
+    "usedExplicitTemporalNeighbors": true,
+    "minimumFusionViews": 3
+  },
+  "rejectedExperiments": [
+    {
+      "name": "DA3-estimated fixed focal KLT mapper",
+      "reason": "no connected reconstruction"
+    },
+    {
+      "name": "Unconstrained two-focal BA",
+      "reason": "implausible fx/fy calibration"
+    },
+    {
+      "name": "Small sparse square-pixel BA",
+      "reason": "only 2 observations for one camera and a temporal jump"
+    },
+    {
+      "name": "Initial learned BA probe",
+      "reason": "invalid mixed coordinate scales; explicit INVALID-METRICS sidecar; excluded"
+    },
+    {
+      "name": "Base learned BA after scale correction",
+      "reason": "post-adjustment negative-depth points; excluded"
+    },
+    {
+      "name": "Large neural-camera mesh with automatic neighbors",
+      "reason": "native exit0 but zero fused depth and no mesh"
+    }
+  ],
+  "codeFixes": [
+    "source-time-normalized forward pose discontinuity warning",
+    "finite motion arithmetic and boolean rejection",
+    "native conversion, fused pointcloud and mesh outputs required before later stages"
+  ],
+  "realJumpDetectedByNewAudit": {
+    "schema": "sphere-camera-temporal-audit-v1",
+    "views": 15,
+    "first_seconds": 10.914,
+    "last_seconds": 18.779,
+    "path_units": 34.04456352071095,
+    "endpoint_displacement_units": 33.644018650678284,
+    "median_step_units": 0.8512670651980825,
+    "max_step_units": 23.348708548925266,
+    "rapid_reversals": [],
+    "median_rate_units_per_second": 1.5735792166209848,
+    "speed_outliers": [
+      {
+        "view": 15,
+        "image": "00000191.png",
+        "seconds": 18.779,
+        "interval_seconds": 0.534,
+        "median_rate_ratio": 27.786445608048226
+      }
+    ],
+    "warning": "poses_require_temporal_review",
+    "heuristic_only": true,
+    "metric_scale": null,
+    "navigation_qualified": false,
+    "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+  },
+  "validation": {
+    "pythonTests": 80,
+    "ruffPassed": true,
+    "frontendUnchanged": true,
+    "priorInstalledFrontendTests": 2702,
+    "githubActionsStarted": 0,
+    "deviceActions": 0,
+    "sourceInputsChanged": false
+  },
+  "runtime": {
+    "uiSource": "49f8b12abf77c2affd8584f72703b18bcbeb63f9",
+    "uiPort": 3015,
+    "localReconstructionApiPort": 3342,
+    "localReconstructionApiRunning": false,
+    "workerFixesInstalled": false,
+    "restartAttemptExecuted": false,
+    "restartRejectedByAutomaticReview": true,
+    "rejectionReason": "blocked by policy; no detailed reason supplied",
+    "browserVisualAcceptance": false,
+    "browserLimitation": "Windows browser URL policy enforcement unsupported; no bypass attempted",
+    "androidAndVpnUnchanged": true
+  },
+  "resourceAfter": {
+    "observedAt": "2026-10-25T16:39:09.966847+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 69571547136,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "availableRamBytes": 16649957376,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 71730532352,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 4068024320,
+    "kernelNonpagedBytes": 2796986368,
+    "processCount": 442,
+    "handleCount": 339665,
+    "memoryMeasurement": "GetPerformanceInfo"
+  },
+  "navigationQualified": false,
+  "geometricAccuracyAccepted": false,
+  "researchSources": [
+    "https://github.com/ByteDance-Seed/Depth-Anything-3",
+    "https://github.com/ByteDance-Seed/Depth-Anything-3/blob/main/docs/API.md",
+    "https://huggingface.co/depth-anything/DA3-LARGE-1.1",
+    "https://github.com/facebookresearch/vggt-omega",
+    "https://github.com/cdcseacave/openMVS/blob/v2.4.0/libs/MVS/Scene.cpp"
+  ]
+}

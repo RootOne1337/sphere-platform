@@ -1,0 +1,36 @@
+{
+  "runtime": {
+    "environment": "production",
+    "lifespan_startup_completed": true,
+    "connected_as_created_role": true,
+    "superuser": false,
+    "bypass_rls": false,
+    "devices_rls_active": true,
+    "pipeline_settings_rls_active": true,
+    "mapped_tables_granted": 30,
+    "redis_ping": true,
+    "lifespan_shutdown_completed": true
+  },
+  "http": {
+    "status_codes": {
+      "health/healthz": 200,
+      "health/readyz": 200,
+      "auth/login": 200,
+      "auth/me": 200,
+      "devices": 200,
+      "tasks": 200,
+      "game-accounts": 200,
+      "pipeline-settings": 200,
+      "auth/refresh": 200
+    },
+    "own_identity_matches": true,
+    "inventory_contains_only_own_device": true,
+    "tasks_and_accounts_contain_own_fixture": true,
+    "orchestration_enabled_readback": true
+  },
+  "orchestration_cooldown_control": {
+    "unscoped_settings_visible": 0,
+    "status_after_real_worker_tick": "cooldown",
+    "status_after_same_runtime_role_with_tenant_bound": "free"
+  }
+}

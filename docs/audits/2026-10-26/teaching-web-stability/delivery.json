@@ -1,0 +1,251 @@
+{
+  "schema": "sphere-teaching-web-stability-delivery-v1",
+  "date": "2026-10-26",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "b1e897979538791a1829c7b8dde77b5186ba3bc4",
+    "apiSourceRevision": "1afdc529e18cd34b5d8ee0919f217076a8592846",
+    "imageId": "sha256:188e0fb09b291b1d4560c9e30a2a6aaa4ce48509d0094157f1d07e2020cfb6cc",
+    "otherContainersPreserved": 45,
+    "backendPreserved": true,
+    "otaCatalogSha256": "26c15c8e3c4ed22f805b5caab071897b6c12b56685e3214a3211377ef0710c52"
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": [
+      "revision readback",
+      "390px two-column buttons, no document overflow",
+      "sealed803-frame Android fixture selected by mouse",
+      "time seek to frame53 at1.003s",
+      "200percent zoom, decoder completed",
+      "no physical gameplay input",
+      "viewport override reset"
+    ],
+    "mobile": {
+      "width": 390,
+      "scrollWidth": 390,
+      "toolbarHeightPx": 168
+    },
+    "physicalGameplayInputTested": false,
+    "sourceGame011321RenderedInBrowser": false
+  },
+  "frontend": {
+    "runId": "20261025T215137Z-4049a767",
+    "tests": {
+      "tests": 2715,
+      "passed": 2715,
+      "failures": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "suites": 197,
+      "success": true
+    },
+    "steps": [
+      {
+        "name": "action-contract",
+        "exitCode": 0
+      },
+      {
+        "name": "jest",
+        "exitCode": 0
+      },
+      {
+        "name": "test_preview_relay.cjs",
+        "exitCode": 0
+      },
+      {
+        "name": "test_frontend_standalone_probe.mjs",
+        "exitCode": 0
+      },
+      {
+        "name": "test_package_command_failure.mjs",
+        "exitCode": 0
+      },
+      {
+        "name": "archive-admission",
+        "exitCode": 0
+      },
+      {
+        "name": "types",
+        "exitCode": 0
+      }
+    ],
+    "githubPublication": {
+      "id": 57218721396,
+      "context": "Sphere Local / Frontend regressions",
+      "state": "success",
+      "createdAt": "2026-10-25T21:57:49Z",
+      "readbackVerified": true,
+      "targetUrl": "https://github.com/RootOne1337/sphere-platform/tree/b1e897979538791a1829c7b8dde77b5186ba3bc4/frontend"
+    },
+    "hostedJobsStarted": 0
+  },
+  "packagedHttp": {
+    "pages": 26,
+    "assets": 72,
+    "archivesCreated": 0
+  },
+  "realReadonlySample": {
+    "webSourceRevision": "29510cd7db9cdd06dbf36eb9b0b7589026a81af9",
+    "device": "auto-ph-011",
+    "agentVersionCode": 10290,
+    "sampleReceivedAtUtc": "2026-10-25T21:53:08.793482+00:00",
+    "presentedFrames": 5310,
+    "sessionElapsedMs": 510680.40000001,
+    "controlState": "idle",
+    "nativeInputState": "idle",
+    "transport": "direct_webrtc",
+    "path": "nat",
+    "protocol": "udp",
+    "rttMs": 1,
+    "fps": 9.6011232564122,
+    "jitterBufferMs": 302.10410416667,
+    "decodeMs": 0.39870833333334,
+    "lastPresentationAgeMs": 96.60009765625,
+    "fullCaptureToModelLatencyKnown": false,
+    "decodeErrors": 0,
+    "renderErrors": 0,
+    "browserReports": 10,
+    "offscreenPresentationLaterTimedOut": true
+  },
+  "androidCapture": {
+    "settings": {
+      "supported": true,
+      "protocol": 1,
+      "settings": {
+        "profile": "detail",
+        "max_fps": 60,
+        "max_bitrate_bps": 24000000
+      },
+      "active": {
+        "width": 1920,
+        "height": 1080,
+        "source_fps": 60,
+        "codec_max_fps": 30,
+        "target_fps": 30,
+        "max_bitrate_bps": 12000000,
+        "target_bitrate_bps": 11040392,
+        "adaptation": "webrtc"
+      }
+    },
+    "captureFps": 9,
+    "encoderFps": 9,
+    "captureReadFailures": 0,
+    "encoderErrors": 0,
+    "planarConversionWindows": [
+      {
+        "samples": 49,
+        "convert_mean_ms": 98.468,
+        "queue_mean_ms": 0.315
+      },
+      {
+        "samples": 50,
+        "convert_mean_ms": 97.024,
+        "queue_mean_ms": 0.359
+      },
+      {
+        "samples": 50,
+        "convert_mean_ms": 97.25,
+        "queue_mean_ms": 0.202
+      },
+      {
+        "samples": 50,
+        "convert_mean_ms": 96.589,
+        "queue_mean_ms": 0.183
+      },
+      {
+        "samples": 50,
+        "convert_mean_ms": 96.517,
+        "queue_mean_ms": 0.164
+      },
+      {
+        "samples": 49,
+        "convert_mean_ms": 98.29,
+        "queue_mean_ms": 0.156
+      },
+      {
+        "samples": 47,
+        "convert_mean_ms": 101.682,
+        "queue_mean_ms": 0.177
+      },
+      {
+        "samples": 48,
+        "convert_mean_ms": 99.624,
+        "queue_mean_ms": 0.185
+      },
+      {
+        "samples": 50,
+        "convert_mean_ms": 96.633,
+        "queue_mean_ms": 0.183
+      },
+      {
+        "samples": 50,
+        "convert_mean_ms": 96.639,
+        "queue_mean_ms": 0.187
+      },
+      {
+        "samples": 49,
+        "convert_mean_ms": 98.038,
+        "queue_mean_ms": 0.182
+      },
+      {
+        "samples": 52,
+        "convert_mean_ms": 92.876,
+        "queue_mean_ms": 0.195
+      },
+      {
+        "samples": 53,
+        "convert_mean_ms": 92.685,
+        "queue_mean_ms": 0.171
+      },
+      {
+        "samples": 50,
+        "convert_mean_ms": 96.767,
+        "queue_mean_ms": 0.181
+      },
+      {
+        "samples": 52,
+        "convert_mean_ms": 93.135,
+        "queue_mean_ms": 0.239
+      },
+      {
+        "samples": 51,
+        "convert_mean_ms": 94.556,
+        "queue_mean_ms": 0.244
+      },
+      {
+        "samples": 52,
+        "convert_mean_ms": 92.175,
+        "queue_mean_ms": 0.252
+      },
+      {
+        "samples": 52,
+        "convert_mean_ms": 92.682,
+        "queue_mean_ms": 0.344
+      },
+      {
+        "samples": 34,
+        "convert_mean_ms": 131.829,
+        "queue_mean_ms": 1.088
+      }
+    ],
+    "scalarConversionIsThroughputBottleneck": true,
+    "nativeOptimizationInstalled": false
+  },
+  "newApkInstalled": false,
+  "physicalGameplayActions": 0,
+  "gameDataCleared": false,
+  "autonomousRepeatQualified": false,
+  "master60fpsQualified": false,
+  "privateEvidence": {
+    ".local-pilot/reviewed-web-install-b1e897979538-f3261fbd/installed.json": "9bcb23167c6ef2d65f8f05833775262302300cbcb951a67909ff67fe624f39a5",
+    ".local-pilot/local-ci/runs/20261025T215137Z-4049a767/receipt.json": "611c4be40d3437ae42b82e7c2f88b588ca2cf744ed3863936bfce6b00cabbf5a",
+    ".local-pilot/teaching-delivery-20261026/ph011-receive-stages.private.json": "3c77e0a9da7f26674b2c53cd9316e824aaee9ce8cf151846bf9d63e99c59514c",
+    ".local-pilot/teaching-delivery-20261026/planar-timing.private.json": "27e9be8ad24237106e138842ea2908e9cb8fc911dda9d0f1e904ca180187f94a"
+  },
+  "screenshots": {
+    "mobile-final-390.jpg": "8194462ed5aa5aef68d32f48daa7daee8eee44c2c4f8276acec4fceff915d445",
+    "review-final-default.jpg": "a88f54df004642589a87aa6252e2c5fe4bd57fc33260611785b8b4a7f0e86b2c",
+    "direct-ph011.jpg": "6b8192bc02b5c89502e1f7bbb6eac111a7ff2a51397ec545b88f07b58c9bc6c1"
+  }
+}

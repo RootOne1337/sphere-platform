@@ -1,0 +1,328 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T14:51:16.896687+00:00",
+  "sourceRevision": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
+  "scope": "Source recovery and read-only runtime observation. No installation, device command or native acceptance.",
+  "fixes": [
+    "retire_exact_media_peer_after_control_channel_failure",
+    "transient_authorization_is_retryable",
+    "bounded_capability_read_retries",
+    "healthy_displayed_peer_resets_failure_window",
+    "late_channel_callbacks_cannot_revive_retired_peer"
+  ],
+  "localTests": {
+    "websocketTests": 690,
+    "websocketSubtests": 44,
+    "frontendSuites": 7,
+    "frontendTests": 192,
+    "typeScript": true,
+    "scopedEslint": true,
+    "scopedRuff": true,
+    "scopedMypy": true,
+    "diffCheck": true,
+    "generatedApiReconciliation": true
+  },
+  "redBeforeFix": {
+    "transportRegressions": 5,
+    "initialAuthRegressions": 4
+  },
+  "githubRuns": [
+    {
+      "conclusion": "",
+      "databaseId": 38148449914,
+      "headSha": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
+      "name": "CI — Backend",
+      "status": "in_progress"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38148450004,
+      "headSha": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
+      "name": "CI — Android",
+      "status": "in_progress"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38148449952,
+      "headSha": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
+      "name": "Preview — Deploy",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38148449924,
+      "headSha": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
+      "name": "CI — Frontend",
+      "status": "completed"
+    }
+  ],
+  "androidSubtree": "67684e5084fc769752b7e5fbb8db3f1fca9c16fd",
+  "androidSourceChanged": false,
+  "runtimeReads": {
+    "observedAtUtc": "2026-10-11T14:46:17.387281+00:00",
+    "deviceCommandsSent": false,
+    "runtimeInstalled": false,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "buildHttpStatus": 200,
+        "readyHttpStatus": 200,
+        "revision": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
+        "readiness": {
+          "postgres": "ok",
+          "redis": "ok"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "buildHttpStatus": 200,
+        "readyHttpStatus": 200,
+        "revision": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
+        "readiness": {
+          "postgres": "ok",
+          "redis": "ok"
+        }
+      }
+    ],
+    "devices": [
+      {
+        "name": "PH010",
+        "status": "online",
+        "agentVersion": "1.2.54-dev",
+        "agentVersionCode": 10254,
+        "capabilities": {
+          "enabled": true,
+          "live_video_enabled": true,
+          "direct_input_enabled": null,
+          "native_history_enabled": null,
+          "profiles": [
+            "host",
+            "public-stun"
+          ]
+        },
+        "sessionCount": 9,
+        "recent": [
+          {
+            "sessionId": "222c7c22646b4169",
+            "startedAt": null,
+            "endedAt": "2026-10-11T11:31:54.835467+00:00",
+            "browserSamples": 4,
+            "lastBrowserSample": {
+              "received_at": "2026-10-11T11:31:48.010314+00:00",
+              "transport": "server_websocket",
+              "control_transport": "server_websocket",
+              "control_state": "ready",
+              "control_failure_detail": null,
+              "control_rtt_ms": 173,
+              "direct_state": "failed",
+              "direct_failure": "connection_deadline",
+              "direct_frames": 0,
+              "direct_path": "unknown",
+              "direct_protocol": null,
+              "direct_ice_state": "checking",
+              "direct_dtls_state": "new",
+              "direct_network_rtt_ms": null
+            },
+            "nativeSamples": 0
+          },
+          {
+            "sessionId": "37b9ae6a0b174801",
+            "startedAt": null,
+            "endedAt": "2026-10-10T23:11:07.610736+00:00",
+            "browserSamples": 8,
+            "lastBrowserSample": {
+              "received_at": "2026-10-10T23:11:00.325355+00:00",
+              "transport": "server_websocket",
+              "control_transport": "server_websocket",
+              "control_state": "ready",
+              "control_failure_detail": null,
+              "control_rtt_ms": 184,
+              "direct_state": "failed",
+              "direct_failure": "connection_deadline",
+              "direct_frames": 0,
+              "direct_path": "unknown",
+              "direct_protocol": null,
+              "direct_ice_state": "checking",
+              "direct_dtls_state": "connecting",
+              "direct_network_rtt_ms": null
+            },
+            "nativeSamples": 0
+          }
+        ]
+      },
+      {
+        "name": "PH011",
+        "status": "online",
+        "agentVersion": "1.2.53-dev",
+        "agentVersionCode": 10253,
+        "capabilities": {
+          "enabled": true,
+          "live_video_enabled": true,
+          "direct_input_enabled": null,
+          "native_history_enabled": null,
+          "profiles": [
+            "host",
+            "public-stun"
+          ]
+        },
+        "sessionCount": 9,
+        "recent": [
+          {
+            "sessionId": "d76879ae7dbb9dcc",
+            "startedAt": null,
+            "endedAt": "2026-10-10T23:07:09.966269+00:00",
+            "browserSamples": 15,
+            "lastBrowserSample": {
+              "received_at": "2026-10-10T23:06:56.564446+00:00",
+              "transport": "server_websocket",
+              "control_transport": "server_websocket",
+              "control_state": "ready",
+              "control_failure_detail": null,
+              "control_rtt_ms": 340,
+              "direct_state": "connecting",
+              "direct_failure": null,
+              "direct_frames": 0,
+              "direct_path": "unknown",
+              "direct_protocol": null,
+              "direct_ice_state": "checking",
+              "direct_dtls_state": "connecting",
+              "direct_network_rtt_ms": null
+            },
+            "nativeSamples": 0
+          },
+          {
+            "sessionId": "d4bb825c48c2914b",
+            "startedAt": null,
+            "endedAt": "2026-10-10T22:57:49.372319+00:00",
+            "browserSamples": 15,
+            "lastBrowserSample": {
+              "received_at": "2026-10-10T22:57:38.500753+00:00",
+              "transport": "server_websocket",
+              "control_transport": "server_websocket",
+              "control_state": "ready",
+              "control_failure_detail": null,
+              "control_rtt_ms": 178,
+              "direct_state": "failed",
+              "direct_failure": "connection_deadline",
+              "direct_frames": 0,
+              "direct_path": "unknown",
+              "direct_protocol": null,
+              "direct_ice_state": "checking",
+              "direct_dtls_state": "connecting",
+              "direct_network_rtt_ms": null
+            },
+            "nativeSamples": 0
+          }
+        ]
+      },
+      {
+        "name": "PH025",
+        "status": "online",
+        "agentVersion": "1.2.52-dev",
+        "agentVersionCode": 10252,
+        "capabilities": {
+          "enabled": true,
+          "live_video_enabled": true,
+          "direct_input_enabled": null,
+          "native_history_enabled": null,
+          "profiles": [
+            "host",
+            "public-stun"
+          ]
+        },
+        "sessionCount": 10,
+        "recent": [
+          {
+            "sessionId": "4899bcc6f4df86cf",
+            "startedAt": null,
+            "endedAt": "2026-10-10T21:30:29.758754+00:00",
+            "browserSamples": 8,
+            "lastBrowserSample": {
+              "received_at": "2026-10-10T21:30:20.298413+00:00",
+              "transport": "server_websocket",
+              "control_transport": "server_websocket",
+              "control_state": "fenced",
+              "control_failure_detail": null,
+              "control_rtt_ms": null,
+              "direct_state": "failed",
+              "direct_failure": "connection_deadline",
+              "direct_frames": 0,
+              "direct_path": "unknown",
+              "direct_protocol": null,
+              "direct_ice_state": "checking",
+              "direct_dtls_state": "connecting",
+              "direct_network_rtt_ms": null
+            },
+            "nativeSamples": 0
+          },
+          {
+            "sessionId": "8e244f9b61844a05",
+            "startedAt": null,
+            "endedAt": "2026-10-10T21:28:58.797886+00:00",
+            "browserSamples": 1,
+            "lastBrowserSample": {
+              "received_at": "2026-10-10T21:28:55.007667+00:00",
+              "transport": "server_websocket",
+              "control_transport": "server_websocket",
+              "control_state": "idle",
+              "control_failure_detail": null,
+              "control_rtt_ms": null,
+              "direct_state": null,
+              "direct_failure": null,
+              "direct_frames": 0,
+              "direct_path": "unknown",
+              "direct_protocol": null,
+              "direct_ice_state": null,
+              "direct_dtls_state": null,
+              "direct_network_rtt_ms": null
+            },
+            "nativeSamples": 0
+          }
+        ]
+      }
+    ]
+  },
+  "hostPreflight": {
+    "observedAt": "2026-10-11T14:51:15.193079+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 46198284288,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "availableRamBytes": 12614041600,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 67787722752,
+    "commitLimitBytes": 101336473600,
+    "volumeHealthStatus": "Warning",
+    "volumeOperationalStatus": [
+      "Full Repair Needed"
+    ],
+    "findings": [
+      "volume_not_ready"
+    ],
+    "buildAllowed": false
+  },
+  "runtimeInstalled": false,
+  "apk55Built": false,
+  "apk55Signed": false,
+  "apk55OtaPublished": false,
+  "directInputAccepted": false,
+  "directVideoAccepted": false,
+  "nearestPathAccepted": false,
+  "localhostAccepted": false,
+  "lanAccepted": false,
+  "wanAccepted": false,
+  "turnConfigured": false,
+  "videoLatencyMeasured": false,
+  "soakAccepted": false,
+  "productionAccepted": false,
+  "originalsRepeated": false,
+  "commandsSent": false,
+  "networkSettingsChanged": false,
+  "next": [
+    "healthy_volume_and_verified_git_recovery",
+    "reviewed_API_UI_and_signed_APK55_canary",
+    "native_direct_input_ACK_and_held_CANCEL",
+    "PH025_runtime_and_fleet_delivery",
+    "localhost_LAN_WAN_TURN_and_soak"
+  ]
+}

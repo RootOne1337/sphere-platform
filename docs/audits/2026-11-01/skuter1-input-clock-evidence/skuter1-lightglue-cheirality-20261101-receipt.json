@@ -1,0 +1,10 @@
+{
+  "exit_code": 0,
+  "stop_reason": null,
+  "elapsed_seconds": 15.25,
+  "observed_peak_rss": 649289728,
+  "source_model_weights_unchanged": true,
+  "cpu_only": true,
+  "no_download": true,
+  "execution_qualified": false
+}

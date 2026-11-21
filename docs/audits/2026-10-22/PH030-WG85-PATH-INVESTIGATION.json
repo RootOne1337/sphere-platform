@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T15:05:57.660563+00:00",
+  "scope": {
+    "device": "auto-ph-030",
+    "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+    "selectedPackages": [
+      "com.br.top"
+    ],
+    "selectedUids": [
+      10061
+    ],
+    "controlUid": 10060,
+    "mode": "selected_apps",
+    "wholeDeviceVpn": false
+  },
+  "apkVersionCode": 10285,
+  "apiSource": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+  "installedUiSource": "46dd02fff711c1667b44520b85290226b7155287",
+  "operationSessionId": "6819b66d-bad9-4970-81ba-49732b24ffc3",
+  "profileId": "9fae6b22-31d1-4c00-9327-fc3f91b7276e",
+  "profileRevisionId": "c077e830-44e8-46f5-a4b3-feb8bff7eb26",
+  "userConfigurationUsed": true,
+  "userConfirmedNotRunningElsewhere": true,
+  "keysInCommandsLogsOrPublicEvidence": false,
+  "steps": [
+    {
+      "step": "apply",
+      "commandId": "6ee600e7-1eae-4119-a32e-820be2c86364",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "status",
+      "commandId": "859cfe5e-61cf-4de6-a8a6-f4556a04e609",
+      "phase": "HANDSHAKE_CONFIRMED",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "post-http",
+      "commandId": "f16c7c67-0d95-4ba3-a2a4-3c73ab70eff6",
+      "phase": "HANDSHAKE_CONFIRMED",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "pause",
+      "commandId": "1fbc81fa-4672-4c51-b158-fcafad5d674f",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag2-resume",
+      "commandId": "5e421d64-380b-4772-ba28-5468b9856fdb",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag2-pause",
+      "commandId": "fc0638e9-e914-4f12-bf29-e7fbf773c471",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag3-resume",
+      "commandId": "c63ae9e9-6888-4960-8d85-30582b2289c6",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag3-pause",
+      "commandId": "cad1bb0b-2089-4493-9aca-e96f0322d177",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag4-resume",
+      "commandId": "bcb4914f-fee1-4931-ab8e-183937826a8b",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag4-pause",
+      "commandId": "7128924a-0313-49d7-9565-2684661c0aef",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag5-resume",
+      "commandId": "28e9a7b8-1938-4b31-92c9-7a31677bca4a",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag5-pause",
+      "commandId": "d093a9f5-b9f7-4095-b372-d00808d89cb5",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag6-resume",
+      "commandId": "f91dbc03-880c-4515-9cd9-a873982cbfa1",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag6-pause",
+      "commandId": "7d383c1c-c8d9-4f91-871a-8e0ef6e58247",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag7-resume",
+      "commandId": "8e6c0cfe-192d-45d2-bdcb-9cb3e826e845",
+      "phase": "TRANSPORT_READY",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag7-active-status",
+      "commandId": "5dfd5cb3-95c0-420a-aed2-5bf774ba725c",
+      "phase": "HANDSHAKE_CONFIRMED",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "diag7-pause",
+      "commandId": "d1fa9602-9cb6-4275-9997-2600067d53f0",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 5715,
+      "sameControlSession": true
+    },
+    {
+      "step": "investigation-final",
+      "commandId": "82d21d04-f0aa-435f-9049-d4ad709273e0",
+      "phase": "PAUSED_GUARD_HELD",
+      "providerPid": 5715,
+      "sameControlSession": true
+    }
+  ],
+  "http": {
+    "selectedUidHttpsByIp": false,
+    "selectedUidHttpsWithDns": false,
+    "selectedUidPlainHttp": false,
+    "controlUidHttps": true,
+    "timeoutSeconds": 3,
+    "tlsConnectTimeoutSeconds": 2,
+    "failedSuOnlyProbeDiscarded": "su UID lacked the INTERNET supplementary group; verified UID launcher subsequently used group 3003."
+  },
+  "path": {
+    "packetHeadersOnly": true,
+    "trafficPayloadLogged": false,
+    "tcpConnectConfirmed": true,
+    "tlsServerHelloCertificateAndServerFinishedReadByCurl": true,
+    "clientFinishedTransmittedIntoTun": true,
+    "outerUdpTransmissionsObservedOnAndroidPhysicalInterface": true,
+    "outerPhysicalTransmissionIsNotProofOfRemoteReceipt": true,
+    "subsequentPeerResponseAbsentWithinObservedWindow": true,
+    "packetMetadata": [
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 60,
+        "tcpFlags": 2
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 124,
+        "tcpFlags": null
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "receive",
+        "interfaceIndex": 2,
+        "ipBytes": 124,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "receive",
+        "interfaceIndex": 13,
+        "ipBytes": 60,
+        "tcpFlags": 18
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 52,
+        "tcpFlags": 16
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 124,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 214,
+        "tcpFlags": 24
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 284,
+        "tcpFlags": null
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "receive",
+        "interfaceIndex": 2,
+        "ipBytes": 124,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "receive",
+        "interfaceIndex": 13,
+        "ipBytes": 52,
+        "tcpFlags": 16
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "receive",
+        "interfaceIndex": 2,
+        "ipBytes": 1340,
+        "tcpFlags": null
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "receive",
+        "interfaceIndex": 2,
+        "ipBytes": 1340,
+        "tcpFlags": null
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "receive",
+        "interfaceIndex": 2,
+        "ipBytes": 220,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "receive",
+        "interfaceIndex": 13,
+        "ipBytes": 1280,
+        "tcpFlags": 16
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 52,
+        "tcpFlags": 16
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "receive",
+        "interfaceIndex": 13,
+        "ipBytes": 1280,
+        "tcpFlags": 24
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 52,
+        "tcpFlags": 16
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "receive",
+        "interfaceIndex": 13,
+        "ipBytes": 160,
+        "tcpFlags": 24
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 52,
+        "tcpFlags": 16
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 124,
+        "tcpFlags": null
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 124,
+        "tcpFlags": null
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 124,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 145,
+        "tcpFlags": 24
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 220,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 145,
+        "tcpFlags": 24
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 220,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 145,
+        "tcpFlags": 24
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 220,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 145,
+        "tcpFlags": 24
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 220,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 52,
+        "tcpFlags": 17
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 124,
+        "tcpFlags": null
+      },
+      {
+        "kind": "inner_tcp",
+        "direction": "transmit",
+        "interfaceIndex": 13,
+        "ipBytes": 145,
+        "tcpFlags": 25
+      },
+      {
+        "kind": "outer_udp",
+        "direction": "transmit",
+        "interfaceIndex": 2,
+        "ipBytes": 220,
+        "tcpFlags": null
+      }
+    ],
+    "rawPrivateCaptureSha256NormalizedLf": "69a2d8474a0c782ab15557549050e9290b7d184dd664927f0e1cc95a227e77d2"
+  },
+  "hypotheses": {
+    "rpFilterDisabledOnAllDefaultAndTun": true,
+    "movedOwnedGuardAfterNativeVpnRuleDidNotRestoreHttpDns": true,
+    "temporaryRoutingRulesExactlyRestored": true,
+    "sameConfigConcurrentClientExcludedByUser": true,
+    "upstreamFilteringConfirmed": false,
+    "serverFaultConfirmed": false,
+    "nativeCipherCorrectnessForLostPacketsProven": false,
+    "rootCauseConfirmed": false
+  },
+  "finalState": {
+    "phase": "PAUSED_GUARD_HELD",
+    "guardPhase": "BLOCKED",
+    "planVersion": 4,
+    "tunClosed": true,
+    "uidBlackholeBothFamilies": true,
+    "filterDropBothFamilies": true,
+    "guardReleased": false,
+    "profileArchived": false,
+    "sphereManagementAndHttpsPreserved": true,
+    "sameControlSession": true,
+    "leftPausedForUser": true
+  },
+  "cleanup": {
+    "temporaryDiagnosticBinariesAndDirectoriesRemoved": true,
+    "temporaryPublicCodeRelayRemoved": true,
+    "nginxConfigRestored": true,
+    "noOtherAppOrHostVpnChanged": true,
+    "gameLaunches": 0,
+    "gameDataClears": 0
+  },
+  "independentHostProbe": {
+    "sourcePrepared": true,
+    "compiled": false,
+    "executed": false,
+    "reason": "Existing default Windows resource guard denied compilation; thresholds and user processes unchanged.",
+    "resourceFindings": [
+      "commit_headroom_low"
+    ]
+  },
+  "webSourceChange": {
+    "freshnessLabelClarified": true,
+    "scopeVisibleOnMobile": true,
+    "vpnSuites": 11,
+    "vpnTestsPassed": 85,
+    "installed": false
+  },
+  "allAppsExceptControlImplemented": false,
+  "allAppsDesign": "docs/design/VPN-ALL-EXCEPT-SPHERE.md",
+  "productionAccepted": false
+}

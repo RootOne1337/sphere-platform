@@ -1,0 +1,19 @@
+{
+  "before": {
+    "scripts/pilot/route_guided_landmarks.py": "556da33079d494cfd982cb1e3fb308a93149a1e8deeaefdbdcd12fafb5d23b03",
+    "scripts/pilot/route_landmark_builder.py": "063ed3b1b38c595a1a8b3638e7ed51c60e5e59dc136bcb390a65749459e72e4e",
+    "scripts/pilot/export_route_localization.py": "d55991fb16415cb3f59e65bfb5534aea3a9f2fe2e9c51dfca313711b27f093de",
+    "scripts/pilot/camera_pixel_conventions.py": "c144d4e9771ba292528e52fa8e52aec5b2fb79e1baf448e2d77aa47f05f29c96",
+    "motor_worker/route_localization.py": "e2733d248decd2ec038686409d542a279d1ef4d653ec9b05b9034358737d9427",
+    "motor_worker/route_tracking.py": "a092226f86bdaba7414472972cc9f506221224e681872749d98af7da5266849f"
+  },
+  "after": {
+    "scripts/pilot/route_guided_landmarks.py": "556da33079d494cfd982cb1e3fb308a93149a1e8deeaefdbdcd12fafb5d23b03",
+    "scripts/pilot/route_landmark_builder.py": "063ed3b1b38c595a1a8b3638e7ed51c60e5e59dc136bcb390a65749459e72e4e",
+    "scripts/pilot/export_route_localization.py": "d55991fb16415cb3f59e65bfb5534aea3a9f2fe2e9c51dfca313711b27f093de",
+    "scripts/pilot/camera_pixel_conventions.py": "c144d4e9771ba292528e52fa8e52aec5b2fb79e1baf448e2d77aa47f05f29c96",
+    "motor_worker/route_localization.py": "e2733d248decd2ec038686409d542a279d1ef4d653ec9b05b9034358737d9427",
+    "motor_worker/route_tracking.py": "a092226f86bdaba7414472972cc9f506221224e681872749d98af7da5266849f"
+  },
+  "unchanged": true
+}

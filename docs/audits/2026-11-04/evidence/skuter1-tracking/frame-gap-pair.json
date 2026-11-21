@@ -1,0 +1,54 @@
+{
+  "schema": "sphere-route-frame-gap-pair-v1",
+  "localReportSha256": "ee1196359bbf69b2a608088b8f56fc4f9aaed4632faccb4877a41a5165466278",
+  "sameCapture": true,
+  "sameSeedVerifiedByHashes": true,
+  "reproducedHistoricalSkip": true,
+  "unchangedPnP": true,
+  "physicalActions": 0,
+  "qualifiedForLiveDriving": false,
+  "anchorCount": 256,
+  "actualSourceTimestamps": [
+    10.687,
+    10.72,
+    10.753,
+    10.786,
+    10.819,
+    10.854,
+    10.885
+  ],
+  "cases": {
+    "skip": {
+      "inliers": 159,
+      "median_px": 1.0208896279331052,
+      "native_trace_error_units": 0.8949082080501015,
+      "survivingPerLink": [
+        202
+      ],
+      "linkComputeMs": [
+        6.5574
+      ]
+    },
+    "all": {
+      "inliers": 214,
+      "median_px": 0.8246388310139199,
+      "native_trace_error_units": 0.02343127079526857,
+      "survivingPerLink": [
+        251,
+        238,
+        235,
+        232,
+        230,
+        227
+      ],
+      "linkComputeMs": [
+        5.4366,
+        5.4357,
+        5.1206,
+        4.9232,
+        4.8766,
+        4.8681
+      ]
+    }
+  }
+}

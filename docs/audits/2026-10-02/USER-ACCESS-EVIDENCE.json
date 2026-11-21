@@ -1,0 +1,166 @@
+{
+  "observedAt": "2026-10-02T11:20:12.413285+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "finding": "F38",
+  "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
+  "auditCommit": "80fb365",
+  "source": "e2362eb0a9896505a1d4c78609dfcb07e83eac72",
+  "sourceFileSha256": {
+    "frontend/app/(dashboard)/users/page.tsx": "f50cf1c77f5ced26a440205be1d2de418436fb2410bf7910a36b7e2e07725242",
+    "frontend/lib/hooks/useUsers.ts": "e335d77ff9df0a01b66f4b0452f8dd7917063e98e9042569823732003a16def8",
+    "frontend/src/features/users/UserDialogs.tsx": "43471a42a219c820a18994e3c9a5c6827b7baa34a298419c60ff16bf5e1733b2",
+    "frontend/src/features/users/access.ts": "e0cfc76d44da926ca0339c6be344c8943b58b12d08c50772e634b9254ec674a1",
+    "frontend/src/features/users/errors.ts": "c9e50ba9ff94a8237465e1ca314c4f0f7514feec2cb2efb3abc8755bcb719299",
+    "frontend/__tests__/users/workflows.test.tsx": "c7b6f312cfd54b7e8f8111ca5bbbac0f51a0b75da7057ceedb84d54e3d4dfadd",
+    "frontend/__tests__/hooks/useUsers.test.ts": "7a73b54d9d213514012afcc8a1670119fb5e83954586a67d7788bad840c9008c",
+    "docs/operations/USER-ACCESS.md": "3070174f725a71d520acf337c862b04a18d8be5d38f25db6fa830097fb0babac"
+  },
+  "before": {
+    "source": "4898577eef1112280b028860247cc2795de4d4dc",
+    "assertionFailures": 16,
+    "controlPasses": 0,
+    "runtimeErrors": 0
+  },
+  "after": {
+    "newWorkflowTestsPassed": 16,
+    "targetedTestsPassed": 21,
+    "frontendSuitesPassed": 96,
+    "frontendTestsPassed": 777,
+    "frontendFailed": 0,
+    "frontendSkipped": 0,
+    "userHttpTestsPassed": 23,
+    "userHttpErrors": 0,
+    "userHttpFailures": 0,
+    "rbacPairsMatchedBackend": 49,
+    "typesExit": 0,
+    "lintExit": 0,
+    "lintWarningsExisting": 44
+  },
+  "compile": {
+    "platform": "Linux Docker",
+    "immutableGitArchive": true,
+    "productionConfigPreserved": true,
+    "source": "e2362eb0a9896505a1d4c78609dfcb07e83eac72",
+    "exit": 0,
+    "node": "v24.21.0",
+    "next": "15.5.26"
+  },
+  "runtime": {
+    "observedAt": "2026-10-02T11:16:56.899748+00:00",
+    "phase": "users-installed",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "e2362eb0a9896505a1d4c78609dfcb07e83eac72",
+    "backendSource": "933164e2929be0223b9a918902795ade7f0a6dfa",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "oldDiscoveryPayloadStatus": 422,
+    "oldDiscoveryMissingRequiredField": "workstation_id",
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "0a9617f3ae176a0b332f9a914aa422f29a4a814807d6c2a7f5b2587da5d772e0",
+        "imageId": "sha256:cb89e21458392ded9e31e9c96052d0942c5419ac28d0c81433aee1809a713590",
+        "image": "sphere-review-frontend:e2362eb0a9896505a1d4c78609dfcb07e83eac72",
+        "health": "healthy",
+        "startedAt": "2026-10-02T11:09:45.486415843Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "8e300b187ed2dbdbc9a053fe808c9ff3d1d9cf1994f6993c193cd39ce0c7ea3b",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T11:09:51.412115492Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "finiteUserApiReadback": {
+    "observedAt": "2026-10-02T11:17:56.101493+00:00",
+    "uiSource": "e2362eb0a9896505a1d4c78609dfcb07e83eac72",
+    "backendSource": "933164e2929be0223b9a918902795ade7f0a6dfa",
+    "catalogReadPassed": true,
+    "usersObserved": 1,
+    "invalidCreateStatus": 422,
+    "validationFieldLocations": [
+      [
+        "body",
+        "email"
+      ],
+      [
+        "body",
+        "password"
+      ]
+    ],
+    "unknownRoleTargetStatus": 404,
+    "selfDeactivationStatus": 400,
+    "userIdsOrganizationsRolesActiveStatesUnchanged": true,
+    "existingContainersPreserved": 44,
+    "existingRunningContainersPreserved": 14,
+    "realUserAccessChanged": false,
+    "androidCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "previousExactHeadCi": [
+    {
+      "conclusion": "success",
+      "headSha": "4898577eef1112280b028860247cc2795de4d4dc",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/36952724546"
+    },
+    {
+      "conclusion": "success",
+      "headSha": "4898577eef1112280b028860247cc2795de4d4dc",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/36952724480"
+    },
+    {
+      "conclusion": "success",
+      "headSha": "4898577eef1112280b028860247cc2795de4d4dc",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/36952724699"
+    }
+  ],
+  "newHeadCi": "PENDING_AT_DOCUMENT_COMMIT",
+  "limits": [
+    "Browser visual acceptance OPEN_URL_POLICY_BLOCKED; URL denial not bypassed.",
+    "Live mutations changed no existing account. 422/404/400 negative API checks do not establish browser click geometry or successful live user creation/role change.",
+    "Component transport is mocked; actual QueryClient and Radix dialogs run in JSDOM.",
+    "SQLite user HTTP cases do not establish PostgreSQL last-owner concurrency acceptance.",
+    "General role-aware shell F39 remains open.",
+    "No backend CAS/ETag or immutable export was added.",
+    "Public frontend/APK/OTA/tunnels and Android commands unchanged in this user-workflow continuation.",
+    "Remote stream cadence/latency, artifact upload and fleet OTA gates remain open."
+  ],
+  "documentValidation": {
+    "relativeTargetsChecked": 545,
+    "findingAnchorsChecked": 41,
+    "missing": []
+  }
+}

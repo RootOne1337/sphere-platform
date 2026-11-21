@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Sphere Platform</title>
+  <desc id="desc">Управление Android, локальная автоматизация и восстановление связи. Абстрактная схема: центральный узел и устройства распределённого парка.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1200" y2="400" gradientUnits="userSpaceOnUse"><stop stop-color="#10172D"/><stop offset="1" stop-color="#080D19"/></linearGradient>
+    <linearGradient id="accent" x1="810" y1="90" x2="1025" y2="300" gradientUnits="userSpaceOnUse"><stop stop-color="#A5B4FC"/><stop offset="0.5" stop-color="#6366F1"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#6366F1" stop-opacity=".23"/><stop offset="1" stop-color="#6366F1" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" stroke="#94A3B8" stroke-opacity=".055"/></pattern>
+  </defs>
+  <rect x="1" y="1" width="1198" height="398" rx="24" fill="url(#background)" stroke="#29334B"/>
+  <rect x="1" y="1" width="1198" height="398" rx="24" fill="url(#grid)"/>
+  <ellipse cx="925" cy="200" rx="260" ry="198" fill="url(#glow)"/>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <rect x="54" y="52" width="40" height="40" rx="12" fill="#6366F1"/>
+    <circle cx="74" cy="72" r="11" stroke="white" stroke-width="2"/>
+    <circle cx="74" cy="72" r="4" fill="white"/>
+    <text x="108" y="78" font-size="16" font-weight="600" letter-spacing="3" fill="#B8C4DF">ANDROID · AUTOMATION · CONTROL</text>
+    <text x="51" y="181" font-size="72" font-weight="700" letter-spacing="-2" fill="#F5F7FF">Sphere Platform</text>
+    <text x="55" y="227" font-size="25" fill="#CCD6ED">Разные устройства. Единое управление.</text>
+    <path d="M55 269H605" stroke="#2D3854"/>
+    <text x="55" y="308" font-size="17" fill="#A8B6D0">Локальные задания</text>
+    <circle cx="230" cy="302" r="2" fill="#818CF8"/>
+    <text x="250" y="308" font-size="17" fill="#A8B6D0">Живые экраны</text>
+    <circle cx="392" cy="302" r="2" fill="#818CF8"/>
+    <text x="412" y="308" font-size="17" fill="#A8B6D0">Контроль восстановления</text>
+    <text x="55" y="363" font-size="12" letter-spacing="2.3" fill="#7E8DAA">OPEN SOURCE / SELF-HOSTED</text>
+  </g>
+  <g stroke="#55628D">
+    <ellipse cx="927" cy="198" rx="169" ry="118" transform="rotate(-28 927 198)" stroke-opacity=".65"/>
+    <ellipse cx="927" cy="198" rx="118" ry="160" transform="rotate(-28 927 198)" stroke-opacity=".45"/>
+    <path d="M927 198L796 101M927 198L1087 137M927 198L1054 303M927 198L777 289" stroke-dasharray="4 8" stroke-opacity=".8"/>
+  </g>
+  <circle cx="927" cy="198" r="83" fill="#141E39" stroke="#5462A4"/>
+  <circle cx="927" cy="198" r="63" stroke="url(#accent)" stroke-width="2"/>
+  <circle cx="927" cy="198" r="40" fill="#6366F1"/>
+  <circle cx="927" cy="198" r="15" fill="#E0E7FF"/>
+  <circle cx="936" cy="141" r="6" fill="#A5B4FC"/>
+  <g fill="#111B31" stroke="#7E8AC3" stroke-width="1.5">
+    <rect x="773" y="66" width="47" height="72" rx="10"/>
+    <rect x="1064" y="102" width="47" height="72" rx="10"/>
+    <rect x="1031" y="267" width="47" height="72" rx="10"/>
+    <rect x="754" y="253" width="47" height="72" rx="10"/>
+  </g>
+  <g stroke="#818CF8" stroke-width="3" stroke-linecap="round">
+    <path d="M791 78H802M1082 114H1093M1049 279H1060M772 265H783"/>
+  </g>
+  <g fill="#A5B4FC"><circle cx="796.5" cy="118" r="4"/><circle cx="1087.5" cy="154" r="4"/><circle cx="1054.5" cy="319" r="4"/><circle cx="777.5" cy="305" r="4"/></g>
+</svg>

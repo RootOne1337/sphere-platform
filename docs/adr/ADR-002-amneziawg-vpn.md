@@ -1,5 +1,14 @@
 # ADR-002 — Use AmneziaWG for Device VPN Tunnels
 
+> Historical decision, not an installation/readiness receipt. The current
+> [VPN/egress design](../design/VPN-EGRESS-ARCHITECTURE.md) supersedes its SDK,
+> routing and fixed-parameter assumptions. The documented Android provider is a
+> candidate with bounded historical checks, not a general deployment acceptance.
+> The historical Redis allocator and automatic reconciliation claims below do not
+> describe the current SQL-owned pool; see the [VPN incident guide](../runbooks/02-vpn-incident.md)
+> and [VPN profile contract](../operations/VPN-PROFILES.md). Performance, DPI,
+> kill-switch and roaming claims below are not current acceptance evidence.
+
 **Status:** Accepted  
 **Date:** 2024-02-01  
 **Deciders:** Infrastructure Lead, Android Team Lead, CTO  
@@ -141,6 +150,6 @@ A reconciliation job on backend startup syncs Redis state with the database.
 ## Links
 
 - [AmneziaVPN GitHub](https://github.com/amnezia-vpn/amneziawg-go)
-- [backend/services/vpn_manager.py](../../backend/services/vpn_manager.py)
+- [Current VPN pool service](../../backend/services/vpn/pool_service.py)
 - [docs/configuration.md — VPN section](../configuration.md#vpn--amneziawg)
 - [ADR-003: Redis Pub/Sub for WebSocket](ADR-003-redis-pubsub-websocket.md)

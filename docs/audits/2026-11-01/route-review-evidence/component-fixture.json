@@ -1,0 +1,26 @@
+{
+  "mode": "COMPONENT_FIXTURE_NOT_IAB_ACCEPTANCE",
+  "render": "React SSR actual RouteGeometryMap; canvas effect reproduced in fixture; no hydration or click test",
+  "geometry_path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\alternatives\\hud-gap-166-diagnostic\\geometry.json",
+  "geometry_sha256": "a4cddab78876cef9183ec5beea94e6c7739e02173652ca4f0243f7e19aba9933",
+  "source_png_path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000500.png",
+  "source_png_sha256": "19d5ede8980b9dde657beffeb678d0b521a21e6b0bc2181276dae2c7779ff56a",
+  "source_index": 500,
+  "pts_90k": 1805040,
+  "points": 15164,
+  "cameras": 166,
+  "displayed_points": 2504,
+  "component_sha256": "55a0fc964ed6b6720023589c95f85c761427eb80eda89548d507b01373594d1e",
+  "screenshot": "component-fixture.png",
+  "screenshot_sha256": "86e5b458f752cdccc94c2b83b625509ccaea089d638aa3d5b4817b1ef483fb99",
+  "fixture_sha256": "5d116c300ab8040862b3059f65b23a8afc0a99685d926280d0859d955b249e1a",
+  "viewport": [
+    1700,
+    1200
+  ],
+  "css_source": "previous isolated walk-map benchmark CSS; not freshly installed bundle",
+  "browser": "isolated local headless chromium, new task-specific profile",
+  "interactive": false,
+  "source_binding": "source index 500, PTS 1805040; source PNG from targeted-gap verified preparation",
+  "disclaimer": "SSR static fixture only; canvas effect reconstructed using same projection and painting; no IAB, catalog, hydration, or click acceptance"
+}

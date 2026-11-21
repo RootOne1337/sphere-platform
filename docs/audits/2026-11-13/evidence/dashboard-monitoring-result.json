@@ -1,0 +1,93 @@
+{
+  "dashboard_summary": {
+    "total": 2,
+    "online": 0,
+    "busy": 0,
+    "connecting": 0,
+    "offline": 2
+  },
+  "fleet_coverage": {
+    "schema_version": 1,
+    "scope": "current-tenant-active-inventory",
+    "org_id": "00000000-0000-0000-0000-000000000001",
+    "generated_at": "2026-11-13T19:02:23.379034Z",
+    "max_inventory_devices": 5000,
+    "inventory": {
+      "state": "ready",
+      "source": "sql-active-inventory",
+      "observed_at": "2026-11-13T19:02:23.378512Z",
+      "counts": {
+        "total": 2
+      },
+      "reason": "",
+      "max_age_seconds": null
+    },
+    "presence": {
+      "state": "unavailable",
+      "source": "redis-presence",
+      "observed_at": null,
+      "counts": null,
+      "reason": "redis_unavailable",
+      "max_age_seconds": null
+    },
+    "android_vpn": {
+      "state": "forbidden",
+      "source": "android-managed-vpn-report",
+      "observed_at": null,
+      "counts": null,
+      "reason": "vpn_read_required",
+      "max_age_seconds": null
+    },
+    "vpn_assignment": {
+      "state": "forbidden",
+      "source": "sql-tenant-peers",
+      "observed_at": null,
+      "counts": null,
+      "reason": "vpn_read_required",
+      "max_age_seconds": null
+    },
+    "handshakes": {
+      "state": "forbidden",
+      "source": "retained-sql-handshakes",
+      "observed_at": null,
+      "counts": null,
+      "reason": "vpn_read_required",
+      "max_age_seconds": null
+    },
+    "transport_tunnels": {
+      "state": "unmeasured",
+      "source": "transport-tunnel-probes",
+      "observed_at": null,
+      "counts": null,
+      "reason": "transport_probes_not_connected",
+      "max_age_seconds": null
+    }
+  },
+  "monitoring_metrics": {
+    "cpu": {
+      "linuxLoad1mPerCpu": 0.5,
+      "history": []
+    },
+    "ram": {
+      "currentBytes": 1048576,
+      "totalBytes": 2097152,
+      "history": []
+    },
+    "redis": {
+      "status": "HEALTHY",
+      "ops": 50,
+      "memory": "2.0 MB",
+      "clients": 2
+    },
+    "network": {
+      "txTotalBytes": 2048,
+      "rxTotalBytes": 4096,
+      "activeTunnels": null
+    },
+    "observedAt": "2026-11-13T19:02:23.380157+00:00"
+  },
+  "script_runner_permissions_checked": [
+    "monitoring:read",
+    "device:read"
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "schema": "route-review-evidence-index-v1",
+  "entries": [
+    {
+      "file": "frontend-checks-v2.json",
+      "source": ".local-pilot/route-review-delivery-20261101/frontend-checks-v2.json",
+      "source_sha256": "395184bfecdabc205d5d1636d4a6e108a4e227afe8e4662fb7cd53bcdc8d777b",
+      "sha256": "395184bfecdabc205d5d1636d4a6e108a4e227afe8e4662fb7cd53bcdc8d777b",
+      "bytes": 782,
+      "transform": "copy"
+    },
+    {
+      "file": "frontend-checks-v2.log",
+      "source": ".local-pilot/route-review-delivery-20261101/frontend-checks-v2.log",
+      "source_sha256": "4f21260238e076de8d182d7a26703b8fdbc3371ee3fa58c940b7ff9326cf4c5b",
+      "sha256": "4f21260238e076de8d182d7a26703b8fdbc3371ee3fa58c940b7ff9326cf4c5b",
+      "bytes": 2039,
+      "transform": "copy"
+    },
+    {
+      "file": "publication.json",
+      "source": ".local-pilot/route-review-delivery-20261101/publication.json",
+      "source_sha256": "f74ed09da2d2de7fdcf543ecf258b86dc696fbcf2f8d4dba934b3c0c9206bece",
+      "sha256": "5ccc9b1e94ad73b5bbcc6066fab2bfcd25f7b3543647713592904a684b8dbad5",
+      "bytes": 1060,
+      "transform": "publication"
+    },
+    {
+      "file": "runtime-reload.json",
+      "source": ".local-pilot/route-review-delivery-20261101/runtime-reload.json",
+      "source_sha256": "0a78a89ba40ac34ba528a522ab2e3069b1b0f823d52683d847443307b879dc0c",
+      "sha256": "0a78a89ba40ac34ba528a522ab2e3069b1b0f823d52683d847443307b879dc0c",
+      "bytes": 450,
+      "transform": "copy"
+    },
+    {
+      "file": "frontend-regression.json",
+      "source": ".local-pilot/route-review-delivery-20261101-v2/frontend-regression.json",
+      "source_sha256": "7e479abd063e0357c5c4f3c0077b0e41e690d44f117b257ccd6160814de463c8",
+      "sha256": "c0fa00e9c33e140596b8e5588dd16955342dc5f161b826b926c7d265145f3ea2",
+      "bytes": 1061,
+      "transform": "summary"
+    },
+    {
+      "file": "frontend-regression.log",
+      "source": ".local-pilot/route-review-delivery-20261101-v2/frontend-regression.log",
+      "source_sha256": "f29b511114fddc6a2c259650764d7322b9512f0731cf773d2cd3498288c12a1f",
+      "sha256": "f29b511114fddc6a2c259650764d7322b9512f0731cf773d2cd3498288c12a1f",
+      "bytes": 1177,
+      "transform": "copy"
+    },
+    {
+      "file": "image.json",
+      "source": ".local-pilot/route-review-delivery-20261101-v2/image.json",
+      "source_sha256": "41fd967269fc0c43f3d6dac532a1fbae27112ed4350e4dc801c46523eef2a949",
+      "sha256": "41fd967269fc0c43f3d6dac532a1fbae27112ed4350e4dc801c46523eef2a949",
+      "bytes": 152,
+      "transform": "copy"
+    },
+    {
+      "file": "install-receipt.json",
+      "source": ".local-pilot/route-review-image-20261101-v2/install-receipt.json",
+      "source_sha256": "3628ed1a72036d82d7107a802af6083856287083ed4bfe240c05311b413b81e1",
+      "sha256": "3628ed1a72036d82d7107a802af6083856287083ed4bfe240c05311b413b81e1",
+      "bytes": 702,
+      "transform": "copy"
+    },
+    {
+      "file": "probe5.json",
+      "source": ".local-pilot/route-review-image-20261101-v2/probe5.json",
+      "source_sha256": "cdf4603114bba5c624e5a430c215115fbed817204d087fe89274106f8d1daed9",
+      "sha256": "cdf4603114bba5c624e5a430c215115fbed817204d087fe89274106f8d1daed9",
+      "bytes": 150,
+      "transform": "copy"
+    },
+    {
+      "file": "build.json",
+      "source": ".local-pilot/route-review-build-20261101-v2.json",
+      "source_sha256": "895c2af3e049a1ce9890d93aef22681e81af5eaf756279bd915fb63c4c175ec5",
+      "sha256": "895c2af3e049a1ce9890d93aef22681e81af5eaf756279bd915fb63c4c175ec5",
+      "bytes": 644,
+      "transform": "copy"
+    },
+    {
+      "file": "../assets/route-review-component-fixture.png",
+      "source": ".local-pilot/route-review-delivery-20261101/component-fixture.png",
+      "source_sha256": "86e5b458f752cdccc94c2b83b625509ccaea089d638aa3d5b4817b1ef483fb99",
+      "sha256": "86e5b458f752cdccc94c2b83b625509ccaea089d638aa3d5b4817b1ef483fb99",
+      "bytes": 439719,
+      "transform": "copy"
+    },
+    {
+      "file": "component-fixture.json",
+      "source": ".local-pilot/route-review-delivery-20261101/component-fixture.json",
+      "source_sha256": "ecc85a897a2f3c3037af320f2745729dc00fd3313cc8a27b4f17016f30b3eebc",
+      "sha256": "ecc85a897a2f3c3037af320f2745729dc00fd3313cc8a27b4f17016f30b3eebc",
+      "bytes": 1637,
+      "transform": "copy"
+    },
+    {
+      "file": "backend-observed.json",
+      "source": null,
+      "source_sha256": null,
+      "sha256": "a233676f26e3055a9a6b05fa299e6628b089a2577958b200123f8fe88c39d1de",
+      "bytes": 1014,
+      "transform": "observed_tool_result"
+    }
+  ]
+}

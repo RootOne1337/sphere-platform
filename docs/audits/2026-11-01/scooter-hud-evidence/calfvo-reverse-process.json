@@ -1,0 +1,14 @@
+{
+  "admitted": true,
+  "initial_ram": 9326583808,
+  "initial_commit": 22161604608,
+  "initial_disk_free": 37129949184,
+  "cache_bytes_exact": 135625728,
+  "cache_max_bytes": 536870912,
+  "exit": 0,
+  "stop": null,
+  "seconds": 40.53200000000652,
+  "min_ram": 7826067456,
+  "min_commit": 19174170624,
+  "input_hashes_unchanged": true
+}

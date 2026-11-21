@@ -1,0 +1,1099 @@
+{
+  "schema": "sphere-walk-smoothness-evidence-v1",
+  "date": "2026-10-30",
+  "timezone": "Asia/Yekaterinburg",
+  "diagnoses": [
+    {
+      "id": "fdc3070dbdd449458ae43e9801552293",
+      "sha256": "706e528adbbbe0aea2ffe369758a563ce826db267cafdaf847be8cb1a6a16dca",
+      "stopReason": "walk_relocalization_timeout",
+      "stopFrameAgeMs": 20.400000035762787,
+      "observations": 47,
+      "inputSummary": {
+        "applied": 8,
+        "events": 63,
+        "submitted": 8
+      },
+      "cameraInput": {
+        "lastDistancePx": 65,
+        "lastDurationMs": 1662.7001953125,
+        "movesApplied": 3,
+        "strokesApplied": 2,
+        "strokesSubmitted": 2
+      },
+      "camera": {
+        "calibrationAttempts": 2,
+        "feedback": [
+          {
+            "afterUpMs": 382,
+            "fraction": 0.018,
+            "sequence": 3776,
+            "turnRadians": 0.035468646987964494,
+            "yawAfter": 0.20908881430331405,
+            "yawBefore": 0.25069503415056216
+          },
+          {
+            "afterUpMs": 408.60000002384186,
+            "fraction": 0.0425739338347621,
+            "sequence": 3788,
+            "turnRadians": 0.10001749841166935,
+            "yawAfter": 0.054258729352914155,
+            "yawBefore": 0.1677822033415705
+          }
+        ],
+        "gainRadiansPerShortSide": 2.0841160940735577,
+        "minimumFraction": 0.009596394393226211,
+        "mode": "continuous_drag_v1",
+        "pulses": 3,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "maximumStageMs": {
+        "source_gap": 249.70000004768372,
+        "long_task": 75,
+        "jpeg": 114.10000002384186,
+        "http": 291.89999997615814
+      },
+      "lastObservations": [
+        {
+          "ageMs": 224.0999999642372,
+          "cameraYawRadians": null,
+          "computeMs": 202.06219993997365,
+          "crossTrackUnits": 0.008487348652946708,
+          "elapsedMs": 8659.5,
+          "inliers": 43,
+          "medianErrorPx": 0.2513375317527248,
+          "plannerReason": "walk_relocalizing_neutral",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "confirming",
+          "progress": 0.12389680560981493,
+          "reason": "walk_camera_waiting_neutral",
+          "segment": 23,
+          "sequence": 3838,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 227.0999999642372,
+          "cameraYawRadians": null,
+          "computeMs": 174.0533000556752,
+          "crossTrackUnits": 0.008545503037984086,
+          "elapsedMs": 9113.5,
+          "inliers": 118,
+          "medianErrorPx": 0.30652402374784793,
+          "plannerReason": "walk_relocalizing_neutral",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "localized",
+          "progress": 0.12468022007610709,
+          "reason": "walk_camera_waiting_neutral",
+          "segment": 22,
+          "sequence": 3847,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 87.5,
+          "cameraYawRadians": null,
+          "computeMs": 12.81579991336912,
+          "crossTrackUnits": 0.008549381050623254,
+          "elapsedMs": 9206.600000023842,
+          "inliers": 117,
+          "medianErrorPx": 0.3031280655382841,
+          "plannerReason": "walk_relocalization_timeout",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "localized",
+          "progress": null,
+          "reason": "walk_relocalization_timeout",
+          "segment": 22,
+          "sequence": 3852,
+          "state": "stopped"
+        }
+      ]
+    },
+    {
+      "id": "c3ee73ccc305476c9bac26ecdbbd4fb6",
+      "sha256": "6cb875b820126a3b2129303618e7ee5a68d1a0c340551e89a5ff775105ab8f7f",
+      "stopReason": "walk_camera_input_unconfirmed",
+      "stopFrameAgeMs": 250.5,
+      "observations": 26,
+      "inputSummary": {
+        "applied": 18,
+        "events": 57,
+        "submitted": 18
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "movesApplied": 1,
+        "strokesApplied": 0,
+        "strokesSubmitted": 1
+      },
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "mode": "continuous_drag_v1",
+        "pulses": 1,
+        "quietResponses": 0,
+        "terminal": "walk_camera_input_unconfirmed"
+      },
+      "maximumStageMs": {
+        "source_gap": 216.39999997615814,
+        "long_task": 175,
+        "jpeg": 206.60000002384186,
+        "http": 285.19999998807907
+      },
+      "lastObservations": [
+        {
+          "ageMs": 41.299999952316284,
+          "cameraYawRadians": 0.3455385158227879,
+          "computeMs": 8.568099932745099,
+          "crossTrackUnits": 0.010787119045404607,
+          "elapsedMs": 5881.699999988079,
+          "inliers": 40,
+          "medianErrorPx": 0.20480439839454667,
+          "plannerReason": "walk_camera_alignment_required",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "localized",
+          "progress": 0.133855937115884,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 25,
+          "sequence": 4061,
+          "state": "following"
+        },
+        {
+          "ageMs": 41,
+          "cameraYawRadians": 0.3437639903588652,
+          "computeMs": 7.160200038924813,
+          "crossTrackUnits": 0.010517152048677661,
+          "elapsedMs": 5963.5,
+          "inliers": 40,
+          "medianErrorPx": 0.20554036935625097,
+          "plannerReason": "walk_camera_alignment_required",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "localized",
+          "progress": 0.13386627146719274,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 25,
+          "sequence": 4063,
+          "state": "following"
+        },
+        {
+          "ageMs": 37.59999996423721,
+          "cameraYawRadians": 0.3428812135698012,
+          "computeMs": 7.518199970945716,
+          "crossTrackUnits": 0.010436530395548867,
+          "elapsedMs": 6013.5,
+          "inliers": 40,
+          "medianErrorPx": 0.2078042053973957,
+          "plannerReason": "walk_camera_alignment_required",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "localized",
+          "progress": 0.133870455060021,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 25,
+          "sequence": 4064,
+          "state": "following"
+        }
+      ]
+    },
+    {
+      "id": "7f997bd8c6e649228d096df568083298",
+      "sha256": "ccc859d55ccfbdc31119d1de35ec0dad4d8f169f373140654e843097bef99d3a",
+      "stopReason": "walk_camera_input_unconfirmed",
+      "stopFrameAgeMs": 255,
+      "observations": 9,
+      "inputSummary": {
+        "applied": 0,
+        "events": 15,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "movesApplied": 1,
+        "strokesApplied": 0,
+        "strokesSubmitted": 1
+      },
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "mode": "continuous_drag_v1",
+        "pulses": 1,
+        "quietResponses": 0,
+        "terminal": "walk_camera_input_unconfirmed"
+      },
+      "maximumStageMs": {
+        "source_gap": 412.80000001192093,
+        "long_task": null,
+        "jpeg": 45.80000001192093,
+        "http": 201.19999998807907
+      },
+      "lastObservations": [
+        {
+          "ageMs": 62.39999997615814,
+          "cameraYawRadians": 0.2620365998050253,
+          "computeMs": 6.564000039361417,
+          "crossTrackUnits": 0.009163329564064569,
+          "elapsedMs": 3515.699999988079,
+          "inliers": 64,
+          "medianErrorPx": 0.28874606018290916,
+          "plannerReason": "walk_camera_alignment_required",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "localized",
+          "progress": 0.1339759530079211,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 25,
+          "sequence": 4178,
+          "state": "following"
+        },
+        {
+          "ageMs": 38.30000001192093,
+          "cameraYawRadians": 0.26201507836860416,
+          "computeMs": 8.045099908486009,
+          "crossTrackUnits": 0.00916221506719122,
+          "elapsedMs": 3557.600000023842,
+          "inliers": 64,
+          "medianErrorPx": 0.2887190713478359,
+          "plannerReason": "walk_camera_alignment_required",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "localized",
+          "progress": 0.13397606103466422,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 25,
+          "sequence": 4179,
+          "state": "following"
+        },
+        {
+          "ageMs": 29.5,
+          "cameraYawRadians": 0.26196649170229935,
+          "computeMs": 8.59909993596375,
+          "crossTrackUnits": 0.009156874095420625,
+          "elapsedMs": 3598.800000011921,
+          "inliers": 64,
+          "medianErrorPx": 0.2886337368379681,
+          "plannerReason": "walk_camera_alignment_required",
+          "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+          "poseState": "localized",
+          "progress": 0.13397638390872676,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 25,
+          "sequence": 4181,
+          "state": "following"
+        }
+      ]
+    }
+  ],
+  "localContactProbe": {
+    "schema": "sphere-local-contact-smoothness-probe-v1",
+    "physicalActions": 0,
+    "simulatedAcks": true,
+    "ackDelayMs": 8,
+    "realVideo": false,
+    "contactDriverSha256": "6efbb8820afdb81b94c5c8acde0ca20be6177d9e548b736802efbb720ed967ee",
+    "turnBegan": 47.66460000000001,
+    "turnEnded": 172.39960000000002,
+    "turnApplied": true,
+    "cameraMoves": 5,
+    "maximumStepPixels": 12.08304597359457,
+    "gapBegan": 172.4001,
+    "gapInjectedMs": 350,
+    "pausedOwnerAlive": true,
+    "neutralNoCamera": true,
+    "resumed": true,
+    "closed": true,
+    "stickDowns": 1,
+    "rows": [
+      {
+        "kind": "wire",
+        "ms": 0.32269999999999754,
+        "type": "touch_open",
+        "capture_epoch": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "frame_width": 1920,
+        "frame_height": 1080,
+        "contact_protocol": 1
+      },
+      {
+        "kind": "journal",
+        "ms": 8.780300000000011,
+        "stage": "submitted",
+        "at_ms": 1793371121511.9375,
+        "sequence": 1,
+        "gesture": 1,
+        "action": 0,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 885
+      },
+      {
+        "kind": "wire",
+        "ms": 8.804000000000002,
+        "type": "touch_contact_event",
+        "sequence": 1,
+        "gesture": 1,
+        "action": 0,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 885
+      },
+      {
+        "kind": "journal",
+        "ms": 17.804699999999997,
+        "stage": "receipt",
+        "at_ms": 1793371121520.977,
+        "sequence": 1,
+        "gesture": 1,
+        "action": 0,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 885,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 24.072900000000004,
+        "stage": "submitted",
+        "at_ms": 1793371121527.247,
+        "sequence": 2,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 848
+      },
+      {
+        "kind": "wire",
+        "ms": 24.09469999999999,
+        "type": "touch_contact_event",
+        "sequence": 2,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 848
+      },
+      {
+        "kind": "journal",
+        "ms": 32.367399999999975,
+        "stage": "receipt",
+        "at_ms": 1793371121535.542,
+        "sequence": 2,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 848,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 39.28129999999999,
+        "stage": "submitted",
+        "at_ms": 1793371121542.4558,
+        "sequence": 3,
+        "gesture": 1,
+        "action": 0,
+        "pointer_id": 1,
+        "x": 1247,
+        "y": 540
+      },
+      {
+        "kind": "wire",
+        "ms": 39.29469999999998,
+        "type": "touch_contact_event",
+        "sequence": 3,
+        "gesture": 1,
+        "action": 0,
+        "pointer_id": 1,
+        "x": 1247,
+        "y": 540
+      },
+      {
+        "kind": "journal",
+        "ms": 47.61840000000001,
+        "stage": "receipt",
+        "at_ms": 1793371121550.7917,
+        "sequence": 3,
+        "gesture": 1,
+        "action": 0,
+        "pointer_id": 1,
+        "x": 1247,
+        "y": 540,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 64.16239999999999,
+        "stage": "submitted",
+        "at_ms": 1793371121567.3354,
+        "sequence": 4,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1254,
+        "y": 544
+      },
+      {
+        "kind": "wire",
+        "ms": 64.1782,
+        "type": "touch_contact_event",
+        "sequence": 4,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1254,
+        "y": 544
+      },
+      {
+        "kind": "journal",
+        "ms": 72.33670000000001,
+        "stage": "receipt",
+        "at_ms": 1793371121575.5105,
+        "sequence": 4,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1254,
+        "y": 544,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 88.77100000000002,
+        "stage": "submitted",
+        "at_ms": 1793371121591.9363,
+        "sequence": 5,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1264,
+        "y": 550
+      },
+      {
+        "kind": "wire",
+        "ms": 88.798,
+        "type": "touch_contact_event",
+        "sequence": 5,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1264,
+        "y": 550
+      },
+      {
+        "kind": "journal",
+        "ms": 97.18560000000002,
+        "stage": "receipt",
+        "at_ms": 1793371121600.3503,
+        "sequence": 5,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1264,
+        "y": 550,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 113.07100000000003,
+        "stage": "submitted",
+        "at_ms": 1793371121616.243,
+        "sequence": 6,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1274,
+        "y": 556
+      },
+      {
+        "kind": "wire",
+        "ms": 113.09339999999997,
+        "type": "touch_contact_event",
+        "sequence": 6,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1274,
+        "y": 556
+      },
+      {
+        "kind": "journal",
+        "ms": 121.93720000000002,
+        "stage": "receipt",
+        "at_ms": 1793371121625.1128,
+        "sequence": 6,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1274,
+        "y": 556,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 138.1223,
+        "stage": "submitted",
+        "at_ms": 1793371121641.295,
+        "sequence": 7,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1285,
+        "y": 561
+      },
+      {
+        "kind": "wire",
+        "ms": 138.142,
+        "type": "touch_contact_event",
+        "sequence": 7,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1285,
+        "y": 561
+      },
+      {
+        "kind": "journal",
+        "ms": 146.57979999999998,
+        "stage": "receipt",
+        "at_ms": 1793371121649.7556,
+        "sequence": 7,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1285,
+        "y": 561,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 163.88459999999998,
+        "stage": "submitted",
+        "at_ms": 1793371121667.0579,
+        "sequence": 8,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1290,
+        "y": 564
+      },
+      {
+        "kind": "wire",
+        "ms": 163.9117,
+        "type": "touch_contact_event",
+        "sequence": 8,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1290,
+        "y": 564
+      },
+      {
+        "kind": "journal",
+        "ms": 172.3501,
+        "stage": "receipt",
+        "at_ms": 1793371121675.5256,
+        "sequence": 8,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 1,
+        "x": 1290,
+        "y": 564,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 430.04889999999995,
+        "stage": "submitted",
+        "at_ms": 1793371121933.2192,
+        "sequence": 9,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 885
+      },
+      {
+        "kind": "wire",
+        "ms": 430.08110000000005,
+        "type": "touch_contact_event",
+        "sequence": 9,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 885
+      },
+      {
+        "kind": "journal",
+        "ms": 438.59970000000004,
+        "stage": "receipt",
+        "at_ms": 1793371121941.7732,
+        "sequence": 9,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 885,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 438.6185,
+        "stage": "submitted",
+        "at_ms": 1793371121941.7954,
+        "sequence": 10,
+        "gesture": 1,
+        "action": 1,
+        "pointer_id": 1,
+        "x": 1290,
+        "y": 564
+      },
+      {
+        "kind": "wire",
+        "ms": 438.6339,
+        "type": "touch_contact_event",
+        "sequence": 10,
+        "gesture": 1,
+        "action": 1,
+        "pointer_id": 1,
+        "x": 1290,
+        "y": 564
+      },
+      {
+        "kind": "journal",
+        "ms": 448.67350000000005,
+        "stage": "receipt",
+        "at_ms": 1793371121951.8486,
+        "sequence": 10,
+        "gesture": 1,
+        "action": 1,
+        "pointer_id": 1,
+        "x": 1290,
+        "y": 564,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "journal",
+        "ms": 557.6850999999999,
+        "stage": "submitted",
+        "at_ms": 1793371122060.8618,
+        "sequence": 11,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 848
+      },
+      {
+        "kind": "wire",
+        "ms": 557.6984,
+        "type": "touch_contact_event",
+        "sequence": 11,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 848
+      },
+      {
+        "kind": "journal",
+        "ms": 565.8806999999999,
+        "stage": "receipt",
+        "at_ms": 1793371122069.0574,
+        "sequence": 11,
+        "gesture": 1,
+        "action": 2,
+        "pointer_id": 0,
+        "x": 288,
+        "y": 848,
+        "outcome": "applied",
+        "device_uptime_ms": 1000
+      },
+      {
+        "kind": "wire",
+        "ms": 578.1153999999999,
+        "type": "touch_close"
+      },
+      {
+        "kind": "journal",
+        "ms": 586.5138999999999,
+        "stage": "closed",
+        "at_ms": 1793371122089.6775,
+        "sequence": 0,
+        "gesture": 0,
+        "action": 3,
+        "pointer_id": -1,
+        "outcome": "closed",
+        "device_uptime_ms": 1000,
+        "cancelled_pointers": [
+          0
+        ]
+      }
+    ]
+  },
+  "referenceRotations": {
+    "confirmed": 174,
+    "total": 174,
+    "mapSha256": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+    "mapRebuilt": false
+  },
+  "expiredReplyHttp": {
+    "scope": "REAL_RGB_HTTP_EXPIRED_REPLY",
+    "physicalActions": 0,
+    "injectedDelayMs": 300,
+    "neutralOnExpired": true,
+    "threeFreshObservationsRequired": true,
+    "resumed": true,
+    "independentGameplay": false,
+    "feedbackLoop": false,
+    "rows": [
+      {
+        "sequence": 1,
+        "sourceIndex": 510,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 266.4535999065265,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 2,
+        "sourceIndex": 515,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 226.07639990746975,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 3,
+        "sourceIndex": 521,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_confirming_current_position",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 243.91850002575666,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 4,
+        "sourceIndex": 526,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_confirming_current_position",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 23.970600101165473,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 5,
+        "sourceIndex": 532,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.006648303611985506,
+          -0.1998894696052868
+        ],
+        "replyMs": 24.184499983675778,
+        "injected": false,
+        "referenceView": true,
+        "targetViewCamera": [
+          0.00611083977736952,
+          0.0005584208150289293,
+          0.9999811727244711
+        ]
+      },
+      {
+        "sequence": 6,
+        "sourceIndex": 539,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 336.51160006411374,
+        "injected": true,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 7,
+        "sourceIndex": 545,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 184.32070000562817,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 8,
+        "sourceIndex": 550,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 25.170199922285974,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 9,
+        "sourceIndex": 554,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.0015727912245104374,
+          -0.1999938157237971
+        ],
+        "replyMs": 13.034299947321415,
+        "injected": false,
+        "referenceView": true,
+        "targetViewCamera": [
+          -0.011206283349118938,
+          -0.006485290935947225,
+          0.999916176594306
+        ]
+      },
+      {
+        "sequence": 10,
+        "sourceIndex": 560,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.014386028552019363,
+          -0.3494076895738846
+        ],
+        "replyMs": 24.472099961712956,
+        "injected": false,
+        "referenceView": true,
+        "targetViewCamera": [
+          -0.0071035968731281715,
+          -0.0036729799233716012,
+          0.9999680235537267
+        ]
+      },
+      {
+        "sequence": 11,
+        "sourceIndex": 566,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.05094151498484421,
+          -0.3424215101205604
+        ],
+        "replyMs": 22.558000055141747,
+        "injected": false,
+        "referenceView": true,
+        "targetViewCamera": [
+          -0.005354620040535201,
+          -0.0020697805859340055,
+          0.9999835218905098
+        ]
+      },
+      {
+        "sequence": 12,
+        "sourceIndex": 572,
+        "pose": "unknown",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 170.93779996503145,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 13,
+        "sourceIndex": 578,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 185.55369996465743,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 14,
+        "sourceIndex": 583,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 188.2153000915423,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 15,
+        "sourceIndex": 588,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 186.8125000037253,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 16,
+        "sourceIndex": 594,
+        "pose": "localized",
+        "phase": "stopped",
+        "reason": "walk_relocalization_drift",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 23.413100047037005,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 17,
+        "sourceIndex": 600,
+        "pose": "localized",
+        "phase": "stopped",
+        "reason": "walk_relocalization_drift",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 24.55029997508973,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      },
+      {
+        "sequence": 18,
+        "sourceIndex": 607,
+        "pose": "localized",
+        "phase": "stopped",
+        "reason": "walk_relocalization_drift",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 24.588000029325485,
+        "injected": false,
+        "referenceView": null,
+        "targetViewCamera": null
+      }
+    ]
+  },
+  "tests": {
+    "frontendTests": 144,
+    "frontendSuites": 16,
+    "pythonUnitTests": 141,
+    "httpTests": 28,
+    "typescriptPassed": true,
+    "productionBuildPassed": true
+  },
+  "webInstall": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:cdc2cbc5b00040ed01e9485890afb9f1e6794268e49770d0f1cbb4e1f14fa7ba",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "webProbe": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "workerMatches": true,
+    "encoderWorkerMatches": true,
+    "newBundlePresent": true
+  },
+  "apiReload": {
+    "oldPid": 6252,
+    "watchdogPid": 4444,
+    "physicalActions": 0,
+    "sourceSha": "9e7dde09407006d854c66f56feacf0b0216d8d91c82132caa70cee0001cdd99d",
+    "outcome": "verified",
+    "newPid": 8236,
+    "existingAssetsUnchanged": true
+  },
+  "frontendSourceSha": "b3fabb5af8906b71af2a9f8f2e62c2cb4d066f07785f5b982af89593b73a2f24",
+  "workerSha256": "c89ae0d80724b50d167bf6fccb6b9609aabe424b07665fb57b0d312b4debfbc4",
+  "limits": {
+    "movementPermitMs": 250,
+    "shortGapOwnerGraceMs": 1000,
+    "nativeAckTimeoutMs": 500,
+    "maxTestSeconds": 60
+  },
+  "physicalActions": 0,
+  "independentGameplay": false,
+  "closedLoopGameAtoBVerified": false,
+  "browserInteractionVerified": false,
+  "newGameplaySmoothnessMeasured": false
+}

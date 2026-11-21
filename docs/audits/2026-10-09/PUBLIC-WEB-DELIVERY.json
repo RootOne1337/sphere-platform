@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T16:00:27.564136+00:00",
+  "scope": "Existing public Tuna hostname now serves the same reviewed UI process as loopback 3015. Finite delivery and read-only browser checks only; not stream/control, transport reliability or resource-soak acceptance.",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "86354350638650215717658b9395b2751326af6c",
+    "apiSourceRevision": "d720232e3164d278a7322a61a90ba111e205ae3c",
+    "publicUrl": "https://sphere-agent-canary-20260927.ru.tuna.am",
+    "uiContainerId": "9d48493d4c35ac406dc36e9a4cb0f217ce053b1fb97ccc016e223c8282e028c5",
+    "apiContainerId": "7463f441f41cf6d7d39679166d4281db28d8cd009c60c572611b0a079001ef19",
+    "previousPublicUiImage": "sphere-pilot-20260911-frontend:8fef5eb",
+    "publicGatewayContainerId": "ec2a4b7110ca60a0a89d41df105e3dee656666fff6090098d3756579ac972a2e",
+    "allContainerIdentityImageStartStatusPreserved": true,
+    "containerCountPreserved": 46,
+    "bootstrapHashesPreserved": true,
+    "schemaApkOtaChangesPerformed": false,
+    "newImagesBuiltOrLoaded": false
+  },
+  "delivery": {
+    "gracefulReloadAtUtc": "2026-10-09T15:53:53.500361+00:00",
+    "nginxSyntaxPassed": true,
+    "routing": "Exact-host private map selects existing review-gateway:8080 for UI and Next observability routes. Business API, WebSockets, health and bootstrap retain original nginx:8081/alias routing. Other hosts keep previous UI.",
+    "apiWsBootstrapRoutingChanged": false,
+    "configuration": "infrastructure/nginx/remote-pilot.conf",
+    "configurationSha256NormalizedLf": "42d07bb2fee1815a15199a1a40ef7d9bcdd5084d69f44a100d26b1de78df241c",
+    "privateMapCommitted": false,
+    "privatePlanAndReceipt": ".local-pilot/remote-web-20261009",
+    "rollbackPerformed": false
+  },
+  "browser": {
+    "acceptedRecordedScope": true,
+    "windowUtc": "2026-10-09T15:57Z/2026-10-09T16:00Z",
+    "loginDashboard": true,
+    "webRevision": "86354350",
+    "apiRevision": "d720232e",
+    "scriptCatalogCount": 22,
+    "scriptBuilder": {
+      "publishedVersion": 1,
+      "nodes": 3,
+      "edges": 2,
+      "undo": 0,
+      "libraryActions": 32
+    },
+    "eventConnectionVisible": true,
+    "monitoring": {
+      "httpCpuRamFleetDataObserved": true,
+      "grafanaDashboardOpened": true,
+      "transientRequestFailureObserved": true,
+      "manualRefreshRecoveredMetrics": true,
+      "transientFailureCause": "Unknown; edge recorded successful responses and client-close 499. Those logs do not establish end-to-end delivery or root cause."
+    },
+    "saveRunRecordAndroidInputPerformed": false,
+    "originalUserTabsModified": false,
+    "screenshots": {
+      "docs/audits/2026-10-09/assets/public-web/studio.jpg": "9b7fc4b0975636a8c920b9dd7c8fae1bc92f5dab2e33d5ebc2ccbe9d8e41a68a",
+      "docs/audits/2026-10-09/assets/public-web/monitoring.jpg": "0c85db458e1ab78183a10688548b3c21d767fced838ee5909585dd4eaaf11624"
+    }
+  },
+  "checks": {
+    "dockerGatewayIntegrationPassed": 1,
+    "dockerGatewayIntegrationSeconds": 10.25,
+    "scopedRuff": "passed",
+    "liveUnauthenticatedHttpStatuses": {
+      "/api/observability/resources": 401,
+      "/observability/grafana/": 401,
+      "/metrics": 404
+    },
+    "rawPrometheusExposed": false
+  },
+  "limits": [
+    "Only the working Tuna hostname was opted in; Cloudflare/SSH fallback UI not updated or accepted.",
+    "Existing review UI/gateway availability is now a dependency of public UI. No separate HA, load or public-device control canary.",
+    "Graceful Nginx reload and unchanged container starts do not prove zero transient requests or zero Android reconnects.",
+    "Continuous idle failure remains open; whole-PC disk writer remains unknown.",
+    "Product counts remain 9 accepted recorded scopes / 41 open."
+  ]
+}

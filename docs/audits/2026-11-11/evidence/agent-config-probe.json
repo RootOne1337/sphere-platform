@@ -1,0 +1,38 @@
+{
+  "batch_without_workstation": {
+    "exit_code": 0,
+    "reported_count": 3,
+    "filenames": [
+      "sphere-agent-config-007.json"
+    ],
+    "instance_indices": [
+      7
+    ],
+    "non_http_server_written": false,
+    "empty_enrollment_key_written": false
+  },
+  "documented_single_clone_index": {
+    "exit_code": 0,
+    "reported_count": 1,
+    "filenames": [
+      "sphere-agent-config.json"
+    ],
+    "instance_indices": [
+      0
+    ],
+    "non_http_server_written": false,
+    "empty_enrollment_key_written": false
+  },
+  "invalid_provisioning": {
+    "exit_code": 0,
+    "reported_count": 1,
+    "filenames": [
+      "sphere-agent-config.json"
+    ],
+    "instance_indices": [
+      null
+    ],
+    "non_http_server_written": true,
+    "empty_enrollment_key_written": true
+  }
+}

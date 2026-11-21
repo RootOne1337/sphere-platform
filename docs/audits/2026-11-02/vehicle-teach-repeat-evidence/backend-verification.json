@@ -1,0 +1,45 @@
+{
+  "scope": "VEHICLE_BACKEND_UNIT_AND_SYNTHETIC_PLANT_NO_GAME_INPUT",
+  "physicalActions": 0,
+  "files": {
+    "motor_worker/vehicle_route.py": "1b0caec535d2e5db758082f89eaa01a8f6729d3f85d1705d38e1edf381cf93bd",
+    "scripts/pilot/route_workspace.py": "aa58dfd9380084c3113974711da85b8e8eb2ef005f5e70567772f96776f10a87",
+    "scripts/pilot/reconstruction_service.py": "eea788c667cc9095e0a7438d72a25b9d9e6564edfae2149df6e779660a260d01",
+    "scripts/pilot/walk_diagnostics.py": "8995bc309fd0d358f5b31bf78b002f6469ce6e4ebbb984e6f38520a8722646a6",
+    "tests/test_vehicle_route.py": "9823c07a36b49a97c54b373e1f9768bd3db255b6f01e147fe8357a33dd888e43",
+    "tests/test_vehicle_route_workspace.py": "2b2c103c14a6f6bdc504ce4485eaa9fc8fd977ed6b704797068052c9cb732680"
+  },
+  "tests": {
+    "passed": 132,
+    "subtests": 61,
+    "log_sha256": "d58842dfbc6542ef1685ad758f051e14a5d9d99c73f1a07471a27cbd4375d4df"
+  },
+  "simulation_sha256": "b239fb2ac0427bc2dfa271627cdd0fd8f087ab509d6a31c8dbd13a02ae2db909",
+  "plot_sha256": "ee7422aaab82a1af094e1c0954324ebfe26db71a475bec2ebc50e2bdd5dea5b8",
+  "vehicle_contract": {
+    "schema": "sphere-vehicle-plan-v1",
+    "motionProtocol": "applied_vehicle_v1",
+    "maxDecisionAgeMs": 450,
+    "maxAnswerHoldMs": 350,
+    "maxRecoveryNeutralSeconds": 15,
+    "maxSecondsRange": [
+      60,
+      1800
+    ],
+    "defaultSpeedCapKmh": 15,
+    "allowedSpeedCapKmh": [
+      1,
+      30
+    ],
+    "minimumSpeedConfidence": 80,
+    "attachedCameraRequired": true,
+    "freeCameraDragWhileMoving": false
+  },
+  "limitations": [
+    "source navigation ready and immutable speed reference required",
+    "camera follows body explicitly confirmed, not physically calibrated",
+    "no native game input or real-vehicle pass executed",
+    "synthetic plant supplies oracle poses; no image-localization test",
+    "no collision avoidance or road clearance authority"
+  ]
+}

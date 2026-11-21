@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-14",
+  "sourceRevision": "99e57e04975b8ba69074be45fe146a709b355dea",
+  "report": "docs/audits/2026-11-14/AUDIT-CURSOR-AND-FLEET-ACCEPTANCE.md",
+  "runtime": {
+    "installedOnPilot": true,
+    "schema": "20261114_audit_cursor_idx",
+    "fleetAccepted": false
+  },
+  "ledger": {
+    "closedInThisBatch": [
+      "EP-034"
+    ]
+  },
+  "acceptance": {
+    "EP-034": {
+      "cursorPagesDisjoint": true,
+      "changedFilterAndInvalidSignatureRejected": true,
+      "legacyPageCompatible": true,
+      "csv": {
+        "limit": 2,
+        "matched": 3,
+        "rows": 2,
+        "truncated": true
+      },
+      "agent": {
+        "device": "PH025",
+        "versionCode": 10285,
+        "dag": "start → end",
+        "terminal": "completed",
+        "auditEvents": 3,
+        "elapsedSeconds": 5.22
+      }
+    }
+  }
+}

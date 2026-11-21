@@ -1,0 +1,1256 @@
+{
+  "scope": "EXPERIMENTAL_LOCAL_PLANES_NOT_NAVIGATION",
+  "acceptedPlanes": 52,
+  "totalCameras": 89,
+  "physicalActions": 0,
+  "geometryQualified": false,
+  "planes": [
+    {
+      "ticks": 0,
+      "candidates": 172,
+      "accepted": true,
+      "normal": [
+        -0.16664081962476476,
+        -0.9726590564598233,
+        0.16175659838619622
+      ],
+      "offset": 0.3860973476856535,
+      "support": 172,
+      "heightUnits": 0.3683648101854111,
+      "centerOnCandidatePlane": [
+        2.766995510985136,
+        -0.755375265664699,
+        -4.07850775543917
+      ],
+      "medianResidual": 0.000939640164634048
+    },
+    {
+      "ticks": 45000,
+      "candidates": 172,
+      "accepted": true,
+      "normal": [
+        -0.16664081962476476,
+        -0.9726590564598233,
+        0.16175659838619622
+      ],
+      "offset": 0.3860973476856535,
+      "support": 172,
+      "heightUnits": 0.36831726821095945,
+      "centerOnCandidatePlane": [
+        2.76779755904989,
+        -0.7554221495619902,
+        -4.07796340732314
+      ],
+      "medianResidual": 0.000939640164634048
+    },
+    {
+      "ticks": 95940,
+      "candidates": 185,
+      "accepted": true,
+      "normal": [
+        -0.17841616057030404,
+        -0.970762717547226,
+        0.16058461902584706
+      ],
+      "offset": 0.4091093050711632,
+      "support": 180,
+      "heightUnits": 0.33733512699726825,
+      "centerOnCandidatePlane": [
+        2.605870494364027,
+        -0.7471587248303742,
+        -4.169102462864071
+      ],
+      "medianResidual": 0.0006321141766857108
+    },
+    {
+      "ticks": 149850,
+      "candidates": 187,
+      "accepted": true,
+      "normal": [
+        -0.17721020131758822,
+        -0.9716276351421065,
+        0.15664061790333425
+      ],
+      "offset": 0.3887316667799652,
+      "support": 181,
+      "heightUnits": 0.33983802191735335,
+      "centerOnCandidatePlane": [
+        2.401287677142353,
+        -0.7227746560703817,
+        -4.248366948610426
+      ],
+      "medianResidual": 0.0008791139672966186
+    },
+    {
+      "ticks": 200970,
+      "candidates": 21,
+      "accepted": false
+    },
+    {
+      "ticks": 247770,
+      "candidates": 22,
+      "accepted": false
+    },
+    {
+      "ticks": 293940,
+      "candidates": 20,
+      "accepted": false
+    },
+    {
+      "ticks": 344970,
+      "candidates": 20,
+      "accepted": false
+    },
+    {
+      "ticks": 397710,
+      "candidates": 19,
+      "accepted": false
+    },
+    {
+      "ticks": 447030,
+      "candidates": 17,
+      "accepted": false
+    },
+    {
+      "ticks": 492030,
+      "candidates": 18,
+      "accepted": false
+    },
+    {
+      "ticks": 537030,
+      "candidates": 21,
+      "accepted": false
+    },
+    {
+      "ticks": 582030,
+      "candidates": 22,
+      "accepted": false
+    },
+    {
+      "ticks": 634320,
+      "candidates": 22,
+      "accepted": false
+    },
+    {
+      "ticks": 686700,
+      "candidates": 31,
+      "accepted": false
+    },
+    {
+      "ticks": 736110,
+      "candidates": 41,
+      "accepted": false
+    },
+    {
+      "ticks": 787050,
+      "candidates": 187,
+      "accepted": true,
+      "normal": [
+        -0.27695572326654405,
+        -0.9583539119157668,
+        0.0696656792520661
+      ],
+      "offset": -0.07992761367016778,
+      "support": 114,
+      "heightUnits": 0.3067994941636669,
+      "centerOnCandidatePlane": [
+        -0.4624558878900408,
+        -0.2827186343265378,
+        -4.580400332609221
+      ],
+      "medianResidual": 0.007266550300268744
+    },
+    {
+      "ticks": 839250,
+      "candidates": 694,
+      "accepted": true,
+      "normal": [
+        -0.4201575266711455,
+        -0.9047908400304283,
+        -0.06943477931568348
+      ],
+      "offset": -0.7939016621270659,
+      "support": 276,
+      "heightUnits": 0.29716630579434977,
+      "centerOnCandidatePlane": [
+        -0.6325810712889671,
+        -0.24710021760853207,
+        -4.386043324901822
+      ],
+      "medianResidual": 0.007663531555971936
+    },
+    {
+      "ticks": 890190,
+      "candidates": 898,
+      "accepted": true,
+      "normal": [
+        -0.4316380533713741,
+        -0.8978099389116804,
+        -0.08732642482763218
+      ],
+      "offset": -0.8744719513143814,
+      "support": 301,
+      "heightUnits": 0.32487749143364575,
+      "centerOnCandidatePlane": [
+        -0.8098721165752085,
+        -0.17433261587948334,
+        -4.218457047224336
+      ],
+      "medianResidual": 0.007767661531027592
+    },
+    {
+      "ticks": 939690,
+      "candidates": 886,
+      "accepted": true,
+      "normal": [
+        -0.2889370804418719,
+        -0.9550563602528878,
+        0.06620205651061185
+      ],
+      "offset": -0.11276042898308303,
+      "support": 272,
+      "heightUnits": 0.33653907525238236,
+      "centerOnCandidatePlane": [
+        -1.045922275308104,
+        -0.08732667599759936,
+        -4.121430833513079
+      ],
+      "medianResidual": 0.005420400830545055
+    },
+    {
+      "ticks": 987750,
+      "candidates": 782,
+      "accepted": true,
+      "normal": [
+        -0.41055047897386016,
+        -0.9102885120314275,
+        -0.053133125994471196
+      ],
+      "offset": -0.7249267570721009,
+      "support": 273,
+      "heightUnits": 0.35006429928162264,
+      "centerOnCandidatePlane": [
+        -1.1875180507714351,
+        -0.031600188678634566,
+        -3.9264650799447636
+      ],
+      "medianResidual": 0.008289324790287877
+    },
+    {
+      "ticks": 1041570,
+      "candidates": 537,
+      "accepted": true,
+      "normal": [
+        -0.47052073020063967,
+        -0.8722619922454491,
+        -0.13330138534710326
+      ],
+      "offset": -1.0941412205914576,
+      "support": 189,
+      "heightUnits": 0.3666795023471381,
+      "centerOnCandidatePlane": [
+        -1.352740679699096,
+        0.04265601916881612,
+        -3.712308849455889
+      ],
+      "medianResidual": 0.008594714263669756
+    },
+    {
+      "ticks": 1092330,
+      "candidates": 471,
+      "accepted": true,
+      "normal": [
+        -0.40348090638457634,
+        -0.913934322795023,
+        -0.043900020504368926
+      ],
+      "offset": -0.6841470566140707,
+      "support": 171,
+      "heightUnits": 0.3548247362992224,
+      "centerOnCandidatePlane": [
+        -1.5497543271555483,
+        0.10703226395123633,
+        -3.568819191686485
+      ],
+      "medianResidual": 0.007393650798910079
+    },
+    {
+      "ticks": 1142280,
+      "candidates": 406,
+      "accepted": true,
+      "normal": [
+        -0.4288862906804965,
+        -0.8992156843487581,
+        -0.08641587057664178
+      ],
+      "offset": -0.86639855384293,
+      "support": 161,
+      "heightUnits": 0.36434865906366487,
+      "centerOnCandidatePlane": [
+        -1.693738632493658,
+        0.16743857251197947,
+        -3.36212159872333
+      ],
+      "medianResidual": 0.007560270728283136
+    },
+    {
+      "ticks": 1189890,
+      "candidates": 286,
+      "accepted": true,
+      "normal": [
+        -0.45192417942341073,
+        -0.8895694179169299,
+        -0.06656415521443557
+      ],
+      "offset": -0.8612073637855705,
+      "support": 119,
+      "heightUnits": 0.3462819510936689,
+      "centerOnCandidatePlane": [
+        -1.8414721384052262,
+        0.20630168400011728,
+        -3.192728082739838
+      ],
+      "medianResidual": 0.0074018420401937846
+    },
+    {
+      "ticks": 1240920,
+      "candidates": 96,
+      "accepted": true,
+      "normal": [
+        -0.1918966244221225,
+        -0.9679171931938295,
+        0.1622097181280266
+      ],
+      "offset": 0.3715502892933158,
+      "support": 83,
+      "heightUnits": 0.3372973294003183,
+      "centerOnCandidatePlane": [
+        -2.0814163004418265,
+        0.2830757132394426,
+        -3.0637695896430697
+      ],
+      "medianResidual": 0.003513369110011766
+    },
+    {
+      "ticks": 1285920,
+      "candidates": 48,
+      "accepted": false
+    },
+    {
+      "ticks": 1333980,
+      "candidates": 34,
+      "accepted": false
+    },
+    {
+      "ticks": 1387890,
+      "candidates": 28,
+      "accepted": false
+    },
+    {
+      "ticks": 1440270,
+      "candidates": 9,
+      "accepted": false
+    },
+    {
+      "ticks": 1492740,
+      "candidates": 10,
+      "accepted": false
+    },
+    {
+      "ticks": 1545210,
+      "candidates": 659,
+      "accepted": true,
+      "normal": [
+        -0.1659063354744678,
+        -0.9752932190161036,
+        0.14587057547922555
+      ],
+      "offset": 0.220625982307682,
+      "support": 332,
+      "heightUnits": 0.13106601200655796,
+      "centerOnCandidatePlane": [
+        -2.811633603520642,
+        0.44874988862449205,
+        -1.7099479174296448
+      ],
+      "medianResidual": 0.010271331850260787
+    },
+    {
+      "ticks": 1596150,
+      "candidates": 663,
+      "accepted": true,
+      "normal": [
+        -0.16753618506804824,
+        -0.973999003928971,
+        0.15250431809695392
+      ],
+      "offset": 0.20624024504482422,
+      "support": 336,
+      "heightUnits": 0.126914994699381,
+      "centerOnCandidatePlane": [
+        -2.9114019974888943,
+        0.4821380456308234,
+        -1.4714563856497669
+      ],
+      "medianResidual": 0.010135869759808722
+    },
+    {
+      "ticks": 1647000,
+      "candidates": 662,
+      "accepted": true,
+      "normal": [
+        -0.1574649645751987,
+        -0.9775130684432557,
+        0.14026042190861363
+      ],
+      "offset": 0.23257448423244018,
+      "support": 335,
+      "heightUnits": 0.13986564053416034,
+      "centerOnCandidatePlane": [
+        -3.0112749889627852,
+        0.5444903283964815,
+        -1.2441027887454985
+      ],
+      "medianResidual": 0.009846541745537618
+    },
+    {
+      "ticks": 1697940,
+      "candidates": 661,
+      "accepted": true,
+      "normal": [
+        -0.17080250603958175,
+        -0.9706835699223775,
+        0.16911508215811907
+      ],
+      "offset": 0.17347887030809273,
+      "support": 375,
+      "heightUnits": 0.10223614432418002,
+      "centerOnCandidatePlane": [
+        -3.1078632712693253,
+        0.5525050317720944,
+        -0.9934190770257512
+      ],
+      "medianResidual": 0.01012378679293685
+    },
+    {
+      "ticks": 1750410,
+      "candidates": 60,
+      "accepted": false
+    },
+    {
+      "ticks": 1804500,
+      "candidates": 19,
+      "accepted": false
+    },
+    {
+      "ticks": 1856880,
+      "candidates": 12,
+      "accepted": false
+    },
+    {
+      "ticks": 1907730,
+      "candidates": 12,
+      "accepted": false
+    },
+    {
+      "ticks": 1957140,
+      "candidates": 13,
+      "accepted": false
+    },
+    {
+      "ticks": 2004930,
+      "candidates": 16,
+      "accepted": false
+    },
+    {
+      "ticks": 2057580,
+      "candidates": 17,
+      "accepted": false
+    },
+    {
+      "ticks": 2108430,
+      "candidates": 21,
+      "accepted": false
+    },
+    {
+      "ticks": 2160720,
+      "candidates": 25,
+      "accepted": false
+    },
+    {
+      "ticks": 2207250,
+      "candidates": 33,
+      "accepted": false
+    },
+    {
+      "ticks": 2256750,
+      "candidates": 859,
+      "accepted": true,
+      "normal": [
+        -0.17604853096368145,
+        -0.9685426739219707,
+        0.17587496563641222
+      ],
+      "offset": 0.1612740387542966,
+      "support": 333,
+      "heightUnits": 0.20991635818300622,
+      "centerOnCandidatePlane": [
+        -2.577399157777223,
+        0.9401654576173899,
+        1.6805631830106258
+      ],
+      "medianResidual": 0.009485429172424287
+    },
+    {
+      "ticks": 2307600,
+      "candidates": 861,
+      "accepted": true,
+      "normal": [
+        -0.16835556718154854,
+        -0.9714185260177473,
+        0.16733932684365044
+      ],
+      "offset": 0.17476420691645939,
+      "support": 349,
+      "heightUnits": 0.18050382712082452,
+      "centerOnCandidatePlane": [
+        -2.4445967073968187,
+        0.9319121698405397,
+        1.9060138480305064
+      ],
+      "medianResidual": 0.010344459809111806
+    },
+    {
+      "ticks": 2357100,
+      "candidates": 856,
+      "accepted": true,
+      "normal": [
+        -0.17146800323299477,
+        -0.970522882131226,
+        0.16936368892707873
+      ],
+      "offset": 0.17023786326404977,
+      "support": 358,
+      "heightUnits": 0.18510952891341176,
+      "centerOnCandidatePlane": [
+        -2.301267106850748,
+        0.9493893313694797,
+        2.10536587519272
+      ],
+      "medianResidual": 0.010088784827095437
+    },
+    {
+      "ticks": 2408040,
+      "candidates": 850,
+      "accepted": true,
+      "normal": [
+        -0.17272692329961126,
+        -0.9696863821037768,
+        0.1728401872538277
+      ],
+      "offset": 0.1652956956470468,
+      "support": 369,
+      "heightUnits": 0.19470951239423082,
+      "centerOnCandidatePlane": [
+        -2.130886149056719,
+        0.959324765948313,
+        2.296266069746531
+      ],
+      "medianResidual": 0.010479783686439537
+    },
+    {
+      "ticks": 2461860,
+      "candidates": 610,
+      "accepted": true,
+      "normal": [
+        -0.16629244137157476,
+        -0.9705660955858006,
+        0.17420757171264478
+      ],
+      "offset": 0.16236846583013212,
+      "support": 276,
+      "heightUnits": 0.1866832010683873,
+      "centerOnCandidatePlane": [
+        -1.933289940087042,
+        0.9445771384572539,
+        2.4850502831176904
+      ],
+      "medianResidual": 0.009694958189480088
+    },
+    {
+      "ticks": 2511360,
+      "candidates": 86,
+      "accepted": false
+    },
+    {
+      "ticks": 2562300,
+      "candidates": 43,
+      "accepted": false
+    },
+    {
+      "ticks": 2611800,
+      "candidates": 52,
+      "accepted": false
+    },
+    {
+      "ticks": 2665440,
+      "candidates": 109,
+      "accepted": false
+    },
+    {
+      "ticks": 2716380,
+      "candidates": 1501,
+      "accepted": true,
+      "normal": [
+        -0.1709954922978376,
+        -0.9739816862913073,
+        0.1487286669844168
+      ],
+      "offset": 0.22180906620657212,
+      "support": 322,
+      "heightUnits": 0.16571794017660005,
+      "centerOnCandidatePlane": [
+        -0.8903883318278341,
+        0.8561950117030932,
+        3.0919177403589813
+      ],
+      "medianResidual": 0.009211558830841557
+    },
+    {
+      "ticks": 2767230,
+      "candidates": 1655,
+      "accepted": true,
+      "normal": [
+        -0.1654028751555546,
+        -0.9696815441987784,
+        0.17988771978806328
+      ],
+      "offset": 0.14449459262641096,
+      "support": 324,
+      "heightUnits": 0.16974664390631872,
+      "centerOnCandidatePlane": [
+        -0.6445206898842902,
+        0.8413690725809733,
+        3.1395133274037614
+      ],
+      "medianResidual": 0.009011650093928167
+    },
+    {
+      "ticks": 2816640,
+      "candidates": 1633,
+      "accepted": true,
+      "normal": [
+        -0.1692667862493276,
+        -0.9710419555663676,
+        0.16860093594837863
+      ],
+      "offset": 0.1753719298357819,
+      "support": 332,
+      "heightUnits": 0.154230244950304,
+      "centerOnCandidatePlane": [
+        -0.4016792808069703,
+        0.8072172510914108,
+        3.205669791959359
+      ],
+      "medianResidual": 0.009706186783284373
+    },
+    {
+      "ticks": 2871000,
+      "candidates": 1606,
+      "accepted": true,
+      "normal": [
+        -0.092145630584429,
+        -0.9224270077663753,
+        0.3750167971003023
+      ],
+      "offset": -0.3630093225668019,
+      "support": 285,
+      "heightUnits": 0.3086772436276349,
+      "centerOnCandidatePlane": [
+        -0.13658307603301673,
+        0.911511421865293,
+        3.1764618319110878
+      ],
+      "medianResidual": 0.009404959149947767
+    },
+    {
+      "ticks": 2924820,
+      "candidates": 1591,
+      "accepted": true,
+      "normal": [
+        -0.16698533622935133,
+        -0.9661571968287206,
+        0.19661172015024717
+      ],
+      "offset": 0.10744525890235515,
+      "support": 298,
+      "heightUnits": 0.1715360349349846,
+      "centerOnCandidatePlane": [
+        0.131431702239676,
+        0.7617394929890683,
+        3.30835822427224
+      ],
+      "medianResidual": 0.009545270830121189
+    },
+    {
+      "ticks": 2977200,
+      "candidates": 1705,
+      "accepted": true,
+      "normal": [
+        -0.32222149406543754,
+        -0.8738934728617375,
+        0.36398283867771597
+      ],
+      "offset": 0.26002638007370654,
+      "support": 271,
+      "heightUnits": 0.8670134768598305,
+      "centerOnCandidatePlane": [
+        0.647430869251638,
+        1.3259627542964316,
+        3.0422861753065926
+      ],
+      "medianResidual": 0.009235078562295884
+    },
+    {
+      "ticks": 3024990,
+      "candidates": 1737,
+      "accepted": true,
+      "normal": [
+        -0.3992076819570629,
+        -0.8496485265292791,
+        0.3445730808306032
+      ],
+      "offset": 0.47561697908907263,
+      "support": 293,
+      "heightUnits": 0.9278604361782936,
+      "centerOnCandidatePlane": [
+        0.9846164734254682,
+        1.331641273348024,
+        3.0439885905225728
+      ],
+      "medianResidual": 0.008587981214517815
+    },
+    {
+      "ticks": 3074490,
+      "candidates": 2213,
+      "accepted": false
+    },
+    {
+      "ticks": 3121110,
+      "candidates": 2480,
+      "accepted": false
+    },
+    {
+      "ticks": 3168990,
+      "candidates": 2467,
+      "accepted": false
+    },
+    {
+      "ticks": 3221370,
+      "candidates": 2465,
+      "accepted": false
+    },
+    {
+      "ticks": 3266550,
+      "candidates": 2472,
+      "accepted": false
+    },
+    {
+      "ticks": 3318930,
+      "candidates": 1703,
+      "accepted": true,
+      "normal": [
+        -0.4780167966002084,
+        -0.7171982525353789,
+        0.5070765314311765
+      ],
+      "offset": 0.3496451839322508,
+      "support": 315,
+      "heightUnits": 0.7677761450152714,
+      "centerOnCandidatePlane": [
+        2.15614690185492,
+        0.8613727500060235,
+        2.561357510496615
+      ],
+      "medianResidual": 0.009082579573624627
+    },
+    {
+      "ticks": 3369690,
+      "candidates": 1357,
+      "accepted": true,
+      "normal": [
+        -0.38609780078759104,
+        -0.8354067564278508,
+        0.391182872249903
+      ],
+      "offset": 0.36403112376313634,
+      "support": 299,
+      "heightUnits": 0.47960255357109216,
+      "centerOnCandidatePlane": [
+        2.0846053115794017,
+        0.668353677486661,
+        2.5542467507760533
+      ],
+      "medianResidual": 0.009523835359090072
+    },
+    {
+      "ticks": 3419190,
+      "candidates": 1162,
+      "accepted": true,
+      "normal": [
+        -0.4190772830979512,
+        -0.8193222224956925,
+        0.3912611998600911
+      ],
+      "offset": 0.44676521961130417,
+      "support": 282,
+      "heightUnits": 0.428885263020418,
+      "centerOnCandidatePlane": [
+        2.175552677108435,
+        0.5742627456686996,
+        2.390898241277282
+      ],
+      "medianResidual": 0.009513186849782168
+    },
+    {
+      "ticks": 3471570,
+      "candidates": 990,
+      "accepted": true,
+      "normal": [
+        -0.34996075251903536,
+        -0.8578038144715231,
+        0.3764307208164815
+      ],
+      "offset": 0.33095545350258626,
+      "support": 248,
+      "heightUnits": 0.32609595983536943,
+      "centerOnCandidatePlane": [
+        2.230485939124557,
+        0.45951942769064413,
+        2.2415933542914805
+      ],
+      "medianResidual": 0.010479316096843494
+    },
+    {
+      "ticks": 3521070,
+      "candidates": 808,
+      "accepted": true,
+      "normal": [
+        -0.31156583042111174,
+        -0.8616049958785988,
+        0.40070383625695777
+      ],
+      "offset": 0.20173024655993305,
+      "support": 222,
+      "heightUnits": 0.26952398193627336,
+      "centerOnCandidatePlane": [
+        2.287747041478603,
+        0.3715921521027694,
+        2.0743979460176245
+      ],
+      "medianResidual": 0.010099014324727831
+    },
+    {
+      "ticks": 3571920,
+      "candidates": 534,
+      "accepted": true,
+      "normal": [
+        -0.26116494856867,
+        -0.9193444337488916,
+        0.2942765396256619
+      ],
+      "offset": 0.2605519522196061,
+      "support": 186,
+      "heightUnits": 0.15713404077346266,
+      "centerOnCandidatePlane": [
+        2.3464635990683402,
+        0.23994707719900968,
+        1.9466590965602188
+      ],
+      "medianResidual": 0.008952902974845856
+    },
+    {
+      "ticks": 3622770,
+      "candidates": 348,
+      "accepted": true,
+      "normal": [
+        -0.2809280648414271,
+        -0.9260195176294592,
+        0.25212551507880965
+      ],
+      "offset": 0.3915727935367121,
+      "support": 98,
+      "heightUnits": 0.11605122743305862,
+      "centerOnCandidatePlane": [
+        2.502279000802852,
+        0.15319591425602852,
+        1.7977157541261426
+      ],
+      "medianResidual": 0.009852944967188165
+    },
+    {
+      "ticks": 3672180,
+      "candidates": 629,
+      "accepted": false
+    },
+    {
+      "ticks": 3726090,
+      "candidates": 713,
+      "accepted": true,
+      "normal": [
+        -0.1813906972486666,
+        -0.9799654812957508,
+        0.08225004814849729
+      ],
+      "offset": 0.11179744429129088,
+      "support": 159,
+      "heightUnits": 0.16614289171462096,
+      "centerOnCandidatePlane": [
+        2.0897281815342925,
+        -0.07286265428136221,
+        2.381237773775818
+      ],
+      "medianResidual": 0.003707327147044928
+    },
+    {
+      "ticks": 3775500,
+      "candidates": 709,
+      "accepted": true,
+      "normal": [
+        -0.18943530780110018,
+        -0.9791466683758436,
+        0.07338982195637303
+      ],
+      "offset": 0.15669744406999495,
+      "support": 162,
+      "heightUnits": 0.17926282868147725,
+      "centerOnCandidatePlane": [
+        2.252351920209627,
+        -0.09705249431319934,
+        2.3838306741087267
+      ],
+      "medianResidual": 0.0025642466069691894
+    },
+    {
+      "ticks": 3826530,
+      "candidates": 1027,
+      "accepted": true,
+      "normal": [
+        -0.10458011608203378,
+        -0.9336369929128342,
+        0.34261489282421587
+      ],
+      "offset": -0.5445214698336174,
+      "support": 283,
+      "heightUnits": 0.315167171701658,
+      "centerOnCandidatePlane": [
+        2.415773325303105,
+        -0.016187085761823372,
+        2.2825933108174885
+      ],
+      "medianResidual": 0.008644166080896243
+    },
+    {
+      "ticks": 3871530,
+      "candidates": 913,
+      "accepted": true,
+      "normal": [
+        -0.09560974915068572,
+        -0.9481366752270085,
+        0.3031429051731498
+      ],
+      "offset": -0.5519854973054708,
+      "support": 274,
+      "heightUnits": 0.25420324597929744,
+      "centerOnCandidatePlane": [
+        2.5484769449131015,
+        -0.1057673764483251,
+        2.29384491012429
+      ],
+      "medianResidual": 0.008935823137891652
+    },
+    {
+      "ticks": 3923910,
+      "candidates": 810,
+      "accepted": true,
+      "normal": [
+        -0.09283033381591413,
+        -0.9493409189601475,
+        0.3002238310186731
+      ],
+      "offset": -0.551637815355449,
+      "support": 251,
+      "heightUnits": 0.2691052563537645,
+      "centerOnCandidatePlane": [
+        2.718401129428861,
+        -0.12884384433686008,
+        2.270543160240924
+      ],
+      "medianResidual": 0.008180852357999924
+    },
+    {
+      "ticks": 3971790,
+      "candidates": 769,
+      "accepted": true,
+      "normal": [
+        -0.08510136053437298,
+        -0.9536208579385508,
+        0.28873000838108454
+      ],
+      "offset": -0.5747908029430115,
+      "support": 245,
+      "heightUnits": 0.25917127901089043,
+      "centerOnCandidatePlane": [
+        2.8576622851204028,
+        -0.17778798985484895,
+        2.2458331213086775
+      ],
+      "medianResidual": 0.008445567090527684
+    },
+    {
+      "ticks": 4022910,
+      "candidates": 722,
+      "accepted": true,
+      "normal": [
+        -0.08073734326228584,
+        -0.954386922406783,
+        0.287449271597367
+      ],
+      "offset": -0.5856334705456423,
+      "support": 218,
+      "heightUnits": 0.2568627045546633,
+      "centerOnCandidatePlane": [
+        2.9982356568378616,
+        -0.20812850789685647,
+        2.1884484950698733
+      ],
+      "medianResidual": 0.008347357640603681
+    },
+    {
+      "ticks": 4073760,
+      "candidates": 499,
+      "accepted": true,
+      "normal": [
+        -0.09035170930315446,
+        -0.9601296579359344,
+        0.2645517124832587
+      ],
+      "offset": -0.5352298690249101,
+      "support": 200,
+      "heightUnits": 0.2310610126238395,
+      "centerOnCandidatePlane": [
+        3.1164206741008824,
+        -0.26314392089400773,
+        2.132481078221823
+      ],
+      "medianResidual": 0.008249202137523282
+    },
+    {
+      "ticks": 4126230,
+      "candidates": 386,
+      "accepted": true,
+      "normal": [
+        -0.0934668942644713,
+        -0.9652767971634468,
+        0.24393573853462266
+      ],
+      "offset": -0.4908466497728085,
+      "support": 149,
+      "heightUnits": 0.22337824579545446,
+      "centerOnCandidatePlane": [
+        3.233662812353014,
+        -0.3012248267515849,
+        2.0592379655668216
+      ],
+      "medianResidual": 0.01066502552206855
+    },
+    {
+      "ticks": 4178520,
+      "candidates": 357,
+      "accepted": true,
+      "normal": [
+        -0.20222391743546697,
+        -0.9756931702517705,
+        0.08442940685035707
+      ],
+      "offset": 0.1953305413315943,
+      "support": 128,
+      "heightUnits": 0.22763439655242917,
+      "centerOnCandidatePlane": [
+        3.380982530733908,
+        -0.3257542059201467,
+        2.0200169973893205
+      ],
+      "medianResidual": 0.0015081983303701224
+    },
+    {
+      "ticks": 4228020,
+      "candidates": 324,
+      "accepted": true,
+      "normal": [
+        -0.09283389134440381,
+        -0.9642884998842967,
+        0.2480515220851267
+      ],
+      "offset": -0.4985538002421102,
+      "support": 124,
+      "heightUnits": 0.2244489947643617,
+      "centerOnCandidatePlane": [
+        3.461053618826291,
+        -0.3605680943564664,
+        1.9034965197843492
+      ],
+      "medianResidual": 0.010494376656118354
+    },
+    {
+      "ticks": 4277430,
+      "candidates": 303,
+      "accepted": true,
+      "normal": [
+        -0.09642172753422543,
+        -0.954470666051917,
+        0.28229168975675717
+      ],
+      "offset": -0.5078803007434676,
+      "support": 123,
+      "heightUnits": 0.2576345336758259,
+      "centerOnCandidatePlane": [
+        3.5760048681090946,
+        -0.3588207868624915,
+        1.807353779372879
+      ],
+      "medianResidual": 0.009872856369836924
+    },
+    {
+      "ticks": 4325310,
+      "candidates": 292,
+      "accepted": true,
+      "normal": [
+        -0.21145125727224723,
+        -0.9699703420615672,
+        0.12019110332696331
+      ],
+      "offset": 0.18668490576046587,
+      "support": 105,
+      "heightUnits": 0.2440906852650161,
+      "centerOnCandidatePlane": [
+        3.7040057899809233,
+        -0.39575305070019334,
+        1.7693743349421445
+      ],
+      "medianResidual": 0.003325489370333584
+    },
+    {
+      "ticks": 4370310,
+      "candidates": 266,
+      "accepted": true,
+      "normal": [
+        -0.2807264716785116,
+        -0.9477892740412937,
+        0.1512882682537253
+      ],
+      "offset": 0.4381273084553579,
+      "support": 102,
+      "heightUnits": 0.2931159524092929,
+      "centerOnCandidatePlane": [
+        3.77089176034122,
+        -0.379065603540572,
+        1.7264228107563742
+      ],
+      "medianResidual": 0.00578564600349446
+    },
+    {
+      "ticks": 4410630,
+      "candidates": 255,
+      "accepted": true,
+      "normal": [
+        -0.2795823723393427,
+        -0.9481449979356429,
+        0.15117790832897587
+      ],
+      "offset": 0.43327386104827204,
+      "support": 99,
+      "heightUnits": 0.29264641464063806,
+      "centerOnCandidatePlane": [
+        3.7703915208097523,
+        -0.3793789798009728,
+        1.7274671005458428
+      ],
+      "medianResidual": 0.005251780828652908
+    }
+  ],
+  "comparisons": [
+    {
+      "index": 0,
+      "mode": "camera",
+      "segments": 1,
+      "reason": "KNOWN RECORDING POSE / NOT LIVE"
+    },
+    {
+      "index": 0,
+      "mode": "local_surface_candidate",
+      "segments": 1,
+      "reason": "PLANE CANDIDATE / BODY & OCCLUSION UNKNOWN"
+    },
+    {
+      "index": 102,
+      "mode": "camera",
+      "segments": 1,
+      "reason": "KNOWN RECORDING POSE / NOT LIVE"
+    },
+    {
+      "index": 102,
+      "mode": "local_surface_candidate",
+      "segments": 6,
+      "reason": "PLANE CANDIDATE / BODY & OCCLUSION UNKNOWN"
+    },
+    {
+      "index": 204,
+      "mode": "camera",
+      "segments": 1,
+      "reason": "KNOWN RECORDING POSE / NOT LIVE"
+    },
+    {
+      "index": 204,
+      "mode": "local_surface_candidate",
+      "segments": 0,
+      "reason": "NO LOCAL SURFACE SUPPORT - NO LINE"
+    },
+    {
+      "index": 307,
+      "mode": "camera",
+      "segments": 1,
+      "reason": "KNOWN RECORDING POSE / NOT LIVE"
+    },
+    {
+      "index": 307,
+      "mode": "local_surface_candidate",
+      "segments": 0,
+      "reason": "NO LOCAL SURFACE SUPPORT - NO LINE"
+    },
+    {
+      "index": 409,
+      "mode": "camera",
+      "segments": 1,
+      "reason": "KNOWN RECORDING POSE / NOT LIVE"
+    },
+    {
+      "index": 409,
+      "mode": "local_surface_candidate",
+      "segments": 1,
+      "reason": "PLANE CANDIDATE / BODY & OCCLUSION UNKNOWN"
+    },
+    {
+      "index": 511,
+      "mode": "camera",
+      "segments": 0,
+      "reason": "KNOWN RECORDING POSE / NOT LIVE"
+    },
+    {
+      "index": 511,
+      "mode": "local_surface_candidate",
+      "segments": 0,
+      "reason": "PLANE CANDIDATE / BODY & OCCLUSION UNKNOWN"
+    }
+  ]
+}

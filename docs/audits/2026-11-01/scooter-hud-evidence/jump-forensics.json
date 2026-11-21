@@ -1,0 +1,524 @@
+{
+  "status": "complete",
+  "outlier": {
+    "view": 92,
+    "image": "00000500.png",
+    "seconds": 20.056,
+    "interval_seconds": 0.217,
+    "median_rate_ratio": 22.294243363199914
+  },
+  "camera_intrinsics": [
+    603.2398818704738,
+    960.0,
+    540.0
+  ],
+  "pairs": [
+    {
+      "label": "control",
+      "first": "00000492.png",
+      "second": "00000496.png",
+      "first_seconds": 19.639,
+      "second_seconds": 19.839,
+      "estimated_camera_step_units": 0.3421041850016627,
+      "verified_2d_matches": 542,
+      "both_hud_allowed": 542,
+      "both_top_quarter_y_lt_270": 146,
+      "occupied_8x4": [
+        16,
+        16
+      ],
+      "same_3d_point": 166,
+      "different_3d_points": 0,
+      "one_3d_point": 34,
+      "neither_3d_point": 342,
+      "same_3d_reprojection_error_median_px": 0.8391720173231971,
+      "lk_tested": 542,
+      "lk_forward_backward_valid": 42,
+      "lk_match_error_median_px_among_valid": 4.3783416748046875,
+      "lk_disagree_over_5px_among_valid": 18,
+      "lk_examples_high_disagreement": [
+        {
+          "inlier_index": 253,
+          "feature_indices": [
+            2055,
+            984
+          ],
+          "source_xy_colmap": [
+            1097.3468017578125,
+            189.8160858154297
+          ],
+          "target_xy_colmap": [
+            896.4884033203125,
+            184.57080078125
+          ],
+          "lk_target_xy_image": [
+            1110.60595703125,
+            326.38458251953125
+          ],
+          "lk_forward_backward_error_px": 0.23535026609897614,
+          "lk_to_match_error_px": 257.5148620605469,
+          "same_reconstructed_3d_point": true
+        },
+        {
+          "inlier_index": 403,
+          "feature_indices": [
+            2574,
+            1625
+          ],
+          "source_xy_colmap": [
+            1372.8271484375,
+            248.23558044433594
+          ],
+          "target_xy_colmap": [
+            1137.4354248046875,
+            318.1822814941406
+          ],
+          "lk_target_xy_image": [
+            1369.163330078125,
+            287.7677001953125
+          ],
+          "lk_forward_backward_error_px": 1.2502654790878296,
+          "lk_to_match_error_px": 234.14671325683594,
+          "same_reconstructed_3d_point": true
+        },
+        {
+          "inlier_index": 397,
+          "feature_indices": [
+            2552,
+            1624
+          ],
+          "source_xy_colmap": [
+            1339.25732421875,
+            118.18611145019531
+          ],
+          "target_xy_colmap": [
+            1137.2933349609375,
+            129.6045684814453
+          ],
+          "lk_target_xy_image": [
+            1338.7646484375,
+            117.72550201416016
+          ],
+          "lk_forward_backward_error_px": 0.03976886719465256,
+          "lk_to_match_error_px": 202.29161071777344,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 52,
+          "feature_indices": [
+            1369,
+            265
+          ],
+          "source_xy_colmap": [
+            737.92041015625,
+            196.47708129882812
+          ],
+          "target_xy_colmap": [
+            497.30621337890625,
+            200.0707244873047
+          ],
+          "lk_target_xy_image": [
+            646.4476928710938,
+            161.30795288085938
+          ],
+          "lk_forward_backward_error_px": 0.2725514769554138,
+          "lk_to_match_error_px": 154.4558563232422,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 84,
+          "feature_indices": [
+            1443,
+            357
+          ],
+          "source_xy_colmap": [
+            822.3029174804688,
+            323.14202880859375
+          ],
+          "target_xy_colmap": [
+            603.8186645507812,
+            349.45062255859375
+          ],
+          "lk_target_xy_image": [
+            724.03076171875,
+            266.42181396484375
+          ],
+          "lk_forward_backward_error_px": 1.4491428136825562,
+          "lk_to_match_error_px": 146.22726440429688,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 328,
+          "feature_indices": [
+            2225,
+            1246
+          ],
+          "source_xy_colmap": [
+            1144.210205078125,
+            350.4522399902344
+          ],
+          "target_xy_colmap": [
+            956.411376953125,
+            371.2515869140625
+          ],
+          "lk_target_xy_image": [
+            1079.8443603515625,
+            423.5179443359375
+          ],
+          "lk_forward_backward_error_px": 0.8124353289604187,
+          "lk_to_match_error_px": 134.69845581054688,
+          "same_reconstructed_3d_point": true
+        },
+        {
+          "inlier_index": 47,
+          "feature_indices": [
+            1350,
+            253
+          ],
+          "source_xy_colmap": [
+            721.9800415039062,
+            198.2510223388672
+          ],
+          "target_xy_colmap": [
+            479.4844665527344,
+            204.72637939453125
+          ],
+          "lk_target_xy_image": [
+            571.2918701171875,
+            184.6245880126953
+          ],
+          "lk_forward_backward_error_px": 0.6856255531311035,
+          "lk_to_match_error_px": 94.36571502685547,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 197,
+          "feature_indices": [
+            1919,
+            827
+          ],
+          "source_xy_colmap": [
+            1052.2803955078125,
+            226.49600219726562
+          ],
+          "target_xy_colmap": [
+            847.4641723632812,
+            222.9097900390625
+          ],
+          "lk_target_xy_image": [
+            814.7039794921875,
+            246.0470733642578
+          ],
+          "lk_forward_backward_error_px": 0.9985159635543823,
+          "lk_to_match_error_px": 39.99301528930664,
+          "same_reconstructed_3d_point": false
+        }
+      ]
+    },
+    {
+      "label": "jump",
+      "first": "00000496.png",
+      "second": "00000500.png",
+      "first_seconds": 19.839,
+      "second_seconds": 20.056,
+      "estimated_camera_step_units": 3.4281037890119195,
+      "verified_2d_matches": 301,
+      "both_hud_allowed": 301,
+      "both_top_quarter_y_lt_270": 33,
+      "occupied_8x4": [
+        15,
+        14
+      ],
+      "same_3d_point": 50,
+      "different_3d_points": 0,
+      "one_3d_point": 37,
+      "neither_3d_point": 214,
+      "same_3d_reprojection_error_median_px": 1.0226154550111568,
+      "lk_tested": 301,
+      "lk_forward_backward_valid": 16,
+      "lk_match_error_median_px_among_valid": 281.9965515136719,
+      "lk_disagree_over_5px_among_valid": 15,
+      "lk_examples_high_disagreement": [
+        {
+          "inlier_index": 263,
+          "feature_indices": [
+            2204,
+            862
+          ],
+          "source_xy_colmap": [
+            1511.1246337890625,
+            244.62411499023438
+          ],
+          "target_xy_colmap": [
+            1107.401123046875,
+            306.2629699707031
+          ],
+          "lk_target_xy_image": [
+            1535.1719970703125,
+            276.45013427734375
+          ],
+          "lk_forward_backward_error_px": 0.734740138053894,
+          "lk_to_match_error_px": 429.2728576660156,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 253,
+          "feature_indices": [
+            2167,
+            905
+          ],
+          "source_xy_colmap": [
+            1485.67333984375,
+            281.59332275390625
+          ],
+          "target_xy_colmap": [
+            1096.194091796875,
+            330.42120361328125
+          ],
+          "lk_target_xy_image": [
+            1509.610107421875,
+            313.6638488769531
+          ],
+          "lk_forward_backward_error_px": 0.719208300113678,
+          "lk_to_match_error_px": 414.23516845703125,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 252,
+          "feature_indices": [
+            2160,
+            1861
+          ],
+          "source_xy_colmap": [
+            1480.7979736328125,
+            285.13189697265625
+          ],
+          "target_xy_colmap": [
+            1092.5269775390625,
+            329.98138427734375
+          ],
+          "lk_target_xy_image": [
+            1504.7117919921875,
+            317.7138671875
+          ],
+          "lk_forward_backward_error_px": 1.054374098777771,
+          "lk_to_match_error_px": 412.8525390625,
+          "same_reconstructed_3d_point": true
+        },
+        {
+          "inlier_index": 192,
+          "feature_indices": [
+            1971,
+            1986
+          ],
+          "source_xy_colmap": [
+            1340.213134765625,
+            7.609385013580322
+          ],
+          "target_xy_colmap": [
+            991.190185546875,
+            85.24994659423828
+          ],
+          "lk_target_xy_image": [
+            1340.22802734375,
+            6.698076248168945
+          ],
+          "lk_forward_backward_error_px": 0.6170573830604553,
+          "lk_to_match_error_px": 358.1463317871094,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 194,
+          "feature_indices": [
+            1979,
+            1132
+          ],
+          "source_xy_colmap": [
+            1343.5809326171875,
+            62.25471115112305
+          ],
+          "target_xy_colmap": [
+            1002.2276000976562,
+            124.03585815429688
+          ],
+          "lk_target_xy_image": [
+            1343.079345703125,
+            61.67067337036133
+          ],
+          "lk_forward_backward_error_px": 1.0589252710342407,
+          "lk_to_match_error_px": 346.9125671386719,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 180,
+          "feature_indices": [
+            1945,
+            1996
+          ],
+          "source_xy_colmap": [
+            1319.53369140625,
+            92.74339294433594
+          ],
+          "target_xy_colmap": [
+            978.593017578125,
+            137.02178955078125
+          ],
+          "lk_target_xy_image": [
+            1315.43701171875,
+            94.52251434326172
+          ],
+          "lk_forward_backward_error_px": 0.6219499707221985,
+          "lk_to_match_error_px": 339.9483947753906,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 174,
+          "feature_indices": [
+            1912,
+            1325
+          ],
+          "source_xy_colmap": [
+            1298.577392578125,
+            50.24837112426758
+          ],
+          "target_xy_colmap": [
+            966.267333984375,
+            98.62771606445312
+          ],
+          "lk_target_xy_image": [
+            1298.34423828125,
+            63.614383697509766
+          ],
+          "lk_forward_backward_error_px": 0.48347923159599304,
+          "lk_to_match_error_px": 334.3629455566406,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 178,
+          "feature_indices": [
+            1939,
+            1207
+          ],
+          "source_xy_colmap": [
+            1316.07958984375,
+            325.57989501953125
+          ],
+          "target_xy_colmap": [
+            982.8872680664062,
+            339.4343566894531
+          ],
+          "lk_target_xy_image": [
+            1296.3409423828125,
+            355.99566650390625
+          ],
+          "lk_forward_backward_error_px": 0.8946119546890259,
+          "lk_to_match_error_px": 314.4169006347656,
+          "same_reconstructed_3d_point": true
+        }
+      ]
+    },
+    {
+      "label": "control",
+      "first": "00000500.png",
+      "second": "00000504.png",
+      "first_seconds": 20.056,
+      "second_seconds": 20.271,
+      "estimated_camera_step_units": 0.302191852751566,
+      "verified_2d_matches": 232,
+      "both_hud_allowed": 232,
+      "both_top_quarter_y_lt_270": 48,
+      "occupied_8x4": [
+        11,
+        8
+      ],
+      "same_3d_point": 44,
+      "different_3d_points": 0,
+      "one_3d_point": 20,
+      "neither_3d_point": 168,
+      "same_3d_reprojection_error_median_px": 0.9775759673174709,
+      "lk_tested": 232,
+      "lk_forward_backward_valid": 2,
+      "lk_match_error_median_px_among_valid": 379.7462158203125,
+      "lk_disagree_over_5px_among_valid": 2,
+      "lk_examples_high_disagreement": [
+        {
+          "inlier_index": 57,
+          "feature_indices": [
+            575,
+            3105
+          ],
+          "source_xy_colmap": [
+            1245.3558349609375,
+            103.50975799560547
+          ],
+          "target_xy_colmap": [
+            854.1515502929688,
+            140.1663055419922
+          ],
+          "lk_target_xy_image": [
+            1264.031005859375,
+            98.79503631591797
+          ],
+          "lk_forward_backward_error_px": 0.028327375650405884,
+          "lk_to_match_error_px": 412.4096984863281,
+          "same_reconstructed_3d_point": false
+        },
+        {
+          "inlier_index": 75,
+          "feature_indices": [
+            692,
+            1055
+          ],
+          "source_xy_colmap": [
+            1163.979736328125,
+            382.4920349121094
+          ],
+          "target_xy_colmap": [
+            784.3256225585938,
+            383.0428771972656
+          ],
+          "lk_target_xy_image": [
+            1123.398193359375,
+            454.3546142578125
+          ],
+          "lk_forward_backward_error_px": 0.5295994877815247,
+          "lk_to_match_error_px": 347.082763671875,
+          "same_reconstructed_3d_point": true
+        }
+      ]
+    }
+  ],
+  "inputs_sha256_before": {
+    ".local-pilot\\scooter-stage-global-focal-20261101\\database.db": "3471a2e9a71c44a2d7601cb60136c2b4063a64caae090d9c4e09b2c255806722",
+    ".local-pilot\\scooter-precise-hud-20261101\\mask.png": "f638c5d6da826eebfae0f3be57784ea4518dfac4238a6bcddaffbfbed0fb1ec7",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\geometry-0.json": "daa78df1661571a9e0a394fbb1c387b4e78c28108928b92d7cdbd34ea47b7ef2",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\cameras.bin": "69c7a9981d1ec6cc7260932390601e7f3c059f2f2271fd5a2cd443388bc46e27",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\images.bin": "e2a8cde367ac89c66afb70e0f3f6201dae658113b9f244b5498500fba98b393d",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\points3D.bin": "43a60001603d54d23daedf5fd016068f2558227bcabd2003fedd4f713e080f84",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\frames.bin": "d6a4fdf052f338ff22f30fda4ebc4a5d4bb7822218e1a799b9d7db47f716593d",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    ".local-pilot\\scooter-precise-hud-20261101\\reconstruction\\prepared\\images\\00000492.png": "398e7e94b3813d7ffc648ab51402d3f3d29dfa889f2d551ca4cc75811cbb99f5",
+    ".local-pilot\\scooter-precise-hud-20261101\\reconstruction\\prepared\\images\\00000496.png": "99d0cfb02151af8ae5b9b9bf28e4998da47574348eca18bf2bd88d542d0edd31",
+    ".local-pilot\\scooter-precise-hud-20261101\\reconstruction\\prepared\\images\\00000500.png": "19d5ede8980b9dde657beffeb678d0b521a21e6b0bc2181276dae2c7779ff56a",
+    ".local-pilot\\scooter-precise-hud-20261101\\reconstruction\\prepared\\images\\00000504.png": "0f909cffcd8874c79a65bab80f7d5c00fbac5f66d08efeacc84f6e4c9ff3976e"
+  },
+  "inputs_sha256_after": {
+    ".local-pilot\\scooter-stage-global-focal-20261101\\database.db": "3471a2e9a71c44a2d7601cb60136c2b4063a64caae090d9c4e09b2c255806722",
+    ".local-pilot\\scooter-precise-hud-20261101\\mask.png": "f638c5d6da826eebfae0f3be57784ea4518dfac4238a6bcddaffbfbed0fb1ec7",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\geometry-0.json": "daa78df1661571a9e0a394fbb1c387b4e78c28108928b92d7cdbd34ea47b7ef2",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\cameras.bin": "69c7a9981d1ec6cc7260932390601e7f3c059f2f2271fd5a2cd443388bc46e27",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\images.bin": "e2a8cde367ac89c66afb70e0f3f6201dae658113b9f244b5498500fba98b393d",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\points3D.bin": "43a60001603d54d23daedf5fd016068f2558227bcabd2003fedd4f713e080f84",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\frames.bin": "d6a4fdf052f338ff22f30fda4ebc4a5d4bb7822218e1a799b9d7db47f716593d",
+    ".local-pilot\\scooter-stage-global-focal-20261101\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    ".local-pilot\\scooter-precise-hud-20261101\\reconstruction\\prepared\\images\\00000492.png": "398e7e94b3813d7ffc648ab51402d3f3d29dfa889f2d551ca4cc75811cbb99f5",
+    ".local-pilot\\scooter-precise-hud-20261101\\reconstruction\\prepared\\images\\00000496.png": "99d0cfb02151af8ae5b9b9bf28e4998da47574348eca18bf2bd88d542d0edd31",
+    ".local-pilot\\scooter-precise-hud-20261101\\reconstruction\\prepared\\images\\00000500.png": "19d5ede8980b9dde657beffeb678d0b521a21e6b0bc2181276dae2c7779ff56a",
+    ".local-pilot\\scooter-precise-hud-20261101\\reconstruction\\prepared\\images\\00000504.png": "0f909cffcd8874c79a65bab80f7d5c00fbac5f66d08efeacc84f6e4c9ff3976e"
+  },
+  "source_unchanged": true,
+  "elapsed_s": 0.5310000000754371,
+  "limits": "Verified graph means model-estimated two-view inliers, not truth. Top-quarter is image location, not semantic sky; mask is capture-specific HUD proposal. LK can fail or track different local appearance even when forward-backward consistent. Reprojection errors are fitted on the same reconstruction; not heldout accuracy. Three adjacent pairs, no causal proof of erroneous correspondences or metric scale."
+}

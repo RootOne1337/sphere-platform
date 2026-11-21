@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-24T18:22:45.551677+00:00",
+  "sourceRevision": "566053388ff79437c8f777fefbf361bda5eed792",
+  "scope": "Vehicle held-input Android fixture, verified original recording and UI delivery; not gameplay navigation",
+  "installedUi": {
+    "source": "566053388ff79437c8f777fefbf361bda5eed792",
+    "imageId": "sha256:c4aeb70e88dfae2d8896902e21c0eff4112e3e4d38cefc595454f29957d448b7",
+    "healthy": true,
+    "apiPreserved": true,
+    "otherContainersPreserved": 45
+  },
+  "android": {
+    "lastVerifiedVersionCode": 10290,
+    "newApkForThisFollowup": false,
+    "device": "auto-ph-011",
+    "previousDeliveryEvidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json"
+  },
+  "localGate": {
+    "runId": "20261024T180239Z-3ee83e89",
+    "tests": 2681,
+    "passed": 2681,
+    "failures": 0,
+    "failedSuites": 0,
+    "skipped": 0,
+    "suites": 189,
+    "success": true
+  },
+  "fixtureRecording": {
+    "clip": "81e6db77ad42474f9b5d541b41e409be",
+    "frames": 803,
+    "decodedFrames": 803,
+    "mediaSeconds": 14.672,
+    "allAccessUnitHashesVerified": true,
+    "journalPairsVerified": true,
+    "completeVerified": true,
+    "releaseConfirmed": true,
+    "contacts": {
+      "0": {
+        "down": 1,
+        "up": 1,
+        "move": 0,
+        "nativeHoldMs": 1805
+      },
+      "1": {
+        "down": 1,
+        "up": 1,
+        "move": 0,
+        "nativeHoldMs": 1784
+      }
+    },
+    "simultaneousHoldMs": 1784
+  },
+  "export": {
+    "individualDownloadsIndependentlyVerified": true,
+    "folderCopyUnitTestsPassed": true,
+    "browserFolderPickerQualified": false,
+    "iabPicker": "immediate_abort_source_retained",
+    "windowsBrowserCheck": "tool_stopped_url_policy_enforcement_unsupported"
+  },
+  "relative3D": {
+    "flatPreviousAndCurrentViewsVisuallyVerified": true,
+    "globalStitching": false,
+    "metricScaleKnown": false
+  },
+  "resourceGuardsWeakened": false,
+  "newGitHubJobs": 0,
+  "newAutonomousGameActions": 0,
+  "browserImporterImplemented": false,
+  "autonomousNavigationAccepted": false,
+  "productionAccepted": false,
+  "research": "docs/audits/2026-10-24/NAVIGATION-30-QUESTIONS.md"
+}

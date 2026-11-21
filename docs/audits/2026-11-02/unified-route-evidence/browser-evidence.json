@@ -1,0 +1,572 @@
+{
+  "scope": "ACTUAL_REVIEW_2D_AND_WEBGL_WITH_READ_ONLY_SOURCE_MEDIA_MOCKED_API_NOT_USER_IAB",
+  "console": [],
+  "pageErrors": [],
+  "blocked": [],
+  "requests": [
+    "http://127.0.0.1:58006/",
+    "http://127.0.0.1:58006/style.css",
+    "http://127.0.0.1:58006/bundle.js",
+    "http://127.0.0.1:58006/data.json",
+    "http://127.0.0.1:58006/input/manifest.json",
+    "http://127.0.0.1:58006/input/frames.jsonl",
+    "http://127.0.0.1:58006/input/inputs.jsonl",
+    "http://127.0.0.1:58006/input/COMPLETE",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264",
+    "http://127.0.0.1:58006/video.h264"
+  ],
+  "checks": [
+    {
+      "name": "selected_173_2d",
+      "passed": true,
+      "detail": "Совместная геометрия · полный проход\n173 камер · 20 556 точек"
+    },
+    {
+      "name": "main_144_is_labelled_distinctly",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "selected_preview_173_is_distinct",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "archive_does_not_poll",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "primary_not_loaded_for_alternative",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "selected_173_3d",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "same_source_full_coverage",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no_inner_primary_switch_under_173",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "real_webgl_context",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "shared_end_timestamp_3d",
+      "passed": true,
+      "detail": "Кадр 857 / 857 · 36.903 с\nДекодирование исходного кадра…\n← Назад 1 с\nПройти по записи\nВперёд 1 с →"
+    },
+    {
+      "name": "shared_end_timestamp_2d",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "video_is_same_end_frame",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "primary_missing_prefix_visible",
+      "passed": true,
+      "detail": "Вся исходная запись: 0.0–36.9 с. Интервалы соседних камер: 83.3% времени; без начала 5.7 с, без конца 0.5 с, внутренних разрывов 0.0 с. Это не процент точной геометрии."
+    },
+    {
+      "name": "primary_is_not_false_100percent",
+      "passed": true,
+      "detail": "Вся исходная запись: 0.0–36.9 с. Интервалы соседних камер: 83.3% времени; без начала 5.7 с, без конца 0.5 с, внутренних разрывов 0.0 с. Это не процент точной геометрии."
+    },
+    {
+      "name": "switch_back_restores_173",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "mobile_no_horizontal_overflow",
+      "passed": true,
+      "detail": {
+        "scroll": 390,
+        "client": 390
+      }
+    },
+    {
+      "name": "change_recording_opens_library",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "select_recording_hides_library",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no_processing_or_input",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "no_external_access",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no_browser_errors",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "fixture": {
+    "apiReads": [
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives",
+      "/jobs/6a77040681d142ec97d51831a22785fb",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives/fixed-k-fused-173-supported-diagnostic",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry",
+      "/jobs/6a77040681d142ec97d51831a22785fb/geometry-alternatives/fixed-k-fused-173-supported-diagnostic"
+    ],
+    "apiWrites": [],
+    "fileWrites": [],
+    "sourceRangeReads": [
+      {
+        "first": 0,
+        "last": 448549
+      },
+      {
+        "first": 0,
+        "last": 448549
+      },
+      {
+        "first": 0,
+        "last": 448549
+      },
+      {
+        "first": 34387478,
+        "last": 34457705
+      },
+      {
+        "first": 34457705,
+        "last": 34477627
+      },
+      {
+        "first": 34477627,
+        "last": 34511541
+      },
+      {
+        "first": 34511541,
+        "last": 34561779
+      },
+      {
+        "first": 34561779,
+        "last": 34593851
+      },
+      {
+        "first": 34593851,
+        "last": 34634098
+      },
+      {
+        "first": 34634098,
+        "last": 34677435
+      },
+      {
+        "first": 34677435,
+        "last": 34722543
+      },
+      {
+        "first": 34722543,
+        "last": 34771508
+      },
+      {
+        "first": 34771508,
+        "last": 34796356
+      },
+      {
+        "first": 34387478,
+        "last": 34457705
+      },
+      {
+        "first": 34457705,
+        "last": 34477627
+      },
+      {
+        "first": 34477627,
+        "last": 34511541
+      },
+      {
+        "first": 34511541,
+        "last": 34561779
+      },
+      {
+        "first": 34561779,
+        "last": 34593851
+      },
+      {
+        "first": 34593851,
+        "last": 34634098
+      },
+      {
+        "first": 34634098,
+        "last": 34677435
+      },
+      {
+        "first": 34677435,
+        "last": 34722543
+      },
+      {
+        "first": 34387478,
+        "last": 34457705
+      },
+      {
+        "first": 34457705,
+        "last": 34477627
+      },
+      {
+        "first": 34477627,
+        "last": 34511541
+      },
+      {
+        "first": 34511541,
+        "last": 34561779
+      },
+      {
+        "first": 34561779,
+        "last": 34593851
+      },
+      {
+        "first": 34593851,
+        "last": 34634098
+      },
+      {
+        "first": 34634098,
+        "last": 34677435
+      },
+      {
+        "first": 34677435,
+        "last": 34722543
+      },
+      {
+        "first": 34722543,
+        "last": 34771508
+      },
+      {
+        "first": 34771508,
+        "last": 34796356
+      },
+      {
+        "first": 34796356,
+        "last": 34831001
+      },
+      {
+        "first": 34831001,
+        "last": 34884219
+      },
+      {
+        "first": 34884219,
+        "last": 34910759
+      },
+      {
+        "first": 34910759,
+        "last": 34954606
+      },
+      {
+        "first": 34954606,
+        "last": 34988629
+      },
+      {
+        "first": 34988629,
+        "last": 35050429
+      },
+      {
+        "first": 35050429,
+        "last": 35069084
+      },
+      {
+        "first": 35069084,
+        "last": 35104526
+      },
+      {
+        "first": 35104526,
+        "last": 35188532
+      },
+      {
+        "first": 35188532,
+        "last": 35217152
+      },
+      {
+        "first": 35217152,
+        "last": 35283272
+      },
+      {
+        "first": 35283272,
+        "last": 35312537
+      },
+      {
+        "first": 35312537,
+        "last": 35419244
+      },
+      {
+        "first": 35419244,
+        "last": 35460793
+      },
+      {
+        "first": 35460793,
+        "last": 35510160
+      },
+      {
+        "first": 35510160,
+        "last": 35553943
+      },
+      {
+        "first": 35553943,
+        "last": 35603559
+      },
+      {
+        "first": 35603559,
+        "last": 35647369
+      },
+      {
+        "first": 35647369,
+        "last": 35685307
+      },
+      {
+        "first": 35685307,
+        "last": 35747105
+      },
+      {
+        "first": 35747105,
+        "last": 35895502
+      },
+      {
+        "first": 35895502,
+        "last": 35908146
+      },
+      {
+        "first": 35908146,
+        "last": 35929751
+      },
+      {
+        "first": 35929751,
+        "last": 35976416
+      },
+      {
+        "first": 35976416,
+        "last": 36010886
+      },
+      {
+        "first": 36010886,
+        "last": 36080499
+      },
+      {
+        "first": 34387478,
+        "last": 34457705
+      },
+      {
+        "first": 34457705,
+        "last": 34477627
+      },
+      {
+        "first": 34477627,
+        "last": 34511541
+      },
+      {
+        "first": 34511541,
+        "last": 34561779
+      },
+      {
+        "first": 34561779,
+        "last": 34593851
+      },
+      {
+        "first": 34593851,
+        "last": 34634098
+      },
+      {
+        "first": 34634098,
+        "last": 34677435
+      },
+      {
+        "first": 34677435,
+        "last": 34722543
+      },
+      {
+        "first": 34722543,
+        "last": 34771508
+      },
+      {
+        "first": 34771508,
+        "last": 34796356
+      },
+      {
+        "first": 34796356,
+        "last": 34831001
+      },
+      {
+        "first": 34831001,
+        "last": 34884219
+      },
+      {
+        "first": 34884219,
+        "last": 34910759
+      },
+      {
+        "first": 34910759,
+        "last": 34954606
+      },
+      {
+        "first": 34954606,
+        "last": 34988629
+      },
+      {
+        "first": 34988629,
+        "last": 35050429
+      },
+      {
+        "first": 35050429,
+        "last": 35069084
+      },
+      {
+        "first": 35069084,
+        "last": 35104526
+      },
+      {
+        "first": 35104526,
+        "last": 35188532
+      },
+      {
+        "first": 35188532,
+        "last": 35217152
+      },
+      {
+        "first": 35217152,
+        "last": 35283272
+      },
+      {
+        "first": 35283272,
+        "last": 35312537
+      },
+      {
+        "first": 35312537,
+        "last": 35419244
+      },
+      {
+        "first": 35419244,
+        "last": 35460793
+      },
+      {
+        "first": 35460793,
+        "last": 35510160
+      }
+    ],
+    "blocked": []
+  },
+  "physicalActions": 0,
+  "productSourceHashes": {
+    "TeachingReview.tsx": "4c2dee4a7671b5e81e4077f703e3ee647a42c2ac047c79425cc9f4e14f8ce8f4",
+    "TeachingReconstruction.tsx": "71f7183486c7958d908776de906b3f8638b46bd0344cbe97d205f341852d77bd",
+    "ReconstructedScene.tsx": "4875aefcd4040d6061ebf0bcef35802457a50f78a4c650c097d0b99fce3fd4fb",
+    "CompactReconstructionWorkflow.tsx": "f9913793b1e5789dabb228b91e13d84c3363aa5aa824062a4b979609b9757f04",
+    "routeMapProjection.ts": "05280488a683c65e8281a390c599fd213643eeeee117c2a8f3c950237f2f2041",
+    "sceneGeometrySelection.ts": "fc7114db926aeb958c914071a507279fa588f728ca3f1a386caebe531c05d994",
+    "RouteGeometryMap.tsx": "7b9ca4c3213a64a6b68e932ab392b5591cd916a574498aea385aba707a3392cd"
+  },
+  "fixtureBoundary": {
+    "actualReadOnlySkuter1": true,
+    "actualWebGL": true,
+    "actualH264WebCodecs": true,
+    "realUserOpfsAccess": false,
+    "productionApiAccess": false,
+    "nextDynamicAdapter": true,
+    "gameInput": false,
+    "browserClosed": true
+  }
+}

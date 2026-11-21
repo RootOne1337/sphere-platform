@@ -1,0 +1,50 @@
+{
+  "common_positive_depth_unambiguous_heldout_observation_count": 1682,
+  "variants": {
+    "calf960": {
+      "median_px": 14.41949457196306,
+      "p90_px": 142.04878808705575,
+      "le_2px": 93,
+      "le_5px": 309
+    },
+    "calf604": {
+      "median_px": 13.818677157077358,
+      "p90_px": 141.04486700159106,
+      "le_2px": 95,
+      "le_5px": 327
+    },
+    "sfm960": {
+      "median_px": 1.958692116481985,
+      "p90_px": 60.06141969067012,
+      "le_2px": 847,
+      "le_5px": 1096
+    }
+  },
+  "caveat": "Common 2D feature keys, not necessarily identical 3D scene points/track associations; reference SfM poses were fitted using all views. Same source video, same matches, axes assumed, not independent truth.",
+  "common_by_quarter": [
+    385,
+    440,
+    207,
+    650
+  ],
+  "training_views_with_points_by_quarter": {
+    "calf960": [
+      44,
+      33,
+      54,
+      37
+    ],
+    "calf604": [
+      44,
+      35,
+      52,
+      37
+    ],
+    "sfm960": [
+      44,
+      36,
+      55,
+      37
+    ]
+  }
+}

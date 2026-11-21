@@ -1,0 +1,487 @@
+{
+  "baseline_backend_source": "a22fb54 (backend identical to b76d225)",
+  "after_backend_source": "AUD-97 fix; source digests below",
+  "apk_sha256": "3fea6b1be345bec99a71e1926a386dd070c361887d875d5b46a7c18d83d0d36b",
+  "native_device": "emulator-5554 / Android 9 API 28 / com.sphereplatform.agent.pilot.debug",
+  "before": {
+    "started_at": "2026-09-12T18:04:53.269717+00:00",
+    "scoped_redis": "7d8866e37758ae3fc71225199852726f6f366e8b09af41a3c5d060fcb9b380ec",
+    "before_version": 8,
+    "events": [
+      {
+        "event": "isolated_redis_paused",
+        "utc": "2026-09-12T18:04:53.525552+00:00"
+      },
+      {
+        "event": "publisher_refused_unready_route",
+        "utc": "2026-09-12T18:05:00.236797+00:00",
+        "status": {
+          "status": "error",
+          "error_type": "PublicationError",
+          "reason": "Candidate route is not ready",
+          "checked_at": 1789236299,
+          "last_success_at": 1789236254,
+          "duration_seconds": 3.781,
+          "scope": "RootOne1337/sphere-agent-config:codex/pilot-bootstrap-20260911:pilots/sphere-pilot-20260911/discovery.json:ce58a96d-fd02-4f7c-ac86-111c4f7fa37e:pilot-20260911-v1",
+          "compose_project": "sphere-pilot-20260911",
+          "compose_service": "cloudflare-quick"
+        },
+        "signed_mirror_and_journal_unchanged": true
+      },
+      {
+        "event": "isolated_redis_restored",
+        "utc": "2026-09-12T18:05:23.810232+00:00",
+        "pause_seconds": 30.3
+      },
+      {
+        "event": "command_recovery_failed",
+        "utc": "2026-09-12T18:07:06.195191+00:00",
+        "attempts": [
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          },
+          {
+            "error_type": "AssertionError",
+            "expected_output": false
+          }
+        ]
+      }
+    ]
+  },
+  "before_harness_limit": "First five command requests returned 503. Subsequent retries repeatedly logged in and hit auth failures; those are excluded from transport recovery conclusions. After harness authenticates once.",
+  "after": {
+    "started_at": "2026-09-12T18:13:28.322094+00:00",
+    "scoped_redis": "7d8866e37758ae3fc71225199852726f6f366e8b09af41a3c5d060fcb9b380ec",
+    "before_version": 8,
+    "events": [
+      {
+        "event": "isolated_redis_paused",
+        "utc": "2026-09-12T18:13:28.559957+00:00"
+      },
+      {
+        "event": "publisher_refused_unready_route",
+        "utc": "2026-09-12T18:13:35.339657+00:00",
+        "status": {
+          "status": "error",
+          "error_type": "PublicationError",
+          "reason": "Candidate route is not ready",
+          "checked_at": 1789236814,
+          "last_success_at": 1789236794,
+          "duration_seconds": 4.078,
+          "scope": "RootOne1337/sphere-agent-config:codex/pilot-bootstrap-20260911:pilots/sphere-pilot-20260911/discovery.json:ce58a96d-fd02-4f7c-ac86-111c4f7fa37e:pilot-20260911-v1",
+          "compose_project": "sphere-pilot-20260911",
+          "compose_service": "cloudflare-quick"
+        },
+        "signed_mirror_and_journal_unchanged": true
+      },
+      {
+        "event": "isolated_redis_restored",
+        "utc": "2026-09-12T18:13:58.792320+00:00",
+        "pause_seconds": 30.22
+      },
+      {
+        "event": "first_real_command_recovered",
+        "utc": "2026-09-12T18:14:08.257810+00:00",
+        "seconds_after_restore": 9.47,
+        "attempts": [
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "http_status": 503,
+            "expected_output": false
+          },
+          {
+            "http_status": 200,
+            "expected_output": true
+          }
+        ]
+      },
+      {
+        "event": "real_command_sequence_passed",
+        "utc": "2026-09-12T18:14:15.640419+00:00",
+        "real_commands_passed": 12,
+        "same_pid": true,
+        "new_registrations": 0,
+        "identity_and_signed_cache_preserved": true,
+        "backend_not_restarted": true,
+        "same_ws_session": true
+      },
+      {
+        "event": "scheduled_recovery",
+        "utc": "2026-09-12T18:14:15.641463+00:00",
+        "status": {
+          "status": "ok",
+          "action": "unchanged",
+          "config_version": 8,
+          "server_url": "https://reach-further-loads-ran.trycloudflare.com",
+          "expires_at": 1791827415,
+          "mirror_verified": true,
+          "desired_route_pending": false,
+          "checked_at": 1789236855,
+          "last_success_at": 1789236855,
+          "duration_seconds": 1.687,
+          "scope": "RootOne1337/sphere-agent-config:codex/pilot-bootstrap-20260911:pilots/sphere-pilot-20260911/discovery.json:ce58a96d-fd02-4f7c-ac86-111c4f7fa37e:pilot-20260911-v1",
+          "compose_project": "sphere-pilot-20260911",
+          "compose_service": "cloudflare-quick"
+        }
+      }
+    ],
+    "passed": true
+  },
+  "post_drill_runtime": {
+    "verified_at_utc": "2026-09-12T18:14:41.001665+00:00",
+    "project": "sphere-pilot-20260911",
+    "http_checks": [
+      {
+        "url": "http://127.0.0.1:18080/login",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:18080/api/v1/health/readyz",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:15678/healthz",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:19000/minio/health/ready",
+        "status": 200
+      }
+    ],
+    "services": [
+      {
+        "service": "backend",
+        "id": "54a114652d04ff7849bbea2939026fb976dcd145f2d66aa9848cdabb133e84b6",
+        "image": "sha256:233c57ad5058e59089c4925f82d9e2a7020170226c4113b77076d7b53058f222",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      },
+      {
+        "service": "frontend",
+        "id": "3b1230268b3e8c9f5187aa4bfb40522d52234054adcd1413c76c9b5a670338af",
+        "image": "sha256:d38bfe345a8f2f578f85235b67f39c90ff957204c794c96e947cee608bbd9d07",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      },
+      {
+        "service": "cloudflare-quick",
+        "id": "f5f9954eef5b83c4d53c4a39b41f47f1e70e0e5270e0a2a257e904e20b3c34ce",
+        "image": "sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      },
+      {
+        "service": "public-gateway",
+        "id": "ec2a4b7110ca60a0a89d41df105e3dee656666fff6090098d3756579ac972a2e",
+        "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      },
+      {
+        "service": "nginx",
+        "id": "879a728d94aacf998fa4e2a8d1abaff46d04ad003c5fbf322f4f058d90b15816",
+        "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      },
+      {
+        "service": "n8n",
+        "id": "0bf7b0be08bb44223480628e492dca644ee3a7300b3c44ccb07b8aa66f5984a6",
+        "image": "sha256:e01ebe6ac2014a4dcffe439e14211df1c15e6312f93ca8a985a128ab7feb2f08",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      },
+      {
+        "service": "minio",
+        "id": "6ed531e885818664cd32fe806c2993fd7a9c0b8d456969bfd1cbee517f05904d",
+        "image": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      },
+      {
+        "service": "postgres",
+        "id": "c2b5b99bcf18bda3332079ecc2e4bb4bd6f5622e8c1cb9d3233ad092d2819048",
+        "image": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      },
+      {
+        "service": "redis",
+        "id": "7d8866e37758ae3fc71225199852726f6f366e8b09af41a3c5d060fcb9b380ec",
+        "image": "sha256:65748f2ea686cb0e37a008cbe7024324db1d84abf57e917e1c2ec92b5e50f602",
+        "status": "running",
+        "health": "healthy",
+        "restart_count": 0
+      }
+    ],
+    "apk_enrollment_authenticated": true,
+    "old_containers_unchanged_including_mounts": 27,
+    "baseline_containers_now_missing": [
+      {
+        "id": "a2fdbf6b8f471082a02a80ed8a59330e79330b843c63016bc41ebd0d51cb44fe",
+        "name": "/reverent_colden",
+        "project": null
+      }
+    ],
+    "old_sphere_ids_images_states_mounts_preserved": true,
+    "observed_old_container_restarts": [
+      {
+        "name": "/sphere-tunnel",
+        "before": "2026-09-11T15:04:53.800963077Z",
+        "after": "2026-09-12T16:42:38.584654966Z",
+        "restart_count": 80,
+        "cause": "not established"
+      }
+    ],
+    "devices_registered_by_this_run": 0,
+    "installed_apk_tested": true,
+    "vpn_router_configured": false
+  },
+  "regression_before": {
+    "failed": 6,
+    "passed": 2
+  },
+  "regression_after": {
+    "passed": 77,
+    "warnings": 1,
+    "seconds": 7.39
+  },
+  "packaged_source_sha256": {
+    "backend/websocket/pubsub_router.py": "aa0accfd52b5d5a4abb98b6b15620127aa4d93c3c869bcf3322e4008f5c8efb5",
+    "backend/api/ws/events/router.py": "e3f43b6873fc06d94a3c1723d0e259a6e3c400e18b5cfb27013b049ed3dd3676"
+  },
+  "backend_image_id": "sha256:233c57ad5058e59089c4925f82d9e2a7020170226c4113b77076d7b53058f222",
+  "backend_image_reference_during_drill": "sphere-pilot-20260911-backend:pubsub-recovery-candidate",
+  "after_reconnect_log_events": [
+    {
+      "event": "EventsManager listen loop crashed — restarting",
+      "timestamp": "2026-09-12T18:13:35.713715Z",
+      "backoff_s": 1.0
+    },
+    {
+      "event": "PubSub listen loop crashed — restarting",
+      "timestamp": "2026-09-12T18:13:36.252034Z",
+      "backoff_s": 1.0
+    },
+    {
+      "event": "EventsManager listen loop crashed — restarting",
+      "timestamp": "2026-09-12T18:13:41.715015Z",
+      "backoff_s": 2.0
+    },
+    {
+      "event": "PubSub listen loop crashed — restarting",
+      "timestamp": "2026-09-12T18:13:42.253239Z",
+      "backoff_s": 2.0
+    },
+    {
+      "event": "EventsManager listen loop crashed — restarting",
+      "timestamp": "2026-09-12T18:13:48.716559Z",
+      "backoff_s": 4.0
+    },
+    {
+      "event": "PubSub listen loop crashed — restarting",
+      "timestamp": "2026-09-12T18:13:49.255298Z",
+      "backoff_s": 4.0
+    },
+    {
+      "event": "EventsManager listen loop crashed — restarting",
+      "timestamp": "2026-09-12T18:13:57.717914Z",
+      "backoff_s": 8.0
+    },
+    {
+      "event": "PubSub listen loop crashed — restarting",
+      "timestamp": "2026-09-12T18:13:58.257026Z",
+      "backoff_s": 8.0
+    },
+    {
+      "event": "EventsManager listen loop restarted",
+      "timestamp": "2026-09-12T18:14:05.717860Z",
+      "subscribed_orgs": 1
+    },
+    {
+      "event": "PubSub listen loop restarted",
+      "timestamp": "2026-09-12T18:14:06.256349Z",
+      "channels": 2
+    }
+  ]
+}

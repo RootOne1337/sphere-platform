@@ -1,0 +1,36 @@
+I20261102 01:17:07.621355 50004 database_cache.cc:82] Loading rigs...
+I20261102 01:17:07.621460 50004 database_cache.cc:92]  1 in 0.000s
+I20261102 01:17:07.621467 50004 database_cache.cc:100] Loading cameras...
+I20261102 01:17:07.621480 50004 database_cache.cc:118]  1 in 0.000s
+I20261102 01:17:07.621482 50004 database_cache.cc:126] Loading frames...
+I20261102 01:17:07.621674 50004 database_cache.cc:136]  173 in 0.000s
+I20261102 01:17:07.621679 50004 database_cache.cc:144] Loading matches...
+I20261102 01:17:07.626203 50004 database_cache.cc:163]  758 in 0.005s
+I20261102 01:17:07.626216 50004 database_cache.cc:171] Loading images...
+I20261102 01:17:07.638144 50004 database_cache.cc:268]  173 in 0.012s (connected 172, loaded 172)
+I20261102 01:17:07.638495 50004 database_cache.cc:282] Loading pose priors...
+I20261102 01:17:07.638516 50004 database_cache.cc:290]  0 in 0.000s
+I20261102 01:17:07.638519 50004 database_cache.cc:298] Building correspondence graph...
+I20261102 01:17:07.668530 50004 database_cache.cc:327]  in 0.030s (ignored 108)
+I20261102 01:17:07.668604 50004 two_view_geometry.cc:1834] Decomposing relative poses...
+I20261102 01:17:07.804055 50004 two_view_geometry.cc:1936] Decomposed 109 relative poses (0 failed) in 0.135s
+I20261102 01:17:07.808341 50004 pose_graph.cc:51] Loaded 650 edges into pose graph
+I20261102 01:17:07.842273 50004 rotation_averaging.cc:274] Marked 66 image pairs as invalid with relative rotation error > 10 degrees
+I20261102 01:17:07.843041 50004 global_pipeline.cc:302] Found 1 connected component(s) after rotation filtering
+I20261102 01:17:07.843072 50004 global_pipeline.cc:322] === Reconstructing component 1 / 1 with 172 images ===
+I20261102 01:17:07.914865 50004 pose_graph.cc:51] Loaded 650 edges into pose graph
+I20261102 01:17:07.914905 50004 global_mapper.cc:553] === Running rotation averaging ===
+I20261102 01:17:07.933636 50004 rotation_averaging.cc:274] Marked 66 image pairs as invalid with relative rotation error > 10 degrees
+I20261102 01:17:07.948720 50004 rotation_averaging.cc:274] Marked 0 image pairs as invalid with relative rotation error > 10 degrees
+I20261102 01:17:07.948842 50004 global_mapper.cc:559] Rotation averaging done in 0.033938 seconds
+I20261102 01:17:07.948849 50004 global_mapper.cc:565] === Running track establishment ===
+I20261102 01:17:08.037515 50004 global_mapper.cc:206] Established 16714 tracks from 93990 observations
+I20261102 01:17:08.072252 50004 global_mapper.cc:261] Kept 7369 tracks, discarded 1515 due to inconsistency
+I20261102 01:17:08.079874 50004 global_mapper.cc:302] Before filtering: 7369, after filtering: 7369
+I20261102 01:17:08.092648 50004 global_mapper.cc:569] Track establishment done in 0.143812 seconds
+I20261102 01:17:08.092685 50004 global_mapper.cc:575] === Running global positioning ===
+I20261102 01:17:08.092708 50004 global_positioning.cc:39] Setting up the global positioner problem
+I20261102 01:17:08.173665 50004 global_positioning.cc:59] Solving the global positioner problem
+I20261102 01:17:26.996522 50004 global_positioning.cc:70] Ceres Solver Report: Iterations: 101, Initial cost: 6.021735e+05, Final cost: 2.185130e+00, Termination: NO_CONVERGENCE
+I20261102 01:17:27.155561 50004 global_mapper.cc:584] Global positioning done in 19.0629 seconds
+I20261102 01:17:27.159417 50004 global_mapper.cc:596] === Running iterative bundle adjustment ===

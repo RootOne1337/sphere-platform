@@ -1,0 +1,98 @@
+{
+  "schema": "sphere-selected-geometry-query-evidence-v1",
+  "source_geometry_sha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "pipeline_sha256": "af1b9e440ea3c4055189d79fcb725888fcbafa578d5ae00234df6d5307ddf6b9",
+  "reports": [
+    {
+      "kind": "same_recording_heldout",
+      "sample_count": 159,
+      "counts": {
+        "confirming": 15,
+        "unknown": 16,
+        "localized": 128
+      },
+      "compute_ms": {
+        "p50": 59.82460000086576,
+        "p95": 119.64073000126511,
+        "p99": 244.16190999967384,
+        "maximum": 488.2591999921715
+      },
+      "freshness_lower_bound": {
+        "receiver_age_budget_ms": 250,
+        "samples_exceeding_budget": 2,
+        "localized_samples_exceeding_budget": 1,
+        "android_capture_and_delivery_latency_known": false
+      },
+      "offline_media_clock": true,
+      "report_sha256": "401f32e17800581293682e219fe59f69271e2aedef647efaff1c9d5129759252",
+      "actual_match_attempts": 159
+    },
+    {
+      "kind": "same_recording_heldout_transport",
+      "sample_count": 159,
+      "counts": {
+        "confirming": 31,
+        "localized": 97,
+        "unknown": 31
+      },
+      "compute_ms": {
+        "p50": 64.08189999638125,
+        "p95": 267.3988099995767,
+        "p99": 723.1512100095266,
+        "maximum": 860.166800004663
+      },
+      "freshness_lower_bound": {
+        "receiver_age_budget_ms": 250,
+        "samples_exceeding_budget": 9,
+        "localized_samples_exceeding_budget": 0,
+        "android_capture_and_delivery_latency_known": false
+      },
+      "offline_media_clock": false,
+      "report_sha256": "33e6651fd8f8d1e6876fc08eb91081952ce47fb6afdf0010a0f32cd25281e3f7",
+      "actual_match_attempts": 154
+    },
+    {
+      "kind": "unrelated_negative",
+      "sample_count": 89,
+      "counts": {
+        "unknown": 89
+      },
+      "compute_ms": {
+        "p50": 108.68309999932535,
+        "p95": 219.13351999828586,
+        "p99": 635.7360039954075,
+        "maximum": 648.1124999991152
+      },
+      "freshness_lower_bound": {
+        "receiver_age_budget_ms": 250,
+        "samples_exceeding_budget": 4,
+        "localized_samples_exceeding_budget": 0,
+        "android_capture_and_delivery_latency_known": false
+      },
+      "offline_media_clock": false,
+      "report_sha256": "1e7fb9e999e2cc73e29e35f82730bb700913e897d90ec4816723f4828a0ccce6",
+      "actual_match_attempts": 89
+    }
+  ],
+  "runner": {
+    "exitCode": 0,
+    "reason": null,
+    "seconds": 100.17199999999139,
+    "peakPrivateBytes": 542765056,
+    "peakRssBytes": 504582144,
+    "allOwnedProcessesClosed": true,
+    "sourceUnchanged": true,
+    "producersUnchanged": true,
+    "physicalActions": 0,
+    "sourceJobNavigationWrites": false,
+    "rootReviewedQualificationWritten": false,
+    "executionQualified": false
+  },
+  "concurrent_frontend_ci": true,
+  "independent_live_gameplay": false,
+  "actual_codec": "OpenCV JPEG86 surrogate",
+  "negative_policy": "fresh independent production tracker for each of all89 unrelated images",
+  "review_scope": "controlled_experimental_test_only",
+  "execution_qualified": false,
+  "source_video_modified": false
+}

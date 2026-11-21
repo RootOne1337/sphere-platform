@@ -1,0 +1,14 @@
+{
+  "stage": "stage1",
+  "admission": {
+    "free_physical_gib": 5.725135803222656,
+    "free_commit_gib": 10.823917388916016
+  },
+  "wall_s": 49.061,
+  "sampled_peak_tree_working_set_bytes": 553566208,
+  "sampled_peak_tree_private_bytes": 526745600,
+  "minimum_sampled_free_physical_gib": 4.849643707275391,
+  "minimum_sampled_free_commit_gib": 10.19161605834961,
+  "guard": null,
+  "exit_code": 0
+}

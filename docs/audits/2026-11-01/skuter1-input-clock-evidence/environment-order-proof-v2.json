@@ -1,0 +1,13 @@
+{
+  "environmentEntries": 12,
+  "uniqueKeys": true,
+  "allKeysAndValueHashesIdentical": true,
+  "entriesAdded": [],
+  "entriesRemoved": [],
+  "valuesChanged": [],
+  "onlyOrderChanged": true,
+  "canonicalEnvironmentSha256": "52799f8f9a637357ae9a961fb4b9fc6401bf6809a9e66ad975092cc4000ae412",
+  "nativeApi6696AndSourceUnchanged": true,
+  "frontendSourceUnchanged": true,
+  "currentUiImage": "sha256:05552b04a203620f66392a8052889769c57592cc83cd613dbeee38f5bc5a8f6d"
+}

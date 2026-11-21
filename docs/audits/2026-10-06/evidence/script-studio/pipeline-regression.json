@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-05T21:58:04.894948+00:00",
+  "exit": 0,
+  "execution": "local source, dedicated audit PostgreSQL/Redis, loopback only",
+  "applicationSourceRevision": "6d4a0ea86393a7104c2e9a312844ab52879e3016",
+  "testFileSha256": "5dbcb6fd656c89dabfb8d578442f62eff66636f40d2e10f62376935f2f2e78f1",
+  "productionDatabaseUsed": false,
+  "deviceCommandsSent": false,
+  "containersRestarted": false,
+  "databaseReset": false,
+  "tests": 47,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "pytestDurationSeconds": 40.52,
+  "warningsReported": 573,
+  "applicationSourceRevisionKind": "git-tree",
+  "applicationSourceCommit": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+  "productionHeartbeatChanged": false,
+  "flakyCiSource": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c"
+}

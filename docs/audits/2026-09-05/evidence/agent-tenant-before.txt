@@ -1,0 +1,83 @@
+FFFFFFF.......                                                           [100%]
+================================== FAILURES ===================================
+_________ test_runtime_agent_websocket_connect_and_reconnect[device] __________
+tests\production\test_agent_tenant_runtime.py:77: in test_runtime_agent_websocket_connect_and_reconnect
+    assert r.manager.connect.await_count == attempt + 1, sent
+E   AssertionError: [{'headers': [], 'subprotocol': None, 'type': 'websocket.accept'}, {'code': 4004, 'reason': 'device_not_found', 'type': 'websocket.close'}]
+E   assert 0 == (0 + 1)
+E    +  where 0 = <AsyncMock id='3101504091296'>.await_count
+E    +    where <AsyncMock id='3101504091296'> = namespace(connect=<AsyncMock id='3101504091296'>, disconnect=<AsyncMock id='3101504127248'>).connect
+E    +      where namespace(connect=<AsyncMock id='3101504091296'>, disconnect=<AsyncMock id='3101504127248'>) = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x000002D21FFD54D0>, sessions=async...48'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-52/test_runtime_agent_websocket_c0')).manager
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "dd45bb9e-a4b6-46fa-93a4-b2ad1297b560", "event": "android_ws: device_not_found", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-08T22:41:08.280703Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.api.ws.android.router:router.py:492 {'device_id': 'dd45bb9e-a4b6-46fa-93a4-b2ad1297b560', 'event': 'android_ws: device_not_found', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-08T22:41:08.280703Z'}
+________ test_runtime_agent_websocket_connect_and_reconnect[refreshed] ________
+tests\production\test_agent_tenant_runtime.py:77: in test_runtime_agent_websocket_connect_and_reconnect
+    assert r.manager.connect.await_count == attempt + 1, sent
+E   AssertionError: [{'headers': [], 'subprotocol': None, 'type': 'websocket.accept'}, {'code': 4004, 'reason': 'device_not_found', 'type': 'websocket.close'}]
+E   assert 0 == (0 + 1)
+E    +  where 0 = <AsyncMock id='3101505357008'>.await_count
+E    +    where <AsyncMock id='3101505357008'> = namespace(connect=<AsyncMock id='3101505357008'>, disconnect=<AsyncMock id='3101504269312'>).connect
+E    +      where namespace(connect=<AsyncMock id='3101505357008'>, disconnect=<AsyncMock id='3101504269312'>) = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x000002D220101E90>, sessions=async...12'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-52/test_runtime_agent_websocket_c1')).manager
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "43daccac-794b-49ae-8aab-b44fa80f481b", "event": "android_ws: device_not_found", "method": "POST", "path": "/api/v1/devices/refresh", "request_id": "46f60f4f", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-08T22:41:08.930976Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.api.ws.android.router:router.py:492 {'device_id': '43daccac-794b-49ae-8aab-b44fa80f481b', 'event': 'android_ws: device_not_found', 'method': 'POST', 'path': '/api/v1/devices/refresh', 'request_id': '46f60f4f', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-08T22:41:08.930976Z'}
+_____ test_runtime_agent_websocket_connect_and_reconnect[enrollment_key] ______
+tests\production\test_agent_tenant_runtime.py:77: in test_runtime_agent_websocket_connect_and_reconnect
+    assert r.manager.connect.await_count == attempt + 1, sent
+E   AssertionError: [{'headers': [], 'subprotocol': None, 'type': 'websocket.accept'}, {'code': 4004, 'reason': 'device_not_found', 'type': 'websocket.close'}]
+E   assert 0 == (0 + 1)
+E    +  where 0 = <AsyncMock id='3101515696800'>.await_count
+E    +    where <AsyncMock id='3101515696800'> = namespace(connect=<AsyncMock id='3101515696800'>, disconnect=<AsyncMock id='3101515700736'>).connect
+E    +      where namespace(connect=<AsyncMock id='3101515696800'>, disconnect=<AsyncMock id='3101515700736'>) = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x000002D220BF01D0>, sessions=async...36'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-52/test_runtime_agent_websocket_c2')).manager
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "4c19273e-a56d-43c2-9af5-112fa3e4d464", "event": "android_ws: device_not_found", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-08T22:41:09.398983Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.api.ws.android.router:router.py:492 {'device_id': '4c19273e-a56d-43c2-9af5-112fa3e4d464', 'event': 'android_ws: device_not_found', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-08T22:41:09.398983Z'}
+__________ test_runtime_agent_websocket_connect_and_reconnect[user] ___________
+tests\production\test_agent_tenant_runtime.py:77: in test_runtime_agent_websocket_connect_and_reconnect
+    assert r.manager.connect.await_count == attempt + 1, sent
+E   AssertionError: [{'headers': [], 'subprotocol': None, 'type': 'websocket.accept'}, {'code': 4004, 'reason': 'device_not_found', 'type': 'websocket.close'}]
+E   assert 0 == (0 + 1)
+E    +  where 0 = <AsyncMock id='3101505582624'>.await_count
+E    +    where <AsyncMock id='3101505582624'> = namespace(connect=<AsyncMock id='3101505582624'>, disconnect=<AsyncMock id='3101505297232'>).connect
+E    +      where namespace(connect=<AsyncMock id='3101505582624'>, disconnect=<AsyncMock id='3101505297232'>) = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x000002D220C5A810>, sessions=async...32'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-52/test_runtime_agent_websocket_c3')).manager
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "aa7452e1-dc99-4c79-9480-3fd8c50643fa", "event": "android_ws: device_not_found", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-08T22:41:09.905988Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.api.ws.android.router:router.py:492 {'device_id': 'aa7452e1-dc99-4c79-9480-3fd8c50643fa', 'event': 'android_ws: device_not_found', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-08T22:41:09.905988Z'}
+__________________ test_runtime_agent_http_device_scope[own] __________________
+tests\production\test_agent_tenant_runtime.py:93: in test_runtime_agent_http_device_scope
+    assert response.status_code == (204 if target == "own" else 404), response.text
+E   AssertionError: {"detail":"Device not found"}
+E   assert 401 == 204
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+____________ test_runtime_agent_http_device_scope[same_org_other] _____________
+tests\production\test_agent_tenant_runtime.py:93: in test_runtime_agent_http_device_scope
+    assert response.status_code == (204 if target == "own" else 404), response.text
+E   AssertionError: {"detail":"Device not found"}
+E   assert 401 == 404
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+________________ test_runtime_agent_http_device_scope[foreign] ________________
+tests\production\test_agent_tenant_runtime.py:93: in test_runtime_agent_http_device_scope
+    assert response.status_code == (204 if target == "own" else 404), response.text
+E   AssertionError: {"detail":"Device not found"}
+E   assert 401 == 404
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_agent_tenant_runtime.py::test_runtime_agent_websocket_connect_and_reconnect[device]
+FAILED tests/production/test_agent_tenant_runtime.py::test_runtime_agent_websocket_connect_and_reconnect[refreshed]
+FAILED tests/production/test_agent_tenant_runtime.py::test_runtime_agent_websocket_connect_and_reconnect[enrollment_key]
+FAILED tests/production/test_agent_tenant_runtime.py::test_runtime_agent_websocket_connect_and_reconnect[user]
+FAILED tests/production/test_agent_tenant_runtime.py::test_runtime_agent_http_device_scope[own]
+FAILED tests/production/test_agent_tenant_runtime.py::test_runtime_agent_http_device_scope[same_org_other]
+FAILED tests/production/test_agent_tenant_runtime.py::test_runtime_agent_http_device_scope[foreign]
+7 failed, 7 passed, 1 warning in 6.46s

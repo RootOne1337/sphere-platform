@@ -1,0 +1,81 @@
+{
+  "frames": 901,
+  "edges": 900,
+  "binding": "forward source indices 0..900, reverse source indices 900..0; exact ticks per source index",
+  "reverse_origin": "source frame 900",
+  "comparison": "for each chronological edge compose forward i->i+1 with reverse i+1->i; relative camera transforms, no model serves as truth",
+  "rotation_cycle_deg_all": {
+    "count": 900,
+    "median": 0.034508112160432425,
+    "p90": 0.10935601369582618,
+    "p99": 0.4918707971476143,
+    "max": 1.3925288576693386
+  },
+  "rotation_cycle_deg_train": {
+    "count": 450,
+    "median": 0.037926756947130685,
+    "p90": 0.09756833721564144,
+    "p99": 0.4984951738256707,
+    "max": 0.7175881354840463
+  },
+  "rotation_cycle_deg_heldout": {
+    "count": 450,
+    "median": 0.030189957463790808,
+    "p90": 0.11745313735884438,
+    "p99": 0.42433800730579063,
+    "max": 1.3925288576693386
+  },
+  "rotation_above_5deg": 0,
+  "rotation_above_10deg": 0,
+  "reverse_to_forward_scale_fit": 1.3179816487159166,
+  "scale_fit": "median forward/reverse camera-step magnitude on first 450 chronological edges with both lengths >1e-6; heldout edges never used for scale fit",
+  "scale_fit_edges": 450,
+  "translation_cycle_forward_units_train": {
+    "count": 450,
+    "median": 0.14890538651350227,
+    "p90": 0.36381478022158514,
+    "p99": 0.8020649072782426,
+    "max": 0.8611494454862239
+  },
+  "translation_cycle_forward_units_heldout": {
+    "count": 450,
+    "median": 0.06515025186642959,
+    "p90": 0.10916080294488135,
+    "p99": 0.41660054896783205,
+    "max": 0.6659373121341344
+  },
+  "translation_cycle_relative_train": {
+    "count": 450,
+    "median": 0.9991623394369434,
+    "p90": 0.9999498636072329,
+    "p99": 0.999992050238921,
+    "max": 0.9999997409858868
+  },
+  "translation_cycle_relative_heldout": {
+    "count": 450,
+    "median": 0.6821689759316709,
+    "p90": 0.9996213602182189,
+    "p99": 0.9999936475302422,
+    "max": 0.9999978723002677
+  },
+  "first_frame_anchor": "align reverse world to forward using source frame 0 orientation and position only; no all-frame Sim3 fit",
+  "anchored_position_difference_forward_units_train_frames": {
+    "count": 451,
+    "median": 43.63178855581763,
+    "p90": 69.71413911773482,
+    "p99": 75.50742161014477,
+    "max": 75.61573296902422
+  },
+  "anchored_position_difference_forward_units_heldout_frames": {
+    "count": 450,
+    "median": 77.24157697654636,
+    "p90": 79.05967104333897,
+    "p99": 79.8042119373855,
+    "max": 79.88055700440478
+  },
+  "last_position_difference_forward_units": 79.88055700440478,
+  "forward_path_units": 91.66514121190721,
+  "end_difference_over_forward_path": 0.871438760125189,
+  "limits": "Same learned model, same recording, overlapping windows, assumptions; two directions not ground truth. Holdout is solely from translation scale fit, not model inference or input. Predicted scales not metres; axes/vehicle-camera relation unverified. SO3 normalized for numerical comparison.",
+  "anchored_end_orientation_difference_deg": 5.030325030375953
+}

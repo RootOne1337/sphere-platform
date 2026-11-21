@@ -1,0 +1,6 @@
+{
+  "overlap_processed_frames": 32,
+  "maximum_abs_fused_maxscore_difference": 5.960464477539063e-08,
+  "rows_differ_gt_1e-5": 0,
+  "caveat": "Only max score compared, not all candidate scores; same input and configuration."
+}

@@ -1,0 +1,38 @@
+{
+  "sourceGeometrySha": "cc0e1694e5afdb5857364aac699248da4455114863bcfd270e219522560e2e77",
+  "sourceUnchanged": true,
+  "cameras": 123,
+  "points": 22014,
+  "originalFrames": 915,
+  "cameraFramesRetained": 123,
+  "oldProjectionOrientation": "pca",
+  "newProjectionOrientation": "camera",
+  "oldRightForwardDeterminant": -0.9999070390150401,
+  "newRightForwardDeterminant": 0.9999999999999987,
+  "depthRange5to95": [
+    0.527360137651622,
+    9.42452621539553
+  ],
+  "units": "arbitrary_sfm",
+  "executionQualified": false,
+  "date": "2026-10-29",
+  "timezone": "Asia/Yekaterinburg",
+  "tests": {
+    "suites": 64,
+    "stream": 943,
+    "typescript": "passed",
+    "production_build": "passed"
+  },
+  "installedWeb": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:5b8b5f329aadb68bbfaacfc6acb5fd3a6290daf65616fe185db37c6f9f12bb28",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "sourceBuildSha": "60f54e92e20aa1bc123da5ed78cceabb06f914d91b4893592435bb81a7d8502e",
+  "browserVisualAcceptance": "not_completed_windows_browser_url_policy_support"
+}

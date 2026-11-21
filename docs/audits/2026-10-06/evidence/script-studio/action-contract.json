@@ -1,0 +1,155 @@
+{
+  "observedAt": "2026-10-05T22:11:12.187353+00:00",
+  "checkoutCommit": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+  "scope": "offline-structural-validation-and-source-inventory",
+  "sourceHashes": {
+    "backend/schemas/dag.py": "324954ef26d12b042525b72527a928a7cd0c527136e59594d7c37e23c455238e",
+    "frontend/lib/dag/export.ts": "ae107131936663804dea0eb944ba11d4cdcf1eb9f614e734eb8007279553fcbd",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt": "5c72cedcb65ab261310f55c9646bfc440e2b1145e4f8ee01d207c4c0d6dc1039",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt": "5adb5db16d8ab4b68b1ae7b59d94ded9eeab4b244be17a80f28dc680d47ad6ab"
+  },
+  "backendTypes": [
+    "assert",
+    "clear_app_data",
+    "condition",
+    "double_tap",
+    "end",
+    "find_element",
+    "find_first_element",
+    "get_device_info",
+    "get_element_text",
+    "get_variable",
+    "http_request",
+    "increment_variable",
+    "input_clear",
+    "key_event",
+    "launch_app",
+    "long_press",
+    "lua",
+    "open_url",
+    "screenshot",
+    "scroll",
+    "scroll_to",
+    "set_variable",
+    "shell",
+    "sleep",
+    "start",
+    "stop_app",
+    "swipe",
+    "tap",
+    "tap_element",
+    "tap_first_visible",
+    "type_text",
+    "wait_for_element_gone"
+  ],
+  "frontendTypes": [
+    "assert",
+    "clear_app_data",
+    "condition",
+    "double_tap",
+    "end",
+    "find_element",
+    "find_first_element",
+    "get_device_info",
+    "get_element_text",
+    "get_variable",
+    "http_request",
+    "increment_variable",
+    "input_clear",
+    "key_event",
+    "launch_app",
+    "long_press",
+    "lua",
+    "open_url",
+    "screenshot",
+    "scroll",
+    "scroll_to",
+    "set_variable",
+    "shell",
+    "sleep",
+    "start",
+    "stop_app",
+    "swipe",
+    "tap",
+    "tap_element",
+    "tap_first_visible",
+    "type_text",
+    "wait_for_element_gone"
+  ],
+  "androidHandlerTypes": [
+    "assert",
+    "clear_app_data",
+    "condition",
+    "double_tap",
+    "end",
+    "find_element",
+    "find_first_element",
+    "get_device_info",
+    "get_element_text",
+    "get_variable",
+    "http_request",
+    "increment_variable",
+    "input_clear",
+    "key_event",
+    "launch_app",
+    "long_press",
+    "loop",
+    "lua",
+    "open_url",
+    "screenshot",
+    "scroll",
+    "scroll_to",
+    "set_variable",
+    "shell",
+    "sleep",
+    "start",
+    "stop_app",
+    "swipe",
+    "tap",
+    "tap_element",
+    "tap_first_visible",
+    "type_text",
+    "wait_for_element_gone"
+  ],
+  "backendFrontendTypesEqual": true,
+  "runtimeOnlyTypes": [
+    "loop"
+  ],
+  "publishedTypesWithoutHandler": [],
+  "cases": [
+    {
+      "name": "tap_missing_coordinates",
+      "structuralValidationAccepted": true
+    },
+    {
+      "name": "sleep_non_numeric_duration",
+      "structuralValidationAccepted": true
+    },
+    {
+      "name": "set_variable_object_value",
+      "structuralValidationAccepted": true
+    },
+    {
+      "name": "condition_non_object_params",
+      "structuralValidationAccepted": true
+    },
+    {
+      "name": "runtime_loop_not_published",
+      "structuralValidationAccepted": false,
+      "errors": [
+        {
+          "loc": [
+            "nodes",
+            0
+          ],
+          "type": "value_error"
+        }
+      ]
+    }
+  ],
+  "deviceExecutionVerified": false,
+  "installedApkCapabilitiesVerified": false,
+  "networkRequestsSent": false,
+  "databaseUsed": false,
+  "deviceCommandsSent": false
+}

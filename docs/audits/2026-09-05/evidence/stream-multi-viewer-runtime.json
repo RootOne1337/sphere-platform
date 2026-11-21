@@ -1,0 +1,206 @@
+{
+  "finding": "AUD-126",
+  "deployment": {
+    "at": "2026-09-20T09:38:57.720702+00:00",
+    "source": "85fb1ea537c2f7961057432e8317f44a44c74c54",
+    "images": {
+      "backend": {
+        "tag": "sphere-pilot-20260911-backend:85fb1ea",
+        "id": "sha256:7983bfd62b9476486ca800de11bae9ebdc4e8c934c9e55ad1842221233ec02d2"
+      }
+    },
+    "only_new_backend_replaced": true,
+    "other_container_ids_images_start_times_preserved": true,
+    "ota_catalog_preserved": true,
+    "apk_download_hash_verified": true,
+    "task_total": 418,
+    "status_counts": {
+      "queued": 0,
+      "assigned": 0,
+      "running": 0,
+      "completed": 418,
+      "failed": 0,
+      "timeout": 0,
+      "cancelled": 0
+    },
+    "build_context": "git archive committed runtime files; no private environment or untracked files"
+  },
+  "phases": {
+    "before": {
+      "started_at": "2026-09-20T09:35:09.316910+00:00",
+      "finished_at": "2026-09-20T09:36:08.069447+00:00",
+      "backend_source": "8a6b30e",
+      "passed": false,
+      "errors": [],
+      "backend_log_sha256": "fe13b3f9a0b7c1209462a46b5f4e4b8758057c83512a2d774f04edd60ccb55f4",
+      "new_frames_by_stage": [
+        {
+          "0": 0,
+          "1": 0,
+          "2": 11
+        },
+        {
+          "0": 0,
+          "1": 0
+        },
+        {
+          "1": 0
+        },
+        {
+          "0": 0,
+          "1": 0,
+          "2": 7
+        },
+        {
+          "0": 0,
+          "1": 0
+        },
+        {
+          "1": 0
+        }
+      ],
+      "all_stages_passed": false,
+      "devices": [
+        {
+          "serial": "emulator-5554",
+          "pid_before": "2182",
+          "pid_after": "2182",
+          "pid_unchanged": true,
+          "crash_buffer_unchanged": true,
+          "echo_verified": true,
+          "api_status": "online",
+          "projection_active_after_own_viewers": false
+        },
+        {
+          "serial": "emulator-5556",
+          "pid_before": "2187",
+          "pid_after": "2187",
+          "pid_unchanged": true,
+          "crash_buffer_unchanged": true,
+          "echo_verified": true,
+          "api_status": "online",
+          "projection_active_after_own_viewers": false
+        }
+      ]
+    },
+    "after": {
+      "started_at": "2026-09-20T09:39:18.986201+00:00",
+      "finished_at": "2026-09-20T09:40:17.382314+00:00",
+      "backend_source": "85fb1ea",
+      "passed": true,
+      "errors": [],
+      "backend_log_sha256": "6c97101303be9ed281d4636b59e1b15dac196fd1ef3a60c0059ecdcdc56a589e",
+      "new_frames_by_stage": [
+        {
+          "0": 10,
+          "1": 11,
+          "2": 10
+        },
+        {
+          "0": 10,
+          "1": 10
+        },
+        {
+          "1": 10
+        },
+        {
+          "0": 6,
+          "1": 6,
+          "2": 6
+        },
+        {
+          "0": 7,
+          "1": 7
+        },
+        {
+          "1": 8
+        }
+      ],
+      "all_stages_passed": true,
+      "devices": [
+        {
+          "serial": "emulator-5554",
+          "pid_before": "2182",
+          "pid_after": "2182",
+          "pid_unchanged": true,
+          "crash_buffer_unchanged": true,
+          "echo_verified": true,
+          "api_status": "online",
+          "projection_active_after_own_viewers": false
+        },
+        {
+          "serial": "emulator-5556",
+          "pid_before": "2187",
+          "pid_after": "2187",
+          "pid_unchanged": true,
+          "crash_buffer_unchanged": true,
+          "echo_verified": true,
+          "api_status": "online",
+          "projection_active_after_own_viewers": false
+        }
+      ]
+    },
+    "probe": {
+      "started_at": "2026-09-20T09:43:20.751684+00:00",
+      "finished_at": "2026-09-20T09:44:06.737959+00:00",
+      "backend_source": "85fb1ea",
+      "passed": true,
+      "errors": [],
+      "backend_log_sha256": "ffa818c5374be7e2fab12c01442834d4add3878698cd7c0e75b0f2a6175686e9",
+      "new_frames_by_stage": [
+        {
+          "0": 5,
+          "1": 5,
+          "2": 5
+        },
+        {
+          "0": 5,
+          "1": 5
+        },
+        {
+          "1": 3
+        },
+        {
+          "0": 4,
+          "1": 4,
+          "2": 4
+        },
+        {
+          "0": 5,
+          "1": 5
+        },
+        {
+          "1": 5
+        }
+      ],
+      "all_stages_passed": true,
+      "devices": [
+        {
+          "serial": "emulator-5554",
+          "pid_before": "2182",
+          "pid_after": "2182",
+          "pid_unchanged": true,
+          "crash_buffer_unchanged": true,
+          "echo_verified": true,
+          "api_status": "online",
+          "projection_active_after_own_viewers": false
+        },
+        {
+          "serial": "emulator-5556",
+          "pid_before": "2187",
+          "pid_after": "2187",
+          "pid_unchanged": true,
+          "crash_buffer_unchanged": true,
+          "echo_verified": true,
+          "api_status": "online",
+          "projection_active_after_own_viewers": false
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Six bounded native stages per phase, not an eight-hour run.",
+    "H.264 protocol delivery and motion counts; no browser decoder or capacity certification.",
+    "probe calls the retained Runner.verify_viewer_motion helper on live WSS viewers."
+  ]
+}

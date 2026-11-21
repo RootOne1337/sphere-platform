@@ -2,96 +2,171 @@
 import { create } from 'zustand';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { clearReturnDestination } from '@/src/features/access/returnDestination';
 
-// Ключ для хранения refresh_token в localStorage (fallback для сред без cookie — tunnel/proxy)
 const REFRESH_TOKEN_KEY = 'sphere_refresh_token';
+const SIGNED_OUT_KEY = 'sphere_signed_out';
+export const AUTH_TIMEOUT_MS = 5000;
 
-/** Сохранить refresh_token в localStorage */
 export function saveRefreshToken(token: string) {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token);
-  }
+  try { if (typeof window !== 'undefined') localStorage.setItem(REFRESH_TOKEN_KEY, token); } catch { /* Cookie-only browser. */ }
 }
-
-/** Получить refresh_token из localStorage */
 export function getRefreshToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
-  }
-  return null;
+  try { return typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null; } catch { return null; }
 }
-
-/** Удалить refresh_token из localStorage */
 export function clearRefreshToken() {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-  }
+  try { if (typeof window !== 'undefined') localStorage.removeItem(REFRESH_TOKEN_KEY); } catch { /* Memory is still cleared. */ }
+}
+function signedOut(): boolean {
+  if (useAuthStore.getState().explicitlySignedOut) return true;
+  try { return typeof window !== 'undefined' && localStorage.getItem(SIGNED_OUT_KEY) === '1'; } catch { return false; }
 }
 
+type User = { id: string; email: string; role: string; org_id: string; mfa_enabled?: boolean };
+export interface SessionTokens { access_token: string; refresh_token?: string; user: User }
 interface AuthState {
   accessToken: string | null;
-  user: { id: string; email: string; role: string; org_id: string; mfa_enabled?: boolean } | null;
-
+  user: User | null;
+  sessionVersion: number;
+  explicitlySignedOut: boolean;
+  logoutWarning: string | null;
+  manualLogoutVersion: number | null;
   setAccessToken: (token: string) => void;
-  setUser: (user: AuthState['user']) => void;
-  logout: () => void;
+  setUser: (user: User | null) => void;
+  completeLogin: (tokens: SessionTokens, version: number) => boolean;
+  logout: (manual?: boolean) => void;
 }
 
-// Access token — ТОЛЬКО в памяти (Zustand без persist)
-export const useAuthStore = create<AuthState>()((set) => ({
+// Access tokens stay in memory. A new login/logout invalidates outstanding work.
+export const useAuthStore = create<AuthState>()((set, get) => ({
   accessToken: null,
   user: null,
-
-  setAccessToken: (token) => set({ accessToken: token }),
-  setUser: (user) => set({ user }),
-  logout: () => {
+  sessionVersion: 0,
+  explicitlySignedOut: false,
+  logoutWarning: null,
+  manualLogoutVersion: null,
+  setAccessToken: (token) => set(s => ({ accessToken: token, explicitlySignedOut: false, sessionVersion: s.sessionVersion + 1 })),
+  setUser: (user) => set(s => ({ user, sessionVersion: s.sessionVersion + 1 })),
+  completeLogin: (tokens, version) => {
+    if (get().sessionVersion !== version) return false;
+    validateTokens(tokens);
+    persistTokens(tokens);
+    set({ accessToken: tokens.access_token, user: tokens.user, explicitlySignedOut: false, logoutWarning: null });
+    return true;
+  },
+  logout: (manual = false) => {
+    // Publish the memory boundary even if the browser blocks storage access.
+    set(s => ({ accessToken: null, user: null, explicitlySignedOut: true, sessionVersion: s.sessionVersion + 1,
+      manualLogoutVersion: manual ? s.sessionVersion + 1 : null }));
     clearRefreshToken();
-    set({ accessToken: null, user: null });
+    try { if (typeof window !== 'undefined') localStorage.setItem(SIGNED_OUT_KEY, '1'); } catch { /* Keep the in-memory logout boundary. */ }
   },
 }));
 
-// ─── SILENT REFRESH ПРИ F5 ───────────────────────────────────────
-// При перезагрузке: отправляем refresh_token через header (localStorage fallback)
-// 200 → сохраняем новый accessToken + refresh_token → пользователь залогинен
-// 401 → токен протух → пользователь не залогинен
-// ──────────────────────────────────────────────────────────────────
-// ⚠️ АВТОРИЗАЦИЯ ОТКЛЮЧЕНА НА ВРЕМЯ РАЗРАБОТКИ
-const _DEV_SKIP_AUTH = process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === 'true';
+export function beginLogin(): number {
+  useAuthStore.getState().logout();
+  useAuthStore.setState({ logoutWarning: null });
+  return useAuthStore.getState().sessionVersion;
+}
 
-export function useInitAuth(): boolean {
-  const [ready, setReady] = useState(!_DEV_SKIP_AUTH ? false : true);
+export class SessionChangedError extends Error {
+  constructor() { super('Session changed while the request was in flight'); this.name = 'SessionChangedError'; }
+}
+export function assertSession(version: number) {
+  if (useAuthStore.getState().sessionVersion !== version) throw new SessionChangedError();
+}
+function validateTokens(data: SessionTokens) {
+  if (typeof data.access_token !== 'string' || !data.access_token || !data.user?.id || !data.user.org_id) {
+    throw new Error('Invalid authentication response');
+  }
+}
+function persistTokens(data: SessionTokens) {
+  if (data.refresh_token) saveRefreshToken(data.refresh_token);
+  try { if (typeof window !== 'undefined') localStorage.removeItem(SIGNED_OUT_KEY); } catch { /* Cookie-only browser. */ }
+}
 
-  useEffect(() => {
-    // DEV_SKIP_AUTH: не делаем никаких запросов, сразу ready
-    if (_DEV_SKIP_AUTH) return;
+let refreshing: { version: number; promise: Promise<string> } | null = null;
 
-    const base = process.env.NEXT_PUBLIC_API_URL ?? '/api/v1';
-    const storedRefresh = getRefreshToken();
-    const setAccessToken = useAuthStore.getState().setAccessToken;
-    const setUser = useAuthStore.getState().setUser;
+function isTemporaryRefreshError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  const status = error.response?.status;
+  return status === undefined || status === 408 || status === 429 || status >= 500;
+}
 
-    // Отправляем refresh_token и через cookie (withCredentials), и через header (fallback)
-    const headers: Record<string, string> = {};
-    if (storedRefresh) {
-      headers['X-Refresh-Token'] = storedRefresh;
+/** One refresh per session, shared by startup and HTTP retries. Never restore a retired session. */
+export function refreshSession(version = useAuthStore.getState().sessionVersion): Promise<string> {
+  assertSession(version);
+  if (signedOut()) return Promise.reject(new SessionChangedError());
+  if (refreshing?.version === version) return refreshing.promise;
+  const stored = getRefreshToken();
+  const promise = axios.post<SessionTokens>(
+    `${process.env.NEXT_PUBLIC_API_URL ?? '/api/v1'}/auth/refresh`, {},
+    { withCredentials: true, timeout: AUTH_TIMEOUT_MS, headers: stored ? { 'X-Refresh-Token': stored } : {} },
+  ).then(({ data }) => {
+    assertSession(version);
+    validateTokens(data);
+    const user = useAuthStore.getState().user;
+    if (user && (user.id !== data.user.id || user.org_id !== data.user.org_id)) {
+      throw new Error('Refresh identity does not match the active session');
     }
+    // Rotation preserves the version; queued requests still belong to this identity.
+    persistTokens(data);
+    useAuthStore.setState({ accessToken: data.access_token, user: data.user, explicitlySignedOut: false });
+    return data.access_token;
+  }).catch(error => {
+    // A missing/late broker response is not a revocation. Preserve this exact
+    // identity and its credentials; the failed operation still rejects and is
+    // never retried here. A later explicit request may try its own refresh.
+    // Confirmed auth rejection, malformed tokens and identity changes remain
+    // terminal, and a newer login/logout cannot be altered by this old work.
+    if (!isTemporaryRefreshError(error) && useAuthStore.getState().sessionVersion === version) useAuthStore.getState().logout();
+    throw error;
+  }).finally(() => {
+    if (refreshing?.promise === promise) refreshing = null;
+  });
+  refreshing = { version, promise };
+  return promise;
+}
 
-    axios.post(`${base}/auth/refresh`, {}, { withCredentials: true, headers })
-      .then((res) => {
-        setAccessToken(res.data.access_token);
-        if (res.data.user) setUser(res.data.user);
-        // Сохраняем новый refresh_token (ротация)
-        if (res.data.refresh_token) {
-          saveRefreshToken(res.data.refresh_token);
-        }
-      })
-      .catch(() => {
-        // refreshToken протух или отсутствует — пользователь не залогинен
-        clearRefreshToken();
-      })
-      .finally(() => setReady(true));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+export function useInitAuth() {
+  const [state, setState] = useState<'checking' | 'ready' | 'unavailable'>('checking');
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let mounted = true;
+    const session = useAuthStore.getState();
+    if ((session.accessToken && session.user) || signedOut()) { setState('ready'); return; }
+    const { sessionVersion } = session;
+    void refreshSession(sessionVersion).then(() => {
+      if (mounted) setState('ready');
+    }, error => {
+      if (!mounted) return;
+      const sameSession = useAuthStore.getState().sessionVersion === sessionVersion;
+      setState(sameSession && isTemporaryRefreshError(error) ? 'unavailable' : 'ready');
+    });
+    return () => { mounted = false; };
+  }, [attempt]);
+  return { state, retry: () => { setState('checking'); setAttempt(value => value + 1); } };
+}
 
-  return ready;
+/** Clear local access immediately, then revoke the captured server session without API retries. */
+export async function signOut(): Promise<boolean> {
+  const access = useAuthStore.getState().accessToken;
+  const refresh = getRefreshToken();
+  clearReturnDestination();
+  useAuthStore.getState().logout(true);
+  const version = useAuthStore.getState().sessionVersion;
+  useAuthStore.setState({ logoutWarning: null });
+  try {
+    await axios.post(`${process.env.NEXT_PUBLIC_API_URL ?? '/api/v1'}/auth/logout`, {}, {
+      withCredentials: true,
+      timeout: AUTH_TIMEOUT_MS,
+      headers: { ...(access ? { Authorization: `Bearer ${access}` } : {}), ...(refresh ? { 'X-Refresh-Token': refresh } : {}) },
+    });
+    return true;
+  } catch {
+    if (useAuthStore.getState().sessionVersion === version) {
+      useAuthStore.setState({ logoutWarning: 'Signed out on this browser. Server session revocation could not be confirmed.' });
+    }
+    return false;
+  }
 }

@@ -1,0 +1,19 @@
+{
+  "preset": "measured_black_russia_hud",
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "source_video_sha256": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+  "output_csv_sha256": "4cffd7bbdedc4a2cfd4d2d2046256c1bcbc9ff1325fd3910f53dacca9d2bbf5a",
+  "geometry": [
+    1920,
+    1080
+  ],
+  "selected_count": 301,
+  "accepted_count": 261,
+  "unknown_count": 40,
+  "sampling_step": 3,
+  "unselected_frames": "unknown",
+  "crop_formula": "rgb[931:969, 920:1000]",
+  "source_modified": false,
+  "units": "game_hud_kmh",
+  "world_metric": false
+}

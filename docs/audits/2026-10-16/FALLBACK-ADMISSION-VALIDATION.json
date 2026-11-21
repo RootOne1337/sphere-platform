@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+  "localValidation": {
+    "frontendSuites": 172,
+    "frontendTests": 2508,
+    "targetedSuites": 3,
+    "targetedTests": 156,
+    "typecheckPassed": true,
+    "regressionFailedBeforeFix": true,
+    "regressionFailure": "Late fallback capability was discarded during second ICE attempt; expected one touch_open, observed zero."
+  },
+  "logSha256": {
+    "fallback-admission-full.private.log": "43a87cc4e6d86f096716b2019bdcf1ee5a6624127e7770e14be43520115ba03d",
+    "fallback-admission-green.private.log": "10f7e4a2b6500c2fd002f27a5840a4e8083fbd84e77157e0c6c955696566e55a",
+    "fallback-admission-red.private.log": "00397df3db756a5fdd59c7560aa2f51eabe5f9b0c9f543a9c2f5ee10a319735f",
+    "fallback-admission-types.private.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "githubStatus": {
+    "context": "Sphere Local / Frontend regressions",
+    "state": "success",
+    "readbackVerified": true
+  },
+  "runtimeInstalledByThisReceipt": false,
+  "fullCiMigrationAccepted": false,
+  "nativeReliabilityAccepted": false
+}

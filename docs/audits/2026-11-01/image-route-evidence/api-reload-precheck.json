@@ -1,0 +1,30 @@
+{
+  "outcome": "blocked_live_state_unobservable",
+  "service_terminated": false,
+  "physical_actions": 0,
+  "filesystem_precheck": {
+    "jobs": {
+      "failed": 5,
+      "partial_scene": 2,
+      "complete": 3,
+      "cancelled": 1,
+      "sparse_complete": 2
+    },
+    "navigation_preparations": {
+      "failed": 4,
+      "ready": 3,
+      "rejected": 1
+    },
+    "surface_and_fragments": {
+      "review_required": 9,
+      "failed": 1
+    }
+  },
+  "reason": "Live session is stored in process memory; existing health and read-only navigation status expose no global live state. Terminal file state alone cannot rule out a live observer or walk session.",
+  "health_contract_before": "image_route_review_contract absent",
+  "tests": {
+    "passed": 44,
+    "skipped": 1,
+    "command": "Python313 -m pytest --noconftest tests/test_image_route_review.py tests/test_reconstruction_service.py -q"
+  }
+}

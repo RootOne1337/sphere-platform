@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T21:13:20.162394+00:00",
+  "sourceBaseRevision": "a598202b2069e7e6a896e9683899e0ae52146044",
+  "scope": "Source audit plus offline capacity arithmetic; not a GPU, network, emulator or gameplay test.",
+  "requestedGame": "Black Russia; clarified by owner after initial Black Rush wording",
+  "requestedTopology": "Separate GPU workstation connects directly to APK in LAN, without browser/central media relay.",
+  "target": {
+    "devices": 50,
+    "observationHzPerDevice": [
+      4,
+      5
+    ],
+    "targetGpuKnown": false
+  },
+  "readiness": "PROFILE_EXECUTOR_AND_WORKER_REQUIRED_GAMEPLAY_UNPROVEN",
+  "upstreamRevision": "32608444660950ffda95e1e57c79632ad65bea10",
+  "samplingSourceEvidence": {
+    "file": "nitrogen/flow_matching_transformer/nitrogen.py",
+    "sha256": "9c7b2af3165f3d7accf0c89eeeab48e1c752a17e6ac746b8d6b4b46521f62157",
+    "randomInitialActionCalls": [
+      {
+        "function": "get_action",
+        "line": 582,
+        "call": "torch.randn"
+      },
+      {
+        "function": "get_action_with_cfg",
+        "line": 667,
+        "call": "torch.randn"
+      }
+    ],
+    "upstreamImportedOrRun": false
+  },
+  "primaryCommunityFollowup": {
+    "url": "https://github.com/MineDojo/NitroGen/issues/39",
+    "title": "Any fine-tuning tip?",
+    "commentUrls": [
+      "https://github.com/MineDojo/NitroGen/issues/39#issuecomment-3761789650",
+      "https://github.com/MineDojo/NitroGen/issues/39#issuecomment-3821724898",
+      "https://github.com/MineDojo/NitroGen/issues/39#issuecomment-3881480335",
+      "https://github.com/MineDojo/NitroGen/issues/39#issuecomment-4188547689"
+    ],
+    "cachedBodySha256Utf8": "c19a3ed5c514912099a3ff31e9e22eb7a7367dfa140cfe4a64c2a7f3915747c5",
+    "controlledBenchmark": false
+  },
+  "thirdPartyBenchmarkCandidate": {
+    "repository": "https://github.com/syseeker/inference-pipeline-benchmark",
+    "revision": "138e7939c9f8fc9a688f345d3bf0b6c117ff068b",
+    "executed": false,
+    "adoptedAsDependency": false,
+    "textFiles": [
+      {
+        "file": "QUICKSTART_NITROGEN.md",
+        "sha256": "3c7e4dd9ae35ab0356e1bfad1a88e3cf68c878b06e264e75d1a625cacc3dbff4"
+      },
+      {
+        "file": "docs/nitrogen.md",
+        "sha256": "1e793ac62cacf387486b32b92fd7a7a2bde6baddea68b8ac55f18db481f66e7e"
+      }
+    ],
+    "caveat": "Author example numbers and synthetic-placeholder frame option are not evidence of Black Russia competence or our fleet capacity."
+  },
+  "sourceFileReceipts": [
+    {
+      "file": "scripts/pilot/motor_budget.py",
+      "sha256NormalizedLf": "32309c78b386b9867e2c343c0c5e681e47361ee754777349b00b246874bfc286"
+    },
+    {
+      "file": "tests/test_motor_budget.py",
+      "sha256NormalizedLf": "ea08463b52e28a143606f10edd684116c600512d73be4aeb9288c485e1076eeb"
+    },
+    {
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchBridge.java",
+      "sha256NormalizedLf": "ebdcf05cb0e8af18768e438c5306176256a481d0e83053d4e5730b8cfee141ea"
+    },
+    {
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchSession.java",
+      "sha256NormalizedLf": "0f654b517ede36b223e56dc8789137fc2f6bc467c9e92a780bef6932e02b4bff"
+    },
+    {
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchWire.java",
+      "sha256NormalizedLf": "01a73b80a431ed71cd2584bd9d0a5dd25490d55f868b331b7a829c8e40c6d4c6"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedPointerArbiter.kt",
+      "sha256NormalizedLf": "06190f199b2540e3586b7c2ce784f5a298bc811ef0ec038d4dd3af7d618fbab2"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/StreamingManagerImpl.kt",
+      "sha256NormalizedLf": "dd137a5eb488061fe50d4ead1b80da9908a5ef2184d2585012d418440683d5bd"
+    },
+    {
+      "file": "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectEncodedVideoSource.kt",
+      "sha256NormalizedLf": "f98a43d440a9c951724794ed1b6a1eb54aac24b27ade85cceb7870667155e4a5"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+      "sha256NormalizedLf": "f128820e9dad995dfecdb8f41e013b94815b9fdc600d760a6a0531cab450b7a7"
+    },
+    {
+      "file": "backend/schemas/dag.py",
+      "sha256NormalizedLf": "69cbc12f81b0a9862c6f5e89256813d0b54b577108129de91a2d87a33008a782"
+    },
+    {
+      "file": "backend/api/ws/direct/router.py",
+      "sha256NormalizedLf": "be122894c463d5479785bc7d4661e1a0da6589fef5f3a6efc5092455244d447d"
+    }
+  ],
+  "capacityScenarios": [
+    {
+      "kind": "CALCULATION_NOT_A_BENCHMARK",
+      "devices": 50,
+      "observationHzPerDevice": 4,
+      "aggregateObservationsPerSecond": 200,
+      "observationPeriodMs": 250.0,
+      "batchSizeAssumed": 1,
+      "batchesPerSynchronizedRound": 50,
+      "utilizationBudget": 0.7,
+      "maximumBatchMsForThisRoundBudget": 3.5,
+      "batchMsSupplied": null,
+      "roundServiceMsAtSuppliedCost": null,
+      "roundDutyAtSuppliedCost": null,
+      "inferenceArithmeticFitsBudget": null,
+      "sourceFpsPerDeviceSupplied": 60,
+      "sourceRateMeetsRequestedObservationRate": true,
+      "aggregateDecodeFramesPerSecondIfEverySourceFrameDecoded": 3000,
+      "videoMbpsPerDeviceSupplied": null,
+      "aggregateVideoPayloadMbps": null,
+      "rawRgb256ObservationPayloadMbps": 314.5728,
+      "assumptions": [
+        "One latest observation per device per synchronized round; final partial batch costs a full batch.",
+        "Supplied batch time must include preprocessing/model/postprocessing allocated to the worker; values are not measured here.",
+        "Batching is a proposed adapter capability; upstream InferenceSession server is not a fleet batch scheduler.",
+        "Decode, network, queue tails, other GPU work, VRAM and game competence are not certified by a fit result.",
+        "Source FPS at least observation Hz is necessary, not proof that every frame contains a fresh capture.",
+        "RGB payload excludes framing/transport overhead; encoded video bitrate is an independent supplied assumption."
+      ],
+      "gameplayReady": false
+    },
+    {
+      "kind": "CALCULATION_NOT_A_BENCHMARK",
+      "devices": 50,
+      "observationHzPerDevice": 5,
+      "aggregateObservationsPerSecond": 250,
+      "observationPeriodMs": 200.0,
+      "batchSizeAssumed": 1,
+      "batchesPerSynchronizedRound": 50,
+      "utilizationBudget": 0.7,
+      "maximumBatchMsForThisRoundBudget": 2.8,
+      "batchMsSupplied": null,
+      "roundServiceMsAtSuppliedCost": null,
+      "roundDutyAtSuppliedCost": null,
+      "inferenceArithmeticFitsBudget": null,
+      "sourceFpsPerDeviceSupplied": 60,
+      "sourceRateMeetsRequestedObservationRate": true,
+      "aggregateDecodeFramesPerSecondIfEverySourceFrameDecoded": 3000,
+      "videoMbpsPerDeviceSupplied": null,
+      "aggregateVideoPayloadMbps": null,
+      "rawRgb256ObservationPayloadMbps": 393.216,
+      "assumptions": [
+        "One latest observation per device per synchronized round; final partial batch costs a full batch.",
+        "Supplied batch time must include preprocessing/model/postprocessing allocated to the worker; values are not measured here.",
+        "Batching is a proposed adapter capability; upstream InferenceSession server is not a fleet batch scheduler.",
+        "Decode, network, queue tails, other GPU work, VRAM and game competence are not certified by a fit result.",
+        "Source FPS at least observation Hz is necessary, not proof that every frame contains a fresh capture.",
+        "RGB payload excludes framing/transport overhead; encoded video bitrate is an independent supplied assumption."
+      ],
+      "gameplayReady": false
+    },
+    {
+      "kind": "CALCULATION_NOT_A_BENCHMARK",
+      "devices": 50,
+      "observationHzPerDevice": 5,
+      "aggregateObservationsPerSecond": 250,
+      "observationPeriodMs": 200.0,
+      "batchSizeAssumed": 8,
+      "batchesPerSynchronizedRound": 7,
+      "utilizationBudget": 0.7,
+      "maximumBatchMsForThisRoundBudget": 20.0,
+      "batchMsSupplied": 20,
+      "roundServiceMsAtSuppliedCost": 140,
+      "roundDutyAtSuppliedCost": 0.7,
+      "inferenceArithmeticFitsBudget": true,
+      "sourceFpsPerDeviceSupplied": 60,
+      "sourceRateMeetsRequestedObservationRate": true,
+      "aggregateDecodeFramesPerSecondIfEverySourceFrameDecoded": 3000,
+      "videoMbpsPerDeviceSupplied": 1,
+      "aggregateVideoPayloadMbps": 50,
+      "rawRgb256ObservationPayloadMbps": 393.216,
+      "assumptions": [
+        "One latest observation per device per synchronized round; final partial batch costs a full batch.",
+        "Supplied batch time must include preprocessing/model/postprocessing allocated to the worker; values are not measured here.",
+        "Batching is a proposed adapter capability; upstream InferenceSession server is not a fleet batch scheduler.",
+        "Decode, network, queue tails, other GPU work, VRAM and game competence are not certified by a fit result.",
+        "Source FPS at least observation Hz is necessary, not proof that every frame contains a fresh capture.",
+        "RGB payload excludes framing/transport overhead; encoded video bitrate is an independent supplied assumption."
+      ],
+      "gameplayReady": false
+    },
+    {
+      "kind": "CALCULATION_NOT_A_BENCHMARK",
+      "devices": 50,
+      "observationHzPerDevice": 5,
+      "aggregateObservationsPerSecond": 250,
+      "observationPeriodMs": 200.0,
+      "batchSizeAssumed": 8,
+      "batchesPerSynchronizedRound": 7,
+      "utilizationBudget": 0.7,
+      "maximumBatchMsForThisRoundBudget": 20.0,
+      "batchMsSupplied": 22.4,
+      "roundServiceMsAtSuppliedCost": 156.79999999999998,
+      "roundDutyAtSuppliedCost": 0.7839999999999999,
+      "inferenceArithmeticFitsBudget": false,
+      "sourceFpsPerDeviceSupplied": 60,
+      "sourceRateMeetsRequestedObservationRate": true,
+      "aggregateDecodeFramesPerSecondIfEverySourceFrameDecoded": 3000,
+      "videoMbpsPerDeviceSupplied": 1,
+      "aggregateVideoPayloadMbps": 50,
+      "rawRgb256ObservationPayloadMbps": 393.216,
+      "assumptions": [
+        "One latest observation per device per synchronized round; final partial batch costs a full batch.",
+        "Supplied batch time must include preprocessing/model/postprocessing allocated to the worker; values are not measured here.",
+        "Batching is a proposed adapter capability; upstream InferenceSession server is not a fleet batch scheduler.",
+        "Decode, network, queue tails, other GPU work, VRAM and game competence are not certified by a fit result.",
+        "Source FPS at least observation Hz is necessary, not proof that every frame contains a fresh capture.",
+        "RGB payload excludes framing/transport overhead; encoded video bitrate is an independent supplied assumption."
+      ],
+      "gameplayReady": false
+    },
+    {
+      "kind": "CALCULATION_NOT_A_BENCHMARK",
+      "devices": 50,
+      "observationHzPerDevice": 5,
+      "aggregateObservationsPerSecond": 250,
+      "observationPeriodMs": 200.0,
+      "batchSizeAssumed": 16,
+      "batchesPerSynchronizedRound": 4,
+      "utilizationBudget": 0.7,
+      "maximumBatchMsForThisRoundBudget": 35.0,
+      "batchMsSupplied": null,
+      "roundServiceMsAtSuppliedCost": null,
+      "roundDutyAtSuppliedCost": null,
+      "inferenceArithmeticFitsBudget": null,
+      "sourceFpsPerDeviceSupplied": 5,
+      "sourceRateMeetsRequestedObservationRate": true,
+      "aggregateDecodeFramesPerSecondIfEverySourceFrameDecoded": 250,
+      "videoMbpsPerDeviceSupplied": null,
+      "aggregateVideoPayloadMbps": null,
+      "rawRgb256ObservationPayloadMbps": 393.216,
+      "assumptions": [
+        "One latest observation per device per synchronized round; final partial batch costs a full batch.",
+        "Supplied batch time must include preprocessing/model/postprocessing allocated to the worker; values are not measured here.",
+        "Batching is a proposed adapter capability; upstream InferenceSession server is not a fleet batch scheduler.",
+        "Decode, network, queue tails, other GPU work, VRAM and game competence are not certified by a fit result.",
+        "Source FPS at least observation Hz is necessary, not proof that every frame contains a fresh capture.",
+        "RGB payload excludes framing/transport overhead; encoded video bitrate is an independent supplied assumption."
+      ],
+      "gameplayReady": false
+    }
+  ],
+  "validation": {
+    "calculatorUnitTests": 9,
+    "calculatorUnitTestsPassed": true,
+    "ruffCheckPassed": true,
+    "boundaryCases": [
+      "partial final batch charged",
+      "unmeasured capacity remains unknown",
+      "slow source cannot supply requested fresh-frame cadence",
+      "non-finite and overflow rejected"
+    ],
+    "modelBenchmarked": false,
+    "gameplayTested": false,
+    "runtimeDeployed": false
+  },
+  "openImplementation": [
+    "versioned profile schema/editor",
+    "multi-touch or gamepad executor",
+    "headless direct machine client",
+    "frame freshness/color fidelity",
+    "independent AI video policy",
+    "goal coordinator/episode",
+    "batch scheduler/admission"
+  ]
+}

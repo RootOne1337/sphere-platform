@@ -1,0 +1,32 @@
+[
+  {
+    "path": "Env",
+    "beforeSha256": "754429fb2f757a2af510b58fc25e13c273d746da85d92f62811eda50830afcbb",
+    "afterSha256": "98530cde2bce66aea3b525b7224ffdc2e920ff996bd19913e8c5e8cb93da6365"
+  },
+  {
+    "path": "Hostname",
+    "beforeSha256": "5387ed735e03c4888bcfc66716a9c3256c3f6edbe6acf12cbdac70b2a331a6c9",
+    "afterSha256": "9c69492793cefb18bb337da2a431520056383993d173854ba6bc537d96e629dd"
+  },
+  {
+    "path": "Image",
+    "beforeSha256": "5642efe362793f8ee21566b3fae15c8becba6b48ea2aa414d76d2c52ae1d1d47",
+    "afterSha256": "e6bebfe760ecdc9c576d438e3b2a042f37603cb801fe90354e6cd690a012124d"
+  },
+  {
+    "path": "Labels.com.docker.compose.config-hash",
+    "beforeSha256": "7a99d3fa9012a17a4ab947155f8d0a9f62b636f345dce85e29a2bc4f4bfd88d7",
+    "afterSha256": "c9f53ad3663c584f275b4d191f29b43562683b38d3d4dcf07c42ce1712147337"
+  },
+  {
+    "path": "Labels.com.docker.compose.image",
+    "beforeSha256": "b148040ae91c1e44a03e6e81260db4834b365bc64ffa0ceed630541339f1fd7c",
+    "afterSha256": "6992f6320138527f978202051e7624605da8e6a6113232e39a94a2cd346f3af4"
+  },
+  {
+    "path": "Labels.com.docker.compose.project.config_files",
+    "beforeSha256": "f307e8b377bcbca640963da2bd26f1a86b53f6de38d70f3e77159b95b6956602",
+    "afterSha256": "6ec5707b6ee4b848ddcce569fdf8fc603adc78d77d935f99a031d9fc7c992809"
+  }
+]

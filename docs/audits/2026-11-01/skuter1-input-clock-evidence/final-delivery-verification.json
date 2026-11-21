@@ -1,0 +1,18 @@
+{
+  "health": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true,
+    "route_camera_pipeline": "vehicle_geometry_v3_hud",
+    "creation_recovery_contract": "confirmed_absence_v1",
+    "image_route_review_contract": "source_bound_offline_v1",
+    "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+    "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+    "alternative_catalog_contract": "source_bound_review_v1",
+    "live_session_active": false
+  },
+  "worker_sha256": "4a327116bda4850b2aa4241784677837eb72e744f3ffd3c0755a7741e3975769",
+  "worker_matches_source": true,
+  "protected_unchanged": true,
+  "preferred": "full-173-endpoints-diagnostic",
+  "note": "API spawns reconstruct_route as a fresh subprocess for new jobs; no live game input or browser interaction"
+}

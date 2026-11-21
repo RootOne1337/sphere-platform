@@ -1,0 +1,377 @@
+{
+  "observedAt": "2026-10-06T14:47:50.926325+00:00",
+  "runId": 37478519344,
+  "artifactId": 11421017980,
+  "artifactName": "android-ci-diagnostics-f87c956d604e89dbcc546951a5de6c772d727dc2",
+  "sourceRevision": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+  "artifactNameUsesPullRequestMergeRevision": true,
+  "allScreenshotCasesPassed": true,
+  "windowsSkippedSymlinkFixturesPassedOnLinux": true,
+  "variantsAreOverlappingCasesNotUniqueTestCounts": true,
+  "variants": [
+    {
+      "variant": "testDevDebugUnitTest",
+      "totals": {
+        "tests": 872,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "screenshotSuites": [
+        {
+          "name": "com.sphereplatform.agent.commands.AdbScreenshotTest",
+          "tests": 4,
+          "cases": [
+            {
+              "name": "successful shell marker with empty PNG still fails file verification",
+              "outcome": "passed"
+            },
+            {
+              "name": "failed capture cannot report a path or replay command",
+              "outcome": "passed"
+            },
+            {
+              "name": "cancelled capture invalidates delivered root ownership and cleans owned staging",
+              "outcome": "passed"
+            },
+            {
+              "name": "capture waits for same FIFO session acknowledgement and original file validation",
+              "outcome": "passed"
+            }
+          ],
+          "artifactPath": "test-results/testDevDebugUnitTest/TEST-com.sphereplatform.agent.commands.AdbScreenshotTest.xml",
+          "xmlSha256": "b0358d3fd731f0a57d97896e5346b487e2d02e5355ae05d2ed79892912b91949"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.ScreenshotFileStoreTest",
+          "tests": 12,
+          "cases": [
+            {
+              "name": "expired and orphan staging are removed on next capture but foreign names survive",
+              "outcome": "passed"
+            },
+            {
+              "name": "store directory symlink is rejected before any write",
+              "outcome": "passed"
+            },
+            {
+              "name": "oversized native output is rejected and staging removed",
+              "outcome": "passed"
+            },
+            {
+              "name": "owned-looking directory is never recursively deleted",
+              "outcome": "passed"
+            },
+            {
+              "name": "owned-looking symlink blocks capture without deleting external target",
+              "outcome": "passed"
+            },
+            {
+              "name": "concurrent requests serialize the native writer and maintain retention",
+              "outcome": "passed"
+            },
+            {
+              "name": "repeated captures keep eight committed files and evict oldest owned file",
+              "outcome": "passed"
+            },
+            {
+              "name": "original encoded PNG bytes and UUID path are preserved",
+              "outcome": "passed"
+            },
+            {
+              "name": "failed and cancelled writer removes staging and releases capture ownership",
+              "outcome": "passed"
+            },
+            {
+              "name": "valid CRC cannot bypass dimension and PNG header bounds",
+              "outcome": "passed"
+            },
+            {
+              "name": "truncated bad CRC non PNG and trailing payload never publish",
+              "outcome": "passed"
+            },
+            {
+              "name": "clock reversal cannot grow file count beyond budget",
+              "outcome": "passed"
+            }
+          ],
+          "artifactPath": "test-results/testDevDebugUnitTest/TEST-com.sphereplatform.agent.commands.ScreenshotFileStoreTest.xml",
+          "xmlSha256": "0d9a5231a887d74506ccbcd460e4d8a88dbe10276e7c2df16554b34f11df9aa9"
+        }
+      ]
+    },
+    {
+      "variant": "testDevReleaseUnitTest",
+      "totals": {
+        "tests": 872,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "screenshotSuites": [
+        {
+          "name": "com.sphereplatform.agent.commands.AdbScreenshotTest",
+          "tests": 4,
+          "cases": [
+            {
+              "name": "successful shell marker with empty PNG still fails file verification",
+              "outcome": "passed"
+            },
+            {
+              "name": "failed capture cannot report a path or replay command",
+              "outcome": "passed"
+            },
+            {
+              "name": "cancelled capture invalidates delivered root ownership and cleans owned staging",
+              "outcome": "passed"
+            },
+            {
+              "name": "capture waits for same FIFO session acknowledgement and original file validation",
+              "outcome": "passed"
+            }
+          ],
+          "artifactPath": "test-results/testDevReleaseUnitTest/TEST-com.sphereplatform.agent.commands.AdbScreenshotTest.xml",
+          "xmlSha256": "aca107516363ca75530fc5dd957b6bf8f17ba0341e8450f59ccbcc67ee2af5b2"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.ScreenshotFileStoreTest",
+          "tests": 12,
+          "cases": [
+            {
+              "name": "expired and orphan staging are removed on next capture but foreign names survive",
+              "outcome": "passed"
+            },
+            {
+              "name": "store directory symlink is rejected before any write",
+              "outcome": "passed"
+            },
+            {
+              "name": "oversized native output is rejected and staging removed",
+              "outcome": "passed"
+            },
+            {
+              "name": "owned-looking directory is never recursively deleted",
+              "outcome": "passed"
+            },
+            {
+              "name": "owned-looking symlink blocks capture without deleting external target",
+              "outcome": "passed"
+            },
+            {
+              "name": "concurrent requests serialize the native writer and maintain retention",
+              "outcome": "passed"
+            },
+            {
+              "name": "repeated captures keep eight committed files and evict oldest owned file",
+              "outcome": "passed"
+            },
+            {
+              "name": "original encoded PNG bytes and UUID path are preserved",
+              "outcome": "passed"
+            },
+            {
+              "name": "failed and cancelled writer removes staging and releases capture ownership",
+              "outcome": "passed"
+            },
+            {
+              "name": "valid CRC cannot bypass dimension and PNG header bounds",
+              "outcome": "passed"
+            },
+            {
+              "name": "truncated bad CRC non PNG and trailing payload never publish",
+              "outcome": "passed"
+            },
+            {
+              "name": "clock reversal cannot grow file count beyond budget",
+              "outcome": "passed"
+            }
+          ],
+          "artifactPath": "test-results/testDevReleaseUnitTest/TEST-com.sphereplatform.agent.commands.ScreenshotFileStoreTest.xml",
+          "xmlSha256": "729d4a969f2189553315b5bb591855183256dc8c1fd846727282f34f225389ac"
+        }
+      ]
+    },
+    {
+      "variant": "testEnterpriseDebugUnitTest",
+      "totals": {
+        "tests": 872,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "screenshotSuites": [
+        {
+          "name": "com.sphereplatform.agent.commands.AdbScreenshotTest",
+          "tests": 4,
+          "cases": [
+            {
+              "name": "successful shell marker with empty PNG still fails file verification",
+              "outcome": "passed"
+            },
+            {
+              "name": "failed capture cannot report a path or replay command",
+              "outcome": "passed"
+            },
+            {
+              "name": "cancelled capture invalidates delivered root ownership and cleans owned staging",
+              "outcome": "passed"
+            },
+            {
+              "name": "capture waits for same FIFO session acknowledgement and original file validation",
+              "outcome": "passed"
+            }
+          ],
+          "artifactPath": "test-results/testEnterpriseDebugUnitTest/TEST-com.sphereplatform.agent.commands.AdbScreenshotTest.xml",
+          "xmlSha256": "b7cad620f3fd6a75f85d8162b0c6dd88f101e23960524072c4a27ee16b50be03"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.ScreenshotFileStoreTest",
+          "tests": 12,
+          "cases": [
+            {
+              "name": "expired and orphan staging are removed on next capture but foreign names survive",
+              "outcome": "passed"
+            },
+            {
+              "name": "store directory symlink is rejected before any write",
+              "outcome": "passed"
+            },
+            {
+              "name": "oversized native output is rejected and staging removed",
+              "outcome": "passed"
+            },
+            {
+              "name": "owned-looking directory is never recursively deleted",
+              "outcome": "passed"
+            },
+            {
+              "name": "owned-looking symlink blocks capture without deleting external target",
+              "outcome": "passed"
+            },
+            {
+              "name": "concurrent requests serialize the native writer and maintain retention",
+              "outcome": "passed"
+            },
+            {
+              "name": "repeated captures keep eight committed files and evict oldest owned file",
+              "outcome": "passed"
+            },
+            {
+              "name": "original encoded PNG bytes and UUID path are preserved",
+              "outcome": "passed"
+            },
+            {
+              "name": "failed and cancelled writer removes staging and releases capture ownership",
+              "outcome": "passed"
+            },
+            {
+              "name": "valid CRC cannot bypass dimension and PNG header bounds",
+              "outcome": "passed"
+            },
+            {
+              "name": "truncated bad CRC non PNG and trailing payload never publish",
+              "outcome": "passed"
+            },
+            {
+              "name": "clock reversal cannot grow file count beyond budget",
+              "outcome": "passed"
+            }
+          ],
+          "artifactPath": "test-results/testEnterpriseDebugUnitTest/TEST-com.sphereplatform.agent.commands.ScreenshotFileStoreTest.xml",
+          "xmlSha256": "4d371c56b318d7f1f16e8828efb99cfe4a6b9630e2dea682381190fa2d3c7657"
+        }
+      ]
+    },
+    {
+      "variant": "testEnterpriseReleaseUnitTest",
+      "totals": {
+        "tests": 872,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "screenshotSuites": [
+        {
+          "name": "com.sphereplatform.agent.commands.AdbScreenshotTest",
+          "tests": 4,
+          "cases": [
+            {
+              "name": "successful shell marker with empty PNG still fails file verification",
+              "outcome": "passed"
+            },
+            {
+              "name": "failed capture cannot report a path or replay command",
+              "outcome": "passed"
+            },
+            {
+              "name": "cancelled capture invalidates delivered root ownership and cleans owned staging",
+              "outcome": "passed"
+            },
+            {
+              "name": "capture waits for same FIFO session acknowledgement and original file validation",
+              "outcome": "passed"
+            }
+          ],
+          "artifactPath": "test-results/testEnterpriseReleaseUnitTest/TEST-com.sphereplatform.agent.commands.AdbScreenshotTest.xml",
+          "xmlSha256": "3736b5503ca24ba3bcc7b726458ba713168127bfbb952dca1f0fe07c8f73d45a"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.ScreenshotFileStoreTest",
+          "tests": 12,
+          "cases": [
+            {
+              "name": "expired and orphan staging are removed on next capture but foreign names survive",
+              "outcome": "passed"
+            },
+            {
+              "name": "store directory symlink is rejected before any write",
+              "outcome": "passed"
+            },
+            {
+              "name": "oversized native output is rejected and staging removed",
+              "outcome": "passed"
+            },
+            {
+              "name": "owned-looking directory is never recursively deleted",
+              "outcome": "passed"
+            },
+            {
+              "name": "owned-looking symlink blocks capture without deleting external target",
+              "outcome": "passed"
+            },
+            {
+              "name": "concurrent requests serialize the native writer and maintain retention",
+              "outcome": "passed"
+            },
+            {
+              "name": "repeated captures keep eight committed files and evict oldest owned file",
+              "outcome": "passed"
+            },
+            {
+              "name": "original encoded PNG bytes and UUID path are preserved",
+              "outcome": "passed"
+            },
+            {
+              "name": "failed and cancelled writer removes staging and releases capture ownership",
+              "outcome": "passed"
+            },
+            {
+              "name": "valid CRC cannot bypass dimension and PNG header bounds",
+              "outcome": "passed"
+            },
+            {
+              "name": "truncated bad CRC non PNG and trailing payload never publish",
+              "outcome": "passed"
+            },
+            {
+              "name": "clock reversal cannot grow file count beyond budget",
+              "outcome": "passed"
+            }
+          ],
+          "artifactPath": "test-results/testEnterpriseReleaseUnitTest/TEST-com.sphereplatform.agent.commands.ScreenshotFileStoreTest.xml",
+          "xmlSha256": "69161d4a4da3c7beabfe9d8547b7223fa7733edf7bfe1626d3750427a93dc4f8"
+        }
+      ]
+    }
+  ]
+}

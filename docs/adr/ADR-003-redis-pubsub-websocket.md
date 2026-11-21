@@ -1,5 +1,13 @@
 # ADR-003 — Use Redis Pub/Sub for WebSocket Fan-out
 
+> Historical decision record: the channel names, Celery callbacks, timeouts and
+> delivery/capacity claims below describe the recorded proposal, not the current
+> contract or a verified SLA. Current channel patterns are defined in
+> [channels.py](../../backend/websocket/channels.py) and browser delivery in the
+> [events router](../../backend/api/ws/events/router.py). Reconnection and REST
+> refresh do not replay every missed event. See [observability and recovery](../operations/OBSERVABILITY.md)
+> and the [task-control contract](../security/task-control-protocol.md).
+
 **Status:** Accepted  
 **Date:** 2024-02-15  
 **Deciders:** Backend Team Lead  
@@ -141,6 +149,5 @@ consumer backpressure from blocking the Redis subscriber coroutine.
 
 ## Links
 
-- [backend/websocket/manager.py](../../backend/websocket/manager.py)
-- [docs/architecture.md — WebSocket Architecture](../architecture.md#websocket-architecture)
-- [TZ-03-WebSocket-Layer/SPLIT-2-Redis-PubSub.md](../../TZ-03-WebSocket-Layer/SPLIT-2-Redis-PubSub.md)
+- [Current Pub/Sub router](../../backend/websocket/pubsub_router.py)
+- [Architecture overview](../architecture.md)

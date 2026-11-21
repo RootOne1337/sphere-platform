@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<verification-metadata xmlns="https://schema.gradle.org/dependency-verification">
+    <configuration>
+        <verify-metadata>false</verify-metadata>
+        <verify-signatures>false</verify-signatures>
+        <!-- Existing dependencies retain their current policy. Only the new native artifact is admitted here. -->
+        <trusted-artifacts>
+            <trust group="^(?!io\.getstream$).*$" regex="true" reason="Existing dependencies; native canary admission is scoped to io.getstream"/>
+        </trusted-artifacts>
+    </configuration>
+    <components>
+        <component group="io.getstream" name="stream-video-webrtc-android" version="146.7.0">
+            <artifact name="stream-video-webrtc-android-146.7.0.aar">
+                <sha256 value="8650f62de6bf8ae930ce72a70e999f1ce2a1dfb87dddca2bbe0cb3317dc6fd28" origin="Maven Central artifact independently downloaded and inspected 2026-10-09"/>
+            </artifact>
+        </component>
+    </components>
+</verification-metadata>

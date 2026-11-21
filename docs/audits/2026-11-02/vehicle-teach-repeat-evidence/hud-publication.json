@@ -1,0 +1,176 @@
+{
+  "schema": "sphere-speed-reference-publication-v1",
+  "source_job": "6a77040681d142ec97d51831a22785fb",
+  "accepted_count": 836,
+  "selected_count": 857,
+  "profile_sha256": "c51e849467777b3b316a0e1c50548618c9b87f933ac8dcb9e664c3871ed33536",
+  "source_and_protected_unchanged": true,
+  "protected_sha256": {
+    "input/manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "input/video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "input/frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "input/inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "input/COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "state.json": "1f4b809096a638fb1600b9d53af795cf4af8d7724ec717c87fb4e87906065ede",
+    "CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "geometry.json": "f0558a9dee168d9216534bdae15ea463c0612f3eb0002d9ef8ee7bd3621dbd6a",
+    "quality.json": "51b1425d2c959d8311247c28cccd6354579d9d943f699227e5a41d82ba0fce74",
+    "START": "8b43ec9dba5945f6d33fcfc62e9228da9198ff4fe3187b466e35519feafc77bc",
+    "control.json": "0407672a9e12b7a29f1a4dab98a9a0bc72dd4b67f8717d62b2259e772650834f",
+    "alternative-selection.json": "1e4c2f10b60459d846c253f4d90ceffc8cecd0a3b99a8e481ce985cbe814fb9a"
+  },
+  "per_frame_reader_ms": {
+    "samples": 400,
+    "median": 0.20439998479560018,
+    "p95": 0.2858300809748471,
+    "maximum": 1.103700022213161
+  },
+  "golden_results": [
+    {
+      "source_index": 0,
+      "expected": 0,
+      "result": {
+        "speed_kmh": 0.0,
+        "confidence": 100.0,
+        "status": "accepted",
+        "epoch": "benchmark",
+        "sequence": 0,
+        "received_at": 123.0,
+        "jpeg_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "latency_ms": 1.103700022213161,
+        "hudProfile": "black_russia_scooter_v1",
+        "units": "game_hud_kmh",
+        "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+        "world_metric": false
+      }
+    },
+    {
+      "source_index": 52,
+      "expected": 1,
+      "result": {
+        "speed_kmh": 1.0,
+        "confidence": 93.27956989247312,
+        "status": "accepted",
+        "epoch": "benchmark",
+        "sequence": 52,
+        "received_at": 123.0,
+        "jpeg_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "latency_ms": 0.242199981585145,
+        "hudProfile": "black_russia_scooter_v1",
+        "units": "game_hud_kmh",
+        "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+        "world_metric": false
+      }
+    },
+    {
+      "source_index": 57,
+      "expected": 7,
+      "result": {
+        "speed_kmh": 7.0,
+        "confidence": 81.76470588235294,
+        "status": "accepted",
+        "epoch": "benchmark",
+        "sequence": 57,
+        "received_at": 123.0,
+        "jpeg_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "latency_ms": 0.13450009282678366,
+        "hudProfile": "black_russia_scooter_v1",
+        "units": "game_hud_kmh",
+        "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+        "world_metric": false
+      }
+    },
+    {
+      "source_index": 62,
+      "expected": 14,
+      "result": {
+        "speed_kmh": 14.0,
+        "confidence": 100.0,
+        "status": "accepted",
+        "epoch": "benchmark",
+        "sequence": 62,
+        "received_at": 123.0,
+        "jpeg_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "latency_ms": 0.25889999233186245,
+        "hudProfile": "black_russia_scooter_v1",
+        "units": "game_hud_kmh",
+        "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+        "world_metric": false
+      }
+    },
+    {
+      "source_index": 151,
+      "expected": 37,
+      "result": {
+        "speed_kmh": 37.0,
+        "confidence": 88.38383838383838,
+        "status": "accepted",
+        "epoch": "benchmark",
+        "sequence": 151,
+        "received_at": 123.0,
+        "jpeg_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "latency_ms": 0.23819995112717152,
+        "hudProfile": "black_russia_scooter_v1",
+        "units": "game_hud_kmh",
+        "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+        "world_metric": false
+      }
+    },
+    {
+      "source_index": 252,
+      "expected": 53,
+      "result": {
+        "speed_kmh": 53.0,
+        "confidence": 97.62470308788599,
+        "status": "accepted",
+        "epoch": "benchmark",
+        "sequence": 252,
+        "received_at": 123.0,
+        "jpeg_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "latency_ms": 0.21430000197142363,
+        "hudProfile": "black_russia_scooter_v1",
+        "units": "game_hud_kmh",
+        "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+        "world_metric": false
+      }
+    },
+    {
+      "source_index": 282,
+      "expected": 59,
+      "result": {
+        "speed_kmh": 59.0,
+        "confidence": 100.0,
+        "status": "accepted",
+        "epoch": "benchmark",
+        "sequence": 282,
+        "received_at": 123.0,
+        "jpeg_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "latency_ms": 0.20969996694475412,
+        "hudProfile": "black_russia_scooter_v1",
+        "units": "game_hud_kmh",
+        "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+        "world_metric": false
+      }
+    },
+    {
+      "source_index": 777,
+      "expected": 10,
+      "result": {
+        "speed_kmh": 10.0,
+        "confidence": 98.21428571428571,
+        "status": "accepted",
+        "epoch": "benchmark",
+        "sequence": 777,
+        "received_at": 123.0,
+        "jpeg_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "latency_ms": 0.20619994029402733,
+        "hudProfile": "black_russia_scooter_v1",
+        "units": "game_hud_kmh",
+        "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+        "world_metric": false
+      }
+    }
+  ],
+  "live_game_test": false,
+  "geometry_or_navigation_authority_changed": false
+}

@@ -1,0 +1,330 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-24T17:25:26.842528+00:00",
+  "scope": "Addressed APK89, actual browser recording/input on launcher/debug fixture and two-view geometry preview. No autonomous route or global map acceptance.",
+  "apk": {
+    "device": "auto-ph-011",
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "versionCode": 10289,
+    "version": "1.2.89-dev",
+    "sourceRevision": "94bf59a3c84f1828fa360b7bbdf0796beb00494a",
+    "sha256": "4367c3b7a6a25c9ac99212028b3af9ca1360d345c14ddb210b6692cc19863b0a",
+    "installedHashVerified": true,
+    "observedAtUtc": "2026-10-23T21:19:05.768641+00:00",
+    "localUnitGates": {
+      "ordinary": {
+        "tests": 5144,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 12
+      },
+      "direct": {
+        "tests": 2600,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 6
+      }
+    },
+    "newGitHubBuilds": 0,
+    "dataClears": 0,
+    "adbInstalls": 0,
+    "fleetRollout": false
+  },
+  "browserRecordings": [
+    {
+      "clip": "cd68bb7e2cd84f86b149de9892e2659b",
+      "manifestSha256": "6b9a8864cef1ab496e4acb4f873484befc253befdfd297e47d4e86fd92b3cb49",
+      "completeVerified": true,
+      "closedVerified": true,
+      "frames": 1496,
+      "decodedFrames": 1496,
+      "allAccessUnitHashesVerified": true,
+      "mediaSeconds": 26.181,
+      "meanMediaFps": 57.10247889690997,
+      "maxMediaGapMs": 34.0,
+      "events": 169,
+      "appliedReceipts": 0,
+      "scene": "Android launcher; no gameplay",
+      "sourceCaptureClockMappingKnown": false
+    },
+    {
+      "clip": "dad1699bfe4547189ba5fb2879d07a3c",
+      "manifestSha256": "15ef9d300ed806e33e10183d930ff0c162ed1843a4ac10ce360fec85c7c3c8cb",
+      "completeVerified": true,
+      "closedVerified": true,
+      "frames": 1205,
+      "decodedFrames": 1205,
+      "allAccessUnitHashesVerified": true,
+      "journalPairsVerified": true,
+      "mediaSeconds": 21.144,
+      "meanMediaFps": 56.94286795308362,
+      "maxMediaGapMs": 47.0,
+      "events": 161,
+      "appliedReceipts": 15,
+      "contacts": {
+        "0": {
+          "down": 1,
+          "move": 1,
+          "up": 1,
+          "nativeHoldMs": 1206
+        },
+        "1": {
+          "down": 1,
+          "move": 8,
+          "up": 1,
+          "nativeHoldMs": 169
+        },
+        "2": {
+          "down": 1,
+          "move": 0,
+          "up": 1,
+          "nativeHoldMs": 506
+        }
+      },
+      "scene": "Android debug fixture; no gameplay",
+      "sourceCaptureClockMappingKnown": false
+    }
+  ],
+  "geometryOfflineService": {
+    "source": "historical screenshots, offline service check, not live",
+    "results": [
+      {
+        "windows": 0,
+        "points": 0,
+        "inference_ms": 0,
+        "frame_sequence": 1,
+        "state": "first_view",
+        "round_trip_ms": 1391.0
+      },
+      {
+        "windows": 1,
+        "points": 4266,
+        "inference_ms": 1098.09,
+        "frame_sequence": 2,
+        "state": "relative_window_not_map",
+        "round_trip_ms": 2344.0
+      },
+      {
+        "windows": 2,
+        "points": 4266,
+        "inference_ms": 474.43,
+        "frame_sequence": 3,
+        "state": "relative_window_not_map",
+        "round_trip_ms": 1625.0
+      },
+      {
+        "windows": 3,
+        "points": 4266,
+        "inference_ms": 31.66,
+        "frame_sequence": 4,
+        "state": "relative_window_not_map",
+        "round_trip_ms": 1203.0
+      }
+    ],
+    "stopped": true
+  },
+  "webSource": "8e752e14e0862113c6052c07452b814eb444cad6",
+  "frontendLocalGate": {
+    "runId": "20261024T165241Z-20bf2131",
+    "state": "success",
+    "suites": 187,
+    "tests": 2668,
+    "failures": 0
+  },
+  "currentCorrections": {
+    "controlsBeforeRecording": true,
+    "maxMinutes": 10,
+    "maxVideoBytes": 2147483648,
+    "plannedLimitCanCompleteAfterClosed": true,
+    "separateLocal3DPanel": true,
+    "workerImporter": false,
+    "globalMap": false,
+    "productionNavigation": false,
+    "sceneBeforeControlRequired": true,
+    "crossSiteViewer": true,
+    "preciseInputWatchdogs": true,
+    "watchdogThresholdsRelaxed": false
+  },
+  "geometryLiveFirstTrial": {
+    "source": "fresh browser video on PH011, not historical screenshots",
+    "windowsObserved": 98,
+    "pointsInLastWindow": 4266,
+    "lastInferenceMs": 37,
+    "globalMap": false,
+    "recordingContinued": false,
+    "finding": "Rerun iframe autofocus triggered parent window blur; fixed in web source9d18cadd, joint long-run verification pending"
+  },
+  "pythonPreviewBoundaryTests": {
+    "passed": 3,
+    "gpuRequired": false,
+    "scope": "unprojection convention, origin/session/Host admission and no inference queue"
+  },
+  "geometryLiveSecondTrial": {
+    "webSource": "9d18cadd748c7a30a8feabd0871c52c845fba8cb",
+    "recordedSeconds": 15.7,
+    "frames": 518,
+    "complete": false,
+    "failure": "contact_watchdog",
+    "finding": "Cold embedded viewer must be warmed before control; latest source isolates viewer site and distinguishes freshness vs ACK failure. Joint long-run acceptance still pending."
+  },
+  "apk90Candidate": {
+    "versionCode": 10290,
+    "sourceRevision": "d62088094abcc136c1d29beea834dd4486d874e2",
+    "androidLocalGate": "20261024T101750Z-8058fac3",
+    "installed": true,
+    "change": "Separate capture-consent task affinity; avoids revealing prior Agent activity over the game",
+    "installedPackageSha256": "51e2f6df58a73a10e730d8494e264f72ce1431ca86df8e3704887bea26ee70cc",
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "localGateCounts": {
+      "ordinary": {
+        "tests": 5144,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 12
+      },
+      "direct": {
+        "tests": 2600,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 6
+      }
+    },
+    "configuredTests": {
+      "dev": {
+        "tests": 1300,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1300,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "dataClears": 0,
+    "adbInstalls": 0,
+    "fleetRollout": false
+  },
+  "installedRuntime": {
+    "ui": "8e752e14e0862113c6052c07452b814eb444cad6",
+    "api": "1afdc529e18cd34b5d8ee0919f217076a8592846",
+    "observedAtUtc": "2026-10-24T17:00:00.138125+00:00",
+    "uiImageId": "sha256:e1b27a113b2879d4bfbcbc49f9e9d17928612006b9815505f739b910e56a8f63",
+    "otherContainersPreserved": 45,
+    "ordinaryOtaChannelChanged": false
+  },
+  "vpn90GuardedHandover": {
+    "atUtc": "2026-10-24T17:06:32.089153+00:00",
+    "temporaryGuardRemoved": true,
+    "newNativeGuardRetained": true,
+    "originalIpWindowOpened": false,
+    "vpnNewSession": "b00a42a8-c2c6-4c3f-a7b7-11dde088b29b",
+    "scope": "Finite addressed PH011 upgrade, both-family rule/table and Sphere UID exclusion proof; HTTPS/exit not requalified here."
+  },
+  "captureForeground90": {
+    "before": {
+      "focus": "mCurrentFocus=Window{b6665a2 u0 com.br.top/com.blackhub.bronline.game.core.JNIActivity}",
+      "gameForeground": true
+    },
+    "after": {
+      "focus": "mCurrentFocus=Window{b6665a2 u0 com.br.top/com.blackhub.bronline.game.core.JNIActivity}",
+      "gameForeground": true,
+      "streamConnectedWithoutForegroundGameRelaunch": true
+    }
+  },
+  "browserJoint90": {
+    "clip": "c7aa48d84c90402da68012da51ed34be",
+    "manifestSha256": "0f79e89fb520823b51cb3916b14ed17174fbc8f1e9af21687d72e0952e9a416e",
+    "completeVerified": true,
+    "closedVerified": true,
+    "frames": 6026,
+    "decodedFrames": 6026,
+    "allAccessUnitHashesVerified": true,
+    "journalPairsVerified": true,
+    "mediaSeconds": 190.215,
+    "meanMediaFps": 31.674683910312016,
+    "maxMediaGapMs": 191.0,
+    "events": 1241,
+    "appliedReceipts": 15,
+    "contacts": {
+      "0": {
+        "down": 1,
+        "move": 1,
+        "up": 1,
+        "nativeHoldMs": 1200
+      },
+      "1": {
+        "down": 1,
+        "move": 8,
+        "up": 1,
+        "nativeHoldMs": 134
+      },
+      "2": {
+        "down": 1,
+        "move": 0,
+        "up": 1,
+        "nativeHoldMs": 502
+      }
+    },
+    "scene": "Black Russia, supervised finite control and live 3D preview; no autonomous navigation",
+    "sourceCaptureClockMappingKnown": false
+  },
+  "browserReview90": {
+    "frame": 5001,
+    "relativeSeconds": 158.289,
+    "webCodecsRendered": true,
+    "old600FrameRestrictionRemoved": true,
+    "seekableIdrs": 30
+  },
+  "geometryJoint90": {
+    "livePreviewRendered": true,
+    "windowsObservedAtRecordingStop": 112,
+    "pointsInLastWindow": 4266,
+    "lastInferenceMs": 39,
+    "coldViewerOpenedBeforeInput": true,
+    "recordingSurvivedFocusTransition": true,
+    "globalMap": false,
+    "metricScaleCalibrated": false,
+    "dynamicSegmentationImplemented": false,
+    "currentMaskStage": "point_filter_after_DA3_inference_not_pose_mask"
+  },
+  "rgbMonitor90": {
+    "success": true,
+    "durationObservedSeconds": 10.006,
+    "requestedObservationHz": 5,
+    "rgbObservationsDuringMonitor": 48,
+    "observationHzDuringMonitor": 4.797,
+    "decodedFpsDuringMonitor": 30.982,
+    "decodedArrivalGaps": {
+      "scope": "unique_frame_recv_return_clock_not_android_capture",
+      "maxGapMs": 417.412,
+      "gapsOver250ms": 4
+    },
+    "bounds": {
+      "decodedFrameSlots": 1,
+      "immutableRgbFrameSlots": 1,
+      "observationTailLimit": 64,
+      "inputReplay": false
+    },
+    "limitations": [
+      "No source capture frame ID/clock mapping: receiver age is not capture age.",
+      "Unique RTP PTS is transport progress, not proof of fresh Android source pixels.",
+      "Selected ICE pair proves a peer route, not LAN or VPN bypass.",
+      "Idle ALIVE is actor liveness. Optional pointer ACKs prove dispatch, not game semantics or source-to-screen latency.",
+      "User JWT pilot only; service identity, task delegation and model integration remain open."
+    ],
+    "acceptance": "finite latest-slot RGB observation;4.797Hz average,417.412ms worst receive gap; strict5Hz/jitter SLA not accepted"
+  },
+  "remaining": [
+    "Human500m master route",
+    "Vehicle keymap calibration",
+    "Single route export/importer",
+    "Global pose alignment and relocalization",
+    "Mask-aware pose estimation and dynamic obstacle layer",
+    "Metric distance calibration",
+    "Motor policy/planner/closed-loop autonomous A-to-B",
+    "Strict5Hz and capture-to-action latency qualification"
+  ]
+}

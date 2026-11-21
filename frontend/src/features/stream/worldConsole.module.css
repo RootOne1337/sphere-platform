@@ -1,0 +1,533 @@
+.console {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(255px, 310px);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+  color: hsl(var(--foreground));
+}
+.panel,
+.legendPanel {
+  min-width: 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 16px;
+  background: hsl(var(--card));
+  overflow: hidden;
+}
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 51px;
+  padding: 10px 17px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.panelHeader > div,
+.target,
+.tripAction,
+.mapbar,
+.selectLabel,
+.layers summary,
+.layers label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.panelHeader h2,
+.legendPanel h3 {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+.panelHeader > div > svg,
+.target > svg {
+  color: hsl(var(--primary));
+  flex-shrink: 0;
+}
+.panelHeader > span,
+.selectLabel > span,
+.target p,
+.tripAction small,
+.status,
+.railBody p,
+.setting p,
+.previewOptions p,
+.legendPanel li {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+.rail {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+}
+.mapbar {
+  justify-content: space-between;
+  padding: 8px 14px;
+  gap: 8px;
+}
+.selectLabel {
+  font-size: 13px;
+  min-width: 0;
+}
+.selectLabel select,
+.previewOptions select {
+  padding: 5px 6px;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+  color: inherit;
+  background: hsl(var(--background));
+  font: inherit;
+  max-width: 100%;
+}
+.layers {
+  position: relative;
+  z-index: 3;
+  font-size: 13px;
+}
+.layers summary,
+.setting summary,
+.previewOptions summary {
+  cursor: pointer;
+  list-style: none;
+}
+.layers summary::-webkit-details-marker,
+.setting summary::-webkit-details-marker,
+.previewOptions summary::-webkit-details-marker {
+  display: none;
+}
+.layers summary {
+  padding: 6px 8px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 7px;
+}
+.layers > div {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 5px);
+  width: max-content;
+  padding: 11px 14px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  box-shadow: 0 5px 22px #0003;
+  background: hsl(var(--card));
+}
+.layers label {
+  min-height: 32px;
+}
+.layers input {
+  accent-color: hsl(var(--primary));
+}
+.mapViewport,
+.mapLoading {
+  position: relative;
+  min-height: 270px;
+  height: clamp(270px, 52dvh, 740px);
+  background: #1b3039;
+}
+.mapLoading {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  color: #d1e6e4;
+}
+.mapViewport canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+.mapViewport canvas:focus-visible {
+  outline: 2px solid #80e5d5;
+  outline-offset: -3px;
+}
+.zoomGroup {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  overflow: hidden;
+  border-radius: 9px;
+  border: 1px solid #62777c;
+  box-shadow: 0 2px 10px #0003;
+}
+.zoomGroup button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: #11242bed;
+  color: #e8f4f3;
+}
+.zoomGroup button + button {
+  border-top: 1px solid #45585e;
+}
+.zoomGroup button:hover,
+.zoomGroup button:focus-visible {
+  background: #2c5158;
+}
+.tileError {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  color: white;
+  background: #3f3430;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+.tripFooter {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) minmax(140px, auto);
+  column-gap: 16px;
+  align-items: start;
+  padding: 14px 16px 0;
+}
+.target {
+  grid-column: 1;
+  flex-wrap: nowrap;
+  min-height: 36px;
+}
+.target strong {
+  font-size: 14px;
+}
+.target p,
+.status,
+.tripAction small,
+.attention {
+  line-height: 1.45;
+}
+.target button {
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 28px;
+}
+.tripFooter > .selectLabel,
+.tripFooter > .status,
+.tripFooter > .attention {
+  grid-column: 1;
+  margin-top: 5px;
+}
+.tripAction {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 220px;
+  text-align: right;
+}
+.tripAction button {
+  gap: 8px;
+}
+.attention {
+  font-size: 12px;
+  color: hsl(var(--foreground));
+  border-left: 2px solid #d3a25c;
+  padding-left: 7px;
+}
+.previewOptions {
+  grid-column: 1/-1;
+  margin-top: 12px;
+  border-top: 1px solid hsl(var(--border));
+  font-size: 13px;
+}
+.previewOptions summary,
+.setting summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 0;
+}
+.previewOptions summary::after,
+.setting summary::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+  margin-right: 3px;
+}
+.previewOptions[open] summary::after,
+.setting[open] summary::after {
+  transform: rotate(225deg);
+}
+.previewOptions[open] {
+  padding-bottom: 12px;
+}
+.previewOptions p {
+  margin: 2px 0 8px;
+}
+.monitor {
+  position: relative;
+  background: #0c161a;
+}
+.monitor video {
+  display: block;
+}
+.noSignal {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 10px;
+  pointer-events: none;
+  color: #a4b9b9;
+  background: radial-gradient(ellipse at 50% 44%, #1c3035, #101c21 80%);
+}
+.noSignal strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.railBody {
+  padding: 12px 15px;
+  display: grid;
+  gap: 6px;
+}
+.railBody button {
+  gap: 8px;
+}
+.panelHeader .online,
+.panelHeader .offline {
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.online::before,
+.offline::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.panelHeader .online {
+  color: hsl(var(--primary));
+}
+.setting {
+  padding: 0 16px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.setting:last-child {
+  border-bottom: 0;
+}
+.setting summary {
+  font-size: 13px;
+  min-height: 43px;
+}
+.setting > div {
+  padding: 0 0 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.setting dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 5px 10px;
+  font-size: 12px;
+}
+.setting dt {
+  color: hsl(var(--muted-foreground));
+}
+.setting dd {
+  overflow-wrap: anywhere;
+}
+.legendPanel {
+  padding: 13px 16px;
+  background: transparent;
+}
+.legendPanel ul {
+  margin-top: 9px;
+  display: grid;
+  gap: 6px;
+}
+.legendPanel li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.legendPanel i {
+  width: 15px;
+  height: 3px;
+  border-radius: 3px;
+  background: #43c7c5;
+}
+.legendPanel i[data-kind="preview"] {
+  background: #eab15a;
+}
+.legendPanel i[data-kind="active"] {
+  background: #3db980;
+}
+.legendPanel i[data-kind="goal"] {
+  background: #ffb957;
+  width: 9px;
+  height: 9px;
+  margin: 0 3px;
+  border-radius: 50%;
+}
+@media (max-width: 980px) {
+  .console {
+    grid-template-columns: minmax(0, 1fr) minmax(216px, 26%);
+    gap: 10px;
+  }
+  .tripFooter {
+    grid-template-columns: 1fr;
+  }
+  .tripAction {
+    grid-row: auto;
+    grid-column: 1;
+    align-items: center;
+    flex-direction: row;
+    max-width: none;
+    text-align: left;
+    margin-top: 8px;
+  }
+}
+@media (max-width: 730px) {
+  .console {
+    grid-template-columns: 1fr;
+  }
+  .mapViewport,
+  .mapLoading {
+    height: clamp(300px, 48dvh, 550px);
+  }
+  .rail {
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  }
+  .mapbar,
+  .tripFooter {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .zoomGroup button {
+    width: 40px;
+    height: 40px;
+  }
+  .mapViewport canvas {
+    min-width: 0;
+  }
+  .legendPanel {
+    align-self: start;
+  }
+}
+
+.probeLine {
+  grid-column: 1/-1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.probeLine button {
+  padding-left: 0;
+  gap: 7px;
+}
+.probeLine small {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+
+.suggest {
+  grid-column: 1;
+  justify-self: start;
+  margin-top: 6px;
+}
+
+.tripAction button:disabled {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  opacity: 1;
+}
+.tripAction small a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.legendPanel i[data-kind="search"] {
+  background: #bd94e9;
+}
+.rail > section {
+  scroll-margin-top: 78px;
+}
+
+.planTabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background));
+}
+.planTabs button {
+  min-height: 30px;
+  padding: 3px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+.planTabs button[aria-pressed="true"] {
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted));
+}
+.itinerary {
+  grid-column: 1;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+.itinerary p,
+.itinerary small {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+.itinerary ol {
+  display: grid;
+  gap: 3px;
+  max-height: 225px;
+  overflow: auto;
+}
+.itinerary li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.itinerary li > b {
+  border: 1px solid hsl(var(--primary) / 0.5);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  flex-shrink: 0;
+}
+.itinerary li > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.itinerary li > button {
+  min-height: 30px;
+  min-width: 26px;
+  display: grid;
+  place-items: center;
+}
+.itinerary button:disabled {
+  opacity: 0.35;
+}
+.itinerary select {
+  color: inherit;
+  background: hsl(var(--background));
+}

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "kind": "FINITE_SUPERVISED_VISUAL_WAYPOINT_SERVO_USER_CONFIRMED_NOT_LEARNED_AI",
+  "observedAtUtc": "2026-10-17T10:58:17.660473+00:00",
+  "sourceRevision": "802535c4133d72bea62250212d24b3b9ff971052",
+  "runner": {
+    "path": ".local-pilot/motor-amd-20261017/waypoint-cv-v1.py",
+    "sha256": "41892da25bc935022058e09388ce17b2fbc7580bdf34a2354d5aca199283ebf4"
+  },
+  "rawEvidence": {
+    "path": ".local-pilot/motor-amd-20261017/waypoint-cv-v1.json",
+    "sha256": "c78c72d4887bd86581d385195a5cfb55570fd354dac092954138c0bf452b49b8"
+  },
+  "waypoint25mDecodedPng": {
+    "path": ".local-pilot/motor-amd-20261017/waypoint-cv-v1-050s.png",
+    "sha256": "299f4670044e686f2c05b3d4e22703fdec0e96a1fe1248332d6170f726a27029"
+  },
+  "afterDecodedPng": {
+    "path": ".local-pilot/motor-amd-20261017/waypoint-cv-v1-after.png",
+    "sha256": "2bf43751641b2dca885a35a7c80e780dcbb72b95758d114e340034463d55543e"
+  },
+  "device": "auto-ph-011",
+  "server": "TYUMEN",
+  "goalReachedUserConfirmed": true,
+  "confirmationSource": "User message in this chat after run: добежала",
+  "rawPreConfirmationGoalReachedFlag": false,
+  "learnedModelUsed": false,
+  "learnedModelGoalNavigationAccepted": false,
+  "controller": "5Hz red-3D-waypoint visual servo; single persistent Android virtual stick",
+  "observedMarkerMeters": [
+    241,
+    110,
+    46,
+    25
+  ],
+  "finalMarkerAndMinimapRouteDisappeared": true,
+  "numericZeroMeterFrameRecorded": false,
+  "finishReason": "visual_target_lost",
+  "durationSeconds": 56.538,
+  "nominalMaximumDurationSeconds": 180,
+  "fullDurationTransportSuccessFlag": false,
+  "fullDurationFlagExplanation": "The original transport success contract requires all180s. The supervised run ended at56.538s on visual target disappearance. This false flag is preserved.",
+  "transportFailure": null,
+  "decisionsIncludingSetup": 296,
+  "observationCorrectionHzWholeSequence": 5.125834493239101,
+  "physicalEvents": 36,
+  "eventCounts": {
+    "0": 1,
+    "2": 35
+  },
+  "nativeAppliedReceipts": 36,
+  "participantClosed": true,
+  "receiverToVisualDecisionMs": {
+    "p50": 33.45425000588875,
+    "max": 98.45009999116883
+  },
+  "sourceCaptureToActionLatencyMeasured": false,
+  "route": {
+    "path": "nat",
+    "protocol": "udp",
+    "candidateTypes": [
+      "host",
+      "prflx"
+    ],
+    "addressScopes": [
+      "private",
+      "private"
+    ],
+    "evidence": "aiortc_1_15_nominated_pair_adapter",
+    "lanProven": false
+  },
+  "serverBootstrapBytes": 0,
+  "serverBytesAfterHandover": 0,
+  "uiApiApkChanged": false,
+  "productionNavigationAccepted": false,
+  "limitations": [
+    "One user-placed visible waypoint on one on-foot route; no repeatability/obstacle planner accepted.",
+    "Pure color/geometry image tracking and visual steering; no NitroGen/P2P inference.",
+    "Arrival confirmed by human after marker disappeared; exact numeric zero not recorded.",
+    "Loss of target stops motion; disappearance alone is not automatic proof of arrival.",
+    "Other authorized clients were not disconnected; not an isolated benchmark.",
+    "No vehicle, camera multitouch, separate GPU/LAN or fleet capacity acceptance."
+  ]
+}

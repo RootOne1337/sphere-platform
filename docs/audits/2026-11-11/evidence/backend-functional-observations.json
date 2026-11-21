@@ -1,0 +1,91 @@
+{
+  "start_session": {
+    "existing_get_http": 200,
+    "start_http": 500,
+    "active_count_after_start": 1
+  },
+  "partial_session_end": {
+    "end_http": 500,
+    "readback_http": 200,
+    "before": {
+      "nodes_executed": 17,
+      "errors_count": 3,
+      "level_after": 8,
+      "balance_after": 145.0
+    },
+    "persisted_after": {
+      "nodes_executed": 17,
+      "errors_count": 3,
+      "level_after": 8,
+      "balance_after": 145.0
+    },
+    "ended_at_after_http": null,
+    "service_response_error": "MissingGreenlet",
+    "flushed_before_rollback": {
+      "nodes_executed": 0,
+      "errors_count": 0,
+      "level_after": null,
+      "balance_after": null
+    }
+  },
+  "schedule_fire_now": {
+    "create_http": 201,
+    "disable_http": 500,
+    "disabled_fire_http": 500,
+    "disabled_next_fire_set": true,
+    "disabled_readback_active": false,
+    "disabled_discovered": false,
+    "enable_http": 500,
+    "enabled_fire_http": 500,
+    "enabled_discovered": true
+  },
+  "schedule_validation": {
+    "invalid_cron_http": 500,
+    "two_triggers_patch_http": 500,
+    "persisted_cron": "0 * * * *",
+    "persisted_interval_seconds": 120
+  },
+  "settings_clear_script": {
+    "set_http": 200,
+    "clear_http": 200,
+    "registration_script_retained": true
+  },
+  "scheduler_master_toggle": {
+    "toggle_http": 200,
+    "scheduler_enabled_readback": false,
+    "execution_status": "triggered",
+    "devices_targeted": 1
+  },
+  "legacy_device_commands": {
+    "connect_http": 204,
+    "screenshot_http": 200,
+    "screenshot_state": "screenshot_requested",
+    "connect_redis_ttl_in_range": true,
+    "screenshot_redis_ttl_in_range": true
+  },
+  "event_trigger_patch": {
+    "patch_http": 200,
+    "readback_http": 200,
+    "description_persisted": true
+  },
+  "event_trigger_hour_limit": {
+    "configured_limit": 1,
+    "trigger_count": 2,
+    "persisted_pipeline_runs": 2
+  },
+  "pipeline_batch_waves": {
+    "batch_http": 201,
+    "persisted_wave_config": {
+      "wave_size": 1,
+      "wave_delay_seconds": 3600
+    },
+    "first_read_run_statuses": [
+      "queued",
+      "queued"
+    ]
+  },
+  "duplicate_active_sessions": {
+    "persisted_count": 3,
+    "event_reactor_end": "MultipleResultsFound"
+  }
+}

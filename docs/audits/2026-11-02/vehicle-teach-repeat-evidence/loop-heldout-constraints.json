@@ -1,0 +1,216 @@
+{
+  "coordinateConvention": "COLMAP xy-.5 and K cx/cy-.5; exact ordered DB keypoint namespace verified",
+  "heldoutScope": "25% correspondence constraints withheld from new loop-edge matching, same images/not independent truth",
+  "pairs": [
+    {
+      "pair": "loop-1-171.npz",
+      "npz_sha256": "aa4509235b73fb441da149e27df4d701e619125a4b9981be7bb18f3bcbaa5fd7",
+      "first": "00000000.png",
+      "second": "00000844.png",
+      "matches": 71,
+      "train": 53,
+      "heldout": 18,
+      "0": {
+        "available": false
+      },
+      "1": {
+        "available": false
+      },
+      "published": {
+        "available": true,
+        "train": {
+          "count": 53,
+          "mean": 48.1390690402787,
+          "median": 31.90653534264161,
+          "p95": 136.42609169139962,
+          "maximum": 190.124052162086,
+          "le2": 0,
+          "le4": 2
+        },
+        "heldout": {
+          "count": 18,
+          "mean": 35.73454992281058,
+          "median": 28.97147853808152,
+          "p95": 82.99947368603247,
+          "maximum": 120.14422605768476,
+          "le2": 1,
+          "le4": 1
+        }
+      }
+    },
+    {
+      "pair": "loop-1-173.npz",
+      "npz_sha256": "0f84e3637275f4bb7c37350b65405877a3db745f0cc21fb0f2a50d7a174fe335",
+      "first": "00000000.png",
+      "second": "00000856.png",
+      "matches": 81,
+      "train": 55,
+      "heldout": 26,
+      "0": {
+        "available": false
+      },
+      "1": {
+        "available": false
+      },
+      "published": {
+        "available": true,
+        "train": {
+          "count": 55,
+          "mean": 42.05575474340096,
+          "median": 33.228011516874865,
+          "p95": 92.14542709420961,
+          "maximum": 172.89680277215106,
+          "le2": 1,
+          "le4": 3
+        },
+        "heldout": {
+          "count": 26,
+          "mean": 47.68231073954317,
+          "median": 26.92891916713533,
+          "p95": 150.6841064013234,
+          "maximum": 190.158295424889,
+          "le2": 0,
+          "le4": 1
+        }
+      }
+    },
+    {
+      "pair": "loop-15-160.npz",
+      "npz_sha256": "c4c5f3c89654e0c08de9b7d158debc165f4073a9282971f442887e04db8fc34d",
+      "first": "00000077.png",
+      "second": "00000790.png",
+      "matches": 39,
+      "train": 27,
+      "heldout": 12,
+      "0": {
+        "available": false
+      },
+      "1": {
+        "available": false
+      },
+      "published": {
+        "available": true,
+        "train": {
+          "count": 27,
+          "mean": 65.91909745971425,
+          "median": 26.447254820141186,
+          "p95": 260.7184856924164,
+          "maximum": 277.4637695961973,
+          "le2": 0,
+          "le4": 0
+        },
+        "heldout": {
+          "count": 12,
+          "mean": 33.040944259950905,
+          "median": 21.10871908288965,
+          "p95": 90.662395616067,
+          "maximum": 109.64292244971793,
+          "le2": 0,
+          "le4": 0
+        }
+      }
+    },
+    {
+      "pair": "loop-20-155.npz",
+      "npz_sha256": "b00ad2998ead214cbdda976538ee3961138f78794484a162ee163f00aa8a30ec",
+      "first": "00000108.png",
+      "second": "00000768.png",
+      "matches": 1,
+      "train": 1,
+      "heldout": 0,
+      "0": {
+        "available": false
+      },
+      "1": {
+        "available": false
+      },
+      "published": {
+        "available": true,
+        "train": {
+          "count": 1,
+          "mean": 19.96482833443948,
+          "median": 19.96482833443948,
+          "p95": 19.96482833443948,
+          "maximum": 19.96482833443948,
+          "le2": 0,
+          "le4": 0
+        },
+        "heldout": {
+          "count": 0
+        }
+      }
+    },
+    {
+      "pair": "loop-3-169.npz",
+      "npz_sha256": "04a6e3aec804ed17745d1fb2f25e67d5dfdf1f3a7c75f7a62cd2a625114dca52",
+      "first": "00000010.png",
+      "second": "00000833.png",
+      "matches": 68,
+      "train": 49,
+      "heldout": 19,
+      "0": {
+        "available": false
+      },
+      "1": {
+        "available": false
+      },
+      "published": {
+        "available": true,
+        "train": {
+          "count": 49,
+          "mean": 50.83580210421429,
+          "median": 35.58432108966407,
+          "p95": 131.6519998079002,
+          "maximum": 190.31884768047263,
+          "le2": 1,
+          "le4": 3
+        },
+        "heldout": {
+          "count": 19,
+          "mean": 41.164107425832675,
+          "median": 30.820788718994937,
+          "p95": 109.65459053992123,
+          "maximum": 173.1225039042514,
+          "le2": 0,
+          "le4": 0
+        }
+      }
+    },
+    {
+      "pair": "loop-8-165.npz",
+      "npz_sha256": "dba2eaf0ac7548a24cc5014d2fec07e1df18b9bd13db2b52a44d406ab3085059",
+      "first": "00000038.png",
+      "second": "00000814.png",
+      "matches": 84,
+      "train": 60,
+      "heldout": 24,
+      "0": {
+        "available": false
+      },
+      "1": {
+        "available": false
+      },
+      "published": {
+        "available": true,
+        "train": {
+          "count": 60,
+          "mean": 49.4595353197791,
+          "median": 34.98149170326842,
+          "p95": 134.11688384345496,
+          "maximum": 211.8900809623799,
+          "le2": 2,
+          "le4": 4
+        },
+        "heldout": {
+          "count": 24,
+          "mean": 49.808630339661725,
+          "median": 37.84258080183374,
+          "p95": 117.56029763188145,
+          "maximum": 190.11078667391334,
+          "le2": 1,
+          "le4": 1
+        }
+      }
+    }
+  ]
+}

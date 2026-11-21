@@ -34,12 +34,15 @@ export async function sphereApiRequest(
 ): Promise<unknown> {
     const creds = await this.getCredentials('spherePlatformApi');
 
+    const accessToken = typeof creds.accessToken === 'string' ? creds.accessToken.trim() : '';
     const options = {
         method,
         url: `${creds.serverUrl as string}/api/v1${path}`,
         headers: {
-            'X-API-Key': creds.apiKey as string,
-            'X-Org-ID': creds.orgId as string,
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {
+                'X-API-Key': creds.apiKey as string,
+                'X-Org-ID': creds.orgId as string,
+            }),
             'Content-Type': 'application/json',
         },
         body,

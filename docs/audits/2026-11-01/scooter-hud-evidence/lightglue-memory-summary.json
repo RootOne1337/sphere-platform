@@ -1,0 +1,82 @@
+{
+  "date": "2026-11-01",
+  "microcomparison": {
+    "jaccard_min": 0.9458128078817734,
+    "jaccard_median": 0.9594793000426802,
+    "gpu_peak_allocated_fp32": 596642304,
+    "gpu_peak_allocated_mp": 502959616,
+    "gpu_peak_reserved_fp32": 1300234240,
+    "gpu_peak_reserved_mp": 849346560,
+    "cache_identical_between_variants": true,
+    "source_hashes_unchanged": true,
+    "scope": "Eight pairs, 12 unique 4096-maximum SIFT feature sets; some naturally have fewer. CPU cache held fixed, only current pair copied to GPU. mp=True is upstream autocast, not fully-half model. Fundamental 2px RANSAC and essential cheirality use assumptions, not ground truth. Non-identical starts and sampled private commit prevent concluding host memory savings; full 163-image stress and quality need independent verification."
+  },
+  "first_full_attempt": {
+    "receipt": {
+      "admitted": true,
+      "initial_ram": 10223517696,
+      "initial_commit": 10592849920,
+      "stages": [
+        {
+          "stage": "prepare",
+          "exit": 0,
+          "stop": null,
+          "seconds": 1.5160000000614673
+        },
+        {
+          "stage": "match",
+          "exit": 1,
+          "stop": "memory",
+          "seconds": 84.65599999995902
+        }
+      ],
+      "seconds": 86.18799999996554,
+      "min_ram": 8441315328,
+      "min_commit": 4811907072,
+      "inputs_unchanged": true
+    },
+    "unverified_raw_pairs": 312,
+    "expected_pairs": 796,
+    "verified_pairs": 0
+  },
+  "second_full_attempt": {
+    "status": "partial_not_eligible_for_mapping",
+    "counts": {
+      "images": 163,
+      "keypoints": 163,
+      "descriptors": 163,
+      "matches": 60,
+      "two_view_geometries": 0
+    },
+    "expected_pairs": 796,
+    "feature_receipt_present": true,
+    "matching_receipt_present": false,
+    "input_png_hashes_all_match": true,
+    "prepared_png_hashes_all_match": true,
+    "prepared_masks_match_precise": true,
+    "current_mask_sha256": "f638c5d6da826eebfae0f3be57784ea4518dfac4238a6bcddaffbfbed0fb1ec7",
+    "video_sha256": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    "manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    "provenance_sha256": "f39f19c39712841bc0b4d228bedfbe128e2101cc0b9d561bfafb5e3eea3cf9f3",
+    "expected_video_sha256": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    "note": "Internal host guard reported free RAM or free commit below 4.5 GiB; current run did not record which value or exact minimum before raising. External watchdog sampled a higher minimum and did not trigger. No mapping or verification was run."
+  },
+  "stage_isolation_snapshot": {
+    "status": "waiting_for_stage1_admission",
+    "free_physical_gib": 5.211952209472656,
+    "free_commit_gib": 5.095550537109375,
+    "stage1_admission_gib": {
+      "commit": 5.5,
+      "ram": 5.5
+    },
+    "stage2_admission_gib": {
+      "commit": 6.5,
+      "ram": 6
+    },
+    "runtime_host_reserve_gib": 4.5,
+    "stage1_private_cap_mib": 768,
+    "plan": "163 individual lossless float32 feature files, max 450 MiB; prior feature hashes required",
+    "source_modified": false
+  },
+  "note": "Mixed precision comparison is only eight pairs; sampled private bytes and different starting states do not prove lower host commit. Partial graphs are not eligible for mapping."
+}

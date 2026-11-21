@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T16:26:10.350615+00:00",
+  "packageHashesObservedAtUtc": "2026-10-11T16:19:56.454654+00:00",
+  "scope": "Follow-up: PH030 completed its already authorized APK54 grant. Fresh installed package hashes for15 devices; no new grant, APK55 or API/UI installation.",
+  "previousEvidence": "docs/audits/2026-10-11/APK54-FLEET-DELIVERY.json",
+  "apk": {
+    "artifacts": [
+      {
+        "sourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
+        "version": "1.2.54-dev",
+        "versionCode": 10254,
+        "sha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "name": "auto-ph-010",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T15:14:51.313829+00:00",
+        "commandId": null,
+        "completedOta": false,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:56.445691+00:00",
+        "commandId": "a85bfefe-af06-4f37-9af0-2157e923e256",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "name": "auto-ph-012",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:55.590000+00:00",
+        "commandId": "91dc54c9-cc42-433d-88c9-f2f9973b36cd",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "name": "auto-ph-013",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:54.712553+00:00",
+        "commandId": "3cdd77d7-4b2f-48a5-bf99-b83a93e57de2",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "name": "auto-ph-014",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:53.945529+00:00",
+        "commandId": "a38f0238-3f0d-46f4-b2b1-82bc2d39a675",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "name": "auto-ph-015",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:53.173335+00:00",
+        "commandId": "9327a8a1-4e2e-48cd-b9a9-e8c0e2486cb9",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "name": "auto-ph-016",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:52.395145+00:00",
+        "commandId": "bc81767f-45d5-48fb-9add-a971fa44866d",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "name": "auto-ph-017",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:51.626590+00:00",
+        "commandId": "1fe551f9-5f54-43b0-964d-9088bf5d8ef4",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "name": "auto-ph-018",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:50.870946+00:00",
+        "commandId": "4fe232d7-2e48-49c8-8b72-965406b5e4b7",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "name": "auto-ph-019",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:50.081424+00:00",
+        "commandId": "ee92d2d2-60b6-4483-84c3-9edfffe35bb0",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "name": "auto-ph-020",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:49.298097+00:00",
+        "commandId": "a741bf81-2942-47c5-9542-e384febafa7a",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "name": "auto-ph-022",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:48.269164+00:00",
+        "commandId": "17a42bcb-0208-4d6c-932e-c53b320b2f51",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "name": "auto-ph-025",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:47.382509+00:00",
+        "commandId": "0ce56858-b54b-4f73-9163-02f2037eb6cc",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "name": "auto-ph-028",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:46.613102+00:00",
+        "commandId": "11d3c113-54d2-408c-92d9-912a2df196d5",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      },
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "name": "auto-ph-030",
+        "versionCode": 10254,
+        "installedPackageSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "status": "online",
+        "observedAtUtc": "2026-10-11T16:19:45.756342+00:00",
+        "commandId": "812ddaef-fc06-4ca2-89d9-64f736a6ae05",
+        "completedOta": true,
+        "evidenceScope": "Actual installed package hash; completed command receipt for addressed OTA."
+      }
+    ],
+    "offlineDevices": [
+      {
+        "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+        "name": "auto-ph-021",
+        "status": "offline",
+        "installationConfirmed": false,
+        "state": "offline_not_dispatched"
+      },
+      {
+        "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+        "name": "auto-ph-023",
+        "status": "offline",
+        "installationConfirmed": false,
+        "state": "offline_not_dispatched"
+      },
+      {
+        "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+        "name": "auto-ph-024",
+        "status": "offline",
+        "installationConfirmed": false,
+        "state": "offline_not_dispatched"
+      },
+      {
+        "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+        "name": "auto-ph-026",
+        "status": "offline",
+        "installationConfirmed": false,
+        "state": "offline_not_dispatched"
+      },
+      {
+        "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+        "name": "auto-ph-027",
+        "status": "offline",
+        "installationConfirmed": false,
+        "state": "offline_not_dispatched"
+      },
+      {
+        "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+        "name": "auto-ph-029",
+        "status": "offline",
+        "installationConfirmed": false,
+        "state": "offline_not_dispatched"
+      }
+    ]
+  },
+  "counts": {
+    "totalRegisteredEmulators": 21,
+    "installedPackageHashConfirmed": 15,
+    "completedNewOtaCommands": 14,
+    "alreadyInstalledTarget": 1,
+    "offline": 6,
+    "queuedOfflineUntilExpiry": 0,
+    "offlineNotDispatched": 6,
+    "failedOtaCommands": 0
+  },
+  "runtimeReads": [
+    {
+      "origin": "http://127.0.0.1:3015",
+      "apiRevision": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
+      "buildHttpStatus": 200,
+      "readyHttpStatus": 200
+    },
+    {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "apiRevision": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
+      "buildHttpStatus": 200,
+      "readyHttpStatus": 200
+    }
+  ],
+  "catalogUnchanged": true,
+  "ordinaryOtaChannelUnchanged": true,
+  "hostBuildPerformed": false,
+  "newWebApiInstalled": false,
+  "apk55Built": false,
+  "apk55Signed": false,
+  "apk55Installed": false,
+  "newGrantIssued": false,
+  "directVideoAccepted": false,
+  "directInputAccepted": false,
+  "nearestPathAccepted": false,
+  "latencyAccepted": false,
+  "soakAccepted": false,
+  "productionAccepted": false,
+  "rebootPerformed": false,
+  "networkSettingsChanged": false
+}

@@ -1,0 +1,31 @@
+{
+  "exit_code": 0,
+  "stopped_reason": null,
+  "source_sha_before": "f609248f1aae3407b3231faff2e6e532a4fab69b320e0728c9ad1afc3975f265",
+  "source_sha_after": "f609248f1aae3407b3231faff2e6e532a4fab69b320e0728c9ad1afc3975f265",
+  "source_unchanged": true,
+  "seconds": 79.48400000005495,
+  "installed": false,
+  "physicalActions": 0,
+  "initialMemory": {
+    "availableRamBytes": 9868902400,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 76238741504,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 10564689920,
+    "kernelNonpagedBytes": 5176459264,
+    "processCount": 490,
+    "handleCount": 671179
+  },
+  "minRamBytes": 8117854208,
+  "minFreeCommitBytes": 22186287104,
+  "resource_profile": {
+    "workers": 1,
+    "affinity_mask": 1,
+    "node_heap_mib": 1536,
+    "start_ram_gib": 5.75,
+    "stop_ram_gib": 4.25,
+    "start_commit_headroom_gib": 6,
+    "stop_commit_headroom_gib": 4.5
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T21:52:21.553422+00:00",
+  "apiBaseline": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+  "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+  "apkVersionCode": 10284,
+  "apkDeliveryEvidence": "docs/audits/2026-10-22/VPN-APK84-PH011-DELIVERY.json",
+  "readOnlyRpc": {
+    "observedAtUtc": "2026-10-21T21:52:21.553422+00:00",
+    "apiSource": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "commandId": "07485f01-a278-4256-bb52-05dded6c478e",
+    "statusRpcCompleted": true,
+    "phase": "IDLE",
+    "providerPid": 22801,
+    "sampledAtEpochMs": 1792617716783,
+    "authenticatedApiObservationMissing": true,
+    "sameControlSession": true,
+    "deviceCommandsSent": 1,
+    "physicalVpnChanged": false,
+    "profileDelivered": false
+  },
+  "processInspection": {
+    "observedAtUtc": "2026-10-21T21:55:33.012527+00:00",
+    "device": "auto-ph-011",
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "mainPid": 22270,
+    "providerPid": 22801,
+    "independentPsMatchedIpcProvider": true,
+    "separateProcessConfirmed": true,
+    "adbReadOnly": true,
+    "physicalVpnChanged": false
+  },
+  "physicalVpnAccepted": false,
+  "productionAccepted": false,
+  "scope": "Before-fix live baseline only. Read-only IPC and independent Android process inspection; no profile, tunnel, root mutation or game command."
+}

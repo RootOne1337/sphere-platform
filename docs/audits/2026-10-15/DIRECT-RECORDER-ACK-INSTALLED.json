@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T10:29:44.156Z",
+  "runtimeInstalled": true,
+  "scope": "Bounded native recording on existing direct controller, command pending without self-revocation, stable canvas geometry and taller fleet table installed on3015/Tuna. Partial recorder, not arbitrary trajectory replay or production SLA.",
+  "runtime": {
+    "sourceRevision": "7b85aa5b1ac08ba1df0c8b673c4e924f24b34c86",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "uiCiRunId": 38719158578,
+    "uiContainer": {
+      "sourceRevision": "7b85aa5b1ac08ba1df0c8b673c4e924f24b34c86",
+      "containerId": "13b627f63cefd88a4188dcb05d55104a5cf522e1e5200284565026556833ad6e",
+      "imageId": "sha256:102fb1624325f7c1ed4d6c3ec38a4f80d1f8b30cf9267722744bb92aa2ed07f4",
+      "status": "running"
+    },
+    "apiContainer": {
+      "sourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+      "containerId": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "status": "running"
+    },
+    "artifactDigest": "b79a2be3209060ede2f2bdab3f6448bbc05f5b246cb4cf771c7fa53cbe9a049e",
+    "githubDigestVerified": true,
+    "otherContainersPreservedPerInstall": 45,
+    "otaCatalogPreserved": true,
+    "schemaMigrationPerformed": false
+  },
+  "ci": {
+    "frontendSuites": 172,
+    "frontendTests": 2497,
+    "typecheck": true,
+    "build": true,
+    "packagedRuntimeProbes": true
+  },
+  "browser": {
+    "sourceRevision": "7b85aa5b1ac08ba1df0c8b673c4e924f24b34c86",
+    "recordedAtUtc": "2026-10-15T10:29:44.156Z",
+    "finiteAccepted": true,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0,
+        "buildStampObserved": true
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0,
+        "buildStampObserved": true
+      }
+    ],
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "table": {
+        "sectionHeight": 589,
+        "gridHeight": 504,
+        "width": 330,
+        "rootOverflow": false
+      },
+      "paginationVisible": true,
+      "pageErrorCount": 0,
+      "physicalPhone": false
+    },
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "table": {
+        "sectionHeight": 578,
+        "gridHeight": 529
+      }
+    },
+    "stream": {
+      "device": "auto-ph-011",
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "confirmedEntries": 10,
+      "directFramesPresented": 1500,
+      "connections": 1,
+      "control": "ready",
+      "legacyWsCounts": {
+        "click": 0,
+        "swipe": 0,
+        "touch_event": 0,
+        "key_event": 0
+      },
+      "geometry": {
+        "sampleCount": 73,
+        "uniqueRects": 1
+      },
+      "graphValidated": true,
+      "taskLaunched": false,
+      "scriptSaved": false
+    },
+    "productionAccepted": false,
+    "ordinaryChrome": true,
+    "transportOverrides": false,
+    "directFramesPresented": 1500,
+    "androidActionsSent": true,
+    "commandsReplayed": false
+  },
+  "sourceValidation": [
+    {
+      "file": "docs/audits/2026-10-15/DIRECT-RECORDER-ACK-OBSERVATION.json",
+      "sha256NormalizedLf": "003b6ba390fe39d5343bc88674e6446ced79839bb817c21bb68537a7a94418d4"
+    },
+    {
+      "file": "docs/audits/2026-10-15/DIRECT-RECORDER-GEOMETRY-OBSERVATION.json",
+      "sha256NormalizedLf": "cb41b350187c89c08afd7680cde25b867c42535e68d23aaa520a2b3c19c6baff"
+    }
+  ],
+  "apkBaselineEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+  "limits": [
+    "Arbitrary gesture_path, multitouch and physical keyboard/IME recording remain unimplemented.",
+    "No20+ viewer, broad WAN/real relay, physical phone IME, server-offline or long soak acceptance.",
+    "Graph export and server validation observed; resulting scenario not saved or executed on device.",
+    "Backend CI06081fb5 failed while pulling PostgreSQL from public ECR: data limit exceeded, before application tests. Frontend exact-source CI is successful; API/APK are unchanged."
+  ]
+}

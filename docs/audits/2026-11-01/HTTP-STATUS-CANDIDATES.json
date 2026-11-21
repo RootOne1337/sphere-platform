@@ -1,0 +1,994 @@
+{
+  "snapshot_operations": 201,
+  "matched_operations": 197,
+  "unmatched_operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/game-accounts/servers"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pipeline-settings/servers"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/n8n/tasks"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tasks"
+    }
+  ],
+  "candidates": [
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/api-keys",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 370,
+      "kind": "http_exception",
+      "status": 403,
+      "declared": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/auth/api-keys/{key_id}",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 424,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/auth/api-keys/{key_id}",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 425,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 86,
+      "kind": "http_exception",
+      "status": 429,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 88,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login/mfa",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 129,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/auth/mfa",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 348,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/mfa/verify-setup",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 315,
+      "kind": "http_exception",
+      "status": 400,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/mfa/verify-setup",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 321,
+      "kind": "http_exception",
+      "status": 400,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 184,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "file": "backend/api/v1/auth/router.py",
+      "line": 192,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/config/agent",
+      "file": "backend/api/v1/config/router.py",
+      "line": 156,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/device-events/{event_id}/processed",
+      "file": "backend/api/v1/device_events/router.py",
+      "line": 121,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/devices/me",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 112,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/devices/me",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 120,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/refresh",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 318,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/register",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 359,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/register",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 366,
+      "kind": "http_exception",
+      "status": 403,
+      "declared": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/devices/{device_id}/direct-probe-capabilities",
+      "file": "backend/api/v1/direct_probe/router.py",
+      "line": 107,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/reboot",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 897,
+      "kind": "http_exception",
+      "status": 504,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/screenshot/native",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 747,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/screenshot/native",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 753,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/screenshot/native",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 755,
+      "kind": "http_exception",
+      "status": 429,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/screenshot/native",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 794,
+      "kind": "http_exception",
+      "status": 502,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/screenshot/native",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 797,
+      "kind": "http_exception",
+      "status": 504,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/devices/{device_id}/stream-sessions",
+      "file": "backend/api/v1/direct_probe/router.py",
+      "line": 60,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/devices/{device_id}/stream-sessions",
+      "file": "backend/api/v1/direct_probe/router.py",
+      "line": 63,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/ui-hierarchy",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 632,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/ui-hierarchy",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 638,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/ui-hierarchy",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 640,
+      "kind": "http_exception",
+      "status": 429,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/ui-hierarchy",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 671,
+      "kind": "http_exception",
+      "status": 409,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/event-triggers",
+      "file": "backend/api/v1/event_triggers/router.py",
+      "line": 98,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/event-triggers/{trigger_id}",
+      "file": "backend/api/v1/event_triggers/router.py",
+      "line": 191,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "204",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/event-triggers/{trigger_id}",
+      "file": "backend/api/v1/event_triggers/router.py",
+      "line": 136,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/event-triggers/{trigger_id}",
+      "file": "backend/api/v1/event_triggers/router.py",
+      "line": 153,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/event-triggers/{trigger_id}",
+      "file": "backend/api/v1/event_triggers/router.py",
+      "line": 161,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/event-triggers/{trigger_id}/toggle",
+      "file": "backend/api/v1/event_triggers/router.py",
+      "line": 218,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/game-accounts/{account_id}",
+      "file": "backend/api/v1/game_accounts/router.py",
+      "line": 225,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/game-accounts/{account_id}",
+      "file": "backend/api/v1/game_accounts/router.py",
+      "line": 177,
+      "kind": "http_exception",
+      "status": 403,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/full",
+      "file": "backend/api/v1/health/router.py",
+      "line": 91,
+      "kind": "explicit_response",
+      "status": 503,
+      "declared": [
+        "200"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/ready",
+      "file": "backend/main.py",
+      "line": 133,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/readyz",
+      "file": "backend/api/v1/health/router.py",
+      "line": 70,
+      "kind": "explicit_response",
+      "status": 503,
+      "declared": [
+        "200"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/logs/upload",
+      "file": "backend/api/v1/logs/router.py",
+      "line": 114,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "400",
+        "408",
+        "413",
+        "422",
+        "503"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/logs/upload",
+      "file": "backend/api/v1/logs/router.py",
+      "line": 150,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200",
+        "400",
+        "408",
+        "413",
+        "422",
+        "503"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/logs/{device_id}",
+      "file": "backend/api/v1/logs/router.py",
+      "line": 196,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/logs/{device_id}",
+      "file": "backend/api/v1/logs/router.py",
+      "line": 176,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/logs/{device_id}",
+      "file": "backend/api/v1/logs/router.py",
+      "line": 178,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/n8n/tasks/{task_id}",
+      "file": "backend/api/v1/n8n/router.py",
+      "line": 198,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/n8n/webhooks/{webhook_id}",
+      "file": "backend/api/v1/n8n/router.py",
+      "line": 121,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/n8n/webhooks/{webhook_id}",
+      "file": "backend/api/v1/n8n/router.py",
+      "line": 122,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tasks/{task_id}/live-logs",
+      "file": "backend/api/v1/tasks/router.py",
+      "line": 270,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tasks/{task_id}/progress",
+      "file": "backend/api/v1/tasks/router.py",
+      "line": 241,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/updates/artifacts/{sha256}",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 447,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/updates/artifacts/{sha256}",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 454,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/updates/latest",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 397,
+      "kind": "http_exception",
+      "status": 401,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/updates/recovery",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 253,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/updates/recovery",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 262,
+      "kind": "http_exception",
+      "status": 409,
+      "declared": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/updates/recovery/{device_id}",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 370,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "204",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/updates/recovery/{device_id}",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 374,
+      "kind": "http_exception",
+      "status": 409,
+      "declared": [
+        "204",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/updates/recovery/{device_id}",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 308,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/updates/recovery/{device_id}/dispatch",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 286,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "202",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/updates/recovery/{device_id}/dispatch",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 289,
+      "kind": "http_exception",
+      "status": 409,
+      "declared": [
+        "202",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/updates/{release_id}",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 585,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/updates/{release_id}",
+      "file": "backend/api/v1/updates/router.py",
+      "line": 586,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users",
+      "file": "backend/api/v1/users/router.py",
+      "line": 92,
+      "kind": "http_exception",
+      "status": 403,
+      "declared": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users",
+      "file": "backend/api/v1/users/router.py",
+      "line": 95,
+      "kind": "http_exception",
+      "status": 409,
+      "declared": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users/{user_id}",
+      "file": "backend/api/v1/users/router.py",
+      "line": 134,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users/{user_id}",
+      "file": "backend/api/v1/users/router.py",
+      "line": 137,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/users/{user_id}/deactivate",
+      "file": "backend/api/v1/users/router.py",
+      "line": 211,
+      "kind": "http_exception",
+      "status": 400,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/users/{user_id}/deactivate",
+      "file": "backend/api/v1/users/router.py",
+      "line": 217,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/users/{user_id}/deactivate",
+      "file": "backend/api/v1/users/router.py",
+      "line": 220,
+      "kind": "http_exception",
+      "status": 403,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/users/{user_id}/deactivate",
+      "file": "backend/api/v1/users/router.py",
+      "line": 229,
+      "kind": "http_exception",
+      "status": 400,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/users/{user_id}/deactivate",
+      "file": "backend/api/v1/users/router.py",
+      "line": 239,
+      "kind": "explicit_response",
+      "status": 204,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/users/{user_id}/role",
+      "file": "backend/api/v1/users/router.py",
+      "line": 159,
+      "kind": "http_exception",
+      "status": 404,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/users/{user_id}/role",
+      "file": "backend/api/v1/users/router.py",
+      "line": 162,
+      "kind": "http_exception",
+      "status": 403,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/users/{user_id}/role",
+      "file": "backend/api/v1/users/router.py",
+      "line": 177,
+      "kind": "http_exception",
+      "status": 400,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vpn/admin/config-preview",
+      "file": "backend/api/v1/vpn/router.py",
+      "line": 155,
+      "kind": "http_exception",
+      "status": 403,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vpn/assign",
+      "file": "backend/api/v1/vpn/router.py",
+      "line": 210,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/vpn/revoke/{device_id}",
+      "file": "backend/api/v1/vpn/router.py",
+      "line": 229,
+      "kind": "http_exception",
+      "status": 503,
+      "declared": [
+        "204",
+        "422"
+      ]
+    }
+  ],
+  "unresolved_expressions": [
+    {
+      "method": "POST",
+      "path": "/api/v1/devices/{device_id}/screenshot/native",
+      "file": "backend/api/v1/devices/router.py",
+      "line": 800,
+      "kind": "http_exception"
+    }
+  ],
+  "unreadable_files": [
+    "backend/models/vpn_peer.py",
+    "backend/services/vpn/event_publisher.py",
+    "backend/services/vpn/health_monitor.py",
+    "backend/services/vpn/ip_pool.py",
+    "backend/services/vpn/killswitch_service.py",
+    "backend/services/vpn/pool_service.py",
+    "backend/tasks/vpn_health.py"
+  ]
+}

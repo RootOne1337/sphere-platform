@@ -1,0 +1,457 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T16:23:02.028267+00:00",
+  "scope": "Finite public-origin QA and installed static-only compression mitigation; not transport SLA, steady FPS, continuous control or resource soak.",
+  "sourceBaseRevision": "4c636d18ff567da90f9a0c6cc72e7ae54166f819",
+  "runtime": {
+    "ui": "86354350638650215717658b9395b2751326af6c",
+    "api": "d720232e3164d278a7322a61a90ba111e205ae3c",
+    "publicUrl": "https://sphere-agent-canary-20260927.ru.tuna.am",
+    "configuration": "infrastructure/nginx/remote-pilot.conf",
+    "configurationSha256NormalizedLf": "b68e6899a2d854eb400c0c23dab54c64f95445cfa74ae50c9ac32bb01ff50c7f",
+    "appliedUtc": "2026-10-09T16:21:38.941728+00:00",
+    "nginxSyntaxPassed": true,
+    "gracefulReload": true,
+    "all46ContainersPreserved": true,
+    "bootstrapAndMapHashesPreserved": true,
+    "publicApiReadyStatus": 200,
+    "configSha256": "b68e6899a2d854eb400c0c23dab54c64f95445cfa74ae50c9ac32bb01ff50c7f",
+    "scope": "Installed static-only gzip; two subsequent public browser dashboard opens confirmed."
+  },
+  "finding": {
+    "publicGrafanaFailedOpenings": 2,
+    "local3015DashboardLoaded": true,
+    "consoleErrorsBefore": [
+      "7606.e8e4d98948a4bb1cf3bc.js: Private field #t must be declared in an enclosing class",
+      "6540.acf453ee99146ad315f3.js: Unexpected end of input"
+    ],
+    "neighborMonitoringRequestsTemporarilyFailed": true,
+    "edgeHadCompleted200DespiteBrowserFailure": true,
+    "preciseCorruptionOrTruncationPoint": "unknown; provider defect or response-size limit not established",
+    "previousEvidenceSupersededForGrafanaAcceptance": "docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.json"
+  },
+  "mitigation": {
+    "staticGrafanaAssetsOnly": true,
+    "gzipNegotiated": true,
+    "viaSupported": true,
+    "apiVideoBootstrapRoutingChanged": false,
+    "assetGatewayBodyBytes": [
+      {
+        "asset": "7606",
+        "before": 4121450,
+        "after": 1426838
+      },
+      {
+        "asset": "6540",
+        "before": 5117648,
+        "after": 1666877
+      }
+    ],
+    "byteCounterScope": "gateway-to-connector only; not client delivery"
+  },
+  "browser": {
+    "uniqueMenuPaths": 22,
+    "observations": [
+      {
+        "label": "Группы",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Группы устройств",
+          "1"
+        ],
+        "loading": false,
+        "path": "/groups",
+        "tables": 0
+      },
+      {
+        "label": "Локации",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Локации"
+        ],
+        "loading": false,
+        "path": "/locations",
+        "tables": 0
+      },
+      {
+        "label": "Задания",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Задачи и исполнения",
+          "Активные задачи",
+          "Активные pipeline"
+        ],
+        "loading": false,
+        "path": "/tasks",
+        "tables": 1
+      },
+      {
+        "label": "Оркестрация",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Orchestration"
+        ],
+        "loading": false,
+        "path": "/orchestration",
+        "tables": 1
+      },
+      {
+        "label": "Пайплайны",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Pipeline Settings",
+          "Главные переключатели",
+          "Регистрация",
+          "Фарм (прокачка)",
+          "Уровни и цели",
+          "Генерация никнеймов",
+          "Мониторинг банов",
+          "Заметки"
+        ],
+        "loading": false,
+        "path": "/pipeline-settings",
+        "tables": 0
+      },
+      {
+        "label": "Игровые аккаунты",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Game Accounts"
+        ],
+        "loading": false,
+        "path": "/accounts",
+        "tables": 1
+      },
+      {
+        "label": "События устройств",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "События устройств"
+        ],
+        "loading": false,
+        "path": "/events",
+        "tables": 1
+      },
+      {
+        "label": "Триггеры событий",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Event Triggers"
+        ],
+        "loading": false,
+        "path": "/event-triggers",
+        "tables": 1
+      },
+      {
+        "label": "Сессии",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Сессии аккаунтов"
+        ],
+        "loading": false,
+        "path": "/sessions",
+        "tables": 1
+      },
+      {
+        "label": "Туннели и VPN",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "VPN Tunneling Manager",
+          "Peer snapshot",
+          " Telemetry coverage",
+          "Assigned VPN peers"
+        ],
+        "loading": false,
+        "path": "/vpn",
+        "tables": 0
+      },
+      {
+        "label": "Вебхуки",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Вебхуки"
+        ],
+        "loading": false,
+        "path": "/webhooks",
+        "tables": 0
+      },
+      {
+        "label": "Пользователи",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Пользователи"
+        ],
+        "loading": false,
+        "path": "/users",
+        "tables": 1
+      },
+      {
+        "label": "Журнал аудита",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Журнал аудита"
+        ],
+        "loading": false,
+        "path": "/audit",
+        "tables": 1
+      },
+      {
+        "label": "Системные логи",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Системные логи"
+        ],
+        "loading": false,
+        "path": "/logs",
+        "tables": 0
+      },
+      {
+        "label": "Обновления",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "OTA Updates"
+        ],
+        "loading": false,
+        "path": "/updates",
+        "tables": 0
+      },
+      {
+        "label": "Конфигурация",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Настройки",
+          "Профиль пользователя"
+        ],
+        "loading": false,
+        "path": "/settings",
+        "tables": 0
+      },
+      {
+        "label": "Главная",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Обзор парка",
+          "Свежесть источников",
+          "Каталог устройств",
+          "Health · backend",
+          "Health · VPN",
+          "Пул VPN",
+          "Журнал событий",
+          "Доступность парка",
+          "Инфраструктура",
+          "Последние события",
+          "Рабочие разделы"
+        ],
+        "loading": false,
+        "path": "/dashboard",
+        "tables": 0
+      },
+      {
+        "label": "Обнаружение",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Обнаружение",
+          "Дополнительный ADB-поиск"
+        ],
+        "loading": false,
+        "path": "/discovery",
+        "tables": 0
+      },
+      {
+        "label": "Видеопоток",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Потоки устройств"
+        ],
+        "loading": false,
+        "path": "/stream",
+        "tables": 0
+      },
+      {
+        "label": "Скрипты",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Сценарии",
+          "Bounded original PNG cache · PH011 · APK 1.2.47",
+          "Focused text clear · PH011 · APK 1.2.46",
+          "Studio recorder · PH025 · 2026-10-06",
+          "Новый сценарий65165156",
+          "Новый сценарий228",
+          "Новый сценарий",
+          "Studio Workbench canary 20261006-0358",
+          "Studio canary 20261006-0227",
+          "Pilot canary 20260921 backend-restart-successor 14079df5",
+          "Pilot canary 20260921 backend-restart 87d38c8a",
+          "Pilot canary 20260921 pipeline-cancel 9551f299",
+          "Pilot canary 20260921 pipeline-normal 91b7734f",
+          "Pilot canary 20260921 late-replay-barrier 7aa2d9eb",
+          "Pilot canary late replay 04935551-0b76-41b4-b549-0ad30e6ed576",
+          "Pilot canary 20260921 deadline-successor 2641f59b",
+          "Pilot canary 20260921 deadline 971e2d01",
+          "Pilot canary 20260921 offline-stop-successor 07d14635",
+          "Pilot canary 20260921 offline-stop 5283898c",
+          "Pilot canary 20260921 connected-stop 3a8d0f01",
+          "Pilot canary 20260921 normal 4fe99caf",
+          "Pilot overnight - safe Android system cycle",
+          "Pilot overnight - safe Android system cycle"
+        ],
+        "loading": false,
+        "path": "/scripts",
+        "tables": 0
+      },
+      {
+        "label": "Инфраструктура",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Инфраструктура",
+          "Prometheus · история и контроль сбора",
+          "Доступность /metrics",
+          "Время сбора метрик",
+          "Измерений в последнем сборе",
+          "Рядов в хранилище Prometheus",
+          "Источники и активные алерты",
+          "Backend · HTTP-нагрузка и задержки",
+          "HTTP · запросы в секунду",
+          "HTTP · p95 до заголовков",
+          "HTTP · ошибки 5xx",
+          "HTTP · ответы 4xx",
+          "Backend · ресурсы контейнера",
+          "CPU · использованные ядра",
+          "CPU · лимит контейнера",
+          "Память · расход контейнера",
+          "Память · лимит контейнера",
+          "Покрытие парка и VPN",
+          "Инвентарь организации",
+          "Связь с Android",
+          "VPN · отчёты Android",
+          "VPN · назначения",
+          "VPN · сохранённые handshakes",
+          "Публичный транспорт",
+          "Linux load · 1 мин",
+          "Память контейнера",
+          "Redis",
+          "Сетевые счётчики",
+          "Проверки сервисов",
+          "API layer",
+          "DB layer",
+          "CACHE layer",
+          "DISK layer",
+          "Backend API responder"
+        ],
+        "loading": false,
+        "path": "/monitoring",
+        "tables": 1
+      },
+      {
+        "label": "Парк устройств",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Устройства"
+        ],
+        "loading": false,
+        "path": "/devices",
+        "tables": 0
+      },
+      {
+        "label": "Видеопоток",
+        "alerts": [],
+        "badOriginLinks": [],
+        "headings": [
+          "Потоки устройств"
+        ],
+        "loading": false,
+        "path": "/stream",
+        "tables": 0
+      }
+    ],
+    "deepBuilderReloadAndSessionRecovery": true,
+    "builderNodes": 3,
+    "builderEdges": 2,
+    "publishedVersion": 1,
+    "exportJsonBytes": 723,
+    "exportJsonNodes": 3,
+    "elkWorkerHttpStatus": 200,
+    "elkWorkerBytesSent": 467797,
+    "layoutButtonReturnedReady": true,
+    "grafanaSuccessfulOpensAfterMitigation": 2,
+    "grafanaRenderedPanelTitles": [
+      "Доступность backend /metrics",
+      "Время сбора",
+      "Измерений в сборе backend",
+      "Ряды хранилища Prometheus"
+    ],
+    "errorsAfterMitigation": [],
+    "finalMainAlerts": [],
+    "originalUserTabModified": false,
+    "temporaryQaTabsClosed": true,
+    "saveRunRecordAndroidInputPerformed": false,
+    "stream": {
+      "device": "PH011",
+      "mode": "read-only",
+      "packets": 8,
+      "bytes": 45104,
+      "decoded": 6,
+      "drawn": 6,
+      "invalid": 0,
+      "decodeErrors": 0,
+      "renderErrors": 0,
+      "laterStaticFrameWarning": true,
+      "heartbeatCaptureReport": "not_streaming",
+      "steadyFpsOrCaptureTelemetryAccepted": false,
+      "continuousControlAccepted": false,
+      "viewerStopped": true
+    }
+  },
+  "checks": {
+    "dockerIntegrationPassed": 1,
+    "dockerIntegrationSeconds": 10.69,
+    "gzipDecodedFixtureSha256MatchesPlainFixture": true,
+    "plainClientFixtureSha256Matches": true,
+    "scopedRuff": "passed",
+    "documentationRegressionTestsPassed": 26,
+    "unauthenticatedStatuses": {
+      "/observability/grafana/public/build/7606.e8e4d98948a4bb1cf3bc.js": 401,
+      "/api/observability/resources": 401,
+      "/metrics": 404
+    },
+    "containerIdentitiesPreserved": 46
+  },
+  "screenshots": {
+    "docs/audits/2026-10-09/assets/public-web-qa/grafana-failure.jpg": "102886f3e52a449b9df3aee59dc30ca2534c1a72afbd6a33dac7d12f7526bab6",
+    "docs/audits/2026-10-09/assets/public-web-qa/grafana-fixed.jpg": "0f28d3c017b88a7428232b6e588fe21b87c5ca4042716f4aa542b4a3e356dee2",
+    "docs/audits/2026-10-09/assets/public-web-qa/stream.jpg": "c1925453a2df9e56d21f4a2c69129b269da210188166efd46eba025c4957defa"
+  },
+  "productCounts": {
+    "acceptedRecordedScope": 9,
+    "open": 41
+  },
+  "limitations": [
+    "No general write-action acceptance, discovery scan, shell, OTA or VPN changes",
+    "No steady FPS/Android control/fleet/soak acceptance",
+    "Exact position of public JS truncation/corruption not attributed",
+    "Existing idle and disk-writer investigations remain open",
+    "Cloudflare/SSH ingress fallback not changed or tested"
+  ]
+}

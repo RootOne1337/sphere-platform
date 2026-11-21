@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "upstream": "amnezia-vpn/amneziawg-android",
+  "commit": "5c16489e2cd9ed3a0a7a27c7445bba5238132f86",
+  "release": "v3.1.20260814",
+  "go_version": "1.25.4",
+  "ndk_version": "26.3.11579264",
+  "diagnostic_only": true,
+  "runtime_sleep_clock_patch_applied": false,
+  "go_runtime_clock_sources": {
+    "sys_linux_amd64.s": "606a963e795a1ed9cfa9393c824f27d02e31cd003ef13329d4424ca7de44a4bf",
+    "sys_linux_arm64.s": "32f44653ca63c5a2dc0c801288d4f1e35366264927c83cb94f14753310752a6e",
+    "sys_linux_arm.s": "89c56d14bba450a1098bc8d8a4ccb54028ca5ee3a9d43ab33892bcb3fc32e18d"
+  },
+  "sources": {
+    "COPYING": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "tunnel/tools/libwg-go/api-android.go": "34bd3f4824c267b89f50f3306a6872d5464b058f22ccfe1d40a5cbd87d0ea86b",
+    "tunnel/tools/libwg-go/jni.c": "640682de14205ad1b9b1909bd04c0a4c449cf59ffe2e6c7f45c57a9c3a827edd",
+    "tunnel/tools/libwg-go/go.mod": "cde303cebd847b122373b4d714645b8480d48283570ab9b0bc6540c364724a16",
+    "tunnel/tools/libwg-go/go.sum": "f8de8667720b798be4a9f2db1dd5eff0cbf09d05409fa80bec8abc6049c79e3d",
+    "tunnel/tools/libwg-go/goruntime-boottime-over-monotonic.diff": "149ab7d9a1c20dad61fe279a837e0e0c81c6b2f5584614ac4d4cde67008755f0"
+  },
+  "android_jni_lifecycle_patch_sha256": "ef4c7bcf938822253601b2788719ce180888afac085ac58056194921e1538f41",
+  "android_jni_effective_source_sha256": "e3899d5380bdb4c3ba818726a30aabb195e25154e06cc188bc8df1ae16ad6ce4"
+}

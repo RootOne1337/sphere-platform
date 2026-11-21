@@ -1,0 +1,75 @@
+{
+  "outcome": "verified",
+  "physicalActions": 0,
+  "executionQualified": false,
+  "sourceUnchanged": true,
+  "cameras": 123,
+  "landmarks": 3740,
+  "pipelineSha": "b37ee283762e241ca5b070a3af02c1c1712f6b0354a9c94c5654af4768513b7f",
+  "profile": {
+    "kind": "route_features",
+    "minRamGiB": 6.25,
+    "hostReserveGiB": 4.0,
+    "sourceVideoBytes": 37019664,
+    "maxViews": 256,
+    "maxFeaturesPerView": 2048,
+    "modelLoaded": false,
+    "maxCommitPercent": 85
+  },
+  "peakWorkingSetBytes": 384692224,
+  "peakCommitBytes": 898162688,
+  "seconds": 106.14100000000326,
+  "minHostAvailableRamBytes": 9216794624,
+  "support": {
+    "all_reference_neighborhoods_supported": false,
+    "all_reference_intervals_observed": true,
+    "unobserved_intervals": [],
+    "zero_landmark_views": 0
+  },
+  "date": "2026-10-29",
+  "timezone": "Asia/Yekaterinburg",
+  "mode": "DIAGNOSTIC_ONLY",
+  "installedWeb": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:e50fece2c5b73969d3258678e691f3ac35ccbc18f15eab9325910a761444a8d5",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "49cc2238b1347db65239f09ac7d7d0e5e6ed7ffb1e38fceb50cc88821249a436",
+    "source_sha_after": "49cc2238b1347db65239f09ac7d7d0e5e6ed7ffb1e38fceb50cc88821249a436",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 9,
+      "stop_ram_gib": 8,
+      "max_commit_percent": 85,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "tests": {
+    "workspace": 18,
+    "service_resources_receipts": 77,
+    "frontend": 33,
+    "typescript": "passed",
+    "production_build": "passed"
+  },
+  "browserAcceptance": "blocked_by_windows_browser_url_policy_support",
+  "service": {
+    "outcome": "verified",
+    "launcherPid": 47252,
+    "physicalActions": 0,
+    "health": 200,
+    "missingCapability": 403
+  }
+}

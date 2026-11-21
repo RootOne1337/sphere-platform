@@ -6,6 +6,11 @@ import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.sphereplatform.agent.root.RootScreenCapturePermission
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * Transparent, UI-less Activity whose sole purpose is to trigger the system
@@ -14,7 +19,10 @@ import androidx.appcompat.app.AppCompatActivity
  *
  * Declared with Theme.Translucent.NoTitleBar so it is invisible to the user.
  */
+@AndroidEntryPoint
 class ScreenCaptureRequestActivity : AppCompatActivity() {
+
+    @Inject lateinit var rootPermission: RootScreenCapturePermission
 
     private val projectionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -36,7 +44,14 @@ class ScreenCaptureRequestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val mpManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        projectionLauncher.launch(mpManager.createScreenCaptureIntent())
+        if (savedInstanceState == null) {
+            lifecycleScope.launch {
+                // Root work runs on IO. Never block the UI or WS heartbeat on su.
+                // Unsupported/denied root retains Android's normal consent flow.
+                rootPermission.prepare()
+                val mpManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                projectionLauncher.launch(mpManager.createScreenCaptureIntent())
+            }
+        }
     }
 }

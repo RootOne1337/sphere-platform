@@ -1,0 +1,81 @@
+{
+  "observedAt": "2026-10-06T23:01:59.907581+00:00",
+  "kind": "source-regression",
+  "sourceMount": true,
+  "hostPorts": [],
+  "existingRuntimeChanged": false,
+  "databaseOnTmpfs": true,
+  "apkInstalled": false,
+  "cleanupVerified": true,
+  "image": "sphere-reviewed-backend:114775a481f579e840ff63a154f1520b2f37dd0d",
+  "sourceHashes": {
+    "backend/api/ws/stream/router.py": "43cec69367af9f02b31c8857e1b687cb4460830ffb422bfca5d94f2ab0dc0409",
+    "backend/websocket/viewer_input.py": "d783b10117bb0c0cee98dccc66e3f3a52f67025fd07dc769d8977e5537a486d2",
+    "tests/production/test_stream_video_routing.py": "87eb05ca372aee725d3d6327121a6ff4ae5adc33abb298abc06fb8bc4d2fd96c",
+    "tests/test_ws/test_viewer_input.py": "543c0c8ca18b58c21489870b7926fe235a48508220c39ec39fe5703b1a5b69a2",
+    "tests/test_ws/test_stream_viewer_keyframe.py": "d4812514a4ed107d4af367298c9eef76841a0f174f5e1ced7883e24093ce614e"
+  },
+  "dependencyImageId": "sha256:4b3b30b6609f5bbd89727eeb6847109023fbf8844d519e639723cded20f3559b",
+  "exitCode": 0,
+  "schemaVersion": 1,
+  "assembledAt": "2026-10-06T23:04:30.157465+00:00",
+  "baseRevision": "d112337b12f9f470d527e1ebb2cc8a5c9b114970",
+  "sourceIdentity": "workspace-byte hashes before commit; not Git canonical blob hashes",
+  "backendTests": {
+    "passed": 66,
+    "subtestsPassed": 44,
+    "seconds": 65.48,
+    "warnings": 1,
+    "warning": "Existing game_accounts Query regex deprecation"
+  },
+  "frontendTests": {
+    "passed": 58,
+    "suites": 3
+  },
+  "deliveryTests": {
+    "unittestMethodsPassed": 52
+  },
+  "sourceTypesPassed": true,
+  "generatedLocalTypesPassed": false,
+  "generatedTypesFailure": "Stale .next/types/validator.ts references removed root page",
+  "scopedRuffPassed": true,
+  "scopedMypyPassed": true,
+  "mypySources": [
+    "backend/websocket/viewer_input.py",
+    "backend/api/ws/stream/router.py"
+  ],
+  "mypyCache": "disabled; first bounded tmpfs cache attempt exhausted its own 16/24 MiB budget",
+  "installedUiRevision": "b50d6ae2af537adb12a52503f0809ef565c0ba21",
+  "installedBackendRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+  "newFixInstalled": false,
+  "newFixHostedCiVerified": false,
+  "newFixBrowserVisualVerified": false,
+  "movingScreenFpsVerified": false,
+  "continuousInjectorImplemented": false,
+  "newApkInstalled": false,
+  "ledger": {
+    "accepted": 9,
+    "open": 41
+  },
+  "baselineCi": {
+    "source": "d112337b12f9f470d527e1ebb2cc8a5c9b114970",
+    "allWorkflowsSuccess": true,
+    "backendRunId": 37542117846,
+    "backendPassed": 3066,
+    "backendSkipped": 37,
+    "backendSubtests": 147,
+    "backendCoveragePercent": 80.39,
+    "frontendRunId": 37542117769,
+    "androidRunId": 37542117872,
+    "previewRunId": 37542117745
+  },
+  "lateLiveHomeCanary": {
+    "deviceName": "PH010",
+    "commandsSent": 1,
+    "outcome": "APK confirmed",
+    "responseMs": 464,
+    "sampleCount": 1,
+    "streamClosedAfterward": true,
+    "inputToFrameLatencyMeasured": false
+  }
+}

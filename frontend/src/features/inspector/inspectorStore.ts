@@ -6,9 +6,9 @@ interface InspectorState {
     isOpen: boolean;
     contentType: InspectorContentType;
     contentId: string | null;
-    payload: any | null; // Для передачи сырых данных
+    payload: unknown | null;
 
-    openInspector: (type: InspectorContentType, id: string, payload?: any) => void;
+    openInspector: (type: InspectorContentType, id: string, payload?: unknown) => void;
     closeInspector: () => void;
 }
 
@@ -22,5 +22,5 @@ export const useInspectorStore = create<InspectorState>((set) => ({
         set({ isOpen: true, contentType: type, contentId: id, payload }),
 
     closeInspector: () =>
-        set({ isOpen: false }),
+        set({ isOpen: false, payload: null }),
 }));

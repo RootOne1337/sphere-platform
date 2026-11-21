@@ -1,0 +1,432 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-17T07:43:27.499847+00:00",
+  "workerSourceRevision": "896e4eb70c53b0033613eecdc3a3831f80dcf1f7",
+  "workerVersion": "0.3.0",
+  "scope": "Finite headless transport and opt-in single-finger native dispatch. Not model, game policy, independent LAN/GPU or production acceptance.",
+  "readiness": {
+    "headlessTransportImplemented": true,
+    "finiteNativePointerProbeVerified": true,
+    "modelDownloaded": false,
+    "modelInstalled": false,
+    "inferenceExecuted": false,
+    "gameProfileImplemented": false,
+    "multiTouchImplemented": false,
+    "episodeDelegationImplemented": false,
+    "sourceClockCorrelationImplemented": false,
+    "separateGpuLanTested": false,
+    "targetGpuBenchmarked": false,
+    "fleetCapacityBenchmarked": false,
+    "crashStop500msAccepted": false,
+    "gameplayAccepted": false,
+    "fullGateG02Accepted": false
+  },
+  "preservedRuntime": {
+    "ui": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+    "api": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+    "apkVersion": "1.2.82-dev",
+    "apkVersionCode": 10282,
+    "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+    "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+    "rebuildOrRedeployByThisSlice": false,
+    "installationReadbackRepeatedByThisSlice": false
+  },
+  "workerSources": {
+    "motor_worker/observation.py": "1a9141b3f515a2a40b505c232e555bb0868fcef9b774699f4aa7582833ef621a",
+    "motor_worker/pointer_probe.py": "4cdfc05c71c5b9663ac9cca4943dfae6a3ffca696770daa0b54a342231871c9b",
+    "motor_worker/protocol.py": "07ba428ebe231e5136d8d86eb8011ec08cf23694e42ff4edc17f279b3cff2c38",
+    "motor_worker/session.py": "873c259b1bd807814af4e2c035a9733ca21fbbe7994bc748069a8aab0dadc940",
+    "motor_worker/__init__.py": "dd55c11ea52a54f288611378d1b641022aa957e279d2595d307b13f19ea36e22",
+    "motor_worker/__main__.py": "a214271f1169bae03958f17e829c3755463416d017f71e00d1bd2fa7323ee73b"
+  },
+  "testSources": {
+    "tests\\test_motor_worker_protocol.py": "9a7f7dff6a884fb979e57edca61ebb985e656ab686c393304c69d90ac720251f",
+    "tests\\test_motor_worker_pointer_probe.py": "4ecda79dc017f921c040a3187af3ca4be50e4eec212f9aec0362901b49d55b4d",
+    "tests\\test_motor_worker_integration.py": "aecfd716089af7dd6fd6656c19284e2ef683ee3dc1b0492b94e43ed6aac0db61"
+  },
+  "requirementsSha256NormalizedLf": "e765017b8d5cdf761dc549d3f51b24a4e60c6d5594c90470d0dea803dccdca34",
+  "example": {
+    "file": "examples/motor-pointer-probe.json",
+    "sha256NormalizedLf": "316c85d2ee00d17851b71cae17aeddce80ff10eaaf89cdd9684c6f8ca55083b7",
+    "geometry": "960x540",
+    "points": 6,
+    "durationMs": 3000
+  },
+  "liveRuns": [
+    {
+      "kind": "HEADLESS_POINTER_PROBE_NOT_GAMEPLAY",
+      "success": true,
+      "failure": null,
+      "durationObservedSeconds": 8.015,
+      "decodedFrames": 446,
+      "rgbObservationsDuringMonitor": 41,
+      "observationHzDuringMonitor": 5.115,
+      "decodedFpsDuringMonitor": 54.397,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 3,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": true,
+        "dataChannelOpened": true,
+        "nativeAdmissionConfirmed": true,
+        "actorAliveReceipts": 26,
+        "lastActorRttMs": 2.5960000057239085,
+        "participantClosedConfirmed": true,
+        "nativeActionAppliedVerified": true,
+        "pointerKeyTextCommandsSent": 6,
+        "availabilityState": "manual"
+      },
+      "pointerProbe": {
+        "requested": true,
+        "expectedPoints": 6,
+        "attemptedPoints": 6,
+        "appliedReceipts": 6,
+        "lastNativeActionRttMs": 7.080099981976673,
+        "complete": true,
+        "samples": [
+          {
+            "sequence": 1,
+            "action": 0,
+            "receiverSequence": 10,
+            "receiverFrameAgeMs": 13.648,
+            "scheduleLatenessMs": 0.0
+          },
+          {
+            "sequence": 4,
+            "action": 2,
+            "receiverSequence": 30,
+            "receiverFrameAgeMs": 15.76,
+            "scheduleLatenessMs": 0.995
+          },
+          {
+            "sequence": 7,
+            "action": 2,
+            "receiverSequence": 58,
+            "receiverFrameAgeMs": 17.635,
+            "scheduleLatenessMs": 8.433
+          },
+          {
+            "sequence": 11,
+            "action": 2,
+            "receiverSequence": 115,
+            "receiverFrameAgeMs": 19.037,
+            "scheduleLatenessMs": 13.972
+          },
+          {
+            "sequence": 14,
+            "action": 2,
+            "receiverSequence": 142,
+            "receiverFrameAgeMs": 15.539,
+            "scheduleLatenessMs": 3.628
+          },
+          {
+            "sequence": 16,
+            "action": 1,
+            "receiverSequence": 170,
+            "receiverFrameAgeMs": 17.347,
+            "scheduleLatenessMs": 14.388
+          }
+        ]
+      },
+      "packages": {
+        "aiortc": "1.15.0",
+        "aioice": "0.10.2",
+        "av": "17.1.0",
+        "websockets": "17.2",
+        "numpy": "2.4.4"
+      },
+      "rgbTransform": "pilot_resize_256_square_rgb24_not_validated_model_preprocessing",
+      "scope": "local_signaling_pointer",
+      "device": "auto-ph-011",
+      "captureWidth": 960,
+      "captureHeight": 540,
+      "privateReport": {
+        "file": ".local-pilot/motor03-pointer-20261016T195505Z.private.json",
+        "sha256NormalizedLf": "f24ba675dcbb8ff0a569c3fde250a99bd009cfb0a31e926963435875195d5b7c"
+      },
+      "sourceProof": {
+        "file": ".local-pilot/motor03-pointer-20261016T195505Z.private.source.json",
+        "sha256NormalizedLf": "172177cbec79ffd707879356ecfc5398bf1c4f537bb8aec2a754a076775b400e"
+      },
+      "observedAtUtc": "2026-10-16T19:55:16.065170+00:00",
+      "maxPreSendLatenessMs": 14.388,
+      "maxReceiverFrameAgeAtSendMs": 19.037
+    },
+    {
+      "kind": "HEADLESS_POINTER_PROBE_NOT_GAMEPLAY",
+      "success": true,
+      "failure": null,
+      "durationObservedSeconds": 8.007,
+      "decodedFrames": 444,
+      "rgbObservationsDuringMonitor": 41,
+      "observationHzDuringMonitor": 5.121,
+      "decodedFpsDuringMonitor": 54.33,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 3,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": true,
+        "dataChannelOpened": true,
+        "nativeAdmissionConfirmed": true,
+        "actorAliveReceipts": 26,
+        "lastActorRttMs": 2.80620000557974,
+        "participantClosedConfirmed": true,
+        "nativeActionAppliedVerified": true,
+        "pointerKeyTextCommandsSent": 6,
+        "availabilityState": "manual"
+      },
+      "pointerProbe": {
+        "requested": true,
+        "expectedPoints": 6,
+        "attemptedPoints": 6,
+        "appliedReceipts": 6,
+        "lastNativeActionRttMs": 5.707400006940588,
+        "complete": true,
+        "samples": [
+          {
+            "sequence": 1,
+            "action": 0,
+            "receiverSequence": 9,
+            "receiverFrameAgeMs": 10.566,
+            "scheduleLatenessMs": 0.0
+          },
+          {
+            "sequence": 4,
+            "action": 2,
+            "receiverSequence": 29,
+            "receiverFrameAgeMs": 15.967,
+            "scheduleLatenessMs": 14.336
+          },
+          {
+            "sequence": 7,
+            "action": 2,
+            "receiverSequence": 57,
+            "receiverFrameAgeMs": 16.745,
+            "scheduleLatenessMs": 16.336
+          },
+          {
+            "sequence": 11,
+            "action": 2,
+            "receiverSequence": 112,
+            "receiverFrameAgeMs": 15.959,
+            "scheduleLatenessMs": 4.32
+          },
+          {
+            "sequence": 13,
+            "action": 2,
+            "receiverSequence": 141,
+            "receiverFrameAgeMs": 15.571,
+            "scheduleLatenessMs": 15.692
+          },
+          {
+            "sequence": 16,
+            "action": 1,
+            "receiverSequence": 168,
+            "receiverFrameAgeMs": 15.853,
+            "scheduleLatenessMs": 0.885
+          }
+        ]
+      },
+      "packages": {
+        "aiortc": "1.15.0",
+        "aioice": "0.10.2",
+        "av": "17.1.0",
+        "websockets": "17.2",
+        "numpy": "2.4.4"
+      },
+      "rgbTransform": "pilot_resize_256_square_rgb24_not_validated_model_preprocessing",
+      "scope": "tunnel_signaling_pointer",
+      "device": "auto-ph-011",
+      "captureWidth": 960,
+      "captureHeight": 540,
+      "privateReport": {
+        "file": ".local-pilot/motor03-pointer-20261016T195516Z.private.json",
+        "sha256NormalizedLf": "1b25833f0f06fe49050e7533c2c6507ab50d628210514a6ae49b01fb25de8974"
+      },
+      "sourceProof": {
+        "file": ".local-pilot/motor03-pointer-20261016T195516Z.private.source.json",
+        "sha256NormalizedLf": "c231e8cb9f9c616e8055802fba72fd80e1fe816034c91a26423b515a1d782415"
+      },
+      "observedAtUtc": "2026-10-16T19:55:30.640383+00:00",
+      "maxPreSendLatenessMs": 16.336,
+      "maxReceiverFrameAgeAtSendMs": 16.745
+    },
+    {
+      "kind": "HEADLESS_TRANSPORT_PILOT_NOT_GAMEPLAY",
+      "success": true,
+      "failure": null,
+      "durationObservedSeconds": 15.003,
+      "decodedFrames": 874,
+      "rgbObservationsDuringMonitor": 76,
+      "observationHzDuringMonitor": 5.066,
+      "decodedFpsDuringMonitor": 57.388,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 6,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "control": {
+        "requested": true,
+        "dataChannelOpened": true,
+        "nativeAdmissionConfirmed": true,
+        "actorAliveReceipts": 49,
+        "lastActorRttMs": 3.3029000042006373,
+        "participantClosedConfirmed": true,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0,
+        "availabilityState": "manual"
+      },
+      "pointerProbe": {
+        "requested": false,
+        "expectedPoints": 0,
+        "attemptedPoints": 0,
+        "appliedReceipts": 0,
+        "lastNativeActionRttMs": null,
+        "complete": false,
+        "samples": []
+      },
+      "packages": {
+        "aiortc": "1.15.0",
+        "aioice": "0.10.2",
+        "av": "17.1.0",
+        "websockets": "17.2",
+        "numpy": "2.4.4"
+      },
+      "rgbTransform": "pilot_resize_256_square_rgb24_not_validated_model_preprocessing",
+      "scope": "local_signaling_default_idle",
+      "device": "auto-ph-011",
+      "captureWidth": 960,
+      "captureHeight": 540,
+      "privateReport": {
+        "file": ".local-pilot/motor-headless-ph011-20261017T074112Z.private.json",
+        "sha256NormalizedLf": "540b9224b36cef84424c9e6f420d1726d586947604b0727017f30cd5508a5681"
+      },
+      "sourceProof": {
+        "file": ".local-pilot/motor-headless-ph011-20261017T074112Z.private.source.json",
+        "sha256NormalizedLf": "9ced25d9314336a3aeaf0a688213affaa5c486a03e9f16200b5f9e299ae1722d"
+      },
+      "runStartedAtUtc": "2026-10-17T07:41:12Z",
+      "decodedSnapshot": {
+        "file": ".local-pilot/motor-headless-ph011-20261017T074112Z.png",
+        "sha256NormalizedLf": "07008173db815f1c1e68d262b06360704d2f85d214be6d2c8c31d74f958c1fde"
+      },
+      "snapshotVisuallyReviewed": "Readable launcher at960x540; not an all-device color or game acceptance."
+    }
+  ],
+  "retainedNegativeRuns": [
+    {
+      "privateReport": {
+        "file": ".local-pilot/motor-headless-ph011-20261016T194328Z.private.json",
+        "sha256NormalizedLf": "3c1675e3147c6a77f510866e75060475c0bcc8a185cf8b55c4b75f40f7408f1a"
+      },
+      "failure": "unsolicited_control_message",
+      "pointerAppliedReceipts": 0,
+      "participantClosedConfirmed": false
+    },
+    {
+      "privateReport": {
+        "file": ".local-pilot/motor03-pointer-20261016T195222Z.private.json",
+        "sha256NormalizedLf": "9631f2cc44d33a84f487dc020ce011b83148bde3d86a6b26346e5a5670cb87ac"
+      },
+      "failure": "media_channel_closed",
+      "pointerAppliedReceipts": 6,
+      "participantClosedConfirmed": true
+    }
+  ],
+  "validation": {
+    "motorTestsPassed": 46,
+    "motorTestsSkipped": 0,
+    "realH264DtlsSctpFakePeer": true,
+    "testLog": {
+      "file": ".local-pilot/motor03-tests-retirement-final.private.log",
+      "sha256NormalizedLf": "824996174cdbfadb99dfd57db21079038602e485ca6c96af22e81e12333702b8"
+    },
+    "expectedCloseRegressionFailedBeforeFix": {
+      "file": ".local-pilot/motor03-expected-close-before.private.log",
+      "sha256NormalizedLf": "b0ecd1c1b44174196564f73246496e752d8e77f8b397e914efc86be3f08c9633"
+    },
+    "ruff": "All checks passed!",
+    "ruffFormat": "9 files already formatted",
+    "cliAbsentFileBeforeAuthAndOutput": true
+  },
+  "limits": {
+    "maxProbeBytes": 16384,
+    "maxProbePoints": 64,
+    "maxProbeDurationMs": 5000,
+    "maxPreSendLatenessMs": 100,
+    "maxReceiverDecodedAgeMsDuringHold": 250,
+    "inputAckDeadlineMs": 500,
+    "nativeCrashLeaseMs": 1500,
+    "replayInputs": false
+  },
+  "limitations": [
+    "Only PH011 finite runs, no long soak or real GPU-host LAN proof.",
+    "Tuna was a signaling origin; media and input used nominated peer route. Private scopes do not prove VPN bypass.",
+    "5Hz is RGB observation selection; worker still receives and software-decodes full shared stream.",
+    "Receiver decoder age is not source capture age. No shared frame ID/clock mapping.",
+    "RGB256square is pilot transform, not verified NitroGen preprocessing.",
+    "APPLIED receipts confirm native dispatch, not correct game behavior or source-to-action latency.",
+    "Default CLI emits no physical actions; opt-in probe is static single-finger path, not game profile or closed-loop policy.",
+    "User JWT pilot, no service principal or atomic DAG episode delegation.",
+    "No weights downloaded, inference, navigation, 50-device capacity or production SLA acceptance."
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "date": "2026-09-12",
+  "backend_source": "a22fb54",
+  "apk": {
+    "source_commit": "c0c07831894d2be6f3a839ff556208f53cc01350",
+    "built_at_utc": "2026-09-12T11:24:56.467231+00:00",
+    "file": "SphereAgent-remote-temporary-c0c0783-dev-debug.apk",
+    "sha256": "914e10c95eac99b863caffd54360359d69b2b76a2ce64adbce26723b925449e9",
+    "bytes": 8359033,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "agent_url": "https://mart-consecutive-kate-ships.trycloudflare.com",
+    "config_url": "https://mart-consecutive-kate-ships.trycloudflare.com/api/v1/config/agent",
+    "fallback_url": null,
+    "persistent_address": false,
+    "signing": "Android Debug; v2 signature verified",
+    "version_name": "1.2.0-dev",
+    "version_code": 10200,
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "jvm_tests": 498,
+    "jvm_suites": 36,
+    "failures": 0,
+    "installed_on_device": true,
+    "independent_fallback_verified": false,
+    "warning": "Quick Tunnel acceptance only; address changes on connector restart. Not fleet distribution.",
+    "verified_adb_serial": "emulator-5554",
+    "installed_package_bytes_match": true,
+    "other_instances_updated": false
+  },
+  "native_recovery": {
+    "time_utc": "2026-09-12T11:44:27.019387+00:00",
+    "apk_revision": "c0c0783",
+    "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+    "gateway_restart": true,
+    "new_ws_session": true,
+    "same_app_process": true,
+    "new_registrations": 0,
+    "recovery_seconds_including_restart_command": 9.03,
+    "automatic_recovery": true,
+    "ui_or_adb_reconnect_command": false,
+    "provider_process_restarted": false,
+    "independent_fallback_tested": false
+  },
+  "commands_before_fix": [
+    {
+      "attempt": 1,
+      "http_status": 400,
+      "elapsed_ms": 204.0,
+      "response": {
+        "detail": "Device is offline"
+      }
+    },
+    {
+      "attempt": 2,
+      "http_status": 200,
+      "elapsed_ms": 546.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_1\n"
+      }
+    },
+    {
+      "attempt": 3,
+      "http_status": 200,
+      "elapsed_ms": 688.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_2\n"
+      }
+    }
+  ],
+  "commands_during_backend_restart": [
+    {
+      "attempt": 1,
+      "http_status": 503,
+      "elapsed_ms": 406.0,
+      "response": {
+        "detail": "Device '85f2f935-7739-400e-9389-0d71227e8f0a' command channel is unavailable"
+      },
+      "expected_output": false
+    },
+    {
+      "attempt": 2,
+      "http_status": 200,
+      "elapsed_ms": 985.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_1\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 3,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_2\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 4,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_3\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 5,
+      "http_status": 200,
+      "elapsed_ms": 765.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_4\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 6,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_5\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 7,
+      "http_status": 200,
+      "elapsed_ms": 766.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_6\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 8,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_7\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 9,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_8\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 10,
+      "http_status": 200,
+      "elapsed_ms": 765.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_9\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 11,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_10\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 12,
+      "http_status": 200,
+      "elapsed_ms": 735.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_11\n"
+      },
+      "expected_output": true
+    }
+  ],
+  "commands_after_confirmed_reconnect": [
+    {
+      "attempt": 1,
+      "http_status": 200,
+      "elapsed_ms": 797.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_0\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 2,
+      "http_status": 200,
+      "elapsed_ms": 765.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_1\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 3,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_2\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 4,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_3\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 5,
+      "http_status": 200,
+      "elapsed_ms": 766.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_4\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 6,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_5\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 7,
+      "http_status": 200,
+      "elapsed_ms": 1266.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_6\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 8,
+      "http_status": 200,
+      "elapsed_ms": 765.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_7\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 9,
+      "http_status": 200,
+      "elapsed_ms": 735.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_8\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 10,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_9\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 11,
+      "http_status": 200,
+      "elapsed_ms": 765.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_10\n"
+      },
+      "expected_output": true
+    },
+    {
+      "attempt": 12,
+      "http_status": 200,
+      "elapsed_ms": 750.0,
+      "response": {
+        "output": "SPHERE_REMOTE_ACCEPTANCE_11\n"
+      },
+      "expected_output": true
+    }
+  ],
+  "regression": {
+    "cross_worker_before": {
+      "failed": 3,
+      "http_status": 400
+    },
+    "targeted_after_passed": 15,
+    "python_suite_passed": 1526,
+    "python_suite_seconds": 368.66,
+    "load_suite_run": false,
+    "coverage_measured": false,
+    "deployment_passed": 101
+  },
+  "limitations": [
+    "temporary single provider",
+    "no independent config source",
+    "one installed APK",
+    "no full DAG from UI",
+    "no VPN acceptance",
+    "no fleet capacity measurement"
+  ]
+}

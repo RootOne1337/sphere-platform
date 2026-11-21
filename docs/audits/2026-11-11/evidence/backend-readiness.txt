@@ -1,0 +1,2 @@
+200 /api/v1/health/ready {'status': 'ready', 'checks': {'postgres': 'ok', 'redis': 'ok'}}
+503 /api/v1/health/readyz {'status': 'not_ready'}

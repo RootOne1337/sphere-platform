@@ -1,0 +1,52 @@
+{
+  "NativeYuvBench": {
+    "output": [
+      "owned_direct iteration=0 ms=1.745388 y=127 u=152 v=103",
+      "owned_direct iteration=1 ms=1.054958 y=127 u=152 v=103",
+      "owned_direct iteration=2 ms=0.947945 y=127 u=152 v=103",
+      "owned_direct iteration=3 ms=0.879554 y=127 u=152 v=103",
+      "owned_direct iteration=4 ms=0.607886 y=127 u=152 v=103",
+      "owned_direct iteration=5 ms=0.649188 y=127 u=152 v=103",
+      "owned_direct iteration=6 ms=0.568125 y=127 u=152 v=103"
+    ],
+    "artifact": {
+      "bytes": 210437,
+      "sha256": "8d5725d59e89e72d63b0a7a5299ad8428addc029817957d1197d4515c978469e"
+    },
+    "source": "scripts/pilot/android/NativeYuvBench.java",
+    "sourceSha256": "19b119ca313c6e7602f0e1b1376df585419876eb0b453ca6d1befc50b4cdc9ae",
+    "scope": "Synthetic, offscreen or owned-memory input only. No live display capture or gameplay actions."
+  },
+  "NativeYuvGpuBench": {
+    "output": [
+      "source_direct=true stride=7680 pixel=4 bytes=8294400",
+      "iteration=0 direct_ms=137.252029 direct_copy_ms=73.83072 staged_ms=0.894964 heap_get_ms=78.220558 heap_put_ms=1.055928 heap_staged_ms=0.812252 y=127",
+      "iteration=1 direct_ms=113.246629 direct_copy_ms=75.150411 staged_ms=1.11855 heap_get_ms=81.050493 heap_put_ms=0.523734 heap_staged_ms=0.921824 y=127",
+      "iteration=2 direct_ms=113.053953 direct_copy_ms=68.125361 staged_ms=1.028858 heap_get_ms=73.158432 heap_put_ms=0.497824 heap_staged_ms=0.76404 y=127",
+      "iteration=3 direct_ms=103.391563 direct_copy_ms=64.423388 staged_ms=1.195692 heap_get_ms=70.175741 heap_put_ms=0.529175 heap_staged_ms=0.798431 y=127"
+    ],
+    "artifact": {
+      "bytes": 211946,
+      "sha256": "28ebd14aff17f5ee3653b76a7b0170c6986e308d568ad8148fb0a9401bea8ec0"
+    },
+    "source": "scripts/pilot/android/NativeYuvGpuBench.java",
+    "sourceSha256": "9f02ee69390715540ef9bc342de25cea0bd2d6396394c2e81f05c6fdf7aac53b",
+    "scope": "Synthetic, offscreen or owned-memory input only. No live display capture or gameplay actions."
+  },
+  "GpuYuvConverterBench": {
+    "output": [
+      "gpu_yuv iteration=0 ms=57.413634 width=1920 height=1080 strideY=1920 y=127 u=153 v=103",
+      "gpu_yuv iteration=1 ms=16.117318 width=1920 height=1080 strideY=1920 y=127 u=153 v=103",
+      "gpu_yuv iteration=2 ms=24.40482 width=1920 height=1080 strideY=1920 y=127 u=153 v=103",
+      "gpu_yuv iteration=3 ms=30.173131 width=1920 height=1080 strideY=1920 y=127 u=153 v=103",
+      "gpu_yuv iteration=4 ms=29.511688 width=1920 height=1080 strideY=1920 y=127 u=153 v=103"
+    ],
+    "artifact": {
+      "bytes": 210953,
+      "sha256": "121d3059dcda036192fb7f12c17afcbe05dac3a3c004c6787f248c388b852b03"
+    },
+    "source": "scripts/pilot/android/GpuYuvConverterBench.java",
+    "sourceSha256": "0cc2fa2c9468363565589fc042c00b8fd9d7697d9bab74dc3cf6b72cfad02b9a",
+    "scope": "Synthetic, offscreen or owned-memory input only. No live display capture or gameplay actions."
+  }
+}

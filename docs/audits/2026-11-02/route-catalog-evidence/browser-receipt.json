@@ -1,0 +1,102 @@
+{
+  "schema": "sphere-isolated-catalog-browser-acceptance-v1",
+  "scope": "REAL_COMPONENT_CLIENT_MOUNT_SYNTHETIC_RECORDS",
+  "component": "frontend/src/features/stream/TeachingRecordingCatalog.tsx",
+  "productSourceHashes": {
+    "frontend/src/features/stream/TeachingRecordingCatalog.tsx": "bed92ac76f045e7d6077ffbb012117062a4d700287a8368bf281ded6b46a5763",
+    "frontend/src/features/stream/teachingCatalog.ts": "35de0f6d6c5780d574dd078fe6e98f6accd03c905be30c11adf477cedcd70c2a",
+    "frontend/components/ui/button.tsx": "fa695a90abc24c543f3788459ac2393e21a1287d0b983498aca2b8834848d01c",
+    "frontend/lib/utils.ts": "6646b373ff8df919a16f37afaa2a1db98046ef4daaa140dc116c0d2f61b80dcc",
+    "frontend/app/globals.css": "7c393c5492a387266eaca41d879f0fed8785a8f2c5d5832e909f3252c023d26d",
+    "frontend/tailwind.config.ts": "ff2fef5f5cb40b20349c781b10134c9aa137d5d4bb42f49d2a886a44dafdff2e",
+    "frontend/package-lock.json": "d04493d745f1d6200a51e7c0a661a9a5feda0552225bd4d01b3490f9455cfc78"
+  },
+  "productSourceUnchanged": true,
+  "records": 18,
+  "checks": 35,
+  "allPassed": true,
+  "browser": {
+    "name": "chromium",
+    "version": "156.0.8078.79",
+    "headless": true,
+    "persistentProfile": false,
+    "attachedUserBrowser": false,
+    "closed": true
+  },
+  "consoleErrors": 0,
+  "consoleWarnings": 0,
+  "pageErrors": 0,
+  "network": {
+    "actualRequests": [
+      "http://127.0.0.1:52286/",
+      "http://127.0.0.1:52286/catalog.css",
+      "http://127.0.0.1:52286/bundle.js"
+    ],
+    "productionApiRequests": 0,
+    "opfsAccess": false,
+    "externalRequests": 0
+  },
+  "visualInspection": {
+    "performed": true,
+    "desktopWidth": 1440,
+    "mobileWidth": 390,
+    "horizontalOverflow": false,
+    "desktopColumns": 2,
+    "mobileColumns": 1,
+    "longTitleWrapped": true,
+    "keyboardFocusVisible": true,
+    "blockingFindings": []
+  },
+  "screenshots": {
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\catalog-20261102-v1\\wide-1440.png": "8c4c44e341c54df64581e980f1e57214b8fe6909372a3fce5b8864ead08302e0",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\catalog-20261102-v1\\mobile-390.png": "b4deb036e2156214473e764eb3dde759269be3de9b62eef45e2e8eb2e5a055f7",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\catalog-20261102-v1\\mobile-long-title-390.png": "1f717d2c59a328ed5a6b05d210624ac0b3dbf8e18c1d7f3fc950a555fbbe011e",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\catalog-20261102-v1\\keyboard-focus-settled.png": "1099c285e04c472160cba3532b863cf650b97ec918470082dfd43ccd208ed19d"
+  },
+  "artifacts": {
+    "browser-evidence.json": "e1f050aff194395d98a8d5f982ff7b949f5a31977ab289aa735f2ac8963d82eb",
+    "bundle-react-resolution-failed.js": "95633515faf50f3349b9371139bcf0f7204ec384d27a31376e226952be4ea775",
+    "bundle.js": "ad46aaec2870b8d3aee969a5477c984dea8dfca399564b453e6bf1b4bc1b11ab",
+    "catalog.css": "27849ddc09572dff8af08ff295b35a8634b9728c1937a4496473b461cd694d01",
+    "entry.tsx": "652a64ae18fdef5129693415be71e08f486745d589b93711a68cc751393113f1",
+    "evidence-cli.txt": "de36bcf4f9cfe2aab79f4637e25917995381601ac907d02131ea90f2719e2c87",
+    "export-evidence.js": "61c9b8bf864b2bb25c49cd6f96234d87438c884335bcea5b966ce08a57530692",
+    "index.html": "03aab891836b3b5dfe4982def5098a0f1360ed615401e2038682015cf586f58a",
+    "inputs.json": "b06e960898e0689a67e01511798cb2ec3ed8b256bb89b783787ed8ffbaea764a",
+    "interactions.js": "6f9e6aff034b2a7338f0a8897ef921ba22ef482c1547a9fcd098fe47f1586312",
+    "mobile.js": "87bdea0bc873a7e4a424f53ff4eda43248763555302dd8c62f031662e60e3728",
+    "server-closed.json": "8e05363dbfdc1e11cc0a6ed91554a112ce20a47f6a14d6579c57c180137f6309",
+    "server.json": "cff3d1e6cc1a54efe46174b7df5ccf43cdb4441f95d68d289188446fb5be1e9a",
+    "server.py": "374ce362844e3477e27bdfb66d02d40a7782115b078e564914c3c8a0d0a865fb",
+    "setup.js": "712f78103268f936ff6245953831cf80534202cf37ccc75029c30c9b56ec5859"
+  },
+  "server": {
+    "pid": 42900,
+    "port": 52286,
+    "loopbackOnly": true,
+    "closed": true
+  },
+  "fixtureCorrections": [
+    {
+      "issue": "Duplicate React resolution from an entry outside frontend",
+      "fix": "Alias React and ReactDOM to exact frontend/node_modules copies; fresh browser context",
+      "productIssue": false,
+      "preserved": "bundle-react-resolution-failed.js + initial CLI console/snapshot"
+    },
+    {
+      "issue": "Evidence recorder self-reference could not serialize",
+      "fix": "Normalize fixture-only recorder detail; no UI checks repeated or changed",
+      "productIssue": false
+    }
+  ],
+  "limitations": [
+    "Synthetic records and callbacks; no real OPFS/API job hydration",
+    "React createRoot client mount; production Next SSR hydration not verified",
+    "Not IAB or device/input acceptance",
+    "Initial fixture resolver error is preserved; final fresh session has zero console errors"
+  ],
+  "physicalActions": 0,
+  "iabAcceptance": false,
+  "backendTouched": false,
+  "productionBuild": false
+}

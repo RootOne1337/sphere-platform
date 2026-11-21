@@ -1,0 +1,85 @@
+{
+  "finding": "AUD-127",
+  "severity": "Medium",
+  "baseline_source": "85fb1ea",
+  "tests": {
+    "before": {
+      "tests": "3",
+      "failures": "3",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.286",
+      "report_sha256": "95f79879f066aebf2e5d4db52791aa148a31c0a1f78ab277b5114a01fda7cd10"
+    },
+    "after": {
+      "tests": "22",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "15.675",
+      "report_sha256": "71d9e4bf18856b983141584ea7f3808f638463891e3b174f22bbedededc9451d"
+    }
+  },
+  "native_helper": {
+    "started_at": "2026-09-20T09:43:20.751684+00:00",
+    "finished_at": "2026-09-20T09:44:06.737959+00:00",
+    "backend_source": "85fb1ea",
+    "passed": true,
+    "errors": [],
+    "backend_log_sha256": "ffa818c5374be7e2fab12c01442834d4add3878698cd7c0e75b0f2a6175686e9",
+    "new_frames_by_stage": [
+      {
+        "0": 5,
+        "1": 5,
+        "2": 5
+      },
+      {
+        "0": 5,
+        "1": 5
+      },
+      {
+        "1": 3
+      },
+      {
+        "0": 4,
+        "1": 4,
+        "2": 4
+      },
+      {
+        "0": 5,
+        "1": 5
+      },
+      {
+        "1": 5
+      }
+    ],
+    "all_stages_passed": true,
+    "devices": [
+      {
+        "serial": "emulator-5554",
+        "pid_before": "2182",
+        "pid_after": "2182",
+        "pid_unchanged": true,
+        "crash_buffer_unchanged": true,
+        "echo_verified": true,
+        "api_status": "online",
+        "projection_active_after_own_viewers": false
+      },
+      {
+        "serial": "emulator-5556",
+        "pid_before": "2187",
+        "pid_after": "2187",
+        "pid_unchanged": true,
+        "crash_buffer_unchanged": true,
+        "echo_verified": true,
+        "api_status": "online",
+        "projection_active_after_own_viewers": false
+      }
+    ]
+  },
+  "limits": [
+    "Six bounded native stages per phase, not an eight-hour run.",
+    "H.264 protocol delivery and motion counts; no browser decoder or capacity certification.",
+    "probe calls the retained Runner.verify_viewer_motion helper on live WSS viewers."
+  ]
+}

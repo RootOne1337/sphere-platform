@@ -73,16 +73,29 @@ async def test_device_jwt_unknown_device_raises(_mock_bl, db_session, test_org):
 @pytest.mark.asyncio
 @patch(_BLACKLIST_PATCH, new_callable=AsyncMock, return_value=False)
 async def test_user_jwt_returns_user(_mock_bl, db_session, test_user, test_org):
-    """Обычный JWT (role='admin') должен искать в users и вернуть User объект."""
+    """Only a user with device:write may act as a legacy device agent."""
+    test_user.role = "device_manager"
+    await db_session.flush()
     token, _ = create_access_token(
         subject=str(test_user.id),
         org_id=str(test_org.id),
-        role="admin",
+        role="device_manager",
     )
     principal = await authenticate_ws_token(token, db_session)
 
     assert hasattr(principal, "org_id")
     assert str(principal.org_id) == str(test_org.id)
+
+
+@pytest.mark.asyncio
+@patch(_BLACKLIST_PATCH, new_callable=AsyncMock, return_value=False)
+async def test_viewer_cannot_authenticate_as_agent(_mock_bl, db_session, test_user, test_org):
+    test_user.role = "viewer"
+    await db_session.flush()
+    token, _ = create_access_token(subject=str(test_user.id), org_id=str(test_org.id), role="viewer")
+    with pytest.raises(HTTPException) as error:
+        await authenticate_ws_token(token, db_session)
+    assert error.value.status_code == 403
 
 
 # ---------------------------------------------------------------------------

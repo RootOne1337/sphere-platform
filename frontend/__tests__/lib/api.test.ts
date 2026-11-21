@@ -31,7 +31,8 @@ jest.mock('axios', () => {
 
 // Мок store
 const mockGetState = jest.fn(() => ({
-  accessToken: 'test-access-token',
+  accessToken: 'test-access-token' as string | null,
+  sessionVersion: 0,
   setAccessToken: jest.fn(),
   logout: jest.fn(),
 }));
@@ -41,6 +42,8 @@ jest.mock('@/lib/store', () => ({
   getRefreshToken: jest.fn(() => 'test-refresh-token'),
   saveRefreshToken: jest.fn(),
   clearRefreshToken: jest.fn(),
+  assertSession: jest.fn(),
+  refreshSession: jest.fn(),
 }));
 
 describe('api.ts HTTP-клиент', () => {
@@ -91,6 +94,7 @@ describe('api.ts HTTP-клиент', () => {
     it('не добавляет header если токен отсутствует', () => {
       mockGetState.mockReturnValueOnce({
         accessToken: null,
+        sessionVersion: 0,
         setAccessToken: jest.fn(),
         logout: jest.fn(),
       });

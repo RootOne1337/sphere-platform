@@ -1,0 +1,7 @@
+* -text whitespace=cr-at-eol
+*.py whitespace=cr-at-eol,-blank-at-eof
+*.cjs whitespace=cr-at-eol,-blank-at-eof
+*.log whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
+# Preserve whitespace emitted by native help and original patch context.
+global-*-help.txt whitespace=cr-at-eol,-blank-at-eol
+guided-*.patch whitespace=cr-at-eol,-blank-at-eol

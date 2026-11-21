@@ -1,0 +1,43 @@
+{
+  "source": "zaezd888",
+  "frames": 901,
+  "hud_samples": 301,
+  "hud_accepted_samples": 261,
+  "hud_unknown_samples": 40,
+  "total_seconds": 35.493,
+  "speed_supported_seconds": 29.182000000000002,
+  "speed_unsupported_seconds": 6.311,
+  "speed_supported_fraction": 0.8221902910433043,
+  "path_supported_seconds": 29.182000000000002,
+  "path_unsupported_seconds": 6.311,
+  "supported_hud_distance_game_units": 462.7498611111111,
+  "distance_method": "trapezoidal between adjacent accepted sampled speeds only, dt<=0.2 sec; HUD km/h /3.6 is game-equivalent distance, not physical meters",
+  "independent_segments": 10,
+  "segment_anchor": "each starts at arbitrary local zero; after any gap next position is unknown; never concatenate",
+  "forward_initial_yaw_deg": 0.0,
+  "reverse_initial_yaw_deg": 3.1805546814635187e-15,
+  "forward_final_yaw_deg": 136.38544873435853,
+  "reverse_final_yaw_deg": 132.27244598317236,
+  "heading_difference_all_frames_deg": {
+    "count": 901,
+    "median_abs": 2.1354944380767473,
+    "p90_abs": 4.863680388885892,
+    "max_abs": 7.678062114730446
+  },
+  "heading_difference_on_accepted_samples_deg": {
+    "count": 261,
+    "median_abs": 2.1102464202628615,
+    "p90_abs": 4.891867564610901
+  },
+  "horizontal_degenerate_frames": 0,
+  "assumptions": [
+    "vehicle moves forward",
+    "camera optical forward aligned with vehicle",
+    "initial camera xz plane is horizontal, up/gravity unknown",
+    "speed changes linearly between adjacent accepted samples within 0.2s",
+    "SO3 predictions from same model and same video are not ground truth"
+  ],
+  "execution_qualified": false,
+  "road_alignment_verified": false,
+  "physical_metric_verified": false
+}

@@ -1,0 +1,47 @@
+{
+  "at": "2026-09-14T14:34:14.362791+00:00",
+  "finding": "AUD-119",
+  "apk_version": "1.2.6 / 10206",
+  "capacity_before": {
+    "tests": 1,
+    "failures": 1,
+    "error": "command_journal_capacity_exhausted",
+    "acknowledged_commands": 512,
+    "source": "historical probe retained with night-deep-analysis-20260914.json"
+  },
+  "ack_write_before": {
+    "tests": 1,
+    "failures": 1,
+    "reason": "uncaught receipt_disk_unavailable in launched result_ack handler",
+    "junit_sha256": "f164f1dec95c6a6fd101cac8440941465573f641a677b7c6e29e632b877fe686"
+  },
+  "full_android_suites": {
+    "dev": {
+      "tests": 577,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": 43,
+      "journal_tests": {
+        "CommandDeliveryTest": 9,
+        "CommandJournalTest": 16,
+        "CommandReceiptStoreTest": 9
+      }
+    },
+    "enterprise": {
+      "tests": 577,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "suites": 43,
+      "journal_tests": {
+        "CommandDeliveryTest": 9,
+        "CommandJournalTest": 16,
+        "CommandReceiptStoreTest": 9
+      }
+    }
+  },
+  "runtime_installed": false,
+  "enterprise_skip": "Existing ConfigRecoveryTest baked-route fixture assumes nonempty DEFAULT_SERVER_URL and DEFAULT_API_KEY; absent in enterprise configuration",
+  "full_test_log_sha256": "318b500d20171c7b535ebebd3bf1207130b9ee5d23c1ffa481159da99d0d4c0e"
+}

@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T22:05:42.592541+00:00",
+  "runtimeInstalled": true,
+  "scope": "One finite diagnostic-only host ICE attempt; failed connectivity. Original APK restored, API probe disabled, ordinary video return accepted only for nine frames. No latency/media/control/fleet acceptance.",
+  "runtime": {
+    "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "apiSourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "uiContainer": {
+      "id": "ab99e502bd25ba176c485847ccedaff1933495c4533b25c2111a4e31b34792f6",
+      "imageId": "sha256:aab964f9218f3911f4f35f4aec8ed63898cbf673a7a4c122c01b3016b65e94bb",
+      "imageTag": "sphere-review-frontend:369654a0be4bded35e299062badc9bfe95101f1e",
+      "startedAt": "2026-10-09T21:35:07.521123551Z",
+      "status": "running"
+    },
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "containerCount": 46,
+    "apiContainer": {
+      "id": "5b602999c25f60cc12e6a82b52b1004a5957d22eff688dc0509e52aa8bfcf83c",
+      "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+      "startedAt": "2026-10-09T22:01:57.41721921Z",
+      "status": "running"
+    },
+    "schemaMigrationPerformed": false,
+    "otherContainersPreservedPerInstallation": 45,
+    "directProbeEnabled": false,
+    "directProbeDeviceIds": [],
+    "nativeCanaryCurrentlyInstalled": false,
+    "originalApkRestored": true,
+    "publicHostMapChanged": false,
+    "apiWsBootstrapRoutesChanged": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Post-cleanup public viewer returned nine decoded/drawn frames with no decode/render/invalid errors; no control input or steady FPS test.",
+    "observedAtUtc": "2026-10-09T22:03:24.494Z",
+    "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+    "decodedFrames": 9,
+    "drawnFrames": 9,
+    "packets": 15,
+    "bytes": 178108,
+    "invalidPackets": 0,
+    "decodeErrors": 0,
+    "renderErrors": 0,
+    "normalBuildNetworkProbePanelVisible": false,
+    "consoleWarningErrorCount": 0,
+    "agentTelemetryScope": "Cached not_streaming report is separate from the nine real browser-decoded frames; not accepted as fresh capture telemetry."
+  },
+  "diagnosticUi": {
+    "origin": "http://127.0.0.1:3016",
+    "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "temporaryDevelopmentServer": true,
+    "productionArtifact": false,
+    "sourceDiffFromInstalledFrontend": [],
+    "buildFlag": "NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY=true",
+    "standardRuntimeBuildFlagEnabled": false,
+    "temporaryPorts": [
+      3016,
+      3017
+    ],
+    "temporaryListenersStopped": true,
+    "newRuntimeArtifactInstalled": false,
+    "finding": "Source delivery does not activate this compile-gated panel in the ordinary frontend artifact. Real network counters were observed in temporary loopback diagnostic UI only."
+  },
+  "probe": {
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "attempts": 1,
+    "iceServers": [],
+    "mediaOrAndroidInputSent": false,
+    "offerBytes": 652,
+    "offerCandidates": 1,
+    "offerMdnsCandidates": 1,
+    "answerBytes": 723,
+    "answerCandidates": 2,
+    "answerMdnsCandidates": 0,
+    "authorizedPublicationGapMs": 463,
+    "onlyApplicationSdp": true,
+    "outcome": "CONNECTION_DEADLINE",
+    "setupDeadlineMs": 12000,
+    "echoSamples": 0,
+    "rttP95Ms": null,
+    "selectedCandidatePair": null,
+    "lastBrowserSnapshot": {
+      "iceState": "checking",
+      "dtlsState": "connecting",
+      "localCandidates": 4,
+      "remoteCandidates": 2,
+      "pairs": 2,
+      "checkingPairs": 2,
+      "failedPairs": 0,
+      "succeededPairs": 0,
+      "requestsSent": 177,
+      "responsesReceived": 0,
+      "snapshotAgeAtStopMs": 367
+    },
+    "localization": "Browser installed the APK answer and attempted ICE checks, but reported no responses or successful pair. Individual packet path, mDNS resolution, firewall/NAT/route cause remain UNKNOWN.",
+    "signalingCountersAreNotBrowserStats": true,
+    "candidateAddressesSdpCredentialsPublished": false
+  },
+  "native": {
+    "sourceRevision": "9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
+    "androidSourceDeltaToInstalledApiSource": [],
+    "apkSha256": "225a0af45fab919f37f10570326bba730bcf1912262c5d91ac567c164ee9e26c",
+    "originalApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+    "restoredApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+    "restoredAtUtc": "2026-10-09T22:00:46.987492+00:00",
+    "appDataCleared": false,
+    "otaPublished": false,
+    "otherDevicesUpdated": false,
+    "sameProcessResourceSamples": [
+      {
+        "observedAtUtc": "2026-10-09T22:00:14.088736+00:00",
+        "vmRssKiB": 130540,
+        "threads": 40
+      },
+      {
+        "observedAtUtc": "2026-10-09T22:00:45.756952+00:00",
+        "vmRssKiB": 127148,
+        "threads": 31
+      }
+    ],
+    "resourceAcceptance": "Two observations of one canary process, including legacy capture and JNI activity. No CPU/plateau/leak/fleet acceptance; original pre-install process is not a comparable baseline."
+  },
+  "cleanup": {
+    "apiEnable": {
+      "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "runId": 37993531649,
+      "imageId": "sha256:ca33376383d9ddb0bb9596dcb4a465d29192ae801d7f17d227f6d46cf7100cdd",
+      "archiveBytes": 236273409,
+      "previousBackend": {
+        "id": "d80254ff806a3bab34471185e4dad9f300dbca4b82e5bd44c57c91eca8254a0f",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T21:46:27.920139598Z",
+        "status": "running"
+      },
+      "sourceChanges": [],
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false,
+      "resourceFindings": [],
+      "observedAtUtc": "2026-10-09T21:54:20.852965+00:00",
+      "applyRequested": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "directProbeDevice": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "directProbeMediaControlEnabled": false,
+      "directProbeExplicitlyDisabled": false,
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-backend-install-369654a0be4b-b6fa0b76",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "installedBackend": {
+        "id": "3635e19a0e02f144feb0d6c9e729bb81a6798ccde3a14026796e16d7482c0b8e",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T21:54:58.285141918Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "liveContractVerified": false,
+      "agentReconnectVerified": false
+    },
+    "apiDisable": {
+      "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "runId": 37993531649,
+      "imageId": "sha256:ca33376383d9ddb0bb9596dcb4a465d29192ae801d7f17d227f6d46cf7100cdd",
+      "archiveBytes": 236273409,
+      "previousBackend": {
+        "id": "3635e19a0e02f144feb0d6c9e729bb81a6798ccde3a14026796e16d7482c0b8e",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T21:54:58.285141918Z",
+        "status": "running"
+      },
+      "sourceChanges": [],
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false,
+      "resourceFindings": [],
+      "observedAtUtc": "2026-10-09T22:01:20.008313+00:00",
+      "applyRequested": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "directProbeDevice": null,
+      "directProbeMediaControlEnabled": false,
+      "directProbeExplicitlyDisabled": true,
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-backend-install-369654a0be4b-bea50b06",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "installedBackend": {
+        "id": "5b602999c25f60cc12e6a82b52b1004a5957d22eff688dc0509e52aa8bfcf83c",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T22:01:57.41721921Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "liveContractVerified": false,
+      "agentReconnectVerified": false
+    },
+    "postCleanupContract": {
+      "observedAtUtc": "2026-10-09T22:02:40.739750+00:00",
+      "requestsStartedUtc": "2026-10-09T22:02:38.334547+00:00",
+      "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "reads": [
+        {
+          "origin": "http://127.0.0.1:3015",
+          "healthStatus": 200,
+          "buildSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+          "missingScriptVerified": true,
+          "broadcastStatus": 404,
+          "broadcastDetail": "Script not found",
+          "requestMs": 9.77,
+          "deviceName": "auto-ph-011",
+          "deviceStatus": "online",
+          "androidInputSent": false
+        },
+        {
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "healthStatus": 200,
+          "buildSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+          "missingScriptVerified": true,
+          "broadcastStatus": 404,
+          "broadcastDetail": "Script not found",
+          "requestMs": 247.33,
+          "deviceName": "auto-ph-011",
+          "deviceStatus": "online",
+          "androidInputSent": false
+        }
+      ],
+      "probeDisabled": {
+        "code": 4003,
+        "reason": "direct_probe_disabled",
+        "jwtSent": false
+      },
+      "apiContainer": {
+        "id": "5b602999c25f60cc12e6a82b52b1004a5957d22eff688dc0509e52aa8bfcf83c",
+        "image": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "startedAtUtc": "2026-10-09T22:01:57.41721921Z"
+      },
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "scope": "Invalid script after real presence resolution; no durable intent or Android execution requested. Real committed HTTP202 verified in isolated CI.",
+      "boundedLogCheck": {
+        "linesRead": 5,
+        "tailLimit": 2000,
+        "broadcastUnhandledErrors": 0,
+        "rawLogsPublished": false
+      }
+    },
+    "originalApkRestored": true,
+    "temporaryListenersStopped": true,
+    "inputReplayPerformed": false
+  },
+  "acceptance": {
+    "productAccepted": 9,
+    "productOpen": 41,
+    "legacyUnclosed": 7,
+    "newProductItemsClosed": []
+  },
+  "previousInstalledObservation": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json"
+}

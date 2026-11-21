@@ -1,0 +1,12 @@
+{
+  "exitCode": 0,
+  "reason": null,
+  "wallSeconds": 42.20299999997951,
+  "peakObservedPrivateBytes": 946176,
+  "minAvailableRamGiB": 10.904563903808594,
+  "resourceSamples": 80,
+  "resourceFindings": 0,
+  "workerLogSha256": "d4de43fe31e46b826c439deaf995361b51876e363f816d4198f2367479ee53d8",
+  "physicalActions": 0,
+  "production3342Touched": false
+}

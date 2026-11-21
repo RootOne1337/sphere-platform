@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "stop": "timeout",
+  "seconds": 120.32799999997951,
+  "initial_ram": 11130998784,
+  "initial_commit": 21893709824,
+  "min_ram": 7696977920,
+  "min_commit": 21891018752,
+  "source_hashes_match_stage2_receipt": true,
+  "input_hashes_unchanged": true
+}

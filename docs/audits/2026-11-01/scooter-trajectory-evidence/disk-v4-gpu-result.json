@@ -1,0 +1,75 @@
+{
+  "status": "GPU_phase_complete_CPU_verification_pending",
+  "method": "DISK_depth_LightGlue_disk",
+  "worker_exit_confirmed": true,
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "source_integrity": {
+    "all_166_PNGs_unchanged": true,
+    "source_input_unchanged": true,
+    "source_database_unchanged": true,
+    "mask_unchanged": true,
+    "previous_profiles_unchanged": true
+  },
+  "camera_params_sha256": "99e600e84bb51398ba19fc00a175b0c46ea86918feefd555dc0eaad9c77cdc4b",
+  "database_counts": {
+    "images": 166,
+    "cameras": 1,
+    "keypoints": 166,
+    "descriptors": 0,
+    "matches": 811,
+    "two_view_geometries": 0
+  },
+  "database_integrity_check": "ok",
+  "keypoint_observations": 168802,
+  "raw_match_observations": 336661,
+  "keypoint_count_summary": {
+    "min": 676,
+    "median": 1024.0,
+    "max": 1024
+  },
+  "outside_source_pixels": 0,
+  "masked_feature_points": 0,
+  "master_dimensions": [
+    1920,
+    1080
+  ],
+  "analysis_dimensions": [
+    1024,
+    576
+  ],
+  "source_master_transcoded": false,
+  "coordinates": "LightGlue source center-zero; COLMAP XY=GL+.5 once after resizing",
+  "quota_after_mask": 1024,
+  "comparison": "same DISK/LG method and frames, analysis resolution and resource limits changed",
+  "gpu_seconds": 80.28100000007544,
+  "peak_gpu_reserved_GiB": 5.70703125,
+  "peak_gpu_allocated_GiB": 5.331132411956787,
+  "minimum_global_gpu_free_GiB": 9.93048095703125,
+  "minimum_host_available_RAM_GiB": 8.923011779785156,
+  "minimum_host_commit_headroom_GiB": 16.555191040039062,
+  "sparse_cache_MiB": 84.52054595947266,
+  "raw_database": "features.db",
+  "raw_database_sha256": "6122cb6d54171933b4d283723bfe082e7b72216637587faf93a71b58d18897c3",
+  "cpu_handoff_database": "cpu-input.db",
+  "cpu_handoff_sha256": "b9d158fbb971c9b32fb9c9c937455ffb8dacee96aa4156e48655d2a4452c8721",
+  "pairs": "pairs.txt",
+  "pairs_sha256": "75f35f628242d8d45eaee2f7f1a03e3e18c7c9d2733b4b519c547c8b99a97384",
+  "independent_pose_holdout": false,
+  "geometric_verification_complete": false,
+  "reconstruction_quality_proven": false,
+  "one_offline_stage_not_100_live_windows": true,
+  "source_modified": false,
+  "primary_modified": false,
+  "published": false,
+  "physicalActions": 0,
+  "post_exit_memory": {
+    "availableRamBytes": 10596052992,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 75960397824,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 10545192960,
+    "kernelNonpagedBytes": 5174280192,
+    "processCount": 492,
+    "handleCount": 671207
+  }
+}

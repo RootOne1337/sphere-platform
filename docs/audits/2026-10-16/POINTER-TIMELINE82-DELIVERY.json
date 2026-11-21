@@ -1,0 +1,549 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-16T19:18:25.969381+00:00",
+  "runtimeInstalled": true,
+  "scope": "Finite two-gesture recording and task-scoped native timeline replay on PH011 and PH030; no universal timing/production SLA.",
+  "previousDelivery": "docs/audits/2026-10-16/POINTER-PATH81-DELIVERY.json",
+  "runtime": {
+    "sourceRevision": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+    "apiSourceRevision": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+    "apkSourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
+    "containers": {
+      "sphere-review-20261002-review-ui-1": {
+        "id": "7dfcb4212525d38904d43c40bf84a69729255886e5865b0b6a34e1241e4a63f1",
+        "imageId": "sha256:b692ad5a6925d2bc1a00396d3b756cc4ee839a613f3e8cfbaae7ca49882f7e27",
+        "health": "healthy"
+      },
+      "sphere-pilot-20260911-backend-1": {
+        "id": "7c719755a3042300d2a7addb3f0b4da1ba7d17a7c9cb57ef0cf70f7c655e3c66",
+        "imageId": "sha256:84e6aef1c9d714833a0e3c1152397d920ac32f35bf742250d0b95242ec5bd293",
+        "health": "healthy"
+      }
+    },
+    "health": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "result": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "origin": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "result": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "result": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "result": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881"
+        }
+      }
+    ]
+  },
+  "apk": {
+    "sha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+    "bytes": 57868809,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "tests": {
+      "dev": {
+        "tests": 1250,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1250,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "android_tree": "7c629741e742f75c9423545aefbc03e43a7d2ba6",
+    "versionCode": 10282,
+    "version": "1.2.82-dev",
+    "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
+    "installedDevices": [
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "versionCode": 10282,
+        "installedPackageSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+        "otaCommandId": "a2b2bda2-e7f2-43b2-8636-4a8c37375c07"
+      },
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "name": "auto-ph-030",
+        "versionCode": 10282,
+        "installedPackageSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+        "otaCommandId": "1361530c-d6f5-4a2f-8a4c-5ff382c4b193"
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "name": "auto-ph-025",
+        "versionCode": 10282,
+        "installedPackageSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+        "otaCommandId": "8e62b1c8-d8f7-4158-af26-84f9e487ceb5"
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "name": "auto-ph-010",
+        "versionCode": 10282,
+        "installedPackageSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+        "otaCommandId": "3894c0c0-459d-4fa8-99b2-a28492e9c14d"
+      }
+    ]
+  },
+  "ci": {
+    "apkBuildStatus": {
+      "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
+      "context": "Sphere Local / Android candidate build",
+      "id": 56553919161,
+      "state": "success",
+      "readbackVerified": true,
+      "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+      "metadataSha256": "55482eed54ed64e628405d3fab843e8dd0663801e1687128ce98ae3b7bafd68e"
+    },
+    "targetedAndroidTests": 196,
+    "targetedFailures": 0,
+    "targetedErrors": 0,
+    "webApiPreviousExactSource": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+    "webApiCodeTreesUnchanged": true,
+    "previousWebApiEvidence": {
+      "frontend": {
+        "tests": {
+          "tests": 2558,
+          "passed": 2558,
+          "failures": 0,
+          "failedSuites": 0,
+          "skipped": 0,
+          "suites": 174,
+          "success": true
+        },
+        "github": {
+          "id": 56550265753,
+          "context": "Sphere Local / Frontend regressions",
+          "state": "success",
+          "createdAt": "2026-10-16T18:21:16Z",
+          "readbackVerified": true,
+          "targetUrl": null
+        },
+        "privateProof": {
+          "file": ".local-pilot/local-ci/runs/20261016T181856Z-33fc00f5/receipt.json",
+          "sha256": "e555938c3daeaa28e1843d33d6f91a3637f20d43b069a1a3af57cf376e6f84ff"
+        }
+      },
+      "backend": {
+        "tests": {
+          "tests": 4189,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 11
+        },
+        "github": {
+          "id": 56550066065,
+          "context": "Sphere Local / Backend regressions",
+          "state": "success",
+          "createdAt": "2026-10-16T18:18:50Z",
+          "readbackVerified": true,
+          "targetUrl": null
+        },
+        "privateProof": {
+          "file": ".local-pilot/local-ci/runs/20261016T180300Z-e54131a6/receipt.json",
+          "sha256": "dbbb03f942399025ba1c41ef9465366cda5e064e77c98eb21603f9bfbfa033db"
+        }
+      }
+    },
+    "previousNoHostedClaimCorrectedBy": "docs/audits/2026-10-16/HOSTED-ACTIONS-DISABLED.json",
+    "hostedActionsStarted": true,
+    "completeCiMigrationAccepted": false,
+    "hostedActionsDisabledAfterDiscovery": true,
+    "hostedActionsControlProof": {
+      "file": ".local-pilot/hosted-actions-disabled-20261017.private.json",
+      "sha256": "17ce8643399640c61bc9886585e68219e4c5e5538bc6f74bca5e88c63d1c18e1"
+    }
+  },
+  "delivery": {
+    "offlineCount": 17,
+    "executorGrantsIssued": 4,
+    "ordinaryChannelUnchanged": true,
+    "fleetProof": {
+      "file": ".local-pilot/pointer82-fleet-ota-20261016.private.json",
+      "sha256": "38db907e9d17618df081b0d7a0f9c0e2700156660276a19b66ba51a0b61f8aab"
+    },
+    "uiAndApiPreserved": true,
+    "schemaMigrationPerformed": false,
+    "archivesCreated": 0
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "directFramesPresented": 1,
+    "runs": [
+      {
+        "case": "record-local",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "origin": "http://127.0.0.1:3015",
+        "atUtc": "2026-10-16T19:09:30.514Z",
+        "taskStatus": "completed",
+        "nativePaths": [
+          {
+            "points_applied": 62,
+            "duration_ms": 19550,
+            "max_schedule_lateness_ms": 8,
+            "timeline_offset_ms": 0,
+            "start_lateness_ms": 0,
+            "helper_reused": false
+          },
+          {
+            "points_applied": 25,
+            "duration_ms": 9182,
+            "max_schedule_lateness_ms": 4,
+            "timeline_offset_ms": 20918,
+            "start_lateness_ms": 4,
+            "helper_reused": true
+          }
+        ],
+        "plannedGapMs": 1368,
+        "taskWindowMs": 35468,
+        "recordedPaths": [
+          {
+            "nodeCount": 1,
+            "points": 62,
+            "durationMs": 19550,
+            "largestIntervalMs": 1921,
+            "reversalRetained": true
+          },
+          {
+            "nodeCount": 1,
+            "points": 25,
+            "durationMs": 9182,
+            "largestIntervalMs": 1327,
+            "reversalRetained": true
+          }
+        ],
+        "viewers": 2,
+        "peersBeforeEach": [
+          1,
+          1
+        ],
+        "peersAfterEach": [
+          1,
+          1
+        ],
+        "framesBeforeEach": [
+          33,
+          1753
+        ],
+        "framesAfterEach": [
+          1879,
+          3621
+        ],
+        "controlAfterEach": [
+          "ready",
+          "ready"
+        ],
+        "directAfterEach": [
+          true,
+          true
+        ],
+        "newHomeAppliedAfterTask": true,
+        "pageErrors": 0,
+        "fixtureArchived": true,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/pointer82-record-local.private.json",
+          "sha256": "6a488dfdf838cc964ad4a85281698838fb51b8103519a84e654ce9d477711b24"
+        }
+      },
+      {
+        "case": "record-tunnel",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "atUtc": "2026-10-16T19:11:32.186Z",
+        "taskStatus": "completed",
+        "nativePaths": [
+          {
+            "points_applied": 62,
+            "duration_ms": 19450,
+            "max_schedule_lateness_ms": 4,
+            "timeline_offset_ms": 0,
+            "start_lateness_ms": 0,
+            "helper_reused": false
+          },
+          {
+            "points_applied": 25,
+            "duration_ms": 5931,
+            "max_schedule_lateness_ms": 2,
+            "timeline_offset_ms": 20851,
+            "start_lateness_ms": 2,
+            "helper_reused": true
+          }
+        ],
+        "plannedGapMs": 1401,
+        "taskWindowMs": 31779,
+        "recordedPaths": [
+          {
+            "nodeCount": 1,
+            "points": 62,
+            "durationMs": 19450,
+            "largestIntervalMs": 1872,
+            "reversalRetained": true
+          },
+          {
+            "nodeCount": 1,
+            "points": 25,
+            "durationMs": 5931,
+            "largestIntervalMs": 1072,
+            "reversalRetained": true
+          }
+        ],
+        "viewers": 2,
+        "peersBeforeEach": [
+          1,
+          1
+        ],
+        "peersAfterEach": [
+          1,
+          1
+        ],
+        "framesBeforeEach": [
+          7,
+          1746
+        ],
+        "framesAfterEach": [
+          1688,
+          3428
+        ],
+        "controlAfterEach": [
+          "ready",
+          "ready"
+        ],
+        "directAfterEach": [
+          true,
+          true
+        ],
+        "newHomeAppliedAfterTask": true,
+        "pageErrors": 0,
+        "fixtureArchived": true,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/pointer82-record-tunnel.private.json",
+          "sha256": "f5bf0032d98f7c1cb7c72fe576005a237663a2a1fda8c3e23bdc72989df4c172"
+        }
+      },
+      {
+        "case": "cancel-local",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "origin": "http://127.0.0.1:3015",
+        "atUtc": "2026-10-16T19:12:35.206Z",
+        "taskStatus": "cancelled",
+        "nativePaths": [],
+        "plannedGapMs": 0,
+        "taskWindowMs": 10542,
+        "recordedPaths": [],
+        "viewers": 2,
+        "peersBeforeEach": [
+          1,
+          1
+        ],
+        "peersAfterEach": [
+          1,
+          1
+        ],
+        "framesBeforeEach": [
+          58,
+          4
+        ],
+        "framesAfterEach": [
+          625,
+          569
+        ],
+        "controlAfterEach": [
+          "ready",
+          "ready"
+        ],
+        "directAfterEach": [
+          true,
+          true
+        ],
+        "newHomeAppliedAfterTask": true,
+        "pageErrors": 0,
+        "fixtureArchived": true,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/pointer82-cancel-local.private.json",
+          "sha256": "47da0e5fa521614d50af59199f995e4e6b18c03332b80971a3123d7ac5f1aaa8"
+        }
+      },
+      {
+        "case": "cancel-gap-local",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "origin": "http://127.0.0.1:3015",
+        "atUtc": "2026-10-16T19:13:15.549Z",
+        "taskStatus": "cancelled",
+        "nativePaths": [
+          {
+            "points_applied": 2,
+            "duration_ms": 500,
+            "max_schedule_lateness_ms": 0,
+            "timeline_offset_ms": 0,
+            "start_lateness_ms": 0,
+            "helper_reused": false
+          }
+        ],
+        "plannedGapMs": 0,
+        "taskWindowMs": 10814,
+        "recordedPaths": [],
+        "viewers": 2,
+        "peersBeforeEach": [
+          1,
+          1
+        ],
+        "peersAfterEach": [
+          1,
+          1
+        ],
+        "framesBeforeEach": [
+          54,
+          3
+        ],
+        "framesAfterEach": [
+          631,
+          581
+        ],
+        "controlAfterEach": [
+          "ready",
+          "ready"
+        ],
+        "directAfterEach": [
+          true,
+          true
+        ],
+        "newHomeAppliedAfterTask": true,
+        "pageErrors": 0,
+        "fixtureArchived": true,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/pointer82-cancel-gap-local.private.json",
+          "sha256": "bcac572473ae3c273e398c745dde016aabd6aab22def9384aa75a40f649f5d47"
+        }
+      },
+      {
+        "case": "record-ph030-tunnel",
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "atUtc": "2026-10-16T19:17:24.713Z",
+        "taskStatus": "completed",
+        "nativePaths": [
+          {
+            "points_applied": 62,
+            "duration_ms": 15966,
+            "max_schedule_lateness_ms": 7,
+            "timeline_offset_ms": 0,
+            "start_lateness_ms": 0,
+            "helper_reused": false
+          },
+          {
+            "points_applied": 25,
+            "duration_ms": 4950,
+            "max_schedule_lateness_ms": 5,
+            "timeline_offset_ms": 18335,
+            "start_lateness_ms": 5,
+            "helper_reused": true
+          }
+        ],
+        "plannedGapMs": 2369,
+        "taskWindowMs": 27314,
+        "recordedPaths": [
+          {
+            "nodeCount": 1,
+            "points": 62,
+            "durationMs": 15966,
+            "largestIntervalMs": 1936,
+            "reversalRetained": true
+          },
+          {
+            "nodeCount": 1,
+            "points": 25,
+            "durationMs": 4950,
+            "largestIntervalMs": 1056,
+            "reversalRetained": true
+          }
+        ],
+        "viewers": 2,
+        "peersBeforeEach": [
+          1,
+          1
+        ],
+        "peersAfterEach": [
+          1,
+          1
+        ],
+        "framesBeforeEach": [
+          14,
+          1693
+        ],
+        "framesAfterEach": [
+          1482,
+          3164
+        ],
+        "controlAfterEach": [
+          "ready",
+          "ready"
+        ],
+        "directAfterEach": [
+          true,
+          true
+        ],
+        "newHomeAppliedAfterTask": true,
+        "pageErrors": 0,
+        "fixtureArchived": true,
+        "ownedContextClosed": true,
+        "privateProof": {
+          "file": ".local-pilot/pointer82-record-ph030-tunnel.private.json",
+          "sha256": "82f24a8680cc74766e5cbf5db2a9248795e6fc56e064eddb3a87b723b80e85e4"
+        }
+      }
+    ],
+    "ownedFixturesArchived": 5,
+    "allOwnedContextsClosed": true,
+    "screenshotsViewed": [
+      "PH011 recorded queue and resumed direct video",
+      "PH030 recorded queue and resumed direct video"
+    ]
+  },
+  "limits": [
+    "Native schedule lateness and start lateness are measured before native pipe submission, not complete input/video latency or application-state equivalence.",
+    "Recording retains browser-offered points. Only DOWN/UP boundaries are confirmed during live recording; intermediate MOVE coalescing is not a full Android execution trace.",
+    "One helper and planned timeline span consecutive pointer_path and sleep nodes. Another action or explicit between-node pause closes the timeline; a later path starts a new timeline.",
+    "Pause during a held path or its timed gap releases and aborts. Unknown cleanup fences input; stale schedules are never replayed as bursts.",
+    "Finite acceptance covers PH011 and PH030 cases listed here; production load, all topologies, full Android MOVE execution proof, multitouch and application-state equivalence remain open.",
+    "Offline devices are not updated. No model downloaded/started. Rich evidence, keyboard recording, full CI migration, file transfer and account sync are separate open scopes."
+  ]
+}

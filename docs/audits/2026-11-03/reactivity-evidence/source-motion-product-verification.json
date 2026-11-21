@@ -1,0 +1,35 @@
+{
+  "schema": "sphere-source-motion-product-verification-v1",
+  "policy": "pnp-ap3p-continuous-image-support-source-time-motion-v6",
+  "descriptorPipelineSha256": "b37ee283762e241ca5b070a3af02c1c1712f6b0354a9c94c5654af4768513b7f",
+  "existingV7GuidedMapStillCompatible": true,
+  "realClockExpiredQuery": {
+    "elapsedMs": 354.188699999213,
+    "state": "unknown",
+    "reason": "route_frame_expired_during_localization"
+  },
+  "tests": {
+    "passed": 202,
+    "subtests": 118,
+    "runtime": "motor-worker-venv OpenCV4.13",
+    "suites": [
+      "motor_route_localization",
+      "motor_route_tracking",
+      "motor_route_background_tracking",
+      "walk_route",
+      "vehicle_route",
+      "route_workspace",
+      "vehicle_route_workspace",
+      "route_cpu_runtime",
+      "route_walk_reports"
+    ]
+  },
+  "physicalActions": 0,
+  "runtimeReloaded": false,
+  "mapAdopted": false,
+  "files": {
+    "motor_worker/route_localization.py": "efec9eeeeb36beea6db60e814ae9c75ccc05191702bfda7fb72bb052a51523b2",
+    "tests/test_motor_route_localization.py": "7ecf5010d97670c899026cad284d706819b34117a1394aaf9fb292a85b443bf6",
+    "tests/test_route_workspace.py": "1866e4b763c50cba52c4d45f2e6ce5beda82355353f44a5aef61ff27fb17f2c1"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "cancelled": {
+    "backend_terminal": "cancelled",
+    "call_sequence": [
+      "POST",
+      "GET"
+    ],
+    "elapsed_simulated_ms": 2000,
+    "result": [
+      [],
+      [
+        {
+          "json": {
+            "task_id": "task-fixture",
+            "status": "timeout",
+            "device_id": "device-fixture",
+            "error": "Timed out after 1s"
+          }
+        }
+      ]
+    ]
+  },
+  "failed": {
+    "backend_terminal": "failed",
+    "call_sequence": [
+      "POST",
+      "GET"
+    ],
+    "elapsed_simulated_ms": 2000,
+    "result": [
+      [],
+      [
+        {
+          "json": {
+            "task_id": "task-fixture",
+            "status": "failed",
+            "error": "Unknown error",
+            "device_id": "device-fixture"
+          }
+        }
+      ]
+    ]
+  },
+  "pool": {
+    "request": {
+      "url": "https://sphere.example.test/api/v1/devices",
+      "header_names": [
+        "Content-Type",
+        "X-API-Key",
+        "X-Org-ID"
+      ],
+      "query": {
+        "limit": "100",
+        "tags": "fixture-tag"
+      }
+    },
+    "response_to_workflow": [
+      [
+        {
+          "json": {
+            "devices": [
+              {
+                "id": "untagged-fixture",
+                "tags": []
+              }
+            ],
+            "count": 1
+          }
+        }
+      ]
+    ]
+  }
+}

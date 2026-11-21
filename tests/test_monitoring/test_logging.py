@@ -16,6 +16,33 @@ from httpx import ASGITransport, AsyncClient
 
 from backend.main import app
 
+
+@pytest.fixture(autouse=True)
+def restore_logging_configuration():
+    """Do not leave a handler pointing at this test's closed capture stream."""
+    root = logging.getLogger()
+    handlers, level = list(root.handlers), root.level
+    configuration = structlog.get_config()
+    context = structlog.contextvars.get_contextvars()
+    library_levels = {
+        name: logging.getLogger(name).level
+        for name in ("uvicorn.access", "sqlalchemy.engine", "httpx")
+    }
+    try:
+        yield
+    finally:
+        for handler in list(root.handlers):
+            if handler not in handlers:
+                root.removeHandler(handler)
+                handler.close()
+        root.handlers[:] = handlers
+        root.setLevel(level)
+        for name, library_level in library_levels.items():
+            logging.getLogger(name).setLevel(library_level)
+        structlog.configure(**configuration)
+        structlog.contextvars.clear_contextvars()
+        structlog.contextvars.bind_contextvars(**context)
+
 # ── setup_logging ─────────────────────────────────────────────────────────────
 
 def test_setup_logging_no_error():

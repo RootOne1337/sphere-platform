@@ -1,0 +1,103 @@
+{
+  "source": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+  "uiSource": "9ad0a69e729f9b4960bf8aea529a88e25e4f73cf",
+  "observedAt": "2026-10-05T19:04:33.548Z",
+  "url": "http://127.0.0.1:3015/monitoring",
+  "desktop": {
+    "width": 1440,
+    "height": 1000,
+    "gridColumns": 3,
+    "documentScrollWidth": 1440
+  },
+  "mobile": {
+    "cards": [
+      {
+        "clientWidth": 350,
+        "label": "Инвентарь организации",
+        "scrollWidth": 350,
+        "width": 352,
+        "x": 16
+      },
+      {
+        "clientWidth": 350,
+        "label": "Связь с Android",
+        "scrollWidth": 350,
+        "width": 352,
+        "x": 16
+      },
+      {
+        "clientWidth": 350,
+        "label": "VPN · отчёты Android",
+        "scrollWidth": 350,
+        "width": 352,
+        "x": 16
+      },
+      {
+        "clientWidth": 350,
+        "label": "VPN · назначения",
+        "scrollWidth": 350,
+        "width": 352,
+        "x": 16
+      },
+      {
+        "clientWidth": 350,
+        "label": "VPN · сохранённые handshakes",
+        "scrollWidth": 350,
+        "width": 352,
+        "x": 16
+      },
+      {
+        "clientWidth": 350,
+        "label": "Публичный транспорт",
+        "scrollWidth": 350,
+        "width": 352,
+        "x": 16
+      }
+    ],
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "finalDefault": {
+    "cards": [
+      {
+        "clientWidth": 668,
+        "label": "Инвентарь организации",
+        "scrollWidth": 668
+      },
+      {
+        "clientWidth": 668,
+        "label": "Связь с Android",
+        "scrollWidth": 668
+      },
+      {
+        "clientWidth": 668,
+        "label": "VPN · отчёты Android",
+        "scrollWidth": 668
+      },
+      {
+        "clientWidth": 668,
+        "label": "VPN · назначения",
+        "scrollWidth": 668
+      },
+      {
+        "clientWidth": 668,
+        "label": "VPN · сохранённые handshakes",
+        "scrollWidth": 668
+      },
+      {
+        "clientWidth": 668,
+        "label": "Публичный транспорт",
+        "scrollWidth": 668
+      }
+    ],
+    "documentScrollWidth": 724,
+    "documentWidth": 724,
+    "regionText": "Покрытие парка и VPNТекущая организация · единица: устройства / peers · события связи и VPN обновляют открытый срез; резервный опрос каждые 15 с. SQL и Redis читаются последовательно, общей транзакции между ними нет.ОбновитьИнвентарь организацииСрез полученУстройств19SQL · только активные зарегистрированные устройства текущей организации.Срез источника: 19:04:19 UTCСвязь с AndroidСрез полученОнлайн14Заняты0Подключаются0Сообщили offline0Сообщили ошибку0Не подтверждено5Redis · online/busy требуют текущий сеанс и heartbeat моложе 120 с. Отсутствующий или повреждённый отчёт — неизвестно.Срез источника: 19:04:19 UTCVPN · отчёты AndroidСрез полученВключён0Выключен14Отчёт устарел0Нет подтверждения5Состояние VPN-службы агента · собственное время приёма и текущий сеанс. Это не проверка трафика или внешнего IP.Срез источника: 19:04:19 UTCVPN · назначенияСрез полученНазначены0Настраиваются0Отзываются0Ошибка0Освобождены0Assigned вне активного парка0SQL · все peers организации. Назначение не подтверждает применение на Android. Последняя строка — подмножество assigned.Срез источника: 19:04:19 UTCVPN · сохранённые handshakesСрез полученНедавний + active flag0Старше срока0Нет / время в будущем0Недавний без active flag0SQL · assigned peers активного парка. Сохранённый handshake моложе 180 с; текущий опрос роутера здесь не выполняется.Срез источника: 19:04:19 UTCПубличный транспортПроверки не подключеныНет подтверждённых измеренийTuna / Cloudflare · проверки провайдеров ещё не подключены. Android VPN и presence не подменяют состояние публичного туннеля.Сформировано 19:04:19 UTC · до 5 000 устройств за срез · неизвестно не означает ноль или исправность.Открыть паркНазначения VPN"
+  },
+  "originalDarkThemeRestored": true,
+  "viewportOverrideReset": true,
+  "warnErrorEntriesReturned": 0,
+  "uiCommandsToAndroidSent": false,
+  "manualRefreshSucceeded": true,
+  "notLoadOrSoakAcceptance": true
+}

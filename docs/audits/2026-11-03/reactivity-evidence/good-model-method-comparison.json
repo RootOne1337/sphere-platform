@@ -1,0 +1,314 @@
+{
+  "schema": "sphere-good-model-vs-first-run-method-diagnosis-v1",
+  "physicalActions": 0,
+  "sourceUnchanged": true,
+  "independentGameplay": false,
+  "executionQualified": false,
+  "nativeReferencePromoted": false,
+  "goodNative": {
+    "cameras": 173,
+    "points": 20556,
+    "observations": 130081,
+    "geometrySHA": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+    "modelHashes": {
+      "cameras.bin": "b91cc00f86302d377a84293589630f17d8d6d1bf84641f8d27fcd8c2fd1be537",
+      "frames.bin": "f64e7a626e40c44c11c180f3391bdcca8965b387f765d652e55e56dad34286e5",
+      "images.bin": "ffd9fe00f97050e510a52252e775476f5f4ea5df1d0f3b71a14dac1df8b7c402",
+      "points3D.bin": "53de3a71e9f452dfa6b32360fc152ec22ec456e66c7603fea1e4cb6172cb12b2",
+      "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+    },
+    "minimumRawTrackSupport": 189,
+    "minimumReprojectionLe4pxSupport": 188,
+    "sourceIndexSHA": "fd1b80002f79c3957001b99ed561d4449e91cbc7828fe1e3a143fca78ce1f7cf",
+    "methods": [
+      "VID LK+independent SIFT fused row namespace,726806 measuredmatches/1339pairs",
+      "global_mapper randomseed17 CPU2,track intraimage consistency1px,tri completion+merge1px",
+      "whole-track conflict filtering945,poses/K/retainedXYZ unchanged at filter",
+      "fixed-K robustBA SOFT_L1 scale2,mintrack3,100iterationsmax",
+      "70finaltracksunder3distinctviewsremoved; retainednativeXYZ/poses/K unchanged; noforcedloop"
+    ]
+  },
+  "fourthNative": {
+    "cameras": 173,
+    "points": 10630,
+    "meanReprojectionPx": 1.3045703196012581,
+    "nativeObservations": 80377,
+    "rawFeatureObservations": 149749,
+    "featureMethod": "source_video_corner_tracks",
+    "fusedDirectoryPresent": false,
+    "methods": [
+      "480x270 FB-LK0.75px through857sourceframes,sourceviewspacing173",
+      "geometric verification,incremental_mapping(randomseed17,max4models)",
+      "compatible componentmerge accepted14.172s thenendpointLK resection4views"
+    ],
+    "runtimeExport": {
+      "tracks": 10208,
+      "landmarks": 2011,
+      "weakNeighborhoods": 8,
+      "weakSourceIntervalSeconds": [
+        4.049,
+        5.478
+      ],
+      "minNeighborhoodSupport": 13
+    }
+  },
+  "automaticMismatch": {
+    "source": "scripts/pilot/reconstruct_route.py:454-480",
+    "nativeReconstructionRecoveryOnly": "fused attempted only when no candidate or native route_admissible false; experimental defaultdisabled",
+    "laterDescriptorCoverage": "separate navigation export can reject weakcoverage without re-entering fusednative recovery",
+    "observedFourth": "nativeadmitted then runtimemaprejected; fused never attempted",
+    "unknown": "No claim enablingfused alonefixesruntimefailure; genericguided coveragepassedbut pairedqueryworse"
+  },
+  "pairedCurrentPolicy": {
+    "sameNative173": true,
+    "sameImmutableFreshFeatureArrays": true,
+    "same159UntaughtQueries": true,
+    "legacy": {
+      "landmarks": 2026,
+      "weakNeighborhoods": 8,
+      "minNeighborhoodSupport": 14,
+      "queries": {
+        "status": "completed",
+        "same159UntaughtIndices": true,
+        "counts": {
+          "confirming": 12,
+          "localized": 107,
+          "unknown": 40
+        },
+        "compute_ms": {
+          "p50": 95.82809999847086,
+          "p95": 165.7492100010131,
+          "maximum": 903.0173999999533
+        },
+        "timestampSanity": {
+          "confirmed_or_confirming": 119,
+          "median_seconds": 0.0,
+          "p95_seconds": 0.9877999999999997,
+          "maximum_seconds": 1.615,
+          "over_2_seconds": 0
+        },
+        "unknownReasons": {
+          "route_pose_discontinuity": 1,
+          "route_pose_not_verified": 39
+        },
+        "bins": [
+          {
+            "start_seconds": 0,
+            "localized": 12,
+            "confirming": 4,
+            "unknown": 7
+          },
+          {
+            "start_seconds": 5,
+            "localized": 0,
+            "confirming": 0,
+            "unknown": 21
+          },
+          {
+            "start_seconds": 10,
+            "localized": 12,
+            "confirming": 2,
+            "unknown": 8
+          },
+          {
+            "start_seconds": 15,
+            "localized": 22,
+            "confirming": 0,
+            "unknown": 0
+          },
+          {
+            "start_seconds": 20,
+            "localized": 15,
+            "confirming": 4,
+            "unknown": 2
+          },
+          {
+            "start_seconds": 25,
+            "localized": 17,
+            "confirming": 2,
+            "unknown": 2
+          },
+          {
+            "start_seconds": 30,
+            "localized": 22,
+            "confirming": 0,
+            "unknown": 0
+          },
+          {
+            "start_seconds": 35,
+            "localized": 7,
+            "confirming": 0,
+            "unknown": 0
+          }
+        ],
+        "nonlocalizedRuns": [
+          {
+            "start": 0.001,
+            "end": 0.259,
+            "duration": 0.258,
+            "samples": 2
+          },
+          {
+            "start": 2.056,
+            "end": 2.473,
+            "duration": 0.4169999999999998,
+            "samples": 3
+          },
+          {
+            "start": 3.817,
+            "end": 12.049,
+            "duration": 8.232,
+            "samples": 37
+          },
+          {
+            "start": 23.793,
+            "end": 24.939,
+            "duration": 1.1460000000000008,
+            "samples": 6
+          },
+          {
+            "start": 25.605,
+            "end": 26.305,
+            "duration": 0.6999999999999993,
+            "samples": 4
+          }
+        ],
+        "independentGameplay": false
+      }
+    },
+    "guided": {
+      "landmarks": 3059,
+      "weakNeighborhoods": 0,
+      "minNeighborhoodSupport": 25,
+      "queries": {
+        "status": "completed",
+        "same159UntaughtIndices": true,
+        "counts": {
+          "confirming": 20,
+          "unknown": 49,
+          "localized": 90
+        },
+        "compute_ms": {
+          "p50": 110.07279999830644,
+          "p95": 210.27663000022582,
+          "maximum": 458.88900000136346
+        },
+        "timestampSanity": {
+          "confirmed_or_confirming": 110,
+          "median_seconds": 0.0,
+          "p95_seconds": 1.0803499999999997,
+          "maximum_seconds": 7.6259999999999994,
+          "over_2_seconds": 1
+        },
+        "unknownReasons": {
+          "route_pose_discontinuity": 5,
+          "route_pose_not_verified": 44
+        },
+        "bins": [
+          {
+            "start_seconds": 0,
+            "localized": 5,
+            "confirming": 8,
+            "unknown": 10
+          },
+          {
+            "start_seconds": 5,
+            "localized": 0,
+            "confirming": 3,
+            "unknown": 18
+          },
+          {
+            "start_seconds": 10,
+            "localized": 10,
+            "confirming": 2,
+            "unknown": 10
+          },
+          {
+            "start_seconds": 15,
+            "localized": 22,
+            "confirming": 0,
+            "unknown": 0
+          },
+          {
+            "start_seconds": 20,
+            "localized": 18,
+            "confirming": 2,
+            "unknown": 1
+          },
+          {
+            "start_seconds": 25,
+            "localized": 6,
+            "confirming": 5,
+            "unknown": 10
+          },
+          {
+            "start_seconds": 30,
+            "localized": 22,
+            "confirming": 0,
+            "unknown": 0
+          },
+          {
+            "start_seconds": 35,
+            "localized": 7,
+            "confirming": 0,
+            "unknown": 0
+          }
+        ],
+        "nonlocalizedRuns": [
+          {
+            "start": 0.001,
+            "end": 2.473,
+            "duration": 2.472,
+            "samples": 12
+          },
+          {
+            "start": 3.817,
+            "end": 12.482,
+            "duration": 8.665,
+            "samples": 39
+          },
+          {
+            "start": 24.457,
+            "end": 24.939,
+            "duration": 0.4819999999999993,
+            "samples": 3
+          },
+          {
+            "start": 25.372,
+            "end": 27.954,
+            "duration": 2.5820000000000007,
+            "samples": 12
+          },
+          {
+            "start": 29.334,
+            "end": 29.783,
+            "duration": 0.4490000000000016,
+            "samples": 3
+          }
+        ],
+        "independentGameplay": false
+      }
+    },
+    "conclusion": "Do not adopt guided:107to90localized,confirminitialalias7.626s,8.665snonlocalizedrun; mapcoverage necessary not sufficient"
+  },
+  "resource": {
+    "exitCode": 0,
+    "reason": null,
+    "seconds": 134.10900000000038,
+    "peakSampledRss": 406851584,
+    "peakSampledPrivate": 436817920,
+    "baseExecutable": "C:\\Users\\dimas\\AppData\\Roaming\\uv\\python\\cpython-3.12.12-windows-x86_64-none\\python.exe",
+    "ownActualProcess": true,
+    "cpuAffinity": [
+      0,
+      1
+    ],
+    "physicalActions": 0
+  },
+  "files": {
+    "legacy-receipt.json": "2a06eefc49847a65ae0ca51ef6f40adb40a2cb8c6be1adec10b02a1c6e4e8fb4",
+    "guided-receipt.json": "ac1874ab909905a4c5c945101116bdab0ba315ca471ae8ace837cf5415f79f60",
+    "outcome.json": "d705f1d9a46e4bfb47b52002b07594bf212b471667ca73c5b96e3dbc8875d5f5",
+    "landmark-provenance.json.gz": "fed06fcf3f3c474d226b06561d77b3f37db6cdc40f25a400f275e8e686b5546a"
+  }
+}

@@ -4,30 +4,41 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Token-bucket style frame throttle to cap output FPS before frames enter
- * the WebSocket pipeline (L1 agent-side backpressure — MERGE-1 TZ-05 SPLIT-4).
+ * Minimum-interval gate for raw ImageReader capture before CPU copy and
+ * MediaCodec submission. Never apply this to an encoded H.264 reference chain.
  *
- * Used in [Choreographer.FrameCallback] to decide whether to render the current
- * frame.  Pass the VSYNC timestamp from [doFrame] directly.
- *
- * L2 server-side backpressure is handled by [VideoStreamQueue] (TZ-03 SPLIT-3).
+ * The manager serializes capture callbacks and supplies a monotonic timestamp.
+ * Network/server queue backpressure is a separate stage.
  */
 @Singleton
 class FrameThrottle @Inject constructor() {
 
-    val targetFps: Int = 30
-
-    private val frameDurationNs = 1_000_000_000L / targetFps
+    @Volatile var targetFps: Int = 30
+        private set
     /**
      * PERF: Pre-computed минимальный интервал (80% от полного).
      * До: `frameDurationNs * 0.8` = Long→Double конвертация + Float multiply на каждый кадр (30 fps).
-     * После: одно Long-сравнение. Мелочь, но вызывается из горячего MediaCodec callback.
+     * После: одно Long-сравнение на горячем пути raw capture.
      */
-    private val minFrameIntervalNs = frameDurationNs * 4L / 5L  // 80% без Float
-    @Volatile private var lastFrameTimeNs = 0L
+    @Volatile private var minFrameIntervalNs = 1_000_000_000L / targetFps * 4L / 5L
+    private var lastFrameTimeNs: Long? = null
+    private var nextFrameTimeNs: Long? = null
+    private var precise = false
+
+    @Synchronized
+    fun configure(fps: Int, newCapture: Boolean = false, precise: Boolean = true) {
+        require(fps in 1..60)
+        if (fps != targetFps || this.precise != precise) {
+            nextFrameTimeNs = lastFrameTimeNs?.let { it + 1_000_000_000L / fps }
+        }
+        targetFps = fps
+        this.precise = precise
+        minFrameIntervalNs = 1_000_000_000L / fps * 4L / 5L
+        if (newCapture) { lastFrameTimeNs = null; nextFrameTimeNs = null; _totalFrames.set(0); _droppedFrames.set(0) }
+    }
 
     /**
-     * FIX F2: Счётчики дропов обёрнуты в AtomicInteger — доступ из MediaCodec callback
+     * FIX F2: Счётчики дропов обёрнуты в AtomicInteger — доступ из capture callback
      * thread (shouldRenderFrame) и heartbeat thread (dropRatio, droppedFrames, totalFrames).
      * Без синхронизации — data race на ARM/x86 (разный memory ordering).
      */
@@ -38,18 +49,26 @@ class FrameThrottle @Inject constructor() {
      * Returns `true` if the frame should be rendered/encoded; `false` if it
      * should be skipped (too soon after the previous accepted frame).
      *
-     * @param frameTimeNs VSYNC timestamp in nanoseconds (from Choreographer).
+     * @param frameTimeNs monotonic capture-callback timestamp in nanoseconds.
      */
+    @Synchronized
     fun shouldRenderFrame(frameTimeNs: Long): Boolean {
         _totalFrames.incrementAndGet()
-        val elapsed = frameTimeNs - lastFrameTimeNs
+        val last = lastFrameTimeNs
+        val elapsed = last?.let { frameTimeNs - it }
 
-        if (elapsed < minFrameIntervalNs) {
+        val tooEarly = if (precise) nextFrameTimeNs?.let { frameTimeNs + 100_000L < it } == true
+            else elapsed != null && elapsed < minFrameIntervalNs
+        if (frameTimeNs < 0 || elapsed != null && elapsed < 0 || tooEarly) {
             _droppedFrames.incrementAndGet()
             return false
         }
 
         lastFrameTimeNs = frameTimeNs
+        val interval = 1_000_000_000L / targetFps
+        nextFrameTimeNs = ((nextFrameTimeNs ?: frameTimeNs) + interval).let {
+            if (it <= frameTimeNs) frameTimeNs + interval else it
+        }
         return true
     }
 

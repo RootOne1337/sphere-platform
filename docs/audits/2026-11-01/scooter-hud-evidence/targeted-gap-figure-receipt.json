@@ -1,0 +1,33 @@
+{
+  "schema": "sphere-scooter-figure-v1",
+  "source_geometry": ".local-pilot\\scooter-targeted-gap-20261101-v2\\geometry-0.json",
+  "geometry_sha256": "a4cddab78876cef9183ec5beea94e6c7739e02173652ca4f0243f7e19aba9933",
+  "source_frames": [
+    {
+      "image": "00000000.png",
+      "ticks_90k": 0,
+      "sha256": "3e19311bd30def3a2d660154e3ca5eb2d3c695206b02b1d55c1bb06a1738650a"
+    },
+    {
+      "image": "00000257.png",
+      "ticks_90k": 896220,
+      "sha256": "09bb0766f5df7a2209002edd9191b986ea1b09aaeed855e49c6d3bd652049582"
+    },
+    {
+      "image": "00000499.png",
+      "ticks_90k": 1797480,
+      "sha256": "d5b15387ba3fb9aa1178d64556d5968b0653327d79174300b2048c342c6f1e8e"
+    },
+    {
+      "image": "00000900.png",
+      "ticks_90k": 3194370,
+      "sha256": "fe165fbb0451fb0c5baa7c259de4710545d2b00c9d4fa17ccd4352aaacd0e08b"
+    }
+  ],
+  "figure": "docs\\audits\\2026-11-01\\assets\\scooter-targeted-gap-result.png",
+  "sha256": "1ce6478c33392178aefb6d0814827cbecee88b09d8f03b5a65a9c04876a1cb56",
+  "bytes": 938290,
+  "points_visible": 11957,
+  "points_total": 15164,
+  "execution_qualified": false
+}

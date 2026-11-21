@@ -1,0 +1,136 @@
+{
+  "sourceRevision": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+  "builtAt": "2026-10-06T12:34:28.079841+00:00",
+  "observedAt": "2026-10-06T12:43:46.357181+00:00",
+  "candidate": {
+    "source_commit": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+    "file": "SphereAgent-pilot-candidate-1.2.46-dev-6a9f570.apk",
+    "sha256": "87db8510a091de310481c39804899ac6255a243df8f8de630db65d428d3dafc4",
+    "bytes": 8477355,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.46-dev",
+    "version_code": 10246,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 856,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 856,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "signed_discovery_manifest_version": 28,
+    "baked_management_urls": [],
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "debug_video_probe": true,
+    "focused_text_clear_source_fix": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+    "android_tree_matches_reviewed_version_commit": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+    "installed": false,
+    "published_to_ota": false,
+    "built_at": "2026-10-06T12:34:28.079841+00:00"
+  },
+  "apkBinaryPublishedInRepository": false,
+  "zipCrcPassed": true,
+  "dex": [
+    {
+      "file": "classes.dex",
+      "bytes": 9165780,
+      "sha256": "7c5d5fbe0418bc51d3b0085c4646cfcea12ffc901d981de57e6a797c8a01d95b",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes10.dex",
+      "bytes": 54748,
+      "sha256": "89d06f1d7b510b25f85b96b8a656868c35ae0ddbad7f81808b0b9f1b16f4e030",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes11.dex",
+      "bytes": 212936,
+      "sha256": "f1f24fcdac6d9b418c8d5f96cfec681999fdddfa2e8225dbc613927d6b4fd669",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes12.dex",
+      "bytes": 44716,
+      "sha256": "d30bfc68fe71c562d3dca09c87918b0665c3fb1708884cabd808145a1309b907",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes13.dex",
+      "bytes": 353252,
+      "sha256": "0dd154cf750b6134d42a0a4fbe3af1658677da1274993507a376f797560a5f7f",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes14.dex",
+      "bytes": 23676,
+      "sha256": "98f90f1b1a0ecd025d60836e19109f32f198024035e63d1a98c73ba854b20ffa",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes15.dex",
+      "bytes": 6298896,
+      "sha256": "e40f72927dd4baac200d113a233103bcc8ae3dcc2292bbb73f9b41d09872faa1",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes2.dex",
+      "bytes": 495132,
+      "sha256": "3500859bffb42b9835460efc76fd9d0943e58caf245e8d42df4142a0e58ab0ed",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes3.dex",
+      "bytes": 34828,
+      "sha256": "ae9f323be6d5c2df62bb37785ba322264a97c9231c7a196b7314099bb333887d",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes4.dex",
+      "bytes": 41912,
+      "sha256": "90fdaa9c9cfd18394d57ce6c63ffd69803dd8ad3d380cbae0344541a64b0e2a4",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes5.dex",
+      "bytes": 11652,
+      "sha256": "94bf9980f0ba1a91d245b792cd0de92d59ad8bddd42158b90c64f954b508caac",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes6.dex",
+      "bytes": 193256,
+      "sha256": "814060d84775e2c3542f0b80fe8c658a5cf3368f1ad24f668a6d2ec8b9afdc5d",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes7.dex",
+      "bytes": 21144,
+      "sha256": "dd25a62dfd7dd0c69aa02d3585f7edc010c5cbc7d72313b1382b4708f3591753",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes8.dex",
+      "bytes": 19216,
+      "sha256": "6b822a4140f71d1e8ede950cc87e74342609dea5dd7923ecac4b04dafd2cae76",
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes9.dex",
+      "bytes": 46080,
+      "sha256": "d9342f8edcd60bc7f865028601a68d543e9e23038b043ce3e6bd13f965c4357d",
+      "headerChecksumsValid": true
+    }
+  ],
+  "builderScope": "pinned Android source, offline debug flavors, private pilot signer/bootstrap",
+  "productionSignedReleaseOrFleetRolloutAccepted": false
+}

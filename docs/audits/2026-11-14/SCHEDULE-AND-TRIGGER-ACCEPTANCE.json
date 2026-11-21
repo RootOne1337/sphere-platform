@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-14",
+  "sourceBase": "ab5236c6",
+  "source": "Working tree on top of the source base",
+  "report": "docs/audits/2026-11-14/SCHEDULE-AND-TRIGGER-ACCEPTANCE.md",
+  "runtime": {
+    "scope": "Isolated PostgreSQL 15, Redis 7.2 and Chromium",
+    "runtimeRoleRls": true,
+    "installedOnPilot": false,
+    "fleetAccepted": false
+  },
+  "ledger": {
+    "closedInThisBatch": ["EP-023", "EP-024"],
+    "partialInThisBatch": ["EP-025", "EP-033"]
+  },
+  "acceptance": {
+    "EP-023": {
+      "testsPassed": 86,
+      "criteria": [
+        "One shared CRON wall-clock algorithm skips gaps and takes the first occurrence of repeated local time. Browser shows UTC and configured zone offset.",
+        "Runtime records skipped windows and exhausted budget, preserves unchanged due slots and coalesces additional missed slots. Persisted legacy slots are honored once.",
+        "Concurrent PATCH and toggle under runtime RLS yield one winner. Stale DELETE and new manual request are refused; accepted request replays after firing."
+      ]
+    },
+    "EP-024": {
+      "testsPassed": 164,
+      "criteria": [
+        "Chromium and scoped HTTP read a saved-event preview without creating a pipeline run.",
+        "PostgreSQL verifies cooldown, hourly budget, deduplication by persisted event and replay by transport UUID.",
+        "Task result ancestry stops A to B to A. Depth and root limits hold, including concurrent contenders in different rules."
+      ],
+      "migration": "20261114_trigger_causality"
+    }
+  }
+}

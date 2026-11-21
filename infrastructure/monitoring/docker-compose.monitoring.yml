@@ -3,8 +3,13 @@
 # Запуск: docker compose -f docker-compose.monitoring.yml up -d
 # Или через корневой: docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml up -d
 
+x-bounded-logs: &bounded-logs
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+
 services:
   prometheus:
+    logging: *bounded-logs
     image: prom/prometheus:v2.48.0
     container_name: sphere-prometheus
     restart: unless-stopped
@@ -30,6 +35,7 @@ services:
       retries: 3
 
   grafana:
+    logging: *bounded-logs
     image: grafana/grafana:10.2.0
     container_name: sphere-grafana
     restart: unless-stopped
@@ -58,6 +64,7 @@ services:
       retries: 3
 
   alertmanager:
+    logging: *bounded-logs
     image: prom/alertmanager:v0.26.0
     container_name: sphere-alertmanager
     restart: unless-stopped
@@ -74,6 +81,7 @@ services:
       - sphere-net
 
   node-exporter:
+    logging: *bounded-logs
     image: prom/node-exporter:v1.7.0
     container_name: sphere-node-exporter
     restart: unless-stopped
@@ -91,6 +99,7 @@ services:
       - monitoring-net
 
   postgres-exporter:
+    logging: *bounded-logs
     image: prometheuscommunity/postgres-exporter:v0.15.0
     container_name: sphere-postgres-exporter
     restart: unless-stopped
@@ -101,6 +110,7 @@ services:
       - sphere-net
 
   redis-exporter:
+    logging: *bounded-logs
     image: oliver006/redis_exporter:v1.55.0
     container_name: sphere-redis-exporter
     restart: unless-stopped

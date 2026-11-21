@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-10-05T20:37:31.558927+00:00",
+  "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+  "workingTreeModified": false,
+  "workingFileHashes": {
+    "backend/api/v1/logs/router.py": "d39fbe5bacb664658cf505f7e9ce66e35cc62fa9ebfd9f484596273adeb8c166",
+    "backend/services/device_log_upload.py": "92be1235a0e5af91b12c22ef787d0e6d906805682c45509f00269b94e481a17c"
+  },
+  "cases": [
+    {
+      "contentLengthDeclared": true,
+      "generatedBodyBytes": 8388608,
+      "chunkBytes": 65536,
+      "receiveCalls": 0,
+      "asgiBodyBytesConsumed": 0,
+      "requestBodyCached": false,
+      "pythonTracedPeakBytes": 6149,
+      "status": 413,
+      "storedFiles": 0,
+      "temporaryFilesRemoved": true
+    },
+    {
+      "contentLengthDeclared": false,
+      "generatedBodyBytes": 8388608,
+      "chunkBytes": 65536,
+      "receiveCalls": 9,
+      "asgiBodyBytesConsumed": 589824,
+      "requestBodyCached": false,
+      "pythonTracedPeakBytes": 530137,
+      "status": 413,
+      "storedFiles": 0,
+      "temporaryFilesRemoved": true
+    }
+  ],
+  "liveServicesContacted": false,
+  "authorizationProven": false,
+  "hostDiskWriterIdentified": false,
+  "aggregateProcessRssBoundProven": false
+}

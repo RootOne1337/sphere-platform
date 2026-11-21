@@ -1,0 +1,368 @@
+{
+  "baseline": {
+    "motion": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 163,
+      "first_seconds": 0.0,
+      "last_seconds": 35.493,
+      "path_units": 45.30581535826059,
+      "endpoint_displacement_units": 7.917234059187983,
+      "median_step_units": 0.17799238401230033,
+      "max_step_units": 3.017243014321465,
+      "rapid_reversals": [
+        {
+          "view": 16,
+          "image": "00000086.png",
+          "seconds": 3.318
+        },
+        {
+          "view": 32,
+          "image": "00000178.png",
+          "seconds": 6.881
+        },
+        {
+          "view": 33,
+          "image": "00000183.png",
+          "seconds": 7.097
+        },
+        {
+          "view": 35,
+          "image": "00000193.png",
+          "seconds": 7.53
+        },
+        {
+          "view": 36,
+          "image": "00000200.png",
+          "seconds": 7.745
+        },
+        {
+          "view": 85,
+          "image": "00000469.png",
+          "seconds": 18.555
+        },
+        {
+          "view": 92,
+          "image": "00000500.png",
+          "seconds": 20.056
+        },
+        {
+          "view": 93,
+          "image": "00000504.png",
+          "seconds": 20.271
+        }
+      ],
+      "median_rate_units_per_second": 0.8082804185185961,
+      "speed_outliers": [
+        {
+          "view": 16,
+          "image": "00000086.png",
+          "seconds": 3.318,
+          "interval_seconds": 0.231,
+          "median_rate_ratio": 8.33413406389471
+        },
+        {
+          "view": 24,
+          "image": "00000132.png",
+          "seconds": 5.083,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 14.67089556978033
+        },
+        {
+          "view": 92,
+          "image": "00000500.png",
+          "seconds": 20.056,
+          "interval_seconds": 0.217,
+          "median_rate_ratio": 9.738620907476406
+        },
+        {
+          "view": 93,
+          "image": "00000504.png",
+          "seconds": 20.271,
+          "interval_seconds": 0.215,
+          "median_rate_ratio": 17.362400618865934
+        }
+      ],
+      "warning": "poses_require_temporal_review",
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "rotation": {
+      "intervals": 162,
+      "median_deg": 1.0633001638186896,
+      "p90_deg": 8.122785320465102,
+      "over_10deg": 15,
+      "max_deg": 60.1952322753275
+    }
+  },
+  "new_on_same_163_views": {
+    "motion": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 163,
+      "first_seconds": 0.0,
+      "last_seconds": 35.493,
+      "path_units": 44.47739973842165,
+      "endpoint_displacement_units": 12.518398548568433,
+      "median_step_units": 0.05390414232127146,
+      "max_step_units": 4.411914412184294,
+      "rapid_reversals": [
+        {
+          "view": 18,
+          "image": "00000097.png",
+          "seconds": 3.735
+        },
+        {
+          "view": 19,
+          "image": "00000102.png",
+          "seconds": 3.952
+        },
+        {
+          "view": 32,
+          "image": "00000178.png",
+          "seconds": 6.881
+        },
+        {
+          "view": 33,
+          "image": "00000183.png",
+          "seconds": 7.097
+        },
+        {
+          "view": 35,
+          "image": "00000193.png",
+          "seconds": 7.53
+        },
+        {
+          "view": 36,
+          "image": "00000200.png",
+          "seconds": 7.745
+        },
+        {
+          "view": 48,
+          "image": "00000269.png",
+          "seconds": 10.407
+        },
+        {
+          "view": 101,
+          "image": "00000550.png",
+          "seconds": 22.083
+        },
+        {
+          "view": 104,
+          "image": "00000567.png",
+          "seconds": 22.714
+        },
+        {
+          "view": 130,
+          "image": "00000718.png",
+          "seconds": 28.351
+        }
+      ],
+      "median_rate_units_per_second": 0.25178412028993014,
+      "speed_outliers": [
+        {
+          "view": 9,
+          "image": "00000043.png",
+          "seconds": 1.758,
+          "interval_seconds": 0.234,
+          "median_rate_ratio": 11.21651442300025
+        },
+        {
+          "view": 10,
+          "image": "00000048.png",
+          "seconds": 1.974,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 8.54436952163332
+        },
+        {
+          "view": 11,
+          "image": "00000054.png",
+          "seconds": 2.19,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 15.063959111402687
+        },
+        {
+          "view": 12,
+          "image": "00000060.png",
+          "seconds": 2.406,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 16.40802427560353
+        },
+        {
+          "view": 13,
+          "image": "00000066.png",
+          "seconds": 2.622,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 19.82196645882844
+        },
+        {
+          "view": 14,
+          "image": "00000072.png",
+          "seconds": 2.855,
+          "interval_seconds": 0.233,
+          "median_rate_ratio": 19.94069148944278
+        },
+        {
+          "view": 15,
+          "image": "00000079.png",
+          "seconds": 3.087,
+          "interval_seconds": 0.232,
+          "median_rate_ratio": 16.611899439108658
+        },
+        {
+          "view": 16,
+          "image": "00000086.png",
+          "seconds": 3.318,
+          "interval_seconds": 0.231,
+          "median_rate_ratio": 75.8554454012017
+        },
+        {
+          "view": 17,
+          "image": "00000092.png",
+          "seconds": 3.535,
+          "interval_seconds": 0.217,
+          "median_rate_ratio": 40.28108495079664
+        },
+        {
+          "view": 18,
+          "image": "00000097.png",
+          "seconds": 3.735,
+          "interval_seconds": 0.2,
+          "median_rate_ratio": 40.579218543220016
+        },
+        {
+          "view": 19,
+          "image": "00000102.png",
+          "seconds": 3.952,
+          "interval_seconds": 0.217,
+          "median_rate_ratio": 67.05987593225463
+        },
+        {
+          "view": 20,
+          "image": "00000109.png",
+          "seconds": 4.201,
+          "interval_seconds": 0.249,
+          "median_rate_ratio": 13.119192953403932
+        },
+        {
+          "view": 21,
+          "image": "00000115.png",
+          "seconds": 4.418,
+          "interval_seconds": 0.217,
+          "median_rate_ratio": 14.63801912496181
+        },
+        {
+          "view": 22,
+          "image": "00000121.png",
+          "seconds": 4.65,
+          "interval_seconds": 0.232,
+          "median_rate_ratio": 15.865803216428805
+        },
+        {
+          "view": 23,
+          "image": "00000126.png",
+          "seconds": 4.867,
+          "interval_seconds": 0.217,
+          "median_rate_ratio": 13.26356579124876
+        },
+        {
+          "view": 24,
+          "image": "00000132.png",
+          "seconds": 5.083,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 29.30161105924482
+        },
+        {
+          "view": 25,
+          "image": "00000138.png",
+          "seconds": 5.316,
+          "interval_seconds": 0.233,
+          "median_rate_ratio": 10.501227499256892
+        },
+        {
+          "view": 26,
+          "image": "00000145.png",
+          "seconds": 5.582,
+          "interval_seconds": 0.266,
+          "median_rate_ratio": 16.432616143615085
+        },
+        {
+          "view": 27,
+          "image": "00000150.png",
+          "seconds": 5.782,
+          "interval_seconds": 0.2,
+          "median_rate_ratio": 29.750954357774432
+        },
+        {
+          "view": 32,
+          "image": "00000178.png",
+          "seconds": 6.881,
+          "interval_seconds": 0.2,
+          "median_rate_ratio": 14.199501630943105
+        },
+        {
+          "view": 33,
+          "image": "00000183.png",
+          "seconds": 7.097,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 11.266669298108361
+        },
+        {
+          "view": 34,
+          "image": "00000187.png",
+          "seconds": 7.301,
+          "interval_seconds": 0.204,
+          "median_rate_ratio": 9.705174670611965
+        },
+        {
+          "view": 35,
+          "image": "00000193.png",
+          "seconds": 7.53,
+          "interval_seconds": 0.229,
+          "median_rate_ratio": 22.68655577201193
+        },
+        {
+          "view": 36,
+          "image": "00000200.png",
+          "seconds": 7.745,
+          "interval_seconds": 0.215,
+          "median_rate_ratio": 17.059948816916084
+        },
+        {
+          "view": 49,
+          "image": "00000275.png",
+          "seconds": 10.607,
+          "interval_seconds": 0.2,
+          "median_rate_ratio": 10.036271563663023
+        },
+        {
+          "view": 50,
+          "image": "00000280.png",
+          "seconds": 10.823,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 11.983966344182944
+        },
+        {
+          "view": 58,
+          "image": "00000327.png",
+          "seconds": 12.535,
+          "interval_seconds": 0.216,
+          "median_rate_ratio": 10.679813893357018
+        }
+      ],
+      "warning": "poses_require_temporal_review",
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "rotation": {
+      "intervals": 162,
+      "median_deg": 1.0119075445969108,
+      "p90_deg": 9.724502931408594,
+      "over_10deg": 17,
+      "max_deg": 35.269031410370424
+    }
+  },
+  "note": "Same source frame timestamps, uncalibrated camera-center scale remains arbitrary; counts and relative angles are heuristics not truth. Both use same recording and intrinsics hypothesis."
+}

@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_audit_service, require_roles
+from backend.core.rbac import can_manage_role
 from backend.core.security import hash_password
 from backend.database.engine import get_db
 from backend.models.user import User
@@ -87,6 +88,8 @@ async def create_user(
     org_admin и org_owner могут создавать пользователей, но не выше своей роли.
     """
     # Проверить уникальность email
+    if not can_manage_role(current_user.role, body.role):
+        raise HTTPException(status_code=403, detail="Cannot assign this role")
     existing = await db.execute(select(User).where(User.email == body.email))
     if existing.scalar_one_or_none():
         raise HTTPException(
@@ -155,6 +158,13 @@ async def update_user_role(
     if not user or (current_user.role != "super_admin" and user.org_id != current_user.org_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    if not can_manage_role(current_user.role, body.role) or not can_manage_role(current_user.role, user.role):
+        raise HTTPException(status_code=403, detail="Cannot change this role")
+
+    # Serialize owner removal across requests, including deactivation.
+    from backend.models.organization import Organization
+    await db.scalar(select(Organization).where(Organization.id == user.org_id).with_for_update())
+    await db.refresh(user)
     # Защита от удаления последнего org_owner
     if user.role == "org_owner" and body.role != "org_owner":
         owners_count_result = await db.execute(
@@ -206,6 +216,17 @@ async def deactivate_user(
     if not user or (current_user.role != "super_admin" and user.org_id != current_user.org_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    if not can_manage_role(current_user.role, user.role):
+        raise HTTPException(status_code=403, detail="Cannot deactivate this role")
+    from backend.models.organization import Organization
+    await db.scalar(select(Organization).where(Organization.id == user.org_id).with_for_update())
+    await db.refresh(user)
+    if user.role == "org_owner" and user.is_active:
+        owners = await db.scalar(select(func.count()).select_from(User).where(
+            User.org_id == user.org_id, User.role == "org_owner", User.is_active.is_(True)
+        ))
+        if (owners or 0) <= 1:
+            raise HTTPException(status_code=400, detail="Cannot remove the last org_owner")
     user.is_active = False
     await audit_svc.log(
         action="user.deactivate",

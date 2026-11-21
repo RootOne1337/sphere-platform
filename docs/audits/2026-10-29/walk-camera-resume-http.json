@@ -1,0 +1,457 @@
+{
+  "schema": "sphere-offline-route-resume-v1",
+  "physicalActions": 0,
+  "originalFilesUnchanged": true,
+  "heldOutSourceFrames": true,
+  "independentGameplay": false,
+  "feedbackLoop": false,
+  "cameraTracking": true,
+  "cases": [
+    {
+      "startMode": "beginning",
+      "samples": [
+        {
+          "queryIndex": 267,
+          "sourceSeconds": 10.022,
+          "pose": "confirming",
+          "inliers": 184,
+          "segment": 28,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0,
+            0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 254.73889999557287,
+          "computeMs": 212.21890003653243
+        },
+        {
+          "queryIndex": 274,
+          "sourceSeconds": 10.256,
+          "pose": "confirming",
+          "inliers": 206,
+          "segment": 29,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 147.6875999942422,
+          "computeMs": 130.45729999430478
+        },
+        {
+          "queryIndex": 280,
+          "sourceSeconds": 10.474,
+          "pose": "localized",
+          "inliers": 171,
+          "segment": 29,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 132.68459995742887,
+          "computeMs": 116.8576999916695
+        },
+        {
+          "queryIndex": 284,
+          "sourceSeconds": 10.656,
+          "pose": "localized",
+          "inliers": 148,
+          "segment": 29,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 42.03159996541217,
+          "computeMs": 13.739199959672987
+        },
+        {
+          "queryIndex": 289,
+          "sourceSeconds": 10.839,
+          "pose": "localized",
+          "inliers": 125,
+          "segment": 30,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 25.002999987918884,
+          "computeMs": 8.34890000987798
+        },
+        {
+          "queryIndex": 294,
+          "sourceSeconds": 11.022,
+          "pose": "localized",
+          "inliers": 114,
+          "segment": 30,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 14.822500001173466,
+          "computeMs": 8.147799992002547
+        },
+        {
+          "queryIndex": 300,
+          "sourceSeconds": 11.205,
+          "pose": "localized",
+          "inliers": 99,
+          "segment": 31,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 14.823700010310858,
+          "computeMs": 8.226200006902218
+        },
+        {
+          "queryIndex": 307,
+          "sourceSeconds": 11.42,
+          "pose": "localized",
+          "inliers": 124,
+          "segment": 31,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 170.35720002604648,
+          "computeMs": 139.42710001720116
+        },
+        {
+          "queryIndex": 313,
+          "sourceSeconds": 11.62,
+          "pose": "localized",
+          "inliers": 92,
+          "segment": 32,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 27.982699975837022,
+          "computeMs": 11.714800028130412
+        },
+        {
+          "queryIndex": 318,
+          "sourceSeconds": 11.802,
+          "pose": "localized",
+          "inliers": 82,
+          "segment": 32,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 26.899099990259856,
+          "computeMs": 9.91480000084266
+        }
+      ]
+    },
+    {
+      "startMode": "recognized_route",
+      "samples": [
+        {
+          "queryIndex": 267,
+          "sourceSeconds": 10.022,
+          "pose": "confirming",
+          "inliers": 184,
+          "segment": 28,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 149.2255000048317,
+          "computeMs": 135.01099997665733
+        },
+        {
+          "queryIndex": 274,
+          "sourceSeconds": 10.256,
+          "pose": "unknown",
+          "inliers": 0,
+          "segment": null,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 118.79199999384582,
+          "computeMs": 103.61059999559075
+        },
+        {
+          "queryIndex": 280,
+          "sourceSeconds": 10.474,
+          "pose": "confirming",
+          "inliers": 171,
+          "segment": 29,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 128.30290000420064,
+          "computeMs": 111.77740001585335
+        },
+        {
+          "queryIndex": 284,
+          "sourceSeconds": 10.656,
+          "pose": "confirming",
+          "inliers": 167,
+          "segment": 29,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 105.49009998794645,
+          "computeMs": 99.98729999642819
+        },
+        {
+          "queryIndex": 289,
+          "sourceSeconds": 10.839,
+          "pose": "localized",
+          "inliers": 132,
+          "segment": 30,
+          "phase": "waiting",
+          "reason": "walk_confirming_current_position",
+          "progress": 0.18640883673631603,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 125.23780000628904,
+          "computeMs": 98.80500001600012
+        },
+        {
+          "queryIndex": 294,
+          "sourceSeconds": 11.022,
+          "pose": "localized",
+          "inliers": 118,
+          "segment": 30,
+          "phase": "waiting",
+          "reason": "walk_confirming_current_position",
+          "progress": 0.19089742419308542,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "targetCamera": null,
+          "replyAgeMs": 22.585000027902424,
+          "computeMs": 7.329799991566688
+        },
+        {
+          "queryIndex": 300,
+          "sourceSeconds": 11.205,
+          "pose": "localized",
+          "inliers": 106,
+          "segment": 31,
+          "phase": "following",
+          "reason": "walk_camera_relative_pursuit",
+          "progress": 0.19507918985109643,
+          "planStick": [
+            0.0027891134597047944,
+            -0.19998055116962973
+          ],
+          "effectiveStick": [
+            0.0027891134597047944,
+            -0.19998055116962973
+          ],
+          "targetCamera": [
+            0.0013896023564902529,
+            -0.005415448111228939,
+            0.0996350450321766
+          ],
+          "replyAgeMs": 22.961000038776547,
+          "computeMs": 7.803199987392873
+        },
+        {
+          "queryIndex": 307,
+          "sourceSeconds": 11.42,
+          "pose": "localized",
+          "inliers": 90,
+          "segment": 31,
+          "phase": "following",
+          "reason": "walk_camera_relative_pursuit",
+          "progress": 0.2000223872487039,
+          "planStick": [
+            0.0019438716996875627,
+            -0.3499892035607202
+          ],
+          "effectiveStick": [
+            0.0019438716996875627,
+            -0.3499892035607202
+          ],
+          "targetCamera": [
+            0.0005536713453591879,
+            -0.0042181129991762925,
+            0.09968713121745669
+          ],
+          "replyAgeMs": 23.555600026156753,
+          "computeMs": 8.341600012499839
+        },
+        {
+          "queryIndex": 313,
+          "sourceSeconds": 11.62,
+          "pose": "localized",
+          "inliers": 66,
+          "segment": 32,
+          "phase": "following",
+          "reason": "walk_camera_relative_pursuit",
+          "progress": 0.20493198103455632,
+          "planStick": [
+            0.008170294675846729,
+            -0.34980917105492443
+          ],
+          "effectiveStick": [
+            0.008170294675846729,
+            -0.34980917105492443
+          ],
+          "targetCamera": [
+            0.002325680484745452,
+            -0.006346147944457287,
+            0.09957344193624322
+          ],
+          "replyAgeMs": 14.147099980618805,
+          "computeMs": 8.113500021863729
+        },
+        {
+          "queryIndex": 318,
+          "sourceSeconds": 11.802,
+          "pose": "localized",
+          "inliers": 116,
+          "segment": 32,
+          "phase": "following",
+          "reason": "walk_camera_relative_pursuit",
+          "progress": 0.20897112382077757,
+          "planStick": [
+            0.0047956214741928715,
+            -0.3499342791298386
+          ],
+          "effectiveStick": [
+            0.0047956214741928715,
+            -0.3499342791298386
+          ],
+          "targetCamera": [
+            0.0013671444813620052,
+            -0.00444447201371686,
+            0.09975989996839134
+          ],
+          "replyAgeMs": 126.47840002318844,
+          "computeMs": 110.40689999936149
+        }
+      ]
+    }
+  ]
+}

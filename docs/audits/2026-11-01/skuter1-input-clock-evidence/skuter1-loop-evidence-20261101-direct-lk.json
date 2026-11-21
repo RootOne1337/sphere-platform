@@ -1,0 +1,40 @@
+{
+  "pairs": [
+    {
+      "head": 0,
+      "tail": 856,
+      "anchor_world_points": 582,
+      "fb_pass": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_inliers"
+      }
+    },
+    {
+      "head": 6,
+      "tail": 850,
+      "anchor_world_points": 582,
+      "fb_pass": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_inliers"
+      }
+    },
+    {
+      "head": 10,
+      "tail": 844,
+      "anchor_world_points": 584,
+      "fb_pass": 0,
+      "fundamental_inliers": 0,
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_inliers"
+      }
+    }
+  ],
+  "elapsed_seconds": 0.23400000005494803,
+  "no_pose_mutation": true,
+  "independent_truth": false
+}

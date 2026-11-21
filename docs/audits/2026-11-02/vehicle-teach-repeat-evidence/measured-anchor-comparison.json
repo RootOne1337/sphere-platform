@@ -1,0 +1,74 @@
+{
+  "schema": "sphere-measured-anchor-baseline-comparison-v1",
+  "adopted": false,
+  "decision": "rejected_no_readiness_or_localization_improvement",
+  "sameQuerySourceIndices": true,
+  "actualTrialBuilderSourceSHA": "3f94a83eec84361905dcf03c6e12fd27470149462a797a142cb2b0f9a995ef43",
+  "correctedBuilderSourceSHA": "e460d172ed998e5578e41182873b41523f69d7c013f6fcbb42fe69851d7c2169",
+  "correctionAfterTrial": "strict final-subset medoid plus total native-row quota/chunked cancellation; corrected code unit-tested only, NOT re-trialed",
+  "baseline": {
+    "landmarks": 2026,
+    "counts": {
+      "confirming": 30,
+      "localized": 63,
+      "unknown": 66
+    },
+    "compute_ms": {
+      "p50": 109.27849996369332,
+      "p95": 171.6303400811739,
+      "maximum": 3056.458300095983
+    },
+    "weakNeighborhoods": 8
+  },
+  "measuredAnchors": {
+    "landmarks": 1524,
+    "counts": {
+      "confirming": 22,
+      "localized": 59,
+      "unknown": 78
+    },
+    "compute_ms": {
+      "p50": 116.33019999135286,
+      "p95": 263.77297000726674,
+      "maximum": 1598.3251000288874
+    },
+    "weakNeighborhoods": 10,
+    "builderSeconds": 6.780999999959022,
+    "rejections": {
+      "no_runtime_association": 15106,
+      "no_geometric_runtime_support": 1,
+      "parallax": 155,
+      "fewer_than_three_runtime_views": 3704,
+      "descriptor_inconsistent": 66
+    }
+  },
+  "peakSampledPrivateMiB": 335.3828125,
+  "resources": {
+    "export": {
+      "samples": 713,
+      "findings": 0,
+      "maxVolumeAgeMs": 9717.99999999348,
+      "minRAMGiB": 7.442951202392578
+    },
+    "localization": {
+      "samples": 8,
+      "findings": 0,
+      "maxVolumeAgeMs": 11702.99999997951,
+      "minRAMGiB": 7.191547393798828
+    }
+  },
+  "protectedSourcesUnchanged": true,
+  "physicalActions": 0,
+  "sameRecordingNotIndependentGameplay": true,
+  "sameFrameRGBAndSourceIndices": true,
+  "referenceIndicesExcluded": 173,
+  "queryCount": 159,
+  "files": {
+    "outcome.json": "1732b23cc25af4e7da119ced46da3800d4602a481395d5ce6b5f4c4de5c650cc",
+    "builder-receipt.json": "f277db22f66f185c22d6a3c811a8732a9bedaab97754fb72ac851b40a751b105",
+    "builder-provenance.json.gz": "130a00fa19d2958e8cd21c80e6a6ecbaf3c349df1b65b616bb5a58b23a1d0011",
+    "same-features-baseline-receipt.json": "91b48ceccfb70484b212f98d218a548223d21d4972d1486879ea34da7236be5c",
+    "source-preservation.json": "9878b1c6979c853cf8c718a9ff2c531f03fe5d741dec5d58d4767a7d196a51db",
+    "runner-receipt.json": "5c124810b380363821c9a35ea47967e10ca0838bdbd3a3b2a7fe54fb6b6a1ded"
+  }
+}

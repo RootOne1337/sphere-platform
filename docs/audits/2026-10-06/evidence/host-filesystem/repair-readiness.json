@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "scope": "Windows C: repair readiness; not completed repair or leak acceptance",
+  "sourceAtStart": "d424e52cebacefed3d928be106d33e73293bbec3",
+  "scan": {
+    "administrator": true,
+    "scanStartedAt": "2026-10-06T15:08:50.0713560Z",
+    "scanFinishedAt": "2026-10-06T15:16:24.6889063Z",
+    "ntfsScanResult": "ScanErrorsFoundNeedSpotFix\r\n",
+    "volumeBefore": {
+      "DriveLetter": "C",
+      "FileSystemType": "NTFS",
+      "HealthStatus": "Warning",
+      "OperationalStatus": "Full Repair Needed",
+      "SizeRemaining": 41620025344,
+      "Size": 1023141736448
+    },
+    "volumeAfter": {
+      "DriveLetter": "C",
+      "FileSystemType": "NTFS",
+      "HealthStatus": "Warning",
+      "OperationalStatus": "Full Repair Needed",
+      "SizeRemaining": 43233083392,
+      "Size": 1023141736448
+    },
+    "errors": []
+  },
+  "scanEvent": {
+    "provider": "Chkdsk",
+    "id": 26226,
+    "recordId": 134448,
+    "observedAt": "2026-10-06T15:16:23.7120382Z",
+    "elapsedMilliseconds": 450586,
+    "fileRecordsChecked": 5796352,
+    "indexRecordsChecked": 7440432,
+    "affectedDirectories": [
+      "old-ignored-build-context",
+      "deleted-WindowsApps-package"
+    ],
+    "missingIndexEntries": {
+      "old-ignored-build-context": 15,
+      "deleted-WindowsApps-package": 6
+    },
+    "rawMessageNotPublished": true,
+    "snapshotLogNotWorkingVolumeRepairProof": true
+  },
+  "priorBootRepair": {
+    "provider": "Microsoft-Windows-Wininit",
+    "id": 1001,
+    "recordId": 133794,
+    "observedAt": "2026-10-04T16:38:26.004Z",
+    "correctedRecords": 3,
+    "scope": "Epic Games cache; new errors subsequently observed"
+  },
+  "backup": {
+    "state": "local-recovery-copy-verified; independent-backup-missing",
+    "totalBytes": 16450263,
+    "independentBackupAvailable": false,
+    "backupOnAffectedPhysicalDisk": true,
+    "notBackedUp": [
+      "personal-files",
+      "full-ssd-image",
+      "minio-objects",
+      "redis-volume",
+      "other-application-volumes",
+      "all-untracked-development-files",
+      "all-signing-keys"
+    ],
+    "remoteSourceMatches": true,
+    "gitFsckPassed": true
+  },
+  "repairRequest": {
+    "state": "boot-check-confirmed; repair-pending-restart",
+    "observedAt": "2026-10-06T15:20:30.9488198Z",
+    "completedAt": "2026-10-06T15:20:32.2096046Z",
+    "command": "chkdsk.exe C: /f",
+    "nativeExitCode": 3,
+    "explicitBootCheckForC": true,
+    "restartPerformed": false,
+    "servicesStopped": false,
+    "repairCompleted": false
+  },
+  "postScan": {
+    "observedAt": "2026-10-06T15:22:53.9278692Z",
+    "volume": {
+      "DriveLetter": "C",
+      "FileSystemType": "NTFS",
+      "HealthStatus": "Warning",
+      "OperationalStatus": "Full Repair Needed",
+      "SizeRemaining": 42991550464,
+      "Size": 1023141736448
+    },
+    "memory": {
+      "AvailableMBytes": 19296,
+      "CommittedBytes": 78272397312,
+      "CommitLimit": 95153381376,
+      "PoolNonpagedBytes": 3149635584,
+      "PoolPagedBytes": 4181737472
+    },
+    "nativeVssDisplayGiB": {
+      "used": 16.8,
+      "allocated": 17.2,
+      "maximum": 19.1
+    },
+    "exactVssCounters": "unavailable",
+    "errors": [
+      {
+        "message": "Exact VSS counters unavailable within the bounded query.",
+        "name": "shadowStorageExact",
+        "errorType": "RuntimeException"
+      }
+    ],
+    "priorVssMaximumBytes": 8589934592,
+    "vssPolicyMismatchCause": "unknown",
+    "vssCleanupPerformed": false
+  },
+  "physicalReliability": {
+    "DeviceId": "0",
+    "Temperature": 54,
+    "TemperatureMax": 100,
+    "Wear": 0,
+    "PowerOnHours": null,
+    "ReadErrorsTotal": null,
+    "ReadErrorsUncorrected": null,
+    "WriteErrorsTotal": null,
+    "WriteErrorsUncorrected": null
+  },
+  "memoryModules": [
+    {
+      "BankLabel": "P0 CHANNEL A",
+      "Capacity": 25769803776,
+      "Speed": 4800,
+      "ConfiguredClockSpeed": 6800
+    },
+    {
+      "BankLabel": "P0 CHANNEL B",
+      "Capacity": 25769803776,
+      "Speed": 4800,
+      "ConfiguredClockSpeed": 6800
+    }
+  ],
+  "scanHost": {
+    "pid": 300,
+    "startedAt": "2026-10-06T15:08:51.175751Z",
+    "registration": "CFmIfsEngine host",
+    "privateBytesObserved": 12267302912,
+    "workingSetBytesObserved": 12221792256,
+    "processAbsentAfterScan": true,
+    "notLongTermLeakProof": true
+  },
+  "validation": {
+    "scopedTestsPassed": 37,
+    "scopedRuffPassed": true,
+    "powershellSyntaxParsed": true,
+    "heavyBuildPerformed": false,
+    "runtimeDeploymentPerformed": false
+  },
+  "privateReceiptSha256": {
+    "host-diagnostics.private.json": "4ce38a88922608dcf62792946c149c184368508091378d2b36c790e81f150f51",
+    "boot-repair-request.private.json": "8110c8b31a86087715dfa149048086a7abe108af0c8b46799ef395de676c0397",
+    "post-scan/host-diagnostics.private.json": "97910bd9c7dcc84e992657af868070eb8b303c6618213a27fa3f1af27f93fa2e",
+    "ntfs-scan-event.private.json": "500c5a870157d77d8ae286483eeb828295ff534b09ac23b3f55a4e991fe98088"
+  }
+}

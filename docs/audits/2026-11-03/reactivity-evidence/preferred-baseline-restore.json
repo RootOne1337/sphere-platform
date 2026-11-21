@@ -1,0 +1,26 @@
+{
+  "state": "restored_exact_previous_preference",
+  "preferredAlternativeId": "fixed-k-fused-173-supported-diagnostic",
+  "preferredInfo": {
+    "id": "fixed-k-fused-173-supported-diagnostic",
+    "cameras": 173,
+    "points": 20556,
+    "scope": "diagnostic",
+    "executionQualified": false,
+    "label": "Совместная геометрия · 173 ракурса · 20 556 точек"
+  },
+  "preferredGeometrySha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "oldPreferenceRestoredByteExact": true,
+  "v7RetainedAvailable": true,
+  "v7GeometrySha256": "c94f6c515e628d87c9e353f10813a991ae15896b3f6dcec879668a477eccd8aa",
+  "beforeSelectionSha256": "72c8831ea571c9f35bd8d4a42a7601a8d91ed57cc1ad60f254f059b5912ceff5",
+  "afterSelectionSha256": "4ffc792895ea14b07565d836cc7d430270ccfdb159990a95af9b94a028cf7efd",
+  "changedFiles": [
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\alternative-selection.json"
+  ],
+  "protectedAssetCount": 598,
+  "primaryControlStateCancelNavigationUnchanged": true,
+  "apiReloaded": false,
+  "physicalActions": 0,
+  "privateReceiptSha256": "23bcaf7e94f75f87b853ea1c7c80224367158f4f33000624724cbbd709645bd4"
+}

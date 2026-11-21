@@ -1,0 +1,24 @@
+{
+  "exit": 0,
+  "stop": null,
+  "seconds": 0.6099999999860302,
+  "min_ram": 9557966848,
+  "min_commit": 21830307840,
+  "source_hashes_before": {
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\manifest.json": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\frames.jsonl": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0",
+    ".local-pilot\\scooter-hud-20261101\\ocr-receipted-step3.csv": "4cffd7bbdedc4a2cfd4d2d2046256c1bcbc9ff1325fd3910f53dacca9d2bbf5a",
+    ".local-pilot\\scooter-hud-20261101\\ocr-receipted-step3.csv.receipt.json": "1bd66edf8580fbaedf012c7743cec7a1181ccabf7feba48b18c284488dad9ae7",
+    ".local-pilot\\scooter-calfvo-full-20261101\\candidate.npz": "3411b8d002a85e0f8a26a9044fcd84138558f85a8ce8bb67cfb38818d1c74e9f",
+    ".local-pilot\\scooter-calfvo-reverse-20261101\\candidate.npz": "f72c22e00544c394500e3512dfdc2eb67bd480446aa8bc2ba5ef6d2306f98936"
+  },
+  "source_hashes_after": {
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\manifest.json": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\frames.jsonl": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0",
+    ".local-pilot\\scooter-hud-20261101\\ocr-receipted-step3.csv": "4cffd7bbdedc4a2cfd4d2d2046256c1bcbc9ff1325fd3910f53dacca9d2bbf5a",
+    ".local-pilot\\scooter-hud-20261101\\ocr-receipted-step3.csv.receipt.json": "1bd66edf8580fbaedf012c7743cec7a1181ccabf7feba48b18c284488dad9ae7",
+    ".local-pilot\\scooter-calfvo-full-20261101\\candidate.npz": "3411b8d002a85e0f8a26a9044fcd84138558f85a8ce8bb67cfb38818d1c74e9f",
+    ".local-pilot\\scooter-calfvo-reverse-20261101\\candidate.npz": "f72c22e00544c394500e3512dfdc2eb67bd480446aa8bc2ba5ef6d2306f98936"
+  },
+  "source_unchanged": true
+}

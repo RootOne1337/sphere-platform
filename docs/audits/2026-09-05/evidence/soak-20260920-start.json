@@ -1,0 +1,160 @@
+{
+  "scope": "Start checkpoint, not eight-hour acceptance. Two owned Android 9 emulators.",
+  "backend": "eacf692",
+  "frontend": "03b161e",
+  "apk": "1.2.7 / 10207",
+  "preflight": {
+    "status": {
+      "run_id": "preflight-20260920-001",
+      "status": "completed",
+      "started_at": "2026-09-19T22:01:12.210944+00:00",
+      "planned_seconds": 120,
+      "pid": 16496,
+      "cycles_passed": 1,
+      "tasks_passed": 2,
+      "commands_passed": 30,
+      "samples": 6,
+      "pipeline_controls_passed": 2,
+      "devices": [
+        "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "ba1346c1-1581-452f-adee-451d36622aaf"
+      ],
+      "script_id": "352a0685-c694-4f11-a160-eb2b0e4337dc",
+      "script_version_id": "2804f56c-a70a-4abf-9633-aad64c2fcdfc",
+      "failure": null,
+      "expected_end": "2026-09-19T22:03:12.210944+00:00",
+      "updated_at": "2026-09-19T22:03:20.540083+00:00",
+      "active_batch": null,
+      "finished_at": "2026-09-19T22:03:20.540083+00:00",
+      "elapsed_seconds": 128.328
+    },
+    "command_seconds": {
+      "count": 30,
+      "min": 0.437,
+      "max": 0.64,
+      "p50": 0.438,
+      "p95": 0.454
+    },
+    "first_frame_seconds": {
+      "count": 2,
+      "min": 0.984,
+      "max": 0.985,
+      "p50": 0.984,
+      "p95": 0.985
+    },
+    "devices": {
+      "85f2f935-7739-400e-9389-0d71227e8f0a": {
+        "observed_pids": [
+          "2182"
+        ],
+        "memory_pss_kib_by_phase": {
+          "after_viewer_close": {
+            "count": 1,
+            "min": 50123,
+            "max": 50123,
+            "p50": 50123,
+            "p95": 50123
+          },
+          "stream": {
+            "count": 1,
+            "min": 54825,
+            "max": 54825,
+            "p50": 54825,
+            "p95": 54825
+          },
+          "baseline": {
+            "count": 1,
+            "min": 41322,
+            "max": 41322,
+            "p50": 41322,
+            "p95": 41322
+          }
+        },
+        "projection_active_after_own_viewers_closed": 0
+      },
+      "ba1346c1-1581-452f-adee-451d36622aaf": {
+        "observed_pids": [
+          "2187"
+        ],
+        "memory_pss_kib_by_phase": {
+          "after_viewer_close": {
+            "count": 1,
+            "min": 48895,
+            "max": 48895,
+            "p50": 48895,
+            "p95": 48895
+          },
+          "stream": {
+            "count": 1,
+            "min": 56578,
+            "max": 56578,
+            "p50": 56578,
+            "p95": 56578
+          },
+          "baseline": {
+            "count": 1,
+            "min": 41272,
+            "max": 41272,
+            "p50": 41272,
+            "p95": 41272
+          }
+        },
+        "projection_active_after_own_viewers_closed": 0
+      }
+    },
+    "incidents": [],
+    "incomplete_event_lines": 0,
+    "scope": "Observed explicit pilot devices only; nearest-rank percentiles. Running is not passed. Other operator viewers can keep projection active. Raw logs retain additional evidence."
+  },
+  "devices": [
+    {
+      "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+      "serial": "emulator-5554",
+      "pid": "2182",
+      "version_code": 10207,
+      "crash_buffer_unchanged": true,
+      "crash_sha256": "21cb8fca861543a2b141b00f4b52c162b178e5586d7f03d4243f3e3795f240b1"
+    },
+    {
+      "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+      "serial": "emulator-5556",
+      "pid": "2187",
+      "version_code": 10207,
+      "crash_buffer_unchanged": true,
+      "crash_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "native_tasks_preflight": 3,
+  "preflight_note": "tasks_passed counts 2 batch tasks; pause/resume pipeline adds 1 native task. Both pipeline controls passed, including cancel before native admission.",
+  "night_checkpoint": {
+    "run_id": "night-20260920-001",
+    "status": "running",
+    "started_at": "2026-09-19T22:04:03.757754+00:00",
+    "planned_seconds": 28800,
+    "pid": 26552,
+    "cycles_passed": 1,
+    "tasks_passed": 4,
+    "commands_passed": 40,
+    "samples": 8,
+    "pipeline_controls_passed": 2,
+    "devices": [
+      "85f2f935-7739-400e-9389-0d71227e8f0a",
+      "ba1346c1-1581-452f-adee-451d36622aaf"
+    ],
+    "script_id": "352a0685-c694-4f11-a160-eb2b0e4337dc",
+    "script_version_id": "2804f56c-a70a-4abf-9633-aad64c2fcdfc",
+    "failure": null,
+    "expected_end": "2026-09-20T06:04:03.757754+00:00",
+    "updated_at": "2026-09-19T22:06:40.034690+00:00",
+    "active_batch": null
+  },
+  "hidden_window": true,
+  "actions_via_sphere_only": true,
+  "prior_system_crash": "emulator-5554 had a 19 September 15:13:30 Android-clock media.codec SIGABRT. Baseline retained; unchanged through preflight. This is not a new Sphere process crash or a proven root cause.",
+  "monitor": {
+    "interval_minutes": 20,
+    "quiet_when_unchanged": true,
+    "uses_existing_automation": "enterprise",
+    "restore_after_terminal": "Original Wednesday 05:15 weekly audit schedule and prompt."
+  }
+}

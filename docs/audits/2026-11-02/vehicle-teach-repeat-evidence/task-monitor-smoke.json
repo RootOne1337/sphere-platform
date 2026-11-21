@@ -1,0 +1,121 @@
+{
+  "scope": "REAL_WINDOWS_READ_ONLY_TASK_MONITOR_SMOKE",
+  "physicalActions": 0,
+  "snapshots": [
+    {
+      "stage": "admission",
+      "queryMs": 1418.8861000584438,
+      "findings": [],
+      "sample": {
+        "observedAt": "2026-11-01T20:35:16.748840+00:00",
+        "system": "Windows",
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "resourceMonitorTask": "7a5fbd9e872b4eb489c4837e3c72af78",
+        "volumeProofScope": "task_and_volume",
+        "volumeProofMaxAgeMs": 30000,
+        "volumeIdentity": "\\\\?\\volume{f0149c83-c7a1-4999-b27b-e156b7d1cf30}\\",
+        "volumeProofAgeMs": 1.2941999593749642,
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ],
+        "volumeObservedAt": "2026-11-01T20:35:18.165840+00:00",
+        "volumeMeasurement": "fresh",
+        "volumeProbeState": "idle",
+        "freeDiskBytes": 37720002560,
+        "diskObservedAt": "2026-11-01T20:35:18.167214+00:00",
+        "availableRamBytes": 11053805568,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 77577527296,
+        "commitLimitBytes": 100060360704,
+        "kernelPagedBytes": 11039563776,
+        "kernelNonpagedBytes": 5327544320,
+        "processCount": 471,
+        "handleCount": 708039,
+        "memoryMeasurement": "GetPerformanceInfo",
+        "memoryObservedAt": "2026-11-01T20:35:18.167708+00:00",
+        "collectionCompletedAt": "2026-11-01T20:35:18.167713+00:00"
+      }
+    },
+    {
+      "stage": "immediate_cached",
+      "queryMs": 1.916100038215518,
+      "findings": [],
+      "sample": {
+        "observedAt": "2026-11-01T20:35:18.167733+00:00",
+        "system": "Windows",
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "resourceMonitorTask": "7a5fbd9e872b4eb489c4837e3c72af78",
+        "volumeProofScope": "task_and_volume",
+        "volumeProofMaxAgeMs": 30000,
+        "volumeIdentity": "\\\\?\\volume{f0149c83-c7a1-4999-b27b-e156b7d1cf30}\\",
+        "volumeProofAgeMs": 3.522499930113554,
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ],
+        "volumeObservedAt": "2026-11-01T20:35:18.165840+00:00",
+        "volumeMeasurement": "task_cache",
+        "volumeProbeState": "idle",
+        "freeDiskBytes": 37719986176,
+        "diskObservedAt": "2026-11-01T20:35:18.169405+00:00",
+        "availableRamBytes": 11053785088,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 77577527296,
+        "commitLimitBytes": 100060360704,
+        "kernelPagedBytes": 11039563776,
+        "kernelNonpagedBytes": 5327544320,
+        "processCount": 471,
+        "handleCount": 708041,
+        "memoryMeasurement": "GetPerformanceInfo",
+        "memoryObservedAt": "2026-11-01T20:35:18.169636+00:00",
+        "collectionCompletedAt": "2026-11-01T20:35:18.169641+00:00"
+      }
+    },
+    {
+      "stage": "background_refresh_launched",
+      "queryMs": 9.579000063240528,
+      "findings": [],
+      "sample": {
+        "observedAt": "2026-11-01T20:35:28.219946+00:00",
+        "system": "Windows",
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "resourceMonitorTask": "7a5fbd9e872b4eb489c4837e3c72af78",
+        "volumeProofScope": "task_and_volume",
+        "volumeProofMaxAgeMs": 30000,
+        "volumeIdentity": "\\\\?\\volume{f0149c83-c7a1-4999-b27b-e156b7d1cf30}\\",
+        "volumeProofAgeMs": 10056.356000015512,
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ],
+        "volumeObservedAt": "2026-11-01T20:35:18.165840+00:00",
+        "volumeMeasurement": "task_cache",
+        "volumeProbeState": "running",
+        "freeDiskBytes": 37720039424,
+        "diskObservedAt": "2026-11-01T20:35:28.229118+00:00",
+        "availableRamBytes": 10989756416,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 77593985024,
+        "commitLimitBytes": 100060360704,
+        "kernelPagedBytes": 11037466624,
+        "kernelNonpagedBytes": 5327577088,
+        "processCount": 469,
+        "handleCount": 707604,
+        "memoryMeasurement": "GetPerformanceInfo",
+        "memoryObservedAt": "2026-11-01T20:35:28.229501+00:00",
+        "collectionCompletedAt": "2026-11-01T20:35:28.229506+00:00"
+      }
+    }
+  ],
+  "closeMs": 1.0099000064656138,
+  "ownedRefreshPid": 46812,
+  "ownedWorkerStopped": true,
+  "ownedProcessReaped": true,
+  "globalThresholdsChanged": false,
+  "globalCache": false,
+  "memoryReused": false
+}

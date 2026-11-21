@@ -15,6 +15,7 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+    Uuid,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -103,6 +104,10 @@ class DeviceEvent(Base, UUIDMixin, TimestampMixin):
         index=True,
         comment="Pipeline run, при выполнении которого произошло событие",
     )
+    source_event_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    trigger_root_event_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    # None is an independent event. An empty path belongs to a manually started pipeline.
+    trigger_path: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
 
     # --- Данные события ---
     data: Mapped[dict] = mapped_column(
@@ -130,6 +135,10 @@ class DeviceEvent(Base, UUIDMixin, TimestampMixin):
 
     # --- Индексы ---
     __table_args__ = (
+        Index(
+            "uq_device_events_source", "org_id", "device_id", "source_event_id",
+            unique=True, postgresql_where=source_event_id.is_not(None),
+        ),
         # Быстрый поиск необработанных событий (для EventReactor)
         Index(
             "ix_device_events_unprocessed",

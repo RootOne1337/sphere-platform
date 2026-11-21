@@ -1,0 +1,101 @@
+{
+  "sourceRevision": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+  "observedAt": "2026-10-06T12:43:46.357181+00:00",
+  "flavors": {
+    "dev": {
+      "counts": {
+        "tests": 856,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "passed": 855,
+      "suites": 71,
+      "focusedSuites": [
+        {
+          "name": "com.sphereplatform.agent.commands.AdbRootClearTest",
+          "tests": "4",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.DagRunnerTest",
+          "tests": "33",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.RootCommandAcknowledgementTest",
+          "tests": "5",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.RootTextClearSequenceTest",
+          "tests": "3",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        }
+      ],
+      "assumptionSkipped": [
+        {
+          "suite": "com.sphereplatform.agent.provisioning.ConfigRecoveryTest",
+          "test": "public discovery of baked route retains locally provisioned enrollment credential"
+        }
+      ]
+    },
+    "enterprise": {
+      "counts": {
+        "tests": 856,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "passed": 855,
+      "suites": 71,
+      "focusedSuites": [
+        {
+          "name": "com.sphereplatform.agent.commands.AdbRootClearTest",
+          "tests": "4",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.DagRunnerTest",
+          "tests": "33",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.RootCommandAcknowledgementTest",
+          "tests": "5",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "com.sphereplatform.agent.commands.RootTextClearSequenceTest",
+          "tests": "3",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        }
+      ],
+      "assumptionSkipped": [
+        {
+          "suite": "com.sphereplatform.agent.provisioning.ConfigRecoveryTest",
+          "test": "public discovery of baked route retains locally provisioned enrollment credential"
+        }
+      ]
+    }
+  },
+  "uniqueTestsCannotBeSummedAcrossFlavors": true,
+  "rawLogsOrBuildConfigPublished": false,
+  "skippedTestExplanation": "Existing ConfigRecoveryTest requires nonblank baked DEFAULT_SERVER_URL and DEFAULT_API_KEY; this manifest-driven candidate does not satisfy that assumption."
+}

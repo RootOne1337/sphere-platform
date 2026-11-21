@@ -1,0 +1,12 @@
+{
+  "figure": "docs\\audits\\2026-11-01\\assets\\scooter-forward-reverse-heading.png",
+  "sha256": "dcb154e3bcfdcca94cb18743a545384658befde3a362b510d32752e9d62655df",
+  "bytes": 173942,
+  "source_files": {
+    ".local-pilot\\scooter-hud-heading-20261101\\headings.csv": "bd5f0cac4a656bf9e12572876105f68a9773daa09597bb00d48351ee4db7b236",
+    ".local-pilot\\scooter-hud-heading-20261101\\intervals.json": "d27d7ccbf51dcb6180cace0988878de060e9a1a5900524e0c664319c22cbbc69",
+    ".local-pilot\\scooter-hud-heading-20261101\\report.json": "0a7c5e7135eb5510e7ce34f434d4bf4df612eff2177df48a39fb47b8ddf6cece"
+  },
+  "execution_qualified": false,
+  "physical_metric_verified": false
+}

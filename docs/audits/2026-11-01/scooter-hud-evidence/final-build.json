@@ -1,0 +1,20 @@
+{
+  "exit_code": 0,
+  "stopped_reason": null,
+  "source_sha_before": "e08ec91a38a79c64647e0a8ab46f3364624d833adab22e3fb3dc74fb85f25522",
+  "source_sha_after": "e08ec91a38a79c64647e0a8ab46f3364624d833adab22e3fb3dc74fb85f25522",
+  "source_unchanged": true,
+  "seconds": 45.85900000005495,
+  "installed": false,
+  "physicalActions": 0,
+  "resource_profile": {
+    "kind": "bounded_frontend_only",
+    "workers": 1,
+    "node_heap_mib": 1536,
+    "start_ram_gib": 5.75,
+    "stop_ram_gib": 4.25,
+    "start_commit_headroom_gib": 6,
+    "stop_commit_headroom_gib": 4.5,
+    "device_and_reconstruction_guards_unchanged": true
+  }
+}

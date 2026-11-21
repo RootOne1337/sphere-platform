@@ -1,0 +1,618 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-05T14:55:31.417703+00:00",
+  "status": "ACCEPTED_FOR_EP_009",
+  "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+  "auditBaseline": "ENTERPRISE-PRODUCT-BACKLOG.json",
+  "auditBaselineSha256": "8ea6e56d57af1570baab08cb0d4aac4e52b0029f95067b19d8f6391eeac9f915",
+  "previousEvidence": "ENTERPRISE-HTTP-METRICS-EVIDENCE.json",
+  "previousEvidenceSha256": "c35d42bf77850f510eb7cde804f931cc5ec21d917ce7cd664a38337ccddd42c4",
+  "textHashFormat": "UTF-8 bytes with CRLF normalized to LF; matches Git text blobs",
+  "gitBlobHashes": [
+    {
+      "file": "backend/main.py",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "9d8c6d76c5bd4c2360d22c1b77184a18e62c091c10a38613c030c436dacfc001"
+    },
+    {
+      "file": "backend/monitoring/container_resources.py",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "bc6fd1fd908cddcf9f2db82cb0bca636db4268b41625627055961f1df36f2f4a"
+    },
+    {
+      "file": "backend/monitoring/resource_exposition.py",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "bbee215d2cfa54b8571175c6de5d26a1ad30847e952e73ec09888555991f76a0"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "2d049767893683d6671559dc5a3059695f1cb7bc9418a2a8fb3405372a95bf7d"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/monitoring-status.test.tsx",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "5dd2a807691eb7e0d0d95ceebe8a328af69257739be8c29d37d92aad7f3ae16e"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/observability-panel.test.tsx",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "1826fba51d55af99394a588fa1feef65969bce7c691ba0032f435c35de6a5ccc"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/page.test.tsx",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "e545233f802c20488fff8d11fdf5613060f7199a64e5446156926cd62a694092"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/resource-metrics-panel.test.tsx",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "755b397d3ff42430ac80791cde4dd565cff69d3d199e2d2924954b3e2fc503fd"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/resource-observability-server.test.ts",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "9471de30fb3827800aeed87bf3d4d1af0233d6b291dc5a8415d4c10ae3a002f1"
+    },
+    {
+      "file": "frontend/app/api/observability/resources/route.ts",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "f6b2d790ce393d96a0d3a5fbf692d7521b8541281c116ce13be5870d66b0e7d5"
+    },
+    {
+      "file": "frontend/lib/server/resourceObservability.ts",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "43d90186442312661231bc09701a5ba4ca17470bf580dbfd180ee3f42f687af9"
+    },
+    {
+      "file": "frontend/src/features/monitoring/ObservabilityPanel.tsx",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "573bd48ce9ac34a0335d44559775fd4a4361df3a413b79941d6fad8fd945328c"
+    },
+    {
+      "file": "frontend/src/features/monitoring/ResourceMetricsPanel.tsx",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "1397fd43161db849f78400e98fd8baf78186d6ea22e3890cd399a6e84ec3fcf3"
+    },
+    {
+      "file": "frontend/src/features/monitoring/monitoringTypes.ts",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "94abf80ca65b238b2efa4b9feb3ab70a289198941fef35b39881e10d14d3c03e"
+    },
+    {
+      "file": "frontend/src/features/monitoring/resourceMetricsTypes.ts",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "ba30b40c7b7580a3bf0aa155970d79811fae7163ef2aeb55216b9243b2f8db40"
+    },
+    {
+      "file": "infrastructure/monitoring/collection/prometheus.yml",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "2e18363b8fc05b3fe6d5fb1f5d658f4b9aa9376da177817cf301811b5faa3335"
+    },
+    {
+      "file": "tests/test_monitoring/fixtures/multiprocess_worker.py",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "3c2e0055f8655d63be0b132278c3154ef592f16b4617d38b8188934483ad7cae"
+    },
+    {
+      "file": "tests/test_monitoring/test_container_resources.py",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "8d64d82a9700eb2a64754d6f3dc6a79f434925bcbf8f74a031e2a0f784698f49"
+    },
+    {
+      "file": "tests/test_monitoring/test_multiprocess_metrics.py",
+      "revision": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "sha256": "89d1476f6412b75ce97e942a3794c7f845a318cd575cc16409bf1a22edea26ae"
+    }
+  ],
+  "ledger": {
+    "originalItems": 50,
+    "closedInPreviousBatch": [
+      "EP-001",
+      "EP-002",
+      "EP-003",
+      "EP-004",
+      "EP-005",
+      "EP-006",
+      "EP-007",
+      "EP-008"
+    ],
+    "closedInThisBatch": [
+      "EP-009"
+    ],
+    "totalClosed": 9,
+    "itemsWithOpenCriteria": 41,
+    "baselineNotRewritten": true,
+    "closedScope": "EP-009 only; no host leak, fleet or platform readiness claim"
+  },
+  "tests": {
+    "frontend": {
+      "success": true,
+      "numTotalTests": 1275,
+      "numPassedTests": 1275,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTestSuites": 120,
+      "numPassedTestSuites": 120,
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "runner": "local Node v25.1.0",
+      "upstreamMocked": true
+    },
+    "api": {
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "tests": 27,
+      "failed": 0,
+      "skipped": 0,
+      "exactProductionImage": true,
+      "applicationSourceMounted": false,
+      "network": "none"
+    },
+    "mypy": {
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "files": 231,
+      "exit": 0
+    },
+    "ruff": {
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "exit": 0,
+      "network": "none",
+      "applicationSourceMounted": false,
+      "memoryLimitBytes": 805306368
+    },
+    "frontendTypeScriptPassed": true,
+    "productionBuildNodeMajor": 24,
+    "promtoolPassed": true
+  },
+  "builds": {
+    "api": {
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "imageId": "sha256:83b35df688e46bcbf4ae4ab6fa90a05bb2481c817e8b1a41295e66022b3eaa62",
+      "image": "sphere-pilot-20260911-backend:cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "exit": 0,
+      "gitArchive": true
+    },
+    "ui": {
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "imageId": "sha256:a626b0d87a408b60bcb4e576f20351cbc08b9d2304e7a291f6bac656b8397f82",
+      "image": "sphere-review-frontend:cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "exit": 0,
+      "gitArchive": true
+    }
+  },
+  "installed": {
+    "api": {
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "observedAt": "2026-10-05T14:45:40.683080+00:00",
+      "stage": "api",
+      "target": "sphere-pilot-20260911-backend-1",
+      "changedContainers": [
+        "sphere-pilot-20260911-backend-1"
+      ],
+      "otherContainersPreserved": 45,
+      "mountsPreserved": true,
+      "logRotationPreserved": true,
+      "beforeFleet": {
+        "observedAt": "2026-10-05T14:45:31.614213+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "presenceAvailable": true
+      },
+      "afterFleet": {
+        "observedAt": "2026-10-05T14:45:40.681968+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "presenceAvailable": true
+      },
+      "apkChanged": false,
+      "tunnelsChanged": false,
+      "ready": true
+    },
+    "prometheus": {
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "observedAt": "2026-10-05T14:46:18.988036+00:00",
+      "stage": "prometheus",
+      "target": "sphere-observability-20260930-prometheus-1",
+      "changedContainers": [],
+      "otherContainersPreserved": 46,
+      "mountsPreserved": true,
+      "logRotationPreserved": true,
+      "beforeFleet": {
+        "observedAt": "2026-10-05T14:46:17.852919+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "presenceAvailable": true
+      },
+      "afterFleet": {
+        "observedAt": "2026-10-05T14:46:18.986482+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 12,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 7,
+          "issues": 0
+        },
+        "presenceAvailable": true
+      },
+      "apkChanged": false,
+      "tunnelsChanged": false,
+      "ready": true
+    },
+    "ui": {
+      "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "observedAt": "2026-10-05T14:46:27.940111+00:00",
+      "stage": "ui",
+      "target": "sphere-review-20261002-review-ui-1",
+      "changedContainers": [
+        "sphere-review-20261002-review-ui-1"
+      ],
+      "otherContainersPreserved": 45,
+      "mountsPreserved": true,
+      "logRotationPreserved": true,
+      "beforeFleet": {
+        "observedAt": "2026-10-05T14:46:19.999732+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 12,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 7,
+          "issues": 0
+        },
+        "presenceAvailable": true
+      },
+      "afterFleet": {
+        "observedAt": "2026-10-05T14:46:27.938023+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 12,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 7,
+          "issues": 0
+        },
+        "presenceAvailable": true
+      },
+      "apkChanged": false,
+      "tunnelsChanged": false,
+      "ready": true
+    }
+  },
+  "runtime": {
+    "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+    "observedAt": "2026-10-05T14:47:41.656381+00:00",
+    "kernel": {
+      "cgroupVersion": "v1",
+      "kernelMemoryBeforeBytes": 615804928,
+      "kernelMemoryAfterBytes": 616857600,
+      "metricMemoryBytes": 616726528.0,
+      "metricMemoryLimitBytes": 2147483648.0,
+      "metricCpuSeconds": 19.27692,
+      "metricCpuQuotaCores": null,
+      "resourcesAvailable": {
+        "cpu": 1.0,
+        "cpuQuota": 0.0,
+        "memory": 1.0,
+        "memoryLimit": 1.0
+      },
+      "boundedSamples": 10,
+      "duplicateResourceSamples": false,
+      "pidLabels": false,
+      "kernelComparisonPassed": true
+    },
+    "windows": [
+      {
+        "window": "1h",
+        "stepSeconds": 15,
+        "milliseconds": 15,
+        "lastScrape": "2026-10-05T14:47:32.262205781Z",
+        "latest": {
+          "cpu": 0.03385366905195791,
+          "memory": 0.5597915649414062,
+          "memoryLimit": 2
+        },
+        "states": {
+          "cpu": "ready",
+          "cpuQuota": "empty",
+          "memory": "ready",
+          "memoryLimit": "ready"
+        },
+        "points": {
+          "cpu": 4,
+          "cpuQuota": 0,
+          "memory": 5,
+          "memoryLimit": 5
+        }
+      },
+      {
+        "window": "6h",
+        "stepSeconds": 30,
+        "milliseconds": 16,
+        "lastScrape": "2026-10-05T14:47:32.262205781Z",
+        "latest": {
+          "cpu": 0.03385366905195791,
+          "memory": 0.5597915649414062,
+          "memoryLimit": 2
+        },
+        "states": {
+          "cpu": "ready",
+          "cpuQuota": "empty",
+          "memory": "ready",
+          "memoryLimit": "ready"
+        },
+        "points": {
+          "cpu": 2,
+          "cpuQuota": 0,
+          "memory": 3,
+          "memoryLimit": 3
+        }
+      },
+      {
+        "window": "24h",
+        "stepSeconds": 60,
+        "milliseconds": 31,
+        "lastScrape": "2026-10-05T14:47:32.262205781Z",
+        "latest": {
+          "cpu": 0.03385366905195791,
+          "memory": 0.5597915649414062,
+          "memoryLimit": 2
+        },
+        "states": {
+          "cpu": "ready",
+          "cpuQuota": "empty",
+          "memory": "ready",
+          "memoryLimit": "ready"
+        },
+        "points": {
+          "cpu": 1,
+          "cpuQuota": 0,
+          "memory": 2,
+          "memoryLimit": 2
+        }
+      }
+    ],
+    "unauthorized": 401,
+    "browserQueryRejected": 400,
+    "httpMetricsPreserved": true,
+    "fleet": {
+      "total": 19,
+      "statusCounts": {
+        "online": 13,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 6,
+        "issues": 0
+      },
+      "presenceAvailable": true
+    },
+    "backfillPerformed": false,
+    "longSoakAccepted": false
+  },
+  "final": {
+    "observedAt": "2026-10-05T14:51:34.672139+00:00",
+    "samples": [
+      {
+        "observedAt": "2026-10-05T14:51:19.567581+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "onlineDeviceCount": 14
+      },
+      {
+        "observedAt": "2026-10-05T14:51:22.584941+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "onlineDeviceCount": 14
+      },
+      {
+        "observedAt": "2026-10-05T14:51:25.599266+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "onlineDeviceCount": 14
+      },
+      {
+        "observedAt": "2026-10-05T14:51:28.615655+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "onlineDeviceCount": 14
+      },
+      {
+        "observedAt": "2026-10-05T14:51:31.629036+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "onlineDeviceCount": 14
+      },
+      {
+        "observedAt": "2026-10-05T14:51:34.640763+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 14,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 5,
+          "issues": 0
+        },
+        "onlineDeviceCount": 14
+      }
+    ],
+    "ownSessionLogout": 204,
+    "ownSessionRevokedResourceRequest": 401,
+    "resourcePanelReady": true,
+    "continuousUptimeClaimed": false,
+    "deviceCommandsSent": false
+  },
+  "browser": {
+    "viewports": [
+      1600,
+      390
+    ],
+    "pageWidthEqualsViewport": true,
+    "mobileRefreshButtonPixels": 40,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "windows": [
+      "1h",
+      "6h",
+      "24h"
+    ],
+    "automaticRefreshObserved": true,
+    "manualRefreshClickedInObservationWindow": false,
+    "viewportReset": true,
+    "originalDarkThemeRestored": true,
+    "consoleErrorsOrWarningsObserved": 0,
+    "screenshots": [
+      {
+        "file": "assets/container-resources/mobile-cpu-live.jpg",
+        "sha256": "369d73a1af080535246f82a8d486d90a981fde0a3dc8e7b115d0d903c1b71ba7",
+        "width": 390,
+        "height": 844,
+        "mimeType": "image/jpeg",
+        "realBrowserCapture": true
+      },
+      {
+        "file": "assets/container-resources/mobile-memory-live.jpg",
+        "sha256": "2405e8d12b77b023ac72e0d723bee08bebf007b6e77aa133db9beb813b17633f",
+        "width": 390,
+        "height": 844,
+        "mimeType": "image/jpeg",
+        "realBrowserCapture": true
+      },
+      {
+        "file": "assets/container-resources/wide-dark-final-live.jpg",
+        "sha256": "13935c004bde139ba24404decf4bf49c408a25e8a153d7a51482a78ff671513d",
+        "width": 1600,
+        "height": 1000,
+        "mimeType": "image/jpeg",
+        "realBrowserCapture": true
+      },
+      {
+        "file": "assets/container-resources/wide-dark-live.jpg",
+        "sha256": "ffe88d4b79d121f852c4879d5f9230dc5c4103041723327f4a9433a68ac9f851",
+        "width": 1600,
+        "height": 1000,
+        "mimeType": "image/jpeg",
+        "realBrowserCapture": true
+      },
+      {
+        "file": "assets/container-resources/wide-light-live.jpg",
+        "sha256": "02f6294d6091a73b1d4cd7ae9fb9271555aa29405be72df29fb8229695371d2e",
+        "width": 1600,
+        "height": 1000,
+        "mimeType": "image/jpeg",
+        "realBrowserCapture": true
+      }
+    ]
+  },
+  "publicReceipts": [
+    {
+      "file": "evidence/container-resources/api-installed.json",
+      "sha256": "deb4e181fff2c66299a98679ab3389cd286a3670b4933d118424f896e1b5f550"
+    },
+    {
+      "file": "evidence/container-resources/prometheus-installed.json",
+      "sha256": "a5feb302c643d3a24a476a16679f26dfe539737f7c8e874c723e623228ba8cd3"
+    },
+    {
+      "file": "evidence/container-resources/ui-installed.json",
+      "sha256": "caf9a0dd504b565ba27779ea541828c2bd029f9dd8d2bc461089b05ccb286fe1"
+    },
+    {
+      "file": "evidence/container-resources/live.json",
+      "sha256": "6c13df455d303791dc505dbbe235290b8e6f2354aedf4080c6e8f66b98153812"
+    },
+    {
+      "file": "evidence/container-resources/browser-poll.json",
+      "sha256": "282664e0acfeec156d104974d7f1513c88676f22ca035152d4bbcbabb4871e0d"
+    },
+    {
+      "file": "evidence/container-resources/final-check.json",
+      "sha256": "3aca48953397bf1b29107786f7730d5ff85bba8b75075d99c714b9295b52dcd5"
+    }
+  ],
+  "open": [
+    "EP-010 tunnel/fleet coverage",
+    "Windows-host and per-worker resource history",
+    "historical disk/RAM writer attribution",
+    "mixed stream/script load and long soak",
+    "Studio/recording/trace",
+    "full product readiness"
+  ],
+  "sourceCi": [
+    {
+      "workflow": "backend",
+      "conclusion": "success",
+      "headSha": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37327272456"
+    },
+    {
+      "workflow": "frontend",
+      "conclusion": "success",
+      "headSha": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37327272244"
+    },
+    {
+      "workflow": "android",
+      "conclusion": "success",
+      "headSha": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37327272251"
+    }
+  ],
+  "documentationCheck": {
+    "documents": 10,
+    "localLinks": 697,
+    "anchors": 19,
+    "valid": true
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "mode": "COMPONENT_FIXTURE_NOT_IAB_ACCEPTANCE",
+  "screenshot": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\image-route-review-20261101.png",
+  "screenshot_sha256": "e342a477fd02837d6fb2b27ef0279f797a70bce4fddcbcdfd0b2803698c2e9a5",
+  "previous_screenshot_sha256": "465faeda795e28b0574a15a916118ea9b8358339b8d0fec29ab61af8efec01a6",
+  "review_sha256": "cb3d6d28a5e7fe151629dde6f6933ce6784b7b61b5b61ee9c10cb667c0ce2e4d",
+  "review_unchanged": true,
+  "component_sha256": "744caa1081b1d7068742b721faa5c1b306b7028c27be4c5ee3634a64c2708610",
+  "component_unchanged": true,
+  "css_files": [
+    {
+      "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\343d268372e978c3.css",
+      "sha256": "060dd6d743cf8de3061f78412d14a6b74012e094c8d58be23cfdd5fc9d6561e8"
+    },
+    {
+      "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\44c801311a9d7b2d.css",
+      "sha256": "e9a6af9c76b9641e5e51167c548e615346ac6db837325de6342eeba27ed995ea"
+    },
+    {
+      "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\599369d853c61df7.css",
+      "sha256": "dae1c1338c9a6d70787063786e64b9ffe238de67379ad80f2827c60aa90fddd1"
+    },
+    {
+      "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\static\\css\\ee1c600aa5123b7f.css",
+      "sha256": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855"
+    }
+  ],
+  "css_unchanged_from_previous_fixture": true,
+  "visual_label_overlap": "no overlap observed",
+  "browser": "isolated Playwright chrome headless in-memory profile",
+  "hydration": false,
+  "interaction_test": false,
+  "application_browser_acceptance": false,
+  "session_closed": true,
+  "loopback_server_stopped": true,
+  "physical_actions": 0
+}

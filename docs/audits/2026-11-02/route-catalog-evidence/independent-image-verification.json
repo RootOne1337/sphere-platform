@@ -1,0 +1,14 @@
+{
+  "source": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "imageId": "sha256:ee18994f586f7428d5767f68ac53f7a6002f8a39e88895ea3a63c46f5e35cb23",
+  "imageTag": "sphere-review-frontend:41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "runId": "20261102T110430Z-d7b0ccd7",
+  "daemonImageEqualsBuildBinding": true,
+  "sourceLabelsMatch": true,
+  "sourceArchiveSha256": "0110a2e7aea3c49b60a3b3ca6ccf6b0a0d53260cb139250d807c142c91084bad",
+  "ciReceiptSha256": "4663c8ec5c1a53630d67bec088fd17f24aa529396f5bd9d6da880336802b71ce",
+  "buildBindingSha256": "c252b7451f697131a32db62fda0665e31b76cbee0c78d7887f13464e09cdaa11",
+  "packageReceiptSha256": "badb4096bd174c0534cd35a2fe6052eb15af5025cb0a02cb3c720a119b0b5d73",
+  "productionUiInstalled": false,
+  "archivesCreated": 0
+}

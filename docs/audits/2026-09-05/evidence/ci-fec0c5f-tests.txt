@@ -1,0 +1,29 @@
+Backend CI run 34418225844, head fec0c5f75438763a8e4e4f18fb45566d1193fbc8, attempt 1
+Full suite summary and device-refresh recovery excerpts.
+
+Tests	Unit and real-service regression tests	2026-09-09T23:47:02.3394858Z tests/production/test_device_refresh_recovery.py::test_lost_committed_response_recovers_after_connection_pool_restart PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:02.8242912Z tests/production/test_device_refresh_recovery.py::test_recovered_access_authenticates_actual_asgi_ws_for_the_same_device PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:03.3872030Z tests/production/test_device_refresh_recovery.py::test_retry_keeps_successor_expiry_and_identity PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:04.0158526Z tests/production/test_device_refresh_recovery.py::test_concurrent_refresh_has_one_successor_with_observed_sql_waiters[True] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:04.7012383Z tests/production/test_device_refresh_recovery.py::test_concurrent_refresh_has_one_successor_with_observed_sql_waiters[False] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:05.1604322Z tests/production/test_device_refresh_recovery.py::test_receipt_requires_both_original_secret_and_matching_intent[missing_id] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:05.6231553Z tests/production/test_device_refresh_recovery.py::test_receipt_requires_both_original_secret_and_matching_intent[different_id] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:06.0813753Z tests/production/test_device_refresh_recovery.py::test_receipt_requires_both_original_secret_and_matching_intent[different_token] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:06.5650440Z tests/production/test_device_refresh_recovery.py::test_receipt_requires_both_original_secret_and_matching_intent[stored_hash] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:07.0680011Z tests/production/test_device_refresh_recovery.py::test_recovery_does_not_restore_revoked_or_superseded_credentials[inactive] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:07.5755445Z tests/production/test_device_refresh_recovery.py::test_recovery_does_not_restore_revoked_or_superseded_credentials[expired] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:08.3645632Z tests/production/test_device_refresh_recovery.py::test_recovery_does_not_restore_revoked_or_superseded_credentials[reenrolled] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:08.8292230Z tests/production/test_device_refresh_recovery.py::test_recovery_does_not_restore_revoked_or_superseded_credentials[child_consumed] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:09.2951377Z tests/production/test_device_refresh_recovery.py::test_recovery_ignores_supplied_foreign_org_header_and_cannot_resolve_other_device PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:09.7688737Z tests/production/test_device_refresh_recovery.py::test_sql_failure_before_commit_keeps_retry_usable PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:10.3381215Z tests/production/test_device_refresh_recovery.py::test_commit_ack_failure_recovers_committed_successor PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:10.8004190Z tests/production/test_device_refresh_recovery.py::test_malformed_refresh_intent_does_not_consume_credential[not-a-uuid] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:11.2715384Z tests/production/test_device_refresh_recovery.py::test_malformed_refresh_intent_does_not_consume_credential[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:11.9475424Z tests/production/test_device_refresh_recovery.py::test_locked_recovery_observes_credential_changes[inactive] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:12.6365897Z tests/production/test_device_refresh_recovery.py::test_locked_recovery_observes_credential_changes[expired] PASSED [ 33%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:13.3156407Z tests/production/test_device_refresh_recovery.py::test_locked_recovery_observes_credential_changes[reenrolled] PASSED [ 33%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:13.9512702Z tests/production/test_device_refresh_recovery.py::test_expiry_is_rechecked_after_lock_wait PASSED [ 33%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:14.4847917Z tests/production/test_device_refresh_recovery.py::test_stored_hash_and_known_request_id_cannot_derive_a_bearer PASSED [ 33%]
+Tests	Unit and real-service regression tests	2026-09-09T23:47:15.0315426Z tests/production/test_device_refresh_recovery.py::test_migration_roundtrip_preserves_function_grants_and_rolls_back_receipt_loss PASSED [ 33%]
+Tests	Unit and real-service regression tests	2026-09-09T23:49:58.9201275Z Required test coverage of 65% reached. Total coverage: 69.30%
+Tests	Unit and real-service regression tests	2026-09-09T23:49:58.9201753Z ================= 1375 passed, 4 warnings in 279.86s (0:04:39) =================

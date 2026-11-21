@@ -9,11 +9,34 @@
 #
 # NOTE: /api/v1/health и /api/v1/health/ready определены в main.py (TZ-00).
 # Новые sub-routes не конфликтуют.
+import os
+import re
+
 from fastapi import APIRouter, Depends, Response
+from pydantic import BaseModel, Field
 
 from backend.services.health_service import HealthService, SystemHealth, get_health_service
 
 router = APIRouter(prefix="/health", tags=["health"])
+
+
+class BuildInfoResponse(BaseModel):
+    service: str = "backend-api"
+    version: str = "4.0.0"
+    revision: str = Field(pattern=r"^(unknown|[0-9a-f]{7,40})$")
+
+
+@router.get("/build", response_model=BuildInfoResponse)
+async def build_info():
+    """Expose only the immutable source revision used to build this API image.
+
+    The revision is deliberately public and validated as a Git SHA; no runtime
+    configuration, host identifiers, or deployment secrets are returned.
+    """
+    revision = os.getenv("SPHERE_BUILD_SHA", "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{7,40}", revision):
+        revision = "unknown"
+    return {"service": "backend-api", "version": "4.0.0", "revision": revision}
 
 
 @router.get("/healthz", status_code=200)

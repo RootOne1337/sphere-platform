@@ -1,0 +1,91 @@
+{
+  "observedAt": "2026-10-06T14:26:46.359152+00:00",
+  "source": "immutable GitHub Git object API; exact SHA1 verification",
+  "systemRepairOrRestartPerformed": false,
+  "originalCorruptBytesBackedUpPrivately": true,
+  "objects": [
+    {
+      "oid": "22d9c8f825cad200bf6e796b1f847f2343fceb4a",
+      "badBytes": 792,
+      "badSha256": "1b558a2a6c25191a65d12103e9484c34e792f48b47d031cf9309f925169dc1e6",
+      "first16": "ffffffffffffffffffffffffffffffff",
+      "allBytesFF": true,
+      "fileModifiedAt": "2026-10-06T11:48:13.853432+00:00",
+      "status": "verified-and-restored",
+      "type": "tree",
+      "restoredCompressedBytes": 793,
+      "verifiedRawSha256": "68841a723e1822d35b1b826ae06acd899a2e14dc416f9de4306d91d9b4195aef"
+    },
+    {
+      "oid": "4ccd02c08142fd1373056698a6c98d8279270f90",
+      "badBytes": 7901,
+      "badSha256": "9d19ae10f973909df3fd31f82d350a024635f88e391f2313d6f889197793bb9e",
+      "first16": "ffffffffffffffffffffffffffffffff",
+      "allBytesFF": true,
+      "fileModifiedAt": "2026-10-06T11:48:02.703568+00:00",
+      "status": "verified-and-restored",
+      "type": "blob",
+      "restoredCompressedBytes": 6936,
+      "verifiedRawSha256": "916ddd94956c2078efa2089af71103a4d6a6c25519c804e0c030612559e71066"
+    },
+    {
+      "oid": "527809ac5e77e54df79aa751312d0e590e30a998",
+      "badBytes": 1014,
+      "badSha256": "1569134d360966c4e80938152612d2c82bc4ee1339e2e073329bf74e9440d063",
+      "first16": "ffffffffffffffffffffffffffffffff",
+      "allBytesFF": true,
+      "fileModifiedAt": "2026-10-06T11:48:13.846248+00:00",
+      "status": "verified-and-restored",
+      "type": "tree",
+      "restoredCompressedBytes": 1011,
+      "verifiedRawSha256": "579715980416c964eef016d19f7a7bf62bc20e5a8bd94a7a9209cbb8dce99de3"
+    },
+    {
+      "oid": "619c2d887f32b856fc319d3b1becba47dbf30d20",
+      "badBytes": 101070,
+      "badSha256": "592e1560269eb9c77c93038b2fe9053a214706ded4782d6aed70afa342fd6fb7",
+      "first16": "ffffffffffffffffffffffffffffffff",
+      "allBytesFF": false,
+      "fileModifiedAt": "2026-10-06T02:09:35.549403+00:00",
+      "status": "verified-and-restored",
+      "type": "blob",
+      "restoredCompressedBytes": 100400,
+      "verifiedRawSha256": "4775f88c59dfbbbef7df67c5ff8b7928aef8c8c873dd884ea1f9b28a6acadf9f"
+    },
+    {
+      "oid": "c8e679239c663bc36e885502ffe8d25238566e28",
+      "badBytes": 110403,
+      "badSha256": "c6c62bcc864fb5ace34b8979961856bf6d429d221b5d7d11a570aded6a2f9c74",
+      "first16": "ffffffffffffffffffffffffffffffff",
+      "allBytesFF": false,
+      "fileModifiedAt": "2026-10-06T02:09:35.555072+00:00",
+      "status": "verified-and-restored",
+      "type": "blob",
+      "restoredCompressedBytes": 109487,
+      "verifiedRawSha256": "5ff6c0c434947f9f5547e2235010fb163f0284ae9d0e2eeb78e17fbf143ab6a0"
+    }
+  ],
+  "completedAt": "2026-10-06T14:27:27.230120+00:00",
+  "gitFsckAfterRecovery": {
+    "exitCode": 0,
+    "observedAt": "2026-10-06T14:28:00Z",
+    "wholeVolumeOrHardwareVerified": false
+  },
+  "ntfsEvent": {
+    "timeUtc": "2026-10-06T11:15:49.3340108Z",
+    "provider": "Ntfs",
+    "id": 55,
+    "recordId": 220639,
+    "volume": "C:",
+    "fileReference": "0x6800000002a628",
+    "index": ":$I30:$INDEX_ALLOCATION",
+    "pathSummary": "Program Files/WindowsApps/Deleted/OpenAI.Codex_26.930.7945.0/.../app/locales",
+    "outsideProject": true
+  },
+  "physicalDiskApi": {
+    "friendlyName": "ADATA LEGEND 970 PRO",
+    "healthStatus": "Healthy",
+    "operationalStatus": "OK",
+    "isFilesystemOrHardwareAcceptance": false
+  }
+}

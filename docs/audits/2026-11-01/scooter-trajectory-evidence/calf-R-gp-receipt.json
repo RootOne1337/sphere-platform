@@ -1,0 +1,13 @@
+{
+  "input_hashes_unchanged": true,
+  "initial_ram": 10236747776,
+  "initial_commit": 25018777600,
+  "min_ram": 9835880448,
+  "min_commit": 24567734272,
+  "exit": 0,
+  "stop": null,
+  "wall_seconds_including_hashes": 18.92200000002049,
+  "only_owned_child_terminated": true,
+  "admission_min_GiB": 6.5,
+  "runtime_min_GiB": 4.5
+}

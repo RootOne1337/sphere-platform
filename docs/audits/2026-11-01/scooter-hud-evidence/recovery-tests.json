@@ -1,0 +1,51 @@
+{
+  "date": "2026-11-01",
+  "status": "review_pending_not_deployed",
+  "backend_health_contract": "confirmed_absence_v1",
+  "files": [
+    {
+      "path": "frontend/src/features/stream/TeachingReconstruction.tsx",
+      "sha256": "fdc4ec490033e36712648fec894d78832e32bbd3a3b01dd87e0e50314e647e08"
+    },
+    {
+      "path": "frontend/src/features/stream/TeachingReview.tsx",
+      "sha256": "b2243fcc5ef6d637491abe21600e439f95d247646f1bda81aaddbc077a3c1dae"
+    },
+    {
+      "path": "frontend/src/features/stream/reconstructionLink.ts",
+      "sha256": "90f0bf2a65bf480741b017529fcda1e15ad5519aedb3893541d0240e6a85dd5b"
+    },
+    {
+      "path": "frontend/src/features/stream/reconstructionClient.ts",
+      "sha256": "bb01e2b4f288135eb0debd54e107e82184c7c80e4da60f02a426da76723761c3"
+    },
+    {
+      "path": "frontend/__tests__/stream/reconstruction-recovery.test.tsx",
+      "sha256": "98c40c337662f2d1656f8e6df2a13e05cb3aa2cabc14dbdc27f8b72f01c6d3e6"
+    },
+    {
+      "path": "frontend/__tests__/stream/reconstruction-link.test.ts",
+      "sha256": "ae3900fdca14b41974b2aea57afc6cc508e85c5102dce9892f37717b5948720b"
+    },
+    {
+      "path": "frontend/__tests__/stream/teaching-review.test.tsx",
+      "sha256": "557dea6af08e3c6b603cea42e8312d2d481a13e41906cd6e3c8c4502f5fea859"
+    },
+    {
+      "path": "scripts/pilot/reconstruction_service.py",
+      "sha256": "c92e5082dd0c84293991ef8b75e9201c81ae429484844de4c32005fc77806e86"
+    },
+    {
+      "path": "tests/test_reconstruction_service.py",
+      "sha256": "575adfa56749bfe22a9630ccaf192a0aaecbe2b21b1e29b72cb747edf45ca957"
+    }
+  ],
+  "tests": [
+    "python -m pytest --noconftest tests/test_reconstruction_service.py -q: 29 passed",
+    "frontend npx jest teaching-review/reconstruction-recovery/reconstruction-link --runInBand: 42 passed",
+    "frontend npx tsc --noEmit --pretty false: passed",
+    "frontend ESLint touched files: 0 errors, 4 warnings"
+  ],
+  "native_browser": "Local Chromium headless shell: ifAvailable true accepted, ifAvailable+signal rejects NotSupportedError; isolated file origin, not IAB",
+  "legacy": "Existing legacy capability without creation payload requires explicit same-id sparse recovery after confirmed 404."
+}

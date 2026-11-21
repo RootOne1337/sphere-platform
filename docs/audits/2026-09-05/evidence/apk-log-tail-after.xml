@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.sphereplatform.agent.logging.FileLoggingTreeTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-09-13T00:36:39" hostname="NIFILIM1337" time="1.497">
+  <properties/>
+  <testcase name="real asynchronous writer includes timestamp level tag and message" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="1.323"/>
+  <testcase name="nonpositive budgets are empty and oversized requests are capped" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.006"/>
+  <testcase name="ASCII tail preserves latest marker within byte budget" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.004"/>
+  <testcase name="truncated UTF-8 write does not inflate response with replacement characters" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.003"/>
+  <testcase name="large Cyrillic log does not skip past the newest records" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.013"/>
+  <testcase name="all UTF-8 cut positions preserve complete characters and latest content" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.009"/>
+  <testcase name="concurrent UTF-8 writes and reads preserve final marker and bounded responses" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.124"/>
+  <testcase name="rotated files share one byte budget rather than character budget" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.005"/>
+  <testcase name="logs spanning rotations remain oldest first" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.005"/>
+  <testcase name="empty directory and unrelated files return empty logs" classname="com.sphereplatform.agent.logging.FileLoggingTreeTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (C:\Users\dimas\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.14.6\46e2545d7a97b6ccb195621650c5957279eb4812\byte-buddy-agent-1.14.6.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

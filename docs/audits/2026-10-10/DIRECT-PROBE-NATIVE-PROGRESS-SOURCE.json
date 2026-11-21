@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T03:23:31.290471+00:00",
+  "sourceBaseRevision": "934f46a809220931b6af9e183838a1e03efc6194",
+  "sourceFilesSha256NormalizedLf": {
+    "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectProbeTransport.kt": "5984c62b4040ee842410c1f95dc89535d947a143e228fd2701619c1696de4ad9",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeProgress.kt": "18b3aa455acc50010249aa715c6ad3635d99246f32cfb9d475b363e623a775ff",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/direct/DirectProbeProgressTest.kt": "3e27fdc0ea26aa9d19df765d96c83cb6995e866748030c92d595b8aa0abd3a28"
+  },
+  "state": "SOURCE_CHECKED_NOT_INSTALLED",
+  "runtimeInstalled": false,
+  "directChannelAccepted": false,
+  "scope": "Fixed enum stages before/after native answer and stats while gathering; one event per stage, terminal retirement, no free text/native errors/SDP/addresses. Protocol/TTL/deadlines unchanged.",
+  "bounds": {
+    "progressEventsPerPeerMaximum": 19,
+    "nativeStatsCallsMaximum": 32,
+    "nativeStatsPendingMaximum": 1,
+    "leaseMs": 30000,
+    "callbackMailbox": 32
+  },
+  "tests": {
+    "Dev": {
+      "tests": 997,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3
+    },
+    "Enterprise": {
+      "tests": 997,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3
+    }
+  },
+  "lint": "PASS_ZERO_ERRORS",
+  "hostedExactSourceCi": "PENDING_FOR_NEW_COMMIT",
+  "nativeStagesObservedLive": false,
+  "productCountsUnchanged": true
+}

@@ -1,0 +1,471 @@
+{
+  "at": "2026-09-13T15:04:17.462222+00:00",
+  "apk_source_commit": "fdd26c51d1e9b32f6e5040d037611811a05515dd",
+  "apk_sha256": "db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add",
+  "trials": [
+    {
+      "at": "2026-09-13T14:59:15.912329+00:00",
+      "target_device": "ba1346c1-1581-452f-adee-451d36622aaf",
+      "apk_source_commit": "fdd26c51d1e9b32f6e5040d037611811a05515dd",
+      "apk_sha256": "db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add",
+      "version_before": 10203,
+      "version_expected": 10204,
+      "transport": "server PubSub command -> existing APK WebSocket -> APK authenticated HTTPS download -> own su installer",
+      "adb_install_commands": 0,
+      "app_launch_commands": 0,
+      "manual_permission_actions": 0,
+      "server_url": "https://conditions-nest-calendar-explanation.trycloudflare.com",
+      "probes": [
+        {
+          "seconds": 1.938,
+          "version_code": 10203,
+          "new_process": false,
+          "command_passed": true
+        },
+        {
+          "seconds": 5.922,
+          "version_code": 10204,
+          "new_process": false,
+          "command_passed": false
+        },
+        {
+          "seconds": 10.266,
+          "version_code": 10204,
+          "new_process": true,
+          "command_passed": true
+        }
+      ],
+      "canary_release_id": "4a91c787-d63e-4a53-b1f6-2ecc9db6ed51",
+      "anonymous_download_denied": true,
+      "authenticated_download_hash_verified": true,
+      "windows_station_watchdog_disabled": true,
+      "staging_empty_after_process_replacement": true,
+      "passed": true,
+      "installed_hash_verified": true,
+      "other_apk_pid_unchanged": true,
+      "signed_cache_version": 9,
+      "ota_log_evidence": [
+        "2026-09-13T16:54:53.829 I/?: OTA: starting update \u2192 version=AUD107-before",
+        "2026-09-13T16:59:25.246 I/?: OTA: starting update \u2192 version=1.2.4-dev",
+        "2026-09-13T16:59:29.017 I/?: OTA: downloaded 8385905 bytes \u2192 update_1.2.4-dev.apk",
+        "2026-09-13T16:59:29.033 I/?: OTA: SHA-256 verified \u2713",
+        "2026-09-13T16:59:31.560 I/?: OTA: removed abandoned staging file update_1.2.4-dev.apk",
+        "2026-09-13T16:59:31.560 I/?: OTA: removed abandoned staging file update_1.2.3-dev.apk",
+        "2026-09-13T16:59:31.560 I/?: OTA: removed abandoned staging file update_AUD107-before.apk"
+      ],
+      "windows_watchdog_restored": true
+    },
+    {
+      "at": "2026-09-13T15:02:05.696273+00:00",
+      "target_device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+      "apk_source_commit": "fdd26c51d1e9b32f6e5040d037611811a05515dd",
+      "apk_sha256": "db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add",
+      "version_before": 10203,
+      "version_expected": 10204,
+      "transport": "server PubSub command -> existing APK WebSocket -> APK authenticated HTTPS download -> own su installer",
+      "adb_install_commands": 0,
+      "app_launch_commands": 0,
+      "manual_permission_actions": 0,
+      "server_url": "https://conditions-nest-calendar-explanation.trycloudflare.com",
+      "probes": [
+        {
+          "seconds": 1.735,
+          "version_code": 10203,
+          "new_process": false,
+          "command_passed": true
+        },
+        {
+          "seconds": 5.688,
+          "version_code": 10204,
+          "new_process": false,
+          "command_passed": false
+        },
+        {
+          "seconds": 9.844,
+          "version_code": 10204,
+          "new_process": true,
+          "command_passed": true
+        }
+      ],
+      "stable_release_id": "910ed92c-622e-406c-b8d6-0a9f4dd6654c",
+      "anonymous_download_denied": true,
+      "authenticated_download_hash_verified": true,
+      "windows_station_watchdog_disabled": true,
+      "staging_empty_after_process_replacement": true,
+      "canary_retired": true,
+      "passed": true,
+      "installed_hash_verified": true,
+      "other_apk_pid_unchanged": true,
+      "signed_cache_version": 9,
+      "ota_log_evidence": [
+        "2026-09-13T17:02:14.879 I/?: OTA: starting update \u2192 version=1.2.4-dev",
+        "2026-09-13T17:02:18.971 I/?: OTA: downloaded 8385905 bytes \u2192 update_1.2.4-dev.apk",
+        "2026-09-13T17:02:18.988 I/?: OTA: SHA-256 verified \u2713",
+        "2026-09-13T17:02:20.804 I/?: OTA: removed abandoned staging file update_1.2.4-dev.apk",
+        "2026-09-13T17:02:20.805 I/?: OTA: removed abandoned staging file update_1.2.3-dev.apk"
+      ],
+      "windows_watchdog_restored": true
+    }
+  ],
+  "interruption": [
+    {
+      "at": "2026-09-13T14:54:49.468817+00:00",
+      "phase": "before",
+      "version_code": 10203,
+      "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+      "command_id": "6f10f298-62d2-4bf1-9c6c-cd8a03a58273",
+      "fixture_declared_bytes": 1048576,
+      "fixture_sent_bytes": 65536,
+      "files_before": "total 8188\n-rw------- 1 u0_a72 u0_a72 8383485 2026-09-13 15:07 update_1.2.3-dev.apk",
+      "adb_install_commands": 0,
+      "app_launch_commands": 0,
+      "manual_permission_actions": 0,
+      "transport": "existing APK WebSocket -> real management HTTPS ingress -> isolated truncated-body fixture",
+      "temporary_route": "/api/v1/updates/audit-fault-a55fd211eb2f4ef4a9f8f126adb8d55e",
+      "gateway_config_sha256_before": "7694340dfecef00626b4094e1b58d9837e94737d88cf5096dd8fe2c5b7acb271",
+      "failure_logged": [
+        "2026-09-13T16:54:55.057 E/?: [6f10f298-62d2-4bf1-9c6c-cd8a03a58273] Failed"
+      ],
+      "fixture_request_observed": true,
+      "elapsed_seconds": 3.39,
+      "files_after": "total 8188\n-rw------- 1 u0_a72 u0_a72 8383485 2026-09-13 15:07 update_1.2.3-dev.apk\n-rw------- 1 u0_a72 u0_a72       0 2026-09-13 16:54 update_AUD107-before.apk",
+      "same_apk_process": true,
+      "both_devices_answered": true,
+      "expected_behavior_observed": true,
+      "gateway_config_restored": true,
+      "fixture_container_removed": true
+    },
+    {
+      "at": "2026-09-13T14:59:53.882657+00:00",
+      "phase": "after",
+      "version_code": 10204,
+      "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+      "command_id": "ec7e75c3-4eca-4dc0-9220-886f4c2ea414",
+      "fixture_declared_bytes": 1048576,
+      "fixture_sent_bytes": 65536,
+      "files_before": "total 0",
+      "adb_install_commands": 0,
+      "app_launch_commands": 0,
+      "manual_permission_actions": 0,
+      "transport": "existing APK WebSocket -> real management HTTPS ingress -> isolated truncated-body fixture",
+      "temporary_route": "/api/v1/updates/audit-fault-e492d22527aa4c2d876c31f1920ec0b6",
+      "gateway_config_sha256_before": "7694340dfecef00626b4094e1b58d9837e94737d88cf5096dd8fe2c5b7acb271",
+      "failure_logged": [
+        "2026-09-13T16:59:59.346 E/?: [ec7e75c3-4eca-4dc0-9220-886f4c2ea414] Failed"
+      ],
+      "fixture_request_observed": true,
+      "elapsed_seconds": 3.281,
+      "files_after": "total 0",
+      "same_apk_process": true,
+      "both_devices_answered": true,
+      "expected_behavior_observed": true,
+      "gateway_config_restored": true,
+      "fixture_container_removed": true
+    }
+  ],
+  "concurrent_commands": {
+    "at": "2026-09-13T15:01:08.832910+00:00",
+    "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+    "apk_source_commit": "fdd26c51d1e9b32f6e5040d037611811a05515dd",
+    "apk_sha256": "db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add",
+    "scenario": "two different command IDs submit the same verified APK concurrently after an interrupted download",
+    "version_label": "AUD107-concurrent-d1272599336848ea94a7ad5fe0bbd3c1",
+    "command_ids": [
+      "2fa1e3cc-6264-4e4c-a694-73cedc9245f1",
+      "7d3b1775-f9b1-43f7-917a-44f657a409a3"
+    ],
+    "adb_install_commands": 0,
+    "app_launch_commands": 0,
+    "manual_permission_actions": 0,
+    "probes": [
+      {
+        "seconds": 2.156,
+        "new_process": false,
+        "command_passed": true
+      },
+      {
+        "seconds": 5.938,
+        "new_process": true,
+        "command_passed": false
+      },
+      {
+        "seconds": 10.453,
+        "new_process": true,
+        "command_passed": true
+      }
+    ],
+    "windows_station_watchdog_disabled": true,
+    "receipt_events": [
+      {
+        "command_id": "7d3b1775-f9b1-43f7-917a-44f657a409a3",
+        "status": "received"
+      },
+      {
+        "command_id": "7d3b1775-f9b1-43f7-917a-44f657a409a3",
+        "status": "running"
+      },
+      {
+        "command_id": "2fa1e3cc-6264-4e4c-a694-73cedc9245f1",
+        "status": "received"
+      },
+      {
+        "command_id": "2fa1e3cc-6264-4e4c-a694-73cedc9245f1",
+        "status": "running"
+      }
+    ],
+    "passed": true,
+    "one_download_started": true,
+    "starts": [
+      "2026-09-13T17:01:15.862 I/?: OTA: starting update \u2192 version=AUD107-concurrent-d1272599336848ea94a7ad5fe0bbd3c1"
+    ],
+    "installed_hash_verified": true,
+    "staging_empty": true,
+    "other_apk_pid_unchanged": true,
+    "retry_after_interruption_succeeded": true,
+    "windows_watchdog_restored": true
+  },
+  "boot_after_ota": {
+    "at": "2026-09-13T15:02:37.457096+00:00",
+    "mode": "reboot",
+    "index": 1,
+    "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+    "app_launch_commands_sent": 0,
+    "manual_ui_actions": 0,
+    "probes": [
+      {
+        "elapsed_seconds": 5.047,
+        "command": {
+          "http_status": 503,
+          "matched": false,
+          "seconds": 0.187
+        },
+        "other_device": {
+          "http_status": 200,
+          "matched": true,
+          "seconds": 0.781
+        },
+        "android_boot_completed": false,
+        "new_boot": false,
+        "app_pid_present": false,
+        "app_pid_changed": false
+      },
+      {
+        "elapsed_seconds": 8.813,
+        "command": {
+          "http_status": 503,
+          "matched": false,
+          "seconds": 0.187
+        },
+        "other_device": {
+          "http_status": 200,
+          "matched": true,
+          "seconds": 0.485
+        },
+        "android_boot_completed": false,
+        "new_boot": false,
+        "app_pid_present": false,
+        "app_pid_changed": false
+      },
+      {
+        "elapsed_seconds": 12.578,
+        "command": {
+          "http_status": 503,
+          "matched": false,
+          "seconds": 0.188
+        },
+        "other_device": {
+          "http_status": 200,
+          "matched": true,
+          "seconds": 0.484
+        },
+        "android_boot_completed": false,
+        "new_boot": false,
+        "app_pid_present": false,
+        "app_pid_changed": false
+      },
+      {
+        "elapsed_seconds": 16.391,
+        "command": {
+          "http_status": 503,
+          "matched": false,
+          "seconds": 0.203
+        },
+        "other_device": {
+          "http_status": 200,
+          "matched": true,
+          "seconds": 0.485
+        },
+        "android_boot_completed": true,
+        "new_boot": true,
+        "app_pid_present": false,
+        "app_pid_changed": false
+      },
+      {
+        "elapsed_seconds": 21.094,
+        "command": {
+          "http_status": 200,
+          "matched": true,
+          "seconds": 0.844
+        },
+        "other_device": {
+          "http_status": 200,
+          "matched": true,
+          "seconds": 0.656
+        },
+        "android_boot_completed": true,
+        "new_boot": true,
+        "app_pid_present": true,
+        "app_pid_changed": true
+      }
+    ],
+    "initial_boot_id": "ddcd0665-a809-4c6c-9166-6a8fd9ca1f0c",
+    "source_commit": "fdd26c51d1e9b32f6e5040d037611811a05515dd",
+    "cached_version_before": 9,
+    "native_boot_job_registered_before": true,
+    "server_url": "https://conditions-nest-calendar-explanation.trycloudflare.com",
+    "published_config_version": 9,
+    "windows_station_watchdog_disabled_for_probe": true,
+    "passed": true,
+    "installed_hash_unchanged": true,
+    "other_apk_pid_unchanged": true,
+    "cached_version_after": 9,
+    "enrollment_events": 0,
+    "process_start_events": [
+      "09-13 17:03:01.343  1484  1536 I am_proc_start: [0,2123,10072,com.sphereplatform.agent.pilot.debug,service,com.sphereplatform.agent.pilot.debug/com.sphereplatform.agent.service.BootRecoveryJobService]"
+    ],
+    "completion_boot_id": "ba479415-0a69-4caa-baf1-e41e3ec95630",
+    "native_boot_job_registered_after": true,
+    "native_boot_job_start_logged": true,
+    "no_resumed_setup_activity": true,
+    "windows_watchdog_restored": true
+  },
+  "published_latest_release": {
+    "id": "910ed92c-622e-406c-b8d6-0a9f4dd6654c",
+    "platform": "android",
+    "flavor": "dev",
+    "version_code": 10204,
+    "version_name": "1.2.4-dev",
+    "download_url": "/api/v1/updates/artifacts/db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add",
+    "sha256": "db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add",
+    "mandatory": false,
+    "changelog": "Pilot 1.2.4: OTA retry and autonomous Android boot recovery; accepted package and signing identity.",
+    "created_at": "2026-09-13T15:02:08.309215+00:00"
+  },
+  "retained_version_codes": [
+    10203,
+    10204
+  ],
+  "workmanager_schedules": [
+    {
+      "serial": "emulator-5554",
+      "state": "ENQUEUED",
+      "interval_ms": 21600000,
+      "backoff_ms": 30000,
+      "read_only": true
+    },
+    {
+      "serial": "emulator-5556",
+      "state": "ENQUEUED",
+      "interval_ms": 21600000,
+      "backoff_ms": 30000,
+      "read_only": true
+    }
+  ],
+  "parallel_commands": [
+    {
+      "index": 0,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.641
+    },
+    {
+      "index": 1,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.782
+    },
+    {
+      "index": 0,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.516
+    },
+    {
+      "index": 1,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.515
+    },
+    {
+      "index": 0,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 1,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.485
+    },
+    {
+      "index": 0,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 1,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.515
+    },
+    {
+      "index": 0,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.75
+    },
+    {
+      "index": 1,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 0,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.61
+    },
+    {
+      "index": 1,
+      "status": 200,
+      "matched": true,
+      "seconds": 0.64
+    }
+  ],
+  "ordinary_logs": [
+    {
+      "index": 0,
+      "lines": 100,
+      "utf8_bytes": 10096,
+      "http_status": 200
+    },
+    {
+      "index": 1,
+      "lines": 100,
+      "utf8_bytes": 10011,
+      "http_status": 200
+    }
+  ],
+  "full_period_not_waited": true,
+  "latest_updated_after_acceptance": true,
+  "future_builds_require_publication": true,
+  "runtime_verification": {
+    "at": "2026-09-13T15:04:47.803697+00:00",
+    "healthy_services": 9,
+    "old_sphere_ids_images_states_mounts_preserved": true,
+    "scope": "Only new pilot gateway temporarily reloaded for the isolated fault route; exact configuration restored. No old Sphere deployment mutations."
+  }
+}

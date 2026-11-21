@@ -1,0 +1,94 @@
+{
+  "schema": "sphere-private-native-observation-LK-comparison-v1",
+  "sameExact159RGBIdentitiesAndTimes": true,
+  "all159IdentitySHA": "ff9837847c41368dec897fa063aeb40cf815b6fc4388d6e47861e47a6b719514",
+  "counts": {
+    "confirming": 15,
+    "unknown": 16,
+    "localized": 128
+  },
+  "baselineLegacyCounts": {
+    "confirming": 12,
+    "localized": 107,
+    "unknown": 40
+  },
+  "baselineNativeSIFTCounts": {
+    "confirming": 26,
+    "localized": 60,
+    "unknown": 73
+  },
+  "over250": 2,
+  "localizedUnder250": 126,
+  "localizedOver250": [
+    {
+      "index": 389,
+      "mediaSeconds": 15.017,
+      "computeMS": 594.028999999864
+    },
+    {
+      "index": 851,
+      "mediaSeconds": 36.686,
+      "computeMS": 336.9879999991099
+    }
+  ],
+  "computeMS": {
+    "p50": 66.51969999802532,
+    "p95": 137.20255000152972,
+    "maximum": 594.028999999864
+  },
+  "nonlocalizedRuns": [
+    {
+      "start": 0.001,
+      "end": 0.974,
+      "seconds": 0.973,
+      "samples": 5
+    },
+    {
+      "start": 1.406,
+      "end": 1.823,
+      "seconds": 0.41700000000000004,
+      "samples": 3
+    },
+    {
+      "start": 4.763,
+      "end": 5.945,
+      "seconds": 1.1820000000000004,
+      "samples": 6
+    },
+    {
+      "start": 7.475,
+      "end": 11.167,
+      "seconds": 3.692,
+      "samples": 17
+    }
+  ],
+  "longestNonlocalizedRun": {
+    "start": 7.475,
+    "end": 11.167,
+    "seconds": 3.692,
+    "samples": 17
+  },
+  "minimumAvailableHostGiB": 11.383476257324219,
+  "referenceObservations": {
+    "min": 182,
+    "maximum": 512,
+    "count": 173,
+    "grayCacheBytes": 89683200,
+    "nativePointCount": 20556
+  },
+  "privateOnly": true,
+  "globalSceneOnlyRetrieval": true,
+  "queryMediaTimeNotUsedForRetrieval": true,
+  "receiverSequenceNotUsedForRetrieval": true,
+  "allPoseGatesUnchanged": true,
+  "runtimeQualified": false,
+  "noSyntheticXYZ": true,
+  "noSyntheticDescriptors": true,
+  "physicalActions": 0,
+  "independentGameplay": false,
+  "offlineMediaClock": true,
+  "allOver250IneligibleLive": true,
+  "wallClockFreshnessQualified": false,
+  "frozenRGBNegativeNotRerun": true,
+  "metricAccuracyNotMeasured": true
+}

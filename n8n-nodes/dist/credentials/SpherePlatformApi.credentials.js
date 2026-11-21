@@ -21,15 +21,21 @@ class SpherePlatformApi {
                 type: 'string',
                 typeOptions: { password: true },
                 default: '',
-                required: true,
-                description: 'API key в формате sphr_prod_<hex32>',
+                description: 'Legacy API key for routes that support it',
             },
             {
                 displayName: 'Organization ID',
                 name: 'orgId',
                 type: 'string',
                 default: '',
-                required: true,
+            },
+            {
+                displayName: 'Access Token',
+                name: 'accessToken',
+                type: 'string',
+                typeOptions: { password: true },
+                default: '',
+                description: 'Sphere user access token for routes requiring Bearer authentication',
             },
         ];
     }

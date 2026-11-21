@@ -1,0 +1,39 @@
+{
+  "variant": "EnterpriseDebug",
+  "suites": 32,
+  "totals": {
+    "tests": 426,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "saved_route_cases": [
+    "wrong device acknowledgement cannot promote backup and original is retried",
+    "expired access refresh follows secondary and retains original retry intent",
+    "discovery saves candidate pair without overwriting last selected route",
+    "failed candidate commit does not replace either memory or durable routes",
+    "registration keeps successful LAN route and saves advertised address as backup",
+    "disconnect before backup acknowledgement prevents promotion",
+    "both failed routes retry original without deleting credentials or starting commands",
+    "configured pins extend to secondary without allowing redirect credential transfer",
+    "legacy single route store keeps existing connection behavior",
+    "route-only local file config can be applied to enrolled device without GitHub",
+    "explicit provisioning replaces old fallback from a different installation",
+    "invalid configured URL does not change either active or saved pair",
+    "static credential also uses saved secondary without refresh",
+    "local route change during backup handshake invalidates its acknowledgement",
+    "auth denial advances to saved alternate without new enrollment",
+    "config without fallback does not discard previously saved backup",
+    "duplicate primary and fallback are normalized to one route",
+    "saved routes survive store recreation without discovery or applying last promotion",
+    "fleet generator enrollment key shape is accepted with saved fallback",
+    "working authenticated connection survives discovery change",
+    "application connected callback observes promoted route and runs once",
+    "route changes do not regenerate pending refresh intent",
+    "invalid fallback rejects entire discovered plan",
+    "persisted successful backup is first after recreation and can return to primary",
+    "already enrolled device reads route-only MDM config without HTTP or re-enrollment",
+    "ended primary callbacks cannot replace promoted backup or deliver commands",
+    "saved secondary is attempted after primary network failure without discovery"
+  ]
+}

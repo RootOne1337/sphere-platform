@@ -1,0 +1,226 @@
+{
+  "new_frames": [
+    {
+      "source_index": 0,
+      "image_id": 1,
+      "added_observations": 582,
+      "train_and_heldout_attached_after_evaluation": true,
+      "coordinate_source": "original image forward/backward LK with native +0.5 pixel convention",
+      "landmark_ids": "existing ba100 only",
+      "database_index_reused": false,
+      "pose_from": "fixedK PnP original training landmarks"
+    },
+    {
+      "source_index": 6,
+      "image_id": 2,
+      "added_observations": 582,
+      "train_and_heldout_attached_after_evaluation": true,
+      "coordinate_source": "original image forward/backward LK with native +0.5 pixel convention",
+      "landmark_ids": "existing ba100 only",
+      "database_index_reused": false,
+      "pose_from": "fixedK PnP original training landmarks"
+    },
+    {
+      "source_index": 850,
+      "image_id": 172,
+      "added_observations": 417,
+      "train_and_heldout_attached_after_evaluation": true,
+      "coordinate_source": "original image forward/backward LK with native +0.5 pixel convention",
+      "landmark_ids": "existing ba100 only",
+      "database_index_reused": false,
+      "pose_from": "fixedK PnP original training landmarks"
+    },
+    {
+      "source_index": 856,
+      "image_id": 173,
+      "added_observations": 417,
+      "train_and_heldout_attached_after_evaluation": true,
+      "coordinate_source": "original image forward/backward LK with native +0.5 pixel convention",
+      "landmark_ids": "existing ba100 only",
+      "database_index_reused": false,
+      "pose_from": "fixedK PnP original training landmarks"
+    }
+  ],
+  "registered": 173,
+  "points": 9987,
+  "mean_point_reprojection": 1.014042362174495,
+  "old_camera_poses_2d_and_3d_points_unchanged": true,
+  "invalid_reciprocal": 0,
+  "duplicate_image_in_track": 0,
+  "assessment": {
+    "schema": "sphere-route-geometry-selection-v1",
+    "registered": 173,
+    "selected": 173,
+    "coverage": 1.0,
+    "points": 9987,
+    "reprojection_px": 1.014042362174495,
+    "scene_admissible": true,
+    "route_admissible": true,
+    "scene_reasons": [],
+    "route_reasons": [],
+    "source_coverage": {
+      "first_seconds": 0.0,
+      "last_seconds": 36.903,
+      "missing_start_seconds": 0.0,
+      "missing_end_seconds": 0.0,
+      "max_observed_gap_seconds": 0.2849999999999966,
+      "endpoints_observed": true,
+      "all_intervals_observed": true,
+      "endpoint_limit_seconds": 1.0,
+      "interval_limit_seconds": 1.0
+    },
+    "motion": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 173,
+      "first_seconds": 0.0,
+      "last_seconds": 36.903,
+      "path_units": 59.42455898048769,
+      "endpoint_displacement_units": 3.255662937972919,
+      "median_step_units": 0.36384827434619715,
+      "max_step_units": 0.7241714122410751,
+      "rapid_reversals": [],
+      "median_rate_units_per_second": 1.7249479352133712,
+      "speed_outliers": [],
+      "warning": null,
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "poses_interpolated": false,
+    "navigation_qualified": false,
+    "execution_qualified": false,
+    "conditioning": {
+      "near_camera_points": 0,
+      "near_camera_fraction": 0.0,
+      "camera_span_units": 27.73557751049752,
+      "passed": true
+    },
+    "intrinsics_condition": {
+      "passed": true,
+      "focal_ratio": 1.0,
+      "horizontal_fov_degrees": 115.85501915542773,
+      "vertical_fov_degrees": 83.82604141189846,
+      "physical_calibration_verified": false
+    },
+    "observation_support": {
+      "status": "complete",
+      "schema": "sphere-observation-support-v1",
+      "summary": {
+        "min": 95,
+        "median": 403.0,
+        "p10": 241.2,
+        "count_under_6": 0,
+        "count_under_15": 0
+      },
+      "summary_measure": "reprojection_le_4px",
+      "track_observations": 74404,
+      "execution_qualified": false,
+      "admission_effect": "none",
+      "caveat": "In-sample diagnostic; counts do not certify camera pose or navigation.",
+      "frame_count": 173,
+      "worst_frames": [
+        {
+          "image": "00000148.png",
+          "ticks_90k": 493020,
+          "raw_eligible_tracks": 95,
+          "positive_depth_inside": 95,
+          "reprojection_le_4px": 95,
+          "occupied_grid_4x4": 4
+        },
+        {
+          "image": "00000143.png",
+          "ticks_90k": 478080,
+          "raw_eligible_tracks": 107,
+          "positive_depth_inside": 107,
+          "reprojection_le_4px": 107,
+          "occupied_grid_4x4": 5
+        },
+        {
+          "image": "00000115.png",
+          "ticks_90k": 385200,
+          "raw_eligible_tracks": 110,
+          "positive_depth_inside": 110,
+          "reprojection_le_4px": 110,
+          "occupied_grid_4x4": 7
+        },
+        {
+          "image": "00000134.png",
+          "ticks_90k": 446670,
+          "raw_eligible_tracks": 117,
+          "positive_depth_inside": 117,
+          "reprojection_le_4px": 117,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000121.png",
+          "ticks_90k": 404730,
+          "raw_eligible_tracks": 119,
+          "positive_depth_inside": 119,
+          "reprojection_le_4px": 119,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000139.png",
+          "ticks_90k": 464670,
+          "raw_eligible_tracks": 122,
+          "positive_depth_inside": 122,
+          "reprojection_le_4px": 122,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000127.png",
+          "ticks_90k": 425700,
+          "raw_eligible_tracks": 125,
+          "positive_depth_inside": 125,
+          "reprojection_le_4px": 125,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000108.png",
+          "ticks_90k": 364410,
+          "raw_eligible_tracks": 143,
+          "positive_depth_inside": 143,
+          "reprojection_le_4px": 143,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000153.png",
+          "ticks_90k": 511020,
+          "raw_eligible_tracks": 147,
+          "positive_depth_inside": 147,
+          "reprojection_le_4px": 147,
+          "occupied_grid_4x4": 6
+        },
+        {
+          "image": "00000102.png",
+          "ticks_90k": 346500,
+          "raw_eligible_tracks": 175,
+          "positive_depth_inside": 175,
+          "reprojection_le_4px": 175,
+          "occupied_grid_4x4": 7
+        },
+        {
+          "image": "00000163.png",
+          "ticks_90k": 546930,
+          "raw_eligible_tracks": 199,
+          "positive_depth_inside": 199,
+          "reprojection_le_4px": 199,
+          "occupied_grid_4x4": 5
+        },
+        {
+          "image": "00000157.png",
+          "ticks_90k": 527580,
+          "raw_eligible_tracks": 205,
+          "positive_depth_inside": 205,
+          "reprojection_le_4px": 204,
+          "occupied_grid_4x4": 6
+        }
+      ],
+      "worst_frames_truncated": true
+    }
+  },
+  "source_unchanged": true,
+  "execution_qualified": false,
+  "published": false
+}

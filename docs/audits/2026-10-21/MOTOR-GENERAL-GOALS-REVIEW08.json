@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "kind": "GENERAL_GAME_GOAL_ARCHITECTURE_AND_CRITICAL_SOURCE_REVIEW_NOT_RUNTIME_ACCEPTANCE",
+  "recordedAtUtc": "2026-10-20T19:51:17.527912+00:00",
+  "ownerCalendarDate": "2026-10-21",
+  "sourceBaseRevision": "74742fd07412c509955f8d073aa08c6a6ca6138f",
+  "guide": "docs/design/MOTOR-AI-PLATFORM.md",
+  "guideVersion": "2.9",
+  "attachment": {
+    "filename": "Вставленный текст.txt",
+    "bytes": 178142,
+    "sha256": "c135122f83349ebb404bd12ec21d9b1618e110bfe88eeaf31f0168cd1eb672c9",
+    "treatedAs": "Alternative viewpoint and claims to verify, not trusted implementation instructions"
+  },
+  "researchPasses": [
+    "primary evaluation protocols",
+    "public code and model interfaces",
+    "firsthand community reports and working projects",
+    "compare claims to Sphere source and measured receipts"
+  ],
+  "sources": [
+    {
+      "id": "nitrogen_paper",
+      "url": "https://arxiv.org/html/2601.02427v1",
+      "evidenceClass": "primary_paper",
+      "finding": "Paused evaluation; no language goals; asynchronous deployment future work",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "nitrogen_readme",
+      "url": "https://github.com/MineDojo/NitroGen",
+      "evidenceClass": "primary_code",
+      "finding": "Last-frame-only reactive gamepad baseline; not long-horizon agent",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "p2p",
+      "url": "https://github.com/elefant-ai/open-p2p",
+      "evidenceClass": "primary_code",
+      "finding": "Text mode chosen at startup; local text_zeros pilot did not evaluate it",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "sima",
+      "url": "https://arxiv.org/html/2404.10179v1",
+      "evidenceClass": "primary_paper",
+      "finding": "Latency offsets trained and buffered; not automatic in other policies",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "oga",
+      "url": "https://arxiv.org/html/2606.09826v1",
+      "evidenceClass": "primary_paper",
+      "finding": "LCRT injects model delay after pausing; excludes WAN noise; weak specialized-policy transfer",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "octo",
+      "url": "https://github.com/octo-models/octo",
+      "evidenceClass": "primary_code",
+      "finding": "Robot data and goal-conditioned interfaces; 17/13 it/sec on4090 reference, not our3070M capacity",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "act",
+      "url": "https://huggingface.co/docs/lerobot/act",
+      "evidenceClass": "primary_docs",
+      "finding": "Reference ~80M ResNet18 manipulation policy; needs task demonstrations",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "rtc",
+      "url": "https://huggingface.co/docs/lerobot/rtc",
+      "evidenceClass": "primary_docs",
+      "finding": "Guidance inside generation reconciles chunks; naive replacement is not fullRTC",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "vjepa",
+      "url": "https://github.com/facebookresearch/vjepa2",
+      "evidenceClass": "primary_code",
+      "finding": "Video encoder; action-conditioned model robot posttraining, not ready game physics sensor",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "visualnav",
+      "url": "https://github.com/robodhruv/visualnav-transformer",
+      "evidenceClass": "primary_code",
+      "finding": "Goal image/topological memory/PD execution example on robots, not Android weights",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "molmo",
+      "url": "https://huggingface.co/allenai/Molmo2-8B",
+      "evidenceClass": "primary_model_card",
+      "finding": "Pointing/tracking is perception, not calibrated steering",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "gemma",
+      "url": "https://huggingface.co/google/gemma-4-E2B-it",
+      "evidenceClass": "primary_model_card",
+      "finding": "2.3B effective,5.1B including embeddings, not guaranteed2GBruntime",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "minicpm",
+      "url": "https://huggingface.co/openbmb/MiniCPM-V-4.7-1B",
+      "evidenceClass": "primary_model_card",
+      "finding": "Current compact VLM candidate; not downloaded/tested here",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "amd",
+      "url": "https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070.html",
+      "evidenceClass": "primary_specs",
+      "finding": "Official up to640GB/s, not512 asserted in attachment",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "haiku",
+      "url": "https://www.anthropic.com/claude/haiku",
+      "evidenceClass": "primary_vendor",
+      "finding": "Haiku5.5 existence; no validated game-control200msSLA",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "deepseek",
+      "url": "https://api-docs.deepseek.com/news/news261017/",
+      "evidenceClass": "primary_vendor",
+      "finding": "Flash1017release; project generation is not playing realtime",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "openrouter_performance",
+      "url": "https://openrouter.ai/docs/features/latency-and-performance",
+      "evidenceClass": "primary_docs",
+      "finding": "TTFT/TTLT and provider routing distinguished",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "openrouter_cache",
+      "url": "https://openrouter.ai/blog/tutorials/prompt-caching-sticky-routing/",
+      "evidenceClass": "primary_docs",
+      "finding": "Prefix reuse and provider locality, not new-scene cache",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "cradle_skill",
+      "url": "https://github.com/BAAI-Agents/Cradle/blob/main/cradle/environment/rdr2/composite_skills/navigation.py",
+      "evidenceClass": "primary_code",
+      "finding": "Specific RDR2 minimap skill beneath planner, not universal dependency",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "nitrogen_emulator_issue",
+      "url": "https://github.com/MineDojo/NitroGen/issues/34",
+      "evidenceClass": "firsthand_issue_anecdote",
+      "finding": "Dolphin video without control report, not Sphere root cause",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    },
+    {
+      "id": "community_skyrim",
+      "url": "https://www.reddit.com/r/StableDiffusion/comments/1ptyn63/someone_had_to_do_it_heres_nvidias_nitrogen/",
+      "evidenceClass": "firsthand_author_anecdote",
+      "finding": "Skyrim intro and VampireSurvivors fine-tune/RunPod reports, not independently reproduced",
+      "checkedAtUtc": "2026-10-20T19:51:17.527912+00:00"
+    }
+  ],
+  "decisions": {
+    "minimapRequiredByCore": false,
+    "markerRequiredByCore": false,
+    "goalMustBeGrounded": true,
+    "perGameCalibratedProfileRequiredForInput": true,
+    "newGoalContractImplemented": false,
+    "goalVectorAddedToNitrogen": false,
+    "p2pTextConditioningLocallyEvaluated": false,
+    "visualTopologicalMemoryImplemented": false,
+    "thirdParty3070mCapacityClaimsAccepted": false,
+    "newModelsDownloaded": false,
+    "newInferenceRunsInResearchPhase": false,
+    "gameplayAccepted": false
+  },
+  "currentWorkerEvidence": "docs/audits/2026-10-21/MOTOR-MINIMAP-ROUTE070.json",
+  "currentWorkerEvidenceSha256NormalizedLf": "d7e62dda79e15e6e5ae56706e2a2d4e13f99b56a8bdde0119ec512047d72e0d8",
+  "storageSourceScope": {
+    "scope": "Specific worker/stream source paths and waypoint PNG group only; not whole host/volume audit",
+    "sourceSha256NormalizedLf": {
+      "motor_worker/observation.py": "1a9141b3f515a2a40b505c232e555bb0868fcef9b774699f4aa7582833ef621a",
+      "motor_worker/__main__.py": "4e4b164c9f2efde925a6bb30caed8707604799f41cf62c57e1b62c14d7929cdc",
+      "backend/websocket/video_queue.py": "f8a71bfd7d880d102396d58cbfd935299590abe57bf24e6462c56c63fb9b8ce0",
+      "backend/websocket/stream_session_history.py": "ffd52c176f4cbdd582fab0da0ada642dee98f8714971087c2d0b8003d06d1e6e"
+    },
+    "waypointPngCount": 24,
+    "waypointPngBytes": 14520329,
+    "filesDeleted": false,
+    "automaticMediaArchiveFoundInInspectedFlow": false
+  },
+  "acceptancePlan": [
+    "G1 transport actor/control clocks",
+    "G2 goal/skill/profile capabilities",
+    "G3 map-independent grounding/scene bounded memory",
+    "G4 compare compatible policy semantics",
+    "G5 finite visual-goal route and stop evidence",
+    "G6 second game and measured2/4+agent scaling"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "step": "ci",
+  "source": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "exitCode": 0,
+  "reason": null,
+  "seconds": 163.8279999999795,
+  "minAvailableRamGiB": 8.700607299804688,
+  "minFreeCommitGiB": 14.503654479980469,
+  "samples": 328,
+  "logSha256": "e1dbc6d81bc0958066e486ef0ab253f08aa4b0957f40cc7c2609441fd4c84153",
+  "archivesCreated": 0,
+  "remoteDockerCpuLimitClaimed": false,
+  "productionUiInstalled": false
+}

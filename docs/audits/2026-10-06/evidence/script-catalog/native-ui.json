@@ -1,0 +1,83 @@
+{
+  "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "observedAt": "2026-10-06T07:45:32.248Z",
+  "capture": "native-codex-browser",
+  "url": "http://127.0.0.1:3015/scripts",
+  "apiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "states": {
+    "active": 19,
+    "archived": 3,
+    "all": 22,
+    "searchStudio": 2
+  },
+  "sourceView": {
+    "scriptId": "eda41efc-8389-436d-ad54-45c7cebad13b",
+    "versionId": "0242986d-cabf-4907-9e90-ba4b06eb4a66",
+    "version": 1,
+    "nodeCount": 3,
+    "hash": "96edea950a8a53f48698faf6dad90c3c35e23857d7626c0f54993eb87d81ca8e",
+    "historyMatchesSource": true
+  },
+  "preferences": {
+    "listRetainedAfterReload": true,
+    "compactPageSize25Retained": true,
+    "lightThemeRetainedAfterReload": true,
+    "restoredOriginalCardsDark": true
+  },
+  "viewportChecks": [
+    {
+      "width": 1280,
+      "height": 720,
+      "documentWidth": 1280
+    },
+    {
+      "width": 724,
+      "height": 884,
+      "documentWidth": 724
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "documentWidth": 390
+    }
+  ],
+  "temporaryViewportReset": true,
+  "runDialog": {
+    "versionPinned": true,
+    "withoutTargetsDisabled": true,
+    "openedOnly": true
+  },
+  "builder": {
+    "loadedOwnedCanary": true,
+    "sourceNodeCount": 3,
+    "actionLibraryCount": 32,
+    "savedOrExecuted": false
+  },
+  "errorOrWarningLogCount": 0,
+  "deviceCommandsSent": false,
+  "realTasksCreated": 0,
+  "networkOrHeapProfilePerformed": false,
+  "fullRecorderProven": false,
+  "frameExactReplayProven": false,
+  "screenshots": [
+    "run-dark-1280.jpg",
+    "versions-dark-1280.jpg",
+    "catalog-source-dark-1280.jpg",
+    "catalog-source-light-1280.jpg",
+    "catalog-light-724.jpg",
+    "run-light-390.jpg",
+    "settings-light-390.jpg",
+    "editor-light-1280.jpg",
+    "catalog-dark-1280.jpg"
+  ],
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "provenance": [
+    {
+      "retainedPrivateReceipt": "native-ui.json",
+      "sha256": "9c699ab1d50520801ce3592dee3d497f8f5b8a65bc6143515fae6254c206fb72",
+      "bytes": 1840
+    }
+  ],
+  "limitations": "Finite DOM/screenshots only: no browser network timing, heap profile, fleet execution, frame-exact replay or full recorder acceptance."
+}

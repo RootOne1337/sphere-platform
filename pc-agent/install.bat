@@ -26,20 +26,21 @@ if errorlevel 1 (
     exit /b 1
 )
 
+sc query "%SERVICE_NAME%" >nul 2>&1
+if not errorlevel 1 (
+    echo [ERROR] Service "%SERVICE_NAME%" already exists. Existing installations require a separate migration.
+    exit /b 1
+)
+
+if not exist "%AGENT_DIR%logs" mkdir "%AGENT_DIR%logs" || exit /b 1
+
 echo [INFO] Устанавливаем сервис "%SERVICE_NAME%"...
 
-nssm install %SERVICE_NAME% "%PYTHON%"
-nssm set    %SERVICE_NAME% AppDirectory   "%AGENT_DIR%"
-nssm set    %SERVICE_NAME% AppParameters  "-m agent.main"
-nssm set    %SERVICE_NAME% AppStdout      "%AGENT_DIR%logs\agent_stdout.log"
-nssm set    %SERVICE_NAME% AppStderr      "%AGENT_DIR%logs\agent_stderr.log"
-nssm set    %SERVICE_NAME% AppRotateFiles 1
-nssm set    %SERVICE_NAME% AppRotateSeconds 86400
-nssm set    %SERVICE_NAME% Start           SERVICE_AUTO_START
-nssm set    %SERVICE_NAME% AppRestartDelay 5000
-
-:: Создать директорию для логов, если нет
-if not exist "%AGENT_DIR%logs" mkdir "%AGENT_DIR%logs"
+nssm install %SERVICE_NAME% "%PYTHON%" || exit /b 1
+nssm set    %SERVICE_NAME% AppDirectory   "%AGENT_DIR%" || goto rollback
+nssm set    %SERVICE_NAME% AppParameters  "-m agent.windows_service" || goto rollback
+nssm set    %SERVICE_NAME% AppRestartDelay 5000 || goto rollback
+nssm set    %SERVICE_NAME% Start           SERVICE_AUTO_START || goto rollback
 
 sc start %SERVICE_NAME%
 if errorlevel 1 (
@@ -49,3 +50,9 @@ if errorlevel 1 (
 )
 
 endlocal
+exit /b 0
+
+:rollback
+echo [ERROR] Service configuration failed. Removing the newly created service.
+nssm remove %SERVICE_NAME% confirm
+exit /b 1

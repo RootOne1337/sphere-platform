@@ -4,6 +4,11 @@ This directory contains Architecture Decision Records (ADRs) for Sphere Platform
 
 An ADR documents an architecturally significant decision: the context that led to it,
 the options considered, the decision made, and the consequences.
+The dates and status labels below are metadata from the records, not independent
+proof of a current deployment, measured capacity, the recorded date/deciders,
+or a revalidated decision. The records preserve historical reasoning and planned
+designs; annotations link to present source and operational contracts where the
+implementation differs. Check those sources before relying on an old ADR.
 
 ## Index
 
@@ -20,9 +25,9 @@ the options considered, the decision made, and the consequences.
 | Status | Meaning |
 |--------|---------|
 | **Proposed** | Under discussion, not yet decided |
-| **Accepted** | Decision made and in effect |
-| **Deprecated** | Was accepted, now superseded |
-| **Superseded by ADR-NNN** | Replaced by a newer decision |
+| **Accepted** | Decision recorded as accepted at that time; implementation and present applicability need independent verification |
+| **Deprecated** | No longer recommended; no replacement is necessarily identified |
+| **Superseded by ADR-NNN** | Replaced by the specified newer decision |
 
 ## ADR Template
 

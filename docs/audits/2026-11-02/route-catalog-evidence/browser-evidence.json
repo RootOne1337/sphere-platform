@@ -1,0 +1,225 @@
+{
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requests": [
+    "http://127.0.0.1:52286/",
+    "http://127.0.0.1:52286/catalog.css",
+    "http://127.0.0.1:52286/bundle.js"
+  ],
+  "blocked": [],
+  "checks": [
+    {
+      "name": "search_title",
+      "passed": true,
+      "detail": "Утренний круг · подготовка не запускалась"
+    },
+    {
+      "name": "select_callback",
+      "passed": true,
+      "detail": "Выбрана: fixture-clip-08; callbacks: [{\"kind\":\"select\",\"id\":\"fixture-clip-08\"}]"
+    },
+    {
+      "name": "prepare_callback_only",
+      "passed": true,
+      "detail": "Выбрана: fixture-clip-08; callbacks: [{\"kind\":\"select\",\"id\":\"fixture-clip-08\"},{\"kind\":\"prepare\",\"id\":\"fixture-clip-08\"}]"
+    },
+    {
+      "name": "search_id",
+      "passed": true,
+      "detail": "Короткий проход 17"
+    },
+    {
+      "name": "search_device",
+      "passed": true,
+      "detail": 6
+    },
+    {
+      "name": "empty_search",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "reset",
+      "passed": true,
+      "detail": 12
+    },
+    {
+      "name": "oldest_sort",
+      "passed": true,
+      "detail": "Короткий проход 17"
+    },
+    {
+      "name": "title_sort",
+      "passed": true,
+      "detail": "Аллея · расчёт остановлен"
+    },
+    {
+      "name": "newest_sort",
+      "passed": true,
+      "detail": "Ночной проезд · карта для проверки"
+    },
+    {
+      "name": "next_page",
+      "passed": true,
+      "detail": "Короткий проход 12"
+    },
+    {
+      "name": "last_page_disabled",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "previous_page",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "filter_Карта для проверки 1",
+      "passed": true,
+      "detail": 1
+    },
+    {
+      "name": "filter_В обработке 2",
+      "passed": true,
+      "detail": 2
+    },
+    {
+      "name": "filter_Требуют внимания 4",
+      "passed": true,
+      "detail": 4
+    },
+    {
+      "name": "filter_Видео сохранено 15",
+      "passed": true,
+      "detail": 12
+    },
+    {
+      "name": "stale_not_map_admission",
+      "passed": true,
+      "detail": "Старый результат · статус устарел\n\n02 нояб. 2026 г., 09:00 · fixture-\n\n0:41\n904 кадров\n\nТестовый эмулятор · синтетический\n\nТранспорт\nHUD · Black Russia\nИсходник\nВидео сохранено\nРеконструкция\nРанее: расчёт завершён\nНавигация\nРанее: карта для проверки\n\nСостояние обработки устарело. Откройте запись, чтобы проверить его снова.\n\nОткрыть запись"
+    },
+    {
+      "name": "reload_callback",
+      "passed": true,
+      "detail": "Выбрана: fixture-clip-08; callbacks: [{\"kind\":\"select\",\"id\":\"fixture-clip-08\"},{\"kind\":\"prepare\",\"id\":\"fixture-clip-08\"},{\"kind\":\"reload\"}]"
+    },
+    {
+      "name": "busy_disables_selection",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "busy_disables_reload",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "busy_preserves_search",
+      "passed": true,
+      "detail": "Утренний круг · подготовка не запускалась"
+    },
+    {
+      "name": "refreshing_busy",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "readonly_no_prepare",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "loading_state",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "partial_catalog_notice",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "keyboard_tab_focus",
+      "passed": true,
+      "detail": {
+        "label": "Открыть запись «Утренний круг · подготовка не запускалась»",
+        "visible": true,
+        "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      }
+    },
+    {
+      "name": "keyboard_enter_callback",
+      "passed": true,
+      "detail": "Выбрана: fixture-clip-08; callbacks: [{\"kind\":\"select\",\"id\":\"fixture-clip-08\"},{\"kind\":\"prepare\",\"id\":\"fixture-clip-08\"},{\"kind\":\"reload\"},{\"kind\":\"select\",\"id\":\"fixture-clip-08\"}]"
+    },
+    {
+      "name": "wide_no_overflow",
+      "passed": true,
+      "detail": {
+        "width": 1440,
+        "documentWidth": 1440,
+        "gridColumns": "618px 618px"
+      }
+    },
+    {
+      "name": "console_clean",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "visible_keyboard_ring_after_transition",
+      "passed": true,
+      "detail": {
+        "label": "Открыть запись «Утренний круг · подготовка не запускалась»",
+        "focusVisible": true,
+        "shadow": "rgba(10, 12, 15, 0.173) 0px 0px 0px 0.347672px, rgba(43, 202, 149, 0.173) 0px 0px 0px 0.695344px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "color": "rgb(238, 241, 245)",
+        "background": "rgb(10, 12, 15)"
+      }
+    },
+    {
+      "name": "mobile_no_horizontal_overflow",
+      "passed": true,
+      "detail": {
+        "width": 390,
+        "scrollWidth": 390,
+        "gridColumns": "358px"
+      }
+    },
+    {
+      "name": "long_title_search",
+      "passed": true,
+      "detail": true
+    },
+    {
+      "name": "mobile_long_title_wrap",
+      "passed": true,
+      "detail": {
+        "cardWidth": 358,
+        "cardScrollWidth": 356,
+        "titleHeight": 60,
+        "titleScrollWidth": 276,
+        "titleWidth": 276,
+        "pageWidth": 390
+      }
+    },
+    {
+      "name": "final_console_clean",
+      "passed": true,
+      "detail": {
+        "consoleErrors": 0,
+        "pageErrors": 0
+      }
+    }
+  ],
+  "browser": "chromium",
+  "browserVersion": "156.0.8078.79",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+  "fixtureUrl": "http://127.0.0.1:52286/",
+  "physicalActions": 0,
+  "productionApiAccess": false,
+  "opfsAccess": false,
+  "iabAcceptance": false,
+  "nextSsrHydrationVerified": false,
+  "reactClientMounted": true
+}

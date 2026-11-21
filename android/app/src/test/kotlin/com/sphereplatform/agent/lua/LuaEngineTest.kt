@@ -1,6 +1,9 @@
 package com.sphereplatform.agent.lua
 
 import com.sphereplatform.agent.commands.AdbActionExecutor
+import com.sphereplatform.agent.commands.DeviceInputOwnership
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -33,6 +36,18 @@ class LuaEngineTest {
     fun setUp() {
         adbActions = mockk(relaxed = true)
         engine = LuaEngine(adbActions)
+    }
+
+    @Test fun `suspending Lua bindings keep task input authority across worker threads`() = runTest {
+        val ownership = DeviceInputOwnership()
+        coEvery { adbActions.typeText(any()) } coAnswers {
+            withContext(Dispatchers.Default) { ownership.claimDiscrete().close() }
+        }
+        val lease = ownership.claimTask()
+        try {
+            withContext(lease.context) { assertEquals(true, engine.execute("return type_text('example')")) }
+            coVerify(exactly = 1) { adbActions.typeText("example") }
+        } finally { lease.close() }
     }
 
     // ── Базовое выполнение ───────────────────────────────────────────────────

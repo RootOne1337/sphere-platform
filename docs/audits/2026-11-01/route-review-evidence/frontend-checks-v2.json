@@ -1,0 +1,20 @@
+{
+  "schema": "frontend-review-checks-v2",
+  "files_sha256": {
+    "frontend/src/features/stream/TeachingReview.tsx": "c937e65c7454a4343a74e5c3d534f97ecd0dbec97c46f374da2bd7b5da0bfdd4",
+    "frontend/__tests__/stream/teaching-review.test.tsx": "6c4b016685d4b7569dac00ad93d94918b3bc91a74bc7d91b268ab238ce9ef4ed"
+  },
+  "checks": [
+    {
+      "command": "npm test -- --runInBand __tests__/stream/teaching-review.test.tsx",
+      "exit_code": 0,
+      "tests_passed": 17
+    },
+    {
+      "command": "npm run type-check",
+      "exit_code": 0
+    }
+  ],
+  "log_sha256": "4f21260238e076de8d182d7a26703b8fdbc3371ee3fa58c940b7ff9326cf4c5b",
+  "note": "Deselect removes displayed map and warnings, invalidates pending geometry; refresh retains explicit deselection."
+}

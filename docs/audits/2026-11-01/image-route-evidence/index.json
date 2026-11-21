@@ -1,0 +1,759 @@
+{
+  "schema": "image-route-evidence-index-v1",
+  "entries": [
+    {
+      "file": "retrieval-summary.json",
+      "source": ".local-pilot/scooter-image-route-20261101/summary.json",
+      "source_sha256": "d36ce9ad380a9b4350e6d4a363ea6ae046eced68ae4d0e366c05e57f0f8cac57",
+      "sha256": "d36ce9ad380a9b4350e6d4a363ea6ae046eced68ae4d0e366c05e57f0f8cac57",
+      "bytes": 1065,
+      "transform": "copy"
+    },
+    {
+      "file": "retrieval-receipt.json",
+      "source": ".local-pilot/scooter-image-route-20261101/receipt.json",
+      "source_sha256": "dae56688b5f2b33c7531aa874f33182c58d27a1c8830a3849c2885f38b9805cf",
+      "sha256": "dae56688b5f2b33c7531aa874f33182c58d27a1c8830a3849c2885f38b9805cf",
+      "bytes": 285,
+      "transform": "copy"
+    },
+    {
+      "file": "reference-receipt.json",
+      "source": ".local-pilot/scooter-image-route-20261101/reference-receipt.json",
+      "source_sha256": "3d095e2e0c43149cced7da026032d3644845a4f4345442e0c70198b3ad38e654",
+      "sha256": "3d095e2e0c43149cced7da026032d3644845a4f4345442e0c70198b3ad38e654",
+      "bytes": 4398,
+      "transform": "copy"
+    },
+    {
+      "file": "query-metrics.json",
+      "source": ".local-pilot/scooter-image-route-20261101/query-metrics.json",
+      "source_sha256": "523c46317d6a7e0e30c1d6cf1cfad5f2248440145c46d9c39e6c59910efd0f75",
+      "sha256": "523c46317d6a7e0e30c1d6cf1cfad5f2248440145c46d9c39e6c59910efd0f75",
+      "bytes": 318963,
+      "transform": "copy"
+    },
+    {
+      "file": "causal-strict-summary.json",
+      "source": ".local-pilot/scooter-image-route-20261101/sequence_eval/summary.json",
+      "source_sha256": "318bdde18b2c280d25573fc7b8d76c2611697a433205fee7e135693fd47536dd",
+      "sha256": "318bdde18b2c280d25573fc7b8d76c2611697a433205fee7e135693fd47536dd",
+      "bytes": 3873,
+      "transform": "copy"
+    },
+    {
+      "file": "beam-world-summary.json",
+      "source": ".local-pilot/scooter-image-route-20261101/seqbeam_v1/summary.json",
+      "source_sha256": "dd0608808792cbb11571e858ffab5ae0904ec28e06b2a9247d912cf9807c5213",
+      "sha256": "dd0608808792cbb11571e858ffab5ae0904ec28e06b2a9247d912cf9807c5213",
+      "bytes": 1970,
+      "transform": "copy"
+    },
+    {
+      "file": "beam-world-intent.json",
+      "source": ".local-pilot/scooter-image-route-20261101/seqbeam_v1/intent.json",
+      "source_sha256": "30af0d2888c776013207103ed9f8afe5145c41e399c0c02b79162a8bf325c364",
+      "sha256": "30af0d2888c776013207103ed9f8afe5145c41e399c0c02b79162a8bf325c364",
+      "bytes": 1719,
+      "transform": "copy"
+    },
+    {
+      "file": "minimap-fusion-summary.json",
+      "source": ".local-pilot/scooter-image-route-20261101/minimap-fusion/summary.json",
+      "source_sha256": "73510107d174b01d245cf85a41b24737f485b0f3e3c188ba4d1a4f1a67b94c29",
+      "sha256": "73510107d174b01d245cf85a41b24737f485b0f3e3c188ba4d1a4f1a67b94c29",
+      "bytes": 1473,
+      "transform": "copy"
+    },
+    {
+      "file": "minimap-fusion-intent.json",
+      "source": ".local-pilot/scooter-image-route-20261101/minimap-fusion/intent.json",
+      "source_sha256": "0ddbd3282baa34228459f4a6e6b1a57be30093923fd1a644f5357d072a58971e",
+      "sha256": "0ddbd3282baa34228459f4a6e6b1a57be30093923fd1a644f5357d072a58971e",
+      "bytes": 962,
+      "transform": "copy"
+    },
+    {
+      "file": "minimap-fusion-receipt.json",
+      "source": ".local-pilot/scooter-image-route-20261101/minimap-fusion/receipt.json",
+      "source_sha256": "e69c6f73357e213759a15d25b926e252d91ab14bcaf8bfac8726d7d169202b5d",
+      "sha256": "e69c6f73357e213759a15d25b926e252d91ab14bcaf8bfac8726d7d169202b5d",
+      "bytes": 288,
+      "transform": "copy"
+    },
+    {
+      "file": "production-beam-summary.json",
+      "source": ".local-pilot/scooter-image-route-20261101/minimap-fusion/production-beam-summary.json",
+      "source_sha256": "b99b10642b7ac48b39bb9219bfc2607451c038e46e07cd314967b89662261250",
+      "sha256": "b99b10642b7ac48b39bb9219bfc2607451c038e46e07cd314967b89662261250",
+      "bytes": 1031,
+      "transform": "copy"
+    },
+    {
+      "file": "production-beam-receipt.json",
+      "source": ".local-pilot/scooter-image-route-20261101/minimap-fusion/production-beam-receipt.json",
+      "source_sha256": "daf77825525a263bf008e48f886027017aa3fc26748d8fd65b625500fbaf924a",
+      "sha256": "daf77825525a263bf008e48f886027017aa3fc26748d8fd65b625500fbaf924a",
+      "bytes": 959,
+      "transform": "copy"
+    },
+    {
+      "file": "relative-goals-report.json",
+      "source": ".local-pilot/scooter-image-route-20261101/relative-goals/report.json",
+      "source_sha256": "8007ad1ab333e180d629b8462d07628dc948daa8e03ccb2f98c66642a3738084",
+      "sha256": "8007ad1ab333e180d629b8462d07628dc948daa8e03ccb2f98c66642a3738084",
+      "bytes": 24881,
+      "transform": "copy"
+    },
+    {
+      "file": "relative-goals-receipt.json",
+      "source": ".local-pilot/scooter-image-route-20261101/relative-goals/receipt.json",
+      "source_sha256": "cc4d6ca84f804afc70222d6d2139a9264a3469a432e0a4fef3c4bf37c8162a2c",
+      "sha256": "cc4d6ca84f804afc70222d6d2139a9264a3469a432e0a4fef3c4bf37c8162a2c",
+      "bytes": 277,
+      "transform": "copy"
+    },
+    {
+      "file": "paced-replay-summary.json",
+      "source": ".local-pilot/scooter-image-route-20261101/stream_replay/summary.json",
+      "source_sha256": "46c0ad79e07fd03d555d71adcd4855f0c67ad624e8ddd6ddb3449e9efd2a41fb",
+      "sha256": "46c0ad79e07fd03d555d71adcd4855f0c67ad624e8ddd6ddb3449e9efd2a41fb",
+      "bytes": 1197,
+      "transform": "copy"
+    },
+    {
+      "file": "paced-replay-receipt.json",
+      "source": ".local-pilot/scooter-image-route-20261101/stream_replay/receipt.json",
+      "source_sha256": "d7a42b6b937856ecca3133fa9b080126614a64fde618671feea635e68fde124e",
+      "sha256": "d7a42b6b937856ecca3133fa9b080126614a64fde618671feea635e68fde124e",
+      "bytes": 287,
+      "transform": "copy"
+    },
+    {
+      "file": "paced-replay-intent.json",
+      "source": ".local-pilot/scooter-image-route-20261101/stream_replay/intent.json",
+      "source_sha256": "2a1b15d42755acf7a6f917fa41e137ed5ef55175b1a593c41276886329df3f20",
+      "sha256": "2a1b15d42755acf7a6f917fa41e137ed5ef55175b1a593c41276886329df3f20",
+      "bytes": 672,
+      "transform": "copy"
+    },
+    {
+      "file": "paced-replay-score-consistency.json",
+      "source": ".local-pilot/scooter-image-route-20261101/stream_replay/score-consistency.json",
+      "source_sha256": "4a107e36a8e12f610249ff60d0cdb3a590af49cf2358177a4ada7179428e6808",
+      "sha256": "4a107e36a8e12f610249ff60d0cdb3a590af49cf2358177a4ada7179428e6808",
+      "bytes": 231,
+      "transform": "copy"
+    },
+    {
+      "file": "paced-replay-frames.jsonl",
+      "source": ".local-pilot/scooter-image-route-20261101/stream_replay/frames.jsonl",
+      "source_sha256": "ad72e14960b3a5650866d25c6af40c676d004fd9a45103b7c6f10032da47a175",
+      "sha256": "ad72e14960b3a5650866d25c6af40c676d004fd9a45103b7c6f10032da47a175",
+      "bytes": 194848,
+      "transform": "copy"
+    },
+    {
+      "file": "publication-fused.json",
+      "source": ".local-pilot/scooter-image-route-20261101/publication-fused.json",
+      "source_sha256": "203e23136d034a691afb81def6467bc9f459963a6fec9602e8da0e90d1120288",
+      "sha256": "203e23136d034a691afb81def6467bc9f459963a6fec9602e8da0e90d1120288",
+      "bytes": 594,
+      "transform": "copy"
+    },
+    {
+      "file": "api-reload-precheck.json",
+      "source": ".local-pilot/scooter-image-route-20261101/api-reload-precheck.json",
+      "source_sha256": "61f81cae38f11d7cfb157964388a2554b88e2065f03d7d419d3ba4b7d1882f1c",
+      "sha256": "61f81cae38f11d7cfb157964388a2554b88e2065f03d7d419d3ba4b7d1882f1c",
+      "bytes": 937,
+      "transform": "copy"
+    },
+    {
+      "file": "api-reload-v2.json",
+      "source": ".local-pilot/scooter-image-route-20261101/api-reload-v2.json",
+      "source_sha256": "122135b8143b1e072408d6af5320804879e000f49ee1df118a74a6c49163a2d7",
+      "sha256": "122135b8143b1e072408d6af5320804879e000f49ee1df118a74a6c49163a2d7",
+      "bytes": 56496,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-build.json",
+      "source": ".local-pilot/image-route-review-build-20261101-v1.json",
+      "source_sha256": "e0a098285363da3c7d44921b42f4d350b03c40d1d940687934145adcd3122b34",
+      "sha256": "e0a098285363da3c7d44921b42f4d350b03c40d1d940687934145adcd3122b34",
+      "bytes": 949,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-image.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v1/image.json",
+      "source_sha256": "906bd6540505a22713940065ed6e864fcf9346ad8cfd37c756b8a9d864761471",
+      "sha256": "906bd6540505a22713940065ed6e864fcf9346ad8cfd37c756b8a9d864761471",
+      "bytes": 332,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-install-receipt.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v1/install-receipt.json",
+      "source_sha256": "e143ad807520c2f7b6d2061bc8a242ff4fefac0c75fd8eec2de706a87ba15832",
+      "sha256": "e143ad807520c2f7b6d2061bc8a242ff4fefac0c75fd8eec2de706a87ba15832",
+      "bytes": 4796,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-probe-first-failure.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v1/probe-first-failure.json",
+      "source_sha256": "6f7eac894679e39d3b32a04a4c5de4461147f8db84ddd1d1fdb8d51afd9c04f8",
+      "sha256": "6f7eac894679e39d3b32a04a4c5de4461147f8db84ddd1d1fdb8d51afd9c04f8",
+      "bytes": 262,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-probe-order-proof.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v1/probe-order-proof.json",
+      "source_sha256": "63cf3050a88e21df76d67db92cb58f25e98dc7bbe2ace44eb40e68e94d294675",
+      "sha256": "63cf3050a88e21df76d67db92cb58f25e98dc7bbe2ace44eb40e68e94d294675",
+      "bytes": 7813,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-probe-v2.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v1/probe-v2.json",
+      "source_sha256": "21055622a01cee42d9bb1f14ce37127af5f1e21eff6df552f5020e346434eefa",
+      "sha256": "21055622a01cee42d9bb1f14ce37127af5f1e21eff6df552f5020e346434eefa",
+      "bytes": 4361,
+      "transform": "copy"
+    },
+    {
+      "file": "published-review-receipt.json",
+      "source": ".local-pilot/reconstruction-jobs/c667f86cc9de4a378fb12e5269981a6e/image-route-review/receipt.json",
+      "source_sha256": "2feb1af500f8ba5ad42227c00ffa2c2c3cc7805d5dea2dd4d8a5abb8bf8d006a",
+      "sha256": "2feb1af500f8ba5ad42227c00ffa2c2c3cc7805d5dea2dd4d8a5abb8bf8d006a",
+      "bytes": 393,
+      "transform": "copy",
+      "source_state": "historical source path was replaced on later generic publication; this archived version is preserved"
+    },
+    {
+      "file": "published-review.json",
+      "source": ".local-pilot/reconstruction-jobs/c667f86cc9de4a378fb12e5269981a6e/image-route-review/review.json",
+      "source_sha256": "cb3d6d28a5e7fe151629dde6f6933ce6784b7b61b5b61ee9c10cb667c0ce2e4d",
+      "sha256": "cb3d6d28a5e7fe151629dde6f6933ce6784b7b61b5b61ee9c10cb667c0ce2e4d",
+      "bytes": 29345,
+      "transform": "copy",
+      "source_state": "historical source path was replaced on later generic publication; this archived version is preserved"
+    },
+    {
+      "file": "sources/motor_worker--image_route_sequence.py",
+      "source": "motor_worker/image_route_sequence.py",
+      "source_sha256": "b50388781b6b9e0cf52161ca80221c0fd235f9b5419085e9e3365181fef5a5e1",
+      "sha256": "b50388781b6b9e0cf52161ca80221c0fd235f9b5419085e9e3365181fef5a5e1",
+      "bytes": 21895,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/motor_worker--image_route_relative.py",
+      "source": "motor_worker/image_route_relative.py",
+      "source_sha256": "f28db515c816f97ef042d3f4afeb3ae39e2d87b164e166c753d2d500c3aefed9",
+      "sha256": "f28db515c816f97ef042d3f4afeb3ae39e2d87b164e166c753d2d500c3aefed9",
+      "bytes": 8744,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/scripts--pilot--image_route_review.py",
+      "source": "scripts/pilot/image_route_review.py",
+      "source_sha256": "cb417df2cc40c94bd8ec7396a5eb170ab95771fdb776c22d6a5a673b278e6b18",
+      "sha256": "cb417df2cc40c94bd8ec7396a5eb170ab95771fdb776c22d6a5a673b278e6b18",
+      "bytes": 5993,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/frontend--src--features--stream--ImageRouteReview.tsx",
+      "source": "frontend/src/features/stream/ImageRouteReview.tsx",
+      "source_sha256": "e08d0bbc3e2f4808ab1212e6565c7af94d71637aed5a168539d653cebe0d20ad",
+      "sha256": "e08d0bbc3e2f4808ab1212e6565c7af94d71637aed5a168539d653cebe0d20ad",
+      "bytes": 11040,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/research--run.py",
+      "source": ".local-pilot/scooter-image-route-20261101/run.py",
+      "source_sha256": "ae2e81a4ce77fbc77a39138bf567215a313a5355096d172f3caf190624904026",
+      "sha256": "ae2e81a4ce77fbc77a39138bf567215a313a5355096d172f3caf190624904026",
+      "bytes": 12303,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/research--sequence_eval--evaluate.py",
+      "source": ".local-pilot/scooter-image-route-20261101/sequence_eval/evaluate.py",
+      "source_sha256": "10d9e011770f1589e27ec621dc170566b014ab4a3be58146535f776719860065",
+      "sha256": "10d9e011770f1589e27ec621dc170566b014ab4a3be58146535f776719860065",
+      "bytes": 7043,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/research--seqbeam_v1--evaluate.py",
+      "source": ".local-pilot/scooter-image-route-20261101/seqbeam_v1/evaluate.py",
+      "source_sha256": "e0fbf615a778c70d46808df1c47a3a83aa2eb4f6fbd2b83f072a45d7cde17930",
+      "sha256": "e0fbf615a778c70d46808df1c47a3a83aa2eb4f6fbd2b83f072a45d7cde17930",
+      "bytes": 8084,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/research--minimap-fusion--run.py",
+      "source": ".local-pilot/scooter-image-route-20261101/minimap-fusion/run.py",
+      "source_sha256": "f4bb78750dd36353b71fbd26bad30327ea5ea61fa2336a5cc90965c02350830f",
+      "sha256": "f4bb78750dd36353b71fbd26bad30327ea5ea61fa2336a5cc90965c02350830f",
+      "bytes": 10367,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/research--minimap-fusion--production-beam.py",
+      "source": ".local-pilot/scooter-image-route-20261101/minimap-fusion/production-beam.py",
+      "source_sha256": "bbd81a4c93c485ee673eb761592cb061dcf3141b11aa7dd00e5a37e513a36525",
+      "sha256": "bbd81a4c93c485ee673eb761592cb061dcf3141b11aa7dd00e5a37e513a36525",
+      "bytes": 6139,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/research--relative-goals--run.py",
+      "source": ".local-pilot/scooter-image-route-20261101/relative-goals/run.py",
+      "source_sha256": "0486894e83a69ffde05a3eb24c3beb744a931d8bccf338d4d4899b6fca999370",
+      "sha256": "0486894e83a69ffde05a3eb24c3beb744a931d8bccf338d4d4899b6fca999370",
+      "bytes": 9339,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/research--stream_replay--run.py",
+      "source": ".local-pilot/scooter-image-route-20261101/stream_replay/run.py",
+      "source_sha256": "b4dcbb7c810ece85b67d2cf94d5f18e627e58a5ce0909f695021bcda77502230",
+      "sha256": "b4dcbb7c810ece85b67d2cf94d5f18e627e58a5ce0909f695021bcda77502230",
+      "bytes": 14391,
+      "transform": "copy"
+    },
+    {
+      "file": "automatic-frontend-tests.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/automatic-frontend-tests.txt",
+      "source_sha256": "d55af88b02c02cadd0eb00fb5acbce1bc0e5dd411f967ca95fa04958cbe55d95",
+      "sha256": "d55af88b02c02cadd0eb00fb5acbce1bc0e5dd411f967ca95fa04958cbe55d95",
+      "bytes": 329,
+      "transform": "copy"
+    },
+    {
+      "file": "automatic-workspace-tests.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/automatic-workspace-tests.txt",
+      "source_sha256": "c8edfb0d245978b6abf896d4008249b0daeaf1a868f364e61be1cbc3799cfca5",
+      "sha256": "c8edfb0d245978b6abf896d4008249b0daeaf1a868f364e61be1cbc3799cfca5",
+      "bytes": 101,
+      "transform": "copy"
+    },
+    {
+      "file": "final-python-tests.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-python-tests.txt",
+      "source_sha256": "59b9a9ad3c723de4f0013e323900b271bfc998673dd53e972db314f5f5833a7a",
+      "sha256": "59b9a9ad3c723de4f0013e323900b271bfc998673dd53e972db314f5f5833a7a",
+      "bytes": 247,
+      "transform": "copy"
+    },
+    {
+      "file": "final-frontend-tests.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-frontend-tests.txt",
+      "source_sha256": "1baf0d4d27f89e772f4a95ca03aeff9085ddd186929485d29c36bbb59e50b427",
+      "sha256": "1baf0d4d27f89e772f4a95ca03aeff9085ddd186929485d29c36bbb59e50b427",
+      "bytes": 329,
+      "transform": "copy"
+    },
+    {
+      "file": "final-source-frame-tests.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-source-frame-tests.txt",
+      "source_sha256": "c0d6b24151f22d70fc91707e02e3641d4bd6f67b1fce74353e35a62162a78cc8",
+      "sha256": "c0d6b24151f22d70fc91707e02e3641d4bd6f67b1fce74353e35a62162a78cc8",
+      "bytes": 330,
+      "transform": "copy"
+    },
+    {
+      "file": "final-eslint.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-eslint.txt",
+      "source_sha256": "21a886b16ea0609ff919e56483f96019c3dab46756ef5fc4ada5092423a1a9dd",
+      "sha256": "21a886b16ea0609ff919e56483f96019c3dab46756ef5fc4ada5092423a1a9dd",
+      "bytes": 1069,
+      "transform": "copy"
+    },
+    {
+      "file": "final-mypy.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-mypy.txt",
+      "source_sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+      "bytes": 43,
+      "transform": "copy"
+    },
+    {
+      "file": "final-typescript.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-typescript.txt",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "transform": "copy"
+    },
+    {
+      "file": "component-fixture-receipt.json",
+      "source": ".local-pilot/image-route-ui-fixture-20261101/receipt.json",
+      "source_sha256": "5596647e1bf1f613be9739bb2f138f8ca4120efa868ecc20d6bfae79eabd0465",
+      "sha256": "5596647e1bf1f613be9739bb2f138f8ca4120efa868ecc20d6bfae79eabd0465",
+      "bytes": 1886,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/component-fixture-server.cjs",
+      "source": ".local-pilot/image-route-ui-fixture-20261101/server.cjs",
+      "source_sha256": "1592280af1bad6b06f470f79b27885cb7a810b17c9c788707e6126e6a95e5b4a",
+      "sha256": "1592280af1bad6b06f470f79b27885cb7a810b17c9c788707e6126e6a95e5b4a",
+      "bytes": 4728,
+      "transform": "copy"
+    },
+    {
+      "file": "../assets/image-route-review-fixture.png",
+      "source": "output/playwright/image-route-review-20261101.png",
+      "source_sha256": "e342a477fd02837d6fb2b27ef0279f797a70bce4fddcbcdfd0b2803698c2e9a5",
+      "sha256": "e342a477fd02837d6fb2b27ef0279f797a70bce4fddcbcdfd0b2803698c2e9a5",
+      "bytes": 110256,
+      "transform": "copy"
+    },
+    {
+      "file": "first-trial-trial-receipt.json",
+      "source": ".local-pilot/image-route-auto-trial-20261101/trial-receipt.json",
+      "source_sha256": "c067fb6db9e9ea3dec25d1cee979586e829ef7c793bc2acd0ad5b49a13dcf322",
+      "sha256": "c067fb6db9e9ea3dec25d1cee979586e829ef7c793bc2acd0ad5b49a13dcf322",
+      "bytes": 2158,
+      "transform": "copy"
+    },
+    {
+      "file": "first-trial-worker-result.json",
+      "source": ".local-pilot/image-route-auto-trial-20261101/worker-result.json",
+      "source_sha256": "baa1b5364baebb8275d659a6d395962d6cf72ce1465586ab31675b0810081c8c",
+      "sha256": "baa1b5364baebb8275d659a6d395962d6cf72ce1465586ab31675b0810081c8c",
+      "bytes": 873,
+      "transform": "copy"
+    },
+    {
+      "file": "first-trial-trial-worker.log",
+      "source": ".local-pilot/image-route-auto-trial-20261101/trial-worker.log",
+      "source_sha256": "76bfef3668a71a33a68acf34fd15f600e9ce08bb2395e5eb8489fbcb4c7b32e5",
+      "sha256": "76bfef3668a71a33a68acf34fd15f600e9ce08bb2395e5eb8489fbcb4c7b32e5",
+      "bytes": 621,
+      "transform": "copy"
+    },
+    {
+      "file": "first-trial-trial.py",
+      "source": ".local-pilot/image-route-auto-trial-20261101/trial.py",
+      "source_sha256": "ec0c8121752c7eddb0f2ce98468165b9944f46cfa7ce84245a4c645cc12b8cf1",
+      "sha256": "ec0c8121752c7eddb0f2ce98468165b9944f46cfa7ce84245a4c645cc12b8cf1",
+      "bytes": 9134,
+      "transform": "copy"
+    },
+    {
+      "file": "r2-trial-trial-receipt.json",
+      "source": ".local-pilot/image-route-auto-trial-20261101-r2/trial-receipt.json",
+      "source_sha256": "949d27c3395e6442ae525a1abe2ef09c996e8b18ebb662bbdbd2f713201fb76d",
+      "sha256": "949d27c3395e6442ae525a1abe2ef09c996e8b18ebb662bbdbd2f713201fb76d",
+      "bytes": 1907,
+      "transform": "copy"
+    },
+    {
+      "file": "r2-trial-worker-result.json",
+      "source": ".local-pilot/image-route-auto-trial-20261101-r2/worker-result.json",
+      "source_sha256": "7c4b5f98935c25e48e8d9dbbf2918b1179ff76b9084821faedf1f1eeeb3a15d3",
+      "sha256": "7c4b5f98935c25e48e8d9dbbf2918b1179ff76b9084821faedf1f1eeeb3a15d3",
+      "bytes": 1368,
+      "transform": "copy"
+    },
+    {
+      "file": "r2-trial-trial-worker.log",
+      "source": ".local-pilot/image-route-auto-trial-20261101-r2/trial-worker.log",
+      "source_sha256": "47deb638d669eea1db56d6cabd40e3ed441b6699b17b1f4ded2dbb6a9e8875c1",
+      "sha256": "47deb638d669eea1db56d6cabd40e3ed441b6699b17b1f4ded2dbb6a9e8875c1",
+      "bytes": 1078,
+      "transform": "copy"
+    },
+    {
+      "file": "r2-trial-trial.py",
+      "source": ".local-pilot/image-route-auto-trial-20261101-r2/trial.py",
+      "source_sha256": "3f07218b3d1b6c932f6e94486103c448b58e3bc57dc4676148efb48be3a9917b",
+      "sha256": "3f07218b3d1b6c932f6e94486103c448b58e3bc57dc4676148efb48be3a9917b",
+      "bytes": 9139,
+      "transform": "copy"
+    },
+    {
+      "file": "final-motor-runtime-tests.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-motor-runtime-tests.txt",
+      "source_sha256": "1386b02e7ac2f202ddac0a3b1ee0c3f0037fa036881893a74cb573f078a73591",
+      "sha256": "1386b02e7ac2f202ddac0a3b1ee0c3f0037fa036881893a74cb573f078a73591",
+      "bytes": 369,
+      "transform": "copy"
+    },
+    {
+      "file": "automatic-final-python-tests.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/automatic-final-python-tests.txt",
+      "source_sha256": "835bf958b1637bd82b801286e2874ee2fd5c09565b85c494246ad193f57646a1",
+      "sha256": "835bf958b1637bd82b801286e2874ee2fd5c09565b85c494246ad193f57646a1",
+      "bytes": 328,
+      "transform": "copy"
+    },
+    {
+      "file": "final-new-python-lint-v3.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-new-python-lint-v3.txt",
+      "source_sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20,
+      "transform": "copy"
+    },
+    {
+      "file": "api-reload-v3.json",
+      "source": ".local-pilot/scooter-image-route-20261101/api-reload-v3.json",
+      "source_sha256": "c4708e8d2624267f71bceab9855725e19221afbc95321297127e76e9cf937ecf",
+      "sha256": "c4708e8d2624267f71bceab9855725e19221afbc95321297127e76e9cf937ecf",
+      "bytes": 57874,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-build-v2.json",
+      "source": ".local-pilot/image-route-review-build-20261101-v2.json",
+      "source_sha256": "7f94d79c4bfed3f3950233364d2fccc34a7c1545f164ff0d48347d55daae73c9",
+      "sha256": "7f94d79c4bfed3f3950233364d2fccc34a7c1545f164ff0d48347d55daae73c9",
+      "bytes": 949,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-v2-image.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v2/image.json",
+      "source_sha256": "66df309d181048b617f80b255e625c2cf39ef325b56a9fe4c61c61edb428f0be",
+      "sha256": "66df309d181048b617f80b255e625c2cf39ef325b56a9fe4c61c61edb428f0be",
+      "bytes": 332,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-v2-install-receipt.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v2/install-receipt.json",
+      "source_sha256": "0f2c294acd8e6d337dda893845c49dc77dae5393c1e5d1c8c7d6c446d2276e5f",
+      "sha256": "0f2c294acd8e6d337dda893845c49dc77dae5393c1e5d1c8c7d6c446d2276e5f",
+      "bytes": 4796,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-v2-probe.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v2/probe.json",
+      "source_sha256": "fdc2aadb31d00918c1f3f219021748457a1e22ef348c56956bed25e2ca865c24",
+      "sha256": "fdc2aadb31d00918c1f3f219021748457a1e22ef348c56956bed25e2ca865c24",
+      "bytes": 4361,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--scripts--pilot--image_route_workspace.py",
+      "source": "scripts/pilot/image_route_workspace.py",
+      "source_sha256": "b9d88880408f40a62b4e7a34d91ab4ccd68a547bb17e83e29848bbe55fb23f65",
+      "sha256": "b9d88880408f40a62b4e7a34d91ab4ccd68a547bb17e83e29848bbe55fb23f65",
+      "bytes": 8414,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--scripts--pilot--image_route_builder.py",
+      "source": "scripts/pilot/image_route_builder.py",
+      "source_sha256": "ca83c44e2ef0c43d7213b7a0b3c63fc60b20b6203725790371d743615918d1d3",
+      "sha256": "ca83c44e2ef0c43d7213b7a0b3c63fc60b20b6203725790371d743615918d1d3",
+      "bytes": 31444,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--scripts--pilot--image_route_review.py",
+      "source": "scripts/pilot/image_route_review.py",
+      "source_sha256": "a4a05576103f55b882933df128dcb08db8b2ac2fd14ebac5f27d54866d1b4278",
+      "sha256": "a4a05576103f55b882933df128dcb08db8b2ac2fd14ebac5f27d54866d1b4278",
+      "bytes": 6496,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--scripts--pilot--reconstruct_route.py",
+      "source": "scripts/pilot/reconstruct_route.py",
+      "source_sha256": "0cfde9670debb05ffdf6b2e935f7067bc147e0bf6f3563f18d1d518289707d47",
+      "sha256": "0cfde9670debb05ffdf6b2e935f7067bc147e0bf6f3563f18d1d518289707d47",
+      "bytes": 42256,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--scripts--pilot--reconstruction_service.py",
+      "source": "scripts/pilot/reconstruction_service.py",
+      "source_sha256": "468599c2c9e4096617082ddeac615016da26dbc760fde94cd5128647c5178369",
+      "sha256": "468599c2c9e4096617082ddeac615016da26dbc760fde94cd5128647c5178369",
+      "bytes": 48448,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--frontend--src--features--stream--ImageRouteReview.tsx",
+      "source": "frontend/src/features/stream/ImageRouteReview.tsx",
+      "source_sha256": "a118374057fd0dcef3783dbaaef055a540540447a8afcc0b7fd89634d79064ac",
+      "sha256": "a118374057fd0dcef3783dbaaef055a540540447a8afcc0b7fd89634d79064ac",
+      "bytes": 12034,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--frontend--src--features--stream--TeachingReview.tsx",
+      "source": "frontend/src/features/stream/TeachingReview.tsx",
+      "source_sha256": "415c19334d456969c6614502bfe125218d7e2ae13cdd330206c80ce12acbe2e0",
+      "sha256": "415c19334d456969c6614502bfe125218d7e2ae13cdd330206c80ce12acbe2e0",
+      "bytes": 40485,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--tests--test_image_route_builder.py",
+      "source": "tests/test_image_route_builder.py",
+      "source_sha256": "52ac4a17c806a77d9ec43439ee4e8952c67b209884284ab1560640701bd77aa2",
+      "sha256": "52ac4a17c806a77d9ec43439ee4e8952c67b209884284ab1560640701bd77aa2",
+      "bytes": 18859,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v2--tests--test_image_route_workspace.py",
+      "source": "tests/test_image_route_workspace.py",
+      "source_sha256": "92b2c9fa8a4468ecf24aabc3d455091baaec65c574e46cc57c30a93862756c1c",
+      "sha256": "92b2c9fa8a4468ecf24aabc3d455091baaec65c574e46cc57c30a93862756c1c",
+      "bytes": 9266,
+      "transform": "copy"
+    },
+    {
+      "file": "first-trial-builder-worker.log",
+      "source": ".local-pilot/image-route-auto-trial-20261101/job/image-route-workspace/worker.log",
+      "source_sha256": "18f732b1aedad3d7e21957064c75b9d5912f3a85a16948204e0076623a1d6da0",
+      "sha256": "18f732b1aedad3d7e21957064c75b9d5912f3a85a16948204e0076623a1d6da0",
+      "bytes": 72,
+      "transform": "copy"
+    },
+    {
+      "file": "r2-trial-builder-worker.log",
+      "source": ".local-pilot/image-route-auto-trial-20261101-r2/job/image-route-workspace/worker.log",
+      "source_sha256": "f2ab09a4dab70c98e165b20635c3a475411d35369feacfc89a4eb00bab4461fe",
+      "sha256": "f2ab09a4dab70c98e165b20635c3a475411d35369feacfc89a4eb00bab4461fe",
+      "bytes": 6538,
+      "transform": "copy"
+    },
+    {
+      "file": "generic-publication-v3.json",
+      "source": ".local-pilot/image-route-auto-trial-20261101-r2/publication-v3receipt.json",
+      "source_sha256": "1e3e98ac98c43ec0db583f104ae3bd40b0852fa4e2d3548e7b947cb631056c6d",
+      "sha256": "1e3e98ac98c43ec0db583f104ae3bd40b0852fa4e2d3548e7b947cb631056c6d",
+      "bytes": 18644,
+      "transform": "copy"
+    },
+    {
+      "file": "published-generic-receipt.json",
+      "source": ".local-pilot/reconstruction-jobs/c667f86cc9de4a378fb12e5269981a6e/image-route-review/receipt.json",
+      "source_sha256": "058bc97567ccd805dc5f50bbdb49ce4ca49172df232c72f06b268308d124f0b9",
+      "sha256": "058bc97567ccd805dc5f50bbdb49ce4ca49172df232c72f06b268308d124f0b9",
+      "bytes": 361,
+      "transform": "copy"
+    },
+    {
+      "file": "published-generic-review.json",
+      "source": ".local-pilot/reconstruction-jobs/c667f86cc9de4a378fb12e5269981a6e/image-route-review/review.json",
+      "source_sha256": "7839bcbb2f2f7715ad9d3904420a8329649d1a21687c1730e01ca95c7d802c35",
+      "sha256": "7839bcbb2f2f7715ad9d3904420a8329649d1a21687c1730e01ca95c7d802c35",
+      "bytes": 135096,
+      "transform": "copy"
+    },
+    {
+      "file": "component-fixture-v3-receipt.json",
+      "source": ".local-pilot/image-route-ui-fixture-v3-20261101/receipt-v3.json",
+      "source_sha256": "e4a42eb2e251624874743ba1459749827571910173efef2fb6d8ec8bc498c519",
+      "sha256": "e4a42eb2e251624874743ba1459749827571910173efef2fb6d8ec8bc498c519",
+      "bytes": 2325,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/component-fixture-v3-server.cjs",
+      "source": ".local-pilot/image-route-ui-fixture-v3-20261101/server.cjs",
+      "source_sha256": "ef10c75fc26a8d4dfb31200a49dbf2ac55b8df8e0ed3f6facdbb709fc095124b",
+      "sha256": "ef10c75fc26a8d4dfb31200a49dbf2ac55b8df8e0ed3f6facdbb709fc095124b",
+      "bytes": 4733,
+      "transform": "copy"
+    },
+    {
+      "file": "../assets/image-route-review-fixture-v3.png",
+      "source": "output/playwright/image-route-review-20261101-final.png",
+      "source_sha256": "7e28f106ea65d48a424907db02444081c4e78327f1baa6c3d77d8afc7b1c30ac",
+      "sha256": "7e28f106ea65d48a424907db02444081c4e78327f1baa6c3d77d8afc7b1c30ac",
+      "bytes": 107611,
+      "transform": "copy"
+    },
+    {
+      "file": "final-frontend-v3-tests.txt",
+      "source": ".local-pilot/scooter-image-route-20261101/final-frontend-v3-tests.txt",
+      "source_sha256": "f7d77dec95e09996b5e5a39c666a53e631110beebaf0335d1078003e1edf2b37",
+      "sha256": "f7d77dec95e09996b5e5a39c666a53e631110beebaf0335d1078003e1edf2b37",
+      "bytes": 423,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v3--frontend--src--features--stream--ImageRouteReview.tsx",
+      "source": "frontend/src/features/stream/ImageRouteReview.tsx",
+      "source_sha256": "e7dd582c2b00b706acdcafdf235a0f5afe5280e8529a428c66869a9dfbf0e4e1",
+      "sha256": "e7dd582c2b00b706acdcafdf235a0f5afe5280e8529a428c66869a9dfbf0e4e1",
+      "bytes": 12042,
+      "transform": "copy"
+    },
+    {
+      "file": "sources/final-v3--frontend--src--features--stream--TeachingReview.tsx",
+      "source": "frontend/src/features/stream/TeachingReview.tsx",
+      "source_sha256": "415c19334d456969c6614502bfe125218d7e2ae13cdd330206c80ce12acbe2e0",
+      "sha256": "415c19334d456969c6614502bfe125218d7e2ae13cdd330206c80ce12acbe2e0",
+      "bytes": 40485,
+      "transform": "copy"
+    },
+    {
+      "file": "builder-pyav-tests-v2.json",
+      "source": ".local-pilot/image-route-builder-pyav-tests-20261101-v2.json",
+      "source_sha256": "f0c6aecb90904d8a35c980215d2e2df457b9233306c35312718f6dd39aabd46a",
+      "sha256": "f0c6aecb90904d8a35c980215d2e2df457b9233306c35312718f6dd39aabd46a",
+      "bytes": 1151,
+      "transform": "copy"
+    },
+    {
+      "file": "builder-pyav-tests-v2.log",
+      "source": ".local-pilot/image-route-builder-pyav-tests-20261101-v2.log",
+      "source_sha256": "cf2a6b47667a1fbc45f9084dfce4c214d1f8d8de1a3f5c54d1296e22fcdd5025",
+      "sha256": "cf2a6b47667a1fbc45f9084dfce4c214d1f8d8de1a3f5c54d1296e22fcdd5025",
+      "bytes": 607,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-build-v3.json",
+      "source": ".local-pilot/image-route-review-build-20261101-v3.json",
+      "source_sha256": "00f889b1b10023698e18f6f1230dd6d7527231008b2a124afdd3f6c12b059f7a",
+      "sha256": "00f889b1b10023698e18f6f1230dd6d7527231008b2a124afdd3f6c12b059f7a",
+      "bytes": 949,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-v3-image.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v3/image.json",
+      "source_sha256": "65a34c7f49f36ebf0116937e3c7e9b3b68d04061b843274e1847c942248ca455",
+      "sha256": "65a34c7f49f36ebf0116937e3c7e9b3b68d04061b843274e1847c942248ca455",
+      "bytes": 332,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-v3-probe.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v3/probe.json",
+      "source_sha256": "11ba81ce0ecea9711a5c91157f0e34d7e1866d04c8152c3b3ede41ceeffb9f81",
+      "sha256": "11ba81ce0ecea9711a5c91157f0e34d7e1866d04c8152c3b3ede41ceeffb9f81",
+      "bytes": 4361,
+      "transform": "copy"
+    },
+    {
+      "file": "ui-v3-install-receipt.json",
+      "source": ".local-pilot/image-route-review-image-20261101-v3/install-receipt.json",
+      "source_sha256": "e4671f241f0e4d978e05f24892e0ba50e6c5586ff4a66b1c7741dfae6cd184cc",
+      "sha256": "e4671f241f0e4d978e05f24892e0ba50e6c5586ff4a66b1c7741dfae6cd184cc",
+      "bytes": 4796,
+      "transform": "copy"
+    }
+  ]
+}

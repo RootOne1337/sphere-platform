@@ -1,0 +1,406 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T06:02:04.459414+00:00",
+  "scope": "finite TURN configuration/auth fixtures; one authorized PH030 OTA; panel source not installed",
+  "turnSourceRevision": "0cea768b566a65cef06dc3790885d3539c34936b",
+  "apkSourceRevision": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+  "networkClarification": "PH030 and browser on laptop without VPN; VPN only on main PC",
+  "runtime": {
+    "uiSourceRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+    "apiSourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "directProbeEnabled": false,
+    "directMediaControlEnabled": false
+  },
+  "runtimeInstalled": false,
+  "mediaControlInstalled": false,
+  "directChannelAccepted": false,
+  "apk": {
+    "source_commit": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+    "file": "SphereAgent-direct-probe-canary-1.2.50-dev-e54b2fc.apk",
+    "sha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
+    "bytes": 57655284,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.50-dev",
+    "version_code": 10250,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 1000,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1000,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "signed_discovery_manifest_version": 28,
+    "baked_management_urls": [],
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "debug_video_probe": true,
+    "continuous_input_enabled": true,
+    "direct_probe_canary_enabled": true,
+    "ice_profile": "public-stun",
+    "stun_url": "stun:stun.cloudflare.com:3478",
+    "source_export": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform",
+    "installed": true,
+    "published_to_ota": true,
+    "built_at": "2026-10-10T05:50:10.995244+00:00"
+  },
+  "ota": {
+    "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+    "apkSha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
+    "apkBytes": 57655284,
+    "beforeApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+    "expectedVersionCode": 10250,
+    "newCommandIds": 1,
+    "adbInstalls": 0,
+    "dataClears": 0,
+    "state": "installed_hash_and_command_confirmed",
+    "samples": [
+      {
+        "atUtc": "2026-10-10T05:51:19.825811+00:00",
+        "versionCode": 10249,
+        "versionName": "1.2.49-dev",
+        "online": true,
+        "lastHeartbeat": "2026-10-10T05:50:51.393097Z",
+        "result": null
+      },
+      {
+        "atUtc": "2026-10-10T05:51:27.851804+00:00",
+        "versionCode": 10249,
+        "versionName": "1.2.49-dev",
+        "online": false,
+        "lastHeartbeat": "2026-10-10T05:51:21.641454Z",
+        "result": null
+      },
+      {
+        "atUtc": "2026-10-10T05:51:35.876733+00:00",
+        "versionCode": 10250,
+        "versionName": "1.2.50-dev",
+        "online": true,
+        "lastHeartbeat": "2026-10-10T05:51:30.545243Z",
+        "result": {
+          "command_id": "d12673da-18c8-4474-93e3-9674901f911d",
+          "sha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
+          "version_name": "1.2.50-dev",
+          "version_code": 10250,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10250,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-10T05:51:30.142297+00:00"
+        }
+      },
+      {
+        "atUtc": "2026-10-10T05:53:51.610155+00:00",
+        "versionCode": 10250,
+        "versionName": "1.2.50-dev",
+        "online": true,
+        "lastHeartbeat": "2026-10-10T05:53:30.520979Z",
+        "result": {
+          "command_id": "d12673da-18c8-4474-93e3-9674901f911d",
+          "sha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
+          "version_name": "1.2.50-dev",
+          "version_code": 10250,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10250,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-10T05:51:30.142297+00:00"
+        }
+      }
+    ],
+    "containerArtifactVerified": true,
+    "authenticatedDownloadVerified": true,
+    "anonymousDownloadDenied": true,
+    "installedApkSha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
+    "hashConfirmedAtUtc": "2026-10-10T05:53:52.382964+00:00",
+    "ordinaryChannelUnchanged": true,
+    "grantClearedOnCompletion": true,
+    "onlyCanaryReleasePublished": true
+  },
+  "windowsStunFixture": {
+    "listenerReady": true,
+    "internalControlExit": 0,
+    "windowsLoopback": {
+      "bindingConfirmed": true,
+      "responseBytes": 40
+    },
+    "windowsPhysical": {
+      "bindingConfirmed": false,
+      "reason": "udp_timeout"
+    },
+    "windowsPhysicalForcedNic": {
+      "bindingConfirmed": true,
+      "responseBytes": 40
+    },
+    "androidExit": 0,
+    "android": {
+      "bindingConfirmed": false,
+      "reason": "udp_timeout"
+    },
+    "observedAtUtc": "2026-10-10T05:07:41.908011+00:00",
+    "image": "coturn/coturn@sha256:59af4221a2c45c1195a1a4a865542b3ea744be1dd8e228d11bde87c6631081cf",
+    "dexBytes": 3372,
+    "dexSha256": "b0640d86166be3c1aca2b812c8f9e45b586f34bbe9a56a1188877fb63fa2b911",
+    "privateLanOnly": true,
+    "containerHardDeadlineSeconds": 40,
+    "containerStopped": true,
+    "previousContainersUnchanged": true,
+    "firewallChanged": false,
+    "routesChanged": false,
+    "apkChanged": false,
+    "turnAllocationTested": false,
+    "directWebRtcAccepted": false
+  },
+  "turnRestAuthFixture": {
+    "scope": "isolated-coturn-rest-auth-only",
+    "network": "none",
+    "publicListener": false,
+    "directWebRtcAccepted": false,
+    "apkChanged": false,
+    "routesChanged": false,
+    "listenerReady": true,
+    "valid": {
+      "exitCode": 0,
+      "receivedMessages": 4,
+      "sentMessages": 4
+    },
+    "wrongKey": {
+      "exitCode": 124,
+      "receivedMessages": 0,
+      "sentMessages": 0
+    },
+    "expired": {
+      "exitCode": 124,
+      "receivedMessages": 0,
+      "sentMessages": 0
+    },
+    "accepted": true,
+    "observedAtUtc": "2026-10-10T05:16:04.265091+00:00",
+    "image": "coturn/coturn@sha256:59af4221a2c45c1195a1a4a865542b3ea744be1dd8e228d11bde87c6631081cf",
+    "containerStopped": true,
+    "previousContainersUnchanged": true,
+    "hardDeadlineSeconds": 60,
+    "helperSha256": "48233ed303cb8c8243aff5ed136285c81b4a036371112706297b4edf13459744"
+  },
+  "turnTemplateFixture": {
+    "observedAtUtc": "2026-10-10T05:31:04.116424+00:00",
+    "image": "coturn/coturn@sha256:59af4221a2c45c1195a1a4a865542b3ea744be1dd8e228d11bde87c6631081cf",
+    "networkMode": "none",
+    "templateHashes": {
+      "compose.yml": "372bf30e6f0e807b77e984f139e78b39929f69200e802268f6f172c4f53822f3",
+      "entrypoint.sh": "8938cf36d14c89cfbe793ebe858e98f3a6f07f1abf3a3eec2901339a298f1c1c",
+      "README.md": "0bc6cd3eee671ca9388e9038e97d1501b5a8e979ebafa0adb257b6bb1c771af9",
+      "turnserver.conf": "572f1cf8682489f9c7e63c2f01d80fa5d31362080febaf043eda6e6dac672a8b"
+    },
+    "cases": [
+      {
+        "case": "valid",
+        "exitCode": 0,
+        "realUdpListenerObserved": true,
+        "fixtureTlsHandshakeVerified": true,
+        "seconds": 6.82
+      },
+      {
+        "case": "wrong-key",
+        "exitCode": 78,
+        "realUdpListenerObserved": false,
+        "fixtureTlsHandshakeVerified": false,
+        "seconds": 0.787
+      },
+      {
+        "case": "expired",
+        "exitCode": 78,
+        "realUdpListenerObserved": false,
+        "fixtureTlsHandshakeVerified": false,
+        "seconds": 0.687
+      },
+      {
+        "case": "wrong-host",
+        "exitCode": 78,
+        "realUdpListenerObserved": false,
+        "fixtureTlsHandshakeVerified": false,
+        "seconds": 0.557
+      },
+      {
+        "case": "invalid-rest-key",
+        "exitCode": 78,
+        "realUdpListenerObserved": false,
+        "fixtureTlsHandshakeVerified": false,
+        "seconds": 0.66
+      },
+      {
+        "case": "missing-cert",
+        "exitCode": 78,
+        "realUdpListenerObserved": false,
+        "fixtureTlsHandshakeVerified": false,
+        "seconds": 0.632
+      }
+    ],
+    "existingActiveContainersUnchanged": true,
+    "ownedContainersRemoved": true,
+    "publicListenersExposed": false,
+    "publicChainTrustVerified": false,
+    "fixtureTlsOnly": true,
+    "nativeWebrtcAccepted": false,
+    "helperSha256": "1a08c9a2f674bd02aecbd5fce828fb609e6b2699003f601669711885ae1ad6d5"
+  },
+  "capabilityPanel": {
+    "sourceBaseRevision": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+    "installed": false,
+    "sourceHashesNormalizedLf": {
+      "backend/api/v1/direct_probe/router.py": "9d619c51294419abc4de9cabbe466de762ad47febba0ade652eecddf88b61c2b",
+      "backend/api/ws/direct/router.py": "dc9f97efd26c91a4a43c6d5bc685fb2605e90535a4dba51b8dfcd15de65dbb9d",
+      "frontend/src/features/stream/DirectProbeAccess.tsx": "41df921ea11ac984040d9d1992df0c709f71e1d5afa0bd4a1ee9aeeccde1e22f",
+      "frontend/src/features/stream/DirectProbeDiagnostics.tsx": "1c59a97a002af84a7581b73f75389c0e1a84a8ba72eb069df3cb8355bf6eb467",
+      "frontend/components/sphere/DeviceStream.tsx": "29c8bbc05303cd25ffb2d5883d14d6882bd3002631898c2650e17b50c3c749ce",
+      "tests/test_ws/test_direct_probe_capabilities.py": "92e605775eb2653e825dd0fd52c1ba4a481a3579084ac95b5a8b43509ab5b6e6",
+      "frontend/__tests__/stream/direct-probe-access.test.tsx": "05f1a4835bba5aafa92152eee419d8f292113f8b5c86c4d080a5ed309f2791dd"
+    },
+    "backendFocusedPassed": 87,
+    "frontendLatestPanelSubsetPassed": 24,
+    "frontendEarlierCoreAndPanelPassed": 48,
+    "installerPassed": 27,
+    "typeCheckPassed": true,
+    "scopedEslintPassed": true,
+    "ruffPassed": true,
+    "scopedMypyPassed": true,
+    "newHttpEndpoints": 1,
+    "httpOperations": 183,
+    "httpPaths": 145,
+    "nativeSupportAttestedByCapabilities": false,
+    "credentialsIssuedByHttpRead": false
+  },
+  "hostedCiForApkSourceAtThisCut": [
+    {
+      "conclusion": "success",
+      "databaseId": 38028561603,
+      "headSha": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+      "status": "completed",
+      "workflowName": "Preview — Deploy"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38028561579,
+      "headSha": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+      "status": "in_progress",
+      "workflowName": "CI — Android"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38028561584,
+      "headSha": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+      "status": "completed",
+      "workflowName": "CI — Frontend"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38028561593,
+      "headSha": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+      "status": "in_progress",
+      "workflowName": "CI — Backend"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38028557505,
+      "headSha": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+      "status": "in_progress",
+      "workflowName": "CI — Android"
+    }
+  ],
+  "localEnvironmentLimit": "Global PyJWT/Pydantic/mypy differ from repository pins. Pinned private PyJWT2.15.1/Pydantic2.9.2 targets used; global installations untouched. Earlier full local unit run had two environment failures, both pinned-auth retests passed16; not a full green run claim.",
+  "storage": {
+    "observedAtUtc": "2026-10-10T05:55:21.248407+00:00",
+    "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+    "process": {
+      "pid": 32064,
+      "creationUtc": "2026-10-10T00:14:44.8920620Z",
+      "commandMatched": true
+    },
+    "completeSamples": 171,
+    "firstSampleUtc": "2026-10-10T00:14:45.084580+00:00",
+    "lastSampleUtc": "2026-10-10T05:54:43.044879+00:00",
+    "dueUtc": "2026-10-10T12:34:45.083321+00:00",
+    "prefixBytes": 2261648,
+    "prefixSha256": "377abd109bffea7d6d093225de18b95e3a1f08819b971e5d458e8384b74cb028",
+    "freeStartBytes": 46521065472,
+    "freeEndBytes": 38804901888,
+    "freeDeltaBytes": -7716163584,
+    "namedFiles": [
+      {
+        "name": "docker_data.vhdx",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": true,
+        "allocatedDeltaBytes": 0,
+        "lastAllocatedBytes": 234731077632
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 2359296,
+        "lastAllocatedBytes": 9562095616
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 1,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 159318016,
+        "lastAllocatedBytes": 7237140480
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 2,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": true,
+        "allocatedDeltaBytes": 0,
+        "lastAllocatedBytes": 1023737856
+      },
+      {
+        "name": "thread_history_1.sqlite",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 30777344,
+        "lastAllocatedBytes": 769613824
+      }
+    ],
+    "vssMeasuredSamples": 0,
+    "writerAttribution": "UNDETERMINED",
+    "globalKernelCaptureAvailable": false,
+    "futureCoverageGuaranteed": false,
+    "inputMutationsPerformed": false
+  },
+  "openGates": [
+    "actual laptop browser-to-PH030 echo/path",
+    "public authenticated native TURN",
+    "direct video and native input/ACK",
+    "cross-viewer/task/API ownership",
+    "per-tab card/stream viewer presence",
+    "keyboard/IME/audio",
+    "reconnect/revocation/geometry",
+    "correlated input-to-picture latency",
+    "resource soak and unknown C: writer"
+  ],
+  "ledger": {
+    "closedInThisBatch": [],
+    "productAccepted": 9,
+    "productOpen": 41,
+    "legacyUnclosed": 7
+  }
+}

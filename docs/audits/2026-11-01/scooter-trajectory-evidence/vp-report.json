@@ -1,0 +1,2013 @@
+{
+  "status": "exploratory_no_accepted_focal",
+  "method": "LSD segments, HUD mask and fixed lower-image region; greedy independent two-line VP hypotheses; no Manhattan or orthogonality verification",
+  "assumptions": "pinhole, square pixels, principal point (960,540); orthogonal scene families NOT established",
+  "not_ground_truth": true,
+  "selection_uses_sfm_poses": false,
+  "source_frame_indices": "filenames bound to prepared source frames",
+  "input_sha256": {
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000000.png": "3e19311bd30def3a2d660154e3ca5eb2d3c695206b02b1d55c1bb06a1738650a",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000079.png": "a9e32db8dd6327e3a7cc6e6e94b091f33e3308ffd525a471910cd77f58b91942",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000257.png": "09bb0766f5df7a2209002edd9191b986ea1b09aaeed855e49c6d3bd652049582",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000389.png": "ed82342d1d09230081e804765200978aeab16401a2b53906ceebdf67351cbf91",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000479.png": "4f223bd95637f14c66d1db159fea730f3710c0710b088446a239f4aa67eb90d4",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000499.png": "d5b15387ba3fb9aa1178d64556d5968b0653327d79174300b2048c342c6f1e8e",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000526.png": "b7847ff1b77d95e66c3c78c7d017aaa4b60a8a78f31e9e32a49d770519fc85ab",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000572.png": "6f9544eb6716b256fccd67032251ea3299dae8ef221b3c764c181dc816d8a8ce",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000684.png": "f0c14ca25db4909aa39d032960b1e3518765b792c30cfedde7cfc1efaa2ce84e",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000762.png": "6d18c9b77404e38ce56da1a745a8b250356ed1a7f43b7893e167453a2b568665",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000831.png": "e9120ceba9d079826421da5278db5e98d3beb9280cc2c85f9fb6ae9b52fdfc83",
+    ".local-pilot\\scooter-targeted-gap-20261101-v2\\prepared\\images\\00000900.png": "fe165fbb0451fb0c5baa7c259de4710545d2b00c9d4fa17ccd4352aaacd0e08b"
+  },
+  "mask_sha256": "f638c5d6da826eebfae0f3be57784ea4518dfac4238a6bcddaffbfbed0fb1ec7",
+  "frames": [
+    {
+      "image": "00000000.png",
+      "ticks_90k": 0,
+      "segments_total": 93,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            989.1805887826846,
+            508.09805144691404
+          ],
+          "inliers": 50,
+          "median_angular_residual_deg": 0.18181414534563523,
+          "p90_angular_residual_deg": 0.7574620595029138,
+          "normalized_fit_singular_values": [
+            2294.9531668968975,
+            4.059279445501792,
+            0.019694512844752092
+          ],
+          "distance_from_center_image_widths": 0.022518083753216022,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            795.2841067271073,
+            15313.057507829868
+          ],
+          "inliers": 31,
+          "median_angular_residual_deg": 0.43130994727428706,
+          "p90_angular_residual_deg": 0.9362087608317482,
+          "normalized_fit_singular_values": [
+            3041.2587026775714,
+            1.6612471599638976,
+            0.055833105508843316
+          ],
+          "distance_from_center_image_widths": 7.694779036344766,
+          "finite_near_enough": false
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 689.9969763224601,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 689.9969763224601
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 693.0350077374645
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 683.5833034229314
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 1086.907215073772
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    },
+    {
+      "image": "00000079.png",
+      "ticks_90k": 277830,
+      "segments_total": 52,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            2859.3583005845453,
+            518.3578278363959
+          ],
+          "inliers": 42,
+          "median_angular_residual_deg": 0.26638891874550036,
+          "p90_angular_residual_deg": 1.0451052117786193,
+          "normalized_fit_singular_values": [
+            1815.2088741415769,
+            0.5183880393570052,
+            0.044011514129019894
+          ],
+          "distance_from_center_image_widths": 0.9893133318083573,
+          "finite_near_enough": true
+        }
+      ],
+      "pair_hypotheses": []
+    },
+    {
+      "image": "00000257.png",
+      "ticks_90k": 896220,
+      "segments_total": 134,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            960.704413193717,
+            544.7762249284087
+          ],
+          "inliers": 57,
+          "median_angular_residual_deg": 0.542154883091816,
+          "p90_angular_residual_deg": 1.676933521690948,
+          "normalized_fit_singular_values": [
+            2676.7457134784986,
+            3.0438729524146297,
+            0.048428607429518634
+          ],
+          "distance_from_center_image_widths": 0.002514526077382298,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            231.24339049003117,
+            -176225.06476404637
+          ],
+          "inliers": 33,
+          "median_angular_residual_deg": 0.3489235488578605,
+          "p90_angular_residual_deg": 1.2208538544638818,
+          "normalized_fit_singular_values": [
+            3446.308306140908,
+            1.2534040361135839,
+            0.061115934599119605
+          ],
+          "distance_from_center_image_widths": 92.06592030994827,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            -135436.58726863362,
+            570.0318551553707
+          ],
+          "inliers": 20,
+          "median_angular_residual_deg": 0.14675617463984772,
+          "p90_angular_residual_deg": 0.8380185191990785,
+          "normalized_fit_singular_values": [
+            938.8469133165879,
+            1.142942110270164,
+            0.04105474378501607
+          ],
+          "distance_from_center_image_widths": 71.03989092439923,
+          "finite_near_enough": false
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 919.1208052092883,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 919.1208052092883
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 936.709965780097
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 898.6281484270289
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 3054.0093163653305
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": 309.7355593966453,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 309.7355593966453
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 2576.942858081232
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 303.2512636589192
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 308.7116852319882
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": null,
+          "f_squared_sign": "nonpositive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    },
+    {
+      "image": "00000389.png",
+      "ticks_90k": 1347210,
+      "segments_total": 67,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            894.7941591884263,
+            535.7368325378591
+          ],
+          "inliers": 36,
+          "median_angular_residual_deg": 0.6995456286359923,
+          "p90_angular_residual_deg": 2.928118575125323,
+          "normalized_fit_singular_values": [
+            1892.174972212679,
+            1.2124415551438215,
+            0.050950076425099446
+          ],
+          "distance_from_center_image_widths": 0.03403388305082427,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            5752.758090688309,
+            469.62427909683913
+          ],
+          "inliers": 12,
+          "median_angular_residual_deg": 0.8017327393219362,
+          "p90_angular_residual_deg": 1.5995997723244126,
+          "normalized_fit_singular_values": [
+            992.8781705616615,
+            0.17200537489490447,
+            0.05369601653754819
+          ],
+          "distance_from_center_image_widths": 2.4964972671985652,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            982.4114578707646,
+            17939.14545256202
+          ],
+          "inliers": 13,
+          "median_angular_residual_deg": 0.5356452064568263,
+          "p90_angular_residual_deg": 0.8213610258917596,
+          "normalized_fit_singular_values": [
+            2229.244633685446,
+            0.7151206742853591,
+            0.03821845997787166
+          ],
+          "distance_from_center_image_widths": 9.062062440838464,
+          "finite_near_enough": false
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 558.7627382228746,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 558.7627382228746
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 288.07861710345907
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 732.689774475124
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 559.9057637387377
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 553.4700813818125
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": true
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": 275.021505916712,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 275.021505916712
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 274.5668572458353
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 266.98070779653204
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 953.0410161170873
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": 1056.9128196255253,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 1056.9128196255253
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 940.0173242860701
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 1160.1244961725504
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 531.958420526598
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 1395.1851688605364
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    },
+    {
+      "image": "00000479.png",
+      "ticks_90k": 1710450,
+      "segments_total": 64,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            859.4160214507758,
+            -53867.59968139856
+          ],
+          "inliers": 16,
+          "median_angular_residual_deg": 0.3534110605635864,
+          "p90_angular_residual_deg": 1.0043189253879468,
+          "normalized_fit_singular_values": [
+            2083.9029157707387,
+            1.1015664876285558,
+            0.04153720986125426
+          ],
+          "distance_from_center_image_widths": 28.3373399253748,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            913.1669443007655,
+            549.8570425268211
+          ],
+          "inliers": 20,
+          "median_angular_residual_deg": 0.4041379283814114,
+          "p90_angular_residual_deg": 1.2522469235767788,
+          "normalized_fit_singular_values": [
+            1688.4034775608434,
+            2.3898037598359636,
+            0.03567726747648491
+          ],
+          "distance_from_center_image_widths": 0.024926630584580004,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            3047.673258959539,
+            509.50370887434667
+          ],
+          "inliers": 11,
+          "median_angular_residual_deg": 0.38391394475101964,
+          "p90_angular_residual_deg": 1.3949916353997258,
+          "normalized_fit_singular_values": [
+            997.1356866259117,
+            0.729927791826998,
+            0.03784505312502211
+          ],
+          "distance_from_center_image_widths": 1.0874458274875314,
+          "finite_near_enough": true
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 729.1003831928494,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 729.1003831928494
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 732.3656097987438
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 722.6391569296767
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 1772.1103282351817
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": null,
+          "f_squared_sign": "nonpositive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 1077.720320698373
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": 313.1656450781125,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 313.1656450781125
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 440.1466244488136
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 311.0617385502985
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 307.8604185738179
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": true
+        }
+      ]
+    },
+    {
+      "image": "00000499.png",
+      "ticks_90k": 1797480,
+      "segments_total": 42,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            23388.49741903638,
+            2212.5841209113714
+          ],
+          "inliers": 14,
+          "median_angular_residual_deg": 0.7223922435176102,
+          "p90_angular_residual_deg": 2.44085682402942,
+          "normalized_fit_singular_values": [
+            787.7742713064363,
+            0.6868169766150626,
+            0.08770476335542231
+          ],
+          "distance_from_center_image_widths": 11.713946169525208,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            4123.437649500556,
+            417.12516754084487
+          ],
+          "inliers": 13,
+          "median_angular_residual_deg": 0.4372011178877719,
+          "p90_angular_residual_deg": 1.3651122630562467,
+          "normalized_fit_singular_values": [
+            1105.8144936833692,
+            0.6308074758424131,
+            0.029052518943929937
+          ],
+          "distance_from_center_image_widths": 1.6488662050103213,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            1081.8539430791968,
+            10264.057167437375
+          ],
+          "inliers": 8,
+          "median_angular_residual_deg": 0.5336756025691045,
+          "p90_angular_residual_deg": 1.198933855832474,
+          "normalized_fit_singular_values": [
+            1635.4498519568056,
+            0.7502307463255152,
+            0.035767571923153704
+          ],
+          "distance_from_center_image_widths": 5.065010741936016,
+          "finite_near_enough": true
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": null,
+          "f_squared_sign": "nonpositive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": null,
+          "f_squared_sign": "nonpositive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": 899.6468996196703,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 899.6468996196703
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 805.8328285391809
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 982.2191916467084
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 588.3908496198173
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 1126.018337361448
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": true
+        }
+      ]
+    },
+    {
+      "image": "00000526.png",
+      "ticks_90k": 1899180,
+      "segments_total": 117,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            956.7119452026686,
+            552.6556348268751
+          ],
+          "inliers": 64,
+          "median_angular_residual_deg": 0.32461791058177014,
+          "p90_angular_residual_deg": 1.1309853766954803,
+          "normalized_fit_singular_values": [
+            2946.7335929592787,
+            2.8764476273423125,
+            0.028918565651879117
+          ],
+          "distance_from_center_image_widths": 0.006810309544106859,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            727.3667549599664,
+            -74955.54285354298
+          ],
+          "inliers": 34,
+          "median_angular_residual_deg": 0.37829127585090994,
+          "p90_angular_residual_deg": 1.0319094161901492,
+          "normalized_fit_singular_values": [
+            3344.4095599433613,
+            1.2927356557476242,
+            0.06120544221080044
+          ],
+          "distance_from_center_image_widths": 39.32078191286657,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            1623.2544490346042,
+            608.0233697249078
+          ],
+          "inliers": 11,
+          "median_angular_residual_deg": 1.0372259697345716,
+          "p90_angular_residual_deg": 1.6968007143995336,
+          "normalized_fit_singular_values": [
+            1461.885795627996,
+            2.532334919635608,
+            0.033529949611708715
+          ],
+          "distance_from_center_image_widths": 0.34725706365717074,
+          "finite_near_enough": true
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 977.0768191671374,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 977.0768191671374
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 981.6818898940554
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 970.0777742849165
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 2139.054393196242
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": 36.33095162623267,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 36.33095162623267
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 175.19795937583507
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 53.74504874454239
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": true
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": 2299.947012188614,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 2299.947012188614
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 2294.9471543117484
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 2303.936213671522
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 2984.6227892480147
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 1291.0969458766695
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    },
+    {
+      "image": "00000572.png",
+      "ticks_90k": 2062260,
+      "segments_total": 109,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            992.2903715156754,
+            545.8046845572113
+          ],
+          "inliers": 58,
+          "median_angular_residual_deg": 0.3735641735951097,
+          "p90_angular_residual_deg": 1.3003005674867014,
+          "normalized_fit_singular_values": [
+            2683.3639281748556,
+            3.250768911673643,
+            0.034405546626376564
+          ],
+          "distance_from_center_image_widths": 0.01708748088172504,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            1424.0261560139213,
+            -31937.376244649688
+          ],
+          "inliers": 34,
+          "median_angular_residual_deg": 0.5642680309919086,
+          "p90_angular_residual_deg": 1.2956193702395173,
+          "normalized_fit_singular_values": [
+            3455.335465481027,
+            1.2602988789140714,
+            0.08704281543586147
+          ],
+          "distance_from_center_image_widths": 16.917026563883194,
+          "finite_near_enough": false
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 416.5781407795895,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 416.5781407795895
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 383.9403001170349
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 441.65205840887927
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 1315.2447613504562
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    },
+    {
+      "image": "00000684.png",
+      "ticks_90k": 2433150,
+      "segments_total": 114,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            -274042.40244099835,
+            865.2005138176253
+          ],
+          "inliers": 40,
+          "median_angular_residual_deg": 0.18498937422744305,
+          "p90_angular_residual_deg": 1.0979486186496346,
+          "normalized_fit_singular_values": [
+            1575.084624856707,
+            1.5487081394254212,
+            0.06953995745638278
+          ],
+          "distance_from_center_image_widths": 143.23051808424472,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            959.7798134739226,
+            545.2444055763359
+          ],
+          "inliers": 31,
+          "median_angular_residual_deg": 0.5789463512082048,
+          "p90_angular_residual_deg": 1.3148738974868714,
+          "normalized_fit_singular_values": [
+            2073.9448051354548,
+            2.8315516488188854,
+            0.03246596075134556
+          ],
+          "distance_from_center_image_widths": 0.00273386760944064,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            1516.116194583664,
+            -65146.62491742746
+          ],
+          "inliers": 28,
+          "median_angular_residual_deg": 0.4347125519413357,
+          "p90_angular_residual_deg": 1.139894558438927,
+          "normalized_fit_singular_values": [
+            3392.7550788481694,
+            0.907884424750893,
+            0.07118656516141923
+          ],
+          "distance_from_center_image_widths": 34.213009880777534,
+          "finite_near_enough": false
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": null,
+          "f_squared_sign": "nonpositive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 3624.3019436957297
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": 13202.068539473137,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 13202.068539473137
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 13691.812570320055
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 12693.261518660933
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 13320.272448126563
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 13082.620584178581
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": 587.0347104734288,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 587.0347104734288
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 561.8031175722135
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 607.444449877836
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 1869.4951232537292
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    },
+    {
+      "image": "00000762.png",
+      "ticks_90k": 2706120,
+      "segments_total": 66,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            959.3961144721324,
+            527.0347210260397
+          ],
+          "inliers": 32,
+          "median_angular_residual_deg": 0.29259429254463865,
+          "p90_angular_residual_deg": 1.258095186443121,
+          "normalized_fit_singular_values": [
+            1863.7027517933477,
+            2.5971120756152146,
+            0.028466629078847477
+          ],
+          "distance_from_center_image_widths": 0.006760070303695122,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            10168.573022910785,
+            428.48968684784523
+          ],
+          "inliers": 17,
+          "median_angular_residual_deg": 0.6689532478419783,
+          "p90_angular_residual_deg": 1.5216470722583828,
+          "normalized_fit_singular_values": [
+            1102.9604915620648,
+            0.7700853580815697,
+            0.0594407919206237
+          ],
+          "distance_from_center_image_widths": 4.796483416546661,
+          "finite_near_enough": true
+        },
+        {
+          "vp_xy_fullres": [
+            835.8291360414787,
+            16838.27776499079
+          ],
+          "inliers": 11,
+          "median_angular_residual_deg": 0.2517629206097719,
+          "p90_angular_residual_deg": 0.9495227638740734,
+          "normalized_fit_singular_values": [
+            1790.9667398295649,
+            0.7425606136984184,
+            0.03446621663312627
+          ],
+          "distance_from_center_image_widths": 8.488932690242555,
+          "finite_near_enough": false
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 64.14952581552642,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 64.14952581552642
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 666.1784147334233
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 88.23825748738703
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": null
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": true
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": 459.60497498446625,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 459.60497498446625
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 463.5967223846805
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 450.49255826830836
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 995.3028344977622
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": 1720.7157015308742,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 1720.7157015308742
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 1588.2402909714826
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 1842.4466964133853
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 1477.0218982149972
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 1932.7502071357135
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    },
+    {
+      "image": "00000831.png",
+      "ticks_90k": 2962260,
+      "segments_total": 166,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            797.4020530595777,
+            52576.56191670957
+          ],
+          "inliers": 88,
+          "median_angular_residual_deg": 0.2877724614246858,
+          "p90_angular_residual_deg": 0.7741535465378352,
+          "normalized_fit_singular_values": [
+            5515.198823384177,
+            2.4438564231273214,
+            0.09773406180611818
+          ],
+          "distance_from_center_image_widths": 27.10250830724024,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            13314.016060055994,
+            540.6777717705546
+          ],
+          "inliers": 53,
+          "median_angular_residual_deg": 0.4408942704613497,
+          "p90_angular_residual_deg": 1.0381548565308065,
+          "normalized_fit_singular_values": [
+            1674.3314494244307,
+            2.1084719199151847,
+            0.09386232558782212
+          ],
+          "distance_from_center_image_widths": 6.43438337429589,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            902.0056947969183,
+            534.2811066314433
+          ],
+          "inliers": 18,
+          "median_angular_residual_deg": 0.4109169729270892,
+          "p90_angular_residual_deg": 1.3539410808976784,
+          "normalized_fit_singular_values": [
+            1055.8878173292087,
+            1.8017051931847512,
+            0.03614652498240704
+          ],
+          "distance_from_center_image_widths": 0.03035187331077949,
+          "finite_near_enough": true
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 1404.8020270238244,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 1404.8020270238244
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 1177.2751019624507
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 1598.8598451896257
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 2113.9896499692927
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": 536.8070360080072,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 536.8070360080072
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 544.4687520974828
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 524.6611914414996
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 1668.3339770645657
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": 846.4434145146054,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 846.4434145146054
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 352.070177297374
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 1142.0908449891733
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 845.2244836798377
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 844.9381516646292
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    },
+    {
+      "image": "00000900.png",
+      "ticks_90k": 3194370,
+      "segments_total": 220,
+      "families": [
+        {
+          "vp_xy_fullres": [
+            742.6023538220038,
+            253789.88534801253
+          ],
+          "inliers": 132,
+          "median_angular_residual_deg": 0.23474189979474713,
+          "p90_angular_residual_deg": 0.7367568404574677,
+          "normalized_fit_singular_values": [
+            6924.487497670958,
+            3.536102283833055,
+            0.0856894569311932
+          ],
+          "distance_from_center_image_widths": 131.90103055128907,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            13341.164560604824,
+            499.2875167976648
+          ],
+          "inliers": 71,
+          "median_angular_residual_deg": 0.4181487495245944,
+          "p90_angular_residual_deg": 1.163250925578059,
+          "normalized_fit_singular_values": [
+            1820.2125017416156,
+            1.8792606044756996,
+            0.09607823244131326
+          ],
+          "distance_from_center_image_widths": 6.448558071370162,
+          "finite_near_enough": false
+        },
+        {
+          "vp_xy_fullres": [
+            877.5332390582056,
+            544.2399661644565
+          ],
+          "inliers": 11,
+          "median_angular_residual_deg": 0.6244696510470275,
+          "p90_angular_residual_deg": 1.960254184770735,
+          "normalized_fit_singular_values": [
+            791.1024062252029,
+            0.48184509582195517,
+            0.034420038977809014
+          ],
+          "distance_from_center_image_widths": 0.04300816996491747,
+          "finite_near_enough": true
+        }
+      ],
+      "pair_hypotheses": [
+        {
+          "families": [
+            1,
+            2
+          ],
+          "hypothesis_f_px": 3605.8380074044076,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 3605.8380074044076
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 3523.6207122432597
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 3685.596905188449
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 919.632229824128
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 5015.356820122879
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            1,
+            3
+          ],
+          "hypothesis_f_px": null,
+          "f_squared_sign": "nonpositive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": null
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 3325.9878217359364
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        },
+        {
+          "families": [
+            2,
+            3
+          ],
+          "hypothesis_f_px": 1010.54794916009,
+          "f_squared_sign": "positive",
+          "principal_point_sensitivity_not_confidence_interval": [
+            {
+              "principal_offset_xy": [
+                0,
+                0
+              ],
+              "focal_px": 1010.54794916009
+            },
+            {
+              "principal_offset_xy": [
+                -48,
+                0
+              ],
+              "focal_px": 654.6492672934405
+            },
+            {
+              "principal_offset_xy": [
+                48,
+                0
+              ],
+              "focal_px": 1268.5584936988478
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                -48
+              ],
+              "focal_px": 1010.2741402062521
+            },
+            {
+              "principal_offset_xy": [
+                0,
+                48
+              ],
+              "focal_px": 1008.5397744927295
+            }
+          ],
+          "assumed_orthogonal_not_verified": true,
+          "both_finite_near_enough": false
+        }
+      ]
+    }
+  ],
+  "elapsed_seconds": 1.3439999999245629,
+  "references": [
+    "https://openaccess.thecvf.com/content_cvpr_2017/papers/Antunes_Unsupervised_Vanishing_Point_CVPR_2017_paper.pdf",
+    "https://openaccess.thecvf.com/content/ICCV2023/papers/Pautrat_Vanishing_Point_Estimation_in_Uncalibrated_Images_with_Prior_Gravity_Direction_ICCV_2023_paper.pdf"
+  ],
+  "limitations": "Image-region filtering is not a semantic sky/world classifier. Greedy VP families can mix parallel/repeated facade lines, curves, signs and moving objects. Pair focal values are conditional hypotheses only; no uncertainty interval, no heldout validation, no recovered dynamic FOV."
+}

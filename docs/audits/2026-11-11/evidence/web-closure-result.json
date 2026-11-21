@@ -1,0 +1,29 @@
+{
+  "browser": {
+    "chromium": "157.0.4341.46",
+    "stream": {
+      "before": "- button \"Следующая страница\": Вперёд",
+      "request": "/api/v1/devices?page=2&per_page=4",
+      "failure": "net::ERR_ABORTED",
+      "pager": "1 / 2",
+      "fifthDeviceVisible": false
+    },
+    "task": {
+      "role": "viewer",
+      "readGranted": true,
+      "executeGranted": false,
+      "before": "- button \"Остановить задание\"",
+      "buttonEnabled": true,
+      "responseStatus": 403,
+      "responseDetail": "Permission denied: script:execute",
+      "displayed": "Permission denied: script:execute"
+    }
+  },
+  "asgi": {
+    "device_pages": [
+      1
+    ],
+    "task_stop_requests": 1,
+    "database_calls": 0
+  }
+}

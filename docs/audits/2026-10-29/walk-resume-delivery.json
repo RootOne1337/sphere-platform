@@ -1,0 +1,23 @@
+{
+  "schema": "sphere-walk-resume-delivery-v1",
+  "installed": true,
+  "physicalActionsByAgent": 0,
+  "frontendTests": 74,
+  "frontendFailed": 0,
+  "pythonUnitTests": 78,
+  "httpTests": 35,
+  "httpSubtests": 5,
+  "tsc": "passed",
+  "sourceSha256": "5234bec87244f55d018bdf1649a782ee2c52cfd9d60253b57bfd749d79e75d95",
+  "imageId": "sha256:c41a6de5801b21566506d217fb31eba703eec83078603bf1656f33d511bbd8f7",
+  "pages": 2,
+  "assets": 31,
+  "sourceUnchanged": true,
+  "apiHealth": 200,
+  "missingCapability": 403,
+  "originalAssetsUnchanged": true,
+  "browserVerification": "Latest IAB reload rejected: Local browser use is disabled in Work settings; no native UI fallback used.",
+  "liveRouteCompletion": "not_verified",
+  "supersededUninstalledImage": "sphere-route-local:route-walk-expiry-20261029-v1",
+  "offlineResumeResult": "walk-resume-http-results.json"
+}

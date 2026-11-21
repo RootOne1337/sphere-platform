@@ -1,5 +1,8 @@
 # SPHERE PLATFORM — Саммари-выжимка по возможностям фарминга
 
+> Исторический анализ2025, не актуальный каталог runtime-возможностей.
+> Действующие требования и границы: [WORK-STATUS](operations/WORK-STATUS.md).
+
 > Краткая выжимка из [ANALYSIS-FARMING-PLATFORM.md](ANALYSIS-FARMING-PLATFORM.md)
 
 ---

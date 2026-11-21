@@ -1,0 +1,116 @@
+{
+  "pairs": [
+    {
+      "pair": [
+        "00000492.png",
+        "00000496.png"
+      ],
+      "count": 542,
+      "rotation_degrees": 17.6315487798436,
+      "direct_essential_assumed_focal": {
+        "ransac_inliers": 418,
+        "positive_depth": 284,
+        "rotation_degrees": 17.242520892816994,
+        "rotation_disagreement_with_global_deg": 0.4972206687664409
+      },
+      "shared_3d_pair_angle_deg": {
+        "count": 166,
+        "median": 1.1715126693717393,
+        "below_1_deg": 83,
+        "below_2_deg": 91
+      },
+      "median_image_displacement_xy_px": [
+        -207.27899169921875,
+        23.99688720703125
+      ],
+      "median_image_displacement_magnitude_px": 208.02032470703125,
+      "p90_image_displacement_magnitude_px": 355.0921936035156,
+      "image_displacement_over_100px": 542,
+      "image_displacement_over_200px": 371,
+      "source_y_quartile_counts": [
+        245,
+        275,
+        22,
+        0
+      ],
+      "pure_rotation_prediction_residual_px_median": 19.42097684778048,
+      "pure_rotation_prediction_residual_px_p90": 66.10067173218474,
+      "pure_rotation_prediction_valid": 542
+    },
+    {
+      "pair": [
+        "00000496.png",
+        "00000500.png"
+      ],
+      "count": 301,
+      "rotation_degrees": 17.487044212860408,
+      "direct_essential_assumed_focal": {
+        "ransac_inliers": 219,
+        "positive_depth": 109,
+        "rotation_degrees": 28.785879585490086,
+        "rotation_disagreement_with_global_deg": 12.771075009425806
+      },
+      "shared_3d_pair_angle_deg": {
+        "count": 50,
+        "median": 12.499138518092614,
+        "below_1_deg": 0,
+        "below_2_deg": 0
+      },
+      "median_image_displacement_xy_px": [
+        -356.2567138671875,
+        5.9202880859375
+      ],
+      "median_image_displacement_magnitude_px": 358.3609924316406,
+      "p90_image_displacement_magnitude_px": 450.611572265625,
+      "image_displacement_over_100px": 301,
+      "image_displacement_over_200px": 301,
+      "source_y_quartile_counts": [
+        46,
+        210,
+        45,
+        0
+      ],
+      "pure_rotation_prediction_residual_px_median": 148.3117259632096,
+      "pure_rotation_prediction_residual_px_p90": 273.36788669634706,
+      "pure_rotation_prediction_valid": 301
+    },
+    {
+      "pair": [
+        "00000500.png",
+        "00000504.png"
+      ],
+      "count": 232,
+      "rotation_degrees": 34.383824363875924,
+      "direct_essential_assumed_focal": {
+        "ransac_inliers": 184,
+        "positive_depth": 80,
+        "rotation_degrees": 34.13853797774683,
+        "rotation_disagreement_with_global_deg": 0.6158736228616531
+      },
+      "shared_3d_pair_angle_deg": {
+        "count": 44,
+        "median": 0.4147779317951574,
+        "below_1_deg": 43,
+        "below_2_deg": 44
+      },
+      "median_image_displacement_xy_px": [
+        -398.17437744140625,
+        -6.4716033935546875
+      ],
+      "median_image_displacement_magnitude_px": 398.804931640625,
+      "p90_image_displacement_magnitude_px": 448.81036376953125,
+      "image_displacement_over_100px": 232,
+      "image_displacement_over_200px": 232,
+      "source_y_quartile_counts": [
+        52,
+        164,
+        16,
+        0
+      ],
+      "pure_rotation_prediction_residual_px_median": 4.732407265904019,
+      "pure_rotation_prediction_residual_px_p90": 12.090942408225825,
+      "pure_rotation_prediction_valid": 232
+    }
+  ],
+  "caveat": "2D displacement and rotation-only residual use saved model relative rotation and fitted f603.24; true intrinsics and depth unknown. LK examples are ambiguities, not proven mismatches. Absolute coordinates in separate report."
+}

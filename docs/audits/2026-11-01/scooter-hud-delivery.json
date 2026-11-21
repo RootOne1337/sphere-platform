@@ -1,0 +1,161 @@
+{
+  "schema": "sphere-scooter-hud-delivery-v1",
+  "date": "2026-11-01",
+  "status": "diagnostic_not_autonomous",
+  "autonomous_route_ready": false,
+  "browser_validation": "blocked_IAB_unavailable",
+  "skuter1": "not_received",
+  "installed_review_ui": {
+    "image_id": "sha256:aad66cdda43aa025afcd10f5d7a4c5a216b64cb2ebcf814be6599a47e51afb5d",
+    "container": "sphere-review-20261002-review-ui-1",
+    "status": "running_healthy",
+    "verification": "docker inspect 2026-11-01 and final-install.json"
+  },
+  "frontend_build": {
+    "seconds": 45.859,
+    "source_unchanged": true,
+    "evidence": "scooter-hud-evidence/final-build.json"
+  },
+  "tests": {
+    "backend": {
+      "passed": 229,
+      "skipped": 1,
+      "subtests_passed": 15,
+      "evidence": "scooter-hud-evidence/final-backend-tests.log"
+    },
+    "note": "Combined 65-test run; previous overlapping subsets are not summed.",
+    "frontend_combined": {
+      "passed": 65,
+      "suites": 8,
+      "seconds": 7.472,
+      "evidence": "scooter-hud-evidence/frontend-combined-tests-summary.json",
+      "log": "scooter-hud-evidence/frontend-combined-tests.log"
+    },
+    "overlap_experimental": {
+      "passed": 14,
+      "runner": "unittest",
+      "evidence": "scooter-hud-evidence/overlap-final-tests.json",
+      "not_additive_with_backend_set": true
+    }
+  },
+  "commits": [
+    "3ee985733c2cd5fb4b1818d1a43571b0de32d678",
+    "5e30e952d5917ef146cf7a585f96609d5e0412e9"
+  ],
+  "new_evidence": [
+    "scooter-hud-evidence/mask-control-sky-summary.json",
+    "scooter-hud-evidence/lightglue-memory-summary.json",
+    "scooter-hud-evidence/stage1-feature-summary.json",
+    "scooter-hud-evidence/stage2-complete.json",
+    "scooter-hud-evidence/graph-verification.json",
+    "scooter-hud-evidence/global-f960-report.json",
+    "scooter-hud-evidence/global-f603-report.json",
+    "scooter-hud-evidence/mask-pad-report.json",
+    "scooter-hud-evidence/dark-sky-report.json",
+    "scooter-hud-evidence/calfvo-convention-fixture.json",
+    "scooter-hud-evidence/parallax-audit.json",
+    "scooter-hud-evidence/wsl-cache-reclaim.json",
+    "scooter-hud-evidence/jump-forensics.json",
+    "scooter-hud-evidence/jump-flow-comparison.json",
+    "scooter-hud-evidence/jump-adjacent.json",
+    "scooter-hud-evidence/targeted-gap-report.json",
+    "scooter-hud-evidence/targeted-gap-comparison.json",
+    "scooter-hud-evidence/targeted-gap-local-comparison.json",
+    "scooter-hud-evidence/targeted-gap-graph-preservation.json",
+    "scooter-hud-evidence/targeted-gap-receipt.json",
+    "scooter-hud-evidence/targeted-gap-prepare-receipt.json",
+    "scooter-hud-evidence/targeted-gap-match-receipt.json",
+    "scooter-hud-evidence/targeted-gap-figure-receipt.json",
+    "scooter-hud-evidence/auto-gap-plan.json",
+    "scooter-hud-evidence/overlap-final-tests.json",
+    "scooter-hud-evidence/overlap-final-tests.log",
+    "scooter-hud-evidence/calfvo-reverse-comparison.json",
+    "scooter-hud-evidence/calfvo-reverse-result.json",
+    "scooter-hud-evidence/calfvo-reverse-process.json",
+    "scooter-hud-evidence/calfvo-reverse-input-before.json",
+    "scooter-hud-evidence/calfvo-reverse-input-after.json",
+    "scooter-hud-evidence/hud-heading-report.json",
+    "scooter-hud-evidence/hud-heading-receipt.json",
+    "scooter-hud-evidence/hud-heading-intervals.json",
+    "scooter-hud-evidence/hud-heading-segments.json",
+    "scooter-hud-evidence/hud-headings.csv",
+    "scooter-hud-evidence/hud-heading-figure-receipt.json"
+  ],
+  "index": "scooter-hud-evidence/index.json",
+  "limitations": [
+    "No accepted accurate 3D route",
+    "Sky segmentation and local HUD/body mask are not accepted",
+    "Earlier two 4096-feature runs stopped; later isolated stages completed the graph but route geometry failed",
+    "No skuter1 capture available",
+    "No live or device execution"
+  ],
+  "skuter1_manifest_scan": {
+    "scanned": 13,
+    "exact_title_found": false,
+    "scope": "local reconstruction job input manifests only",
+    "evidence": "scooter-hud-evidence/skuter1-manifest-scan.json",
+    "inventory_receipt": "scooter-hud-evidence/capture-source-inventory.json"
+  },
+  "published_diagnostic_alternative": {
+    "id": "hud-focal-603-diagnostic",
+    "job": "c667f86cc9de4a378fb12e5269981a6e",
+    "scope": "DIAGNOSTIC_ONLY",
+    "execution_qualified": false,
+    "cameras": 163,
+    "triangulated_points": 15049,
+    "exported_points": 15041,
+    "mean_reprojection_px": 1.1667285942073558,
+    "focal_px": 603.2398818704738,
+    "route_admissible": false,
+    "source_unchanged": true,
+    "navigation_replaced": false,
+    "live_iab_validation": false,
+    "receipt": "scooter-hud-evidence/global-f603-publish-receipt.json"
+  },
+  "stage_graph": {
+    "features": 163,
+    "raw_pairs": 796,
+    "verified_nonempty_pairs": 783,
+    "incremental": "timeout_no_model",
+    "f960_global": "route_audit_failed",
+    "f603_global": "route_audit_failed"
+  },
+  "research_source_archive": "experiments/scooter/source-index.json",
+  "targeted_gap": {
+    "views": 166,
+    "points": 15247,
+    "route_admissible": false,
+    "published": false,
+    "gap_normalized_step_before": 22.50733305471931,
+    "gap_normalized_step_after": 1.2719240497891229,
+    "same_clip_holdout_factor4_before": 18,
+    "same_clip_holdout_factor4_after": 5,
+    "same_clip_holdout_median_abs_log_before": 0.451,
+    "same_clip_holdout_median_abs_log_after": 0.603,
+    "production_planner_wired": false,
+    "automatic_source_plan": [
+      497,
+      498,
+      499
+    ]
+  },
+  "reverse_calfvo": {
+    "frames": 901,
+    "edges": 900,
+    "traversal": "source_indices_900_to_0",
+    "rotation_cycle_median_deg": 0.034508112160432425,
+    "translation_cycle_heldout_median_relative": 0.6821689759316709,
+    "anchored_end_position_difference_over_forward_path": 0.871438760125189,
+    "accepted": false,
+    "independent_truth": false
+  },
+  "conditional_hud_heading": {
+    "supported_seconds": 29.182,
+    "unknown_seconds": 6.311,
+    "independent_segments": 10,
+    "stitched_global_path": false,
+    "execution_qualified": false,
+    "vehicle_camera_alignment_verified": false,
+    "physical_metric_verified": false
+  }
+}

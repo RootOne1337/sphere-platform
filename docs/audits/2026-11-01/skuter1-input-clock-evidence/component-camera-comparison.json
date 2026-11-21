@@ -1,0 +1,49 @@
+{
+  "0": {
+    "common_cameras": 144,
+    "positive_scale": 3.578911195189455,
+    "orientation_median_deg": 0.07988629124097338,
+    "orientation_max_deg": 0.7239515254551074,
+    "center_residual_median": 0.007446656993683071,
+    "center_residual_max": 0.03830967224550787,
+    "calibrations": {
+      "1": [
+        606.0977855786747,
+        960.0,
+        540.0
+      ]
+    }
+  },
+  "1": {
+    "common_cameras": 45,
+    "positive_scale": 1.0000000000000002,
+    "orientation_median_deg": 0.0,
+    "orientation_max_deg": 0.0,
+    "center_residual_median": 6.281902941027859e-16,
+    "center_residual_max": 1.9868029630580076e-15,
+    "calibrations": {
+      "1": [
+        601.5647540123381,
+        960.0,
+        540.0
+      ]
+    }
+  },
+  "registration": {
+    "input_ids_unchanged": true,
+    "calibrations": {
+      "1": [
+        601.5647540123381,
+        960.0,
+        540.0
+      ]
+    },
+    "max_pose_matrix_delta": 0.0
+  },
+  "reprojection_observations": {
+    "count": 72406,
+    "mean": 1.7580747134473673,
+    "median": 1.6843853230026729,
+    "p95": 3.5815538982547563
+  }
+}

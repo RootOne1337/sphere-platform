@@ -1,0 +1,16 @@
+{
+  "schema": "sphere-fused-loop-comparison-figure-v1",
+  "oldGeometrySHA256": "52088388dc0097b9bfdbc24a60aa51b858fef35845424c989198e4b6d3f45140",
+  "newGeometrySHA256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "publishedConstraintsSHA256": "ad25f9c08e18ea6f67d51646fddea8d1beee2915fc3291c8db0e6e6769e56016",
+  "finalConstraintsSHA256": "7fcd22cd05010962513fcefa655a95e594e55eb741270efc588449ce4cbea9f4",
+  "figureSHA256": "5d8dfcb713f6893128a18ee17884c64fcb7f9c661a46ea77b5cd75dcc3b74b71",
+  "sourcePoseChanges": false,
+  "forcedClosure": false,
+  "physicalActions": 0,
+  "projection": "independent first-camera right/forward axes and nonmetric scales",
+  "displayOnlyCloudClipping": true,
+  "heldoutScope": "91 exact-XY-decontaminated physical pairs, same video not independent truth",
+  "diagnosticOnly": true,
+  "finalSupportFilterProvenanceSHA256": "4cdccd22c876eac7225018912baa0bdf700d38f371a43b4982453e327b54d945"
+}

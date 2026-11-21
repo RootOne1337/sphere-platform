@@ -1,0 +1,143 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "execution": "local source, dedicated audit PostgreSQL/Redis, loopback only",
+  "dependencies": {
+    "fastapi": "0.136.3",
+    "starlette": "1.3.1",
+    "pydantic": "2.9.2",
+    "pydantic-settings": "2.2.1",
+    "SQLAlchemy": "2.0.28",
+    "asyncpg": "0.29.0",
+    "alembic": "1.13.1",
+    "pytest": "9.0.3",
+    "pytest-asyncio": "1.3.0",
+    "httpx": "0.27.0",
+    "redis": "5.0.3"
+  },
+  "catalogLegacyMaintenanceBudget": {
+    "result": {
+      "tests": 171,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junitDurationSeconds": 55.62
+    },
+    "startedAt": "2026-10-06T07:23:25.309193+00:00",
+    "finishedAt": "2026-10-06T07:24:24.265296+00:00",
+    "testSources": [
+      {
+        "selector": "tests/production/test_script_catalog_metadata.py",
+        "file": "tests/production/test_script_catalog_metadata.py",
+        "sha256": "7ad4280d69f8438fd69f8abe7d4461aaf66c59ae7e11d880c4afd88e31d16633"
+      },
+      {
+        "selector": "tests/production/test_script_catalog_maintenance.py",
+        "file": "tests/production/test_script_catalog_maintenance.py",
+        "sha256": "c200e24bfe7b6e5971a2a98fcdbc73a9dcc637ea848627360aae27280a0570bc"
+      },
+      {
+        "selector": "tests/production/test_script_catalog_budget.py",
+        "file": "tests/production/test_script_catalog_budget.py",
+        "sha256": "72386fa668a8a179be7c6a6890735afab60d32a4de7424485b6143836b6e9851"
+      },
+      {
+        "selector": "tests/production/test_script_version_workflow.py",
+        "file": "tests/production/test_script_version_workflow.py",
+        "sha256": "9675ec312ff70c9fda32309f1575b49c942571799e5566b80188ce32b0ea11b7"
+      },
+      {
+        "selector": "tests/production/test_script_mutation_response.py",
+        "file": "tests/production/test_script_mutation_response.py",
+        "sha256": "38702e054511fc63466496e879b3fae4b86cc2feb07e358809d0424cd4c82161"
+      },
+      {
+        "selector": "tests/test_script_catalog_contract.py",
+        "file": "tests/test_script_catalog_contract.py",
+        "sha256": "1c92485130d8d0cf7f439193607bb9227d5c7b312c0ca34681825544c8bd934a"
+      },
+      {
+        "selector": "tests/test_scripts/test_soak_viewer_motion.py",
+        "file": "tests/test_scripts/test_soak_viewer_motion.py",
+        "sha256": "97158467ed8c67cf3738fa409d65edbab4a36c7bf04c1859a9ad4d150c23db2e"
+      },
+      {
+        "selector": "tests/test_scripts/test_soak_atomic_json.py",
+        "file": "tests/test_scripts/test_soak_atomic_json.py",
+        "sha256": "ec658d2f881eb727488fc609d966190f293bf1daee7ed77e7d2632a135f88d52"
+      },
+      {
+        "selector": "tests/test_scripts/test_script_service.py",
+        "file": "tests/test_scripts/test_script_service.py",
+        "sha256": "83639bc43349e546c6f52e23873d37a742e2071f370d7b3642a2fdaa5883bb43"
+      },
+      {
+        "selector": "tests/test_scripts/test_safe_soak.py",
+        "file": "tests/test_scripts/test_safe_soak.py",
+        "sha256": "dd5490cdc04207a4ee4aa4a6d48a1b171cc71c4dd334d3ec3c2fdc353f90abf8"
+      },
+      {
+        "selector": "tests/test_scripts/test_draft_validation.py",
+        "file": "tests/test_scripts/test_draft_validation.py",
+        "sha256": "4a3f59808908e8bc40924484fe6478be7219e4e15ab8dca5fc36d8934157a288"
+      },
+      {
+        "selector": "tests/test_scripts/test_dag_schema.py",
+        "file": "tests/test_scripts/test_dag_schema.py",
+        "sha256": "5f272e61db8f9fb2ebb660bf0ea1e4e01f7b61f7cf04c14e70a928c7c61c78e8"
+      }
+    ]
+  },
+  "finalMigrationRerun": {
+    "result": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junitDurationSeconds": 0.384
+    },
+    "startedAt": "2026-10-06T07:24:54.385529+00:00",
+    "finishedAt": "2026-10-06T07:24:57.817519+00:00",
+    "testSources": [
+      {
+        "selector": "tests/production/test_script_catalog_metadata.py::test_catalog_additive_migration_accepts_old_writers_and_enforces_pair",
+        "file": "tests/production/test_script_catalog_metadata.py",
+        "sha256": "7ad4280d69f8438fd69f8abe7d4461aaf66c59ae7e11d880c4afd88e31d16633"
+      }
+    ],
+    "overlapsCatalogSelectedSet": true,
+    "reason": "Rerun after the final transaction-local migration lock/statement timeout change."
+  },
+  "initialEnvironmentRunsAreHistorical": true,
+  "sourceHashVerification": "Receipt source hashes match either exact tested checkout bytes or source-revision Git blob; differences are CRLF only and working source matches archived blob after line-ending normalization.",
+  "uniqueCrossRunTestTotalClaimed": false,
+  "productionDatabaseUsed": false,
+  "deviceCommandsSent": false,
+  "provenance": [
+    {
+      "retainedPrivateReceipt": "catalog-shipped-dependencies.json",
+      "sha256": "a417534d1cf1cb36173865671eb13b4a8e0006736d367172e12c4c28409d1502",
+      "bytes": 4168
+    },
+    {
+      "retainedPrivateReceipt": "catalog-shipped-dependencies.xml",
+      "sha256": "8d175e99de38912f7d6225c8b12a0931533d8c99e55118b475f40faee860fdaf",
+      "bytes": 26838
+    },
+    {
+      "retainedPrivateReceipt": "catalog-shipped-dependencies-versions.json",
+      "sha256": "59a31fdb261f805484f138c7fa6d68f52ae761784934cda6946156f4720a9171",
+      "bytes": 282
+    },
+    {
+      "retainedPrivateReceipt": "catalog-final-migration.json",
+      "sha256": "a0a31b43bf3e03ab68dc6777aae3be3f83ac6d73cf48cd27a9accbf109db1c0b",
+      "bytes": 1719
+    },
+    {
+      "retainedPrivateReceipt": "catalog-final-migration.xml",
+      "sha256": "42bed39f68cc340a138a62ec42e8673a66805050e8ee86bebc3fdd185ae54c1c",
+      "bytes": 407
+    }
+  ]
+}

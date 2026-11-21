@@ -1,0 +1,254 @@
+{
+  "sourceBAConstraintsSHA": "9375a4fb27ff8601b28fec2afe0e7621062968ce02811a4b1d648cf9f577469d",
+  "unchangedPosesAndK": true,
+  "noLabelsRefit": true,
+  "constraints": {
+    "sourceTrainFLabelsSHA": "b8f832b4608e75e6dd4171e73ab3994c8ec62401e043fc53f2eda1af183e14ed",
+    "sameVideoNotIndependentTruth": true,
+    "originalCleanCount": 91,
+    "trainFVettedCleanCount": 56,
+    "pairs": [
+      {
+        "pair": "loop-1-171.npz",
+        "sourceNPZSHA": "aa4509235b73fb441da149e27df4d701e619125a4b9981be7bb18f3bcbaa5fd7",
+        "rawHeldout": {
+          "count": 18,
+          "mean": 7.594915155936592,
+          "median": 8.773073358804245,
+          "p95": 14.278793826448961,
+          "maximum": 15.804054193928176,
+          "le2": 5,
+          "le4": 5
+        },
+        "cleanHeldout": {
+          "count": 16,
+          "mean": 6.8682502728984245,
+          "median": 7.264113098703479,
+          "p95": 13.47128446454567,
+          "maximum": 15.804054193928176,
+          "le2": 5,
+          "le4": 5
+        },
+        "trainFVettedCleanHeldout": {
+          "count": 11,
+          "mean": 5.397562533636966,
+          "median": 5.13144320508644,
+          "p95": 11.792282299765848,
+          "maximum": 12.693694554751502,
+          "le2": 5,
+          "le4": 5
+        },
+        "labelsDerivedFromUnchangedTrainOnlyF": true,
+        "vettedOriginalMatchIndices": [
+          0,
+          2,
+          8,
+          22,
+          27,
+          32,
+          41,
+          44,
+          46,
+          52,
+          57
+        ]
+      },
+      {
+        "pair": "loop-1-173.npz",
+        "sourceNPZSHA": "0f84e3637275f4bb7c37350b65405877a3db745f0cc21fb0f2a50d7a174fe335",
+        "rawHeldout": {
+          "count": 26,
+          "mean": 12.64906866441519,
+          "median": 10.81261948550728,
+          "p95": 21.217602878406524,
+          "maximum": 61.46235019555201,
+          "le2": 2,
+          "le4": 3
+        },
+        "cleanHeldout": {
+          "count": 24,
+          "mean": 12.683598902645478,
+          "median": 10.81261948550728,
+          "p95": 21.30408671797937,
+          "maximum": 61.46235019555201,
+          "le2": 2,
+          "le4": 3
+        },
+        "trainFVettedCleanHeldout": {
+          "count": 14,
+          "mean": 7.4196339226854695,
+          "median": 6.401373958296759,
+          "p95": 13.23483522488584,
+          "maximum": 14.235474819900674,
+          "le2": 2,
+          "le4": 3
+        },
+        "labelsDerivedFromUnchangedTrainOnlyF": true,
+        "vettedOriginalMatchIndices": [
+          0,
+          2,
+          6,
+          7,
+          13,
+          26,
+          27,
+          32,
+          37,
+          48,
+          54,
+          55,
+          61,
+          74
+        ]
+      },
+      {
+        "pair": "loop-15-160.npz",
+        "sourceNPZSHA": "c4c5f3c89654e0c08de9b7d158debc165f4073a9282971f442887e04db8fc34d",
+        "rawHeldout": {
+          "count": 12,
+          "mean": 12.70560104924085,
+          "median": 10.846657062782722,
+          "p95": 23.777525371499983,
+          "maximum": 27.973196230503486,
+          "le2": 0,
+          "le4": 1
+        },
+        "cleanHeldout": {
+          "count": 9,
+          "mean": 14.372977438923288,
+          "median": 16.501153810442727,
+          "p95": 24.921799242137304,
+          "maximum": 27.973196230503486,
+          "le2": 0,
+          "le4": 0
+        },
+        "trainFVettedCleanHeldout": {
+          "count": 6,
+          "mean": 10.19047205649961,
+          "median": 7.357086297310257,
+          "p95": 17.3872930707414,
+          "maximum": 17.68267282417429,
+          "le2": 0,
+          "le4": 0
+        },
+        "labelsDerivedFromUnchangedTrainOnlyF": true,
+        "vettedOriginalMatchIndices": [
+          6,
+          13,
+          25,
+          26,
+          32,
+          35
+        ]
+      },
+      {
+        "pair": "loop-20-155.npz",
+        "sourceNPZSHA": "b00ad2998ead214cbdda976538ee3961138f78794484a162ee163f00aa8a30ec",
+        "rawHeldout": {
+          "count": 0
+        },
+        "cleanHeldout": {
+          "count": 0
+        },
+        "trainFVettedCleanHeldout": {
+          "count": 0
+        },
+        "labelsDerivedFromUnchangedTrainOnlyF": true,
+        "vettedOriginalMatchIndices": []
+      },
+      {
+        "pair": "loop-3-169.npz",
+        "sourceNPZSHA": "04a6e3aec804ed17745d1fb2f25e67d5dfdf1f3a7c75f7a62cd2a625114dca52",
+        "rawHeldout": {
+          "count": 19,
+          "mean": 8.870839488375951,
+          "median": 6.346420313939431,
+          "p95": 15.970677059964258,
+          "maximum": 21.440409170600542,
+          "le2": 3,
+          "le4": 4
+        },
+        "cleanHeldout": {
+          "count": 18,
+          "mean": 8.654072041310718,
+          "median": 6.0688827204210805,
+          "p95": 16.27455106611072,
+          "maximum": 21.440409170600542,
+          "le2": 3,
+          "le4": 4
+        },
+        "trainFVettedCleanHeldout": {
+          "count": 12,
+          "mean": 5.985702721372032,
+          "median": 5.041737518488441,
+          "p95": 13.62975280417133,
+          "maximum": 14.170467906171552,
+          "le2": 3,
+          "le4": 4
+        },
+        "labelsDerivedFromUnchangedTrainOnlyF": true,
+        "vettedOriginalMatchIndices": [
+          8,
+          11,
+          16,
+          19,
+          31,
+          33,
+          39,
+          43,
+          44,
+          46,
+          47,
+          49
+        ]
+      },
+      {
+        "pair": "loop-8-165.npz",
+        "sourceNPZSHA": "dba2eaf0ac7548a24cc5014d2fec07e1df18b9bd13db2b52a44d406ab3085059",
+        "rawHeldout": {
+          "count": 24,
+          "mean": 10.66458465882561,
+          "median": 10.147171485061094,
+          "p95": 21.310162194115613,
+          "maximum": 22.777844805958082,
+          "le2": 2,
+          "le4": 3
+        },
+        "cleanHeldout": {
+          "count": 24,
+          "mean": 10.66458465882561,
+          "median": 10.147171485061094,
+          "p95": 21.310162194115613,
+          "maximum": 22.777844805958082,
+          "le2": 2,
+          "le4": 3
+        },
+        "trainFVettedCleanHeldout": {
+          "count": 13,
+          "mean": 12.674861760397723,
+          "median": 13.132626148193328,
+          "p95": 21.916873244133914,
+          "maximum": 22.777844805958082,
+          "le2": 0,
+          "le4": 1
+        },
+        "labelsDerivedFromUnchangedTrainOnlyF": true,
+        "vettedOriginalMatchIndices": [
+          0,
+          1,
+          17,
+          21,
+          27,
+          28,
+          32,
+          42,
+          53,
+          55,
+          56,
+          60,
+          82
+        ]
+      }
+    ]
+  }
+}

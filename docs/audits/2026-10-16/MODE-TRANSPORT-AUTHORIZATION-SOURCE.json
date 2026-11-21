@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "fc7cdad4bbae51da8b86e6c12d5ba5c13dff6e64",
+  "recordedAtUtc": "2026-10-15T19:37:08.907Z",
+  "runtimeInstalled": false,
+  "productionAccepted": false,
+  "scope": "Source preview: temporary View/tree-read locks retain the negotiated channels; native readiness is separate.",
+  "viewRecordingTapConfirmed": true,
+  "afterXPathConfirmedTapCount": 2,
+  "homeResult": "«Домой»: выполнение подтверждено · ответ команды 189 мс. Это не задержка появления кадра.",
+  "channelsAfterModeCycle": [
+    {
+      "index": 1,
+      "label": "sphere-video-v1",
+      "state": "closed",
+      "sent": 0,
+      "received": 0
+    },
+    {
+      "index": 2,
+      "label": "sphere-control-v2",
+      "state": "closed",
+      "sent": 0,
+      "received": 0
+    },
+    {
+      "index": 3,
+      "label": "sphere-video-v1",
+      "state": "open",
+      "sent": 25,
+      "received": 26
+    },
+    {
+      "index": 4,
+      "label": "sphere-control-v2",
+      "state": "open",
+      "sent": 288,
+      "received": 291
+    }
+  ],
+  "pageErrorCount": 0,
+  "localChecks": {
+    "frontendSuites": 172,
+    "frontendTests": 2507,
+    "targetedSuites": 3,
+    "targetedTests": 188,
+    "typecheck": true
+  },
+  "twoClientDiagnostic": {
+    "durationMs": 246461,
+    "stateAtEnd": "ready",
+    "failureAtEnd": null,
+    "channels": [
+      {
+        "channel": 2,
+        "state": "open",
+        "sent": 942,
+        "received": 944,
+        "heartbeatDelayAlerts": 2
+      }
+    ]
+  },
+  "limits": [
+    "Preview had HMR and unknown build stamp: not an installation identity proof.",
+    "Instrumented timing is diagnostic, not ordinary-browser production acceptance.",
+    "Recurring idle heartbeat timeouts remain open; this change removes one deterministic mode-induced peer restart.",
+    "No physical phone/IME,20+ viewer,WAN/TURN or long soak acceptance. No actions replayed."
+  ]
+}

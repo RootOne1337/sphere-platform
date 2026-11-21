@@ -1,6 +1,6 @@
 /**
  * Тесты хуков групп — CRUD, перемещение устройств, теги.
- * Покрытие: useGroups, useCreateGroup, useUpdateGroup, useDeleteGroup, useMoveDevices, useTags.
+ * Покрытие: useGroups, useCreateGroup, useUpdateGroup, useDeleteGroup, useChangeGroupMembership, useTags.
  */
 import { waitFor } from '@testing-library/react';
 import { renderQueryHook } from '../helpers';
@@ -9,7 +9,7 @@ import {
   useCreateGroup,
   useUpdateGroup,
   useDeleteGroup,
-  useMoveDevices,
+  useChangeGroupMembership,
   useTags,
 } from '@/lib/hooks/useGroups';
 import { api } from '@/lib/api';
@@ -38,6 +38,18 @@ const MOCK_GROUP = {
 
 describe('useGroups', () => {
   beforeEach(() => jest.clearAllMocks());
+
+  it('does not read or poll groups until the caller admits access', async () => {
+    mockApi.get.mockResolvedValue({ data: [MOCK_GROUP] });
+    let enabled = false;
+    const view = renderQueryHook(() => useGroups(enabled));
+    expect(mockApi.get).not.toHaveBeenCalled();
+    enabled = true; view.rerender();
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+    expect(mockApi.get).toHaveBeenCalledTimes(1);
+    enabled = false; view.rerender();
+    expect(view.result.current.fetchStatus).toBe('idle');
+  });
 
   it('загружает список групп', async () => {
     mockApi.get.mockResolvedValueOnce({ data: [MOCK_GROUP] });
@@ -73,7 +85,7 @@ describe('useUpdateGroup', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('обновляет группу PUT /groups/{id}', async () => {
-    mockApi.put.mockResolvedValueOnce({ data: { ...MOCK_GROUP, name: 'Beta' } });
+    mockApi.put.mockResolvedValueOnce({ data: { ...MOCK_GROUP, name: 'Beta', color: '#3b82f6' } });
 
     const { result } = renderQueryHook(() => useUpdateGroup());
 
@@ -87,7 +99,7 @@ describe('useUpdateGroup', () => {
   });
 
   it('обновляет parent_group_id (вложенные группы)', async () => {
-    mockApi.put.mockResolvedValueOnce({ data: MOCK_GROUP });
+    mockApi.put.mockResolvedValueOnce({ data: { ...MOCK_GROUP, id: 'grp-002', parent_group_id: 'grp-001' } });
 
     const { result } = renderQueryHook(() => useUpdateGroup());
 
@@ -104,7 +116,7 @@ describe('useDeleteGroup', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('удаляет группу DELETE /groups/{id}', async () => {
-    mockApi.delete.mockResolvedValueOnce({ data: null });
+    mockApi.delete.mockResolvedValueOnce({ status: 204, data: null });
 
     const { result } = renderQueryHook(() => useDeleteGroup());
 
@@ -115,20 +127,38 @@ describe('useDeleteGroup', () => {
   });
 });
 
-describe('useMoveDevices', () => {
+describe('useChangeGroupMembership', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('перемещает устройства в группу', async () => {
-    mockApi.post.mockResolvedValueOnce({ data: { moved: 3 } });
+  it('returns the outcome for each requested device', async () => {
+    const results = [
+      { device_id: 'dev-001', outcome: 'changed' },
+      { device_id: 'dev-002', outcome: 'unchanged' },
+      { device_id: 'dev-003', outcome: 'device_not_found' },
+    ];
+    mockApi.post.mockResolvedValueOnce({ data: { group_id: 'grp-001', operation: 'add', results } });
 
-    const { result } = renderQueryHook(() => useMoveDevices());
+    const { result } = renderQueryHook(() => useChangeGroupMembership());
 
-    result.current.mutate({ groupId: 'grp-001', deviceIds: ['dev-001', 'dev-002', 'dev-003'] });
+    result.current.mutate({ groupId: 'grp-001', deviceIds: ['dev-001', 'dev-002', 'dev-003'], operation: 'add' });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockApi.post).toHaveBeenCalledWith('/groups/grp-001/devices/move', {
-      device_ids: ['dev-001', 'dev-002', 'dev-003'],
+    expect(result.current.data).toEqual(results);
+    expect(mockApi.post).toHaveBeenCalledWith('/groups/grp-001/devices/membership', {
+      device_ids: ['dev-001', 'dev-002', 'dev-003'], operation: 'add',
     });
+  });
+
+  it.each([
+    [['dev-001']],
+    [['dev-001', 'dev-001']],
+    [['dev-001', 'other']],
+  ])('rejects an unconfirmed membership receipt (%j)', async (ids) => {
+    const results = ids.map(device_id => ({ device_id, outcome: 'changed' }));
+    mockApi.post.mockResolvedValueOnce({ data: { group_id: 'grp-001', operation: 'remove', results } });
+    const { result } = renderQueryHook(() => useChangeGroupMembership());
+    result.current.mutate({ groupId: 'grp-001', deviceIds: ['dev-001', 'dev-002'], operation: 'remove' });
+    await waitFor(() => expect(result.current.isError).toBe(true));
   });
 });
 

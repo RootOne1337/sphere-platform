@@ -1,0 +1,1749 @@
+{
+  "schema": "sphere-anchored-tracking-comparison-v1",
+  "physical_actions": 0,
+  "independent_new_session": false,
+  "offline_media_clock": true,
+  "navigation_qualified": false,
+  "metric_accuracy_known": false,
+  "camera_body_transform_known": false,
+  "reference_source_indices_excluded": 89,
+  "total": 177,
+  "counts": {
+    "descriptor": {
+      "confirming": 4,
+      "localized": 167,
+      "unknown": 6
+    },
+    "anchored_flow": {
+      "confirming": 4,
+      "localized": 167,
+      "unknown": 6
+    }
+  },
+  "compute_ms": {
+    "descriptor": {
+      "p50": 111.70150001998991,
+      "p95": 145.31857998808846,
+      "maximum": 181.7903000046499
+    },
+    "anchored_flow": {
+      "p50": 8.200100011890754,
+      "p95": 137.8069400030654,
+      "maximum": 162.09190001245588
+    }
+  },
+  "method_counts": {
+    "descriptor_pnp": 63,
+    "map_anchored_flow": 114
+  },
+  "baseline_localized_but_tracking_not": 0,
+  "tracking_localized_but_baseline_not": 0,
+  "center_agreement_reference_steps": {
+    "p50": 0.0048141778213918575,
+    "p95": 0.024613179203208664,
+    "maximum": 0.10890889894781831
+  },
+  "rotation_agreement_degrees": {
+    "p50": 0.02188032231398128,
+    "p95": 0.08717201494474758,
+    "maximum": 0.20951122267382769
+  },
+  "default_localizer_changed": false,
+  "samples": [
+    {
+      "index": 1,
+      "seconds": 0.034,
+      "baseline": "confirming",
+      "tracked": "confirming",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 5,
+      "seconds": 0.316,
+      "baseline": "confirming",
+      "tracked": "confirming",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 8,
+      "seconds": 0.6,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.2074182697257333e-06
+    },
+    {
+      "index": 10,
+      "seconds": 0.8,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.003068980314790613,
+      "rotation_difference_degrees": 0.03824544503652875
+    },
+    {
+      "index": 14,
+      "seconds": 1.166,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.003925821432119398,
+      "rotation_difference_degrees": 0.03235323085456968
+    },
+    {
+      "index": 16,
+      "seconds": 1.366,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.006825362758162736,
+      "rotation_difference_degrees": 0.07358021624618855
+    },
+    {
+      "index": 20,
+      "seconds": 1.749,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.2074182697257333e-06
+    },
+    {
+      "index": 23,
+      "seconds": 2.049,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005108615410888611,
+      "rotation_difference_degrees": 0.030533011268708856
+    },
+    {
+      "index": 26,
+      "seconds": 2.333,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.007765175353647003,
+      "rotation_difference_degrees": 0.03240768773256688
+    },
+    {
+      "index": 29,
+      "seconds": 2.633,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 31,
+      "seconds": 2.866,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.004900543793363884,
+      "rotation_difference_degrees": 0.04269914131031863
+    },
+    {
+      "index": 34,
+      "seconds": 3.166,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.012210368182268276,
+      "rotation_difference_degrees": 0.02498888249380072
+    },
+    {
+      "index": 37,
+      "seconds": 3.45,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 40,
+      "seconds": 3.732,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0048141778213918575,
+      "rotation_difference_degrees": 0.010757496122188827
+    },
+    {
+      "index": 43,
+      "seconds": 4.032,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.032439724103943024,
+      "rotation_difference_degrees": 0.03921637265690828
+    },
+    {
+      "index": 46,
+      "seconds": 4.316,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 48,
+      "seconds": 4.534,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.004112119535976368,
+      "rotation_difference_degrees": 0.017519247474764556
+    },
+    {
+      "index": 50,
+      "seconds": 4.77,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.01430398866934561,
+      "rotation_difference_degrees": 0.03901479739911328
+    },
+    {
+      "index": 53,
+      "seconds": 5.067,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.03877709024944276,
+      "rotation_difference_degrees": 0.08321997548467165
+    },
+    {
+      "index": 55,
+      "seconds": 5.267,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 58,
+      "seconds": 5.568,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.021141976547298203,
+      "rotation_difference_degrees": 0.029728744420788315
+    },
+    {
+      "index": 61,
+      "seconds": 5.866,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.10890889894781831,
+      "rotation_difference_degrees": 0.20951122267382769
+    },
+    {
+      "index": 63,
+      "seconds": 6.083,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 65,
+      "seconds": 6.283,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.012668381820544566,
+      "rotation_difference_degrees": 0.03900063334430384
+    },
+    {
+      "index": 68,
+      "seconds": 6.566,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.05754636635673737,
+      "rotation_difference_degrees": 0.13043112152074704
+    },
+    {
+      "index": 71,
+      "seconds": 6.848,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.032271957665192245,
+      "rotation_difference_degrees": 0.08729548679613054
+    },
+    {
+      "index": 74,
+      "seconds": 7.13,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 76,
+      "seconds": 7.33,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.012689713916406782,
+      "rotation_difference_degrees": 0.007270622284995491
+    },
+    {
+      "index": 78,
+      "seconds": 7.53,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 80,
+      "seconds": 7.73,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.02850344122288876,
+      "rotation_difference_degrees": 0.08376348132409689
+    },
+    {
+      "index": 83,
+      "seconds": 8.012,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.035834992332065906,
+      "rotation_difference_degrees": 0.08304357423123473
+    },
+    {
+      "index": 86,
+      "seconds": 8.278,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.018373171588710605,
+      "rotation_difference_degrees": 0.0434740384118049
+    },
+    {
+      "index": 89,
+      "seconds": 8.545,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 92,
+      "seconds": 8.828,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0061640569460293575,
+      "rotation_difference_degrees": 0.019634244240612768
+    },
+    {
+      "index": 94,
+      "seconds": 9.044,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.008042302862802608,
+      "rotation_difference_degrees": 0.04252991494937603
+    },
+    {
+      "index": 98,
+      "seconds": 9.409,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.7075472925031877e-06
+    },
+    {
+      "index": 101,
+      "seconds": 9.692,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00539008011927202,
+      "rotation_difference_degrees": 0.028884978819105445
+    },
+    {
+      "index": 104,
+      "seconds": 9.975,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.009771538088293365,
+      "rotation_difference_degrees": 0.07244795772535421
+    },
+    {
+      "index": 107,
+      "seconds": 10.258,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 110,
+      "seconds": 10.524,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0030872704005077615,
+      "rotation_difference_degrees": 0.04161703293059939
+    },
+    {
+      "index": 113,
+      "seconds": 10.791,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.012392857896642451,
+      "rotation_difference_degrees": 0.09866483058683045
+    },
+    {
+      "index": 116,
+      "seconds": 11.089,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 119,
+      "seconds": 11.373,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.009714521271944323,
+      "rotation_difference_degrees": 0.05124055325390579
+    },
+    {
+      "index": 122,
+      "seconds": 11.672,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.015478156186642578,
+      "rotation_difference_degrees": 0.06458503134476917
+    },
+    {
+      "index": 125,
+      "seconds": 11.955,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.2074182697257333e-06
+    },
+    {
+      "index": 128,
+      "seconds": 12.254,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.018422716466703508,
+      "rotation_difference_degrees": 0.08138777366014581
+    },
+    {
+      "index": 131,
+      "seconds": 12.504,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.007888722309928965,
+      "rotation_difference_degrees": 0.03708428915936614
+    },
+    {
+      "index": 134,
+      "seconds": 12.806,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 136,
+      "seconds": 13.022,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.01060296582556492,
+      "rotation_difference_degrees": 0.024083093887531517
+    },
+    {
+      "index": 139,
+      "seconds": 13.305,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.021424812138472953,
+      "rotation_difference_degrees": 0.07328924109054895
+    },
+    {
+      "index": 142,
+      "seconds": 13.606,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.2074182697257333e-06
+    },
+    {
+      "index": 145,
+      "seconds": 13.888,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.014894371307081246,
+      "rotation_difference_degrees": 0.07612271383465512
+    },
+    {
+      "index": 148,
+      "seconds": 14.187,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.020514026140420392,
+      "rotation_difference_degrees": 0.08659175357228573
+    },
+    {
+      "index": 150,
+      "seconds": 14.404,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.015614919444465214,
+      "rotation_difference_degrees": 0.031687230776506536
+    },
+    {
+      "index": 152,
+      "seconds": 14.606,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 155,
+      "seconds": 14.922,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.007603274492954448,
+      "rotation_difference_degrees": 0.024059603172892262
+    },
+    {
+      "index": 158,
+      "seconds": 15.221,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.014706065570055922,
+      "rotation_difference_degrees": 0.08085190677774345
+    },
+    {
+      "index": 161,
+      "seconds": 15.503,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 164,
+      "seconds": 15.786,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0031341061197478984,
+      "rotation_difference_degrees": 0.022855379120441995
+    },
+    {
+      "index": 167,
+      "seconds": 16.104,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.011121419994975212,
+      "rotation_difference_degrees": 0.056157462495239716
+    },
+    {
+      "index": 170,
+      "seconds": 16.387,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 173,
+      "seconds": 16.687,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.003002113887231161,
+      "rotation_difference_degrees": 0.011197581753462579
+    },
+    {
+      "index": 176,
+      "seconds": 16.986,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.017075943961704747,
+      "rotation_difference_degrees": 0.0643011383402338
+    },
+    {
+      "index": 179,
+      "seconds": 17.252,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 181,
+      "seconds": 17.452,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.021892664686606916,
+      "rotation_difference_degrees": 0.08146186752724789
+    },
+    {
+      "index": 185,
+      "seconds": 17.851,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.04455018854120481,
+      "rotation_difference_degrees": 0.2037957974513246
+    },
+    {
+      "index": 188,
+      "seconds": 18.133,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 191,
+      "seconds": 18.4,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.004893061405818642,
+      "rotation_difference_degrees": 0.017247104125364666
+    },
+    {
+      "index": 194,
+      "seconds": 18.682,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.01509568400396611,
+      "rotation_difference_degrees": 0.09780977197198433
+    },
+    {
+      "index": 197,
+      "seconds": 18.966,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 200,
+      "seconds": 19.265,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.01400486848995881,
+      "rotation_difference_degrees": 0.07345936191339578
+    },
+    {
+      "index": 203,
+      "seconds": 19.55,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.013488834434055604,
+      "rotation_difference_degrees": 0.08028448095522187
+    },
+    {
+      "index": 205,
+      "seconds": 19.766,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.02323383911308681,
+      "rotation_difference_degrees": 0.13055852951752206
+    },
+    {
+      "index": 209,
+      "seconds": 20.148,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 211,
+      "seconds": 20.349,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00923030269715975,
+      "rotation_difference_degrees": 0.06329643809475598
+    },
+    {
+      "index": 215,
+      "seconds": 20.732,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.003813566567066649,
+      "rotation_difference_degrees": 0.0954746639861825
+    },
+    {
+      "index": 218,
+      "seconds": 21.015,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 221,
+      "seconds": 21.314,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0051667618911673254,
+      "rotation_difference_degrees": 0.0214760584539584
+    },
+    {
+      "index": 224,
+      "seconds": 21.582,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.01298536270732307,
+      "rotation_difference_degrees": 0.04002293682564889
+    },
+    {
+      "index": 227,
+      "seconds": 21.845,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.2074182697257333e-06
+    },
+    {
+      "index": 230,
+      "seconds": 22.111,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.010355774849565397,
+      "rotation_difference_degrees": 0.03321737972167075
+    },
+    {
+      "index": 233,
+      "seconds": 22.377,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0131218559907255,
+      "rotation_difference_degrees": 0.03314068230320826
+    },
+    {
+      "index": 236,
+      "seconds": 22.627,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005975534872820409,
+      "rotation_difference_degrees": 0.021776424862440618
+    },
+    {
+      "index": 239,
+      "seconds": 22.96,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 242,
+      "seconds": 23.243,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.006305062068611543,
+      "rotation_difference_degrees": 0.03632156392180601
+    },
+    {
+      "index": 245,
+      "seconds": 23.526,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.008013641199492442,
+      "rotation_difference_degrees": 0.051318215800100556
+    },
+    {
+      "index": 248,
+      "seconds": 23.825,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 251,
+      "seconds": 24.092,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.004230148613527159,
+      "rotation_difference_degrees": 0.040906984285253946
+    },
+    {
+      "index": 254,
+      "seconds": 24.411,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00756682491751498,
+      "rotation_difference_degrees": 0.08047177744725383
+    },
+    {
+      "index": 256,
+      "seconds": 24.626,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 258,
+      "seconds": 24.891,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.018929803895491554,
+      "rotation_difference_degrees": 0.08678993443163083
+    },
+    {
+      "index": 261,
+      "seconds": 25.157,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.7075472925031877e-06
+    },
+    {
+      "index": 264,
+      "seconds": 25.441,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.008941318495097564,
+      "rotation_difference_degrees": 0.018784464675906182
+    },
+    {
+      "index": 267,
+      "seconds": 25.724,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.02141815371774499,
+      "rotation_difference_degrees": 0.04980459711970548
+    },
+    {
+      "index": 270,
+      "seconds": 26.007,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 273,
+      "seconds": 26.29,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0034380847268951752,
+      "rotation_difference_degrees": 0.01057865294760177
+    },
+    {
+      "index": 276,
+      "seconds": 26.573,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00924708287796364,
+      "rotation_difference_degrees": 0.040711922836126964
+    },
+    {
+      "index": 279,
+      "seconds": 26.856,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 281,
+      "seconds": 27.072,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.003845631118637309,
+      "rotation_difference_degrees": 0.012026178989991093
+    },
+    {
+      "index": 285,
+      "seconds": 27.437,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.001936503263403725,
+      "rotation_difference_degrees": 0.02299572808576741
+    },
+    {
+      "index": 288,
+      "seconds": 27.72,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 291,
+      "seconds": 28.004,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00539077857691493,
+      "rotation_difference_degrees": 0.00909335445957563
+    },
+    {
+      "index": 294,
+      "seconds": 28.287,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00957861831340778,
+      "rotation_difference_degrees": 0.014973197315872088
+    },
+    {
+      "index": 297,
+      "seconds": 28.554,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 300,
+      "seconds": 28.835,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.003519392153315916,
+      "rotation_difference_degrees": 0.015074338373253884
+    },
+    {
+      "index": 303,
+      "seconds": 29.051,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.008919674493289462,
+      "rotation_difference_degrees": 0.02424964244161609
+    },
+    {
+      "index": 306,
+      "seconds": 29.332,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.018461410488034912,
+      "rotation_difference_degrees": 0.0599249296474172
+    },
+    {
+      "index": 310,
+      "seconds": 29.715,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 313,
+      "seconds": 29.998,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.002196718412078364,
+      "rotation_difference_degrees": 0.016247235061226363
+    },
+    {
+      "index": 316,
+      "seconds": 30.265,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.006509684344672303,
+      "rotation_difference_degrees": 0.03739712846762426
+    },
+    {
+      "index": 319,
+      "seconds": 30.548,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 322,
+      "seconds": 30.849,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0039022804305782447,
+      "rotation_difference_degrees": 0.01150843047511021
+    },
+    {
+      "index": 325,
+      "seconds": 31.113,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.014555848544030393,
+      "rotation_difference_degrees": 0.04307103159055312
+    },
+    {
+      "index": 328,
+      "seconds": 31.396,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.7075472925031877e-06
+    },
+    {
+      "index": 331,
+      "seconds": 31.663,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00806455674275225,
+      "rotation_difference_degrees": 0.03503582964107533
+    },
+    {
+      "index": 334,
+      "seconds": 32.032,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00442587213474204,
+      "rotation_difference_degrees": 0.003711454304433251
+    },
+    {
+      "index": 336,
+      "seconds": 32.282,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 339,
+      "seconds": 32.58,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005913313219672443,
+      "rotation_difference_degrees": 0.03871311890065874
+    },
+    {
+      "index": 341,
+      "seconds": 32.797,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.007272355152981685,
+      "rotation_difference_degrees": 0.019261960663449224
+    },
+    {
+      "index": 345,
+      "seconds": 33.163,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 348,
+      "seconds": 33.428,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.008016336722457182,
+      "rotation_difference_degrees": 0.016217628433788402
+    },
+    {
+      "index": 351,
+      "seconds": 33.711,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.016237244829217196,
+      "rotation_difference_degrees": 0.023355805250593074
+    },
+    {
+      "index": 354,
+      "seconds": 33.978,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 357,
+      "seconds": 34.245,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.014788199572176114,
+      "rotation_difference_degrees": 0.02188032231398128
+    },
+    {
+      "index": 359,
+      "seconds": 34.461,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.004125572468359383,
+      "rotation_difference_degrees": 0.016444719430009448
+    },
+    {
+      "index": 362,
+      "seconds": 34.795,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.7075472925031877e-06
+    },
+    {
+      "index": 365,
+      "seconds": 35.11,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005079439406421288,
+      "rotation_difference_degrees": 0.025414217078337416
+    },
+    {
+      "index": 367,
+      "seconds": 35.311,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00443444653541369,
+      "rotation_difference_degrees": 0.027276547159708713
+    },
+    {
+      "index": 369,
+      "seconds": 35.511,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.004940242513441984,
+      "rotation_difference_degrees": 0.031657816408357096
+    },
+    {
+      "index": 373,
+      "seconds": 35.877,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.7075472925031877e-06
+    },
+    {
+      "index": 375,
+      "seconds": 36.093,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005200483180919004,
+      "rotation_difference_degrees": 0.04576536516884109
+    },
+    {
+      "index": 378,
+      "seconds": 36.393,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.007582306346423463,
+      "rotation_difference_degrees": 0.03605016377497249
+    },
+    {
+      "index": 381,
+      "seconds": 36.675,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.022928796491208603,
+      "rotation_difference_degrees": 0.019379476773191018
+    },
+    {
+      "index": 384,
+      "seconds": 36.976,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 387,
+      "seconds": 37.243,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005050092201825175,
+      "rotation_difference_degrees": 0.019887173026430314
+    },
+    {
+      "index": 390,
+      "seconds": 37.524,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.006461869562814944,
+      "rotation_difference_degrees": 0.015011833332718051
+    },
+    {
+      "index": 393,
+      "seconds": 37.792,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 2.4148365394514667e-06
+    },
+    {
+      "index": 396,
+      "seconds": 38.075,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.002606905460447422,
+      "rotation_difference_degrees": 0.025486268905374948
+    },
+    {
+      "index": 398,
+      "seconds": 38.308,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.004859094684239695,
+      "rotation_difference_degrees": 0.050581933943015134
+    },
+    {
+      "index": 402,
+      "seconds": 38.673,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.7075472925031877e-06
+    },
+    {
+      "index": 405,
+      "seconds": 38.94,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0008721416648883377,
+      "rotation_difference_degrees": 0.0406853963075249
+    },
+    {
+      "index": 408,
+      "seconds": 39.223,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.025204324956118063,
+      "rotation_difference_degrees": 0.08688391395818734
+    },
+    {
+      "index": 411,
+      "seconds": 39.505,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 414,
+      "seconds": 39.788,
+      "baseline": "unknown",
+      "tracked": "unknown",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 417,
+      "seconds": 40.036,
+      "baseline": "unknown",
+      "tracked": "unknown",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 420,
+      "seconds": 40.336,
+      "baseline": "unknown",
+      "tracked": "unknown",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 423,
+      "seconds": 40.619,
+      "baseline": "unknown",
+      "tracked": "unknown",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 426,
+      "seconds": 40.903,
+      "baseline": "unknown",
+      "tracked": "unknown",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 429,
+      "seconds": 41.201,
+      "baseline": "unknown",
+      "tracked": "unknown",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 432,
+      "seconds": 41.483,
+      "baseline": "confirming",
+      "tracked": "confirming",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 434,
+      "seconds": 41.683,
+      "baseline": "confirming",
+      "tracked": "confirming",
+      "method": "descriptor_pnp"
+    },
+    {
+      "index": 438,
+      "seconds": 42.035,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 441,
+      "seconds": 42.3,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.009683601254903133,
+      "rotation_difference_degrees": 0.05330638729246913
+    },
+    {
+      "index": 444,
+      "seconds": 42.6,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005479924884377705,
+      "rotation_difference_degrees": 0.04624902107924395
+    },
+    {
+      "index": 446,
+      "seconds": 42.817,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.007844578911169197,
+      "rotation_difference_degrees": 0.062391544289064994
+    },
+    {
+      "index": 449,
+      "seconds": 43.1,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.2074182697257333e-06
+    },
+    {
+      "index": 451,
+      "seconds": 43.316,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0017192217456664615,
+      "rotation_difference_degrees": 0.005408226047364522
+    },
+    {
+      "index": 455,
+      "seconds": 43.682,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0038769682050412715,
+      "rotation_difference_degrees": 0.024925163655631535
+    },
+    {
+      "index": 458,
+      "seconds": 43.947,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 2.091309789151873e-06
+    },
+    {
+      "index": 461,
+      "seconds": 44.231,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.002970409935233164,
+      "rotation_difference_degrees": 0.0198792576121101
+    },
+    {
+      "index": 463,
+      "seconds": 44.449,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005610818155684777,
+      "rotation_difference_degrees": 0.021937850255497132
+    },
+    {
+      "index": 466,
+      "seconds": 44.797,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.2074182697257333e-06
+    },
+    {
+      "index": 468,
+      "seconds": 44.997,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.005442431483179788,
+      "rotation_difference_degrees": 0.013243411487303701
+    },
+    {
+      "index": 472,
+      "seconds": 45.364,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0031683978626068287,
+      "rotation_difference_degrees": 0.00502633680351395
+    },
+    {
+      "index": 475,
+      "seconds": 45.647,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 478,
+      "seconds": 45.963,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0038430185962298347,
+      "rotation_difference_degrees": 0.030125661328144968
+    },
+    {
+      "index": 481,
+      "seconds": 46.246,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.012363517037160364,
+      "rotation_difference_degrees": 0.06597470205682522
+    },
+    {
+      "index": 484,
+      "seconds": 46.528,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 2.4148365394514667e-06
+    },
+    {
+      "index": 487,
+      "seconds": 46.811,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.00255915179697306,
+      "rotation_difference_degrees": 0.010045289284501277
+    },
+    {
+      "index": 490,
+      "seconds": 47.077,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.002758184363087542,
+      "rotation_difference_degrees": 0.03204812114436824
+    },
+    {
+      "index": 493,
+      "seconds": 47.344,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 0.0
+    },
+    {
+      "index": 496,
+      "seconds": 47.61,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0031834430046069452,
+      "rotation_difference_degrees": 0.024551403450354916
+    },
+    {
+      "index": 499,
+      "seconds": 47.876,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.006352732477928412,
+      "rotation_difference_degrees": 0.08866311587283923
+    },
+    {
+      "index": 502,
+      "seconds": 48.159,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "descriptor_pnp",
+      "center_difference_reference_steps": 0.0,
+      "rotation_difference_degrees": 1.2074182697257333e-06
+    },
+    {
+      "index": 504,
+      "seconds": 48.361,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.002534584561140357,
+      "rotation_difference_degrees": 0.01827238909576803
+    },
+    {
+      "index": 507,
+      "seconds": 48.642,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.003034380742268231,
+      "rotation_difference_degrees": 0.025844292364821095
+    },
+    {
+      "index": 510,
+      "seconds": 48.908,
+      "baseline": "localized",
+      "tracked": "localized",
+      "method": "map_anchored_flow",
+      "center_difference_reference_steps": 0.0017442707653934875,
+      "rotation_difference_degrees": 0.007160400712056763
+    }
+  ],
+  "route_sha256": "863a5764fc5a6a1cc0825885f2bd91cd591560a4f53702f6abd5216dc0cd3750",
+  "opencv_threads": 8,
+  "resource_guard_min_ram_gib": 12,
+  "capture_manifest_sha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+  "report_sha256": {
+    "descriptor": "de06c99de48c8fa36ebe014ffa951d7a292fdd24cdb1ba03571839215dd3af9e",
+    "anchored_flow": "d99b1463b24da468d90d9ca50918c6260f41e165392a281618a56d5f57f081a0"
+  },
+  "evidenceReportSha256": "2ec5e26fc587991876303b2207b2cf731d9df35f09a8ac0453bb271d71fdbb28",
+  "threadTiming": {
+    "scope": "BOUNDED_CPU_THREAD_TIMING_NOT_NAVIGATION",
+    "queries": 9,
+    "physicalActions": 0,
+    "resourceGuardMinRamGiB": 12,
+    "runs": [
+      {
+        "threads": 2,
+        "computeMedianMs": 209.96020000893623,
+        "computeP95Ms": 223.73702001059428,
+        "maxMs": 224.28610001225024,
+        "solved": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "times": [
+          222.91340000811033,
+          205.68139999522828,
+          224.28610001225024,
+          201.32289998582564,
+          204.35270000598393,
+          204.6422999992501,
+          217.75569999590516,
+          209.96020000893623,
+          214.38419999321923
+        ]
+      },
+      {
+        "threads": 4,
+        "computeMedianMs": 149.3540999945253,
+        "computeP95Ms": 161.9938199990429,
+        "maxMs": 164.5822999998927,
+        "solved": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "times": [
+          149.3540999945253,
+          140.73290000669658,
+          158.11109999776818,
+          143.44569999957457,
+          135.80250000813976,
+          142.91349999257363,
+          164.5822999998927,
+          151.41910000238568,
+          158.04679997381754
+        ]
+      },
+      {
+        "threads": 8,
+        "computeMedianMs": 105.58839997975156,
+        "computeP95Ms": 117.05232000676915,
+        "maxMs": 118.04420000407845,
+        "solved": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "times": [
+          115.5645000108052,
+          101.25790000893176,
+          118.04420000407845,
+          100.26469998410903,
+          102.72920000716113,
+          105.58839997975156,
+          113.60120002063923,
+          102.23920000134967,
+          106.11530000460334
+        ]
+      }
+    ]
+  },
+  "sourceFilesPreserved": {
+    "input/manifest.json": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+    "input/video.h264": "70efc87bf10350439ca715ba1caca2dac8b763799cf3a56568f21c6f795851df",
+    "input/frames.jsonl": "a0eb1e90606671cc3ced0e9dedb400e0496053346169f14adeb5f0ffa84bf43e",
+    "input/inputs.jsonl": "c0ccaf04a674f13d088c91e7bcd30813f6494d61368888e55a2929ef4b462a33",
+    "geometry.json": "be5815218e3280a370466489c732eb235d7ba0e4ca020a6cb79bcfbd47832f62",
+    "result.json": "47f4d60f8e83a9430bb8d199c79cbef6d4515093fb936ed91e47315f9dcc1d0a",
+    "prepared/database.db": "1b7626484c1f3d593a0b17c4b4f580561fd0f921933d9b84a6fdc0c0a4a5c519"
+  },
+  "liveObserverWindowPreparation": {
+    "html": 200,
+    "viewer.js": 200,
+    "sample": 200,
+    "missingOrigin": 403,
+    "falseScene": 409,
+    "invalidTracker": 409,
+    "phase": "waiting_for_manual_start",
+    "oneShot": false,
+    "physicalActions": 0,
+    "privateObservationFileExists": false
+  }
+}

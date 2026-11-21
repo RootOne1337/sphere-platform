@@ -1,0 +1,291 @@
+{
+  "schema": "sphere-three-model-measured-summary-v3",
+  "sourceV2ComparisonSHA": "344e0beed10b7cf42fc698c3a31a81f0719ae1e42a62a6cfdfdfaf8204cec0e1",
+  "sourceV2FigureSHA": "94e1ee3a46565c77c098166f7673652b99b0e1ce00514a6c5475774f20a805c6",
+  "same173SourceFrames": true,
+  "modelMeasurements": {
+    "oldgood": {
+      "nativePoints": 20556,
+      "registered": 173,
+      "nativeActualObservations": {
+        "observations": 130081,
+        "reprojectionPixels": {
+          "count": 130081,
+          "mean": 0.8879859104215804,
+          "median": 0.5811277913010129,
+          "p95": 2.8097361584941067,
+          "maximum": 5.798725208215495,
+          "rms": 1.2421927223373734
+        },
+        "nonpositiveDepth": 0
+      },
+      "nativeCalibration": [
+        {
+          "model": "SIMPLE_PINHOLE",
+          "width": 1920,
+          "height": 1080,
+          "params": [
+            604.4762254407945,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "pathUnits": 74.94923223568438,
+      "gapUnits": 2.293009078315345,
+      "gapPercentPath": 3.0594163674749577,
+      "alignedRmsPercentOldPath": 0.0,
+      "centerResidualPercentOldPath": {
+        "count": 173,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0,
+        "rms": 0.0
+      },
+      "cameraRotationDifferenceDegrees": {
+        "count": 173,
+        "mean": 1.2732239846836959e-06,
+        "median": 0.0,
+        "p95": 5.453077440654614e-06,
+        "maximum": 7.3444386094852035e-06,
+        "rms": 2.272819404994354e-06
+      },
+      "halfSecondDirectionDifferenceDegrees": {
+        "count": 147,
+        "mean": 2.3314488095101207e-07,
+        "median": 0.0,
+        "p95": 1.2074182697257333e-06,
+        "maximum": 1.2074182697257333e-06,
+        "rms": 4.775985434203347e-07
+      },
+      "similarity": {
+        "scale": 1.0,
+        "rotation": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "determinant": 1.0,
+        "reflection": false,
+        "nonlinearWarp": false,
+        "forcedClosure": false
+      }
+    },
+    "fourth": {
+      "nativePoints": 10630,
+      "registered": 173,
+      "nativeActualObservations": {
+        "observations": 80377,
+        "reprojectionPixels": {
+          "count": 80377,
+          "mean": 1.2890334671188057,
+          "median": 1.0387756173004945,
+          "p95": 3.167080035127248,
+          "maximum": 3.999489846873891,
+          "rms": 1.594317002758192
+        },
+        "nonpositiveDepth": 0
+      },
+      "nativeCalibration": [
+        {
+          "model": "SIMPLE_PINHOLE",
+          "width": 1920,
+          "height": 1080,
+          "params": [
+            605.956371874578,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "pathUnits": 20.74491247156942,
+      "gapUnits": 2.452806523913217,
+      "gapPercentPath": 11.8236532801705,
+      "alignedRmsPercentOldPath": 4.019352790952652,
+      "centerResidualPercentOldPath": {
+        "count": 173,
+        "mean": 3.475564070156215,
+        "median": 3.1881992372806214,
+        "p95": 6.923521292650331,
+        "maximum": 6.924508702222111,
+        "rms": 4.019352790952652
+      },
+      "cameraRotationDifferenceDegrees": {
+        "count": 173,
+        "mean": 6.872140585096647,
+        "median": 5.1504405997771405,
+        "p95": 17.16204171237495,
+        "maximum": 17.36823314331225,
+        "rms": 7.993478085727369
+      },
+      "halfSecondDirectionDifferenceDegrees": {
+        "count": 147,
+        "mean": 7.740032402230786,
+        "median": 4.638526421436002,
+        "p95": 17.711732212739033,
+        "maximum": 81.88609051284425,
+        "rms": 14.894724514911207
+      },
+      "similarity": {
+        "scale": 3.499713225848944,
+        "rotation": [
+          [
+            -0.19829692644485417,
+            -0.12022798865395429,
+            -0.9727402323882516
+          ],
+          [
+            0.006702960938510253,
+            0.9922587226943983,
+            -0.12400684477696201
+          ],
+          [
+            0.9801190740298762,
+            -0.031110415958411457,
+            -0.1959559714367332
+          ]
+        ],
+        "translation": [
+          3.426707939722249,
+          1.1976126166571872,
+          12.172295063242501
+        ],
+        "determinant": 1.0000000000000009,
+        "reflection": false,
+        "nonlinearWarp": false,
+        "forcedClosure": false
+      }
+    },
+    "lightglue": {
+      "nativePoints": 20887,
+      "registered": 173,
+      "nativeActualObservations": {
+        "observations": 133784,
+        "reprojectionPixels": {
+          "count": 133784,
+          "mean": 0.9035206266726226,
+          "median": 0.5907575151601241,
+          "p95": 2.849810768759726,
+          "maximum": 5.349673464487641,
+          "rms": 1.2600483286700426
+        },
+        "nonpositiveDepth": 0
+      },
+      "nativeCalibration": [
+        {
+          "model": "SIMPLE_PINHOLE",
+          "width": 1920,
+          "height": 1080,
+          "params": [
+            605.1222364274275,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "pathUnits": 0.007749437793441263,
+      "gapUnits": 0.0003160412677412867,
+      "gapPercentPath": 4.07824768925519,
+      "alignedRmsPercentOldPath": 1.4341981198252993,
+      "centerResidualPercentOldPath": {
+        "count": 173,
+        "mean": 1.2207272777706093,
+        "median": 1.1262258354915478,
+        "p95": 2.2709459110058137,
+        "maximum": 2.2711323668770045,
+        "rms": 1.4341981198252995
+      },
+      "cameraRotationDifferenceDegrees": {
+        "count": 173,
+        "mean": 1.5042833776598599,
+        "median": 1.4005728270506277,
+        "p95": 2.3808807568730526,
+        "maximum": 2.3846646153285196,
+        "rms": 1.5545437768011854
+      },
+      "halfSecondDirectionDifferenceDegrees": {
+        "count": 147,
+        "mean": 1.3401356282386885,
+        "median": 1.2651212253451583,
+        "p95": 2.189646475017221,
+        "maximum": 2.5463044610673657,
+        "rms": 1.387277202011237
+      },
+      "similarity": {
+        "scale": 9594.12236948639,
+        "rotation": [
+          [
+            0.9997903994975446,
+            -0.0029815443334164637,
+            0.02025506025485467
+          ],
+          [
+            0.0030101177948011096,
+            0.9999945169099561,
+            -0.0013803408583746523
+          ],
+          [
+            -0.020250833647070945,
+            0.0014410216555451687,
+            0.9997938923564131
+          ]
+        ],
+        "translation": [
+          10556.53037920046,
+          2669.7326799280036,
+          35632.51143700168
+        ],
+        "determinant": 1.0000000000000002,
+        "reflection": false,
+        "nonlinearWarp": false,
+        "forcedClosure": false
+      }
+    }
+  },
+  "pairMeasurementSHA": "0943eae18dd3f3ec317d11ce231a511ef6792e539d7c63a1c9221d3df1a02787",
+  "geometryReviewAdmitted": true,
+  "geometryAdmissionSourceSHA": "e40dafb938ff191e0967dbdd6587e12c4d7079d2dfa22215b13c3ad541abe1a5",
+  "finalizerGeometrySHA": "0579f9f5ddc899792fc366adcbbaa3bc8e8d7bca1dafa15bbbe9c9580d0faede",
+  "runtimeMapQualified": false,
+  "inputDeliveryQualified": false,
+  "fullRouteExecutionQualified": false,
+  "physicalActions": 0,
+  "fitRecomputed": false,
+  "posesModified": false,
+  "nativeModelsModified": false,
+  "statusOnlyRevision": true,
+  "measurementsCopiedExactlyFromV2": true,
+  "pngSHA": "7a58c27b60377e4348465ea80e1ad5bb79f3068caac180db943f08bb00e974ef",
+  "png": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-lightglue-geometry-comparison-20261103-v3\\three-real-routes.png",
+  "changedPixelBoundingBox": [
+    144,
+    1934,
+    1535,
+    1977
+  ],
+  "permittedStatusFooterROI": [
+    130,
+    1925,
+    2490,
+    1985
+  ],
+  "diagramPixelsOutsideFooterExact": true
+}

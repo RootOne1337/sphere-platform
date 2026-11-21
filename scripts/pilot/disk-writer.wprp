@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0" Author="Sphere Platform">
+  <Profiles>
+    <!-- Fixed circular payload budget: 128 x 1024 KiB, no per-CPU multiplier. -->
+    <SystemCollector Id="SphereDiskWriterCollector" Name="Sphere Disk Writer Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="128" />
+    </SystemCollector>
+    <SystemProvider Id="SphereDiskWriterProvider">
+      <Keywords>
+        <Keyword Value="CpuConfig" />
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+        <Keyword Value="DiskIO" />
+        <Keyword Value="DiskIOInit" />
+        <Keyword Value="FileIO" />
+        <Keyword Value="FileIOInit" />
+      </Keywords>
+      <Stacks>
+        <Stack Value="FileWrite" />
+        <Stack Value="FileSetInformation" />
+        <Stack Value="DiskWriteInit" />
+      </Stacks>
+    </SystemProvider>
+    <Profile Id="SphereDiskWriter.Verbose.Memory" Name="SphereDiskWriter"
+      Description="Bounded file and disk writer attribution" LoggingMode="Memory" DetailLevel="Verbose">
+      <Collectors>
+        <SystemCollectorId Value="SphereDiskWriterCollector">
+          <SystemProviderId Value="SphereDiskWriterProvider" />
+        </SystemCollectorId>
+      </Collectors>
+    </Profile>
+  </Profiles>
+</WindowsPerformanceRecorder>

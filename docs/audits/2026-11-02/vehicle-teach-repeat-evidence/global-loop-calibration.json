@@ -1,0 +1,47 @@
+{
+  "before": {
+    "cameras": [
+      {
+        "id": 1,
+        "model": 0,
+        "width": 1920,
+        "height": 1080,
+        "params": [
+          2304.0,
+          960.0,
+          540.0
+        ],
+        "prior_focal_length": 0
+      }
+    ],
+    "configurations": {
+      "1": 71,
+      "3": 672,
+      "6": 109
+    }
+  },
+  "after": {
+    "cameras": [
+      {
+        "id": 1,
+        "model": 0,
+        "width": 1920,
+        "height": 1080,
+        "params": [
+          2257.545441209922,
+          960.0,
+          540.0
+        ],
+        "prior_focal_length": 1
+      }
+    ],
+    "configurations": {
+      "1": 202,
+      "2": 201,
+      "3": 328,
+      "4": 12,
+      "6": 109
+    }
+  },
+  "copiedDatabaseOnly": true
+}

@@ -1,0 +1,13 @@
+{
+  "status": "stopped_or_failed",
+  "exit_code": 1,
+  "stop_reason": "hard_wall_240s",
+  "wall_seconds": 240.53200000000652,
+  "source_hashes_unchanged": true,
+  "min_available_RAM_GiB": 8.236434936523438,
+  "min_commit_headroom_GiB": 20.391693115234375,
+  "CPU_processors": 2,
+  "owned_direct_base_interpreter": true,
+  "GPU_initialized": false,
+  "physicalActions": 0
+}

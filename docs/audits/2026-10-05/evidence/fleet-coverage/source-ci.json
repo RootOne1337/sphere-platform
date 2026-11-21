@@ -1,0 +1,129 @@
+{
+  "source": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+  "observedAt": "2026-10-05T19:15:57.239863+00:00",
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 37360072777,
+      "headSha": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072777",
+      "workflowName": "CI — Android"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37360072713,
+      "headSha": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072713",
+      "workflowName": "Preview — Deploy"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37360072626,
+      "headSha": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072626",
+      "workflowName": "CI — Frontend"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37360072616,
+      "headSha": "7fef9c5308e9a4e6b9de435d3ca27064bf3754fb",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072616",
+      "workflowName": "CI — Backend"
+    }
+  ],
+  "backendJobs": [
+    {
+      "name": "RLS Policy Coverage",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072616/job/111932417776",
+      "startedAt": "2026-10-05T18:59:49Z",
+      "completedAt": "2026-10-05T18:59:55Z"
+    },
+    {
+      "name": "Production image bootstrap",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072616/job/111932418189",
+      "startedAt": "2026-10-05T18:59:53Z",
+      "completedAt": "2026-10-05T19:01:45Z"
+    },
+    {
+      "name": "Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072616/job/111932418210",
+      "startedAt": "2026-10-05T18:59:51Z",
+      "completedAt": "2026-10-05T19:14:48Z"
+    },
+    {
+      "name": "Security (bandit + pip-audit)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072616/job/111932418225",
+      "startedAt": "2026-10-05T18:59:50Z",
+      "completedAt": "2026-10-05T19:00:18Z"
+    },
+    {
+      "name": "Lint (ruff + mypy)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072616/job/111932418366",
+      "startedAt": "2026-10-05T18:59:50Z",
+      "completedAt": "2026-10-05T19:00:35Z"
+    },
+    {
+      "name": "Alembic Single Head",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37360072616/job/111938650941",
+      "startedAt": "2026-10-05T19:14:54Z",
+      "completedAt": "2026-10-05T19:15:47Z"
+    }
+  ],
+  "unitAndRealService": {
+    "passed": 2754,
+    "skipped": 30,
+    "warnings": 1,
+    "coveragePercent": 79.77
+  },
+  "coverageEndpointCases": [
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:53.8066981Z tests/devices/test_fleet_coverage.py::test_empty_inventory_is_measured_zero_not_unavailable PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:53.8420439Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[True-0-0-owner-owner-active-False] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:53.8771078Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[False-119-0-owner-owner-inactive-False] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:53.9118255Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[True-120-0-owner-owner-stale-False] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:53.9474797Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[True-None-0-owner-owner-unknown-False] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:53.9819566Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[True--1-0-owner-owner-unknown-False] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.0169256Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[True-0-120-owner-owner-unknown-True] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.0525191Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[True-0--1-owner-owner-unknown-True] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.0889343Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[True-0-0-None-None-unknown-True] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.1245028Z tests/devices/test_fleet_coverage.py::test_independent_clocks_partition_android_reports[True-0-0-owner-old-unknown-False] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.1587256Z tests/devices/test_fleet_coverage.py::test_unobserved_presence_is_unknown_not_offline[missing] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.1922733Z tests/devices/test_fleet_coverage.py::test_unobserved_presence_is_unknown_not_offline[malformed] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.2261717Z tests/devices/test_fleet_coverage.py::test_unobserved_presence_is_unknown_not_offline[wrong-device] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.2583092Z tests/devices/test_fleet_coverage.py::test_redis_failure_preserves_sql_but_has_no_presence_numbers[absent] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.2910276Z tests/devices/test_fleet_coverage.py::test_redis_failure_preserves_sql_but_has_no_presence_numbers[outage] PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.3287535Z tests/devices/test_fleet_coverage.py::test_tenant_and_active_scope_not_operator_selected PASSED [ 10%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.3667359Z tests/devices/test_fleet_coverage.py::test_handshakes_are_retained_evidence_not_live_tunnel_health[0-True-assigned-True-1-0-0-0] PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.4034376Z tests/devices/test_fleet_coverage.py::test_handshakes_are_retained_evidence_not_live_tunnel_health[179-True-assigned-True-1-0-0-0] PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.4397191Z tests/devices/test_fleet_coverage.py::test_handshakes_are_retained_evidence_not_live_tunnel_health[180-True-assigned-True-0-1-0-0] PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.4762994Z tests/devices/test_fleet_coverage.py::test_handshakes_are_retained_evidence_not_live_tunnel_health[None-True-assigned-True-0-0-1-0] PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.5146767Z tests/devices/test_fleet_coverage.py::test_handshakes_are_retained_evidence_not_live_tunnel_health[-1-True-assigned-True-0-0-1-0] PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.5519273Z tests/devices/test_fleet_coverage.py::test_handshakes_are_retained_evidence_not_live_tunnel_health[1-False-assigned-True-0-0-0-1] PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.5889000Z tests/devices/test_fleet_coverage.py::test_handshakes_are_retained_evidence_not_live_tunnel_health[1-True-provisioning-True-0-0-0-0] PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.6258614Z tests/devices/test_fleet_coverage.py::test_handshakes_are_retained_evidence_not_live_tunnel_health[1-True-assigned-False-0-0-0-0] PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.6544070Z tests/devices/test_fleet_coverage.py::test_script_runner_can_read_fleet_without_vpn_permission PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.6598346Z tests/devices/test_fleet_coverage.py::test_anonymous_request_cannot_read_coverage PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.6940462Z tests/devices/test_fleet_coverage.py::test_inventory_budget_retains_exact_sql_total_without_reading_redis PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.7308134Z tests/devices/test_fleet_coverage.py::test_later_redis_chunk_failure_discards_partial_counts PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.7614711Z tests/devices/test_fleet_coverage.py::test_peer_source_failure_does_not_hide_received_android_report PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.7644623Z tests/devices/test_fleet_coverage.py::test_inventory_timeout_never_invents_zero PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.8015776Z tests/devices/test_fleet_coverage.py::test_peers_cannot_cross_tenant_or_disabled_inventory PASSED [ 11%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T19:01:54.8384390Z tests/devices/test_fleet_coverage.py::test_route_uses_binary_client_when_text_and_binary_clients_coexist PASSED [ 11%]"
+  ],
+  "laterDocsHeadCiInherited": false
+}

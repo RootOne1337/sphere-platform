@@ -1,0 +1,91 @@
+FFFFFFF                                                                  [100%]
+================================== FAILURES ===================================
+_________ test_F01_org_admin_creates_super_admin_and_reads_other_org __________
+tests\production\test_security_regressions.py:86: in test_F01_org_admin_creates_super_admin_and_reads_other_org
+    assert response.status_code == 403, response.text
+E   AssertionError: {"id":"7e25b0f3-317f-44b7-99f7-b117426810fe","org_id":"0cefa9a0-fc1b-494c-83f2-ee7e9e62816e","email":"escalated-b4e45fbb696d4542b3458974877bef21@example.org","role":"super_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-05T18:11:30.807884Z"}
+E   assert 201 == 403
+E    +  where 201 = <Response [201 Created]>.status_code
+_________________ test_F02_viewer_mints_privileged_agent_key __________________
+tests\production\test_security_regressions.py:93: in test_F02_viewer_mints_privileged_agent_key
+    assert response.status_code == 403, response.text
+E   AssertionError: {"id":"670d7bc6-8796-4f7a-8a98-8b32f926121b","name":"audit-agent","key_prefix":"sphr_deve_46f8","raw_key":"sphr_deve_46f80cc3922fc51425cee9679f9f7939099afcee56054c56584dda24ee09205c","permissions":["device:register","device:write","*"],"expires_at":null,"created_at":"2026-09-05T18:11:31.472816Z"}
+E   assert 201 == 403
+E    +  where 201 = <Response [201 Created]>.status_code
+____________ test_F03_pc_agent_accepts_identifier_from_another_org ____________
+tests\production\test_security_regressions.py:129: in test_F03_pc_agent_accepts_identifier_from_another_org
+    with patch.object(router, "get_connection_manager", return_value=manager), patch.object(router, "AsyncSessionLocal", w.sessions):
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:1467: in __enter__
+    original, local = self.get_original()
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:1437: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'backend.api.ws.agent.router' from 'C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\backend\\api\\ws\\agent\\router.py'> does not have the attribute 'AsyncSessionLocal'
+____________ test_F04_device_token_authenticates_as_another_device ____________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2429: in assert_not_awaited
+    raise AssertionError(msg)
+E   AssertionError: Expected mock to not have been awaited. Awaited 1 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_security_regressions.py:146: in test_F04_device_token_authenticates_as_another_device
+    manager.connect.assert_not_awaited()
+E   AssertionError: Expected mock to not have been awaited. Awaited 1 times.
+E   
+E   pytest introspection follows:
+E   
+E   Args:
+E   assert (<test_securi...c7225469ebfc') == ()
+E     
+E     Left contains 4 more items, first extra item: <test_security_regressions.FakeSocket object at 0x0000029F1FA213D0>
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "efccfad9-8a04-415b-9dfd-59f2f37ce80e", "org_id": "dcf11dd1-59b7-4f2f-b609-c7225469ebfc", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-05T18:11:31.899848Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:454 {'device_id': 'efccfad9-8a04-415b-9dfd-59f2f37ce80e', 'org_id': 'dcf11dd1-59b7-4f2f-b609-c7225469ebfc', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-05T18:11:31.899848Z'}
+___________________ test_F05_viewer_can_send_touch_actions ____________________
+tests\production\test_security_regressions.py:161: in test_F05_viewer_can_send_touch_actions
+    assert "touch_tap" not in sent and "text" not in sent
+E   AssertionError: assert ('touch_tap' not in ['viewer_connected', 'touch_tap', 'text'])
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "dd9af85d-2445-4076-82f3-ac4889f2f35a", "session_id": "4e63e08535dd3af5", "user_id": "7fdd6370-cce4-414e-9165-cf8415a37170", "event": "Stream viewer connected", "level": "info", "logger": "backend.api.ws.stream.router", "timestamp": "2026-09-05T18:11:32.076696Z"}
+{"device_id": "dd9af85d-2445-4076-82f3-ac4889f2f35a", "session_id": "4e63e08535dd3af5", "code": 1000, "reason": "", "event": "Stream viewer WS disconnect", "level": "info", "logger": "backend.api.ws.stream.router", "timestamp": "2026-09-05T18:11:32.076696Z"}
+{"device_id": "dd9af85d-2445-4076-82f3-ac4889f2f35a", "session_id": "4e63e08535dd3af5", "event": "Stream viewer disconnected", "level": "info", "logger": "backend.api.ws.stream.router", "timestamp": "2026-09-05T18:11:32.077210Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.stream.router:router.py:144 {'device_id': 'dd9af85d-2445-4076-82f3-ac4889f2f35a', 'session_id': '4e63e08535dd3af5', 'user_id': '7fdd6370-cce4-414e-9165-cf8415a37170', 'event': 'Stream viewer connected', 'level': 'info', 'logger': 'backend.api.ws.stream.router', 'timestamp': '2026-09-05T18:11:32.076696Z'}
+INFO     backend.api.ws.stream.router:router.py:225 {'device_id': 'dd9af85d-2445-4076-82f3-ac4889f2f35a', 'session_id': '4e63e08535dd3af5', 'code': 1000, 'reason': '', 'event': 'Stream viewer WS disconnect', 'level': 'info', 'logger': 'backend.api.ws.stream.router', 'timestamp': '2026-09-05T18:11:32.076696Z'}
+INFO     backend.api.ws.stream.router:router.py:242 {'device_id': 'dd9af85d-2445-4076-82f3-ac4889f2f35a', 'session_id': '4e63e08535dd3af5', 'event': 'Stream viewer disconnected', 'level': 'info', 'logger': 'backend.api.ws.stream.router', 'timestamp': '2026-09-05T18:11:32.077210Z'}
+________________ test_F06_agent_can_complete_foreign_org_task _________________
+tests\production\test_security_regressions.py:174: in test_F06_agent_can_complete_foreign_org_task
+    assert task.status == TaskStatus.RUNNING
+E   AssertionError: assert <TaskStatus.C...: 'completed'> == <TaskStatus.R...NG: 'running'>
+E     
+E     - running
+E     + completed
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "ffb8364c-ffe3-40d3-9525-efc305cc91cf", "success": true, "device_id": "8d6425ea-2123-441f-ac5b-a7ca83b05877", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-05T18:11:32.214038Z"}
+{"event_id": "93de0710-84ed-403b-8121-57257bab0320", "event_type": "task.completed", "device_id": "8d6425ea-2123-441f-ac5b-a7ca83b05877", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-05T18:11:32.267793Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:454 {'task_id': 'ffb8364c-ffe3-40d3-9525-efc305cc91cf', 'success': True, 'device_id': '8d6425ea-2123-441f-ac5b-a7ca83b05877', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-05T18:11:32.214038Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '93de0710-84ed-403b-8121-57257bab0320', 'event_type': 'task.completed', 'device_id': '8d6425ea-2123-441f-ac5b-a7ca83b05877', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-05T18:11:32.267793Z'}
+___________ test_F07_foreign_account_credentials_inserted_into_dag ____________
+tests\production\test_security_regressions.py:188: in test_F07_foreign_account_credentials_inserted_into_dag
+    assert account is None
+E   assert <GameAccount audit:foreign-login [free]> is None
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 480 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_security_regressions.py::test_F01_org_admin_creates_super_admin_and_reads_other_org
+FAILED tests/production/test_security_regressions.py::test_F02_viewer_mints_privileged_agent_key
+FAILED tests/production/test_security_regressions.py::test_F03_pc_agent_accepts_identifier_from_another_org
+FAILED tests/production/test_security_regressions.py::test_F04_device_token_authenticates_as_another_device
+FAILED tests/production/test_security_regressions.py::test_F05_viewer_can_send_touch_actions
+FAILED tests/production/test_security_regressions.py::test_F06_agent_can_complete_foreign_org_task
+FAILED tests/production/test_security_regressions.py::test_F07_foreign_account_credentials_inserted_into_dag
+7 failed, 481 warnings in 1.91s

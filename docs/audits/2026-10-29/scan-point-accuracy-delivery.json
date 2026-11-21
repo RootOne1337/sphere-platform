@@ -1,0 +1,146 @@
+{
+  "schema": "sphere-scan-point-accuracy-delivery-v1",
+  "date": "2026-10-29",
+  "policy": "pnp-continuous-image-support-temporal-v4",
+  "api": {
+    "outcome": "verified",
+    "launcherPid": 38668,
+    "physicalActions": 0,
+    "health": 200,
+    "missingCapability": 403
+  },
+  "webImage": "sphere-route-local:route-temporal-20261029-v5",
+  "sourceHashes": {
+    "motor_worker/route_localization.py": "c9053f3cf477d9d8631931e446a103ac81b5f9c159b88f578c900766a72ea4c4",
+    "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+    "scripts/pilot/camera_pixel_conventions.py": "c144d4e9771ba292528e52fa8e52aec5b2fb79e1baf448e2d77aa47f05f29c96",
+    "scripts/pilot/export_route_localization.py": "d55991fb16415cb3f59e65bfb5534aea3a9f2fe2e9c51dfca313711b27f093de",
+    "scripts/pilot/learned_route_features.py": "44fbd24aa1ef050fab4c1b3740b6be206207312fb6bce5231635158deaea6536",
+    "scripts/pilot/reconstruct_route.py": "647b0b442a55f979f0eb63ef1ccac57ed9180b532cd514e4159e8f834aaf8dce",
+    "scripts/pilot/reconstruction_service.py": "c1a13f29b43b8ceb6d0a9b32d3ed35e74f821a49867cf0fb98d715908b8736f8",
+    "scripts/pilot/route_motion_sampling.py": "bc8fb20c9a736cf26a9f81b2864fcfaa8572c6204398ff3eba89ca320451e0b8",
+    "scripts/pilot/route_temporal_repair.py": "86ad24dd05ee3fa963e8f2665056b79bc19be9136ee6b895a96c43947d890e4f",
+    "scripts/pilot/route_video_tracks.py": "44bed32447ab643bf9469145af0e22ab098e19d5edd406c39b74a3526f2e3085",
+    "scripts/pilot/route_workspace.py": "12227a90ae6d9bac83873bed049b07da50edf21b0e10b850c6a92acdae56aa6e",
+    "scripts/pilot/temporal_route_matches.py": "7f850e37e186b43cf31c88360835289cd54748ee9d11dcc999f0011c92db38a1",
+    "scripts/pilot/video_observations.py": "00ffe7ad2966dfba44d531f86fb8778b0a4bbeae3655341bba6005d046f3734d"
+  },
+  "adopted": {
+    "outcome": "verified",
+    "job": "b861ac82fcd64425bc583b37f620ba2a",
+    "geometryRevision": "pixel-centers-174-v2",
+    "cameras": 174,
+    "points": 14622,
+    "runtimeLandmarks": 4096,
+    "sourceManifestSha": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    "geometrySha": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+    "routeSha": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+    "rapidReversals": 0,
+    "speedOutliers": 0,
+    "firstSeconds": 0,
+    "lastSeconds": 50.349,
+    "navigationPhase": "ready",
+    "executionQualified": false,
+    "physicalActions": 0,
+    "baselinePreserved": true,
+    "sourceCapturePreserved": true
+  },
+  "productionPipeline": {
+    "outcome": "verified",
+    "seconds": 254.53100000001723,
+    "recipeSourceHashes": {
+      "scripts/pilot/reconstruct_route.py": "647b0b442a55f979f0eb63ef1ccac57ed9180b532cd514e4159e8f834aaf8dce",
+      "scripts/pilot/route_video_tracks.py": "44bed32447ab643bf9469145af0e22ab098e19d5edd406c39b74a3526f2e3085",
+      "scripts/pilot/route_motion_sampling.py": "bc8fb20c9a736cf26a9f81b2864fcfaa8572c6204398ff3eba89ca320451e0b8",
+      "scripts/pilot/video_observations.py": "00ffe7ad2966dfba44d531f86fb8778b0a4bbeae3655341bba6005d046f3734d",
+      "scripts/pilot/camera_pixel_conventions.py": "c144d4e9771ba292528e52fa8e52aec5b2fb79e1baf448e2d77aa47f05f29c96",
+      "scripts/pilot/export_route_localization.py": "d55991fb16415cb3f59e65bfb5534aea3a9f2fe2e9c51dfca313711b27f093de",
+      "scripts/pilot/route_landmark_builder.py": "a91cbcbc9844134524fbf156235a5ae551a2151fb7ab5681970764ebfe672dfa",
+      "scripts/pilot/prepare_route_workspace.py": "58b8ad203b72afac8a794008cd7484a5bc969da81ac250a9e3d7bf0fa0a1f247",
+      "motor_worker/route_localization.py": "c9053f3cf477d9d8631931e446a103ac81b5f9c159b88f578c900766a72ea4c4",
+      "motor_worker/browser_teach.py": "9d680db03103173756b29f7d32b0b9258ddad201911dd7cd2d4666d96a1a1fe4"
+    },
+    "sourceUnchanged": true,
+    "quality": {
+      "registered": 174,
+      "selected": 174,
+      "coverage": 1.0,
+      "points": 14622,
+      "mean_reprojection_px": 0.9583548348384302,
+      "components": 1,
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 11.247581783329597,
+        "passed": true
+      },
+      "intrinsics_condition": {
+        "passed": true,
+        "focal_ratio": 1.0,
+        "horizontal_fov_degrees": 115.5300758064818,
+        "vertical_fov_degrees": 83.46766176167685,
+        "physical_calibration_verified": false
+      }
+    },
+    "reversals": 0,
+    "speedOutliers": 0,
+    "navigation": {
+      "phase": "ready",
+      "error": null,
+      "cameraTraceOnly": true,
+      "executionQualified": false
+    },
+    "physicalActions": 0
+  },
+  "positiveReplay": {
+    "scope": "SOURCE_VIDEO_REPLAY_NOT_INDEPENDENT_GAMEPLAY",
+    "samples": 233,
+    "states": {
+      "confirming": 6,
+      "localized": 225,
+      "unknown": 2
+    },
+    "reasons": {
+      "relative_camera_pose_not_clearance_or_arrival": 231,
+      "route_frame_expired_during_localization": 1,
+      "route_pose_discontinuity": 1
+    },
+    "physicalActions": 0,
+    "executionQualified": false
+  },
+  "negativeReplay": {
+    "scope": "DIFFERENT_LOCATION_CAPTURE_NEGATIVE_TEST",
+    "samples": 154,
+    "states": {
+      "unknown": 154
+    },
+    "reasons": {
+      "route_pose_not_verified": 154
+    },
+    "physicalActions": 0,
+    "executionQualified": false
+  },
+  "computeMs": {
+    "median": 8.371900010388345,
+    "p95": 191.21320000849664,
+    "scope": "COMPUTE_ONLY_NOT_ANDROID_TO_INPUT_LATENCY"
+  },
+  "progressConsistency": {
+    "scope": "SAME_VIDEO_REFERENCE_PROGRESS_NOT_INDEPENDENT_GROUND_TRUTH",
+    "expectedReference": "linear interpolation of reference progress for evaluation only",
+    "samples": 225,
+    "medianUnits": 0.001279407581176173,
+    "p95Units": 0.005496592026869962,
+    "maxUnits": 0.01815744094551519,
+    "medianReferenceStep": 0.06649040285480094,
+    "pathUnits": 12.406225286084284
+  },
+  "tests": {
+    "pytest": 79,
+    "unit": 82
+  },
+  "freshBrowserVisualAcceptance": false,
+  "independentLiveRepeatAccepted": false,
+  "physicalActions": 0,
+  "executionQualified": false
+}

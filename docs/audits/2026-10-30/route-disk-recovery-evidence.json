@@ -1,0 +1,59 @@
+{
+  "schema": "sphere-route-disk-recovery-v1",
+  "cleanup": {
+    "scope": "EXACT_DUPLICATES_IN_COMPLETED_OFFLINE_TESTS",
+    "physicalActions": 0,
+    "planSha256": "32e72badfdda4f028701494c2b65c54564b15e8a254a097f847ec565a0c95411",
+    "freeDiskBytesBefore": 26690666496,
+    "originalsPreserved": true,
+    "reportsPreserved": true,
+    "outcome": "verified",
+    "freeDiskBytesAfter": 35480895488,
+    "actualFreeDeltaBytes": 8790228992,
+    "deletedFiles": 5270,
+    "deletedLogicalBytes": 8775933300,
+    "seconds": 8.08
+  },
+  "minimalFixtureBytes": 5213170,
+  "resumeSummary": [
+    {
+      "startMode": "beginning",
+      "localized": 5,
+      "following": 0
+    },
+    {
+      "startMode": "recognized_route",
+      "localized": 5,
+      "following": 3
+    }
+  ],
+  "replay": [
+    {
+      "case": "baseline",
+      "states": {
+        "confirming": 2,
+        "localized": 21
+      },
+      "plans": {
+        "waiting": 2,
+        "following": 21
+      },
+      "fault": null,
+      "firstStop": null,
+      "firstFollowingSeconds": 0.402,
+      "browserExpiredReplies": 0,
+      "effectiveMovingSamples": 21
+    }
+  ],
+  "temporaryFixturesRemoved": true,
+  "nativeInputSent": false,
+  "unitTests": 98,
+  "pytestTests": 37,
+  "pytestSubtests": 5,
+  "completeDiskLossAttribution": false,
+  "sourceHashes": {
+    "scripts\\pilot\\route_workspace.py": "42e7eee3c5952c801952967431e42b7c2658f8db8db0b52eae7a433c1c190f44",
+    "scripts\\pilot\\route_replay_snapshot.py": "8a65833369fd0a5e4e246f956bcd8f37e6992f76e1132f8ed03f809ae5556b9a",
+    "scripts\\pilot\\route_service_watchdog.py": "031a7fa7b1dd85b8aa5ddcbffd18188012d74b859341165330ff07aa2b6494fe"
+  }
+}

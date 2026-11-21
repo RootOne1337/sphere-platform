@@ -1,0 +1,107 @@
+{
+  "method": "masked cached RootSIFT ratio .75, fundamental RANSAC, nearest landmark subpixel association then heldout PnP",
+  "pairs": [
+    {
+      "head": 0,
+      "tail": 856,
+      "ratio_matches": 32,
+      "fundamental_inliers": 14,
+      "associated_3d": 0,
+      "association_rule": "nearest landmark full-res within 3px, second-nearest separation >=1px",
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_associations"
+      },
+      "board_inliers_drawn": 14
+    },
+    {
+      "head": 0,
+      "tail": 850,
+      "ratio_matches": 27,
+      "fundamental_inliers": 14,
+      "associated_3d": 0,
+      "association_rule": "nearest landmark full-res within 3px, second-nearest separation >=1px",
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_associations"
+      }
+    },
+    {
+      "head": 0,
+      "tail": 844,
+      "ratio_matches": 30,
+      "fundamental_inliers": 16,
+      "associated_3d": 0,
+      "association_rule": "nearest landmark full-res within 3px, second-nearest separation >=1px",
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_associations"
+      }
+    },
+    {
+      "head": 43,
+      "tail": 844,
+      "ratio_matches": 24,
+      "fundamental_inliers": 14,
+      "associated_3d": 1,
+      "association_rule": "nearest landmark full-res within 3px, second-nearest separation >=1px",
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_associations"
+      }
+    },
+    {
+      "head": 77,
+      "tail": 838,
+      "ratio_matches": 16,
+      "fundamental_inliers": 0,
+      "associated_3d": 0,
+      "association_rule": "nearest landmark full-res within 3px, second-nearest separation >=1px",
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_associations"
+      }
+    },
+    {
+      "head": 83,
+      "tail": 833,
+      "ratio_matches": 16,
+      "fundamental_inliers": 0,
+      "associated_3d": 0,
+      "association_rule": "nearest landmark full-res within 3px, second-nearest separation >=1px",
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_associations"
+      }
+    },
+    {
+      "head": 121,
+      "tail": 824,
+      "ratio_matches": 1,
+      "fundamental_inliers": 0,
+      "associated_3d": 0,
+      "association_rule": "nearest landmark full-res within 3px, second-nearest separation >=1px",
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_associations"
+      }
+    },
+    {
+      "head": 127,
+      "tail": 819,
+      "ratio_matches": 2,
+      "fundamental_inliers": 0,
+      "associated_3d": 0,
+      "association_rule": "nearest landmark full-res within 3px, second-nearest separation >=1px",
+      "pnp": {
+        "accepted": false,
+        "reason": "insufficient_2d_3d_associations"
+      }
+    }
+  ],
+  "time_seconds": 0.25,
+  "source_and_model_unchanged": true,
+  "independent_metric_truth": false,
+  "user_5m_used_as_constraint": false,
+  "execution_qualified": false
+}

@@ -1,0 +1,96 @@
+{
+  "observedAtUtc": "2026-10-08T06:55:06Z",
+  "sourceRevision": "961052334b99f9a27fa292f5217d5d0130dd6094",
+  "frontendRunId": 37719924738,
+  "backendRunId": 37719924634,
+  "frontendTestsPassed": 1861,
+  "backendTestsPassed": 3335,
+  "backendTestsSkipped": 37,
+  "runtimeReadback": {
+    "frontend": "96105233",
+    "backend": "96105233",
+    "containersHealthy": true,
+    "composeFilesEach": 2
+  },
+  "schemaMigrationPerformed": false,
+  "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+  "otherContainersPreservedEachInstall": 45,
+  "device": "PH011",
+  "apk": 10249,
+  "canary": {
+    "nativeOwnerOpened": true,
+    "touchesSent": 0,
+    "nativeRelease": 3,
+    "treeNodesBefore": 46,
+    "treeNodesAfter": 46,
+    "explicitRetry": true,
+    "controlReturnedReady": true,
+    "videoVisible": true
+  },
+  "events": [
+    {
+      "snapshot_id": "a8d9c96664054c3c894710554a0aacd3",
+      "status": 200,
+      "failed_stage": null,
+      "reason": null,
+      "native_exit_code": null,
+      "elapsed_ms": 3285,
+      "stage_ms": {
+        "geometry_before": 516,
+        "dump": 1365,
+        "read_xml": 395,
+        "geometry_after": 504,
+        "validate_geometry": 0,
+        "validate_tree": 0,
+        "cleanup": 502
+      },
+      "rpc_count": 5,
+      "cleanup_confirmed": true,
+      "lock_release_confirmed": true,
+      "event": "ui_inspection_finished"
+    },
+    {
+      "snapshot_id": "b086c7711b1e460cb3ecfba7babd87ad",
+      "status": 502,
+      "failed_stage": "geometry_before",
+      "reason": "native_input_busy",
+      "native_exit_code": null,
+      "elapsed_ms": 585,
+      "stage_ms": {
+        "geometry_before": 336,
+        "cleanup": 249
+      },
+      "rpc_count": 2,
+      "cleanup_confirmed": false,
+      "lock_release_confirmed": true,
+      "event": "ui_inspection_finished"
+    },
+    {
+      "snapshot_id": "718ced13b2174501a50a1dd9d0e19ad3",
+      "status": 200,
+      "failed_stage": null,
+      "reason": null,
+      "native_exit_code": null,
+      "elapsed_ms": 3150,
+      "stage_ms": {
+        "geometry_before": 387,
+        "dump": 1505,
+        "read_xml": 280,
+        "geometry_after": 475,
+        "validate_geometry": 0,
+        "validate_tree": 1,
+        "cleanup": 500
+      },
+      "rpc_count": 5,
+      "cleanup_confirmed": true,
+      "lock_release_confirmed": true,
+      "event": "ui_inspection_finished"
+    }
+  ],
+  "limits": [
+    "Finite PH011 test, not fleet soak",
+    "No new APK or OTA advancement",
+    "Historical root exit 1 remains unexplained",
+    "Storage loss and file corruption remain open"
+  ]
+}

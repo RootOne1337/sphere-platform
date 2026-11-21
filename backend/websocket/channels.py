@@ -33,6 +33,9 @@ class ChannelPattern:
     # Видеопоток (от агента к API воркеру)
     VIDEO_STREAM = "sphere:stream:video:{device_id}"
 
+    # Viewer presence is independent of whether this worker needs legacy bytes.
+    VIDEO_PRESENCE = "sphere:stream:presence:{device_id}"
+
     # Ответы на команды
     AGENT_RESULT = "sphere:agent:result:{device_id}:{command_id}"
 
@@ -47,6 +50,10 @@ class ChannelPattern:
     @staticmethod
     def video_stream(device_id: str) -> str:
         return f"sphere:stream:video:{device_id}"
+
+    @staticmethod
+    def video_presence(device_id: str) -> str:
+        return f"sphere:stream:presence:{device_id}"
 
     @staticmethod
     def agent_result_pattern(device_id: str) -> str:

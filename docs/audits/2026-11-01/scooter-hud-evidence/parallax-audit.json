@@ -1,0 +1,165 @@
+{
+  "status": "complete",
+  "fixture_expected_deg": 5.710593137499643,
+  "fixture_actual_deg": 5.710593137499633,
+  "models": {
+    "baseline_f960": {
+      "registered_images": 163,
+      "points_total": 5375,
+      "invalid_or_less_than_two_observations": 0,
+      "positive_depth_observations": 38325,
+      "total_observations": 38325,
+      "track_length": {
+        "count": 5375,
+        "min": 2.0,
+        "p10": 3.0,
+        "median": 4.0,
+        "p90": 15.0,
+        "p99": 40.0,
+        "max": 84.0
+      },
+      "max_acute_triangulation_angle_deg": {
+        "all": {
+          "count": 5375,
+          "min": 1.187072942484454,
+          "p10": 2.4500666139078118,
+          "median": 6.699085044160342,
+          "p90": 16.943493768195992,
+          "p99": 38.93083222126108,
+          "max": 47.573103086320565,
+          "below_1_deg": 0,
+          "below_2_deg": 252,
+          "below_3_deg": 832,
+          "below_5_deg": 1908
+        },
+        "top_quarter_majority": {
+          "count": 0
+        },
+        "other_tracks": {
+          "count": 5375,
+          "min": 1.187072942484454,
+          "p10": 2.4500666139078118,
+          "median": 6.699085044160342,
+          "p90": 16.943493768195992,
+          "p99": 38.93083222126108,
+          "max": 47.573103086320565,
+          "below_1_deg": 0,
+          "below_2_deg": 252,
+          "below_3_deg": 832,
+          "below_5_deg": 1908
+        }
+      }
+    },
+    "new_global_f960": {
+      "registered_images": 163,
+      "points_total": 15706,
+      "invalid_or_less_than_two_observations": 0,
+      "positive_depth_observations": 110966,
+      "total_observations": 110966,
+      "track_length": {
+        "count": 15706,
+        "min": 2.0,
+        "p10": 3.0,
+        "median": 4.0,
+        "p90": 14.0,
+        "p99": 42.0,
+        "max": 108.0
+      },
+      "max_acute_triangulation_angle_deg": {
+        "all": {
+          "count": 15706,
+          "min": 1.0611939794708176,
+          "p10": 2.0558773932125365,
+          "median": 5.649119198553434,
+          "p90": 15.662431790614665,
+          "p99": 25.616078019988848,
+          "max": 46.243132692667295,
+          "below_1_deg": 0,
+          "below_2_deg": 1440,
+          "below_3_deg": 3620,
+          "below_5_deg": 6979
+        },
+        "top_quarter_majority": {
+          "count": 2920,
+          "min": 1.3275517039309264,
+          "p10": 1.8677179009061737,
+          "median": 5.750026316347846,
+          "p90": 16.46686815208759,
+          "p99": 25.252572638015778,
+          "max": 32.30064193018272,
+          "below_1_deg": 0,
+          "below_2_deg": 352,
+          "below_3_deg": 727,
+          "below_5_deg": 1287
+        },
+        "other_tracks": {
+          "count": 12786,
+          "min": 1.0611939794708176,
+          "p10": 2.0970594335729213,
+          "median": 5.620032046318209,
+          "p90": 15.42294823245326,
+          "p99": 25.784179057461117,
+          "max": 46.243132692667295,
+          "below_1_deg": 0,
+          "below_2_deg": 1088,
+          "below_3_deg": 2893,
+          "below_5_deg": 5692
+        }
+      }
+    }
+  },
+  "effective_options_reconstructed_from_identical_run_scripts": {
+    "global_mapper_min_tri_angle_deg": 1.0,
+    "retriangulation_min_angle_deg": 1.0,
+    "retriangulation_ignore_two_view_tracks": true,
+    "retriangulation_re_min_ratio": 0.2,
+    "retriangulation_re_max_trials": 1,
+    "track_min_num_views": 3,
+    "track_max_num_views": 100,
+    "keep_max_num_tracks": 30000,
+    "global_positioning_min_views": 3,
+    "skip_retriangulation": false,
+    "decompose_relative_pose": true,
+    "min_num_matches": 15,
+    "refine_focal_length": false,
+    "max_angular_reprojection_deg": 1.0,
+    "max_normalized_reprojection": 0.01,
+    "new_graph_two_view_options": {
+      "min_num_inliers": 15,
+      "ransac_max_error_px": 4.0,
+      "ransac_confidence": 0.999,
+      "filter_stationary_matches": false,
+      "compute_relative_pose": false,
+      "ransac_num_threads": 1
+    },
+    "pycolmap_version": "4.2.1"
+  },
+  "source_hashes_before": {
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\cameras.bin": "57c2365fe6f8aa39c30f9648bfba53616253111223774d929d4ff082ec2936b4",
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\images.bin": "4375b240ea8079a362b0085e78f2e460a1cfca091cae46fe0bc766cbbb668634",
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\points3D.bin": "f80bd51b051359dd3be637603eeccc552b4296bd7542e22712c46310e54d0b9a",
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\frames.bin": "54dadfae2961c735d9d7a7662342af693bb37a7c3f96631237ded56f28f4e315",
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\cameras.bin": "57c2365fe6f8aa39c30f9648bfba53616253111223774d929d4ff082ec2936b4",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\images.bin": "6f47fa409031f7ea3ca9e5a9763c3c552df7d0f536f1ff7272048cf3c42e9db4",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\points3D.bin": "924e2d3284023ed76e8fe4d01644e387a7baa2c2a9e2a742df6e7fba6efed0be",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\frames.bin": "58d0c9e0bcdeee366aa03412adeb077bedd819568164f3165411298b83afa4ef",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+  },
+  "source_hashes_after": {
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\cameras.bin": "57c2365fe6f8aa39c30f9648bfba53616253111223774d929d4ff082ec2936b4",
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\images.bin": "4375b240ea8079a362b0085e78f2e460a1cfca091cae46fe0bc766cbbb668634",
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\points3D.bin": "f80bd51b051359dd3be637603eeccc552b4296bd7542e22712c46310e54d0b9a",
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\frames.bin": "54dadfae2961c735d9d7a7662342af693bb37a7c3f96631237ded56f28f4e315",
+    ".local-pilot\\scooter-intrinsics-20261101\\960\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\cameras.bin": "57c2365fe6f8aa39c30f9648bfba53616253111223774d929d4ff082ec2936b4",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\images.bin": "6f47fa409031f7ea3ca9e5a9763c3c552df7d0f536f1ff7272048cf3c42e9db4",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\points3D.bin": "924e2d3284023ed76e8fe4d01644e387a7baa2c2a9e2a742df6e7fba6efed0be",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\frames.bin": "58d0c9e0bcdeee366aa03412adeb077bedd819568164f3165411298b83afa4ef",
+    ".local-pilot\\scooter-stage-global-20261101\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+  },
+  "source_unchanged": true,
+  "elapsed_s": 1.312000000034459,
+  "method": "For each reconstructed 3D point, compute all pairwise acute angles between normalized vectors from registered estimated camera centers to that point; report maximum. Top-quarter-majority means more than half observed 2D keypoint y coordinates <270 in 1080px images. Positive depth based on each estimated camera world-to-camera transform.",
+  "limitations": "Conditional on camera centers and 3D points estimated by the same problematic models; not independently measured parallax, scene depth, sky truth, or causal proof. Thresholds of a mapper may apply at another stage, to another pair, prior to BA or rejection; final angles below defaults do not prove filter failure. Top image is not semantic sky."
+}

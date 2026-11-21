@@ -1,0 +1,34 @@
+{
+  "source": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "otherContainersUnchanged": 45,
+  "uiFullApplicationConfigUnchangedExceptVerifiedImageComposeMetadata": true,
+  "uiHostConfigMountsUnchanged": true,
+  "completeUniqueEnvironmentMappingEqual": true,
+  "environmentMappingSha256": "aa1067c00af83488e741c3cf8eae55c9115841b17584e73096dfc7c29c4122e4",
+  "otaUnchanged": true,
+  "physicalDeviceActions": 0,
+  "archivesCreated": 0,
+  "protectedAssets": 562,
+  "allProtectedAssetHashesEqual": true,
+  "apiUnchangedByWebInstall": true,
+  "api": {
+    "pid": 19604,
+    "health": {
+      "service": "sphere-reconstruction-v1",
+      "one_active_job": true,
+      "route_camera_pipeline": "vehicle_geometry_v3_hud",
+      "creation_recovery_contract": "confirmed_absence_v1",
+      "route_lifecycle_contract": "owned_serial_handoff_v1",
+      "job_source_binding_contract": "manifest_sha256_status_v1",
+      "image_route_review_contract": "source_bound_offline_v1",
+      "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+      "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+      "alternative_catalog_contract": "source_bound_review_v1",
+      "vehicle_control_contract": "attached_camera_hud_binary_hold_v1",
+      "route_resource_monitor_contract": "task_volume30_fresh_native_v1",
+      "hud_speed_reference_contract": "source_bound_font_display_v1",
+      "live_session_active": false
+    }
+  },
+  "uiImageId": "sha256:ee18994f586f7428d5767f68ac53f7a6002f8a39e88895ea3a63c46f5e35cb23"
+}

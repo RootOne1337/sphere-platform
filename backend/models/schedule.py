@@ -14,10 +14,12 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -184,6 +186,7 @@ class Schedule(Base, UUIDMixin, TimestampMixin):
     executions: Mapped[list["ScheduleExecution"]] = relationship(back_populates="schedule")
 
     __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_schedule_org_id"),
         Index("ix_schedules_next_fire", "is_active", "next_fire_at"),
         Index("ix_schedules_org_active", "org_id", "is_active"),
         CheckConstraint(
@@ -259,3 +262,22 @@ class ScheduleExecution(Base, UUIDMixin, TimestampMixin):
     __table_args__ = (
         Index("ix_schedule_executions_schedule_fire", "schedule_id", "fire_time"),
     )
+
+
+class ScheduleFireRequest(Base):
+    """Durable acknowledgement for an optional client replay key."""
+
+    __tablename__ = "schedule_fire_requests"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["org_id", "schedule_id"], ["schedules.org_id", "schedules.id"],
+            ondelete="CASCADE", name="fk_schedule_fire_request_owner",
+        ),
+        Index("ix_schedule_fire_requests_expiry", "org_id", "schedule_id", "expires_at"),
+    )
+
+    org_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    schedule_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    request_key: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    fire_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

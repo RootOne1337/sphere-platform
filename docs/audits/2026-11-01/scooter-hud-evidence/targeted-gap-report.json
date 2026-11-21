@@ -1,0 +1,209 @@
+{
+  "models": [
+    {
+      "model": 0,
+      "schema": "sphere-route-geometry-selection-v1",
+      "registered": 166,
+      "selected": 166,
+      "coverage": 1.0,
+      "points": 15247,
+      "reprojection_px": 1.196758992350265,
+      "scene_admissible": true,
+      "route_admissible": false,
+      "scene_reasons": [],
+      "route_reasons": [
+        "route_camera_reversals",
+        "route_camera_speed_outliers"
+      ],
+      "source_coverage": {
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "missing_start_seconds": 0.0,
+        "missing_end_seconds": 0.0,
+        "max_observed_gap_seconds": 0.266,
+        "endpoints_observed": true,
+        "all_intervals_observed": true,
+        "endpoint_limit_seconds": 1.0,
+        "interval_limit_seconds": 1.0
+      },
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 166,
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "path_units": 49.579807576853185,
+        "endpoint_displacement_units": 4.794277960368671,
+        "median_step_units": 0.22317856719503382,
+        "max_step_units": 4.289771443026079,
+        "rapid_reversals": [
+          {
+            "view": 26,
+            "image": "00000145.png",
+            "seconds": 5.582
+          },
+          {
+            "view": 34,
+            "image": "00000187.png",
+            "seconds": 7.301
+          },
+          {
+            "view": 46,
+            "image": "00000257.png",
+            "seconds": 9.958
+          },
+          {
+            "view": 47,
+            "image": "00000263.png",
+            "seconds": 10.159
+          },
+          {
+            "view": 48,
+            "image": "00000269.png",
+            "seconds": 10.407
+          },
+          {
+            "view": 49,
+            "image": "00000275.png",
+            "seconds": 10.607
+          },
+          {
+            "view": 51,
+            "image": "00000287.png",
+            "seconds": 11.055
+          },
+          {
+            "view": 52,
+            "image": "00000293.png",
+            "seconds": 11.255
+          },
+          {
+            "view": 56,
+            "image": "00000316.png",
+            "seconds": 12.119
+          },
+          {
+            "view": 60,
+            "image": "00000340.png",
+            "seconds": 12.969
+          },
+          {
+            "view": 66,
+            "image": "00000371.png",
+            "seconds": 14.303
+          },
+          {
+            "view": 67,
+            "image": "00000377.png",
+            "seconds": 14.519
+          },
+          {
+            "view": 102,
+            "image": "00000539.png",
+            "seconds": 21.583
+          },
+          {
+            "view": 103,
+            "image": "00000544.png",
+            "seconds": 21.834
+          },
+          {
+            "view": 108,
+            "image": "00000572.png",
+            "seconds": 22.914
+          },
+          {
+            "view": 111,
+            "image": "00000590.png",
+            "seconds": 23.595
+          },
+          {
+            "view": 112,
+            "image": "00000596.png",
+            "seconds": 23.812
+          },
+          {
+            "view": 116,
+            "image": "00000621.png",
+            "seconds": 24.691
+          },
+          {
+            "view": 117,
+            "image": "00000626.png",
+            "seconds": 24.892
+          },
+          {
+            "view": 128,
+            "image": "00000689.png",
+            "seconds": 27.236
+          },
+          {
+            "view": 129,
+            "image": "00000694.png",
+            "seconds": 27.468
+          },
+          {
+            "view": 134,
+            "image": "00000722.png",
+            "seconds": 28.551
+          },
+          {
+            "view": 135,
+            "image": "00000727.png",
+            "seconds": 28.751
+          },
+          {
+            "view": 136,
+            "image": "00000734.png",
+            "seconds": 28.984
+          },
+          {
+            "view": 137,
+            "image": "00000740.png",
+            "seconds": 29.217
+          }
+        ],
+        "median_rate_units_per_second": 1.0640683312355765,
+        "speed_outliers": [
+          {
+            "view": 129,
+            "image": "00000694.png",
+            "seconds": 27.468,
+            "interval_seconds": 0.232,
+            "median_rate_ratio": 17.377074016951312
+          },
+          {
+            "view": 130,
+            "image": "00000700.png",
+            "seconds": 27.668,
+            "interval_seconds": 0.2,
+            "median_rate_ratio": 15.986769138393655
+          }
+        ],
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "poses_interpolated": false,
+      "navigation_qualified": false,
+      "execution_qualified": false,
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 10.778485168203337,
+        "passed": true
+      },
+      "intrinsics_condition": {
+        "passed": true,
+        "focal_ratio": 1.0,
+        "horizontal_fov_degrees": 115.63186499720054,
+        "vertical_fov_degrees": 83.57979295233123,
+        "physical_calibration_verified": false
+      }
+    }
+  ],
+  "camera": "shared SIMPLE_PINHOLE f604.4325 initial refined",
+  "no_autoaccept": true,
+  "physical_calibration_verified": false
+}

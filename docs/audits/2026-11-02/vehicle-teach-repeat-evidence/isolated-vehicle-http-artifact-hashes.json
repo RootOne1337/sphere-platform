@@ -1,0 +1,17 @@
+{
+  "result.json": "8df1d91b9b99a234b1da78d0b02e892d7ad385614fc8a5fb9933961a1e21cedc",
+  "runner-receipt.json": "2d641182369ecc420d4edf27702e33a0ecfe6c474982491234f72207ba7ec238",
+  "fixture-intent.json": "7748ee46cc1f1c439b35c50de133547507bfc55fc46ea8c476757ad73faacb6f",
+  "fixture-cleanup.json": "73c6e7c66d5ef7dd5a3f91a9ce1945b2a982c034c6561fe923163904e2e816cf",
+  "navigation-ready.json": "55cc829f9cae7bfcad2bfd82897d4c119c45b338aa79e528773505ce7697c3db",
+  "start-receipt.json": "9fb3d98e6369b79fbcacea26111749e370fec3aac749efb9397288f82f4198f5",
+  "runtime-freeze.json": "58977118e23f9ad6c7fbb20542d86484179c10c780b50f51b93cda410fa0841b",
+  "samples.jsonl": "9bc867626310e232cf835becb049b8ead20313251d892fe3a8688c281acdab7b",
+  "terminal-audit.json": "356b4debb9bc6d774796e6aab8777a38ff8d313dc74c0922a67f32bcf06f96e9",
+  "terminal-reproducer.py": "16b8124ad5782b173aff50a8526a019622e034015a3703d07dbc4378387b67d3",
+  "evidence-limitations.json": "8f1fefe1a04eac31dcca643f3b3589eb4a9850c5562b5004aa102d6089ad61ab",
+  "worker.py": "1a7fb9d365bd5247aaf97c117898021a2519f1e48e1fd8b6fde52e7816b1ff27",
+  "run.py": "28f21c943553d6a9d201d190292a1bf8d5ec35da0c0fb19efbd68b62d558ab00",
+  "worker.log": "d4de43fe31e46b826c439deaf995361b51876e363f816d4198f2367479ee53d8",
+  "resource-samples.json": "e0977df3929045b3ab029239d87bbd6e08a60c9cb2af3552b1b02747e666337b"
+}

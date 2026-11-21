@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T09:14:28.019Z",
+  "runtimeInstalled": true,
+  "scope": "UI0ace2888 installed on3015/Tuna: painted gloss removed; plain translucent windows/denser data panels, preserved mobile/fullscreen and mode peer fixes. Finite UI and direct video handoff checks; full native recorder remains open.",
+  "runtime": {
+    "sourceRevision": "0ace2888ae7b532e40130248525d246c9b9fb230",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "uiCiRunId": 38709974992,
+    "uiContainer": {
+      "sourceRevision": "0ace2888ae7b532e40130248525d246c9b9fb230",
+      "containerId": "e6e6adf9fc0810a0d8905dc6958b982206204879278ad84c0963fbdd3a3d033c",
+      "imageId": "sha256:79795af4dd314fc00f0e919155752c7d6f738ce0ddfb648c01bb4d7eeee2b34b",
+      "status": "running"
+    },
+    "apiContainer": {
+      "sourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+      "containerId": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "status": "running"
+    },
+    "artifactDigest": "17fb4f920700af41ce83aa5d369190d5f5838a74812dc164be7856f743474225",
+    "githubDigestVerified": true,
+    "otherContainersPreservedPerInstall": 45,
+    "otaCatalogPreserved": true,
+    "schemaMigrationPerformed": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "productionAccepted": false,
+    "ordinaryChrome": true,
+    "transportOverrides": false,
+    "directFramesPresented": 3390,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "gridReady": true,
+        "eventsConnected": true,
+        "rootOverflow": false,
+        "pageErrorCount": 0
+      }
+    ],
+    "mobile": {
+      "table": {
+        "width": 330,
+        "height": 240
+      },
+      "rootOverflow": false
+    },
+    "fullscreen": null,
+    "materialChecks": {
+      "panel": {
+        "backgroundImage": "none",
+        "background": "rgba(8, 8, 23, 0.82)",
+        "filter": "blur(28px) saturate(1.12)"
+      },
+      "window": {
+        "backgroundImage": "none",
+        "background": "rgba(8, 8, 23, 0.62)",
+        "filter": "blur(28px) saturate(1.12)",
+        "opacity": "1"
+      }
+    },
+    "stream": {
+      "device": "auto-ph-011",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "directFramesPresented": 3390,
+      "connections": 1,
+      "recording": {
+        "prepared": true,
+        "direct": true,
+        "nativeReleaseState": "closed"
+      },
+      "xpath": {
+        "direct": true,
+        "treeReceived": true
+      },
+      "restoredControl": "ready",
+      "androidActionsSent": false
+    },
+    "androidActionsSent": false,
+    "commandsReplayed": false
+  },
+  "sourceValidation": [
+    {
+      "file": "docs/audits/2026-10-15/GLASS-CORRECTION-OBSERVATION.json",
+      "sha256NormalizedLf": "0a8e43d4f046c83ffd241f3d130b4d80c564e5baf18a042f6a55358eb939c015"
+    },
+    {
+      "file": "docs/audits/2026-10-15/WEB-UI-MODES-INSTALLED.json",
+      "sha256NormalizedLf": "6126f276dc20ef9dc33a69cd7baa51f00e2080616378e45a9d64b4d51d006e3e"
+    }
+  ],
+  "apkBaselineEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+  "limits": [
+    "CSS backdrop material, not a native Liquid Glass/refraction implementation.",
+    "Recorder tap/swipe/wheel transport still legacy server WS without native execution ACK; direct recorder remains design-only.",
+    "No real phone IME/Safari/Firefox, exhaustive contrast,20+ viewers,WAN/TURN or long soak signoff.",
+    "API969/APK76 unchanged."
+  ]
+}

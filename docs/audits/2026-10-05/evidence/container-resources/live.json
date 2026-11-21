@@ -1,0 +1,110 @@
+{
+  "source": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+  "observedAt": "2026-10-05T14:47:41.656381+00:00",
+  "kernel": {
+    "cgroupVersion": "v1",
+    "kernelMemoryBeforeBytes": 615804928,
+    "kernelMemoryAfterBytes": 616857600,
+    "metricMemoryBytes": 616726528.0,
+    "metricMemoryLimitBytes": 2147483648.0,
+    "metricCpuSeconds": 19.27692,
+    "metricCpuQuotaCores": null,
+    "resourcesAvailable": {
+      "cpu": 1.0,
+      "cpuQuota": 0.0,
+      "memory": 1.0,
+      "memoryLimit": 1.0
+    },
+    "boundedSamples": 10,
+    "duplicateResourceSamples": false,
+    "pidLabels": false,
+    "kernelComparisonPassed": true
+  },
+  "windows": [
+    {
+      "window": "1h",
+      "stepSeconds": 15,
+      "milliseconds": 15,
+      "lastScrape": "2026-10-05T14:47:32.262205781Z",
+      "latest": {
+        "cpu": 0.03385366905195791,
+        "memory": 0.5597915649414062,
+        "memoryLimit": 2
+      },
+      "states": {
+        "cpu": "ready",
+        "cpuQuota": "empty",
+        "memory": "ready",
+        "memoryLimit": "ready"
+      },
+      "points": {
+        "cpu": 4,
+        "cpuQuota": 0,
+        "memory": 5,
+        "memoryLimit": 5
+      }
+    },
+    {
+      "window": "6h",
+      "stepSeconds": 30,
+      "milliseconds": 16,
+      "lastScrape": "2026-10-05T14:47:32.262205781Z",
+      "latest": {
+        "cpu": 0.03385366905195791,
+        "memory": 0.5597915649414062,
+        "memoryLimit": 2
+      },
+      "states": {
+        "cpu": "ready",
+        "cpuQuota": "empty",
+        "memory": "ready",
+        "memoryLimit": "ready"
+      },
+      "points": {
+        "cpu": 2,
+        "cpuQuota": 0,
+        "memory": 3,
+        "memoryLimit": 3
+      }
+    },
+    {
+      "window": "24h",
+      "stepSeconds": 60,
+      "milliseconds": 31,
+      "lastScrape": "2026-10-05T14:47:32.262205781Z",
+      "latest": {
+        "cpu": 0.03385366905195791,
+        "memory": 0.5597915649414062,
+        "memoryLimit": 2
+      },
+      "states": {
+        "cpu": "ready",
+        "cpuQuota": "empty",
+        "memory": "ready",
+        "memoryLimit": "ready"
+      },
+      "points": {
+        "cpu": 1,
+        "cpuQuota": 0,
+        "memory": 2,
+        "memoryLimit": 2
+      }
+    }
+  ],
+  "unauthorized": 401,
+  "browserQueryRejected": 400,
+  "httpMetricsPreserved": true,
+  "fleet": {
+    "total": 19,
+    "statusCounts": {
+      "online": 13,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 6,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "backfillPerformed": false,
+  "longSoakAccepted": false
+}

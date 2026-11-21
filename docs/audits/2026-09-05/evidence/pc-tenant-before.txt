@@ -1,0 +1,152 @@
+F.....FF.FFF                                                             [100%]
+================================== FAILURES ===================================
+________________ test_runtime_pc_auth_connects_and_reconnects _________________
+tests\production\test_pc_tenant_runtime.py:62: in test_runtime_pc_auth_connects_and_reconnects
+    assert ws.closed == []
+E   AssertionError: assert [(4001, 'inva...agent_token')] == []
+E
+E     Left contains one more item: (4001, 'invalid_agent_token')
+E     Use -v to get more diff
+___ test_runtime_pc_auth_denies_bad_key_or_workstation[foreign_workstation] ___
+tests\production\test_pc_tenant_runtime.py:90: in test_runtime_pc_auth_denies_bad_key_or_workstation
+    assert ws.closed[0][0] == (4004 if rejected == "foreign_workstation" else 4001)
+E   assert 4001 == 4004
+______ test_runtime_pc_registration_persists_and_caches_owned_instances _______
+tests\production\test_pc_tenant_runtime.py:101: in test_runtime_pc_registration_persists_and_caches_owned_instances
+    assert saved.hostname == "isolated-host" and saved.is_online
+E   AssertionError: assert (None == 'isolated-host')
+E    +  where None = <backend.models.workstation.Workstation object at 0x0000020263083290>.hostname
+---------------------------- Captured stdout call -----------------------------
+{"workstation_id": "176610d8-32a8-44a6-896e-d3dceea4822b", "error": "Workstation not found", "event": "workstation_register error", "level": "error", "logger": "backend.api.ws.agent.router", "timestamp": "2026-09-09T17:07:57.830322Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.api.ws.agent.router:router.py:113 {'workstation_id': '176610d8-32a8-44a6-896e-d3dceea4822b', 'error': 'Workstation not found', 'event': 'workstation_register error', 'level': 'error', 'logger': 'backend.api.ws.agent.router', 'timestamp': '2026-09-09T17:07:57.830322Z'}
+______ test_runtime_pc_registration_sql_abort_then_new_session_recovers _______
+tests\production\test_pc_tenant_runtime.py:130: in test_runtime_pc_registration_sql_abort_then_new_session_recovers
+    assert reached == [True]
+E   assert [] == [True]
+E
+E     Right contains one more item: True
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"workstation_id": "dba43eaa-1a44-476d-ae7f-a752e039949d", "error": "Workstation not found", "event": "workstation_register error", "level": "error", "logger": "backend.api.ws.agent.router", "timestamp": "2026-09-09T17:07:58.700997Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.api.ws.agent.router:router.py:113 {'workstation_id': 'dba43eaa-1a44-476d-ae7f-a752e039949d', 'error': 'Workstation not found', 'event': 'workstation_register error', 'level': 'error', 'logger': 'backend.api.ws.agent.router', 'timestamp': '2026-09-09T17:07:58.700997Z'}
+__________ test_runtime_pc_cache_failure_does_not_undo_registration ___________
+tests\production\test_pc_tenant_runtime.py:148: in test_runtime_pc_cache_failure_does_not_undo_registration
+    assert (await db.get(Workstation, r.own.id)).hostname == "isolated-host"
+E   AssertionError: assert None == 'isolated-host'
+E    +  where None = <backend.models.workstation.Workstation object at 0x000002026316D010>.hostname
+---------------------------- Captured stdout call -----------------------------
+{"workstation_id": "bf8eaacc-4b79-41cb-a200-03d53ed0401b", "error": "Workstation not found", "event": "workstation_register error", "level": "error", "logger": "backend.api.ws.agent.router", "timestamp": "2026-09-09T17:07:59.059077Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.api.ws.agent.router:router.py:113 {'workstation_id': 'bf8eaacc-4b79-41cb-a200-03d53ed0401b', 'error': 'Workstation not found', 'event': 'workstation_register error', 'level': 'error', 'logger': 'backend.api.ws.agent.router', 'timestamp': '2026-09-09T17:07:59.059077Z'}
+_______ test_runtime_pc_auth_uses_revocation_committed_during_key_wait ________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:520: in wait_for
+    return await fut
+           ^^^^^^^^^
+tests\production\test_device_bootstrap_runtime.py:49: in observe
+    count = await db.scalar(text(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\ext\asyncio\session.py:508: in scalar
+    return await greenlet_spawn(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:197: in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2354: in scalar
+    return self._execute_internal(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2181: in _execute_internal
+    conn = self._connection_for_bind(bind)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2050: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\state_changes.py:139: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:1144: in _connection_for_bind
+    conn = bind.connect()
+           ^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:3279: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:145: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:3303: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:449: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:1263: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:712: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\impl.py:308: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:390: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:674: in __init__
+    self.__connect()
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:900: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:896: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\create.py:643: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\default.py:616: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:937: in connect
+    await_only(creator_fn(*arg, **kw)),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:127: in await_only
+    return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:192: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connection.py:2329: in connect
+    return await connect_utils._connect(
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:991: in _connect
+    conn = await _connect_addr(
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:828: in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:876: in __connect_addr
+    await connected
+E   asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+tests\production\test_pc_tenant_runtime.py:164: in test_runtime_pc_auth_uses_revocation_committed_during_key_wait
+    await wait_for_two_runtime_locks(r.db)
+tests\production\test_device_bootstrap_runtime.py:55: in wait_for_two_runtime_locks
+    await asyncio.wait_for(observe(), 5)
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:519: in wait_for
+    async with timeouts.timeout(timeout):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\timeouts.py:115: in __aexit__
+    raise TimeoutError from exc_val
+E   TimeoutError
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_connects_and_reconnects
+FAILED tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_denies_bad_key_or_workstation[foreign_workstation]
+FAILED tests/production/test_pc_tenant_runtime.py::test_runtime_pc_registration_persists_and_caches_owned_instances
+FAILED tests/production/test_pc_tenant_runtime.py::test_runtime_pc_registration_sql_abort_then_new_session_recovers
+FAILED tests/production/test_pc_tenant_runtime.py::test_runtime_pc_cache_failure_does_not_undo_registration
+FAILED tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_uses_revocation_committed_during_key_wait
+6 failed, 6 passed, 1 warning in 11.06s

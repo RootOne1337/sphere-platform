@@ -1,0 +1,7 @@
+{
+  "pinned_image": true,
+  "started_as_non_root": true,
+  "loopback_tls_verified": "TLSv1.3",
+  "stun_binding_utility_exit": 0,
+  "stun_binding_mapped_address_returned": true
+}

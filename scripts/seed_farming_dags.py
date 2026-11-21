@@ -18,8 +18,7 @@ Black Russia (com.br.top):
 и интеграцией с EventReactor (account.banned → авторотация).
 
 Использование:
-    python scripts/seed_farming_dags.py
-    python scripts/seed_farming_dags.py --org-id <UUID>
+    python scripts/seed_farming_dags.py --org-id <UUID> --apply
 
 Требования:
     — Активная .venv с backend-зависимостями
@@ -41,12 +40,12 @@ try:
 except ImportError:
     pass
 
-from sqlalchemy import select, func as sa_func
+from sqlalchemy import select
 
 from backend.database.engine import AsyncSessionLocal
+from backend.database.tenant import bind_tenant_context
 from backend.models.organization import Organization
-from backend.models.script import Script, ScriptVersion
-
+from backend.services.script_version_admin import seed_preserved_source
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DAG 1: РЕГИСТРАЦИЯ (BR — Регистрация)
@@ -1364,73 +1363,25 @@ SCRIPTS_TO_SEED = [
 ]
 
 
-async def seed(org_id_override: uuid.UUID | None = None) -> None:
+async def seed(org_id_override: uuid.UUID) -> None:
     async with AsyncSessionLocal() as db:
-        # Найти организацию
-        if org_id_override:
-            org = await db.scalar(select(Organization).where(Organization.id == org_id_override))
-            if not org:
-                print(f"❌  Организация {org_id_override} не найдена.")
-                sys.exit(1)
-        else:
-            org = await db.scalar(select(Organization).limit(1))
-            if not org:
-                print("❌  Нет ни одной организации. Зарегистрируйтесь в приложении.")
-                sys.exit(1)
+        await bind_tenant_context(db, str(org_id_override))
+        org = await db.scalar(select(Organization).where(Organization.id == org_id_override))
+        if not org:
+            print(f"❌  Организация {org_id_override} не найдена.")
+            sys.exit(1)
 
         org_id: uuid.UUID = org.id
         print(f"🏢  Организация: {org.name} ({org_id})")
         print()
 
         for script_name, dag in SCRIPTS_TO_SEED:
-            # Проверить — существует ли уже
-            existing: Script | None = await db.scalar(
-                select(Script).where(
-                    Script.org_id == org_id,
-                    Script.name == script_name,
-                    Script.is_archived.is_(False),
-                )
+            _, version, created = await seed_preserved_source(
+                db, org_id=org_id, name=script_name, dag=dag,
+                notes="Seed source (seed_farming_dags.py); preserved format, new immutable version",
             )
-            if existing:
-                # Обновляем версию
-                max_ver = await db.scalar(
-                    select(sa_func.coalesce(sa_func.max(ScriptVersion.version), 0))
-                    .where(ScriptVersion.script_id == existing.id)
-                )
-                new_ver_num = (max_ver or 0) + 1
-                new_version = ScriptVersion(
-                    script_id=existing.id,
-                    org_id=org_id,
-                    version=new_ver_num,
-                    dag=dag,
-                    notes=f"v{new_ver_num}: Обновлён seed-скриптом (seed_farming_dags.py)",
-                )
-                db.add(new_version)
-                await db.flush()
-                existing.current_version_id = new_version.id
-                print(f"  🔄  «{script_name}» обновлён → v{new_ver_num} ({len(dag['nodes'])} узлов)")
-            else:
-                # Создаём скрипт + версию
-                script = Script(
-                    org_id=org_id,
-                    name=script_name,
-                    description=dag["description"],
-                    is_archived=False,
-                )
-                db.add(script)
-                await db.flush()
-
-                version = ScriptVersion(
-                    script_id=script.id,
-                    org_id=org_id,
-                    version=1,
-                    dag=dag,
-                    notes="Создано seed-скриптом (seed_farming_dags.py)",
-                )
-                db.add(version)
-                await db.flush()
-                script.current_version_id = version.id
-                print(f"  ✅  «{script_name}» создан → v1 ({len(dag['nodes'])} узлов)")
+            verb = "создан" if created else "обновлён"
+            print(f"  ✅  «{script_name}» {verb} → v{version.version} ({version.node_count} узлов)")
 
         await db.commit()
         print()
@@ -1444,9 +1395,10 @@ async def seed(org_id_override: uuid.UUID | None = None) -> None:
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Seed фарминг DAG-скрипты Black Russia")
     p.add_argument(
-        "--org-id", type=uuid.UUID, default=None,
-        help="UUID организации (по умолчанию — первая в БД)",
+        "--org-id", type=uuid.UUID, required=True,
+        help="UUID единственной целевой организации",
     )
+    p.add_argument("--apply", action="store_true", required=True, help="Явно создать новые версии в БД")
     return p.parse_args()
 
 

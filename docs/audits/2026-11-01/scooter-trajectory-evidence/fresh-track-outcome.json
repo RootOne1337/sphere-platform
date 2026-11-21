@@ -1,0 +1,198 @@
+{
+  "status": "bounded_fresh_track_known_R_experiment_complete_quality_rejected",
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "fresh_track_stage": {
+    "track_containers": 23349,
+    "registered": 166,
+    "observations": 140270,
+    "min": 37,
+    "median": 695.5,
+    "p10": 366.0,
+    "count_under_6": 0,
+    "count_under_15": 0,
+    "previous_final_SIFT_eligible_tracks": 15001,
+    "budget_saturated": false,
+    "RA_gated_edges": true
+  },
+  "fresh_track_stage_seconds": 8.719000000040978,
+  "known_R_global_positioning": {
+    "native_termination": "CONVERGENCE",
+    "solve_seconds": 15.640999999945052,
+    "registered": 166,
+    "max_rotation_matrix_change": 0.0,
+    "intrinsics_unchanged": true,
+    "BA_executed": false,
+    "retriangulation_executed": false,
+    "pose_graph_cached_relative_pose_edges": 0,
+    "pose_graph_note": "DatabaseCache lacks decomposed relative poses. The supported GlobalPositioner objective uses world bearing directions from fixed frame rotations and existing point tracks; every one of the 166 frames has >=37 track observations. PoseGraph edges do not add camera-position residuals in this implementation."
+  },
+  "same_2D_observations": {
+    "common_keys": 61310,
+    "policy": "Same (image_id,point2D_idx) keys, original final SIFT versus fresh GP. Finite signed projections and common-positive-depth projections reported separately; not independent holdout.",
+    "finite_source": {
+      "n": 61310,
+      "mean": 0.9946244318698388,
+      "median": 0.5748779870230252,
+      "p95": 3.44907252399056,
+      "max": 5.970443647723106
+    },
+    "finite_fresh_known_R_GP": {
+      "n": 61310,
+      "mean": 6.62018302051241,
+      "median": 2.1477951539906703,
+      "p95": 27.92676247378177,
+      "max": 510.96824949782183
+    },
+    "positive_depth_both_source": {
+      "n": 61310,
+      "mean": 0.9946244318698388,
+      "median": 0.5748779870230252,
+      "p95": 3.44907252399056,
+      "max": 5.970443647723106
+    },
+    "positive_depth_both_fresh_known_R_GP": {
+      "n": 61310,
+      "mean": 6.62018302051241,
+      "median": 2.1477951539906703,
+      "p95": 27.92676247378177,
+      "max": 510.96824949782183
+    }
+  },
+  "all_new_observations": {
+    "total": 140270,
+    "behind_or_nonprojectable": 2,
+    "nonprojectable": 0,
+    "finite_reprojection": {
+      "n": 140270,
+      "mean": 11.123884594923693,
+      "median": 4.000720078747353,
+      "p95": 45.338454419200815,
+      "max": 6740.315100752675
+    }
+  },
+  "quality": {
+    "scene_admissible": false,
+    "route_admissible": false,
+    "scene_reasons": [
+      "camera_reprojection_invalid_or_large"
+    ],
+    "route_reasons": [
+      "route_camera_reversals",
+      "route_camera_speed_outliers"
+    ],
+    "rapid_reversals": 24,
+    "speed_outliers": 3,
+    "helper_error_warning": "model_assessment mean reprojection contains a huge negative-depth sentinel from 2 behind-camera observations; do not describe it as a physical 3.8e149-pixel error. Use explicit finite signed/common-positive projection quantiles above."
+  },
+  "weakest_fresh_frames": [
+    {
+      "image_id": 84,
+      "name": "00000465.png",
+      "observations": 37,
+      "distinct_track_count": 37,
+      "source_index": 465,
+      "ticks_90k": 1651860,
+      "seconds": 18.354
+    },
+    {
+      "image_id": 16,
+      "name": "00000086.png",
+      "observations": 80,
+      "distinct_track_count": 80,
+      "source_index": 86,
+      "ticks_90k": 298620,
+      "seconds": 3.318
+    },
+    {
+      "image_id": 85,
+      "name": "00000469.png",
+      "observations": 92,
+      "distinct_track_count": 87,
+      "source_index": 469,
+      "ticks_90k": 1669950,
+      "seconds": 18.555
+    },
+    {
+      "image_id": 15,
+      "name": "00000079.png",
+      "observations": 154,
+      "distinct_track_count": 144,
+      "source_index": 79,
+      "ticks_90k": 277830,
+      "seconds": 3.087
+    },
+    {
+      "image_id": 17,
+      "name": "00000092.png",
+      "observations": 209,
+      "distinct_track_count": 199,
+      "source_index": 92,
+      "ticks_90k": 318150,
+      "seconds": 3.535
+    },
+    {
+      "image_id": 14,
+      "name": "00000072.png",
+      "observations": 225,
+      "distinct_track_count": 209,
+      "source_index": 72,
+      "ticks_90k": 256950,
+      "seconds": 2.855
+    },
+    {
+      "image_id": 139,
+      "name": "00000767.png",
+      "observations": 259,
+      "distinct_track_count": 237,
+      "source_index": 767,
+      "ticks_90k": 2725560,
+      "seconds": 30.284
+    },
+    {
+      "image_id": 126,
+      "name": "00000694.png",
+      "observations": 275,
+      "distinct_track_count": 274,
+      "source_index": 694,
+      "ticks_90k": 2472120,
+      "seconds": 27.468
+    },
+    {
+      "image_id": 113,
+      "name": "00000621.png",
+      "observations": 307,
+      "distinct_track_count": 292,
+      "source_index": 621,
+      "ticks_90k": 2222190,
+      "seconds": 24.691
+    },
+    {
+      "image_id": 65,
+      "name": "00000366.png",
+      "observations": 308,
+      "distinct_track_count": 297,
+      "source_index": 366,
+      "ticks_90k": 1266210,
+      "seconds": 14.069
+    }
+  ],
+  "limits": [
+    "Track establishment uses original SfM rotation-averaging gated edges, not an unfiltered raw correspondence graph.",
+    "CalfVO fixed rotations remain learned same-video hypotheses, not calibration or pose truth.",
+    "Same-observation reprojection is in-sample; no independent pose holdout.",
+    "No BA was run in this fresh-track case, preserving exact observation keys for assessment.",
+    "Track-stage placeholder XYZ is not a reconstructed scene."
+  ],
+  "source_hashes_unchanged": true,
+  "executionQualified": false,
+  "published": false,
+  "physicalActions": 0,
+  "artifacts": {
+    ".local-pilot\\scooter-fresh-tracks-20261101\\run.py": "dc9ecdfc3ec876280ae3f0d51983b403826e5d8c3c0c654ffaa008108570f1e1",
+    ".local-pilot\\scooter-fresh-tracks-20261101\\gp.py": "a2bdb026926abbe4aae619154149e31f6c1c425db4fffe3bca53d832d46a0eb1",
+    ".local-pilot\\scooter-fresh-tracks-20261101\\receipt.json": "d13435ba1a6d717ed0993a1bc66a6546c9afbbc8dc79adeba0373cd78d9f9ae5",
+    ".local-pilot\\scooter-fresh-tracks-20261101\\worker-result.json": "42e000b4820975f7814bc868d7d1568db01647185d3fd3102159c20300e42973",
+    ".local-pilot\\scooter-fresh-tracks-20261101\\known-R-global-positioning\\receipt.json": "3beac30030e0c7aef1b191fb2b13bdee271e976289f41d4bfcba191c0fc43bcd",
+    ".local-pilot\\scooter-fresh-tracks-20261101\\known-R-global-positioning\\assessment.json": "f3a50ef22476cb592c844af21977f7e9230b5b456edd0d7dd6716e4e8e48531f"
+  }
+}

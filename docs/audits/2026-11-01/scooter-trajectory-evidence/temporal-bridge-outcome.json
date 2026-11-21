@@ -1,0 +1,187 @@
+{
+  "status": "one_localized169_candidate_complete_PARTIAL_NOT_FULL_ROUTE",
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "selected_views": 169,
+  "registered_across_separate_models": 169,
+  "separate_components": [
+    94,
+    75
+  ],
+  "components_are_independent_world_gauges_not_concatenatable": true,
+  "full_route_recovered": false,
+  "frontier": {
+    "new_real_source_indices": [
+      501,
+      502,
+      503
+    ],
+    "new_source_PTS": [
+      1809540,
+      1814040,
+      1819980
+    ],
+    "new_views_first_time_SIFT_anchors_and_estimated_component_poses": true,
+    "distinction": "Original all901 optical-flow validation already used501..503 as intermediate images; this localized candidate added their feature identities and camera views for the first time."
+  },
+  "graph": {
+    "old651_good_preserved_byteexact": true,
+    "old156_empty_never_restored": true,
+    "old166_features_byteexact": true,
+    "new_LG_pairs": 24,
+    "new_temporally_retained_pairs": 12,
+    "new_temporally_retained_matches": 654,
+    "total_reverified_pairs": 663,
+    "new_to_early_component_all_9_strict_matches": 0,
+    "isolated_old_frame500_joined_late_component": true,
+    "remaining_frontier": "499 at19.972s to500 at20.056s; no source intermediate exists between them."
+  },
+  "models": [
+    {
+      "registered": 94,
+      "stored_directory": ".local-pilot\\scooter-temporal-bridge-20261101\\mapping\\models\\1",
+      "geometry_model_ID": "0",
+      "model_geometry_binding": "exact image-name set",
+      "points": 2383,
+      "first_seconds": 0.0,
+      "last_seconds": 19.972,
+      "focal_px": 593.6997241916945,
+      "reprojection": {
+        "finite_front_count": 12415,
+        "all_observations": 12415,
+        "behind": 0,
+        "nonfinite_count": 0,
+        "mean_px": 0.7278094797266339,
+        "median_px": 0.4464151516361129,
+        "p95_px": 2.524937857739961,
+        "duplicate_track_observations": 0,
+        "duplicate_track_images": 816
+      },
+      "temporal": {
+        "rapid_reversals": 1,
+        "speed_outliers": 4
+      },
+      "HUD_fixed125_partial": {
+        "edges": 72,
+        "fit": 65,
+        "test": 7,
+        "test_median_abs_log": 2.186154463593345,
+        "test_factor4": 7,
+        "warning": "Partial counts are not comparable to full 125-edge split."
+      },
+      "direct_E_raw": {
+        "intervals_examined": 93,
+        "estimated": 93,
+        "median_deg": 0.17756794836474016,
+        "p95_deg": 20.39320028901576,
+        "over_10deg": 10
+      },
+      "direct_E_support_caveat": {
+        "rows_with_under15_positive_depth": 7,
+        "raw_over10_among_under15_positive_depth": 3,
+        "supported_rows_at_least15_positive_depth": 86,
+        "supported_over10": 7,
+        "interpretation": "recoverPose low-positive-depth rotation branches are weak/ambiguous diagnostics, not independent evidence of wrong SfM orientation."
+      }
+    },
+    {
+      "registered": 75,
+      "stored_directory": ".local-pilot\\scooter-temporal-bridge-20261101\\mapping\\models\\0",
+      "geometry_model_ID": "1",
+      "model_geometry_binding": "exact image-name set",
+      "points": 6975,
+      "first_seconds": 20.056,
+      "last_seconds": 35.493,
+      "focal_px": 603.466316353752,
+      "reprojection": {
+        "finite_front_count": 64016,
+        "all_observations": 64016,
+        "behind": 0,
+        "nonfinite_count": 0,
+        "mean_px": 0.7136018928623021,
+        "median_px": 0.4473370732516775,
+        "p95_px": 2.5411047899136223,
+        "duplicate_track_observations": 0,
+        "duplicate_track_images": 9731
+      },
+      "temporal": {
+        "rapid_reversals": 0,
+        "speed_outliers": 1
+      },
+      "HUD_fixed125_partial": {
+        "edges": 52,
+        "fit": 0,
+        "test": 52,
+        "test_median_abs_log": null,
+        "test_factor4": null,
+        "warning": "Partial counts are not comparable to full 125-edge split."
+      },
+      "direct_E_raw": {
+        "intervals_examined": 74,
+        "estimated": 74,
+        "median_deg": 0.25497257317814187,
+        "p95_deg": 1.2981907850049996,
+        "over_10deg": 1
+      },
+      "direct_E_support_caveat": {
+        "rows_with_under15_positive_depth": 5,
+        "raw_over10_among_under15_positive_depth": 0,
+        "supported_rows_at_least15_positive_depth": 69,
+        "supported_over10": 1,
+        "interpretation": "recoverPose low-positive-depth rotation branches are weak/ambiguous diagnostics, not independent evidence of wrong SfM orientation."
+      }
+    }
+  ],
+  "native_GP_termination": [
+    "NO_CONVERGENCE",
+    "NO_CONVERGENCE"
+  ],
+  "quality_limits": [
+    "No full-route HUD125 comparison: early fit65/test7; late fit0/test52. Missing edges are not imputed and no alternative scale split is invented.",
+    "Both global-positioning stages reached native iteration limits; low final in-sample reprojection is not pose truth.",
+    "Repeated-image observations within tracks remain816 and9731; exact duplicate feature observations are0.",
+    "New anchors did not bridge early94 to late75; do not concatenate model coordinate systems or declare navigation admission.",
+    "LK consistency and descriptor matching can both alias on repeated facades; rejection does not by itself prove a correspondence is physically false."
+  ],
+  "resources": {
+    "previous_full807_flow_cumulative_wall_s": 269.3279999999795,
+    "previous_166_map_wall_s": 35.53200000000652,
+    "new_frontier_prepare_wall_s": 4.39000000001397,
+    "new_feature_and_GPU_matching_wall_s": 8.891000000061467,
+    "new24_flow_wall_s": 11.187999999965541,
+    "new169_map_wall_s": 41.78100000007544,
+    "new169_stage_wall_sum_s": 66.25000000011642,
+    "full807_flow_plus_new169_stage_wall_sum_s": 335.5780000000959,
+    "initial240s_flow_guard_plus_authorized_missing_only_resume_explicit": true,
+    "new_GPU_peak_reserved_bytes": 710934528,
+    "new_GPU_cap_GiB": 3,
+    "min_new169_host_RAM_GiB": 6.712589263916016
+  },
+  "source_hashes_unchanged": true,
+  "graph_contract": {
+    "keypoints_old_rows_equal": 166,
+    "descriptors_old_rows_equal": 166,
+    "old_pair_records_unchanged": 807,
+    "old_nonempty": 651,
+    "old_empty": 156,
+    "new_image_ids": [
+      167,
+      168,
+      169
+    ]
+  },
+  "source_master_transcoded": false,
+  "preferred_web_alternative_unchanged": true,
+  "executionQualified": false,
+  "published": false,
+  "physicalActions": 0,
+  "no_further_experiment_started": true,
+  "artifacts": {
+    ".local-pilot\\scooter-temporal-bridge-20261101\\bridge-plan.json": "43f0a1bf7dae262180e793631084a5c36e8996151a3acf9c7dcabe8766402ec9",
+    ".local-pilot\\scooter-temporal-bridge-20261101\\feature-match-receipt.json": "b642e32ccee53ef79f51fc0ce3962cd6841bb9521402b04e86a3155d539558fa",
+    ".local-pilot\\scooter-temporal-bridge-20261101\\temporal-handoff.json": "7c1ec278b9fafffdbb174e9cba21da6326e2de42ce0c3c61c4e0b0bb9a60be5a",
+    ".local-pilot\\scooter-temporal-bridge-20261101\\new-flow\\receipt.json": "efc478b132be969528c6d332af251bb69fc4db5ad914a284e143ffb178e010f5",
+    ".local-pilot\\scooter-temporal-bridge-20261101\\mapping\\assessment.json": "6667decf04deeed7f69c386a01527276574ea740b40320bdb9c440d8f4f3031f",
+    ".local-pilot\\scooter-temporal-bridge-20261101\\mapping\\receipt.json": "22a868333cb60e6c75da6387d9697400c0fc89bcae643e8752e999202fc2f47f",
+    ".local-pilot\\scooter-temporal-bridge-20261101\\mapping\\graph-contract.json": "6fd78ef298aa1dc8679b916f444108ef7fd91ab157be164669159c1572097f27"
+  }
+}

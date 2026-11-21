@@ -1,0 +1,42 @@
+{
+  "produced": 901,
+  "processed": 312,
+  "overwritten_dropped": 589,
+  "first_source_index": 0,
+  "last_source_index": 900,
+  "producer_first_to_last_seconds": 35.48499999998603,
+  "maximum_presentation_lateness_s": 0.019000000087544322,
+  "analysis_latency_ms": {
+    "p50": 109.00000005494803,
+    "p95": 147.75000001536665,
+    "max": 219.0000000409782
+  },
+  "age_at_decision_ms": {
+    "p50": 132.50000000698492,
+    "p95": 186.9999999180436,
+    "max": 219.0000000409782
+  },
+  "status_counts": {
+    "reference_selected": 149,
+    "unknown": 26,
+    "ambiguous": 137,
+    "stale": 0
+  },
+  "fresh_at_decision_250ms": 312,
+  "selected": 149,
+  "selected_time_proxy_hit_0_6s": 138,
+  "selected_time_proxy_wrong_over_2s": 0,
+  "denominator_all_processed": 312,
+  "mean_phase_ms": {
+    "extract_ms": 61.346153844706116,
+    "coarse_ms": 1.0544871788274928,
+    "world_verify_ms": 40.509615387492936,
+    "minimap_ms": 9.913461536201888,
+    "filter_ms": 1.1057692317990586
+  },
+  "jsonl_bytes": 194536,
+  "source_same_video_time_proxy_only": true,
+  "open_loop_no_environment_response": true,
+  "execution_qualified": false,
+  "physical_actions": 0
+}
