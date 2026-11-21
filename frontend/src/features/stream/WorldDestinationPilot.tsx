@@ -1,6 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { Flag, MapPin, Navigation, X } from 'lucide-react';
+import { WorldDestinationMap } from './WorldDestinationMap';
+import styles from './worldConsole.module.css';
 import { Button } from '@/components/ui/button';
 import type { TeachingInput } from './teachingContacts';
 import type { VehicleInputLease } from './vehiclePilot';
@@ -21,23 +24,20 @@ function problem(e: unknown) {
   const msg = e instanceof Error ? e.message : '';
   return reasons[msg] ?? (msg==='Failed to fetch'?'Нет связи с локальной службой карты':msg || 'Ошибка связи с картой');
 }
-type View = [number,number,number,number];
-function viewBounds(points: XYZ[], pad: number): View {
-  const x=points.map(p=>p[0]), y=points.map(p=>-p[1]);
-  return [Math.min(...x)-pad,Math.min(...y)-pad,Math.max(...x)-Math.min(...x)+2*pad,Math.max(...y)-Math.min(...y)+2*pad];
-}
-function outline(points:XYZ[]) { return points.map(([x,y])=>x+','+-y).join(' '); }
-
 export function WorldDestinationPilot({video,ready,inputIssue,openInput}:{
   video:RefObject<HTMLVideoElement|null>; ready:boolean; inputIssue:string|null; openInput:(signal:AbortSignal,journal:(event:TeachingInput)=>void)=>Promise<VehicleInputLease>;
 }) {
-  const [info,setInfo]=useState<WorldInfo|null>(null), [view,setView]=useState<View|null>(null);
+  const [info,setInfo]=useState<WorldInfo|null>(null);
+  const [covered,setCovered]=useState<number[]>([]);
+  const [origin,setOrigin]=useState<XYZ|null>(null), [pickingOrigin,setPickingOrigin]=useState(false);
+  const [originChoices,setOriginChoices]=useState<{x:number;y:number;levels:number[]}|null>(null);
+  const [preview,setPreview]=useState<{path:XYZ[];distance:number;covered:boolean}|null>(null);
+  const [previewError,setPreviewError]=useState('');
   const [point,setPoint]=useState<[number,number]|null>(null), [levels,setLevels]=useState<number[]>([]), [level,setLevel]=useState<number|null>(null);
   const [status,setStatus]=useState('Загрузка карты'), [active,setActive]=useState(false), [refresh,setRefresh]=useState(0);
   const [data,setData]=useState<Decision|null>(null), [age,setAge]=useState<number|null>(null);
   const choice=useRef<AbortController|null>(null), run=useRef<AbortController|null>(null), mounted=useRef(false);
-  const drag=useRef<{x:number;y:number;view:View;m:DOMMatrix}|null>(null);
-  const map=useRef<SVGSVGElement|null>(null), opening=useRef(openInput); opening.current=openInput;
+  const opening=useRef(openInput); opening.current=openInput;
   const stop=useCallback(()=>{ if(run.current){run.current.abort();setStatus('Поездка остановлена');} },[]);
   useEffect(()=>{
     mounted.current=true;
@@ -50,25 +50,36 @@ export function WorldDestinationPilot({video,ready,inputIssue,openInput}:{
     const c=new AbortController();
     worldRequest<WorldInfo>('/world',AbortSignal.any([c.signal,AbortSignal.timeout(6000)])).then(w=>{
       if(c.signal.aborted)return;
-      setInfo(w);setView(viewBounds(w.atlas.visualTrace,30));setStatus('Поставьте метку на дороге');
+      setInfo(w);setStatus('Поставьте метку на дороге');
     }).catch(e=>{if(!c.signal.aborted)setStatus(problem(e));});
     return ()=>c.abort();
   },[refresh]);
   async function choose(x:number,y:number) {
     if(run.current)return;
     choice.current?.abort(); const c=new AbortController(); choice.current=c;
-    setPoint([x,y]);setLevel(null);setLevels([]);setData(null);setAge(null);setStatus('Проверяем дорогу под меткой');
+    if(pickingOrigin){
+      setOrigin(null);setOriginChoices(null);setStatus('Проверяем точку отправления');
+      try{
+        const result=await worldRequest<{levels:number[]}>('/levels',AbortSignal.any([c.signal,AbortSignal.timeout(5000)]),{point:[x,y]});
+        if(c.signal.aborted)return;
+        if(!result.levels.length){setStatus('Под стартовой точкой нет дороги');return;}
+        if(result.levels.length>1){setOriginChoices({x,y,levels:result.levels});setStatus('Выберите высоту старта');return;}
+        setOrigin([x,y,result.levels[0]]);setPickingOrigin(false);setStatus('Старт для расчёта выбран');
+      }catch(e){if(!c.signal.aborted)setStatus(problem(e));}
+      return;
+    }
+    setCovered([]);setPoint([x,y]);setLevel(null);setLevels([]);setData(null);setAge(null);setStatus('Проверяем дорогу под меткой');
     try {
       const result=await worldRequest<{levels:number[];coveredLevels:number[]}>('/levels',AbortSignal.any([c.signal,AbortSignal.timeout(5000)]),{point:[x,y]});
       if(c.signal.aborted)return;
-      const valid=result.coveredLevels;
+      const valid=result.levels;setCovered(result.coveredLevels);
       setLevels(valid);setLevel(valid.length===1?valid[0]:null);
-      setStatus(!result.levels.length?'Под меткой нет проезжей дороги':!valid.length?'У этой дороги ещё нет визуальных ориентиров':valid.length>1?'Выберите уровень дороги':'Цель выбрана');
+      setStatus(!result.levels.length?'Под меткой нет проезжей дороги':valid.length>1?'Выберите уровень дороги':'Цель выбрана');
     } catch(e){if(!c.signal.aborted)setStatus(problem(e));}
   }
   async function start() {
     const el=video.current;
-    if(!el||!info||!point||level===null||inputIssue||!ready||run.current)return;
+    if(!el||!info||!point||level===null||!covered.includes(level)||inputIssue||!ready||run.current)return;
     const c=new AbortController();run.current=c;setActive(true);setData(null);setAge(null);setStatus('Ищем скутер по живому кадру');
     let session:string|undefined;
     let applied=0, rejected=0;
@@ -87,45 +98,48 @@ export function WorldDestinationPilot({video,ready,inputIssue,openInput}:{
       if(mounted.current)setActive(false);
     }
   }
-  const goWide=()=>{if(info){const [l,r,b,t]=info.bounds;setView([l,-t,r-l,t-b]);}};
-  const zoom=(factor:number)=>{if(view){const [x,y,w,h]=view;setView([x+w*(1-factor)/2,y+h*(1-factor)/2,w*factor,h*factor]);}};
-  const bounds=info?.bounds;
-  const dot=Math.max(2.4,(view?.[3]??0)/70);
-  return <section aria-label="Поездка к метке" className="min-w-0 space-y-3 rounded-2xl border border-border bg-card p-4">
-    <h2 className="text-lg font-semibold">Поездка к метке</h2>
-    {info&&view&&bounds&&<>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={goWide}>Вся карта</Button>
-        <Button variant="outline" size="sm" onClick={()=>setView(viewBounds(info.atlas.visualTrace,30))}>Зона ориентиров</Button>
-        <Button variant="outline" size="sm" aria-label="Приблизить" disabled={view[2]<16} onClick={()=>zoom(.5)}>+</Button>
-        <Button variant="outline" size="sm" aria-label="Отдалить" disabled={view[2]>=bounds[1]-bounds[0]} onClick={()=>zoom(2)}>−</Button>
+  useEffect(()=>{
+    const controller=new AbortController();
+    setPreview(null);setPreviewError('');
+    if(origin&&point&&level!==null&&info){
+      worldRequest<{path:XYZ[];distance:number;covered:boolean}>('/preview',AbortSignal.any([controller.signal,AbortSignal.timeout(10000)]),
+        {revision:info.mapRevision,start:origin,goal:[...point,level]}).then(r=>{
+          if(!controller.signal.aborted)setPreview(r);
+        }).catch(e=>{if(!controller.signal.aborted)setPreviewError(problem(e));});
+    }
+    return ()=>controller.abort();
+  },[origin,point,level,info]);
+  const clear=()=>{
+    choice.current?.abort();setOrigin(null);setOriginChoices(null);setPickingOrigin(false);
+    setPoint(null);setData(null);setAge(null);setLevels([]);setLevel(null);setCovered([]);setStatus('Поставьте метку на дороге');
+  };
+  const inAtlas=level!==null&&covered.includes(level);
+  return <section aria-label="Поездка к метке" className={styles.panel}>
+    <header className={styles.panelHeader}><div><MapPin size={17}/><h2>Карта мира</h2></div><span>Black Russia</span></header>
+    {info?<WorldDestinationMap info={info} point={point} origin={origin} preview={preview?.path??[]} decision={data} onChoose={(x,y)=>void choose(x,y)}/>:
+      <div className={styles.mapLoading}><p>{status}</p><Button size="sm" variant="outline" onClick={()=>setRefresh(n=>n+1)}>Повторить подключение к карте</Button></div>}
+    <div className={styles.tripFooter}>
+      <div className={styles.target}><Flag size={17}/><div><strong>{point?'Точка назначения':'Выберите точку назначения'}</strong>
+        <p>{point?point.map(n=>n.toFixed(1)).join(' / '):'Щелчок ставит метку. Перетаскивание перемещает карту.'}</p></div>
+        {point&&!active&&<button type="button" onClick={clear} aria-label="Сбросить метки"><X size={15}/></button>}</div>
+      {levels.length>1&&<label className={styles.selectLabel}>Уровень дороги <select value={level??''} disabled={active} onChange={e=>setLevel(e.target.value===''?null:Number(e.target.value))}><option value="">Выберите</option>{levels.map(z=><option key={z} value={z}>{z.toFixed(1)} м</option>)}</select></label>}
+      {(point||active||pickingOrigin)&&<p role="status" className={styles.status}>{status}</p>}
+      {point&&level!==null&&!inAtlas&&<p className={styles.attention}>Дорога найдена. Для автопоездки здесь ещё нужны визуальные ориентиры.</p>}
+      {data&&<p className={styles.status}>Опор {data.pose?.supports??0} · Кадр до решения {age} мс{data.remaining!=null?' · Осталось '+data.remaining.toFixed(1)+' м':''}</p>}
+      <div className={styles.tripAction}>
+        {active?<Button variant="destructive" onClick={stop}>Остановить · Esc</Button>:
+        <Button disabled={!ready||!!inputIssue||!inAtlas||pickingOrigin} onClick={()=>void start()}><Navigation size={15}/>Ехать к метке</Button>}
+        {!active&&inputIssue&&<small>{inputIssue}</small>}
       </div>
-      <svg ref={map} viewBox={view.join(' ')} aria-label="Выбрать точку назначения на карте Black Russia" className="h-80 w-full touch-none cursor-crosshair rounded-lg bg-slate-950"
-        onPointerDown={e=>{const m=map.current?.getScreenCTM();if(!m||e.button!==0)return;
-          e.currentTarget.setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,view,m:m.inverse()};}}
-        onPointerMove={e=>{const d=drag.current;if(!d||Math.hypot(e.clientX-d.x,e.clientY-d.y)<4)return;
-          const a=new DOMPoint(d.x,d.y).matrixTransform(d.m),b=new DOMPoint(e.clientX,e.clientY).matrixTransform(d.m);
-          setView([d.view[0]+a.x-b.x,d.view[1]+a.y-b.y,d.view[2],d.view[3]]);}}
-        onPointerCancel={()=>{drag.current=null;}}
-        onPointerUp={e=>{const d=drag.current;drag.current=null;if(!d||active||Math.hypot(e.clientX-d.x,e.clientY-d.y)>=4)return;
-          const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(d.m);void choose(p.x,-p.y);}}
-      >
-        {['world','drive'].map(layer=><image key={layer} href={'http://127.0.0.1:8817/'+layer+'.png'} x={bounds[0]} y={-bounds[3]} width={bounds[1]-bounds[0]} height={bounds[3]-bounds[2]} preserveAspectRatio="none" opacity={layer==='drive'?.45:1}/>)}
-        <polyline points={outline(info.atlas.visualTrace)} fill="none" stroke="#22d3ee" strokeOpacity=".28" strokeLinejoin="round" strokeLinecap="round" strokeWidth={2*info.atlas.coverageRadius}/>
-        {data?.path&&<polyline points={outline(data.path)} fill="none" stroke="#34d399" strokeWidth="3" vectorEffect="non-scaling-stroke"/>}
-        {point&&<circle cx={point[0]} cy={-point[1]} r={dot} fill="#f59e0b" stroke="white" strokeWidth="2" vectorEffect="non-scaling-stroke"/>}
-        {data?.pose&&<circle cx={data.pose.eye[0]} cy={-data.pose.eye[1]} r={dot} fill="#38bdf8" stroke="white" strokeWidth="2" vectorEffect="non-scaling-stroke"/>}
-      </svg>
-      <p className="text-xs text-muted-foreground">Голубая полоса — зона ориентиров у Кремля. Зелёная линия показывает построенный путь. Для старта сядьте на скутер и направьте камеру вперёд.</p>
-    </>}
-    {levels.length>1&&<label>Уровень дороги <select value={level??''} disabled={active} onChange={e=>setLevel(e.target.value===''?null:Number(e.target.value))}><option value="">Выберите уровень</option>{levels.map(z=><option key={z} value={z}>{z.toFixed(1)} м</option>)}</select></label>}
-    <p role="status" className="text-sm">{status}</p>
-    {data&&<p className="text-xs text-muted-foreground">Опор {data.pose?.supports??0} · кадр до ответа {age} мс{data.remaining!==null?' · до цели '+data.remaining.toFixed(1)+' м':''}</p>}
-    {!active&&inputIssue&&<p className="text-xs text-muted-foreground">{inputIssue}</p>}
-    <div className="flex flex-wrap gap-2">
-      {!info&&<Button variant="outline" onClick={()=>setRefresh(n=>n+1)}>Повторить подключение к карте</Button>}
-      <Button disabled={active||!ready||!!inputIssue||level===null} onClick={()=>void start()}>Ехать к метке</Button>
-      {active&&<Button variant="outline" onClick={stop}>Остановить · Esc</Button>}
+      <details className={styles.previewOptions}><summary>Проверить путь между двумя точками</summary>
+        <p>Для поездки старт определяется по живому экрану. Здесь можно рассчитать путь от выбранной дороги.</p>
+        <Button variant="outline" size="sm" disabled={active||!point||level===null} onClick={()=>{
+          choice.current?.abort();setOriginChoices(null);setPickingOrigin(v=>!v);setStatus(pickingOrigin?'Цель выбрана':'Укажите стартовую дорогу на карте');
+        }}>{pickingOrigin?'Отменить выбор старта':origin?'Изменить старт':'Указать старт на карте'}</Button>
+        {originChoices&&<label>Уровень старта <select defaultValue="" onChange={e=>{setOrigin([originChoices.x,originChoices.y,Number(e.target.value)]);setOriginChoices(null);setPickingOrigin(false);setStatus('Старт для расчёта выбран');}}><option value="" disabled>Выберите</option>{originChoices.levels.map(z=><option key={z} value={z}>{z.toFixed(1)} м</option>)}</select></label>}
+        {preview&&<p role="status">{preview.path.length?'Путь по дорогам · '+Math.round(preview.distance)+' м'+(preview.covered?' · в зоне ориентиров':' · вне полного покрытия ориентирами'):'Между этими точками нет связного проезда'}</p>}
+        {previewError&&<p role="alert">{previewError}</p>}
+      </details>
     </div>
   </section>;
 }

@@ -14,6 +14,9 @@ import { TeachingReview, type TeachingClipChoice } from './TeachingReview';
 import { TeachingScenePreview } from './TeachingScenePreview';
 import { teachingTitle } from './teachingMetadata';
 import {TeachingCaptureSetup,type CaptureQuality} from './TeachingCaptureSetup';
+import Link from 'next/link';
+import styles from './worldConsole.module.css';
+import { Radio, Settings2, Signal, VideoOff } from 'lucide-react';
 import {WorldDestinationPilot} from './WorldDestinationPilot';
 import {TeachingNavigation} from './TeachingNavigation';
 import {TeachingLocalWorker} from './TeachingLocalWorker';
@@ -84,12 +87,12 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
   const videoHolder=useRef<HTMLDivElement>(null),[pinLiveVideo,setPinLiveVideo]=useState(false);
   useEffect(()=>{
     setPinLiveVideo(false);const holder=videoHolder.current;
-    if(workspaceMode!=='live'||calibrate||bindingTarget||!holder||typeof IntersectionObserver==='undefined')return;
+    if(destination||workspaceMode!=='live'||calibrate||bindingTarget||!holder||typeof IntersectionObserver==='undefined')return;
     // Keep the SAME video element presented when the operator scrolls to the
     // map. A second peer/video would break source/age and input ownership.
     const observer=new IntersectionObserver(entries=>setPinLiveVideo(!entries[0]?.isIntersecting),{threshold:.05});
     observer.observe(holder);return()=>observer.disconnect();
-  },[workspaceMode,calibrate,bindingTarget]);
+  },[destination,workspaceMode,calibrate,bindingTarget]);
   const connection = useRef<TeachingConnection | null>(null), controller = useRef<TeachingContacts | null>(null);
   const abort = useRef<AbortController | null>(null), stopPromise = useRef<Promise<void> | null>(null);
   const keys = useRef(new Set<string>()), mouse = useRef<number | null>(null), attached = useRef(false);
@@ -470,6 +473,65 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
     abort.current?.abort();abort.current=null;connection.current?.close();terminateTeachingRecorder(connection.current?.worker);connection.current=null;
     controller.current=null;attached.current=false;armSent.current=false;setReady(false);setResult(null);change('idle');setWorkspaceMode('review');
   },[phase,autoPrepare,clip,storageScope]);
+  const gameScreen=(<div ref={videoHolder} className="relative aspect-video">
+        <video ref={video} muted playsInline tabIndex={0} aria-label={destination?"Живой экран устройства":"Игровой экран: назначенные клавиши и мышь; Escape — остановить запись"}
+          className={`aspect-video max-h-[calc(100dvh-14rem)] scroll-mt-56 touch-none bg-black object-contain outline-none focus-visible:ring-2 focus-visible:ring-primary ${pinLiveVideo?'fixed bottom-6 left-6 z-50 w-60 rounded-xl border border-cyan-500/60 shadow-2xl':'w-full'}`}
+          onKeyDown={e => key(e,true)} onKeyUp={e => key(e,false)} onContextMenu={e => e.preventDefault()}
+          onBlur={() => { if (keys.current.size || mouse.current !== null) void stop('input_focus_lost'); }}
+          onPointerDown={e => {
+            const pos = point(e), b = connection.current?.binding(); if (!pos || !b) return;
+            if(e.button===0&&phaseRef.current==='piloting'&&pilotInterrupt.current){e.preventDefault();pilotInterrupt.current('vehicle_manual_override');void stop('vehicle_manual_override');return;}
+            if (calibrate && !active(phase)) {
+              setProfile(p => calibrateProfile(p,b,calibrate,pos)); setCalibrate(null); return;
+            }
+            if (!inputEnabled(phaseRef.current) || externalActive.current || mouse.current !== null || e.button !== 0) return;
+            if(profileRef.current.mode==='vehicle_buttons'&&[...keys.current].some(code=>teachingRole(code,profileRef.current)==='action')){setNotice(`Отпустите ${keyLabel(teachingKeys(profileRef.current).action)}, чтобы двигать камеру мышью.`);return;}
+            e.preventDefault(); e.currentTarget.focus(); e.currentTarget.setPointerCapture(e.pointerId);
+            mouse.current = e.pointerId; mouseContact.current=cameraContact(profileRef.current);controller.current?.set(mouseContact.current,pos);
+          }}
+          onPointerMove={e => { if (mouse.current === e.pointerId) { const p = point(e); if(p) controller.current?.set(mouseContact.current,p); } }}
+          onPointerUp={e => { if (mouse.current === e.pointerId) { mouse.current = null; controller.current?.set(mouseContact.current,null); e.currentTarget.releasePointerCapture(e.pointerId); } }}
+          onPointerCancel={e => { if(!externalActive.current&&mouse.current===e.pointerId)void stop('pointer_cancelled'); }}
+          onLostPointerCapture={e => { if (mouse.current === e.pointerId) void stop('pointer_capture_lost'); }} />
+        {ready&&!active(phase)&&binding&&(!destination||calibrate)&&<svg aria-label="Проверенные точки управления" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${binding.width} ${binding.height}`} preserveAspectRatio="xMidYMid meet">
+          {profile.look&&calibrated(profile,binding,'look')&&(()=>{const p=fromPercent(profile.look,binding),reach=Math.min(binding.width,binding.height)*.25,left=Math.max(binding.height*.05,p.x-reach),right=Math.min(binding.width-1-binding.height*.05,p.x+reach);return <g aria-label="Диапазон горизонтального свайпа камеры" pointerEvents="none"><rect x={left} y={p.y-binding.height*.025} width={right-left} height={binding.height*.05} rx={10} fill="#22d3ee18" stroke="#22d3ee66" strokeDasharray="6 5"/><path d={`M ${left} ${p.y} L ${right} ${p.y}`} fill="none" stroke="#22d3ee" strokeWidth={2}/></g>;})()}
+          {calibrationMarkers.map(marker=><g key={marker.label} transform={`translate(${marker.x} ${marker.y})`}><circle r={Math.max(9,binding.height*.018)} fill="#020617cc" stroke="#38bdf8" strokeWidth={2}/><text textAnchor="middle" dominantBaseline="central" fill="white" fontSize={Math.max(9,binding.height*.018)}>{marker.label}</text></g>)}
+        </svg>}
+        {calibrate&&<p className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/95 px-3 py-2 text-sm text-primary">Укажите {calibrationNames[calibrate]}. Это только калибровка.</p>}
+        </div>);
+  if(destination){
+    const inputIssue=readOnly?'Доступен только просмотр':!ready||!result||!['host','nat'].includes(result.path)
+      ?'Подключите прямой поток устройства':calibrate?'Завершите калибровку':vehicleCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Канал управления занят');
+    return <div ref={host} className={styles.console} aria-label="Навигация по живому экрану">
+      <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} inputIssue={inputIssue} openInput={openVehicleInput}/>
+      <aside className={styles.rail}>
+        <section aria-label="Живой экран" className={styles.panel}>
+          <header className={styles.panelHeader}><div><Radio size={17}/><h2>Живой экран</h2></div><span className={ready?styles.online:styles.offline}>{ready?'В эфире':'Офлайн'}</span></header>
+          <div className={styles.monitor}>{gameScreen}{!ready&&<div className={styles.noSignal}><VideoOff size={25}/><strong>{phase==='connecting'?'Подключаем экран…':'Поток отключён'}</strong></div>}</div>
+          <div className={styles.railBody}><Button variant="outline" disabled={readOnly||!storageScope||active(phase)||phase==='connecting'} onClick={()=>void connect()}><Signal size={15}/>{ready?'Переподключить поток':'Подключить поток'}</Button>
+            {!ready&&phase!=='idle'&&<p role="status">{notice}</p>}
+            {phase==='idle'&&notice&&!notice.startsWith('Подключите поток')&&<p role="status">{notice}</p>}
+            {ready&&binding&&<p>{binding.width} × {binding.height} · {result?.path}</p>}
+          </div>
+        </section>
+        <section className={styles.panel}><header className={styles.panelHeader}><div><Settings2 size={16}/><h2>Настройки</h2></div></header>
+          <details className={styles.setting}><summary>Качество потока</summary><div><StreamQualityControl deviceId={deviceId} readOnly={readOnly||active(phase)}/></div></details>
+          <details className={styles.setting}><summary>Управление скутером</summary><div>
+            <p>Положения педалей и руля сохраняются для этого устройства и размера экрана.</p>
+            <Button variant="outline" size="sm" disabled={readOnly||!ready||!binding||active(phase)} onClick={()=>{if(binding){setCalibrate(null);setProfile(p=>blackRussiaScooterProfile(binding,p));}}}>Применить профиль скутера</Button>
+            {profile.mode==='vehicle_buttons'&&([...vehicleButtons.filter(t=>profile.steering!=='stick'||t==='forward'||t==='reverse'),...(profile.steering==='stick'?['stick' as const]:[])]).map(target=><Button key={target} size="sm" variant="outline" disabled={readOnly||!ready||active(phase)} onClick={()=>chooseCalibration(target)}>{calibrationNames[target]}</Button>)}
+            {calibrate&&<Button size="sm" variant="ghost" onClick={()=>setCalibrate(null)}>Отменить калибровку</Button>}
+          </div></details>
+          <details className={styles.setting}><summary>Диагностика соединения</summary><div><dl>
+            <dt>Канал ввода</dt><dd>{native}</dd><dt>Ответ Android</dt><dd>{inputRtt===null?'—':inputRtt+' мс'}</dd><dt>Устройство</dt><dd>{deviceId}</dd>
+          </dl>{ready&&<p>{encoded}</p>}</div></details>
+        </section>
+        <section className={styles.legendPanel}><h3>Легенда</h3><ul>
+          <li><i data-kind="coverage"/>Визуальные ориентиры</li><li><i data-kind="preview"/>Расчётный путь</li><li><i data-kind="active"/>Путь автопоездки</li><li><i data-kind="goal"/>Точка назначения</li>
+        </ul></section>
+      </aside>
+    </div>;
+  }
   const workflow=[
     {mode:'capture' as const,label:'1 · Запись',detail:'Покажите путь в игре',status:phase==='recording'?'Идёт запись':chosenClip?`Выбрано: ${chosenClip.title}`:'Ожидает запись'},
     {mode:'review' as const,label:'2 · Библиотека',detail:'Записи, обработка и карты проходов',status:navigationJob?'Связана с записью':'Выберите проход'},
@@ -504,40 +566,13 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
     <div className={workspaceMode==='live'?'grid items-start gap-4 xl:grid-cols-[280px_minmax(0,1fr)]':'grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]'}>
       <section className={`overflow-hidden rounded-2xl border border-border bg-card ${workspaceMode==='live'?'xl:sticky xl:top-56':''}`}>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 text-sm"><span className="font-medium">{phase === 'recording' ? '● Запись' : 'Прямой экран Android'}</span><span className="text-xs text-muted-foreground">{connection.current?.binding() ? `${connection.current.binding()!.width} × ${connection.current.binding()!.height}` : 'Размер ожидается'}</span></div>
-        <div ref={videoHolder} className="relative aspect-video">
-        <video ref={video} muted playsInline tabIndex={0} aria-label="Игровой экран: назначенные клавиши и мышь; Escape — остановить запись"
-          className={`aspect-video max-h-[calc(100dvh-14rem)] scroll-mt-56 touch-none bg-black object-contain outline-none focus-visible:ring-2 focus-visible:ring-primary ${pinLiveVideo?'fixed bottom-6 left-6 z-50 w-60 rounded-xl border border-cyan-500/60 shadow-2xl':'w-full'}`}
-          onKeyDown={e => key(e,true)} onKeyUp={e => key(e,false)} onContextMenu={e => e.preventDefault()}
-          onBlur={() => { if (keys.current.size || mouse.current !== null) void stop('input_focus_lost'); }}
-          onPointerDown={e => {
-            const pos = point(e), b = connection.current?.binding(); if (!pos || !b) return;
-            if(e.button===0&&phaseRef.current==='piloting'&&pilotInterrupt.current){e.preventDefault();pilotInterrupt.current('vehicle_manual_override');void stop('vehicle_manual_override');return;}
-            if (calibrate && !active(phase)) {
-              setProfile(p => calibrateProfile(p,b,calibrate,pos)); setCalibrate(null); return;
-            }
-            if (!inputEnabled(phaseRef.current) || externalActive.current || mouse.current !== null || e.button !== 0) return;
-            if(profileRef.current.mode==='vehicle_buttons'&&[...keys.current].some(code=>teachingRole(code,profileRef.current)==='action')){setNotice(`Отпустите ${keyLabel(teachingKeys(profileRef.current).action)}, чтобы двигать камеру мышью.`);return;}
-            e.preventDefault(); e.currentTarget.focus(); e.currentTarget.setPointerCapture(e.pointerId);
-            mouse.current = e.pointerId; mouseContact.current=cameraContact(profileRef.current);controller.current?.set(mouseContact.current,pos);
-          }}
-          onPointerMove={e => { if (mouse.current === e.pointerId) { const p = point(e); if(p) controller.current?.set(mouseContact.current,p); } }}
-          onPointerUp={e => { if (mouse.current === e.pointerId) { mouse.current = null; controller.current?.set(mouseContact.current,null); e.currentTarget.releasePointerCapture(e.pointerId); } }}
-          onPointerCancel={e => { if(!externalActive.current&&mouse.current===e.pointerId)void stop('pointer_cancelled'); }}
-          onLostPointerCapture={e => { if (mouse.current === e.pointerId) void stop('pointer_capture_lost'); }} />
-        {ready&&!active(phase)&&binding&&<svg aria-label="Проверенные точки управления" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${binding.width} ${binding.height}`} preserveAspectRatio="xMidYMid meet">
-          {profile.look&&calibrated(profile,binding,'look')&&(()=>{const p=fromPercent(profile.look,binding),reach=Math.min(binding.width,binding.height)*.25,left=Math.max(binding.height*.05,p.x-reach),right=Math.min(binding.width-1-binding.height*.05,p.x+reach);return <g aria-label="Диапазон горизонтального свайпа камеры" pointerEvents="none"><rect x={left} y={p.y-binding.height*.025} width={right-left} height={binding.height*.05} rx={10} fill="#22d3ee18" stroke="#22d3ee66" strokeDasharray="6 5"/><path d={`M ${left} ${p.y} L ${right} ${p.y}`} fill="none" stroke="#22d3ee" strokeWidth={2}/></g>;})()}
-          {calibrationMarkers.map(marker=><g key={marker.label} transform={`translate(${marker.x} ${marker.y})`}><circle r={Math.max(9,binding.height*.018)} fill="#020617cc" stroke="#38bdf8" strokeWidth={2}/><text textAnchor="middle" dominantBaseline="central" fill="white" fontSize={Math.max(9,binding.height*.018)}>{marker.label}</text></g>)}
-        </svg>}
-        {calibrate&&<p className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/95 px-3 py-2 text-sm text-primary">Укажите {calibrationNames[calibrate]}. Это только калибровка.</p>}
-        </div>
+        {gameScreen}
         {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Стик для пешего теста</p><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>{setProfile(p=>({...p,mode:'stick'}));chooseCalibration('stick');}}>Указать центр пешего стика</Button><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>chooseCalibration('look')}>Указать область поворота камеры</Button><label>Радиус, % короткой стороны <input aria-label="Радиус пешего стика" type="number" className="ml-2 w-16 rounded border bg-background p-1" value={profile.radius} min={1} max={20} step={.5} disabled={active(phase)} onChange={e=>{const n=Number(e.target.value);if(n>=1&&n<=20)setProfile(p=>({...p,radius:n}));}}/></label></div><p className="text-muted-foreground">По умолчанию стик — слева внизу, камера — справа от центра. Положения и радиус сохраняются для этого устройства, аккаунта и разрешения. При необходимости укажите свои точки: это не отправляет касание в игру. Палец камеры перемещается плавно по двум осям, в пределах 25% короткой стороны от начала свайпа. Прыжок не управляется.</p></div>}
         <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) && !externalActive.current ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{phase==='piloting'?(profile.mode==='vehicle_buttons'?'Транспорт · газ и руль по свежим кадрам':'Пеший тест · стик управляется алгоритмом'):externalActive.current ? 'Управление в эмуляторе · нажатия не записываются' : inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
         {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Транспорт · калибровка</p><Button size="sm" variant="outline" disabled={readOnly||!ready||!binding||active(phase)} onClick={()=>{if(binding){setBindingTarget(null);setCalibrate(null);setProfile(p=>blackRussiaScooterProfile(binding,p));}}}>Настроить скутер · педали и стик</Button><p className="text-muted-foreground">Профиль Black Russia выбирается явно; его применение не отправляет касания. Проверьте педали и центр стика перед поездкой.</p></div>}
       </section>
-      {workspaceMode==='live'&&<WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready}
-        inputIssue={readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Подключите прямой поток устройства.':vehicleCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Завершите другое управление.')}
-        openInput={openVehicleInput}/>}
+      {workspaceMode==='live'&&<Button variant="outline" asChild><Link href={`/stream/${encodeURIComponent(deviceId)}?teach=1&world=1`}>Открыть навигацию по карте</Link></Button>}
       {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} sourceRecording={routeSource?.clip===clip&&routeSource.scope===storageScope?routeSource:null} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'} onReview={()=>{void switchMode('review');}}
         beginVehicleVideo={config=>!readOnly&&config.scope===storageScope?connection.current?.beginVehicleVideo(config)??null:null}
         walkInput={{open:openWalkInput,revision:JSON.stringify(profile),cameraIssue:walkingCameraIssue(profile,binding??null),issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для пешего теста нужен прямой поток.':walkingCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}
