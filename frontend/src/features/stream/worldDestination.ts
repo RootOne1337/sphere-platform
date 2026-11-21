@@ -5,6 +5,7 @@ export type XYZ = [number, number, number];
 export type WorldInfo = {
   bounds: [number, number, number, number];
   mapRevision: string;
+  tiles: {revision: string; width: number; height: number; tileSize: number};
   atlas: { visualTrace: XYZ[]; coverageRadius: number };
 };
 export type Decision = VehicleCommand & {
