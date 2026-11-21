@@ -160,7 +160,7 @@ export function WorldDestinationPilot({
         setObservation(r.eye);
         setProbeMessage(
           (r.district
-            ? "Тестовые ориентиры · " + r.district
+            ? "Ориентиры · " + r.district
             : "Ориентиры у Кремля") +
             " · " +
             r.supports +
