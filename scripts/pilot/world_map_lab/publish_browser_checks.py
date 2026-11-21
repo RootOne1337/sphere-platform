@@ -53,6 +53,7 @@ def publish(web, game, manifest, scenario):
         required=[
             *GAME_FILES,
             "models/player.img",
+            "models/gta_int.img",
             "data/maps/brworld/brworld.ide",
             *("data/maps/brworld/" + s["packaged"].lower() for s in world["scenes"]),
             *(a["path"] for a in banks[2:]),

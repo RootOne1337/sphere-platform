@@ -1,27 +1,52 @@
 const pick = document.querySelector("#game-folder");
 const message = document.querySelector("#assets");
 const scene = document.querySelector("#game");
+const start = document.querySelector("#start-served");
+const gameUrl = "index.html?strict=1&backend=gl&inworld=0";
 const plan = await (await fetch("browser-course.json")).json();
 function missing(files) {
   return plan.required.filter(
     (path) => !files.has(path) || files.get(path).size <= 0,
   );
 }
-const served = await (await fetch("game-index.json")).json();
-const absent = missing(new Map(served.map((f) => [f.path.toLowerCase(), f])));
-message.textContent = absent.length
-  ? "В данных стенда отсутствуют " + absent.join(", ") + "."
-  : "Файлы игрового клиента доступны. Для запуска выберите подготовленную папку маршрута.";
 async function digest(file) {
   const buffer = await file.arrayBuffer();
   return [...new Uint8Array(await crypto.subtle.digest("SHA-256", buffer))]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
+async function verifyGame(files, read) {
+  const absent = missing(files);
+  if (absent.length) throw Error("Отсутствуют " + absent.join(", "));
+  for (const [key, size] of Object.entries(plan.archiveBytes)) {
+    if (files.get(key)?.size !== size) throw Error("Неполный архив " + key);
+  }
+  const receipt = files.get("sphere-full-world.json");
+  if (!receipt)
+    throw Error("Выбрана папка без подготовленного маршрута Black Russia.");
+  const record = JSON.parse(await (await read("sphere-full-world.json")).text());
+  if (
+    record.runtime !== "browser-wasm" ||
+    record.worldManifestSha256 !== plan.world ||
+    record.routeSha256 !== plan.route
+  )
+    throw Error("Папка подготовлена для другой карты, миссии или движка.");
+  const sums = {
+    "sphere-route.json": plan.route,
+    "data/script/main.scm": plan.scm,
+    "data/script/script.img": plan.scriptImg,
+    "data/gta.dat": record.layoutSha256?.["gta.dat"],
+    "data/default.dat": record.layoutSha256?.["default.dat"],
+  };
+  for (const [key, hash] of Object.entries(sums)) {
+    if (!files.has(key) || (await digest(await read(key))) !== hash)
+      throw Error("Не совпадает файл " + key);
+  }
+}
 pick.addEventListener("change", async () => {
   const selection = pick.files;
   if (!selection.length) return;
-  pick.disabled = true;
+  start.disabled = pick.disabled = true;
   scene.hidden = true;
   scene.onload = null;
   scene.removeAttribute("src");
@@ -36,32 +61,7 @@ pick.addEventListener("change", async () => {
       if (files.has(key)) throw Error("Дублируется файл " + key);
       files.set(key, file);
     }
-    const absent = missing(files);
-    if (absent.length) throw Error("Отсутствуют " + absent.join(", "));
-    for (const [key, size] of Object.entries(plan.archiveBytes)) {
-      if (files.get(key)?.size !== size) throw Error("Неполный архив " + key);
-    }
-    const receipt = files.get("sphere-full-world.json");
-    if (!receipt)
-      throw Error("Выбрана папка без подготовленного маршрута Black Russia.");
-    const record = JSON.parse(await receipt.text());
-    if (
-      record.runtime !== "browser-wasm" ||
-      record.worldManifestSha256 !== plan.world ||
-      record.routeSha256 !== plan.route
-    )
-      throw Error("Папка подготовлена для другой карты, миссии или движка.");
-    const sums = {
-      "sphere-route.json": plan.route,
-      "data/script/main.scm": plan.scm,
-      "data/script/script.img": plan.scriptImg,
-      "data/gta.dat": record.layoutSha256?.["gta.dat"],
-      "data/default.dat": record.layoutSha256?.["default.dat"],
-    };
-    for (const [key, hash] of Object.entries(sums)) {
-      if (!files.has(key) || (await digest(files.get(key))) !== hash)
-        throw Error("Не совпадает файл " + key);
-    }
+    await verifyGame(files, async (key) => files.get(key));
     message.textContent = "Запускается игровой движок…";
     await new Promise((resolve, reject) => {
       scene.onload = () => {
@@ -75,7 +75,7 @@ pick.addEventListener("change", async () => {
           reject(e);
         }
       };
-      scene.src = "index.html?strict=1&backend=gl&inworld=0";
+      scene.src = gameUrl;
       scene.hidden = false;
     });
     message.textContent =
@@ -85,6 +85,45 @@ pick.addEventListener("change", async () => {
     message.textContent = e.message;
   } finally {
     pick.value = "";
-    pick.disabled = false;
+    start.disabled = pick.disabled = false;
+  }
+});
+
+async function checkServedGame() {
+  const response = await fetch("game-index.json", { cache: "no-store" });
+  if (!response.ok) throw Error("Индекс файлов стенда недоступен.");
+  const files = new Map();
+  for (const entry of await response.json()) {
+    const key = entry.path.toLowerCase();
+    if (files.has(key)) throw Error("Повторяющийся путь в данных стенда " + key);
+    files.set(key, entry);
+  }
+  await verifyGame(files, async (key) => {
+    const path = files.get(key).path.split("/").map(encodeURIComponent).join("/");
+    const res = await fetch("/game/" + path, { cache: "no-store" });
+    if (!res.ok) throw Error("Не удалось прочитать " + key);
+    return res.blob();
+  });
+}
+try {
+  await checkServedGame();
+  message.textContent = "Карта и миссия на стенде готовы к запуску движка.";
+  start.hidden = false;
+} catch (error) {
+  message.textContent = error.message;
+}
+start.addEventListener("click", async () => {
+  start.disabled = pick.disabled = true;
+  try {
+    await checkServedGame();
+    scene.onload = null;
+    scene.src = gameUrl + "&autostart=1";
+    scene.hidden = false;
+    message.textContent = "Запускается игровой движок с данными стенда.";
+    scene.scrollIntoView({ block: "start" });
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    start.disabled = pick.disabled = false;
   }
 });
