@@ -10,7 +10,7 @@ export type WorldInfo = {
   tiles: { revision: string; width: number; height: number; tileSize: number };
   atlas: { visualTrace: XYZ[]; coverageRadius: number };
 };
-type SearchState = { phase: string; samples: number; tracking: boolean };
+type SearchState = { phase: string; samples: number; tracking: boolean; detailWidth?: number };
 export type Decision = VehicleCommand & {
   worldSearch?: SearchState;
   reason: string;
@@ -93,7 +93,7 @@ export function worldFrameSampler(video: HTMLVideoElement) {
   const ctx = canvas.getContext("2d", { alpha: false });
   if (!ctx || typeof video.requestVideoFrameCallback !== "function")
     throw Error("video_unsupported");
-  return (signal: AbortSignal, lastSequence: number) => {
+  return (signal: AbortSignal, lastSequence: number, detailed = false) => {
     if (signal.aborted) throw Error("stream_stopped");
     return new Promise<{
       seq: number;
@@ -129,12 +129,18 @@ export function worldFrameSampler(video: HTMLVideoElement) {
           return;
         }
         try {
+          const width = detailed && video.videoWidth >= 1280
+            ? (video.videoWidth >= 1920 ? 1920 : 1280) : 640;
+          if (canvas.width !== width) {
+            canvas.width = width;
+            canvas.height = width * 9 / 16;
+          }
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const blob = new Promise<Blob>((accept, fail) =>
             canvas.toBlob(
               (b) => (b ? accept(b) : fail(Error("frame_encode"))),
               "image/jpeg",
-              0.91,
+              detailed ? 0.96 : 0.91,
             ),
           );
           const capture = (
@@ -161,6 +167,15 @@ type Probe = {
   district: string | null;
   ambiguous: boolean;
 };
+function detailSampler() {
+  let last = -Infinity;
+  return (state?: SearchState) => {
+    const now = performance.now();
+    if (state?.phase !== "collecting_views" || !state.detailWidth || now - last < 650) return false;
+    last = now;
+    return true;
+  };
+}
 export async function probeWorldPosition(
   video: HTMLVideoElement,
   signal: AbortSignal,
@@ -168,6 +183,8 @@ export async function probeWorldPosition(
   progress?: (frames: number, secondsLeft: number, phase?: string) => void,
 ) {
   const sample = worldFrameSampler(video);
+  const detail = detailSampler();
+  let searchState: SearchState | undefined;
   const timeout = AbortSignal.timeout(acquireMs);
   const search = AbortSignal.any([signal, timeout]);
   const deadline = performance.now() + acquireMs;
@@ -178,7 +195,7 @@ export async function probeWorldPosition(
   let lastUpdate = -Infinity;
   try {
     while (!search.aborted) {
-      const frame = await sample(search, lastSequence).catch((error: unknown) => {
+      const frame = await sample(search, lastSequence, detail(searchState)).catch((error: unknown) => {
         if (!search.aborted && error instanceof Error && error.message === "frame_timeout") return null;
         throw error;
       });
@@ -197,6 +214,7 @@ export async function probeWorldPosition(
         jpeg,
       );
       if (search.aborted) break;
+      searchState = result.worldSearch;
       const now = performance.now();
       count++;
       const pose = result.pose;
@@ -251,6 +269,8 @@ export async function runWorldTrip(
 ) {
   let lastFix = performance.now();
   const sample = worldFrameSampler(video);
+  const detail = detailSampler();
+  let searchState: SearchState | undefined;
   let lease: VehicleInputLease | undefined;
   let commanded = false;
   let strokes = 0;
@@ -260,7 +280,7 @@ export async function runWorldTrip(
     while (!signal.aborted) {
       if (performance.now() - lastFix >= acquireMs)
         throw Error("position_timeout");
-      const frame = await sample(signal, lastSequence);
+      const frame = await sample(signal, lastSequence, detail(searchState));
       lastSequence = frame.seq;
       const jpeg = await frame.blob;
       if (signal.aborted) break;
@@ -279,6 +299,7 @@ export async function runWorldTrip(
       );
       if (signal.aborted) break;
       if (d.sequence !== frame.seq) throw Error("frame_sequence");
+      searchState = d.worldSearch;
       update(d, Math.round(performance.now() - frame.captured));
       if (d.reason === "arrived" || d.reason === "no_motion") return;
       if (lease && (!lease.active() || lease.failure?.()))
