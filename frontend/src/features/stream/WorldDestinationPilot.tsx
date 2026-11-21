@@ -98,6 +98,10 @@ export function WorldDestinationPilot({
   const opening = useRef(openInput);
   opening.current = openInput;
   const stop = useCallback(() => {
+    if (probe.current) {
+      probe.current.abort();
+      setProbeMessage("Поиск остановлен");
+    }
     if (run.current) {
       run.current.abort();
       setStatus("Поездка остановлена");
@@ -139,9 +143,19 @@ export function WorldDestinationPilot({
     probe.current = c;
     setProbing(true);
     setObservation(null);
-    setProbeMessage("Сверяем два свежих кадра…");
+    setProbeMessage("Ищем ориентиры в потоке…");
     try {
-      const r = await probeWorldPosition(video.current, c.signal);
+      const r = await probeWorldPosition(
+        video.current,
+        c.signal,
+        acquireMinutes * 60_000,
+        (frames, seconds) => {
+          if (!c.signal.aborted)
+            setProbeMessage(
+              `Проверено кадров · ${frames}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
+            );
+        },
+      );
       if (!c.signal.aborted) {
         setObservation(r.eye);
         setProbeMessage(
@@ -472,11 +486,11 @@ export function WorldDestinationPilot({
           <Button
             size="sm"
             variant="ghost"
-            disabled={!ready || !info || active || probing}
-            onClick={() => void inspect()}
+            disabled={!ready || !info || active}
+            onClick={() => (probing ? stop() : void inspect())}
           >
             <LocateFixed size={15} />
-            Определить положение
+            {probing ? "Остановить поиск" : "Определить положение"}
           </Button>
           {probeMessage && <small role="status">{probeMessage}</small>}
         </div>
@@ -485,7 +499,7 @@ export function WorldDestinationPilot({
           <label className={styles.selectLabel}>
             Время на поиск позиции
             <select
-              disabled={active}
+              disabled={active || probing}
               value={acquireMinutes}
               onChange={(e) => setAcquireMinutes(Number(e.target.value))}
             >
