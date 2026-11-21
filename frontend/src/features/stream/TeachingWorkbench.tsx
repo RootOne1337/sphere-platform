@@ -14,6 +14,7 @@ import { TeachingReview, type TeachingClipChoice } from './TeachingReview';
 import { TeachingScenePreview } from './TeachingScenePreview';
 import { teachingTitle } from './teachingMetadata';
 import {TeachingCaptureSetup,type CaptureQuality} from './TeachingCaptureSetup';
+import {WorldDestinationPilot} from './WorldDestinationPilot';
 import {TeachingNavigation} from './TeachingNavigation';
 import {TeachingLocalWorker} from './TeachingLocalWorker';
 import type {ReconstructionJob} from './reconstructionClient';
@@ -534,6 +535,9 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
         {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Транспорт · калибровка</p><Button size="sm" variant="outline" disabled={readOnly||!ready||!binding||active(phase)} onClick={()=>{if(binding){setBindingTarget(null);setCalibrate(null);setProfile(p=>blackRussiaScooterProfile(binding,p));}}}>Настроить скутер · педали и стик</Button><p className="text-muted-foreground">Профиль Black Russia выбирается явно; его применение не отправляет касания. Проверьте педали и центр стика перед поездкой.</p></div>}
       </section>
+      {workspaceMode==='live'&&<WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready}
+        inputIssue={readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Подключите прямой поток устройства.':vehicleCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Завершите другое управление.')}
+        openInput={openVehicleInput}/>}
       {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} sourceRecording={routeSource?.clip===clip&&routeSource.scope===storageScope?routeSource:null} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'} onReview={()=>{void switchMode('review');}}
         beginVehicleVideo={config=>!readOnly&&config.scope===storageScope?connection.current?.beginVehicleVideo(config)??null:null}
         walkInput={{open:openWalkInput,revision:JSON.stringify(profile),cameraIssue:walkingCameraIssue(profile,binding??null),issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для пешего теста нужен прямой поток.':walkingCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}
