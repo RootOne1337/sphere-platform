@@ -53,7 +53,7 @@ def install_test_language(context, url):
     context.route(base + "/game/" + path, resource)
 
 
-def check(url, folder, chrome, seconds, scenario, test_language=False):
+def check(url, folder, chrome, seconds, scenario, test_language=False, strict=False):
     records = []
     failed = []
     errors = []
@@ -96,7 +96,8 @@ def check(url, folder, chrome, seconds, scenario, test_language=False):
         page.goto(
             url.rstrip("/")
             + "/?autostart=1&backend=gl&cache_mb=64"
-            + ("&mods=sphere-journey" if scenario else ""),
+            + ("&mods=sphere-journey" if scenario else "")
+            + ("&strict=1&inworld=0" if strict else ""),
             timeout=45000,
         )
         deadline = time.monotonic() + seconds
@@ -147,6 +148,7 @@ def check(url, folder, chrome, seconds, scenario, test_language=False):
             module_hashes[name] = {"sha256": hashlib.sha256(contents).hexdigest(), "source": source}
         proof = dict(
             testLanguage=test_language,
+            strictRequested=strict,
             completedBootSteps=boot_steps,
             fileOpens=file_opens,
             worldRendered=rendered,
@@ -187,5 +189,8 @@ if __name__ == "__main__":
     cli.add_argument("--seconds", type=float, default=40)
     cli.add_argument("--scenario", action="store_true")
     cli.add_argument("--test-language", action="store_true")
+    cli.add_argument(
+        "--strict", action="store_true", help="disable exploration overrides in the patched port"
+    )
     a = cli.parse_args()
-    check(a.url, a.output, a.chrome, a.seconds, a.scenario, a.test_language)
+    check(a.url, a.output, a.chrome, a.seconds, a.scenario, a.test_language, a.strict)

@@ -6,6 +6,7 @@ import html
 import json
 import math
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from scripts.pilot.world_map_lab.native_route import native_route
 
@@ -82,7 +83,7 @@ def controller_section(folder, route_id):
 Игровой скрипт проверяет посадку, {data["gates"]} дорожные точки, остановку и пеший финиш. Живой проезд в классическом клиенте ожидает проверки.</p></section>"""
 
 
-def cross_world_section(folder, world_manifest):
+def cross_world_section(folder, world_manifest, browser_stand=None):
     if folder is None:
         return ""
     if world_manifest is None:
@@ -106,7 +107,13 @@ def cross_world_section(folder, world_manifest):
         checks.append(
             f"<tr><th>{title}</th><td>{length:,.1f}</td><td>{sum(r['found'] for r in results)} / {len(results)}</td></tr>"
         )
-    return f"""<section id="cross-map"><h2>Через всю карту на Faggio</h2>
+    browser_link = ""
+    if browser_stand:
+        address = urlsplit(browser_stand)
+        if address.scheme != "http" or address.hostname not in {"127.0.0.1", "localhost", "::1"}:
+            raise ValueError("the browser stand must be on loopback")
+        browser_link = f'<p><a href="{html.escape(browser_stand, quote=True)}">Открыть браузерный стенд полного маршрута</a></p>'
+    return f"""<section id="cross-map"><h2>Через всю карту на Faggio</h2>{browser_link}
 <p>Проверка по отдельным изображениям геометрии карты с приблизительно известным положением.</p>
 <table><thead><tr><th>Участок</th><th>Длина, ед.</th><th>Найдена поза</th></tr></thead><tbody>{"".join(checks)}</tbody></table>
 <p>Проверок с кадром из другого места: {len(probe["negatives"])}. Принято ложных положений: {sum(v["accepted"] for v in probe["negatives"])}.</p>
@@ -114,7 +121,7 @@ def cross_world_section(folder, world_manifest):
 <p><strong>Заезд в клиенте GTA SA ожидает проверки. Запись игрового окна появится после физического прогона.</strong></p></section>"""
 
 
-def publish(folder, world_manifest=None, cross_course=None):
+def publish(folder, world_manifest=None, cross_course=None, browser_stand=None):
     def read(name):
         return json.loads((folder / name).read_bytes())
 
@@ -166,7 +173,7 @@ def publish(folder, world_manifest=None, cross_course=None):
 <title>{title} · GTA San Andreas</title><style>
 *{{box-sizing:border-box}}body{{margin:0;background:#0c131a;color:#e9f1f2;font:17px/1.6 "Segoe UI",sans-serif}}main{{max-width:910px;margin:42px auto;padding:0 26px 56px}}a{{color:#75dfce}}h1{{font-size:clamp(32px,5vw,54px);line-height:1.08;margin:34px 0 12px}}h2{{font-size:23px;margin:28px 0 8px}}p{{margin:8px 0;color:#cbd7df}}strong{{color:#ffe1a3}}section{{background:#17212b;padding:6px 20px 20px;border-radius:12px;margin-top:22px}}table{{width:100%;border-collapse:collapse}}td,th{{border-bottom:1px solid #34414e;padding:9px 5px;text-align:right;font-variant-numeric:tabular-nums}}th:first-child{{text-align:left}}code{{overflow-wrap:anywhere;font-size:14px}}@media(max-width:580px){{main{{padding:0 12px}}section{{padding:4px 10px 14px}}table{{font-size:13px}}}}</style>
 <main><a href="/">← Карта Black Russia</a><h1>{"Маршруты Black Russia" if cross_course else title} в GTA San Andreas</h1>
-{cross_world_section(cross_course, world_manifest)}
+{cross_world_section(cross_course, world_manifest, browser_stand)}
 {f"<h2>{title} · контрольный квартал</h2>" if cross_course else ""}
 <p>Пешком к скутеру → круг на Faggio → пешком до цели.</p>
 <section><h2>Запуск игры</h2><p><strong>Проезд в оригинальной GTA SA ожидает проверки.</strong></p>
@@ -191,5 +198,6 @@ if __name__ == "__main__":
     cli.add_argument("--folder", type=Path, required=True)
     cli.add_argument("--world-manifest", type=Path)
     cli.add_argument("--cross-course", type=Path, help="compiled and tested long itinerary")
+    cli.add_argument("--browser-stand", help="local browser engine page for the full route")
     args = cli.parse_args()
-    publish(args.folder, args.world_manifest, args.cross_course)
+    publish(args.folder, args.world_manifest, args.cross_course, args.browser_stand)

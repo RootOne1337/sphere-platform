@@ -130,6 +130,17 @@ def test_full_map_preserves_overrides_independent_scenes_and_gameplay(tmp_path):
     assert (alt_dest / "sphere-route.json").read_bytes() == alternate.read_bytes()
     assert prepare_full(game, world, scenario, alt_dest) == alt_dest / "gta_sa.exe"
     assert (world / "sphere-route.json").read_bytes() == route.read_bytes()
+    # A data-only browser copy retains the level and mission even when there is no executable.
+    (game / "gta_sa.exe").rename(game / "ignored.exe")
+    web = tmp_path / "web-game"
+    stage(game, world, web, scenario, browser=True)
+    assert not (web / "ignored.exe").exists()
+    record = json.loads((web / "sphere-full-world.json").read_bytes())
+    assert record["runtime"] == "browser-wasm"
+    assert "gameExecutableSha256" not in record and "limitsFile" not in record
+    assert (web / "data/gta.dat").read_bytes() == (alt_dest / "data/gta.dat").read_bytes()
+    assert (web / "sphere-route.json").read_bytes() == alternate.read_bytes()
+    (game / "ignored.exe").rename(game / "gta_sa.exe")
     (scenario / "sphere-route.json").write_bytes(b"altered route")
     with pytest.raises(ValueError, match="itinerary checksum"):
         stage(game, world, tmp_path / "bad-itinerary", scenario)

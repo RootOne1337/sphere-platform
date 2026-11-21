@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ru">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+  <title>Black Russia · Проверка движка</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background: #101619;
+      color: #ecf4f3;
+      font:
+        17px/1.52 "Segoe UI",
+        sans-serif;
+      margin: 0;
+    }
+    main {
+      margin: 7vh auto;
+      padding: 0 24px;
+      max-width: 830px;
+    }
+    h1 {
+      font-size: clamp(32px, 6vw, 52px);
+      letter-spacing: -0.045em;
+      line-height: 1.04;
+      margin: 16px 0;
+    }
+    h2 {
+      font-size: 20px;
+    }
+    a {
+      color: #75dac8;
+    }
+    p {
+      color: #becdcb;
+    }
+    button {
+      background: #89e4ce;
+      color: #132323;
+      font: inherit;
+      font-weight: 650;
+      border: 0;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.55;
+    }
+    section {
+      padding: 6px 0 16px;
+      border-bottom: 1px solid #364745;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+    }
+    iframe {
+      width: 100%;
+      height: 72vh;
+      border: 1px solid #364745;
+      border-radius: 6px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    input {
+      max-width: 100%;
+    }
+    small {
+      display: block;
+      color: #acbebb;
+    }
+    #status {
+      min-height: 1.6em;
+    }
+  </style>
+  <main>
+    <a href="http://127.0.0.1:8817/classic-game#cross-map">← Дальний маршрут</a>
+    <h1>Физика скутера в браузере</h1>
+    <p>
+      Тест подаёт команды в мотоциклетный контроллер sa-engine, измеряет отклик
+      подвески и читает секторы карты Black Russia. Персонаж и маршрут
+      проверяются отдельным игровым запуском.
+    </p>
+    <button id="run">Проверить в браузере</button>
+    <p id="status" role="status">Готов к проверке.</p>
+    <section id="result" hidden>
+      <h2>Отклик руля</h2>
+      <canvas
+        width="720"
+        height="150"
+        id="plot"
+        aria-label="Угол руля на восьми последовательных шагах проверки"
+      ></canvas
+      ><small id="controls"></small>
+    </section>
+    <p id="map"></p>
+    <p id="ground"></p>
+    <section>
+      <h2>Игровой запуск · Black Russia</h2>
+      <p>
+        105 м пешком до Faggio, 14,31 км на скутере и 29 м до финиша. Движок
+        читает игровые файлы локально.
+      </p>
+      <p id="assets"></p>
+      <label for="game-folder"
+        >Подготовленная папка карты с данными GTA SA 1.0 US</label
+      ><input id="game-folder" type="file" webkitdirectory multiple /><iframe
+        hidden
+        id="game"
+        title="Игровое окно GTA San Andreas"
+        allowfullscreen
+      ></iframe>
+    </section>
+  </main>
+  <script type="module" src="browser_game_folder.js"></script>
+  <script type="module">
+    const $ = (id) => document.getElementById(id);
+    let state = { phase: "idle" };
+    window.render_game_to_text = () => JSON.stringify(state);
+    function call(kind) {
+      return new Promise((resolve, reject) => {
+        const w = new Worker("browser_check_worker.js", { type: "module" });
+        const timer = setTimeout(
+          () => finish(reject, "Превышено время проверки"),
+          60000,
+        );
+        function finish(f, value) {
+          clearTimeout(timer);
+          w.terminate();
+          f(value);
+        }
+        w.onmessage = ({ data }) =>
+          data.error ? finish(reject, data.error) : finish(resolve, data);
+        w.onerror = (e) => finish(reject, e.message);
+        w.postMessage(kind);
+      });
+    }
+    $("run").onclick = async () => {
+      $("run").disabled = true;
+      $("result").hidden = true;
+      $("controls").textContent = "";
+      $("ground").textContent = "";
+      $("map").textContent = "";
+      state = { phase: "running" };
+      $("status").textContent = "Запускается WebAssembly-порт…";
+      try {
+        const controls = await call("controls");
+        state.controls = controls;
+        $("result").hidden = false;
+        const deg = controls.inputs.map((row) => (row[2] * 180) / Math.PI);
+        const g = $("plot").getContext("2d");
+        g.clearRect(0, 0, 720, 150);
+        g.lineWidth = 3;
+        g.strokeStyle = "#89e4ce";
+        g.beginPath();
+        const peak = Math.max(...deg);
+        deg.forEach((v, i) => {
+          const x = 20 + i * 95,
+            y = 120 - (95 * v) / peak;
+          i ? g.lineTo(x, y) : g.moveTo(x, y);
+        });
+        g.stroke();
+        g.fillStyle = "#c1d8d4";
+        g.font = "14px Segoe UI";
+        g.fillText(peak.toFixed(1) + "°", 390, 16);
+        g.fillText("Нажатие", 165, 145);
+        g.fillText("Отпускание", 465, 145);
+        $("controls").textContent =
+          "Газ и тормоз проверены отдельно. Максимальный угол за три шага поворота " +
+          peak.toFixed(2) +
+          "°.";
+        $("ground").textContent =
+          "Сила подвески при сжатии на 0, 25 и 50% — " +
+          controls.springs.map((v) => v[0].toFixed(2)).join(" / ") +
+          " в единицах движка. Масса и параметры нагрузки заданы для этого опыта.";
+        const archives = await call("archives");
+        state.archives = archives;
+        $("map").textContent =
+          "Движок прочитал два базовых архива и " +
+          (archives.archives - 2) +
+          " архивов карты Black Russia. Первый и последний сектор каждого сверены с файлами на диске.";
+        state.phase = "passed";
+        $("status").textContent =
+          "Контроллер, подвеска и чтение архивов прошли проверку.";
+      } catch (e) {
+        state.phase = "error";
+        state.error = String(e);
+        $("status").textContent = state.error;
+      } finally {
+        $("run").disabled = false;
+      }
+    };
+  </script>
+</html>

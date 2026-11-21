@@ -1,0 +1,140 @@
+--- a/crates/sa-stream/src/streaming.rs
++++ b/crates/sa-stream/src/streaming.rs
+@@ -624,9 +624,33 @@
+
+ /// `ms_files[img].StreamHandle`.
+ pub fn file_handle(img: i32) -> u32 {
+-    FILES.ptr().cast::<StreamingFile>().wrapping_index(img).read().handle
+-}
++    file(img).read().handle
++}
++#[cfg(target_arch = "wasm32")]
++const FILE_CAPACITY: i32 = 24;
++#[cfg(not(target_arch = "wasm32"))]
++const FILE_CAPACITY: i32 = 8;
++
++// The legacy next global starts immediately after slot seven. Preserve the eight
++// original addresses and keep additional browser descriptors outside that arena.
++#[cfg(target_arch = "wasm32")]
++extern crate std;
++#[cfg(target_arch = "wasm32")]
++std::thread_local! {
++    static EXTRA_IMAGES: std::cell::Cell<[StreamingFile; 16]> =
++        const { std::cell::Cell::new([StreamingFile::ZERO; 16]) };
++}
++
+ fn file(img: i32) -> GPtr<StreamingFile> {
++    #[cfg(target_arch = "wasm32")]
++    {
++        assert!((0..FILE_CAPACITY).contains(&img));
++        if img >= 8 {
++            return EXTRA_IMAGES.with(|extra| {
++                GPtr::from_raw(extra.as_ptr().cast::<StreamingFile>()).wrapping_index(img - 8)
++            });
++        }
++    }
+     FILES.ptr().cast::<StreamingFile>().wrapping_index(img)
+ }
+ fn channel(ch: i32) -> GPtr<StreamingChannel> {
+@@ -798,7 +822,7 @@
+ /// index, or 0 when all 8 are used.
+ #[hook(addr = 0x407610, conv = cdecl, name = "CStreaming::AddImageToList", expect = "E9 7B 05 16 01")]
+ pub fn add_image_to_list(name: GPtr<u8>, not_player_img: u8) -> i32 {
+-    for i in 0..8 {
++    for i in 0..FILE_CAPACITY {
+         let f = file(i);
+         if f.read().name[0] == 0 {
+             copy_name(f.cast(), name);
+@@ -1045,7 +1069,7 @@
+ /// in 0x8E48A8 / 0x8E48A4 (0 when no slot is free).
+ #[hook(addr = 0x4083C0, conv = cdecl, name = "CStreaming::InitImageList", expect = "B8 04 49 8E 00")]
+ pub fn init_image_list() {
+-    for i in 0..8 {
++    for i in 0..FILE_CAPACITY {
+         field::<u8, _>(file(i), 0).write(0);
+         field::<u32, _>(file(i), 0x2C).write(0);
+     }
+@@ -1053,7 +1077,7 @@
+     GTA_INT_IMG.set(add_image_inline(0x858B20));
+ }
+ fn add_image_inline(name: usize) -> i32 {
+-    for i in 0..8 {
++    for i in 0..FILE_CAPACITY {
+         if file(i).read().name[0] == 0 {
+             copy_name(file(i).cast(), GPtr::from_addr(name));
+             let h = cd_stream_open(GPtr::from_addr(name), 0);
+@@ -4167,14 +4191,14 @@
+     if file(0).read().name[0] != 0 {
+         let mut i = 0;
+         loop {
+-            if i >= 8 {
++            if i >= FILE_CAPACITY {
+                 break;
+             }
+             if file(i).read().not_player_img != 0 {
+                 call_load_cd_directory_file(file(i).cast(), i);
+             }
+             i += 1;
+-            if i >= 8 || file(i).read().name[0] == 0 {
++            if i >= FILE_CAPACITY || file(i).read().name[0] == 0 {
+                 break;
+             }
+         }
+--- a/crates/sa-mod-host/src/data.rs
++++ b/crates/sa-mod-host/src/data.rs
+@@ -39,7 +39,11 @@
+ pub const MAX_NAME: usize = 23;
+
+ /// `CStreaming::ms_files`: the image archives the game can open.
++#[cfg(not(target_arch = "wasm32"))]
+ pub const MAX_IMAGES: usize = 8;
++/// Browser descriptor capacity, including the original game archives.
++#[cfg(target_arch = "wasm32")]
++pub const MAX_IMAGES: usize = 24;
+ /// The images the game opens besides its level files' `IMG` lines: `MODELS\GTA3.IMG` and `MODELS\GTA_INT.IMG`
+ /// (`CStreaming::InitImageList`) and `MODELS\PLAYER.IMG` (`CClothes::Init`).
+ pub const GAME_IMAGES: usize = 3;
+--- a/crates/sa-game/src/bind.rs
++++ b/crates/sa-game/src/bind.rs
+@@ -143,6 +143,9 @@
+         let Platform { files, vfs, .. } = p;
+         files.fopen(vfs, &path, &mode)
+     });
++    if crate::env::var_os("SA_WEB_TRACE_FILE_OPEN").is_some() {
++        println!("file open {:?} {:?}: {:?}", path, mode, h);
++    }
+     GPtr::from_addr(h.unwrap_or(0) as usize)
+ }
+ /// The whole file at a game path, through the same file layer as `fopen`; `None` when it cannot be opened.
+--- a/crates/sa-game/src/lib.rs
++++ b/crates/sa-game/src/lib.rs
+@@ -57,3 +57,6 @@
+ pub mod winmain;
+
+ pub mod app;
++
++#[cfg(target_arch = "wasm32")]
++mod sphere_browser_checks;
+--- a/web/main.js
++++ b/web/main.js
+@@ -234,11 +234,15 @@
+   };
+   worker.onerror = (e) => log(`worker error: ${e.message}`, 'error');
+   const env = {};
+-  env.SA_GAME_SCRIPT_SKIP = '1';
+-  const stub = params.get('stub');
+-  if (stub !== 'none') env.SA_GAME_STUB = stub ?? DEFAULT_STUBS;
+-  for (const [k, v] of params) if (k.startsWith('SA_')) env[k] = v;
+-  if (params.get('auto') === '1') env.SA_WEB_AUTO_INPUT = '1';
++  if (params.get('strict') === '1') {
++    env.SA_WEB_TRACE_FILE_OPEN = '1';
++  } else {
++    env.SA_GAME_SCRIPT_SKIP = '1';
++    const stub = params.get('stub');
++    if (stub !== 'none') env.SA_GAME_STUB = stub ?? DEFAULT_STUBS;
++    for (const [k, v] of params) if (k.startsWith('SA_')) env[k] = v;
++    if (params.get('auto') === '1') env.SA_WEB_AUTO_INPUT = '1';
++  }
+   // ?mods=a,b: the WebAssembly mods mods/a/, mods/b/ of the server (tools/web/serve.sh --mods DIR; build with
+   // FEATURES=mods; docs/mods/getting-started.md)
+   if (params.get('mods')) env.SA_MODS = params.get('mods');

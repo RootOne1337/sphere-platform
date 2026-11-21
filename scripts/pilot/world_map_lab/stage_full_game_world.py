@@ -27,7 +27,7 @@ def merge_layout(path, additions=()):
     return "\n".join(lines) + "\n"
 
 
-def stage(game, world, destination, scenario):
+def stage(game, world, destination, scenario, *, browser=False):
     game, world = game.resolve(strict=True), world.resolve(strict=True)
     destination = destination.resolve()
     if destination.exists() or any(destination.is_relative_to(p) for p in (world, game)):
@@ -52,7 +52,8 @@ def stage(game, world, destination, scenario):
         for p, present in inspect_runtime(game).items()
         if not present and p != "data/script/main.scm"
     ]
-    missing.extend(n for n in ("gta_sa.exe", "models/player.img") if not (game / n).is_file())
+    required = ("models/player.img",) if browser else ("gta_sa.exe", "models/player.img")
+    missing.extend(n for n in required if not (game / n).is_file())
     if missing:
         raise ValueError("missing classic gameplay files: " + ", ".join(missing))
     map_dir = "data/maps/brworld/"
@@ -79,7 +80,15 @@ def stage(game, world, destination, scenario):
     destination.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=destination.parent) as temp:
         root = Path(temp) / "game"
-        shutil.copytree(game, root)
+        if browser:
+            root.mkdir()
+            for name in ("anim", "audio", "data", "models", "movies", "text"):
+                if (game / name).is_dir():
+                    shutil.copytree(game / name, root / name)
+            if (game / "stream.ini").is_file():
+                shutil.copyfile(game / "stream.ini", root / "stream.ini")
+        else:
+            shutil.copytree(game, root)
         for rel, checksum in expected.items():
             if rel == "sphere-route.json":
                 src = itinerary
@@ -109,8 +118,17 @@ def stage(game, world, destination, scenario):
             len(archives),
         )
         config = root / CONFIG_NAME
-        existing = config.read_text(encoding="cp1252") if config.is_file() else ""
-        config.write_text(merge_limits(existing, needed), encoding="cp1252")
+        if browser:
+            runtime_fields = {"runtime": "browser-wasm", "requiredWorldLimits": needed}
+        else:
+            existing = config.read_text(encoding="cp1252") if config.is_file() else ""
+            config.write_text(merge_limits(existing, needed), encoding="cp1252")
+            runtime_fields = {
+                "gameExecutableSha256": digest(root / "gta_sa.exe"),
+                "limitsFile": CONFIG_NAME,
+                "limitsSha256": digest(config),
+                "limitAdjusterPresent": (root / "$fastman92limitAdjuster.asi").is_file(),
+            }
         for name in ("default.dat", "gta.dat"):
             path = Path("data") / name
             content = merge_layout(game / path, additions if name == "gta.dat" else ())
@@ -123,7 +141,7 @@ def stage(game, world, destination, scenario):
                     "additionalImageArchives": len(manifest["archives"]),
                     "largestSceneInstances": max(s["instances"] for s in manifest["scenes"]),
                     "sourceGameDirectory": str(game),
-                    "gameExecutableSha256": digest(root / "gta_sa.exe"),
+                    **runtime_fields,
                     "scenarioFiles": {
                         n: digest(root / "data/script" / n) for n in ("main.scm", "script.img")
                     },
@@ -131,9 +149,6 @@ def stage(game, world, destination, scenario):
                         n: digest(root / "data" / n) for n in ("default.dat", "gta.dat")
                     },
                     "binding": binding,
-                    "limitsFile": CONFIG_NAME,
-                    "limitsSha256": digest(config),
-                    "limitAdjusterPresent": (root / "$fastman92limitAdjuster.asi").is_file(),
                     "gameplayVerified": False,
                 },
                 indent=2,
@@ -147,5 +162,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("game", "world", "output", "classic-scenario"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument(
+        "--browser", action="store_true", help="stage data for the WebAssembly game"
+    )
     args = parser.parse_args()
-    stage(args.game, args.world, args.output, args.classic_scenario)
+    stage(args.game, args.world, args.output, args.classic_scenario, browser=args.browser)
