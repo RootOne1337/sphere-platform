@@ -16,7 +16,7 @@ from urllib.request import Request, urlopen
 def code_digest():
     folder = Path(__file__).resolve().parent
     digest = hashlib.sha256()
-    for name in ("live_destination.py", "live_destination_atlas.py"):
+    for name in ("live_destination.py", "live_destination_atlas.py", "destination_tiles.py"):
         digest.update(hashlib.sha256((folder / name).read_bytes()).digest())
     return digest.hexdigest()
 

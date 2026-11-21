@@ -17,6 +17,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from scripts.pilot.world_map_lab.destination_tiles import DestinationTiles
 from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator
 from scripts.pilot.world_map_lab.start_live_destination import code_digest
 
@@ -194,6 +195,7 @@ def serve(args):
     with args.atlas.open("rb") as f:
         atlas_digest = hashlib.file_digest(f, "sha256").hexdigest()
     locator = Locator(args.atlas, road.meta["placementRevision"])
+    tiles = DestinationTiles(road.base)
     cv2.setNumThreads(3)
     lock = threading.Lock()
     sessions = {}
@@ -236,11 +238,25 @@ def serve(args):
             self.end_headers()
 
         def do_GET(self):
+            if self.permitted() and self.path.startswith(f"/tiles/{tiles.revision}/"):
+                data = tiles.files.get(self.path.split("/", 3)[3])
+                if data is None:
+                    return self.reply(404, dict(error="unknown_tile"))
+                self.send_response(200)
+                self.send_header("Access-Control-Allow-Origin", args.origin)
+                self.send_header("Vary", "Origin")
+                self.send_header("Cache-Control", "private,max-age=31536000,immutable")
+                self.send_header("Content-Type", "image/webp")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
             if self.path != "/world" or not self.permitted():
                 return self.reply(403, dict(error="origin_denied"))
             self.reply(
                 200,
                 dict(
+                    tiles=tiles.manifest(),
                     bounds=road.meta["bounds"],
                     mapRevision=road.meta["placementRevision"],
                     atlas=locator.meta,
@@ -263,6 +279,22 @@ def serve(args):
                 raw = self.rfile.read(size)
                 if len(raw) != size:
                     raise ValueError("invalid_frame")
+                if self.path == "/preview":
+                    payload = json.loads(raw)
+                    if payload["revision"] != road.meta["placementRevision"]:
+                        raise ValueError("invalid_goal")
+                    start, goal = (payload[k] for k in ("start", "goal"))
+                    for point in (start, goal):
+                        if (len(point) != 3 or not all(type(v) in (int, float) and math.isfinite(v) for v in point)
+                                or not any(abs(z - point[2]) < .4 for z in road.levels(*point[:2]))):
+                            raise ValueError("unreachable_goal")
+                    result = road.route(start, goal)
+                    path = result.get("path", [])
+                    if (result.get("status") != "complete" or not path
+                            or math.dist(start, path[0]) > 2.5 or math.dist(goal, path[-1]) > 2.5):
+                        return self.reply(200, dict(path=[], distance=0, covered=False))
+                    return self.reply(200, dict(path=path, distance=sum(math.dist(a, b) for a, b in zip(path, path[1:])),
+                                                covered=bool(locator.covers(path))))
                 with lock:
                     self.process(frame, raw)
             except (ValueError, KeyError, TypeError, OSError, cv2.error) as e:
