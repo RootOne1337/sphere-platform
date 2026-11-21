@@ -28,9 +28,68 @@ def publish(web, game, manifest, scenario):
         raise ValueError("mission and world differ")
     if not (web / "pkg/sa_game_bg.wasm").is_file():
         raise ValueError("build the patched browser engine first")
-    banks = []
     paths = ["models/gta3.img", "models/gta_int.img"]
     paths += ["data/maps/brworld/" + a["name"] for a in world["archives"]]
+    scenes = ["data/maps/brworld/" + s["packaged"].lower() for s in world["scenes"]]
+    return publish_plan(
+        web, game, mission, paths, scenes, requires_packing(world["scenes"]), world["instances"]
+    )
+
+
+def publish_streamed(web, game, scenario):
+    receipt = game / "sphere-full-world.json"
+    record = json.loads(receipt.read_bytes())
+    streamed = record["streamedWorld"]
+    mission = json.loads((scenario / "classic-scenario.json").read_bytes())
+    if not (web / "pkg/sa_game_bg.wasm").is_file():
+        raise ValueError("build the patched browser engine first")
+    if (
+        record["runtime"] != "browser-wasm"
+        or record["routeSha256"] != digest(game / "sphere-route.json")
+        or mission["routeSha256"] != record["routeSha256"]
+        or mission["files"] != record["scenarioFiles"]
+        or mission.get("worldManifestSha256", record["worldManifestSha256"])
+        != record["worldManifestSha256"]
+    ):
+        raise ValueError("staged world and mission differ")
+    mission["worldManifestSha256"] = record["worldManifestSha256"]
+    layout = game / "data/gta.dat"
+    if digest(layout) != record["layoutSha256"]["gta.dat"]:
+        raise ValueError("staged layout mismatch")
+    root = "data/maps/brworld/"
+    paths = ["models/gta3.img", "models/gta_int.img"]
+    for line in layout.read_text("ascii").splitlines():
+        key, _, value = line.partition("#")[0].strip().partition(" ")
+        if key.lower() == "img":
+            name = value.strip().lower().replace(chr(92), "/")
+            if name.startswith(root):
+                if Path(name).parent.as_posix() != root.rstrip("/") or name in paths:
+                    raise ValueError("unexpected staged archive")
+                paths.append(name)
+    if len(paths) - 2 != record["additionalImageArchives"]:
+        raise ValueError("staged IMG count differs from active layout")
+    checks = {
+        k: digest(game / k)
+        for k in [
+            "sphere-world-cells.json",
+            root + "brcells.img",
+            root + "brworld.ide",
+            root + "branchor.ipl",
+        ]
+    }
+    if (
+        checks["sphere-world-cells.json"] != streamed["indexSha256"]
+        or checks[root + "brworld.ide"] != record["browserDataMod"]["ideSha256"]
+    ):
+        raise ValueError("staged cell index or model definitions differ")
+    extra = dict(stagedReceipt=digest(receipt), streamedFiles=checks)
+    return publish_plan(
+        web, game, mission, paths, list(checks), False, streamed["instances"], extra
+    )
+
+
+def publish_plan(web, game, mission, paths, scenes, packed, count, extra=None):
+    banks = []
     for path in paths:
         source = game / path
         size = source.stat().st_size
@@ -56,13 +115,14 @@ def publish(web, game, manifest, scenario):
             "models/player.img",
             "models/gta_int.img",
             "data/maps/brworld/brworld.ide",
-            *("data/maps/brworld/" + s["packaged"].lower() for s in world["scenes"]),
+            *scenes,
             *(a["path"] for a in banks[2:]),
             "data/water.dat",
             "data/timecyc.dat",
         ],
-        packedScenesRequired=requires_packing(world["scenes"]),
-        placementCount=world["instances"],
+        packedScenesRequired=packed,
+        placementCount=count,
+        **(extra or {}),
         archiveBytes={a["path"]: a["bytes"] for a in banks[2:]},
     )
     (web / "browser-course.json").write_text(json.dumps(spec), encoding="utf8")
@@ -73,7 +133,11 @@ def publish(web, game, manifest, scenario):
 
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
-    for name in ("web", "game", "manifest", "scenario"):
+    for name in ("web", "game", "scenario"):
         cli.add_argument("--" + name, type=Path, required=True)
+    cli.add_argument("--manifest", type=Path, help="source world manifest for a flat package")
     args = cli.parse_args()
-    publish(args.web, args.game, args.manifest, args.scenario)
+    if args.manifest:
+        publish(args.web, args.game, args.manifest, args.scenario)
+    else:
+        publish_streamed(args.web, args.game, args.scenario)

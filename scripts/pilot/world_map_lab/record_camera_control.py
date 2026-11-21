@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from playwright.sync_api import sync_playwright
 
+from scripts.pilot.world_map_lab.browser_test_input import NO_POINTER_LOCK
 from scripts.pilot.world_map_lab.record_native_journey import CAPTURE, encode
 
 # This fixed input sequence isolates camera changes. It does not test navigation.
@@ -35,8 +36,8 @@ PLAYER = re.compile(
 def record(port, dest, chrome):
     dest.mkdir(parents=True, exist_ok=False)
     url = (
-        f"http://127.0.0.1:{port}/?autostart=1&inworld=0&strict=1"
-        "&backend=webgpu&mods=br-game-profile&cache_mb=64&pointer=click"
+        f"http://127.0.0.1:{port}/?autostart=1&pointer=off&inworld=0&strict=1"
+        "&backend=webgpu&mods=br-game-profile&cache_mb=64"
     )
     report = {
         "url": url,
@@ -52,6 +53,7 @@ def record(port, dest, chrome):
         )
         try:
             page = browser.new_page(viewport={"width": 1024, "height": 768})
+            page.add_init_script(NO_POINTER_LOCK)
 
             def log(message):
                 text = message.text

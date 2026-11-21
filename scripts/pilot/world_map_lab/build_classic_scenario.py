@@ -121,7 +121,8 @@ def build(route, compiler, destination, world=None, *, actor_camera=False):
         # Follow the pedestrian while walking and the chassis while riding.
         # The second vector is a local look-at point in CCam::Process_AttachedCam.
         # Looking at the zero vector from eye level points the lens at the feet.
-        mount_view = "ATTACH_CAMERA_TO_VEHICLE scooter 0.0 0.46 1.22 0.0 8.5 -1.0 0.0 1"
+        # A forward view two degrees below horizontal keeps the street landmarks in view.
+        mount_view = "ATTACH_CAMERA_TO_VEHICLE scooter 0.0 0.46 1.22 0.0 8.5 0.94 0.0 1"
         foot_view = "ATTACH_CAMERA_TO_CHAR scplayer 0.0 0.28 0.65 0.0 9.0 0.47 0.0"
         camera_start = f"{foot_view} 2"
         camera_tick = f"""    SET_CHAR_VISIBLE scplayer 0

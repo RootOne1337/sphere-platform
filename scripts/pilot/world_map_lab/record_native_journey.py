@@ -102,8 +102,13 @@ def encode(source, dest):
     from imageio_ffmpeg import get_ffmpeg_exe
 
     with av.open(str(source)) as file:
-        times = [float(f.pts * f.time_base) for f in file.decode(video=0) if f.pts is not None]
-    if len(times) < 2 or any(b <= a for a, b in zip(times, times[1:])):
+        stamps = [
+            None if f.pts is None else float(f.pts * f.time_base) for f in file.decode(video=0)
+        ]
+    if None in stamps or any(b < a for a, b in zip(stamps, stamps[1:])):
+        raise ValueError("missing or decreasing capture timestamps")
+    times = list(dict.fromkeys(stamps))
+    if len(times) < 2:
         raise ValueError("invalid capture timestamps")
     subprocess.run(
         [
@@ -116,7 +121,9 @@ def encode(source, dest):
             "-map",
             "0:v:0",
             "-vf",
-            "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+            "select='isnan(prev_selected_pts)+gt(pts,prev_selected_pts)',pad=ceil(iw/2)*2:ceil(ih/2)*2",
+            "-enc_time_base",
+            "1:1000",
             "-fps_mode",
             "vfr",
             "-c:v",
@@ -137,6 +144,7 @@ def encode(source, dest):
         raise ValueError("transcode changed the number of captured frames")
     return dict(
         frames=encoded,
+        coincidentSourceFrames=len(stamps) - len(times),
         seconds=times[-1] - times[0],
         sourceFps=(len(times) - 1) / (times[-1] - times[0]),
         maxFrameGap=max(b - a for a, b in zip(times, times[1:])),

@@ -1,0 +1,60 @@
+--- a/web/index.html
++++ b/web/index.html
+@@ -7,14 +7,14 @@
+   body { margin: 0; background: #111; color: #ddd; font: 14px system-ui, sans-serif; }
+   #bar, #bar2 { padding: 8px 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+   #stage { display: flex; justify-content: center; align-items: center; background: #000; }
+-  #screen { display: block; background: #000; width: 800px; height: calc(800px / var(--aspect, 4 / 3)); image-rendering: auto; }
++  #screen { display: block; background: #000; width: min(100%, 1920px); height: auto; aspect-ratio: var(--aspect, 1.777778); object-fit: contain; image-rendering: auto; }
+   #screen.menu { cursor: none; }
+   /* full window / fullscreen: the canvas fills the viewport at the aspect of the game's video mode (letterboxed, smooth scaling) */
+   body.full #bar, body.full #bar2, body.full #log { display: none; }
+   body.full #stage, #stage:fullscreen { position: fixed; inset: 0; z-index: 1; }
+-  body.full #screen, #stage:fullscreen #screen { width: min(100vw, calc(100vh * var(--aspect, 4 / 3))); height: min(100vh, calc(100vw / var(--aspect, 4 / 3))); }
+-  #corner { display: none; position: fixed; top: 6px; right: 6px; z-index: 2; opacity: 0.35; font: 12px monospace; gap: 6px; align-items: center; }
+-  #corner:hover { opacity: 0.9; }
++  body.full #screen, #stage:fullscreen #screen { width: 100%; height: 100%; object-fit: contain; }
++  #corner { display: none; position: fixed; top: 6px; right: 6px; z-index: 2; opacity: 0; font: 12px monospace; gap: 6px; align-items: center; }
++  #corner:hover, #corner:focus-within { opacity: 0.9; }
+   body.full #corner, #stage:fullscreen #corner { display: flex; }
+   #status { font-family: monospace; color: #9c9; }
+   #log { font: 12px monospace; white-space: pre-wrap; max-height: 30vh; overflow: auto; margin: 8px 12px; color: #aaa; }
+--- a/web/worker.js
++++ b/web/worker.js
+@@ -359,7 +359,7 @@
+   lastStatus = performance.now();
+   // after a trap the module's state is torn (a panic aborts mid-call): no more calls into it
+   if (extra.error) {
+-    post('status', { phase, mib: Math.round(bytesRead / 1048576), io: ioStatus(), ...extra });
++    post('status', { phase, linearMemoryMiB: wasm?.memory?.buffer.byteLength / 1048576, mib: Math.round(bytesRead / 1048576), io: ioStatus(), ...extra });
+     return;
+   }
+   const state = sa.game_state();
+@@ -372,6 +372,7 @@
+   }
+   post('status', {
+     phase,
++    linearMemoryMiB: wasm?.memory?.buffer.byteLength / 1048576,
+     iterations: sa.iterations(),
+     blocked,
+     lastBlocked,
+--- a/web/main.js
++++ b/web/main.js
+@@ -224,7 +224,7 @@
+       inMenu = m.inMenu ?? (m.state !== 9 || !!m.uiCursor || !!m.menuActive);
+       // back in game from a menu or the SA:MP UI (Resume / Esc / Enter / a click: a recent user gesture, which the
+       // browser needs for the pointer lock): capture the pointer again, so the game has it at once
+-      if (wasMenu && !inMenu && m.state === 9 && document.pointerLockElement !== canvas && document.hasFocus()) {
++      if (params.get('pointer') === 'auto' && wasMenu && !inMenu && m.state === 9 && document.pointerLockElement !== canvas && document.hasFocus()) {
+         canvas.requestPointerLock?.()?.catch?.(() => {});
+       }
+       if ((m.uiCursor || m.menuActive) && document.pointerLockElement === canvas) { selfRelease = true; document.exitPointerLock?.(); }
+@@ -372,7 +372,7 @@
+       worker.postMessage({ type: 'button', button: e.button, down: true });
+       return;
+     }
+-    canvas.requestPointerLock?.();
++    if (params.get('pointer') !== 'off') canvas.requestPointerLock?.();
+     return;
+   }
+   worker.postMessage({ type: 'button', button: e.button, down: true });

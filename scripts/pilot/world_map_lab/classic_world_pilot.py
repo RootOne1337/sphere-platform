@@ -16,12 +16,13 @@ import numpy as np
 
 from scripts.pilot.world_map_lab.check_journey_rgb import H, Lane, W, angle, correct
 from scripts.pilot.world_map_lab.classic_lens import stationary_focal
-from scripts.pilot.world_map_lab.classic_transfers import MixedJourney
+from scripts.pilot.world_map_lab.classic_transfers import MixedJourney, pose_corridor
 from scripts.pilot.world_map_lab.classic_window import drive_window
 from scripts.pilot.world_map_lab.export_full_game_world import digest
 from scripts.pilot.world_map_lab.indexed_landmarks import IndexedLandmarks
 from scripts.pilot.world_map_lab.native_route import native_route
 from scripts.pilot.world_map_lab.neighborhood_search import NeighborhoodSearch
+from scripts.pilot.world_map_lab.rgbd_keyframe_pose import KeyframePose
 
 
 class RootDescriptors:
@@ -36,7 +37,7 @@ class RootDescriptors:
 
 
 class WorldCoursePilot:
-    def __init__(self, route, bank, hfov=None):
+    def __init__(self, route, bank, hfov=None, *, cross_renderer=False):
         paths, _, self.route_hash = native_route(route)
         config = json.loads(route.read_bytes())
         meta = json.loads((bank / "index.json").read_bytes())
@@ -100,7 +101,9 @@ class WorldCoursePilot:
             self.retrieval.append(NeighborhoodSearch([(index, 32)]))
         self.stations, self.caps = self.lanes[1].curve_limits()
         self.confirmed = None
+        self.keyframe_pose = KeyframePose(self) if cross_renderer else None
         self.phase_index = None
+        self.station_speed = 0.0
         self.samples = deque()
         self.misses = 0
 
@@ -150,12 +153,17 @@ class WorldCoursePilot:
         origin = self.indices[phase].atlas.origin
         for v in candidates[:6]:
             ref, depth = self.reference_image(*v["bytes"])
-            result = correct(v["pose"], (ref, depth, live), self.map_focal, sparse_scene=True)
+            result = correct(
+                v["pose"],
+                (ref, depth, live),
+                v.get("focalAt320", self.map_focal),
+                sparse_scene=True,
+            )
             if result is None:
                 continue
             eye, heading, count = result
             station, cross = project(eye - origin)
-            if cross > 2.2 or abs(station - prior) > 8:
+            if cross > pose_corridor(phase) or abs(station - prior) > 8:
                 continue
             for old_eye, old_heading, other, old_s in estimates:
                 if abs(v["s"] - old_s) < 0.75:
@@ -202,6 +210,16 @@ class WorldCoursePilot:
         rgb = cv2.resize(raw, (w, h), interpolation=cv2.INTER_AREA)
         previous = self.confirmed
         prior = previous[1][2] if previous else 0.0
+        if self.keyframe_pose and self.packed is not None and self.hfov is not None:
+            heading = previous[1][1][2] if previous else lane.at(prior + 1) - lane.at(prior - 1)
+            fit = self.keyframe_pose.locate(
+                rgb, phase, prior, math.atan2(heading[1], heading[0]), previous, t
+            )
+            if fit is not None:
+                self.method = (
+                    "tracked-keyframe-pnp" if self.keyframe_pose.tracked else "keyframe-rgbd-pnp"
+                )
+                return fit
         if previous:
             fit = self.dense_fit(rgb, phase, prior, previous)
             dt = t - previous[0]
@@ -261,9 +279,12 @@ class WorldCoursePilot:
 
     def frame(self, raw, t, capture_started):
         stage = self.journey.stage
-        phase = 0 if stage in ("approach", "boarding") else (1 if stage == "drive" else 2)
+        # The transfer must be confirmed from the destination camera bank.
+        # The vehicle-mounted view can face away from the entire walking approach.
+        phase = 0 if stage == "approach" else (1 if stage in ("boarding", "drive", "park") else 2)
         if phase != self.phase_index:
             self.phase_index = phase
+            self.station_speed = 0.0
             self.confirmed = None
             self.samples.clear()
             self.misses = 0
@@ -272,7 +293,9 @@ class WorldCoursePilot:
         row = dict(
             capture_s=t,
             latency_ms=latency,
-            vision="matched" if fit else "lost",
+            vision=("tracked" if self.method == "tracked-keyframe-pnp" else "matched")
+            if fit
+            else "lost",
             supports=fit[3] if fit else 0,
             station=fit[2] if fit else None,
             measured_xyz=fit[0].tolist() if fit else None,
@@ -292,6 +315,11 @@ class WorldCoursePilot:
             self.samples.clear()
             self.journey.step(row, None, lambda: None)
             return row
+        if self.confirmed is not None:
+            elapsed = t - self.confirmed[0]
+            if phase == 1 and 0.12 <= elapsed <= 0.55:
+                rate = (fit[2] - self.confirmed[1][2]) / elapsed
+                self.station_speed = float(np.clip(0.4 * self.station_speed + 0.6 * rate, 0, 24))
         self.confirmed = (t, fit)
         self.misses = 0
         if self.samples and t - self.samples[-1][0] > 0.50:
@@ -299,7 +327,7 @@ class WorldCoursePilot:
         self.samples.append((t, fit[0]))
         while self.samples and t - self.samples[0][0] > 0.75:
             self.samples.popleft()
-        if phase == 1 and len(self.samples) >= 3 and t - self.samples[0][0] >= 0.25:
+        if stage == "drive" and len(self.samples) >= 3 and t - self.samples[0][0] >= 0.25:
             times = np.array([tt for tt, _ in self.samples])
             times -= times.mean()
             centers = np.stack([pos for _, pos in self.samples])

@@ -25,8 +25,9 @@ def desired_keys(row):
 class KeyLease:
     """Continue a valid pedal across observations; expire steering and throttle independently."""
 
-    def __init__(self, focused, send, clock=time.monotonic):
+    def __init__(self, focused, send, clock=time.monotonic, *, walk_turn_seconds=0.2):
         self.focused, self.send, self.clock = focused, send, clock
+        self.walk_turn_seconds = walk_turn_seconds
         self.deadlines = {}
         self.held = set()
         self.lock = threading.Lock()
@@ -55,7 +56,9 @@ class KeyLease:
             ):
                 # Analog pursuit on a digital keyboard. Shorter holds produce less turn.
                 self.deadlines["D" if steering > 0 else "A"] = min(
-                    captured + 0.35, now + 0.2 * min(1, abs(steering) / 0.35)
+                    captured + 0.35,
+                    now
+                    + (0.2 if driving else self.walk_turn_seconds) * min(1, abs(steering) / 0.35),
                 )
             self._tick(now)
 

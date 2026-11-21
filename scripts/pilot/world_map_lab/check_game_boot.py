@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
+from scripts.pilot.world_map_lab.browser_test_input import NO_POINTER_LOCK
 from scripts.pilot.world_map_lab.prepare_boot_probe import language_table
 
 
@@ -82,6 +83,7 @@ def check(
             executable_path=chrome, args=["--enable-gpu", "--use-angle=d3d11"]
         )
         page = browser.new_page(viewport={"width": 1280, "height": 850})
+        page.add_init_script(NO_POINTER_LOCK)
         if test_language:
             install_test_language(page.context, url)
         boot_steps = []
@@ -115,7 +117,7 @@ def check(
         )
         page.goto(
             url.rstrip("/")
-            + f"/?autostart=1&backend={backend}&cache_mb=64"
+            + f"/?autostart=1&pointer=off&backend={backend}&cache_mb=64"
             + ("&mods=" + ",".join(mods) if mods else "")
             + ("&strict=1&inworld=0" if strict else ""),
             wait_until="commit",

@@ -2,8 +2,11 @@ const pick = document.querySelector("#game-folder");
 const message = document.querySelector("#assets");
 const scene = document.querySelector("#game");
 const start = document.querySelector("#start-served");
-const gameUrl = "index.html?strict=1&backend=gl&inworld=0";
+
 const plan = await (await fetch("browser-course.json")).json();
+const gameUrl = plan.stagedReceipt
+  ? "index.html?strict=1&backend=webgpu&inworld=0&mods=br-game-profile&full=1&cache_mb=64"
+  : "index.html?strict=1&backend=gl&inworld=0";
 function missing(files) {
   return plan.required.filter(
     (path) => !files.has(path) || files.get(path).size <= 0,
@@ -24,7 +27,10 @@ async function verifyGame(files, read) {
   const receipt = files.get("sphere-full-world.json");
   if (!receipt)
     throw Error("Выбрана папка без подготовленного маршрута Black Russia.");
-  const record = JSON.parse(await (await read("sphere-full-world.json")).text());
+  const manifest = await read("sphere-full-world.json");
+  if (plan.stagedReceipt && (await digest(manifest)) !== plan.stagedReceipt)
+    throw Error("Стенд подготовлен для другой сборки карты.");
+  const record = JSON.parse(await manifest.text());
   if (
     record.runtime !== "browser-wasm" ||
     record.worldManifestSha256 !== plan.world ||
@@ -32,6 +38,7 @@ async function verifyGame(files, read) {
   )
     throw Error("Папка подготовлена для другой карты, миссии или движка.");
   const sums = {
+    ...(plan.streamedFiles ?? {}),
     "sphere-route.json": plan.route,
     "data/script/main.scm": plan.scm,
     "data/script/script.img": plan.scriptImg,

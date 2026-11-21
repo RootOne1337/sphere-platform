@@ -5,6 +5,13 @@ from collections import deque
 
 import numpy as np
 
+WALK_CORRIDOR_M = 2.75
+DRIVE_CORRIDOR_M = 2.2
+
+
+def pose_corridor(phase):
+    return DRIVE_CORRIDOR_M if phase == 1 else WALK_CORRIDOR_M
+
 
 class MixedJourney:
     def __init__(self, paths):
@@ -48,13 +55,18 @@ class MixedJourney:
         )
         dist = np.linalg.norm(path[:-1, :2] + where[:, None] * segs - eye[:2], axis=1)
         i = int(np.argmin(dist))
-        if dist[i] > 2.75:
+        if dist[i] > WALK_CORRIDOR_M:
             return [], 0.0
         arc = np.r_[0.0, np.cumsum(lengths)]
-        station = min(arc[-1], arc[i] + where[i] * lengths[i] + 1.5)
+        # Aim far enough ahead to see the outgoing leg before crossing a street corner.
+        # Aim closer to the path when returning from a lateral excursion.
+        lookahead = np.clip(3.0 - dist[i], 1.25, 3.0)
+        station = min(arc[-1], arc[i] + where[i] * lengths[i] + lookahead)
         aim = np.array([np.interp(station, arc, col) for col in path[:, :2].T]) - eye[:2]
         yaw = math.atan2(heading[1] * aim[0] - heading[0] * aim[1], heading @ aim)
-        return (["W"] if abs(yaw) < 0.95 else []), float(np.clip(yaw * 0.60, -0.35, 0.35))
+        # In camera-relative walking the side key alone requests a perpendicular step.
+        # Keep forward engaged for diagonal corrections while the goal is still ahead.
+        return (["W"] if abs(yaw) < math.pi / 2 else []), float(np.clip(yaw * 0.60, -0.35, 0.35))
 
     def step(self, row, fit, reset_driver):
         """Visual completion is a hypothesis. The compiled native observer judges actual success."""
