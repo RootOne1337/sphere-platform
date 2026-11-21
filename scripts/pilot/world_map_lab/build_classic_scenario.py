@@ -118,10 +118,34 @@ def build(route, compiler, destination, world=None, *, actor_camera=False):
     person, bike = spawn(paths[0]), spawn(paths[1])
     observer, gate_count = journey_observer(paths)
     if actor_camera:
-        # The engine keeps the camera on the same physical actor through entry and exit.
-        # Never set a new world-space viewpoint on a keyframe or transfer.
-        camera_start = "ATTACH_CAMERA_TO_CHAR scplayer 0.0 0.20 0.66 0.0 0.0 0.0 0.0 2"
-        camera_tick = ""
+        # Follow the pedestrian while walking and the chassis while riding.
+        # The second vector is a local look-at point in CCam::Process_AttachedCam.
+        # Looking at the zero vector from eye level points the lens at the feet.
+        mount_view = "ATTACH_CAMERA_TO_VEHICLE scooter 0.0 0.46 1.22 0.0 8.5 -1.0 0.0 1"
+        foot_view = "ATTACH_CAMERA_TO_CHAR scplayer 0.0 0.28 0.65 0.0 9.0 0.47 0.0"
+        camera_start = f"{foot_view} 2"
+        camera_tick = f"""    SET_CHAR_VISIBLE scplayer 0
+    seatedView = 0
+    IF IS_CHAR_IN_CAR scplayer scooter
+        seatedView = 1
+    ELSE
+        IF IS_CHAR_GETTING_IN_TO_A_CAR scplayer
+            IF LOCATE_CHAR_ANY_MEANS_CAR_3D scplayer scooter 1.25 1.25 1.5 0
+                seatedView = 1
+            ENDIF
+        ENDIF
+    ENDIF
+    IF seatedView = 1
+        IF survey = 1
+            {mount_view}
+            survey = 0
+        ENDIF
+    ELSE
+        IF survey = 0
+            {foot_view} 2
+            survey = 1
+        ENDIF
+    ENDIF"""
     else:
         camera_start = ""
         camera_tick = f"""    GET_OFFSET_FROM_CHAR_IN_WORLD_COORDS scplayer 0.0 0.20 0.66 eyeX eyeY eyeZ
@@ -144,7 +168,7 @@ def build(route, compiler, destination, world=None, *, actor_camera=False):
     POINT_CAMERA_AT_POINT aimX aimY aimZ 2"""
     text = f"""VAR_INT player scplayer reserved0[7] player_group reserved1[255] reserved2[142] flag_player_on_mission
 {{
-LVAR_INT scooter stage survey
+LVAR_INT scooter stage survey seatedView
 LVAR_FLOAT eyeX eyeY eyeZ aimX aimY aimZ scanAngle lookSide
 SCRIPT_NAME BRTEST
 DO_FADE 0 0
@@ -221,12 +245,15 @@ GOTO camera_loop
             raise ValueError("compiled scenario failed instruction readback")
         if (
             ir.count("LOCATE_CAR_3D") != gate_count
-            or ir.count("IS_CHAR_IN_CAR") != 2
+            or ir.count("IS_CHAR_IN_CAR") != (3 if actor_camera else 2)
             or ir.count("IS_CAR_STOPPED") != 1
         ):
             raise ValueError("compiled native course markers differ from the selected road")
         if actor_camera and (
-            ir.count("ATTACH_CAMERA_TO_CHAR") != 1
+            ir.count("IS_CHAR_GETTING_IN_TO_A_CAR") != 1
+            or ir.count("SET_CHAR_VISIBLE") != 1
+            or ir.count("ATTACH_CAMERA_TO_CHAR") != 2
+            or ir.count("ATTACH_CAMERA_TO_VEHICLE") != 1
             or any(
                 op in ir
                 for op in (
@@ -273,7 +300,7 @@ GOTO camera_loop
                     },
                     "compilerSha256": hashlib.sha256(compiler.read_bytes()).hexdigest(),
                     "vehicleModel": 462,
-                    "cameraMode": "attached-to-player"
+                    "cameraMode": "attached-to-ped-or-vehicle"
                     if actor_camera
                     else "diagnostic-head-survey",
                     "orderedNativeRoadChecks": gate_count,
@@ -298,7 +325,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--actor-camera",
         action="store_true",
-        help="attach to the physical player once for the entire trip",
+        help="use forward-facing native pedestrian and vehicle cameras",
     )
     args = parser.parse_args()
     build(args.route, args.compiler, args.output, args.world, actor_camera=args.actor_camera)

@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
 from scripts.pilot.world_map_lab.prepare_boot_probe import language_table
@@ -53,13 +54,29 @@ def install_test_language(context, url):
     context.route(base + "/game/" + path, resource)
 
 
-def check(url, folder, chrome, seconds, scenario, test_language=False, strict=False):
+def check(
+    url,
+    folder,
+    chrome,
+    seconds,
+    scenario,
+    test_language=False,
+    strict=False,
+    start_game=False,
+    startup_profile=False,
+    backend="gl",
+):
     records = []
     failed = []
     errors = []
     snapshots = []
     rendered = False
     requested = set()
+    menu_inputs = []
+    transitions = []
+    state = None
+    last_input_at = float("-inf")
+    log = ""
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
             executable_path=chrome, args=["--enable-gpu", "--use-angle=d3d11"]
@@ -93,18 +110,45 @@ def check(url, folder, chrome, seconds, scenario, test_language=False, strict=Fa
                 module_responses[name] = response
 
         page.context.on("response", response_seen)
+        mods = (["sphere-journey"] if scenario else []) + (
+            ["br-game-profile"] if startup_profile else []
+        )
         page.goto(
             url.rstrip("/")
-            + "/?autostart=1&backend=gl&cache_mb=64"
-            + ("&mods=sphere-journey" if scenario else "")
+            + f"/?autostart=1&backend={backend}&cache_mb=64"
+            + ("&mods=" + ",".join(mods) if mods else "")
             + ("&strict=1&inworld=0" if strict else ""),
+            wait_until="commit",
             timeout=45000,
         )
         deadline = time.monotonic() + seconds
         while time.monotonic() < deadline:
             page.wait_for_timeout(1200)
-            row = page.locator("#status").inner_text()
-            state = page.evaluate("() => window.saGame?.status ?? null")
+            telemetry = page.evaluate("""() => {
+                const game = window.saGame;
+                return {
+                    row: document.getElementById('status')?.textContent ?? '',
+                    state: game?.status ?? null,
+                    log: game?.logs?.slice(-80).join('\\n').slice(-12000) ?? '',
+                    panic: game?.panic ?? null
+                };
+            }""")
+            row, state, log = telemetry["row"], telemetry["state"], telemetry["log"]
+            if state and (state_id := state.get("state")) is not None:
+                if not transitions or transitions[-1] != state_id:
+                    transitions.append(state_id)
+                    print(f"game state {state_id}: {row[:180]}", flush=True)
+                # Only dismiss movies and select New Game before the world starts.
+                if (
+                    start_game
+                    and state_id in (2, 4, 7)
+                    and not state.get("error")
+                    and not state.get("done")
+                    and time.monotonic() - last_input_at > 2
+                ):
+                    page.keyboard.press("Enter", delay=100)
+                    menu_inputs.append(state_id)
+                    last_input_at = time.monotonic()
             if (
                 state
                 and state.get("state") == 9
@@ -115,7 +159,12 @@ def check(url, folder, chrome, seconds, scenario, test_language=False, strict=Fa
                 rendered = True
             if not snapshots or snapshots[-1] != row:
                 snapshots.append(row)
-            log = page.locator("#log").inner_text()
+            if (
+                rendered
+                or telemetry["panic"]
+                or (state and (state.get("done") or state.get("error")))
+            ):
+                break
             if any(
                 t in (row + " " + log[-500:]).lower()
                 for t in (
@@ -129,7 +178,10 @@ def check(url, folder, chrome, seconds, scenario, test_language=False, strict=Fa
                 )
             ):
                 break
-        page.screenshot(path=str(folder / "engine-boot.png"))
+        try:
+            page.screenshot(path=str(folder / "engine-boot.png"), timeout=5000)
+        except PlaywrightTimeoutError:
+            records.append("engine screenshot timed out")
         loaded = any(u.endswith("sa_game_bg.wasm") for u in requested)
         module_hashes = {}
         for name, response in module_responses.items():
@@ -148,6 +200,11 @@ def check(url, folder, chrome, seconds, scenario, test_language=False, strict=Fa
             module_hashes[name] = {"sha256": hashlib.sha256(contents).hexdigest(), "source": source}
         proof = dict(
             testLanguage=test_language,
+            startupMods=mods,
+            backend=backend,
+            menuInputStates=menu_inputs,
+            stateTransitions=transitions,
+            lastStatus=state,
             strictRequested=strict,
             completedBootSteps=boot_steps,
             fileOpens=file_opens,
@@ -169,7 +226,7 @@ def check(url, folder, chrome, seconds, scenario, test_language=False, strict=Fa
             json.dumps(
                 {
                     "moduleRequested": loaded,
-                    "status": snapshots[-1],
+                    "status": snapshots[-1] if snapshots else None,
                     "lastCompletedStep": boot_steps[-1] if boot_steps else None,
                     "fileOpens": file_opens[-3:],
                     "pageErrors": errors,
@@ -192,5 +249,26 @@ if __name__ == "__main__":
     cli.add_argument(
         "--strict", action="store_true", help="disable exploration overrides in the patched port"
     )
+    cli.add_argument(
+        "--start-game", action="store_true", help="press Enter at the logo, intro and New Game menu"
+    )
+    cli.add_argument(
+        "--startup-profile",
+        action="store_true",
+        help="load the installed br-game-profile startup mod",
+    )
+    cli.add_argument("--backend", choices=("gl", "webgpu"), default="gl")
     a = cli.parse_args()
-    check(a.url, a.output, a.chrome, a.seconds, a.scenario, a.test_language, a.strict)
+    a.output.mkdir(exist_ok=True, parents=True)
+    check(
+        a.url,
+        a.output,
+        a.chrome,
+        a.seconds,
+        a.scenario,
+        a.test_language,
+        a.strict,
+        a.start_game,
+        a.startup_profile,
+        a.backend,
+    )

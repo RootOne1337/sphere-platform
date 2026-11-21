@@ -11,7 +11,13 @@ from contextlib import ExitStack
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from scripts.pilot.world_map_lab.native_collisions import COL, ENTRY, SECTOR, bind_collisions
+from scripts.pilot.world_map_lab.native_collisions import (
+    COL,
+    ENTRY,
+    SECTOR,
+    bind_collisions,
+    img_directory,
+)
 from scripts.pilot.world_map_lab.stage_game_quarter import directives
 
 
@@ -25,29 +31,6 @@ def source_file(root, relative):
     if not path.is_relative_to(root) or not path.is_file():
         raise ValueError(f"invalid source file {relative}")
     return path
-
-
-def img_directory(path):
-    size = path.stat().st_size
-    with path.open("rb") as stream:
-        magic, count = struct.unpack("<4sI", stream.read(8))
-        table_size = 8 + count * ENTRY.size
-        if magic != b"VER2" or not count or table_size > size:
-            raise ValueError(f"invalid IMG table in {path}")
-        entries = {}
-        for sector, logical, physical, raw in ENTRY.iter_unpack(stream.read(count * ENTRY.size)):
-            name = raw.split(b"\0")[0].decode("ascii").lower()
-            start, length = sector * SECTOR, (physical or logical) * SECTOR
-            if (
-                not name
-                or name in entries
-                or start < table_size
-                or not length
-                or start + length > size
-            ):
-                raise ValueError(f"invalid IMG entry {name} in {path}")
-            entries[name] = (path, start, length)
-        return entries
 
 
 def definitions(path):
