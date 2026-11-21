@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Black Russia · Проверка карты</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #10191c;
+        color: #f4f7f5;
+        font:
+          16px/1.5 "Segoe UI",
+          sans-serif;
+      }
+      main {
+        max-width: 1700px;
+        margin: auto;
+        padding: 32px;
+      }
+      h1 {
+        font-size: clamp(28px, 3vw, 44px);
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+        margin: 0 0 8px;
+      }
+      h2 {
+        font-weight: 600;
+        margin: 0 0 6px;
+      }
+      p {
+        color: #b9c9c7;
+        margin: 0 0 16px;
+      }
+      section {
+        display: grid;
+        grid-template-columns: minmax(360px, 0.85fr) minmax(420px, 1.3fr);
+        gap: 24px;
+        align-items: start;
+      }
+      .map {
+        position: relative;
+        margin: 0;
+        isolation: isolate;
+        background: #111d20;
+      }
+      .map > img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      #pins {
+        position: absolute;
+        inset: 0;
+      }
+      .dot {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        transform: translate(-50%, -50%);
+        background: #7ee2bd;
+        border: 1px solid #172323;
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 2;
+      }
+      .dot:focus-visible,
+      .dot.chosen {
+        outline: 3px solid #fff;
+        z-index: 5;
+      }
+      .ocean { background: #67baff; }
+    .key i.blue {background: #67baff;}
+      .defect, .key i.defect { background: #ffc04f; }
+      .hole {
+        background: #ff9475;
+        border-radius: 1px;
+        width: 8px;
+        height: 8px;
+      }
+      .blank {
+        background: #8b9495;
+      }
+      .key {
+        font-size: 14px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin: 9px 0 18px;
+        color: #bfcecb;
+      }
+      .key i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        background: #7ee2bd;
+        border-radius: 50%;
+      }
+      .key i.orange {
+        background: #ff9475;
+        border-radius: 0;
+      }
+      #frame {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      #meta {
+        font-variant-numeric: tabular-nums;
+      }
+      a {
+        color: #9ae5c8;
+      }
+      .links {
+        margin-top: 16px;
+      }
+      .titleRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      button.step {
+        border: 1px solid #49615e;
+        border-radius: 5px;
+        background: #18282b;
+        color: white;
+        padding: 4px 12px;
+        cursor: pointer;
+      }
+      #gap {
+        color: #ffc0a9;
+        min-height: 1.5em;
+      }
+      aside {
+        align-self: start;
+      }
+      @media (max-width: 860px) {
+        main {
+          padding: 16px;
+        }
+        section {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Проверка карты Black Russia</h1>
+      <p id="stats"></p>
+      <section>
+        <div>
+          <div class="map">
+            <img src="surfaces.png" alt="Дорожная и пешеходная сеть исходной карты" />
+            <div id="pins"></div>
+          </div>
+          <div class="key">
+            <span><i></i> Кадр движка</span><span><i class="defect"></i> Возможный пропуск геометрии</span><span><i class="blue"></i> Дно за границей суши</span
+            ><span><i class="orange"></i> Объект отсутствует в исходнике</span>
+          </div>
+          <p id="gap"></p>
+        </div>
+        <aside>
+          <div class="titleRow">
+            <h2 id="title"></h2>
+            <div>
+              <button class="step" id="prev" aria-label="Предыдущая точка">←</button>
+              <button class="step" id="next" aria-label="Следующая точка">→</button>
+            </div>
+          </div>
+          <p id="meta"></p>
+          <p id="coverage"></p>
+          <p id="finding" hidden></p>
+          <a id="open" target="_blank"
+            ><img id="frame" alt="Кадр браузерного движка в выбранной точке"
+          /></a>
+          <p class="links">
+            <a id="compare" hidden href="streaming-comparison.jpg">Дорога и сквер</a>
+            <a id="horizon" hidden href="horizon-comparison.jpg">Дальний склон</a>
+            <a href="result.json">Итог по сериям</a> ·
+            <a href="fidelity.json">Сверка с исходной картой</a>
+          </p>
+          <p>
+            В каждой доступной ячейке камера установлена на высоте 1,65 м над выбранной
+            навигационной поверхностью. Нажмите на кадр для просмотра в исходном разрешении.
+          </p>
+        </aside>
+      </section>
+    </main>
+    <script type="application/json" id="worldData">
+      WORLD_REPORT_DATA
+    </script>
+    <script>
+      const d = JSON.parse(document.getElementById("worldData").textContent);
+      const el = (id) => document.getElementById(id);
+      const buttons = [];
+      el("compare").hidden = !d.comparison;
+      el("horizon").hidden = !d.horizonComparison;
+      let current = 0;
+      function pin(x, y, cls, title, action) {
+        const b = document.createElement("button");
+        b.className = "dot " + cls;
+        b.title = title;
+        b.setAttribute("aria-label", title);
+        b.style.left = (100 * (x - d.lo[0])) / (d.hi[0] - d.lo[0]) + "%";
+        b.style.top = (100 * (d.hi[1] - y)) / (d.hi[1] - d.lo[1]) + "%";
+        b.onclick = action;
+        el("pins").append(b);
+        return b;
+      }
+      function select(i) {
+        current = (i + d.sites.length) % d.sites.length;
+        const s = d.sites[current];
+        el("gap").textContent = "";
+        buttons.forEach((b, j) => b.classList.toggle("chosen", j === current));
+        el("title").textContent = "Ячейка " + s.cell.join(" / ");
+        el("meta").textContent =
+          s.ground.map((x) => x.toFixed(1)).join(" · ") +
+          "  |  " +
+          (s.sample ? "1920 × 1080" : "Кадр отсутствует") +
+          (s.oceanFloor ? " · Камера под уровнем внешнего океана" : "");
+        el("finding").hidden = !s.finding;
+        el("finding").textContent = s.finding || "";
+        const cov = s.coverage;
+        el("coverage").textContent = !cov ? "Сравнение с геометрией для этого кадра отсутствует." :
+          cov.holes.length ? "На месте поверхности виден фон. Модели для проверки — " +
+            [...new Set(cov.holes.map(h => h.model + " (" + h.rangeM + " м)"))].join(", ") :
+            "Из " + cov.tested + " проверенных направлений поверхность ожидается в " + cov.expected +
+            ". В этих пробах фон вместо поверхности не обнаружен.";
+        el("frame").hidden = !s.sample;
+        if (s.sample) {
+          el("frame").src = s.sample.file;
+          el("open").href = s.sample.file;
+        } else {
+          el("frame").removeAttribute("src");
+          el("open").removeAttribute("href");
+        }
+      }
+      d.sites.forEach((s, i) =>
+        buttons.push(
+          pin(...s.ground.slice(0, 2), s.sample ? (s.coverage?.holes.length ? "defect" : s.oceanFloor ? "ocean" : "") : "blank", "Ячейка " + s.cell, () => {
+            el("gap").textContent = "";
+            select(i);
+          }),
+        ),
+      );
+      d.gaps.forEach((g) =>
+        pin(...g.xyz.slice(0, 2), "hole", g.model, () => {
+          let best = 0;
+          let nearest = Infinity;
+          d.sites.forEach((s, i) => {
+            const distance = Math.hypot(s.ground[0] - g.xyz[0], s.ground[1] - g.xyz[1]);
+            if (distance < nearest) {
+              nearest = distance;
+              best = i;
+            }
+          });
+          select(best);
+          el("gap").textContent =
+            g.model +
+            " · " +
+            g.xyz.map((x) => x.toFixed(1)).join(", ") +
+            " · " +
+            g.scene +
+            " · показан ближайший контрольный кадр";
+        }),
+      );
+      el("stats").textContent =
+        d.summary.captured +
+        " из " +
+        (d.summary.planned ?? d.summary.scheduled) +
+        " контрольных кадров · " +
+        d.placements.toLocaleString("ru") +
+        " размещений · " +
+        d.gaps.length +
+        " недоступных наружных размещений в исходнике" +
+        (d.sites.some(s => s.coverage) ?
+          " · Кадры с возможным пропуском поверхности — " + d.sites.filter(s => s.coverage?.holes.length).length : "");
+      el("prev").onclick = () => select(current - 1);
+      el("next").onclick = () => select(current + 1);
+      const linked = Number(new URLSearchParams(location.search).get("sample"));
+      select(Number.isInteger(linked) && linked >= 0 && linked < d.sites.length ? linked : 0);
+    </script>
+  </body>
+</html>
