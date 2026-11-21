@@ -1,0 +1,97 @@
+"""Start or reuse the local road planner and registered image service on Windows."""
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+
+
+def code_digest():
+    folder = Path(__file__).resolve().parent
+    digest = hashlib.sha256()
+    for name in ("live_destination.py", "live_destination_atlas.py"):
+        digest.update(hashlib.sha256((folder / name).read_bytes()).digest())
+    return digest.hexdigest()
+
+
+def get(url):
+    try:
+        with urlopen(
+            Request(url, headers={"Origin": "http://127.0.0.1:3015"}), timeout=2
+        ) as response:
+            return json.load(response)
+    except (URLError, TimeoutError):
+        return None
+
+
+def start(module, args, url, log):
+    existing = get(url)
+    if existing is not None:
+        return existing
+    root = Path(__file__).resolve().parents[3]
+    name = module.rsplit(".", 1)[-1]
+    log_file = log / (name + "-" + datetime.now().strftime("%Y%m%d-%H%M%S-%f") + ".log")
+    with log_file.open("xb") as output:
+        process = subprocess.Popen(
+            [sys.executable, "-u", "-m", module, *map(str, args)],
+            cwd=root,
+            stdin=subprocess.DEVNULL,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+    end = time.monotonic() + 90
+    while time.monotonic() < end:
+        if process.poll() is not None:
+            raise RuntimeError(f"{name} exited; see {log_file}")
+        result = get(url)
+        if result is not None:
+            return result
+        time.sleep(0.4)
+    raise TimeoutError(f"{name} did not start; see {log_file}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for key in ("map-folder", "atlas", "logs"):
+        parser.add_argument("--" + key, type=Path, required=True)
+    args = parser.parse_args()
+    folder = args.map_folder.resolve(strict=True)
+    atlas = args.atlas.resolve(strict=True)
+    adapter = (folder / "journey/ariane-nav.dll").resolve(strict=True)
+    logs = args.logs.resolve()
+    logs.mkdir(parents=True, exist_ok=True)
+    road = start(
+        "scripts.pilot.world_map_lab.serve_world_navmesh",
+        ["--folder", folder, "--adapter", adapter, "--port", "8817"],
+        "http://127.0.0.1:8817/api/world",
+        logs,
+    )
+    visual = start(
+        "scripts.pilot.world_map_lab.live_destination",
+        ["--atlas", atlas, "--logs", logs],
+        "http://127.0.0.1:8849/world",
+        logs,
+    )
+    with atlas.open("rb") as f:
+        digest = hashlib.file_digest(f, "sha256").hexdigest()
+    if (
+        visual.get("codeDigest") != code_digest()
+        or visual.get("atlasDigest") != digest
+        or visual.get("mapRevision") != road["drive"]["placementRevision"]
+    ):
+        raise ValueError(
+            "The running visual atlas or road revision differs from the selected files"
+        )
+    print("Ready: http://127.0.0.1:3015")
+
+
+if __name__ == "__main__":
+    main()
