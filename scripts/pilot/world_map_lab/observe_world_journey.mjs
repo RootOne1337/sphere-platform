@@ -73,6 +73,12 @@ async ({ width: w, height: h, model = "faggio" }) => {
     await world.ensure(...pose.slice(0, 3));
     return view(pose, true);
   };
+  window.mapReferenceRGBD = async (pose) => {
+    const [, depth] = await window.mapReference(pose);
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
+    return [canvas.toDataURL("image/jpeg", 0.96).split(",")[1], depth];
+  };
   window.observePair = async ([prior, actual, vehicle]) => {
     ride = vehicle.mounted;
     panAngle = vehicle.pan ?? 0;

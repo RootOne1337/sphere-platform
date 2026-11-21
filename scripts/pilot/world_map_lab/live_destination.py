@@ -22,6 +22,7 @@ from scripts.pilot.world_map_lab.destination_itinerary import plan
 from scripts.pilot.world_map_lab.destination_tiles import DestinationTiles
 from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator
 from scripts.pilot.world_map_lab.start_live_destination import code_digest
+from scripts.pilot.world_map_lab.world_scene_acquisition import WorldAcquisition
 
 
 class RoadMap:
@@ -278,6 +279,10 @@ def serve(args):
     log_dir = args.logs.resolve()
     log_dir.mkdir(parents=True, exist_ok=True)
 
+    search_config = getattr(args, "world_search_config", None)
+    global_search = (WorldAcquisition(search_config, log_dir / "world-search", road.base,
+                                     road.meta["placementRevision"]) if search_config else None)
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -351,6 +356,8 @@ def serve(args):
                     streetTiles=detail.manifest() if detail else None,
                     searchAtlases=district_digests,
                     driveRegions=drive_regions,
+                    worldSearch=(dict(config=global_search.signature, **global_search.status())
+                                 if global_search else None),
                     searchCameraHfovs=args.search_hfov,
                     searchRegions=[
                         dict(
@@ -488,7 +495,13 @@ def serve(args):
                 if sessions:
                     return self.reply(409, dict(error="session_active"))
                 gray = self.decode_frame(raw)
-                return self.reply(200, probe_atlases(gray, locator, district_locators))
+                observed = locator.describe(gray)
+                result = probe_atlases(gray, locator, district_locators, observed=observed)
+                if global_search and not result["pose"] and not result["ambiguous"]:
+                    pose = global_search.observe(raw, gray, observed)
+                    result.update(pose=pose, district="Поиск по всей карте" if pose else None,
+                                  worldSearch=global_search.status())
+                return self.reply(200, result)
             if self.path == "/start":
                 if sessions:
                     return self.reply(409, dict(error="session_active"))
@@ -547,13 +560,22 @@ def serve(args):
             trip.last_sequence = seq
             observed = locator.describe(gray)
             fix = probe_atlases(gray, locator, drive_banks, observed=observed)
-            response = trip.decide(fix["pose"], clock)
+            passive = False
             if (observed is not None and not fix["pose"] and not fix["ambiguous"] and search_only
                     and now >= getattr(trip, "next_region_search", 0)):
                 trip.next_region_search = now + 0.8
                 fix = probe_atlases(gray, locator, search_only, observed=observed, include_main=False)
                 if fix["pose"]:
-                    response.update(pose=fix["pose"], reason="outside_visual_coverage")
+                    passive = True
+            if global_search and not fix["pose"] and not fix["ambiguous"]:
+                pose = global_search.observe(raw, gray, observed)
+                if pose:
+                    fix.update(pose=pose, district="Поиск по всей карте")
+            response = trip.decide(None if passive else fix["pose"], clock)
+            if passive:
+                response.update(pose=fix["pose"], reason="outside_visual_coverage")
+            if global_search:
+                response["worldSearch"] = global_search.status()
             response.update(district=fix["district"], ambiguous=fix["ambiguous"])
             response["stopIndex"] = trip.stop_index
             if response["pose"] and response["reason"] != "outside_visual_coverage" and trip.path is not None:
@@ -572,6 +594,7 @@ def serve(args):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--world-search-config", type=Path)
     p.add_argument("--atlas", type=Path, required=True)
     p.add_argument("--logs", type=Path, required=True)
     p.add_argument("--planner", default="http://127.0.0.1:8817")

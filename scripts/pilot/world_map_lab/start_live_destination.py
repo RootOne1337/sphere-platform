@@ -22,6 +22,11 @@ def code_digest():
         "destination_tiles.py",
         "destination_detail.py",
         "destination_itinerary.py",
+        "world_scene_acquisition.py",
+        "world_scene_retrieval.py",
+        "render_world_search_views.py",
+        "observe_world_journey.mjs",
+        "verify_world_scene_candidates.py",
     ):
         digest.update(hashlib.sha256((folder / name).read_bytes()).digest())
     return digest.hexdigest()
@@ -74,6 +79,7 @@ def main():
     parser.add_argument(
         "--water", type=Path, help="Source data/water.dat for detailed street map tiles"
     )
+    parser.add_argument("--world-search-config", type=Path)
     parser.add_argument("--drive-region", action="append", default=[], metavar="DISTRICT")
     parser.add_argument("--search-hfov", action="append", type=float, default=[])
     args = parser.parse_args()
@@ -93,6 +99,11 @@ def main():
         search_args.extend(["--search-hfov", str(angle)])
     for name in args.drive_region:
         search_args.extend(["--drive-region", name])
+    expected_config = None
+    if args.world_search_config:
+        config = args.world_search_config.resolve(strict=True)
+        search_args.extend(["--world-search-config", config])
+        expected_config = hashlib.sha256(config.read_bytes()).hexdigest()
     expected = {}
     for label, filename in args.search_atlas:
         path = Path(filename).resolve(strict=True)
@@ -111,6 +122,7 @@ def main():
         digest = hashlib.file_digest(f, "sha256").hexdigest()
     if (
         visual.get("codeDigest") != code_digest()
+        or (visual.get("worldSearch") or {}).get("config") != expected_config
         or visual.get("searchCameraHfovs", []) != args.search_hfov
         or visual.get("searchAtlases", {}) != expected
         or visual.get("driveRegions", []) != args.drive_region

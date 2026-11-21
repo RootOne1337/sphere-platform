@@ -247,7 +247,7 @@ class Locator:
         votes = np.bincount(
             [self.view_ids[m.trainIdx] for m in picked.values()], minlength=len(self.views)
         )
-        votes = np.convolve(votes, [1, 2, 1], mode="same")
+        votes = np.convolve(np.pad(votes, 1), [1, 2, 1], mode="valid")
         gray = cv2.resize(gray, SIZE, interpolation=cv2.INTER_AREA)
         for view in np.argsort(votes)[-4:][::-1]:
             if votes[view] < 6:
@@ -304,7 +304,7 @@ class Locator:
             solutions.append(pose)
         return max(solutions, key=lambda p: p["supports"], default=None)
 
-    def solve_with_camera(self, camera, obj, px, descriptor_check):
+    def solve_with_camera(self, camera, obj, px, descriptor_check, *, inliers=None):
         ok, r, t, idx = cv2.solvePnPRansac(
             obj,
             px,
@@ -379,6 +379,9 @@ class Locator:
             q = cv2.Rodrigues(rr)[0]
             if np.linalg.norm(-q.T @ tt[:, 0] - eye) > 0.72 or q[2] @ R[2] < 0.998:
                 return None
+        if inliers is not None:
+            keep = (np.linalg.norm(reproj - px, axis=1) <= 1.8) & (obj @ R[2] + t[2, 0] > 0)
+            inliers.update(pixels=px[keep], world=(obj[keep] + self.origin).astype(np.float32))
         return dict(
             eye=(eye + self.origin).tolist(),
             heading=math.atan2(R[2, 1], R[2, 0]),
