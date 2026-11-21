@@ -17,6 +17,8 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from scripts.pilot.world_map_lab.destination_detail import StreetTiles
+from scripts.pilot.world_map_lab.destination_itinerary import plan
 from scripts.pilot.world_map_lab.destination_tiles import DestinationTiles
 from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator
 from scripts.pilot.world_map_lab.start_live_destination import code_digest
@@ -30,11 +32,14 @@ class RoadMap:
         self.meta = self.query("world")["drive"]
 
     def query(self, name, **params):
-        with urlopen(self.base + "/api/" + name + "?" + urlencode(params), timeout=4) as response:
+        with urlopen(
+            self.base + "/api/" + name + "?" + urlencode(params),
+            timeout=45 if params.get("mode") == "taxi" else 4,
+        ) as response:
             return json.load(response)
 
-    def levels(self, x, y):
-        return self.query("levels", mode="drive", x=x, y=y)["levels"]
+    def levels(self, x, y, mode="drive"):
+        return self.query("levels", mode=mode, x=x, y=y)["levels"]
 
     def route(self, start, goal):
         def fmt(p):
@@ -55,6 +60,8 @@ class Trip:
         self.covers = covers
         if not covers([self.goal]):
             raise ValueError("outside_visual_coverage")
+        self.next_stops = []
+        self.stop_index = 0
         self.previous = None
         self.path = None
         self.last_media_time = None
@@ -70,7 +77,13 @@ class Trip:
             pedal="coast", steering=0.0, reason="position_unknown", pose=pose, remaining=None
         )
         if self.arrived:
-            return dict(neutral, reason="arrived")
+            if not self.next_stops:
+                return dict(neutral, reason="arrived")
+            self.goal = np.asarray(self.next_stops.pop(0), dtype=float)
+            self.stop_index += 1
+            self.previous = self.path = self.motion_origin = self.arrival_time = None
+            self.arrived = False
+            self.steering = 0.0
         if pose is None:
             self.previous = None
             self.steering = 0.0
@@ -137,7 +150,11 @@ class Trip:
             return dict(
                 neutral,
                 pedal="coast" if self.arrived or speed < 0.8 else "brake",
-                reason="arrived" if self.arrived else "stopping",
+                reason="waypoint_reached"
+                if self.arrived and self.next_stops
+                else "arrived"
+                if self.arrived
+                else "stopping",
                 remaining=0.0,
             )
         self.arrival_time = None
@@ -208,6 +225,13 @@ def serve(args):
         with open(file, "rb") as src:
             district_digests[label] = hashlib.file_digest(src, "sha256").hexdigest()
     tiles = DestinationTiles(road.base)
+    detail = (
+        StreetTiles(
+            args.detail_folder, args.water, road.meta["bounds"], road.meta["placementRevision"]
+        )
+        if args.detail_folder and args.water
+        else None
+    )
     cv2.setNumThreads(3)
     lock = threading.Lock()
     sessions = {}
@@ -249,26 +273,42 @@ def serve(args):
             self.send_header("Content-Length", "0")
             self.end_headers()
 
+        def webp(self, data):
+            self.send_response(200)
+            self.send_header("Access-Control-Allow-Origin", args.origin)
+            self.send_header("Vary", "Origin")
+            self.send_header("Cache-Control", "private,max-age=31536000,immutable")
+            self.send_header("Content-Type", "image/webp")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            try:
+                self.wfile.write(data)
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                pass
+
         def do_GET(self):
             if self.permitted() and self.path.startswith(f"/tiles/{tiles.revision}/"):
                 data = tiles.files.get(self.path.split("/", 3)[3])
                 if data is None:
                     return self.reply(404, dict(error="unknown_tile"))
-                self.send_response(200)
-                self.send_header("Access-Control-Allow-Origin", args.origin)
-                self.send_header("Vary", "Origin")
-                self.send_header("Cache-Control", "private,max-age=31536000,immutable")
-                self.send_header("Content-Type", "image/webp")
-                self.send_header("Content-Length", str(len(data)))
-                self.end_headers()
-                self.wfile.write(data)
-                return
+                return self.webp(data)
+            if self.permitted() and detail and self.path.startswith(f"/street/{detail.version}/"):
+                try:
+                    _, _, _, span, leaf = self.path.split("/")
+                    if not leaf.endswith(".webp"):
+                        raise ValueError("format")
+                    col, row = leaf[:-5].split("-")
+                    data = detail.tile(int(span), int(col), int(row))
+                except (KeyError, ValueError):
+                    return self.reply(404, dict(error="unknown_tile"))
+                return self.webp(data)
             if self.path != "/world" or not self.permitted():
                 return self.reply(403, dict(error="origin_denied"))
             self.reply(
                 200,
                 dict(
                     tiles=tiles.manifest(),
+                    streetTiles=detail.manifest() if detail else None,
                     searchAtlases=district_digests,
                     searchRegions=[
                         dict(
@@ -292,7 +332,7 @@ def serve(args):
             try:
                 size = int(self.headers.get("Content-Length", "0"))
                 frame = self.path in ("/frame", "/probe")
-                if not 0 <= size <= (384 * 1024 if frame else 1024):
+                if not 0 <= size <= (384 * 1024 if frame else 4096):
                     return self.reply(413, dict(error="payload_size"))
                 typ = self.headers.get_content_type()
                 if typ != ("image/jpeg" if frame else "application/json"):
@@ -302,6 +342,13 @@ def serve(args):
                     raise ValueError("invalid_frame")
                 if self.path == "/levels":
                     return self.road_levels(raw)
+                if self.path == "/itinerary":
+                    payload = json.loads(raw)
+                    if payload.get("revision") != road.meta["placementRevision"]:
+                        raise ValueError("invalid_goal")
+                    return self.reply(
+                        200, plan(road, payload["stops"], payload["mode"], locator.covers)
+                    )
                 if self.path == "/preview":
                     payload = json.loads(raw)
                     if payload["revision"] != road.meta["placementRevision"]:
@@ -348,17 +395,24 @@ def serve(args):
                 self.reply(400, dict(error=message))
 
         def road_levels(self, raw):
-            x, y = json.loads(raw)["point"]
+            payload = json.loads(raw)
+            x, y = payload["point"]
+            mode = payload.get("mode", "drive")
+            if mode not in ("walk", "drive", "taxi"):
+                raise ValueError("invalid_goal")
+            surface = "drive" if mode == "drive" else "walk"
             if not all(math.isfinite(v) for v in (x, y)):
                 raise ValueError("invalid_goal")
-            levels = road.levels(x, y)
+            drive = road.levels(x, y)
+            walk = road.levels(x, y, mode="walk")
+            levels = drive if surface == "drive" else walk
             suggestion = None
             if not levels:
                 for radius in (0.75, 1.5, 3.0):
                     for direction in range(8):
                         angle = math.pi * direction / 4
                         sx, sy = x + radius * math.cos(angle), y + radius * math.sin(angle)
-                        nearby = road.levels(sx, sy)
+                        nearby = road.levels(sx, sy, mode=surface)
                         if nearby:
                             suggestion = dict(point=[sx, sy], distance=radius)
                             break
@@ -368,6 +422,8 @@ def serve(args):
                 200,
                 dict(
                     levels=levels,
+                    walkLevels=walk,
+                    driveLevels=drive,
                     suggestion=suggestion,
                     coveredLevels=[z for z in levels if locator.covers([[x, y, z]])],
                 ),
@@ -406,7 +462,14 @@ def serve(args):
                 payload = json.loads(raw)
                 if payload["revision"] != road.meta["placementRevision"]:
                     raise ValueError("invalid_goal")
-                trip = Trip(road, payload["goal"], locator.covers)
+                stops = payload.get("stops")
+                if stops is not None:
+                    selection = plan(road, stops, "drive", locator.covers)
+                    if selection.get("status") != "complete" or not selection["covered"]:
+                        raise ValueError("outside_visual_coverage")
+                trip = Trip(road, stops[0] if stops else payload["goal"], locator.covers)
+                if stops:
+                    trip.next_stops = stops[1:]
                 key = secrets.token_hex(24)
                 trip.log = log_dir / (secrets.token_hex(12) + ".jsonl")
                 sessions[key] = trip
@@ -451,6 +514,7 @@ def serve(args):
             trip.last_sequence = seq
             pose = locator.locate(gray)
             response = trip.decide(pose, clock)
+            response["stopIndex"] = trip.stop_index
             if pose and trip.path is not None:
                 response["path"] = trip.path.tolist()
             response.update(sequence=seq, computeMs=round((time.monotonic() - now) * 1000, 1))
@@ -474,5 +538,7 @@ if __name__ == "__main__":
     p.add_argument(
         "--search-atlas", action="append", nargs=2, default=[], metavar=("DISTRICT", "NPZ")
     )
+    p.add_argument("--detail-folder", type=Path)
+    p.add_argument("--water", type=Path)
     p.add_argument("--port", type=int, default=8849)
     serve(p.parse_args())

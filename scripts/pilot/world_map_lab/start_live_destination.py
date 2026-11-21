@@ -16,7 +16,13 @@ from urllib.request import Request, urlopen
 def code_digest():
     folder = Path(__file__).resolve().parent
     digest = hashlib.sha256()
-    for name in ("live_destination.py", "live_destination_atlas.py", "destination_tiles.py"):
+    for name in (
+        "live_destination.py",
+        "live_destination_atlas.py",
+        "destination_tiles.py",
+        "destination_detail.py",
+        "destination_itinerary.py",
+    ):
         digest.update(hashlib.sha256((folder / name).read_bytes()).digest())
     return digest.hexdigest()
 
@@ -65,6 +71,9 @@ def main():
     parser.add_argument(
         "--search-atlas", action="append", nargs=2, default=[], metavar=("DISTRICT", "NPZ")
     )
+    parser.add_argument(
+        "--water", type=Path, help="Source data/water.dat for detailed street map tiles"
+    )
     args = parser.parse_args()
     folder = args.map_folder.resolve(strict=True)
     atlas = args.atlas.resolve(strict=True)
@@ -84,6 +93,8 @@ def main():
         search_args.extend(["--search-atlas", label, path])
         with path.open("rb") as source:
             expected[label] = hashlib.file_digest(source, "sha256").hexdigest()
+    if args.water:
+        search_args.extend(["--detail-folder", folder, "--water", args.water.resolve(strict=True)])
     visual = start(
         "scripts.pilot.world_map_lab.live_destination",
         ["--atlas", atlas, "--logs", logs, *search_args],
@@ -95,6 +106,7 @@ def main():
     if (
         visual.get("codeDigest") != code_digest()
         or visual.get("searchAtlases", {}) != expected
+        or (args.water and not visual.get("streetTiles"))
         or visual.get("atlasDigest") != digest
         or visual.get("mapRevision") != road["drive"]["placementRevision"]
     ):

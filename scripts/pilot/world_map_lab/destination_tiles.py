@@ -13,7 +13,7 @@ class DestinationTiles:
     def __init__(self, planner):
         self.files = {}
         digest = hashlib.sha256(b"destination-tiles-v1")
-        for layer, source in (("terrain", "world"), ("roads", "drive")):
+        for layer, source in (("terrain", "world"), ("roads", "drive"), ("walk", "walk")):
             with urlopen(f"{planner}/{source}.png", timeout=12) as response:
                 raw = response.read()
             digest.update(hashlib.sha256(raw).digest())

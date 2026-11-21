@@ -89,3 +89,17 @@ def test_grid_pose_requires_support_away_from_the_dominant_plane():
     assert distributed_surface_support(world, pixels)
     pixels[:18] = [128, 128]
     assert not distributed_surface_support(world, pixels)
+
+
+def test_vehicle_stops_at_each_waypoint_and_reacquires_for_next_leg():
+    trip = Trip(Roads(), [5, 0, 0], lambda _: True)
+    trip.next_stops = [[15, 0, 0]]
+    assert trip.decide(pose(5), 0)["reason"] == "confirming_position"
+    assert trip.decide(pose(5), 0.2)["reason"] == "stopping"
+    assert trip.decide(pose(5), 1.0)["reason"] == "waypoint_reached"
+    assert trip.decide(pose(5), 1.2)["reason"] == "confirming_position"
+    assert trip.stop_index == 1
+    assert trip.decide(None, 1.4)["pedal"] == "coast"
+    assert trip.decide(pose(15), 1.6)["reason"] == "confirming_position"
+    assert trip.decide(pose(15), 1.8)["reason"] == "stopping"
+    assert trip.decide(pose(15), 2.6)["reason"] == "arrived"
