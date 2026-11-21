@@ -1,0 +1,13 @@
+--- a/crates/sa-game/src/d3d9.rs
++++ b/crates/sa-game/src/d3d9.rs
+@@ -1206,6 +1206,10 @@
+         if n == 0 && !swap { s.res.remove(&h).map(|e| e.0) } else { None }
+     });
+     match gone {
++        // GetSurfaceLevel retains its owner until the final release of this surface.
++        Some(Res::Surface { tex: Some(parent), .. }) => {
++            res_release(parent);
++        }
+         Some(Res::Texture { id, .. }) | Some(Res::Surface { own: Some(id), .. }) => {
+             with_device(|d| d.release_texture(id));
+         }

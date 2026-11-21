@@ -1,0 +1,132 @@
+--- a/crates/sa-stream/src/iplstore.rs
++++ b/crates/sa-stream/src/iplstore.rs
+@@ -365,6 +365,8 @@
+ /// `CIplStore::RemoveIpl(int)` (0x404B20, cdecl).
+ #[hook(addr = 0x404B20, conv = cdecl, name = "CIplStore::RemoveIpl", expect = "A1 B0 3F 8E 00")]
+ pub fn remove_ipl(slot: i32) {
++    #[cfg(target_arch = "wasm32")]
++    crate::streaming::mark_extent_slot(slot, false);
+     let d = at(slot);
+     let dummies = DUMMY_POOL.get();
+     let buildings = BUILDING_POOL.get();
+@@ -1108,6 +1110,7 @@
+         quad_add_item(QUAD_TREE.get(),d.cast(),d.cast());
+         enable_dynamic_streaming(slot,1);
+     }
++    crate::streaming::mark_extent_slot(slot, has_roles);
+     b(d,LOADED).write(1);
+     1
+ }
+--- a/crates/sa-stream/src/streaming.rs
++++ b/crates/sa-stream/src/streaming.rs
+@@ -2615,6 +2615,62 @@
+     purge_requested(0x1E);
+ }
+ 
++
++// Only packed exterior IPLs use the extent pass. Keep their near meshes in the
++// regular collision sectors; registering them as visual LODs would remove physics.
++#[cfg(target_arch = "wasm32")]
++static EXTENT_SLOTS: [core::sync::atomic::AtomicU32; 8] =
++    [const { core::sync::atomic::AtomicU32::new(0) }; 8];
++
++#[cfg(target_arch = "wasm32")]
++pub(crate) fn mark_extent_slot(slot: i32, active: bool) {
++    use core::sync::atomic::Ordering::Relaxed;
++    if !(0..256).contains(&slot) { return; }
++    let bits = &EXTENT_SLOTS[slot as usize / 32];
++    let mask = 1 << (slot % 32);
++    if active { bits.fetch_or(mask, Relaxed); } else { bits.fetch_and(!mask, Relaxed); }
++}
++
++#[cfg(target_arch = "wasm32")]
++fn request_surface_extents(pos: GPtr<f32>, scene_load: bool) {
++    use core::sync::atomic::Ordering::Relaxed;
++    if curr_area() != 0 || !EXTENT_SLOTS.iter().any(|s| s.load(Relaxed) != 0) { return; }
++    let px = pos.read();
++    let py = pos.wrapping_index(1).read();
++    let scale = g::<f32>(CAMERA + 0xF0).read();
++    if scene_load {
++        // The first vanilla big-building pass runs before the new IPLs arrive.
++        call_request_big_buildings(pos);
++    }
++    // Scan occupied static instances only, once per scene or once per 16 game frames.
++    // Bounds are native and transformed. The pivot of a visible street can lie
++    // outside the standard 80-unit streaming circle even directly under the observer.
++    for pool in [building_pool(), dummy_pool()] {
++        if pool.is_null() { continue; }
++        pool_backwards(pool, 0x38, |e| {
++            let slot = field::<u8, u8>(e, 0x2E).read() as usize;
++            if EXTENT_SLOTS[slot / 32].load(Relaxed) & (1 << (slot % 32)) == 0
++                || !in_current_area(e) || e_flags(e) & (0x80000 | 0x80) != 0x80 { return; }
++            let id = e_model(e);
++            if load_state(id) == 1 { return; }
++            let m = mi(id);
++            if m.is_null() || field::<GPtr<u8>, u8>(m, 0x14).read().is_null() { return; }
++            let draw = field::<f32, u8>(m, 0x18).read() * scale;
++            let radius = draw.min(180.0);
++            let mut rect = [0f32; 4];
++            crate::iplstore::entity_get_bound_rect(e, GPtr::from_raw(rect.as_mut_ptr()).cast());
++            let dx = (rect[0] - px).max(px - rect[2]).max(0.0);
++            let dy = (rect[3] - py).max(py - rect[1]).max(0.0);
++            let d2 = dx * dx + dy * dy;
++            if !(radius > 0.0 && d2 <= radius * radius) { return; }
++            let ti = mi_get_time_info(m);
++            if !ti.is_null() && clock_get_is_time_in_range(ti.read() as u32, ti.byte_add(1).read() as u32) == 0 { return; }
++            let flags = if scene_load { 0x20 } else { 0 };
++            call_request_model(id, flags | if d2 <= 65.0 * 65.0 { 0x10 } else { 0 });
++        });
++    }
++}
++
+ /// The common entity filter of both `ProcessEntitiesInSectorList`s: new scan code (stamped), not
+ /// loaded, not `m_bStreamingDontDelete`, in the current area (or 13), visible and streamable, and the
+ /// time info (if any) in range. Returns the model info.
+@@ -3797,6 +3853,8 @@
+     ipl_load_ipls(pos.read(), pos.wrapping_index(1).read(), pos.wrapping_index(2).read(), 1);
+     call_load_all_requested_models(0);
+     call_add_models_to_request_list(pos, 0x20);
++    #[cfg(target_arch = "wasm32")]
++    request_surface_extents(pos, true);
+     radar_stream_radar_sections(pos);
+     path_find_load_scene_for_path_nodes(g(0x96F050), pos.read(), pos.wrapping_index(1).read(), pos.wrapping_index(2).read());
+     if curr_area() == 0 {
+@@ -3911,6 +3969,10 @@
+         ipl_load_ipls(p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read(), 0);
+         ipl_ensure_ipls_are_in_memory(e_pos(g::<GPtr<u8>>(UPDATE_FOCUS_ENTITY).read()));
+     }
++    #[cfg(target_arch = "wasm32")]
++    if !DISABLE_STREAMING.get().get() && g::<u32>(TIMER_FRAME_COUNTER).read() & 15 == 0 {
++        request_surface_extents(camera_pos(), false);
++    }
+     if ENABLE_REQUEST_LIST_PURGE.get().get() {
+         purge_requested(0x1E);
+     }
+@@ -4153,7 +4215,17 @@
+     DESIRED_NUM_VEHICLES_LOADED.set(0x16);
+     // ms_rwObjectInstances.Init(1000)
+     let l = rw_instances();
+-    let links = operator_new_alias(12000);
++    let mut link_bytes = 12000;
++    #[cfg(target_arch = "wasm32")]
++    if sa_core::options::limit(sa_core::options::Limit::Buildings) > 13000 {
++        // The streaming LRU otherwise destroys drawables already selected for the
++        // current frame. Match the expanded static pools; model bytes still use
++        // the native streaming budget and eviction policy.
++        let buildings = sa_core::options::limit(sa_core::options::Limit::Buildings);
++        let dummies = sa_core::options::limit(sa_core::options::Limit::Dummies);
++        link_bytes = buildings.saturating_add(dummies).min(65535) * 12;
++    }
++    let links = operator_new_alias(link_bytes);
+     field::<GPtr<u8>, u8>(l, 0x30).write(links);
+     let used_head = l;
+     let used_tail = l.byte_add(0xC);
+@@ -4163,7 +4235,7 @@
+     field::<GPtr<u8>, u8>(used_tail, 4).write(used_head);
+     field::<GPtr<u8>, u8>(free_head, 8).write(free_tail);
+     field::<GPtr<u8>, u8>(free_tail, 4).write(free_head);
+-    let mut off = 12000isize;
++    let mut off = link_bytes as isize;
+     while off != 0 {
+         off -= 0xC;
+         let link = field::<GPtr<u8>, u8>(l, 0x30).read().byte_add(off);

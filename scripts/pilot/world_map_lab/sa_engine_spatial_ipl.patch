@@ -1,0 +1,161 @@
+--- a/crates/sa-stream/src/fileloader.rs
++++ b/crates/sa-stream/src/fileloader.rs
+@@ -2171,6 +2171,39 @@
+     }
+ }
+ 
++/// Apply the native near/far rendering and collision rules after resolving entity links.
++pub(crate) fn prepare_lod_entity(e: GPtr<u8>, near_collider: bool) {
++    let mi = model_info(rd16(e, 0x22) as i32).cast::<u8>();
++    let big = rd8(e, 0x34) > 0 || {
++        let dist = X87::from_f32(f(GPtr::<u32>::from_addr(0xB6F118).read())).fmul_m(f(rd32(mi, 0x18)));
++        dist.to_f64() > 300.0
++    };
++    if big && !near_collider {
++        setup_big_building(e);
++    }
++    let lod = rdp(e, 0x30);
++    if !lod.is_null() {
++        let lod_mi = model_info(rd16(lod, 0x22) as i32).cast::<u8>();
++        let ent_mi = model_info(rd16(e, 0x22) as i32).cast::<u8>();
++        let children = rd8(lod, 0x34);
++        if children == 1 {
++            if rd32(e, 0x1C) & 0x10_0000 != 0 {
++                wr32(lod, 0x1C, rd32(lod, 0x1C) | 0x10_0000);
++            }
++            let col = rdp(ent_mi, 0x14);
++            if rdp(lod_mi, 0x14) != col && !col.is_null() {
++                delete_collision_model(lod_mi.cast::<crate::shared::CBaseModelInfo>());
++                set_col_model(lod_mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), rdp(ent_mi, 0x14), 0);
++            }
++        } else if rd8(ent_mi, 0x12) & 0x20 != 0 {
++            wr32(ent_mi, 0x18, 0x43C8_0000);
++        } else {
++            wr8(lod, 0x34, children.wrapping_sub(1));
++            wr32(e, 0x30, 0);
++        }
++    }
++}
++
+ /// `CFileLoader::LinkLods(int32 extra)` (0x5B51E0): resolves the LOD indices of `gpLoadedBuildings`
+ /// (counting children in +0x34), sets up big buildings (children, or lod-distance * draw distance >
+ /// 300 under x87 PC=24), shares col models / flags with single-child LODs, then caches and adds every
+@@ -2204,35 +2237,7 @@
+             };
+             if !skip {
+                 let e = list.wrapping_index(i as i32).read();
+-                let mi = model_info(rd16(e, 0x22) as i32).cast::<u8>();
+-                let big = rd8(e, 0x34) > 0 || {
+-                    let dist = X87::from_f32(f(GPtr::<u32>::from_addr(0xB6F118).read())).fmul_m(f(rd32(mi, 0x18)));
+-                    dist.to_f64() > 300.0
+-                };
+-                if big {
+-                    setup_big_building(e);
+-                }
+-                let lod = rdp(e, 0x30);
+-                if !lod.is_null() {
+-                    let lod_mi = model_info(rd16(lod, 0x22) as i32).cast::<u8>();
+-                    let ent_mi = model_info(rd16(e, 0x22) as i32).cast::<u8>();
+-                    let children = rd8(lod, 0x34);
+-                    if children == 1 {
+-                        if rd32(e, 0x1C) & 0x10_0000 != 0 {
+-                            wr32(lod, 0x1C, rd32(lod, 0x1C) | 0x10_0000);
+-                        }
+-                        let col = rdp(ent_mi, 0x14);
+-                        if rdp(lod_mi, 0x14) != col && !col.is_null() {
+-                            delete_collision_model(lod_mi.cast::<crate::shared::CBaseModelInfo>());
+-                            set_col_model(lod_mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), rdp(ent_mi, 0x14), 0);
+-                        }
+-                    } else if rd8(ent_mi, 0x12) & 0x20 != 0 {
+-                        wr32(ent_mi, 0x18, 0x43C8_0000);
+-                    } else {
+-                        wr8(lod, 0x34, children.wrapping_sub(1));
+-                        wr32(e, 0x30, 0);
+-                    }
+-                }
++                prepare_lod_entity(e, false);
+             }
+             i = i.wrapping_add(1);
+             if i >= (count().wrapping_add(extra)) as u32 {
+--- a/crates/sa-stream/src/iplstore.rs
++++ b/crates/sa-stream/src/iplstore.rs
+@@ -1049,12 +1049,79 @@
+     QUAD_TREE.set(GPtr::NULL);
+ }
+ 
++// BRC1 is the browser packer's spatial IPL. Its LOD indices refer to entities
++// in the same cell, allowing an entire LOD family to enter/leave the world together.
++#[cfg(target_arch = "wasm32")]
++fn load_world_cell(slot: i32, data: GPtr<u8>, size: i32, d: GPtr<IplDef>) -> u8 {
++    extern crate std;
++    let count = field::<u32,_>(data,4).read() as usize;
++    // BRC2 adds an explicit near-collider marker to each unmodified native instance.
++    let has_roles = field::<u32,_>(data,0).read() == u32::from_le_bytes(*b"BRC2");
++    let stride = if has_roles {44} else {40};
++    if count == 0 || count > 4096 || 8 + count * stride > size as usize {
++        return 0;
++    }
++    for i in 0..count {
++        let row = data.byte_add((8+i*stride) as isize);
++        let model = field::<i32,_>(row,28).read();
++        let lod = field::<i32,_>(row,36).read();
++        if !(0..20000).contains(&model) || model_info(model).is_null() ||
++            (has_roles && field::<u32,_>(row,40).read() > 1) || lod < -1 || lod >= count as i32 || lod == i as i32 {
++            return 0;
++        }
++    }
++    let first = fl(d,0) > fl(d,2) || fl(d,3) > fl(d,1);
++    let mut entities = std::vec::Vec::with_capacity(count);
++    for i in 0..count {
++        let row = data.byte_add((8+i*stride) as isize);
++        entities.push(load_object_instance_bin(row,GPtr::NULL));
++    }
++    let links = GPtr::from_raw(entities.as_mut_ptr());
++    for &entity in &entities {
++        link_lod(entity,slot,links,false);
++    }
++    for (i, &entity) in entities.iter().enumerate() {
++        let is_near = has_roles && field::<u32,_>(data, (8+i*stride+40) as isize).read() == 1;
++        crate::fileloader::prepare_lod_entity(entity, is_near);
++        entity_add(entity);
++        include_entity_call(slot,entity);
++        if first {
++            mark_large(d,entity);
++            let mut bounds=[0f32;4];
++            let _=entity_get_bound_rect(entity,GPtr::from_raw(bounds.as_mut_ptr()).cast());
++            let bb: GPtr<f32>=d.cast();
++            for (j,v) in bounds.into_iter().enumerate() {
++                let dst=bb.wrapping_index(j as i32);
++                if (j==0 || j==3) && v<dst.read() || (j==1 || j==2) && v>dst.read() {
++                    dst.write(v);
++                }
++            }
++        }
++    }
++    if first {
++        let bb: GPtr<f32>=d.cast();
++        let pad=if b(d,IS_LARGE).read()!=0 {350.0} else {200.0};
++        for (j,sign) in [-1.0,1.0,1.0,-1.0].into_iter().enumerate() {
++            let v=bb.wrapping_index(j as i32);
++            v.write(v.read()+pad*sign);
++        }
++        quad_add_item(QUAD_TREE.get(),d.cast(),d.cast());
++        enable_dynamic_streaming(slot,1);
++    }
++    b(d,LOADED).write(1);
++    1
++}
++
+ /// `CIplStore::LoadIpl(int, uint8* data, int size)` (0x406080, cdecl, AL).
+ #[hook(addr = 0x406080, conv = cdecl, name = "CIplStore::LoadIpl", expect = "8B 0D B0 3F 8E 00")]
+ pub fn load_ipl(slot: i32, data: GPtr<u8>, size: i32) -> u8 {
+     let d = at(slot);
+     if d.is_null() {
+         null_deref("CIplStore::LoadIpl");
++    }
++    #[cfg(target_arch = "wasm32")]
++    if size >= 8 && [u32::from_le_bytes(*b"BRC1"), u32::from_le_bytes(*b"BRC2")].contains(&field::<u32,_>(data,0).read()) {
++        return load_world_cell(slot,data,size,d);
+     }
+     if fl(d, 0) > fl(d, 2) || fl(d, 3) > fl(d, 1) {
+         let ok = load_ipl_bounding_box_call(slot, data, size);

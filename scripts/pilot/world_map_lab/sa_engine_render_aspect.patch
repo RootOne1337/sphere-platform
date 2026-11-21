@@ -1,0 +1,19 @@
+--- a/crates/sa-render/src/mvpb_r1.rs
++++ b/crates/sa-render/src/mvpb_r1.rs
+@@ -97,6 +97,16 @@
+ #[hook(addr = 0x6FF420, conv = cdecl, name = "CDraw::CalculateAspectRatio", expect = "A0 93 67 BA 00",
+        route = "L2", hazards = "none", recs = "grove-walk")]
+ pub fn calculate_aspect_ratio() -> X87 {
++    #[cfg(target_arch = "wasm32")]
++    if g::<u8>(0xB6F065).read() == 0 {
++        let w = sa_core::platform::RS_MAXIMUM_WIDTH.get();
++        let h = sa_core::platform::RS_MAXIMUM_HEIGHT.get();
++        if w > 0 && h > 0 {
++            let aspect = w as f32 / h as f32;
++            g::<f32>(0xC3EFA4).write(aspect);
++            return X87::from_f32(aspect);
++        }
++    }
+     let bits = if g::<u8>(0xBA6793).read() != 0 {
+         0x3FE3_8E39
+     } else if g::<u8>(0xB6F065).read() != 0 {

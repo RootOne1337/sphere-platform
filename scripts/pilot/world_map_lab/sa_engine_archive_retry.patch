@@ -1,0 +1,40 @@
+--- a/web/worker.js
++++ b/web/worker.js
+@@ -53,13 +53,30 @@
+ let startup = new Set();
+ 
+ function syncFetch(f, start, end) {
+-  const xhr = new XMLHttpRequest();
+-  xhr.open('GET', f.url, false);
+-  xhr.responseType = 'arraybuffer';
+-  xhr.setRequestHeader('Range', `bytes=${start}-${end - 1}`);
+-  xhr.send();
+-  if (xhr.status !== 206 && xhr.status !== 200) throw new Error(`${f.url}: HTTP ${xhr.status}`);
+-  return new Uint8Array(xhr.response);
++  // A Windows loopback connection can be reset during a long IMG traversal.
++  // Replay only this idempotent byte range, using a fresh connection per attempt.
++  for (let attempt = 0; attempt < 3; attempt++) {
++    const xhr = new XMLHttpRequest();
++    xhr.open('GET', f.url, false);
++    xhr.responseType = 'arraybuffer';
++    xhr.setRequestHeader('Range', `bytes=${start}-${end - 1}`);
++    try {
++      xhr.send();
++    } catch (error) {
++      if (error.name !== 'NetworkError' || attempt === 2) throw error;
++      io.rangeRetries = (io.rangeRetries || 0) + 1;
++      continue;
++    }
++    if ([502, 503, 504].includes(xhr.status) && attempt < 2) {
++      io.rangeRetries = (io.rangeRetries || 0) + 1;
++      continue;
++    }
++    const body = new Uint8Array(xhr.response);
++    if (xhr.status === 206 && body.length === end - start &&
++        xhr.getResponseHeader('Content-Range') === `bytes ${start}-${end - 1}/${f.size}`) return body;
++    if (xhr.status === 200 && body.length === f.size) return body.subarray(start, end);
++    throw new Error(`Invalid IMG range ${f.url} [${start}, ${end}): HTTP ${xhr.status}, ${body.length} bytes`);
++  }
+ }
+ 
+ function put(k, v) {

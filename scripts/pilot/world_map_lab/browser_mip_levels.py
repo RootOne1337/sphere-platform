@@ -50,7 +50,7 @@ def trim_native(data, side):
     return header + data[first:]
 
 
-def trim_dictionary(data, side):
+def transform_dictionary(data, transform):
     tag, size, version = CHUNK.unpack_from(data)
     if tag != 22 or size + 12 > len(data) or any(data[12 + size :]):
         raise ValueError("invalid texture dictionary")
@@ -58,16 +58,24 @@ def trim_dictionary(data, side):
     for kind, rev, payload in chunks(data[12 : 12 + size]):
         if kind == 21:
             payload = b"".join(
-                chunk(key, v, trim_native(part, side) if key == 1 else part)
+                chunk(key, v, transform(part) if key == 1 else part)
                 for key, v, part in chunks(payload)
             )
         result.extend(chunk(kind, rev, payload))
     return chunk(tag, version, result)
 
 
+def trim_dictionary(data, side):
+    return transform_dictionary(data, lambda part: trim_native(part, side))
+
+
 def write_mip_archive(source, target, side):
     if side < 1 or side & (side - 1):
         raise ValueError("expected a power-of-two texture limit")
+    return transform_archive(source, target, lambda raw: trim_dictionary(raw, side))
+
+
+def transform_archive(source, target, transform):
     directory = img_directory(source)
     records = []
     with source.open("rb") as inp, target.open("xb") as out:
@@ -79,7 +87,7 @@ def write_mip_archive(source, target, side):
             if len(raw) != length:
                 raise ValueError("truncated input archive")
             if name.endswith(".txd"):
-                raw = trim_dictionary(raw, side)
+                raw = transform(raw)
             sectors = (len(raw) + SECTOR - 1) // SECTOR
             records.append(ENTRY.pack(out.tell() // SECTOR, sectors, 0, name.encode("ascii")))
             out.write(raw)

@@ -1,0 +1,258 @@
+--- a/crates/sa-render/src/waterlevel.rs
++++ b/crates/sa-render/src/waterlevel.rs
+@@ -113,9 +113,27 @@
+     pub static VERTICES @ 0xC22910: [u8; 1021 * 0x14] = [0; 1021 * 0x14];
+ }
+ 
+-const VERTICES_BASE: usize = 0xC22910;
+-const QUADS_BASE: usize = 0xC21C90;
+-const TRIANGLES_BASE: usize = 0xC22854;
++// Browser worlds can contain more water than the fixed PC executable tables.
++macro_rules! water_table {
++    ($name:ident, $pc:expr, $bytes:expr) => {
++        pub(crate) fn $name() -> usize {
++            #[cfg(target_arch="wasm32")]
++            {
++                extern crate std;
++                std::thread_local! {
++                    static TABLE: core::cell::Cell<[u32; $bytes / 4]> = const { core::cell::Cell::new([0; $bytes / 4]) };
++                }
++                TABLE.with(|t| GPtr::from_raw(t.as_ptr().cast::<u8>()).addr())
++            }
++            #[cfg(not(target_arch="wasm32"))]
++            { $pc }
++        }
++    };
++}
++water_table!(water_vertices, 0xC22910, 8192*20);
++water_table!(water_quads, 0xC21C90, 2048*10);
++water_table!(water_triangles, 0xC22854, 1024*8);
++water_table!(water_combos, 0xC215F8, 16384*2);
+ /// `CTimer::m_snTimeInMilliseconds`
+ const TIME_MS: usize = 0xB7CB84;
+ /// `CWeather::Wavyness`, `CWeather::SunGlare`
+@@ -248,7 +266,7 @@
+ 
+ /// Vertex `i` (sign-extended index, as `movsx`).
+ fn vtx(i: i16) -> GPtr<u8> {
+-    GPtr::from_addr(VERTICES_BASE).byte_add(isize::from(i) * 0x14)
++    GPtr::from_addr(water_vertices()).byte_add(isize::from(i) * 0x14)
+ }
+ 
+ fn vx(i: i16) -> i32 {
+@@ -703,14 +721,14 @@
+         return 1;
+     }
+     let info = u32::from(BLOCK_POLY_INFO.ptr().cast::<u16>().wrapping_index(bx * 12 + by).read());
+-    let quad = |i: u32| GPtr::<u8>::from_addr(QUADS_BASE).byte_add(i as isize * 0xA);
+-    let tri = |i: u32| GPtr::<u8>::from_addr(TRIANGLES_BASE).byte_add(i as isize * 8);
++    let quad = |i: u32| GPtr::<u8>::from_addr(water_quads()).byte_add(i as isize * 0xA);
++    let tri = |i: u32| GPtr::<u8>::from_addr(water_triangles()).byte_add(i as isize * 8);
+     match info >> 14 {
+         0 => 0,
+         1 => u8::from(o_quad_level(quad(info & 0x3FFF), px, py, pz, level, big, small) != 0),
+         2 => u8::from(o_triangle_level(tri(info & 0x3FFF), px, py, pz, level, big, small) != 0),
+         _ => {
+-            let mut e = POLY_COMBOS.ptr().cast::<u16>().wrapping_index((info & 0x3FFF) as i32);
++            let mut e = GPtr::<u16>::from_addr(water_combos()).wrapping_index((info & 0x3FFF) as i32);
+             while e.read() & 0xC000 != 0 {
+                 let v = u32::from(e.read());
+                 let hit = match v >> 14 {
+@@ -773,14 +791,14 @@
+             .wrapping_index(bx.wrapping_mul(12).wrapping_add(by))
+             .read(),
+     );
+-    let quad = |i: u32| GPtr::<u8>::from_addr(QUADS_BASE).byte_add(i as isize * 0xA);
+-    let tri = |i: u32| GPtr::<u8>::from_addr(TRIANGLES_BASE).byte_add(i as isize * 8);
++    let quad = |i: u32| GPtr::<u8>::from_addr(water_quads()).byte_add(i as isize * 0xA);
++    let tri = |i: u32| GPtr::<u8>::from_addr(water_triangles()).byte_add(i as isize * 8);
+     match info >> 14 {
+         0 => {}
+         1 => mark_one(quad(info & 0x3FFF), 8, interior),
+         2 => mark_one(tri(info & 0x3FFF), 6, interior),
+         _ => {
+-            let mut e = POLY_COMBOS.ptr().cast::<u16>().wrapping_index((info & 0x3FFF) as i32);
++            let mut e = GPtr::<u16>::from_addr(water_combos()).wrapping_index((info & 0x3FFF) as i32);
+             while e.read() & 0xC000 != 0 {
+                 let v = u32::from(e.read());
+                 match v >> 14 {
+@@ -994,7 +1012,9 @@
+         }
+         i += 1;
+     }
+-    let v = GPtr::<u8>::from_addr(VERTICES_BASE).byte_add(n as isize * 0x14);
++    #[cfg(target_arch="wasm32")]
++    assert!((0..8192).contains(&n), "world water table capacity exceeded");
++    let v = GPtr::<u8>::from_addr(water_vertices()).byte_add(n as isize * 0x14);
+     wr::<i16>(v, 0, cx as i16);
+     wr::<i16>(v, 2, cy as i16);
+     for (j, w) in p.iter().enumerate() {
+@@ -1047,7 +1067,9 @@
+         (v2, v1, v0)
+     };
+     let n = NUM_WATER_TRIANGLES.get();
+-    let t = GPtr::<u8>::from_addr(TRIANGLES_BASE).byte_add(n as isize * 8);
++    #[cfg(target_arch="wasm32")]
++    assert!(n < 1024, "world water table capacity exceeded");
++    let t = GPtr::<u8>::from_addr(water_triangles()).byte_add(n as isize * 8);
+     wr::<u16>(t, 0, a as u16);
+     wr::<u16>(t, 2, b as u16);
+     wr::<u16>(t, 4, c as u16);
+@@ -1088,7 +1110,7 @@
+         o_add_vertex(x3, y3, p3z, p3b, p3s, p3f),
+         o_add_vertex(x4, y4, p4z, p4b, p4s, p4f),
+     ];
+-    let at = |i: i32| GPtr::<u8>::from_addr(VERTICES_BASE).byte_add((i as isize).wrapping_mul(0x14));
++    let at = |i: i32| GPtr::<u8>::from_addr(water_vertices()).byte_add((i as isize).wrapping_mul(0x14));
+     let sx = |i: i32| rd::<i16>(at(i), 0);
+     let sy = |i: i32| rd::<i16>(at(i), 2);
+     let min_y = v.iter().map(|&i| sy(i)).min().unwrap_or(0);
+@@ -1110,7 +1132,9 @@
+     let (a0, a1) = order(slots[0], slots[1]);
+     let (b0, b1) = order(slots[2], slots[3]);
+     let n = NUM_WATER_QUADS.get();
+-    let q = GPtr::<u8>::from_addr(QUADS_BASE).byte_add(n as isize * 0xA);
++    #[cfg(target_arch="wasm32")]
++    assert!(n < 2048, "world water table capacity exceeded");
++    let q = GPtr::<u8>::from_addr(water_quads()).byte_add(n as isize * 0xA);
+     wr::<u16>(q, 0, a0 as u16);
+     wr::<u16>(q, 2, a1 as u16);
+     wr::<u16>(q, 4, b0 as u16);
+@@ -1127,14 +1151,16 @@
+ #[hook(addr = 0x6E5750, conv = cdecl, name = "FUN_006e5750", expect = "8B 44 24 04 8B 4C 24 08")]
+ pub fn add_to_block(bx: i32, by: i32, idx: i32, kind: i32) {
+     let cell = BLOCK_POLY_INFO.ptr().cast::<u16>().wrapping_index(bx.wrapping_mul(12).wrapping_add(by));
+-    let combos = POLY_COMBOS.ptr().cast::<u16>();
++    let combos = GPtr::<u16>::from_addr(water_combos());
+     let c = cell.read();
+     let entry = (kind.wrapping_shl(14) | idx) as u16;
+     match c >> 14 {
+         0 => cell.write(entry),
+         1 | 2 => {
+             let n = NUM_WATER_ZONE_POLYS.get();
+-            combos.wrapping_index(n).write(c);
++            #[cfg(target_arch="wasm32")]
++    assert!((0..=16381).contains(&n), "world water table capacity exceeded");
++    combos.wrapping_index(n).write(c);
+             combos.wrapping_index(n.wrapping_add(1)).write(entry);
+             combos.wrapping_index(n.wrapping_add(2)).write(0);
+             NUM_WATER_ZONE_POLYS.set(n.wrapping_add(3));
+@@ -1142,7 +1168,9 @@
+         }
+         _ => {
+             let n = NUM_WATER_ZONE_POLYS.get();
+-            combos.wrapping_index(n.wrapping_sub(1)).write(entry);
++            #[cfg(target_arch="wasm32")]
++    assert!((1..16384).contains(&n), "world water table capacity exceeded");
++    combos.wrapping_index(n.wrapping_sub(1)).write(entry);
+             combos.wrapping_index(n).write(0);
+             NUM_WATER_ZONE_POLYS.set(n.wrapping_add(1));
+         }
+@@ -1171,7 +1199,7 @@
+             let y1 = f32_of(yv.fadd_m(k(BLOCK_SIZE)));
+             let mut i = 0;
+             while i < NUM_WATER_QUADS.get() as i32 {
+-                let q = GPtr::<u8>::from_addr(QUADS_BASE).byte_add(i as isize * 0xA);
++                let q = GPtr::<u8>::from_addr(water_quads()).byte_add(i as isize * 0xA);
+                 let qi = |j: isize| rd::<i16>(q, j * 2);
+                 if gt(xi(vx(qi(1))), x0)
+                     && lt(xi(vx(qi(0))), x1)
+@@ -1185,7 +1213,7 @@
+             let nt = NUM_WATER_TRIANGLES.get() as i32;
+             let mut i = 0;
+             while i < nt {
+-                let t = GPtr::<u8>::from_addr(TRIANGLES_BASE).byte_add(i as isize * 8);
++                let t = GPtr::<u8>::from_addr(water_triangles()).byte_add(i as isize * 8);
+                 let ti = |j: isize| rd::<i16>(t, j * 2);
+                 let ya = rd::<i16>(vtx(ti(0)), 2);
+                 let yb = rd::<i16>(vtx(ti(2)), 2);
+@@ -1283,7 +1311,7 @@
+     let n = NUM_WATER_QUADS.get() as i32;
+     let mut i = 0;
+     while i < n {
+-        let q = GPtr::<u8>::from_addr(QUADS_BASE).byte_add(i as isize * 0xA);
++        let q = GPtr::<u8>::from_addr(water_quads()).byte_add(i as isize * 0xA);
+         let qi = |j: isize| rd::<i16>(q, j * 2);
+         let v0 = qi(0);
+         let x0f = f32_of(xi(vx(v0)));
+--- a/crates/sa-render/src/water_render.rs
++++ b/crates/sa-render/src/water_render.rs
+@@ -230,10 +230,7 @@
+ /// Triangles (count, 8-byte records: vertex indices at +0/+2/+4, flags at +6) and quads (count, 10-byte
+ /// records: indices +0..+6, flags +8); vertices: 20 bytes (x, y int16, CRenPar 16 bytes).
+ const RW_TRI_COUNT: usize = 0xC2_2884;
+-const RW_TRIS: usize = 0xC2_2854;
+ const RW_QUAD_COUNT: usize = 0xC2_2888;
+-const RW_QUADS: usize = 0xC2_1C90;
+-const RW_VERTS: usize = 0xC2_2910;
+ /// The debug "colour every quad" byte.
+ const RW_DEBUG_COLOURS: usize = 0xC2_28DC;
+ 
+@@ -245,7 +242,7 @@
+ 
+ /// A water vertex: (x, y, the four CRenPar dwords).
+ fn rw_vertex(i: i16) -> (i32, i32, [u32; 4]) {
+-    let v = RW_VERTS + 20 * i as isize as usize;
++    let v = crate::waterlevel::water_vertices() + 20 * i as isize as usize;
+     (
+         i32::from(g::<i16>(v).read()),
+         i32::from(g::<i16>(v + 2).read()),
+@@ -434,7 +431,7 @@
+     rw_rs(11, 6);
+     let mut i = 0usize;
+     while (i as i32) < g::<i32>(RW_TRI_COUNT).read() {
+-        let t = RW_TRIS + 8 * i;
++        let t = crate::waterlevel::water_triangles() + 8 * i;
+         i += 1;
+         if g::<u8>(t + 6).read() & 1 == 0 {
+             continue;
+@@ -447,7 +444,7 @@
+     }
+     let mut i = 0i32;
+     while i < g::<i32>(RW_QUAD_COUNT).read() {
+-        let qd = RW_QUADS + 10 * i as usize;
++        let qd = crate::waterlevel::water_quads() + 10 * i as usize;
+         if g::<u8>(qd + 8).read() & 1 != 0 {
+             if g::<u8>(RW_DEBUG_COLOURS).read() != 0 {
+                 // 1/16 (0x858620), 255 (0x859AAC)
+--- a/crates/sa-render/src/water_line_test.rs
++++ b/crates/sa-render/src/water_line_test.rs
+@@ -13,11 +13,8 @@
+ /// (u16 each: bits 14-15 the kind, 1 = one quad, 3 = a list in 0xC215F8; bits 0-13 the index), at 0xC21B70.
+ const BLOCK_GRID: usize = 0xC2_1B70;
+ /// The entry lists (u16 each, a list ends at the first entry whose top two bits are 0), at 0xC215F8.
+-const BLOCK_LISTS: usize = 0xC2_15F8;
+ /// `CWaterLevel::m_aQuads` (10 bytes each: four vertex indices, flags), at 0xC21C90.
+-const QUADS: usize = 0xC2_1C90;
+ /// `CWaterLevel::m_aVertices` (20 bytes each, i16 x at +0 and y at +2), at 0xC22910.
+-const VERTICES: usize = 0xC2_2910;
+ 
+ /// Cell of a coordinate: `ftol(v * 0.002f + 6.0f)` (0x858F44, 0x858B44; the product kept at 80 bits).
+ fn cell(v: f32) -> i32 {
+@@ -26,7 +23,7 @@
+ 
+ /// `fild word` of a water vertex coordinate (`off` 0 = x, 2 = y).
+ fn vert(i: i16, off: usize) -> X87 {
+-    let a = (VERTICES as u32).wrapping_add((i32::from(i) * 20) as u32) as usize + off;
++    let a = (crate::waterlevel::water_vertices() as u32).wrapping_add((i32::from(i) * 20) as u32) as usize + off;
+     xi(i32::from(g::<i16>(a).read()))
+ }
+ 
+@@ -57,7 +54,7 @@
+         return false;
+     }
+     crossing(s, e, zmin, zmax, out);
+-    let quad = QUADS + q as usize * 10;
++    let quad = crate::waterlevel::water_quads() + q as usize * 10;
+     let v0 = g::<i16>(quad).read();
+     let v1 = g::<i16>(quad + 2).read();
+     let v2 = g::<i16>(quad + 4).read();
+@@ -118,7 +115,7 @@
+                         }
+                     }
+                     3 => {
+-                        let mut p = BLOCK_LISTS + usize::from(v & 0x3FFF) * 2;
++                        let mut p = crate::waterlevel::water_combos() + usize::from(v & 0x3FFF) * 2;
+                         if g::<u8>(p + 1).read() & 0xC0 != 0 {
+                             loop {
+                                 let ent = g::<u16>(p).read();

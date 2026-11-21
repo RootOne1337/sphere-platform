@@ -1,0 +1,145 @@
+--- a/crates/sa-stream/src/iplstore.rs
++++ b/crates/sa-stream/src/iplstore.rs
+@@ -1111,6 +1111,9 @@
+         enable_dynamic_streaming(slot,1);
+     }
+     crate::streaming::mark_extent_slot(slot, has_roles);
++    if has_roles {
++        for &entity in &entities { crate::streaming::remember_far_surface(slot, entity); }
++    }
+     b(d,LOADED).write(1);
+     1
+ }
+--- a/crates/sa-stream/src/streaming.rs
++++ b/crates/sa-stream/src/streaming.rs
+@@ -2622,13 +2622,57 @@
+ static EXTENT_SLOTS: [core::sync::atomic::AtomicU32; 8] =
+     [const { core::sync::atomic::AtomicU32::new(0) }; 8];
+ 
++
++#[cfg(target_arch = "wasm32")]
++std::thread_local! {
++    // Only immutable buildings live in this index. RemoveIpl clears a slot before
++    // returning entity addresses to the native pool.
++    static FAR_SURFACES: core::cell::RefCell<std::vec::Vec<(i32, usize)>> = const {
++        core::cell::RefCell::new(std::vec::Vec::new())
++    };
++}
++
++#[cfg(target_arch = "wasm32")]
++pub fn broad_unlinked_surface(e: GPtr<u8>, m: GPtr<u8>) -> bool {
++    use core::sync::atomic::Ordering::Relaxed;
++    let slot = field::<u8, u8>(e, 0x2E).read() as usize;
++    if EXTENT_SLOTS[slot / 32].load(Relaxed) & (1 << (slot % 32)) == 0
++        || field::<u8,u8>(e,0x36).read() & 7 != 1
++        || !field::<GPtr<u8>,u8>(e,0x30).read().is_null()
++        || field::<u8,u8>(e,0x34).read() != 0
++        || field::<f32,u8>(m,0x18).read() < 190.0 { return false; }
++    let col = field::<GPtr<f32>,u8>(m,0x14).read();
++    if col.is_null() { return false; }
++    let width = col.wrapping_index(3).read() - col.read();
++    let depth = col.wrapping_index(4).read() - col.wrapping_index(1).read();
++    let height = col.wrapping_index(5).read() - col.wrapping_index(2).read();
++    width.min(depth) >= 45.0 && width.max(depth) >= 85.0 && height <= 0.6 * width.min(depth)
++}
++
++#[cfg(target_arch = "wasm32")]
++pub(crate) fn remember_far_surface(slot: i32, e: GPtr<u8>) {
++    if field::<u8,u8>(e,0x36).read() & 7 == 1 && field::<GPtr<u8>,u8>(e,0x30).read().is_null() && field::<u8,u8>(e,0x34).read() == 0 && field::<f32,u8>(mi(e_model(e)),0x18).read() >= 190.0 {
++        FAR_SURFACES.with(|list| list.borrow_mut().push((slot,e.addr())));
++    }
++}
++
++#[cfg(target_arch = "wasm32")]
++pub fn visit_far_surfaces(mut f: impl FnMut(GPtr<u8>)) {
++    FAR_SURFACES.with(|list| {
++        for &(_,addr) in list.borrow().iter() { f(GPtr::from_addr(addr)); }
++    });
++}
++
+ #[cfg(target_arch = "wasm32")]
+ pub(crate) fn mark_extent_slot(slot: i32, active: bool) {
+     use core::sync::atomic::Ordering::Relaxed;
+     if !(0..256).contains(&slot) { return; }
+     let bits = &EXTENT_SLOTS[slot as usize / 32];
+     let mask = 1 << (slot % 32);
+-    if active { bits.fetch_or(mask, Relaxed); } else { bits.fetch_and(!mask, Relaxed); }
++    if active { bits.fetch_or(mask, Relaxed); } else {
++        bits.fetch_and(!mask, Relaxed);
++        FAR_SURFACES.with(|list| list.borrow_mut().retain(|r| r.0 != slot));
++    }
+ }
+ 
+ #[cfg(target_arch = "wasm32")]
+@@ -2656,7 +2700,9 @@
+             let m = mi(id);
+             if m.is_null() || field::<GPtr<u8>, u8>(m, 0x14).read().is_null() { return; }
+             let draw = field::<f32, u8>(m, 0x18).read() * scale;
+-            let radius = draw.min(180.0);
++            let radius = if scene_load && broad_unlinked_surface(e,m) {
++                900.0
++            } else { draw.min(180.0) };
+             let mut rect = [0f32; 4];
+             crate::iplstore::entity_get_bound_rect(e, GPtr::from_raw(rect.as_mut_ptr()).cast());
+             let dx = (rect[0] - px).max(px - rect[2]).max(0.0);
+--- a/crates/sa-render/src/renderer.rs
++++ b/crates/sa-render/src/renderer.rs
+@@ -774,6 +774,10 @@
+         }
+     }
+     // `t < draw` as `fcomp [draw]` + `test ah, 5` + `jp` not taken.
++    #[cfg(target_arch = "wasm32")]
++    if sa_stream::streaming::broad_unlinked_surface(e, mi) {
++        draw = draw.max(960.0_f32.min(a.to_f32()));
++    }
+     let near = |t: X87| !jp(t, x(draw), 5);
+     let faded = x(fade).fadd_m(dist).fsub_m(k(0x41A0_0000));
+     if mi_rw == 0 {
+@@ -935,6 +939,10 @@
+     let dz = x(rd::<f32>(pos, 8)).fsub_m(rd::<f32>(cam, 8));
+     let d = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt().to_f32();
+     out.write(quiet(d));
++    #[cfg(target_arch = "wasm32")]
++    if d > 300.0 && sa_stream::streaming::broad_unlinked_surface(e, mi) {
++        return call_setup_map_entity_visibility(e,mi,d.to_bits(),time_in_range);
++    }
+     if !jne(x(d), x(k(0x4396_0000)), 0x41) {
+         // d > 300.0
+         let l = x(rd::<f32>(g(0xB6F118), 0)).fmul_m(rd::<f32>(mi, 0x18)).to_f32();
+@@ -1509,6 +1517,36 @@
+         pts[2 * i + 1] = to_lod(v[3 * i + 1]);
+     }
+     world_scan(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pts.as_mut_ptr())), 5, 0x554B10);
++
++    // The normal-sector frustum ends at 300 units. An unlinked ground sheet
++    // under distant decorations also needs a visual pass outside that frustum.
++    // The original game object keeps its collision registration and native DFF.
++    #[cfg(target_arch = "wasm32")]
++    if rd::<i32>(g(CURR_AREA), 0) == 0 {
++        let code = rd::<u16>(g(CURRENT_SCAN_CODE),0);
++        let mut requests = 0;
++        sa_stream::streaming::visit_far_surfaces(|e| {
++            if !sa_stream::streaming::broad_unlinked_surface(e, model_info_of(e))
++                || NO_OF_VISIBLE_ENTITIES.get() >= 968 { return; }
++            let pos = entity_pos(e);
++            let dist = pos_minus_camera_distance(pos);
++            if dist > 960.0 || entity_get_is_on_screen(e) == 0 { return; }
++            let mid = i32::from(rd::<i16>(e,0x22));
++            let state = 0x8E4CC0 + mid as usize * 20;
++            if rd::<u8>(g(state),16) != 1 && requests < 6
++                && rd::<u8>(g(state),6) & 0x10 == 0 {
++                request_model(mid,0x10);
++                requests += 1;
++            }
++            if rd::<u16>(e,0x2C) == code { return; }
++            wr::<u16>(e,0x2C,code);
++            let mut out = [0.0f32];
++            let result = call_setup_entity_visibility(e,GPtr::from_raw(out.as_mut_ptr()));
++            if result == 1 {
++                call_add_entity_to_render_list(e, out[0].to_bits());
++            }
++        });
++    }
+ }
+ 
+ /// `CRenderer::GetObjectsInFrustum(CEntity** out, float farPlane, RwMatrix* transform)` (0x554C60): the
