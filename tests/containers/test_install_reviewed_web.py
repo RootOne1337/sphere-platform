@@ -113,6 +113,19 @@ class InstallTests(unittest.TestCase):
                 self.assertEqual(receipt, result)
             return result, calls, retention, patches, root
 
+    def test_running_config_is_confined_to_its_explicit_workspace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            private = root / ".local-pilot"
+            private.mkdir()
+            config = private / "baseline.json"
+            config.touch()
+            self.assertEqual(installer.private_path_at(config, root, private), config)
+            outside = root / "baseline.json"
+            outside.touch()
+            with self.assertRaises(ValueError):
+                installer.private_path_at(outside, root, private)
+
     def test_bounded_profile_admits_ui_budget_and_records_three_fresh_checks_without_retention(self):
         snapshots = [healthy_ui_host() | {'observedAt': f'sample-{n}'} for n in range(3)]
         result, calls, retention, mocks, _root = self.mocked_hosted_install(

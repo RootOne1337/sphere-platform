@@ -102,10 +102,15 @@ def command(args: list[str], *, timeout: int = 30) -> str:
 
 
 def private_path(path: Path) -> Path:
+    return private_path_at(path, ROOT, PRIVATE)
+
+
+def private_path_at(path: Path, root: Path, private: Path) -> Path:
+    require(path.absolute().is_relative_to(root), "Private path outside requested workspace")
     resolved = path.resolve(strict=True)
-    require(resolved.is_relative_to(PRIVATE.resolve(strict=True)), "Path must remain in .local-pilot")
+    require(resolved.is_relative_to(private.resolve(strict=True)), "Path must remain in .local-pilot")
     ancestor = path.absolute()
-    while ancestor != ROOT:
+    while ancestor != root:
         require(not ancestor.is_symlink() and not ancestor.is_junction(), "Linked private path rejected")
         ancestor = ancestor.parent
     return resolved
@@ -117,7 +122,7 @@ def inspect(name: str) -> dict[str, Any]:
     return data[0]
 
 
-def compose_prefix(labels: dict[str, Any]) -> list[str]:
+def compose_prefix(labels: dict[str, Any], resolve_private=None) -> list[str]:
     """Reuse explicit environment metadata; frozen installs may have none.
 
     A resolved baseline already contains its environment values. Do not invent
@@ -129,7 +134,7 @@ def compose_prefix(labels: dict[str, Any]) -> list[str]:
     if key in labels:
         value = labels[key]
         require(isinstance(value, str) and bool(value), "Invalid Compose environment file metadata")
-        prefix += ["--env-file", str(private_path(Path(value)))]
+        prefix += ["--env-file", str((resolve_private or private_path)(Path(value)))]
     return prefix
 
 
@@ -178,7 +183,10 @@ def check_ci(receipt: dict[str, Any]) -> None:
 
 
 def catalog_hash() -> str:
-    path = private_path(PRIVATE / "updates/releases.json")
+    return catalog_digest(private_path(PRIVATE / "updates/releases.json"))
+
+
+def catalog_digest(path: Path) -> str:
     require(path.stat().st_size <= 1024 * 1024, "OTA catalog budget exceeded")
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -260,7 +268,8 @@ def admit_candidate(artifact: Path, source: str, local_execution: bool) -> dict[
 
 def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
             *, allow_degraded_volume: bool = False, local_execution: bool = False,
-            defer_cache_retention: bool = False, bounded_ui_resources: bool = False) -> dict[str, Any]:
+            defer_cache_retention: bool = False, bounded_ui_resources: bool = False,
+            runtime_root: Path | None = None) -> dict[str, Any]:
     require(type(defer_cache_retention) is bool, "Cache retention deferral must be an explicit boolean")
     require(type(bounded_ui_resources) is bool, "Bounded UI resources must be an explicit boolean")
     require(not bounded_ui_resources or not allow_degraded_volume,
@@ -271,7 +280,24 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
     require(admitted["imageId"] == expected_image_id, "Archive image does not match independent CI admission")
     if not local_execution:
         check_ci(bounded_json(artifact / "receipt.json", 256 * 1024))
-    host = collect(ROOT)
+    live_root = ROOT
+    live_private = PRIVATE
+    resolve_live = private_path
+    read_catalog = catalog_hash
+    if runtime_root is not None:
+        require(runtime_root.is_absolute() and runtime_root.resolve(strict=True)==runtime_root
+                and (runtime_root / "docker-compose.review.yml").is_file(), "Invalid live workspace")
+        live_root = runtime_root
+        live_private = live_root / ".local-pilot"
+
+        def resolve_live(path):
+            return private_path_at(path, live_root, live_private)
+
+        def read_catalog():
+            return catalog_digest(resolve_live(live_private / "updates/releases.json"))
+
+        resolve_live(live_private)
+    host = collect(live_root)
     findings = resource_findings(host, bounded_ui_resources)
     admission_findings = admitted_findings(findings, allow_degraded_volume=allow_degraded_volume)
     before = snapshot()
@@ -283,8 +309,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
     config_files = labels.get("com.docker.compose.project.config_files", "").split(",")
     require(1 <= len(config_files) <= 64 and all(config_files)
             and len(set(config_files)) == len(config_files), "Unexpected Compose inventory")
-    files = [private_path(Path(name)) for name in config_files]
-    cmd = compose_prefix(labels)
+    files = [resolve_live(Path(name)) for name in config_files]
+    cmd = compose_prefix(labels, resolve_live) if runtime_root is not None else compose_prefix(labels)
     prefix = list(cmd)
     for file in files:
         cmd += ["--file", str(file)]
@@ -293,9 +319,9 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
     runtime_env = dict(value.split("=", 1) for value in current["Config"]["Env"] if "=" in value)
     require(all(runtime_env.get(key) == value for key, value in
                 old["services"]["review-ui"].get("environment", {}).items()), "Baseline UI environment mismatch")
-    output = PRIVATE / f"reviewed-web-install-{source[:12]}-{uuid4().hex[:8]}"
+    output = live_private / f"reviewed-web-install-{source[:12]}-{uuid4().hex[:8]}"
     output.mkdir()
-    private_path(output)
+    resolve_live(output)
     override = output / "candidate.yml"
     # !reset removes the old source recipe: a later --build must never rebuild
     # the previous checkout while reusing the newly admitted image tag.
@@ -308,7 +334,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
     caps = bounded_ui_caps(current, old, candidate) if bounded_ui_resources else None
     profile = resource_profile(bounded_ui_resources)
     resource_checks = [{"stage": "planning", "snapshot": host, "findings": findings, "uiCaps": caps}]
-    ota_hash = catalog_hash()
+    ota_hash = read_catalog()
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
             "archiveBytes": admitted["archiveBytes"], "previousUi": before[UI], "containerCount": len(before),
             "observedAtUtc": datetime.now(timezone.utc).isoformat(), "resourceFindings": findings,
@@ -326,7 +352,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
         return plan
     require(not admission_findings, "Host not admitted; no image loaded or runtime stopped")
     def fresh_resources(stage: str) -> list[str]:
-        fresh = collect(ROOT)
+        fresh = collect(live_root)
         checked = resource_findings(fresh, bounded_ui_resources)
         fresh_caps = None
         if bounded_ui_resources:
@@ -362,7 +388,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
         installed = inspect(UI)
         require(installed["Image"] == runtime_id
                 and installed["State"]["Health"]["Status"] == "healthy", "UI identity/readiness mismatch")
-        require(catalog_hash() == ota_hash, "OTA catalog changed")
+        require(read_catalog() == ota_hash, "OTA catalog changed")
         with urllib.request.urlopen("http://127.0.0.1:3015/login", timeout=10) as response:
             require(response.status == 200, "Gateway UI readiness failed")
         result = plan | {"runtimeInstalled": True, "loadedImageId": runtime_id, "installedUi": after[UI],
@@ -374,7 +400,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
                                         "archivesRemoved": 0, "imagesRemoved": 0, "previousImagePreserved": True}
         else:
             from scripts.pilot.reviewed_artifact_retention import post_install
-            result["cacheRetention"] = post_install(ROOT, source, before[UI]["imageId"])
+            result["cacheRetention"] = post_install(live_root, source, before[UI]["imageId"])
         write(output / "installed.json", result)
         return result
     except Exception:
@@ -397,6 +423,7 @@ def main() -> int:
     parser.add_argument("--artifact", type=Path, required=True)
     parser.add_argument("--source", required=True)
     parser.add_argument("--expected-image-id", required=True, help="Image ID from authenticated CI logs/admission, not the downloaded receipt")
+    parser.add_argument("--runtime-root", type=Path, help="Existing Compose workspace when the admitted artifact was built in a separate checkout")
     parser.add_argument("--apply", action="store_true", help="Install the admitted UI image")
     parser.add_argument("--local-execution", action="store_true",
                         help="Admit an existing local image against full local CI and packaged probes; no Actions identity")
@@ -411,7 +438,7 @@ def main() -> int:
         print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.apply,
                                  allow_degraded_volume=args.allow_degraded_volume, local_execution=args.local_execution,
                                  defer_cache_retention=args.defer_cache_retention,
-                                 bounded_ui_resources=args.bounded_ui_resources)))
+                                 bounded_ui_resources=args.bounded_ui_resources, runtime_root=args.runtime_root)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2
