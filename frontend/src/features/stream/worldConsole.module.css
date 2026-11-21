@@ -459,3 +459,75 @@
 .rail > section {
   scroll-margin-top: 78px;
 }
+
+.planTabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background));
+}
+.planTabs button {
+  min-height: 30px;
+  padding: 3px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+.planTabs button[aria-pressed="true"] {
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted));
+}
+.itinerary {
+  grid-column: 1;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+.itinerary p,
+.itinerary small {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+.itinerary ol {
+  display: grid;
+  gap: 3px;
+  max-height: 225px;
+  overflow: auto;
+}
+.itinerary li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.itinerary li > b {
+  border: 1px solid hsl(var(--primary) / 0.5);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  flex-shrink: 0;
+}
+.itinerary li > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.itinerary li > button {
+  min-height: 30px;
+  min-width: 26px;
+  display: grid;
+  place-items: center;
+}
+.itinerary button:disabled {
+  opacity: 0.35;
+}
+.itinerary select {
+  color: inherit;
+  background: hsl(var(--background));
+}

@@ -5,6 +5,7 @@ export type XYZ = [number, number, number];
 export type WorldInfo = {
   bounds: [number, number, number, number];
   mapRevision: string;
+  streetTiles?: { revision: string; spans: number[]; pixels: number } | null;
   searchRegions?: { name: string; points: XYZ[]; radius: number }[];
   tiles: { revision: string; width: number; height: number; tileSize: number };
   atlas: { visualTrace: XYZ[]; coverageRadius: number };
@@ -12,6 +13,7 @@ export type WorldInfo = {
 export type Decision = VehicleCommand & {
   reason: string;
   sequence: number;
+  stopIndex?: number;
   remaining: number | null;
   computeMs: number;
   pose: { eye: XYZ; heading: number; supports: number } | null;
@@ -205,19 +207,23 @@ export async function runWorldTrip(
   signal: AbortSignal,
   openInput: () => Promise<VehicleInputLease>,
   update: (result: Decision, age: number) => void,
+  acquireMs = 180000,
 ) {
+  let lastFix = performance.now();
   const sample = worldFrameSampler(video);
   let lease: VehicleInputLease | undefined;
   let lastSequence = -1;
   try {
     while (!signal.aborted) {
+      if (performance.now() - lastFix >= acquireMs)
+        throw Error("position_timeout");
       const frame = await sample(signal, lastSequence);
       lastSequence = frame.seq;
       const jpeg = await frame.blob;
       if (signal.aborted) break;
       if (performance.now() - frame.captured >= 320) {
         lease?.neutral?.();
-        throw Error("frame_stale");
+        continue;
       }
       const d = await worldRequest<Decision>(
         "/frame",
@@ -238,6 +244,7 @@ export async function runWorldTrip(
         lease?.neutral?.();
         continue;
       }
+      lastFix = performance.now();
       if (!lease) lease = await openInput();
       if (signal.aborted || !lease.active() || lease.failure?.())
         throw Error("input_closed");
