@@ -12,6 +12,7 @@ const config: Config = {
     }],
   },
   moduleNameMapper: {
+    "\\.module\\.css$": "<rootDir>/__tests__/css-module.cjs",
     // Поддержка алиасов @/* → ./*
     '^@/(.*)$': '<rootDir>/$1',
   },
