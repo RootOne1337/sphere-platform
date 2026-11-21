@@ -27,6 +27,7 @@ type Props = {
   decision: Decision | null;
   stops: Stop[];
   observation: XYZ | null;
+  initialFocus?: XY | null;
   legs?: RoadLeg[];
   onChoose: (x: number, y: number) => void;
 };
@@ -151,7 +152,10 @@ export function WorldDestinationMap(props: Props) {
         (item) => "search-" + item.name === id,
       );
       const trace = region?.points ?? info.atlas.visualTrace;
-      if (id === "position" && latest.current.observation) {
+      if (id === "goal" && (latest.current.point || latest.current.initialFocus)) {
+        [camera.x, camera.y] = (latest.current.point ?? latest.current.initialFocus)!;
+        camera.zoom = clamp(Math.min(w, h) / 210 / fit(), 1, 128);
+      } else if (id === "position" && latest.current.observation) {
         [camera.x, camera.y] = latest.current.observation;
         camera.zoom = clamp(Math.min(w, h) / 260 / fit(), 1, 128);
       } else if ((id === "coverage" || region) && trace.length) {
@@ -541,6 +545,9 @@ export function WorldDestinationMap(props: Props) {
     };
   }, [info, retry]);
   useEffect(() => {
+    if (props.initialFocus) actions.current?.go("goal");
+  }, [props.initialFocus]);
+  useEffect(() => {
     if (props.observation) actions.current?.go("position");
     else setSector((id) => (id === "position" ? "custom" : id));
   }, [props.observation]);
@@ -558,6 +565,7 @@ export function WorldDestinationMap(props: Props) {
             {districts.map((d) => (
               <option key={d.name}>{d.name}</option>
             ))}
+            {props.point && <option value="goal">Выбранная метка</option>}
             {props.observation && (
               <option value="position">Последняя проверка</option>
             )}

@@ -191,7 +191,7 @@ export function WorldDestinationPilot({
       });
     return () => c.abort();
   }, [refresh]);
-  async function choose(x: number, y: number) {
+  const choose = useCallback(async (x: number, y: number) => {
     if (run.current) return;
     choice.current?.abort();
     const c = new AbortController();
@@ -208,7 +208,7 @@ export function WorldDestinationPilot({
       const result = await worldRequest<{
         levels: number[];
         coveredLevels: number[];
-        suggestion: typeof suggestion;
+        suggestion: { point: [number, number]; distance: number } | null;
       }>("/levels", AbortSignal.any([c.signal, AbortSignal.timeout(5000)]), {
         point: [x, y],
       });
@@ -228,6 +228,26 @@ export function WorldDestinationPilot({
     } catch (e) {
       if (!c.signal.aborted) setStatus(problem(e));
     }
+  }, []);
+  const [initialFocus, setInitialFocus] = useState<[number, number] | null>(null);
+  useEffect(() => {
+    if (!info) return;
+    const target = new URL(window.location.href).searchParams.get("goal");
+    if (!target) return;
+    const fields = target.split(",");
+    if (fields.length !== 2 || fields.some((v) => !v.trim())) return;
+    const [x, y] = fields.map(Number);
+    const [left, right, bottom, top] = info.bounds;
+    if (!Number.isFinite(x) || !Number.isFinite(y) || x < left || x > right || y < bottom || y > top) return;
+    setInitialFocus([x, y]);
+    void choose(x, y);
+    return () => choice.current?.abort();
+  }, [info, choose]);
+  function mark(x: number, y: number) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("goal", [x.toFixed(4), y.toFixed(4)].join(","));
+    window.history.replaceState(window.history.state, "", url);
+    void choose(x, y);
   }
   async function start() {
     const el = video.current;
@@ -346,6 +366,7 @@ export function WorldDestinationPilot({
         <WorldDestinationMap
           info={info}
           point={multiple ? null : point}
+          initialFocus={initialFocus}
           observation={observation}
           decision={data}
           stops={multiple ? itinerary.stops : []}
@@ -353,7 +374,7 @@ export function WorldDestinationPilot({
           onChoose={(x, y) => {
             if (!run.current) {
               if (multiple) itinerary.add(x, y);
-              else void choose(x, y);
+              else mark(x, y);
             }
           }}
         />
@@ -427,7 +448,7 @@ export function WorldDestinationPilot({
                 className={styles.suggest}
                 size="sm"
                 variant="outline"
-                onClick={() => void choose(...suggestion.point)}
+                onClick={() => mark(...suggestion.point)}
               >
                 Выбрать дорогу рядом · {suggestion.distance.toFixed(1)} м
               </Button>
