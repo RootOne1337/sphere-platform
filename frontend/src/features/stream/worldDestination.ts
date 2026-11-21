@@ -157,48 +157,77 @@ type Probe = {
 export async function probeWorldPosition(
   video: HTMLVideoElement,
   signal: AbortSignal,
+  acquireMs = 180000,
+  progress?: (frames: number, secondsLeft: number) => void,
 ) {
   const sample = worldFrameSampler(video);
+  const timeout = AbortSignal.timeout(acquireMs);
+  const search = AbortSignal.any([signal, timeout]);
+  const deadline = performance.now() + acquireMs;
   let previous: Probe | null = null;
+  let previousTime = -Infinity;
   let lastSequence = -1;
-  for (let i = 0; i < 2; i++) {
-    const frame = await sample(signal, lastSequence);
-    lastSequence = frame.seq;
-    const jpeg = await frame.blob;
-    if (signal.aborted || performance.now() - frame.captured >= 320)
-      throw Error("frame_stale");
-    const result = await worldRequest<Probe>(
-      "/probe",
-      AbortSignal.any([signal, AbortSignal.timeout(3500)]),
-      undefined,
-      undefined,
-      jpeg,
-    );
-    if (performance.now() - frame.captured > 800) throw Error("frame_stale");
-    if (
-      !result.pose ||
-      !xyz(result.pose.eye) ||
-      !Number.isFinite(result.pose.heading) ||
-      result.pose.supports < 24
-    )
-      throw Error(result.ambiguous ? "ambiguous_position" : "position_unknown");
-    if (previous?.pose) {
-      const { eye, heading } = previous.pose;
+  let count = 0;
+  let lastUpdate = -Infinity;
+  try {
+    while (!search.aborted) {
+      const frame = await sample(search, lastSequence);
+      lastSequence = frame.seq;
+      const jpeg = await frame.blob;
+      if (performance.now() - frame.captured >= 320) {
+        previous = null;
+        continue;
+      }
+      const result = await worldRequest<Probe>(
+        "/probe",
+        AbortSignal.any([search, AbortSignal.timeout(3500)]),
+        undefined,
+        undefined,
+        jpeg,
+      );
+      if (search.aborted) break;
+      const now = performance.now();
+      count++;
+      const pose = result.pose;
       if (
-        previous.district !== result.district ||
-        Math.hypot(...eye.map((v, j) => v - result.pose!.eye[j])) > 3 ||
-        Math.cos(heading - result.pose.heading) < 0.97
-      )
-        throw Error("ambiguous_position");
-      return {
-        eye: result.pose.eye,
-        district: result.district,
-        supports: result.pose.supports,
-      };
+        now - frame.captured > 800 ||
+        result.ambiguous ||
+        !pose ||
+        !xyz(pose.eye) ||
+        !Number.isFinite(pose.heading) ||
+        !Number.isInteger(pose.supports) ||
+        pose.supports < 24
+      ) {
+        previous = null;
+      } else {
+        const age = frame.mediaTime - previousTime;
+        if (
+          previous?.pose &&
+          age > 0 &&
+          age <= 1.2 &&
+          previous.district === result.district &&
+          Math.hypot(...previous.pose.eye.map((v, j) => v - pose.eye[j])) <=
+            3 &&
+          Math.cos(previous.pose.heading - pose.heading) >= 0.97
+        ) {
+          return {
+            eye: pose.eye,
+            district: result.district,
+            supports: pose.supports,
+          };
+        }
+        previous = result;
+        previousTime = frame.mediaTime;
+      }
+      if (now - lastUpdate >= 1000) {
+        progress?.(count, Math.max(0, Math.ceil((deadline - now) / 1000)));
+        lastUpdate = now;
+      }
     }
-    previous = result;
+  } catch (error) {
+    if (!timeout.aborted || signal.aborted) throw error;
   }
-  throw Error("position_unknown");
+  throw Error(signal.aborted ? "stream_stopped" : "position_timeout");
 }
 
 export async function runWorldTrip(
