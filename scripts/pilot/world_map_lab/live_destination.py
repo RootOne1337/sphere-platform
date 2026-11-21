@@ -206,12 +206,14 @@ class Trip:
         return float(delta[i]), float(self.arc[i] + u[i] * self.ds[i]), i
 
 
-def probe_atlases(gray, main, districts):
+def probe_atlases(gray, main, districts, *, observed=None, include_main=True):
     # All indexes use the same RootSIFT representation and normalized image size.
-    observed = main.describe(gray)
+    if observed is None:
+        observed = main.describe(gray)
     found = []
     if observed is not None:
-        for name, bank in [(None, main), *districts.items()]:
+        indexes = [(None, main), *districts.items()] if include_main else districts.items()
+        for name, bank in indexes:
             pose = bank.locate_features(gray, *observed)
             if pose is not None:
                 x, y, z = pose["eye"]
@@ -249,6 +251,19 @@ def serve(args):
         district_locators[label] = district
         with open(file, "rb") as src:
             district_digests[label] = hashlib.file_digest(src, "sha256").hexdigest()
+    drive_regions = list(getattr(args, "drive_region", []))
+    if len(set(drive_regions)) != len(drive_regions) or any(
+        name not in district_locators or not district_locators[name].meta.get("independentScenery")
+        for name in drive_regions
+    ):
+        raise ValueError("drive regions require distinct independent source-map surveys")
+    drive_banks = {name: district_locators[name] for name in drive_regions}
+
+    search_only = {name: bank for name, bank in district_locators.items() if name not in drive_banks}
+
+    def covers(path):
+        return locator.covers(path) or any(bank.covers(path) for bank in drive_banks.values())
+
     tiles = DestinationTiles(road.base)
     detail = (
         StreetTiles(
@@ -335,12 +350,14 @@ def serve(args):
                     tiles=tiles.manifest(),
                     streetTiles=detail.manifest() if detail else None,
                     searchAtlases=district_digests,
+                    driveRegions=drive_regions,
                     searchCameraHfovs=args.search_hfov,
                     searchRegions=[
                         dict(
                             name=name,
                             points=bank.meta["visualTrace"],
                             radius=bank.meta["coverageRadius"],
+                            driveEnabled=name in drive_banks,
                         )
                         for name, bank in district_locators.items()
                     ],
@@ -373,7 +390,7 @@ def serve(args):
                     if payload.get("revision") != road.meta["placementRevision"]:
                         raise ValueError("invalid_goal")
                     return self.reply(
-                        200, plan(road, payload["stops"], payload["mode"], locator.covers)
+                        200, plan(road, payload["stops"], payload["mode"], covers)
                     )
                 if self.path == "/preview":
                     payload = json.loads(raw)
@@ -401,7 +418,7 @@ def serve(args):
                         dict(
                             path=path,
                             distance=sum(math.dist(a, b) for a, b in zip(path, path[1:])),
-                            covered=bool(locator.covers(path)),
+                            covered=bool(covers(path)),
                         ),
                     )
                 with lock:
@@ -451,7 +468,7 @@ def serve(args):
                     walkLevels=walk,
                     driveLevels=drive,
                     suggestion=suggestion,
-                    coveredLevels=[z for z in levels if locator.covers([[x, y, z]])],
+                    coveredLevels=[z for z in levels if covers([[x, y, z]])],
                 ),
             )
 
@@ -480,10 +497,10 @@ def serve(args):
                     raise ValueError("invalid_goal")
                 stops = payload.get("stops")
                 if stops is not None:
-                    selection = plan(road, stops, "drive", locator.covers)
+                    selection = plan(road, stops, "drive", covers)
                     if selection.get("status") != "complete" or not selection["covered"]:
                         raise ValueError("outside_visual_coverage")
-                trip = Trip(road, stops[0] if stops else payload["goal"], locator.covers)
+                trip = Trip(road, stops[0] if stops else payload["goal"], covers)
                 if stops:
                     trip.next_stops = stops[1:]
                 key = secrets.token_hex(24)
@@ -528,10 +545,18 @@ def serve(args):
             trip.frame_received = now
             trip.last_media_time = clock
             trip.last_sequence = seq
-            pose = locator.locate(gray)
-            response = trip.decide(pose, clock)
+            observed = locator.describe(gray)
+            fix = probe_atlases(gray, locator, drive_banks, observed=observed)
+            response = trip.decide(fix["pose"], clock)
+            if (observed is not None and not fix["pose"] and not fix["ambiguous"] and search_only
+                    and now >= getattr(trip, "next_region_search", 0)):
+                trip.next_region_search = now + 0.8
+                fix = probe_atlases(gray, locator, search_only, observed=observed, include_main=False)
+                if fix["pose"]:
+                    response.update(pose=fix["pose"], reason="outside_visual_coverage")
+            response.update(district=fix["district"], ambiguous=fix["ambiguous"])
             response["stopIndex"] = trip.stop_index
-            if pose and trip.path is not None:
+            if response["pose"] and response["reason"] != "outside_visual_coverage" and trip.path is not None:
                 response["path"] = trip.path.tolist()
             response.update(sequence=seq, computeMs=round((time.monotonic() - now) * 1000, 1))
             with trip.log.open("a", encoding="utf8") as f:
@@ -554,6 +579,7 @@ if __name__ == "__main__":
     p.add_argument(
         "--search-atlas", action="append", nargs=2, default=[], metavar=("DISTRICT", "NPZ")
     )
+    p.add_argument("--drive-region", action="append", default=[], metavar="DISTRICT")
     p.add_argument("--search-hfov", action="append", type=float, default=[])
     p.add_argument("--detail-folder", type=Path)
     p.add_argument("--water", type=Path)

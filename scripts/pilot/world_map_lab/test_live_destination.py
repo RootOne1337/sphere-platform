@@ -157,3 +157,31 @@ def test_nearby_repeated_object_needs_distant_street_support():
     assert loc.solve(world, project()) is None
     world[::3] *= 3
     assert loc.solve(world, project()) is not None
+
+
+def test_lane_reference_samples_follow_bends_and_include_last_surface():
+    from scripts.pilot.world_map_lab.capture_district_references import road_sites
+
+    class Map:
+        def route(self, start, end):
+            return dict(status="complete", path=[start, [0, 0, 0], [3, 0, 0], end])
+
+    sites = list(road_sites(Map(), [0, 0, 0, 3, 5, 0], 2))
+    assert [s[:3] for s in sites] == [
+        (0, 0, 1.45), (2, 0, 1.45), (3, 1, 1.45), (3, 3, 1.45), (3, 5, 1.45)
+    ]
+    assert sites[0][3] == 0 and sites[-1][3] == pytest.approx(np.pi / 2)
+
+
+def test_search_only_fallback_uses_existing_features_without_rechecking_main():
+    class Passive:
+        def locate_features(self, gray, *features):
+            assert features == ("uv", "desc")
+            return dict(eye=[8, 1, 2], heading=0, supports=48)
+
+        def covers(self, path):
+            return True
+
+    result = probe_atlases(None, None, {"district": Passive()},
+                           observed=("uv", "desc"), include_main=False)
+    assert result["district"] == "district" and result["pose"]["eye"] == [8, 1, 2]

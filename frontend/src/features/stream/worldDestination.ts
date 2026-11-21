@@ -6,7 +6,7 @@ export type WorldInfo = {
   bounds: [number, number, number, number];
   mapRevision: string;
   streetTiles?: { revision: string; spans: number[]; pixels: number } | null;
-  searchRegions?: { name: string; points: XYZ[]; radius: number }[];
+  searchRegions?: { name: string; points: XYZ[]; radius: number; driveEnabled?: boolean }[];
   tiles: { revision: string; width: number; height: number; tileSize: number };
   atlas: { visualTrace: XYZ[]; coverageRadius: number };
 };

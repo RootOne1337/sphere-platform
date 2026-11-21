@@ -14,6 +14,38 @@ from scripts.pilot.world_map_lab.live_destination import RoadMap
 from scripts.pilot.world_map_lab.run_world_map_suite import game_server, stage_assets
 
 
+def road_sites(road, endpoints, step):
+    """Sample a planned lane in world units, keeping both endpoints and local bearing."""
+    start, end = endpoints[:3], endpoints[3:]
+    route = road.route(start, end)
+    path = route.get("path", [])
+    if (
+        route.get("status") != "complete"
+        or len(path) < 2
+        or math.dist(path[0], start) > 2.5
+        or math.dist(path[-1], end) > 2.5
+    ):
+        raise ValueError("no continuous road between the survey endpoints")
+    distance = 0.0
+    next_sample = 0.0
+    last_bearing = None
+    for a, b in zip(path, path[1:]):
+        length = math.dist(a, b)
+        if length < 1e-5:
+            continue
+        last_bearing = math.atan2(b[1] - a[1], b[0] - a[0])
+        while next_sample < distance + length:
+            fraction = (next_sample - distance) / length
+            x, y, z = (u + (v - u) * fraction for u, v in zip(a, b))
+            yield x, y, z + 1.45, last_bearing
+            next_sample += step
+        distance += length
+    if last_bearing is None:
+        raise ValueError("road survey has no length")
+    x, y, z = path[-1]
+    yield x, y, z + 1.45, last_bearing
+
+
 def build(args):
     game = args.game.resolve()
     road = RoadMap(args.planner)
@@ -23,9 +55,15 @@ def build(args):
     if not 1 <= args.step <= 12 or args.heading_step <= 0 or 360 % args.heading_step:
         raise ValueError("invalid camera grid")
     sites = []
-    for x, y, z in grid_sites(road, args.bounds, args.step, ("drive", "walk")):
+    if args.road_endpoints:
+        cameras = road_sites(road, args.road_endpoints, args.step)
+    else:
+        cameras = (
+            (*site, 0.0) for site in grid_sites(road, args.bounds, args.step, ("drive", "walk"))
+        )
+    for x, y, z, bearing in cameras:
         for angle in range(0, 360, args.heading_step):
-            yaw = math.radians(angle + args.heading_offset)
+            yaw = bearing + math.radians(angle + args.heading_offset)
             sites.append(
                 dict(
                     referenceIndex=len(sites),
@@ -65,6 +103,7 @@ def build(args):
         revision=revision,
         step=args.step,
         bounds=args.bounds,
+        roadEndpoints=args.road_endpoints,
         headingStep=args.heading_step,
         headingOffset=args.heading_offset,
         views=len(sites),
@@ -79,7 +118,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("game", "mods", "scenario", "web", "compiler", "server", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
-    parser.add_argument("--bounds", nargs=4, type=int, required=True)
+    area = parser.add_mutually_exclusive_group(required=True)
+    area.add_argument("--bounds", nargs=4, type=int)
+    area.add_argument("--road-endpoints", nargs=6, type=float)
     parser.add_argument("--step", type=int, default=6)
     parser.add_argument("--heading-step", type=int, default=45)
     parser.add_argument("--heading-offset", type=float, default=0)

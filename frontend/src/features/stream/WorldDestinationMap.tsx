@@ -291,7 +291,7 @@ export function WorldDestinationMap(props: Props) {
         );
       if (layers.current.coverage)
         for (const region of info.searchRegions ?? []) {
-          ctx.fillStyle = "rgba(198,164,242,.45)";
+          ctx.fillStyle = region.driveEnabled ? "rgba(72,227,222,.48)" : "rgba(198,164,242,.45)";
           ctx.beginPath();
           for (const [x, y] of region.points) {
             const [a, b] = pixel(x, y),
@@ -572,7 +572,7 @@ export function WorldDestinationMap(props: Props) {
             <option value="coverage">Кремль · автопоездка</option>
             {info.searchRegions?.map((r) => (
               <option key={r.name} value={"search-" + r.name}>
-                {r.name} · проверка кадра
+                {r.name} · {r.driveEnabled ? "автопоездка" : "проверка кадра"}
               </option>
             ))}
             {sector === "custom" && (
