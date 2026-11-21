@@ -382,7 +382,7 @@ def serve(args):
             try:
                 size = int(self.headers.get("Content-Length", "0"))
                 frame = self.path in ("/frame", "/probe")
-                if not 0 <= size <= (384 * 1024 if frame else 4096):
+                if not 0 <= size <= (1536 * 1024 if frame and global_search else 384 * 1024 if frame else 4096):
                     return self.reply(413, dict(error="payload_size"))
                 typ = self.headers.get_content_type()
                 if typ != ("image/jpeg" if frame else "application/json"):
@@ -482,9 +482,11 @@ def serve(args):
         @staticmethod
         def decode_frame(raw):
             with Image.open(BytesIO(raw)) as pic:
-                if pic.format != "JPEG" or pic.size != SIZE:
+                sizes = (SIZE, (1280, 720), (1920, 1080)) if global_search else (SIZE,)
+                if pic.format != "JPEG" or pic.size not in sizes:
                     raise ValueError("invalid_frame")
-                return np.asarray(pic.convert("L"))
+                gray = pic.convert("L")
+                return np.asarray(gray if gray.size == SIZE else gray.resize(SIZE, Image.Resampling.BOX))
 
         def process(self, frame, raw):
             now = time.monotonic()

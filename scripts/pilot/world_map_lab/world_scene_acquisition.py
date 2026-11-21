@@ -9,10 +9,13 @@ import sys
 import tempfile
 import threading
 import time
+from io import BytesIO
 from pathlib import Path
+from zipfile import ZipFile
 
 import cv2
 import numpy as np
+from PIL import Image
 
 from scripts.pilot.world_map_lab.live_destination_atlas import Locator
 
@@ -114,6 +117,8 @@ def acquire(cfg, frames, output, planner, report):
             cfg["matcher"],
             "--output",
             output / "geometry.json",
+            "--survey",
+            gallery / "survey.json",
             "--tracking-atlas",
             output / "tracking.npz",
             *frames,
@@ -140,13 +145,20 @@ class WorldAcquisition:
         self.samples = []
         self.last_seen = self.last_sample = self.first_sample = self.retry = -math.inf
         self.busy = False
+        self.last_detail = -math.inf
+        self.detailed_samples = False
         existing = self.directory / "tracking.npz"
         if existing.exists():
             self.bank = Locator(existing, revision)
 
     def status(self):
         with self.lock:
-            return dict(phase=self.phase, samples=len(self.samples), tracking=self.bank is not None)
+            return dict(
+                phase=self.phase,
+                samples=len(self.samples),
+                tracking=self.bank is not None,
+                detailWidth=1920,
+            )
 
     def observe(self, raw, gray, observed):
         with self.lock:
@@ -162,7 +174,18 @@ class WorldAcquisition:
             if now - self.last_seen > 5:
                 self.samples.clear()
             self.last_seen = now
-            if now - self.last_sample < 0.55:
+            with Image.open(BytesIO(raw)) as image:
+                detailed = image.width >= 1280
+            if detailed:
+                if not self.detailed_samples:
+                    self.samples.clear()
+                self.detailed_samples = True
+                self.last_detail = now
+            elif now - self.last_detail < 2:
+                return None
+            elif self.detailed_samples and now - self.last_detail > 5:
+                self.detailed_samples = False
+            if now - self.last_sample < (0.3 if detailed else 0.55):
                 return None
             self.last_sample = now
             thumb = cv2.resize(gray, (64, 36), interpolation=cv2.INTER_AREA).astype(np.int16)
@@ -208,7 +231,16 @@ class WorldAcquisition:
                             self.bank = bank
                         state = "tracking"
                 finally:
-                    for name in ("search.log", "global.json", "local.json", "geometry.json"):
+                    with ZipFile(folder / "frames.zip", "w") as archive:
+                        for frame in frames:
+                            archive.write(frame, frame.name)
+                    for name in (
+                        "frames.zip",
+                        "search.log",
+                        "global.json",
+                        "local.json",
+                        "geometry.json",
+                    ):
                         if (folder / name).exists():
                             (folder / name).replace(self.directory / ("last-" + name))
         except Exception as exc:

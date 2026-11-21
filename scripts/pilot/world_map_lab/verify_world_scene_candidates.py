@@ -143,6 +143,9 @@ def run(args):
         hashlib.sha256(p.read_bytes()).hexdigest() for p in args.frames
     ]:
         raise ValueError("query images or frame order differ from the retrieval")
+    gallery = json.loads(args.survey.read_bytes()) if args.survey else None
+    if gallery and gallery["revision"] != source["revision"]:
+        raise ValueError("local survey and retrieval revision differ")
     meta = json.loads(args.scene.read_bytes())
     if source["revision"] != meta["revision"]:
         raise ValueError("map revision mismatch")
@@ -191,6 +194,7 @@ def run(args):
                 # challenge it from other live directions before publishing any position.
                 candidates = list(group["candidates"][: args.candidates])
                 initial_count = len(candidates)
+                tried_neighbors = refined_pose = False
                 for rank, candidate in enumerate(candidates):
                     for k, delta in views[: (12 if rank >= initial_count else args.views)]:
                         eye = candidate["eye"]
@@ -254,7 +258,7 @@ def run(args):
                                 pose=fix,
                             )
                         )
-                    if rank == initial_count - 1:
+                    if rank == len(candidates) - 1 and not refined_pose:
                         measured_rows = sorted(
                             (e for e in evidence if e["group"] == g and e["pose"]),
                             key=lambda e: -e["pose"]["supports"],
@@ -272,7 +276,32 @@ def run(args):
                             extra.append(dict(eye=fix["eye"], yaw=heading, site=-1 - len(extra)))
                             if len(extra) == 3:
                                 break
-                        candidates.extend(extra)
+                        if extra:
+                            refined_pose = True
+                            candidates.extend(extra)
+                        elif gallery and not tried_neighbors:
+                            tried_neighbors = True
+                            rows = [e for e in evidence if e["group"] == g]
+                            best = max(rows, key=lambda e: e["correspondences"], default=None)
+                            if best and best["correspondences"] >= 32:
+                                parent = candidates[best["rank"]]
+                                neighbors = sorted(
+                                    enumerate(gallery["eyes"]),
+                                    key=lambda item: math.dist(item[1], parent["eye"]),
+                                )
+                                for site, eye in neighbors:
+                                    if len(candidates) >= initial_count + 6:
+                                        break
+                                    dist = math.dist(eye, parent["eye"])
+                                    if dist < 3 or dist > 28 or abs(eye[2] - parent["eye"][2]) > 2:
+                                        continue
+                                    if any(
+                                        c["site"] == site
+                                        and math.cos(c["yaw"] - parent["yaw"]) > 0.995
+                                        for c in candidates
+                                    ):
+                                        continue
+                                    candidates.append(dict(site=site, eye=eye, yaw=parent["yaw"]))
                 confirmed.extend(
                     consistent_views([e for e in evidence if e["group"] == g and e["pose"]])
                 )
@@ -299,6 +328,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("scene", "results", "interpreter", "matcher", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--survey", type=Path)
     parser.add_argument("--tracking-atlas", type=Path)
     parser.add_argument("--planner", default="http://127.0.0.1:8817")
     parser.add_argument("--stream-focal", type=float)
