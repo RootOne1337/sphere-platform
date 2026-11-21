@@ -505,7 +505,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
     return <div ref={host} className={styles.console} aria-label="Навигация по живому экрану">
       <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} inputIssue={inputIssue} openInput={openVehicleInput}/>
       <aside className={styles.rail}>
-        <section aria-label="Живой экран" className={styles.panel}>
+        <section id="destination-stream" aria-label="Живой экран" className={styles.panel}>
           <header className={styles.panelHeader}><div><Radio size={17}/><h2>Живой экран</h2></div><span className={ready?styles.online:styles.offline}>{ready?'В эфире':'Офлайн'}</span></header>
           <div className={styles.monitor}>{gameScreen}{!ready&&<div className={styles.noSignal}><VideoOff size={25}/><strong>{phase==='connecting'?'Подключаем экран…':'Поток отключён'}</strong></div>}</div>
           <div className={styles.railBody}><Button variant="outline" disabled={readOnly||!storageScope||active(phase)||phase==='connecting'} onClick={()=>void connect()}><Signal size={15}/>{ready?'Переподключить поток':'Подключить поток'}</Button>
@@ -527,7 +527,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
           </dl>{ready&&<p>{encoded}</p>}</div></details>
         </section>
         <section className={styles.legendPanel}><h3>Легенда</h3><ul>
-          <li><i data-kind="coverage"/>Визуальные ориентиры</li><li><i data-kind="preview"/>Расчётный путь</li><li><i data-kind="active"/>Путь автопоездки</li><li><i data-kind="goal"/>Точка назначения</li>
+          <li><i data-kind="coverage"/>Ориентиры автопоездки</li><li><i data-kind="search"/>Проверка положения по кадру</li><li><i data-kind="preview"/>Расчётный путь</li><li><i data-kind="active"/>Путь автопоездки</li><li><i data-kind="goal"/>Точка назначения</li>
         </ul></section>
       </aside>
     </div>;
