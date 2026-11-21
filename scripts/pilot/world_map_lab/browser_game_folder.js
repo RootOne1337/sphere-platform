@@ -42,6 +42,31 @@ async function verifyGame(files, read) {
     if (!files.has(key) || (await digest(await read(key))) !== hash)
       throw Error("Не совпадает файл " + key);
   }
+  if (plan.packedScenesRequired)
+    await verifyPackedScenes(record, files, read, plan.placementCount);
+}
+
+export async function verifyPackedScenes(record, files, read, placementCount) {
+  const entries = Object.entries(record.packedScenes ?? {});
+  const names = entries.map(([name]) => "data/maps/brworld/" + name);
+  const layout = await (await read("data/gta.dat")).text();
+  const active = layout.split(/\r?\n/)
+    .map((line) => line.split("#")[0].trim())
+    .filter((line) => /^IPL\s+/i.test(line))
+    .map((line) => line.replace(/^IPL\s+/i, "").replaceAll("\\", "/").toLowerCase());
+  if (!entries.length || entries.length > 40 || names.length !== active.length ||
+      names.some((name, i) => name !== active[i]))
+    throw Error("Компоновка сцен в gta.dat не совпадает с картой для браузера.");
+  let count = 0;
+  for (const [i, [name, part]] of entries.entries()) {
+    if (!/^brp\d{3}\.ipl$/.test(name) || !Number.isInteger(part?.instances) ||
+        part.instances < 1 || part.instances > 4096 || !files.has(names[i]) ||
+        (await digest(await read(names[i]))) !== part.sha256)
+      throw Error("Не удалось проверить сцену " + name);
+    count += part.instances;
+  }
+  if (count !== placementCount)
+    throw Error("Число объектов в браузерной сборке не совпало с исходной картой.");
 }
 pick.addEventListener("change", async () => {
   const selection = pick.files;

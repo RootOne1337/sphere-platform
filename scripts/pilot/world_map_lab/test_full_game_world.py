@@ -4,6 +4,7 @@ import struct
 
 import pytest
 
+from scripts.pilot.world_map_lab import browser_world_scenes
 from scripts.pilot.world_map_lab.audit_game_runtime import GAME_FILES
 from scripts.pilot.world_map_lab.export_full_game_world import build, check_scene, img_directory
 from scripts.pilot.world_map_lab.native_collisions import COL, ENTRY, SECTOR
@@ -25,7 +26,7 @@ def chunk(kind, content):
     return struct.pack("<III", kind, len(content), 0) + content
 
 
-def test_full_map_preserves_overrides_independent_scenes_and_gameplay(tmp_path):
+def test_full_map_preserves_overrides_independent_scenes_and_gameplay(tmp_path, monkeypatch):
     source = tmp_path / "source"
     data = source / "data"
     models = source / "models"
@@ -140,6 +141,22 @@ def test_full_map_preserves_overrides_independent_scenes_and_gameplay(tmp_path):
     assert "gameExecutableSha256" not in record and "limitsFile" not in record
     assert (web / "data/gta.dat").read_bytes() == (alt_dest / "data/gta.dat").read_bytes()
     assert (web / "sphere-route.json").read_bytes() == alternate.read_bytes()
+    # Force the browser packaging path with two source scenes sharing local LOD index 1.
+    monkeypatch.setattr(browser_world_scenes, "MAX_SCENES", 1)
+    packed_game = tmp_path / "packed-browser-game"
+    stage(game, world, packed_game, scenario, browser=True)
+    receipt = json.loads((packed_game / "sphere-full-world.json").read_bytes())
+    parts = receipt["packedScenes"]
+    assert list(parts) == ["brp000.ipl"]
+    part = packed_game / "data/maps/brworld/brp000.ipl"
+    rows = browser_world_scenes.placements(part)
+    assert [lod for _, lod in rows] == [1, -1, 3, -1]
+    assert [payload.split(",")[:3] for payload, _ in rows] == [
+        ["1001", "shop", area] for area in ("0", "0", "1", "1")
+    ]
+    assert parts[part.name]["sha256"] == hashlib.sha256(part.read_bytes()).hexdigest()
+    active = (packed_game / "data/gta.dat").read_text().lower()
+    assert "brp000.ipl" in active and "brs000.ipl" not in active
     (game / "ignored.exe").rename(game / "gta_sa.exe")
     (scenario / "sphere-route.json").write_bytes(b"altered route")
     with pytest.raises(ValueError, match="itinerary checksum"):
@@ -164,3 +181,21 @@ def test_invalid_or_cyclic_lod_cannot_be_published(tmp_path, target):
     path.write_text(f"inst\n1000,shop,0,0,0,0,0,0,0,1,{target}\nend")
     with pytest.raises(ValueError, match="LOD"):
         check_scene(path, {"shop": 1000})
+
+
+def test_browser_keeps_shared_lod_and_rejects_an_indivisible_group(tmp_path, monkeypatch):
+    scene = tmp_path / "shared.ipl"
+    scene.write_text(
+        "inst\n"
+        + "".join(f"1000,x,0,{i},2,3,0,0,0,1,{lod}\n" for i, lod in enumerate([4, -1, 4, 0, -1]))
+        + "end\n"
+    )
+    spec = [dict(packaged=scene.name, instances=5, lodLinks=3)]
+    monkeypatch.setattr(browser_world_scenes, "MAX_INSTANCES", 4)
+    parts = browser_world_scenes.pack_scenes(tmp_path, spec, tmp_path)
+    assert [part["instances"] for part in parts.values()] == [4, 1]
+    rows = browser_world_scenes.placements(tmp_path / "brp000.ipl")
+    assert [(int(s.split(",")[3]), lod) for s, lod in rows] == [(0, 3), (2, 3), (3, 0), (4, -1)]
+    monkeypatch.setattr(browser_world_scenes, "MAX_INSTANCES", 3)
+    with pytest.raises(ValueError, match="one LOD group"):
+        browser_world_scenes.pack_scenes(tmp_path, spec, tmp_path)

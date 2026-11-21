@@ -7,6 +7,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from scripts.pilot.world_map_lab.audit_game_runtime import inspect_runtime
+from scripts.pilot.world_map_lab.browser_world_scenes import (
+    MAX_INSTANCES,
+    MAX_SCENES,
+    pack_scenes,
+    requires_packing,
+)
 from scripts.pilot.world_map_lab.classic_world_binding import bind_world
 from scripts.pilot.world_map_lab.classic_world_limits import CONFIG_NAME, merge_limits, requirements
 from scripts.pilot.world_map_lab.export_full_game_world import digest, source_file
@@ -119,7 +125,19 @@ def stage(game, world, destination, scenario, *, browser=False):
         )
         config = root / CONFIG_NAME
         if browser:
-            runtime_fields = {"runtime": "browser-wasm", "requiredWorldLimits": needed}
+            if requires_packing(manifest["scenes"]):
+                packed = pack_scenes(root / map_dir, manifest["scenes"], root / map_dir)
+                additions = [line for line in additions if not line.startswith("IPL ")]
+                additions.extend("IPL " + (map_dir + name).replace("/", "\\") for name in packed)
+                needed["IPL"]["Inst entries per file"] = MAX_INSTANCES
+                needed["IPL"]["Entity index array"] = MAX_SCENES
+            else:
+                packed = {}
+            runtime_fields = {
+                "runtime": "browser-wasm",
+                "requiredWorldLimits": needed,
+                "packedScenes": packed,
+            }
         else:
             existing = config.read_text(encoding="cp1252") if config.is_file() else ""
             config.write_text(merge_limits(existing, needed), encoding="cp1252")

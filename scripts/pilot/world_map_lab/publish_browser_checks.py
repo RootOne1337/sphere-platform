@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 from scripts.pilot.world_map_lab.audit_game_runtime import GAME_FILES
+from scripts.pilot.world_map_lab.browser_world_scenes import requires_packing
 from scripts.pilot.world_map_lab.export_full_game_world import digest
 
 
@@ -60,6 +61,8 @@ def publish(web, game, manifest, scenario):
             "data/water.dat",
             "data/timecyc.dat",
         ],
+        packedScenesRequired=requires_packing(world["scenes"]),
+        placementCount=world["instances"],
         archiveBytes={a["path"]: a["bytes"] for a in banks[2:]},
     )
     (web / "browser-course.json").write_text(json.dumps(spec), encoding="utf8")
