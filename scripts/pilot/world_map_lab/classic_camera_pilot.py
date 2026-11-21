@@ -345,6 +345,12 @@ class CameraPilot:
             drive_phase = self.journey.stage == "drive"
             self.journey.step(row, fit, self.reset_driver)
             row["drive_enabled"] = drive_phase and self.journey.stage == "drive"
+        if (self.journey is None or row.get("drive_enabled")) and self.driver.terminal:
+            row["controller_finished"] = self.driver.terminal[0] not in (
+                "vehicle_progress_discontinuity",
+                "vehicle_relocalization_timeout",
+                "vehicle_pose_discontinuity",
+            )
         return row
 
 

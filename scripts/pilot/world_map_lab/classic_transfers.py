@@ -89,7 +89,19 @@ class MixedJourney:
             return
         if self.stage in ("approach", "depart"):
             path = self.walks[0 if self.stage == "approach" else 1]
-            if abs(eye[2] - path[-1, 2] - 1.5) > 1.6:
+            # Compare to the floor directly beneath the observed part of the walk.
+            # A long approach can cross a slope well above or below its endpoint.
+            delta = np.diff(path, axis=0)
+            ground = eye - [0.0, 0.0, 1.5]
+            fraction = np.clip(
+                np.einsum("ij,ij->i", ground - path[:-1], delta)
+                / np.maximum(1e-9, np.sum(delta**2, axis=1)),
+                0,
+                1,
+            )
+            closest = path[:-1] + delta * fraction[:, None]
+            local = closest[np.argmin(np.linalg.norm(closest - ground, axis=1))]
+            if abs(ground[2] - local[2]) > 1.6:
                 return
             if self.stage == "approach" and np.linalg.norm(eye[:2] - path[0, :2]) <= 1.6:
                 self.saw_start = True

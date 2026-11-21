@@ -55,6 +55,8 @@ def prepare_full(game, world, scenario, output):
     valid = (
         record["sourceGameDirectory"] == str(game)
         and record["worldManifestSha256"] == digest(world / "world-manifest.json")
+        and selected.get("worldManifestSha256", record["worldManifestSha256"])
+        == record["worldManifestSha256"]
         and record["routeSha256"] == selected["routeSha256"] == digest(output / "sphere-route.json")
         and record["gameExecutableSha256"]
         == digest(game / "gta_sa.exe")
@@ -85,7 +87,14 @@ if __name__ == "__main__":
     for key in ("scenario", "output"):
         cli.add_argument("--" + key, required=True, type=Path)
     cli.add_argument("--prepare-only", action="store_true")
-    cli.add_argument(
+    pilot_group = cli.add_mutually_exclusive_group()
+    pilot_group.add_argument(
+        "--world-pilot",
+        type=Path,
+        metavar="COURSE_ATLAS",
+        help="use map-derived RGB landmarks for the complete selected itinerary",
+    )
+    pilot_group.add_argument(
         "--visual-pilot",
         type=Path,
         nargs=4,
@@ -94,11 +103,16 @@ if __name__ == "__main__":
     )
     cli.add_argument("--hfov", type=float, help="use a measured native camera field of view")
     args = cli.parse_args()
-    if args.visual_pilot and (not args.world or args.prepare_only):
-        cli.error("--visual-pilot requires launching the full world")
+    if (args.visual_pilot or args.world_pilot) and (not args.world or args.prepare_only):
+        cli.error("the visual pilot requires launching the full world")
     if args.visual_pilot:
         transfer_bank = (args.scenario / "transfer-views.npz").resolve(strict=True)
         lab, source, controller, bank = (p.resolve(strict=True) for p in args.visual_pilot)
+    if args.world_pilot:
+        index = json.loads((args.world_pilot / "index.json").read_bytes())
+        selected = json.loads((args.scenario / "classic-scenario.json").read_bytes())
+        if index["routeSha256"] != selected["routeSha256"]:
+            cli.error("visual landmarks and mission are from different itineraries")
     if args.game is None:
         import tkinter as tk
         from tkinter import filedialog
@@ -128,12 +142,30 @@ if __name__ == "__main__":
         print(exe)
     else:
         subprocess.Popen([str(exe)], cwd=exe.parent)
-        if args.visual_pilot:
+        if args.visual_pilot or args.world_pilot:
             attempt = (
                 exe.parent.parent
                 / "native-runs"
                 / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
             )
+            if args.world_pilot:
+                subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "scripts.pilot.world_map_lab.classic_world_pilot",
+                        "--game",
+                        str(exe.parent),
+                        "--bank",
+                        str(args.world_pilot.resolve()),
+                        "--output",
+                        str(attempt),
+                        "--actuate",
+                        *(["--hfov", str(args.hfov)] if args.hfov is not None else []),
+                    ],
+                    check=True,
+                )
+                raise SystemExit(0)
             attempt.mkdir(parents=True, exist_ok=False)
             subprocess.run(
                 [

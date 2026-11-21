@@ -35,6 +35,10 @@ class KeyLease:
     def refresh(self, row, captured):
         now = self.clock()
         with self.lock:
+            if now - captured >= 0.25:
+                self.deadlines.clear()
+                self._tick(now)
+                return
             self.deadlines = {key: captured + 0.35 for key in desired_keys(row)}
             if "F" in self.deadlines:
                 self.deadlines["F"] = min(captured + 0.35, now + 0.11)
@@ -261,16 +265,7 @@ def drive_window(pilot, folder, actuate, movie_path=None, *, keys_file=None):
                 yield row
                 if row.get("goal_seen"):
                     break
-                if (
-                    (pilot.journey is None or row.get("drive_enabled"))
-                    and pilot.driver.terminal
-                    and pilot.driver.terminal[0]
-                    not in (
-                        "vehicle_progress_discontinuity",
-                        "vehicle_relocalization_timeout",
-                        "vehicle_pose_discontinuity",
-                    )
-                ):
+                if row.get("controller_finished"):
                     break
                 done.wait(max(0.0, stamp + 0.20 - time.monotonic()))
     finally:

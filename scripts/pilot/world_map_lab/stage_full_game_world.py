@@ -37,7 +37,15 @@ def stage(game, world, destination, scenario):
         raise ValueError("full-world manifest required")
     scenario = scenario.resolve(strict=True)
     scripts = json.loads((scenario / "classic-scenario.json").read_bytes())
-    if not manifest["routeSha256"] or manifest["routeSha256"] != scripts["routeSha256"]:
+    if "worldManifestSha256" in scripts:
+        if scripts["worldManifestSha256"] != digest(world / "world-manifest.json"):
+            raise ValueError("scenario was compiled for another world")
+        itinerary = source_file(scenario, "sphere-route.json")
+        if digest(itinerary) != scripts["routeSha256"]:
+            raise ValueError("compiled itinerary checksum mismatch")
+    elif manifest["routeSha256"] and manifest["routeSha256"] == scripts["routeSha256"]:
+        itinerary = source_file(world, "sphere-route.json")
+    else:
         raise ValueError("world and compiled scenario belong to different routes")
     missing = [
         p
@@ -73,11 +81,12 @@ def stage(game, world, destination, scenario):
         root = Path(temp) / "game"
         shutil.copytree(game, root)
         for rel, checksum in expected.items():
-            src = (
-                source_file(scenario, Path(rel).name)
-                if rel.startswith("data/script/")
-                else source_file(world, rel)
-            )
+            if rel == "sphere-route.json":
+                src = itinerary
+            elif rel.startswith("data/script/"):
+                src = source_file(scenario, Path(rel).name)
+            else:
+                src = source_file(world, rel)
             target = (root / rel).resolve()
             if not target.is_relative_to(root):
                 raise ValueError("overlay path outside destination")

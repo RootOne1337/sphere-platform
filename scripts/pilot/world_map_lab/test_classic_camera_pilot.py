@@ -42,6 +42,23 @@ def test_keyboard_holds_across_decisions_and_expires_during_slow_search():
     assert not lease.held
 
 
+def test_delayed_delivery_cannot_extend_throttle_even_if_reported_processing_was_fast():
+    now, events = [1.0], []
+    lease = KeyLease(lambda: True, lambda key, down: events.append((key, down)), lambda: now[0])
+    row = dict(
+        phase="following",
+        vision="matched",
+        latency_ms=25,
+        pedal="throttle",
+        terminal_brake=False,
+        steering=0.0,
+    )
+    lease.refresh(row, 0.99)
+    now[0] = 1.32
+    lease.refresh(row, 1.01)
+    assert events == [("W", True), ("W", False)]
+
+
 def test_keep_existing_capacity_and_refuse_ambiguous_override():
     original = "[IPL]\n# Buildings = 10\nBuildings = 90 ; keep\nDummies = 10\n\n[Other]\nx = 4\n"
     needs = {
@@ -140,3 +157,15 @@ def test_native_lens_identifies_camera_and_rejects_single_plane(hfov):
     points[:, 2] = 10
     flat = cv2.projectPoints(points, np.zeros(3), np.zeros(3), k, None)[0][:, 0, :]
     assert focal_from_map(points, flat, w, h) is None
+
+
+def test_long_walk_uses_nearby_floor_when_endpoint_is_uphill():
+    paths = [[[0, 0, 0], [0, 30, 4]], [[0, 30, 4], [20, 30, 4]], [[20, 30, 4], [20, 35, 4]]]
+    state = MixedJourney(paths)
+    rot = np.eye(3)
+    rot[2] = [0, 1, 0]
+    for i in range(3):
+        eye = np.array([0.0, i * 0.1, 1.5 + i * 0.1 * 4 / 30])
+        row = dict(phase="waiting", vision="matched", latency_ms=35, capture_s=i * 0.2)
+        state.step(row, (eye, rot, i * 0.1, 60, 0.4), lambda: None)
+    assert state.saw_start and row["keys"] == ["W"]

@@ -112,6 +112,34 @@ def test_full_map_preserves_overrides_independent_scenes_and_gameplay(tmp_path):
     (dest / "data/gta.dat").write_text("EXIT\n")
     with pytest.raises(ValueError, match="стенда"):
         prepare_full(game, world, scenario, dest)
+    # A second native mission can use the same 3D world but must carry its own exact itinerary.
+    alternate = tmp_path / "cross-map.json"
+    alternate.write_bytes(b"another route")
+    new_route = hashlib.sha256(alternate.read_bytes()).hexdigest()
+    binding = dict(
+        files=hashes,
+        routeSha256=new_route,
+        worldManifestSha256=hashlib.sha256(
+            (world / "world-manifest.json").read_bytes()
+        ).hexdigest(),
+    )
+    (scenario / "classic-scenario.json").write_text(json.dumps(binding))
+    (scenario / "sphere-route.json").write_bytes(alternate.read_bytes())
+    alt_dest = tmp_path / "other-game"
+    stage(game, world, alt_dest, scenario)
+    assert (alt_dest / "sphere-route.json").read_bytes() == alternate.read_bytes()
+    assert prepare_full(game, world, scenario, alt_dest) == alt_dest / "gta_sa.exe"
+    assert (world / "sphere-route.json").read_bytes() == route.read_bytes()
+    (scenario / "sphere-route.json").write_bytes(b"altered route")
+    with pytest.raises(ValueError, match="itinerary checksum"):
+        stage(game, world, tmp_path / "bad-itinerary", scenario)
+    (scenario / "sphere-route.json").write_bytes(alternate.read_bytes())
+    (scenario / "classic-scenario.json").write_text(
+        json.dumps(dict(binding, worldManifestSha256="0" * 64))
+    )
+    with pytest.raises(ValueError, match="another world"):
+        stage(game, world, tmp_path / "bad-world", scenario)
+    (scenario / "classic-scenario.json").write_text(json.dumps(binding))
     damaged = world / "data/maps/brworld/brw00.img"
     damaged.write_bytes(b"invalid")
     with pytest.raises(ValueError, match="checksum mismatch"):

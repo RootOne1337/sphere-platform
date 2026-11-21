@@ -64,7 +64,9 @@ class Lane:
 
 def correct(pose, images, focal, descriptors=False, *, sparse_scene=False):
     ref, dep, live = [
-        np.frombuffer(base64.b64decode(x), dtype="<u2" if i == 1 else "u1").reshape(H, W)
+        x
+        if isinstance(x, np.ndarray)
+        else np.frombuffer(base64.b64decode(x), dtype="<u2" if i == 1 else "u1").reshape(H, W)
         for i, x in enumerate(images)
     ]
     dep = dep.astype(np.float32) / 128.0

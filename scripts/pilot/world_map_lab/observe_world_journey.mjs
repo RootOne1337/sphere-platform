@@ -66,6 +66,13 @@ async ({ width: w, height: h, model = "faggio" }) => {
         ? [bytes(grey), bytes(new Uint8Array(z.buffer))]
         : bytes(grey);
   }
+  // Offline reference capture: render only the static environment at the selected map pose.
+  window.mapReference = async (pose) => {
+    ride = false;
+    world.vehicle(null, 0, false);
+    await world.ensure(...pose.slice(0, 3));
+    return view(pose, true);
+  };
   window.observePair = async ([prior, actual, vehicle]) => {
     ride = vehicle.mounted;
     panAngle = vehicle.pan ?? 0;
