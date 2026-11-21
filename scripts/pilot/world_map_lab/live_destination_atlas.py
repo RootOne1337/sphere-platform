@@ -210,11 +210,17 @@ class Locator:
                 return False
         return True
 
-    def locate(self, gray):
+    def describe(self, gray):
         h, w = gray.shape
-        if abs(w / h - SIZE[0] / SIZE[1]) > 0.01:
+        if not h or abs(w / h - SIZE[0] / SIZE[1]) > 0.01:
             return None
-        uv, desc = features(gray, self.detector)
+        return features(gray, self.detector)
+
+    def locate(self, gray):
+        observed = self.describe(gray)
+        return self.locate_features(gray, *observed) if observed is not None else None
+
+    def locate_features(self, gray, uv, desc):
         if len(uv) < 24:
             return None
         matches = self.matcher.knnMatch(desc, k=8)
@@ -325,6 +331,13 @@ class Locator:
         if R[1, 2] > -0.65 or abs(R[2, 2]) > 0.65:
             return None
         eye = -R.T @ t[:, 0]
+        if self.meta.get("independentScenery"):
+            depth = (obj - eye) @ R[2]
+            # Two walls on one nearby kiosk can constrain a precise but wrong pose.
+            # Verify street context beyond that object before accepting a cold fix.
+            background = px[depth > max(10.0, np.percentile(depth, 15) + 4.0)]
+            if len(background) < 6 or len(np.unique((background // 64).astype(int), axis=0)) < 3:
+                return None
         reproj = cv2.projectPoints(obj, r, t, camera, None)[0][:, 0]
         if (
             np.median(np.linalg.norm(reproj - px, axis=1)) > 1.7

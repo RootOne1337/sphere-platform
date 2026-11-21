@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pytest
 
-from scripts.pilot.world_map_lab.live_destination import Trip
+from scripts.pilot.world_map_lab.live_destination import Trip, probe_atlases
 from scripts.pilot.world_map_lab.live_destination_atlas import Locator, distributed_surface_support
 
 
@@ -119,3 +119,41 @@ def test_different_lenses_must_agree_before_reporting_a_search_pose():
     assert loc.solve(None, None) is None
     loc.solve_with_camera = lambda camera, *_: pose(0.1) if camera[0, 0] > 400 else None
     assert loc.solve(None, None)["eye"] == [0.1, 0, 1.45]
+
+def test_overlapping_search_atlases_reuse_features_and_reject_conflicting_locations():
+    class Index:
+        def __init__(self, x, strength):
+            self.x, self.strength, self.descriptions = x, strength, 0
+
+        def describe(self, gray):
+            self.descriptions += 1
+            return "pixels", "descriptors"
+
+        def locate_features(self, gray, pixels, descriptors):
+            assert (pixels, descriptors) == ("pixels", "descriptors")
+            return dict(eye=[self.x, 0, 2], heading=0, supports=self.strength)
+
+        def covers(self, path):
+            return True
+
+    first, overlap = Index(10, 32), Index(10.1, 60)
+    result = probe_atlases(None, first, {"overlap": overlap})
+    assert not result["ambiguous"] and result["district"] == "overlap"
+    assert (first.descriptions, overlap.descriptions) == (1, 0)
+    conflict = probe_atlases(None, first, {"overlap": overlap, "similar": Index(45, 80)})
+    assert conflict == dict(pose=None, district=None, ambiguous=True)
+
+
+def test_nearby_repeated_object_needs_distant_street_support():
+    loc = Locator.__new__(Locator)
+    loc.origin = np.zeros(3)
+    loc.meta = {"source": "source-map-grid", "independentScenery": True}
+    loc.k = np.array([[340., 0., 320.], [0., 340., 180.], [0., 0., 1.]])
+    rng = np.random.default_rng(101)
+    world = rng.uniform([-3, 5, -2], [3, 8, 2], (150, 3)).astype(np.float32)
+    rotation = np.array([[1., 0., 0.], [0., 0., -1.], [0., 1., 0.]])
+    def project():
+        return cv2.projectPoints(world, cv2.Rodrigues(rotation)[0], np.zeros(3), loc.k, None)[0][:, 0]
+    assert loc.solve(world, project()) is None
+    world[::3] *= 3
+    assert loc.solve(world, project()) is not None

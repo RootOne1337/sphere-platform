@@ -4,6 +4,7 @@ import argparse
 import base64
 import json
 import math
+import tempfile
 import time
 from pathlib import Path
 
@@ -12,6 +13,7 @@ import numpy as np
 from playwright.sync_api import sync_playwright
 
 from scripts.pilot.world_map_lab.bake_world_course import renderer
+from scripts.pilot.world_map_lab.export_full_game_world import digest
 from scripts.pilot.world_map_lab.live_destination import RoadMap
 from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator, features
 
@@ -32,57 +34,129 @@ def lift(uv, depth, focal, pose):
     return (pose[:3] + (rays @ axes) * depth[:, None]).astype(np.float32)
 
 
-def bake(page, sites, focal, revision, output):
+def grid_sites(road, bounds, step, modes):
+    if step < 1:
+        raise ValueError("grid step must be positive")
+    x0, y0, x1, y1 = bounds
+    sites = []
+    for x in range(x0, x1 + 1, step):
+        for y in range(y0, y1 + 1, step):
+            levels = []
+            for mode in modes:
+                for z in road.levels(x, y, mode):
+                    # Sidewalk and road meshes can describe the same physical floor.
+                    if all(abs(z - other) > 0.35 for other in levels):
+                        levels.append(z)
+            sites.extend([x, y, z + 1.45] for z in levels)
+    return sites
+
+
+def map_views(page, sites, heading_step, focal):
+    if heading_step < 1 or 360 % heading_step:
+        raise ValueError("heading step must divide 360")
+    for site in sites:
+        for yaw in range(0, 360, heading_step):
+            pose = [*site, math.radians(yaw), -0.045]
+            gray, depth = render(page, pose)
+            yield pose, gray, depth, focal
+
+
+def engine_views(page, folder, renderer_focal):
+    """Use a separate static map survey with an observed camera for depth alignment."""
+    from scripts.pilot.world_map_lab.bake_game_reference_views import reproject_depth
+
+    for item in json.loads((folder / "samples.json").read_bytes()).values():
+        if item.get("imageStd", 0) < 5 or item["io"]["failed"]:
+            continue
+        x, y, z = item["nativeForward"]
+        pose = [*item["nativeCamera"], math.atan2(y, x), math.atan2(z, math.hypot(x, y))]
+        hfov = item["hfov"]
+        if not 35 <= hfov <= 150:
+            raise ValueError("invalid surveyed camera")
+        focal = SIZE[0] / (2 * math.tan(math.radians(hfov) / 2))
+        gray = cv2.imread(str(folder / item["file"]), cv2.IMREAD_GRAYSCALE)
+        if gray is None or abs(gray.shape[1] / gray.shape[0] - SIZE[0] / SIZE[1]) > 0.01:
+            raise ValueError("missing or incompatible reference frame")
+        _, depth = render(page, pose)
+        yield (
+            pose,
+            cv2.resize(gray, SIZE, interpolation=cv2.INTER_AREA),
+            reproject_depth(depth, renderer_focal, focal),
+            focal,
+        )
+
+
+def bake_views(samples, revision, output, *, engine_reference_spacing=None):
     detector = cv2.SIFT_create(nfeatures=600, contrastThreshold=0.018)
     offsets, views, pixels, world, desc, ids = [0], [], [], [], [], []
-    for site in sites:
-        for yaw in range(0, 360, 45):
-            pose = [*site, math.radians(yaw), -0.045]
-            gray, z = render(page, pose)
-            uv, descriptors = features(gray, detector)
-            if not len(uv):
-                continue
-            x, y = np.rint(uv).astype(int).T
-            x = np.clip(x, 1, SIZE[0] - 2)
-            y = np.clip(y, 1, SIZE[1] - 2)
-            depth = z[y, x]
-            # Avoid silhouettes where one pixel may belong to either surface.
-            stable = np.maximum.reduce(
-                [np.abs(z[y + dy, x + dx] - depth) for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]]
-            )
-            use = (depth > 1) & (depth < 180) & (stable < 0.12 + 0.02 * depth)
-            if use.sum() < 36:
-                continue
-            pixels.append(uv[use])
-            world.append(lift(uv[use], depth[use], focal, pose))
-            desc.append(descriptors[use])
-            ids.append(np.full(use.sum(), len(views), np.int32))
-            views.append(gray)
-            offsets.append(offsets[-1] + int(use.sum()))
+    sites = {}
+    atlas_focal = None
+    for pose, gray, z, focal in samples:
+        if atlas_focal is None:
+            atlas_focal = focal
+        elif not math.isclose(atlas_focal, focal, rel_tol=1e-6):
+            raise ValueError("a reference bank requires one calibrated lens")
+        uv, descriptors = features(gray, detector)
+        if not len(uv):
+            continue
+        x, y = np.rint(uv).astype(int).T
+        x = np.clip(x, 1, SIZE[0] - 2)
+        y = np.clip(y, 1, SIZE[1] - 2)
+        depth = z[y, x]
+        # Avoid silhouettes where one pixel may belong to either surface.
+        stable = np.maximum.reduce(
+            [np.abs(z[y + dy, x + dx] - depth) for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]]
+        )
+        use = (depth > 1) & (depth < 180) & (stable < 0.12 + 0.02 * depth)
+        if use.sum() < 36:
+            continue
+        pixels.append(uv[use])
+        world.append(lift(uv[use], depth[use], focal, pose))
+        desc.append(descriptors[use])
+        ids.append(np.full(use.sum(), len(views), np.int32))
+        views.append(gray)
+        offsets.append(offsets[-1] + int(use.sum()))
+        sites[tuple(pose[:3])] = None
     if not views:
         raise ValueError("no map views with stable depth")
     xyz = np.concatenate(world)
     meta = dict(
         revision=revision,
-        visualTrace=sites,
+        visualTrace=list(sites),
         coverageRadius=4,
         source="source-map-grid",
         trainingViews=len(views),
         landmarks=len(xyz),
     )
-    np.savez_compressed(
-        output,
-        meta=json.dumps(meta),
-        intrinsics=[focal, focal, *((np.array(SIZE) - 1) / 2)],
-        views=views,
-        xyz=xyz,
-        desc=np.concatenate(desc),
-        viewIds=np.concatenate(ids),
-        trackOffsets=offsets,
-        trackPixels=np.concatenate(pixels),
-        trackXYZ=xyz,
-    )
+    if engine_reference_spacing is not None:
+        if not 0 < engine_reference_spacing <= 12:
+            raise ValueError("invalid reference grid spacing")
+        meta.update(independentScenery=True, coverageRadius=engine_reference_spacing / math.sqrt(2))
+    # Leave the last usable bank intact if compression or a disk write fails.
+    output = Path(output)
+    with tempfile.NamedTemporaryFile(dir=output.parent, suffix=".npz", delete=False) as handle:
+        temporary = Path(handle.name)
+    try:
+        np.savez_compressed(
+            temporary,
+            meta=json.dumps(meta),
+            intrinsics=[focal, focal, *((np.array(SIZE) - 1) / 2)],
+            views=views,
+            xyz=xyz,
+            desc=np.concatenate(desc),
+            viewIds=np.concatenate(ids),
+            trackOffsets=offsets,
+            trackPixels=np.concatenate(pixels),
+            trackXYZ=xyz,
+        )
+        temporary.replace(output)
+    finally:
+        temporary.unlink(missing_ok=True)
     return meta
+
+
+def bake(page, sites, focal, revision, output, heading_step=45):
+    return bake_views(map_views(page, sites, heading_step, focal), revision, output)
 
 
 def check(locator, gray, focal, eye, yaw):
@@ -107,12 +181,7 @@ def main(args):
     road = RoadMap(args.planner)
     rev = road.meta["placementRevision"]
     x0, y0, x1, y1 = args.atlas_bounds or args.bounds
-    sites = [
-        [x, y, z + 1.45]
-        for x in range(x0, x1 + 1, args.step)
-        for y in range(y0, y1 + 1, args.step)
-        for z in road.levels(x, y)
-    ]
+    sites = grid_sites(road, (x0, y0, x1, y1), args.step, args.surfaces)
     if not sites:
         raise ValueError("no roads in the requested district")
     args.output.mkdir(parents=True, exist_ok=True)
@@ -121,7 +190,22 @@ def main(args):
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True, args=["--enable-gpu", "--use-angle=d3d11"])
         page, focal = renderer(browser, args.planner, args.scene, SIZE)
-        meta = bake(page, sites, focal, rev, bank)
+        if args.engine_references:
+            if args.engine_references.resolve() == args.native.resolve():
+                raise ValueError("reference captures must be independent of scored frames")
+            survey = json.loads((args.engine_references / "survey.json").read_bytes())
+            if survey["revision"] != rev or survey["samplesSha256"] != digest(
+                args.engine_references / "samples.json"
+            ):
+                raise ValueError("reference survey does not match source map or samples")
+            meta = bake_views(
+                engine_views(page, args.engine_references, focal),
+                rev,
+                bank,
+                engine_reference_spacing=survey["step"],
+            )
+        else:
+            meta = bake(page, sites, focal, rev, bank, args.heading_step)
         print("Map views:", meta["trainingViews"], flush=True)
         locator = Locator(bank, rev)
         synthetic = []
@@ -190,6 +274,9 @@ if __name__ == "__main__":
         nargs=4,
         help="Include lookalike streets around the scoring district",
     )
+    parser.add_argument("--surfaces", nargs="+", choices=("drive", "walk"), default=["drive"])
+    parser.add_argument("--heading-step", type=int, default=45)
+    parser.add_argument("--engine-references", type=Path)
     parser.add_argument("--step", type=int, default=8)
     parser.add_argument("--planner", default="http://127.0.0.1:8817")
     parser.add_argument(

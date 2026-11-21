@@ -46,7 +46,7 @@ def plan_views(views, walk_spacing, road_spacing, road_end):
 def camera_mission(base, sites):
     lines = [base[: base.index("camera_loop:")], "SET_CHAR_VISIBLE scplayer 0", "WAIT 500"]
     anchor = None
-    for site in sites:
+    for index, site in enumerate(sites):
         x, y, z = site["eye"]
         if anchor is None or math.dist((x, y), anchor) > 30:
             lines.extend(
@@ -64,7 +64,7 @@ def camera_mission(base, sites):
             [
                 f"SET_FIXED_CAMERA_POSITION {eye} 0.0 0.0 0.0",
                 f"POINT_CAMERA_AT_POINT {target} 2",
-                "WAIT 1350",
+                "WAIT 5200" if index == 0 else "WAIT 1350",
             ]
         )
     return "\n".join([*lines, "survey_end:", "WAIT 0", "GOTO survey_end", "}", ""])

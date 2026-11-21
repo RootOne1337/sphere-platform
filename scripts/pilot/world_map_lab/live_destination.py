@@ -206,6 +206,31 @@ class Trip:
         return float(delta[i]), float(self.arc[i] + u[i] * self.ds[i]), i
 
 
+def probe_atlases(gray, main, districts):
+    # All indexes use the same RootSIFT representation and normalized image size.
+    observed = main.describe(gray)
+    found = []
+    if observed is not None:
+        for name, bank in [(None, main), *districts.items()]:
+            pose = bank.locate_features(gray, *observed)
+            if pose is not None:
+                x, y, z = pose["eye"]
+                if bank.covers([[x, y, z - 1.45]]):
+                    found.append(dict(pose=pose, district=name))
+    for i, first in enumerate(found):
+        for second in found[i + 1 :]:
+            a, b = first["pose"], second["pose"]
+            if math.dist(a["eye"], b["eye"]) > 1.0 or math.cos(
+                a["heading"] - b["heading"]
+            ) < math.cos(math.radians(5)):
+                return dict(pose=None, district=None, ambiguous=True)
+    # Overlapping source grids can recognize the very same street camera.
+    best = max(
+        found, key=lambda item: item["pose"]["supports"], default=dict(pose=None, district=None)
+    )
+    return dict(**best, ambiguous=False)
+
+
 def serve(args):
     code_revision = code_digest()
     road = RoadMap(args.planner)
@@ -446,17 +471,7 @@ def serve(args):
                 if sessions:
                     return self.reply(409, dict(error="session_active"))
                 gray = self.decode_frame(raw)
-                found = []
-                for name, bank in [(None, locator), *district_locators.items()]:
-                    pose = bank.locate(gray)
-                    if pose is None:
-                        continue
-                    x, y, z = pose["eye"]
-                    if bank.covers([[x, y, z - 1.45]]):
-                        found.append(dict(pose=pose, district=name))
-                # Even strong independent solutions in two districts are ambiguous.
-                result = found[0] if len(found) == 1 else dict(pose=None, district=None)
-                return self.reply(200, dict(**result, ambiguous=len(found) > 1))
+                return self.reply(200, probe_atlases(gray, locator, district_locators))
             if self.path == "/start":
                 if sessions:
                     return self.reply(409, dict(error="session_active"))
