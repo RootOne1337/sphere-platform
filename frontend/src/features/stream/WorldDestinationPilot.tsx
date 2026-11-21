@@ -24,6 +24,17 @@ import {
 
 import { WorldItinerary, useWorldItinerary, letter } from "./WorldItinerary";
 
+const searchPhases: Record<string, string> = {
+  collecting_views: "Собираем ракурсы",
+  global_search: "Ищем место по всей карте",
+  rendering_candidates: "Сверяем выбранные улицы",
+  local_search: "Уточняем район",
+  verifying_geometry: "Проверяем положение по 3D-карте",
+  tracking: "Сверяем свежий кадр",
+  no_verified_position: "Положение пока не подтверждено",
+  search_error: "Сбой поиска по карте",
+};
+
 const reasons: Record<string, string> = {
   ambiguous_position: "Кадры дают разные положения. Нужен другой ракурс.",
   waypoint_reached: "Промежуточная точка достигнута",
@@ -60,11 +71,13 @@ function problem(e: unknown) {
 export function WorldDestinationPilot({
   video,
   ready,
+  connected,
   inputIssue,
   openInput,
 }: {
   video: RefObject<HTMLVideoElement | null>;
   ready: boolean;
+  connected: boolean;
   inputIssue: string | null;
   openInput: (
     signal: AbortSignal,
@@ -95,6 +108,7 @@ export function WorldDestinationPilot({
   const choice = useRef<AbortController | null>(null),
     run = useRef<AbortController | null>(null),
     mounted = useRef(false);
+  const driving = useRef(false);
   const opening = useRef(openInput);
   opening.current = openInput;
   const stop = useCallback(() => {
@@ -130,13 +144,16 @@ export function WorldDestinationPilot({
     };
   }, [stop]);
   useEffect(() => {
-    if (!ready) {
+    if (!connected) {
       stop();
       probe.current?.abort();
       setObservation(null);
       setProbeMessage("");
+    } else if (!ready && driving.current) {
+      run.current?.abort();
+      setStatus("Потерян свежий кадр. Управление остановлено.");
     }
-  }, [ready, stop]);
+  }, [connected, ready, stop]);
   async function inspect() {
     if (!ready || !video.current || run.current || probe.current) return;
     const c = new AbortController();
@@ -149,10 +166,10 @@ export function WorldDestinationPilot({
         video.current,
         c.signal,
         acquireMinutes * 60_000,
-        (frames, seconds) => {
+        (frames, seconds, phase) => {
           if (!c.signal.aborted)
             setProbeMessage(
-              `Проверено кадров · ${frames}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
+              `${searchPhases[phase ?? ""] ?? "Поиск ориентиров"} · ${frames} кадров. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
             );
         },
       );
@@ -267,6 +284,7 @@ export function WorldDestinationPilot({
       return;
     const c = new AbortController();
     run.current = c;
+    driving.current = false;
     setActive(true);
     setObservation(null);
     setProbeMessage("");
@@ -303,12 +321,15 @@ export function WorldDestinationPilot({
           () => opening.current(c.signal, journal),
           (d, ms) => {
             if (!c.signal.aborted) {
+              if (d.reason === "following" && ms < 320) driving.current = true;
               setData(d);
               setAge(ms);
               setStatus(
                 ms >= 320
                   ? "Ответ по устаревшему кадру"
-                  : (reasons[d.reason] ?? d.reason),
+                  : (d.reason === "position_unknown" && d.worldSearch
+                      ? (searchPhases[d.worldSearch.phase] ?? reasons.position_unknown)
+                      : (reasons[d.reason] ?? d.reason)),
               );
             }
           },
@@ -324,7 +345,10 @@ export function WorldDestinationPilot({
           { applied, rejected },
           session,
         ).catch(() => undefined);
-      if (run.current === c) run.current = null;
+      if (run.current === c) {
+        run.current = null;
+        driving.current = false;
+      }
       if (mounted.current) setActive(false);
     }
   }
