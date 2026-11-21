@@ -120,6 +120,7 @@ def test_different_lenses_must_agree_before_reporting_a_search_pose():
     loc.solve_with_camera = lambda camera, *_: pose(0.1) if camera[0, 0] > 400 else None
     assert loc.solve(None, None)["eye"] == [0.1, 0, 1.45]
 
+
 def test_overlapping_search_atlases_reuse_features_and_reject_conflicting_locations():
     class Index:
         def __init__(self, x, strength):
@@ -148,12 +149,16 @@ def test_nearby_repeated_object_needs_distant_street_support():
     loc = Locator.__new__(Locator)
     loc.origin = np.zeros(3)
     loc.meta = {"source": "source-map-grid", "independentScenery": True}
-    loc.k = np.array([[340., 0., 320.], [0., 340., 180.], [0., 0., 1.]])
+    loc.k = np.array([[340.0, 0.0, 320.0], [0.0, 340.0, 180.0], [0.0, 0.0, 1.0]])
     rng = np.random.default_rng(101)
     world = rng.uniform([-3, 5, -2], [3, 8, 2], (150, 3)).astype(np.float32)
-    rotation = np.array([[1., 0., 0.], [0., 0., -1.], [0., 1., 0.]])
+    rotation = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]])
+
     def project():
-        return cv2.projectPoints(world, cv2.Rodrigues(rotation)[0], np.zeros(3), loc.k, None)[0][:, 0]
+        return cv2.projectPoints(world, cv2.Rodrigues(rotation)[0], np.zeros(3), loc.k, None)[0][
+            :, 0
+        ]
+
     assert loc.solve(world, project()) is None
     world[::3] *= 3
     assert loc.solve(world, project()) is not None
@@ -168,7 +173,11 @@ def test_lane_reference_samples_follow_bends_and_include_last_surface():
 
     sites = list(road_sites(Map(), [0, 0, 0, 3, 5, 0], 2))
     assert [s[:3] for s in sites] == [
-        (0, 0, 1.45), (2, 0, 1.45), (3, 1, 1.45), (3, 3, 1.45), (3, 5, 1.45)
+        (0, 0, 1.45),
+        (2, 0, 1.45),
+        (3, 1, 1.45),
+        (3, 3, 1.45),
+        (3, 5, 1.45),
     ]
     assert sites[0][3] == 0 and sites[-1][3] == pytest.approx(np.pi / 2)
 
@@ -182,6 +191,22 @@ def test_search_only_fallback_uses_existing_features_without_rechecking_main():
         def covers(self, path):
             return True
 
-    result = probe_atlases(None, None, {"district": Passive()},
-                           observed=("uv", "desc"), include_main=False)
+    result = probe_atlases(
+        None, None, {"district": Passive()}, observed=("uv", "desc"), include_main=False
+    )
     assert result["district"] == "district" and result["pose"]["eye"] == [8, 1, 2]
+
+
+def test_progressive_drive_requires_a_covered_stopping_horizon():
+    def seen(points):
+        return all(p[0] <= 9 for p in points)
+
+    trip = Trip(Roads(), [18, 0, 0], lambda p: len(p) == 1, local_covers=seen)
+    assert trip.decide(pose(0), 0)["pedal"] == "coast"
+    assert trip.decide(pose(0.1), 0.2)["reason"] == "following"
+    assert trip.extend_visual
+    result = trip.decide(pose(4.5), 0.65)
+    assert result["pedal"] == "brake" and result["reason"] == "stopping"
+    result = trip.decide(pose(4.5), 1)
+    assert result["pedal"] == "coast" and result["reason"] == "outside_visual_coverage"
+    assert trip.decide(None, 1.3)["pedal"] == "coast"

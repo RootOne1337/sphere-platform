@@ -27,6 +27,7 @@ def code_digest():
         "render_world_search_views.py",
         "observe_world_journey.mjs",
         "verify_world_scene_candidates.py",
+        "scooter_road_access.py",
     ):
         digest.update(hashlib.sha256((folder / name).read_bytes()).digest())
     return digest.hexdigest()

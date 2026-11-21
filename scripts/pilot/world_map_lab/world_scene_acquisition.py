@@ -151,6 +151,11 @@ class WorldAcquisition:
         if existing.exists():
             self.bank = Locator(existing, revision)
 
+    def covers(self, path):
+        with self.lock:
+            bank = self.bank
+        return bank is not None and bank.covers(path)
+
     def status(self):
         with self.lock:
             return dict(
@@ -167,6 +172,10 @@ class WorldAcquisition:
             pose = bank.locate_features(gray, *observed)
             if pose and bank.covers([[*pose["eye"][:2], pose["eye"][2] - 1.45]]):
                 return pose
+        self.collect(raw, gray)
+        return None
+
+    def collect(self, raw, gray):
         now = time.monotonic()
         with self.lock:
             if self.busy or now < self.retry:

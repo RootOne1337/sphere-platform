@@ -21,6 +21,7 @@ from scripts.pilot.world_map_lab.destination_detail import StreetTiles
 from scripts.pilot.world_map_lab.destination_itinerary import plan
 from scripts.pilot.world_map_lab.destination_tiles import DestinationTiles
 from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator
+from scripts.pilot.world_map_lab.scooter_road_access import RoadAccess
 from scripts.pilot.world_map_lab.start_live_destination import code_digest
 from scripts.pilot.world_map_lab.world_scene_acquisition import WorldAcquisition
 
@@ -50,7 +51,7 @@ class RoadMap:
 
 
 class Trip:
-    def __init__(self, road, goal, covers):
+    def __init__(self, road, goal, covers, *, access=None, local_covers=None):
         self.road = road
         self.goal = np.asarray(goal, dtype=float)
         if self.goal.shape != (3,) or not np.isfinite(self.goal).all():
@@ -59,6 +60,13 @@ class Trip:
         if not any(abs(z - self.goal[2]) < 0.4 for z in levels):
             raise ValueError("unreachable_goal")
         self.covers = covers
+        self.access = access
+        self.local_covers = local_covers
+        self.pending_access = None
+        self.access_origin = None
+        self.access_m = 0.0
+        self.progressive = False
+        self.extend_visual = False
         if not covers([self.goal]):
             raise ValueError("outside_visual_coverage")
         self.next_stops = []
@@ -74,6 +82,7 @@ class Trip:
         self.arrival_time = None
 
     def decide(self, pose, now):
+        self.extend_visual = False
         neutral = dict(
             pedal="coast", steering=0.0, reason="position_unknown", pose=pose, remaining=None
         )
@@ -83,6 +92,7 @@ class Trip:
             self.goal = np.asarray(self.next_stops.pop(0), dtype=float)
             self.stop_index += 1
             self.previous = self.path = self.motion_origin = self.arrival_time = None
+            self.pending_access = self.access_origin = None
             self.arrived = False
             self.steering = 0.0
         if pose is None:
@@ -116,21 +126,45 @@ class Trip:
             # Query the mesh, then verify the actual polygon landing and elevation.
             ground = [*eye[:2], options[0] if options else eye[2] - 1.45]
             result = self.road.route(ground, self.goal)
-            if result["status"] != "complete":
-                self.path = None
+            path = np.asarray(result.get("path", []), float)
+            joined = bool(
+                len(path)
+                and math.dist(path[0], ground) <= 2.5
+                and math.dist(path[-1], self.goal) <= 2.5
+            )
+            on_surface = bool(
+                options
+                or (
+                    joined
+                    and math.dist(path[0, :2], eye[:2]) <= 0.4
+                    and 0.6 < eye[2] - path[0, 2] < 2.6
+                )
+            )
+            if not on_surface and not levels and self.access is not None:
+                if self.pending_access is None or math.dist(eye, self.access_origin) > 2:
+                    if self.pending_access is not None and not self.pending_access.done():
+                        return dict(neutral, reason="road_level_unknown")
+                    self.access_origin = eye.copy()
+                    self.pending_access = self.access.executor.submit(
+                        self.access.find, eye.copy(), self.goal.copy()
+                    )
+                if not self.pending_access.done():
+                    return dict(neutral, reason="confirming_position")
+                result = self.pending_access.result()
+                if not result:
+                    return dict(neutral, reason="road_level_unknown")
+                path = np.asarray(result["path"], float)
+                self.access_m = result["accessMeters"]
+            elif result["status"] != "complete":
                 return dict(neutral, reason="no_road_path" if options else "road_level_unknown")
-            path = np.asarray(result["path"], float)
-            if (
-                len(path) == 0
-                or math.dist(path[0], ground) > 2.5
-                or math.dist(path[-1], self.goal) > 2.5
-            ):
+            elif not joined:
                 return dict(neutral, reason="endpoint_off_road")
-            if not options and (
-                math.dist(path[0, :2], eye[:2]) > 0.4 or not 0.6 < eye[2] - path[0, 2] < 2.6
-            ):
+            elif not on_surface:
                 return dict(neutral, reason="road_level_unknown")
-            if not self.covers(path):
+            else:
+                self.access_m = 0.0
+            self.progressive = not self.covers(path)
+            if self.progressive and not self.local_covers:
                 return dict(neutral, reason="outside_visual_coverage")
             self.path = path[
                 np.r_[True, np.linalg.norm(np.diff(path[:, :2], axis=0), axis=1) > 1e-4]
@@ -165,6 +199,23 @@ class Trip:
         if cross > 3.0:
             return dict(neutral, reason="outside_path")
         remaining = float(self.arc[-1] - station)
+        if self.progressive:
+            horizon = min(self.arc[-1], station + max(5, 3 + 0.7 * speed + speed**2 / 8))
+            ahead_stations = np.linspace(
+                station, horizon, max(2, math.ceil((horizon - station) / 1.5) + 1)
+            )
+            envelope = np.column_stack(
+                [np.interp(ahead_stations, self.arc, col) for col in self.path.T]
+            )
+            future = min(self.arc[-1], station + 14)
+            future_point = [np.interp(future, self.arc, col) for col in self.path.T]
+            self.extend_visual = not self.local_covers([future_point])
+            if not self.local_covers(envelope):
+                self.extend_visual = True
+                self.motion_origin = None
+                if speed > 0.8:
+                    return dict(neutral, reason="stopping", pedal="brake", remaining=remaining)
+                return dict(neutral, reason="outside_visual_coverage", remaining=remaining)
         # Stop the lookahead at sharp bends instead of cutting across the inside corner.
         ahead = min(self.arc[-1], station + max(2.5, min(7.0, 2.5 + speed * 0.5)))
         for i in range(seg, min(len(self.ds) - 1, np.searchsorted(self.arc, ahead))):
@@ -183,6 +234,8 @@ class Trip:
         steer = self.steering + float(np.clip(steer - self.steering, -1.3 * dt, 1.3 * dt))
         self.steering = steer
         target = min(10.0, max(1.0, remaining * 0.55)) / (1 + 2 * abs(error))
+        if self.progressive:
+            target = min(target, 2.0 if station < self.access_m else 3.5)
         pedal = "brake" if speed > target + 1.2 else "throttle" if speed < target - 0.3 else "coast"
         if pedal == "throttle":
             if self.motion_origin is None or math.dist(self.motion_origin[1], eye[:2]) >= 0.8:
@@ -260,7 +313,9 @@ def serve(args):
         raise ValueError("drive regions require distinct independent source-map surveys")
     drive_banks = {name: district_locators[name] for name in drive_regions}
 
-    search_only = {name: bank for name, bank in district_locators.items() if name not in drive_banks}
+    search_only = {
+        name: bank for name, bank in district_locators.items() if name not in drive_banks
+    }
 
     def covers(path):
         return locator.covers(path) or any(bank.covers(path) for bank in drive_banks.values())
@@ -280,8 +335,15 @@ def serve(args):
     log_dir.mkdir(parents=True, exist_ok=True)
 
     search_config = getattr(args, "world_search_config", None)
-    global_search = (WorldAcquisition(search_config, log_dir / "world-search", road.base,
-                                     road.meta["placementRevision"]) if search_config else None)
+    global_search = (
+        WorldAcquisition(
+            search_config, log_dir / "world-search", road.base, road.meta["placementRevision"]
+        )
+        if search_config
+        else None
+    )
+
+    access = RoadAccess(args.detail_folder, road) if global_search and args.detail_folder else None
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
@@ -356,8 +418,11 @@ def serve(args):
                     streetTiles=detail.manifest() if detail else None,
                     searchAtlases=district_digests,
                     driveRegions=drive_regions,
-                    worldSearch=(dict(config=global_search.signature, **global_search.status())
-                                 if global_search else None),
+                    worldSearch=(
+                        dict(config=global_search.signature, **global_search.status())
+                        if global_search
+                        else None
+                    ),
                     searchCameraHfovs=args.search_hfov,
                     searchRegions=[
                         dict(
@@ -382,7 +447,11 @@ def serve(args):
             try:
                 size = int(self.headers.get("Content-Length", "0"))
                 frame = self.path in ("/frame", "/probe")
-                if not 0 <= size <= (1536 * 1024 if frame and global_search else 384 * 1024 if frame else 4096):
+                if (
+                    not 0
+                    <= size
+                    <= (1536 * 1024 if frame and global_search else 384 * 1024 if frame else 4096)
+                ):
                     return self.reply(413, dict(error="payload_size"))
                 typ = self.headers.get_content_type()
                 if typ != ("image/jpeg" if frame else "application/json"):
@@ -396,9 +465,7 @@ def serve(args):
                     payload = json.loads(raw)
                     if payload.get("revision") != road.meta["placementRevision"]:
                         raise ValueError("invalid_goal")
-                    return self.reply(
-                        200, plan(road, payload["stops"], payload["mode"], covers)
-                    )
+                    return self.reply(200, plan(road, payload["stops"], payload["mode"], covers))
                 if self.path == "/preview":
                     payload = json.loads(raw)
                     if payload["revision"] != road.meta["placementRevision"]:
@@ -486,7 +553,9 @@ def serve(args):
                 if pic.format != "JPEG" or pic.size not in sizes:
                     raise ValueError("invalid_frame")
                 gray = pic.convert("L")
-                return np.asarray(gray if gray.size == SIZE else gray.resize(SIZE, Image.Resampling.BOX))
+                return np.asarray(
+                    gray if gray.size == SIZE else gray.resize(SIZE, Image.Resampling.BOX)
+                )
 
         def process(self, frame, raw):
             now = time.monotonic()
@@ -501,8 +570,11 @@ def serve(args):
                 result = probe_atlases(gray, locator, district_locators, observed=observed)
                 if global_search and not result["pose"] and not result["ambiguous"]:
                     pose = global_search.observe(raw, gray, observed)
-                    result.update(pose=pose, district="Поиск по всей карте" if pose else None,
-                                  worldSearch=global_search.status())
+                    result.update(
+                        pose=pose,
+                        district="Поиск по всей карте" if pose else None,
+                        worldSearch=global_search.status(),
+                    )
                 return self.reply(200, result)
             if self.path == "/start":
                 if sessions:
@@ -515,7 +587,13 @@ def serve(args):
                     selection = plan(road, stops, "drive", covers)
                     if selection.get("status") != "complete" or not selection["covered"]:
                         raise ValueError("outside_visual_coverage")
-                trip = Trip(road, stops[0] if stops else payload["goal"], covers)
+                trip = Trip(
+                    road,
+                    stops[0] if stops else payload["goal"],
+                    covers,
+                    access=access,
+                    local_covers=global_search.covers if global_search else None,
+                )
                 if stops:
                     trip.next_stops = stops[1:]
                 key = secrets.token_hex(24)
@@ -563,10 +641,17 @@ def serve(args):
             observed = locator.describe(gray)
             fix = probe_atlases(gray, locator, drive_banks, observed=observed)
             passive = False
-            if (observed is not None and not fix["pose"] and not fix["ambiguous"] and search_only
-                    and now >= getattr(trip, "next_region_search", 0)):
+            if (
+                observed is not None
+                and not fix["pose"]
+                and not fix["ambiguous"]
+                and search_only
+                and now >= getattr(trip, "next_region_search", 0)
+            ):
                 trip.next_region_search = now + 0.8
-                fix = probe_atlases(gray, locator, search_only, observed=observed, include_main=False)
+                fix = probe_atlases(
+                    gray, locator, search_only, observed=observed, include_main=False
+                )
                 if fix["pose"]:
                     passive = True
             if global_search and not fix["pose"] and not fix["ambiguous"]:
@@ -577,17 +662,48 @@ def serve(args):
             if passive:
                 response.update(pose=fix["pose"], reason="outside_visual_coverage")
             if global_search:
+                if fix["pose"] and trip.extend_visual:
+                    global_search.collect(raw, gray)
                 response["worldSearch"] = global_search.status()
             response.update(district=fix["district"], ambiguous=fix["ambiguous"])
             response["stopIndex"] = trip.stop_index
-            if response["pose"] and response["reason"] != "outside_visual_coverage" and trip.path is not None:
-                response["path"] = trip.path.tolist()
+            if response["pose"] and trip.path is not None:
+                if getattr(trip, "_display_source", None) is not trip.path:
+                    xy = trip.path[:, :2].astype(np.float32)
+                    # Preserve horizontal bends and retain the real elevation of each selected vertex.
+                    indices = cv2.approxPolyDP(xy, 0.35, False).reshape(-1, 2)
+                    cursor = 0
+                    trip.display_path = []
+                    for pt in indices:
+                        i = int(np.argmin(np.linalg.norm(xy[cursor:] - pt, axis=1))) + cursor
+                        trip.display_path.append(trip.path[i].tolist())
+                        cursor = i
+                    trip._display_source = trip.path
+                response.update(
+                    path=trip.display_path,
+                    accessMeters=trip.access_m,
+                    locallyTracked=trip.progressive,
+                )
             response.update(sequence=seq, computeMs=round((time.monotonic() - now) * 1000, 1))
             with trip.log.open("a", encoding="utf8") as f:
                 print(
-                    json.dumps(dict(t=now, goal=trip.goal.tolist(), **response), allow_nan=False),
+                    json.dumps(
+                        dict(
+                            t=now,
+                            goal=trip.goal.tolist(),
+                            **{
+                                k: v
+                                for k, v in response.items()
+                                if k != "path"
+                                or getattr(trip, "logged_path", None) is not trip.path
+                            },
+                        ),
+                        allow_nan=False,
+                    ),
                     file=f,
                 )
+            if "path" in response:
+                trip.logged_path = trip.path
             self.reply(200, response)
 
     with ThreadingHTTPServer(("127.0.0.1", args.port), Handler) as server:
