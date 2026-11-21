@@ -13,10 +13,11 @@ export type Decision = VehicleCommand & {
   path?: XYZ[];
 };
 
-export async function worldRequest<T>(endpoint: string, signal: AbortSignal, json?: object, token?: string, jpeg?: Blob, sequence?: number): Promise<T> {
+export async function worldRequest<T>(endpoint: string, signal: AbortSignal, json?: object, token?: string, jpeg?: Blob, sequence?: number, mediaTime?:number): Promise<T> {
   const headers: Record<string, string> = {};
   if (token) headers['X-World-Session'] = token;
   if (sequence !== undefined) headers['X-Frame-Sequence'] = String(sequence);
+  if (mediaTime!==undefined) headers['X-Frame-Media-Time'] = String(mediaTime);
   if (jpeg || json) headers['Content-Type'] = jpeg ? 'image/jpeg' : 'application/json';
   const res = await fetch(worldService + endpoint, { method: jpeg || json ? 'POST' : 'GET',
     headers, signal, body: jpeg ?? (json ? JSON.stringify(json) : undefined), cache: 'no-store', credentials: 'omit' });
@@ -49,7 +50,7 @@ export async function runWorldTrip(
   let lastSequence = -1;
   try {
     while (!signal.aborted) {
-      const frame = await new Promise<{ seq: number; captured: number; blob: Promise<Blob> }>((resolve, reject) => {
+      const frame = await new Promise<{ seq: number; mediaTime:number; captured: number; blob: Promise<Blob> }>((resolve, reject) => {
         const cleanup = () => { clearTimeout(timeout); signal.removeEventListener('abort', cancelled); };
         const cancelled = () => { video.cancelVideoFrameCallback(id); cleanup(); reject(Error('stream_stopped')); };
         const timeout = setTimeout(cancelled, 3500);
@@ -61,7 +62,7 @@ export async function runWorldTrip(
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const blob = new Promise<Blob>((accept, fail) => canvas.toBlob(b => b ? accept(b) : fail(Error('frame_encode')), 'image/jpeg', .91));
             const capture = (meta as VideoFrameCallbackMetadata & {captureTime?: number}).captureTime;
-            resolve({ seq: meta.presentedFrames, captured: Math.min(now,meta.presentationTime,capture ?? now), blob });
+            resolve({ seq: meta.presentedFrames, mediaTime:meta.mediaTime, captured: Math.min(now,meta.presentationTime,capture ?? now), blob });
           } catch (err) { reject(err); }
         });
         signal.addEventListener('abort', cancelled, {once:true});
@@ -70,11 +71,11 @@ export async function runWorldTrip(
       const jpeg = await frame.blob;
       if (signal.aborted) break;
       if (performance.now()-frame.captured >= 320) { lease?.neutral?.(); throw Error('frame_stale'); }
-      const d = await worldRequest<Decision>('/frame', AbortSignal.any([signal,AbortSignal.timeout(4000)]), undefined, token, jpeg, frame.seq);
+      const d = await worldRequest<Decision>('/frame', AbortSignal.any([signal,AbortSignal.timeout(4000)]), undefined, token, jpeg, frame.seq, frame.mediaTime);
       if (signal.aborted) break;
       if (d.sequence !== frame.seq) throw Error('frame_sequence');
       update(d, Math.round(performance.now()-frame.captured));
-      if (d.reason === 'arrived') return;
+      if (d.reason === 'arrived' || d.reason==='no_motion') return;
       if (lease && (!lease.active() || lease.failure?.())) throw Error('input_closed');
       if (!usableDecision(d,frame.seq,frame.captured,performance.now())) { lease?.neutral?.(); continue; }
       if (!lease) lease = await openInput();

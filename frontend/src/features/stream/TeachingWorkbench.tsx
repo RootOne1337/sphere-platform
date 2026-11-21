@@ -38,7 +38,7 @@ stopReasons.native_closed_unexpectedly='Android завершил сеанс вв
 Object.assign(stopReasons,{encoded_geometry_or_codec_changed:'изменился размер или кодек входящего H.264',recorder_worker_failed:'сбой обработчика записи',recording_write_failed:'не удалось записать данные в хранилище браузера',capture_renewal_unconfirmed:'сервер не подтвердил продление видеосеанса',release_unknown:'освобождение ввода не подтверждено'});
 Object.assign(stopReasons,{recording_library_limit:'в библиотеке уже 100 записей; сохраните нужные в архив перед освобождением места',recording_storage_full:'закончилась квота хранилища браузера',recording_storage_denied:'браузер запретил доступ к хранилищу',recording_exists:'запись с таким идентификатором уже существует',finalization_unconfirmed:'завершение записи не подтверждено'});
 
-export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; readOnly: boolean }) {
+export function TeachingWorkbench({ deviceId, readOnly, destination = false }: { deviceId: string; readOnly: boolean; destination?:boolean }) {
   const token = useAuthStore(s => s.accessToken), sessionVersion = useAuthStore(s => s.sessionVersion);
   const user = useAuthStore(s => s.user);
   const [storageScope, setStorageScope] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [lastCapture,setLastCapture]=useState<{title:string;complete:boolean;reason:string|null;frames:number;seconds:number}|null>(null);
   const [ready, setReady] = useState(false); const [clip, setClip] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
-  const [workspaceMode,setWorkspaceMode]=useState<'capture'|'review'|'live'>('capture');
+  const [workspaceMode,setWorkspaceMode]=useState<'capture'|'review'|'live'>(destination?'live':'capture');
   const [captureQuality,setCaptureQuality]=useState<CaptureQuality|null>(null);
   const [captureTargetFps,setCaptureTargetFps]=useState<number|null>(null);
   const [navigationBinding,setNavigationBinding]=useState<{job:ReconstructionJob;clip:string;scope:string}|null>(null);

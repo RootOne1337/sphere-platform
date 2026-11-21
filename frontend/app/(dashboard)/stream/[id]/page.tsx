@@ -15,17 +15,19 @@ interface Props { params: Promise<{ id: string }>; }
 export default function DeviceStreamPage({ params }: Props) {
   const { id } = use(params);
   const access = useCapabilities();
-  const teaching = useSearchParams().get('teach') === '1';
+  const query = useSearchParams();
+  const teaching = query.get('teach') === '1';
+  const destination = teaching && query.get('world') === '1';
 
   return (
     <PageFrame className="max-w-[1800px]">
       <PageHeading
         eyebrow="Просмотр устройства"
-        title={teaching ? 'Запись маршрута' : 'Видеопоток'}
+        title={destination ? 'Поездка к метке' : teaching ? 'Запись маршрута' : 'Видеопоток'}
         description={teaching ? `Устройство ${id}` : `Устройство ${id} · экран и диагностические счётчики браузера и Android-агента.`}
         actions={<div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href={`/stream/${encodeURIComponent(id)}${teaching ? '' : '?teach=1'}`}>{teaching ? 'Обычный поток' : 'Записать маршрут'}</Link></Button><Button asChild variant="outline"><Link href={`/devices/${encodeURIComponent(id)}`}><ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />Карточка устройства</Link></Button></div>}
       />
-      {teaching ? <TeachingWorkbench key={id} deviceId={id} readOnly={!access.can('stream:control')} /> : <section aria-label={`Видеопоток устройства ${id}`} className="overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-soft sm:p-3">
+      {teaching ? <TeachingWorkbench key={id+String(destination)} deviceId={id} destination={destination} readOnly={!access.can('stream:control')} /> : <section aria-label={`Видеопоток устройства ${id}`} className="overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-soft sm:p-3">
         <div className="mb-3 flex items-center gap-2 px-1 text-xs text-muted-foreground"><Monitor className="h-3.5 w-3.5" aria-hidden="true" /><span className="font-mono">{id}</span><span className="ml-auto">Поток подключается отдельно от статуса heartbeat</span></div>
         <div className="mx-auto w-full max-w-[1100px] overflow-hidden rounded-xl border border-border bg-black">
           <DeviceStream deviceId={id} enableDiagnostics enableScreenshot enableNavigation enableStaticInput readOnly={!access.can('stream:control')} />
