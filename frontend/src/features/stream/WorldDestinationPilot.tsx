@@ -22,8 +22,12 @@ import {
   type XYZ,
 } from "./worldDestination";
 
+import { WorldItinerary, useWorldItinerary, letter } from "./WorldItinerary";
+
 const reasons: Record<string, string> = {
   ambiguous_position: "Кадры дают разные положения. Нужен другой ракурс.",
+  waypoint_reached: "Промежуточная точка достигнута",
+  position_timeout: "Время поиска положения истекло",
   no_motion:
     "Поездка остановлена. Газ был запрошен, но скутер не сдвинулся. Проверьте топливо и калибровку педали.",
   following: "Движение по маршруту",
@@ -77,19 +81,9 @@ export function WorldDestinationPilot({
     distance: number;
   } | null>(null);
   const [covered, setCovered] = useState<number[]>([]);
-  const [origin, setOrigin] = useState<XYZ | null>(null),
-    [pickingOrigin, setPickingOrigin] = useState(false);
-  const [originChoices, setOriginChoices] = useState<{
-    x: number;
-    y: number;
-    levels: number[];
-  } | null>(null);
-  const [preview, setPreview] = useState<{
-    path: XYZ[];
-    distance: number;
-    covered: boolean;
-  } | null>(null);
-  const [previewError, setPreviewError] = useState("");
+  const [multiple, setMultiple] = useState(false);
+  const [acquireMinutes, setAcquireMinutes] = useState(3);
+  const itinerary = useWorldItinerary(info?.mapRevision);
   const [point, setPoint] = useState<[number, number] | null>(null),
     [levels, setLevels] = useState<number[]>([]),
     [level, setLevel] = useState<number | null>(null);
@@ -189,36 +183,6 @@ export function WorldDestinationPilot({
     const c = new AbortController();
     choice.current = c;
     setSuggestion(null);
-    if (pickingOrigin) {
-      setOrigin(null);
-      setOriginChoices(null);
-      setStatus("Проверяем точку отправления");
-      try {
-        const result = await worldRequest<{
-          levels: number[];
-          suggestion: typeof suggestion;
-        }>("/levels", AbortSignal.any([c.signal, AbortSignal.timeout(5000)]), {
-          point: [x, y],
-        });
-        if (c.signal.aborted) return;
-        if (!result.levels.length) {
-          setSuggestion(result.suggestion);
-          setStatus("Под стартовой точкой нет дороги");
-          return;
-        }
-        if (result.levels.length > 1) {
-          setOriginChoices({ x, y, levels: result.levels });
-          setStatus("Выберите высоту старта");
-          return;
-        }
-        setOrigin([x, y, result.levels[0]]);
-        setPickingOrigin(false);
-        setStatus("Старт для расчёта выбран");
-      } catch (e) {
-        if (!c.signal.aborted) setStatus(problem(e));
-      }
-      return;
-    }
     setCovered([]);
     setPoint([x, y]);
     setLevel(null);
@@ -256,9 +220,11 @@ export function WorldDestinationPilot({
     if (
       !el ||
       !info ||
-      !point ||
-      level === null ||
-      !covered.includes(level) ||
+      (multiple
+        ? itinerary.mode !== "drive" ||
+          !itinerary.plan?.covered ||
+          itinerary.plan.status !== "complete"
+        : !point || level === null || !covered.includes(level)) ||
       inputIssue ||
       !ready ||
       run.current ||
@@ -287,7 +253,12 @@ export function WorldDestinationPilot({
       const res = await worldRequest<{ session: string }>(
         "/start",
         AbortSignal.timeout(5500),
-        { goal: [...point, level], revision: info.mapRevision },
+        multiple
+          ? {
+              stops: itinerary.stops.map((p) => [...p.xy, p.z]),
+              revision: info.mapRevision,
+            }
+          : { goal: [...point!, level], revision: info.mapRevision },
       );
       session = res.session;
       if (!c.signal.aborted)
@@ -307,6 +278,7 @@ export function WorldDestinationPilot({
               );
             }
           },
+          acquireMinutes * 60_000,
         );
     } catch (e) {
       if (!c.signal.aborted && mounted.current) setStatus(problem(e));
@@ -322,40 +294,17 @@ export function WorldDestinationPilot({
       if (mounted.current) setActive(false);
     }
   }
-  useEffect(() => {
-    const controller = new AbortController();
-    setPreview(null);
-    setPreviewError("");
-    if (origin && point && level !== null && info) {
-      worldRequest<{ path: XYZ[]; distance: number; covered: boolean }>(
-        "/preview",
-        AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]),
-        { revision: info.mapRevision, start: origin, goal: [...point, level] },
-      )
-        .then((r) => {
-          if (!controller.signal.aborted) setPreview(r);
-        })
-        .catch((e) => {
-          if (!controller.signal.aborted) setPreviewError(problem(e));
-        });
-    }
-    return () => controller.abort();
-  }, [origin, point, level, info]);
-  const clear = () => {
+  const eligible = multiple
+    ? itinerary.mode === "drive" &&
+      itinerary.plan?.status === "complete" &&
+      itinerary.plan.covered
+    : level !== null && covered.includes(level);
+  function switchPlan(value: boolean) {
     choice.current?.abort();
-    setSuggestion(null);
-    setOrigin(null);
-    setOriginChoices(null);
-    setPickingOrigin(false);
-    setPoint(null);
+    setMultiple(value);
     setData(null);
-    setAge(null);
-    setLevels([]);
-    setLevel(null);
-    setCovered([]);
-    setStatus("Поставьте метку на дороге");
-  };
-  const inAtlas = level !== null && covered.includes(level);
+    setStatus("");
+  }
   return (
     <section aria-label="Поездка к метке" className={styles.panel}>
       <header className={styles.panelHeader}>
@@ -363,17 +312,36 @@ export function WorldDestinationPilot({
           <MapPin size={17} />
           <h2>Карта мира</h2>
         </div>
-        <span>Black Russia</span>
+        <nav className={styles.planTabs} aria-label="Выбор маршрута">
+          {[
+            [false, "К метке"],
+            [true, "A–B–C"],
+          ].map(([value, label]) => (
+            <button
+              key={String(label)}
+              aria-pressed={multiple === value}
+              disabled={active}
+              onClick={() => switchPlan(value === true)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </header>
       {info ? (
         <WorldDestinationMap
           info={info}
-          point={point}
-          origin={origin}
+          point={multiple ? null : point}
           observation={observation}
-          preview={preview?.path ?? []}
           decision={data}
-          onChoose={(x, y) => void choose(x, y)}
+          stops={multiple ? itinerary.stops : []}
+          legs={multiple ? itinerary.plan?.legs : undefined}
+          onChoose={(x, y) => {
+            if (!run.current) {
+              if (multiple) itinerary.add(x, y);
+              else void choose(x, y);
+            }
+          }}
         />
       ) : (
         <div className={styles.mapLoading}>
@@ -388,62 +356,84 @@ export function WorldDestinationPilot({
         </div>
       )}
       <div className={styles.tripFooter}>
-        <div className={styles.target}>
-          <Flag size={17} />
-          <div>
-            <strong>
-              {point ? "Точка назначения" : "Выберите точку назначения"}
-            </strong>
-            <p>
-              {point
-                ? point.map((n) => n.toFixed(1)).join(" / ")
-                : "Щелчок ставит метку. Перетаскивание перемещает карту."}
-            </p>
-          </div>
-          {point && !active && (
-            <button type="button" onClick={clear} aria-label="Сбросить метки">
-              <X size={15} />
-            </button>
-          )}
-        </div>
-        {levels.length > 1 && (
-          <label className={styles.selectLabel}>
-            Уровень дороги{" "}
-            <select
-              value={level ?? ""}
-              disabled={active}
-              onChange={(e) =>
-                setLevel(e.target.value === "" ? null : Number(e.target.value))
-              }
-            >
-              <option value="">Выберите</option>
-              {levels.map((z) => (
-                <option key={z} value={z}>
-                  {z.toFixed(1)} м
-                </option>
-              ))}
-            </select>
-          </label>
+        {multiple ? (
+          <WorldItinerary model={itinerary} locked={active} />
+        ) : (
+          <>
+            <div className={styles.target}>
+              <Flag size={17} />
+              <div>
+                <strong>
+                  {point ? "Точка назначения" : "Выберите точку назначения"}
+                </strong>
+                <p>
+                  {point
+                    ? point.map((n) => n.toFixed(1)).join(" / ")
+                    : "Щелчок ставит метку. Перетаскивание перемещает карту."}
+                </p>
+              </div>
+              {point && !active && (
+                <button
+                  aria-label="Сбросить метку"
+                  onClick={() => {
+                    choice.current?.abort();
+                    setPoint(null);
+                    setLevel(null);
+                    setLevels([]);
+                    setSuggestion(null);
+                    setData(null);
+                    setStatus("");
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+            {levels.length > 1 && (
+              <label className={styles.selectLabel}>
+                Уровень дороги{" "}
+                <select
+                  disabled={active}
+                  value={level ?? ""}
+                  onChange={(e) => setLevel(Number(e.target.value))}
+                >
+                  <option value="" disabled>
+                    Выберите
+                  </option>
+                  {levels.map((z) => (
+                    <option key={z} value={z}>
+                      {z.toFixed(1)} м
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {suggestion && !active && (
+              <Button
+                className={styles.suggest}
+                size="sm"
+                variant="outline"
+                onClick={() => void choose(...suggestion.point)}
+              >
+                Выбрать дорогу рядом · {suggestion.distance.toFixed(1)} м
+              </Button>
+            )}
+          </>
         )}
-        {(point || active || pickingOrigin) && (
+        {(active || (point && !multiple) || data) && status && (
           <p role="status" className={styles.status}>
             {status}
+            {multiple && data?.stopIndex != null
+              ? " · " + letter(data.stopIndex)
+              : ""}
           </p>
         )}
-        {suggestion && !active && (
-          <Button
-            className={styles.suggest}
-            size="sm"
-            variant="outline"
-            onClick={() => void choose(...suggestion.point)}
-          >
-            Выбрать дорогу рядом · {suggestion.distance.toFixed(1)} м
-          </Button>
-        )}
-        {point && level !== null && !inAtlas && (
+        {((!multiple && point && level !== null && !eligible) ||
+          (multiple && itinerary.plan?.status === "complete" && !eligible)) && (
           <p className={styles.attention}>
-            Дорога найдена. Для автопоездки здесь ещё нужны визуальные
-            ориентиры.
+            {multiple
+              ? "Путь рассчитан. Автопоездка доступна на транспортных участках с проверенными ориентирами."
+              : "Дорога найдена. Для автопоездки здесь ещё нужны визуальные ориентиры."}
           </p>
         )}
         {data && (
@@ -461,13 +451,11 @@ export function WorldDestinationPilot({
             </Button>
           ) : (
             <Button
-              disabled={
-                !ready || !!inputIssue || !inAtlas || pickingOrigin || probing
-              }
+              disabled={!ready || !!inputIssue || !eligible || probing}
               onClick={() => void start()}
             >
               <Navigation size={15} />
-              Ехать к метке
+              {multiple ? "Ехать по точкам" : "Ехать к метке"}
             </Button>
           )}
           {!active && inputIssue && (
@@ -493,73 +481,21 @@ export function WorldDestinationPilot({
           {probeMessage && <small role="status">{probeMessage}</small>}
         </div>
         <details className={styles.previewOptions}>
-          <summary>Проверить путь между двумя точками</summary>
-          <p>
-            Для поездки старт определяется по живому экрану. Здесь можно
-            рассчитать путь от выбранной дороги.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={active || !point || level === null}
-            onClick={() => {
-              choice.current?.abort();
-              setSuggestion(null);
-              setOriginChoices(null);
-              setPickingOrigin((v) => !v);
-              setStatus(
-                pickingOrigin
-                  ? "Цель выбрана"
-                  : "Укажите стартовую дорогу на карте",
-              );
-            }}
-          >
-            {pickingOrigin
-              ? "Отменить выбор старта"
-              : origin
-                ? "Изменить старт"
-                : "Указать старт на карте"}
-          </Button>
-          {originChoices && (
-            <label>
-              Уровень старта{" "}
-              <select
-                defaultValue=""
-                onChange={(e) => {
-                  setOrigin([
-                    originChoices.x,
-                    originChoices.y,
-                    Number(e.target.value),
-                  ]);
-                  setOriginChoices(null);
-                  setPickingOrigin(false);
-                  setStatus("Старт для расчёта выбран");
-                }}
-              >
-                <option value="" disabled>
-                  Выберите
+          <summary>Параметры поиска</summary>
+          <label className={styles.selectLabel}>
+            Время на поиск позиции
+            <select
+              disabled={active}
+              value={acquireMinutes}
+              onChange={(e) => setAcquireMinutes(Number(e.target.value))}
+            >
+              {[1, 3, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n} мин
                 </option>
-                {originChoices.levels.map((z) => (
-                  <option key={z} value={z}>
-                    {z.toFixed(1)} м
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {preview && (
-            <p role="status">
-              {preview.path.length
-                ? "Путь по дорогам · " +
-                  Math.round(preview.distance) +
-                  " м" +
-                  (preview.covered
-                    ? " · в зоне ориентиров"
-                    : " · вне полного покрытия ориентирами")
-                : "Между этими точками нет связного проезда"}
-            </p>
-          )}
-          {previewError && <p role="alert">{previewError}</p>}
+              ))}
+            </select>
+          </label>
         </details>
       </div>
     </section>

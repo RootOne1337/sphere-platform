@@ -527,7 +527,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
           </dl>{ready&&<p>{encoded}</p>}</div></details>
         </section>
         <section className={styles.legendPanel}><h3>Легенда</h3><ul>
-          <li><i data-kind="coverage"/>Ориентиры автопоездки</li><li><i data-kind="search"/>Проверка положения по кадру</li><li><i data-kind="preview"/>Расчётный путь</li><li><i data-kind="active"/>Путь автопоездки</li><li><i data-kind="goal"/>Точка назначения</li>
+          <li><i data-kind="coverage"/>Ориентиры автопоездки</li><li><i data-kind="search"/>Проверка положения по кадру</li><li><i data-kind="preview"/>Пеший участок</li><li><i data-kind="active"/>Путь на транспорте</li><li><i data-kind="goal"/>Точка назначения</li>
         </ul></section>
       </aside>
     </div>;

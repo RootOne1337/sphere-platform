@@ -8,6 +8,7 @@ import {
   type WorldInfo,
   type XYZ,
 } from "./worldDestination";
+import { letter, type RoadLeg, type Stop } from "./WorldItinerary";
 import styles from "./worldConsole.module.css";
 
 type XY = [number, number];
@@ -24,9 +25,9 @@ type Props = {
   info: WorldInfo;
   point: XY | null;
   decision: Decision | null;
-  origin: XYZ | null;
+  stops: Stop[];
   observation: XYZ | null;
-  preview: XYZ[];
+  legs?: RoadLeg[];
   onChoose: (x: number, y: number) => void;
 };
 export function WorldDestinationMap(props: Props) {
@@ -39,16 +40,17 @@ export function WorldDestinationMap(props: Props) {
     render: () => void;
   } | null>(null);
   const [roads, setRoads] = useState(false),
-    [coverage, setCoverage] = useState(true);
+    [walk, setWalk] = useState(false),
+    [coverage, setCoverage] = useState(false);
   const [sector, setSector] = useState("world"),
     [mapError, setMapError] = useState(false),
     [retry, setRetry] = useState(0);
-  const layers = useRef({ roads, coverage });
+  const layers = useRef({ roads, walk, coverage });
   useEffect(() => {
     latest.current = props;
-    layers.current = { roads, coverage };
+    layers.current = { roads, walk, coverage };
     actions.current?.render();
-  }, [props, roads, coverage]);
+  }, [props, roads, walk, coverage]);
   useEffect(() => {
     const el = canvas.current!;
     const ctx = el.getContext("2d", { alpha: false });
@@ -78,18 +80,42 @@ export function WorldDestinationMap(props: Props) {
     function render() {
       if (alive && !frame) frame = requestAnimationFrame(draw);
     }
-    function image(key: string) {
+    let detailRequests = 0;
+    function image(key: string, street = false) {
       const old = images.get(key);
-      if (old) return old;
+      if (old) {
+        images.delete(key);
+        images.set(key, old);
+        return old;
+      }
+      if (street && detailRequests >= 3) return;
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.decoding = "async";
-      img.onload = render;
+      if (street) detailRequests++;
+      const done = () => {
+        if (street) detailRequests--;
+        render();
+      };
+      img.onload = done;
       img.onerror = () => {
         if (alive && key === "terrain/overview") setMapError(true);
+        done();
       };
-      img.src = worldService + "/tiles/" + revision + "/" + key + ".webp";
+      img.src =
+        worldService +
+        (street
+          ? "/street/" + info.streetTiles!.revision + "/" + key.slice(7)
+          : "/tiles/" + revision + "/" + key) +
+        ".webp";
       images.set(key, img);
+      if (images.size > 96)
+        for (const [k, v] of images) {
+          if (v.complete && !k.endsWith("/overview") && k !== key) {
+            images.delete(k);
+            break;
+          }
+        }
       return img;
     }
     function pixel(x: number, y: number): XY {
@@ -168,6 +194,11 @@ export function WorldDestinationMap(props: Props) {
       ctx!.lineCap = "round";
       ctx!.stroke();
     }
+    let lastPlan: RoadLeg[] | undefined,
+      started = 0;
+    const staticMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     function draw() {
       frame = 0;
       if (!alive || w <= 0 || h <= 0 || !ctx) return;
@@ -182,7 +213,7 @@ export function WorldDestinationMap(props: Props) {
       function paint(layer: string) {
         if (!ctx) return;
         const overview = image(layer + "/overview");
-        if (overview.complete && overview.naturalWidth)
+        if (overview?.complete && overview.naturalWidth)
           ctx.drawImage(overview, x0, y0, mw, mh);
         if (mh * dpr <= 1024 && mw * dpr <= 1024) return;
         const sx = mw / iw,
@@ -200,7 +231,7 @@ export function WorldDestinationMap(props: Props) {
         for (let row = firstRow; row <= lastRow; row++)
           for (let col = firstCol; col <= lastCol; col++) {
             const tile = image(layer + "/" + col + "-" + row);
-            if (tile.complete && tile.naturalWidth)
+            if (tile?.complete && tile.naturalWidth)
               ctx.drawImage(
                 tile,
                 x0 + col * tileSize * sx,
@@ -211,6 +242,38 @@ export function WorldDestinationMap(props: Props) {
           }
       }
       paint("terrain");
+      const detail = info.streetTiles;
+      if (detail && s * dpr > 0.75) {
+        const span = s * dpr > 2.25 ? 64 : 256;
+        const colMin = Math.max(0, Math.floor(-x0 / (span * s))),
+          rowMin = Math.max(0, Math.floor(-y0 / (span * s)));
+        const colMax = Math.min(
+            Math.ceil(wWorld / span) - 1,
+            Math.floor((w - x0) / (span * s)),
+          ),
+          rowMax = Math.min(
+            Math.ceil(hWorld / span) - 1,
+            Math.floor((h - y0) / (span * s)),
+          );
+        for (let r = rowMin; r <= rowMax; r++)
+          for (let c = colMin; c <= colMax; c++) {
+            const tile = image("street/" + span + "/" + c + "-" + r, true);
+            if (tile?.complete && tile.naturalWidth)
+              ctx.drawImage(
+                tile,
+                x0 + c * span * s,
+                y0 + r * span * s,
+                span * s,
+                span * s,
+              );
+          }
+      }
+      if (layers.current.walk) {
+        ctx.globalAlpha = 0.48;
+        paint("walk");
+        ctx.globalAlpha = 1;
+      }
+
       if (layers.current.roads) {
         ctx.globalAlpha = 0.55;
         paint("roads");
@@ -246,12 +309,66 @@ export function WorldDestinationMap(props: Props) {
           ctx.fillText(d.name, x, y);
         }
       }
-      const { point, decision, origin, preview } = latest.current;
-      if (!decision?.path) plot(preview, "#ffce76", 3);
+      const { point, decision, stops, legs } = latest.current;
+      if (legs !== lastPlan) {
+        lastPlan = legs;
+        started = performance.now();
+      }
+      if (legs?.length) {
+        const fraction = staticMotion
+          ? 1
+          : clamp((performance.now() - started) / 800, 0, 1);
+        let remaining =
+          legs.reduce((sum, leg) => sum + leg.distance, 0) *
+          (1 - (1 - fraction) ** 2);
+        for (const leg of legs) {
+          if (remaining <= 0) break;
+          let shown = leg.path;
+          if (remaining < leg.distance && fraction < 1) {
+            shown = leg.path.slice(0, 1);
+            let arc = 0;
+            for (let i = 1; i < leg.path.length; i++) {
+              const a = leg.path[i - 1],
+                b = leg.path[i],
+                ds = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+              if (arc + ds > remaining) {
+                const f = (remaining - arc) / ds;
+                shown.push([
+                  a[0] + f * (b[0] - a[0]),
+                  a[1] + f * (b[1] - a[1]),
+                  a[2] + f * (b[2] - a[2]),
+                ]);
+                break;
+              }
+              shown.push(b);
+              arc += ds;
+            }
+          }
+          plot(shown, "#143136", 6);
+          ctx.setLineDash(leg.mode === "walk" ? [3, 5] : []);
+          plot(shown, leg.mode === "walk" ? "#ffc875" : "#64efc2", 3.3);
+          ctx.setLineDash([]);
+          remaining -= leg.distance;
+        }
+        if (fraction < 1) render();
+      }
       if (decision?.path) plot(decision.path, "#68f3a8", 3);
+      stops.forEach((stop, i) => {
+        const [x, y] = pixel(...stop.xy);
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = "#14292d";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#adf1d5";
+        ctx.stroke();
+        ctx.font = "600 11px system-ui";
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(letter(i), x, y + 4);
+      });
       for (const [p, color] of [
         [latest.current.observation, "#c9aaff"],
-        [origin, "#b8f39b"],
         [point, "#ffb957"],
         [decision?.pose?.eye, "#51dbe5"],
       ] as const) {
@@ -468,6 +585,14 @@ export function WorldDestinationMap(props: Props) {
                 onChange={(e) => setRoads(e.target.checked)}
               />
               Дороги
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={walk}
+                onChange={(e) => setWalk(e.target.checked)}
+              />
+              Пешие поверхности
             </label>
             <label>
               <input
