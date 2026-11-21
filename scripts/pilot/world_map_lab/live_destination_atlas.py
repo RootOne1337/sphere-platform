@@ -155,6 +155,24 @@ def build(route_dir, geometry_path, observations_path, recording, revision, outp
     return meta
 
 
+def distributed_surface_support(world, pixels):
+    """Reject a cold fix explained by just one repeated wall or road surface."""
+    rng = np.random.default_rng(42)
+    a, b, c = world[rng.integers(len(world), size=(96, 3))].transpose(1, 0, 2)
+    normals = np.cross(b - a, c - a)
+    lengths = np.linalg.norm(normals, axis=1)
+    usable = lengths > 0.01
+    if not usable.any():
+        return False
+    normals = normals[usable] / lengths[usable, None]
+    distances = np.abs(normals @ world.T - np.sum(normals * a[usable], axis=1)[:, None])
+    dominant = np.argmax((distances < 0.7).sum(1))
+    # Six off-plane matches can constrain another pose independently. A tiny
+    # cluster at one window edge is insufficient to resolve repeated facades.
+    others = pixels[distances[dominant] > 0.7]
+    return len(others) >= 6 and len(np.unique((others // 64).astype(int), axis=0)) >= 3
+
+
 class Locator:
     def __init__(self, path, revision):
         with np.load(path, allow_pickle=False) as bank:
@@ -261,6 +279,10 @@ class Locator:
         if not ok or idx is None or len(idx) < 24 or len(idx) < 0.30 * len(obj):
             return None
         obj, px = obj[idx.ravel()], px[idx.ravel()]
+        if self.meta.get("source") == "source-map-grid" and not distributed_surface_support(
+            obj, px
+        ):
+            return None
         if cv2.contourArea(cv2.convexHull(px)) < 0.05 * math.prod(SIZE):
             return None
         r, t = cv2.solvePnPRefineLM(obj, px, self.k, None, r, t)

@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from scripts.pilot.world_map_lab.live_destination import Trip
-from scripts.pilot.world_map_lab.live_destination_atlas import Locator
+from scripts.pilot.world_map_lab.live_destination_atlas import Locator, distributed_surface_support
 
 
 class Roads:
@@ -67,6 +67,7 @@ def test_wrong_camera_jump_needs_reconfirmation_before_motion():
 
 def test_pose_from_inverted_camera_is_ineligible_for_vehicle_control():
     loc = Locator.__new__(Locator)
+    loc.meta = {"source": "source-map-grid"}
     loc.k = np.array([[240.0, 0, 320], [0, 240.0, 180.0], [0, 0, 1.0]])
     loc.origin = np.zeros(3)
     world = np.random.default_rng(42).uniform([-7, 10, -4], [7, 18, 4], (140, 3)).astype(np.float32)
@@ -75,3 +76,16 @@ def test_pose_from_inverted_camera_is_ineligible_for_vehicle_control():
         rotation = np.diag([-1.0, -1.0, 1.0]) @ forward if inverted else forward
         uv = cv2.projectPoints(world, cv2.Rodrigues(rotation)[0], np.zeros(3), loc.k, None)[0][:, 0]
         assert (loc.solve(world, uv) is None) == inverted
+
+
+def test_grid_pose_requires_support_away_from_the_dominant_plane():
+    rng = np.random.default_rng(23)
+    world = rng.uniform(-12, 12, (100, 3)).astype(np.float32)
+    pixels = rng.uniform((0, 0), (639, 359), (100, 2)).astype(np.float32)
+    world[:, 0] = 3
+    world[:2, 0] = 9
+    assert not distributed_surface_support(world, pixels)
+    world[:18, 0] = 9
+    assert distributed_surface_support(world, pixels)
+    pixels[:18] = [128, 128]
+    assert not distributed_surface_support(world, pixels)

@@ -62,6 +62,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for key in ("map-folder", "atlas", "logs"):
         parser.add_argument("--" + key, type=Path, required=True)
+    parser.add_argument(
+        "--search-atlas", action="append", nargs=2, default=[], metavar=("DISTRICT", "NPZ")
+    )
     args = parser.parse_args()
     folder = args.map_folder.resolve(strict=True)
     atlas = args.atlas.resolve(strict=True)
@@ -74,9 +77,16 @@ def main():
         "http://127.0.0.1:8817/api/world",
         logs,
     )
+    search_args = []
+    expected = {}
+    for label, filename in args.search_atlas:
+        path = Path(filename).resolve(strict=True)
+        search_args.extend(["--search-atlas", label, path])
+        with path.open("rb") as source:
+            expected[label] = hashlib.file_digest(source, "sha256").hexdigest()
     visual = start(
         "scripts.pilot.world_map_lab.live_destination",
-        ["--atlas", atlas, "--logs", logs],
+        ["--atlas", atlas, "--logs", logs, *search_args],
         "http://127.0.0.1:8849/world",
         logs,
     )
@@ -84,6 +94,7 @@ def main():
         digest = hashlib.file_digest(f, "sha256").hexdigest()
     if (
         visual.get("codeDigest") != code_digest()
+        or visual.get("searchAtlases", {}) != expected
         or visual.get("atlasDigest") != digest
         or visual.get("mapRevision") != road["drive"]["placementRevision"]
     ):

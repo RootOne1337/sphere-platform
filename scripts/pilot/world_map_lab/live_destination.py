@@ -195,6 +195,18 @@ def serve(args):
     with args.atlas.open("rb") as f:
         atlas_digest = hashlib.file_digest(f, "sha256").hexdigest()
     locator = Locator(args.atlas, road.meta["placementRevision"])
+    district_locators = {}
+    district_digests = {}
+    for label, file in getattr(args, "search_atlas", []):
+        if not label.strip() or label in district_locators:
+            raise ValueError("duplicate or empty district name")
+        district = Locator(file, road.meta["placementRevision"])
+        if district.meta.get("source") != "source-map-grid":
+            raise ValueError("expected reference views rendered from the source map")
+        district.k = locator.k.copy()  # Use the calibrated live stream lens.
+        district_locators[label] = district
+        with open(file, "rb") as src:
+            district_digests[label] = hashlib.file_digest(src, "sha256").hexdigest()
     tiles = DestinationTiles(road.base)
     cv2.setNumThreads(3)
     lock = threading.Lock()
@@ -257,6 +269,15 @@ def serve(args):
                 200,
                 dict(
                     tiles=tiles.manifest(),
+                    searchAtlases=district_digests,
+                    searchRegions=[
+                        dict(
+                            name=name,
+                            points=bank.meta["visualTrace"],
+                            radius=bank.meta["coverageRadius"],
+                        )
+                        for name, bank in district_locators.items()
+                    ],
                     bounds=road.meta["bounds"],
                     mapRevision=road.meta["placementRevision"],
                     atlas=locator.meta,
@@ -270,7 +291,7 @@ def serve(args):
                 return self.reply(403, dict(error="origin_denied"))
             try:
                 size = int(self.headers.get("Content-Length", "0"))
-                frame = self.path == "/frame"
+                frame = self.path in ("/frame", "/probe")
                 if not 0 <= size <= (384 * 1024 if frame else 1024):
                     return self.reply(413, dict(error="payload_size"))
                 typ = self.headers.get_content_type()
@@ -279,22 +300,37 @@ def serve(args):
                 raw = self.rfile.read(size)
                 if len(raw) != size:
                     raise ValueError("invalid_frame")
+                if self.path == "/levels":
+                    return self.road_levels(raw)
                 if self.path == "/preview":
                     payload = json.loads(raw)
                     if payload["revision"] != road.meta["placementRevision"]:
                         raise ValueError("invalid_goal")
                     start, goal = (payload[k] for k in ("start", "goal"))
                     for point in (start, goal):
-                        if (len(point) != 3 or not all(type(v) in (int, float) and math.isfinite(v) for v in point)
-                                or not any(abs(z - point[2]) < .4 for z in road.levels(*point[:2]))):
+                        if (
+                            len(point) != 3
+                            or not all(type(v) in (int, float) and math.isfinite(v) for v in point)
+                            or not any(abs(z - point[2]) < 0.4 for z in road.levels(*point[:2]))
+                        ):
                             raise ValueError("unreachable_goal")
                     result = road.route(start, goal)
                     path = result.get("path", [])
-                    if (result.get("status") != "complete" or not path
-                            or math.dist(start, path[0]) > 2.5 or math.dist(goal, path[-1]) > 2.5):
+                    if (
+                        result.get("status") != "complete"
+                        or not path
+                        or math.dist(start, path[0]) > 2.5
+                        or math.dist(goal, path[-1]) > 2.5
+                    ):
                         return self.reply(200, dict(path=[], distance=0, covered=False))
-                    return self.reply(200, dict(path=path, distance=sum(math.dist(a, b) for a, b in zip(path, path[1:])),
-                                                covered=bool(locator.covers(path))))
+                    return self.reply(
+                        200,
+                        dict(
+                            path=path,
+                            distance=sum(math.dist(a, b) for a, b in zip(path, path[1:])),
+                            covered=bool(locator.covers(path)),
+                        ),
+                    )
                 with lock:
                     self.process(frame, raw)
             except (ValueError, KeyError, TypeError, OSError, cv2.error) as e:
@@ -311,23 +347,59 @@ def serve(args):
                 )
                 self.reply(400, dict(error=message))
 
+        def road_levels(self, raw):
+            x, y = json.loads(raw)["point"]
+            if not all(math.isfinite(v) for v in (x, y)):
+                raise ValueError("invalid_goal")
+            levels = road.levels(x, y)
+            suggestion = None
+            if not levels:
+                for radius in (0.75, 1.5, 3.0):
+                    for direction in range(8):
+                        angle = math.pi * direction / 4
+                        sx, sy = x + radius * math.cos(angle), y + radius * math.sin(angle)
+                        nearby = road.levels(sx, sy)
+                        if nearby:
+                            suggestion = dict(point=[sx, sy], distance=radius)
+                            break
+                    if suggestion:
+                        break
+            return self.reply(
+                200,
+                dict(
+                    levels=levels,
+                    suggestion=suggestion,
+                    coveredLevels=[z for z in levels if locator.covers([[x, y, z]])],
+                ),
+            )
+
+        @staticmethod
+        def decode_frame(raw):
+            with Image.open(BytesIO(raw)) as pic:
+                if pic.format != "JPEG" or pic.size != SIZE:
+                    raise ValueError("invalid_frame")
+                return np.asarray(pic.convert("L"))
+
         def process(self, frame, raw):
             now = time.monotonic()
             for key, trip in list(sessions.items()):
                 if now - trip.last_use > 45:
                     del sessions[key]
-            if self.path == "/levels":
-                x, y = json.loads(raw)["point"]
-                if not all(math.isfinite(v) for v in (x, y)):
-                    raise ValueError("invalid_goal")
-                levels = road.levels(x, y)
-                return self.reply(
-                    200,
-                    dict(
-                        levels=levels,
-                        coveredLevels=[z for z in levels if locator.covers([[x, y, z]])],
-                    ),
-                )
+            if self.path == "/probe":
+                if sessions:
+                    return self.reply(409, dict(error="session_active"))
+                gray = self.decode_frame(raw)
+                found = []
+                for name, bank in [(None, locator), *district_locators.items()]:
+                    pose = bank.locate(gray)
+                    if pose is None:
+                        continue
+                    x, y, z = pose["eye"]
+                    if bank.covers([[x, y, z - 1.45]]):
+                        found.append(dict(pose=pose, district=name))
+                # Even strong independent solutions in two districts are ambiguous.
+                result = found[0] if len(found) == 1 else dict(pose=None, district=None)
+                return self.reply(200, dict(**result, ambiguous=len(found) > 1))
             if self.path == "/start":
                 if sessions:
                     return self.reply(409, dict(error="session_active"))
@@ -358,10 +430,7 @@ def serve(args):
             seq = int(self.headers.get("X-Frame-Sequence", "-1"))
             if not trip.last_sequence < seq < 2**53:
                 return self.reply(409, dict(error="frame_sequence"))
-            with Image.open(BytesIO(raw)) as pic:
-                if pic.format != "JPEG" or pic.size != SIZE:
-                    raise ValueError("invalid_frame")
-                gray = np.asarray(pic.convert("L"))
+            gray = self.decode_frame(raw)
             stamp = self.headers.get("X-Frame-Media-Time")
             clock = float(stamp) if stamp is not None else now
             if (
@@ -402,5 +471,8 @@ if __name__ == "__main__":
     p.add_argument("--logs", type=Path, required=True)
     p.add_argument("--planner", default="http://127.0.0.1:8817")
     p.add_argument("--origin", default="http://127.0.0.1:3015")
+    p.add_argument(
+        "--search-atlas", action="append", nargs=2, default=[], metavar=("DISTRICT", "NPZ")
+    )
     p.add_argument("--port", type=int, default=8849)
     serve(p.parse_args())
