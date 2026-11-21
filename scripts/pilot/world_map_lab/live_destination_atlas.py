@@ -265,11 +265,44 @@ class Locator:
                 return result
         return None
 
+    def configure_search_lenses(self, stream_camera, hfovs):
+        """Set known capture and renderer lenses for passive source-map search."""
+        cameras = [self.k]
+        lenses = [stream_camera.copy()]
+        for hfov in hfovs:
+            if not math.isfinite(hfov) or not 0 < hfov < 180:
+                raise ValueError("invalid horizontal camera field of view")
+            camera = stream_camera.copy()
+            camera[0, 0] = camera[1, 1] = SIZE[0] / (2 * math.tan(math.radians(hfov) / 2))
+            cameras.append(camera)
+        for camera in cameras:
+            if not any(np.allclose(camera, current) for current in lenses):
+                lenses.append(camera)
+        self.search_lenses = lenses
+
     def solve(self, obj, px, descriptor_check=None):
+        cameras = getattr(self, "search_lenses", None)
+        if not cameras:
+            return self.solve_with_camera(self.k, obj, px, descriptor_check)
+        solutions = []
+        for camera in cameras:
+            pose = self.solve_with_camera(camera, obj, px, descriptor_check)
+            if pose is None:
+                continue
+            for other in solutions:
+                if (
+                    math.dist(other["eye"], pose["eye"]) > 1.0
+                    or math.cos(other["heading"] - pose["heading"]) < 0.9925
+                ):
+                    return None
+            solutions.append(pose)
+        return max(solutions, key=lambda p: p["supports"], default=None)
+
+    def solve_with_camera(self, camera, obj, px, descriptor_check):
         ok, r, t, idx = cv2.solvePnPRansac(
             obj,
             px,
-            self.k,
+            camera,
             None,
             iterationsCount=450,
             reprojectionError=2.6,
@@ -285,14 +318,14 @@ class Locator:
             return None
         if cv2.contourArea(cv2.convexHull(px)) < 0.05 * math.prod(SIZE):
             return None
-        r, t = cv2.solvePnPRefineLM(obj, px, self.k, None, r, t)
+        r, t = cv2.solvePnPRefineLM(obj, px, camera, None, r, t)
         R = cv2.Rodrigues(r)[0]
         # In the map Z is up and the image y-axis is down. An upside-down frame
         # can have excellent descriptor matches but reverses the steering convention.
         if R[1, 2] > -0.65 or abs(R[2, 2]) > 0.65:
             return None
         eye = -R.T @ t[:, 0]
-        reproj = cv2.projectPoints(obj, r, t, self.k, None)[0][:, 0]
+        reproj = cv2.projectPoints(obj, r, t, camera, None)[0][:, 0]
         if (
             np.median(np.linalg.norm(reproj - px, axis=1)) > 1.7
             or np.mean(obj @ R[2] + t[2, 0] > 0) < 0.98
@@ -300,7 +333,7 @@ class Locator:
             return None
         if descriptor_check is not None:
             verify_points, verify_px = descriptor_check
-            projected = cv2.projectPoints(verify_points, r, t, self.k, None)[0][:, 0]
+            projected = cv2.projectPoints(verify_points, r, t, camera, None)[0][:, 0]
             supported = (np.linalg.norm(projected - verify_px, axis=1) < 3.0) & (
                 (verify_points @ R[2] + t[2, 0]) > 0
             )
@@ -311,7 +344,7 @@ class Locator:
             ok, vr, vt = cv2.solvePnP(
                 verify_points[supported],
                 verify_px[supported],
-                self.k,
+                camera,
                 None,
                 flags=cv2.SOLVEPNP_SQPNP,
             )
@@ -327,7 +360,7 @@ class Locator:
         for mask in (pattern, ~pattern):
             if mask.sum() < 8:
                 return None
-            ok, rr, tt = cv2.solvePnP(obj[mask], px[mask], self.k, None, flags=cv2.SOLVEPNP_SQPNP)
+            ok, rr, tt = cv2.solvePnP(obj[mask], px[mask], camera, None, flags=cv2.SOLVEPNP_SQPNP)
             if not ok:
                 return None
             q = cv2.Rodrigues(rr)[0]

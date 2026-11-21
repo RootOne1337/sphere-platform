@@ -74,6 +74,7 @@ def main():
     parser.add_argument(
         "--water", type=Path, help="Source data/water.dat for detailed street map tiles"
     )
+    parser.add_argument("--search-hfov", action="append", type=float, default=[])
     args = parser.parse_args()
     folder = args.map_folder.resolve(strict=True)
     atlas = args.atlas.resolve(strict=True)
@@ -87,6 +88,8 @@ def main():
         logs,
     )
     search_args = []
+    for angle in args.search_hfov:
+        search_args.extend(["--search-hfov", str(angle)])
     expected = {}
     for label, filename in args.search_atlas:
         path = Path(filename).resolve(strict=True)
@@ -105,6 +108,7 @@ def main():
         digest = hashlib.file_digest(f, "sha256").hexdigest()
     if (
         visual.get("codeDigest") != code_digest()
+        or visual.get("searchCameraHfovs", []) != args.search_hfov
         or visual.get("searchAtlases", {}) != expected
         or (args.water and not visual.get("streetTiles"))
         or visual.get("atlasDigest") != digest

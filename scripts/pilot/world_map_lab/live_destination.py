@@ -220,7 +220,7 @@ def serve(args):
         district = Locator(file, road.meta["placementRevision"])
         if district.meta.get("source") != "source-map-grid":
             raise ValueError("expected reference views rendered from the source map")
-        district.k = locator.k.copy()  # Use the calibrated live stream lens.
+        district.configure_search_lenses(locator.k, args.search_hfov)
         district_locators[label] = district
         with open(file, "rb") as src:
             district_digests[label] = hashlib.file_digest(src, "sha256").hexdigest()
@@ -310,6 +310,7 @@ def serve(args):
                     tiles=tiles.manifest(),
                     streetTiles=detail.manifest() if detail else None,
                     searchAtlases=district_digests,
+                    searchCameraHfovs=args.search_hfov,
                     searchRegions=[
                         dict(
                             name=name,
@@ -538,6 +539,7 @@ if __name__ == "__main__":
     p.add_argument(
         "--search-atlas", action="append", nargs=2, default=[], metavar=("DISTRICT", "NPZ")
     )
+    p.add_argument("--search-hfov", action="append", type=float, default=[])
     p.add_argument("--detail-folder", type=Path)
     p.add_argument("--water", type=Path)
     p.add_argument("--port", type=int, default=8849)

@@ -103,3 +103,19 @@ def test_vehicle_stops_at_each_waypoint_and_reacquires_for_next_leg():
     assert trip.decide(pose(15), 1.6)["reason"] == "confirming_position"
     assert trip.decide(pose(15), 1.8)["reason"] == "stopping"
     assert trip.decide(pose(15), 2.6)["reason"] == "arrived"
+
+
+def test_different_lenses_must_agree_before_reporting_a_search_pose():
+    loc = Locator.__new__(Locator)
+    loc.k = np.array([[300, 0, 319.5], [0, 300, 179.5], [0, 0, 1.0]])
+    stream = loc.k.copy()
+    stream[0, 0] = stream[1, 1] = 202
+    loc.configure_search_lenses(stream, [70, 70])
+    assert len(loc.search_lenses) == 3
+    with pytest.raises(ValueError):
+        loc.configure_search_lenses(stream, [float("nan")])
+    loc.configure_search_lenses(stream, [70])
+    loc.solve_with_camera = lambda camera, *_: pose(6 if camera[0, 0] > 400 else 0)
+    assert loc.solve(None, None) is None
+    loc.solve_with_camera = lambda camera, *_: pose(0.1) if camera[0, 0] > 400 else None
+    assert loc.solve(None, None)["eye"] == [0.1, 0, 1.45]
