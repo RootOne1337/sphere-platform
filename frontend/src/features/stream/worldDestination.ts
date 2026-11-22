@@ -6,6 +6,7 @@ export type XYZ = [number, number, number];
 export type WorldInfo = {
   bounds: [number, number, number, number];
   mapRevision: string;
+  walkAutopilot?: boolean;
   streetTiles?: { revision: string; spans: number[]; pixels: number } | null;
   worldSearch?: SearchState | null;
   searchRegions?: { name: string; points: XYZ[]; radius: number; driveEnabled?: boolean }[];
@@ -283,13 +284,13 @@ export async function probeWorldPosition(
       const phase = result.worldSearch?.phase;
       if (openCamera && !cameraIssue && !previous && !search.aborted &&
           cameraSteps < 12 && now >= nextStroke &&
-          phase !== "tracking") {
+          phase !== "tracking" && phase !== "verifying_geometry") {
         try {
           camera ??= await openCamera(search);
           if (search.aborted || !camera.active() || !camera.look) throw Error("world_camera_unavailable");
           if (camera.canLook?.() === true) {
             // Sweep one side and then cross the starting direction. The walking stick stays neutral.
-            const fraction = cameraSteps < 4 ? 0.16 : -0.16;
+            const fraction = cameraSteps < 3 || cameraSteps >= 9 ? 0.16 : -0.16;
             if (await camera.look(fraction, performance.now() + 240)) cameraSteps++;
             nextStroke = performance.now() + 500;
           } else {

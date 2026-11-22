@@ -508,9 +508,10 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
       ?'Подключите прямой поток устройства':calibrate?'Завершите калибровку':vehicleCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Канал управления занят');
     const cameraIssue=readOnly?'Доступен только просмотр':!ready||!result||!['host','nat'].includes(result.path)
       ?'Для поворота камеры подключите прямой поток':calibrate?'Завершите калибровку'
-      :walkingCameraIssue(profile,binding??null);
+      :walkingCameraIssue(profile,binding??null)??(phase==='preview'?null:'Канал управления занят');
+    const walkIssue=cameraIssue??walkingCalibrationIssue(profile,binding??null);
     return <div ref={host} className={styles.console} aria-label="Навигация по живому экрану">
-      <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} connected={attached.current && result !== null} inputIssue={inputIssue} openInput={openVehicleInput} cameraIssue={cameraIssue} openCamera={openCameraInput}/>
+      <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} connected={attached.current && result !== null} inputIssue={inputIssue} openInput={openVehicleInput} cameraIssue={cameraIssue} openCamera={openCameraInput} walkIssue={walkIssue} openWalk={openWalkInput}/>
       <aside className={styles.rail}>
         <section id="destination-stream" aria-label="Живой экран" className={styles.panel}>
           <header className={styles.panelHeader}><div><Radio size={17}/><h2>Живой экран</h2></div><span className={ready?styles.online:styles.offline}>{ready?'В эфире':'Офлайн'}</span></header>

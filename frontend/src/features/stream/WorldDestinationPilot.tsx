@@ -7,7 +7,8 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { Flag, LocateFixed, MapPin, Navigation, X } from "lucide-react";
+import { Flag, Footprints, LocateFixed, MapPin, Navigation, X } from "lucide-react";
+import { runWorldWalk } from "./worldWalk";
 import { WorldDestinationMap } from "./WorldDestinationMap";
 import styles from "./worldConsole.module.css";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,13 @@ const reasons: Record<string, string> = {
   stream_stopped: "Поток остановлен",
   stream_geometry_or_clock: "Нужен свежий горизонтальный кадр 16:9",
   unreachable_goal: "Метка вне проезжей части",
+  planning_walk: "Прокладываем маршрут по тротуарам и переходам",
+  walking: "Идём к метке",
+  walk_aligning: "Поворачиваем камеру по ходу маршрута",
+  walk_outside_path: "Уточняем положение и перестраиваем маршрут",
+  walk_clearance_unknown: "Не подтверждён проход впереди. Остановились для проверки.",
+  walk_start_not_on_pavement: "Положение найдено. Под персонажем нет подтверждённого тротуара.",
+  walk_path_unavailable: "Между текущим тротуаром и меткой нет подтверждённого пешеходного пути.",
   session_active: "Другой сеанс уже использует карту",
 };
 function problem(e: unknown) {
@@ -81,6 +89,8 @@ export function WorldDestinationPilot({
   openInput,
   openCamera,
   cameraIssue,
+  walkIssue,
+  openWalk,
 }: {
   video: RefObject<HTMLVideoElement | null>;
   ready: boolean;
@@ -88,6 +98,8 @@ export function WorldDestinationPilot({
   inputIssue: string | null;
   cameraIssue?: string | null;
   openCamera?: (signal: AbortSignal, journal: (event: TeachingInput) => void) => Promise<WalkInputLease>;
+  walkIssue?: string | null;
+  openWalk?: (signal: AbortSignal, journal: (event: TeachingInput) => void) => Promise<WalkInputLease>;
   openInput: (
     signal: AbortSignal,
     journal: (event: TeachingInput) => void,
@@ -106,6 +118,9 @@ export function WorldDestinationPilot({
   } | null>(null);
   const [covered, setCovered] = useState<number[]>([]);
   const [multiple, setMultiple] = useState(false);
+  const [walking, setWalking] = useState(() =>
+    typeof window !== "undefined" && new URL(window.location.href).searchParams.get("travel") === "walk",
+  );
   const [acquireMinutes, setAcquireMinutes] = useState(3);
   const itinerary = useWorldItinerary(info?.mapRevision);
   const [liveStartFresh, setLiveStartFresh] = useState(false);
@@ -127,10 +142,12 @@ export function WorldDestinationPilot({
     [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<Decision | null>(null),
     [age, setAge] = useState<number | null>(null);
+  const [commandAge, setCommandAge] = useState<number | null>(null);
   const choice = useRef<AbortController | null>(null),
     run = useRef<AbortController | null>(null),
     mounted = useRef(false);
   const driving = useRef(false);
+  const surveying = useRef(false);
   const opening = useRef(openInput);
   opening.current = openInput;
   const stop = useCallback(() => {
@@ -140,12 +157,14 @@ export function WorldDestinationPilot({
     }
     if (run.current) {
       run.current.abort();
-      setStatus("Поездка остановлена");
+      setStatus("Проход остановлен");
     }
   }, []);
   useEffect(() => {
     mounted.current = true;
-    const blur = () => stop(),
+    const blur = () => {
+        if (run.current && !surveying.current) stop();
+      },
       key = (e: KeyboardEvent) => {
         if (e.key === "Escape") stop();
       },
@@ -244,7 +263,8 @@ export function WorldDestinationPilot({
     setLevels([]);
     setData(null);
     setAge(null);
-    setStatus("Проверяем дорогу под меткой");
+    setCommandAge(null);
+    setStatus(walking ? "Проверяем тротуар под меткой" : "Проверяем дорогу под меткой");
     try {
       const result = await worldRequest<{
         levels: number[];
@@ -252,6 +272,7 @@ export function WorldDestinationPilot({
         suggestion: { point: [number, number]; distance: number } | null;
       }>("/levels", AbortSignal.any([c.signal, AbortSignal.timeout(5000)]), {
         point: [x, y],
+        ...(walking ? { mode: "walk", surface: "pavement" } : {}),
       });
       if (c.signal.aborted) return;
       setSuggestion(result.suggestion);
@@ -261,7 +282,7 @@ export function WorldDestinationPilot({
       setLevel(valid.length === 1 ? valid[0] : null);
       setStatus(
         !result.levels.length
-          ? "Под меткой нет проезжей дороги"
+          ? (walking ? "Под меткой нет тротуара" : "Под меткой нет проезжей дороги")
           : valid.length > 1
             ? "Выберите уровень дороги"
             : "Цель выбрана",
@@ -269,7 +290,7 @@ export function WorldDestinationPilot({
     } catch (e) {
       if (!c.signal.aborted) setStatus(problem(e));
     }
-  }, []);
+  }, [walking]);
   const [initialFocus, setInitialFocus] = useState<[number, number] | null>(null);
   useEffect(() => {
     if (!info) return;
@@ -292,6 +313,7 @@ export function WorldDestinationPilot({
   }
   async function start() {
     const el = video.current;
+    const onFoot = walking && !multiple;
     if (
       !el ||
       !info ||
@@ -299,8 +321,8 @@ export function WorldDestinationPilot({
         ? itinerary.mode !== "drive" ||
           !itinerary.plan?.covered ||
           itinerary.plan.status !== "complete"
-        : !point || level === null || !covered.includes(level)) ||
-      inputIssue ||
+        : !point || level === null || (onFoot ? !info.walkAutopilot : !covered.includes(level))) ||
+      (onFoot ? walkIssue || cameraIssue || !openWalk || !openCamera : inputIssue) ||
       !ready ||
       run.current ||
       probe.current
@@ -314,7 +336,8 @@ export function WorldDestinationPilot({
     setProbeMessage("");
     setData(null);
     setAge(null);
-    setStatus("Ищем скутер по живому кадру");
+    setCommandAge(null);
+    setStatus(onFoot ? "Ищем положение персонажа по живому кадру" : "Ищем скутер по живому кадру");
     let session: string | undefined;
     let applied = 0,
       rejected = 0;
@@ -325,6 +348,29 @@ export function WorldDestinationPilot({
       }
     };
     try {
+      const locateWalkingStart = async () => {
+        surveying.current = true;
+        try {
+          const position = await probeWorldPosition(
+            el, c.signal, acquireMinutes * 60_000,
+            ({ phase, frames, cameraSteps, cameraIssue: issue }) => {
+              if (!c.signal.aborted) setStatus(
+                `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Сбор ракурсов"} · ${frames} кадров · ${cameraSteps} поворотов камеры`,
+              );
+            },
+            (signal) => openCamera!(signal, journal),
+            info.worldSearch,
+          );
+          if (!c.signal.aborted) {
+            setObservation({ eye: position.eye, startLevels: position.startLevels, acquiredAt: performance.now() });
+            setStatus("Положение подтверждено. Готовим пеший маршрут");
+          }
+        } finally {
+          surveying.current = false;
+        }
+      };
+      if (onFoot) await locateWalkingStart();
+      if (c.signal.aborted) return;
       // Retain the session handle even if Stop is pressed while /start is in flight.
       const res = await worldRequest<{ session: string }>(
         "/start",
@@ -334,10 +380,21 @@ export function WorldDestinationPilot({
               stops: itinerary.stops.map((p) => [...p.xy, p.z]),
               revision: info.mapRevision,
             }
-          : { goal: [...point!, level], revision: info.mapRevision },
+          : { goal: [...point!, level], revision: info.mapRevision, ...(onFoot ? { mode: "walk" } : {}) },
       );
       session = res.session;
-      if (!c.signal.aborted)
+      if (!c.signal.aborted && onFoot)
+        await runWorldWalk(el, session, c.signal, () => openWalk!(c.signal, journal),
+          (decision, ms, commandMs) => {
+            if (c.signal.aborted) return;
+            setData(decision);
+            setAge(ms);
+            if (commandMs != null) setCommandAge(commandMs);
+            setStatus(decision.reason === "no_motion"
+              ? "Пеший проход остановлен. Персонаж не продвинулся после команды."
+              : reasons[decision.reason] ?? decision.reason);
+          }, locateWalkingStart);
+      else if (!c.signal.aborted)
         await runWorldTrip(
           el,
           session,
@@ -380,30 +437,39 @@ export function WorldDestinationPilot({
     ? itinerary.mode === "drive" &&
       itinerary.plan?.status === "complete" &&
       itinerary.plan.covered
-    : level !== null && covered.includes(level);
-  function switchPlan(value: boolean) {
+    : level !== null && (walking ? info?.walkAutopilot === true : covered.includes(level));
+  const currentIssue = walking && !multiple ? walkIssue ?? cameraIssue : inputIssue;
+  function switchPlan(value: "drive" | "walk" | "itinerary") {
     choice.current?.abort();
-    setMultiple(value);
+    if (value !== "itinerary") {
+      const url = new URL(window.location.href);
+      if (value === "walk") url.searchParams.set("travel", "walk");
+      else url.searchParams.delete("travel");
+      window.history.replaceState(window.history.state, "", url);
+    }
+    setMultiple(value === "itinerary");
+    setWalking(value === "walk");
     setData(null);
     setStatus("");
   }
   return (
-    <section aria-label="Поездка к метке" className={styles.panel}>
+    <section aria-label="Навигация к метке" className={styles.panel}>
       <header className={styles.panelHeader}>
         <div>
           <MapPin size={17} />
           <h2>Карта мира</h2>
         </div>
         <nav className={styles.planTabs} aria-label="Выбор маршрута">
-          {[
-            [false, "К метке"],
-            [true, "A–B–C"],
-          ].map(([value, label]) => (
+          {([
+            ["drive", "На транспорте"],
+            ["walk", "Пешком"],
+            ["itinerary", "A–B–C"],
+          ] as const).map(([value, label]) => (
             <button
               key={String(label)}
-              aria-pressed={multiple === value}
-              disabled={active}
-              onClick={() => switchPlan(value === true)}
+              aria-pressed={value === (multiple ? "itinerary" : walking ? "walk" : "drive")}
+              disabled={active || probing}
+              onClick={() => switchPlan(value)}
             >
               {label}
             </button>
@@ -481,6 +547,9 @@ export function WorldDestinationPilot({
                   aria-label="Сбросить метку"
                   onClick={() => {
                     choice.current?.abort();
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("goal");
+                    window.history.replaceState(window.history.state, "", url);
                     setPoint(null);
                     setLevel(null);
                     setLevels([]);
@@ -495,7 +564,7 @@ export function WorldDestinationPilot({
             </div>
             {levels.length > 1 && (
               <label className={styles.selectLabel}>
-                Уровень дороги{" "}
+                {walking ? "Уровень тротуара" : "Уровень дороги"}{" "}
                 <select
                   disabled={active}
                   value={level ?? ""}
@@ -519,7 +588,7 @@ export function WorldDestinationPilot({
                 variant="outline"
                 onClick={() => mark(...suggestion.point)}
               >
-                Выбрать дорогу рядом · {suggestion.distance.toFixed(1)} м
+                {walking ? "Выбрать тротуар рядом" : "Выбрать дорогу рядом"} · {suggestion.distance.toFixed(1)} м
               </Button>
             )}
           </>
@@ -537,12 +606,14 @@ export function WorldDestinationPilot({
           <p className={styles.attention}>
             {multiple
               ? "Путь рассчитан. Автопоездка доступна на транспортных участках с проверенными ориентирами."
-              : "Дорога найдена. Для автопоездки здесь ещё нужны визуальные ориентиры."}
+              : walking ? "Служба карты не поддерживает пешее управление."
+                : "Дорога найдена. Для автопоездки здесь ещё нужны визуальные ориентиры."}
           </p>
         )}
         {data && (
           <p className={styles.status}>
             Опор {data.pose?.supports ?? 0} · Кадр до решения {age} мс
+            {walking && commandAge != null && ` · Кадр до команды ${commandAge} мс`}
             {data.remaining != null
               ? " · Осталось " + data.remaining.toFixed(1) + " м"
               : ""}
@@ -555,19 +626,19 @@ export function WorldDestinationPilot({
             </Button>
           ) : (
             <Button
-              disabled={!ready || !!inputIssue || !eligible || probing}
+              disabled={!ready || !!currentIssue || !eligible || probing}
               onClick={() => void start()}
             >
-              <Navigation size={15} />
-              {multiple ? "Ехать по точкам" : "Ехать к метке"}
+              {walking && !multiple ? <Footprints size={15} /> : <Navigation size={15} />}
+              {multiple ? "Ехать по точкам" : walking ? "Идти к метке" : "Ехать к метке"}
             </Button>
           )}
-          {!active && inputIssue && (
+          {!active && currentIssue && (
             <small>
               {!ready ? (
-                <a href="#destination-stream">{inputIssue}</a>
+                <a href="#destination-stream">{currentIssue}</a>
               ) : (
-                inputIssue
+                currentIssue
               )}
             </small>
           )}
