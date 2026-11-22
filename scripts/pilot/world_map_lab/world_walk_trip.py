@@ -214,7 +214,7 @@ class WalkTrip:
         if aim is None:
             if self.last_edge_replan is None or math.dist(eye[:2], self.last_edge_replan) > 0.5:
                 ground = self.surface.ground_support(eye, 1.55)
-                if ground is not None and not ground.on_mesh:
+                if ground is not None and (not ground.on_mesh or not self.pavement_below(eye)):
                     self.last_edge_replan = eye[:2].copy()
                     self.path = self.motion_origin = None
                     return dict(reply, path=[], reason="walk_outside_path")
