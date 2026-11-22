@@ -156,6 +156,13 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                 path = folder / relative
                 if path.is_file():
                     files["/" + relative] = path
+        crossing_example = walk_folder / "crossing-example.json"
+        if "pavement" in examples and hasattr(walk.dll, "query_crossing_path"):
+            examples["crossings"] = examples["pavement"]
+            if crossing_example.is_file():
+                case = json.loads(crossing_example.read_bytes())
+                if case.get("geometrySha256") == walk.meta["geometrySha256"]:
+                    examples["crossings"] = {key: case[key] for key in ("start", "end")}
         audit_file = walk_folder / "world-navigation-audit.json"
         if audit_file.is_file():
             audit = json.loads(audit_file.read_bytes())
@@ -340,6 +347,8 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                             **{m: n.meta for m, n in nets.items()},
                             "examples": list(examples),
                             "pavement": pavement is not None,
+                            "pedestrianCrossings": pavement is not None
+                            and hasattr(walk.dll, "query_crossing_path"),
                             "parkedVehicle": parked,
                             "review": "/review" in files,
                             "detail": "/detail" in files,
@@ -405,7 +414,11 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                     nav = nets["walk" if mode in ("trip", "taxi") else mode]
                     if req.path == "/api/example":
                         surface = args.get("surface")
-                        key = "pavement" if mode == "walk" and surface == ["pavement"] else mode
+                        key = (
+                            surface[0]
+                            if mode == "walk" and surface in (["pavement"], ["crossings"])
+                            else mode
+                        )
                         self.send_json(examples[key])
                     elif req.path == "/api/step":
                         start, xy = (
@@ -422,7 +435,9 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                         if vehicle and mode != "trip":
                             raise ValueError("vehicle requires mixed mode")
                         surface = args.get("surface")
-                        if surface is not None and (mode != "walk" or surface != ["pavement"]):
+                        if surface is not None and (
+                            mode != "walk" or surface not in (["pavement"], ["crossings"])
+                        ):
                             raise ValueError("expected pavement restriction on a walking route")
                         point = [float(n) for n in vehicle[0].split(",")] if vehicle else None
                         result = (
@@ -432,11 +447,25 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                             if mode == "trip"
                             else nav.route(*ends, pavement=surface is not None)
                         )
-                        if surface and result["status"] == "complete":
-                            if pavement is None or not pavement.paved_route(
-                                [ends[0], *result["path"], ends[1]]
-                            ):
-                                result = dict(status="surface_unconfirmed", length=0, path=[])
+                        if (
+                            surface
+                            and result["status"] == "complete"
+                            and (
+                                pavement is None
+                                or not pavement.paved_route([ends[0], *result["path"], ends[1]])
+                            )
+                        ):
+                            result = dict(status="surface_unconfirmed", length=0, path=[])
+                        if surface == ["crossings"] and result["status"] != "complete" and pavement:
+                            result = nav.route(*ends, pavement=True, crossings=True)
+                            if result["status"] == "complete":
+                                crossings = pavement.crossings_on(
+                                    [ends[0], *result["path"], ends[1]]
+                                )
+                                if crossings is None:
+                                    result = dict(status="surface_unconfirmed", length=0, path=[])
+                                else:
+                                    result["crossings"] = crossings
                         self.send_json(result)
                 except (KeyError, TypeError, ValueError, OverflowError):
                     self.send_json({"error": "invalid query"}, 400)

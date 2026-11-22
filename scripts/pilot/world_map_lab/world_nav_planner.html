@@ -193,6 +193,9 @@
         <label id="pavementOption" hidden>
           <input id="pavement" type="checkbox" /> Только тротуары и дорожки
         </label>
+        <label id="crossingOption" hidden>
+          <input id="crossings" type="checkbox" checked /> Короткие переходы поперёк дороги
+        </label>
       </div>
     </header>
     <section class="card">
@@ -265,6 +268,7 @@
       active = "a",
       ends = {},
       path = [],
+      roadCrossings = [],
       itinerary,
       pending,
       request = 0,
@@ -325,6 +329,17 @@
         ctx.strokeStyle = leg.mode === "walk" ? "#c5ffac" : "#ffcb68";
         ctx.stroke();
       }
+      ctx.save();
+      ctx.setLineDash([6, 3]);
+      for (const crossing of roadCrossings) {
+        ctx.beginPath();
+        ctx.moveTo(...pixel(...crossing.entry));
+        ctx.lineTo(...pixel(...crossing.exit));
+        ctx.strokeStyle = "#ffc16c";
+        ctx.lineWidth = 5;
+        ctx.stroke();
+      }
+      ctx.restore();
       for (const leg of path.slice(1)) {
         const [x, y] = pixel(...leg.path[0]);
         ctx.beginPath();
@@ -393,12 +408,17 @@
     function pavedOnly() {
       return mode() === "walk" && world?.pavement && $("pavement").checked;
     }
+    function walkingSurface() {
+      if (!pavedOnly()) return "";
+      return world.pedestrianCrossings && $("crossings").checked ? "crossings" : "pavement";
+    }
     function reset() {
       clearItinerary();
       $("v").hidden = mode() !== "trip";
       $("pavementOption").hidden = !(mode() === "walk" && world?.pavement);
+      $("crossingOption").hidden = !(pavedOnly() && world.pedestrianCrossings);
       if (world?.examples)
-        $("example").disabled = !world.examples.includes(pavedOnly() ? "pavement" : mode());
+        $("example").disabled = !world.examples.includes(walkingSurface() || mode());
       request++;
       ends =
         mode() === "trip" && world?.parkedVehicle
@@ -407,6 +427,7 @@
       reachable = null;
       $("surfaceLabel").textContent = pavedOnly() ? "Общая пешая сетка" : "Доступная поверхность";
       path = [];
+      roadCrossings = [];
       $("exploreLink").href = "/explore";
       pending = null;
       $("levels").hidden = true;
@@ -440,6 +461,7 @@
           });
       }
       path = [];
+      roadCrossings = [];
       const freeLink = ends.a
         ? "/explore?" +
           new URLSearchParams({ start: ends.a.join(","), mode: mode() })
@@ -468,12 +490,13 @@
         end: ends.b.join(","),
       });
       if (ends.v) query.set("vehicle", ends.v.join(","));
-      if (pavedOnly()) query.set("surface", "pavement");
+      if (walkingSurface()) query.set("surface", walkingSurface());
       const result = await get("/api/path?" + query);
       if (token !== request) return;
       path =
         result.legs ||
         (result.path.length ? [{ mode: mode(), path: result.path }] : []);
+      roadCrossings = result.crossings || [];
       draw();
       $("exploreLink").href =
         result.status === "complete" && !pavedOnly() ? "/explore?" + query : freeLink;
@@ -507,7 +530,7 @@
         endpoint_unavailable:
           "Для одного из концов не найдена подходящая поверхность.",
         surface_unconfirmed: pavedOnly()
-          ? "Тротуар или дорожка подтверждены только на части пути."
+          ? "Непрерывный тротуар или допустимый переход на части пути не подтверждены."
           : "На выбранном уровне не подтверждена высота опоры.",
         search_limit: "Поиск достиг вычислительного лимита.",
       };
@@ -520,6 +543,7 @@
                 .map((l) => (l.mode === "walk" ? "пешком" : "на транспорте"))
                 .join(" → ") +
               (pavedOnly() ? " · по тротуарам и дорожкам" : "") +
+              (result.crossings?.length ? " · переходов " + result.crossings.length : "") +
               (mode() === "taxi" && result.pickup
                 ? ". Место подачи скутера выбрано на карте стенда."
                 : ".")
@@ -541,6 +565,7 @@
           new URLSearchParams({ start: ends.a.join(","), mode: mode() })
         : "/explore";
       path = [];
+      roadCrossings = [];
       draw();
       const { levels } = await get(
         "/api/levels?" +
@@ -588,7 +613,7 @@
       const token = request;
       try {
         const query = new URLSearchParams({ mode: mode() });
-        if (pavedOnly()) query.set("surface", "pavement");
+        if (walkingSurface()) query.set("surface", walkingSurface());
         const ex = await get("/api/example?" + query);
         if (token !== request) return;
         ends.a = ex.start;
@@ -635,6 +660,7 @@
     $("clear").onclick = reset;
     $("mode").onchange = reset;
     $("pavement").onchange = reset;
+    $("crossings").onchange = reset;
     $("overlay").onchange = draw;
     $("plus").onclick = () => zoom(1.6);
     $("minus").onclick = () => zoom(1 / 1.6);

@@ -71,7 +71,7 @@ def acquire(cfg, frames, output, planner, report, *, walk_anchor=None, walk_fold
     if walk_anchor is None:
         report("global_search")
         encode(cfg["gallery"], "search", "--stream-focal", focal, cfg["index"], coarse, *frames)
-        spacing, regions, radius = 10, 3, 110
+        spacing, regions, radius = (10, 2, 75) if len(frames) == 1 else (10, 3, 110)
     else:
         anchor = np.asarray(walk_anchor, dtype=float)
         if anchor.shape != (3,) or not np.isfinite(anchor).all() or walk_folder is None:
@@ -151,6 +151,100 @@ def acquire(cfg, frames, output, planner, report, *, walk_anchor=None, walk_fold
     return json.loads((output / "geometry.json").read_bytes())
 
 
+class RecentWalkProbe:
+    """Try current geometry near a recent walking fix before searching the entire map."""
+
+    def __init__(self, directory, revision):
+        self.file = directory / "recent-walk-fix.json"
+        self.revision = revision
+        self.tracker = None
+        self.surface = None
+        self.seed = None
+        self.attempt = 0
+        self.deadline = 0.0
+        self.seed_until = 0.0
+        self.retry = 0.0
+        self.last_saved = -math.inf
+        try:
+            data = json.loads(self.file.read_bytes())
+            if (
+                data["revision"] == revision
+                and 0 <= time.time() - data["capturedUnix"] <= 1200
+                and len(data["pose"]["eye"]) == 3
+                and all(math.isfinite(x) for x in (*data["pose"]["eye"], data["pose"]["heading"]))
+            ):
+                self.seed = data["pose"]
+                self.seed_until = data["capturedUnix"] + 1200
+        except (OSError, ValueError, TypeError, KeyError):
+            pass
+
+    def observe(self, raw, cfg, road):
+        if self.seed is None or time.time() > self.seed_until:
+            return None
+        from scripts.pilot.world_map_lab.pedestrian_surface import FootSurface
+        from scripts.pilot.world_map_lab.walking_mesh_tracker import WalkingMeshTracker
+
+        now = time.monotonic()
+        if self.tracker is None:
+            if now < self.retry:
+                return None
+            self.surface = FootSurface(cfg["folder"], road, check_visibility=False)
+            self.tracker = WalkingMeshTracker(cfg, road.base)
+            self.deadline = now + 45
+            cleanup = threading.Timer(60, self.tracker.close)
+            cleanup.daemon = True
+            cleanup.start()
+        tracker = self.tracker
+        if now >= self.deadline or tracker.closed or tracker.failed:
+            self.retry = now + (0 if tracker.closed and not tracker.failed else 20)
+            tracker.close()
+            self.surface.close()
+            self.tracker = self.surface = None
+            return None
+        if not tracker.ready.is_set():
+            return None
+        image = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
+        pose = tracker.locate(image)
+        if pose and math.dist(pose["eye"], self.seed["eye"]) < 10:
+            ground = self.surface.ground_support(pose["eye"], 1.55)
+            if ground is not None:
+                if self.attempt == 1:
+                    print(
+                        f"Recent walking position confirmed at {pose['supports']} points",
+                        flush=True,
+                    )
+                self.seed = pose
+                self.seed_until = time.time() + 1200
+                if now - self.last_saved >= 5:
+                    try:
+                        pending = self.file.with_suffix(".pending")
+                        pending.write_text(
+                            json.dumps(
+                                {
+                                    "revision": self.revision,
+                                    "capturedUnix": time.time(),
+                                    "pose": pose,
+                                }
+                            )
+                        )
+                        pending.replace(self.file)
+                        self.last_saved = now
+                    except OSError:
+                        pass
+                self.attempt = 0
+                self.deadline = now + 18
+                tracker.submit(image, pose)
+                return pose
+        if now - tracker.last_submit >= 0.4:
+            angles = (0, 0.35, -0.35, 0.8, -0.8, 1.55, -1.55, 2.35, -2.35, math.pi)
+            acquired = dict(
+                self.seed, heading=self.seed["heading"] + angles[self.attempt % len(angles)]
+            )
+            tracker.submit(image, acquired)
+            self.attempt += 1
+        return None
+
+
 class WorldAcquisition:
     """At most one GPU job. Historical results only seed a fresh per-frame geometric solve."""
 
@@ -163,6 +257,7 @@ class WorldAcquisition:
         self.directory = directory / self.signature
         self.directory.mkdir(parents=True, exist_ok=True)
         self.planner, self.revision = planner, revision
+        self.recent_walk = RecentWalkProbe(self.directory, revision)
         self.bank = None
         self.lock = threading.Lock()
         self.phase = "collecting_views"
@@ -189,12 +284,16 @@ class WorldAcquisition:
                 detailWidth=1920,
             )
 
-    def observe(self, raw, gray, observed):
+    def observe(self, raw, gray, observed, *, walk_road=None):
         with self.lock:
             bank = self.bank
         if bank is not None and observed is not None:
             pose = bank.locate_features(gray, *observed)
             if pose and bank.covers([[*pose["eye"][:2], pose["eye"][2] - 1.45]]):
+                return pose
+        if walk_road is not None:
+            pose = self.recent_walk.observe(raw, self.cfg, walk_road)
+            if pose:
                 return pose
         self.collect(raw, gray)
         return None
@@ -230,7 +329,9 @@ class WorldAcquisition:
                 self.phase = "collecting_views"
             if all(np.mean(np.abs(thumb - old)) >= 5 for old, _ in self.samples):
                 self.samples.append((thumb, raw))
-            if len(self.samples) >= 14 or (self.samples and now - self.first_sample >= 24):
+            count = len(self.samples)
+            elapsed = now - self.first_sample
+            if count >= 10 or (count >= 4 and elapsed >= 12) or (count and elapsed >= 24):
                 frames = [im for _, im in self.samples]
                 self.samples.clear()
                 self.busy = True
@@ -243,6 +344,7 @@ class WorldAcquisition:
 
     def _run(self, images):
         state = "no_verified_position"
+        print(f"World search started: {len(images)} distinct frames", flush=True)
         try:
             with tempfile.TemporaryDirectory(dir=self.directory, prefix="survey-") as tmp:
                 folder = Path(tmp)
@@ -253,6 +355,14 @@ class WorldAcquisition:
                     frames.append(path)
                 try:
                     result = acquire(self.cfg, frames, folder, self.planner, self._phase)
+                    print(
+                        "World search finished:",
+                        {
+                            key: result.get(key)
+                            for key in ("candidatesChecked", "framesWithPose", "ambiguous")
+                        },
+                        flush=True,
+                    )
                     if (
                         result.get("trackingAtlas")
                         and result.get("pose")

@@ -66,7 +66,7 @@ def measure(row, data, index, chunks, origin=(-3072, 3584)):
     ac = t[:, 2] - t[:, 0]
     det = cross[:, 2]
     prof = []
-    for f in np.linspace(0, 1, 17) if length else (0,):
+    for f in np.linspace(0, 1, row.get("samples", 17)) if length else (0,):
         p = a + (b - a) * f
         offset = p[:2] - t[:, 0, :2]
         u = (offset[:, 0] * ac[:, 1] - offset[:, 1] * ac[:, 0]) / np.where(abs(det) > 1e-7, det, 1)

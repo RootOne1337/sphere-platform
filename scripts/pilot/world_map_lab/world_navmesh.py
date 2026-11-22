@@ -62,8 +62,9 @@ def library(path):
         "query_levels": (integer, [void, real, real, FLOATS, integer]),
         "query_path": (integer, [void, FLOATS, FLOATS, FLOATS, integer, ct.POINTER(integer)]),
     }
-    if hasattr(dll, "query_pavement_path"):
-        signatures["query_pavement_path"] = signatures["query_path"]
+    for name in ("query_pavement_path", "query_crossing_path"):
+        if hasattr(dll, name):
+            signatures[name] = signatures["query_path"]
     if hasattr(dll, "move_body"):
         signatures["move_body"] = (integer, [void, FLOATS, FLOATS, FLOATS])
     if hasattr(dll, "walk_material_version"):
@@ -376,11 +377,14 @@ class Network:
             raise RuntimeError("endpoint lookup failed")
         return int(self.labels[i])
 
-    def route(self, start, end, *, pavement=False):
+    def route(self, start, end, *, pavement=False, crossings=False):
+        if crossings and not pavement:
+            raise ValueError("crossings require a pavement route")
+        restricted_query = "query_crossing_path" if crossings else "query_pavement_path"
         if pavement and (
             self.meta["mode"] != "walk"
             or not self.meta.get("walkMaterialVersion")
-            or not hasattr(self.dll, "query_pavement_path")
+            or not hasattr(self.dll, restricted_query)
         ):
             raise ValueError("pavement-only routes require a classified walking mesh and adapter")
         ends = [np.ascontiguousarray(p, dtype=np.float32) for p in (start, end)]
@@ -399,7 +403,7 @@ class Network:
         fn = self.dll.query_cluster_path if self.graph else self.dll.query_path
         handles = (self.handle, self.graph) if self.graph else (self.handle,)
         if pavement:
-            fn, handles = self.dll.query_pavement_path, (self.handle,)
+            fn, handles = getattr(self.dll, restricted_query), (self.handle,)
         status = fn(
             *handles,
             *(p.ctypes.data_as(FLOATS) for p in ends),

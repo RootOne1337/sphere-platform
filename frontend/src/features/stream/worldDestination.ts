@@ -1,3 +1,4 @@
+import type { WalkInputLease } from "./walkPilot";
 import type { VehicleCommand, VehicleInputLease } from "./vehiclePilot";
 
 export const worldService = "http://127.0.0.1:8849";
@@ -6,11 +7,14 @@ export type WorldInfo = {
   bounds: [number, number, number, number];
   mapRevision: string;
   streetTiles?: { revision: string; spans: number[]; pixels: number } | null;
+  worldSearch?: SearchState | null;
   searchRegions?: { name: string; points: XYZ[]; radius: number; driveEnabled?: boolean }[];
   tiles: { revision: string; width: number; height: number; tileSize: number };
   atlas: { visualTrace: XYZ[]; coverageRadius: number };
 };
+type SearchState = { phase: string; samples: number; tracking: boolean; detailWidth?: number };
 export type Decision = VehicleCommand & {
+  worldSearch?: SearchState;
   reason: string;
   sequence: number;
   stopIndex?: number;
@@ -91,7 +95,7 @@ export function worldFrameSampler(video: HTMLVideoElement) {
   const ctx = canvas.getContext("2d", { alpha: false });
   if (!ctx || typeof video.requestVideoFrameCallback !== "function")
     throw Error("video_unsupported");
-  return (signal: AbortSignal, lastSequence: number) => {
+  return (signal: AbortSignal, lastSequence: number, detailed = false) => {
     if (signal.aborted) throw Error("stream_stopped");
     return new Promise<{
       seq: number;
@@ -108,7 +112,11 @@ export function worldFrameSampler(video: HTMLVideoElement) {
         cleanup();
         reject(Error("stream_stopped"));
       };
-      const timeout = setTimeout(cancelled, 3500);
+      const timeout = setTimeout(() => {
+        video.cancelVideoFrameCallback(id);
+        cleanup();
+        reject(Error("frame_timeout"));
+      }, 3500);
       const id = video.requestVideoFrameCallback((now, meta) => {
         cleanup();
         if (
@@ -123,12 +131,18 @@ export function worldFrameSampler(video: HTMLVideoElement) {
           return;
         }
         try {
+          const width = detailed && video.videoWidth >= 1280
+            ? (video.videoWidth >= 1920 ? 1920 : 1280) : 640;
+          if (canvas.width !== width) {
+            canvas.width = width;
+            canvas.height = width * 9 / 16;
+          }
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const blob = new Promise<Blob>((accept, fail) =>
             canvas.toBlob(
               (b) => (b ? accept(b) : fail(Error("frame_encode"))),
               "image/jpeg",
-              0.91,
+              detailed ? 0.96 : 0.91,
             ),
           );
           const capture = (
@@ -149,18 +163,39 @@ export function worldFrameSampler(video: HTMLVideoElement) {
   };
 }
 
+type ProbeProgress = {
+  frames: number;
+  secondsLeft: number;
+  phase?: string;
+  cameraSteps: number;
+  cameraIssue?: string;
+};
 type Probe = {
+  worldSearch?: SearchState;
   pose: Decision["pose"];
   district: string | null;
   ambiguous: boolean;
 };
+function detailSampler() {
+  let last = -Infinity;
+  return (state?: SearchState) => {
+    const now = performance.now();
+    if (state?.phase !== "collecting_views" || !state.detailWidth || now - last < 650) return false;
+    last = now;
+    return true;
+  };
+}
 export async function probeWorldPosition(
   video: HTMLVideoElement,
   signal: AbortSignal,
   acquireMs = 180000,
-  progress?: (frames: number, secondsLeft: number) => void,
+  progress?: (value: ProbeProgress) => void,
+  openCamera?: (signal: AbortSignal) => Promise<WalkInputLease>,
+  initialSearch?: SearchState | null,
 ) {
   const sample = worldFrameSampler(video);
+  const detail = detailSampler();
+  let searchState = initialSearch ?? undefined;
   const timeout = AbortSignal.timeout(acquireMs);
   const search = AbortSignal.any([signal, timeout]);
   const deadline = performance.now() + acquireMs;
@@ -169,9 +204,17 @@ export async function probeWorldPosition(
   let lastSequence = -1;
   let count = 0;
   let lastUpdate = -Infinity;
+  let camera: WalkInputLease | undefined;
+  let cameraIssue: string | undefined;
+  let cameraSteps = 0;
+  let nextStroke = performance.now() + 1400;
   try {
     while (!search.aborted) {
-      const frame = await sample(search, lastSequence);
+      const frame = await sample(search, lastSequence, detail(searchState)).catch((error: unknown) => {
+        if (!search.aborted && error instanceof Error && error.message === "frame_timeout") return null;
+        throw error;
+      });
+      if (!frame) { previous = null; continue; }
       lastSequence = frame.seq;
       const jpeg = await frame.blob;
       if (performance.now() - frame.captured >= 320) {
@@ -186,6 +229,7 @@ export async function probeWorldPosition(
         jpeg,
       );
       if (search.aborted) break;
+      searchState = result.worldSearch;
       const now = performance.now();
       count++;
       const pose = result.pose;
@@ -219,13 +263,37 @@ export async function probeWorldPosition(
         previous = result;
         previousTime = frame.mediaTime;
       }
+      const phase = result.worldSearch?.phase;
+      if (openCamera && !cameraIssue && !previous && !search.aborted &&
+          cameraSteps < 24 && now >= nextStroke &&
+          (!phase || ["collecting_views", "no_verified_position", "search_error"].includes(phase))) {
+        try {
+          camera ??= await openCamera(search);
+          if (search.aborted || !camera.active() || !camera.look) throw Error("world_camera_unavailable");
+          if (camera.canLook?.() === true) {
+            // Sweep one side and then cross the starting direction. The walking stick stays neutral.
+            const fraction = cameraSteps < 8 ? 0.038 : -0.038;
+            if (await camera.look(fraction, performance.now() + 240)) cameraSteps++;
+            nextStroke = performance.now() + 500;
+          } else {
+            nextStroke = performance.now() + 300;
+          }
+        } catch (error) {
+          await camera?.close();
+          camera = undefined;
+          cameraIssue = error instanceof Error ? error.message : "world_camera_unavailable";
+        }
+      }
       if (now - lastUpdate >= 1000) {
-        progress?.(count, Math.max(0, Math.ceil((deadline - now) / 1000)));
+        progress?.({ frames: count, secondsLeft: Math.max(0, Math.ceil((deadline - now) / 1000)),
+          phase, cameraSteps, cameraIssue });
         lastUpdate = now;
       }
     }
   } catch (error) {
     if (!timeout.aborted || signal.aborted) throw error;
+  } finally {
+    await camera?.close();
   }
   throw Error(signal.aborted ? "stream_stopped" : "position_timeout");
 }
@@ -240,13 +308,18 @@ export async function runWorldTrip(
 ) {
   let lastFix = performance.now();
   const sample = worldFrameSampler(video);
+  const detail = detailSampler();
+  let searchState: SearchState | undefined;
   let lease: VehicleInputLease | undefined;
+  let commanded = false;
+  let strokes = 0;
+  let nextLook = performance.now() + 2200;
   let lastSequence = -1;
   try {
     while (!signal.aborted) {
       if (performance.now() - lastFix >= acquireMs)
         throw Error("position_timeout");
-      const frame = await sample(signal, lastSequence);
+      const frame = await sample(signal, lastSequence, detail(searchState));
       lastSequence = frame.seq;
       const jpeg = await frame.blob;
       if (signal.aborted) break;
@@ -265,10 +338,31 @@ export async function runWorldTrip(
       );
       if (signal.aborted) break;
       if (d.sequence !== frame.seq) throw Error("frame_sequence");
+      searchState = d.worldSearch;
       update(d, Math.round(performance.now() - frame.captured));
       if (d.reason === "arrived" || d.reason === "no_motion") return;
       if (lease && (!lease.active() || lease.failure?.()))
         throw Error("input_closed");
+      // Stationary visual search uses the calibrated camera control of this trip.
+      // Finish the symmetric sweep before allowing the first pedal command.
+      const nowForLook = performance.now();
+      const collecting = !d.pose && d.reason === "position_unknown" && d.worldSearch?.phase === "collecting_views";
+      if (!commanded && strokes < 36 && collecting && nowForLook >= nextLook
+          && nowForLook - frame.captured < 300) {
+        lease ??= await openInput();
+        if (signal.aborted || !lease.active() || lease.failure?.()) throw Error("input_closed");
+        if (!lease.paused?.() && !lease.translating?.() && lease.look && lease.canLook?.()
+            && performance.now() - frame.captured < 280) {
+          const fraction = strokes < 9 || strokes >= 27 ? 0.038 : -0.038;
+          if (await lease.look(fraction, performance.now() + 240)) {
+            strokes++;
+            nextLook = performance.now() + 500;
+            continue;
+          }
+        }
+        nextLook = performance.now() + 500;
+      }
+
       if (!usableDecision(d, frame.seq, frame.captured, performance.now())) {
         lease?.neutral?.();
         continue;
@@ -287,6 +381,7 @@ export async function runWorldTrip(
       }
       if (!lease.permit || !lease.neutral) throw Error("input_closed");
       lease.permit(frame.captured + 320);
+      commanded = true;
       lease.setVehicle({
         pedal: d.pedal,
         steering: d.steering,

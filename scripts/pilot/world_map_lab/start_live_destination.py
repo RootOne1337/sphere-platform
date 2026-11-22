@@ -28,6 +28,9 @@ def code_digest():
         "observe_world_journey.mjs",
         "verify_world_scene_candidates.py",
         "scooter_road_access.py",
+        "walking_mesh_tracker.py",
+        "pedestrian_surface.py",
+        "pedestrian_crossing.py",
     ):
         digest.update(hashlib.sha256((folder / name).read_bytes()).digest())
     return digest.hexdigest()

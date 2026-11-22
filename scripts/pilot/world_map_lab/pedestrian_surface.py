@@ -12,6 +12,7 @@ from scripts.pilot.world_map_lab.pedestrian_clearance import (
     continuous_floor,
     continuous_pavement,
 )
+from scripts.pilot.world_map_lab.pedestrian_crossing import verified_crossings
 from scripts.pilot.world_map_lab.pedestrian_scene import plausible_walk_height
 from scripts.pilot.world_map_lab.pedestrian_visibility import PedestrianVisibility
 from scripts.pilot.world_map_lab.survey_clearance import measure
@@ -46,9 +47,13 @@ class FootSurface:
         if self.visibility:
             self.visibility.close()
 
-    def _measure(self, start, end):
+    def _measure(self, start, end, *, samples=17):
         return measure(
-            dict(a=start, b=end, mode="walk"), self.data, self.index, self.chunks, self.origin
+            dict(a=start, b=end, mode="walk", samples=samples),
+            self.data,
+            self.index,
+            self.chunks,
+            self.origin,
         )
 
     def sweep(self, start, end):
@@ -63,6 +68,9 @@ class FootSurface:
         return len(points) > 1 and all(
             self.sweep(a, b) == (0, True) for a, b in zip(points[:-1], points[1:])
         )
+
+    def crossings_on(self, path):
+        return verified_crossings(np.asarray(path, dtype=float), self._measure)
 
     def ground_support(self, eye, camera_height):
         """Use the original floor to confirm a pose just outside the eroded walk mesh."""

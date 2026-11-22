@@ -569,7 +569,7 @@ def serve(args):
                 observed = locator.describe(gray)
                 result = probe_atlases(gray, locator, district_locators, observed=observed)
                 if global_search and not result["pose"] and not result["ambiguous"]:
-                    pose = global_search.observe(raw, gray, observed)
+                    pose = global_search.observe(raw, gray, observed, walk_road=road)
                     result.update(
                         pose=pose,
                         district="Поиск по всей карте" if pose else None,
