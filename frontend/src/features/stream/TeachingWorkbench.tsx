@@ -87,7 +87,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
   const videoHolder=useRef<HTMLDivElement>(null),[pinLiveVideo,setPinLiveVideo]=useState(false);
   useEffect(()=>{
     setPinLiveVideo(false);const holder=videoHolder.current;
-    if(destination||workspaceMode!=='live'||calibrate||bindingTarget||!holder||typeof IntersectionObserver==='undefined')return;
+    if((!destination&&workspaceMode!=='live')||calibrate||bindingTarget||!holder||typeof IntersectionObserver==='undefined')return;
     // Keep the SAME video element presented when the operator scrolls to the
     // map. A second peer/video would break source/age and input ownership.
     const observer=new IntersectionObserver(entries=>setPinLiveVideo(!entries[0]?.isIntersecting),{threshold:.05});
@@ -194,7 +194,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
     const request = new AbortController(); abort.current = request;
     try {
       const conn = await connectTeaching(deviceId, token, video.current!, request.signal, setResult,
-        reason => { if (request.signal.aborted) return; setNotice(`Транспорт остановлен: ${reason}`); void stopCallback.current(reason).then(() => {
+        reason => { if (request.signal.aborted) return; attached.current=false; setReady(false); setNotice(`Транспорт остановлен: ${reason}`); void stopCallback.current(reason).then(() => {
           connection.current?.close(); if (!active(phaseRef.current)) setReady(false);
         }); }, message => {
           if (request.signal.aborted) return;
@@ -239,7 +239,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
             setNotice(manifest.complete ? 'Материал сохранён. Видео и журнал готовы к просмотру.' : `Материал неполный: ${manifest.failure ?? 'нет подтверждения'}. Для повторения маршрута не допущен.`);
             finalize.current?.();
           }
-        });
+        }, destination);
       if (request.signal.aborted) { conn.close(); terminateTeachingRecorder(conn.worker); return; }
       connection.current = conn; change('preview');
       setNotice('Проверьте игру в потоке. Для записи из эмулятора достаточно нажать «Записать маршрут»; веб-управление включается отдельно.');
@@ -479,7 +479,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
   },[phase,autoPrepare,clip,storageScope]);
   const gameScreen=(<div ref={videoHolder} className="relative aspect-video">
         <video ref={video} muted playsInline tabIndex={0} aria-label={destination?"Живой экран устройства":"Игровой экран: назначенные клавиши и мышь; Escape — остановить запись"}
-          className={`aspect-video max-h-[calc(100dvh-14rem)] scroll-mt-56 touch-none bg-black object-contain outline-none focus-visible:ring-2 focus-visible:ring-primary ${pinLiveVideo?'fixed bottom-6 left-6 z-50 w-60 rounded-xl border border-cyan-500/60 shadow-2xl':'w-full'}`}
+          className={`aspect-video max-h-[calc(100dvh-14rem)] scroll-mt-56 touch-none bg-black object-contain outline-none focus-visible:ring-2 focus-visible:ring-primary ${pinLiveVideo&&result?'fixed bottom-6 left-6 z-50 w-60 rounded-xl border border-cyan-500/60 shadow-2xl':'w-full'}`}
           onKeyDown={e => key(e,true)} onKeyUp={e => key(e,false)} onContextMenu={e => e.preventDefault()}
           onBlur={() => { if (keys.current.size || mouse.current !== null) void stop('input_focus_lost'); }}
           onPointerDown={e => {
@@ -514,12 +514,12 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
       <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} connected={attached.current && result !== null} inputIssue={inputIssue} openInput={openVehicleInput} cameraIssue={cameraIssue} openCamera={openCameraInput} walkIssue={walkIssue} openWalk={openWalkInput}/>
       <aside className={styles.rail}>
         <section id="destination-stream" aria-label="Живой экран" className={styles.panel}>
-          <header className={styles.panelHeader}><div><Radio size={17}/><h2>Живой экран</h2></div><span className={ready?styles.online:styles.offline}>{ready?'В эфире':'Офлайн'}</span></header>
-          <div className={styles.monitor}>{gameScreen}{!ready&&<div className={styles.noSignal}><VideoOff size={25}/><strong>{phase==='connecting'?'Подключаем экран…':'Поток отключён'}</strong></div>}</div>
+          <header className={styles.panelHeader}><div><Radio size={17}/><h2>Живой экран</h2></div><span className={ready?styles.online:styles.offline}>{ready?'В эфире':attached.current?'Ждём кадр':'Офлайн'}</span></header>
+          <div className={styles.monitor}>{gameScreen}{!ready&&<div className={styles.noSignal}><VideoOff size={25}/><strong>{phase==='connecting'?'Подключаем экран…':attached.current?'Ждём свежий кадр':'Поток отключён'}</strong></div>}</div>
           <div className={styles.railBody}><Button variant="outline" disabled={readOnly||!storageScope||active(phase)||phase==='connecting'} onClick={()=>void connect()}><Signal size={15}/>{ready?'Переподключить поток':'Подключить поток'}</Button>
             {!ready&&phase!=='idle'&&<p role="status">{notice}</p>}
             {phase==='idle'&&notice&&!notice.startsWith('Подключите поток')&&<p role="status">{notice}</p>}
-            {ready&&binding&&<p>{binding.width} × {binding.height} · {result?.path}</p>}
+            {ready&&binding&&<p aria-label="Качество приёма">{result?.videoStats?.width??binding.width} × {result?.videoStats?.height??binding.height}{result?.videoStats?.fps!=null&&` · ${result.videoStats.fps.toFixed(1)} FPS`}{result?.videoStats?.bitrateBps!=null&&` · ${(result.videoStats.bitrateBps/1e6).toFixed(2)} Мбит/с приёма`}</p>}
           </div>
         </section>
         <section className={styles.panel}><header className={styles.panelHeader}><div><Settings2 size={16}/><h2>Настройки</h2></div></header>

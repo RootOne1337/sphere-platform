@@ -1,6 +1,7 @@
 import { browserStreamSample, directDiagnosticSample, StreamSessionReporter, directFailure, teachingStreamSample } from '@/src/features/stream/streamSessionTelemetry';
 import type { StreamDecoderStats } from '@/lib/h264-decoder';
 import type { PointerFenceObservation } from '@/src/features/stream/continuousPointer';
+import type { DirectProbeResult } from '@/src/features/stream/directProbe';
 
 const stats = { binaryMessagesReceived: 20, binaryBytesReceived: 300, renderedFrames: 10, decodedOutputs: 10,
   invalidPackets: 0, decodeErrors: 0, renderErrors: 0, queueRecoveries: 0, staleOutputDrops: 0,
@@ -12,6 +13,12 @@ test('teaching keeps direct media transport before presentation and maps timeout
   const value=teachingStreamSample(null,0,null,'fenced','contact_ack_timeout',null,1000);
   expect(value).toMatchObject({transport:'direct_webrtc',control_transport:'direct_webrtc',received_bytes:0,
     control_state:'fenced',control_failure:'timeout',control_failure_detail:'native_receipt_timeout'});
+});
+test('teaching retains RTP traffic even when presentation stops advancing',()=>{
+  const receiver = { path:'nat', state:'connected', videoStats:{ packets:214, bytes:830420, decoded:41, fps:30 } };
+  const value = teachingStreamSample(receiver as DirectProbeResult, 32, 800, 'idle', null, null, 1200);
+  expect(value).toMatchObject({ received_packets:214, received_bytes:830420, decoded_frames:41,
+    rendered_frames:32, direct_frame_age_ms:400 });
 });
 test('server echo and Android receipt retain separate scalar values and a missing echo stays unknown', () => {
   const result = browserStreamSample(stats, { state: 'ready', failure: null, rtt: 140, attempts: 0 }, 1000,

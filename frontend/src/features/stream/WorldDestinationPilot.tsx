@@ -34,6 +34,7 @@ const searchPhases: Record<string, string> = {
   local_search: "Уточняем район",
   verifying_geometry: "Проверяем положение по 3D-карте",
   tracking: "Сверяем свежий кадр",
+  waiting_video: "Поток на паузе. Ждём свежий кадр",
   no_verified_position: "Положение пока не подтверждено",
   search_error: "Сбой поиска по карте",
 };
@@ -172,7 +173,6 @@ export function WorldDestinationPilot({
   const choice = useRef<AbortController | null>(null),
     run = useRef<AbortController | null>(null),
     mounted = useRef(false);
-  const driving = useRef(false);
   const surveying = useRef(false);
   const opening = useRef(openInput);
   opening.current = openInput;
@@ -216,11 +216,8 @@ export function WorldDestinationPilot({
       probe.current?.abort();
       setObservation(null);
       setProbeMessage("");
-    } else if (!ready && driving.current) {
-      run.current?.abort();
-      setStatus("Потерян свежий кадр. Управление остановлено.");
     }
-  }, [connected, ready, stop]);
+  }, [connected, stop]);
   async function inspect() {
     if (!ready || !video.current || run.current || probe.current) return;
     const c = new AbortController();
@@ -361,7 +358,6 @@ export function WorldDestinationPilot({
       return;
     const c = new AbortController();
     run.current = c;
-    driving.current = false;
     setActive(true);
     setObservation(null);
     setProbeMessage("");
@@ -377,6 +373,12 @@ export function WorldDestinationPilot({
         if (e.outcome === "applied") applied++;
         else rejected++;
       }
+    };
+    const waitingForVideo = () => {
+      if (c.signal.aborted) return;
+      setStatus("Поток на паузе. Ввод отпущен, маршрут сохранён.");
+      setAge(null);
+      setCommandAge(null);
     };
     try {
       const locateWalkingStart = async () => {
@@ -429,7 +431,7 @@ export function WorldDestinationPilot({
               : decision.reason === "no_motion"
               ? "Пеший проход остановлен. Персонаж не продвинулся после команды."
               : reasons[decision.reason] ?? decision.reason);
-          }, locateWalkingStart);
+          }, locateWalkingStart, waitingForVideo);
       else if (!c.signal.aborted)
         await runWorldTrip(
           el,
@@ -438,7 +440,6 @@ export function WorldDestinationPilot({
           () => opening.current(c.signal, journal),
           (d, ms) => {
             if (!c.signal.aborted) {
-              if (d.reason === "following" && ms < 320) driving.current = true;
               setData(d);
               setAge(ms);
               setStatus(
@@ -451,6 +452,7 @@ export function WorldDestinationPilot({
             }
           },
           acquireMinutes * 60_000,
+          waitingForVideo,
         );
     } catch (e) {
       if (!c.signal.aborted && mounted.current) setStatus(problem(e));
@@ -464,7 +466,6 @@ export function WorldDestinationPilot({
         ).catch(() => undefined);
       if (run.current === c) {
         run.current = null;
-        driving.current = false;
       }
       if (mounted.current) setActive(false);
     }

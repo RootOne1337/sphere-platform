@@ -28,6 +28,7 @@ export async function runWorldWalk(
   openInput: () => Promise<WalkInputLease>,
   update: (decision: Decision, age: number, commandAge?: number) => void,
   reacquire: () => Promise<void>,
+  waitingForVideo?: () => void,
 ) {
   const sample = worldFrameSampler(video);
   let sequence = -1;
@@ -37,6 +38,14 @@ export async function runWorldWalk(
   try {
     while (!signal.aborted) {
       const frame = await sample(signal, sequence);
+      if (!frame) {
+        waitingForVideo?.();
+        lease?.neutral?.();
+        const released = await lease?.close();
+        lease = undefined;
+        if (released === false && !signal.aborted) throw Error("input_closed");
+        continue;
+      }
       sequence = frame.seq;
       const jpeg = await frame.blob;
       if (signal.aborted) break;

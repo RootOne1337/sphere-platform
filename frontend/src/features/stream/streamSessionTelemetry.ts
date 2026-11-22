@@ -128,7 +128,7 @@ export function teachingStreamSample(result: DirectProbeResult | null, presented
   const stats: StreamDecoderStats = {
     receivedPictureFps: video?.fps ?? 0, renderedFps: video?.fps ?? 0,
     receivedPictureFpsCapped:false, renderedFpsCapped:false,
-    binaryMessagesReceived:0,binaryBytesReceived:0,validPackets:0,invalidPackets:0,
+    binaryMessagesReceived:video?.packets??0,binaryBytesReceived:video?.bytes??0,validPackets:0,invalidPackets:0,
     spsUnits:0,ppsUnits:0,idrUnits:0,deltaUnits:0,decodeSubmitted:0,
     decodedOutputs:video?.decoded ?? 0,renderedFrames:presented,decodeErrors:0,lastDecodeError:null,
     renderErrors:0,queueRecoveries:0,staleOutputDrops:0,framesDroppedBeforeConfiguration:0,
