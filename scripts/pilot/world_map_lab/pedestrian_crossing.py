@@ -117,9 +117,11 @@ def crossing_target(ground, entry, exit, measure):
     return finish
 
 
-def verified_crossings(path, measure):
+def verified_crossings(path, measure, *, on_unclassified=None):
     """Return crossing entry and exit points, or None when any segment is unproven."""
-    samples = []
+    crossings = []
+    last_pavement = None
+    strip = []
     for a, b in zip(path[:-1], path[1:]):
         if np.linalg.norm(b[:2] - a[:2]) < 0.001:
             continue
@@ -128,22 +130,22 @@ def verified_crossings(path, measure):
         if check["bodyIntersections"] or not continuous_floor(check):
             return None
         points = np.linspace(a, b, len(check["profile"]))
-        samples.extend((surface_kind(row), point) for row, point in zip(check["profile"], points))
-    if not samples or samples[0][0] != "pavement" or samples[-1][0] != "pavement":
-        return None
-    crossings = []
-    road_start = None
-    for i, (kind, _) in enumerate(samples):
-        if kind == "road":
-            if road_start is None:
-                road_start = i - 1
-        elif kind == "pavement":
-            if road_start is not None:
-                strip = np.array([point for _, point in samples[road_start : i + 1]])
-                if not transverse(strip, measure):
-                    return None
-                crossings.append({"entry": strip[0].tolist(), "exit": strip[-1].tolist()})
-                road_start = None
-        else:
-            return None
-    return crossings
+        for row, point in zip(check["profile"], points):
+            kind = surface_kind(row)
+            if kind == "pavement":
+                if strip:
+                    strip.append(point)
+                    if not transverse(np.asarray(strip), measure):
+                        return None
+                    crossings.append({"entry": strip[0].tolist(), "exit": point.tolist()})
+                    strip.clear()
+                last_pavement = point
+            elif kind == "road" and last_pavement is not None:
+                if not strip:
+                    strip.append(last_pavement)
+                strip.append(point)
+            else:
+                if kind is None and on_unclassified:
+                    on_unclassified(point)
+                return None
+    return crossings if last_pavement is not None and not strip else None

@@ -16,6 +16,29 @@ from scripts.pilot.world_map_lab.collect_ariane_nav_geometry import (
     put,
 )
 from scripts.pilot.world_map_lab.world_navmesh import Network, build, checksum
+from scripts.pilot.world_map_lab.serve_world_navmesh import source_verified_crossing_route
+
+
+def test_crossing_fallback_requires_source_verification():
+    start, goal = [0, 0, 0], [10, 0, 0]
+    filtered, alternate = [5, 0, 0], [5, 2, 0]
+
+    class Nav:
+        def route(self, a, b, **flags):
+            return dict(status="complete", length=11, path=[filtered if flags else alternate])
+
+    class Surface:
+        allow_alternate = True
+
+        def crossings_on(self, points, *, on_unclassified):
+            return [] if points == [start, alternate, goal] and self.allow_alternate else None
+
+    pavement = Surface()
+    route = source_verified_crossing_route(Nav(), pavement, start, goal)
+    assert route["path"] == [alternate]
+    assert route["crossings"] == []
+    pavement.allow_alternate = False
+    assert source_verified_crossing_route(Nav(), pavement, start, goal)["status"] == "surface_unconfirmed"
 
 
 def deck(x0, y0, x1, y1, z):

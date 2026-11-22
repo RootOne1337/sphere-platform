@@ -26,6 +26,7 @@ class WalkTrip:
         self.path = None
         self.last_plan = -math.inf
         self.next_search = -math.inf
+        self.pose_bank = None
         self.arrival = None
         self.arrived = False
 

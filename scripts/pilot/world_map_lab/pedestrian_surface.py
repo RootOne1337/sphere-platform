@@ -74,8 +74,10 @@ class FootSurface:
             self.sweep(a, b) == (0, True) for a, b in zip(points[:-1], points[1:])
         )
 
-    def crossings_on(self, path):
-        return verified_crossings(np.asarray(path, dtype=float), self._measure)
+    def crossings_on(self, path, *, on_unclassified=None):
+        return verified_crossings(
+            np.asarray(path, dtype=float), self._measure, on_unclassified=on_unclassified,
+        )
 
     def crossing_aim(self, eye, height, crossing):
         start = np.array([*eye[:2], eye[2] - height])

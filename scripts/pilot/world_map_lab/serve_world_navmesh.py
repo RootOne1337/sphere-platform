@@ -3,6 +3,7 @@
 import argparse
 import json
 import math
+import time
 import mimetypes
 import os
 import re
@@ -95,6 +96,64 @@ def pedestrian_release(folder):
     ):
         raise ValueError("invalid pedestrian release name")
     return folder / "pedestrian-releases" / name
+
+
+def source_verified_crossing_route(nav, pavement, start, end, *, detour=True):
+    primary = nav.route(start, end, pavement=True, crossings=True)
+    rejected = False
+    gaps = []
+    for index, candidate in enumerate((primary, None)):
+        # Polygon flags are sampled during the mesh bake and can omit a
+        # narrow landing. The unfiltered mesh offers another corridor, but
+        # it still has to pass all source-floor and crossing checks.
+        if candidate is None:
+            candidate = nav.route(start, end)
+        if candidate["status"] != "complete":
+            continue
+        crossings = pavement.crossings_on(
+            [start, *candidate["path"], end],
+            on_unclassified=gaps.append if detour and index == 0 else None,
+        )
+        if crossings is not None:
+            return dict(candidate, crossings=crossings)
+        rejected = True
+    if gaps and primary["length"] <= 800:
+        result = pavement_detour(nav, pavement, start, end, gaps[0], primary["length"])
+        if result is not None:
+            return result
+    return dict(status="surface_unconfirmed", length=0, path=[]) if rejected else primary
+
+
+def pavement_detour(nav, pavement, start, end, gap, primary_length):
+    """Try nearby pavement on either side of a misclassified passage."""
+    deadline = time.monotonic() + 1.6
+    x, y, z = gap
+    # Probe world bearings in a bounded neighbourhood. Every proposed link
+    # uses the same collision, floor and transverse crossing checks.
+    for radius in (6, 10, 3, 16):
+        for index in range(12):
+            if time.monotonic() >= deadline:
+                return None
+            angle = index * math.tau / 12
+            ax, ay = x + radius * math.cos(angle), y + radius * math.sin(angle)
+            for az in nav.levels(ax, ay):
+                anchor = [ax, ay, az]
+                if abs(az - z) > 0.40 or not pavement.paved_route([anchor]):
+                    continue
+                first = source_verified_crossing_route(nav, pavement, start, anchor, detour=False)
+                if first["status"] != "complete":
+                    continue
+                second = source_verified_crossing_route(nav, pavement, anchor, end, detour=False)
+                if second["status"] != "complete":
+                    continue
+                path = [start, *first["path"], anchor, *second["path"], end]
+                length = sum(math.dist(a, b) for a, b in zip(path, path[1:]))
+                if length > primary_length * 1.35:
+                    continue
+                crossings = pavement.crossings_on(path)
+                if crossings is not None:
+                    return dict(status="complete", length=length, path=path, crossings=crossings)
+    return None
 
 
 def serve(folder, port, adapter=None, *, walk_folder=None, detail_folder=None):
@@ -478,15 +537,7 @@ def serve(folder, port, adapter=None, *, walk_folder=None, detail_folder=None):
                         ):
                             result = dict(status="surface_unconfirmed", length=0, path=[])
                         if surface == ["crossings"] and result["status"] != "complete" and pavement:
-                            result = nav.route(*ends, pavement=True, crossings=True)
-                            if result["status"] == "complete":
-                                crossings = pavement.crossings_on(
-                                    [ends[0], *result["path"], ends[1]]
-                                )
-                                if crossings is None:
-                                    result = dict(status="surface_unconfirmed", length=0, path=[])
-                                else:
-                                    result["crossings"] = crossings
+                            result = source_verified_crossing_route(nav, pavement, *ends)
                         self.send_json(result)
                 except (KeyError, TypeError, ValueError, OverflowError):
                     self.send_json({"error": "invalid query"}, 400)

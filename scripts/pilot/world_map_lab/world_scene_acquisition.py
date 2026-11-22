@@ -27,6 +27,10 @@ def read_config(path):
     focal = float(cfg["focalAt640"])
     if not math.isfinite(focal) or not 80 <= focal <= 1200:
         raise ValueError("invalid stream lens")
+    if cfg.get("geometryVerifier", "roma") not in {"roma", "sparse"}:
+        raise ValueError("invalid world geometry verifier")
+    if cfg.get("materialIndex"):
+        cfg["materialIndex"] = Path(cfg["materialIndex"]).resolve(strict=True)
     return cfg
 
 
@@ -169,9 +173,10 @@ def acquire(
     encode(gallery, "index", index)
     encode(gallery, "search", "--stream-focal", focal, index, fine, *frames)
     report("verifying_geometry")
+    sparse = cfg.get("geometryVerifier") == "sparse"
     execute(
         sys.executable,
-        "verify_world_scene_candidates",
+        "verify_world_scene_sparse" if sparse else "verify_world_scene_candidates",
         [
             "--planner",
             planner,
@@ -181,18 +186,12 @@ def acquire(
             fine,
             "--stream-focal",
             focal,
-            "--candidates",
-            12,
-            "--views",
-            6,
-            "--interpreter",
-            cfg["gpu"],
-            "--matcher",
-            cfg["matcher"],
+            *([] if sparse else [
+                "--candidates", 12, "--views", 6, "--interpreter", cfg["gpu"],
+                "--matcher", cfg["matcher"], "--survey", gallery / "survey.json",
+            ]),
             "--output",
             output / "geometry.json",
-            "--survey",
-            gallery / "survey.json",
             "--tracking-atlas",
             output / "tracking.npz",
             *frames,
@@ -319,6 +318,7 @@ class WorldAcquisition:
 
     def __init__(self, config, directory, planner, revision):
         self.cfg = read_config(config)
+        self.dense_walk = self.cfg.get("geometryVerifier") != "sparse"
         self.signature = hashlib.sha256(config.read_bytes()).hexdigest()
         manifest = json.loads((self.cfg["gallery"] / "survey.json").read_bytes())
         if manifest["revision"] != revision:
@@ -368,7 +368,7 @@ class WorldAcquisition:
             pose = bank.locate_features(gray, *observed)
             if pose and bank.covers([[*pose["eye"][:2], pose["eye"][2] - 1.45]]):
                 return pose
-        if walk_road is not None:
+        if walk_road is not None and self.dense_walk:
             pose = self.recent_walk.observe(raw, self.cfg, walk_road)
             if pose:
                 return pose
@@ -435,7 +435,11 @@ class WorldAcquisition:
                     path.write_bytes(raw)
                     frames.append(path)
                 try:
-                    result = acquire(self.cfg, frames, folder, self.planner, self._phase)
+                    material_index = self.cfg.get("materialIndex")
+                    result = acquire(
+                        self.cfg, frames, folder, self.planner, self._phase,
+                        **({"material_index": material_index} if material_index else {}),
+                    )
                     print(
                         "World search finished:",
                         {

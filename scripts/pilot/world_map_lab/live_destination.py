@@ -800,20 +800,34 @@ def serve(args):
             self.reply(200, response)
 
         def walk_frame(self, trip, raw, gray, now, clock, seq):
-            pose = global_search.recent_walk.observe(raw, global_search.cfg, road)
+            pose = (
+                global_search.recent_walk.observe(raw, global_search.cfg, road)
+                if global_search.dense_walk else None
+            )
             at_menu = False
-            if pose is None and now >= trip.next_search:
-                trip.next_search = now + 0.65
+            collected = False
+            if pose is None and (trip.pose_bank is not None or now >= trip.next_search):
                 observed = locator.describe(gray)
                 at_menu = menu is not None and menu.matches(observed)
-                if not at_menu:
+                if not at_menu and trip.pose_bank is not None and observed is not None:
+                    bank = trip.pose_bank
+                    candidate = bank.locate_features(gray, *observed)
+                    if candidate and bank.covers([[*candidate["eye"][:2], candidate["eye"][2] - 1.45]]):
+                        pose = candidate
+                if not at_menu and pose is None and now >= trip.next_search:
+                    trip.next_search = now + 0.65
                     fix = probe_atlases(gray, locator, district_locators, observed=observed)
                     pose = fix["pose"]
-                    if pose is None and not fix["ambiguous"]:
+                    if pose is not None:
+                        trip.pose_bank = district_locators.get(fix["district"], locator)
+                    elif not fix["ambiguous"]:
                         pose = global_search.observe(raw, gray, observed)
+                        collected = pose is None
+                        if pose is not None:
+                            trip.pose_bank = global_search.bank
                     if pose is not None:
                         global_search.recent_walk.remember(pose)
-            elif pose is None:
+            if pose is None and not at_menu and not collected:
                 global_search.collect(raw, gray)
             response = trip.decide(pose, clock)
             if at_menu:

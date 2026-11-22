@@ -33,6 +33,7 @@ def code_digest():
         "render_world_search_views.py",
         "observe_world_journey.mjs",
         "verify_world_scene_candidates.py",
+        "verify_world_scene_sparse.py",
         "scooter_road_access.py",
         "walking_mesh_tracker.py",
         "world_walk_trip.py",

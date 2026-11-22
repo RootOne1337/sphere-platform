@@ -74,6 +74,9 @@ def test_walk_itinerary_requires_pavement_endpoints_and_keeps_crossing_geometry(
     assert blocked["reason"] == "wrong_surface"
     result = plan(road, [stop_a, stop_b], "walk", None, surface="crossings")
     assert result["legs"][0]["crossings"] == [{"entry": entry, "exit": exit}]
+    road.query = lambda *args, **kwargs: {"status": "surface_unconfirmed", "path": []}
+    result = plan(road, [stop_a, stop_b], "walk", None, surface="crossings")
+    assert result == {"status": "unavailable", "reason": "surface_unconfirmed", "stop": 1, "legs": []}
 
 
 def test_follow_loss_reacquire_and_stationary_arrival():

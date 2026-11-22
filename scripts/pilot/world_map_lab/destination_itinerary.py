@@ -40,7 +40,8 @@ def plan(road, stops, mode, covers, *, surface=None):
             else [dict(mode=mode, path=result.get("path", []))]
         )
         if result.get("status") != "complete" or not pieces:
-            return dict(status="unavailable", reason="no_path", stop=i + 1, legs=[])
+            reason = "surface_unconfirmed" if surface and result["status"] == "surface_unconfirmed" else "no_path"
+            return dict(status="unavailable", reason=reason, stop=i + 1, legs=[])
         prev = a
         for leg in pieces:
             path = leg.get("path", [])
