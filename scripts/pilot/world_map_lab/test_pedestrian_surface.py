@@ -3,6 +3,14 @@ import pytest
 
 from scripts.pilot.world_map_lab.pedestrian_scene import WalkingSceneGuard
 from scripts.pilot.world_map_lab.pedestrian_surface import FootSurface
+from scripts.pilot.world_map_lab.project_ariane_roads import PEDESTRIAN_MATERIAL
+
+
+def test_ariane_pedestrian_materials_keep_mixed_and_bike_tiles_out():
+    for name in ("lf_arztrot2", "arzpark_tile4", "arzpark_brick5", "srd_bruschatka2"):
+        assert PEDESTRIAN_MATERIAL.fullmatch(name)
+    for name in ("wolv_trot_grass", "wolv_trot4_srd", "arzpark_bike1", "arzpark_grav1", "lf_arzgrass1"):
+        assert not PEDESTRIAN_MATERIAL.fullmatch(name)
 
 
 def test_exit_existing_overlap_but_never_cross_a_new_obstacle():

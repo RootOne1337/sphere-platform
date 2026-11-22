@@ -42,7 +42,10 @@ PEDESTRIAN_MATERIAL = re.compile(
     r"(?:t_nn_pavem_[abcd]|pavement-small|pavementluk|t_nn_roadside_[ab]|"
     r"dc_sidewalk001|t_sidewalks_a|wolv_trot(?:[23]?_srd)?|lf_newpav[12]|"
     r"t_pav_slabs_[abd]_alb|a889_newtrop(?:3|4|7|8|9|14)|lf_arztropa1|"
-    r"bys_sandytropa[1-4]|arz_trot_[23]|egorovkatropa2)"
+    r"bys_sandytropa[1-4]|arz_trot_[23]|egorovkatropa2|"
+    # Verified in the original Arzamas sidewalk and park models with their TXD materials.
+    r"lf_arztrot[12]|arzpark_tile[234]|arzpark_brick[2567]|arzbrusch1|"
+    r"srd_bruschatka2|rsn_ql_paving_0002)"
 )
 PIXELS_PER_UNIT = 0.35
 
