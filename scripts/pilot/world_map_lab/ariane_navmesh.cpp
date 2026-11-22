@@ -26,6 +26,7 @@ struct Chunk {
 enum Source { Collision, Obstacle, Water, Road, Paving, Foot };
 // Paint only physically walkable spans. Zero preserves driving and legacy tiles.
 enum WalkArea : unsigned char { LegacyArea, GenericFloor, Carriageway, PavedGround, Footpath };
+constexpr unsigned short pavementFlag = 2;
 static float travelCost(unsigned char area) {
     switch (area) {
     case Footpath: return 1.f;
@@ -213,9 +214,16 @@ API int add_tile(dtNavMesh *nav, const unsigned char *bytes, int size) {
     if (!copy)
         return 0;
     std::memcpy(copy, bytes, size);
-    if (dtStatusFailed(nav->addTile(copy, size, DT_TILE_FREE_DATA, 0, nullptr))) {
+    dtTileRef ref = 0;
+    if (dtStatusFailed(nav->addTile(copy, size, DT_TILE_FREE_DATA, 0, &ref))) {
         dtFree(copy);
         return 0;
+    }
+    const dtMeshTile *tile = nav->getTileByRef(ref);
+    for (int i = 0; i < tile->header->polyCount; ++i) {
+        auto &poly = tile->polys[i];
+        if (poly.getArea() == PavedGround || poly.getArea() == Footpath)
+            poly.flags |= pavementFlag;
     }
     return 1;
 }
@@ -289,12 +297,12 @@ API int collect_labels(const dtNavMesh *nav, unsigned *labels, int capacity) {
     return enumerate_components(nav, nullptr, labels, capacity);
 }
 static dtStatus endpoint(dtNavMeshQuery &q, const dtQueryFilter &filter, const float *xyz,
-                         dtPolyRef &ref, float *hit) {
-    const float extents[] = {1.5f, 1.0f, 1.5f};
+                         dtPolyRef &ref, float *hit, float horizontal = 1.5f) {
+    const float extents[] = {horizontal, 1.0f, horizontal};
     float point[3];
     toNav(xyz, point);
     auto status = q.findNearestPoly(point, extents, &filter, &ref, hit);
-    if (ref && (std::hypot(point[0] - hit[0], point[2] - hit[2]) > 1.5f ||
+    if (ref && (std::hypot(point[0] - hit[0], point[2] - hit[2]) > horizontal ||
                 std::abs(point[1] - hit[1]) > 1.0f))
         ref = 0;
     return status;
@@ -516,8 +524,9 @@ static bool world_corridor(const dtNavMesh *nav, dtPolyRef start, dtPolyRef end,
 
 // Codes: 1 complete, 0 endpoint outside tolerance, 2 disconnected, 3 query
 // budget exhausted.
-API int query_cluster_path(const dtNavMesh *nav, const ClusterGraph *graph, const float *start,
-                           const float *goal, float *output, int capacity, int *points) {
+static int route_path(const dtNavMesh *nav, const ClusterGraph *graph, const float *start,
+                      const float *goal, float *output, int capacity, int *points,
+                      bool pavement = false) {
     *points = 0;
     dtNavMeshQuery q;
     if (dtStatusFailed(q.init(nav, 65535)))
@@ -525,10 +534,13 @@ API int query_cluster_path(const dtNavMesh *nav, const ClusterGraph *graph, cons
     dtQueryFilter filter;
     for (int area = GenericFloor; area <= Footpath; ++area)
         filter.setAreaCost(area, travelCost(static_cast<unsigned char>(area)));
+    if (pavement)
+        filter.setIncludeFlags(pavementFlag);
+    const float snap = pavement ? 0.20f : 1.5f;
     float nearA[3], nearB[3];
     dtPolyRef af = 0, bf = 0;
-    if (dtStatusFailed(endpoint(q, filter, start, af, nearA)) ||
-        dtStatusFailed(endpoint(q, filter, goal, bf, nearB)))
+    if (dtStatusFailed(endpoint(q, filter, start, af, nearA, snap)) ||
+        dtStatusFailed(endpoint(q, filter, goal, bf, nearB, snap)))
         return -2;
     if (!af || !bf)
         return 0;
@@ -546,6 +558,8 @@ API int query_cluster_path(const dtNavMesh *nav, const ClusterGraph *graph, cons
         if (dtStatusFailed(result))
             return -3;
         if (result & (DT_OUT_OF_NODES | DT_BUFFER_TOO_SMALL)) {
+            if (pavement)
+                return 3;
             if (!world_corridor(nav, af, bf, corridor))
                 return 2;
             count = (int)corridor.size();
@@ -624,6 +638,14 @@ API int query_cluster_path(const dtNavMesh *nav, const ClusterGraph *graph, cons
         }
     }
     return 1;
+}
+API int query_cluster_path(const dtNavMesh *nav, const ClusterGraph *graph, const float *start,
+                           const float *goal, float *output, int capacity, int *points) {
+    return route_path(nav, graph, start, goal, output, capacity, points);
+}
+API int query_pavement_path(const dtNavMesh *nav, const float *start, const float *goal,
+                            float *out, int cap, int *points) {
+    return route_path(nav, nullptr, start, goal, out, cap, points, true);
 }
 API int query_path(const dtNavMesh *nav, const float *start, const float *goal, float *out, int cap,
                    int *points) {

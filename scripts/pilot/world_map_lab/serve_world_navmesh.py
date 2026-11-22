@@ -9,12 +9,14 @@ import shutil
 from contextlib import ExitStack
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import parse_qs, urlsplit
 
 import numpy as np
 
 from scripts.pilot.world_map_lab.detail_scene_service import read_scene, scene_files
 from scripts.pilot.world_map_lab.journey_runs import JourneyRuns
+from scripts.pilot.world_map_lab.pedestrian_surface import FootSurface
 from scripts.pilot.world_map_lab.taxi_surface import TaxiSurface
 from scripts.pilot.world_map_lab.world_navmesh import FLOATS, Network, checksum
 from scripts.pilot.world_map_lab.world_trip import TripPlanner
@@ -81,8 +83,10 @@ def pedestrian_release(folder):
     if not selection.is_file():
         return folder
     name = json.loads(selection.read_bytes())["release"]
-    if not isinstance(name, str) or not name or not all(
-        ch.isascii() and (ch.isalnum() or ch in "_-") for ch in name
+    if (
+        not isinstance(name, str)
+        or not name
+        or not all(ch.isascii() and (ch.isalnum() or ch in "_-") for ch in name)
     ):
         raise ValueError("invalid pedestrian release name")
     return folder / "pedestrian-releases" / name
@@ -104,6 +108,13 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
             raise ValueError("travel modes are from different source revisions")
         trip = TripPlanner(nets, folder, walk_folder=walk_folder)
         accessible = TaxiSurface(trip)
+        walk = nets["walk"]
+        pavement = None
+        if walk.meta.get("walkMaterialVersion") and hasattr(walk.dll, "query_pavement_path"):
+            pavement = FootSurface(
+                folder, SimpleNamespace(meta=walk.meta), pavement=True, check_visibility=False
+            )
+            stack.callback(pavement.close)
         files = {
             "/": Path(__file__).with_name("world_nav_planner.html"),
             "/world.png": folder / "atlas/ariane-world-top.png",
@@ -116,6 +127,11 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
 
         files.update(scene_files(folder, nets))
         examples = {}
+        paved_example = walk_folder / "pavement-example.json"
+        if pavement and paved_example.is_file():
+            case = json.loads(paved_example.read_bytes())
+            if case.get("geometrySha256") == walk.meta["geometrySha256"]:
+                examples["pavement"] = {key: case[key] for key in ("start", "end")}
         for name in (
             "navigation-report.html",
             "street-comparison.jpg",
@@ -161,7 +177,9 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
         if mixed_file.is_file():
             mixed = json.loads(mixed_file.read_bytes())
             mesh_files = {"drive": folder / "drive.nav.zip", "walk": walk_folder / "walk.nav.zip"}
-            if all(mixed["meshes"].get(mode) == checksum(file) for mode, file in mesh_files.items()):
+            if all(
+                mixed["meshes"].get(mode) == checksum(file) for mode, file in mesh_files.items()
+            ):
                 examples["trip"] = {key: mixed[key] for key in ("start", "vehicle", "end")}
                 examples["taxi"] = {key: mixed[key] for key in ("start", "end")}
 
@@ -321,6 +339,7 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                         {
                             **{m: n.meta for m, n in nets.items()},
                             "examples": list(examples),
+                            "pavement": pavement is not None,
                             "parkedVehicle": parked,
                             "review": "/review" in files,
                             "detail": "/detail" in files,
@@ -385,7 +404,9 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                     mode = args["mode"][0]
                     nav = nets["walk" if mode in ("trip", "taxi") else mode]
                     if req.path == "/api/example":
-                        self.send_json(examples[mode])
+                        surface = args.get("surface")
+                        key = "pavement" if mode == "walk" and surface == ["pavement"] else mode
+                        self.send_json(examples[key])
                     elif req.path == "/api/step":
                         start, xy = (
                             [float(n) for n in args[k][0].split(",")] for k in ("start", "xy")
@@ -400,14 +421,23 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                         vehicle = args.get("vehicle")
                         if vehicle and mode != "trip":
                             raise ValueError("vehicle requires mixed mode")
+                        surface = args.get("surface")
+                        if surface is not None and (mode != "walk" or surface != ["pavement"]):
+                            raise ValueError("expected pavement restriction on a walking route")
                         point = [float(n) for n in vehicle[0].split(",")] if vehicle else None
-                        self.send_json(
+                        result = (
                             trip.taxi(*ends)
                             if mode == "taxi"
                             else trip.route(*ends, vehicle=point)
                             if mode == "trip"
-                            else nav.route(*ends)
+                            else nav.route(*ends, pavement=surface is not None)
                         )
+                        if surface and result["status"] == "complete":
+                            if pavement is None or not pavement.paved_route(
+                                [ends[0], *result["path"], ends[1]]
+                            ):
+                                result = dict(status="surface_unconfirmed", length=0, path=[])
+                        self.send_json(result)
                 except (KeyError, TypeError, ValueError, OverflowError):
                     self.send_json({"error": "invalid query"}, 400)
 
@@ -421,6 +451,8 @@ if __name__ == "__main__":
     parser.add_argument("--folder", type=Path, required=True)
     parser.add_argument("--port", type=int, default=8817)
     parser.add_argument("--adapter", type=Path)
-    parser.add_argument("--walk-folder", type=Path, help="Preview a separately baked pedestrian release")
+    parser.add_argument(
+        "--walk-folder", type=Path, help="Preview a separately baked pedestrian release"
+    )
     args = parser.parse_args()
     serve(args.folder, args.port, args.adapter, walk_folder=args.walk_folder)

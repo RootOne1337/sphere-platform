@@ -12,6 +12,16 @@ def continuous_floor(row):
     )
 
 
+def continuous_pavement(row):
+    return continuous_floor(row) and all(
+        any(
+            q.get(kind) is not None and abs(q[kind] - q["floor"]) < 0.40
+            for kind in ("footpath", "paving")
+        )
+        for q in row["profile"]
+    )
+
+
 def jumpable(obstacle, landing):
     if not obstacle["bodyIntersections"] or not continuous_floor(obstacle):
         return False

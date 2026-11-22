@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from scripts.pilot.world_map_lab.pedestrian_scene import WalkingSceneGuard, plausible_walk_height
+from scripts.pilot.world_map_lab.pedestrian_scene import WalkingSceneGuard
 from scripts.pilot.world_map_lab.pedestrian_surface import FootSurface
 
 
@@ -38,4 +38,70 @@ def test_cut_latches_until_fresh_absolute_exterior_pose():
     [(12.6, [11.1], True), (10.9, [11.1], False), (11.1, [], False), (22.5, [10, 21], True)],
 )
 def test_pose_requires_reachable_floor_height(eye, floors, accepted):
-    assert plausible_walk_height(eye, floors) == accepted
+    surface = FootSurface.__new__(FootSurface)
+
+    class Road:
+        def levels(self, x, y, mode):
+            assert mode == "walk"
+            return floors
+
+    surface.road = Road()
+    surface._measure = lambda *_: {"profile": [dict(floor=None, water=None)]}
+    assert (surface.ground_support([0, 0, eye], 1.55) is not None) == accepted
+
+
+def test_floor_at_navmesh_gap_keeps_pose_but_not_water_or_unsupported_height():
+    surface = FootSurface.__new__(FootSurface)
+
+    class Road:
+        def levels(self, x, y, mode):
+            return []
+
+    surface.road = Road()
+    sample = {"floor": 25.477, "water": None}
+    surface._measure = lambda *_: {"profile": [sample]}
+    support = surface.ground_support([0, 0, 27.16], 1.55)
+    assert support.height == pytest.approx(25.477)
+    assert not support.on_mesh
+    assert surface.ground_support([1, 1, 24], 1.55) is None
+    assert surface.ground_support([1, 1, 28], 1.55) is None
+    sample["water"] = 25.46
+    assert surface.ground_support([0, 0, 27.16], 1.55) is None
+
+
+def test_route_entrance_must_be_clear_at_actual_detour_endpoint():
+    surface = FootSurface.__new__(FootSurface)
+
+    class Road:
+        def levels(self, x, y, mode):
+            return [0.0]
+
+        def query(self, name, **params):
+            return {"status": "complete", "length": 9.8, "path": [[0.2, 0, 0], [10, 0, 0]]}
+
+    surface.road = Road()
+    surface.visibility = None
+    surface.clear_or_exiting = lambda a, b: False
+    assert surface.connection([0, 0, 1.55], [10, 0, 0], 0) is None
+    surface.clear_or_exiting = lambda a, b: True
+    assert surface.connection([0, 0, 1.55], [10, 0, 0], 0)[:2] == [[0, 0, 0], [0.2, 0, 0]]
+    assert surface.aim([0, 0, 1.55], 1.55, [0.2, 0]) == pytest.approx([0.2, 0])
+
+
+def test_sidewalk_lookahead_shortens_at_bend_instead_of_leaving_pavement():
+    surface = FootSurface.__new__(FootSurface)
+    surface.visibility = None
+    surface.sweep = lambda start, end: (0, end[0] < 1)
+    aim = surface.pavement_aim([0, 0, 1.55], 1.55, [[2, 1, 0], [0.5, 0, 0]])
+    assert aim == pytest.approx([0.5, 0])
+    assert surface.pavement_aim([0, 0, 1.55], 1.55, [[2, 1, 0]]) is None
+
+    class Foliage:
+        def exposure(self, eye, end):
+            return 0.7 if end[0] > 1 else 0.0
+
+    surface.visibility = Foliage()
+    surface.sweep = lambda start, end: (0, True)
+    assert surface.pavement_aim([0, 0, 1.55], 1.55, [[2, 1, 0], [0.5, 0, 0]]) == pytest.approx(
+        [0.5, 0]
+    )

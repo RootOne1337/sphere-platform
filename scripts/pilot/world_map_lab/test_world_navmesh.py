@@ -71,7 +71,11 @@ def meshes(tmp_path_factory):
             put(write, FOOT, strip, stats)
         # Facing walkways separated by eight metres of lawn with a 50 m detour above.
         put(write, COLLISION, deck(211, 83, 248, 125, 0), stats)
-        for strip in (deck(213, 86, 219, 121, 0), deck(227, 86, 233, 121, 0), deck(213, 115, 233, 121, 0)):
+        for strip in (
+            deck(213, 86, 219, 121, 0),
+            deck(227, 86, 233, 121, 0),
+            deck(213, 115, 233, 121, 0),
+        ):
             put(write, FOOT, strip, stats)
         put(write, COLLISION, deck(4, 85, 70, 105, 0), stats)
         put(write, WATER, deck(5, 86, 17, 104, 2), stats)
@@ -244,3 +248,17 @@ def test_pedestrian_release_must_be_local_and_transfers_bound_to_it(tmp_path, me
     with Network(meshes, "drive") as drive, Network(meshes, "walk") as walk:
         with pytest.raises(ValueError, match="transfer index"):
             TripPlanner({"drive": drive, "walk": walk}, meshes, walk_folder=tmp_path)
+
+
+def test_pavement_only_uses_painted_walkways_and_refuses_unmarked_floor(meshes):
+    with Network(meshes, "walk") as foot:
+        if not hasattr(foot.dll, "query_pavement_path"):
+            pytest.skip("adapter predates pavement-only paths")
+        direct = foot.route([216, 90, 0], [230, 90, 0])
+        paved = foot.route([216, 90, 0], [230, 90, 0], pavement=True)
+        assert direct["status"] == paved["status"] == "complete"
+        assert direct["length"] < 20 and paved["length"] > 50
+        assert max(q[1] for q in paved["path"]) >= 115
+        rejected = foot.route([223, 90, 0], [230, 90, 0], pavement=True)
+        assert rejected["status"] == "endpoint_unavailable"
+        assert not rejected["path"]

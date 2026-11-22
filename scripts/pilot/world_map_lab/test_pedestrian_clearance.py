@@ -1,4 +1,4 @@
-from scripts.pilot.world_map_lab.pedestrian_clearance import jumpable
+from scripts.pilot.world_map_lab.pedestrian_clearance import continuous_pavement, jumpable
 
 
 def test_only_a_low_narrow_barrier_with_ground_and_clear_landing_can_be_jumped():
@@ -15,3 +15,12 @@ def test_only_a_low_narrow_barrier_with_ground_and_clear_landing_can_be_jumped()
     assert not jumpable(
         hedge, {**clear, "profile": [dict(floor=11.0, referenceZ=11.0, water=11.2)]}
     )
+
+
+def test_pavement_lookahead_refuses_lawn_and_marking_from_another_level():
+    sidewalk = dict(floor=10, referenceZ=10, water=None, footpath=10, paving=None)
+    park = {**sidewalk, "footpath": None}
+    overhead = {**park, "paving": 13}
+    assert continuous_pavement({"profile": [sidewalk, sidewalk]})
+    for wrong in [park, overhead, {**sidewalk, "water": 10}]:
+        assert not continuous_pavement({"profile": [sidewalk, wrong]})

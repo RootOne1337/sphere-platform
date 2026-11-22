@@ -190,6 +190,9 @@
           <option value="walk">Пешком</option>
           <option value="trip">Транспорт и пешком</option>
         </select>
+        <label id="pavementOption" hidden>
+          <input id="pavement" type="checkbox" /> Только тротуары и дорожки
+        </label>
       </div>
     </header>
     <section class="card">
@@ -387,18 +390,22 @@
       itinerary = null;
       $("depart").disabled = true;
     }
+    function pavedOnly() {
+      return mode() === "walk" && world?.pavement && $("pavement").checked;
+    }
     function reset() {
       clearItinerary();
       $("v").hidden = mode() !== "trip";
+      $("pavementOption").hidden = !(mode() === "walk" && world?.pavement);
       if (world?.examples)
-        $("example").disabled = !world.examples.includes(mode());
+        $("example").disabled = !world.examples.includes(pavedOnly() ? "pavement" : mode());
       request++;
       ends =
         mode() === "trip" && world?.parkedVehicle
           ? { v: world.parkedVehicle }
           : {};
       reachable = null;
-      $("surfaceLabel").textContent = "Доступная поверхность";
+      $("surfaceLabel").textContent = pavedOnly() ? "Общая пешая сетка" : "Доступная поверхность";
       path = [];
       $("exploreLink").href = "/explore";
       pending = null;
@@ -461,6 +468,7 @@
         end: ends.b.join(","),
       });
       if (ends.v) query.set("vehicle", ends.v.join(","));
+      if (pavedOnly()) query.set("surface", "pavement");
       const result = await get("/api/path?" + query);
       if (token !== request) return;
       path =
@@ -468,11 +476,11 @@
         (result.path.length ? [{ mode: mode(), path: result.path }] : []);
       draw();
       $("exploreLink").href =
-        result.status === "complete" ? "/explore?" + query : freeLink;
+        result.status === "complete" && !pavedOnly() ? "/explore?" + query : freeLink;
       if (
         result.status === "complete" &&
         result.length > 0.01 &&
-        world.explore
+        world.explore && !pavedOnly()
       ) {
         itinerary = {
           mode: mode(),
@@ -498,8 +506,9 @@
           "Старт и цель лежат в разных частях сети. Непрерывного пути в этом режиме нет.",
         endpoint_unavailable:
           "Для одного из концов не найдена подходящая поверхность.",
-        surface_unconfirmed:
-          "На выбранном уровне не подтверждена высота опоры.",
+        surface_unconfirmed: pavedOnly()
+          ? "Тротуар или дорожка подтверждены только на части пути."
+          : "На выбранном уровне не подтверждена высота опоры.",
         search_limit: "Поиск достиг вычислительного лимита.",
       };
       status(
@@ -510,6 +519,7 @@
               path
                 .map((l) => (l.mode === "walk" ? "пешком" : "на транспорте"))
                 .join(" → ") +
+              (pavedOnly() ? " · по тротуарам и дорожкам" : "") +
               (mode() === "taxi" && result.pickup
                 ? ". Место подачи скутера выбрано на карте стенда."
                 : ".")
@@ -577,7 +587,9 @@
       reset();
       const token = request;
       try {
-        const ex = await get("/api/example?mode=" + mode());
+        const query = new URLSearchParams({ mode: mode() });
+        if (pavedOnly()) query.set("surface", "pavement");
+        const ex = await get("/api/example?" + query);
         if (token !== request) return;
         ends.a = ex.start;
         if (ex.vehicle) ends.v = ex.vehicle;
@@ -622,6 +634,7 @@
     });
     $("clear").onclick = reset;
     $("mode").onchange = reset;
+    $("pavement").onchange = reset;
     $("overlay").onchange = draw;
     $("plus").onclick = () => zoom(1.6);
     $("minus").onclick = () => zoom(1 / 1.6);

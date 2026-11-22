@@ -1,20 +1,35 @@
 """Local steering against the same source solids and walking floors as the world route."""
 
 import math
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 
 from scripts.pilot.world_map_lab.destination_itinerary import fmt
-from scripts.pilot.world_map_lab.pedestrian_clearance import can_jump, continuous_floor
+from scripts.pilot.world_map_lab.pedestrian_clearance import (
+    can_jump,
+    continuous_floor,
+    continuous_pavement,
+)
+from scripts.pilot.world_map_lab.pedestrian_scene import plausible_walk_height
 from scripts.pilot.world_map_lab.pedestrian_visibility import PedestrianVisibility
 from scripts.pilot.world_map_lab.survey_clearance import measure
 from scripts.pilot.world_map_lab.world_navmesh import spatial_index
 
 
+@dataclass(frozen=True)
+class GroundSupport:
+    height: float
+    on_mesh: bool
+
+
 class FootSurface:
-    def __init__(self, folder, road):
+    pavement = False
+
+    def __init__(self, folder, road, *, pavement=False, check_visibility=True):
         self.road = road
+        self.pavement = pavement
         geometry = Path(folder) / "world-geometry.bin"
         self.data = np.memmap(geometry, dtype="u1", mode="r")
         bounds = road.meta["bounds"]
@@ -23,7 +38,7 @@ class FootSurface:
         detail = Path(folder) / "detail-scene.sqlite"
         self.visibility = (
             PedestrianVisibility(detail, road.meta["placementRevision"])
-            if detail.is_file()
+            if check_visibility and detail.is_file()
             else None
         )
 
@@ -31,11 +46,43 @@ class FootSurface:
         if self.visibility:
             self.visibility.close()
 
-    def sweep(self, start, end):
-        row = measure(
+    def _measure(self, start, end):
+        return measure(
             dict(a=start, b=end, mode="walk"), self.data, self.index, self.chunks, self.origin
         )
-        return row["bodyIntersections"], continuous_floor(row)
+
+    def sweep(self, start, end):
+        row = self._measure(start, end)
+        supported = continuous_pavement(row) if self.pavement else continuous_floor(row)
+        return row["bodyIntersections"], supported
+
+    def paved_route(self, path):
+        points = np.asarray(path, dtype=float)
+        if points.shape == (1, 3):
+            return self.sweep(points[0], points[0]) == (0, True)
+        return len(points) > 1 and all(
+            self.sweep(a, b) == (0, True) for a, b in zip(points[:-1], points[1:])
+        )
+
+    def ground_support(self, eye, camera_height):
+        """Use the original floor to confirm a pose just outside the eroded walk mesh."""
+        expected = eye[2] - camera_height
+        levels = self.road.levels(*eye[:2], mode="walk")
+        if levels:
+            close = [z for z in levels if plausible_walk_height(eye[2], (z,))]
+            return (
+                GroundSupport(min(close, key=lambda z: abs(z - expected)), True) if close else None
+            )
+        point = np.array([*eye[:2], expected])
+        sample = self._measure(point, point)["profile"][0]
+        level = sample["floor"]
+        if level is None or not plausible_walk_height(eye[2], (level,)):
+            return None
+        if abs(level - expected) >= 0.40 or (
+            sample["water"] is not None and sample["water"] >= level - 0.05
+        ):
+            return None
+        return GroundSupport(level, False)
 
     def clear_or_exiting(self, start, end):
         hits, dry = self.sweep(start, end)
@@ -62,9 +109,9 @@ class FootSurface:
             count = remaining
         return False
 
-    def connection(self, eye, goal, expected):
+    def connection(self, eye, goal, expected, *, heading=None):
         start = np.array([*eye[:2], expected])
-        for radius in (0, 0.75, 1.5, 2.5, 4, 5.5):
+        for radius in (0, 0.35, 0.75, 1.5, 2.5, 4, 5.5):
             paths = []
             for angle in np.linspace(0, 2 * math.pi, 12 if radius else 1, endpoint=False):
                 xy = start[:2] + radius * np.array([math.cos(angle), math.sin(angle)])
@@ -74,23 +121,47 @@ class FootSurface:
                 )
                 for z in heights[:2]:
                     ground = np.array([*xy, z])
-                    if radius and not self.clear_or_exiting(start, ground):
-                        continue
-                    route = self.road.query("path", mode="walk", start=fmt(ground), end=fmt(goal))
+                    policy = {"surface": "pavement"} if self.pavement else {}
+                    route = self.road.query(
+                        "path", mode="walk", start=fmt(ground), end=fmt(goal), **policy
+                    )
                     if route.get("status") != "complete" or not route.get("path"):
                         continue
-                    if math.dist(route["path"][0], ground) < 0.9:
-                        path = [start.tolist(), *route["path"]] if radius else route["path"]
-                        paths.append((route["length"] + math.dist(start, ground), path))
+                    entry = np.asarray(route["path"][0])
+                    distance = math.dist(start, entry)
+                    if math.dist(entry, ground) >= 0.9 or not self.clear_or_exiting(start, entry):
+                        continue
+                    path = [start.tolist(), *route["path"]] if distance > 0.001 else route["path"]
+                    turn_cost = 0
+                    if heading is not None and distance >= 0.10:
+                        bearing = math.atan2(entry[1] - start[1], entry[0] - start[0])
+                        turn_cost = 0.5 * abs(math.remainder(bearing - heading, 2 * math.pi))
+                    paths.append((route["length"] + distance + turn_cost, path))
             if paths:
                 return min(paths, key=lambda pair: pair[0])[1]
+        return None
+
+    def pavement_aim(self, eye, height, route_targets):
+        start = np.array([*eye[:2], eye[2] - height])
+        # Try the farthest reachable point first. At a tight bend, reduce the
+        # lookahead along the route instead of steering across the corner.
+        for end in route_targets:
+            end = np.asarray(end, dtype=float)
+            if np.linalg.norm(end[:2] - start[:2]) < 0.05:
+                continue
+            if self.visibility and self.visibility.exposure(eye, end) > 0.12:
+                continue
+            if self.sweep(start, end) == (0, True):
+                return end[:2]
         return None
 
     def aim(self, eye, height, target, avoid_bias=0):
         start = np.array([*eye[:2], eye[2] - height])
         offset = np.asarray(target) - start[:2]
         heading = math.atan2(offset[1], offset[0])
-        lookahead = min(max(1.0, np.linalg.norm(offset)), 3.0)
+        lookahead = min(np.linalg.norm(offset), 3.0)
+        if lookahead < 0.05:
+            return None
         side = 1 if avoid_bias >= 0 else -1
         best_cost, best = math.inf, None
         for turn in (0, 0.38, -0.38, 0.74, -0.74, 1.18, -1.18, 1.58, -1.58, 2.13, -2.13, math.pi):
@@ -111,6 +182,8 @@ class FootSurface:
         return best
 
     def low_barrier(self, eye, height, heading):
+        if self.pavement:
+            return False
         start = np.array([*eye[:2], eye[2] - height])
         direction = np.array([math.cos(heading), math.sin(heading), 0])
         end = start + 2.9 * direction

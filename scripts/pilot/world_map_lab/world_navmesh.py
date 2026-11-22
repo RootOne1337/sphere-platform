@@ -62,6 +62,8 @@ def library(path):
         "query_levels": (integer, [void, real, real, FLOATS, integer]),
         "query_path": (integer, [void, FLOATS, FLOATS, FLOATS, integer, ct.POINTER(integer)]),
     }
+    if hasattr(dll, "query_pavement_path"):
+        signatures["query_pavement_path"] = signatures["query_path"]
     if hasattr(dll, "move_body"):
         signatures["move_body"] = (integer, [void, FLOATS, FLOATS, FLOATS])
     if hasattr(dll, "walk_material_version"):
@@ -374,11 +376,17 @@ class Network:
             raise RuntimeError("endpoint lookup failed")
         return int(self.labels[i])
 
-    def route(self, start, end):
+    def route(self, start, end, *, pavement=False):
+        if pavement and (
+            self.meta["mode"] != "walk"
+            or not self.meta.get("walkMaterialVersion")
+            or not hasattr(self.dll, "query_pavement_path")
+        ):
+            raise ValueError("pavement-only routes require a classified walking mesh and adapter")
         ends = [np.ascontiguousarray(p, dtype=np.float32) for p in (start, end)]
         if any(p.shape != (3,) or not np.isfinite(p).all() for p in ends):
             raise ValueError("expected finite XYZ for both endpoints")
-        if self.labels is not None:
+        if self.labels is not None and not pavement:
             a, b = map(self.component, ends)
             if a is None or b is None or a != b:
                 return {
@@ -390,6 +398,8 @@ class Network:
         count = ct.c_int()
         fn = self.dll.query_cluster_path if self.graph else self.dll.query_path
         handles = (self.handle, self.graph) if self.graph else (self.handle,)
+        if pavement:
+            fn, handles = self.dll.query_pavement_path, (self.handle,)
         status = fn(
             *handles,
             *(p.ctypes.data_as(FLOATS) for p in ends),
@@ -424,6 +434,7 @@ def main():
     q = sub.add_parser("route")
     q.add_argument("--folder", required=True, type=Path)
     q.add_argument("--mode", required=True, choices=["drive", "walk"])
+    q.add_argument("--pavement", action="store_true")
     q.add_argument("--start", nargs=3, type=float, required=True)
     q.add_argument("--end", nargs=3, type=float, required=True)
     args = parser.parse_args()
@@ -431,7 +442,7 @@ def main():
         build(args)
     else:
         with Network(args.folder, args.mode) as nav:
-            print(json.dumps(nav.route(args.start, args.end)))
+            print(json.dumps(nav.route(args.start, args.end, pavement=args.pavement)))
 
 
 if __name__ == "__main__":
