@@ -227,9 +227,9 @@ class RecentWalkProbe:
         except (OSError, ValueError, TypeError, KeyError):
             pass
 
-    def remember(self, pose):
+    def remember(self, pose, *, seconds=1200):
         self.seed = pose
-        self.seed_until = time.time() + 1200
+        self.seed_until = time.time() + seconds
 
     def observe(self, raw, cfg, road):
         if self.seed is None or time.time() > self.seed_until:
@@ -448,6 +448,11 @@ class WorldAcquisition:
                         },
                         flush=True,
                     )
+                    # Dense geometry may verify the last camera direction even when
+                    # that view has too few landmarks for the sparse tracking atlas.
+                    seed = result.get("latestConfirmedPose")
+                    if self.dense_walk and seed and result.get("pose") and not result["ambiguous"]:
+                        self.recent_walk.remember(seed, seconds=60)
                     if (
                         result.get("trackingAtlas")
                         and result.get("pose")

@@ -108,7 +108,7 @@ class Trip:
         previous = self.previous
         self.previous = (now, eye, pose["heading"])
         if previous is None:
-            self.motion_origin = None
+            self.motion_origin = self.arrival_time = None
             return dict(neutral, reason="confirming_position")
         dt = now - previous[0]
         change = math.dist(eye, previous[1])
@@ -770,7 +770,10 @@ def serve(args):
             # A resumed or re-buffered video must confirm its pose again.
             if (
                 trip.last_media_time is not None
-                and abs((clock - trip.last_media_time) - (now - trip.frame_received)) > 0.6
+                and (
+                    now - trip.frame_received > 1.2
+                    or abs((clock - trip.last_media_time) - (now - trip.frame_received)) > 0.6
+                )
             ):
                 trip.previous = None
                 trip.motion_origin = None

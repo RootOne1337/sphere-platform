@@ -8,7 +8,7 @@ import pytest
 
 from scripts.pilot.world_map_lab import world_scene_acquisition as acquisition
 from scripts.pilot.world_map_lab.render_world_search_views import candidate_regions, select_sites
-from scripts.pilot.world_map_lab.verify_world_scene_candidates import consistent_views
+from scripts.pilot.world_map_lab.verify_world_scene_candidates import consistent_views, latest_confirmed_view
 from scripts.pilot.world_map_lab.world_scene_acquisition import (
     WorldAcquisition,
     material_regions,
@@ -73,6 +73,15 @@ def test_parked_stream_needs_independent_source_baselines_and_agreement():
     assert not consistent_views([a, dict(b, sourceEye=[3, 2, 3])])
     assert not consistent_views([a, dict(b, pose=dict(b["pose"], eye=[5, 5, 6]))])
     assert not consistent_views([a, dict(b, pose=dict(b["pose"], supports=38))])
+
+
+def test_handoff_uses_latest_agreed_view_even_when_the_first_has_more_matches():
+    a = dict(frame=0, delta=0, pose=dict(eye=[4, 5, 6], heading=0.2, supports=100))
+    b = dict(frame=3, delta=0.8, pose=dict(eye=[4, 5, 6], heading=1.0, supports=42))
+    outlier = dict(frame=4, delta=0.5, pose=dict(eye=[4, 15, 6], heading=0.7, supports=210))
+    rows = [a, b, outlier]
+    assert latest_confirmed_view(rows, consistent_views(rows)) == b["pose"]
+    assert latest_confirmed_view(rows, []) is None
 
 
 def test_global_worker_never_exposes_a_cached_fix_on_an_unrecognized_frame():

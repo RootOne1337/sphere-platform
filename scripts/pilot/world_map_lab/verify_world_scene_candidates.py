@@ -75,6 +75,17 @@ def consistent_views(rows):
     return confirmed
 
 
+def latest_confirmed_view(rows, confirmed):
+    """Use the last geometrically agreed view to initialize a fresh local solve."""
+    confirmed_ids = {id(pose) for pose in confirmed}
+    newest = max(
+        (r for r in rows if id(r["pose"]) in confirmed_ids),
+        key=lambda r: (r["frame"], r["pose"]["supports"]),
+        default=None,
+    )
+    return newest["pose"] if newest else None
+
+
 def write_tracking_atlas(path, images, anchors, rows, pose, focal, revision):
     """Only expose live appearance backed by measured 2D-to-source-mesh inliers."""
     detector = cv2.SIFT_create(nfeatures=2400, contrastThreshold=0.018)
@@ -317,6 +328,7 @@ def run(args):
         framesWithPose=len({e["frame"] for e in evidence if e["pose"] is not None}),
         comparisonsWithPose=sum(e["pose"] is not None for e in evidence),
         pose=None if not confirmed or ambiguous else max(confirmed, key=lambda p: p["supports"]),
+        latestConfirmedPose=None if ambiguous else latest_confirmed_view(evidence, confirmed),
         ambiguous=ambiguous,
         comparisons=evidence,
     )

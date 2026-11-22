@@ -74,7 +74,7 @@ class WalkTrip:
         prior = self.previous
         self.previous = now, eye, heading
         if not prior or not 0 < now - prior[0] <= 1.2:
-            self.arrival = None
+            self.arrival = self.motion_origin = None
             return dict(reply, reason="confirming_position")
         dt = now - prior[0]
         change = math.dist(eye, prior[1])
