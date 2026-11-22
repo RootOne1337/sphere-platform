@@ -1,9 +1,18 @@
+import argparse
+
 import cv2
 import numpy as np
 import pytest
 
 from scripts.pilot.world_map_lab.destination_itinerary import plan
-from scripts.pilot.world_map_lab.live_destination import Trip, probe_atlases, probe_start_levels
+from scripts.pilot.world_map_lab.live_destination import (
+    Trip,
+    preview_origin,
+    probe_atlases,
+    probe_start_levels,
+    walk_pose_plausible,
+    walking_exposure,
+)
 from scripts.pilot.world_map_lab.live_destination_atlas import (
     Locator,
     MenuBackdrop,
@@ -22,6 +31,28 @@ class Roads:
 
 def pose(x, y=0, z=1.45, heading=0):
     return {"eye": [x, y, z], "heading": heading, "supports": 40}
+
+
+def test_walking_exposure_refuses_flat_frames_and_bounds_amplification():
+    assert walking_exposure(np.full((64, 64), 18, np.uint8)) is None
+    dark = np.tile(np.arange(14, 46, dtype=np.uint8), (24, 1))
+    adjusted = walking_exposure(dark)
+    assert adjusted.shape == dark.shape
+    assert np.all(np.diff(adjusted.astype(int), axis=1) == 4)
+
+
+def test_walk_weather_fix_refuses_a_spurious_jump_and_keeps_normal_steps():
+    previous = (1.0, [550.607, 768.422, 12.705], 1.24)
+    assert not walk_pose_plausible(previous, pose(551.673, 768.459, 12.283), 1.2)
+    assert walk_pose_plausible(previous, pose(550.753, 768.920, 12.559), 1.2)
+    assert walk_pose_plausible(previous, pose(550.753, 768.920, 12.559), 3.0)
+
+
+def test_preview_origin_is_an_exact_loopback_origin():
+    assert preview_origin("http://127.0.0.1:3016") == "http://127.0.0.1:3016"
+    for value in ("http://localhost:3016", "http://127.0.0.1:3016/path", "http://127.0.0.1:3016@other.test", "null"):
+        with pytest.raises(argparse.ArgumentTypeError):
+            preview_origin(value)
 
 
 def test_launcher_backdrop_requires_exact_landmarks_across_the_view():

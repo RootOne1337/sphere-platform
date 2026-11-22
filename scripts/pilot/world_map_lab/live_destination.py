@@ -307,6 +307,37 @@ def probe_start_levels(road, eye):
     return eligible
 
 
+def walking_exposure(gray):
+    histogram = np.bincount(gray.ravel(), minlength=256).cumsum()
+    low, high = np.searchsorted(histogram, [gray.size * .03, gray.size * .97])
+    if high - low < 8:
+        return None
+    gain = min(4.0, 180.0 / (high - low))
+    levels = np.uint8(np.clip((np.arange(256) - low) * gain + 18, 0, 255))
+    return cv2.LUT(gray, levels)
+
+
+def walk_pose_plausible(previous, pose, clock):
+    if previous is None:
+        return True
+    stamp, eye, _ = previous
+    elapsed = clock - stamp
+    return not 0 < elapsed <= 1.2 or (
+        abs(pose["eye"][2] - eye[2]) <= .30 + .18 * elapsed
+        and math.dist(pose["eye"], eye) <= .28 + 3.6 * elapsed
+    )
+
+
+def preview_origin(value):
+    try:
+        url = urlsplit(value)
+        if url.port and value == f"http://127.0.0.1:{url.port}":
+            return value
+    except ValueError:
+        pass
+    raise argparse.ArgumentTypeError("preview origin must be an exact IPv4 loopback URL with a port")
+
+
 def serve(args):
     code_revision = code_digest()
     road = RoadMap(args.planner)
@@ -331,6 +362,27 @@ def serve(args):
         district_locators[label] = district
         with open(file, "rb") as src:
             district_digests[label] = hashlib.file_digest(src, "sha256").hexdigest()
+    weather_locators, weather_digests = {}, {}
+    for label, file in getattr(args, "walk_weather_atlas", []):
+        if not label.strip() or label in district_locators or label in weather_locators:
+            raise ValueError("duplicate or empty walking weather atlas name")
+        bank = Locator(file, road.meta["placementRevision"])
+        if bank.meta.get("source") != "source-map-grid" or not bank.meta.get("independentScenery"):
+            raise ValueError("walking weather atlases require independent source-map references")
+        bank.configure_search_lenses(locator.k, args.search_hfov)
+        weather_locators[label] = bank
+        with open(file, "rb") as src:
+            weather_digests[label] = hashlib.file_digest(src, "sha256").hexdigest()
+    walking_banks = {**district_locators, **weather_locators}
+
+    def walk_fix(gray, observed):
+        fix = probe_atlases(gray, locator, district_locators, observed=observed)
+        if fix["pose"] is not None or fix["ambiguous"] or not weather_locators:
+            return fix, False
+        adjusted = walking_exposure(gray)
+        if adjusted is None:
+            return fix, False
+        return probe_atlases(adjusted, locator, walking_banks), True
     drive_regions = list(getattr(args, "drive_region", []))
     if len(set(drive_regions)) != len(drive_regions) or any(
         name not in district_locators or not district_locators[name].meta.get("independentScenery")
@@ -361,6 +413,7 @@ def serve(args):
     cv2.setNumThreads(3)
     lock = threading.Lock()
     sessions = {}
+    origins = {args.origin, *getattr(args, "preview_origin", [])}
     log_dir = args.logs.resolve()
     log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -388,8 +441,9 @@ def serve(args):
             raw = json.dumps(body, allow_nan=False).encode()
             try:
                 self.send_response(status)
-                if self.headers.get("Origin") == args.origin:
-                    self.send_header("Access-Control-Allow-Origin", args.origin)
+                origin = self.headers.get("Origin")
+                if origin in origins:
+                    self.send_header("Access-Control-Allow-Origin", origin)
                     self.send_header("Vary", "Origin")
                 self.send_header("Cache-Control", "no-store")
                 self.send_header("Content-Type", "application/json")
@@ -402,14 +456,15 @@ def serve(args):
         def permitted(self):
             return (
                 self.headers.get("Host") == f"127.0.0.1:{args.port}"
-                and self.headers.get("Origin") == args.origin
+                and self.headers.get("Origin") in origins
             )
 
         def do_OPTIONS(self):
             if not self.permitted():
                 return self.reply(403, dict(error="origin_denied"))
             self.send_response(204)
-            self.send_header("Access-Control-Allow-Origin", args.origin)
+            self.send_header("Access-Control-Allow-Origin", self.headers["Origin"])
+            self.send_header("Vary", "Origin")
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header(
                 "Access-Control-Allow-Headers",
@@ -420,7 +475,7 @@ def serve(args):
 
         def webp(self, data):
             self.send_response(200)
-            self.send_header("Access-Control-Allow-Origin", args.origin)
+            self.send_header("Access-Control-Allow-Origin", self.headers["Origin"])
             self.send_header("Vary", "Origin")
             self.send_header("Cache-Control", "private,max-age=31536000,immutable")
             self.send_header("Content-Type", "image/webp")
@@ -478,6 +533,7 @@ def serve(args):
                     atlasDigest=atlas_digest,
                     codeDigest=code_revision,
                     walkAutopilot=foot is not None,
+                    walkWeatherAtlases=weather_digests,
                 ),
             )
 
@@ -486,7 +542,7 @@ def serve(args):
                 return self.reply(403, dict(error="origin_denied"))
             try:
                 size = int(self.headers.get("Content-Length", "0"))
-                frame = self.path in ("/frame", "/probe")
+                frame = self.path in ("/frame", "/probe", "/walk-probe")
                 if (
                     not 0
                     <= size
@@ -615,7 +671,7 @@ def serve(args):
             for key, trip in list(sessions.items()):
                 if now - trip.last_use > 45:
                     del sessions[key]
-            if self.path == "/probe":
+            if self.path in ("/probe", "/walk-probe"):
                 survey = sessions.get(self.headers.get("X-World-Session"))
                 if sessions and not isinstance(survey, WalkTrip):
                     return self.reply(409, dict(error="session_active"))
@@ -628,7 +684,10 @@ def serve(args):
                     return self.reply(
                         200, dict(pose=None, district=None, ambiguous=False, screen="menu_backdrop")
                     )
-                result = probe_atlases(gray, locator, district_locators, observed=observed)
+                if self.path == "/walk-probe":
+                    result, _ = walk_fix(gray, observed)
+                else:
+                    result = probe_atlases(gray, locator, district_locators, observed=observed)
                 if global_search and not result["pose"] and not result["ambiguous"]:
                     pose = global_search.observe(raw, gray, observed, walk_road=road)
                     result.update(
@@ -805,27 +864,40 @@ def serve(args):
             )
             at_menu = False
             collected = False
+            normalized = False
             if pose is None and (trip.pose_bank is not None or now >= trip.next_search):
                 observed = locator.describe(gray)
                 at_menu = menu is not None and menu.matches(observed)
                 if not at_menu and trip.pose_bank is not None and observed is not None:
                     bank = trip.pose_bank
-                    candidate = bank.locate_features(gray, *observed)
-                    if candidate and bank.covers([[*candidate["eye"][:2], candidate["eye"][2] - 1.45]]):
+                    normalized = trip.normalized_pose_bank
+                    image = walking_exposure(gray) if normalized else gray
+                    features = bank.describe(image) if normalized and image is not None else observed
+                    candidate = bank.locate_features(image, *features) if image is not None and features else None
+                    if candidate and bank.covers([[*candidate["eye"][:2], candidate["eye"][2] - 1.45]]) and (
+                        not normalized or walk_pose_plausible(trip.last_visual_fix, candidate, clock)
+                    ):
                         pose = candidate
                 if not at_menu and pose is None and now >= trip.next_search:
                     trip.next_search = now + 0.65
-                    fix = probe_atlases(gray, locator, district_locators, observed=observed)
+                    fix, normalized = walk_fix(gray, observed)
                     pose = fix["pose"]
+                    if normalized and pose is not None and not walk_pose_plausible(trip.last_visual_fix, pose, clock):
+                        fix = dict(fix, ambiguous=True)
+                        pose = None
                     if pose is not None:
-                        trip.pose_bank = district_locators.get(fix["district"], locator)
+                        trip.pose_bank = walking_banks.get(fix["district"], locator)
+                        trip.normalized_pose_bank = normalized
                     elif not fix["ambiguous"]:
                         pose = global_search.observe(raw, gray, observed)
                         collected = pose is None
                         if pose is not None:
                             trip.pose_bank = global_search.bank
+                            trip.normalized_pose_bank = normalized = False
                     if pose is not None:
                         global_search.recent_walk.remember(pose)
+            if pose is not None:
+                trip.last_visual_fix = clock, pose["eye"], pose["heading"]
             if pose is None and not at_menu and not collected:
                 global_search.collect(raw, gray)
             response = trip.decide(pose, clock)
@@ -854,8 +926,12 @@ if __name__ == "__main__":
     p.add_argument("--logs", type=Path, required=True)
     p.add_argument("--planner", default="http://127.0.0.1:8817")
     p.add_argument("--origin", default="http://127.0.0.1:3015")
+    p.add_argument("--preview-origin", action="append", default=[], type=preview_origin)
     p.add_argument(
         "--search-atlas", action="append", nargs=2, default=[], metavar=("DISTRICT", "NPZ")
+    )
+    p.add_argument(
+        "--walk-weather-atlas", action="append", nargs=2, default=[], metavar=("LABEL", "NPZ")
     )
     p.add_argument("--drive-region", action="append", default=[], metavar="DISTRICT")
     p.add_argument("--search-hfov", action="append", type=float, default=[])

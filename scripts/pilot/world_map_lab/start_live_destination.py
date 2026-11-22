@@ -90,6 +90,9 @@ def main():
         "--search-atlas", action="append", nargs=2, default=[], metavar=("DISTRICT", "NPZ")
     )
     parser.add_argument(
+        "--walk-weather-atlas", action="append", nargs=2, default=[], metavar=("LABEL", "NPZ")
+    )
+    parser.add_argument(
         "--water", type=Path, help="Source data/water.dat for detailed street map tiles"
     )
     parser.add_argument("--world-search-config", type=Path)
@@ -98,6 +101,7 @@ def main():
     parser.add_argument("--menu-background", type=Path)
     parser.add_argument("--drive-region", action="append", default=[], metavar="DISTRICT")
     parser.add_argument("--search-hfov", action="append", type=float, default=[])
+    parser.add_argument("--preview-origin", action="append", default=[])
     args = parser.parse_args()
     folder = args.map_folder.resolve(strict=True)
     atlas = args.atlas.resolve(strict=True)
@@ -125,6 +129,8 @@ def main():
     search_args = []
     for angle in args.search_hfov:
         search_args.extend(["--search-hfov", str(angle)])
+    for origin in args.preview_origin:
+        search_args.extend(["--preview-origin", origin])
     for name in args.drive_region:
         search_args.extend(["--drive-region", name])
     expected_config = None
@@ -143,6 +149,12 @@ def main():
         search_args.extend(["--search-atlas", label, path])
         with path.open("rb") as source:
             expected[label] = hashlib.file_digest(source, "sha256").hexdigest()
+    expected_weather = {}
+    for label, filename in args.walk_weather_atlas:
+        path = Path(filename).resolve(strict=True)
+        search_args.extend(["--walk-weather-atlas", label, path])
+        with path.open("rb") as source:
+            expected_weather[label] = hashlib.file_digest(source, "sha256").hexdigest()
     if args.water:
         search_args.extend(["--detail-folder", folder, "--water", args.water.resolve(strict=True)])
     if texture_pack:
@@ -162,6 +174,7 @@ def main():
         or (visual.get("worldSearch") or {}).get("config") != expected_config
         or visual.get("searchCameraHfovs", []) != args.search_hfov
         or visual.get("searchAtlases", {}) != expected
+        or visual.get("walkWeatherAtlases", {}) != expected_weather
         or visual.get("menuBackgroundDigest") != menu_digest
         or visual.get("driveRegions", []) != args.drive_region
         or (args.water and not visual.get("streetTiles"))

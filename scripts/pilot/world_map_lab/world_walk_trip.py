@@ -24,6 +24,8 @@ class WalkTrip:
         self.last_plan = -math.inf
         self.next_search = -math.inf
         self.pose_bank = None
+        self.normalized_pose_bank = False
+        self.last_visual_fix = None
         self.arrival = None
         self.arrived = False
 
