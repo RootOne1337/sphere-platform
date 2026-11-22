@@ -86,11 +86,13 @@ def _array_payload(**fields):
 class RomaProcess:
     """A bounded single outstanding request, including process warm-up."""
 
-    def __init__(self, runtime):
+    def __init__(self, runtime, *, match_timeout=2):
         self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="route-roma")
         self._process = None
         self._pending = None
         self._began = time.monotonic()
+        self._match_timeout = match_timeout
+        self.failure = None
         self.status = "warming"
         from scripts.pilot.route_owned_process import spawn_owned
 
@@ -142,7 +144,10 @@ class RomaProcess:
         if pending is None:
             return None
         if not pending.done():
-            if time.monotonic() - self._began > (45 if self.status == "warming" else 2):
+            if time.monotonic() - self._began > (
+                45 if self.status == "warming" else self._match_timeout
+            ):
+                self.failure = f"{self.status} timeout"
                 self.disable()
             return None
         self._pending = None
@@ -155,7 +160,8 @@ class RomaProcess:
                 return None
             self.status = "ready"
             return result
-        except Exception:
+        except Exception as exc:
+            self.failure = type(exc).__name__
             self.disable()
             return None
 

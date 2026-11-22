@@ -156,7 +156,8 @@ def run(args):
         raise ValueError("missing live RGB")
     cv2.setNumThreads(2)
     worker = RomaProcess(
-        Runtime(args.interpreter.resolve(strict=True), args.matcher.resolve(strict=True))
+        Runtime(args.interpreter.resolve(strict=True), args.matcher.resolve(strict=True)),
+        match_timeout=12,
     )
     evidence = []
     confirmed = []
@@ -166,7 +167,7 @@ def run(args):
             worker.poll()
             time.sleep(0.025)
         if not worker.available:
-            raise RuntimeError("GPU matcher unavailable")
+            raise RuntimeError(f"GPU matcher unavailable ({worker.failure})")
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True, args=["--enable-gpu", "--use-angle=d3d11"])
             page, fr = renderer(browser, args.planner, args.scene, SIZE)
@@ -213,7 +214,9 @@ def run(args):
                             if reply is None:
                                 time.sleep(0.005)
                         if reply is None:
-                            raise RuntimeError("GPU matcher did not return correspondences")
+                            raise RuntimeError(
+                                f"GPU matcher did not return correspondences ({worker.failure})"
+                            )
                         ids, xy = reply[0]
                         dst = ((xy - [479.5, 269.5]) / zoom + [479.5, 269.5] + 0.5) / 1.5 - 0.5
                         # Require distinct image patches in both images before geometric fitting.
