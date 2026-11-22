@@ -89,6 +89,12 @@ export async function createWorld(canvas, settings, model = "faggio") {
   }
 
   top.colorSpace = T.SRGBColorSpace;
+  const detailRadius = [320, 640, 960].includes(settings.detailRadius)
+    ? settings.detailRadius : 320;
+  const reloadDistance = 96;
+  const anisotropy = detailRadius > 320
+    ? Math.min(16, renderer.capabilities.getMaxAnisotropy()) : 1;
+  top.anisotropy = anisotropy;
   const terrain = settings.terrain,
     { bounds, cols, rows, nx, ny, stride } = terrain;
   const heights = new Int16Array(field),
@@ -132,7 +138,7 @@ export async function createWorld(canvas, settings, model = "faggio") {
       "varying vec3 worldTerrain;\n" +
       s.fragmentShader.replace(
         "#include <map_fragment>",
-        "if(distance(worldTerrain.xy,cameraPosition.xy)<205.) discard;\n#include <map_fragment>",
+        `if(distance(worldTerrain.xy,cameraPosition.xy)<${(detailRadius - reloadDistance - 19).toFixed(1)}) discard;\n#include <map_fragment>`,
       );
   };
   scene.add(new T.Mesh(g, distant));
@@ -175,7 +181,7 @@ export async function createWorld(canvas, settings, model = "faggio") {
   }
   async function zone(x, y, z) {
     const data = await get(
-      "/api/neighborhood?" + new URLSearchParams({ x, y, z, radius: 320 }),
+      "/api/neighborhood?" + new URLSearchParams({ x, y, z, radius: detailRadius }),
       "json",
     );
     const next = new T.Group(),
@@ -190,6 +196,12 @@ export async function createWorld(canvas, settings, model = "faggio") {
           if (!mesh.isMesh) return;
           if (!mesh.geometry.attributes.normal)
             mesh.geometry.computeVertexNormals();
+          for (const material of [mesh.material].flat()) {
+            if (material.map && material.map.anisotropy !== anisotropy) {
+              material.map.anisotropy = anisotropy;
+              material.map.needsUpdate = true;
+            }
+          }
           const inst = new T.InstancedMesh(
             mesh.geometry,
             mesh.material,
@@ -234,14 +246,14 @@ export async function createWorld(canvas, settings, model = "faggio") {
   async function ensure(x, y, z) {
     if (
       anchor &&
-      Math.hypot(x - anchor[0], y - anchor[1]) < 96 &&
+      Math.hypot(x - anchor[0], y - anchor[1]) < reloadDistance &&
       Math.abs(z - anchor[2]) < 36
     )
       return;
     if (pending) await pending;
     if (
       !anchor ||
-      Math.hypot(x - anchor[0], y - anchor[1]) >= 96 ||
+      Math.hypot(x - anchor[0], y - anchor[1]) >= reloadDistance ||
       Math.abs(z - anchor[2]) >= 36
     ) {
       pending = zone(x, y, z);
@@ -301,6 +313,6 @@ export async function createWorld(canvas, settings, model = "faggio") {
     camera,
     scene,
     renderer,
-    stats: () => ({ sectors, models: cache.size }),
+    stats: () => ({ sectors, models: cache.size, detailRadius, anisotropy }),
   };
 }

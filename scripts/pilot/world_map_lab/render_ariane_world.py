@@ -22,6 +22,7 @@ from scripts.pilot.world_map_lab.project_ariane_roads import load_local_adapter
 
 CHUNK = Struct("<3I")
 UINT = Struct("<I")
+FLOAT = Struct("<f")
 SKY = (28, 46, 54)
 WATER = (47, 86, 102)
 
@@ -38,13 +39,14 @@ def chunks(blob):
         position = stop
 
 
-def splat_textures(plugin):
+def splat_textures(plugin, *, include_tiling=False):
     names = []
     position = 8
     for _ in range(5):
-        position += 4  # Per-layer UV tiling factor.
-        if position + CHUNK.size > len(plugin):
+        if position + 4 + CHUNK.size > len(plugin):
             return ()
+        factor = FLOAT.unpack_from(plugin, position)[0]
+        position += 4
         kind, length, _ = CHUNK.unpack_from(plugin, position)
         start = position + CHUNK.size
         position = start + length
@@ -53,11 +55,13 @@ def splat_textures(plugin):
         strings = [value for tag, value in chunks(plugin[start:position]) if tag == 2]
         if not strings:
             return ()
-        names.append(bytes(strings[0]).split(b"\0", 1)[0].decode("ascii").lower())
+        name = bytes(strings[0]).split(b"\0", 1)[0].decode("ascii").lower()
+        factor = factor if math.isfinite(factor) and 0 < factor <= 65536 else 1.0
+        names.append((name, factor) if include_tiling else name)
     return tuple(names)
 
 
-def terrain_materials(blob):
+def terrain_materials(blob, *, include_tiling=False):
     result = []
     for clump_kind, clump in chunks(memoryview(blob)):
         if clump_kind != 0x10:
@@ -84,7 +88,7 @@ def terrain_materials(blob):
                                     and len(plugin) >= 12
                                     and UINT.unpack_from(plugin)[0] == 9
                                 ):
-                                    names = splat_textures(plugin)
+                                    names = splat_textures(plugin, include_tiling=include_tiling)
                         result.append(names)
     return result
 
@@ -102,6 +106,36 @@ def texture_parents(source):
         elif active and len(words) == 2:
             parents[words[0]] = words[1]
     return parents
+
+
+def compose_terrain_layers(layers, scales, limit):
+    available = [i for i, layer in enumerate(layers[:4]) if layer is not None]
+    mask = layers[4]
+    if not available:
+        return None
+    if mask is None:
+        return layers[available[0]]
+    height, width = np.minimum(
+        np.max([layers[i].shape[:2] for i in [*available, 4]], axis=0), limit
+    )
+
+    def sample(image, factor):
+        y = (np.arange(height) * factor * image.shape[0] / height).astype(int) % image.shape[0]
+        x = (np.arange(width) * factor * image.shape[1] / width).astype(int) % image.shape[1]
+        return image[y[:, None], x, :3]
+
+    mix = sample(mask, scales[4]).astype(np.float32) / 255
+    weights = np.dstack((mix, np.maximum(1 - mix.sum(axis=2), 0)))
+    mass = weights[..., available].sum(axis=2)
+    result = np.zeros((height, width, 3), np.float32)
+    for i in available:
+        result += sample(layers[i], scales[i]) * weights[..., i, None]
+    result /= np.maximum(mass[..., None], 1e-6)
+    uncovered = mass <= 1e-6
+    if uncovered.any():
+        first = available[0]
+        result[uncovered] = sample(layers[first], scales[first])[uncovered]
+    return np.dstack((np.rint(result).astype(np.uint8), np.full((height, width), 255, np.uint8)))
 
 
 class Textures:
@@ -158,7 +192,15 @@ class Textures:
         return None
 
     def material(self, pack, item, splat=()):
-        if len(splat) == 5:
+        if len(splat) == 5 and isinstance(splat[0], tuple):
+            names, scales = zip(*splat, strict=True)
+            layers = [self.find(pack, name) if name else None for name in names]
+            result = compose_terrain_layers(layers, scales, self.texture_size)
+            if result is not None:
+                self.stats["detailed_terrain_materials"] += 1
+                return result
+            self.stats["terrain_material_fallback"] += 1
+        elif len(splat) == 5:
             layers = [self.find(pack, name) if name else None for name in splat]
             mask = layers[-1]
             available = [i for i, layer in enumerate(layers[:4]) if layer is not None]

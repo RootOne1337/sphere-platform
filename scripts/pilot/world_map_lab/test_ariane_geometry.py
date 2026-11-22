@@ -4,6 +4,7 @@ from types import SimpleNamespace as NS
 import numpy as np
 
 from scripts.pilot.world_map_lab.ariane_geometry import scene_parts
+from scripts.pilot.world_map_lab.render_ariane_world import compose_terrain_layers
 
 
 def frame(position, parent=-1, name=None):
@@ -44,6 +45,20 @@ class ArianePlacementFrameTest(unittest.TestCase):
         )
         [(points, _)] = list(scene_parts(model, "anim"))
         np.testing.assert_array_equal(points, [(6, 5, 11)])
+
+
+def test_detail_terrain_keeps_original_layer_texture_and_mask():
+    grass = np.full((4, 4, 4), 255, np.uint8)
+    grass[:, :, :3] = (0, 255, 0)
+    grass[:, 1::2, :3] = (0, 64, 0)
+    rock = np.full((4, 4, 4), 120, np.uint8)
+    mask = np.zeros((4, 4, 4), np.uint8)
+    mask[:, :2, 0] = 255
+    mask[:, 2:, 1] = 255
+    detailed = compose_terrain_layers([grass, rock, None, None, mask], [1.0] * 5, 1024)
+    np.testing.assert_array_equal(detailed[:, :2, :3], grass[:, :2, :3])
+    np.testing.assert_array_equal(detailed[:, 2:, :3], rock[:, 2:, :3])
+    assert np.all(detailed[..., 3] == 255)
 
 
 if __name__ == "__main__":

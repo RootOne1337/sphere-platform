@@ -123,7 +123,7 @@ def journey_files(folder, revision):
     return files
 
 
-def scene_files(folder, nets):
+def scene_files(folder, nets, *, detail_folder=None):
     files = {}
     review = folder / "review.json"
     if (
@@ -136,11 +136,16 @@ def scene_files(folder, nets):
     ):
         files["/review.json"] = review
         files["/review"] = folder / "navigation-report.html"
-    if (folder / "detail-scene.sqlite").is_file():
-        uri = (folder / "detail-scene.sqlite").resolve().as_uri() + "?mode=ro&immutable=1"
+    detail = (detail_folder or folder) / "detail-scene.sqlite"
+    if detail_folder and not detail.is_file():
+        raise FileNotFoundError(detail)
+    if detail.is_file():
+        uri = detail.resolve().as_uri() + "?mode=ro&immutable=1"
         with closing(sqlite3.connect(uri, uri=True)) as db:
             record = json.loads(db.execute("select value from meta").fetchone()[0])
         if record["revision"] != nets["drive"].meta["placementRevision"]:
+            if detail_folder:
+                raise ValueError("detail pack belongs to a different map revision")
             return files
         vendor = folder / "viewer-deps/node_modules/three"
         package = vendor / "package.json"
@@ -205,7 +210,7 @@ def read_scene(folder, req, args):
             )
         x, y, z = [float(args[k][0]) for k in ("x", "y", "z")]
         radius = int(args.get("radius", ["96"])[0])
-        if radius not in (48, 96, 160, 320) or not all(
+        if radius not in (48, 96, 160, 320, 640, 960) or not all(
             math.isfinite(v) and abs(v) < 10000 for v in (x, y, z)
         ):
             raise ValueError("invalid detail viewport")

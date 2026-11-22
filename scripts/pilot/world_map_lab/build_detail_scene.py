@@ -116,7 +116,7 @@ def mesh_file(parts, texture):
     )
 
 
-def build(source, adapter, output):
+def build(source, adapter, output, *, texture_size=256):
     g = load_local_adapter(source, adapter)
     placements = defaultdict(list)
     for p in g.active_exterior():
@@ -126,7 +126,8 @@ def build(source, adapter, output):
     models = g.index_files(sorted(src.glob("br_models_*.img")) + [src / "br_terrain_models.img"])
     types = model_types(source)
     packs = g.definition_dicts(source)
-    textures = Textures(source, g, texture_size=256, pack_cache=48)
+    detailed = texture_size > 256
+    textures = Textures(source, g, texture_size=texture_size, pack_cache=12 if detailed else 48)
     output.mkdir(parents=True, exist_ok=True)
     tmp = output / "detail-scene.tmp.sqlite"
     if tmp.exists():
@@ -160,7 +161,9 @@ def build(source, adapter, output):
             if bare not in placements:
                 continue
             blob = g.read_entry(models, name)
-            splat = terrain_materials(blob) if b"\x20\x01\0\0" in blob else []
+            splat = (
+                terrain_materials(blob, include_tiling=detailed) if b"\x20\x01\0\0" in blob else []
+            )
 
             def parts():
                 for v, mesh in instance_parts(blob, types[bare]):
@@ -223,7 +226,7 @@ def build(source, adapter, output):
             "textures": len(known),
             "emptyModels": empty,
             "missingTextures": dict(textures.stats),
-            "textureLimit": 256,
+            "textureLimit": texture_size,
         }
         db.execute("insert into meta values (?)", (json.dumps(report),))
         db.commit()
@@ -237,5 +240,6 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     for name in ("source", "adapter", "output"):
         p.add_argument("--" + name, type=Path, required=True)
+    p.add_argument("--texture-size", type=int, choices=(256, 512, 1024), default=256)
     args = p.parse_args()
-    build(args.source, args.adapter, args.output)
+    build(args.source, args.adapter, args.output, texture_size=args.texture_size)

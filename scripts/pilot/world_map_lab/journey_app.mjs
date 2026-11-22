@@ -61,8 +61,10 @@ async function main() {
     u.searchParams.set("model", $("model").value);
     location.href = u.href;
   };
+  const detail = Number(params.get("detail"));
+  const detailRadius = [320, 640, 960].includes(detail) ? detail : capture ? 320 : 960;
   const [world, atlas] = await Promise.all([
-    createWorld(canvas, config, model),
+    createWorld(canvas, { ...config, detailRadius }, model),
     createImageBitmap(await (await fetch("/journey/terrain.jpg")).blob()),
   ]);
   const trip = free

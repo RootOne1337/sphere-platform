@@ -162,8 +162,11 @@
             >Радиус
             <select id="radius">
               <option>48</option>
-              <option selected>96</option>
+              <option>96</option>
               <option>160</option>
+              <option>320</option>
+              <option>640</option>
+              <option selected>960</option>
             </select></label
           ><button>Открыть участок</button>
         </form>
@@ -215,6 +218,7 @@
     for (const k of ["x", "y", "z", "radius"])
       if (params.has(k)) $("#" + k).value = params.get(k);
     const capture = params.get("capture") === "1";
+    if (capture && !params.has("radius")) $("#radius").value = "96";
     document.body.classList.toggle("capture", capture);
     for (const id of ["view", "yaw", "pitch"])
       if (params.has(id)) $("#" + id).value = params.get(id);
@@ -388,6 +392,13 @@
               if (!mesh.isMesh) return;
               if (!mesh.geometry.attributes.normal)
                 mesh.geometry.computeVertexNormals();
+              const anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+              for (const material of [mesh.material].flat()) {
+                if (material.map && material.map.anisotropy !== anisotropy) {
+                  material.map.anisotropy = anisotropy;
+                  material.map.needsUpdate = true;
+                }
+              }
               const inst = new T.InstancedMesh(
                 mesh.geometry,
                 mesh.material,

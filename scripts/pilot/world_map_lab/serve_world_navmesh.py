@@ -92,7 +92,7 @@ def pedestrian_release(folder):
     return folder / "pedestrian-releases" / name
 
 
-def serve(folder, port, adapter=None, *, walk_folder=None):
+def serve(folder, port, adapter=None, *, walk_folder=None, detail_folder=None):
     walk_folder = pedestrian_release(folder) if walk_folder is None else walk_folder
     with ExitStack() as stack:
         nets = {
@@ -125,7 +125,7 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
             if not file.is_file():
                 raise FileNotFoundError(file)
 
-        files.update(scene_files(folder, nets))
+        files.update(scene_files(folder, nets, detail_folder=detail_folder))
         examples = {}
         paved_example = walk_folder / "pavement-example.json"
         if pavement and paved_example.is_file():
@@ -370,7 +370,7 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                 ):
                     try:
                         resource = read_scene(
-                            folder,
+                            detail_folder or folder,
                             req.path,
                             parse_qs(req.query, strict_parsing=True, max_num_fields=4),
                         )
@@ -491,5 +491,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--walk-folder", type=Path, help="Preview a separately baked pedestrian release"
     )
+    parser.add_argument(
+        "--detail-folder", type=Path, help="Preview a detail pack for this map revision"
+    )
     args = parser.parse_args()
-    serve(args.folder, args.port, args.adapter, walk_folder=args.walk_folder)
+    serve(
+        args.folder,
+        args.port,
+        args.adapter,
+        walk_folder=args.walk_folder,
+        detail_folder=args.detail_folder,
+    )
