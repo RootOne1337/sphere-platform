@@ -528,6 +528,12 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
             <Button size="sm" variant="outline" disabled={readOnly||!ready||active(phase)} onClick={()=>chooseCalibration('look')}>Указать область поворота камеры</Button>
             {calibrate==='look'&&<Button size="sm" variant="ghost" onClick={()=>setCalibrate(null)}>Отменить</Button>}
           </div></details>
+          <details className={styles.setting}><summary>Пешее управление</summary><div>
+            <Button size="sm" variant="outline" disabled={readOnly||!ready||active(phase)} onClick={()=>{
+              setProfile(p=>({...p,mode:'stick'}));chooseCalibration('stick');
+            }}>Указать центр пешего стика</Button>
+            {calibrate==='stick'&&<Button size="sm" variant="ghost" onClick={()=>setCalibrate(null)}>Отменить</Button>}
+          </div></details>
           <details className={styles.setting}><summary>Управление скутером</summary><div>
             <p>Положения педалей и руля сохраняются для этого устройства и размера экрана.</p>
             <Button variant="outline" size="sm" disabled={readOnly||!ready||!binding||active(phase)} onClick={()=>{if(binding){setCalibrate(null);setProfile(p=>blackRussiaScooterProfile(binding,p));}}}>Применить профиль скутера</Button>
