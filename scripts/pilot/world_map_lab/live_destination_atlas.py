@@ -223,6 +223,49 @@ class Locator:
         self.origin = self.world.mean(0, dtype=np.float64)
         self.track_xyz = np.asarray(self.track_xyz - self.origin, dtype=np.float32)
         self.relative = np.asarray(self.world - self.origin, dtype=np.float32)
+        self.verified_views = [
+            (i, pose, self._appearance(self.views[i]))
+            for i, pose in enumerate(self.meta.get("verifiedViews", []))
+            if pose is not None
+        ]
+
+    @staticmethod
+    def _appearance(gray):
+        view = cv2.resize(gray, (160, 90), interpolation=cv2.INTER_AREA)[8:78, 5:155]
+        return view, cv2.Laplacian(view, cv2.CV_32F)
+
+    def locate_near_verified_view(self, gray):
+        """Check the latest frame against geometrically verified reference pixels."""
+        if not self.verified_views:
+            return None
+        view, edge = self._appearance(gray)
+        if view.std() < 10 or edge.std() < 4:
+            return None
+        current = cv2.resize(gray, SIZE, interpolation=cv2.INTER_AREA)
+        for i, prior, (reference, ref_edge) in self.verified_views:
+            if (
+                cv2.matchTemplate(view, reference, cv2.TM_CCOEFF_NORMED)[0, 0] < 0.95
+                or cv2.matchTemplate(edge, ref_edge, cv2.TM_CCOEFF_NORMED)[0, 0] < 0.73
+            ):
+                continue
+            start, end = self.track_offsets[i : i + 2]
+            pixels = self.track_pixels[start:end]
+            opts = dict(winSize=(21, 21), maxLevel=2)
+            moved, ok, _ = cv2.calcOpticalFlowPyrLK(self.views[i], current, pixels, None, **opts)
+            back, seen, _ = cv2.calcOpticalFlowPyrLK(current, self.views[i], moved, None, **opts)
+            good = (
+                ok.ravel().astype(bool)
+                & seen.ravel().astype(bool)
+                & (np.linalg.norm(back - pixels, axis=1) < 0.65)
+                & (np.linalg.norm(moved - pixels, axis=1) < 12)
+            )
+            if good.sum() < max(36, 0.60 * len(pixels)):
+                continue
+            found = self.solve_with_camera(self.k, self.track_xyz[start:end][good], moved[good], None)
+            if (found and math.dist(found["eye"], prior["eye"]) <= 1.0
+                    and abs(math.remainder(found["heading"] - prior["heading"], math.tau)) <= 0.07):
+                return found
+        return None
 
     def covers(self, path):
         # Sample full segments, including long shortcuts between two mapped endpoints.

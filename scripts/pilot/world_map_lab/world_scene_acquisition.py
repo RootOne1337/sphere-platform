@@ -77,6 +77,7 @@ def acquire(
 
     def execute(executable, module, args):
         with (output / "search.log").open("ab") as log:
+            started = time.monotonic()
             subprocess.run(
                 [str(executable), "-u", "-m", prefix + module, *map(str, args)],
                 cwd=Path(__file__).resolve().parents[3],
@@ -87,6 +88,7 @@ def acquire(
                 timeout=480,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
+            log.write(f"{module} finished in {time.monotonic() - started:.2f} s\n".encode("ascii"))
 
     def encode(gallery, *command):
         execute(
@@ -170,8 +172,7 @@ def acquire(
         ],
     )
     report("local_search")
-    encode(gallery, "index", index)
-    encode(gallery, "search", "--stream-focal", focal, index, fine, *frames)
+    encode(gallery, "refine", "--stream-focal", focal, index, fine, *frames)
     report("verifying_geometry")
     sparse = cfg.get("geometryVerifier") == "sparse"
     execute(
@@ -348,11 +349,10 @@ class WorldAcquisition:
 
     def status(self, *, seeking_view=False):
         with self.lock:
-            # A previous geometry job may still run while the next attempt
-            # adds views. Older browser builds issue camera sweeps only in
-            # the collecting phase, so expose the foreground state separately.
+            # Keep the camera on its current view during geometric verification
+            # so a fresh follow-up can match the views being verified.
             phase = self.phase
-            accepting_views = seeking_view and len(self.samples) < 10
+            accepting_views = seeking_view and phase != "verifying_geometry" and len(self.samples) < 10
             return dict(
                 phase="collecting_views" if accepting_views else phase,
                 computePhase=phase,
@@ -360,6 +360,14 @@ class WorldAcquisition:
                 tracking=self.bank is not None,
                 detailWidth=1920,
             )
+
+    def match_verified_view(self, gray):
+        with self.lock:
+            bank = self.bank
+        if bank is None:
+            return None
+        pose = bank.locate_near_verified_view(gray)
+        return pose if pose and bank.covers([[*pose["eye"][:2], pose["eye"][2] - 1.45]]) else None
 
     def observe(self, raw, gray, observed, *, walk_road=None):
         with self.lock:

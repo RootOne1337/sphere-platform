@@ -17,8 +17,11 @@ from scripts.pilot.world_map_lab.world_scene_acquisition import (
 from scripts.pilot.world_map_lab.world_scene_retrieval import infer_rotations
 
 
-@pytest.mark.parametrize("phase", ["global_search", "verifying_geometry", "tracking"])
-def test_awaiting_more_views_does_not_inherit_the_previous_search_phase(phase):
+@pytest.mark.parametrize(("phase", "foreground"), [
+    ("global_search", "collecting_views"), ("verifying_geometry", "verifying_geometry"),
+    ("tracking", "collecting_views"),
+])
+def test_camera_pauses_during_geometry_but_can_collect_during_retrieval(phase, foreground):
     search = WorldAcquisition.__new__(WorldAcquisition)
     search.lock = threading.Lock()
     search.phase = phase
@@ -27,7 +30,7 @@ def test_awaiting_more_views_does_not_inherit_the_previous_search_phase(phase):
 
     assert search.status()["phase"] == phase
     awaiting = search.status(seeking_view=True)
-    assert awaiting["phase"] == "collecting_views"
+    assert awaiting["phase"] == foreground
     assert awaiting["computePhase"] == phase
     assert awaiting["tracking"]
     search.samples = [None] * 10
@@ -88,7 +91,7 @@ def test_global_worker_never_exposes_a_cached_fix_on_an_unrecognized_frame():
     worker = WorldAcquisition.__new__(WorldAcquisition)
     worker.lock = threading.Lock()
     worker.collect = lambda *_: None
-    worker.bank = SimpleNamespace(locate_features=lambda *_: None)
+    worker.bank = SimpleNamespace(locate_features=lambda *_: None, locate_near_verified_view=lambda *_: None)
     frame = np.zeros((360, 640), np.uint8)
     assert worker.observe(b"frame", frame, (None, None)) is None
     pose = dict(eye=[1, 2, 3], heading=0, supports=80)
@@ -96,6 +99,12 @@ def test_global_worker_never_exposes_a_cached_fix_on_an_unrecognized_frame():
     assert worker.observe(b"frame", frame, (None, None)) is None
     worker.bank.covers = lambda _: True
     assert worker.observe(b"frame", frame, (None, None)) == pose
+
+    # A dense, geometrically confirmed reference still requires a fresh camera match.
+    worker.bank.locate_features = lambda *_: None
+    worker.bank.locate_near_verified_view = lambda current: pose if current is frame else None
+    assert worker.match_verified_view(frame) == pose
+    assert worker.match_verified_view(frame.copy()) is None
 
 
 def test_local_animation_and_uniform_lighting_do_not_count_as_camera_rotation():

@@ -679,14 +679,24 @@ def serve(args):
                     survey.last_use = now
                     survey.previous = survey.arrival = survey.motion_origin = None
                 gray = self.decode_frame(raw)
-                observed = locator.describe(gray)
+                observed = locator.describe(gray) if menu else None
                 if menu and menu.matches(observed):
                     return self.reply(
                         200, dict(pose=None, district=None, ambiguous=False, screen="menu_backdrop")
                     )
-                if self.path == "/walk-probe":
+                nearby = global_search.match_verified_view(gray) if global_search and self.path == "/walk-probe" else None
+                if nearby:
+                    result = dict(
+                        pose=nearby, district="Поиск по всей карте", ambiguous=False,
+                        worldSearch=global_search.status(),
+                    )
+                elif self.path == "/walk-probe":
+                    if observed is None:
+                        observed = locator.describe(gray)
                     result, _ = walk_fix(gray, observed)
                 else:
+                    if observed is None:
+                        observed = locator.describe(gray)
                     result = probe_atlases(gray, locator, district_locators, observed=observed)
                 if global_search and not result["pose"] and not result["ambiguous"]:
                     pose = global_search.observe(raw, gray, observed, walk_road=road)
@@ -861,10 +871,11 @@ def serve(args):
             self.reply(200, response)
 
         def walk_frame(self, trip, raw, gray, now, clock, seq):
-            pose = (
-                global_search.recent_walk.observe(raw, global_search.cfg, road)
-                if global_search.dense_walk else None
-            )
+            pose = global_search.match_verified_view(gray)
+            if pose is not None:
+                global_search.recent_walk.remember(pose)
+            elif global_search.dense_walk:
+                pose = global_search.recent_walk.observe(raw, global_search.cfg, road)
             at_menu = False
             collected = False
             normalized = False

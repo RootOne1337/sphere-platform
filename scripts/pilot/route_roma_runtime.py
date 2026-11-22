@@ -86,7 +86,7 @@ def _array_payload(**fields):
 class RomaProcess:
     """A bounded single outstanding request, including process warm-up."""
 
-    def __init__(self, runtime, *, match_timeout=2):
+    def __init__(self, runtime, *, match_timeout=2, cache_query=False):
         self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="route-roma")
         self._process = None
         self._pending = None
@@ -98,6 +98,7 @@ class RomaProcess:
 
         environment = os.environ.copy()
         environment["PYTHONPATH"] = os.pathsep.join(map(str, (runtime.directory, runtime.directory / "deps")))
+        environment["SPHERE_ROMA_REUSE_QUERY"] = "1" if cache_query else "0"
         try:
             self._process = spawn_owned(
                 [str(runtime.python), str(Path(__file__).resolve()), str(runtime.directory)],
@@ -213,7 +214,7 @@ class CachedMatcher:
             return [CachedMatcher._clone(tensor) for tensor in value]
         return value.clone()
 
-    def match(self, key, rgb, query):
+    def match(self, key, rgb, query, *, query_key=None):
         calls = [0, 0]
 
         def wrap(layer, kind):
@@ -221,9 +222,9 @@ class CachedMatcher:
 
             def infer(tensor):
                 calls[kind] += 1
-                if calls[kind] != 1:
+                if calls[kind] != 1 and (calls[kind] != 2 or query_key is None):
                     return forward(tensor)
-                local_key = kind, key
+                local_key = kind, calls[kind], key if calls[kind] == 1 else query_key
                 if local_key not in self.cache:
                     self.cache[local_key] = self._clone(forward(tensor))
                 self.cache.move_to_end(local_key)
@@ -278,6 +279,7 @@ def _serve(directory):
     matcher = CachedMatcher(directory)
     blank = np.zeros((540, 960, 3), dtype=np.uint8)
     matcher.match("warm-up", blank, blank)
+    cache_query = os.environ.get("SPHERE_ROMA_REUSE_QUERY") == "1"
     _write(wire, b"ready")
     while True:
         try:
@@ -288,6 +290,7 @@ def _serve(directory):
             query = archive["query"]
             if query.shape != (540, 960, 3) or query.dtype != np.uint8:
                 raise ValueError("RoMa query geometry")
+            query_key = sha256(query).digest() if cache_query else None
             indices = archive["indices"]
             if indices.ndim != 1 or not 1 <= len(indices) <= 2:
                 raise ValueError("RoMa candidates")
@@ -296,7 +299,7 @@ def _serve(directory):
                 rgb, pixels = archive[f"rgb{slot}"], archive[f"pixels{slot}"]
                 if rgb.shape != query.shape or rgb.dtype != np.uint8 or not 1 <= len(pixels) <= 4096:
                     raise ValueError("RoMa reference geometry")
-                warp = matcher.match((int(index), sha256(rgb).digest()), rgb, query)
+                warp = matcher.match((int(index), sha256(rgb).digest()), rgb, query, query_key=query_key)
                 result[f"indices{slot}"], result[f"xy{slot}"] = _correspondences(warp, pixels)
             _write(wire, _array_payload(**result))
 

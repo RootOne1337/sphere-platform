@@ -86,10 +86,11 @@ def latest_confirmed_view(rows, confirmed):
     return newest["pose"] if newest else None
 
 
-def write_tracking_atlas(path, images, anchors, rows, pose, focal, revision):
+def write_tracking_atlas(path, images, anchors, rows, pose, focal, revision, *, confirmed=()):
     """Only expose live appearance backed by measured 2D-to-source-mesh inliers."""
     detector = cv2.SIFT_create(nfeatures=2400, contrastThreshold=0.018)
-    views, desc, xyz, ids, pixels, points, trace = [], [], [], [], [], [], []
+    views, desc, xyz, ids, pixels, points, trace, verified = [], [], [], [], [], [], [], []
+    confirmed_ids = {id(p) for p in confirmed}
     offsets = [0]
     for frame in sorted({r["frame"] for r in rows if r["pose"]}):
         choices = [
@@ -107,17 +108,20 @@ def write_tracking_atlas(path, images, anchors, rows, pose, focal, revision):
         keypoints, descriptors = features(gray, detector)
         distance, neighbor = cKDTree(uv).query(keypoints)
         keep = distance <= 1.7
-        if keep.sum() < 10:
+        geometry = row["pose"] if id(row["pose"]) in confirmed_ids else None
+        if keep.sum() < 10 and geometry is None:
             continue
-        ids.append(np.full(keep.sum(), len(views), np.int16))
-        desc.append(descriptors[keep])
-        xyz.append(world[neighbor[keep]])
+        if keep.sum() >= 10:
+            ids.append(np.full(keep.sum(), len(views), np.int16))
+            desc.append(descriptors[keep])
+            xyz.append(world[neighbor[keep]])
+        verified.append(geometry)
         views.append(gray)
         pixels.append(uv)
         points.append(world)
         trace.append(row["pose"]["eye"])
         offsets.append(offsets[-1] + len(uv))
-    if not views:
+    if not desc:
         return False
     meta = dict(
         source="source-map-grid",
@@ -125,6 +129,7 @@ def write_tracking_atlas(path, images, anchors, rows, pose, focal, revision):
         revision=revision,
         coverageRadius=16.0,
         visualTrace=trace,
+        verifiedViews=verified,
         trainingViews=len(views),
         landmarks=sum(len(a) for a in xyz),
         width=SIZE[0],
@@ -169,6 +174,7 @@ def run(args):
     worker = RomaProcess(
         Runtime(args.interpreter.resolve(strict=True), args.matcher.resolve(strict=True)),
         match_timeout=12,
+        cache_query=True,
     )
     evidence = []
     confirmed = []
@@ -334,7 +340,8 @@ def run(args):
     )
     if args.tracking_atlas and result["pose"]:
         result["trackingAtlas"] = write_tracking_atlas(
-            args.tracking_atlas, images, anchors, evidence, result["pose"], fq, source["revision"]
+            args.tracking_atlas, images, anchors, evidence, result["pose"], fq, source["revision"],
+            confirmed=confirmed,
         )
     args.output.write_text(json.dumps(result, allow_nan=False), encoding="utf8")
     print({k: v for k, v in result.items() if k != "comparisons"}, flush=True)

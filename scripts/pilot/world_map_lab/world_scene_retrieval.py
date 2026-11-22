@@ -168,23 +168,29 @@ def index(args, encoder):
     out = np.lib.format.open_memmap(
         cache, mode="r+" if start else "w+", dtype=np.float16, shape=(n, 8, 2304)
     )
-    for i in range(start, n):
-        file = args.gallery / f"{i:05}.jpg"
-        deadline = time.monotonic() + args.wait_seconds
-        while not file.exists() and time.monotonic() < deadline:
-            time.sleep(0.25)
-        sheet = cv2.imread(str(file))
-        if sheet is None or sheet.shape[:2] != (height * 2, width * 4):
-            raise ValueError("missing survey view " + str(i))
-        images = [
-            sheet[(j // 4) * height : (j // 4 + 1) * height, (j % 4) * width : (j % 4 + 1) * width]
-            for j in range(8)
-        ]
-        out[i] = encoder.encode(images)
-        if (i + 1) % 50 == 0 or i + 1 == n:
+    completed = start
+    batch_sites = 4 if encoder.device == "cuda" else 1
+    while completed < n:
+        end = min(n, completed + batch_sites, (completed // 50 + 1) * 50)
+        images = []
+        for i in range(completed, end):
+            file = args.gallery / f"{i:05}.jpg"
+            deadline = time.monotonic() + args.wait_seconds
+            while not file.exists() and time.monotonic() < deadline:
+                time.sleep(0.25)
+            sheet = cv2.imread(str(file))
+            if sheet is None or sheet.shape[:2] != (height * 2, width * 4):
+                raise ValueError("missing survey view " + str(i))
+            images.extend(
+                sheet[(j // 4) * height : (j // 4 + 1) * height, (j % 4) * width : (j % 4 + 1) * width]
+                for j in range(8)
+            )
+        out[completed:end] = encoder.encode(images).reshape(end - completed, 8, 2304)
+        completed = end
+        if completed % 50 == 0 or completed == n:
             out.flush()
             tmp = stamp.with_suffix(".tmp")
-            tmp.write_text(json.dumps(dict(signature=signature, completed=i + 1)), encoding="utf8")
+            tmp.write_text(json.dumps(dict(signature=signature, completed=completed)), encoding="utf8")
             tmp.replace(stamp)
     del out
     cache.replace(args.output)
@@ -290,14 +296,17 @@ if __name__ == "__main__":
     build = commands.add_parser("index")
     build.add_argument("output", type=Path)
     build.add_argument("--wait-seconds", type=float, default=0)
-    search = commands.add_parser("search")
-    search.add_argument("index", type=Path)
-    search.add_argument("output", type=Path)
-    search.add_argument("--stream-focal", type=float, help="calibrated focal length at 640 px wide")
-    search.add_argument("frames", type=Path, nargs="+")
+    for name in ("search", "refine"):
+        search = commands.add_parser(name)
+        search.add_argument("index", type=Path)
+        search.add_argument("output", type=Path)
+        search.add_argument("--stream-focal", type=float, help="calibrated focal length at 640 px wide")
+        search.add_argument("frames", type=Path, nargs="+")
     args = parser.parse_args()
     encoder = Encoder(args.source, args.weights)
     if args.command == "index":
         index(args, encoder)
     else:
+        if args.command == "refine":
+            index(argparse.Namespace(gallery=args.gallery, output=args.index, wait_seconds=0), encoder)
         retrieve(args, encoder)

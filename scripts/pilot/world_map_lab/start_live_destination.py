@@ -42,6 +42,7 @@ def code_digest():
         "serve_world_navmesh.py",
     ):
         digest.update(hashlib.sha256((folder / name).read_bytes()).digest())
+    digest.update(hashlib.sha256((folder.parent / "route_roma_runtime.py").read_bytes()).digest())
     return digest.hexdigest()
 
 
