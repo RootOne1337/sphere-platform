@@ -4,7 +4,12 @@ import pytest
 
 from scripts.pilot.world_map_lab.destination_itinerary import plan
 from scripts.pilot.world_map_lab.live_destination import Trip, probe_atlases, probe_start_levels
-from scripts.pilot.world_map_lab.live_destination_atlas import Locator, distributed_surface_support
+from scripts.pilot.world_map_lab.live_destination_atlas import (
+    Locator,
+    MenuBackdrop,
+    distributed_surface_support,
+    features,
+)
 
 
 class Roads:
@@ -17,6 +22,21 @@ class Roads:
 
 def pose(x, y=0, z=1.45, heading=0):
     return {"eye": [x, y, z], "heading": heading, "supports": 40}
+
+
+def test_launcher_backdrop_requires_exact_landmarks_across_the_view():
+    rng = np.random.default_rng(43)
+    source = rng.integers(5, 190, size=(360, 640), dtype=np.uint8)
+    source = cv2.GaussianBlur(source, (3, 3), 0.6)
+    menu = MenuBackdrop(source)
+    detector = cv2.SIFT_create(nfeatures=1600, contrastThreshold=0.018)
+    overlay = source + 25
+    overlay[115:270, 225:415] = 220
+    assert menu.matches(features(overlay, detector))
+    assert not menu.matches(features(np.roll(source, 12, axis=1), detector))
+    isolated = np.zeros(source.shape, np.uint8)
+    isolated[:110, :145] = source[:110, :145]
+    assert not menu.matches(features(isolated, detector))
 
 
 def test_probe_can_show_position_without_a_valid_route_level():

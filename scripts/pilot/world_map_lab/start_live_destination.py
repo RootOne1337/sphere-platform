@@ -85,6 +85,7 @@ def main():
         "--water", type=Path, help="Source data/water.dat for detailed street map tiles"
     )
     parser.add_argument("--world-search-config", type=Path)
+    parser.add_argument("--menu-background", type=Path)
     parser.add_argument("--drive-region", action="append", default=[], metavar="DISTRICT")
     parser.add_argument("--search-hfov", action="append", type=float, default=[])
     args = parser.parse_args()
@@ -109,6 +110,11 @@ def main():
         config = args.world_search_config.resolve(strict=True)
         search_args.extend(["--world-search-config", config])
         expected_config = hashlib.sha256(config.read_bytes()).hexdigest()
+    menu_digest = None
+    if args.menu_background:
+        background = args.menu_background.resolve(strict=True)
+        search_args.extend(["--menu-background", background])
+        menu_digest = hashlib.sha256(background.read_bytes()).hexdigest()
     expected = {}
     for label, filename in args.search_atlas:
         path = Path(filename).resolve(strict=True)
@@ -130,6 +136,7 @@ def main():
         or (visual.get("worldSearch") or {}).get("config") != expected_config
         or visual.get("searchCameraHfovs", []) != args.search_hfov
         or visual.get("searchAtlases", {}) != expected
+        or visual.get("menuBackgroundDigest") != menu_digest
         or visual.get("driveRegions", []) != args.drive_region
         or (args.water and not visual.get("streetTiles"))
         or visual.get("atlasDigest") != digest

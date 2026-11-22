@@ -173,6 +173,34 @@ def distributed_surface_support(world, pixels):
     return len(others) >= 6 and len(np.unique((others // 64).astype(int), axis=0)) >= 3
 
 
+class MenuBackdrop:
+    """Recognize the fixed launcher camera, including when the UI is absent from the stream."""
+
+    def __init__(self, gray):
+        sift = cv2.SIFT_create(nfeatures=1600, contrastThreshold=0.018)
+        self.pixels, self.descriptors = features(gray, sift)
+        if len(self.pixels) < 64:
+            raise ValueError("launcher reference has too few visual landmarks")
+        self.matcher = cv2.FlannBasedMatcher(dict(algorithm=1, trees=4), dict(checks=32))
+        self.matcher.add([self.descriptors])
+        self.matcher.train()
+
+    def matches(self, observed):
+        if observed is None:
+            return False
+        pixels, descriptors = observed
+        if len(pixels) < 48:
+            return False
+        fixed = {}
+        for first, second in self.matcher.knnMatch(descriptors, k=2):
+            if first.distance >= 0.74 * second.distance:
+                continue
+            original = self.pixels[first.trainIdx]
+            if np.linalg.norm(pixels[first.queryIdx] - original) <= 2.0:
+                fixed[first.trainIdx] = (int(original[0]) // 160, int(original[1]) // 120)
+        return len(fixed) >= 48 and len(set(fixed.values())) >= 6
+
+
 class Locator:
     def __init__(self, path, revision):
         with np.load(path, allow_pickle=False) as bank:

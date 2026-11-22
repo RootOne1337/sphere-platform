@@ -39,12 +39,13 @@ test("position search turns a neutral camera, submits detail frames and closes t
     function (this: HTMLCanvasElement, done) { widths.push(this.width); done(new Blob(["jpeg"])); },
   );
   const prevFetch = globalThis.fetch;
-  let moved = false;
+  let moved = false, menu = false;
   const close = jest.fn(async () => true);
   const set = jest.fn();
   const look = jest.fn(async () => { moved = true; return true; });
   globalThis.fetch = jest.fn(async () => ({ ok: true, json: async () => ({
     pose: moved ? good.pose : null, district: "Проверка", ambiguous: false,
+    screen: menu ? "menu_backdrop" : undefined,
     startLevels: { drive: 8 - frame % 2, walk: 7.5 },
     worldSearch: { phase: "collecting_views", samples: 1, tracking: false, detailWidth: 1920 },
   }) } as Response));
@@ -58,6 +59,13 @@ test("position search turns a neutral camera, submits detail frames and closes t
     expect(set).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalledTimes(1);
     expect(widths).toContain(1920);
+    menu = true;
+    const open = jest.fn();
+    const stopped = expect(probeWorldPosition(video, new AbortController().signal, 10000,
+      undefined, open)).rejects.toThrow("menu_backdrop");
+    await jest.advanceTimersByTimeAsync(500);
+    await stopped;
+    expect(open).not.toHaveBeenCalled();
   } finally {
     jest.useRealTimers();
     context.mockRestore();

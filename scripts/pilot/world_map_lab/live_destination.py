@@ -20,7 +20,7 @@ from PIL import Image
 from scripts.pilot.world_map_lab.destination_detail import StreetTiles
 from scripts.pilot.world_map_lab.destination_itinerary import plan
 from scripts.pilot.world_map_lab.destination_tiles import DestinationTiles
-from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator
+from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator, MenuBackdrop
 from scripts.pilot.world_map_lab.scooter_road_access import RoadAccess
 from scripts.pilot.world_map_lab.start_live_destination import code_digest
 from scripts.pilot.world_map_lab.world_scene_acquisition import WorldAcquisition
@@ -311,6 +311,12 @@ def serve(args):
     with args.atlas.open("rb") as f:
         atlas_digest = hashlib.file_digest(f, "sha256").hexdigest()
     locator = Locator(args.atlas, road.meta["placementRevision"])
+    menu = menu_digest = None
+    if args.menu_background:
+        raw_menu = args.menu_background.read_bytes()
+        with Image.open(BytesIO(raw_menu)) as image:
+            menu = MenuBackdrop(np.asarray(image.convert("L")))
+        menu_digest = hashlib.sha256(raw_menu).hexdigest()
     district_locators = {}
     district_digests = {}
     for label, file in getattr(args, "search_atlas", []):
@@ -435,6 +441,7 @@ def serve(args):
                     tiles=tiles.manifest(),
                     streetTiles=detail.manifest() if detail else None,
                     searchAtlases=district_digests,
+                    menuBackgroundDigest=menu_digest,
                     driveRegions=drive_regions,
                     worldSearch=(
                         dict(config=global_search.signature, **global_search.status())
@@ -597,6 +604,10 @@ def serve(args):
                     return self.reply(409, dict(error="session_active"))
                 gray = self.decode_frame(raw)
                 observed = locator.describe(gray)
+                if menu and menu.matches(observed):
+                    return self.reply(
+                        200, dict(pose=None, district=None, ambiguous=False, screen="menu_backdrop")
+                    )
                 result = probe_atlases(gray, locator, district_locators, observed=observed)
                 if global_search and not result["pose"] and not result["ambiguous"]:
                     pose = global_search.observe(raw, gray, observed, walk_road=road)
@@ -671,10 +682,16 @@ def serve(args):
             trip.last_media_time = clock
             trip.last_sequence = seq
             observed = locator.describe(gray)
-            fix = probe_atlases(gray, locator, drive_banks, observed=observed)
+            at_menu = menu is not None and menu.matches(observed)
+            fix = (
+                dict(pose=None, district=None, ambiguous=False)
+                if at_menu
+                else probe_atlases(gray, locator, drive_banks, observed=observed)
+            )
             passive = False
             if (
-                observed is not None
+                not at_menu
+                and observed is not None
                 and not fix["pose"]
                 and not fix["ambiguous"]
                 and search_only
@@ -686,11 +703,13 @@ def serve(args):
                 )
                 if fix["pose"]:
                     passive = True
-            if global_search and not fix["pose"] and not fix["ambiguous"]:
+            if global_search and not at_menu and not fix["pose"] and not fix["ambiguous"]:
                 pose = global_search.observe(raw, gray, observed)
                 if pose:
                     fix.update(pose=pose, district="Поиск по всей карте")
             response = trip.decide(None if passive else fix["pose"], clock)
+            if at_menu:
+                response.update(reason="menu_backdrop")
             if passive:
                 response.update(pose=fix["pose"], reason="outside_visual_coverage")
             if global_search:
@@ -745,6 +764,7 @@ def serve(args):
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--world-search-config", type=Path)
+    p.add_argument("--menu-background", type=Path)
     p.add_argument("--atlas", type=Path, required=True)
     p.add_argument("--logs", type=Path, required=True)
     p.add_argument("--planner", default="http://127.0.0.1:8817")

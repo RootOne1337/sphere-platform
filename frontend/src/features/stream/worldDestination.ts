@@ -183,6 +183,7 @@ function agreedStartLevels(a?: Partial<StartLevels>, b?: Partial<StartLevels>): 
 }
 
 type Probe = {
+  screen?: "menu_backdrop";
   startLevels?: StartLevels;
   worldSearch?: SearchState;
   pose: Decision["pose"];
@@ -243,6 +244,7 @@ export async function probeWorldPosition(
         jpeg,
       );
       if (search.aborted) break;
+      if (result.screen === "menu_backdrop") throw Error("menu_backdrop");
       searchState = result.worldSearch;
       const now = performance.now();
       count++;
@@ -355,7 +357,7 @@ export async function runWorldTrip(
       if (d.sequence !== frame.seq) throw Error("frame_sequence");
       searchState = d.worldSearch;
       update(d, Math.round(performance.now() - frame.captured));
-      if (d.reason === "arrived" || d.reason === "no_motion") return;
+      if (d.reason === "arrived" || d.reason === "no_motion" || d.reason === "menu_backdrop") return;
       if (lease && (!lease.active() || lease.failure?.()))
         throw Error("input_closed");
       // Stationary visual search uses the calibrated camera control of this trip.
