@@ -31,3 +31,23 @@ def test_walk_trip_reacquires_and_requires_stable_arrival():
             assert trip.decide(pose(9.8), 2.2)["reason"] == "confirming_position"
             assert trip.decide(pose(9.8), 2.4)["reason"] == "stopping"
             assert trip.decide(pose(9.8), 2.9)["reason"] == "arrived"
+
+
+def test_shortens_the_aim_when_the_walk_mesh_blocks_a_corner_cut():
+    road = Mock()
+    road.levels.return_value = [0]
+    surface = Mock()
+    surface.sweep.return_value = (0, True)
+    surface.step_supported.side_effect = lambda start, finish: finish[1] < 0.01
+    goal = [4, 1, 0]
+    walk = WalkTrip(road, goal, surface)
+    pose = {"eye": [0, 0, 1.6], "heading": 0, "supports": 32}
+    route = [[0, 0, 0], [0.5, 0, 0], [0.5, 1, 0], goal]
+    with patch("scripts.pilot.world_map_lab.world_walk_trip.plan",
+               return_value={"status": "complete", "legs": [{"path": route}]}):
+        walk.decide(pose, 1)
+        walk.decide(pose, 1.2)
+        command = walk.decide(pose, 1.4)
+    assert surface.step_supported.call_count == 4
+    assert command["reason"] == "walking"
+    assert abs(command["stick"][0]) < 1e-6 and command["stick"][1] < 0

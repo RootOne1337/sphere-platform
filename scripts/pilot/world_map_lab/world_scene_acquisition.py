@@ -305,7 +305,13 @@ def same_view(a, b):
     diff = a - b
     diff = np.abs(diff - np.median(diff))
     tiles = diff.reshape(6, 6, 8, 8).mean(axis=(1, 3))
-    return np.median(tiles) < 5
+    if np.median(tiles) >= 5:
+        return False
+    # A dark or sky-heavy scene can leave the global median nearly unchanged.
+    # Use broad support across the horizon band, without treating one animated
+    # object near the camera or a change in one patch of sky as a new view.
+    central_changes = tiles[2:5] >= 6
+    return np.count_nonzero(central_changes) < 7 or central_changes.any(axis=0).sum() < 4
 
 
 class WorldAcquisition:

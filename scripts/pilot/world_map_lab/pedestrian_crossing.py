@@ -64,6 +64,34 @@ def transverse(crossing, measure, width_limit=22):
     )
 
 
+def transverse_exit(start, end, profile, measure):
+    """An already exposed pedestrian can leave the road by its nearby edge."""
+    start, end = np.asarray(start, dtype=float), np.asarray(end, dtype=float)
+    direction = (end - start)[:2]
+    length = np.linalg.norm(direction)
+    if not 0.5 <= length <= 5.0:
+        return False
+    kinds = list(map(surface_kind, profile))
+    if len(kinds) < 2 or kinds[0] != "road" or kinds[-1] != "pavement" or None in kinds:
+        return False
+    first_pavement = kinds.index("pavement")
+    if "road" in kinds[first_pavement:]:
+        return False
+
+    direction /= length
+    side = np.array([-direction[1], direction[0]])
+
+    def extents(axis, metres):
+        offset = np.r_[axis * metres, 0.0]
+        section = measure(start - offset, start + offset, samples=49)["profile"]
+        return road_width(section, metres / 24)
+
+    along = extents(side, 20.0)
+    oblique = [extents((direction + sign * side) / math.sqrt(2), 8.0)[1] for sign in (-1, 1)]
+    exit_distance = length * first_pavement / (len(kinds) - 1)
+    return min(along) >= 7.0 and min(oblique) >= 0.9 * exit_distance
+
+
 def crossing_target(ground, entry, exit, measure):
     """Keep a walking command inside the previously verified crossing strip."""
     start = np.asarray(ground, dtype=float)

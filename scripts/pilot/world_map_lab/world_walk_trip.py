@@ -2,6 +2,7 @@
 
 import math
 import time
+from itertools import islice
 
 import numpy as np
 
@@ -66,13 +67,30 @@ class WalkTrip:
             self.last_plan = now
             levels = self.road.levels(*eye[:2], mode="walk", surface="pavement")
             ground = [z for z in levels if 0.85 < eye[2] - z < 2.55]
-            if len(ground) != 1:
+            if len(ground) > 1:
                 return dict(reply, reason="walk_start_not_on_pavement")
-            start = [float(eye[0]), float(eye[1]), ground[0]]
-            result = plan(self.road, [start, self.goal.tolist()], "walk", None, surface="crossings")
-            if result["status"] != "complete":
-                return dict(reply, reason="walk_path_unavailable")
-            points = np.asarray(result["legs"][0]["path"], float)
+            goal = self.goal.tolist()
+            if ground:
+                start = [float(eye[0]), float(eye[1]), ground[0]]
+                start_options = [(None, start)]
+            else:
+                start_options = islice(self.surface.pavement_entries(eye, goal), 4)
+            points = None
+            found_entry = False
+            for connector, start in start_options:
+                found_entry = True
+                result = plan(self.road, [start, goal], "walk", None, surface="crossings")
+                if result["status"] != "complete":
+                    continue
+                path = result["legs"][0]["path"]
+                if connector is not None:
+                    if math.dist(start, path[0]) >= 0.45:
+                        continue
+                    path = [connector, start, *path]
+                points = np.asarray(path, float)
+                break
+            if points is None:
+                return dict(reply, reason="walk_path_unavailable" if found_entry else "walk_start_not_on_pavement")
             self.path = points[np.r_[True, np.linalg.norm(np.diff(points[:, :2], axis=0), axis=1) > 1e-4]]
             self.segments = np.diff(self.path, axis=0)
             self.distances = np.linalg.norm(self.segments[:, :2], axis=1)
@@ -107,18 +125,34 @@ class WalkTrip:
         station = float(self.arc[index] + u[index] * self.distances[index])
         remaining = float(self.arc[-1] - station)
         start = np.array([*eye[:2], projected[index, 2]])
-        aim = None
-        for lookahead in (1.75, 1.05, 0.55):
-            end = np.array([
+        def point_at(lookahead):
+            return np.array([
                 np.interp(min(self.arc[-1], station + lookahead), self.arc, col)
                 for col in self.path.T
             ])
-            # The path itself is validated against original pavement and
-            # crossings. These short sweeps only choose an unobstructed aim
-            # on that path rather than aiming across an inside corner.
-            if math.dist(start[:2], end[:2]) >= 0.05 and self.surface.sweep(start, end) == (0, True):
-                aim = end
-                break
+
+        def reachable(end):
+            return (
+                math.dist(start[:2], end[:2]) >= 0.05
+                and self.surface.sweep(start, end) == (0, True)
+                and self.surface.step_supported(start, end)
+            )
+
+        preferred = (point_at(distance) for distance in (1.75, 1.05, 0.55, 0.3))
+        aim = next((point for point in preferred if reachable(point)), None)
+        if aim is None:
+            # Small steer-around within the corridor. A floor-only sweep can
+            # otherwise cut the corner of a walk polygon and hold the stick still.
+            forward = point_at(0.55) - start
+            angle = math.atan2(forward[1], forward[0])
+            lane = projected[max(0, index - 1) : index + 2, :2]
+            for turn in (0.22, -0.22, 0.44, -0.44):
+                bearing = angle + turn
+                offset = np.array([0.5 * math.cos(bearing), 0.5 * math.sin(bearing), 0.0])
+                proposed = start + offset
+                if np.linalg.norm(lane - proposed[:2], axis=1).min() <= 0.65 and reachable(proposed):
+                    aim = proposed
+                    break
         if aim is None:
             self.motion_origin = None
             return dict(reply, reason="walk_clearance_unknown", remaining=remaining)

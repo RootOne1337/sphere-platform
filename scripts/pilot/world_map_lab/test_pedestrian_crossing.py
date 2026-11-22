@@ -1,6 +1,10 @@
 import numpy as np
 
-from scripts.pilot.world_map_lab.pedestrian_crossing import crossing_target, verified_crossings
+from scripts.pilot.world_map_lab.pedestrian_crossing import (
+    crossing_target,
+    transverse_exit,
+    verified_crossings,
+)
 
 
 def street(a, b, *, samples, wall=False, gap=False):
@@ -47,6 +51,14 @@ def test_crossing_command_stays_between_verified_curbs():
         crossing_target([0, 0, 0], entry, exit, lambda a, b, **kw: street(a, b, wall=True, **kw))
         is None
     )
+
+
+def test_short_exit_when_already_in_traffic_lane():
+    start, curb = [0, 0, 0], [4.5, 0, 0]
+    oncoming = [0, 4.5, 0]
+    assert transverse_exit(start, curb, street(start, curb, samples=17)["profile"], street)
+    assert not transverse_exit(start, oncoming, street(start, oncoming, samples=17)["profile"], street)
+    assert not transverse_exit(curb, start, street(curb, start, samples=17)["profile"], street)
 
 
 def test_driveway_ends_before_a_continuous_street():

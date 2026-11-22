@@ -98,6 +98,17 @@ def test_local_animation_and_uniform_lighting_do_not_count_as_camera_rotation():
     assert not same_view(before, np.roll(before, 7, axis=1))
 
 
+def test_shift_across_a_thin_horizon_is_a_distinct_view():
+    first = np.full((36, 64), 100, dtype=np.int16)
+    second = first.copy()
+    second[12:24, 8:40] += 15
+    assert not same_view(first, second)
+
+    second = first.copy()
+    second[12:24, 8:24] += 15
+    assert same_view(first, second)
+
+
 def test_single_view_search_starts_early_and_keeps_new_views_during_a_job(tmp_path, monkeypatch):
     gallery = tmp_path / "gallery"
     gallery.mkdir()

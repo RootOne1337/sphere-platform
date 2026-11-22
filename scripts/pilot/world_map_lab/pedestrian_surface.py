@@ -12,7 +12,12 @@ from scripts.pilot.world_map_lab.pedestrian_clearance import (
     continuous_floor,
     continuous_pavement,
 )
-from scripts.pilot.world_map_lab.pedestrian_crossing import crossing_target, verified_crossings
+from scripts.pilot.world_map_lab.pedestrian_crossing import (
+    crossing_target,
+    surface_kind,
+    transverse_exit,
+    verified_crossings,
+)
 from scripts.pilot.world_map_lab.pedestrian_scene import plausible_walk_height
 from scripts.pilot.world_map_lab.pedestrian_visibility import PedestrianVisibility
 from scripts.pilot.world_map_lab.survey_clearance import measure
@@ -152,6 +157,48 @@ class FootSurface:
             if paths:
                 return min(paths, key=lambda pair: pair[0])[1]
         return None
+
+    def pavement_entries(self, eye, goal, camera_height=1.55):
+        """Find short, dry approaches, with transverse egress if already on the road."""
+        support = self.ground_support(eye, camera_height)
+        if support is None or not support.on_mesh:
+            return
+        start = [float(eye[0]), float(eye[1]), support.height]
+        heading = math.atan2(goal[1] - start[1], goal[0] - start[0])
+        profile = self._measure(start, start)["profile"]
+        on_road = continuous_floor({"profile": profile}) and surface_kind(profile[0]) == "road"
+        samples = 24 if on_road else 12
+        directions = sorted(
+            (index * math.tau / samples for index in range(samples)),
+            key=lambda angle: abs(math.remainder(angle - heading, math.tau)),
+        )
+        radii = (0.65, 1.25, 2.25, 3.0, 3.5, 4.0, 4.5, 5.0) if on_road else (
+            0.65, 1.25, 2.25, 3.5, 5.0
+        )
+        for radius in radii:
+            for angle in directions:
+                x = start[0] + radius * math.cos(angle)
+                y = start[1] + radius * math.sin(angle)
+                for level in self.road.levels(x, y, mode="walk", surface="pavement"):
+                    if abs(level - start[2]) > 0.40:
+                        continue
+                    end = [x, y, level]
+                    row = self._measure(start, end)
+                    if row["bodyIntersections"] or not continuous_floor(row):
+                        continue
+                    if any(surface_kind(p) == "road" for p in row["profile"]):
+                        if not transverse_exit(start, end, row["profile"], self._measure):
+                            continue
+                    yield start, end
+
+    def step_supported(self, start, end):
+        offset = (end - start)[:2]
+        distance = np.linalg.norm(offset)
+        if distance < 0.05:
+            return False
+        target = start[:2] + min(0.45, distance) / distance * offset
+        step = self.road.query("step", mode="walk", start=fmt(start), xy=fmt(target))
+        return step["moved"] and math.dist(step["position"][:2], target) < 0.12
 
     def pavement_aim(self, eye, height, route_targets):
         start = np.array([*eye[:2], eye[2] - height])
