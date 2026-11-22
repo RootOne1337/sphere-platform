@@ -21,9 +21,11 @@ from scripts.pilot.world_map_lab.destination_detail import StreetTiles
 from scripts.pilot.world_map_lab.destination_itinerary import plan
 from scripts.pilot.world_map_lab.destination_tiles import DestinationTiles
 from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator, MenuBackdrop
+from scripts.pilot.world_map_lab.pedestrian_surface import FootSurface
 from scripts.pilot.world_map_lab.scooter_road_access import RoadAccess
 from scripts.pilot.world_map_lab.start_live_destination import code_digest
 from scripts.pilot.world_map_lab.world_scene_acquisition import WorldAcquisition
+from scripts.pilot.world_map_lab.world_walk_trip import WalkTrip
 
 
 class RoadMap:
@@ -367,6 +369,11 @@ def serve(args):
     )
 
     access = RoadAccess(args.detail_folder, road) if global_search and args.detail_folder else None
+    foot = (
+        FootSurface(args.detail_folder, road, check_visibility=False)
+        if global_search and args.detail_folder
+        else None
+    )
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
@@ -465,6 +472,7 @@ def serve(args):
                     atlas=locator.meta,
                     atlasDigest=atlas_digest,
                     codeDigest=code_revision,
+                    walkAutopilot=foot is not None,
                 ),
             )
 
@@ -542,6 +550,7 @@ def serve(args):
                         "invalid_goal",
                         "invalid_frame",
                         "outside_visual_coverage",
+                        "walk_service_unavailable",
                     )
                     else "invalid_request"
                 )
@@ -602,8 +611,12 @@ def serve(args):
                 if now - trip.last_use > 45:
                     del sessions[key]
             if self.path == "/probe":
-                if sessions:
+                survey = sessions.get(self.headers.get("X-World-Session"))
+                if sessions and not isinstance(survey, WalkTrip):
                     return self.reply(409, dict(error="session_active"))
+                if survey is not None:
+                    survey.last_use = now
+                    survey.previous = survey.arrival = survey.motion_origin = None
                 gray = self.decode_frame(raw)
                 observed = locator.describe(gray)
                 if menu and menu.matches(observed):
@@ -619,6 +632,8 @@ def serve(args):
                         worldSearch=global_search.status(seeking_view=pose is None),
                     )
                 if result["pose"] is not None:
+                    if global_search:
+                        global_search.recent_walk.remember(result["pose"])
                     result["startLevels"] = probe_start_levels(road, result["pose"]["eye"])
                 return self.reply(200, result)
             if self.path == "/start":
@@ -628,6 +643,22 @@ def serve(args):
                 if payload["revision"] != road.meta["placementRevision"]:
                     raise ValueError("invalid_goal")
                 stops = payload.get("stops")
+                mode = payload.get("mode", "drive")
+                if mode == "walk":
+                    if foot is None:
+                        raise ValueError("walk_service_unavailable")
+                    if stops is not None:
+                        raise ValueError("invalid_goal")
+                    trip = WalkTrip(road, payload["goal"], foot)
+                    key = secrets.token_hex(24)
+                    trip.log = log_dir / (secrets.token_hex(12) + ".jsonl")
+                    with trip.log.open("a", encoding="utf8") as stream:
+                        print(json.dumps(dict(event="start", mode="walk", t=now,
+                                              goal=trip.goal.tolist())), file=stream)
+                    sessions[key] = trip
+                    return self.reply(201, dict(session=key, mode="walk"))
+                if mode != "drive":
+                    raise ValueError("invalid_goal")
                 if stops is not None:
                     selection = plan(road, stops, "drive", covers)
                     if selection.get("status") != "complete" or not selection["covered"]:
@@ -683,6 +714,8 @@ def serve(args):
             trip.frame_received = now
             trip.last_media_time = clock
             trip.last_sequence = seq
+            if isinstance(trip, WalkTrip):
+                return self.walk_frame(trip, raw, gray, now, clock, seq)
             observed = locator.describe(gray)
             at_menu = menu is not None and menu.matches(observed)
             fix = (
@@ -760,6 +793,36 @@ def serve(args):
             if "path" in response:
                 trip.logged_path = trip.path
             self.reply(200, response)
+
+        def walk_frame(self, trip, raw, gray, now, clock, seq):
+            pose = global_search.recent_walk.observe(raw, global_search.cfg, road)
+            at_menu = False
+            if pose is None and now >= trip.next_search:
+                trip.next_search = now + 0.65
+                observed = locator.describe(gray)
+                at_menu = menu is not None and menu.matches(observed)
+                if not at_menu:
+                    fix = probe_atlases(gray, locator, district_locators, observed=observed)
+                    pose = fix["pose"]
+                    if pose is None and not fix["ambiguous"]:
+                        pose = global_search.observe(raw, gray, observed)
+                    if pose is not None:
+                        global_search.recent_walk.remember(pose)
+            elif pose is None:
+                global_search.collect(raw, gray)
+            response = trip.decide(pose, clock)
+            if at_menu:
+                response["reason"] = "menu_backdrop"
+            response.update(
+                sequence=seq,
+                computeMs=round((time.monotonic() - now) * 1000, 1),
+                worldSearch=global_search.status(seeking_view=pose is None),
+            )
+            with trip.log.open("a", encoding="utf8") as stream:
+                row = {k: v for k, v in response.items() if k != "path" or trip.path is not getattr(trip, "logged_path", None)}
+                print(json.dumps(dict(t=now, **row), allow_nan=False), file=stream)
+                trip.logged_path = trip.path
+            return self.reply(200, response)
 
     with ThreadingHTTPServer(("127.0.0.1", args.port), Handler) as server:
         server.serve_forever()

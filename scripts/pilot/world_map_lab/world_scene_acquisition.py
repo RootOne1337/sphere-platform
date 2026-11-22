@@ -228,6 +228,10 @@ class RecentWalkProbe:
         except (OSError, ValueError, TypeError, KeyError):
             pass
 
+    def remember(self, pose):
+        self.seed = pose
+        self.seed_until = time.time() + 1200
+
     def observe(self, raw, cfg, road):
         if self.seed is None or time.time() > self.seed_until:
             return None
