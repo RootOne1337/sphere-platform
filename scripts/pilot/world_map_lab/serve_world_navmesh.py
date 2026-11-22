@@ -4,6 +4,7 @@ import argparse
 import json
 import math
 import mimetypes
+import os
 import re
 import shutil
 from contextlib import ExitStack
@@ -208,16 +209,21 @@ def serve(folder, port, adapter=None, *, walk_folder=None, detail_folder=None):
 
         class Handler(BaseHTTPRequestHandler):
             disable_nagle_algorithm = True
+            protocol_version = "HTTP/1.1"
+            timeout = 15
 
             def send_json(self, document, status=200):
                 body = json.dumps(document, ensure_ascii=False, allow_nan=False).encode()
                 self.send_response(status)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))
+                if self.close_connection:
+                    self.send_header("Connection", "close")
                 self.end_headers()
                 self.wfile.write(body)
 
             def do_POST(self):
+                self.close_connection = True
                 req = urlsplit(self.path)
                 if (
                     req.path not in ("/api/journey/start", "/api/journey/stop")
@@ -279,7 +285,7 @@ def serve(folder, port, adapter=None, *, walk_folder=None, detail_folder=None):
                             if not path.is_file():
                                 raise KeyError("no telemetry")
                             with path.open("rb") as stream:
-                                size = path.stat().st_size
+                                size = os.fstat(stream.fileno()).st_size
                                 self.send_response(200)
                                 self.send_header("Content-Type", "application/x-ndjson")
                                 self.send_header("Content-Length", str(size))

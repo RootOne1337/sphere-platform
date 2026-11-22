@@ -9,6 +9,7 @@ import json
 import sqlite3
 import struct
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +18,37 @@ from PIL import Image
 from scripts.pilot.world_map_lab.ariane_geometry import instance_parts, model_types
 from scripts.pilot.world_map_lab.index_ariane_world import inventory
 from scripts.pilot.world_map_lab.project_ariane_roads import load_local_adapter
-from scripts.pilot.world_map_lab.render_ariane_world import Textures, terrain_materials
+from scripts.pilot.world_map_lab.render_ariane_world import (
+    Textures,
+    compose_terrain_layers,
+    terrain_materials,
+)
+
+
+@dataclass(frozen=True)
+class TerrainMaterial:
+    preview: np.ndarray
+    layers: tuple
+    repeats: tuple
+    detail_repeats: tuple
+
+
+def layered_material(textures, pack, definition, vertices, uv):
+    names, repeats = zip(*definition, strict=True)
+    layers = tuple(textures.find(pack, name) if name else None for name in names)
+    if layers[4] is None or not any(layer is not None for layer in layers[:4]):
+        return None
+    preview = compose_terrain_layers(layers, repeats, textures.texture_size)
+    # A single mask spans the terrain patch. Optional close-up detail preserves
+    # that mask and repeats the same source diffuse tiles in map units.
+    detail = (1.0, 1.0)
+    if len(uv) >= 3 and np.isfinite(uv).all() and np.isfinite(vertices).all():
+        jacobian, _, rank, _ = np.linalg.lstsq(
+            uv - uv.mean(axis=0), vertices - vertices.mean(axis=0), rcond=None
+        )
+        if rank == 2:
+            detail = tuple(np.clip(np.linalg.norm(jacobian, axis=1) / 8.0, 1.0, 64.0))
+    return TerrainMaterial(preview, layers, repeats, detail)
 
 
 def aligned(blob, pad):
@@ -32,6 +63,13 @@ def mesh_file(parts, texture):
     materials = []
     primitives = []
     used = {}
+    image_indices = {}
+
+    def image(key):
+        if key not in image_indices:
+            image_indices[key] = len(images)
+            images.append({"uri": "/detail/texture/" + key + ".png"})
+        return image_indices[key]
 
     def accessor(data, kind, component, extents=False):
         buf = np.ascontiguousarray(data)
@@ -58,13 +96,19 @@ def mesh_file(parts, texture):
         bounds.extend((vv.min(axis=0), vv.max(axis=0)))
         for matid in np.unique(material_ids):
             tex = colors[matid]
-            key, alpha = texture(tex)
-            if key not in used:
-                used[key] = len(materials)
-                images.append({"uri": "/detail/texture/" + key + ".png"})
+            extra = None
+            if isinstance(tex, TerrainMaterial):
+                layers = tuple(
+                    image(texture(layer)[0]) if layer is not None else None for layer in tex.layers
+                )
+                extra = dict(layers=layers, repeats=tex.repeats, detailRepeats=tex.detail_repeats)
+            key, alpha = texture(tex.preview if extra else tex)
+            material_key = (key, None if extra is None else tuple(extra.values()))
+            if material_key not in used:
+                used[material_key] = len(materials)
                 mat = {
                     "pbrMetallicRoughness": {
-                        "baseColorTexture": {"index": len(images) - 1},
+                        "baseColorTexture": {"index": image(key)},
                         "metallicFactor": 0,
                         "roughnessFactor": 1,
                     },
@@ -72,6 +116,8 @@ def mesh_file(parts, texture):
                 }
                 if alpha:
                     mat.update(alphaMode="MASK", alphaCutoff=0.49)
+                if extra is not None:
+                    mat["extras"] = {"arianeTerrain": extra}
                 materials.append(mat)
             faces = idx[material_ids == matid].reshape(-1)
             component = 5123 if len(vv) <= 65535 else 5125
@@ -82,7 +128,7 @@ def mesh_file(parts, texture):
                 {
                     "attributes": {"POSITION": pos, "TEXCOORD_0": uv_id},
                     "indices": index,
-                    "material": used[key],
+                    "material": used[material_key],
                 }
             )
             count += len(faces) // 3
@@ -114,6 +160,33 @@ def mesh_file(parts, texture):
         np.max(bounds, axis=0),
         count,
     )
+
+
+def model_parts(blob, kind, pack, textures, splat):
+    for vertices, mesh in instance_parts(blob, kind):
+        faces = np.asarray(
+            [(f.a, f.b, f.c, f.material) for f in mesh.triangles], dtype="i4"
+        ).reshape(-1, 4)
+        faces = faces[(faces[:, 3] >= 0) & (faces[:, 3] < len(mesh.materials))]
+        if not len(faces):
+            continue
+        uv = (
+            np.asarray(mesh.uv_layers[0])
+            if mesh.uv_layers and len(mesh.uv_layers[0]) == len(vertices)
+            else np.zeros((len(vertices), 2))
+        )
+        colors = {}
+        for i in np.unique(faces[:, 3]):
+            definition = splat[i] if i < len(splat) else ()
+            layered = (
+                layered_material(textures, pack, definition, vertices, uv)
+                if len(definition) == 5 and isinstance(definition[0], tuple)
+                else None
+            )
+            if layered is not None:
+                textures.stats["layered_terrain_materials"] += 1
+            colors[i] = layered or textures.material(pack, mesh.materials[i], definition)
+        yield vertices, uv, faces[:, :3], faces[:, 3], colors
 
 
 def build(source, adapter, output, *, texture_size=256):
@@ -165,31 +238,9 @@ def build(source, adapter, output, *, texture_size=256):
                 terrain_materials(blob, include_tiling=detailed) if b"\x20\x01\0\0" in blob else []
             )
 
-            def parts():
-                for v, mesh in instance_parts(blob, types[bare]):
-                    faces = np.asarray(
-                        [(f.a, f.b, f.c, f.material) for f in mesh.triangles], dtype="i4"
-                    ).reshape(-1, 4)
-                    faces = faces[(faces[:, 3] >= 0) & (faces[:, 3] < len(mesh.materials))]
-                    if not len(faces):
-                        continue
-                    ids = np.unique(faces[:, 3])
-                    colors = {
-                        i: textures.material(
-                            packs.get(bare, ""),
-                            mesh.materials[i],
-                            splat[i] if i < len(splat) else (),
-                        )
-                        for i in ids
-                    }
-                    uv = (
-                        np.asarray(mesh.uv_layers[0])
-                        if mesh.uv_layers and len(mesh.uv_layers[0]) == len(v)
-                        else np.zeros((len(v), 2))
-                    )
-                    yield v, uv, faces[:, :3], faces[:, 3], colors
-
-            mesh = mesh_file(parts(), save_tex)
+            mesh = mesh_file(
+                model_parts(blob, types[bare], packs.get(bare, ""), textures, splat), save_tex
+            )
             if not mesh:
                 empty.append(bare)
                 continue

@@ -62,6 +62,7 @@ def render(args):
                     "journey_record.mjs",
                     "journey_dashboard.mjs",
                     "journey_scene.mjs",
+                    "ariane_terrain_materials.mjs",
                     "journey_vehicle.mjs",
                     "journey_path.mjs",
                     "journey_app.mjs",

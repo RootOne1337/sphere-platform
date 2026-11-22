@@ -151,6 +151,9 @@ def scene_files(folder, nets, *, detail_folder=None):
         package = vendor / "package.json"
         if package.exists() and json.loads(package.read_bytes())["version"] == "0.180.0":
             files["/detail"] = Path(__file__).with_name("world_detail.html")
+            files["/detail/js/terrain-materials.mjs"] = Path(__file__).with_name(
+                "ariane_terrain_materials.mjs"
+            )
             files.update(journey_files(folder / "journey", record["revision"]))
             for name, rel in VENDOR.items():
                 path = "/detail/utils/" if name == "BufferGeometryUtils.js" else "/detail/js/"

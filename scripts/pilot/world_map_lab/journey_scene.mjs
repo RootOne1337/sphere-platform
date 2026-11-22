@@ -1,5 +1,6 @@
 import * as T from "three";
 import { GLTFLoader } from "/detail/js/GLTFLoader.js";
+import { configureTerrain } from "/detail/js/terrain-materials.mjs";
 
 export async function createWorld(canvas, settings, model = "faggio") {
   if (!["faggio", "premier"].includes(model))
@@ -9,6 +10,10 @@ export async function createWorld(canvas, settings, model = "faggio") {
     antialias: true,
     powerPreference: "high-performance",
   });
+  const detailRadius = [320, 640, 960].includes(settings.detailRadius)
+    ? settings.detailRadius : 320;
+  const anisotropy = detailRadius > 320
+    ? Math.min(16, renderer.capabilities.getMaxAnisotropy()) : 1;
   const scene = new T.Scene(),
     camera = new T.PerspectiveCamera(62, 1, 0.16, 5500);
   camera.up.set(0, 0, 1);
@@ -45,17 +50,21 @@ export async function createWorld(canvas, settings, model = "faggio") {
     for (let attempt = 0; attempt < 3; attempt++) {
       const manager = new T.LoadingManager();
       let missing = null;
+      let model;
       manager.onError = (resource) => {
         missing = resource;
       };
       try {
-        const model = await new GLTFLoader(manager).loadAsync(
+        model = await new GLTFLoader(manager).loadAsync(
           new URL(url, location.href).href,
         );
-        if (!missing) return model;
-        disposeModel(model);
+        if (!missing) {
+          await configureTerrain(model, anisotropy, settings.terrainDetail !== "source");
+          if (!missing) return model;
+        }
         throw Error("Не загружена текстура " + missing);
       } catch (error) {
+        if (model) disposeModel(model);
         lastError = error;
       }
     }
@@ -89,11 +98,7 @@ export async function createWorld(canvas, settings, model = "faggio") {
   }
 
   top.colorSpace = T.SRGBColorSpace;
-  const detailRadius = [320, 640, 960].includes(settings.detailRadius)
-    ? settings.detailRadius : 320;
   const reloadDistance = 96;
-  const anisotropy = detailRadius > 320
-    ? Math.min(16, renderer.capabilities.getMaxAnisotropy()) : 1;
   top.anisotropy = anisotropy;
   const terrain = settings.terrain,
     { bounds, cols, rows, nx, ny, stride } = terrain;
@@ -158,6 +163,7 @@ export async function createWorld(canvas, settings, model = "faggio") {
         for (const mat of [].concat(m.material)) {
           mats.add(mat);
           if (mat.map) tx.add(mat.map);
+          for (const texture of mat.arianeTerrainTextures ?? []) tx.add(texture);
         }
       }
     });

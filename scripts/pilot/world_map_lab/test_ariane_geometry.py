@@ -1,9 +1,13 @@
+import gzip
+import json
+import struct
 import unittest
 from types import SimpleNamespace as NS
 
 import numpy as np
 
 from scripts.pilot.world_map_lab.ariane_geometry import scene_parts
+from scripts.pilot.world_map_lab.build_detail_scene import layered_material, mesh_file
 from scripts.pilot.world_map_lab.render_ariane_world import compose_terrain_layers
 
 
@@ -59,6 +63,29 @@ def test_detail_terrain_keeps_original_layer_texture_and_mask():
     np.testing.assert_array_equal(detailed[:, :2, :3], grass[:, :2, :3])
     np.testing.assert_array_equal(detailed[:, 2:, :3], rock[:, 2:, :3])
     assert np.all(detailed[..., 3] == 255)
+
+
+def test_street_pack_preserves_separate_source_mask_and_detail_coordinates():
+    grass = np.full((8, 8, 4), (18, 50, 1, 255), np.uint8)
+    mask = np.full((4, 4, 4), (255, 0, 0, 0), np.uint8)
+    textures = NS(find=lambda _pack, name: {"grass": grass, "mask": mask}.get(name), texture_size=8)
+    xyz = np.array([[0.0, 0, 0], [160, 0, 0], [0, 80, 0]])
+    uv = np.array([[0.0, 0], [1, 0], [0, 1]])
+    layer = layered_material(
+        textures, "map", tuple((n, 1.0) for n in ("grass", "", "", "", "mask")), xyz, uv
+    )
+
+    def store(data):
+        return ("mask" if data is mask else "grass"), False
+
+    glb, _, _, _ = mesh_file([(xyz, uv, np.array([[0, 1, 2]]), np.array([0]), {0: layer})], store)
+    decoded = gzip.decompress(glb)
+    desc = json.loads(decoded[20 : 20 + struct.unpack_from("<I", decoded, 12)[0]])
+    payload = desc["materials"][0]["extras"]["arianeTerrain"]
+    assert payload["layers"] == [0, None, None, None, 1]
+    assert payload["repeats"] == [1.0] * 5
+    np.testing.assert_allclose(payload["detailRepeats"], [20.0, 10.0])
+    assert desc["images"][1]["uri"].endswith("/mask.png")
 
 
 if __name__ == "__main__":
