@@ -45,13 +45,14 @@ test("position search turns a neutral camera, submits detail frames and closes t
   const look = jest.fn(async () => { moved = true; return true; });
   globalThis.fetch = jest.fn(async () => ({ ok: true, json: async () => ({
     pose: moved ? good.pose : null, district: "Проверка", ambiguous: false,
+    startLevels: { drive: 8 - frame % 2, walk: 7.5 },
     worldSearch: { phase: "collecting_views", samples: 1, tracking: false, detailWidth: 1920 },
   }) } as Response));
   try {
     const running = probeWorldPosition(video, new AbortController().signal, 10000,
       undefined, async () => ({ active: () => true, canLook: () => true, look, set, close }), {phase:"collecting_views", samples:0, tracking:false, detailWidth:1920});
     await jest.advanceTimersByTimeAsync(3500);
-    await expect(running).resolves.toMatchObject({ supports: 37 });
+    await expect(running).resolves.toMatchObject({ supports: 37, startLevels: { drive: null, walk: 7.5 } });
     expect(look).toHaveBeenCalledTimes(1);
     expect(look).toHaveBeenCalledWith(0.16, expect.any(Number));
     expect(set).not.toHaveBeenCalled();
