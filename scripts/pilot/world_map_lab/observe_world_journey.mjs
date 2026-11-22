@@ -1,4 +1,4 @@
-async ({ width: w, height: h, model = "faggio", verticalFov = null, detailRadius }) => {
+async ({ width: w, height: h, model = "faggio", verticalFov = null, detailRadius, asyncReadback = false }) => {
   const T = await import("three"),
     { createWorld } = await import("/journey/scene.mjs");
   const canvas = document.getElementById("eye"),
@@ -32,7 +32,6 @@ async ({ width: w, height: h, model = "faggio", verticalFov = null, detailRadius
       "uniform sampler2D depth,color;uniform float near,far;varying vec2 uv0;void main(){float d=texture2D(depth,uv0).r;float z=min(65535.,round(128.*near*far/(far-d*(far-near))));float v=dot(texture2D(color,uv0).rgb,vec3(.299,.587,.114));gl_FragColor=vec4(v,mod(z,256.)/255.,floor(z/256.)/255.,1.);}",
   });
   quad.add(new T.Mesh(new T.PlaneGeometry(2, 2), pack));
-  const raw = new Uint8Array(w * h * 4);
   function bytes(v) {
     let r = "";
     for (let i = 0; i < v.length; i += 8192)
@@ -54,8 +53,15 @@ async ({ width: w, height: h, model = "faggio", verticalFov = null, detailRadius
     renderer.render(scene, camera);
     renderer.setRenderTarget(packed);
     renderer.render(quad, ortho);
-    renderer.readRenderTargetPixels(packed, 0, 0, w, h, raw);
-    renderer.setRenderTarget(null);
+    const raw = new Uint8Array(w * h * 4);
+    if (asyncReadback) {
+      const pending = renderer.readRenderTargetPixelsAsync(packed, 0, 0, w, h, raw);
+      renderer.setRenderTarget(null);
+      await pending;
+    } else {
+      renderer.readRenderTargetPixels(packed, 0, 0, w, h, raw);
+      renderer.setRenderTarget(null);
+    }
     const grey = new Uint8Array(w * h),
       z = depth ? new Uint16Array(w * h) : null;
     for (let y = 0; y < h; y++)
@@ -89,14 +95,24 @@ async ({ width: w, height: h, model = "faggio", verticalFov = null, detailRadius
     panAngle = vehicle.pan ?? 0;
     if (!ride) world.vehicle(vehicle.park, vehicle.yaw ?? 0, false);
     await world.ensure(...prior.slice(0, 3));
-    const [ref, depth] = await view(prior, true);
-    // The simulator streams the body's own neighborhood even if the estimator drifts.
-    await world.ensure(...actual.slice(0, 3));
-    observation = await view(actual, false, true);
+    const reference = view(prior, true);
+    const live = async () => {
+      // The simulator streams the body's own neighborhood even if the estimator drifts.
+      await world.ensure(...actual.slice(0, 3));
+      return view(actual, false, true);
+    };
+    let ref, depth;
+    if (asyncReadback) {
+      [[ref, depth], observation] = await Promise.all([reference, live()]);
+    } else {
+      [ref, depth] = await reference;
+      observation = await live();
+    }
     await world.ensure(...prior.slice(0, 3));
     return [ref, depth, bytes(observation)];
   };
   window.mapPairWithLastImage = async (cameraPose) => {
+    await world.ensure(...cameraPose.slice(0, 3));
     const [grey, depth] = await view(cameraPose, true);
     return [grey, depth, bytes(observation)];
   };

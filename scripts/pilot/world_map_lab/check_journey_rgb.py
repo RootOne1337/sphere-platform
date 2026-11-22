@@ -18,6 +18,7 @@ from scripts.pilot.world_map_lab.world_navmesh import Network
 
 W, H = 320, 180
 DT = 0.2
+WALK_YAW_RATE = 1.15  # Keep consecutive walking views close enough for optical flow at 5 Hz.
 
 
 def angle(x):
@@ -612,6 +613,8 @@ def run(args):
         )
         page.goto(args.url.rstrip("/") + "/rgb-lab")
         optics = dict(width=W, height=H, model=args.model)
+        if getattr(args, "async_observer", False):
+            optics["asyncReadback"] = True
         if getattr(args, "detail_radius", None) is not None:
             optics["detailRadius"] = args.detail_radius
         calibration = getattr(args, "focal_at_640", None)
@@ -737,6 +740,7 @@ def run(args):
                 begin = time.perf_counter()
                 imgs = rgb_pair(page, prior, live, vehicle_info(phase, pan))
                 t0 = time.perf_counter()
+                capture_ms = (t0 - begin) * 1000
                 stopped_in_image = (
                     sparse and moving and image_standstill(previous_view, imgs[2], prior, focal)
                 )
@@ -912,7 +916,7 @@ def run(args):
                         7.0 / max(1.0, estimated_speed),
                     )
                     if moving
-                    else 2.5
+                    else WALK_YAW_RATE
                 )
                 turn = np.clip(cmd_yaw, -limit * DT, limit * DT)
                 if maneuver_left:
@@ -988,6 +992,7 @@ def run(args):
                         lostTicks=unseen,
                         distanceSinceFix=since_fix,
                         commandMs=command_ms,
+                        captureMs=capture_ms,
                         throttle=throttle,
                         brake=braking,
                         matchMs=match_ms,
@@ -1064,6 +1069,7 @@ if __name__ == "__main__":
     c.add_argument("--eye-height", type=float, default=1.68)
     c.add_argument("--focal-at-640", type=float)
     c.add_argument("--detail-radius", type=int, choices=(320, 640, 960))
+    c.add_argument("--async-observer", action="store_true")
     c.add_argument("--max-steps", type=int, default=9000)
     c.add_argument(
         "--displace",

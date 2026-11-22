@@ -14,11 +14,66 @@ from scripts.pilot.world_map_lab.live_destination_atlas import SIZE, Locator
 from scripts.pilot.world_map_lab.verify_world_scene_candidates import source_observation
 
 
+class WalkingYawHint:
+    """Predict the next reference angle from RGB without publishing a map pose."""
+
+    def __init__(self, focal):
+        width, height = 192, 80
+        extent = min(0.82, math.atan(313 / focal))
+        slope = np.tan(np.linspace(-extent, extent, width, dtype=np.float32))
+        vertical = min(0.32, 171 / (focal * math.sqrt(1 + float(slope[-1]) ** 2)))
+        rows = np.linspace(-vertical, vertical, height, dtype=np.float32)
+        self.x = np.broadcast_to(319.5 + focal * slope, (height, width)).copy()
+        self.y = (179.5 + focal * rows[:, None] * np.sqrt(1 + slope[None, :] ** 2)).astype(
+            np.float32
+        )
+        self.window = cv2.createHanningWindow((width, height), cv2.CV_32F)
+        self.step = 2 * extent / (width - 1)
+        self.reset()
+
+    def reset(self):
+        self.previous = self.heading = None
+        self.timestamp = self.confirmed_at = -math.inf
+
+    def confirm(self, heading, now):
+        self.heading, self.confirmed_at = heading, now
+
+    def observe(self, gray, now, verified_heading=None):
+        strip = cv2.remap(gray, self.x, self.y, cv2.INTER_LINEAR).astype(np.float32)
+        if verified_heading is not None:
+            self.confirm(verified_heading, now)
+        elif (
+            self.heading is not None
+            and self.previous is not None
+            and 0 < now - self.timestamp <= 0.45
+            and now - self.confirmed_at <= 2.5
+        ):
+            (dx, dy), score = cv2.phaseCorrelate(self.previous, strip, self.window)
+            yaw = dx * self.step
+            self.heading = (
+                math.remainder(self.heading + yaw, math.tau)
+                if score >= 0.32 and abs(dy) <= 5 and abs(yaw) <= 0.48
+                else None
+            )
+        else:
+            self.heading = None
+        self.previous, self.timestamp = strip, now
+
+
+def projected_turn(pixels, camera, yaw):
+    c, s = math.cos(yaw), math.sin(yaw)
+    rotation = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+    return cv2.perspectiveTransform(
+        pixels.reshape(-1, 1, 2), camera @ rotation @ np.linalg.inv(camera)
+    ).reshape(-1, 2)
+
+
 class WalkingMeshTracker:
     def __init__(self, config, planner):
         self.cfg, self.planner = config, planner
         focal = float(config["focalAt640"])
         self.camera = np.float64([[focal, 0, 319.5], [0, focal, 179.5], [0, 0, 1]])
+        self.yaw_hint = WalkingYawHint(focal)
         self.lock = threading.Condition()
         self.pending = self.refresh = self.track = None
         self.closed = False
@@ -45,6 +100,7 @@ class WalkingMeshTracker:
         with self.lock:
             self.invalid_before = time.monotonic()
             self.track = self.refresh = self.pending = None
+            self.yaw_hint.reset()
 
     def _solve(self, points, pixels, origin, *, verified_tracks=False):
         if len(points) < 24:
@@ -158,6 +214,8 @@ class WalkingMeshTracker:
     def locate(self, bgr):
         gray = cv2.cvtColor(cv2.resize(bgr, SIZE, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
         now = time.monotonic()
+        self.yaw_hint.observe(gray, now)
+        heading = self.yaw_hint.heading
         with self.lock:
             fresh = self.refresh
             self.refresh = None
@@ -167,13 +225,20 @@ class WalkingMeshTracker:
             old, xyz, uv, prior, stamp, baked = sample
             if now - stamp > 2 or now - baked > 5:
                 continue
+            turn = (
+                math.remainder(heading - prior["heading"], math.tau) if heading is not None else 0
+            )
+            compensate = 0.035 <= abs(turn) <= 0.60
+            flags = cv2.OPTFLOW_USE_INITIAL_FLOW if compensate else 0
+            guess = projected_turn(uv, self.camera, turn) if compensate else None
             moved, valid, _ = cv2.calcOpticalFlowPyrLK(
-                old, gray, uv, None, winSize=(21, 21), maxLevel=3
+                old, gray, uv, guess, winSize=(21, 21), maxLevel=3, flags=flags
             )
             if moved is None:
                 continue
+            guess = projected_turn(moved, self.camera, -turn) if compensate else None
             back, again, _ = cv2.calcOpticalFlowPyrLK(
-                gray, old, moved, None, winSize=(21, 21), maxLevel=3
+                gray, old, moved, guess, winSize=(21, 21), maxLevel=3, flags=flags
             )
             if back is None or again is None:
                 continue
@@ -191,7 +256,13 @@ class WalkingMeshTracker:
                 if solved and (
                     solved[0]["supports"] < 45
                     or math.dist(solved[0]["eye"], prior["eye"]) > 0.60
-                    or math.cos(solved[0]["heading"] - prior["heading"]) < 0.995
+                    or min(
+                        abs(math.remainder(solved[0]["heading"] - prior["heading"], math.tau)),
+                        abs(math.remainder(solved[0]["heading"] - heading, math.tau))
+                        if compensate and abs(turn) <= 0.30
+                        else math.inf,
+                    )
+                    > 0.072
                 ):
                     solved = None
             if not solved:
@@ -200,8 +271,12 @@ class WalkingMeshTracker:
             if math.dist(pose["eye"], prior["eye"]) > 0.9 + 8 * (now - stamp):
                 continue
             self.track = (gray, xyz, uv, pose, now, baked)
+            self.yaw_hint.confirm(pose["heading"], now)
             return pose
         return None
+
+    def heading_suggestion(self):
+        return self.yaw_hint.heading
 
     def close(self):
         with self.lock:

@@ -287,9 +287,10 @@ class RecentWalkProbe:
                 return pose
         if now - tracker.last_submit >= 0.4:
             angles = (0, 0.35, -0.35, 0.8, -0.8, 1.55, -1.55, 2.35, -2.35, math.pi)
-            acquired = dict(
-                self.seed, heading=self.seed["heading"] + angles[self.attempt % len(angles)]
-            )
+            heading = tracker.heading_suggestion()
+            if heading is None:
+                heading = self.seed["heading"] + angles[self.attempt % len(angles)]
+            acquired = dict(self.seed, heading=heading)
             tracker.submit(image, acquired)
             self.attempt += 1
         return None
