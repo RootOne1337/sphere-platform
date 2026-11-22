@@ -208,6 +208,7 @@ export async function probeWorldPosition(
   progress?: (value: ProbeProgress) => void,
   openCamera?: (signal: AbortSignal) => Promise<WalkInputLease>,
   initialSearch?: SearchState | null,
+  session?: string,
 ) {
   const sample = worldFrameSampler(video);
   const detail = detailSampler(true);
@@ -241,7 +242,7 @@ export async function probeWorldPosition(
         "/probe",
         AbortSignal.any([search, AbortSignal.timeout(3500)]),
         undefined,
-        undefined,
+        session,
         jpeg,
       );
       if (search.aborted) break;

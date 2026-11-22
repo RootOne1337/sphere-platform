@@ -360,6 +360,7 @@ export function WorldDestinationPilot({
             },
             (signal) => openCamera!(signal, journal),
             info.worldSearch,
+            session,
           );
           if (!c.signal.aborted) {
             setObservation({ eye: position.eye, startLevels: position.startLevels, acquiredAt: performance.now() });
@@ -390,7 +391,9 @@ export function WorldDestinationPilot({
             setData(decision);
             setAge(ms);
             if (commandMs != null) setCommandAge(commandMs);
-            setStatus(decision.reason === "no_motion"
+            setStatus(ms >= 250 && decision.reason === "walking"
+              ? "Кадр для шага устарел. Ждём новое решение."
+              : decision.reason === "no_motion"
               ? "Пеший проход остановлен. Персонаж не продвинулся после команды."
               : reasons[decision.reason] ?? decision.reason);
           }, locateWalkingStart);
