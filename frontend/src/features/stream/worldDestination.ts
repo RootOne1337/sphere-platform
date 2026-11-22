@@ -255,6 +255,7 @@ export async function probeWorldPosition(
   openCamera?: (signal: AbortSignal) => Promise<WalkInputLease>,
   initialSearch?: SearchState | null,
   session?: string,
+  walking = false,
 ) {
   const sample = worldFrameSampler(video);
   const detail = detailSampler(true);
@@ -289,7 +290,7 @@ export async function probeWorldPosition(
         continue;
       }
       const result = await worldRequest<Probe>(
-        "/probe",
+        walking ? "/walk-probe" : "/probe",
         AbortSignal.any([search, AbortSignal.timeout(3500)]),
         undefined,
         session,

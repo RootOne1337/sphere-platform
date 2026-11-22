@@ -241,6 +241,8 @@ export function WorldDestinationPilot({
         },
         !cameraIssue && openCamera ? (signal) => openCamera(signal, () => {}) : undefined,
         info?.worldSearch,
+        undefined,
+        walking || (multiple && itinerary.mode === "walk"),
       );
       if (!c.signal.aborted) {
         setObservation({ eye: r.eye, startLevels: r.startLevels, acquiredAt: performance.now() });
@@ -390,6 +392,7 @@ export function WorldDestinationPilot({
             (signal) => openCamera!(signal, journal),
             info.worldSearch,
             session,
+            true,
           );
           if (!c.signal.aborted) {
             setObservation({ eye: position.eye, startLevels: position.startLevels, acquiredAt: performance.now() });
