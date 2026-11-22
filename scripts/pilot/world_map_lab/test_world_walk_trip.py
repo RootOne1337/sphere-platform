@@ -70,3 +70,40 @@ def test_standstill_with_a_fresh_pose_attempts_a_new_direction():
         recovery = walk.decide(pose, 2.4)
     assert recovery["reason"] == "walk_aligning"
     assert recovery["lookRadians"] < -0.5 and recovery["stick"] == [0.0, 0.0]
+
+
+def test_walk_itinerary_plans_each_leg_from_a_fresh_pose_and_finishes_once():
+    road = Mock()
+    road.levels.side_effect = lambda x, y, **_: [] if x == 1.2 else [0]
+    surface = Mock()
+    walk = WalkTrip.from_stops(road, [[2, 0, 0], [4, 0, 0]], surface)
+
+    def pose(x):
+        return {"eye": [x, 0, 1.55], "heading": 0, "supports": 32}
+
+    def plan_route(_, stops, mode, __, *, surface):
+        assert (mode, surface) == ("walk", "crossings")
+        return {"status": "complete", "legs": [{"path": stops}]}
+
+    with patch("scripts.pilot.world_map_lab.world_walk_trip.plan", side_effect=plan_route) as planner:
+        assert walk.decide(None, 0.5)["reason"] == "position_unknown"
+        planner.assert_not_called()
+        assert walk.decide(pose(-3), 1)["reason"] == "confirming_position"
+        first = walk.decide(pose(-3), 1.2)
+        assert first["stopIndex"] == 0 and first["path"] == [[-3, 0, 0], [2, 0, 0]]
+        walk.decide(pose(1.2), 1.6)
+        assert walk.decide(pose(1.2), 1.8)["reason"] == "walking"
+        walk.decide(pose(1.8), 2)
+        assert walk.decide(pose(1.8), 2.2)["reason"] == "stopping"
+        advance = walk.decide(pose(1.8), 2.7)
+        assert advance["reason"] == "planning_walk" and advance["stopIndex"] == 1
+        assert advance["path"] == [] and advance["stick"] == [0.0, 0.0]
+        assert walk.decide(None, 2.9)["reason"] == "position_unknown"
+        assert walk.decide(pose(1.7), 3.1)["reason"] == "confirming_position"
+        second = walk.decide(pose(1.7), 3.3)
+        assert second["path"] == [[1.7, 0, 0], [4, 0, 0]]
+        walk.decide(pose(3.9), 3.7)
+        assert walk.decide(pose(3.9), 3.9)["reason"] == "stopping"
+        assert walk.decide(pose(3.9), 4.35)["reason"] == "arrived"
+        assert walk.decide(None, 4.55)["reason"] == "arrived"
+        assert planner.call_count == 2

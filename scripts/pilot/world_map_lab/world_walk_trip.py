@@ -6,20 +6,15 @@ from itertools import islice
 
 import numpy as np
 
-from scripts.pilot.world_map_lab.destination_itinerary import plan
+from scripts.pilot.world_map_lab.destination_itinerary import MAX_STOPS, plan
 
 
 class WalkTrip:
-    def __init__(self, road, goal, surface):
+    def __init__(self, road, goal, surface, *, next_stops=()):
         self.road, self.surface = road, surface
-        self.goal = np.asarray(goal, dtype=float)
-        if self.goal.shape != (3,) or not np.isfinite(self.goal).all():
-            raise ValueError("invalid_goal")
-        if not any(
-            abs(z - self.goal[2]) < 0.45
-            for z in road.levels(*self.goal[:2], mode="walk", surface="pavement")
-        ):
-            raise ValueError("unreachable_goal")
+        self.stops = [self.validated_stop(stop) for stop in (goal, *next_stops)]
+        self.stop_index = 0
+        self.goal = self.stops[0]
         self.last_use = time.monotonic()
         self.last_sequence = -1
         self.last_media_time = self.previous = self.motion_origin = None
@@ -32,6 +27,27 @@ class WalkTrip:
         self.arrival = None
         self.arrived = False
 
+    @classmethod
+    def from_stops(cls, road, stops, surface):
+        if not isinstance(stops, list) or not 1 <= len(stops) <= MAX_STOPS:
+            raise ValueError("invalid_goal")
+        return cls(road, stops[0], surface, next_stops=stops[1:])
+
+    def validated_stop(self, stop):
+        point = np.asarray(stop, dtype=float)
+        if point.shape != (3,) or not np.isfinite(point).all():
+            raise ValueError("invalid_goal")
+        if not any(
+            abs(z - point[2]) < 0.45
+            for z in self.road.levels(*point[:2], mode="walk", surface="pavement")
+        ):
+            raise ValueError("unreachable_goal")
+        return point
+
+    def pavement_below(self, eye):
+        levels = self.road.levels(*eye[:2], mode="walk", surface="pavement")
+        return [z for z in levels if 0.85 < eye[2] - z < 2.55]
+
     def decide(self, pose, now):
         reply = dict(
             mode="walk",
@@ -40,6 +56,7 @@ class WalkTrip:
             reason="position_unknown",
             pose=pose,
             remaining=None,
+            stopIndex=self.stop_index,
         )
         if self.path is not None:
             reply["path"] = self.path.tolist()
@@ -68,8 +85,7 @@ class WalkTrip:
             if now - self.last_plan < 1.5:
                 return dict(reply, reason="planning_walk")
             self.last_plan = now
-            levels = self.road.levels(*eye[:2], mode="walk", surface="pavement")
-            ground = [z for z in levels if 0.85 < eye[2] - z < 2.55]
+            ground = self.pavement_below(eye)
             if len(ground) > 1:
                 return dict(reply, reason="walk_start_not_on_pavement")
             goal = self.goal.tolist()
@@ -106,15 +122,26 @@ class WalkTrip:
             self.arc = np.r_[0, np.cumsum(self.distances)]
             reply["path"] = self.path.tolist()
             return dict(reply, reason="planning_walk", remaining=float(self.arc[-1]))
+        last_stop = self.stop_index == len(self.stops) - 1
         if (
             math.dist(eye[:2], self.goal[:2]) <= 0.9
             and 0.85 < eye[2] - self.goal[2] < 2.55
+            and (last_stop or len(self.pavement_below(eye)) == 1)
         ):
             self.motion_origin = None
             if speed > 1.0 or self.arrival is None:
                 self.arrival = now
-            self.arrived = now - self.arrival >= 0.38
-            return dict(reply, reason="arrived" if self.arrived else "stopping", remaining=0.0)
+            if now - self.arrival < 0.38:
+                return dict(reply, reason="stopping", remaining=0.0)
+            if last_stop:
+                self.arrived = True
+                return dict(reply, reason="arrived", remaining=0.0)
+            self.stop_index += 1
+            self.goal = self.stops[self.stop_index]
+            self.arrival = self.path = self.entry = None
+            self.crossings = ()
+            self.last_plan = -math.inf
+            return dict(reply, reason="planning_walk", path=[], stopIndex=self.stop_index)
         self.arrival = None
         if not len(self.segments):
             self.path = None

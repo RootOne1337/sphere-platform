@@ -652,14 +652,13 @@ def serve(args):
                 if mode == "walk":
                     if foot is None:
                         raise ValueError("walk_service_unavailable")
-                    if stops is not None:
-                        raise ValueError("invalid_goal")
-                    trip = WalkTrip(road, payload["goal"], foot)
+                    trip = WalkTrip.from_stops(road, stops if stops is not None else [payload["goal"]], foot)
                     key = secrets.token_hex(24)
                     trip.log = log_dir / (secrets.token_hex(12) + ".jsonl")
                     with trip.log.open("a", encoding="utf8") as stream:
                         print(json.dumps(dict(event="start", mode="walk", t=now,
-                                              goal=trip.goal.tolist())), file=stream)
+                                              goal=trip.goal.tolist(),
+                                              stops=[stop.tolist() for stop in trip.stops])), file=stream)
                     sessions[key] = trip
                     return self.reply(201, dict(session=key, mode="walk"))
                 if mode != "drive":
