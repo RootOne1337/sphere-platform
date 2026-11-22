@@ -1,0 +1,107 @@
+{
+  "stage1_features.py": {
+    "original_path": ".local-pilot/scooter-stage-isolation-20261101/stage1_features.py",
+    "sha256": "94bc6be37990e5266aec43a353fea6dece29c3d931fae46abe38535ec3589cc1",
+    "bytes": 5368
+  },
+  "stage2_match.py": {
+    "original_path": ".local-pilot/scooter-stage-isolation-20261101/stage2_match.py",
+    "sha256": "805f6ba7d809ae1f45fbac48084ebe6007090a0438abe558b8f7ed17aa28064e",
+    "bytes": 8420
+  },
+  "watch_stages.ps1": {
+    "original_path": ".local-pilot/scooter-stage-isolation-20261101/watch.ps1",
+    "sha256": "782a629e60f4e3a9961fe1b9a814259494c101442bed16d9f9f361dd464fa541",
+    "bytes": 2754
+  },
+  "verify_incremental.py": {
+    "original_path": ".local-pilot/scooter-stage-verify-map-20261101/run.py",
+    "sha256": "f99e31716bde0a81061e380ed70c8d32ab3fc0ffec7bac1c82f18506a954b85a",
+    "bytes": 5217
+  },
+  "global_fixed.py": {
+    "original_path": ".local-pilot/scooter-stage-global-20261101/run.py",
+    "sha256": "b35ab83e6d49a25b78b9b502609c2782e918e056b1935d9215a48655b666e19d",
+    "bytes": 5034
+  },
+  "global_shared_focal.py": {
+    "original_path": ".local-pilot/scooter-stage-global-focal-20261101/run.py",
+    "sha256": "b06e015b57c0e8480d733c501e1f06ae83a07282b18cb616f0d1dfedde77de49",
+    "bytes": 5140
+  },
+  "compare_shared_focal.py": {
+    "original_path": ".local-pilot/scooter-stage-global-focal-20261101/compare.py",
+    "sha256": "a4b9e2cc7c1dd41416d8648562efaadc6e6245dfdcd44886ffa932c999a880fa",
+    "bytes": 2310
+  },
+  "calfvo_full.py": {
+    "original_path": ".local-pilot/scooter-calfvo-full-20261101/full-run.py",
+    "sha256": "f2b4512df5ebfa434bfc19945e1542dc71801ac737ada8d875ba7622d9ac54fa",
+    "bytes": 13976
+  },
+  "calfvo_tensor_reader.py": {
+    "original_path": ".local-pilot/scooter-yaw-20261101/calfvo-stream-loader.py",
+    "sha256": "59b8ba3697604c38b645a5c1628810b4dbbd44420a0a1476070841934345999e",
+    "bytes": 2341
+  },
+  "calfvo_convention_fixture.py": {
+    "original_path": ".local-pilot/scooter-calfvo-convention-audit-20261101/fixture.py",
+    "sha256": "7ce667e98bccf33bac170603fcc1340c146e2e22ac13577ce856b8e174fa5e89",
+    "bytes": 4101
+  },
+  "parallax_audit.py": {
+    "original_path": ".local-pilot/scooter-parallax-audit-20261101/analyze.py",
+    "sha256": "4fadc6b69165a419dc2b7904ea8a042a5a209d416b63dcfc46ae2d01968fe048",
+    "bytes": 7438
+  },
+  "render_result.py": {
+    "original_path": ".local-pilot/render-scooter-stage-result-20261101.py",
+    "sha256": "0c2ff6ab4ead50f08f2f87e309d446060745400c5479c2a874bf613958175fbe",
+    "bytes": 8136
+  },
+  "jump_forensics.py": {
+    "original_path": ".local-pilot/scooter-jump-forensics-20261101/audit.py",
+    "sha256": "a93a148fedeb65f7e05b35cd3fa695ba97d8c621bc094677e3b9705eb17179a7",
+    "bytes": 8150
+  },
+  "jump_forensics_details.py": {
+    "original_path": ".local-pilot/scooter-jump-forensics-20261101/details.py",
+    "sha256": "1c7aa29f108229f42324ae08144b2b5da37d934e2337e82859feff8c48638477",
+    "bytes": 4945
+  },
+  "jump_adjacent.py": {
+    "original_path": ".local-pilot/scooter-jump-adjacent-20261101/audit.py",
+    "sha256": "918c2ee6e8e8ddd17f80123a63b5fc75733ae25d24d7e81e3bd5d815316f431d",
+    "bytes": 7882
+  },
+  "targeted_gap.py": {
+    "original_path": ".local-pilot/scooter-targeted-gap-20261101-v2/run.py",
+    "sha256": "bc4ae4c61100e2f64ca51e25c96f4acf3bf44eb86db4c0888ff2f10e04517cd5",
+    "bytes": 15030
+  },
+  "targeted_gap_comparison.py": {
+    "original_path": ".local-pilot/scooter-targeted-gap-20261101-v2/gap-comparison.py",
+    "sha256": "bc86ee9a8c32a65fa81b7ddab943e27dacbf3e718894c1c5ac2a7ec8020955dc",
+    "bytes": 3321
+  },
+  "calfvo_reverse.py": {
+    "original_path": ".local-pilot/scooter-calfvo-reverse-20261101/reverse-run.py",
+    "sha256": "f3094b032cf1554cb9e455c843102ad3d31abb688991ca49938c21083fc2ba24",
+    "bytes": 14955
+  },
+  "calfvo_reverse_compare.py": {
+    "original_path": ".local-pilot/scooter-calfvo-reverse-20261101/compare.py",
+    "sha256": "cc9d96390392c0e298bbf57e07a96c026fbdb80529de3aa761255153b761f3ae",
+    "bytes": 4349
+  },
+  "hud_heading.py": {
+    "original_path": ".local-pilot/scooter-hud-heading-20261101/run.py",
+    "sha256": "df503c35ac518ae7406e533a1bb7eb0e2f4a7f34ecbc317376588ce7c6a23f79",
+    "bytes": 9975
+  },
+  "render_heading.py": {
+    "original_path": ".local-pilot/render-scooter-heading-check-20261101.py",
+    "sha256": "7c1f0fc5b5335503a64df3a2826dd329ba9364031795769af92ad52e053f7aec",
+    "bytes": 3721
+  }
+}

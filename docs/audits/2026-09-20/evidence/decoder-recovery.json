@@ -1,0 +1,183 @@
+{
+  "finding": "AUD-138 / F32-06",
+  "baseline": "cb07eae07daba3eda1b106ab1fd0eb5c3d527686",
+  "before": {
+    "numTotalTests": 16,
+    "numPassedTests": 2,
+    "numFailedTests": 14,
+    "numRuntimeErrorTestSuites": 0
+  },
+  "after_full_frontend": {
+    "numTotalTests": 264,
+    "numPassedTests": 264,
+    "numFailedTests": 0,
+    "numRuntimeErrorTestSuites": 0
+  },
+  "typecheck": "passed",
+  "native": {
+    "source": "9924eb1728d95b4220cd11db2be8a9a372889569",
+    "image": "sha256:9dd9ee7ac2cf644f5f21052f304e7f67cd7bdbd94c286ba6d1017d4e227f98b6",
+    "verified_at": "2026-09-21T11:23:09.258298+00:00",
+    "browser": {
+      "source": "9924eb1728d95b4220cd11db2be8a9a372889569",
+      "two_decoded_screens": true,
+      "backend_restart_recovered_without_reload": true,
+      "android_clocks_observed": [
+        "13:21",
+        "13:22"
+      ],
+      "own_viewers_stopped": true,
+      "capacity_or_frame_rate_measured": false,
+      "fault_scope": "graceful restart of new pilot backend, no active tasks/pipelines"
+    },
+    "devices": [
+      {
+        "serial": "emulator-5554",
+        "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "version_code": 10208,
+        "pid": "24613",
+        "same_pid_since_ota": true,
+        "crash_buffer_unchanged": true,
+        "sha256": "2f958bef697243fcbf6d449410f557aaa4f71bbd02b7df632909a79506a4987a",
+        "online": true,
+        "capture_released": true
+      },
+      {
+        "serial": "emulator-5556",
+        "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "version_code": 10208,
+        "pid": "22567",
+        "same_pid_since_ota": true,
+        "crash_buffer_unchanged": true,
+        "sha256": "2f958bef697243fcbf6d449410f557aaa4f71bbd02b7df632909a79506a4987a",
+        "online": true,
+        "capture_released": true
+      }
+    ],
+    "other_containers_unchanged_except_intentional_backend_restart": true,
+    "limits": "Two actual Android streams; no synthetic browser codec error injection, FPS/GPU/RAM benchmark or 32-device acceptance"
+  },
+  "limits": {
+    "preconfig_buffer_frames": 0,
+    "pending_inputs": 8,
+    "encoded_bytes": 2097152,
+    "packet_bytes_excluding_header": 1048576,
+    "input_output_age_ms": 500,
+    "codec_cooldown_ms": 1000
+  },
+  "test_scope": "Real TypeScript decoder, stalled/failing codec double; no GPU capacity inference",
+  "regressions": [
+    {
+      "title": "does not retain and replay frames received before SPS/PPS",
+      "status": "passed"
+    },
+    {
+      "title": "bounds submissions when a codec stops consuming input",
+      "status": "passed"
+    },
+    {
+      "title": "also bounds internal pending output when decodeQueueSize reports zero",
+      "status": "passed"
+    },
+    {
+      "title": "discards an expired reference chain and resumes only from a new IDR",
+      "status": "passed"
+    },
+    {
+      "title": "bounds retained encoded bytes even when every frame is an IDR",
+      "status": "passed"
+    },
+    {
+      "title": "recovers from an async closed-codec error without throwing on new packets",
+      "status": "passed"
+    },
+    {
+      "title": "closes frames even when rendering throws",
+      "status": "passed"
+    },
+    {
+      "title": "ignores delayed output after destroy and closes every frame exactly once",
+      "status": "passed"
+    },
+    {
+      "title": "ignores output from a replaced codec generation",
+      "status": "passed"
+    },
+    {
+      "title": "preserves the source timestamp as microseconds without claiming wall-clock latency",
+      "status": "passed"
+    },
+    {
+      "title": "ignores repeated identical parameter sets instead of losing reference state",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid size packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid version packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid empty packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid timestamp packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid oversize packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "converts all NALs in an access unit into one AVCC picture",
+      "status": "passed"
+    },
+    {
+      "title": "waits for fresh PPS and IDR after changed SPS, and fences old output",
+      "status": "passed"
+    },
+    {
+      "title": "clears configuration and pending frames for a different socket generation",
+      "status": "passed"
+    },
+    {
+      "title": "contains a synchronous configure failure and recovers on a new keyframe",
+      "status": "passed"
+    },
+    {
+      "title": "contains a synchronous decode failure and recovers on a new keyframe",
+      "status": "passed"
+    },
+    {
+      "title": "renders sustained output without growing submissions in flight",
+      "status": "passed"
+    },
+    {
+      "title": "drops stale decoded output instead of rendering an old image",
+      "status": "passed"
+    }
+  ],
+  "file_sha256": {
+    "frontend/lib/h264-decoder.ts": "ffddc6ad3f375d1aab8e57dce102e59b71477e31f453e35801e5b58b559a8bcb",
+    "frontend/components/sphere/DeviceStream.tsx": "7fa9af47f2a39e64a33f8273abbf6e097700cc57dad57be0f1bdb69abcf62903",
+    "frontend/__tests__/stream/h264-decoder.test.ts": "da6cde87345467e81599a2a597d49dd145be6572e666e852158f199fb419a325",
+    "frontend/__tests__/stream/reconnect.test.tsx": "76dda5b965674d2a01c349c6d9da17388195a13e4f7168c5109117a9892d89e0"
+  },
+  "private_logs_sha256": {
+    "decoder-before.json": "50bb87860368fbdd279a78a5196a756fbea7452dd1e7ae33a63d96126b358631",
+    "decoder-full.json": "d295823b8f0d789870f80ae8c34272e12cdb5042e8418c7d46a9d2a1a3554cd6",
+    "decoder-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "native_private_sha256": {
+    "build.json": "e38468e4ac275c6521549902ba004355f07d23422c035196d8336520518d7c91",
+    "deploy-intent.json": "e082f1ad1ea1429c092dc39e1aaaf014a8172ae73937682f8e7a4ea4702ec9f6",
+    "deploy-result.json": "8a2013f2abb7e2c263f461684689b01feaddaa50653c08af2502ec2161c1517b",
+    "restart-intent.json": "a48d810731f94aa26e708d5e4089b014f0c522a9906fa0aa9e3361666909e146",
+    "restart-result.json": "7244d230bbdb21845dc053e84a2ec1cd5096c9c4e5340326a9a90cc26e86fddd",
+    "native-verification.json": "9abb7e26dffcdef1e8d48468b8d29c35bd90f846b4f4d1daa5074f6d858b7bd8",
+    "browser-verification.json": "8947e6fdbb2924214bb906640afbc5cdb855173604408460466174f454afcd2f"
+  }
+}

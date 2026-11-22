@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-01",
+  "verdict": "Core model import succeeds with an isolated composite of pinned sources and a local roma package. A DINOv2 model state structure can be assembled on the meta device using a diagnostic replacement of the backbone factory and a tiny CPU linspace. Checkpoint compatibility, actual model allocation, GPU operator support, inference speed and output accuracy remain untested.",
+  "source_composite": {
+    "path": ".local-pilot/reconstruction-tools/calfvo-64497981704a-composite",
+    "receipt": ".local-pilot/scooter-yaw-20261101/calfvo-composite-receipt.json",
+    "method": "Copies of independently staged pinned CroCo and DUSt3R; CroCo additionally copied into DUSt3R/croco to satisfy the actual upstream path helper. Every file hash of both copies matches the corresponding unmodified source; original third-party directories remain unchanged."
+  },
+  "dependency": {
+    "target": ".local-pilot/calfvo-python-target",
+    "name": "roma",
+    "version": "1.5.7",
+    "wheel_bytes": 25441,
+    "sha256": "6bd69e6d7044923e7e6e11c463c741b0c8bab35a95e5b4b43f692f5e3dbfd130",
+    "receipt": ".local-pilot/scooter-yaw-20261101/calfvo-wheel-receipt.json",
+    "method": "Official PyPI pure-Python wheel matched PyPI hash, inspected archive paths, purelib flag, no native binaries, .pth or wheel scripts; pip --no-index --no-deps --no-compile to new isolated target. Existing venvs and scipy target not modified."
+  },
+  "real_core_import": {
+    "result": "imported src.model with no path-loader monkeypatch; selected CroCo pure PyTorch RoPE fallback warning",
+    "details": ".local-pilot/scooter-yaw-20261101/import-composite-probe.json",
+    "sampled_peak_process_tree_working_set_bytes": 448163840,
+    "wall_s": 5.008,
+    "admission_free_physical_gib": 5.135,
+    "admission_free_commit_gib": 5.303
+  },
+  "meta_factory": {
+    "result": "constructed diagnostic meta model; 686 state tensors, 519695458 total elements, including 439 encoder state tensors; all state tensors on meta. No checkpoint loaded.",
+    "details": ".local-pilot/scooter-yaw-20261101/meta-construction-probe.json",
+    "probe_source": ".local-pilot/scooter-yaw-20261101/calfvo-import-probe.py",
+    "scoped_changes": "get_backbone is replaced in this probe process only by upstream DinoV2Backbone wrapping Dinov2Model created from locally pinned config, avoiding from_pretrained. Default device meta cannot support original drop-path torch.linspace(...).item(), so only the 12-element linspace call is explicitly put on CPU; restored after construction. All model state tensors remain meta. No upstream source files edited.",
+    "failed_first_attempt": "Unmodified get_model under global meta device failed with RuntimeError Tensor.item() cannot be called on meta tensors in src/model/calfvo.py drop-path linspace. The second diagnostic attempt adds the scoped CPU linspace override.",
+    "sampled_peak_process_tree_working_set_bytes": 515690496,
+    "wall_s": 6.796,
+    "admission_free_physical_gib": 6.566,
+    "admission_free_commit_gib": 6.677,
+    "constraints": "30-second and 900 MiB sampled process-tree working-set termination guards; not hard OS-enforced resource limits. HF_HUB_OFFLINE and TRANSFORMERS_OFFLINE plus Python socket connect/create_connection blocked during meta construction. No real model weight tensors or device allocation, though normal CPU import/runtime and a 12-element CPU tensor do allocate memory."
+  },
+  "next_admission": "Before any full-checkpoint experiment separately assess disk, system commit, available VRAM, model and batch memory, license and source trust; acquire only the selected verified checkpoint if authorized. Verify strict state keys/shapes and reference-equivalent preprocessing/windows before any interpretation. Model output and learned metric scale need independent held-out validation, particularly for game footage.",
+  "non_actions": "No model or backbone weights downloaded; no inference, device input, setup script, changes to product code, original source copies, existing venv or shared target."
+}

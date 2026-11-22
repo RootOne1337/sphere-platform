@@ -1,0 +1,190 @@
+{
+  "models": [
+    {
+      "model": 0,
+      "schema": "sphere-route-geometry-selection-v1",
+      "registered": 163,
+      "selected": 163,
+      "coverage": 1.0,
+      "points": 15706,
+      "reprojection_px": 1.479031854076652,
+      "scene_admissible": true,
+      "route_admissible": false,
+      "scene_reasons": [],
+      "route_reasons": [
+        "route_camera_reversals",
+        "route_camera_speed_outliers"
+      ],
+      "source_coverage": {
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "missing_start_seconds": 0.0,
+        "missing_end_seconds": 0.0,
+        "max_observed_gap_seconds": 0.266,
+        "endpoints_observed": true,
+        "all_intervals_observed": true,
+        "endpoint_limit_seconds": 1.0,
+        "interval_limit_seconds": 1.0
+      },
+      "motion": {
+        "schema": "sphere-camera-temporal-audit-v1",
+        "views": 163,
+        "first_seconds": 0.0,
+        "last_seconds": 35.493,
+        "path_units": 63.057483180474016,
+        "endpoint_displacement_units": 5.932964865990999,
+        "median_step_units": 0.23704328610125638,
+        "max_step_units": 5.713599892677421,
+        "rapid_reversals": [
+          {
+            "view": 11,
+            "image": "00000054.png",
+            "seconds": 2.19
+          },
+          {
+            "view": 12,
+            "image": "00000060.png",
+            "seconds": 2.406
+          },
+          {
+            "view": 84,
+            "image": "00000465.png",
+            "seconds": 18.354
+          },
+          {
+            "view": 86,
+            "image": "00000474.png",
+            "seconds": 18.771
+          },
+          {
+            "view": 90,
+            "image": "00000492.png",
+            "seconds": 19.639
+          },
+          {
+            "view": 100,
+            "image": "00000544.png",
+            "seconds": 21.834
+          },
+          {
+            "view": 101,
+            "image": "00000550.png",
+            "seconds": 22.083
+          },
+          {
+            "view": 104,
+            "image": "00000567.png",
+            "seconds": 22.714
+          },
+          {
+            "view": 105,
+            "image": "00000572.png",
+            "seconds": 22.914
+          },
+          {
+            "view": 108,
+            "image": "00000590.png",
+            "seconds": 23.595
+          },
+          {
+            "view": 109,
+            "image": "00000596.png",
+            "seconds": 23.812
+          },
+          {
+            "view": 113,
+            "image": "00000621.png",
+            "seconds": 24.691
+          },
+          {
+            "view": 114,
+            "image": "00000626.png",
+            "seconds": 24.892
+          },
+          {
+            "view": 125,
+            "image": "00000689.png",
+            "seconds": 27.236
+          },
+          {
+            "view": 126,
+            "image": "00000694.png",
+            "seconds": 27.468
+          },
+          {
+            "view": 131,
+            "image": "00000722.png",
+            "seconds": 28.551
+          },
+          {
+            "view": 132,
+            "image": "00000727.png",
+            "seconds": 28.751
+          }
+        ],
+        "median_rate_units_per_second": 1.1160941660456305,
+        "speed_outliers": [
+          {
+            "view": 91,
+            "image": "00000496.png",
+            "seconds": 19.839,
+            "interval_seconds": 0.2,
+            "median_rate_ratio": 9.367588217019966
+          },
+          {
+            "view": 92,
+            "image": "00000500.png",
+            "seconds": 20.056,
+            "interval_seconds": 0.217,
+            "median_rate_ratio": 23.591157649147785
+          },
+          {
+            "view": 105,
+            "image": "00000572.png",
+            "seconds": 22.914,
+            "interval_seconds": 0.2,
+            "median_rate_ratio": 8.640830789807286
+          },
+          {
+            "view": 126,
+            "image": "00000694.png",
+            "seconds": 27.468,
+            "interval_seconds": 0.232,
+            "median_rate_ratio": 11.935881449049347
+          },
+          {
+            "view": 127,
+            "image": "00000700.png",
+            "seconds": 27.668,
+            "interval_seconds": 0.2,
+            "median_rate_ratio": 12.183034550908056
+          }
+        ],
+        "warning": "poses_require_temporal_review",
+        "heuristic_only": true,
+        "metric_scale": null,
+        "navigation_qualified": false,
+        "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+      },
+      "poses_interpolated": false,
+      "navigation_qualified": false,
+      "execution_qualified": false,
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 15.056455054026884,
+        "passed": true
+      },
+      "intrinsics_condition": {
+        "passed": true,
+        "focal_ratio": 1.0,
+        "horizontal_fov_degrees": 90.0,
+        "vertical_fov_degrees": 58.71550708558255,
+        "physical_calibration_verified": false
+      }
+    }
+  ],
+  "camera": "fixed f960 SIMPLE_PINHOLE",
+  "physical_calibration_verified": false,
+  "no_autoaccept": true
+}

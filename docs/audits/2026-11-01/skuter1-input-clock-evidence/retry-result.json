@@ -1,0 +1,40 @@
+{
+  "elapsed_seconds": 449.53100000007544,
+  "pid": 47296,
+  "exit_code": 1,
+  "stop_reason": "resource_guard",
+  "final_state": {
+    "phase": "failed",
+    "error": "resource_guard",
+    "updated_at": 1793526184.8607893
+  },
+  "source_before": {
+    "COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce"
+  },
+  "source_after": {
+    "COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce"
+  },
+  "source_unchanged": true,
+  "protected_before": {
+    "control.json": "0407672a9e12b7a29f1a4dab98a9a0bc72dd4b67f8717d62b2259e772650834f",
+    "START": "8b43ec9dba5945f6d33fcfc62e9228da9198ff4fe3187b466e35519feafc77bc",
+    "worker.log": "ace1c7cb6c99e663cbf3f14e3069db9481086a43347e2afc402fc40dfc6b04bc"
+  },
+  "protected_after": {
+    "control.json": "0407672a9e12b7a29f1a4dab98a9a0bc72dd4b67f8717d62b2259e772650834f",
+    "START": "8b43ec9dba5945f6d33fcfc62e9228da9198ff4fe3187b466e35519feafc77bc",
+    "worker.log": "ace1c7cb6c99e663cbf3f14e3069db9481086a43347e2afc402fc40dfc6b04bc"
+  },
+  "protected_unchanged": true,
+  "log_bytes": 83365,
+  "device_commands": 0,
+  "navigation_prepared": false
+}

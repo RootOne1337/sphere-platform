@@ -2,6 +2,7 @@
 # ВЛАДЕЛЕЦ: TZ-03 SPLIT-3. H.264 NAL unit frame types для приоритизации backpressure.
 from __future__ import annotations
 
+import re
 import time
 from enum import IntEnum
 
@@ -9,48 +10,122 @@ from enum import IntEnum
 class FrameType(IntEnum):
     """H.264 NAL unit types для приоритизации."""
     UNKNOWN = 0
-    NON_IDR = 1      # P-frame — можно дропать
-    IDR_SLICE = 5    # I-frame — ключевой, НЕЛЬЗЯ дропать
+    NON_IDR = 1      # May reference an earlier picture; never drop in isolation.
+    IDR_SLICE = 5    # Decoder refresh point, still subject to queue bounds.
     SEI = 6          # SEI metadata — можно дропать
     SPS = 7          # SPS — критично для декодера
     PPS = 8          # PPS — критично для декодера
 
 
-def detect_nal_type(data: bytes) -> FrameType:
-    """Определить тип NAL unit по первым байтам (после start code)."""
-    if len(data) < 5:
+_SPHERE_FRAME_HEADERS = {0x01: 14, 0x02: 30}
+_MAX_CAPTURE_PAYLOAD = 1024 * 1024
+_ANNEX_B_START_CODE_3 = b"\x00\x00\x01"
+_ANNEX_B_START_CODE_4 = b"\x00\x00\x00\x01"
+_START_CODES = re.compile(b"\x00\x00\x00\x01|\x00\x00\x01")
+
+
+def _unwrap_sphere_frame(data: bytes) -> tuple[bytes, bool]:
+    """Return the H.264 payload and keyframe flag for a complete Sphere frame."""
+    if not data or data[0] not in _SPHERE_FRAME_HEADERS:
+        return data, False
+    header_size = _SPHERE_FRAME_HEADERS[data[0]]
+    if len(data) <= header_size:
+        return b"", False
+    payload_size = int.from_bytes(data[10:14], "big")
+    if payload_size != len(data) - header_size:
+        return b"", False
+    if data[0] == 2 and (data[1] & ~1 or not any(data[14:30]) or payload_size > _MAX_CAPTURE_PAYLOAD):
+        return b"", False
+    # Never search a UUID/header for accidental Annex-B start codes.
+    return data[header_size:], bool(data[1] & 0x01)
+
+
+def _detect_nal_type(payload: bytes) -> FrameType:
+    if len(payload) < 4:
         return FrameType.UNKNOWN
 
-    # Найти start code 0x00 0x00 0x00 0x01
-    start = -1
-    for i in range(len(data) - 4):
-        if data[i : i + 4] == b"\x00\x00\x00\x01":
-            start = i + 4
+    # Annex B permits both 3-byte and 4-byte start codes. Check four bytes first
+    # so a 4-byte prefix is not mistaken for its overlapping 3-byte suffix.
+    nal_offset = -1
+    for i in range(len(payload) - 2):
+        if payload[i : i + 4] == _ANNEX_B_START_CODE_4:
+            nal_offset = i + 4
+            break
+        if payload[i : i + 3] == _ANNEX_B_START_CODE_3:
+            nal_offset = i + 3
             break
 
-    if start == -1 or start >= len(data):
+    if nal_offset < 0 or nal_offset >= len(payload):
         return FrameType.UNKNOWN
 
-    nal_unit_type = data[start] & 0x1F
+    nal_unit_type = payload[nal_offset] & 0x1F
     try:
         return FrameType(nal_unit_type)
     except ValueError:
         return FrameType.UNKNOWN
 
 
+def detect_nal_type(data: bytes) -> FrameType:
+    """Detect an H.264 NAL in raw Annex-B bytes or the Sphere binary wire frame."""
+    payload, _ = _unwrap_sphere_frame(data)
+    return _detect_nal_type(payload)
+
+
+def detect_first_nal_type(data: bytes) -> FrameType:
+    """Classify an access unit's leading NAL in O(1), for hot-path telemetry."""
+    payload, _ = _unwrap_sphere_frame(data)
+    if payload.startswith(_ANNEX_B_START_CODE_4):
+        nal_offset = 4
+    elif payload.startswith(_ANNEX_B_START_CODE_3):
+        nal_offset = 3
+    else:
+        return FrameType.UNKNOWN
+    if nal_offset >= len(payload):
+        return FrameType.UNKNOWN
+    try:
+        return FrameType(payload[nal_offset] & 0x1F)
+    except ValueError:
+        return FrameType.UNKNOWN
+
+
 class VideoFrame:
-    __slots__ = ("data", "nal_type", "timestamp", "device_id")
+    __slots__ = ("data", "nal_type", "nal_types", "keyframe_flag", "timestamp", "device_id")
 
     def __init__(self, data: bytes, device_id: str) -> None:
         self.data = data
         self.device_id = device_id
-        self.nal_type = detect_nal_type(data)
+        payload, self.keyframe_flag = _unwrap_sphere_frame(data)
+        self.nal_type = _detect_nal_type(payload)
+        # MediaCodec outputs complete access units: a leading SEI/AUD must not
+        # hide a dependent picture or an IDR later in the same packet.
+        self.nal_types = frozenset(
+            payload[match.end()] & 0x1F
+            for match in _START_CODES.finditer(payload) if match.end() < len(payload)
+        )
         self.timestamp = time.monotonic()
 
     @property
+    def is_keyframe(self) -> bool:
+        return FrameType.IDR_SLICE in self.nal_types
+
+    @property
+    def is_configuration(self) -> bool:
+        return bool(self.nal_types & {7, 8}) and self.nal_types <= {6, 7, 8, 9}
+
+    @property
+    def is_picture(self) -> bool:
+        # Unrecognized packets are conservatively dependent. SEI/AUD alone do
+        # not contain pictures; never mistake mixed SEI + VCL for metadata.
+        return not self.nal_types or not self.nal_types <= {6, 7, 8, 9}
+
+    @property
     def is_critical(self) -> bool:
-        """I-frame, SPS, PPS — нельзя дропать."""
-        return self.nal_type in (FrameType.IDR_SLICE, FrameType.SPS, FrameType.PPS)
+        """Protect codec configuration and keyframes from latency/backpressure drops."""
+        return self.keyframe_flag or self.nal_type in (
+            FrameType.IDR_SLICE,
+            FrameType.SPS,
+            FrameType.PPS,
+        )
 
     @property
     def size_kb(self) -> float:

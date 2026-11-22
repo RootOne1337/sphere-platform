@@ -1,0 +1,18 @@
+Code revision: 8692a5863bba9646b480dd0db1636566c5bc7aa0
+Source: https://github.com/RootOne1337/sphere-platform/actions/runs/34387311587
+
+Tests	Unit and real-service regression tests	2026-09-09T18:12:40.7293245Z tests/production/test_pc_result_protocol.py::test_unsupported_pc_command_reports_failure_without_execution[ld_lauch] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T18:12:41.1072717Z tests/production/test_pc_result_protocol.py::test_unsupported_pc_command_reports_failure_without_execution[adb_exec] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T18:12:41.4787390Z tests/production/test_pc_result_protocol.py::test_unsupported_pc_command_reports_failure_without_execution[unsupported_future_command] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:37.8726132Z tests/test_pc_agent_arch.py::TestExponentialBackoff::test_backoff_sequence PASSED [ 59%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.5711197Z tests/test_pc_client_recovery.py::test_send_failure_reconnects_even_when_receiver_is_still_open PASSED [ 65%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.5767140Z tests/test_pc_client_recovery.py::test_auth_write_failure_cleans_state_and_next_session_recovers PASSED [ 65%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.5803700Z tests/test_pc_client_recovery.py::test_cancellation_during_auth_cleans_state PASSED [ 65%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.5838757Z tests/test_pc_client_recovery.py::test_stop_interrupts_open_circuit_without_reconnecting PASSED [ 65%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.6334547Z tests/test_pc_client_recovery.py::test_repeated_failed_connects_do_not_leave_stop_waiters PASSED [ 65%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.7388362Z tests/test_pc_client_recovery.py::test_clean_close_uses_delay_before_next_connection PASSED [ 65%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.7432933Z tests/test_pc_client_recovery.py::test_receive_end_cleans_transport_tasks[False] PASSED [ 65%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.7487427Z tests/test_pc_client_recovery.py::test_receive_end_cleans_transport_tasks[True] PASSED [ 65%]
+Tests	Unit and real-service regression tests	2026-09-09T18:14:47.7537636Z tests/test_pc_client_recovery.py::test_concurrent_producers_keep_auth_first_and_serialize_sends PASSED [ 66%]
+Tests	Unit and real-service regression tests	2026-09-09T18:15:09.8272167Z Required test coverage of 65% reached. Total coverage: 69.27%
+Tests	Unit and real-service regression tests	2026-09-09T18:15:09.8272672Z ================= 1334 passed, 4 warnings in 266.92s (0:04:26) =================

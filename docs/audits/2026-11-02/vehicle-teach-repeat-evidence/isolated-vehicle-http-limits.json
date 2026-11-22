@@ -1,0 +1,43 @@
+{
+  "schema": "sphere-production-http-replay-evidence-limitations-v1",
+  "scope": "ONE isolated production-code HTTP replay; no Android, source job mutation, production API call, or physical actions",
+  "sourceCommit": "432aa6a176e731912ca6337ab8b9fd1300ad764d",
+  "productionPort3342ListenerAfter": 38860,
+  "hostMonitor": {
+    "samples": 80,
+    "findings": 0,
+    "minAvailableRamGiB": 10.904563903808594
+  },
+  "actualWorkerPrivate": {
+    "peakBytes": 121520128,
+    "sampling": "after each completed observation; not continuous"
+  },
+  "outerPrivateCounter": {
+    "peakBytes": 946176,
+    "scope": "launched venv handle; not valid as actual worker peak"
+  },
+  "hardJobMemory": {
+    "configuredBytes": 2147483648,
+    "assigned": "launched venv handle",
+    "actualWorkerMembershipSeparatelyRecorded": false
+  },
+  "continuousWorkerPrivateCapProven": false,
+  "prelaunchScaffoldFailure": {
+    "reason": "wrong source-proof path scripts/pilot/route_reference_view.py; corrected to motor_worker before runtime-freeze",
+    "workerOrServerLaunched": false
+  },
+  "sameVideo": true,
+  "queryCount": 277,
+  "queryCountNotSameAsFair159": true,
+  "sourceClockUsedForSchedulingOnly": true,
+  "poseValidityClock": "actual perf_counter wall time",
+  "deterministicControllerAudit": {
+    "compared": 47,
+    "mismatches": 0,
+    "clockBasis": "recorded_actual_received_at_plus_measured_HTTP_handler_computeMs_upper_bound; no_source_clock; no_new_inference",
+    "newHttp": false,
+    "newVisionInference": false
+  },
+  "terminalInterpretation": "Forward reacquisition agrees with same-video accepted camera trace; open-loop source continues through unknown while no motion feedback or commanded braking is applied. This is not independent pose truth or a completed vehicle route.",
+  "noRepeat": true
+}

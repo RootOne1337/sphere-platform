@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T09:06:28.752735+00:00",
+  "sourceRevision": "0ace2888ae7b532e40130248525d246c9b9fb230",
+  "runtimeInstalled": false,
+  "scope": "Source preview in ordinary Chrome; not an installed production observation. Preview uses3015 API/WS and an older display build stamp.",
+  "paintedSurfaceBackgroundImages": "none",
+  "enterOpacityObserved": 1,
+  "enterAnimation": "sphere-glass-enter",
+  "palettes": [
+    {
+      "theme": "neo-dark",
+      "rootOverflow": false,
+      "background": "rgba(15, 17, 21, 0.44)",
+      "backgroundImage": "none",
+      "filter": "blur(36px) saturate(1.12)",
+      "file": "contrast-neo-dark.png",
+      "sampledMinimumContrast": 14.62,
+      "contrastSampleCount": 6
+    },
+    {
+      "theme": "graphite",
+      "rootOverflow": false,
+      "background": "rgba(26, 27, 31, 0.44)",
+      "backgroundImage": "none",
+      "filter": "blur(36px) saturate(1.12)",
+      "file": "contrast-graphite.png",
+      "sampledMinimumContrast": 13.31,
+      "contrastSampleCount": 6
+    },
+    {
+      "theme": "mist",
+      "rootOverflow": false,
+      "background": "rgba(251, 252, 253, 0.44)",
+      "backgroundImage": "none",
+      "filter": "blur(36px) saturate(1.12)",
+      "file": "contrast-mist.png",
+      "sampledMinimumContrast": 6.62,
+      "contrastSampleCount": 6
+    },
+    {
+      "theme": "sandstone",
+      "rootOverflow": false,
+      "background": "rgba(252, 251, 248, 0.44)",
+      "backgroundImage": "none",
+      "filter": "blur(36px) saturate(1.12)",
+      "file": "contrast-sandstone.png",
+      "sampledMinimumContrast": 6.27,
+      "contrastSampleCount": 6
+    }
+  ],
+  "settings": {
+    "strengthNotes": [
+      {
+        "opacity": ".78",
+        "panelOpacity": ".90",
+        "blur": "20px"
+      },
+      {
+        "opacity": ".62",
+        "panelOpacity": ".82",
+        "blur": "28px"
+      },
+      {
+        "opacity": ".44",
+        "panelOpacity": ".72",
+        "blur": "36px"
+      }
+    ],
+    "solidCheck": {
+      "surface": "solid",
+      "backgroundImage": "none",
+      "filter": "none"
+    },
+    "savedCheck": {
+      "surface": "glass",
+      "opacity": ".44",
+      "filter": "blur(36px) saturate(1.12)"
+    }
+  },
+  "accessibility": {
+    "reducedGlass": {
+      "reducedTransparency": true,
+      "reducedMotion": true,
+      "background": "rgb(252, 251, 248)",
+      "filter": "none",
+      "animation": "sphere-glass-enter"
+    },
+    "mobileGlass": {
+      "width": 390,
+      "height": 844,
+      "viewport": 844,
+      "rootOverflow": false,
+      "backgroundImage": "none"
+    }
+  },
+  "reducedMotionObservedDurationSeconds": 1e-05,
+  "localValidation": {
+    "typeScriptPassed": true,
+    "appearanceContractTestsPassed": 15
+  },
+  "physicalPhoneTested": false,
+  "nativeLiquidGlassClaimed": false,
+  "productionAccepted": false,
+  "limits": [
+    "Pixel-adjacent contrast samples are finite and do not cover all arbitrary backdrops.",
+    "No physical mobile IME/Safari/Firefox.",
+    "No transport or APK changes in the material correction."
+  ]
+}

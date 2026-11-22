@@ -1,0 +1,52 @@
+F.F.....                                                                 [100%]
+================================== FAILURES ===================================
+_ test_generated_config_loads_backend_settings_after_real_compose_render[None-full] _
+tests\deployment\test_compose_runtime_settings.py:46: in test_generated_config_loads_backend_settings_after_real_compose_render
+    assert parsed.returncode == 0, parsed.stdout + parsed.stderr
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 1, in <module>
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\core\config.py", line 105, in <module>
+E         settings = Settings()  # type: ignore[call-arg]
+E                    ^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pydantic_settings\main.py", line 84, in __init__
+E         super().__init__(
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pydantic\main.py", line 212, in __init__
+E         validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E     pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+E     DEV_SKIP_AUTH
+E       Input should be a valid boolean, unable to interpret input [type=bool_parsing, input_value='', input_type=str]
+E         For further information visit https://errors.pydantic.dev/2.9/v/bool_parsing
+E
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Script...input_value=\'\', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.9/v/bool_parsing\n').returncode
+_ test_generated_config_loads_backend_settings_after_real_compose_render[-full] _
+tests\deployment\test_compose_runtime_settings.py:46: in test_generated_config_loads_backend_settings_after_real_compose_render
+    assert parsed.returncode == 0, parsed.stdout + parsed.stderr
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 1, in <module>
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\core\config.py", line 105, in <module>
+E         settings = Settings()  # type: ignore[call-arg]
+E                    ^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pydantic_settings\main.py", line 84, in __init__
+E         super().__init__(
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pydantic\main.py", line 212, in __init__
+E         validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E     pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+E     DEV_SKIP_AUTH
+E       Input should be a valid boolean, unable to interpret input [type=bool_parsing, input_value='', input_type=str]
+E         For further information visit https://errors.pydantic.dev/2.9/v/bool_parsing
+E
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Script...input_value=\'\', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.9/v/bool_parsing\n').returncode
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_compose_runtime_settings.py::test_generated_config_loads_backend_settings_after_real_compose_render[None-full]
+FAILED tests/deployment/test_compose_runtime_settings.py::test_generated_config_loads_backend_settings_after_real_compose_render[-full]
+2 failed, 6 passed, 1 warning in 6.16s

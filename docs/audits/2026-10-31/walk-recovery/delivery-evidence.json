@@ -1,0 +1,1471 @@
+{
+  "schema": "sphere-live-recovery-evidence-v1",
+  "baseline": "3f0076db",
+  "date": "2026-10-31",
+  "timezone": "Asia/Yekaterinburg",
+  "clientVersion": "walk_live_v6",
+  "physicalDeviceActions": 0,
+  "newRealGamePassVerified": false,
+  "liveReport": {
+    "id": "5e6c6367196f4e4f9f2cdd67545c0952",
+    "clientVersion": "walk_live_v5",
+    "stop": "walk_relocalization_timeout",
+    "inputFailure": null,
+    "release": "closed",
+    "sourceSequence": 1101,
+    "sourceAgeMs": 1.7000000476837158,
+    "observationCount": 425,
+    "retainedScalarObservations": 213,
+    "summarySha256": "baffe1dd1b716af9f77bef43b17cb8fa3e2b4a388badaab9baf2c22c29881632",
+    "archiveSha256": "f7a3abc4f7faeb2d4d6d966a1e7258b086ad3001068e874292fd057f183e361f",
+    "stageSummary": {
+      "camera_command": {
+        "count": 38,
+        "durationMs": 0,
+        "maxAgeMs": 0,
+        "maxDurationMs": 0
+      },
+      "camera_result": {
+        "count": 38,
+        "durationMs": 0,
+        "maxAgeMs": 0,
+        "maxDurationMs": 0
+      },
+      "decision_expired": {
+        "count": 21,
+        "durationMs": 0,
+        "maxAgeMs": 600,
+        "maxDurationMs": 0
+      },
+      "http": {
+        "count": 440,
+        "durationMs": 20379.400000452995,
+        "maxAgeMs": 489.2999999523163,
+        "maxDurationMs": 318.5
+      },
+      "input_command": {
+        "count": 424,
+        "durationMs": 0,
+        "maxAgeMs": 247,
+        "maxDurationMs": 0
+      },
+      "input_open": {
+        "count": 1,
+        "durationMs": 0,
+        "maxAgeMs": 0,
+        "maxDurationMs": 0
+      },
+      "input_ready": {
+        "count": 1,
+        "durationMs": 0,
+        "maxAgeMs": 0,
+        "maxDurationMs": 0
+      },
+      "jpeg": {
+        "count": 446,
+        "durationMs": 9577.699999332428,
+        "maxAgeMs": 600,
+        "maxDurationMs": 600
+      },
+      "neutral_wait": {
+        "count": 46,
+        "durationMs": 0,
+        "maxAgeMs": 0,
+        "maxDurationMs": 0
+      },
+      "source_gap": {
+        "count": 45,
+        "durationMs": 7598.500000238419,
+        "maxAgeMs": 0,
+        "maxDurationMs": 651.7000000476837
+      },
+      "stop": {
+        "count": 1,
+        "durationMs": 0,
+        "maxAgeMs": 1.7000000476837158,
+        "maxDurationMs": 0
+      }
+    }
+  },
+  "exactFrames": {
+    "geometrySha256": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+    "retained": 12,
+    "tail": [
+      {
+        "sequence": 1064,
+        "poseState": "unknown",
+        "poseReason": "route_frame_expired_during_localization",
+        "inliers": 0,
+        "computeMs": 290.4169999528676,
+        "plan": {
+          "phase": "waiting",
+          "reason": "walk_relocalizing_neutral",
+          "stick": [
+            0.0,
+            0.0
+          ],
+          "progressFraction": 0.2190548731665883,
+          "motionActive": true,
+          "motionSeconds": 28.658276799833402
+        }
+      },
+      {
+        "sequence": 1076,
+        "poseState": "unknown",
+        "poseReason": "route_frame_expired_during_localization",
+        "inliers": 0,
+        "computeMs": 274.27550009451807,
+        "plan": {
+          "phase": "waiting",
+          "reason": "walk_relocalizing_neutral",
+          "stick": [
+            0.0,
+            0.0
+          ],
+          "progressFraction": 0.2190548731665883,
+          "motionActive": false,
+          "motionSeconds": 28.658276799833402
+        }
+      },
+      {
+        "sequence": 1088,
+        "poseState": "localized",
+        "poseReason": "relative_camera_pose_not_clearance_or_arrival",
+        "inliers": 89,
+        "computeMs": 138.357000076212,
+        "plan": {
+          "phase": "waiting",
+          "reason": "walk_relocalizing_neutral",
+          "stick": [
+            0.0,
+            0.0
+          ],
+          "progressFraction": 0.21981689596879803,
+          "motionActive": false,
+          "motionSeconds": 28.658276799833402
+        }
+      },
+      {
+        "sequence": 1094,
+        "poseState": "unknown",
+        "poseReason": "route_observation_gap",
+        "inliers": 0,
+        "computeMs": 0.687299994751811,
+        "plan": {
+          "phase": "waiting",
+          "reason": "walk_relocalizing_neutral",
+          "stick": [
+            0.0,
+            0.0
+          ],
+          "progressFraction": 0.2190548731665883,
+          "motionActive": false,
+          "motionSeconds": 28.658276799833402
+        }
+      }
+    ]
+  },
+  "tests": {
+    "frontend": {
+      "success": true,
+      "passed": 134,
+      "suites": 13,
+      "sha256": "fbdc84c9528b9a25b2caee3787263e7075e66533c01cf783e1818864ecc9fb10"
+    },
+    "python": {
+      "passed": 160,
+      "skipped": 1,
+      "subtests": 60,
+      "xmlSha256": "b156e7fd1cb61aa175f09fb403dc53762d09550e7ff3c2f9b39253870d60f6b6",
+      "logSha256": "47c8d1b362e555d61ba48c12ac825591a7b982e4370fdedfbfb33da5991e9f9d"
+    }
+  },
+  "descriptorComparisons": [
+    {
+      "path": ".local-pilot/walk-recovery-20261030-2358/descriptor-cost-v1/report.json",
+      "sha256": "e615d84ef78712a1193750f6c5a8821a89320424c70a13224b8118bab3148feb",
+      "value": {
+        "schema": "sphere-exact-live-recovery-cost-v1",
+        "physicalActions": 0,
+        "realQueryImages": true,
+        "offline": true,
+        "absoluteAccuracyVerified": false,
+        "priorReference": 33,
+        "priorFromPreviousQualifiedImage": true,
+        "archiveSha256": "f7a3abc4f7faeb2d4d6d966a1e7258b086ad3001068e874292fd057f183e361f",
+        "routeSha256": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+        "cases": [
+          {
+            "threads": 1,
+            "candidates": 8,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 109.79629994835705,
+            "solveMs": 147.12710003368556,
+            "totalMs": 256.9233999820426,
+            "inliers": 86,
+            "center": [
+              -2.8688451475019514,
+              0.414137289691213,
+              -3.263328664085589
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 3,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 120.45829999260604,
+            "solveMs": 86.47360000759363,
+            "totalMs": 206.93190000019968,
+            "inliers": 89,
+            "center": [
+              -2.869350626822778,
+              0.4153155407858849,
+              -3.262817562304588
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 8,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 120.33790000714362,
+            "solveMs": 133.8099999120459,
+            "totalMs": 254.1478999191895,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 3,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 131.8666998995468,
+            "solveMs": 89.42560001742095,
+            "totalMs": 221.29229991696775,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 8,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 128.7213999312371,
+            "solveMs": 129.53290005680174,
+            "totalMs": 258.25429998803884,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 3,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 129.5430000172928,
+            "solveMs": 78.62049993127584,
+            "totalMs": 208.16349994856864,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 8,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 115.91669998597354,
+            "solveMs": 121.46550009492785,
+            "totalMs": 237.38220008090138,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 3,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 118.11070004478097,
+            "solveMs": 72.02189997769892,
+            "totalMs": 190.1326000224799,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 8,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 79.58890008740127,
+            "solveMs": 91.34089993312955,
+            "totalMs": 170.92980002053082,
+            "inliers": 86,
+            "center": [
+              -2.8688451475019514,
+              0.414137289691213,
+              -3.263328664085589
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 3,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 73.215699987486,
+            "solveMs": 68.29830002970994,
+            "totalMs": 141.51400001719594,
+            "inliers": 89,
+            "center": [
+              -2.869350626822778,
+              0.4153155407858849,
+              -3.262817562304588
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 8,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 105.67059996537864,
+            "solveMs": 121.17339996621013,
+            "totalMs": 226.84399993158877,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 3,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 93.22249994147569,
+            "solveMs": 72.32559996191412,
+            "totalMs": 165.5480999033898,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 8,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 85.37590003106743,
+            "solveMs": 110.42290006298572,
+            "totalMs": 195.79880009405315,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 3,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 91.22699999716133,
+            "solveMs": 68.51070001721382,
+            "totalMs": 159.73770001437515,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 8,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 91.89360006712377,
+            "solveMs": 102.1702999714762,
+            "totalMs": 194.06390003859997,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 3,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 88.73750001657754,
+            "solveMs": 77.0767000503838,
+            "totalMs": 165.81420006696135,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 8,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 84.8200999898836,
+            "solveMs": 119.8455000994727,
+            "totalMs": 204.6656000893563,
+            "inliers": 86,
+            "center": [
+              -2.8688451475019514,
+              0.414137289691213,
+              -3.263328664085589
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 3,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 76.40200003515929,
+            "solveMs": 81.25499996822327,
+            "totalMs": 157.65700000338256,
+            "inliers": 89,
+            "center": [
+              -2.869350626822778,
+              0.4153155407858849,
+              -3.262817562304588
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 8,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 71.69120002072304,
+            "solveMs": 87.68050000071526,
+            "totalMs": 159.3717000214383,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 3,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 70.75110008008778,
+            "solveMs": 70.33309992402792,
+            "totalMs": 141.0842000041157,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 8,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 71.68579997960478,
+            "solveMs": 89.10620003007352,
+            "totalMs": 160.7920000096783,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 3,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 74.04380000662059,
+            "solveMs": 69.83769999351352,
+            "totalMs": 143.8815000001341,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 8,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 66.41890003811568,
+            "solveMs": 97.4362000124529,
+            "totalMs": 163.85510005056858,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 3,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 65.96070004161447,
+            "solveMs": 68.86250001844019,
+            "totalMs": 134.82320006005466,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "path": ".local-pilot/walk-recovery-20261030-2358/descriptor-cost-v2/report.json",
+      "sha256": "691a872770305454dc71043631609bdb501e44ec7badd599fd94c90272c1e7ee",
+      "value": {
+        "schema": "sphere-exact-live-recovery-cost-v1",
+        "physicalActions": 0,
+        "realQueryImages": true,
+        "offline": true,
+        "absoluteAccuracyVerified": false,
+        "priorReference": 33,
+        "priorFromPreviousQualifiedImage": true,
+        "archiveSha256": "f7a3abc4f7faeb2d4d6d966a1e7258b086ad3001068e874292fd057f183e361f",
+        "routeSha256": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9",
+        "cases": [
+          {
+            "threads": 1,
+            "candidates": 8,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 114.29940001107752,
+            "solveMs": 123.36129997856915,
+            "totalMs": 237.66069998964667,
+            "inliers": 86,
+            "center": [
+              -2.8688451475019514,
+              0.414137289691213,
+              -3.263328664085589
+            ],
+            "rotation": [
+              [
+                0.9447707712911143,
+                0.021530050293087726,
+                -0.32702392366365196
+              ],
+              [
+                -0.023617950432425327,
+                0.9997181418169869,
+                -0.0024144024855439136
+              ],
+              [
+                0.32687976708778477,
+                0.010004691717779879,
+                0.9450129755787842
+              ]
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 3,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 113.6187999509275,
+            "solveMs": 80.40400000754744,
+            "totalMs": 194.02279995847493,
+            "inliers": 89,
+            "center": [
+              -2.869350626822778,
+              0.4153155407858849,
+              -3.262817562304588
+            ],
+            "rotation": [
+              [
+                0.9445627871553923,
+                0.02097931931907234,
+                -0.3276598988007922
+              ],
+              [
+                -0.0230393450074836,
+                0.9997316633681194,
+                -0.002406208810421459
+              ],
+              [
+                0.32752149502416344,
+                0.009821884754038166,
+                0.9447926761343016
+              ]
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 8,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 112.41870000958443,
+            "solveMs": 111.43930000253022,
+            "totalMs": 223.85800001211464,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ],
+            "rotation": [
+              [
+                0.9449387658975941,
+                0.021442001856889516,
+                -0.32654397752875647
+              ],
+              [
+                -0.02353247171473637,
+                0.9997200656074827,
+                -0.0024521820416888588
+              ],
+              [
+                0.3263999869468855,
+                0.01000154878704269,
+                0.945178828340401
+              ]
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 3,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 155.554800061509,
+            "solveMs": 82.12179993279278,
+            "totalMs": 237.6765999943018,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ],
+            "rotation": [
+              [
+                0.9449387658975941,
+                0.021442001856889516,
+                -0.32654397752875647
+              ],
+              [
+                -0.02353247171473637,
+                0.9997200656074827,
+                -0.0024521820416888588
+              ],
+              [
+                0.3263999869468855,
+                0.01000154878704269,
+                0.945178828340401
+              ]
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 8,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 113.02829999476671,
+            "solveMs": 113.81880007684231,
+            "totalMs": 226.84710007160902,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ],
+            "rotation": [
+              [
+                0.9446794944092413,
+                0.02145025736013231,
+                -0.32729274251331075
+              ],
+              [
+                -0.023627458865857123,
+                0.9997172482835592,
+                -0.0026770640430310772
+              ],
+              [
+                0.32714277621589394,
+                0.010262063317498576,
+                0.9449191997341493
+              ]
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 3,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 111.8557999143377,
+            "solveMs": 81.33610000368208,
+            "totalMs": 193.19189991801977,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ],
+            "rotation": [
+              [
+                0.9446794944092413,
+                0.02145025736013231,
+                -0.32729274251331075
+              ],
+              [
+                -0.023627458865857123,
+                0.9997172482835592,
+                -0.0026770640430310772
+              ],
+              [
+                0.32714277621589394,
+                0.010262063317498576,
+                0.9449191997341493
+              ]
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 8,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 113.7200000230223,
+            "solveMs": 131.80969993118197,
+            "totalMs": 245.52969995420426,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ],
+            "rotation": [
+              [
+                0.9447579655023969,
+                0.021423557350191608,
+                -0.32706791008938
+              ],
+              [
+                -0.023500130158391856,
+                0.9997209574619816,
+                -0.002398143831641064
+              ],
+              [
+                0.32692526745773315,
+                0.009951803945096972,
+                0.9449977942280754
+              ]
+            ]
+          },
+          {
+            "threads": 1,
+            "candidates": 3,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 128.54489998426288,
+            "solveMs": 80.71970008313656,
+            "totalMs": 209.26460006739944,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ],
+            "rotation": [
+              [
+                0.9447579655023969,
+                0.021423557350191608,
+                -0.32706791008938
+              ],
+              [
+                -0.023500130158391856,
+                0.9997209574619816,
+                -0.002398143831641064
+              ],
+              [
+                0.32692526745773315,
+                0.009951803945096972,
+                0.9449977942280754
+              ]
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 8,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 73.42270005028695,
+            "solveMs": 90.00869991723448,
+            "totalMs": 163.43139996752143,
+            "inliers": 86,
+            "center": [
+              -2.8688451475019514,
+              0.414137289691213,
+              -3.263328664085589
+            ],
+            "rotation": [
+              [
+                0.9447707712911143,
+                0.021530050293087726,
+                -0.32702392366365196
+              ],
+              [
+                -0.023617950432425327,
+                0.9997181418169869,
+                -0.0024144024855439136
+              ],
+              [
+                0.32687976708778477,
+                0.010004691717779879,
+                0.9450129755787842
+              ]
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 3,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 75.28610003646463,
+            "solveMs": 65.28959993738681,
+            "totalMs": 140.57569997385144,
+            "inliers": 89,
+            "center": [
+              -2.869350626822778,
+              0.4153155407858849,
+              -3.262817562304588
+            ],
+            "rotation": [
+              [
+                0.9445627871553923,
+                0.02097931931907234,
+                -0.3276598988007922
+              ],
+              [
+                -0.0230393450074836,
+                0.9997316633681194,
+                -0.002406208810421459
+              ],
+              [
+                0.32752149502416344,
+                0.009821884754038166,
+                0.9447926761343016
+              ]
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 8,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 77.58119993377477,
+            "solveMs": 85.06399998441339,
+            "totalMs": 162.64519991818815,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ],
+            "rotation": [
+              [
+                0.9449387658975941,
+                0.021442001856889516,
+                -0.32654397752875647
+              ],
+              [
+                -0.02353247171473637,
+                0.9997200656074827,
+                -0.0024521820416888588
+              ],
+              [
+                0.3263999869468855,
+                0.01000154878704269,
+                0.945178828340401
+              ]
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 3,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 79.67890007421374,
+            "solveMs": 68.86040000244975,
+            "totalMs": 148.5393000766635,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ],
+            "rotation": [
+              [
+                0.9449387658975941,
+                0.021442001856889516,
+                -0.32654397752875647
+              ],
+              [
+                -0.02353247171473637,
+                0.9997200656074827,
+                -0.0024521820416888588
+              ],
+              [
+                0.3263999869468855,
+                0.01000154878704269,
+                0.945178828340401
+              ]
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 8,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 78.74140003696084,
+            "solveMs": 106.08199995476753,
+            "totalMs": 184.82339999172837,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ],
+            "rotation": [
+              [
+                0.9446794944092413,
+                0.02145025736013231,
+                -0.32729274251331075
+              ],
+              [
+                -0.023627458865857123,
+                0.9997172482835592,
+                -0.0026770640430310772
+              ],
+              [
+                0.32714277621589394,
+                0.010262063317498576,
+                0.9449191997341493
+              ]
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 3,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 92.00169995892793,
+            "solveMs": 71.1768000619486,
+            "totalMs": 163.17850002087653,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ],
+            "rotation": [
+              [
+                0.9446794944092413,
+                0.02145025736013231,
+                -0.32729274251331075
+              ],
+              [
+                -0.023627458865857123,
+                0.9997172482835592,
+                -0.0026770640430310772
+              ],
+              [
+                0.32714277621589394,
+                0.010262063317498576,
+                0.9449191997341493
+              ]
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 8,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 93.57200004160404,
+            "solveMs": 137.90610001888126,
+            "totalMs": 231.4781000604853,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ],
+            "rotation": [
+              [
+                0.9447579655023969,
+                0.021423557350191608,
+                -0.32706791008938
+              ],
+              [
+                -0.023500130158391856,
+                0.9997209574619816,
+                -0.002398143831641064
+              ],
+              [
+                0.32692526745773315,
+                0.009951803945096972,
+                0.9449977942280754
+              ]
+            ]
+          },
+          {
+            "threads": 2,
+            "candidates": 3,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 134.83210001140833,
+            "solveMs": 119.17339998763055,
+            "totalMs": 254.00549999903888,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ],
+            "rotation": [
+              [
+                0.9447579655023969,
+                0.021423557350191608,
+                -0.32706791008938
+              ],
+              [
+                -0.023500130158391856,
+                0.9997209574619816,
+                -0.002398143831641064
+              ],
+              [
+                0.32692526745773315,
+                0.009951803945096972,
+                0.9449977942280754
+              ]
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 8,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 114.63970004115254,
+            "solveMs": 99.5512999361381,
+            "totalMs": 214.19099997729063,
+            "inliers": 86,
+            "center": [
+              -2.8688451475019514,
+              0.414137289691213,
+              -3.263328664085589
+            ],
+            "rotation": [
+              [
+                0.9447707712911143,
+                0.021530050293087726,
+                -0.32702392366365196
+              ],
+              [
+                -0.023617950432425327,
+                0.9997181418169869,
+                -0.0024144024855439136
+              ],
+              [
+                0.32687976708778477,
+                0.010004691717779879,
+                0.9450129755787842
+              ]
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 3,
+            "sequence": 1064,
+            "recordedState": "unknown",
+            "features": 1618,
+            "extractMs": 70.98459999542683,
+            "solveMs": 73.61880003008991,
+            "totalMs": 144.60340002551675,
+            "inliers": 89,
+            "center": [
+              -2.869350626822778,
+              0.4153155407858849,
+              -3.262817562304588
+            ],
+            "rotation": [
+              [
+                0.9445627871553923,
+                0.02097931931907234,
+                -0.3276598988007922
+              ],
+              [
+                -0.0230393450074836,
+                0.9997316633681194,
+                -0.002406208810421459
+              ],
+              [
+                0.32752149502416344,
+                0.009821884754038166,
+                0.9447926761343016
+              ]
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 8,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 68.2378999190405,
+            "solveMs": 83.50479998625815,
+            "totalMs": 151.74269990529865,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ],
+            "rotation": [
+              [
+                0.9449387658975941,
+                0.021442001856889516,
+                -0.32654397752875647
+              ],
+              [
+                -0.02353247171473637,
+                0.9997200656074827,
+                -0.0024521820416888588
+              ],
+              [
+                0.3263999869468855,
+                0.01000154878704269,
+                0.945178828340401
+              ]
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 3,
+            "sequence": 1076,
+            "recordedState": "unknown",
+            "features": 1572,
+            "extractMs": 67.17020005453378,
+            "solveMs": 75.31630003359169,
+            "totalMs": 142.48650008812547,
+            "inliers": 87,
+            "center": [
+              -2.849072072186209,
+              0.40939597469183375,
+              -3.2252475454844127
+            ],
+            "rotation": [
+              [
+                0.9449387658975941,
+                0.021442001856889516,
+                -0.32654397752875647
+              ],
+              [
+                -0.02353247171473637,
+                0.9997200656074827,
+                -0.0024521820416888588
+              ],
+              [
+                0.3263999869468855,
+                0.01000154878704269,
+                0.945178828340401
+              ]
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 8,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 68.61720001325011,
+            "solveMs": 88.69489992503077,
+            "totalMs": 157.31209993828088,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ],
+            "rotation": [
+              [
+                0.9446794944092413,
+                0.02145025736013231,
+                -0.32729274251331075
+              ],
+              [
+                -0.023627458865857123,
+                0.9997172482835592,
+                -0.0026770640430310772
+              ],
+              [
+                0.32714277621589394,
+                0.010262063317498576,
+                0.9449191997341493
+              ]
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 3,
+            "sequence": 1088,
+            "recordedState": "localized",
+            "features": 1607,
+            "extractMs": 90.00240010209382,
+            "solveMs": 93.68709998670965,
+            "totalMs": 183.68950008880347,
+            "inliers": 89,
+            "center": [
+              -2.8589635926728847,
+              0.41247411381076843,
+              -3.2492463243939995
+            ],
+            "rotation": [
+              [
+                0.9446794944092413,
+                0.02145025736013231,
+                -0.32729274251331075
+              ],
+              [
+                -0.023627458865857123,
+                0.9997172482835592,
+                -0.0026770640430310772
+              ],
+              [
+                0.32714277621589394,
+                0.010262063317498576,
+                0.9449191997341493
+              ]
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 8,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 75.05039998795837,
+            "solveMs": 104.18729996308684,
+            "totalMs": 179.23769995104522,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ],
+            "rotation": [
+              [
+                0.9447579655023969,
+                0.021423557350191608,
+                -0.32706791008938
+              ],
+              [
+                -0.023500130158391856,
+                0.9997209574619816,
+                -0.002398143831641064
+              ],
+              [
+                0.32692526745773315,
+                0.009951803945096972,
+                0.9449977942280754
+              ]
+            ]
+          },
+          {
+            "threads": 4,
+            "candidates": 3,
+            "sequence": 1094,
+            "recordedState": "unknown",
+            "features": 1629,
+            "extractMs": 79.02470009867102,
+            "solveMs": 68.9023999730125,
+            "totalMs": 147.92710007168353,
+            "inliers": 90,
+            "center": [
+              -2.8666080367866997,
+              0.41632715550097876,
+              -3.281141733631663
+            ],
+            "rotation": [
+              [
+                0.9447579655023969,
+                0.021423557350191608,
+                -0.32706791008938
+              ],
+              [
+                -0.023500130158391856,
+                0.9997209574619816,
+                -0.002398143831641064
+              ],
+              [
+                0.32692526745773315,
+                0.009951803945096972,
+                0.9449977942280754
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "build": {
+    "path": ".local-pilot/walk-recovery-build-20261031-v6.json",
+    "sha256": "a31d134521cbbe3d99abc5f55aef4419da16f16207b7217a88cb2a3400c6143f",
+    "value": {
+      "exit_code": 0,
+      "stopped_reason": null,
+      "source_sha_before": "82c80f932677d8616b166180e6fa9f94d0ccee96c7fb4ed28d3a941479aee80e",
+      "source_sha_after": "82c80f932677d8616b166180e6fa9f94d0ccee96c7fb4ed28d3a941479aee80e",
+      "source_unchanged": true,
+      "local_only": true,
+      "installed": false,
+      "resource_profile": {
+        "kind": "bounded_frontend_only",
+        "workers": 1,
+        "node_heap_mib": 1024,
+        "start_ram_gib": 6.5,
+        "stop_ram_gib": 5.5,
+        "max_commit_percent": 90,
+        "android_and_reconstruction_guards_unchanged": true
+      }
+    }
+  },
+  "probe": {
+    "path": ".local-pilot/walk-recovery-image-20261031-v6/probe3.json",
+    "sha256": "cdf4603114bba5c624e5a430c215115fbed817204d087fe89274106f8d1daed9",
+    "value": {
+      "outcome": "verified",
+      "physicalActions": 0,
+      "pages": 2,
+      "assets": 31,
+      "workerMatches": true,
+      "encoderWorkerMatches": true,
+      "newBundlePresent": true
+    }
+  },
+  "installation": {
+    "path": ".local-pilot/walk-recovery-image-20261031-v6/install-receipt.json",
+    "sha256": "f976ec15517d278df9d4c805302a24f5f8c9d389b8d89155cc8472dbf0fb22b4",
+    "value": {
+      "outcome": "verified",
+      "candidateImageId": "sha256:b9e288fd95618ef4b1e52e3cfa8bc8449c6d9044eb773c31453cef63a2fc9549",
+      "physicalDeviceActions": 0,
+      "pages": 2,
+      "assets": 31,
+      "uiHealthy": true,
+      "otherContainersPreserved": true,
+      "sourceMatches": true
+    }
+  },
+  "runtime": {
+    "path": ".local-pilot/walk-recovery-runtime-reload-20261031-v6-final.json",
+    "sha256": "20955f0d9bc6b43f0cf33e2f26531f3452380c5dc23c935e1a8a0dba09c2c638",
+    "value": {
+      "oldPid": 44548,
+      "watchdogPid": 4444,
+      "physicalActions": 0,
+      "sourceSha": "1b718346e08128bedccbd223351093db7da1a84e3179129efce506534fde9cda",
+      "outcome": "verified",
+      "newPid": 15224,
+      "existingAssetsUnchanged": true
+    }
+  },
+  "processorHealth": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true
+  },
+  "sourceHashes": {
+    "motor_worker/route_tracking.py": "a092226f86bdaba7414472972cc9f506221224e681872749d98af7da5266849f",
+    "motor_worker/walk_route.py": "bdcae508a94f5c3561f7ac8d31a6223cd52ab4fed2d67809fc8ca6431efb4455",
+    "scripts/pilot/route_workspace.py": "1b718346e08128bedccbd223351093db7da1a84e3179129efce506534fde9cda",
+    "frontend/src/features/stream/WalkingRoutePilot.tsx": "1f45e841fd626db8af888214bb3a8624248b6b89205c46351b0951465cab9c42",
+    "frontend/src/features/stream/walkPilot.ts": "7282d617e6e89867b46427b6224b3d4b16ab3bfe8e33aefbd566e6167e79e220",
+    "frontend/src/features/stream/walkRunDiagnostics.ts": "83298633f831a0e276a0e91d6f738b866d1e4bb744dddfeeffd00184fcda9537",
+    "scripts/pilot/check_walk_recovery_frames.py": "0160eef5004328f2f34a4810c6cc74d6c8e3d4dc75d9df2f9c8ecada83400ba0",
+    "scripts/pilot/render_walk_recovery_evidence.py": "c3f6234a33f66e8551723d53e7a99ea360b252a920e854e96a0580f9a16cb802"
+  }
+}

@@ -1,8 +1,9 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { GitBranch } from 'lucide-react';
+import { ActionRoutes } from './ActionRoutes';
 
 export function ConditionNode({ data, selected }: NodeProps) {
-  const d = data as { condition_expr?: string };
+  const d = data.action as { code?: string; check?: string };
   return (
     <div
       className={`rounded-lg border-2 p-3 bg-orange-950 min-w-36 text-center ${
@@ -15,7 +16,7 @@ export function ConditionNode({ data, selected }: NodeProps) {
         <span className="text-sm font-medium text-orange-200">Condition</span>
       </div>
       <p className="text-xs text-orange-500 font-mono truncate">
-        {d.condition_expr ?? 'true'}
+        {d.check ?? d.code ?? 'Условие не задано'}
       </p>
       {/* true_branch */}
       <Handle
@@ -35,6 +36,7 @@ export function ConditionNode({ data, selected }: NodeProps) {
         <span>true</span>
         <span>false</span>
       </div>
+      <ActionRoutes />
     </div>
   );
 }

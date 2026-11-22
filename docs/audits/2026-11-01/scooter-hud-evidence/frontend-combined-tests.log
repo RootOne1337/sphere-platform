@@ -1,0 +1,17 @@
+PASS __tests__/stream/reconstruction-recovery.test.tsx
+PASS __tests__/stream/teaching-review.test.tsx
+PASS __tests__/hudSpeedCard.test.tsx
+PASS __tests__/stream/reconstruction-comparison.test.tsx
+(node:14436) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS __tests__/stream/reconstruction-link.test.ts
+PASS __tests__/stream/reconstruction-client.test.ts
+PASS __tests__/stream/teaching-keymap.test.ts
+PASS __tests__/stream/teaching-profile-storage.test.ts
+
+Test Suites: 8 passed, 8 total
+Tests:       65 passed, 65 total
+Snapshots:   0 total
+Time:        7.472 s
+Ran all test suites matching __tests__/hudSpeedCard.test.tsx|__tests__/stream/teaching-keymap.test.ts|__tests__/stream/teaching-profile-storage.test.ts|__tests__/stream/reconstruction-recovery.test.tsx|__tests__/stream/reconstruction-client.test.ts|__tests__/stream/reconstruction-link.test.ts|__tests__/stream/teaching-review.test.tsx|__tests__/stream/reconstruction-comparison.test.tsx.
+Test results written to: ..\.local-pilot\scooter-hud-20261101\frontend-combined-tests.json

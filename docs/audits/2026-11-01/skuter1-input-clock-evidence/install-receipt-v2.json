@@ -1,0 +1,30 @@
+{
+  "outcome": "failed",
+  "imageId": "sha256:61bdd78299702ee2b812a53ebc9556cd7eac44cec0e03093efacd891da436cf2",
+  "previousImageId": "sha256:05552b04a203620f66392a8052889769c57592cc83cd613dbeee38f5bc5a8f6d",
+  "nextBuildPerformed": false,
+  "wholeCurrentFrontendCompiled": false,
+  "compiledBaseSourceSha256": "e60cc4d3df9bb9b683e1258be94699dcf0aaf341262efd032aadf308e6ec16f3",
+  "currentFrontendSourceSha256": "95397031c8d91382af6a94d9929237a9c12ea1274fa8f33cb0895294d0d6d850",
+  "patchedAssetSha256": "4a327116bda4850b2aa4241784677837eb72e744f3ffd3c0755a7741e3975769",
+  "physicalDeviceActions": 0,
+  "iabAcceptance": false,
+  "fullImageConfigUnchanged": true,
+  "baseRootFSLayersUnchanged": true,
+  "singleAdditionalLayer": "sha256:579e1925475287411306d866e1e57cf770a107ba094146907377455900a00b58",
+  "imageConfigSha256": "35508662b95fd67210e71fca260a489280c57e739743f8b57e08d08e348ecae4",
+  "inheritedUser": "1001:1001",
+  "inheritedEntrypoint": [
+    "docker-entrypoint.sh"
+  ],
+  "inheritedCmd": [
+    "node",
+    "server.js"
+  ],
+  "dockerfileSha256": "b61dbf28060b81190bfb16f35937dbb037ecd36079a1fa6f2a7b88cc1c4a0423",
+  "reason": "ui_application_config_changed",
+  "errorType": "RuntimeError",
+  "rollbackRequested": true,
+  "rollbackImageConfirmed": true,
+  "secondsAfterInstallIntent": 44.06299999996554
+}

@@ -1,0 +1,1320 @@
+{
+  "observedAt": "2026-10-02T22:12:45.393822+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "finding": "F26",
+  "sourceFixed": true,
+  "baseline": "5964fd4a6fea21be925a42028129f152d2be6dd0",
+  "backendSource": "db6be05e6fdc679cad10754347aebe18ce93921f",
+  "uiSource": "8e0aeb52755943390705bcd549ddf792643bc9ad",
+  "beforePostgres": {
+    "failed": 15,
+    "passed": 11,
+    "errors": 0,
+    "cases": 26
+  },
+  "beforeUi": {
+    "failed": 11,
+    "passed": 7,
+    "cases": 18,
+    "scope": "Old page rendered with new pure-helper controls; not a baseline implementation of those helper functions"
+  },
+  "afterPostgres": {
+    "passed": 30,
+    "failed": 0,
+    "relatedLocationGroupPassed": 40
+  },
+  "productionImagePostgres": {
+    "passed": 30,
+    "failed": 0,
+    "backendMounted": false
+  },
+  "frontend": {
+    "suitesPassed": 102,
+    "testsPassed": 893,
+    "failed": 0,
+    "skipped": 0,
+    "newLocationTests": 26,
+    "existingClearRegressionUpdated": true,
+    "typeCheckExit": 0,
+    "buildExit": 0,
+    "lintExit": 0,
+    "existingLintWarnings": 44
+  },
+  "pinnedTools": {
+    "ruff": "0.15.2",
+    "ruffBackendTestsPassed": true,
+    "mypyModulesPassed": 224,
+    "pydantic": "2.9.2"
+  },
+  "openapi": {
+    "operations": 175,
+    "paths": 137,
+    "productionImageCheckPassed": true
+  },
+  "backendImage": {
+    "source": "db6be05e6fdc679cad10754347aebe18ce93921f",
+    "image": "sphere-pilot-20260911-backend:db6be05e6fdc679cad10754347aebe18ce93921f",
+    "imageId": "sha256:906b381388f6461483c0bbd1d19d7546910958e30c3b8996b263300a35fe2b39",
+    "gitArchive": true
+  },
+  "backendInstalled": {
+    "source": "db6be05e6fdc679cad10754347aebe18ce93921f",
+    "previousSource": "cc28e9b4336af92bdf800f4c79102c219255cea3",
+    "containerId": "5f256c3a03d1ca8c4ff1b8e8642164455790cf841639905b7b28d093cc6189e5",
+    "imageId": "sha256:906b381388f6461483c0bbd1d19d7546910958e30c3b8996b263300a35fe2b39",
+    "observedAt": "2026-10-02T22:03:44.272563+00:00",
+    "ready": true,
+    "healthRevisionMatched": true,
+    "routes": {
+      "/api/v1/locations/{location_id}": [
+        "get",
+        "put",
+        "delete"
+      ],
+      "/api/v1/locations": [
+        "get",
+        "post"
+      ]
+    },
+    "onlyBackendReplaced": true,
+    "screenshotStorageConfigured": false,
+    "apkOtaTunnelsPreserved": true,
+    "browserVerified": false
+  },
+  "reviewInstalled": {
+    "source": "8e0aeb52755943390705bcd549ddf792643bc9ad",
+    "observedAt": "2026-10-02T22:06:40.232260+00:00",
+    "servicesHealthy": true,
+    "url": "http://127.0.0.1:3015/locations",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "452d69cd54c50483799fbda134b2346065040f78174b151c3ef72bf6786ae749",
+        "imageId": "sha256:f2314fc54b64a0279b98701e4fad3cbc7664915db30588288dd893a3e1a3a050",
+        "startedAt": "2026-10-02T22:06:28.045095364Z"
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "bf5756ce4799d8a0a6d6016e88c81af5365d57a3525b6dbd14e2c8fe06e5e992",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "startedAt": "2026-10-02T22:06:33.922861088Z"
+      }
+    ]
+  },
+  "runtimeVerification": {
+    "observedAt": "2026-10-02T22:06:46.253332+00:00",
+    "phase": "locations-final",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "8e0aeb52755943390705bcd549ddf792643bc9ad",
+    "backendSource": "db6be05e6fdc679cad10754347aebe18ce93921f",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "452d69cd54c50483799fbda134b2346065040f78174b151c3ef72bf6786ae749",
+        "imageId": "sha256:f2314fc54b64a0279b98701e4fad3cbc7664915db30588288dd893a3e1a3a050",
+        "image": "sphere-review-frontend:8e0aeb52755943390705bcd549ddf792643bc9ad",
+        "health": "healthy",
+        "startedAt": "2026-10-02T22:06:28.045095364Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "bf5756ce4799d8a0a6d6016e88c81af5365d57a3525b6dbd14e2c8fe06e5e992",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T22:06:33.922861088Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "ownLiveCanary": {
+    "prefix": "F26-canary-73b88634de5d",
+    "rootId": "b056a084-f158-403d-a161-8821e31eb24e",
+    "childId": "35f85f81-b936-411e-824d-e69d9326c828",
+    "validBoundariesAndZeroPassed": true,
+    "cycleAtomic400": true,
+    "coordinate422": true,
+    "nullableClearPassed": true,
+    "staleUpdate409": true,
+    "staleDelete409": true,
+    "parentDelete204ChildPreservedRoot": true,
+    "childReceipt": {
+      "id": "35f85f81-b936-411e-824d-e69d9326c828",
+      "org_id": "99057712-7db7-4fcb-8f07-030051c66b5e",
+      "name": "F26-canary-73b88634de5d-child",
+      "description": null,
+      "address": null,
+      "color": null,
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "parent_location_id": null,
+      "created_at": "2026-10-02T22:06:04.917238Z",
+      "updated_at": "2026-10-02T22:06:05.102687Z"
+    },
+    "directAssignments": 0,
+    "observedAt": "2026-10-02T22:06:05.205888+00:00",
+    "apiSource": "db6be05e6fdc679cad10754347aebe18ce93921f",
+    "existingLocationMetadataUnchanged": true,
+    "createdResourcesRemoved": true,
+    "androidCommandsSent": false,
+    "deviceAssignmentsSent": false,
+    "browserAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "fleetFollowup": {
+    "samples": [
+      {
+        "observedAt": "2026-10-02T22:07:11.422907+00:00",
+        "counts": {
+          "online": 14,
+          "offline": 5
+        },
+        "catalogTotal": 19,
+        "devices": [
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:41.362632Z",
+            "last_heartbeat": "2026-10-02T22:07:11.393379Z",
+            "heartbeatAgeSeconds": 0.029528
+          },
+          {
+            "id": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+            "name": "auto-ph-027",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+            "name": "auto-ph-026",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:35.539130Z",
+            "last_heartbeat": "2026-10-02T22:07:05.495561Z",
+            "heartbeatAgeSeconds": 5.927346
+          },
+          {
+            "id": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+            "name": "auto-ph-024",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+            "name": "auto-ph-023",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.273401Z",
+            "last_heartbeat": "2026-10-02T22:07:10.392863Z",
+            "heartbeatAgeSeconds": 1.030044
+          },
+          {
+            "id": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+            "name": "auto-ph-021",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.258860Z",
+            "last_heartbeat": "2026-10-02T22:07:10.381538Z",
+            "heartbeatAgeSeconds": 1.041369
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:16.482615Z",
+            "last_heartbeat": "2026-10-02T22:06:46.979998Z",
+            "heartbeatAgeSeconds": 24.442909
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:18.563278Z",
+            "last_heartbeat": "2026-10-02T22:06:49.058696Z",
+            "heartbeatAgeSeconds": 22.364211
+          },
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.512536Z",
+            "last_heartbeat": "2026-10-02T22:06:43.326600Z",
+            "heartbeatAgeSeconds": 28.096307
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.152507Z",
+            "last_heartbeat": "2026-10-02T22:06:43.320790Z",
+            "heartbeatAgeSeconds": 28.102117
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:58.825198Z",
+            "last_heartbeat": "2026-10-02T22:06:59.888086Z",
+            "heartbeatAgeSeconds": 11.534821
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.167673Z",
+            "last_heartbeat": "2026-10-02T22:06:43.304460Z",
+            "heartbeatAgeSeconds": 28.118447
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:44.651104Z",
+            "last_heartbeat": "2026-10-02T22:06:44.764145Z",
+            "heartbeatAgeSeconds": 26.658762
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.812520Z",
+            "last_heartbeat": "2026-10-02T22:07:10.806388Z",
+            "heartbeatAgeSeconds": 0.616519
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.906249Z",
+            "last_heartbeat": "2026-10-02T22:07:10.877800Z",
+            "heartbeatAgeSeconds": 0.545107
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.365964Z",
+            "last_heartbeat": "2026-10-02T22:07:10.356185Z",
+            "heartbeatAgeSeconds": 1.066722
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-02T22:07:41.449058+00:00",
+        "counts": {
+          "online": 14,
+          "offline": 5
+        },
+        "catalogTotal": 19,
+        "devices": [
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:41.362632Z",
+            "last_heartbeat": "2026-10-02T22:07:11.393379Z",
+            "heartbeatAgeSeconds": 30.055679
+          },
+          {
+            "id": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+            "name": "auto-ph-027",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+            "name": "auto-ph-026",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:35.539130Z",
+            "last_heartbeat": "2026-10-02T22:07:35.866355Z",
+            "heartbeatAgeSeconds": 5.582703
+          },
+          {
+            "id": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+            "name": "auto-ph-024",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+            "name": "auto-ph-023",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.273401Z",
+            "last_heartbeat": "2026-10-02T22:07:40.244675Z",
+            "heartbeatAgeSeconds": 1.204383
+          },
+          {
+            "id": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+            "name": "auto-ph-021",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.258860Z",
+            "last_heartbeat": "2026-10-02T22:07:40.245700Z",
+            "heartbeatAgeSeconds": 1.203358
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:16.482615Z",
+            "last_heartbeat": "2026-10-02T22:07:16.478223Z",
+            "heartbeatAgeSeconds": 24.970835
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:18.563278Z",
+            "last_heartbeat": "2026-10-02T22:07:18.557996Z",
+            "heartbeatAgeSeconds": 22.891062
+          },
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.512536Z",
+            "last_heartbeat": "2026-10-02T22:07:12.844154Z",
+            "heartbeatAgeSeconds": 28.604904
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.152507Z",
+            "last_heartbeat": "2026-10-02T22:07:12.141579Z",
+            "heartbeatAgeSeconds": 29.307479
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:58.825198Z",
+            "last_heartbeat": "2026-10-02T22:07:28.823146Z",
+            "heartbeatAgeSeconds": 12.625912
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.167673Z",
+            "last_heartbeat": "2026-10-02T22:07:12.158263Z",
+            "heartbeatAgeSeconds": 29.290795
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:44.651104Z",
+            "last_heartbeat": "2026-10-02T22:07:16.107949Z",
+            "heartbeatAgeSeconds": 25.341109
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.812520Z",
+            "last_heartbeat": "2026-10-02T22:07:41.224577Z",
+            "heartbeatAgeSeconds": 0.224481
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.906249Z",
+            "last_heartbeat": "2026-10-02T22:07:40.885487Z",
+            "heartbeatAgeSeconds": 0.563571
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.365964Z",
+            "last_heartbeat": "2026-10-02T22:07:40.353870Z",
+            "heartbeatAgeSeconds": 1.095188
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-02T22:08:11.473515+00:00",
+        "counts": {
+          "online": 14,
+          "offline": 5
+        },
+        "catalogTotal": 19,
+        "devices": [
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:41.362632Z",
+            "last_heartbeat": "2026-10-02T22:08:11.353496Z",
+            "heartbeatAgeSeconds": 0.120019
+          },
+          {
+            "id": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+            "name": "auto-ph-027",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+            "name": "auto-ph-026",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:35.539130Z",
+            "last_heartbeat": "2026-10-02T22:08:05.490545Z",
+            "heartbeatAgeSeconds": 5.98297
+          },
+          {
+            "id": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+            "name": "auto-ph-024",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+            "name": "auto-ph-023",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.273401Z",
+            "last_heartbeat": "2026-10-02T22:08:10.704846Z",
+            "heartbeatAgeSeconds": 0.768669
+          },
+          {
+            "id": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+            "name": "auto-ph-021",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.258860Z",
+            "last_heartbeat": "2026-10-02T22:08:10.601136Z",
+            "heartbeatAgeSeconds": 0.872379
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:16.482615Z",
+            "last_heartbeat": "2026-10-02T22:07:49.108549Z",
+            "heartbeatAgeSeconds": 22.364966
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:18.563278Z",
+            "last_heartbeat": "2026-10-02T22:07:49.124281Z",
+            "heartbeatAgeSeconds": 22.349234
+          },
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.512536Z",
+            "last_heartbeat": "2026-10-02T22:07:44.193238Z",
+            "heartbeatAgeSeconds": 27.280277
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.152507Z",
+            "last_heartbeat": "2026-10-02T22:07:44.173466Z",
+            "heartbeatAgeSeconds": 27.300049
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:58.825198Z",
+            "last_heartbeat": "2026-10-02T22:08:00.220735Z",
+            "heartbeatAgeSeconds": 11.25278
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.167673Z",
+            "last_heartbeat": "2026-10-02T22:07:42.350121Z",
+            "heartbeatAgeSeconds": 29.123394
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:44.651104Z",
+            "last_heartbeat": "2026-10-02T22:07:44.650891Z",
+            "heartbeatAgeSeconds": 26.822624
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.812520Z",
+            "last_heartbeat": "2026-10-02T22:08:10.803974Z",
+            "heartbeatAgeSeconds": 0.669541
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.906249Z",
+            "last_heartbeat": "2026-10-02T22:08:10.875519Z",
+            "heartbeatAgeSeconds": 0.597996
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.365964Z",
+            "last_heartbeat": "2026-10-02T22:08:10.351662Z",
+            "heartbeatAgeSeconds": 1.121853
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-02T22:08:41.496537+00:00",
+        "counts": {
+          "online": 14,
+          "offline": 5
+        },
+        "catalogTotal": 19,
+        "devices": [
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:41.362632Z",
+            "last_heartbeat": "2026-10-02T22:08:11.353496Z",
+            "heartbeatAgeSeconds": 30.143041
+          },
+          {
+            "id": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+            "name": "auto-ph-027",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+            "name": "auto-ph-026",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:35.539130Z",
+            "last_heartbeat": "2026-10-02T22:08:35.643425Z",
+            "heartbeatAgeSeconds": 5.853112
+          },
+          {
+            "id": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+            "name": "auto-ph-024",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+            "name": "auto-ph-023",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.273401Z",
+            "last_heartbeat": "2026-10-02T22:08:40.240090Z",
+            "heartbeatAgeSeconds": 1.256447
+          },
+          {
+            "id": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+            "name": "auto-ph-021",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.258860Z",
+            "last_heartbeat": "2026-10-02T22:08:40.241735Z",
+            "heartbeatAgeSeconds": 1.254802
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:16.482615Z",
+            "last_heartbeat": "2026-10-02T22:08:16.472967Z",
+            "heartbeatAgeSeconds": 25.02357
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:18.563278Z",
+            "last_heartbeat": "2026-10-02T22:08:18.862837Z",
+            "heartbeatAgeSeconds": 22.6337
+          },
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.512536Z",
+            "last_heartbeat": "2026-10-02T22:08:13.047004Z",
+            "heartbeatAgeSeconds": 28.449533
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.152507Z",
+            "last_heartbeat": "2026-10-02T22:08:12.138688Z",
+            "heartbeatAgeSeconds": 29.357849
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:58.825198Z",
+            "last_heartbeat": "2026-10-02T22:08:28.819044Z",
+            "heartbeatAgeSeconds": 12.677493
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.167673Z",
+            "last_heartbeat": "2026-10-02T22:08:12.155869Z",
+            "heartbeatAgeSeconds": 29.340668
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:44.651104Z",
+            "last_heartbeat": "2026-10-02T22:08:16.212020Z",
+            "heartbeatAgeSeconds": 25.284517
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.812520Z",
+            "last_heartbeat": "2026-10-02T22:08:41.084808Z",
+            "heartbeatAgeSeconds": 0.411729
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.906249Z",
+            "last_heartbeat": "2026-10-02T22:08:40.873190Z",
+            "heartbeatAgeSeconds": 0.623347
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.365964Z",
+            "last_heartbeat": "2026-10-02T22:08:40.349128Z",
+            "heartbeatAgeSeconds": 1.147409
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-02T22:09:11.520385+00:00",
+        "counts": {
+          "online": 14,
+          "offline": 5
+        },
+        "catalogTotal": 19,
+        "devices": [
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:41.362632Z",
+            "last_heartbeat": "2026-10-02T22:08:42.227692Z",
+            "heartbeatAgeSeconds": 29.292693
+          },
+          {
+            "id": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+            "name": "auto-ph-027",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+            "name": "auto-ph-026",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:35.539130Z",
+            "last_heartbeat": "2026-10-02T22:09:06.067217Z",
+            "heartbeatAgeSeconds": 5.453168
+          },
+          {
+            "id": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+            "name": "auto-ph-024",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+            "name": "auto-ph-023",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.273401Z",
+            "last_heartbeat": "2026-10-02T22:08:40.240090Z",
+            "heartbeatAgeSeconds": 31.280295
+          },
+          {
+            "id": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+            "name": "auto-ph-021",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.258860Z",
+            "last_heartbeat": "2026-10-02T22:08:40.241735Z",
+            "heartbeatAgeSeconds": 31.27865
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:16.482615Z",
+            "last_heartbeat": "2026-10-02T22:08:49.395823Z",
+            "heartbeatAgeSeconds": 22.124562
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:18.563278Z",
+            "last_heartbeat": "2026-10-02T22:08:49.390268Z",
+            "heartbeatAgeSeconds": 22.130117
+          },
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.512536Z",
+            "last_heartbeat": "2026-10-02T22:08:44.263965Z",
+            "heartbeatAgeSeconds": 27.25642
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.152507Z",
+            "last_heartbeat": "2026-10-02T22:08:44.082312Z",
+            "heartbeatAgeSeconds": 27.438073
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:58.825198Z",
+            "last_heartbeat": "2026-10-02T22:09:00.969686Z",
+            "heartbeatAgeSeconds": 10.550699
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.167673Z",
+            "last_heartbeat": "2026-10-02T22:08:42.925499Z",
+            "heartbeatAgeSeconds": 28.594886
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:44.651104Z",
+            "last_heartbeat": "2026-10-02T22:08:44.641306Z",
+            "heartbeatAgeSeconds": 26.879079
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.812520Z",
+            "last_heartbeat": "2026-10-02T22:08:41.084808Z",
+            "heartbeatAgeSeconds": 30.435577
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.906249Z",
+            "last_heartbeat": "2026-10-02T22:09:10.874135Z",
+            "heartbeatAgeSeconds": 0.64625
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.365964Z",
+            "last_heartbeat": "2026-10-02T22:09:10.348028Z",
+            "heartbeatAgeSeconds": 1.172357
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-02T22:09:41.550065+00:00",
+        "counts": {
+          "online": 14,
+          "offline": 5
+        },
+        "catalogTotal": 19,
+        "devices": [
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:41.362632Z",
+            "last_heartbeat": "2026-10-02T22:09:41.348097Z",
+            "heartbeatAgeSeconds": 0.201968
+          },
+          {
+            "id": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+            "name": "auto-ph-027",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+            "name": "auto-ph-026",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:35.539130Z",
+            "last_heartbeat": "2026-10-02T22:09:35.488344Z",
+            "heartbeatAgeSeconds": 6.061721
+          },
+          {
+            "id": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+            "name": "auto-ph-024",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+            "name": "auto-ph-023",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.273401Z",
+            "last_heartbeat": "2026-10-02T22:09:40.235307Z",
+            "heartbeatAgeSeconds": 1.314758
+          },
+          {
+            "id": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+            "name": "auto-ph-021",
+            "status": "offline",
+            "connected_since": null,
+            "last_heartbeat": null,
+            "heartbeatAgeSeconds": null
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.258860Z",
+            "last_heartbeat": "2026-10-02T22:09:40.240170Z",
+            "heartbeatAgeSeconds": 1.309895
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "status": "online",
+            "connected_since": "2026-10-02T22:04:16.482615Z",
+            "last_heartbeat": "2026-10-02T22:09:17.266908Z",
+            "heartbeatAgeSeconds": 24.283157
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:18.563278Z",
+            "last_heartbeat": "2026-10-02T22:09:18.552191Z",
+            "heartbeatAgeSeconds": 22.997874
+          },
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.512536Z",
+            "last_heartbeat": "2026-10-02T22:09:12.496751Z",
+            "heartbeatAgeSeconds": 29.053314
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.152507Z",
+            "last_heartbeat": "2026-10-02T22:09:12.137188Z",
+            "heartbeatAgeSeconds": 29.412877
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:58.825198Z",
+            "last_heartbeat": "2026-10-02T22:09:28.820472Z",
+            "heartbeatAgeSeconds": 12.729593
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:42.167673Z",
+            "last_heartbeat": "2026-10-02T22:09:12.151925Z",
+            "heartbeatAgeSeconds": 29.39814
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "status": "online",
+            "connected_since": "2026-10-02T22:05:44.651104Z",
+            "last_heartbeat": "2026-10-02T22:09:15.252850Z",
+            "heartbeatAgeSeconds": 26.297215
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.812520Z",
+            "last_heartbeat": "2026-10-02T22:09:40.794625Z",
+            "heartbeatAgeSeconds": 0.75544
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.906249Z",
+            "last_heartbeat": "2026-10-02T22:09:40.874897Z",
+            "heartbeatAgeSeconds": 0.675168
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "status": "online",
+            "connected_since": "2026-10-02T22:03:40.365964Z",
+            "last_heartbeat": "2026-10-02T22:09:40.347339Z",
+            "heartbeatAgeSeconds": 1.202726
+          }
+        ]
+      }
+    ],
+    "deviceCommandsSent": false,
+    "continuousUptimeClaimed": false,
+    "sameOnlineCohortAndConnectionTimes": true,
+    "maxOnlineHeartbeatAgeSeconds": 31.280295
+  },
+  "neighbors": {
+    "observedAt": "2026-10-02T22:10:46.441479+00:00",
+    "runningContainersPreserved": 13,
+    "names": [
+      "sphere-observability-20260930-grafana-1",
+      "sphere-observability-20260930-prometheus-1",
+      "sphere-tuna-canary",
+      "sphere-pilot-20260911-frontend-1",
+      "sphere-pilot-20260911-cloudflare-quick-1",
+      "sphere-pilot-20260911-public-gateway-1",
+      "sphere-pilot-20260911-nginx-1",
+      "sphere-pilot-20260911-n8n-1",
+      "sphere-pilot-20260911-minio-1",
+      "sphere-pilot-20260911-postgres-1",
+      "sphere-pilot-20260911-redis-1",
+      "sphere-audit-20260905-redis",
+      "sphere-audit-20260905-postgres"
+    ],
+    "idsImagesStartTimesAndRunningStateUnchanged": true,
+    "ephemeralOwnProbeExcluded": {
+      "name": "keen_mcnulty",
+      "id": "d549e1167a6ea9a014150a88a8b98bbb719701c9823648c699489e9f2fdda4b7",
+      "imageId": "sha256:906b381388f6461483c0bbd1d19d7546910958e30c3b8996b263300a35fe2b39",
+      "reason": "Own docker run --rm production-image PostgreSQL test completed; not a service neighbor"
+    },
+    "initialCheckerFailedOnRemovedProbe": true
+  },
+  "lintCountCorrection": "UI commit text retained the historical count 45; actual current lint log has 44 warnings, none in the new location workflow.",
+  "verificationCorrection": "The first neighbor checker included our transient docker run --rm image test; it failed after that probe exited. The corrected comparison checks 13 persistent service neighbors and explicitly records the removed own probe.",
+  "ci": {
+    "frontend": {
+      "conclusion": "success",
+      "headSha": "8e0aeb52755943390705bcd549ddf792643bc9ad",
+      "status": "completed",
+      "runId": 37070432656,
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37070432656"
+    },
+    "backend": {
+      "conclusion": "",
+      "headSha": "8e0aeb52755943390705bcd549ddf792643bc9ad",
+      "status": "in_progress",
+      "runId": 37070432689,
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37070432689"
+    },
+    "android": {
+      "conclusion": "",
+      "headSha": "8e0aeb52755943390705bcd549ddf792643bc9ad",
+      "status": "in_progress",
+      "runId": 37070432779,
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37070432779"
+    }
+  },
+  "previousHeadAllCiPassed": {
+    "source": "5964fd4a6fea21be925a42028129f152d2be6dd0",
+    "observedAt": "2026-10-02T22:09:21.962832+00:00",
+    "allThreeWorkflowsSucceeded": true,
+    "backendTests": {
+      "passed": 2300,
+      "skipped": 16
+    },
+    "runs": {
+      "frontend": {
+        "runId": 37067762709,
+        "source": "5964fd4a6fea21be925a42028129f152d2be6dd0",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37067762709",
+        "jobs": [
+          {
+            "name": "Frontend tests, types and build",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "backend": {
+        "runId": 37067762644,
+        "source": "5964fd4a6fea21be925a42028129f152d2be6dd0",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37067762644",
+        "jobs": [
+          {
+            "name": "Security (bandit + pip-audit)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Tests",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Lint (ruff + mypy)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Production image bootstrap",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "RLS Policy Coverage",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Alembic Single Head",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "android": {
+        "runId": 37067762662,
+        "source": "5964fd4a6fea21be925a42028129f152d2be6dd0",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37067762662",
+        "jobs": [
+          {
+            "name": "Android tests and signed release smoke build",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      }
+    }
+  },
+  "scope": {
+    "backendChanged": true,
+    "reviewUiChanged": true,
+    "publicFrontendChanged": false,
+    "apkChanged": false,
+    "otaPromoted": false,
+    "tunnelsChanged": false,
+    "deviceCommandsSent": false
+  },
+  "limits": [
+    "Fresh browser visual/keyboard/mobile acceptance remains OPEN_URL_POLICY_BLOCKED; no policy bypass or invented screenshot.",
+    "Finite 14-online/5-offline samples are not an uptime SLA, draw-FPS measurement or input-latency/combined-fleet acceptance.",
+    "Location online counters use persisted online status and direct memberships; no descendant aggregation or independent socket proof.",
+    "Timestamp conditions remain optional for old clients; new UI always supplies them for update/delete.",
+    "Delete condition protects the location row revision, not a frozen membership/children preview.",
+    "No map/geocoder/IP geolocation, mass workflow or large-catalog load acceptance was added.",
+    "Public frontend, APK, OTA catalog/artifacts and Tuna configuration were not changed.",
+    "F32, F33 PARTIAL, F34-F36, F39-F41, N01, N03 and durable audit outbox remain separately open."
+  ]
+}

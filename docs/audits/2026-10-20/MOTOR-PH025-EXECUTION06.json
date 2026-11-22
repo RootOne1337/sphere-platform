@@ -1,0 +1,942 @@
+{
+  "schemaVersion": 1,
+  "dateLocal": "2026-10-20",
+  "observedAtUtc": "2026-10-20T00:02:29.644601+00:00",
+  "sourceRevision": "330ae5e8942f254739e9bf9512af2dd38639eda3",
+  "workerVersion": "0.6.0",
+  "deviceAlias": "auto-ph-025",
+  "installedRuntime": {
+    "web": "15ce2b62",
+    "api": "15ce2b62",
+    "apkVersionCode": 10282
+  },
+  "tests": {
+    "motorPassed": 145,
+    "ruffPassed": true,
+    "nativeExecutionIntegrationUsesFixturePolicy": true,
+    "intentionalLostDownNeverLateApplied": true
+  },
+  "experiments": [
+    {
+      "name": "transport-baseline",
+      "rawLocalSha256": "94bc71b1d7093b47ab5a9c13858f300cb760631565d0b970a45824ce38cdeb76",
+      "success": true,
+      "failure": null,
+      "monitorSeconds": 15.013,
+      "rgbObservationHz": 5.129,
+      "decodedFps": 55.417,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 6,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 0,
+      "physicalCommandsSent": 0,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "lastActorRttMs": 23.334800032898784,
+      "workerScheduler": null,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 33,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 854,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "gpuChildCleanupConfirmed": null
+    },
+    {
+      "name": "nitrogen-shadow",
+      "rawLocalSha256": "7d06ccb0a73eb968689dfa456fde822b6a9bcf5f028c6fef75df3e210b65c8dc",
+      "success": false,
+      "failure": "control_unavailable_cleanup_unknown",
+      "monitorSeconds": 0.0,
+      "rgbObservationHz": null,
+      "decodedFps": null,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 0,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 0,
+      "physicalCommandsSent": 0,
+      "nativeReady": false,
+      "closedConfirmed": false,
+      "lastActorRttMs": null,
+      "workerScheduler": null,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 5,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 0,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "gpuChildCleanupConfirmed": true
+    },
+    {
+      "name": "nitrogen-shadow-v2",
+      "rawLocalSha256": "13a9c34b9cedefd205d93089f728a492d276d2584e29ec6dafd316427c2bf570",
+      "success": false,
+      "failure": "control_alive_deadline",
+      "monitorSeconds": 0.99,
+      "rgbObservationHz": 5.049,
+      "decodedFps": 57.556,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 1,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 7,
+      "physicalCommandsSent": 0,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "lastActorRttMs": 1025.926700036507,
+      "workerScheduler": null,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 46,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 81,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "inferenceWallP50Ms": 145.5,
+      "receiverAgeAtResultP50Ms": 170.023,
+      "receiverAgeAtResultMaxMs": 249.981,
+      "gpuChildCleanupConfirmed": true
+    },
+    {
+      "name": "nitrogen-shadow-v3-lowfps",
+      "rawLocalSha256": "bd65b999f40b9b7ab06dbc8b4c0049db4be2d2f5acd8058aba488b337061f995",
+      "success": false,
+      "failure": "video_frame_deadline",
+      "monitorSeconds": 9.365,
+      "rgbObservationHz": 4.485,
+      "decodedFps": 8.97,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 4,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 44,
+      "physicalCommandsSent": 0,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "lastActorRttMs": 67.9357000044547,
+      "workerScheduler": null,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 213,
+        "overLegacyCapacityFrames": 1,
+        "pliRequests": 0,
+        "emittedFrames": 93,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "inferenceWallP50Ms": 130.252,
+      "receiverAgeAtResultP50Ms": 190.963,
+      "receiverAgeAtResultMaxMs": 283.3,
+      "gpuChildCleanupConfirmed": true
+    },
+    {
+      "name": "nitrogen-shadow-v4-recovery",
+      "rawLocalSha256": "94c0b2ddd069a7c1b30ac726507cab427d12a3c4dce987cd552749e9d5611144",
+      "success": false,
+      "failure": "control_alive_deadline",
+      "monitorSeconds": 1.291,
+      "rgbObservationHz": 5.424,
+      "decodedFps": 10.848,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 1,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 9,
+      "physicalCommandsSent": 0,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "lastActorRttMs": 1029.0419000084512,
+      "workerScheduler": null,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 125,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 21,
+        "stallRecoveries": 0,
+        "stallRecoveryAfterMs": 750,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "inferenceWallP50Ms": 127.568,
+      "receiverAgeAtResultP50Ms": 207.916,
+      "receiverAgeAtResultMaxMs": 241.355,
+      "gpuChildCleanupConfirmed": true
+    },
+    {
+      "name": "nitrogen-shadow-v5-scheduler",
+      "rawLocalSha256": "2dd9167c99ef389e3b48c8b495b0654af7c32e2ad7d884a8b190546333b48293",
+      "success": false,
+      "failure": "control_alive_deadline",
+      "monitorSeconds": 0.979,
+      "rgbObservationHz": 5.109,
+      "decodedFps": 10.218,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 1,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 6,
+      "physicalCommandsSent": 0,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "lastActorRttMs": 1029.424000007566,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 148,
+        "maxTickGapMs": 26.026
+      },
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 125,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 17,
+        "stallRecoveries": 0,
+        "stallRecoveryAfterMs": 750,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "inferenceWallP50Ms": 141.691,
+      "receiverAgeAtResultP50Ms": 202.815,
+      "receiverAgeAtResultMaxMs": 320.805,
+      "gpuChildCleanupConfirmed": true
+    },
+    {
+      "name": "transport-baseline-v2",
+      "rawLocalSha256": "d792322f29afb5fa3c82e584235bb6588a47dc8abcbd204d6d9dfd1386b2ada5",
+      "success": true,
+      "failure": null,
+      "monitorSeconds": 15.008,
+      "rgbObservationHz": 4.664,
+      "decodedFps": 10.061,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 6,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 0,
+      "physicalCommandsSent": 0,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "lastActorRttMs": 21.274799946695566,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 812,
+        "maxTickGapMs": 35.669
+      },
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 125,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 157,
+        "stallRecoveries": 0,
+        "stallRecoveryAfterMs": 750,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "gpuChildCleanupConfirmed": null
+    },
+    {
+      "name": "nitrogen-shadow-v6-video-only",
+      "rawLocalSha256": "de4589be13777f24b3c79b302fde860ff48a029bfd4ea6572878583ee962f90b",
+      "success": true,
+      "failure": null,
+      "monitorSeconds": 20.01,
+      "rgbObservationHz": 4.498,
+      "decodedFps": 10.145,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 7,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 89,
+      "physicalCommandsSent": 0,
+      "nativeReady": false,
+      "closedConfirmed": false,
+      "lastActorRttMs": null,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 1344,
+        "maxTickGapMs": 29.419
+      },
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 125,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 204,
+        "stallRecoveries": 0,
+        "stallRecoveryAfterMs": 750,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "inferenceWallP50Ms": 136.43849999999998,
+      "receiverAgeAtResultP50Ms": 191.261,
+      "receiverAgeAtResultMaxMs": 295.526,
+      "gpuChildCleanupConfirmed": true
+    },
+    {
+      "name": "nitrogen-shadow-v7-idle-budget",
+      "rawLocalSha256": "74513fc14e380207b1b81fbe9681ea875fb475db06faea460a4955b7ccc65a3d",
+      "success": false,
+      "failure": "control_expired",
+      "monitorSeconds": 8.486,
+      "rgbObservationHz": 4.36,
+      "decodedFps": 10.017,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 3,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 39,
+      "physicalCommandsSent": 0,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "lastActorRttMs": 19.53330001560971,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 625,
+        "maxTickGapMs": 28.67
+      },
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 125,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 91,
+        "stallRecoveries": 0,
+        "stallRecoveryAfterMs": 750,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "inferenceWallP50Ms": 131.427,
+      "receiverAgeAtResultP50Ms": 170.017,
+      "receiverAgeAtResultMaxMs": 259.041,
+      "gpuChildCleanupConfirmed": true
+    },
+    {
+      "name": "nitrogen-public-stick-v1",
+      "rawLocalSha256": "2a506f3b6854d751a98b2e10d6f2286157667a662301db7a668be7b2f9ff9fb8",
+      "sourceRevisionPrefix": "ede1c923",
+      "success": true,
+      "failure": null,
+      "monitorSeconds": 12.002,
+      "rgbGuardCheckHz": 4.999,
+      "decodedFps": 57.906,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 5,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 61,
+      "acceptedStickPlans": 60,
+      "modelResultsMayIncludeSetupAndDrain": true,
+      "physicalCommandsSent": 62,
+      "nativeApplied": 62,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "gpuChildCleanupConfirmed": true,
+      "physicalActionCounts": {
+        "0": 2,
+        "2": 59,
+        "1": 1
+      },
+      "eventTailActions": {
+        "0": 2,
+        "2": 59,
+        "1": 1
+      },
+      "maskedResults": 60,
+      "sceneRefusals": 0,
+      "sceneGuardOverlapMinimum": 0.9944,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 863,
+        "maxTickGapMs": 41.466
+      },
+      "sctpTransport": null,
+      "controlPacketLifeTimeMs": null,
+      "completionDrainMs": null,
+      "inferenceWallP50Ms": 134.524,
+      "receiverAgeAtResultMaxMs": 234.354
+    },
+    {
+      "name": "nitrogen-public-stick-v2",
+      "rawLocalSha256": "144eb2a7f9667c33fb82edaee4b872009ca6ee79e607ad0d07d421982886b364",
+      "sourceRevisionPrefix": "27c07515",
+      "success": false,
+      "failure": "control_alive_deadline",
+      "monitorSeconds": 1.142,
+      "rgbGuardCheckHz": 7.881,
+      "decodedFps": 55.167,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 1,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 10,
+      "acceptedStickPlans": 6,
+      "modelResultsMayIncludeSetupAndDrain": true,
+      "physicalCommandsSent": 5,
+      "nativeApplied": 5,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "gpuChildCleanupConfirmed": true,
+      "physicalActionCounts": {
+        "0": 1,
+        "2": 4
+      },
+      "eventTailActions": {
+        "0": 1,
+        "2": 4
+      },
+      "maskedResults": 6,
+      "sceneRefusals": 0,
+      "sceneGuardOverlapMinimum": 0.9986,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 161,
+        "maxTickGapMs": 66.022
+      },
+      "sctpTransport": null,
+      "controlPacketLifeTimeMs": null,
+      "completionDrainMs": null,
+      "inferenceWallP50Ms": 150.07299999999998,
+      "receiverAgeAtResultMaxMs": 261.157
+    },
+    {
+      "name": "nitrogen-public-stick-v3",
+      "rawLocalSha256": "44e8b23d34ce61816951a5ca4bbf6255af28d86361b02035cef449b56eb49c54",
+      "sourceRevisionPrefix": "27c07515",
+      "success": false,
+      "failure": "control_action_deadline",
+      "monitorSeconds": 7.167,
+      "rgbGuardCheckHz": 5.302,
+      "decodedFps": 62.506,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 3,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 40,
+      "acceptedStickPlans": 36,
+      "modelResultsMayIncludeSetupAndDrain": true,
+      "physicalCommandsSent": 54,
+      "nativeApplied": 54,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "gpuChildCleanupConfirmed": true,
+      "physicalActionCounts": {
+        "0": 1,
+        "2": 53
+      },
+      "eventTailActions": {
+        "0": 1,
+        "2": 53
+      },
+      "maskedResults": 36,
+      "sceneRefusals": 0,
+      "sceneGuardOverlapMinimum": 0.9535,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 552,
+        "maxTickGapMs": 49.852
+      },
+      "sctpTransport": {
+        "counts": {
+          "dataSent": 82,
+          "dataReceived": 84,
+          "duplicatePeerTsn": 1,
+          "t3Expired": 1,
+          "dataRetransmitted": 2
+        },
+        "events": [
+          {
+            "kind": "duplicate_peer_data",
+            "at": 465224.5113734,
+            "stream": 3,
+            "rtoMs": 1000,
+            "flightBytes": 75
+          },
+          {
+            "kind": "t3_expired",
+            "at": 465225.1009625,
+            "stream": null,
+            "rtoMs": 1000,
+            "flightBytes": 75
+          },
+          {
+            "kind": "local_retransmit",
+            "at": 465225.1010474,
+            "stream": 3,
+            "rtoMs": 1000,
+            "flightBytes": 75
+          },
+          {
+            "kind": "local_retransmit",
+            "at": 465225.1012029,
+            "stream": 3,
+            "rtoMs": 1000,
+            "flightBytes": 97
+          }
+        ],
+        "rtoMs": 1000,
+        "smoothedRttMs": 24.40389531101017
+      },
+      "controlPacketLifeTimeMs": null,
+      "completionDrainMs": null,
+      "inferenceWallP50Ms": 137.96949999999998,
+      "receiverAgeAtResultMaxMs": 307.786
+    },
+    {
+      "name": "nitrogen-public-stick-v4",
+      "rawLocalSha256": "345e4108ec2433f09727e598a64f9199e07994a0684798d9573542146ed4da89",
+      "sourceRevisionPrefix": "07dcec54",
+      "success": false,
+      "failure": "control_action_deadline",
+      "monitorSeconds": 1.046,
+      "rgbGuardCheckHz": 7.647,
+      "decodedFps": 77.431,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 1,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 10,
+      "acceptedStickPlans": 6,
+      "modelResultsMayIncludeSetupAndDrain": true,
+      "physicalCommandsSent": 2,
+      "nativeApplied": 2,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "gpuChildCleanupConfirmed": true,
+      "physicalActionCounts": {
+        "0": 1,
+        "2": 1
+      },
+      "eventTailActions": {
+        "0": 1,
+        "2": 1
+      },
+      "maskedResults": 6,
+      "sceneRefusals": 0,
+      "sceneGuardOverlapMinimum": 0.9986,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 164,
+        "maxTickGapMs": 42.959
+      },
+      "sctpTransport": {
+        "evidence": "aiortc_1_15_observation_only_adapter",
+        "dataChunksSent": 11,
+        "dataChunksReceived": 12,
+        "dataChunksRetransmitted": 2,
+        "duplicatePeerDataChunks": 0,
+        "t3Expiries": 1,
+        "rtoMs": 1000,
+        "smoothedRttMs": 19.371,
+        "eventTail": [
+          {
+            "kind": "t3_expired",
+            "elapsedMs": 8611.647,
+            "streamId": null,
+            "rtoMs": 1000,
+            "flightBytes": 73
+          },
+          {
+            "kind": "local_retransmit",
+            "elapsedMs": 8611.732,
+            "streamId": 3,
+            "rtoMs": 1000,
+            "flightBytes": 73
+          },
+          {
+            "kind": "local_retransmit",
+            "elapsedMs": 8611.893,
+            "streamId": 3,
+            "rtoMs": 1000,
+            "flightBytes": 95
+          }
+        ],
+        "eventTailLimit": 64,
+        "duplicateWindowChunks": 2048,
+        "timersAndReliabilityChanged": false,
+        "applicationCommandReplay": false
+      },
+      "controlPacketLifeTimeMs": null,
+      "completionDrainMs": 600,
+      "inferenceWallP50Ms": 146.743,
+      "receiverAgeAtResultMaxMs": 189.523
+    },
+    {
+      "name": "nitrogen-public-stick-v5",
+      "rawLocalSha256": "9c71b3799d5bb71fea1e91b1e3dc4d077279da093e8e687cd1a707bbfd95d393",
+      "sourceRevisionPrefix": "330ae5e8",
+      "success": false,
+      "failure": "control_action_deadline",
+      "monitorSeconds": 0.902,
+      "rgbGuardCheckHz": 9.977,
+      "decodedFps": 67.621,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "srflx"
+        ],
+        "addressScopes": [
+          "private",
+          "public"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 1,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "acceptedModelResponses": 11,
+      "acceptedStickPlans": 5,
+      "modelResultsMayIncludeSetupAndDrain": true,
+      "physicalCommandsSent": 10,
+      "nativeApplied": 9,
+      "nativeReady": true,
+      "closedConfirmed": true,
+      "gpuChildCleanupConfirmed": true,
+      "physicalActionCounts": {
+        "0": 1,
+        "2": 9
+      },
+      "eventTailActions": {
+        "0": 1,
+        "2": 9
+      },
+      "maskedResults": 5,
+      "sceneRefusals": 0,
+      "sceneGuardOverlapMinimum": 0.9986,
+      "workerScheduler": {
+        "scope": "worker_monitor_event_loop_not_network_or_native",
+        "tickCount": 150,
+        "maxTickGapMs": 54.085
+      },
+      "sctpTransport": {
+        "evidence": "aiortc_1_15_observation_only_adapter",
+        "dataChunksSent": 17,
+        "dataChunksReceived": 20,
+        "dataChunksRetransmitted": 0,
+        "duplicatePeerDataChunks": 0,
+        "t3Expiries": 1,
+        "rtoMs": 1000,
+        "smoothedRttMs": 23.515,
+        "eventTail": [
+          {
+            "kind": "t3_expired",
+            "elapsedMs": 8376.006,
+            "streamId": null,
+            "rtoMs": 1000,
+            "flightBytes": 75
+          }
+        ],
+        "eventTailLimit": 64,
+        "duplicateWindowChunks": 2048,
+        "timersAndReliabilityChanged": false,
+        "applicationCommandReplay": false
+      },
+      "controlPacketLifeTimeMs": 200,
+      "completionDrainMs": 600,
+      "inferenceWallP50Ms": 144.63,
+      "receiverAgeAtResultMaxMs": 226.586
+    }
+  ],
+  "game": {
+    "installedPackage": {
+      "package": "com.br.top",
+      "versionCode": 1571,
+      "shaMatchesOfficial": true,
+      "sha256": "130083a2b9f6cbe8364ae7b519d35d0e1e3ca519019d763fe55bb9e1c431ac14"
+    },
+    "resourcesDownloadCompleted": true,
+    "guestSelected": true,
+    "serverSelectedByGame": "CHERRY",
+    "characterSetupCompleted": true,
+    "worldCinematicObserved": true,
+    "calibratedGameplayInputAccepted": true,
+    "playableTutorialHudObserved": true,
+    "goalReachedByLearnedPolicy": false
+  },
+  "limits": {
+    "productionGameplayAccepted": false,
+    "combinedLearnedControlAccepted": false,
+    "obstacleAvoidanceAccepted": false,
+    "nativeMultiTouchImplemented": false,
+    "sourceCaptureAgeMeasured": false,
+    "vpnBypassProven": false,
+    "perSecondMinimumDecisionRateProven": false,
+    "visualColorIssueRootCauseFixed": false,
+    "finitePhysicalMovementAccepted": true,
+    "nativeActionExpiryClockContractImplemented": false
+  },
+  "temporarySourcePreferencesRestored": true,
+  "agentRecovery": {
+    "sameManagedApk82ReinstalledOnce": true,
+    "gameDataCleared": false,
+    "reason": "root_handoff_unknown_after_generic_shell_install_timeout"
+  },
+  "liveGpuPhysicalActionsThisStage": 133
+}

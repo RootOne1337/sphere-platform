@@ -1,0 +1,663 @@
+{
+  "recorded_at": "2026-09-14T13:23:04.324485+00:00",
+  "source": "3e442d1 before current audit edits",
+  "night": {
+    "at": "2026-09-14T12:13:50.872231+00:00",
+    "run_id": "night-20260914-001",
+    "terminal_status": "failed",
+    "events": {
+      "route_authenticated": 8,
+      "command": 1555,
+      "sample": 311,
+      "started": 1,
+      "batch_admitted": 78,
+      "task_verified": 156,
+      "batch_verified": 78,
+      "pipeline_admitted": 16,
+      "pipeline_control_verified": 16,
+      "stream_observation": 432,
+      "viewer_verified": 154,
+      "cycle_passed": 77,
+      "overlap_verified": 38,
+      "failed": 1,
+      "finished": 1
+    },
+    "batch_tasks": 156,
+    "batch_node_receipts": 2028,
+    "task_duration_seconds": {
+      "count": 156,
+      "min": 2.422,
+      "max": 2.915,
+      "p50": 2.62,
+      "p95": 2.796
+    },
+    "batch_observation_seconds": {
+      "count": 78,
+      "min": 5.156,
+      "max": 9.782,
+      "p50": 7.406,
+      "p95": 9.719
+    },
+    "nodes": {
+      "start": {
+        "count": 156,
+        "action_type": "start",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 0,
+          "max": 0,
+          "p50": 0,
+          "p95": 0
+        }
+      },
+      "counter": {
+        "count": 156,
+        "action_type": "set_variable",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 0,
+          "max": 1,
+          "p50": 0,
+          "p95": 0
+        }
+      },
+      "home": {
+        "count": 156,
+        "action_type": "key_event",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 0,
+          "max": 6,
+          "p50": 0,
+          "p95": 2
+        }
+      },
+      "settle": {
+        "count": 156,
+        "action_type": "sleep",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 500,
+          "max": 502,
+          "p50": 500,
+          "p95": 501
+        }
+      },
+      "expand": {
+        "count": 156,
+        "action_type": "shell",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 101,
+          "max": 309,
+          "p50": 201,
+          "p95": 213
+        }
+      },
+      "observe": {
+        "count": 156,
+        "action_type": "sleep",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 1500,
+          "max": 1502,
+          "p50": 1500,
+          "p95": 1501
+        }
+      },
+      "collapse": {
+        "count": 156,
+        "action_type": "shell",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 100,
+          "max": 202,
+          "p50": 101,
+          "p95": 106
+        }
+      },
+      "increment": {
+        "count": 156,
+        "action_type": "increment_variable",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 0,
+          "max": 1,
+          "p50": 0,
+          "p95": 1
+        }
+      },
+      "branch": {
+        "count": 156,
+        "action_type": "condition",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 0,
+          "max": 11,
+          "p50": 1,
+          "p95": 4
+        }
+      },
+      "echo": {
+        "count": 156,
+        "action_type": "shell",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 100,
+          "max": 319,
+          "p50": 109,
+          "p95": 304
+        }
+      },
+      "verify": {
+        "count": 156,
+        "action_type": "assert",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 0,
+          "max": 3,
+          "p50": 0,
+          "p95": 0
+        }
+      },
+      "sdk": {
+        "count": 156,
+        "action_type": "shell",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 100,
+          "max": 325,
+          "p50": 120,
+          "p95": 231
+        }
+      },
+      "end": {
+        "count": 156,
+        "action_type": "end",
+        "failures": 0,
+        "duration_ms": {
+          "count": 156,
+          "min": 0,
+          "max": 0,
+          "p50": 0,
+          "p95": 0
+        }
+      }
+    },
+    "action_coverage": {
+      "executed_types": [
+        "assert",
+        "condition",
+        "end",
+        "increment_variable",
+        "key_event",
+        "set_variable",
+        "shell",
+        "sleep",
+        "start"
+      ],
+      "canonical_type_count": 32,
+      "unexercised_types": [
+        "clear_app_data",
+        "double_tap",
+        "find_element",
+        "find_first_element",
+        "get_device_info",
+        "get_element_text",
+        "get_variable",
+        "http_request",
+        "input_clear",
+        "launch_app",
+        "long_press",
+        "lua",
+        "open_url",
+        "screenshot",
+        "scroll",
+        "scroll_to",
+        "stop_app",
+        "swipe",
+        "tap",
+        "tap_element",
+        "tap_first_visible",
+        "type_text",
+        "wait_for_element_gone"
+      ],
+      "note": "Type presence is not semantic/branch/error/fault coverage."
+    },
+    "waves": {
+      "1": {
+        "count": 39,
+        "overlapping_pairs": 31,
+        "start_gap_seconds": {
+          "count": 39,
+          "min": 0.0,
+          "max": 5.01,
+          "p50": 0.002,
+          "p95": 5.006
+        },
+        "execution_overlap_seconds": {
+          "count": 39,
+          "min": 0,
+          "max": 2.662,
+          "p50": 2.532,
+          "p95": 2.646
+        }
+      },
+      "2": {
+        "count": 39,
+        "overlapping_pairs": 39,
+        "start_gap_seconds": {
+          "count": 39,
+          "min": 0.0,
+          "max": 0.037,
+          "p50": 0.002,
+          "p95": 0.029
+        },
+        "execution_overlap_seconds": {
+          "count": 39,
+          "min": 2.422,
+          "max": 2.796,
+          "p50": 2.547,
+          "p95": 2.69
+        }
+      }
+    },
+    "resources": {
+      "ba1346c1-1581-452f-adee-451d36622aaf": {
+        "phases": {
+          "stream": {
+            "count": 77,
+            "first_ten_pss_kib": {
+              "count": 10,
+              "min": 67755,
+              "max": 68895,
+              "p50": 68075,
+              "p95": 68895
+            },
+            "last_ten_pss_kib": {
+              "count": 10,
+              "min": 65987,
+              "max": 67282,
+              "p50": 66500,
+              "p95": 67282
+            }
+          },
+          "after_viewer_close": {
+            "count": 77,
+            "first_ten_pss_kib": {
+              "count": 10,
+              "min": 61856,
+              "max": 65040,
+              "p50": 62273,
+              "p95": 65040
+            },
+            "last_ten_pss_kib": {
+              "count": 10,
+              "min": 62388,
+              "max": 65102,
+              "p50": 62947,
+              "p95": 65102
+            }
+          }
+        },
+        "cpu_ticks_delta": 7934,
+        "sampled_seconds": 9246.888,
+        "cpu_note": "Raw ticks only; clock tick rate not captured, no inferred CPU percentage."
+      },
+      "85f2f935-7739-400e-9389-0d71227e8f0a": {
+        "phases": {
+          "stream": {
+            "count": 78,
+            "first_ten_pss_kib": {
+              "count": 10,
+              "min": 60595,
+              "max": 64944,
+              "p50": 63052,
+              "p95": 64944
+            },
+            "last_ten_pss_kib": {
+              "count": 10,
+              "min": 62540,
+              "max": 66258,
+              "p50": 64576,
+              "p95": 66258
+            }
+          },
+          "after_viewer_close": {
+            "count": 77,
+            "first_ten_pss_kib": {
+              "count": 10,
+              "min": 55971,
+              "max": 60736,
+              "p50": 56970,
+              "p95": 60736
+            },
+            "last_ten_pss_kib": {
+              "count": 10,
+              "min": 59103,
+              "max": 60909,
+              "p50": 59391,
+              "p95": 60909
+            }
+          }
+        },
+        "cpu_ticks_delta": 11793,
+        "sampled_seconds": 9296.508,
+        "cpu_note": "Raw ticks only; clock tick rate not captured, no inferred CPU percentage."
+      }
+    },
+    "backend_log": {
+      "structured_rows": 3936,
+      "unparsed_rows": 390,
+      "first_timestamp": "2026-09-14T00:06:00.213268Z",
+      "last_timestamp": "2026-09-14T02:41:01.317448Z",
+      "warning_error_counts": {
+        "warning:task.result.not_found": 1555
+      },
+      "completed_tasks": 164,
+      "all_saved_native_ids_present": true,
+      "missing_uuid_count": 1555,
+      "missing_ids_overlap_saved_native": 0,
+      "event_counts": {
+        "task.result.not_found": 1555,
+        "Viewer registered": 194,
+        "Stream viewer connected": 194,
+        "send_to_device: \u0434\u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u043e": 544,
+        "Binary frame from agent": 76,
+        "batch.wave.start": 117,
+        "task.created": 156,
+        "task.assignment_sent": 164,
+        "batch.waves_submitted": 78,
+        "task.completed": 164,
+        "event_reactor.event_saved": 164,
+        "batch.auto_aggregated": 78,
+        "pipeline_run.created": 16,
+        "pipeline_run.paused": 8,
+        "pipeline_run.paused_at_step": 8,
+        "pipeline_run.resumed": 8,
+        "step.execute_script.task_created": 8,
+        "pipeline_run.completed": 8,
+        "pipeline_run.cancelled": 8,
+        "Stream viewer WS disconnect": 194,
+        "Stream viewer disconnected": 194
+      }
+    },
+    "result_limits": {
+      "batch_result_bytes": {
+        "count": 156,
+        "min": 1303,
+        "max": 1304,
+        "p50": 1303,
+        "p95": 1303
+      },
+      "truncated_results": 0
+    }
+  },
+  "live_readonly": {
+    "at": "2026-09-14T12:11:02.805345+00:00",
+    "devices": [
+      {
+        "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "status": "online",
+        "active_tasks": {
+          "queued": 0,
+          "assigned": 0,
+          "running": 0
+        },
+        "pid": "31803",
+        "projection_active": false,
+        "last_fatal_records": [
+          "09-13 21:43:28.633 29477 30278 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386bdcb690 in tid 30278 (sphere-imagerea), pid 29477 (ent.pilot.debug)",
+          "09-13 21:43:31.673 30391 30445 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386e553c70 in tid 30445 (sphere-imagerea), pid 30391 (ent.pilot.debug)"
+        ]
+      },
+      {
+        "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "status": "online",
+        "active_tasks": {
+          "queued": 0,
+          "assigned": 0,
+          "running": 0
+        },
+        "pid": "386",
+        "projection_active": false,
+        "last_fatal_records": [
+          "09-13 20:49:08.140 30618 31035 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386d2f53f0 in tid 31035 (sphere-imagerea), pid 30618 (ent.pilot.debug)",
+          "09-13 20:49:11.441 31472 31531 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x763870a23b20 in tid 31531 (sphere-imagerea), pid 31472 (ent.pilot.debug)"
+        ]
+      }
+    ],
+    "task_listing": {
+      "api_total": 174,
+      "pages": 2,
+      "first_page_items": 100,
+      "second_page_items": 74,
+      "first_second_overlap": 0,
+      "first_page_statuses": {
+        "completed": 100
+      }
+    }
+  },
+  "visual_proof": {
+    "at": "2026-09-14T12:14:49.817349+00:00",
+    "scope": "separate two-task pixel proof; not retrospective night frame coverage",
+    "tasks": [
+      {
+        "id": "7aec5897-5401-44ab-bf48-efd93a817d61",
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a"
+      },
+      {
+        "id": "893cbfbd-3bf8-4260-95bd-9a70801c3c6a",
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf"
+      }
+    ],
+    "frames_captured": 28,
+    "errors": [],
+    "observed_by_image_review": {
+      "emulator-5554": [
+        "00: home",
+        "05: notification shade open",
+        "12: home"
+      ],
+      "emulator-5556": [
+        "00: home",
+        "05: notification shade open",
+        "12: home"
+      ]
+    },
+    "private_images": [
+      {
+        "name": "emulator-5554-00.png",
+        "sha256": "72616adb82b9928f2d2e0290fef6871325aaeb7d056023b5186c0849d3008ed0"
+      },
+      {
+        "name": "emulator-5554-01.png",
+        "sha256": "72616adb82b9928f2d2e0290fef6871325aaeb7d056023b5186c0849d3008ed0"
+      },
+      {
+        "name": "emulator-5554-02.png",
+        "sha256": "72616adb82b9928f2d2e0290fef6871325aaeb7d056023b5186c0849d3008ed0"
+      },
+      {
+        "name": "emulator-5554-03.png",
+        "sha256": "72616adb82b9928f2d2e0290fef6871325aaeb7d056023b5186c0849d3008ed0"
+      },
+      {
+        "name": "emulator-5554-04.png",
+        "sha256": "3a73a322899012da6d4828a2787860108e26f2cc0af13ef36e8745e685657d78"
+      },
+      {
+        "name": "emulator-5554-05.png",
+        "sha256": "9eca60afe8fc96faf2749d95a92d5da21fd59cf5d67e6f704c56675b83f0d487"
+      },
+      {
+        "name": "emulator-5554-06.png",
+        "sha256": "0f2aa098424501a4a18cd8cf9d4963abd698082a393d6262cd9a6ca101652c1a"
+      },
+      {
+        "name": "emulator-5554-07.png",
+        "sha256": "0f2aa098424501a4a18cd8cf9d4963abd698082a393d6262cd9a6ca101652c1a"
+      },
+      {
+        "name": "emulator-5554-08.png",
+        "sha256": "d5a57436e8f7af4f538115dc3460097029d1712358218163e23af69d21448f76"
+      },
+      {
+        "name": "emulator-5554-09.png",
+        "sha256": "18808e769edfacffd37863bdebdd83cf45c8c5a7db9b76083da5a5c9def19116"
+      },
+      {
+        "name": "emulator-5554-10.png",
+        "sha256": "bc61e55be2de53e89e022ba78dae9ebe9cd63504efd21f5e332bd907f94704d5"
+      },
+      {
+        "name": "emulator-5554-11.png",
+        "sha256": "3a73a322899012da6d4828a2787860108e26f2cc0af13ef36e8745e685657d78"
+      },
+      {
+        "name": "emulator-5554-12.png",
+        "sha256": "3a73a322899012da6d4828a2787860108e26f2cc0af13ef36e8745e685657d78"
+      },
+      {
+        "name": "emulator-5554-13.png",
+        "sha256": "3a73a322899012da6d4828a2787860108e26f2cc0af13ef36e8745e685657d78"
+      },
+      {
+        "name": "emulator-5556-00.png",
+        "sha256": "3e530ac904cd7665bd788edcb59948eae59e686e48e2966036f554f7756d746d"
+      },
+      {
+        "name": "emulator-5556-01.png",
+        "sha256": "3e530ac904cd7665bd788edcb59948eae59e686e48e2966036f554f7756d746d"
+      },
+      {
+        "name": "emulator-5556-02.png",
+        "sha256": "3e530ac904cd7665bd788edcb59948eae59e686e48e2966036f554f7756d746d"
+      },
+      {
+        "name": "emulator-5556-03.png",
+        "sha256": "2e530dcb46818b5984958ca54d7d922a629cae5294b43dc45269dca5d1d6431a"
+      },
+      {
+        "name": "emulator-5556-04.png",
+        "sha256": "eb29ca2fc7873d3578e6f12931717e9dd79babf1d9827d7ebd30a13c591b8ee6"
+      },
+      {
+        "name": "emulator-5556-05.png",
+        "sha256": "587686caf21ea1f70b251af82b091e0391324c4c4eea5cecafdfcaca09f08dbb"
+      },
+      {
+        "name": "emulator-5556-06.png",
+        "sha256": "587686caf21ea1f70b251af82b091e0391324c4c4eea5cecafdfcaca09f08dbb"
+      },
+      {
+        "name": "emulator-5556-07.png",
+        "sha256": "587686caf21ea1f70b251af82b091e0391324c4c4eea5cecafdfcaca09f08dbb"
+      },
+      {
+        "name": "emulator-5556-08.png",
+        "sha256": "587686caf21ea1f70b251af82b091e0391324c4c4eea5cecafdfcaca09f08dbb"
+      },
+      {
+        "name": "emulator-5556-09.png",
+        "sha256": "b5d3f5c439af96e65bc16e167503f078a90e65fda1f27754e2860c79066f4833"
+      },
+      {
+        "name": "emulator-5556-10.png",
+        "sha256": "b5d3f5c439af96e65bc16e167503f078a90e65fda1f27754e2860c79066f4833"
+      },
+      {
+        "name": "emulator-5556-11.png",
+        "sha256": "b5d3f5c439af96e65bc16e167503f078a90e65fda1f27754e2860c79066f4833"
+      },
+      {
+        "name": "emulator-5556-12.png",
+        "sha256": "b5d3f5c439af96e65bc16e167503f078a90e65fda1f27754e2860c79066f4833"
+      },
+      {
+        "name": "emulator-5556-13.png",
+        "sha256": "b5d3f5c439af96e65bc16e167503f078a90e65fda1f27754e2860c79066f4833"
+      }
+    ]
+  },
+  "windows_probe": {
+    "at": "2026-09-14T12:16:30.596280+00:00",
+    "source": "3e442d1",
+    "operation": "real Windows reader denies delete sharing",
+    "failure": {
+      "type": "PermissionError",
+      "frames": [
+        {
+          "file": "probe_windows_snapshot.py",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "android_soak.py",
+          "function": "write_json",
+          "line": 58
+        },
+        {
+          "file": "pathlib.py",
+          "function": "replace",
+          "line": 1376
+        }
+      ],
+      "errno": 13,
+      "winerror": 5
+    },
+    "old_json_intact": true,
+    "after_reader_close_succeeds": true,
+    "scope": "Reproduces this local failure path; does not prove the original night OS cause."
+  },
+  "atomic_json_before": {
+    "tests": "3",
+    "failures": "2",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.362"
+  },
+  "atomic_json_after": {
+    "tests": "18",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.618"
+  },
+  "atomic_json_lint": "passed",
+  "journal_acknowledged_capacity_probe": {
+    "result": {
+      "tests": "1",
+      "failures": "1",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.597"
+    },
+    "failure": "command_journal_capacity_exhausted after 512 completed and acknowledged tasks",
+    "status": "open; no APK fix or OTA deployed",
+    "preserved_probe": "../probes/AuditAcknowledgedCapacityProbeTest.kt"
+  },
+  "task_engine_browser_observation": {
+    "url": "http://127.0.0.1:18080/tasks",
+    "frontend": "9b3afbc",
+    "total_tasks_shown": 100,
+    "pages_shown": 4,
+    "page_size_shown": 25,
+    "manual_priority_5_tasks_labeled": "CRON",
+    "new_workflow_click": "no dialog or navigation",
+    "active_pipeline_display": "hardcoded No active pipeline running; no pipeline query in page"
+  },
+  "runtime_changes": "No APK/backend/frontend replacement or restart; only two additional safe tasks for separate visual proof."
+}

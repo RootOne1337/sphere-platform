@@ -1,0 +1,711 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-11T20:44:52.135904+00:00",
+  "apkSource": "9cdb5257f9fd9f847c90cbd95c990f7fae037a40",
+  "apkVersion": "1.2.58-dev",
+  "apkSha256": "215bef10f88be0805a506cc910adccc915a94ed323f74d93037d5c5d3670777e",
+  "uiSource": "b3e6ee6c38123d76b021156838bd92c3d2bb75f0",
+  "apiSource": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+  "browserContext": {
+    "device": "PH010",
+    "numericIceTestOnly": true,
+    "startedAt": "2026-10-11T20:30:46.539386+00:00",
+    "at": "2026-10-11T20:43:23.451Z",
+    "videoCounters": [
+      {
+        "state": "connected",
+        "ice": "connected",
+        "videoRows": [
+          {
+            "kind": "video",
+            "mediaType": "video",
+            "timestamp": 1791751403450.583,
+            "packetsReceived": 250563,
+            "bytesReceived": 286209921,
+            "framesDecoded": 21808,
+            "framesDropped": 0,
+            "jitterBufferDelay": 1116.5513059999998,
+            "jitterBufferEmittedCount": 21808,
+            "totalDecodeTime": 6.509929,
+            "framesPerSecond": 28,
+            "frameWidth": 960,
+            "frameHeight": 540,
+            "keyFramesDecoded": 23,
+            "freezeCount": 0,
+            "pauseCount": 0,
+            "packetsLost": 0,
+            "nackCount": 0,
+            "pliCount": 0,
+            "firCount": 0,
+            "framesReceived": 21810,
+            "jitter": 0.014,
+            "retransmittedPacketsReceived": 170
+          }
+        ],
+        "receivers": 1
+      }
+    ],
+    "nativeRetirement": [
+      {
+        "received": 26253,
+        "forwarded": 26251,
+        "budgetRejected": 0,
+        "invalidAccessUnits": 0,
+        "failed": 0,
+        "retainedInputFrames": 0,
+        "retainedInputBytes": 0,
+        "retainedOutputFrames": 0,
+        "retainedOutputBytes": 0,
+        "encodeCalls": 26252,
+        "keyframeWaitDrops": 1,
+        "pausedFrames": 0,
+        "keyframeHints": 0,
+        "syncRequests": 2,
+        "forwardedBytes": 345068113,
+        "targetBitrateBps": 1464677,
+        "targetFramerate": 29
+      }
+    ],
+    "primaryControlAccepted": false,
+    "nativeUpConfirmed": false,
+    "sentDirectTouchEvents": 0,
+    "sentServerTouchEvents": 0
+  },
+  "notebook": {
+    "device": "PH030",
+    "status": "offline",
+    "agent_version": "1.2.55-dev",
+    "agent_version_code": 10255,
+    "last_heartbeat": "2026-10-11T20:41:33.196776Z",
+    "sessions": [
+      {
+        "opened_at": "2026-10-11T20:34:22.263945+00:00",
+        "state": "closed",
+        "last_seen_at": "2026-10-11T20:41:32.485818+00:00",
+        "samples": [
+          {
+            "received_at": "2026-10-11T20:39:56.848636+00:00",
+            "rendered_frames": 6794,
+            "incoming_fps": 60,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "server_rejected",
+            "control_failure_detail": "server_rejected",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "gathering",
+            "direct_attempts": 15,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:40:11.655997+00:00",
+            "rendered_frames": 6964,
+            "incoming_fps": 29,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "server_rejected",
+            "control_failure_detail": "server_rejected",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 16,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:40:26.630724+00:00",
+            "rendered_frames": 6975,
+            "incoming_fps": 25,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "server_rejected",
+            "control_failure_detail": "server_rejected",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "new",
+            "direct_dtls_state": "new",
+            "direct_attempts": 17,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:40:36.644071+00:00",
+            "rendered_frames": 6975,
+            "incoming_fps": 19,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "server_rejected",
+            "control_failure_detail": "server_rejected",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "new",
+            "direct_dtls_state": "new",
+            "direct_attempts": 17,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:40:51.663307+00:00",
+            "rendered_frames": 7125,
+            "incoming_fps": 30,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "server_rejected",
+            "control_failure_detail": "server_rejected",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 18,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:41:06.648254+00:00",
+            "rendered_frames": 7125,
+            "incoming_fps": 33,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "server_rejected",
+            "control_failure_detail": "server_rejected",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 19,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:41:22.294385+00:00",
+            "rendered_frames": 7377,
+            "incoming_fps": 18,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "server_rejected",
+            "control_failure_detail": "server_rejected",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "failed",
+            "direct_failure": "connection_deadline",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 19,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:41:31.631764+00:00",
+            "rendered_frames": 7551,
+            "incoming_fps": 30,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "server_rejected",
+            "control_failure_detail": "server_rejected",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "failed",
+            "direct_failure": "connection_deadline",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 19,
+            "decode_errors": 0,
+            "render_errors": 0
+          }
+        ],
+        "summary": {
+          "max_control_rtt_ms": 851,
+          "max_decode_errors": 0,
+          "max_render_errors": 0,
+          "last_control_failure_detail": "server_rejected"
+        },
+        "native": [
+          {
+            "received_at": "2026-10-11T20:41:10.134034+00:00",
+            "kind": "sample",
+            "stage": "answer_sent",
+            "elapsed_ms": 11290,
+            "answer_sent": true,
+            "network": {
+              "local_candidates": 3,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 226,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          },
+          {
+            "received_at": "2026-10-11T20:41:12.221753+00:00",
+            "kind": "sample",
+            "stage": "answer_sent",
+            "elapsed_ms": 13336,
+            "answer_sent": true,
+            "network": {
+              "local_candidates": 3,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 267,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          },
+          {
+            "received_at": "2026-10-11T20:41:14.447828+00:00",
+            "kind": "final",
+            "stage": "connection_failed",
+            "elapsed_ms": 15283,
+            "answer_sent": true,
+            "network": {
+              "local_candidates": 3,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 287,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          }
+        ],
+        "controlEvents": [
+          {
+            "received_at": "2026-10-11T20:35:34.151511+00:00",
+            "reason": null,
+            "error": "input_rejected_or_unavailable"
+          },
+          {
+            "received_at": "2026-10-11T20:35:34.442644+00:00",
+            "reason": null,
+            "error": "input_rejected_or_unavailable"
+          }
+        ]
+      },
+      {
+        "opened_at": "2026-10-11T20:33:29.017986+00:00",
+        "state": "closed",
+        "last_seen_at": "2026-10-11T20:34:09.041037+00:00",
+        "samples": [
+          {
+            "received_at": "2026-10-11T20:33:29.122440+00:00",
+            "rendered_frames": 445,
+            "incoming_fps": 0,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "idle",
+            "control_failure": "none",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_attempts": 0,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:33:42.430587+00:00",
+            "rendered_frames": 475,
+            "incoming_fps": 31,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "probing",
+            "control_failure": "none",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "signaling",
+            "direct_attempts": 1,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:33:52.448979+00:00",
+            "rendered_frames": 629,
+            "incoming_fps": 26,
+            "control_rtt_ms": 218,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "ready",
+            "control_failure": "none",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 1,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:34:02.447290+00:00",
+            "rendered_frames": 872,
+            "incoming_fps": 24,
+            "control_rtt_ms": 308,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "ready",
+            "control_failure": "none",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 2,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:34:13.083254+00:00",
+            "rendered_frames": 1105,
+            "incoming_fps": 25,
+            "control_rtt_ms": 238,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "ready",
+            "control_failure": "none",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "failed",
+            "direct_failure": "connection_deadline",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 2,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:34:15.928400+00:00",
+            "rendered_frames": 1152,
+            "incoming_fps": 0,
+            "control_rtt_ms": 211,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "timeout",
+            "control_failure_detail": "idle_receipt_timeout",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "signaling",
+            "direct_attempts": 3,
+            "decode_errors": 0,
+            "render_errors": 0
+          }
+        ],
+        "summary": {
+          "max_control_rtt_ms": 308,
+          "max_decode_errors": 0,
+          "max_render_errors": 0,
+          "last_control_failure_detail": "idle_receipt_timeout",
+          "last_control_fence_received_at": "2026-10-11T20:34:15.928400+00:00"
+        },
+        "native": [
+          {
+            "received_at": "2026-10-11T20:34:13.919234+00:00",
+            "kind": "sample",
+            "stage": "offer_received",
+            "elapsed_ms": 18,
+            "answer_sent": false,
+            "network": {}
+          },
+          {
+            "received_at": "2026-10-11T20:34:15.925133+00:00",
+            "kind": "sample",
+            "stage": "gathering",
+            "elapsed_ms": 1061,
+            "answer_sent": false,
+            "network": {
+              "local_candidates": 2,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 5,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          },
+          {
+            "received_at": "2026-10-11T20:34:17.003591+00:00",
+            "kind": "sample",
+            "stage": "answer_sent",
+            "elapsed_ms": 3104,
+            "answer_sent": true,
+            "network": {
+              "local_candidates": 3,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 47,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          }
+        ],
+        "controlEvents": [
+          {
+            "received_at": "2026-10-11T20:34:15.924241+00:00",
+            "reason": "runtime_unavailable",
+            "error": "input_temporarily_unavailable"
+          }
+        ]
+      },
+      {
+        "opened_at": "2026-10-11T20:33:18.660249+00:00",
+        "state": "closed",
+        "last_seen_at": "2026-10-11T20:33:18.664101+00:00",
+        "samples": [
+          {
+            "received_at": "2026-10-11T20:33:18.766174+00:00",
+            "rendered_frames": 376,
+            "incoming_fps": 0,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "idle",
+            "control_failure": "none",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_attempts": 0,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:33:23.881910+00:00",
+            "rendered_frames": 443,
+            "incoming_fps": 0,
+            "control_rtt_ms": 227,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "timeout",
+            "control_failure_detail": "idle_receipt_timeout",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 1,
+            "decode_errors": 0,
+            "render_errors": 0
+          }
+        ],
+        "summary": {
+          "max_control_rtt_ms": 227,
+          "max_decode_errors": 0,
+          "max_render_errors": 0,
+          "last_control_failure_detail": "idle_receipt_timeout",
+          "last_control_fence_received_at": "2026-10-11T20:33:23.881910+00:00"
+        },
+        "native": [
+          {
+            "received_at": "2026-10-11T20:33:19.760791+00:00",
+            "kind": "sample",
+            "stage": "offer_received",
+            "elapsed_ms": 9,
+            "answer_sent": false,
+            "network": {}
+          },
+          {
+            "received_at": "2026-10-11T20:33:20.889754+00:00",
+            "kind": "sample",
+            "stage": "answer_sent",
+            "elapsed_ms": 1136,
+            "answer_sent": true,
+            "network": {
+              "local_candidates": 3,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 16,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          }
+        ],
+        "controlEvents": []
+      },
+      {
+        "opened_at": "2026-10-11T20:32:52.771011+00:00",
+        "state": "closed",
+        "last_seen_at": "2026-10-11T20:33:12.784572+00:00",
+        "samples": [
+          {
+            "received_at": "2026-10-11T20:32:52.876837+00:00",
+            "rendered_frames": 0,
+            "incoming_fps": 0,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "idle",
+            "control_failure": "none",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_attempts": 0,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:33:06.880719+00:00",
+            "rendered_frames": 203,
+            "incoming_fps": 26,
+            "control_rtt_ms": 223,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "ready",
+            "control_failure": "none",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 1,
+            "decode_errors": 0,
+            "render_errors": 0
+          },
+          {
+            "received_at": "2026-10-11T20:33:14.218288+00:00",
+            "rendered_frames": 369,
+            "incoming_fps": 19,
+            "control_rtt_ms": 1011,
+            "control_transport": "server_websocket",
+            "transport": "server_websocket",
+            "control_state": "fenced",
+            "control_failure": "timeout",
+            "control_failure_detail": "idle_receipt_timeout",
+            "direct_frames": 0,
+            "direct_path": "unknown",
+            "direct_state": "connecting",
+            "direct_ice_state": "checking",
+            "direct_dtls_state": "new",
+            "direct_attempts": 2,
+            "decode_errors": 0,
+            "render_errors": 0
+          }
+        ],
+        "summary": {
+          "max_control_rtt_ms": 1011,
+          "max_decode_errors": 0,
+          "max_render_errors": 0,
+          "last_control_failure_detail": "idle_receipt_timeout",
+          "last_control_fence_received_at": "2026-10-11T20:33:14.218288+00:00"
+        },
+        "native": [
+          {
+            "received_at": "2026-10-11T20:33:13.867012+00:00",
+            "kind": "sample",
+            "stage": "gathering",
+            "elapsed_ms": 1053,
+            "answer_sent": false,
+            "network": {
+              "local_candidates": 2,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 15,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          },
+          {
+            "received_at": "2026-10-11T20:33:14.801353+00:00",
+            "kind": "sample",
+            "stage": "answer_sent",
+            "elapsed_ms": 2116,
+            "answer_sent": true,
+            "network": {
+              "local_candidates": 3,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 37,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          },
+          {
+            "received_at": "2026-10-11T20:33:16.846513+00:00",
+            "kind": "sample",
+            "stage": "answer_sent",
+            "elapsed_ms": 3146,
+            "answer_sent": true,
+            "network": {
+              "local_candidates": 3,
+              "remote_candidates": 1,
+              "pairs": 1,
+              "checking_pairs": 1,
+              "failed_pairs": 0,
+              "succeeded_pairs": 0,
+              "requests_sent": 58,
+              "requests_received": 0,
+              "responses_sent": 0,
+              "responses_received": 0,
+              "dtls_state": "new"
+            }
+          }
+        ],
+        "controlEvents": []
+      }
+    ],
+    "physicalNetworkChangeObservedByAgent": false,
+    "interpretation": "Latest recorded session used server video; direct ICE received no answers. This does not prove which NAT, firewall, mDNS or emulator network layer blocked it."
+  },
+  "scope": {
+    "videoCadenceAcceptedInControlledContext": true,
+    "ordinaryChromeAccepted": false,
+    "notebookLoopbackAccepted": false,
+    "wifiMobileMigrationAccepted": false,
+    "fleetRolloutAccepted": false,
+    "glassToGlassDelayMeasured": false,
+    "allDevicesUpdated": false
+  },
+  "secretsExcluded": [
+    "credentials",
+    "SDP",
+    "ICE keys",
+    "candidate addresses",
+    "images",
+    "raw inputs"
+  ]
+}

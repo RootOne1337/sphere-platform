@@ -1,0 +1,20 @@
+PASS __tests__/session/refresh-races.test.tsx
+  √ does not resurrect a logged-out session from a delayed startup refresh (18 ms)
+  √ shares one startup refresh through StrictMode effect replay (4 ms)
+  √ does not replay a mutation or restore credentials after logout during API refresh (72 ms)
+  √ does not refresh or replay an old 401 under a newly signed-in tenant (3 ms)
+  √ rejects a successful stale response after the active identity changes (1 ms)
+  √ binds a mutation to the identity at call time, before the next microtask (1 ms)
+  √ ignores an old refresh failure after a different login succeeds (52 ms)
+  √ coalesces concurrent 401s and retries each request at most once (4 ms)
+  √ bounds the refresh transport wait (5 ms)
+  √ shares startup refresh with a second initializer and an API 401 (7 ms)
+  √ does not try a second refresh when both retried requests remain unauthorized (4 ms)
+  √ fails closed if the cookie refresh belongs to a different identity (54 ms)
+  √ does not restore a cookie session after an explicit logout and remount (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       13 passed, 13 total
+Snapshots:   0 total
+Time:        1.291 s
+Ran all test suites matching __tests__/session/refresh-races.test.tsx.

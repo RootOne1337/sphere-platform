@@ -1,0 +1,51 @@
+{
+  "success": true,
+  "numPassedTests": 69,
+  "numFailedTests": 0,
+  "numPassedTestSuites": 8,
+  "numFailedTestSuites": 0,
+  "numTotalTests": 69,
+  "numTotalTestSuites": 8,
+  "suites": [
+    {
+      "name": "reconstruction-recovery.test.tsx",
+      "status": "passed",
+      "tests": 18
+    },
+    {
+      "name": "teaching-review.test.tsx",
+      "status": "passed",
+      "tests": 17
+    },
+    {
+      "name": "hudSpeedCard.test.tsx",
+      "status": "passed",
+      "tests": 4
+    },
+    {
+      "name": "reconstruction-comparison.test.tsx",
+      "status": "passed",
+      "tests": 2
+    },
+    {
+      "name": "reconstruction-link.test.ts",
+      "status": "passed",
+      "tests": 11
+    },
+    {
+      "name": "reconstruction-client.test.ts",
+      "status": "passed",
+      "tests": 5
+    },
+    {
+      "name": "teaching-keymap.test.ts",
+      "status": "passed",
+      "tests": 6
+    },
+    {
+      "name": "teaching-profile-storage.test.ts",
+      "status": "passed",
+      "tests": 6
+    }
+  ]
+}

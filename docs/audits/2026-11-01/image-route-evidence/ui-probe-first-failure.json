@@ -1,0 +1,8 @@
+{
+  "outcome": "stopped_before_swap",
+  "reason": "raw_mount_array_order_false_mismatch",
+  "probeContainerRemoved": true,
+  "originalUiUnchanged": true,
+  "preservationProof": "probe-order-proof.json",
+  "httpAcceptance": "not_sealed_due_finally_error"
+}

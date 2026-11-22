@@ -1,5 +1,16 @@
 # ADR-004 — DAG-Based Automation Script Engine
 
+> Historical decision record, not the current wire schema or an acceptance of
+> fleet capacity. The proposal below describes `depends_on`, Celery waves and
+> SSE; current publication validates [DAGScript](../../backend/schemas/dag.py)
+> through [script_service.py](../../backend/services/script_service.py), while
+> Android follows `on_success`/`on_failure` routes in
+> [DagRunner](../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt).
+> See [Script Studio](../operations/SCRIPT-STUDIO.md) and
+> [tasks and orchestration](../operations/TASKS-AND-ORCHESTRATION.md) for the
+> current contracts and limitations. The old parallel-wave and timing claims
+> below are design assumptions, not a measured runtime guarantee.
+
 **Status:** Accepted  
 **Date:** 2024-03-10  
 **Deciders:** Backend Team Lead, Product  
@@ -99,8 +110,9 @@ parallel wave execution and `chord()` for synchronization. The schema is
 expressive enough for real use cases while remaining approachable:
 most scripts are simple linear chains or simple fan-out patterns.
 
-Cycle detection is implemented using Kahn's algorithm at script-save time,
-preventing invalid scripts from entering the execution queue.
+The recorded proposal specified Kahn's algorithm for cycle detection at save time.
+The current schema instead uses DFS for its cycle validation; see the source linked
+above for its actual rules and exceptions.
 
 ---
 
@@ -108,7 +120,8 @@ preventing invalid scripts from entering the execution queue.
 
 ### Positive
 
-- A 5-step linear script runs in the time of 1 step (if all steps can parallelize)
+- The original proposal expected parallelizable independent steps to reduce elapsed time;
+  a linear chain has dependencies and cannot all run as one parallel step.
 - Fleet execution: a wave can dispatch to 1,000 devices simultaneously via Celery `group()`
 - Step isolation: a failure in one branch does not abort independent branches
   (configurable via `on_failure: continue`)
@@ -138,7 +151,6 @@ Celery tasks per script execution.
 
 ## Links
 
-- [backend/services/script_engine.py](../../backend/services/script_engine.py)
-- [docs/architecture.md — Script Engine / DAG](../architecture.md#script-engine--dag-execution)
-- [TZ-04-Script-Engine/SPLIT-1-DAG-Schema.md](../../TZ-04-Script-Engine/SPLIT-1-DAG-Schema.md)
-- [TZ-04-Script-Engine/SPLIT-4-Wave-Batch.md](../../TZ-04-Script-Engine/SPLIT-4-Wave-Batch.md)
+- [Script service](../../backend/services/script_service.py)
+- [DAG schema](../../backend/schemas/dag.py)
+- [Architecture overview](../architecture.md)

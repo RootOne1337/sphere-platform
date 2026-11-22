@@ -1,0 +1,149 @@
+{
+  "finding": "F39",
+  "scope": "group_location_create_edit_delete_forms",
+  "status": "installed_ui_accepted_api_jsdom_visual_open",
+  "implementationSource": "922f479d29d5eee833e8b66ddfc4aea2401e0e9d",
+  "observedAt": "2026-10-03T21:04:49.352982+00:00",
+  "before": {
+    "applicationSource": "6635805a381e39aea31bf2093348ff19843f3b6a",
+    "archive": true,
+    "passed": 0,
+    "assertionFailures": 16,
+    "runtimeErrorSuites": 0
+  },
+  "checks": {
+    "nodeMajor": 24,
+    "frontendSuites": 107,
+    "sourceFrontendPassed": 1013,
+    "builderImagePassed": 1013,
+    "typesPassed": true,
+    "productionBuildPassed": true,
+    "noFrontendApplicationSourceMount": true,
+    "actualPostgresRedisPassed": 89,
+    "installedApiImagePassed": 89,
+    "noBackendSourceMount": true,
+    "addedFrontendCases": 16,
+    "addedHttpCases": 16,
+    "pythonRuffPassed": true
+  },
+  "runtime": {
+    "uiSource": "922f479d29d5eee833e8b66ddfc4aea2401e0e9d",
+    "previousUiSource": "81d065a90919c1ad60312f81cb4f821e034ad501",
+    "apiSource": "37bb436ae5fb9f27eda6c7549bb46a83bf3df510",
+    "uiImageId": "sha256:0df239d85c4733951bb2a7f6c0d3a276238963b9a472bc72c592ef46adbd5d3c",
+    "installedAt": "2026-10-03T21:03:39.198173+00:00",
+    "url": "http://127.0.0.1:3015/groups",
+    "apiPreserved": true,
+    "neighboursPreserved": 15,
+    "tunaPreserved": true,
+    "otaCatalogPreserved": true,
+    "samples": 7,
+    "cohort": 14,
+    "apkCode": 10244,
+    "offlineOutsideAcceptance": 5,
+    "baselineEpochsPreserved": true,
+    "heartbeatUnder60Seconds": true,
+    "apiReady": true,
+    "prometheusBackendUp": true,
+    "readbackStartedAt": "2026-10-03T21:03:48.816477+00:00",
+    "readbackFinishedAt": "2026-10-03T21:04:49.352982+00:00",
+    "capabilityStatus": 200,
+    "anonymousStatus": 401,
+    "permissionMatrixMatched": true,
+    "capabilityCacheControl": "no-store",
+    "catalogReadback": {
+      "groups": {
+        "status": 200,
+        "rows": 1,
+        "owned": true,
+        "metadataSha256": "b44aaf80fe1a64ae3769fa1aa98afd9b18a2d03441110bf9bdb10fc4568a4587"
+      },
+      "locations": {
+        "status": 200,
+        "rows": 0,
+        "owned": true,
+        "metadataSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "catalogMetadataPreserved": true
+  },
+  "sourceCi": [
+    {
+      "conclusion": "success",
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37153326136"
+    },
+    {
+      "conclusion": "success",
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37153326155"
+    },
+    {
+      "conclusion": "success",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37153326148"
+    },
+    {
+      "conclusion": "success",
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37153326150"
+    }
+  ],
+  "sourceCiObservedAt": "2026-10-03T21:12:26.481105+00:00",
+  "limits": {
+    "browserAcceptance": "OPEN_URL_POLICY_BLOCKED",
+    "liveCatalogMutationsSent": false,
+    "liveDestructiveOrVpnCommandsSent": false,
+    "liveAndroidRolesChanged": false,
+    "newApkInstalled": false,
+    "inflightMutationsNotUndone": true,
+    "clientChecksDoNotReplaceServerAuthorization": true,
+    "fullFleetUptimeAccepted": false,
+    "otherPageMutationCoverageStillOpen": true,
+    "memberLifecycleAcceptanceStillOpen": true,
+    "liveLocationDetailNotExercisedBecauseCatalogEmpty": true,
+    "frozenAuditChanged": false
+  },
+  "originalAuditCounts": {
+    "sourceFixed": 33,
+    "unclosed": 8,
+    "includedPartial": [
+      "F32",
+      "F33",
+      "F39"
+    ]
+  },
+  "sourceCiFirstObservation": {
+    "observedAt": "2026-10-03T21:06:03.809082+00:00",
+    "runs": [
+      {
+        "conclusion": "",
+        "name": "CI — Backend",
+        "status": "in_progress",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37153326150"
+      },
+      {
+        "conclusion": "success",
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37153326136"
+      },
+      {
+        "conclusion": "",
+        "name": "CI — Android",
+        "status": "in_progress",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37153326148"
+      },
+      {
+        "conclusion": "success",
+        "name": "CI — Frontend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37153326155"
+      }
+    ]
+  }
+}

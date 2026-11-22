@@ -1,0 +1,99 @@
+{
+  "registered_camera_ticks_exact": true,
+  "relative_rotation_disagreement_degrees": {
+    "count": 162,
+    "median": 0.5579004576042891,
+    "p90": 6.052006482769639,
+    "maximum": 18.473502861075424
+  },
+  "early_0_6_rotation_disagreement_degrees": {
+    "count": 27,
+    "median": 2.813182214950528,
+    "p90": 8.478368519028397,
+    "maximum": 17.339179528215425
+  },
+  "after_6_rotation_disagreement_degrees": {
+    "count": 135,
+    "median": 0.5018131865010931,
+    "p90": 5.058192286765351,
+    "maximum": 18.473502861075424
+  },
+  "around_3_318_s": [
+    {
+      "a": 79,
+      "b": 86,
+      "start_s": 3.087,
+      "end_s": 3.318,
+      "rotation_disagreement_deg": 17.339179528215425,
+      "cal_rotation_deg": 10.085965614039425,
+      "sfm_rotation_deg": 7.487781876485269,
+      "cal_step": 0.9524373366542415,
+      "sfm_step": 8.030383073950041,
+      "hud_distance": 2.7270833333333333,
+      "hud_status": "accepted",
+      "cal_hud_fit_ratio": 2.3663995262682445
+    },
+    {
+      "a": 86,
+      "b": 92,
+      "start_s": 3.318,
+      "end_s": 3.535,
+      "rotation_disagreement_deg": 15.669875907568874,
+      "cal_rotation_deg": 4.921006597771374,
+      "sfm_rotation_deg": 20.572918124630824,
+      "cal_step": 1.1900265882494803,
+      "sfm_step": 0.4593357757950652,
+      "hud_distance": 2.696076068376068,
+      "hud_status": "accepted",
+      "cal_hud_fit_ratio": 2.9907119793545722
+    }
+  ],
+  "max_sfm_step_edge": {
+    "a": 79,
+    "b": 86,
+    "start_s": 3.087,
+    "end_s": 3.318,
+    "rotation_disagreement_deg": 17.339179528215425,
+    "cal_rotation_deg": 10.085965614039425,
+    "sfm_rotation_deg": 7.487781876485269,
+    "cal_step": 0.9524373366542415,
+    "sfm_step": 8.030383073950041,
+    "hud_distance": 2.7270833333333333,
+    "hud_status": "accepted",
+    "cal_hud_fit_ratio": 2.3663995262682445
+  },
+  "max_calfvo_step_edge": {
+    "a": 72,
+    "b": 79,
+    "start_s": 2.855,
+    "end_s": 3.087,
+    "rotation_disagreement_deg": 2.813182214950528,
+    "cal_rotation_deg": 5.222131303660007,
+    "sfm_rotation_deg": 7.83690664406397,
+    "cal_step": 2.8454959453229103,
+    "sfm_step": 0.7154877093846892,
+    "hud_distance": 2.5679944444444445,
+    "hud_status": "accepted",
+    "cal_hud_fit_ratio": 7.507821838561255
+  },
+  "final_relative_rotation_disagreement_deg": 137.21846458982247,
+  "hud_same_accepted_edges": 125,
+  "calfvo_units_per_integrated_hud_unit_same_data_median": 0.14758762124650707,
+  "calfvo_hud_factor4_outliers": 3,
+  "sfm_hud_factor4_outliers_same_accepted": 17,
+  "calfvo_hud_fit_ratio_stats": {
+    "count": 125,
+    "median": 1.0,
+    "p90": 2.6539937583583506,
+    "maximum": 7.507821838561255
+  },
+  "single_similarity_fit_all_163_cameras": {
+    "sfm_units_per_calfvo_unit": 0.14308123100333203,
+    "rms_sfm_units": 3.8605730977052373,
+    "median_error_sfm_units": 2.846121832696757,
+    "last_position_error_sfm_units": 3.9324815748364346,
+    "maximum_error_sfm_units": 8.593649183595303,
+    "scope": "in-sample all-camera fit, no ground truth or heldout"
+  },
+  "limits": "Both reconstructions and HUD derive from same game recording; HUD camera/body and learned translation scale not calibrated. No method is ground truth. Similarity is same-data, not a validated physical fit; accepted HUD interpolation rules are inherited from speed-consistency-step3."
+}

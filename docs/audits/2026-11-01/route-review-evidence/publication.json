@@ -1,0 +1,33 @@
+{
+  "status": "source_bound_diagnostic_published",
+  "catalog": {
+    "alternatives": [
+      {
+        "id": "global-163-requires-review",
+        "cameras": 163,
+        "points": 5544,
+        "scope": "diagnostic",
+        "executionQualified": false
+      },
+      {
+        "id": "hud-focal-603-diagnostic",
+        "cameras": 163,
+        "points": 15041,
+        "scope": "diagnostic",
+        "executionQualified": false
+      },
+      {
+        "id": "hud-gap-166-diagnostic",
+        "cameras": 166,
+        "points": 15164,
+        "scope": "diagnostic",
+        "executionQualified": false,
+        "label": "zaezd888 · исходные кадры и уточнение поворота · диагностика"
+      }
+    ],
+    "preferredAlternativeId": "hud-gap-166-diagnostic"
+  },
+  "source_manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+  "geometry_sha256": "a4cddab78876cef9183ec5beea94e6c7739e02173652ca4f0243f7e19aba9933",
+  "protected_assets_unchanged": true
+}

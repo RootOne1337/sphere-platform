@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <queries><package android:name="com.sphereplatform.awgclientprobe" /></queries>
+    <application android:allowBackup="false" android:label="Sphere AWG JNI probe" />
+    <instrumentation android:name=".NativeSmokeInstrumentation" android:targetPackage="com.sphereplatform.awgprobe" android:label="Read-only AWG native smoke" />
+    <instrumentation android:name="com.sphereplatform.agent.vpn.NativeTunnelInstrumentation" android:targetPackage="com.sphereplatform.awgprobe" android:label="Isolated root TUN fixture" />
+</manifest>

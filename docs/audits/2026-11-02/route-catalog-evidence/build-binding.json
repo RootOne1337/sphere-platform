@@ -1,0 +1,9 @@
+{
+  "sourceRevision": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "sourceArchiveSha256": "0110a2e7aea3c49b60a3b3ca6ccf6b0a0d53260cb139250d807c142c91084bad",
+  "imageId": "sha256:ee18994f586f7428d5767f68ac53f7a6002f8a39e88895ea3a63c46f5e35cb23",
+  "runId": "20261102T110430Z-d7b0ccd7",
+  "exitCode": 0,
+  "toolingSource": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "dockerfileSha256": "e743c579c3ca440bb38c21e4f8eda437faa7acd85eecf9344f54579712cbe9a7"
+}

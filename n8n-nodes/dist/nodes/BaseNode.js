@@ -8,12 +8,15 @@ const n8n_workflow_1 = require("n8n-workflow");
  */
 async function sphereApiRequest(method, path, body, qs) {
     const creds = await this.getCredentials('spherePlatformApi');
+    const accessToken = typeof creds.accessToken === 'string' ? creds.accessToken.trim() : '';
     const options = {
         method,
         url: `${creds.serverUrl}/api/v1${path}`,
         headers: {
-            'X-API-Key': creds.apiKey,
-            'X-Org-ID': creds.orgId,
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {
+                'X-API-Key': creds.apiKey,
+                'X-Org-ID': creds.orgId,
+            }),
             'Content-Type': 'application/json',
         },
         body,

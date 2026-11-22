@@ -1,0 +1,110 @@
+{
+  "schema": "sphere-exact-sift-alias-normalization-v1",
+  "maximumAliasDiameterPixels": 0.001,
+  "physicalActions": 0,
+  "executionQualified": false,
+  "posesCorrected": false,
+  "models": [
+    {
+      "model": 0,
+      "removedObservations": 4767,
+      "nonAliasGroupsPreserved": 3380,
+      "maximumRemovedDistancePixels": 0.0,
+      "posesBitExact": true,
+      "keypointXYTablesBitExact": true,
+      "pointXYZBitExact": true,
+      "pointsRemovedByNative": [],
+      "structural": {
+        "passed": false,
+        "reason": "component_merge_duplicate_image_observation"
+      }
+    },
+    {
+      "model": 1,
+      "removedObservations": 407,
+      "nonAliasGroupsPreserved": 343,
+      "maximumRemovedDistancePixels": 0.0,
+      "posesBitExact": true,
+      "keypointXYTablesBitExact": true,
+      "pointXYZBitExact": true,
+      "pointsRemovedByNative": [],
+      "structural": {
+        "passed": false,
+        "reason": "component_merge_duplicate_image_observation"
+      }
+    }
+  ],
+  "status": "completed",
+  "seconds": 4.10999999998603,
+  "resourceSamples": [
+    {
+      "seconds": 0.0470000000204891,
+      "availableRamBytes": 9909456896,
+      "commitPercent": 77.45563341038583,
+      "rssBytes": 93569024,
+      "diskBytes": 37808599040
+    },
+    {
+      "seconds": 1.7349999999860302,
+      "availableRamBytes": 9959346176,
+      "commitPercent": 77.39486497064387,
+      "rssBytes": 104968192,
+      "diskBytes": 37808304128
+    },
+    {
+      "seconds": 2.23499999998603,
+      "availableRamBytes": 9965105152,
+      "commitPercent": 77.40073509139766,
+      "rssBytes": 106545152,
+      "diskBytes": 37808250880
+    },
+    {
+      "seconds": 2.73499999998603,
+      "availableRamBytes": 9959419904,
+      "commitPercent": 77.40622860747268,
+      "rssBytes": 107360256,
+      "diskBytes": 37808140288
+    },
+    {
+      "seconds": 3.23499999998603,
+      "availableRamBytes": 9929129984,
+      "commitPercent": 77.4282354200057,
+      "rssBytes": 107675648,
+      "diskBytes": 37808025600
+    },
+    {
+      "seconds": 3.73499999998603,
+      "availableRamBytes": 9923260416,
+      "commitPercent": 77.42788747003077,
+      "rssBytes": 102436864,
+      "diskBytes": 37801996288
+    }
+  ],
+  "volumeChecks": [
+    {
+      "seconds": 1.5160000000614673,
+      "findings": [],
+      "snapshot": {
+        "observedAt": "2026-11-01T20:10:16.766760+00:00",
+        "system": "Windows",
+        "freeDiskBytes": 37808599040,
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ],
+        "availableRamBytes": 9956745216,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 77433053184,
+        "commitLimitBytes": 100060360704,
+        "kernelPagedBytes": 11010580480,
+        "kernelNonpagedBytes": 5304332288,
+        "processCount": 469,
+        "handleCount": 705353,
+        "memoryMeasurement": "GetPerformanceInfo"
+      }
+    }
+  ],
+  "protectedUnchanged": true
+}

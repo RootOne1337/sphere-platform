@@ -1,0 +1,842 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T04:16:38.839681+00:00",
+  "runtimeInstalled": true,
+  "scope": "Three finite installations / four explicit diagnostic peers on one PH011. Setup/native stats and one UID-filtered UDP capture accepted only as diagnostics; direct channel/RTT/media/input not accepted. Original APK restored and ordinary UI/API retained.",
+  "runtime": {
+    "sourceRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+    "apiSourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "uiContainer": {
+      "id": "2109cf7c08790a48f9637031f1603bbdba1d435e9260a1f32a5719c827be9102",
+      "imageId": "sha256:addce2bdef7e7c574fa68abfa0bc273184e63df81d1a721268caefbf4874ab13",
+      "imageTag": "sphere-review-frontend:639b6ad52fe3651579499659ded46ff73027f313",
+      "startedAt": "2026-10-10T00:38:05.533230075Z"
+    },
+    "apiContainer": {
+      "id": "fe9fb8f38427ce1e03e9d86c350cbad612aa9bc114c02181e5982be85f9f05d1",
+      "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "startedAt": "2026-10-10T04:12:56.954296937Z"
+    },
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "schemaMigrationPerformed": false,
+    "otherContainersPreservedPerInstallation": 45,
+    "containerCount": 46,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "directProbeEnabled": false,
+    "directProbeDeviceIds": [],
+    "nativeCanaryCurrentlyInstalled": false,
+    "originalApkRestored": true,
+    "publicHostMapChanged": false
+  },
+  "sourceAdmission": {
+    "revision": "161a23e97a323b2061aceaf56f84bc436cd90305",
+    "hostedCi": [
+      {
+        "kind": "android",
+        "runId": 38020447092,
+        "conclusion": "success",
+        "headSha": "161a23e97a323b2061aceaf56f84bc436cd90305",
+        "status": "completed"
+      },
+      {
+        "kind": "backend",
+        "runId": 38020451358,
+        "conclusion": "success",
+        "headSha": "161a23e97a323b2061aceaf56f84bc436cd90305",
+        "status": "completed"
+      },
+      {
+        "kind": "frontend",
+        "runId": 38020451363,
+        "conclusion": "success",
+        "headSha": "161a23e97a323b2061aceaf56f84bc436cd90305",
+        "status": "completed"
+      },
+      {
+        "kind": "preview",
+        "runId": 38020451353,
+        "conclusion": "success",
+        "headSha": "161a23e97a323b2061aceaf56f84bc436cd90305",
+        "status": "completed"
+      }
+    ],
+    "signedApkSha256": "27279d73bfe5de9998d0c5d2e7034850f0abdb38e86fa85c863c02b3d4ced7d2",
+    "apkBytes": 57655284,
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version": "1.2.49-dev / 10249",
+    "jniAbis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "tests": {
+      "dev": {
+        "tests": 997,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 997,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "lint": {
+      "devDebug": {
+        "errors": 0,
+        "warnings": 38
+      },
+      "enterpriseDebug": {
+        "errors": 0,
+        "warnings": 38
+      }
+    },
+    "otaPublished": false,
+    "otherDevicesUpdated": false
+  },
+  "bounds": {
+    "progressEventsPerPeerMaximum": 19,
+    "nativeStatsCallsMaximum": 32,
+    "nativeStatsPendingMaximum": 1,
+    "callbackMailbox": 32,
+    "leaseMs": 30000,
+    "guardianSeconds": 360,
+    "deadlinesChanged": false
+  },
+  "nativeProgress": [
+    {
+      "installationOrdinal": 1,
+      "probeWithinInstallation": 1,
+      "observedAtUtc": "2026-10-10T03:52:29.239648+00:00",
+      "pid": 9745,
+      "stages": [
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "offer_received",
+          "elapsedMs": 0
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "factory_ready",
+          "elapsedMs": 26
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "peer_ready",
+          "elapsedMs": 34
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "remote_description_set",
+          "elapsedMs": 38
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "answer_created",
+          "elapsedMs": 39
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "local_description_set",
+          "elapsedMs": 109
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "gathering",
+          "elapsedMs": 109
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "gathered",
+          "elapsedMs": 391
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "answer_sent",
+          "elapsedMs": 392
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "closed",
+          "elapsedMs": 12556
+        }
+      ],
+      "statsReports": 13,
+      "preAnswerReports": 1,
+      "firstNetwork": {
+        "localCandidates": 0,
+        "remoteCandidates": 0,
+        "pairs": 0,
+        "checkingPairs": 0,
+        "failedPairs": 0,
+        "succeededPairs": 0,
+        "requestsSent": null,
+        "requestsReceived": null,
+        "responsesSent": null,
+        "responsesReceived": null,
+        "dtlsState": "new"
+      },
+      "lastNetwork": {
+        "localCandidates": 3,
+        "remoteCandidates": 1,
+        "pairs": 1,
+        "checkingPairs": 1,
+        "failedPairs": 0,
+        "succeededPairs": 0,
+        "requestsSent": 246,
+        "requestsReceived": 0,
+        "responsesSent": 0,
+        "responsesReceived": 0,
+        "dtlsState": "new"
+      },
+      "boundedNativeLinesRead": 24,
+      "rawStatsExported": false,
+      "rawLogcatExported": false
+    },
+    {
+      "installationOrdinal": 2,
+      "probeWithinInstallation": 1,
+      "observedAtUtc": "2026-10-10T04:00:21.614270+00:00",
+      "pid": 10871,
+      "stages": [
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "offer_received",
+          "elapsedMs": 0
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "factory_ready",
+          "elapsedMs": 30
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "peer_ready",
+          "elapsedMs": 43
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "remote_description_set",
+          "elapsedMs": 48
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "answer_created",
+          "elapsedMs": 49
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "local_description_set",
+          "elapsedMs": 122
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "gathering",
+          "elapsedMs": 122
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "gathered",
+          "elapsedMs": 224
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "answer_sent",
+          "elapsedMs": 226
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "closed",
+          "elapsedMs": 12391
+        }
+      ],
+      "statsReports": 13,
+      "preAnswerReports": 1,
+      "firstNetwork": {
+        "localCandidates": 0,
+        "remoteCandidates": 0,
+        "pairs": 0,
+        "checkingPairs": 0,
+        "failedPairs": 0,
+        "succeededPairs": 0,
+        "requestsSent": null,
+        "requestsReceived": null,
+        "responsesSent": null,
+        "responsesReceived": null,
+        "dtlsState": "new"
+      },
+      "lastNetwork": {
+        "localCandidates": 3,
+        "remoteCandidates": 1,
+        "pairs": 1,
+        "checkingPairs": 1,
+        "failedPairs": 0,
+        "succeededPairs": 0,
+        "requestsSent": 242,
+        "requestsReceived": 0,
+        "responsesSent": 0,
+        "responsesReceived": 0,
+        "dtlsState": "new"
+      },
+      "boundedNativeLinesRead": 24,
+      "rawStatsExported": false,
+      "rawLogcatExported": false
+    },
+    {
+      "installationOrdinal": 3,
+      "probeWithinInstallation": 1,
+      "observedAtUtc": "2026-10-10T04:11:55.000873+00:00",
+      "pid": 12342,
+      "stages": [
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "offer_received",
+          "elapsedMs": 0
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "factory_ready",
+          "elapsedMs": 33
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "peer_ready",
+          "elapsedMs": 44
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "remote_description_set",
+          "elapsedMs": 48
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "answer_created",
+          "elapsedMs": 49
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "local_description_set",
+          "elapsedMs": 137
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "gathering",
+          "elapsedMs": 137
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "gathered",
+          "elapsedMs": 240
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "answer_sent",
+          "elapsedMs": 243
+        },
+        {
+          "event": "native_probe_progress",
+          "iceProfile": "public-stun",
+          "stage": "closed",
+          "elapsedMs": 12407
+        }
+      ],
+      "statsReports": 13,
+      "preAnswerReports": 1,
+      "firstNetwork": {
+        "localCandidates": 0,
+        "remoteCandidates": 0,
+        "pairs": 0,
+        "checkingPairs": 0,
+        "failedPairs": 0,
+        "succeededPairs": 0,
+        "requestsSent": null,
+        "requestsReceived": null,
+        "responsesSent": null,
+        "responsesReceived": null,
+        "dtlsState": "new"
+      },
+      "lastNetwork": {
+        "localCandidates": 3,
+        "remoteCandidates": 1,
+        "pairs": 1,
+        "checkingPairs": 1,
+        "failedPairs": 0,
+        "succeededPairs": 0,
+        "requestsSent": 241,
+        "requestsReceived": 0,
+        "responsesSent": 0,
+        "responsesReceived": 0,
+        "dtlsState": "new"
+      },
+      "boundedNativeLinesRead": 24,
+      "rawStatsExported": false,
+      "rawLogcatExported": false
+    }
+  ],
+  "additionalPeer": {
+    "installationOrdinal": 2,
+    "probeWithinInstallation": 2,
+    "nativeReportsSeparated": false,
+    "outcome": "Browser connection_deadline after native answer; no RTT. Native reader intentionally not rerun across two peers in same PID.",
+    "failureDomSha256NormalizedLf": "51ac2d076e8c5937dd001f5bc79fcd252f966bfe8b7c1bfb402af6c18a631de1"
+  },
+  "packetObservation": {
+    "observedAtUtc": "2026-10-10T04:11:53.802332+00:00",
+    "startedAtUtc": "2026-10-10T04:11:18.329717+00:00",
+    "events": [
+      {
+        "kind": "offer",
+        "elapsedSeconds": 12.38,
+        "udpCandidates": 2,
+        "candidateTypes": {
+          "host": 1,
+          "srflx": 1,
+          "prflx": 0,
+          "relay": 0
+        }
+      },
+      {
+        "kind": "answer",
+        "elapsedSeconds": 12.789,
+        "udpCandidates": 2,
+        "candidateTypes": {
+          "host": 1,
+          "srflx": 1,
+          "prflx": 0,
+          "relay": 0
+        }
+      },
+      {
+        "kind": "close",
+        "elapsedSeconds": 24.794,
+        "udpCandidates": 0,
+        "candidateTypes": {
+          "host": 0,
+          "srflx": 0,
+          "prflx": 0,
+          "relay": 0
+        }
+      }
+    ],
+    "capture": {
+      "pid": 12342,
+      "ownedApkSocketPorts": 1,
+      "socketOwnershipVerified": true,
+      "interface": "wlan0",
+      "headerTextOnly": true,
+      "promiscuous": false,
+      "packetLimit": 512,
+      "secondsLimit": 14,
+      "snaplen": 96,
+      "capturedRows": 245,
+      "capturedOutputBytes": 18636,
+      "captureExit": 0,
+      "interfaceListeningConfirmed": true,
+      "kernelCounts": {
+        "captured": 239,
+        "receivedByFilter": 239,
+        "droppedByKernel": 0
+      },
+      "durationBetweenPacketsSeconds": 11.823,
+      "counts": {
+        "outboundOfferedCandidate": 237,
+        "inboundOfferedCandidate": 0,
+        "outboundStunDiscovery": 1,
+        "inboundStunDiscovery": 1,
+        "outboundOther": 0,
+        "inboundOther": 0,
+        "unparsedRows": 6
+      },
+      "rawHeadersPersisted": false,
+      "packetPayloadExported": false,
+      "addressesPersisted": false,
+      "otherAppSocketsCaptured": false
+    },
+    "systemSettingsChanged": false,
+    "androidInputSent": false,
+    "causeProven": false
+  },
+  "rejectedPacketAttempts": [
+    {
+      "installationOrdinal": 2,
+      "probeWithinInstallation": 1,
+      "outcome": "Root command argument rejected before capture",
+      "validCapture": false
+    },
+    {
+      "installationOrdinal": 2,
+      "probeWithinInstallation": 2,
+      "outcome": "Socket UID verification passed; literal quote reached BPF, capture rejected",
+      "validCapture": false
+    },
+    {
+      "outcome": "Corrected command startup/exit checked with empty port1 filter and no peer; not packet-path acceptance",
+      "validApkPathCapture": false
+    }
+  ],
+  "browserFailure": {
+    "outcome": "connection_deadline",
+    "secondsAfterAnswer": 12,
+    "ice": "checking",
+    "dtls": "connecting",
+    "localCandidates": 5,
+    "remoteCandidates": 2,
+    "pairs": 2,
+    "checkingPairs": 2,
+    "succeededPairs": 0,
+    "requestsSent": 177,
+    "responsesReceived": 0,
+    "sampleAgeMs": 999,
+    "echoCount": 0,
+    "rttMs": null,
+    "selectedCandidatePair": null,
+    "failureDomAndScreenshotRetainedPrivately": true
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Post-final-cleanup ordinary view-only frame decoding on both origins. Embedded streams initially open default control and are then switched to view-only; no taps/keys/swipes. Public server_rejected opening notice retained. Not control, steady FPS, latency or soak acceptance.",
+    "observations": [
+      {
+        "origin": "local",
+        "decodedFrames": 11,
+        "drawnFrames": 11,
+        "invalidPackets": 0,
+        "decodeErrors": 0,
+        "renderErrors": 0,
+        "androidInputSent": false,
+        "viewOnly": true,
+        "controlFailureSeen": null,
+        "domSha256NormalizedLf": "df47e529cbda21f592548996cc3d4e28f213b20ea4eecd152ce0b2d61e66b494",
+        "screenshotSha256": "7312db6f469b142af84453e9b3316ce9940d5bb316bbcd0e6eefd274bcd05b07"
+      },
+      {
+        "origin": "public",
+        "decodedFrames": 2,
+        "drawnFrames": 2,
+        "invalidPackets": 0,
+        "decodeErrors": 0,
+        "renderErrors": 0,
+        "androidInputSent": false,
+        "viewOnly": true,
+        "controlFailureSeen": "server_rejected",
+        "domSha256NormalizedLf": "baef50eb1265a1225aa42abda18d215d00581cc219b3934e5f7df192214b166f",
+        "screenshotSha256": "bbce1ab071c8d024e150d5298678c15876343db51c0aaf25fd584aae169f2e87"
+      }
+    ]
+  },
+  "cleanup": [
+    {
+      "installationOrdinal": 1,
+      "originalApk": {
+        "observedAtUtc": "2026-10-10T03:53:04.739695+00:00",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "installedApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+        "sourceRevision": "d8023bce29c518cca7ab83b907c96e142081f106",
+        "restoredOriginalApk": true,
+        "appDataCleared": false,
+        "otaPublished": false,
+        "directProbeNativeInstalled": false
+      },
+      "guardian": {
+        "state": "verified_manual_cleanup",
+        "pid": 41900,
+        "startedAtUtc": "2026-10-10T03:50:03.977330+00:00",
+        "dueUtc": "2026-10-10T03:56:03.977330+00:00",
+        "finiteSeconds": 360,
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "systemWideChanges": false,
+        "finishedUtc": "2026-10-10T03:55:17.208349+00:00"
+      },
+      "temporaryPreview": {
+        "stoppedOwnedPids": [
+          4136,
+          40196
+        ],
+        "observedAtUtc": "2026-10-10T03:53:22.1910489Z",
+        "userProcessesStopped": false
+      },
+      "backendDisabled": true,
+      "allowlist": [],
+      "backendEpochAfterCleanup": "2026-10-10T03:53:55.176478746Z",
+      "agentCreatedTabsClosed": true
+    },
+    {
+      "installationOrdinal": 2,
+      "originalApk": {
+        "observedAtUtc": "2026-10-10T04:02:36.128399+00:00",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "installedApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+        "sourceRevision": "d8023bce29c518cca7ab83b907c96e142081f106",
+        "restoredOriginalApk": true,
+        "appDataCleared": false,
+        "otaPublished": false,
+        "directProbeNativeInstalled": false
+      },
+      "guardian": {
+        "state": "verified_manual_cleanup",
+        "pid": 29260,
+        "startedAtUtc": "2026-10-10T03:58:13.656607+00:00",
+        "dueUtc": "2026-10-10T04:04:13.656607+00:00",
+        "finiteSeconds": 360,
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "systemWideChanges": false,
+        "finishedUtc": "2026-10-10T04:04:03.909991+00:00"
+      },
+      "temporaryPreview": {
+        "stoppedOwnedPids": [
+          15432,
+          20148
+        ],
+        "observedAtUtc": "2026-10-10T04:02:53.6691938Z",
+        "userProcessesStopped": false
+      },
+      "backendDisabled": true,
+      "allowlist": [],
+      "backendEpochAfterCleanup": "2026-10-10T04:03:26.115471684Z",
+      "agentCreatedTabsClosed": true
+    },
+    {
+      "installationOrdinal": 3,
+      "originalApk": {
+        "observedAtUtc": "2026-10-10T04:12:05.698863+00:00",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "installedApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+        "sourceRevision": "d8023bce29c518cca7ab83b907c96e142081f106",
+        "restoredOriginalApk": true,
+        "appDataCleared": false,
+        "otaPublished": false,
+        "directProbeNativeInstalled": false
+      },
+      "guardian": {
+        "state": "verified_manual_cleanup",
+        "pid": 44424,
+        "startedAtUtc": "2026-10-10T04:10:00.769584+00:00",
+        "dueUtc": "2026-10-10T04:16:00.769584+00:00",
+        "finiteSeconds": 360,
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "systemWideChanges": false,
+        "finishedUtc": "2026-10-10T04:13:21.038105+00:00"
+      },
+      "temporaryPreview": {
+        "stoppedOwnedPids": [
+          3772,
+          45360
+        ],
+        "userProcessesStopped": false,
+        "observedAtUtc": "2026-10-10T04:12:20.1944205Z"
+      },
+      "backendDisabled": true,
+      "allowlist": [],
+      "backendEpochAfterCleanup": "2026-10-10T04:12:56.954296937Z",
+      "agentCreatedTabsClosed": true
+    }
+  ],
+  "health": [
+    {
+      "origin": "http://127.0.0.1:3015",
+      "healthStatus": 200,
+      "buildSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "deviceName": "auto-ph-011",
+      "deviceStatus": "online",
+      "androidInputSent": false
+    },
+    {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "healthStatus": 200,
+      "buildSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "deviceName": "auto-ph-011",
+      "deviceStatus": "online",
+      "androidInputSent": false
+    }
+  ],
+  "nativeResources": {
+    "scope": "Descriptive process snapshots across different APK/capture epochs, not a leak or resource plateau acceptance.",
+    "snapshots": [
+      {
+        "observedAtUtc": "2026-10-10T03:50:10.777298+00:00",
+        "pid": 9745,
+        "procStatus": {
+          "VmSize": 3408924,
+          "VmRSS": 121504,
+          "Threads": 42
+        },
+        "webrtcLogLines": 0
+      },
+      {
+        "observedAtUtc": "2026-10-10T03:52:03.851006+00:00",
+        "pid": 9745,
+        "procStatus": {
+          "VmSize": 3434292,
+          "VmRSS": 124308,
+          "Threads": 46
+        },
+        "webrtcLogLines": 19
+      },
+      {
+        "observedAtUtc": "2026-10-10T03:52:29.487842+00:00",
+        "pid": 9745,
+        "procStatus": {
+          "VmSize": 3431484,
+          "VmRSS": 124536,
+          "Threads": 43
+        },
+        "webrtcLogLines": 21
+      },
+      {
+        "observedAtUtc": "2026-10-10T03:53:22.509076+00:00",
+        "pid": 10437,
+        "procStatus": {
+          "VmSize": 3330976,
+          "VmRSS": 93700,
+          "Threads": 35
+        },
+        "webrtcLogLines": 0
+      }
+    ]
+  },
+  "buildFailurePreserved": {
+    "admitted": false,
+    "installed": false,
+    "sourceRootMismatchRejected": true,
+    "exception": "JBR21.0.9 C2 jvm.dll EXCEPTION_ACCESS_VIOLATION 0xc0000005 while compiling SQLiteProgram constructor",
+    "processId": 25572,
+    "laterCorrectRootBuildPassed": true,
+    "systemEventWindow": {
+      "ObservedAtUtc": "2026-10-10T03:37:51.9812244Z",
+      "StartUtc": "2026-10-10T03:00:00.0000000Z",
+      "MaximumSystemEventsRead": 256,
+      "EventsRead": 26,
+      "RelevantEvents": [],
+      "RawMessagesPublished": false,
+      "CompleteProviderHistoryGuaranteed": false
+    },
+    "causeProven": false,
+    "rawFatalLogsPublished": false
+  },
+  "storageCheckpoint": {
+    "observedAtUtc": "2026-10-10T04:14:44.231057+00:00",
+    "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+    "process": {
+      "pid": 32064,
+      "creationUtc": "2026-10-10T00:14:44.8920620Z",
+      "commandMatched": true
+    },
+    "completeSamples": 120,
+    "firstSampleUtc": "2026-10-10T00:14:45.084580+00:00",
+    "lastSampleUtc": "2026-10-10T04:12:43.044854+00:00",
+    "dueUtc": "2026-10-10T12:34:45.083321+00:00",
+    "prefixBytes": 1575706,
+    "prefixSha256": "005bdeb10ee3c0c332ae59497fa567531f348354df87cd70d55e8771ef9e5295",
+    "freeStartBytes": 46521065472,
+    "freeEndBytes": 39716073472,
+    "freeDeltaBytes": -6804992000,
+    "namedFiles": [
+      {
+        "name": "docker_data.vhdx",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": true,
+        "allocatedDeltaBytes": 0,
+        "lastAllocatedBytes": 234731077632
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 2359296,
+        "lastAllocatedBytes": 9562095616
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 1,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 159318016,
+        "lastAllocatedBytes": 7237140480
+      },
+      {
+        "name": "data.vmdk",
+        "ordinal": 2,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": true,
+        "allocatedDeltaBytes": 0,
+        "lastAllocatedBytes": 1023737856
+      },
+      {
+        "name": "thread_history_1.sqlite",
+        "ordinal": 0,
+        "allocationComplete": true,
+        "sameIdentity": true,
+        "allocatedConstant": false,
+        "allocatedDeltaBytes": 25673728,
+        "lastAllocatedBytes": 764510208
+      }
+    ],
+    "vssMeasuredSamples": 0,
+    "writerAttribution": "UNDETERMINED",
+    "globalKernelCaptureAvailable": false,
+    "futureCoverageGuaranteed": false,
+    "inputMutationsPerformed": false
+  },
+  "privateEvidenceSha256NormalizedLf": {
+    "nativeStagesFinal": "ca01a78549388b93fc90dc8464b6b75d373ea81493940fc7aa8465a73d79c0e2",
+    "packetCountsFinal": "81093a0bafb4d2590707edaf98dce5f4a536353030bee681c82b8ae0b4565a3a",
+    "browserFailureDomFinal": "67b74ab8d2e46fa4191cc0b142cf73ea6d886d3f3b11cded1872aa9fd3c24994",
+    "storagePrefixCheckpoint": "cb767f028805e2b99d303b689d3231e24f24a1995a0145a82dd8dd260e094b8d"
+  },
+  "acceptance": {
+    "nativeDiagnostic": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
+    "setupDelayExplainsLatestFailure": false,
+    "earlier934SetupFailureCause": "UNKNOWN_NOT_REPRODUCED",
+    "networkDropLocation": "UNKNOWN",
+    "directChannel": "OPEN",
+    "directMediaControl": "OPEN",
+    "stableApk13": "NO_GO",
+    "productAccepted": 9,
+    "productOpen": 41,
+    "legacyUnclosed": 7,
+    "newProductItemsClosed": []
+  },
+  "previousInstalledObservation": "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
+  "browserFailureScreenshotSha256": "3575faa8782725c7c8dd816ec8c48c47f8dc257b67818492bf4886329bf53b7c"
+}

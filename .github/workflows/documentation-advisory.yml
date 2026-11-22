@@ -1,0 +1,60 @@
+name: Documentation advisory
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  advisory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check out trusted base implementation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted-base
+          persist-credentials: false
+      - name: Check out exact PR head without executing it
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr-head
+          persist-credentials: false
+      - name: Summarize documentation review candidates
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_CHECKOUT_PATH: ${{ github.workspace }}/pr-head
+          TRUSTED_BASE_PATH: ${{ github.workspace }}/trusted-base
+          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          actual_base=$(git -C trusted-base rev-parse --verify HEAD 2>/dev/null) || actual_base=''
+          if [[ ! "$EVENT_BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$actual_base" != "$EVENT_BASE_SHA" ] || [ ! -f trusted-base/scripts/documentation_pr_advisory.py ]; then
+            printf '%s\n\n%s\n\n%s\n' '## Подсказки по документации: неполный результат' 'Базовый checkout или скрипт недоступен либо SHA не совпадает. Вывод об отсутствии влияния невозможен.' 'Локально на проверяемом head при доступном общем предке: `python -m scripts.documentation_impact --base <база>`.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            cd trusted-base
+            python -m scripts.documentation_pr_advisory
+          fi
+
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Validate documentation inventory and links
+        run: python -m scripts.check_documentation_status
+      - name: Run documentation tests
+        run: python -m unittest discover -s tests -p 'test_documentation*.py'

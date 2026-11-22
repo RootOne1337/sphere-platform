@@ -1,0 +1,3 @@
+* -text
+# Preserve exact captured experiment bytes, including final blank lines.
+sources/*.py whitespace=-blank-at-eof,cr-at-eol

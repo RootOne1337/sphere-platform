@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T10:10:42.688557+00:00",
+  "scope": "PH030 APK87 addressed install, actual emulator reboot defect, finite guarded recovery and PC direct input/video acceptance. APK88 boot restoration is an uninstalled local candidate.",
+  "device": {
+    "name": "auto-ph-030",
+    "id": "753fd530-2f19-4e5e-98ba-769863678141",
+    "versionCode": 10287,
+    "versionName": "1.2.87-dev",
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "sourceRevision": "e82e66db6acfb0f99396e6c29c13d9e98914a880",
+    "apkSha256": "d1210d31de31474dcfabb3d8500520fe492322c9e3708a9f00831927ecae1476",
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "currentPackageHashVerified": true
+  },
+  "delivery": {
+    "fullValidationRunId": 39844420660,
+    "configuredPackageRunId": 39853338701,
+    "payloadEntriesPreserved": 936,
+    "onlySignatureChanged": true,
+    "signingLocal": true,
+    "oneShotSecretDeleted": true,
+    "ordinaryChannelChanged": false,
+    "fleetRollout": false,
+    "gameDataCleared": false
+  },
+  "rebootDefect": {
+    "reportedByUser": true,
+    "kernelTunAndGuardAbsentAfterBoot": true,
+    "staleJournalPhase": "ALLOWED",
+    "automaticVpnRestorationInApk87": false,
+    "continuousProtectionAcrossRebootAccepted": false,
+    "manualRecoveryEditedJournal": false,
+    "unknownCleared": false,
+    "independentDropHeldDuringFiniteRecovery": true,
+    "newNativeGuardVerified": true,
+    "temporaryGuardRemoved": true,
+    "guardPlanVersion": 5,
+    "sphereUidExcluded": 10060
+  },
+  "vpn": {
+    "phase": "HANDSHAKE_CONFIRMED",
+    "nativeSessionId": "9262be60-1ca2-4de8-bca8-8a01809a21f9",
+    "policy": "all_apps_except_control",
+    "ipv6": "block",
+    "uidRanges": [
+      {
+        "first": 10000,
+        "last": 10059
+      },
+      {
+        "first": 10061,
+        "last": 99999
+      }
+    ],
+    "browserHttpsObserved": true,
+    "browserExitIp": "64.145.94.74",
+    "sphereControlRemainedAvailable": true,
+    "directAndroidWanAccepted": false,
+    "systemUid0To9999Guarded": false
+  },
+  "pcDirect": {
+    "durationSeconds": 20.013,
+    "decodedFrames": 1125,
+    "decodedFps": 55.364,
+    "rgbObservations": 102,
+    "observationHz": 4.997,
+    "receiverSelectionAgeP95Ms": 22.087,
+    "receiverSelectionAgeMaxMs": 39.715,
+    "route": {
+      "path": "nat",
+      "protocol": "udp",
+      "candidateTypes": [
+        "host",
+        "prflx"
+      ],
+      "addressScopes": [
+        "private",
+        "private"
+      ],
+      "evidence": "aiortc_1_15_nominated_pair_adapter",
+      "lanProven": false
+    },
+    "serverBootstrapBytes": 0,
+    "serverBytesAfterHandover": 0
+  },
+  "input": {
+    "nativeAdmissionConfirmed": true,
+    "participantClosedConfirmed": true,
+    "nativeActionAppliedVerified": true,
+    "pointerProbe": {
+      "requested": true,
+      "expectedPoints": 6,
+      "attemptedPoints": 6,
+      "appliedReceipts": 6,
+      "lastNativeActionRttMs": 16.74479991197586,
+      "complete": true,
+      "samples": [
+        {
+          "sequence": 1,
+          "action": 0,
+          "receiverSequence": 17,
+          "receiverFrameAgeMs": 3.576,
+          "scheduleLatenessMs": 0.0
+        },
+        {
+          "sequence": 4,
+          "action": 2,
+          "receiverSequence": 42,
+          "receiverFrameAgeMs": 21.569,
+          "scheduleLatenessMs": 20.102
+        },
+        {
+          "sequence": 7,
+          "action": 2,
+          "receiverSequence": 68,
+          "receiverFrameAgeMs": 20.369,
+          "scheduleLatenessMs": 19.339
+        },
+        {
+          "sequence": 11,
+          "action": 2,
+          "receiverSequence": 123,
+          "receiverFrameAgeMs": 17.806,
+          "scheduleLatenessMs": 4.117
+        },
+        {
+          "sequence": 13,
+          "action": 2,
+          "receiverSequence": 150,
+          "receiverFrameAgeMs": 16.476,
+          "scheduleLatenessMs": 13.648
+        },
+        {
+          "sequence": 16,
+          "action": 1,
+          "receiverSequence": 177,
+          "receiverFrameAgeMs": 16.027,
+          "scheduleLatenessMs": 4.82
+        }
+      ]
+    },
+    "modelLaunched": false,
+    "sourceCaptureAgeProven": false,
+    "phoneBrowserAccepted": false
+  },
+  "gateway": {
+    "sourceRevision": "ec81121f",
+    "sourceSha256": "bd367ddcdbababd52a64ed0ee92050c176b6029c35f82fb068ae33221d177d6d",
+    "socketPidObserved": 25056,
+    "expiresAtEpochSeconds": 1792782485,
+    "leaseExtended": false,
+    "newProviderPeers": 0,
+    "previousExitCause": "PermissionError WinError5 while replacing state.json; traceback retained privately",
+    "boundedWindowsReplaceRetry": true,
+    "isolatedTestsPassed": 16,
+    "ruffPassed": true,
+    "permanentDenialStillFails": true
+  },
+  "candidate88": {
+    "sourceRevision": "b1daf2b108c82907e00243c21d485c0dca884e23",
+    "installed": false,
+    "localBuildRunning": true,
+    "encryptedRestartStateImplemented": true,
+    "newBootGuardReconstructionImplemented": true,
+    "accepted": false
+  },
+  "limitations": [
+    "PC headless route does not accept the user phone browser or physically attest shortest LAN routing.",
+    "Receiver selection age and native ACK RTT are not Android source-to-screen latency.",
+    "APK87 does not restore VPN after reboot. APK88 source must pass local validation and real boot acceptance.",
+    "Early boot before credential-encrypted storage unlock/agent startup has no proven all-app fail-closed barrier.",
+    "Temporary gateway still depends on the PC and expires; direct Android WAN and production VPN remain open."
+  ],
+  "productionAccepted": false,
+  "apk": {
+    "artifacts": [
+      {
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "sha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "bytes": 73217607,
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "hostedCertificateSha256": "70e67b0395df3cf30feb1d10f06303a7598b8453e5d965db06a4d00defdbc3e7",
+        "cloudApkSha256": "7b98a6dffff8cb8b91a08d527b9fb131b0d69971ec18736365760db86668cc6c",
+        "builtByHostedCi": true,
+        "onlySignatureChangedLocally": true,
+        "unchangedPayloadEntries": 936
+      },
+      {
+        "version": "1.2.87-dev",
+        "versionCode": 10287,
+        "sourceRevision": "e82e66db6acfb0f99396e6c29c13d9e98914a880",
+        "sha256": "d1210d31de31474dcfabb3d8500520fe492322c9e3708a9f00831927ecae1476",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "builtByHostedCi": true,
+        "onlySignatureChangedLocally": true
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:30.867863+00:00",
+        "completedAddressedOta": true,
+        "commandId": "74bd69d1-5b6c-42b5-b102-b3059be7dfaa",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:38.101328+00:00",
+        "completedAddressedOta": true,
+        "commandId": "256a6674-b9ad-47e3-ab04-f7d38d523330",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:34.316120+00:00",
+        "completedAddressedOta": true,
+        "commandId": "6ab684dc-0ebc-46e4-ac7e-278ae9294098",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10287,
+        "installedPackageSha256": "d1210d31de31474dcfabb3d8500520fe492322c9e3708a9f00831927ecae1476",
+        "verifiedAtUtc": "2026-10-23T10:10:42.688557+00:00",
+        "addressedOtaCompleted": true
+      }
+    ],
+    "scope": "Mixed version proof: PH030 fresh; three unchanged historical APK85 bindings; seventeen offline untouched."
+  }
+}

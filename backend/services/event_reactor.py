@@ -14,17 +14,31 @@
 # Запускается как фоновая задача при старте бэкенда.
 from __future__ import annotations
 
-import fnmatch
 import uuid
 from datetime import datetime, timezone
 
 import structlog
-from sqlalchemy import select
+from fastapi import HTTPException
+from sqlalchemy import and_, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.dml import Insert
 
 from backend.models.account_session import AccountSession
+from backend.models.device import Device
 from backend.models.device_event import DeviceEvent, EventSeverity
+from backend.models.event_trigger import EventTrigger
 from backend.models.game_account import AccountStatus, GameAccount
+from backend.models.pipeline import Pipeline, PipelineRun
+from backend.models.task import Task
+from backend.services.application_account_scope import resolve_application_account_scope
+from backend.services.event_trigger_admission import (
+    inspect_trigger,
+    trigger_clock,
+    trigger_pattern_matches,
+    trigger_root_available,
+)
 
 logger = structlog.get_logger()
 
@@ -76,6 +90,36 @@ class EventReactor:
         pipeline_run_id: uuid.UUID | None = None,
         data: dict | None = None,
     ) -> DeviceEvent:
+        event, _ = await self._process_event(
+            org_id, device_id, event_type, severity, message, account_id, task_id, pipeline_run_id, data,
+        )
+        return event
+
+    async def process_transport_event(
+        self, org_id: uuid.UUID, device_id: uuid.UUID, event_type: str, severity: str,
+        message: str | None, account_id: uuid.UUID | None, task_id: uuid.UUID | None,
+        data: dict, source_event_id: uuid.UUID | None,
+    ) -> tuple[DeviceEvent, bool]:
+        """Persist one device event and report whether its transport key was replayed."""
+        return await self._process_event(
+            org_id, device_id, event_type, severity, message, account_id, task_id, data=data,
+            source_event_id=source_event_id,
+        )
+
+    async def _process_event(
+        self,
+        org_id: uuid.UUID,
+        device_id: uuid.UUID,
+        event_type: str,
+        severity: str = "info",
+        message: str | None = None,
+        account_id: uuid.UUID | None = None,
+        task_id: uuid.UUID | None = None,
+        pipeline_run_id: uuid.UUID | None = None,
+        data: dict | None = None,
+        *,
+        source_event_id: uuid.UUID | None = None,
+    ) -> tuple[DeviceEvent, bool]:
         """
         Обработать входящее событие от устройства.
 
@@ -84,26 +128,61 @@ class EventReactor:
         3. Завершает активную сессию (если применимо)
         4. Запускает ротацию (если account.banned)
 
-        Возвращает созданный DeviceEvent.
+        Возвращает событие и признак повтора доставки.
         """
+        # Resolve ancestry from the task row and its pipeline link. Agent-supplied
+        # pipeline IDs or arbitrary payload fields never become causal metadata.
+        task_id, origin = await self._find_task_origin(org_id, device_id, task_id)
+        if origin is not None:
+            pipeline_run_id = origin.id
+        path = None
+        if origin is not None:
+            path = origin.trigger_path or ([str(origin.event_trigger_id)] if origin.event_trigger_id else [])
+        root_id = (origin.trigger_root_event_id or origin.trigger_event_id) if origin is not None else None
+
+        # The transport event key is scoped to the authenticated device. Reserve
+        # it before account/device locks or mutations, and let the unique index
+        # arbitrate concurrent deliveries. A rollback releases the reservation.
+        event: DeviceEvent | None = None
+        if source_event_id is not None:
+            event, replayed = await self._persist_transport_event(
+                org_id, device_id, event_type, severity, message, task_id, pipeline_run_id,
+                data or {}, source_event_id, root_id, path,
+            )
+            if replayed:
+                return event, True
+        scope = None
+        if account_id and (event_type in ACCOUNT_STATUS_REACTIONS or event_type in SESSION_END_REASONS):
+            device = await self.db.scalar(select(Device).where(
+                Device.id == device_id, Device.org_id == org_id,
+            ).with_for_update(key_share=True).execution_options(populate_existing=True))
+            if device is not None:
+                try:
+                    scope = await resolve_application_account_scope(self.db, device)
+                except HTTPException:
+                    account_id = None
+                if scope is not None:
+                    account = await self.db.scalar(select(GameAccount).where(
+                        GameAccount.id == account_id, GameAccount.org_id == org_id,
+                        GameAccount.device_id == device_id, GameAccount.game == scope[0],
+                        GameAccount.server_name == scope[1],
+                    ).with_for_update().execution_options(populate_existing=True))
+                    if account is None:
+                        account_id = None
+
         # ── 1. Персистентное сохранение ──────────────────────────────────
-        event = DeviceEvent(
-            org_id=org_id,
-            device_id=device_id,
-            event_type=event_type,
-            severity=EventSeverity(severity),
-            message=message,
-            account_id=account_id,
-            task_id=task_id,
-            pipeline_run_id=pipeline_run_id,
-            data=data or {},
-            occurred_at=datetime.now(timezone.utc),
-            processed=False,
-        )
-        self.db.add(event)
+        if event is None:
+            event = DeviceEvent(
+                org_id=org_id, device_id=device_id, event_type=event_type,
+                severity=EventSeverity(severity), message=message, task_id=task_id,
+                pipeline_run_id=pipeline_run_id, data=data or {}, occurred_at=datetime.now(timezone.utc),
+                trigger_root_event_id=root_id, trigger_path=path, processed=False,
+            )
+            self.db.add(event)
+        event.account_id = account_id
         await self.db.flush()
 
-        logger.info(
+        logger.debug(
             "event_reactor.event_saved",
             event_id=str(event.id),
             event_type=event_type,
@@ -138,6 +217,7 @@ class EventReactor:
                 device_id=device_id,
                 org_id=org_id,
                 banned_account_id=account_id,
+                scope=scope,
             )
             if rotated:
                 event.data = {**event.data, "rotation": "success", "new_account_id": str(rotated)}
@@ -156,7 +236,54 @@ class EventReactor:
         event.processed = True
         await self.db.flush()
 
-        return event
+        return event, False
+
+    async def _find_task_origin(
+        self, org_id: uuid.UUID, device_id: uuid.UUID, task_id: uuid.UUID | None,
+    ) -> tuple[uuid.UUID | None, PipelineRun | None]:
+        if task_id is None:
+            return None, None
+        task = await self.db.scalar(select(Task).where(
+            Task.id == task_id, Task.org_id == org_id, Task.device_id == device_id,
+        ))
+        if task is None:
+            return None, None
+        # In-flight children created before the migration only have the inverse
+        # current_task_id link. New children retain provenance after step advance.
+        owner = PipelineRun.id == task.pipeline_run_id if task.pipeline_run_id is not None else (
+            and_(PipelineRun.current_task_id.is_not(None), PipelineRun.current_task_id == task.id)
+        )
+        origin = await self.db.scalar(select(PipelineRun).where(
+            owner, PipelineRun.org_id == org_id, PipelineRun.device_id == device_id,
+        ).limit(1))
+        return task_id, origin
+
+    async def _persist_transport_event(
+        self, org_id: uuid.UUID, device_id: uuid.UUID, event_type: str, severity: str, message: str | None,
+        task_id: uuid.UUID | None, pipeline_run_id: uuid.UUID | None, data: dict, source_event_id: uuid.UUID,
+        root_id: uuid.UUID | None, path: list[str] | None,
+    ) -> tuple[DeviceEvent, bool]:
+        values = dict(
+            org_id=org_id, device_id=device_id, event_type=event_type, severity=EventSeverity(severity),
+            message=message, task_id=task_id, pipeline_run_id=pipeline_run_id, data=data,
+            source_event_id=source_event_id, trigger_root_event_id=root_id, trigger_path=path,
+            occurred_at=datetime.now(timezone.utc), processed=False,
+        )
+        identity = ["org_id", "device_id", "source_event_id"]
+        statement: Insert
+        if self.db.get_bind().dialect.name == "sqlite":
+            statement = sqlite_insert(DeviceEvent).values(**values).on_conflict_do_nothing(index_elements=identity)
+        else:
+            statement = pg_insert(DeviceEvent).values(**values).on_conflict_do_nothing(
+                index_elements=identity, index_where=DeviceEvent.source_event_id.is_not(None),
+            )
+        event_id = await self.db.scalar(statement.returning(DeviceEvent.id))
+        event = await self.db.scalar(select(DeviceEvent).where(
+            DeviceEvent.org_id == org_id, DeviceEvent.device_id == device_id, DeviceEvent.source_event_id == source_event_id,
+        ))
+        if event is None:
+            raise RuntimeError("Device event reservation is unavailable")
+        return event, event_id is None
 
     # ── Внутренние методы ────────────────────────────────────────────────
 
@@ -256,6 +383,7 @@ class EventReactor:
         device_id: uuid.UUID,
         org_id: uuid.UUID,
         banned_account_id: uuid.UUID,
+        scope: tuple[str, str] | None = None,
     ) -> uuid.UUID | None:
         """
         Попытка ротации: найти свободный аккаунт той же игры и назначить на устройство.
@@ -263,7 +391,9 @@ class EventReactor:
         Возвращает UUID нового аккаунта или None если свободных нет.
         """
         # Получить забаненный аккаунт для определения игры
-        banned = await self.db.get(GameAccount, banned_account_id)
+        banned = await self.db.scalar(select(GameAccount).where(
+            GameAccount.id == banned_account_id, GameAccount.org_id == org_id,
+        ))
         if not banned:
             return None
 
@@ -282,6 +412,8 @@ class EventReactor:
             .limit(1)
             .with_for_update(skip_locked=True)
         )
+        if scope is not None:
+            stmt = stmt.where(GameAccount.server_name == scope[1], GameAccount.device_id.is_(None))
         free_account = (await self.db.execute(stmt)).scalar_one_or_none()
         if not free_account:
             logger.warning(
@@ -336,84 +468,69 @@ class EventReactor:
         Учитывает cooldown_seconds и max_triggers_per_hour для анти-спама.
         Паттерн поддерживает glob (fnmatch): account.banned, account.*, task.* итд.
         """
-        from backend.models.event_trigger import EventTrigger
-
-        stmt = select(EventTrigger).where(
+        candidates = (await self.db.execute(select(EventTrigger.id, EventTrigger.event_type_pattern).where(
             EventTrigger.org_id == org_id,
             EventTrigger.is_active.is_(True),
-        )
-        result = await self.db.execute(stmt)
-        triggers = result.scalars().all()
-
-        if not triggers:
+        ).order_by(EventTrigger.id))).all()
+        matching = [trigger_id for trigger_id, pattern in candidates if trigger_pattern_matches(event_type, pattern)]
+        if not matching or not await trigger_root_available(self.db, event, lock=True):
             return
-
-        now = datetime.now(timezone.utc)
-
-        for trigger in triggers:
-            # Проверка glob-паттерна
-            if not fnmatch.fnmatch(event_type, trigger.event_type_pattern):
-                continue
-
-            # Проверка cooldown
-            if trigger.last_triggered_at and trigger.cooldown_seconds > 0:
-                elapsed = (now - trigger.last_triggered_at).total_seconds()
-                if elapsed < trigger.cooldown_seconds:
-                    logger.debug(
-                        "event_trigger.cooldown_skip",
-                        trigger_id=str(trigger.id),
-                        trigger_name=trigger.name,
-                        cooldown_remaining=trigger.cooldown_seconds - elapsed,
-                    )
-                    continue
-
-            # Проверка max_triggers_per_hour (простая проверка по total_triggers)
-            # Для точной проверки нужна отдельная таблица, но в 99% случаев
-            # cooldown_seconds достаточно. max_triggers_per_hour — дополнительная страховка.
-            # TODO: реализовать точный подсчёт через временное окно при необходимости
-
-            # Подставить параметры из шаблона
-            input_params = self._render_trigger_params(
-                template=trigger.input_params_template,
-                device_id=device_id,
-                event=event,
-            )
-
-            # Запустить pipeline
+        # All admissions for a root lock the same persisted event before any
+        # trigger rows. This serializes the shared budget across different rules.
+        for trigger_id in matching:
             try:
-                from backend.services.orchestrator.pipeline_service import PipelineService
-                pipeline_svc = PipelineService(self.db)
-                run = await pipeline_svc.run(
-                    pipeline_id=trigger.pipeline_id,
-                    device_id=device_id,
-                    org_id=org_id,
-                    input_params=input_params,
-                )
-                await self.db.flush()
-
-                # Обновить статистику триггера
-                trigger.last_triggered_at = now
-                trigger.total_triggers += 1
-                await self.db.flush()
-
-                logger.info(
-                    "event_trigger.fired",
-                    trigger_id=str(trigger.id),
-                    trigger_name=trigger.name,
-                    pipeline_id=str(trigger.pipeline_id),
-                    run_id=str(run.id),
-                    event_type=event_type,
-                    device_id=str(device_id),
-                )
-            except Exception as e:
+                # A failed run admission must not roll back the event, its other
+                # triggers, or any mutations done by the event's caller.
+                async with self.db.begin_nested():
+                    await self._admit_event_trigger(trigger_id, org_id, device_id, event)
+            except Exception as exc:
                 logger.error(
                     "event_trigger.fire_failed",
-                    trigger_id=str(trigger.id),
-                    trigger_name=trigger.name,
-                    pipeline_id=str(trigger.pipeline_id),
-                    event_type=event_type,
-                    error=str(e),
+                    trigger_id=str(trigger_id), event_id=str(event.id), error_type=type(exc).__name__,
                 )
+
+    async def _admit_event_trigger(
+        self, trigger_id: uuid.UUID, org_id: uuid.UUID, device_id: uuid.UUID, event: DeviceEvent,
+    ) -> None:
+        from backend.services.orchestrator.pipeline_service import PipelineService
+
+        trigger = await self.db.scalar(select(EventTrigger).where(
+            EventTrigger.id == trigger_id, EventTrigger.org_id == org_id,
+        ).with_for_update().execution_options(populate_existing=True))
+        if trigger is None or not trigger.is_active or not trigger_pattern_matches(
+            event.event_type, trigger.event_type_pattern,
+        ):
+            return
+
+        # Hold the definition lock before PipelineService.run, whose public
+        # lock-conflict handler rolls back its whole session.
+        active = await self.db.scalar(select(Pipeline.is_active).where(
+            Pipeline.org_id == org_id, Pipeline.id == trigger.pipeline_id,
+        ).with_for_update(read=True, nowait=True))
+        now = await trigger_clock(self.db)
+        decision = await inspect_trigger(self.db, trigger, event.event_type, now, pipeline_active=bool(active), event=event)
+        if not decision.would_admit:
+            logger.debug(
+                "event_trigger.not_admitted", trigger_id=str(trigger.id), event_id=str(event.id),
+                reason=decision.reason,
+            )
+            return
+
+        run = await PipelineService(self.db).run(
+            pipeline_id=trigger.pipeline_id, device_id=device_id, org_id=org_id,
+            input_params=self._render_trigger_params(trigger.input_params_template, device_id, event),
+        )
+        run.event_trigger_id = trigger.id
+        run.trigger_event_id = event.id
+        run.trigger_accepted_at = now
+        run.trigger_root_event_id = event.trigger_root_event_id or event.id
+        run.trigger_path = [*(event.trigger_path or []), str(trigger.id)]
+        trigger.last_triggered_at = now
+        trigger.total_triggers += 1
+        await self.db.flush()
+        logger.debug(
+            "event_trigger.admitted", trigger_id=str(trigger.id), event_id=str(event.id), run_id=str(run.id),
+        )
 
     @staticmethod
     def _render_trigger_params(

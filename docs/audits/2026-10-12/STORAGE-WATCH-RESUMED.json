@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T21:38:53.226846+00:00",
+  "runtimeInstalled": false,
+  "scope": "Finite limited host metadata collection restarted after a confirmed missing worker; disk writer attribution and continuous coverage remain unaccepted",
+  "previous": {
+    "lastSampleUtc": "2026-10-11T20:53:31.497052+00:00",
+    "samplesWritten": 89,
+    "reportedState": "running",
+    "processObservedAbsentAtUtc": "2026-10-11T21:33:18.5452449Z",
+    "previousReportPreserved": true,
+    "stopCause": "unknown"
+  },
+  "current": {
+    "workerPid": 28000,
+    "workerIdentityVerified": true,
+    "sourceSha256": "3a6bf900a04051dd624ee762cffa60e697b887a893cfb23e969ee968787b853d",
+    "completeSamples": 3,
+    "startedUtc": "2026-10-11T21:33:18.721807+00:00",
+    "dueUtc": "2026-10-12T21:33:18.721807+00:00",
+    "lastSampleUtc": "2026-10-11T21:37:18.716177+00:00",
+    "oneFreeDiskReadingBytes": 35154444288,
+    "memberOfJob": true,
+    "privilegesElevated": false,
+    "watchedNamedFiles": 24,
+    "intervalSeconds": 120,
+    "dockerEverySamples": 8,
+    "reportBudgetBytes": 16777216,
+    "reportBytes": 50401,
+    "fullDirectoryScans": false
+  },
+  "continuousCoverageConfirmed": false,
+  "independentLifetimeConfirmed": false,
+  "autostartConfigured": false,
+  "vssAccessGuaranteed": false,
+  "cleanupPerformed": false,
+  "deviceCommandsSent": false,
+  "writerAttribution": "UNDETERMINED"
+}

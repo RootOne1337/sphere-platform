@@ -1,0 +1,58 @@
+[
+  {
+    "file": "00-0000.png",
+    "source_index": 0,
+    "proposed_speed": 0,
+    "source_access_unit_sha256": "f3a18b2829b80b1b5cc96e19c026638c6e7127514d78009625ca3b7815fe9664",
+    "crop_sha256": "11c06422b571ed2f33a176bbc214ad0cdc1214a83d906c052f80c0e0efef6e63"
+  },
+  {
+    "file": "01-0052.png",
+    "source_index": 52,
+    "proposed_speed": 1,
+    "source_access_unit_sha256": "313d8e756778bc6f1fc929a5088b6100dfab950486fcc74429f1f2516e6c1007",
+    "crop_sha256": "a14707e841bae6693ac3d5eb8930c08fb383a7113937017773bb691324bf92ed"
+  },
+  {
+    "file": "07-0057.png",
+    "source_index": 57,
+    "proposed_speed": 7,
+    "source_access_unit_sha256": "9d8f0a54e34fedf6741aca9aa8d3ff5bf095d418c64bf93816e2a3865d583381",
+    "crop_sha256": "007b5bfc39ac997572ab37b8f7a8788e3da0c89e81d8a40dd1bdc34099a2211f"
+  },
+  {
+    "file": "14-0062.png",
+    "source_index": 62,
+    "proposed_speed": 14,
+    "source_access_unit_sha256": "579ee1dd4d552b82ab20fc3cf0509d147b219a2a614a20079ed8280157c388cd",
+    "crop_sha256": "e23e515789bea260b7facd56a7b414c054949d3ff487e995463a1f6a47ad478b"
+  },
+  {
+    "file": "37-0151.png",
+    "source_index": 151,
+    "proposed_speed": 37,
+    "source_access_unit_sha256": "7788661227eb416f328ba0c5c06559b472a40573f65a0cf447f9a3ecb8e67085",
+    "crop_sha256": "f27eb743e0f878154c0a17a1e58835884ff5b3eb5d00de88cd5c7bb86715ab9f"
+  },
+  {
+    "file": "53-0252.png",
+    "source_index": 252,
+    "proposed_speed": 53,
+    "source_access_unit_sha256": "d877f806141fcd2761065a7d9035776f7222aad2694634a944c75a42613432df",
+    "crop_sha256": "704c2a820faf79af5914bb2d42851af841d8c8271e141f3509b34c0cfab07dd7"
+  },
+  {
+    "file": "59-0282.png",
+    "source_index": 282,
+    "proposed_speed": 59,
+    "source_access_unit_sha256": "606f3a687ebef450cb691b20f3c52eed0ceeb9813c75e182dd690bb5e4ea3d03",
+    "crop_sha256": "097b9c50592b8512fa1657beb4c46bcb3d1dc5a371c3fe7adb51767c5a969a40"
+  },
+  {
+    "file": "10-0777.png",
+    "source_index": 777,
+    "proposed_speed": 10,
+    "source_access_unit_sha256": "53936aa9ac04338e7f5cda0e579b017c2fd504d9dd3e600d44a98e60eb172757",
+    "crop_sha256": "9c56ec5c7b785cf1806227e73cc57f305c478d23388af7d6a2911804a8b63045"
+  }
+]

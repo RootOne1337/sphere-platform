@@ -1,0 +1,237 @@
+{
+  "allConfigHostConfigMountContentsUnchanged": true,
+  "containers": 46,
+  "proofs": {
+    "sphere-review-20261002-review-ui-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-backend-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 4,
+      "permutationsChecked": 17
+    },
+    "sphere-review-20261002-review-gateway-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-observability-20260930-grafana-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 4,
+      "permutationsChecked": 17
+    },
+    "sphere-observability-20260930-prometheus-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 3,
+      "permutationsChecked": 4
+    },
+    "sphere-tuna-canary": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-frontend-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-cloudflare-h2-ab": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-serveo-ab": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-alt-ingress-20260926": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-localhost-run-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-cloudflare-quick-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-public-gateway-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-nginx-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 4,
+      "permutationsChecked": 19
+    },
+    "sphere-pilot-20260911-n8n-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-minio-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-postgres-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 1
+    },
+    "sphere-pilot-20260911-redis-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-audit-20260905-redis": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-audit-20260905-postgres": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-factory-worker-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-factory-tool-worker-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-factoryd-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 6,
+      "permutationsChecked": 305
+    },
+    "sphere-mini-factory-mission-control-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-factory-storage-init-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 1
+    },
+    "ruflo-nginx-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "ruflo-chat-ui-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "ruflo-mcp-bridge-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "ruflo-mongodb-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-tool-runtime-seed-python-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-tool-runtime-seed-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-tool-runtime-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 3,
+      "permutationsChecked": 5
+    },
+    "sphere-mini-factory-postgres-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-otel-collector-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-prometheus-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 1
+    },
+    "sphere-mini-factory-jaeger-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-local-pg-20260729": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-tunnel": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 0,
+      "permutationsChecked": 1
+    },
+    "sphere-platform-nginx-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 4,
+      "permutationsChecked": 1
+    },
+    "sphere-platform-n8n-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 1
+    },
+    "sphere-platform-postgres-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 1
+    },
+    "sphere-platform-redis-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-platform-certbot-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 3,
+      "permutationsChecked": 1
+    },
+    "sphere-platform-minio-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 1,
+      "permutationsChecked": 1
+    },
+    "sphere-platform-frontend-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 3,
+      "permutationsChecked": 4
+    },
+    "sphere-platform-backend-1": {
+      "originalFullHashMatchedByMountOrderOnly": true,
+      "mountEntries": 2,
+      "permutationsChecked": 2
+    }
+  },
+  "conclusion": "Original full Config+HostConfig+Mounts hashes reproduced exactly from current objects by only permuting Mounts order. Docker inspect Mounts order is nondeterministic; no value ignored or dropped."
+}

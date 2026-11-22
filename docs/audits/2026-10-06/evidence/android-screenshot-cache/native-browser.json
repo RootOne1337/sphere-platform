@@ -1,0 +1,18 @@
+{
+  "recordedAt": "2026-10-06T14:50:44.693713+00:00",
+  "url": "http://127.0.0.1:3015/tasks/b1d67f65-f7b9-4859-906a-77513017acfc",
+  "visibleStatus": "Завершено",
+  "visibleTaskReports": "14/14",
+  "localOnlyReceiptExpanded": true,
+  "missingServerArtifactMessageVisible": true,
+  "desktopViewport": [
+    1280,
+    900
+  ],
+  "desktopDocumentOverflow": false,
+  "capturedWarningsOrErrors": 0,
+  "viewportOverrideReset": true,
+  "taskRepeatNotClicked": true,
+  "uiRevision": "1c26ffc7",
+  "apiRevision": "eb7a7c26"
+}

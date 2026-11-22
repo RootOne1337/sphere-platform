@@ -1,0 +1,18 @@
+{
+  "schema": "sphere-endpoint-resection-v1",
+  "accepted": false,
+  "namespace": "ENDPOINT_LK",
+  "further_original_db_matching": false,
+  "poses_interpolated": false,
+  "execution_qualified": false,
+  "frames": [
+    {
+      "source_index": 6,
+      "anchor": "00000000.png",
+      "anchor_tracks": 5,
+      "accepted": false,
+      "reason": "insufficient_landmarks"
+    }
+  ],
+  "reason": "no_valid_pose"
+}

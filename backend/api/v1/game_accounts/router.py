@@ -6,11 +6,12 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
+from backend.core.rbac import has_permission
 from backend.database.engine import get_db
 from backend.models.user import User
 from backend.schemas.game_accounts import (
@@ -166,10 +167,15 @@ async def import_game_accounts(
 )
 async def get_game_account(
     account_id: uuid.UUID,
-    show_password: bool = Query(False, description="Показать пароль в ответе"),
+    response: Response,
+    show_password: bool = Query(False, description="Раскрыть пароль; требуется account:credentials:read"),
     current_user: User = require_permission("account:read"),
     svc: GameAccountService = Depends(get_game_account_service),
 ) -> GameAccountResponse | GameAccountWithPasswordResponse:
+    if show_password:
+        if not has_permission(current_user.role, "account:credentials:read"):
+            raise HTTPException(status_code=403, detail="Permission denied: account:credentials:read")
+        response.headers["Cache-Control"] = "no-store"
     return await svc.get_account(
         account_id=account_id,
         org_id=current_user.org_id,

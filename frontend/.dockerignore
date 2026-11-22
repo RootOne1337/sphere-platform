@@ -1,6 +1,7 @@
 # frontend/.dockerignore — Next.js production build
 node_modules
 .next
+.next*/
 .env
 .env.*
 *.md

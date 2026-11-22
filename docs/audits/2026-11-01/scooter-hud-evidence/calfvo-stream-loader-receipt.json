@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-01",
+  "status": "one_window_completed",
+  "scope": "Offline research smoke only: eight real frames on one video, no device action, no complete route or execution qualification.",
+  "loader": {
+    "path": ".local-pilot/scooter-yaw-20261101/calfvo-stream-loader.py",
+    "method": "FakeTensorMode with weights_only and mmap=False reads checkpoint metadata. ZIP local headers and storage offsets are validated; bounded ZIP_STORED byte ranges are read into one temporary bytearray per tensor and copied to GPU synchronously. Stride, storage offsets, dtype and bounds are checked. No mmap of checkpoint and no second checkpoint copy.",
+    "test": ".local-pilot/scooter-yaw-20261101/stream-probe-result.json",
+    "fixture": "A small independently saved fixture compared byte-for-byte against torch.load for dense, non-contiguous shared-storage view, integer and empty tensors, also checking shape and stride; all passed. This is limited evidence, not exhaustive loader validation.",
+    "checkpoint_tensor_count": 686,
+    "maximum_single_tensor_span_bytes": 16777216,
+    "all_observed_storage_types": [
+      "float32",
+      "ZIP_STORED"
+    ],
+    "checkpoint_sha256_before_after": "ca3531dbbdeec1e1ff3f5300ab236d3d529b413eb7fe89769a174def07f37ecd",
+    "strict_state": "All 686 model state keys, shape and original dtype checked against the meta model before GPU loading; earlier standard torch.load strict verification passed."
+  },
+  "model": {
+    "checkpoint": "CalfVO DINOv2",
+    "precision": "FP16 encoder and transformer; FP32 pose head as required by upstream x.float() and SVD. Not validated as equivalent to FP32.",
+    "backbone": "Constructed from local pinned DINOv2 config without from_pretrained; full checkpoint weights streamed into model.",
+    "network": "HF offline flags and Python socket connect/create_connection blocking within worker; no downloads or device inputs."
+  },
+  "input": {
+    "frame_indices": [
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93
+    ],
+    "ticks_90k": [
+      298620,
+      301680,
+      304650,
+      307620,
+      310590,
+      313650,
+      318150,
+      321120
+    ],
+    "video_sha256_before_after": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    "binding": "Sequential decoded frames; frames 86 and 92 match prepared PNG pixels, source timestamps taken from indexed frames. Other six frames were not individually pixel-compared to prepared PNGs in this smoke.",
+    "preprocessing": "Upstream evaluation transform: square center crop, bilinear resize to 224 with antialias, ImageNet normalization."
+  },
+  "result": {
+    "path": ".local-pilot/scooter-yaw-20261101/stream-smoke-result.json",
+    "relative_camera_yaw_degrees": [
+      0.9831517934799194,
+      0.9140270948410034,
+      0.7558369636535645,
+      0.6953617334365845,
+      0.6796982288360596,
+      1.0998626947402954,
+      0.8981984853744507
+    ],
+    "finite": "Seven relative transforms and confidence values are finite. The yaw component is camera-relative model output, not validated physical heading. Confidence is exp(-predicted log variance), not a calibrated probability. No ground truth or held-out repeat validation is supplied."
+  },
+  "resources": {
+    "process_receipt": ".local-pilot/scooter-yaw-20261101/stream-smoke-process-receipt.json",
+    "phases": ".local-pilot/scooter-yaw-20261101/stream-smoke-phases.jsonl",
+    "wall_s": 17.231,
+    "forward_phase_s_approximately": 4.23,
+    "sampled_peak_process_tree_working_set_bytes": 1210355712,
+    "minimum_sampled_free_physical_gib": 8.951,
+    "minimum_sampled_free_commit_gib": 6.227,
+    "pytorch_peak_gpu_allocated_bytes": 1190724608,
+    "pytorch_peak_gpu_reserved_bytes": 1264582656,
+    "gpu_allocator_cap_bytes": 4294967296,
+    "guard": "90-second limit and 4.5 GiB free physical/commit guard did not trigger. Sampling is not an OS-enforced hard cap; GPU limit applies to PyTorch allocator, not all driver allocations. Timing is not a throughput claim for the full clip."
+  },
+  "limitations": "This establishes only that one bounded streamed FP16 forward completed on this hardware with finite output. It does not establish route-scale accuracy, drift, precision parity, robustness to changing game camera or reproducibility on held-out footage. Streaming reader is experimental and must not be used in production without broader correctness, security, aliasing and numerical tests."
+}

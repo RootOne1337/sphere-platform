@@ -1,0 +1,688 @@
+{
+  "results": [
+    {
+      "role": "dp_selected",
+      "query_index": 55,
+      "selected_reference_index": 60,
+      "target_reference_index": 79,
+      "ticks": 201600,
+      "bgr_sha256": "5b50a19b7737d38cedcff4cb8ac8a9eeffa2bc0f4e4c8f6b63ebc6cf66dbf9e9",
+      "access_unit_sha256": "c9dfc18711c057e079b007369b67d1748b034edc4b9a1a0d9dee341f0b5bc058",
+      "feature_count": 679,
+      "cache_sha256": "835746fec0bc0414b02437cab01447f56fb1bea0824cf1a6dc542ad056061b7c",
+      "target_cache_sha256": "ab0e4e4ad392b9bc1199c28f38e1d5a8f052346490f295e8bead876b4f5a5164",
+      "matched_unique_coordinates": 11,
+      "estimate_seconds": 0.0,
+      "rotation_angles": null,
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "unknown",
+        "reason": "insufficient_correspondences",
+        "Rtarget_from_query": null,
+        "goal_direction_query_camera": null,
+        "yaw_radians": null,
+        "pitch_radians": null,
+        "support": null,
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 0.847
+    },
+    {
+      "role": "dp_selected",
+      "query_index": 218,
+      "selected_reference_index": 213,
+      "target_reference_index": 228,
+      "ticks": 759960,
+      "bgr_sha256": "d7300e44f89c6f6f9f2a01591f51addd55e5ce100626528bc5164eb17f3bfa5b",
+      "access_unit_sha256": "bc1098059c6f0750b56a25a39eec6d3ad2b3c298f82e74c2eb67fb05b0a3d13c",
+      "feature_count": 681,
+      "cache_sha256": "3045bf71ad22f8fee58ad44977511c72f6ff236b5608aaf08d24af422876acd2",
+      "target_cache_sha256": "09ed4dba4bc6678ce7f51cb2102161071bade95882456ca77542e723fbc49f7e",
+      "matched_unique_coordinates": 67,
+      "estimate_seconds": 0.01600000006146729,
+      "rotation_angles": {
+        "matrix_convention": "Rtarget_from_query; axis angles are algebraic camera-coordinate diagnostics, not vehicle yaw/pitch",
+        "yaw_y_rad": -0.00011986727100988387,
+        "pitch_x_rad": 0.0010597044052444052
+      },
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "goal_direction",
+        "reason": "two_view_direction_unscaled",
+        "Rtarget_from_query": [
+          [
+            0.9999999431997785,
+            0.00031501157676640744,
+            -0.0001198672034189649
+          ],
+          [
+            -0.00031513842592911063,
+            0.9999993888571963,
+            -0.0010597042069077686
+          ],
+          [
+            0.00011953331106981206,
+            0.001059741921478119,
+            0.9999994313292621
+          ]
+        ],
+        "goal_direction_query_camera": [
+          0.012465537644959841,
+          0.013441688000509771,
+          0.9998319515773234
+        ],
+        "yaw_radians": 0.012466986873853057,
+        "pitch_radians": 0.013442092805161447,
+        "support": {
+          "correspondences": 67,
+          "pose_inliers": 39,
+          "inlier_fraction": 0.582089552238806,
+          "query_grid": {
+            "occupied": 5,
+            "rows": 2,
+            "cols": 3
+          },
+          "target_grid": {
+            "occupied": 5,
+            "rows": 2,
+            "cols": 3
+          },
+          "median_parallax_deg": 3.6843618384745582,
+          "sampson_median_px": 0.33757913845087173,
+          "sampson_p95_px": 1.0026717155569187
+        },
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 0.416
+    },
+    {
+      "role": "dp_selected",
+      "query_index": 273,
+      "selected_reference_index": 293,
+      "target_reference_index": 311,
+      "ticks": 948600,
+      "bgr_sha256": "5770fffde620aac1a5b939d4376ab40a302c5fda50235ab9662c4bf2254e54d7",
+      "access_unit_sha256": "27936bd0749d0707de607e873122ce4583680d3920a25f3cc85cc28da9c34196",
+      "feature_count": 735,
+      "cache_sha256": "360577cec36cc74d2ab4074e5c54bcf8d2859e2137a4c11123c10f444ebce286",
+      "target_cache_sha256": "c4fe472fe55e94b5499058fa61bf79c6ba215cc3e85f2082e45e27757c597579",
+      "matched_unique_coordinates": 119,
+      "estimate_seconds": 0.015999999945051968,
+      "rotation_angles": null,
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "unknown",
+        "reason": "insufficient_parallax_or_geometry",
+        "Rtarget_from_query": null,
+        "goal_direction_query_camera": null,
+        "yaw_radians": null,
+        "pitch_radians": null,
+        "support": null,
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 1.363
+    },
+    {
+      "role": "dp_selected",
+      "query_index": 409,
+      "selected_reference_index": 414,
+      "target_reference_index": 431,
+      "ticks": 1408680,
+      "bgr_sha256": "136e58f4e1decc82ae56812a4f35c622b32d7c04024ab1f855ea9f9a5159821f",
+      "access_unit_sha256": "d9d4cbecb50a47f152564f95973d78fbdc68cea66ee91f6789494aa3cdd30b38",
+      "feature_count": 477,
+      "cache_sha256": "18bc85863173d0afeabffc5a6edbf7fd54a340c3d7bf357ddcce14b5f05af480",
+      "target_cache_sha256": "6eefe13e6874567e620fc0b9c6cd10a2639af15ad260bc918569b3b082ca0592",
+      "matched_unique_coordinates": 61,
+      "estimate_seconds": 0.015000000013969839,
+      "rotation_angles": {
+        "matrix_convention": "Rtarget_from_query; axis angles are algebraic camera-coordinate diagnostics, not vehicle yaw/pitch",
+        "yaw_y_rad": -0.2849202018167028,
+        "pitch_x_rad": -0.07397633999381034
+      },
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "goal_direction",
+        "reason": "two_view_direction_unscaled",
+        "Rtarget_from_query": [
+          [
+            0.9598170572834189,
+            0.013279120496194282,
+            -0.2803121144486011
+          ],
+          [
+            0.007788106883643141,
+            0.9972345872356473,
+            0.07390888588063732
+          ],
+          [
+            0.28051838075065044,
+            -0.07312211006115497,
+            0.957059347732019
+          ]
+        ],
+        "goal_direction_query_camera": [
+          0.2336661958106037,
+          -0.025003216802370765,
+          0.9719953436539367
+        ],
+        "yaw_radians": 0.2359217170761306,
+        "pitch_radians": -0.025005822707583572,
+        "support": {
+          "correspondences": 61,
+          "pose_inliers": 35,
+          "inlier_fraction": 0.5737704918032787,
+          "query_grid": {
+            "occupied": 8,
+            "rows": 3,
+            "cols": 3
+          },
+          "target_grid": {
+            "occupied": 6,
+            "rows": 3,
+            "cols": 3
+          },
+          "median_parallax_deg": 2.1406116219456006,
+          "sampson_median_px": 0.5442448996300899,
+          "sampson_p95_px": 1.2133460628938952
+        },
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 0.901
+    },
+    {
+      "role": "dp_selected",
+      "query_index": 536,
+      "selected_reference_index": 526,
+      "target_reference_index": 544,
+      "ticks": 1932030,
+      "bgr_sha256": "4d736677e8c0d244f43ea4ab24ad5f900a043c2103f9e3b5c44a18652cbc631d",
+      "access_unit_sha256": "eae8d88728d72ab05378e1e8bf3feaaf8fc28a2127ea65fe3724d8a180d84300",
+      "feature_count": 666,
+      "cache_sha256": "c3118ddbc0a501666311d7a956e745f6b16cce6a5597107cd3f3610a7671ac96",
+      "target_cache_sha256": "e96586be32c79241ba77af19b5f4cea937f4e52839223ffaf3002fc6d72a006c",
+      "matched_unique_coordinates": 132,
+      "estimate_seconds": 0.03200000000651926,
+      "rotation_angles": {
+        "matrix_convention": "Rtarget_from_query; axis angles are algebraic camera-coordinate diagnostics, not vehicle yaw/pitch",
+        "yaw_y_rad": -0.0493216330414267,
+        "pitch_x_rad": 0.01081755128826847
+      },
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "goal_direction",
+        "reason": "two_view_direction_unscaled",
+        "Rtarget_from_query": [
+          [
+            0.9987747985810612,
+            -0.0043051792617159294,
+            -0.04929875405002532
+          ],
+          [
+            0.003776241928991469,
+            0.9999343604184541,
+            -0.010817340312247396
+          ],
+          [
+            0.04934208868961796,
+            0.01061792286945695,
+            0.9987254968196636
+          ]
+        ],
+        "goal_direction_query_camera": [
+          0.027507793306568443,
+          0.018047167062541884,
+          0.9994586640118839
+        ],
+        "yaw_radians": 0.027515746020329267,
+        "pitch_radians": 0.01804814686725807,
+        "support": {
+          "correspondences": 132,
+          "pose_inliers": 107,
+          "inlier_fraction": 0.8106060606060606,
+          "query_grid": {
+            "occupied": 7,
+            "rows": 3,
+            "cols": 4
+          },
+          "target_grid": {
+            "occupied": 10,
+            "rows": 3,
+            "cols": 4
+          },
+          "median_parallax_deg": 2.244790745048571,
+          "sampson_median_px": 0.24646987637985143,
+          "sampson_p95_px": 1.2732571463806004
+        },
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 0.367
+    },
+    {
+      "role": "dp_selected",
+      "query_index": 645,
+      "selected_reference_index": 638,
+      "target_reference_index": 654,
+      "ticks": 2309040,
+      "bgr_sha256": "4b9a8103d9d62b9e88683a2bcab61367d1a25866bfda8ff58f7479cc5bed9e55",
+      "access_unit_sha256": "f257075c0cc996058e2af6afd0d7d42681ff3450efefefeffdc0e3305bf85a8c",
+      "feature_count": 606,
+      "cache_sha256": "1abca5babe5e48989b8d77c0df88c10c39842a217691cb4cf37b0928a83e24eb",
+      "target_cache_sha256": "3e96f39556152cfa18b5d55b9c618075c00f0bf2bc71f89e7319f7a408479999",
+      "matched_unique_coordinates": 40,
+      "estimate_seconds": 0.0,
+      "rotation_angles": {
+        "matrix_convention": "Rtarget_from_query; axis angles are algebraic camera-coordinate diagnostics, not vehicle yaw/pitch",
+        "yaw_y_rad": 0.017266637536707968,
+        "pitch_x_rad": -0.00643245255015038
+      },
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "goal_direction",
+        "reason": "two_view_direction_unscaled",
+        "Rtarget_from_query": [
+          [
+            0.999849664654803,
+            -0.0015978985048165568,
+            0.017265422382503316
+          ],
+          [
+            0.0014870289891841886,
+            0.999978206197336,
+            0.0064324081915714225
+          ],
+          [
+            -0.017275324438726918,
+            -0.0064057669896722645,
+            0.9998302502499166
+          ]
+        ],
+        "goal_direction_query_camera": [
+          0.034248070890407406,
+          -0.028476278125441564,
+          0.9990075931765525
+        ],
+        "yaw_radians": 0.03426867198997878,
+        "pitch_radians": -0.0284801280919467,
+        "support": {
+          "correspondences": 40,
+          "pose_inliers": 24,
+          "inlier_fraction": 0.6,
+          "query_grid": {
+            "occupied": 5,
+            "rows": 2,
+            "cols": 3
+          },
+          "target_grid": {
+            "occupied": 5,
+            "rows": 2,
+            "cols": 3
+          },
+          "median_parallax_deg": 0.9778501469553952,
+          "sampson_median_px": 0.22669866155682217,
+          "sampson_p95_px": 1.183349193482801
+        },
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 0.315
+    },
+    {
+      "role": "dp_selected",
+      "query_index": 709,
+      "selected_reference_index": 727,
+      "target_reference_index": 746,
+      "ticks": 2517030,
+      "bgr_sha256": "18cb60b936d582e2b26235042bd1dcdf5c6128709f6e7b068f3ee97b8dd063c8",
+      "access_unit_sha256": "ff628e376b82c65522914271aa7ef673c7e3060a21a48f2bbe06bf8e854c5f44",
+      "feature_count": 628,
+      "cache_sha256": "bb916586aa4da900ed8d6fb85fcc8a101286d716792d8566094fd4fa89acf256",
+      "target_cache_sha256": "355e74dd106b1195f58be543ca2190b2ecff8993bb25b3eca54a41d5a0655fbf",
+      "matched_unique_coordinates": 103,
+      "estimate_seconds": 0.015999999945051968,
+      "rotation_angles": {
+        "matrix_convention": "Rtarget_from_query; axis angles are algebraic camera-coordinate diagnostics, not vehicle yaw/pitch",
+        "yaw_y_rad": 0.026610564112918164,
+        "pitch_x_rad": 0.018418223290260216
+      },
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "goal_direction",
+        "reason": "two_view_direction_unscaled",
+        "Rtarget_from_query": [
+          [
+            0.9995881079409956,
+            0.010765667814270453,
+            0.026602910732713647
+          ],
+          [
+            -0.010277555747479631,
+            0.9997775648893934,
+            -0.018417181969361325
+          ],
+          [
+            -0.026795266574478956,
+            0.01813618318025806,
+            0.9994764092007649
+          ]
+        ],
+        "goal_direction_query_camera": [
+          -0.08621077969041985,
+          0.012643830753570076,
+          0.9961966849016538
+        ],
+        "yaw_radians": -0.08632484684177973,
+        "pitch_radians": 0.012644167665210433,
+        "support": {
+          "correspondences": 103,
+          "pose_inliers": 66,
+          "inlier_fraction": 0.6407766990291263,
+          "query_grid": {
+            "occupied": 7,
+            "rows": 3,
+            "cols": 4
+          },
+          "target_grid": {
+            "occupied": 10,
+            "rows": 3,
+            "cols": 4
+          },
+          "median_parallax_deg": 3.819856056645961,
+          "sampson_median_px": 0.33239972394218126,
+          "sampson_p95_px": 1.1296191007255283
+        },
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 1.466
+    },
+    {
+      "role": "dp_selected",
+      "query_index": 827,
+      "selected_reference_index": 849,
+      "target_reference_index": 866,
+      "ticks": 2948760,
+      "bgr_sha256": "4d671ed93330b4a31230c9e02b5805aace60a2a70996878f014262f5be85316e",
+      "access_unit_sha256": "61c09133cb20db33cf7fc2e059b8aa37645f8177a46cde164b4874a3a1c5eb63",
+      "feature_count": 889,
+      "cache_sha256": "ae4d90e3e46f152ebca4a96cda67955162651c85c3c1278bda8830073acf07ac",
+      "target_cache_sha256": "26364c37d5ca497dc9e1be1cb874e744cdc98f79a5837685aa4d4757e7abb955",
+      "matched_unique_coordinates": 191,
+      "estimate_seconds": 0.01600000006146729,
+      "rotation_angles": {
+        "matrix_convention": "Rtarget_from_query; axis angles are algebraic camera-coordinate diagnostics, not vehicle yaw/pitch",
+        "yaw_y_rad": -0.020505747785673586,
+        "pitch_x_rad": -0.03484291866904834
+      },
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "goal_direction",
+        "reason": "two_view_direction_unscaled",
+        "Rtarget_from_query": [
+          [
+            0.9997613958258383,
+            -0.007565372472204865,
+            -0.020491865599019957
+          ],
+          [
+            0.008276348095746781,
+            0.9993587765612961,
+            0.03483586904480769
+          ],
+          [
+            0.020215179409778752,
+            -0.03499715487387079,
+            0.9991829390417779
+          ]
+        ],
+        "goal_direction_query_camera": [
+          -0.07847395884102658,
+          -0.06425469063975918,
+          0.9948432904305109
+        ],
+        "yaw_radians": -0.07871772884833571,
+        "pitch_radians": -0.06429898733962543,
+        "support": {
+          "correspondences": 191,
+          "pose_inliers": 144,
+          "inlier_fraction": 0.7539267015706806,
+          "query_grid": {
+            "occupied": 5,
+            "rows": 2,
+            "cols": 3
+          },
+          "target_grid": {
+            "occupied": 6,
+            "rows": 2,
+            "cols": 3
+          },
+          "median_parallax_deg": 6.210506327716178,
+          "sampson_median_px": 0.07883931709958777,
+          "sampson_p95_px": 0.3265901084115341
+        },
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 1.429
+    },
+    {
+      "role": "raw_wrong_control",
+      "query_index": 110,
+      "selected_reference_index": 275,
+      "target_reference_index": 293,
+      "ticks": 381150,
+      "bgr_sha256": "9bb92a625bc5fae4342ae5fbec7b2224a2d0cc74173c3544e1e57b74b9c78b5e",
+      "access_unit_sha256": "4c92602e66f3c94b44ff9d2323d9cf6c015fc6430a0009e2d54ec0737fb34856",
+      "feature_count": 661,
+      "cache_sha256": "10327f1172ea758214787a5a59166674b7e9d55d05714b1a3b97b22c8140dac8",
+      "target_cache_sha256": "1699c36206e16f57b701e879d2299d4f5b77340c0586e7e203b6af3c9ec3f52e",
+      "matched_unique_coordinates": 100,
+      "estimate_seconds": 0.030999999959021807,
+      "rotation_angles": {
+        "matrix_convention": "Rtarget_from_query; axis angles are algebraic camera-coordinate diagnostics, not vehicle yaw/pitch",
+        "yaw_y_rad": -0.2586748109581164,
+        "pitch_x_rad": 0.008319309570048828
+      },
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "goal_direction",
+        "reason": "two_view_direction_unscaled",
+        "Rtarget_from_query": [
+          [
+            0.966111508224218,
+            -0.034635349940502075,
+            -0.25579082511150697
+          ],
+          [
+            0.03362612389346009,
+            0.999399857152722,
+            -0.008319213605880877
+          ],
+          [
+            0.25592545295188657,
+            -0.0005639659719929961,
+            0.9666963558810772
+          ]
+        ],
+        "goal_direction_query_camera": [
+          -0.8291385145576234,
+          0.013299099792758628,
+          0.5588850128800021
+        ],
+        "yaw_radians": -0.9776961076094787,
+        "pitch_radians": 0.013299491850516423,
+        "support": {
+          "correspondences": 100,
+          "pose_inliers": 58,
+          "inlier_fraction": 0.58,
+          "query_grid": {
+            "occupied": 7,
+            "rows": 3,
+            "cols": 4
+          },
+          "target_grid": {
+            "occupied": 6,
+            "rows": 2,
+            "cols": 4
+          },
+          "median_parallax_deg": 8.828240834947989,
+          "sampson_median_px": 0.32464277424477533,
+          "sampson_p95_px": 1.087736575015581
+        },
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 7.02
+    },
+    {
+      "role": "raw_wrong_control",
+      "query_index": 164,
+      "selected_reference_index": 300,
+      "target_reference_index": 316,
+      "ticks": 574380,
+      "bgr_sha256": "825cad88553c308994d60c71754ff555c139ac8119cb0b008a82dbedaf0c68d9",
+      "access_unit_sha256": "d04ad5b3217daf494ff81a4c3a01bef5250639455d48eac53d8465f91bde5b71",
+      "feature_count": 652,
+      "cache_sha256": "da216433f57c75b372dcd6d7e161dd7df0018300ab181bbd6f69423c15a09b6a",
+      "target_cache_sha256": "a5246d91ce52146717d75d706b816fa0a4a3942ddd3902c6ef9fe7ce3d0822c1",
+      "matched_unique_coordinates": 164,
+      "estimate_seconds": 0.0,
+      "rotation_angles": null,
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "unknown",
+        "reason": "insufficient_parallax_or_geometry",
+        "Rtarget_from_query": null,
+        "goal_direction_query_camera": null,
+        "yaw_radians": null,
+        "pitch_radians": null,
+        "support": null,
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 5.737
+    },
+    {
+      "role": "raw_wrong_control",
+      "query_index": 173,
+      "selected_reference_index": 293,
+      "target_reference_index": 311,
+      "ticks": 604260,
+      "bgr_sha256": "d926566dd712d60c4e4bad6397f4c9d2083eeb6b295c933d74f2e21d82b3ca08",
+      "access_unit_sha256": "71851dfa940e229ccf0e3eb3b05a44001c6a7750d4aea0ed2b8f45311c4eb3d8",
+      "feature_count": 686,
+      "cache_sha256": "58899aaa76bbc4c8af47c3066ef813f3f75631564827e2b2ff92bf54e5a3b75d",
+      "target_cache_sha256": "c4fe472fe55e94b5499058fa61bf79c6ba215cc3e85f2082e45e27757c597579",
+      "matched_unique_coordinates": 142,
+      "estimate_seconds": 0.0,
+      "rotation_angles": null,
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "unknown",
+        "reason": "insufficient_parallax_or_geometry",
+        "Rtarget_from_query": null,
+        "goal_direction_query_camera": null,
+        "yaw_radians": null,
+        "pitch_radians": null,
+        "support": null,
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 5.189
+    },
+    {
+      "role": "raw_wrong_control",
+      "query_index": 701,
+      "selected_reference_index": 544,
+      "target_reference_index": 561,
+      "ticks": 2493090,
+      "bgr_sha256": "fd6076a6c1718a1fe4e8365edb85416d11d270713741fdc9f8d3f269e431734c",
+      "access_unit_sha256": "ae39ac49750ae19b35dcef35e73b7732f19ee2a657ec15f3f1aa7cb00f606d8b",
+      "feature_count": 677,
+      "cache_sha256": "ab16e6d2086eadd38321567c4fa69e40792c4e65669a27ac6576c25e0018cb9c",
+      "target_cache_sha256": "f0d4da443869f5906d1c0fd16cbaab57ebc44adaafee64e2adf812cce693aed8",
+      "matched_unique_coordinates": 64,
+      "estimate_seconds": 0.045999999972991645,
+      "rotation_angles": null,
+      "relative": {
+        "schema": "sphere-image-relative-goal-v1",
+        "status": "unknown",
+        "reason": "insufficient_parallax_or_geometry",
+        "Rtarget_from_query": null,
+        "goal_direction_query_camera": null,
+        "yaw_radians": null,
+        "pitch_radians": null,
+        "support": null,
+        "metric_scale_known": false,
+        "position_known": false,
+        "arrival_confirmed": false,
+        "execution_qualified": false,
+        "camera_vehicle_alignment_known": false
+      },
+      "same_video_proxy_delta_seconds": 5.203
+    }
+  ],
+  "intrinsics": [
+    [
+      302.085,
+      0.0,
+      479.5
+    ],
+    [
+      0.0,
+      302.085,
+      269.5
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "intrinsics_status": "focal 604.17 at 1920px width scaled by .5; pixel-center cx479.5 cy269.5; physical calibration unverified",
+  "camera_to_vehicle_unknown": true,
+  "units": "relative translation direction is unitless and never distance/speed; no ground path",
+  "query_time_never_used_for_target_selection": true,
+  "cache_bytes": 4185480,
+  "elapsed_s": 4.108999999938533,
+  "execution_qualified": false,
+  "no_action": true
+}

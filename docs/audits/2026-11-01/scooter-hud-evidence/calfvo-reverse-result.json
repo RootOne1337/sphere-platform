@@ -1,0 +1,47 @@
+{
+  "status": "complete",
+  "total_input_frames": 901,
+  "total_planned_windows": 225,
+  "completed_windows": 225,
+  "last_processed_frame": 0,
+  "unprocessed_frame_indices": [],
+  "upstream_window_overlap": 4,
+  "tail_window_reverse_ordinals": [
+    893,
+    894,
+    895,
+    896,
+    897,
+    898,
+    899,
+    900
+  ],
+  "tail_window_source_indices": [
+    7,
+    6,
+    5,
+    4,
+    3,
+    2,
+    1,
+    0
+  ],
+  "traversal": "source_indices_900_to_0",
+  "input_cache_bytes": 135625728,
+  "input_cache_sha256": "ce7b60901f67c0340f47ed0db6714bc9acc1f8ab8c7e4a688efa722bc59bbca0",
+  "tail_is_explicit_extension": true,
+  "upstream_recover_trajectory": true,
+  "synthetic_aggregation_fixture": "passed",
+  "hash_checkpoint_before_after": "ca3531dbbdeec1e1ff3f5300ab236d3d529b413eb7fe89769a174def07f37ecd",
+  "hash_video_before_after": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+  "png_pixel_binding_count": 41,
+  "forward_first_two_s": [
+    2.094000000040978,
+    0.0470000000204891
+  ],
+  "forward_mean_after_first_two_s": 0.04594618834256541,
+  "elapsed_s": 39.43799999996554,
+  "max_gpu_allocated_bytes": 1224280064,
+  "max_gpu_reserved_bytes": 1264582656,
+  "limits": "Experimental camera trajectory in learned model units, no metric validation, no route or execution qualification; FP16 not proven equivalent FP32; confidence not calibrated."
+}

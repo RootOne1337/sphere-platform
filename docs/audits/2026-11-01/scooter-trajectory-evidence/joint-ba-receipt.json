@@ -1,0 +1,35 @@
+{
+  "initial_ram": 14609752064,
+  "initial_commit": 21245394944,
+  "stages": [
+    {
+      "stage": "prepare",
+      "exit": 0,
+      "stop": null,
+      "seconds": 1.609000000054948
+    },
+    {
+      "stage": "w0",
+      "exit": 0,
+      "stop": null,
+      "seconds": 12.452999999979511
+    },
+    {
+      "stage": "w05",
+      "exit": 0,
+      "stop": null,
+      "seconds": 20.844000000040978
+    },
+    {
+      "stage": "w2",
+      "exit": 0,
+      "stop": null,
+      "seconds": 28.093999999924563
+    }
+  ],
+  "admission_stop": null,
+  "seconds": 63.03099999995902,
+  "min_ram": 10453819392,
+  "min_commit": 20264988672,
+  "input_hashes_unchanged": true
+}

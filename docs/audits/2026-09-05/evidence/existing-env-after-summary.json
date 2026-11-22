@@ -1,0 +1,12 @@
+{
+  "baseline_sha": "a294c2951b6a1e7176cf84270468232d29d18b76",
+  "state": "existing-env-after",
+  "totals": {
+    "tests": 77,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [],
+  "boundary": "Actual shipped PS secret stage and Bash preamble/secret stage in temporary installation with synthetic dotenv files; generator replaced by a native process. No real secrets, database or Docker service startup."
+}

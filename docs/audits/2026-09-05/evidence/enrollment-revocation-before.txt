@@ -1,0 +1,34 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+______ test_enrollment_rechecks_key_after_competing_admin_commit[revoke] ______
+tests\production\test_device_bootstrap_runtime.py:202: in test_enrollment_rechecks_key_after_competing_admin_commit
+    assert [response.status_code for response in responses] == [expected, expected]
+E   assert [201, 201] == [401, 401]
+E
+E     At index 0 diff: 201 != 401
+E     Use -v to get more diff
+____ test_enrollment_rechecks_key_after_competing_admin_commit[permission] ____
+tests\production\test_device_bootstrap_runtime.py:202: in test_enrollment_rechecks_key_after_competing_admin_commit
+    assert [response.status_code for response in responses] == [expected, expected]
+E   assert [201, 201] == [403, 403]
+E
+E     At index 0 diff: 201 != 403
+E     Use -v to get more diff
+______ test_enrollment_rechecks_key_after_competing_admin_commit[expire] ______
+tests\production\test_device_bootstrap_runtime.py:202: in test_enrollment_rechecks_key_after_competing_admin_commit
+    assert [response.status_code for response in responses] == [expected, expected]
+E   assert [201, 201] == [401, 401]
+E
+E     At index 0 diff: 201 != 401
+E     Use -v to get more diff
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_device_bootstrap_runtime.py::test_enrollment_rechecks_key_after_competing_admin_commit[revoke]
+FAILED tests/production/test_device_bootstrap_runtime.py::test_enrollment_rechecks_key_after_competing_admin_commit[permission]
+FAILED tests/production/test_device_bootstrap_runtime.py::test_enrollment_rechecks_key_after_competing_admin_commit[expire]
+3 failed, 18 deselected, 1 warning in 2.58s

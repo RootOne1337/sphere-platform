@@ -1,0 +1,104 @@
+{
+  "method": "orientation geodesic median from first 10; positive scale plus translation least-squares on first 10 centers; last 10 camera views held out by time",
+  "names_train": [
+    "00000351.png",
+    "00000356.png",
+    "00000361.png",
+    "00000366.png",
+    "00000371.png",
+    "00000377.png",
+    "00000383.png",
+    "00000389.png",
+    "00000395.png",
+    "00000402.png"
+  ],
+  "names_test": [
+    "00000408.png",
+    "00000414.png",
+    "00000419.png",
+    "00000425.png",
+    "00000431.png",
+    "00000435.png",
+    "00000439.png",
+    "00000443.png",
+    "00000448.png",
+    "00000452.png"
+  ],
+  "rotation_align": [
+    [
+      -0.9636892090578477,
+      0.01104619084308741,
+      0.26679784484384145
+    ],
+    [
+      -0.023816766930741973,
+      0.991606126246483,
+      -0.12708285487590873
+    ],
+    [
+      -0.2659621588843554,
+      -0.1288226379884477,
+      -0.9553370389466069
+    ]
+  ],
+  "unconstrained_scale": 0.6125919762042557,
+  "scale": 0.6125919762042557,
+  "translation": [
+    1.8168259092574752,
+    0.060264535232327915,
+    -0.1699650941051103
+  ],
+  "median_target_camera_step": 0.08339614267612747,
+  "rotation_degrees_train": {
+    "count": 10,
+    "median": 0.6078023139219145,
+    "p95": 2.3257719527378407
+  },
+  "rotation_degrees_test": {
+    "count": 10,
+    "median": 11.84610044616575,
+    "p95": 33.088243576299604
+  },
+  "center_units_train": {
+    "count": 10,
+    "median": 0.1124863423492419,
+    "p95": 0.18214637192297226
+  },
+  "center_units_test": {
+    "count": 10,
+    "median": 1.0855356238401124,
+    "p95": 26.0507732355365
+  },
+  "center_relative_to_target_median_step_train": {
+    "count": 10,
+    "median": 1.3488194866048837,
+    "p95": 2.1841102727058446
+  },
+  "center_relative_to_target_median_step_test": {
+    "count": 10,
+    "median": 13.016616704394075,
+    "p95": 312.37383888012437
+  },
+  "cross_projection_error_px_train": {
+    "count": 5257,
+    "median": 205.49308123426667,
+    "p95": 810.2849268859408
+  },
+  "cross_projection_error_px_test": {
+    "count": 829,
+    "median": 317.8943809841944,
+    "p95": 824.0386635799919
+  },
+  "both_triangulated_count_train_test": [
+    5589,
+    1023
+  ],
+  "behind_target_camera_train_test": [
+    332,
+    194
+  ],
+  "camera_focal_component_1": 381.3219931477968,
+  "camera_focal_component_2": 595.939883279563,
+  "input_hashes_unchanged": true,
+  "interpretation": "Same source observations used in construction of both models: heldout only from alignment fit, not independent capture. Cross-projection uses component-2 intrinsics and component-1 3D points. No merge or acceptance."
+}

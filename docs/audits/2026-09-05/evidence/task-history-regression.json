@@ -1,0 +1,35 @@
+{
+  "at": "2026-09-19T13:26:52.157217+00:00",
+  "finding": "AUD-120",
+  "source_base": "3462f97",
+  "postgres_before": {
+    "sha256": "309c3e886512ba195ce1af771deb7e7a274347596d7eb7041dd4ed56f52372e3",
+    "tests": 10,
+    "failures": 10,
+    "errors": 0,
+    "skipped": 0
+  },
+  "postgres_and_orchestrator_after": {
+    "sha256": "d03656e4e0a5fba263cf0180eb1fd5d3ca9d243a8e267b21db5e2e4ab5e7b9c4",
+    "tests": 81,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontend_before": {
+    "sha256": "abf69465f9fd138f37e342ed9623fd09b7791782744b6af83345ffd669051de8",
+    "numTotalTests": 7,
+    "numPassedTests": 0,
+    "numFailedTests": 7,
+    "numPassedTestSuites": 0
+  },
+  "frontend_after": {
+    "sha256": "b368df320e5b58a92ec14a54112658d9f94c9267ca1b4cd0eaf343b39303de4f",
+    "numTotalTests": 218,
+    "numPassedTests": 218,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 27
+  },
+  "typescript": "passed",
+  "scope": "Source tests. PostgreSQL is isolated local; frontend tests control API responses. Native pilot deployment is separate."
+}

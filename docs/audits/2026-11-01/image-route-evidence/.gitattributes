@@ -1,0 +1,3 @@
+* -text whitespace=cr-at-eol
+*.py whitespace=cr-at-eol,-blank-at-eof
+*.cjs whitespace=cr-at-eol,-blank-at-eof

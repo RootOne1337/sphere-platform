@@ -1,0 +1,180 @@
+{
+  "finding": "N10",
+  "relatedFinding": "F39",
+  "status": "source_and_installed_api_accepted_visual_open",
+  "implementationSource": "37bb436ae5fb9f27eda6c7549bb46a83bf3df510",
+  "observedAt": "2026-10-03T19:33:40.278550+00:00",
+  "before": {
+    "apiSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+    "tests": 4,
+    "assertionFailures": 4,
+    "errors": 0,
+    "actualPostgresRedis": true,
+    "liveAndroidRolesChanged": false
+  },
+  "checks": {
+    "sourceBroadPassed": 293,
+    "additionalReadRevocationPassed": 1,
+    "imagePassed": 294,
+    "imageFailed": 0,
+    "imageSkipped": 0,
+    "noBackendSourceMount": true,
+    "restrictedRuntimeRls": true,
+    "ruff": true,
+    "mypyRouter": true,
+    "frontendPriorImagePassed": 982,
+    "frontendUnchanged": true
+  },
+  "runtime": {
+    "apiSource": "37bb436ae5fb9f27eda6c7549bb46a83bf3df510",
+    "uiSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+    "url": "http://127.0.0.1:3015/devices",
+    "installedAt": "2026-10-03T19:24:32.168690+00:00",
+    "apiImageId": "sha256:35ebb4e4babe1ac138d0e37fbe26c4fe10f7b8e76b1f375ba015d77c25c6f35d",
+    "capabilityStatus": 200,
+    "anonymousStatus": 401,
+    "schemaVersion": 1,
+    "permissionsCount": 31,
+    "cohort": 14,
+    "catalog": 19,
+    "offlineOutsideAcceptance": 5,
+    "apkCode": 10244,
+    "recoveryReadback": {
+      "startedAt": "2026-10-03T19:32:39.744724+00:00",
+      "finishedAt": "2026-10-03T19:33:40.278550+00:00",
+      "samples": 7,
+      "samePostRolloutEpochs": true,
+      "heartbeatUnder60Seconds": true
+    },
+    "initialReadback": {
+      "startedAt": "2026-10-03T19:25:14.626190+00:00",
+      "finishedAt": "2026-10-03T19:26:15.177802+00:00",
+      "status": "failed_cohort_heartbeat_epoch_gate",
+      "lastOnline": 11,
+      "cohortPreserved": false,
+      "heartbeatUnder60Seconds": false,
+      "sameEpochs": false
+    },
+    "postRestartObservations": {
+      "cleanCloseCode": 1012,
+      "temporaryPreAuthHttp": 502,
+      "additionalDisconnectCode": 1005,
+      "clientFailureClasses": [
+        "SSLException",
+        "SocketException"
+      ],
+      "providerMappingNotProven": true,
+      "rootCauseNotEstablished": true
+    },
+    "neighboursPreserved": 15,
+    "uiPreserved": true,
+    "tunaPreserved": true,
+    "otaCatalogPreserved": true,
+    "mountsPreserved": true,
+    "newApkInstalled": false,
+    "apiReady": true,
+    "prometheusBackendUp": true,
+    "finalCohort": {
+      "observedAt": "2026-10-03T19:41:33.806079+00:00",
+      "online": 14,
+      "heartbeatMaxSeconds": 27.720594
+    }
+  },
+  "viewerProtocolProbe": {
+    "targets": [
+      {
+        "device": "auto-ph-025",
+        "packets": 17,
+        "pictures": 15,
+        "bytes": 128470,
+        "pingCount": 1,
+        "errors": [],
+        "startedAt": "2026-10-03T19:37:08.122599+00:00",
+        "durationSeconds": 12.5,
+        "finishedAt": "2026-10-03T19:37:20.625774+00:00",
+        "savedVideoBytes": 0,
+        "inputCommandsSent": 0,
+        "browserDecoded": false
+      },
+      {
+        "device": "auto-ph-010",
+        "packets": 4,
+        "pictures": 2,
+        "bytes": 33632,
+        "pingCount": 1,
+        "errors": [],
+        "startedAt": "2026-10-03T19:37:08.153153+00:00",
+        "durationSeconds": 12.5,
+        "finishedAt": "2026-10-03T19:37:20.658358+00:00",
+        "savedVideoBytes": 0,
+        "inputCommandsSent": 0,
+        "browserDecoded": false
+      }
+    ],
+    "automaticCaptureControls": [
+      "start_stream",
+      "viewer_connected"
+    ],
+    "directAndroidActions": false,
+    "policy": "protocol check; no browser rendering evidence"
+  },
+  "sourceCi": [
+    {
+      "conclusion": "success",
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37147526278"
+    },
+    {
+      "conclusion": "success",
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37147526118"
+    },
+    {
+      "conclusion": "success",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37147526150"
+    },
+    {
+      "conclusion": "success",
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37147526183"
+    }
+  ],
+  "knownOpenObservations": {
+    "repeatedUnrecognizedOtaReceipts": true,
+    "receiptReconciliationNotFixed": true
+  },
+  "documentationChecks": {
+    "observedAt": "2026-10-03T19:46:08.452083+00:00",
+    "documents": 12,
+    "relativeLinksAndAnchors": 801,
+    "jsonFiles": 2,
+    "failures": 0,
+    "frozenAuditPreserved": true,
+    "diffCheck": true,
+    "generatedApiOperations": 176,
+    "generatedApiPaths": 138
+  },
+  "limits": {
+    "passiveCheckIntervalSeconds": 10,
+    "authorizationDeadlineSeconds": 2,
+    "inflightActionsNotUndone": true,
+    "roleMutationPublicationNotOneTransaction": true,
+    "fullFleetPerformanceNotAccepted": true,
+    "browserAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "frozenAuditChanged": false,
+  "counts": {
+    "sourceFixed": 33,
+    "open": 8,
+    "partial": [
+      "F32",
+      "F33",
+      "F39"
+    ]
+  }
+}

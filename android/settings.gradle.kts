@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SphereAgent"
 include(":app")
+include(":awg-sdk", ":awg-smoke", ":awg-client")

@@ -1,0 +1,11 @@
+{
+  "outcome": "failed",
+  "nextBuildPerformed": false,
+  "physicalActions": 0,
+  "reason": "update expected at most 1 argument, got 2",
+  "errorType": "TypeError",
+  "existingContainersUnchanged": true,
+  "nativeApiUnchanged": true,
+  "sourceCaptureUnchanged": true,
+  "frontendSourceUnchanged": true
+}

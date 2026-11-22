@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "kind": "sphere-local-web",
+  "sourceRevision": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "repository": "RootOne1337/sphere-platform",
+  "runtimeInstalled": false,
+  "observedAtUtc": "2026-11-02T11:09:08.155648+00:00",
+  "image": {
+    "id": "sha256:ee18994f586f7428d5767f68ac53f7a6002f8a39e88895ea3a63c46f5e35cb23",
+    "tag": "sphere-review-frontend:41101d00a999cac4f6574d65131e3ca7c5ea9820"
+  },
+  "localExecution": {
+    "file": "local-ci/runs/20261102T110430Z-d7b0ccd7/receipt.json",
+    "sha256": "4663c8ec5c1a53630d67bec088fd17f24aa529396f5bd9d6da880336802b71ce"
+  },
+  "sourceArchiveSha256": "0110a2e7aea3c49b60a3b3ca6ccf6b0a0d53260cb139250d807c142c91084bad",
+  "buildBinding": {
+    "file": "catalog-image-41101d00-20261102-v1/build-binding.json",
+    "sha256": "c252b7451f697131a32db62fda0665e31b76cbee0c78d7887f13464e09cdaa11"
+  },
+  "httpProbe": {
+    "file": "catalog-image-41101d00-20261102-v1/http-probe.json",
+    "sha256": "05f0c9fcd76d871f2119e7ca0fee4ed093bebafba38a834c5decab5b6218a07c"
+  },
+  "archivesCreated": 0,
+  "buildPlatform": "linux/amd64",
+  "toolingSource": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "resumedBuild": false
+}

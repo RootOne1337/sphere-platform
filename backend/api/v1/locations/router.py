@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
@@ -59,6 +60,15 @@ async def create_location(
     return result
 
 
+@router.get("/{location_id}", response_model=LocationResponse, summary="Локация с прямыми счётчиками устройств")
+async def get_location(
+    location_id: uuid.UUID,
+    current_user: User = require_permission("device:read"),
+    svc: LocationService = Depends(get_location_service),
+) -> LocationResponse:
+    return await svc.get_location(location_id, current_user.org_id)
+
+
 # ── Update ────────────────────────────────────────────────────────────────────
 
 @router.put(
@@ -88,11 +98,14 @@ async def update_location(
 )
 async def delete_location(
     location_id: uuid.UUID,
+    expected_updated_at: datetime | None = Query(None, description="Optional timezone-aware condition from LocationResponse"),
     current_user: User = require_permission("device:delete"),
     svc: LocationService = Depends(get_location_service),
     db: AsyncSession = Depends(get_db),
 ):
-    await svc.delete_location(location_id, current_user.org_id)
+    if expected_updated_at is not None and expected_updated_at.utcoffset() is None:
+        raise HTTPException(status_code=422, detail="expected_updated_at must include a timezone")
+    await svc.delete_location(location_id, current_user.org_id, expected_updated_at)
     await db.commit()
 
 

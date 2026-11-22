@@ -1,0 +1,84 @@
+{
+  "totals": {
+    "tests": 18,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "name": "test_shipped_seed_runs_and_device_is_visible_to_the_intended_operator",
+      "failure": null
+    },
+    {
+      "name": "test_repeated_seed_reuses_one_key_without_printing_key_material",
+      "failure": null
+    },
+    {
+      "name": "test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[revoked]",
+      "failure": null
+    },
+    {
+      "name": "test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[expired]",
+      "failure": null
+    },
+    {
+      "name": "test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[permissions]",
+      "failure": null
+    },
+    {
+      "name": "test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[organization]",
+      "failure": null
+    },
+    {
+      "name": "test_missing_key_is_a_bootstrap_failure_not_reported_success",
+      "failure": null
+    },
+    {
+      "name": "test_missing_operator_organization_does_not_create_an_unrelated_tenant",
+      "failure": null
+    },
+    {
+      "name": "test_two_seed_process_flows_converge_on_one_key",
+      "failure": null
+    },
+    {
+      "name": "test_actual_admin_cli_login_and_enrollment_share_one_organization[False]",
+      "failure": {
+        "message": "AssertionError: Traceback (most recent call last):\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 538, in _prepare_and_execute\n      self._rows = await prepared_stmt.fetch(*parameters)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\asyncpg\\prepared_stmt.py\", line 176, in fetch\n      data = await self.__bind_execute(args, 0, timeout)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\asyncpg\\prepared_stmt.py\", line 241, in __bind_execute\n      data, status, _ = await self.__do_execute(\n                        ^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\asyncpg\\prepared_stmt.py\", line 230, in __do_execute\n      return await executor(protocol)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"asyncpg\\protocol\\protocol.pyx\", line 207, in bind_execute\n  asyncpg.exceptions.NotNullViolationError: null value in column \"id\" of relation \"users\" violates not-null constraint\n  DETAIL:  Failing row contains (null, 2026-09-10 19:30:55.523524+00, 2026-09-10 19:30:55.523524+00, 7120c33b-597b-476b-9941-d82344d1044c, pilot-452f31b3fba74b4f96998d409bc2b117@example.org, $2b$12$z/mSza0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC, super_admin, t, null, null, null).\n  \n  The above exception was the direct cause of the following exception:\n  \n  Traceback (most recent call last):\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\base.py\", line 1970, in _exec_single_context\n      self.dialect.do_execute(\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\default.py\", line 924, in do_execute\n      cursor.execute(statement, parameters)\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 572, in execute\n      self._adapt_connection.await_(\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\util\\_concurrency_py3k.py\", line 127, in await_only\n      return current.driver.switch(awaitable)  # type: ignore[no-any-return]\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\util\\_concurrency_py3k.py\", line 192, in greenlet_spawn\n      value = await result\n              ^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 550, in _prepare_and_execute\n      self._handle_exception(error)\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 501, in _handle_exception\n      self._adapt_connection._handle_exception(error)\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 789, in _handle_exception\n      raise translated_error from error\n  sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column \"id\" of relation \"users\" violates not-null constraint\n  DETAIL:  Failing row contains (null, 2026-09-10 19:30:55.523524+00, 2026-09-10 19:30:55.523524+00, 7120c33b-597b-476b-9941-d82344d1044c, pilot-452f31b3fba74b4f96998d409bc2b117@example.org, $2b$12$z/mSza0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC, super_admin, t, null, null, null).\n  \n  The above exception was the direct cause of the following exception:\n  \n  Traceback (most recent call last):\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\scripts\\create_admin.py\", line 89, in <module>\n      asyncio.run(main())\n    File \"C:\\Users\\dimas\\AppData\\Roaming\\uv\\python\\cpython-3.12.12-windows-x86_64-none\\Lib\\asyncio\\runners.py\", line 195, in run\n      return runner.run(main)\n             ^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\AppData\\Roaming\\uv\\python\\cpython-3.12.12-windows-x86_64-none\\Lib\\asyncio\\runners.py\", line 118, in run\n      return self._loop.run_until_complete(task)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\AppData\\Roaming\\uv\\python\\cpython-3.12.12-windows-x86_64-none\\Lib\\asyncio\\base_events.py\", line 691, in run_until_complete\n      return future.result()\n             ^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\scripts\\create_admin.py\", line 75, in main\n      await conn.execute(\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\ext\\asyncio\\engine.py\", line 654, in execute\n      result = await greenlet_spawn(\n               ^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\util\\_concurrency_py3k.py\", line 197, in greenlet_spawn\n      result = context.throw(*sys.exc_info())\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\base.py\", line 1421, in execute\n      return meth(\n             ^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\sql\\elements.py\", line 514, in _execute_on_connection\n      return connection._execute_clauseelement(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\base.py\", line 1643, in _execute_clauseelement\n      ret = self._execute_context(\n            ^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\base.py\", line 1849, in _execute_context\n      return self._exec_single_context(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\base.py\", line 1989, in _exec_single_context\n      self._handle_dbapi_exception(\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\base.py\", line 2356, in _handle_dbapi_exception\n      raise sqlalchemy_exception.with_traceback(exc_info[2]) from e\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\base.py\", line 1970, in _exec_single_context\n      self.dialect.do_execute(\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\engine\\default.py\", line 924, in do_execute\n      cursor.execute(statement, parameters)\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 572, in execute\n      self._adapt_connection.await_(\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\util\\_concurrency_py3k.py\", line 127, in await_only\n      return current.driver.switch(awaitable)  # type: ignore[no-any-return]\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\util\\_concurrency_py3k.py\", line 192, in greenlet_spawn\n      value = await result\n              ^^^^^^^^^^^^\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 550, in _prepare_and_execute\n      self._handle_exception(error)\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 501, in _handle_exception\n      self._adapt_connection._handle_exception(error)\n    File \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Lib\\site-packages\\sqlalchemy\\dialects\\postgresql\\asyncpg.py\", line 789, in _handle_exception\n      raise translated_error from error\n  sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column \"id\" of relation \"users\" violates not-null constraint\n  DETAIL:  Failing row contains (null, 2026-09-10 19:30:55.523524+00, 2026-09-10 19:30:55.523524+00, 7120c33b-597b-476b-9941-d82344d1044c, pilot-452f31b3fba74b4f96998d409bc2b117@example.org, $2b$12$z/mSza0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC, super_admin, t, null, null, null).\n  [SQL: INSERT INTO users (org_id, email, password_hash, role, is_active) VALUES ($1, $2, $3, 'super_admin', true)]\n  [parameters: (UUID('7120c33b-597b-476b-9941-d82344d1044c'), 'pilot-452f31b3fba74b4f96998d409bc2b117@example.org', '$2b$12$z/mSza0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC')]\n  (Background on this error at: https://sqlalche.me/e/20/gkpj)\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\Documents\\\\ChatGPT\\\\sphere-platform\\\\.venv-audit\\\\dependency-upgrade\\\\Script...za0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC\\')]\\n(Background on this error at: https://sqlalche.me/e/20/gkpj)\\n').returncode"
+      }
+    },
+    {
+      "name": "test_actual_admin_cli_login_and_enrollment_share_one_organization[True]",
+      "failure": null
+    },
+    {
+      "name": "test_admin_cli_rejects_existing_email_in_another_organization",
+      "failure": null
+    },
+    {
+      "name": "test_bootstrap_forwards_actual_credentials_without_embedding_them_in_command[powershell]",
+      "failure": null
+    },
+    {
+      "name": "test_bootstrap_forwards_actual_credentials_without_embedding_them_in_command[bash]",
+      "failure": null
+    },
+    {
+      "name": "test_failed_bootstrap_stops_before_claiming_working_credentials[powershell-admin]",
+      "failure": null
+    },
+    {
+      "name": "test_failed_bootstrap_stops_before_claiming_working_credentials[powershell-enrollment]",
+      "failure": null
+    },
+    {
+      "name": "test_failed_bootstrap_stops_before_claiming_working_credentials[bash-admin]",
+      "failure": null
+    },
+    {
+      "name": "test_failed_bootstrap_stops_before_claiming_working_credentials[bash-enrollment]",
+      "failure": null
+    }
+  ]
+}

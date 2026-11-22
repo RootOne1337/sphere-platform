@@ -1,0 +1,950 @@
+FFFFFFF....FFFFFFFFFF.                                                   [100%]
+================================== FAILURES ===================================
+__________ test_valid_jwt_binds_tenant_before_user_lookup[org_admin] __________
+tests\production\test_jwt_tenant_runtime.py:42: in test_valid_jwt_binds_tenant_before_user_lookup
+    assert response.status_code == 200, response.text
+E   AssertionError: {"detail":"User not found or inactive"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+___________ test_valid_jwt_binds_tenant_before_user_lookup[foreign] ___________
+tests\production\test_jwt_tenant_runtime.py:42: in test_valid_jwt_binds_tenant_before_user_lookup
+    assert response.status_code == 200, response.text
+E   AssertionError: {"detail":"User not found or inactive"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_____ test_runtime_jwt_device_update_and_audit_share_tenant_boundary[own] _____
+tests\production\test_jwt_tenant_runtime.py:61: in test_runtime_jwt_device_update_and_audit_share_tenant_boundary
+    assert response.status_code == expected, response.text
+E   AssertionError: {"detail":"User not found or inactive"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_ test_runtime_jwt_device_update_and_audit_share_tenant_boundary[foreign_device] _
+tests\production\test_jwt_tenant_runtime.py:61: in test_runtime_jwt_device_update_and_audit_share_tenant_boundary
+    assert response.status_code == expected, response.text
+E   AssertionError: {"detail":"User not found or inactive"}
+E   assert 401 == 404
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+___ test_runtime_jwt_device_update_and_audit_share_tenant_boundary[viewer] ____
+tests\production\test_jwt_tenant_runtime.py:61: in test_runtime_jwt_device_update_and_audit_share_tenant_boundary
+    assert response.status_code == expected, response.text
+E   AssertionError: {"detail":"User not found or inactive"}
+E   assert 401 == 403
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+___ test_concurrent_jwt_requests_reuse_one_connection_without_tenant_bleed ____
+tests\production\test_jwt_tenant_runtime.py:77: in test_concurrent_jwt_requests_reuse_one_connection_without_tenant_bleed
+    assert [response.status_code for response in responses] == [200] * len(users)
+E   assert [401, 401, 401, 401] == [200, 200, 200, 200]
+E
+E     At index 0 diff: 401 != 200
+E     Use -v to get more diff
+_ test_existing_token_cannot_keep_old_tenant_or_privileges[owner-control-moved] _
+tests\production\test_jwt_tenant_runtime.py:102: in test_existing_token_cannot_keep_old_tenant_or_privileges
+    assert response.status_code == (403 if change == "downgraded" else 401), response.text
+E   AssertionError: {"id":"bcb60f04-513d-434c-b3aa-eb79f7b2eb23","org_id":"be3e1577-6b27-4b19-9567-3f31692e13c2","email":"org_admin-f830b1195ddf44ee8efb125ab568e1b7@example.org","role":"org_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-08T21:40:10.726353Z"}
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+_ test_existing_token_cannot_keep_old_tenant_or_privileges[runtime-role-downgraded] _
+tests\production\test_jwt_tenant_runtime.py:102: in test_existing_token_cannot_keep_old_tenant_or_privileges
+    assert response.status_code == (403 if change == "downgraded" else 401), response.text
+E   AssertionError: {"detail":"User not found or inactive"}
+E   assert 401 == 403
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_ test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-None] _
+tests\production\test_jwt_tenant_runtime.py:120: in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    assert response.status_code == 401, response.text
+E   AssertionError: {"id":"022f96db-ef1a-4745-ac1c-a6af23c8b15e","org_id":"d62fb76f-e024-483a-9c11-22cfc8371ee9","email":"org_admin-ae65309305e34b94b51d3e672557b09a@example.org","role":"org_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-08T21:40:12.850794Z"}
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+__ test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-] __
+tests\production\test_jwt_tenant_runtime.py:120: in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    assert response.status_code == 401, response.text
+E   AssertionError: {"id":"89ea927c-c381-4f63-85a7-357ab6172b9e","org_id":"b7b76629-7996-473e-808c-537616c84844","email":"org_admin-ec6aaaa94d5f4584bab839abd1738abb@example.org","role":"org_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-08T21:40:13.003750Z"}
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+_ test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-invalid] _
+tests\production\test_jwt_tenant_runtime.py:120: in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    assert response.status_code == 401, response.text
+E   AssertionError: {"id":"3509954e-40e4-433c-a8f4-9b064aa7935c","org_id":"5c65c25c-1b5f-4fcb-b910-ab54ef165fec","email":"org_admin-21dc24dff29b4708a13ca0e175f41926@example.org","role":"org_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-08T21:40:13.168431Z"}
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+_ test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-value3] _
+tests\production\test_jwt_tenant_runtime.py:120: in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    assert response.status_code == 401, response.text
+E   AssertionError: {"id":"d714ce0b-e7d4-4793-a0fb-26033dd68984","org_id":"c51de245-aebd-481c-9890-87343d73872b","email":"org_admin-1da6e9ff6caf42fd8d5515c337147e4f@example.org","role":"org_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-08T21:40:13.322794Z"}
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+_ test_invalid_user_claims_are_401_even_when_database_bypasses_rls[sub-invalid] _
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_utils.py", line 85, in create_collapsing_task_group
+  |     async with anyio.create_task_group() as tg:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\runner.py", line 353, in from_call
+    |     result: TResult | None = func()
+    |                              ^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\runner.py", line 245, in <lambda>
+    |     lambda: runtest_hook(item=item, **kwds),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\logging.py", line 850, in pytest_runtest_call
+    |     yield
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\capture.py", line 900, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\skipping.py", line 268, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    |     item.runtest()
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pytest_asyncio\plugin.py", line 469, in runtest
+    |     super().runtest()
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\python.py", line 1720, in runtest
+    |     self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    |     result = testfunction(**testargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pytest_asyncio\plugin.py", line 716, in inner
+    |     runner.run(coro, context=context)
+    |   File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    |     return self._loop.run_until_complete(task)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    |     return future.result()
+    |            ^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\tests\production\test_jwt_tenant_runtime.py", line 119, in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    |     response = await world.client.get("/api/v1/auth/me", headers={"Authorization": "Bearer " + malformed})
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1801, in get
+    |     return await self.request(
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1574, in request
+    |     return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1661, in send
+    |     response = await self._send_handling_auth(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1689, in _send_handling_auth
+    |     response = await self._send_handling_redirects(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1726, in _send_handling_redirects
+    |     response = await self._send_single_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1763, in _send_single_request
+    |     response = await transport.handle_async_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_transports\asgi.py", line 164, in handle_async_request
+    |     await self.app(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\applications.py", line 1159, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\request_id.py", line 40, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\metrics.py", line 40, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette_exporter\middleware.py", line 308, in __call__
+    |     await self.app(scope, receive, wrapped_send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\audit.py", line 82, in audit_middleware
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\tenant_middleware.py", line 23, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\cors.py", line 88, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 680, in app
+    |     await route.handle(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 276, in handle
+    |     await self.app(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 134, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 120, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 457, in app
+    |     solved_result = await solve_dependencies(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\dependencies\utils.py", line 678, in solve_dependencies
+    |     solved = await call(**solved_result.values)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\core\dependencies.py", line 73, in get_current_user
+    |     user = await db.get(User, uuid.UUID(payload["sub"]))
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\uuid.py", line 178, in __init__
+    |     raise ValueError('badly formed hexadecimal UUID string')
+    | ValueError: badly formed hexadecimal UUID string
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\tests\production\test_jwt_tenant_runtime.py", line 119, in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    response = await world.client.get("/api/v1/auth/me", headers={"Authorization": "Bearer " + malformed})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1801, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1574, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1661, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1689, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1726, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1763, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_transports\asgi.py", line 164, in handle_async_request
+    await self.app(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\request_id.py", line 40, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\metrics.py", line 40, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette_exporter\middleware.py", line 308, in __call__
+    await self.app(scope, receive, wrapped_send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\audit.py", line 82, in audit_middleware
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\tenant_middleware.py", line 23, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 680, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 457, in app
+    solved_result = await solve_dependencies(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\dependencies\utils.py", line 678, in solve_dependencies
+    solved = await call(**solved_result.values)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\core\dependencies.py", line 73, in get_current_user
+    user = await db.get(User, uuid.UUID(payload["sub"]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\uuid.py", line 178, in __init__
+    raise ValueError('badly formed hexadecimal UUID string')
+ValueError: badly formed hexadecimal UUID string
+
+The above exception was the direct cause of the following exception:
+tests\production\test_jwt_tenant_runtime.py:119: in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    response = await world.client.get("/api/v1/auth/me", headers={"Authorization": "Bearer " + malformed})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1801: in get
+    return await self.request(
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1574: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1661: in send
+    response = await self._send_handling_auth(
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1689: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1726: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1763: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_transports\asgi.py:164: in handle_async_request
+    await self.app(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\applications.py:1159: in __call__
+    await super().__call__(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\middleware\request_id.py:40: in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\middleware\metrics.py:40: in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette_exporter\middleware.py:308: in __call__
+    await self.app(scope, receive, wrapped_send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\middleware\audit.py:82: in audit_middleware
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\middleware\tenant_middleware.py:23: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\cors.py:88: in __call__
+    await self.app(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py:134: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py:120: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py:457: in app
+    solved_result = await solve_dependencies(
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\dependencies\utils.py:678: in solve_dependencies
+    solved = await call(**solved_result.values)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\core\dependencies.py:73: in get_current_user
+    user = await db.get(User, uuid.UUID(payload["sub"]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\uuid.py:178: in __init__
+    raise ValueError('badly formed hexadecimal UUID string')
+E   ValueError: badly formed hexadecimal UUID string
+---------------------------- Captured stdout call -----------------------------
+{"error": "badly formed hexadecimal UUID string", "event": "unhandled_exception", "method": "GET", "path": "/api/v1/auth/me", "request_id": "d493e395", "level": "error", "logger": "backend.main", "timestamp": "2026-09-08T21:40:13.514709Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.main:main.py:99 {'error': 'badly formed hexadecimal UUID string', 'event': 'unhandled_exception', 'method': 'GET', 'path': '/api/v1/auth/me', 'request_id': 'd493e395', 'level': 'error', 'logger': 'backend.main', 'timestamp': '2026-09-08T21:40:13.514709Z'}
+___ test_invalid_user_claims_are_401_even_when_database_bypasses_rls[sub-] ____
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_utils.py", line 85, in create_collapsing_task_group
+  |     async with anyio.create_task_group() as tg:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\runner.py", line 353, in from_call
+    |     result: TResult | None = func()
+    |                              ^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\runner.py", line 245, in <lambda>
+    |     lambda: runtest_hook(item=item, **kwds),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\logging.py", line 850, in pytest_runtest_call
+    |     yield
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\capture.py", line 900, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\skipping.py", line 268, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    |     item.runtest()
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pytest_asyncio\plugin.py", line 469, in runtest
+    |     super().runtest()
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\python.py", line 1720, in runtest
+    |     self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    |     result = testfunction(**testargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\pytest_asyncio\plugin.py", line 716, in inner
+    |     runner.run(coro, context=context)
+    |   File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    |     return self._loop.run_until_complete(task)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    |     return future.result()
+    |            ^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\tests\production\test_jwt_tenant_runtime.py", line 119, in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    |     response = await world.client.get("/api/v1/auth/me", headers={"Authorization": "Bearer " + malformed})
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1801, in get
+    |     return await self.request(
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1574, in request
+    |     return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1661, in send
+    |     response = await self._send_handling_auth(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1689, in _send_handling_auth
+    |     response = await self._send_handling_redirects(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1726, in _send_handling_redirects
+    |     response = await self._send_single_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1763, in _send_single_request
+    |     response = await transport.handle_async_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_transports\asgi.py", line 164, in handle_async_request
+    |     await self.app(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\applications.py", line 1159, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\request_id.py", line 40, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\metrics.py", line 40, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette_exporter\middleware.py", line 308, in __call__
+    |     await self.app(scope, receive, wrapped_send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\audit.py", line 82, in audit_middleware
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\tenant_middleware.py", line 23, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\cors.py", line 88, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 680, in app
+    |     await route.handle(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 276, in handle
+    |     await self.app(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 134, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 120, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 457, in app
+    |     solved_result = await solve_dependencies(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\dependencies\utils.py", line 678, in solve_dependencies
+    |     solved = await call(**solved_result.values)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\core\dependencies.py", line 73, in get_current_user
+    |     user = await db.get(User, uuid.UUID(payload["sub"]))
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\uuid.py", line 178, in __init__
+    |     raise ValueError('badly formed hexadecimal UUID string')
+    | ValueError: badly formed hexadecimal UUID string
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\tests\production\test_jwt_tenant_runtime.py", line 119, in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    response = await world.client.get("/api/v1/auth/me", headers={"Authorization": "Bearer " + malformed})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1801, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1574, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1661, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1689, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1726, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py", line 1763, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_transports\asgi.py", line 164, in handle_async_request
+    await self.app(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\request_id.py", line 40, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\metrics.py", line 40, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette_exporter\middleware.py", line 308, in __call__
+    await self.app(scope, receive, wrapped_send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\audit.py", line 82, in audit_middleware
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\middleware\tenant_middleware.py", line 23, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 680, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py", line 457, in app
+    solved_result = await solve_dependencies(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\dependencies\utils.py", line 678, in solve_dependencies
+    solved = await call(**solved_result.values)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\core\dependencies.py", line 73, in get_current_user
+    user = await db.get(User, uuid.UUID(payload["sub"]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\uuid.py", line 178, in __init__
+    raise ValueError('badly formed hexadecimal UUID string')
+ValueError: badly formed hexadecimal UUID string
+
+The above exception was the direct cause of the following exception:
+tests\production\test_jwt_tenant_runtime.py:119: in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    response = await world.client.get("/api/v1/auth/me", headers={"Authorization": "Bearer " + malformed})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1801: in get
+    return await self.request(
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1574: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1661: in send
+    response = await self._send_handling_auth(
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1689: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1726: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_client.py:1763: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\httpx\_transports\asgi.py:164: in handle_async_request
+    await self.app(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\applications.py:1159: in __call__
+    await super().__call__(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\middleware\request_id.py:40: in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\middleware\metrics.py:40: in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette_exporter\middleware.py:308: in __call__
+    await self.app(scope, receive, wrapped_send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\middleware\audit.py:82: in audit_middleware
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\middleware\tenant_middleware.py:23: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\cors.py:88: in __call__
+    await self.app(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py:134: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv-audit\dependency-upgrade\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py:120: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py:457: in app
+    solved_result = await solve_dependencies(
+.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\dependencies\utils.py:678: in solve_dependencies
+    solved = await call(**solved_result.values)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\core\dependencies.py:73: in get_current_user
+    user = await db.get(User, uuid.UUID(payload["sub"]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\uuid.py:178: in __init__
+    raise ValueError('badly formed hexadecimal UUID string')
+E   ValueError: badly formed hexadecimal UUID string
+---------------------------- Captured stdout call -----------------------------
+{"error": "badly formed hexadecimal UUID string", "event": "unhandled_exception", "method": "GET", "path": "/api/v1/auth/me", "request_id": "c1ebfa73", "level": "error", "logger": "backend.main", "timestamp": "2026-09-08T21:40:13.809993Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.main:main.py:99 {'error': 'badly formed hexadecimal UUID string', 'event': 'unhandled_exception', 'method': 'GET', 'path': '/api/v1/auth/me', 'request_id': 'c1ebfa73', 'level': 'error', 'logger': 'backend.main', 'timestamp': '2026-09-08T21:40:13.809993Z'}
+_ test_invalid_user_claims_are_401_even_when_database_bypasses_rls[type-refresh] _
+tests\production\test_jwt_tenant_runtime.py:120: in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    assert response.status_code == 401, response.text
+E   AssertionError: {"id":"fd33da19-6e89-4dd3-8e22-6e996fd7163e","org_id":"a63ed5fe-c6a8-4ff2-90f2-a78f787e42f4","email":"org_admin-09582a1091334e42b3d02d33a0eb90cf@example.org","role":"org_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-08T21:40:14.053500Z"}
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+_ test_invalid_user_claims_are_401_even_when_database_bypasses_rls[type-device_access] _
+tests\production\test_jwt_tenant_runtime.py:120: in test_invalid_user_claims_are_401_even_when_database_bypasses_rls
+    assert response.status_code == 401, response.text
+E   AssertionError: {"id":"0c46925d-c266-46f4-8733-8571006dbd9e","org_id":"fca30a7b-f48e-4939-a6d4-fbf5c32e0930","email":"org_admin-efd9c99eaf1b4329b1f33d4db829bcb7@example.org","role":"org_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-08T21:40:14.206527Z"}
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+___ test_signed_token_for_another_org_cannot_load_user_on_owner_connection ____
+tests\production\test_jwt_tenant_runtime.py:126: in test_signed_token_for_another_org_cannot_load_user_on_owner_connection
+    assert response.status_code == 401, response.text
+E   AssertionError: {"id":"b592e409-032e-4c3d-bdf0-2abe743eeceb","org_id":"9d25e714-5677-4e54-95dd-81e85c0550d4","email":"org_admin-08c46c6fab7f4b749af8a9e9cb82a9b4@example.org","role":"org_admin","is_active":true,"mfa_enabled":false,"last_login_at":null,"created_at":"2026-09-08T21:40:14.360602Z"}
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_jwt_tenant_runtime.py::test_valid_jwt_binds_tenant_before_user_lookup[org_admin]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_valid_jwt_binds_tenant_before_user_lookup[foreign]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_runtime_jwt_device_update_and_audit_share_tenant_boundary[own]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_runtime_jwt_device_update_and_audit_share_tenant_boundary[foreign_device]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_runtime_jwt_device_update_and_audit_share_tenant_boundary[viewer]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_concurrent_jwt_requests_reuse_one_connection_without_tenant_bleed
+FAILED tests/production/test_jwt_tenant_runtime.py::test_existing_token_cannot_keep_old_tenant_or_privileges[owner-control-moved]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_existing_token_cannot_keep_old_tenant_or_privileges[runtime-role-downgraded]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-None]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-invalid]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-value3]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[sub-invalid]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[sub-]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[type-refresh]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[type-device_access]
+FAILED tests/production/test_jwt_tenant_runtime.py::test_signed_token_for_another_org_cannot_load_user_on_owner_connection
+17 failed, 5 passed, 1 warning in 6.00s

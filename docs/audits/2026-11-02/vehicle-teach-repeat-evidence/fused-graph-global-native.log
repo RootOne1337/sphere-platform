@@ -1,0 +1,52 @@
+I20261102 02:08:58.642726 49820 database_cache.cc:82] Loading rigs...
+I20261102 02:08:58.642807 49820 database_cache.cc:92]  1 in 0.000s
+I20261102 02:08:58.642811 49820 database_cache.cc:100] Loading cameras...
+I20261102 02:08:58.642823 49820 database_cache.cc:118]  1 in 0.000s
+I20261102 02:08:58.642825 49820 database_cache.cc:126] Loading frames...
+I20261102 02:08:58.642974 49820 database_cache.cc:136]  173 in 0.000s
+I20261102 02:08:58.642978 49820 database_cache.cc:144] Loading matches...
+I20261102 02:08:58.655441 49820 database_cache.cc:163]  1339 in 0.012s
+I20261102 02:08:58.655459 49820 database_cache.cc:171] Loading images...
+I20261102 02:08:58.666540 49820 database_cache.cc:268]  173 in 0.011s (connected 173, loaded 173)
+I20261102 02:08:58.666560 49820 database_cache.cc:282] Loading pose priors...
+I20261102 02:08:58.666571 49820 database_cache.cc:290]  0 in 0.000s
+I20261102 02:08:58.666573 49820 database_cache.cc:298] Building correspondence graph...
+I20261102 02:08:58.726396 49820 database_cache.cc:327]  in 0.060s (ignored 108)
+I20261102 02:08:58.726504 49820 two_view_geometry.cc:1834] Decomposing relative poses...
+I20261102 02:08:59.265038 49820 two_view_geometry.cc:1936] Decomposed 1231 relative poses (0 failed) in 0.539s
+I20261102 02:08:59.269696 49820 pose_graph.cc:51] Loaded 1231 edges into pose graph
+I20261102 02:08:59.288468 49820 rotation_averaging.cc:274] Marked 118 image pairs as invalid with relative rotation error > 10 degrees
+I20261102 02:08:59.289268 49820 global_pipeline.cc:302] Found 1 connected component(s) after rotation filtering
+I20261102 02:08:59.289280 49820 global_pipeline.cc:322] === Reconstructing component 1 / 1 with 173 images ===
+I20261102 02:08:59.421670 49820 pose_graph.cc:51] Loaded 1231 edges into pose graph
+I20261102 02:08:59.421688 49820 global_mapper.cc:553] === Running rotation averaging ===
+I20261102 02:08:59.438356 49820 rotation_averaging.cc:274] Marked 118 image pairs as invalid with relative rotation error > 10 degrees
+I20261102 02:08:59.452455 49820 rotation_averaging.cc:274] Marked 1 image pairs as invalid with relative rotation error > 10 degrees
+I20261102 02:08:59.452622 49820 global_mapper.cc:559] Rotation averaging done in 0.030938 seconds
+I20261102 02:08:59.452631 49820 global_mapper.cc:565] === Running track establishment ===
+I20261102 02:08:59.605764 49820 global_mapper.cc:206] Established 27481 tracks from 216139 observations
+I20261102 02:08:59.646284 49820 global_mapper.cc:261] Kept 16890 tracks, discarded 1698 due to inconsistency
+I20261102 02:08:59.657038 49820 global_mapper.cc:302] Before filtering: 16890, after filtering: 16890
+I20261102 02:08:59.674877 49820 global_mapper.cc:569] Track establishment done in 0.222258 seconds
+I20261102 02:08:59.674898 49820 global_mapper.cc:575] === Running global positioning ===
+I20261102 02:08:59.674905 49820 global_positioning.cc:39] Setting up the global positioner problem
+I20261102 02:08:59.839365 49820 global_positioning.cc:59] Solving the global positioner problem
+I20261102 02:09:40.051756 49820 global_positioning.cc:70] Ceres Solver Report: Iterations: 59, Initial cost: 1.848821e+06, Final cost: 8.357223e+00, Termination: CONVERGENCE
+I20261102 02:09:40.159771 49820 global_mapper.cc:584] Global positioning done in 40.4849 seconds
+I20261102 02:09:40.165716 49820 global_mapper.cc:596] === Running iterative bundle adjustment ===
+I20261102 02:09:50.323339 49820 global_mapper.cc:391] Global bundle adjustment iteration 1 / 3, fixed-rotation stage finished
+I20261102 02:09:54.859697 49820 global_mapper.cc:401] Global bundle adjustment iteration 1 / 3 finished
+I20261102 02:09:54.869508 49820 global_mapper.cc:424] Filtering tracks by reprojection ...
+I20261102 02:10:00.676743 49820 global_mapper.cc:391] Global bundle adjustment iteration 2 / 3, fixed-rotation stage finished
+I20261102 02:10:12.059386 49820 global_mapper.cc:401] Global bundle adjustment iteration 2 / 3 finished
+I20261102 02:10:12.079021 49820 global_mapper.cc:424] Filtering tracks by reprojection ...
+I20261102 02:10:15.755748 49820 global_mapper.cc:391] Global bundle adjustment iteration 3 / 3, fixed-rotation stage finished
+I20261102 02:10:27.787357 49820 global_mapper.cc:401] Global bundle adjustment iteration 3 / 3 finished
+I20261102 02:10:27.797464 49820 global_mapper.cc:424] Filtering tracks by reprojection ...
+I20261102 02:10:27.804359 49820 global_mapper.cc:449] Filtering tracks by reprojection ...
+I20261102 02:10:27.813796 49820 global_mapper.cc:608] Iterative bundle adjustment done in 47.6481 seconds
+I20261102 02:10:27.813814 49820 global_mapper.cc:614] === Running iterative retriangulation and refinement ===
+I20261102 02:10:51.326487 49820 global_mapper.cc:623] Iterative retriangulation and refinement done in 23.5127 seconds
+I20261102 02:10:51.344093 49820 global_pipeline.cc:183] Reconstruction done in 111.922 seconds
+I20261102 02:10:51.346929 49820 global_pipeline.cc:254] Extracting colors ...
+I20261102 02:10:55.335763 49820 global_pipeline.cc:260] Kept 1 reconstruction(s), discarded 0 with fewer than 3 registered frames, and failed to reconstruct 0

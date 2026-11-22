@@ -1,0 +1,27 @@
+{
+  "schema": "sphere-fused-namespace-postverification-audit-v1",
+  "expectedMeasuredPairs": 1339,
+  "expectedMeasuredMatches": 726806,
+  "actualPairs": 1339,
+  "rawMatchPairFailures": [],
+  "rawMatchFingerprint": "f0eb1b8abfc81225467394cfd005d0176b72b36deca1d1a2f3b3bda29ca53cb5",
+  "keypointRowHashFailures": [],
+  "descriptorRows": 0,
+  "verifiedPairCount": 1339,
+  "verifiedCorrespondences": 687123,
+  "siftAliasesRemoved": 33666,
+  "fusedKeypointRows": 291935,
+  "videoPrefixRows": 149749,
+  "siftSuffixRows": 142186,
+  "cleanHeldoutCounts": [
+    16,
+    24,
+    9,
+    0,
+    18,
+    24
+  ],
+  "sourceModified": false,
+  "modelSolveLaunched": false,
+  "note": "Existing measured raw matches plus exact row remapping remain byte-exact after native geometric verification; no descriptor extraction or matching changed the graph."
+}

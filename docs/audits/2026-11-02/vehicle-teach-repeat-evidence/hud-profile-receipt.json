@@ -1,0 +1,22 @@
+{
+  "schema": "sphere-hud-speed-reference-receipt-v1",
+  "hudProfile": "black_russia_scooter_v1",
+  "source_hashes": {
+    "manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475"
+  },
+  "profile_sha256": "c51e849467777b3b316a0e1c50548618c9b87f933ac8dcb9e664c3871ed33536",
+  "font_sha256": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+  "units": "game_hud_kmh",
+  "world_metric": false,
+  "source_modified": false,
+  "selected_count": 857,
+  "accepted_count": 836,
+  "max_gap_ticks_90k": 18000,
+  "commands_observed": false,
+  "execution_qualified": false,
+  "processing_seconds": 9.655999999959022
+}

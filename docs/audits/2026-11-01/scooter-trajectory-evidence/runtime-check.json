@@ -1,0 +1,26 @@
+{
+  "scope": "read_only_runtime_and_worker_import",
+  "date_UTC": "2026-11-01",
+  "API_health": {
+    "route_camera_pipeline": "vehicle_geometry_v3_hud",
+    "creation_recovery_contract": "confirmed_absence_v1",
+    "alternative_catalog_contract": "source_bound_review_v1"
+  },
+  "UI_container": {
+    "name": "sphere-review-20261002-review-ui-1",
+    "status": "running",
+    "health": "healthy",
+    "image": "sha256:cbd6374c9f1c5ffda6ba22bd6f52eae54e5ed4b5c5456a74b939201c9c033ef5"
+  },
+  "new_worker_import": "ok",
+  "worker_code_sha256": {
+    "scripts/pilot/reconstruct_route.py": "ace9d9f50c70569b95e79d860b436d2a66695a8123f34c4b227b20bec4c5ba47",
+    "scripts/pilot/route_observation_support.py": "d8477f50d559b40113ecc697281a485c165a0212330ef3a69c1132873585b314"
+  },
+  "IAB_acceptance": "not_performed",
+  "CUA_result": "Local browser use is disabled in Work settings",
+  "native_UI_or_browser_profile_bypass": false,
+  "physical_actions": 0,
+  "capture_master_changed": false,
+  "execution_qualified": false
+}

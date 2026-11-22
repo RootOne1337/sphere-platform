@@ -1,0 +1,73 @@
+{
+  "schema": "sphere-route-catalog-delivery-v1",
+  "state": "installed_verified",
+  "observedAtUtc": "2026-11-02T11:13:47.500983+00:00",
+  "frontendSource": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "backendSource": "2095f9782e38707145e28d829edb4c3517f6f76f",
+  "imageId": "sha256:ee18994f586f7428d5767f68ac53f7a6002f8a39e88895ea3a63c46f5e35cb23",
+  "sourceArchiveSha256": "0110a2e7aea3c49b60a3b3ca6ccf6b0a0d53260cb139250d807c142c91084bad",
+  "frontendCI": {
+    "runId": "20261102T110430Z-d7b0ccd7",
+    "tests": {
+      "tests": 3134,
+      "passed": 3134,
+      "failures": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "suites": 229,
+      "success": true
+    },
+    "receipt": ".local-pilot/local-ci/runs/20261102T110430Z-d7b0ccd7/receipt.json",
+    "github": {
+      "id": 57830541349,
+      "context": "Sphere Local / Frontend regressions",
+      "state": "success",
+      "createdAt": "2026-11-02T11:07:05Z",
+      "readbackVerified": true,
+      "targetUrl": null
+    }
+  },
+  "backendFinalTests": {
+    "passed": 104,
+    "subtests": 16,
+    "seconds": 7.46,
+    "scope": [
+      "test_route_owned_process",
+      "test_reconstruction_service",
+      "test_route_workspace",
+      "test_image_route_workspace"
+    ]
+  },
+  "browserChecks": 35,
+  "browserErrors": 0,
+  "browserScope": "actual catalog component + React createRoot + synthetic records; NOT IAB/Next/OPFS/game acceptance",
+  "installedHttp": {
+    "pages": 2,
+    "clientAssets": 31,
+    "compiledSourceLiteral": "41101d00a999cac4f6574d65131e3ca7c5ea9820"
+  },
+  "preservation": {
+    "otherContainers": 45,
+    "protectedAssets": 562,
+    "hashesEqual": true,
+    "fullUiEnvironmentAndHostConfigPreserved": true,
+    "apiUnchangedByWebInstall": true,
+    "otaUnchanged": true
+  },
+  "skuter1": {
+    "mainPhase": "failed",
+    "navigationPhase": "not_prepared",
+    "diagnosticGeometryPromoted": false
+  },
+  "newRealCaptureOrLiveRouteTest": false,
+  "physicalDeviceActions": 0,
+  "buildsForInstalledSource": 1,
+  "prior188SourceBuilds": 0,
+  "archivesCreated": 0,
+  "commits": [
+    "2095f978",
+    "188a2670",
+    "41101d00"
+  ],
+  "rawPrivateInstallReceiptSha256": "24ef6b8ebc545501c5477cbaf5b5967495e1fda3aaae2f2c215641d0e5500d74"
+}

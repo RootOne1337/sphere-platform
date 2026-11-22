@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "stop": null,
+  "initial_ram": 11295977472,
+  "initial_commit": 25101516800,
+  "min_ram": 9583689728,
+  "min_commit": 17776001024,
+  "seconds": 82.98400000005495,
+  "only_owned_direct_child": true
+}

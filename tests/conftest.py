@@ -4,8 +4,8 @@
 # импортируя base-фикстуры отсюда.
 #
 # ВАЖНО: тесты используют SQLite in-memory (aiosqlite) чтобы не требовать
-# запущенного PostgreSQL в CI. RLS-политики НЕ тестируются здесь —
-# для них есть отдельный job `rls-check` в ci-backend.yml.
+# PostgreSQL для unit tests. tests/production использует отдельные реальные
+# PostgreSQL/Redis. Статический rls-check не доказывает изоляцию runtime-ролей.
 
 from __future__ import annotations
 
@@ -26,9 +26,10 @@ import logging as _logging
 _logging.getLogger("aiosqlite").setLevel(_logging.WARNING)
 
 import asyncio
+import uuid
 
 # ---------------------------------------------------------------------------
-# SQLite compat: render PostgreSQL-only types as TEXT
+# SQLite compatibility without changing PostgreSQL semantics
 # ---------------------------------------------------------------------------
 from collections.abc import AsyncGenerator
 
@@ -36,10 +37,9 @@ import pytest
 import pytest_asyncio
 from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import ARRAY as _SA_ARRAY
-from sqlalchemy import event
-from sqlalchemy.dialects.postgresql import ARRAY as _PG_ARRAY
-from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
+from sqlalchemy import ARRAY, JSON, String, event
+from sqlalchemy.dialects.postgresql import INET, JSONB, TSVECTOR
+from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from backend.database.engine import Base, get_db
@@ -47,62 +47,52 @@ from backend.database.redis_client import get_redis
 from backend.main import app
 from backend.models import *  # noqa: F401,F403 — side-effect: registers all mappers
 
-
-def _visit_text_compat(self, type_, **kw):
-    return "TEXT"
-
-
-SQLiteTypeCompiler.visit_JSONB = _visit_text_compat  # type: ignore[attr-defined]
-SQLiteTypeCompiler.visit_TSVECTOR = _visit_text_compat  # type: ignore[attr-defined]
-SQLiteTypeCompiler.visit_INET = _visit_text_compat  # type: ignore[attr-defined]
-SQLiteTypeCompiler.visit_ARRAY = _visit_text_compat  # type: ignore[attr-defined]
-
-
-# ---------------------------------------------------------------------------
-# SQLite bind/result processors для ARRAY и JSONB
-# ---------------------------------------------------------------------------
-# Модели используют sqlalchemy.sql.sqltypes.ARRAY (generic), а НЕ
-# sqlalchemy.dialects.postgresql.ARRAY. Патчим ОБА класса.
-# ---------------------------------------------------------------------------
-
-def _make_array_bind_processor(original_bp):
-    """Фабрика: обёртка над оригинальным bind_processor для ARRAY → SQLite TEXT."""
-    def patched_bind_processor(self, dialect):
-        if dialect.name == "sqlite":
-            def process(value):
-                if value is None:
-                    return None
-                if isinstance(value, list):
-                    return "{" + ",".join(str(v) for v in value) + "}"
-                return value
-            return process
-        return original_bp(self, dialect)
-    return patched_bind_processor
+# SQLite variants preserve native PostgreSQL DDL and bind processors when the
+# unit and real-service suites run in one process. Never replace the base type:
+# otherwise collection order can turn PostgreSQL ARRAY parameters into JSON.
+for _table in Base.metadata.tables.values():
+    for _column in _table.columns:
+        if isinstance(_column.type, (ARRAY, JSONB)):
+            _column.type = _column.type.with_variant(JSON(), "sqlite")
+        elif isinstance(_column.type, (INET, TSVECTOR)):
+            _column.type = _column.type.with_variant(String(), "sqlite")
 
 
-def _make_array_result_processor(original_rp):
-    """Фабрика: обёртка над оригинальным result_processor для SQLite TEXT → list."""
-    def patched_result_processor(self, dialect, coltype):
-        if dialect.name == "sqlite":
-            def process(value):
-                if value is None:
-                    return None
-                if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
-                    inner = value[1:-1]
-                    return inner.split(",") if inner else []
-                return value
-            return process
-        return original_rp(self, dialect, coltype)
-    return patched_result_processor
+@event.listens_for(Engine, "engine_connect")
+def _sqlite_uuid_function(connection):
+    """SQLite SQL adapters only; tenant enforcement is proved in PostgreSQL tests."""
+    if connection.dialect.name == "sqlite":
+        connection.connection.dbapi_connection.create_function(
+            "gen_random_uuid", 0, lambda: uuid.uuid4().hex,
+        )
+        # SQLite has no GUC/RLS. Let unit tests exercise the real auth claim and
+        # explicit org checks without adding a production dialect bypass. This
+        # function does NOT emulate tenant isolation or transaction-local state.
+        def tenant_setting(name, value, local):
+            assert name == "app.current_org_id" and local == 1
+            return value
+
+        connection.connection.dbapi_connection.create_function(
+            "set_config", 3, tenant_setting,
+        )
 
 
-# Патчим generic ARRAY (sqlalchemy.sql.sqltypes.ARRAY)
-_SA_ARRAY.bind_processor = _make_array_bind_processor(_SA_ARRAY.bind_processor)  # type: ignore[assignment]
-_SA_ARRAY.result_processor = _make_array_result_processor(_SA_ARRAY.result_processor)  # type: ignore[assignment]
-
-# Патчим PostgreSQL ARRAY (sqlalchemy.dialects.postgresql.ARRAY) на случай прямого использования
-_PG_ARRAY.bind_processor = _make_array_bind_processor(_PG_ARRAY.bind_processor)  # type: ignore[assignment]
-_PG_ARRAY.result_processor = _make_array_result_processor(_PG_ARRAY.result_processor)  # type: ignore[assignment]
+@event.listens_for(Engine, "before_cursor_execute", retval=True)
+def _sqlite_credential_lookup(connection, cursor, statement, parameters, context, executemany):
+    # SQLite has neither schemas nor SECURITY DEFINER. Substitute only the exact
+    # exact tenant-only SQL calls in unit tests. PostgreSQL tests execute the real
+    # migration functions and verify their grants, search_path and RLS boundaries.
+    if connection.dialect.name == "sqlite":
+        statement = {
+            "SELECT sphere_auth.api_key_org(?)": "SELECT org_id FROM api_keys WHERE key_hash = ?",
+            "SELECT sphere_auth.device_refresh_org(?)": (
+                "WITH candidate(value) AS (SELECT ?) SELECT org_id FROM devices, candidate "
+                "WHERE refresh_token_hash = candidate.value OR refresh_previous_token_hash = candidate.value"
+            ),
+            "SELECT sphere_auth.user_refresh_org(?)": "SELECT org_id FROM refresh_tokens WHERE token_hash = ?",
+            "SELECT sphere_auth.user_login_org(?)": "SELECT org_id FROM users WHERE email = ?",
+        }.get(statement, statement)
+    return statement, parameters
 
 
 # ---------------------------------------------------------------------------

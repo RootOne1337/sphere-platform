@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-06",
+  "source_baseline": "bc9f4bb9f0540e84e2e23aecde3ff553ddd0b572",
+  "runtime": { "frontend": "1c26ffc7", "backend": "eb7a7c26", "agent": "1.2.47-dev", "version_code": 10247 },
+  "device": { "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e", "name": "auto-ph-011", "adb_serial": "emulator-5554", "sdk": 28, "width": 960, "height": 540, "wm_density": 160 },
+  "user_file": {
+    "name": "sphere-414ce0e9-4b93-4f96-b9ca-ee675f53835e-dc4f98b956364287bb5157d9bee5450f.png",
+    "bytes": 236486,
+    "sha256": "1dd467f72b8838020922687ddf4f09a8f7e3b5b4226893cb44af37b55dd388d7",
+    "decoded_rgba_sha256": "4b54e5abfc8927f7e9fa6c25a4c58d1c58585f062c201771d581d4c8eec6792b",
+    "width": 960, "height": 540, "bit_depth": 8, "color_type": 6,
+    "chunks": { "IHDR": 1, "sBIT": 1, "IDAT": 29, "IEND": 1 },
+    "all_chunk_crcs_valid": true, "trailing_data": false,
+    "pHYs_present": false, "eXIf_present": false, "encoded_dpi": null,
+    "filesystem_created_at_utc": "2026-10-06T16:50:19.9779646Z"
+  },
+  "matching_backend_capture": {
+    "snapshot_id": "dc4f98b956364287bb5157d9bee5450f", "request_id": "49ca46fe",
+    "event": "native_screenshot.finished", "timestamp": "2026-10-06T16:50:12.366814Z",
+    "http_status": 200, "elapsed_ms": 6714, "rpc_count": 10, "completed_rpcs": 10,
+    "cleanup_confirmed": true, "failed_phase": null,
+    "phase_elapsed_ms": { "display_before": 428, "capture": 749, "file_size": 499, "android_digest": 508, "chunk_copy": 945, "chunk_read": 2690, "display_after": 378, "cleanup": 511 },
+    "historical_response_headers_retained": false
+  },
+  "independent_android_capture": {
+    "observed_at_utc": "2026-10-06T16:58:01.501915+00:00",
+    "method": "Sequential adb exec-out screencap -p and screencap; no device input or display settings changed",
+    "png_bytes": 236267, "png_sha256": "20577b2f187d83e5b5c10170292b61cdc24154cfd26caac1c5bf87a26af92891",
+    "raw_bytes": 2073616, "raw_header_bytes": 16, "raw_format": 1,
+    "decoded_rgba_sha256": "6365e2c23fb19b323a99b4d645a1a23d879e2851b6b87a15ca5023be74e9c0cb",
+    "raw_rgba_sha256": "6365e2c23fb19b323a99b4d645a1a23d879e2851b6b87a15ca5023be74e9c0cb",
+    "compared_pixels": 518400, "different_pixels": 0, "exact_pixel_match": true
+  },
+  "user_file_vs_new_native_capture": {
+    "compared_pixels": 518400, "equal_pixels": 518274, "different_pixels": 126,
+    "difference_bounding_box_exclusive": [42, 5, 931, 19],
+    "region_below_status_bar": [0, 24, 960, 540], "region_pixel_count": 495360,
+    "region_exact_pixel_match": true
+  },
+  "scope": {
+    "conclusion": "No screenshot pixel degradation demonstrated for this PH011 file; all pixels below status bar match Android native RGBA exactly",
+    "not_proven": ["quality of other files or devices", "frame-correlated replay", "rich recorder crop/pixel evidence", "historical SHA headers of the user's download"],
+    "native_capture_reencoded": false, "new_ui_deployed": false
+  }
+}

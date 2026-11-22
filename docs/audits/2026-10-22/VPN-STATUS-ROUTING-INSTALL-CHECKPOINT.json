@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T22:18:32.574373+00:00",
+  "candidateSource": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+  "candidateImageId": "sha256:cf84467ff9fe581f18cc67ecdb3a28a128466fd670d7de1737e26995d4f3f3b3",
+  "candidateFullCiPassed": true,
+  "ciEvidence": "docs/audits/2026-10-22/VPN-STATUS-ROUTING-CI.json",
+  "runtimeInstalled": false,
+  "state": "blocked_before_backend_replacement",
+  "replacementIntentWritten": false,
+  "candidateImageImportedAndVerified": true,
+  "reimportRequired": false,
+  "baselineContainerIdUnchanged": true,
+  "installed": {
+    "ui": "46dd02fff711c1667b44520b85290226b7155287",
+    "api": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+    "apiImageId": "sha256:27e1f5659fa37e213f7bb8ad8d8bfefb740921c7b32a30b658cfdce388fcc2da",
+    "uiImageId": "sha256:7fd4d52ec5402dae96b715d890f9f905e0ca1a4b5417423eb9de5f3ce0d238d0",
+    "apiHealthy": true,
+    "gatewayReady": true
+  },
+  "resourceAdmission": {
+    "observedAtUtc": "2026-10-21T22:17:41.124956+00:00",
+    "findings": [
+      "commit_headroom_low"
+    ],
+    "commitPercent": 85.198,
+    "maximumAdmittedCommitPercent": 85,
+    "availableRamBytes": 5305847808,
+    "minimumAdmittedRamBytes": 4294967296,
+    "postImportWatchSamples": 17,
+    "thresholdsWeakened": false
+  },
+  "devices": [
+    {
+      "device": "auto-ph-011",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "status": "online",
+      "agentVersionCode": 10284
+    },
+    {
+      "device": "auto-ph-030",
+      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+      "status": "offline",
+      "agentVersionCode": null
+    }
+  ],
+  "postFixStatusRpcSent": false,
+  "physicalVpnCommandsSent": 0,
+  "gameCommandsSent": 0,
+  "schemaMigrationPerformed": false,
+  "physicalVpnAccepted": false,
+  "productionAccepted": false,
+  "scope": "Read-only checkpoint after an admitted image import but before any backend replacement. This is not a live acceptance receipt for the fix."
+}

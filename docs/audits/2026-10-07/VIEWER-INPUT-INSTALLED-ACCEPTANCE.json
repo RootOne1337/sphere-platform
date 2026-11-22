@@ -1,0 +1,322 @@
+{
+  "observedAtUtc": "2026-10-07T03:02:09.423844+00:00",
+  "sourceRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+  "scope": "local authenticated pilot UI/API; discrete viewer rejection and reconnect",
+  "url": "http://127.0.0.1:3015/scripts/builder",
+  "ci": {
+    "backend": {
+      "runId": 37544582292,
+      "runAttempt": 1,
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37544582292",
+      "workflow": ".github/workflows/ci-backend.yml",
+      "testsPassed": 3097,
+      "skipped": 37,
+      "warnings": 2,
+      "subtestsPassed": 193,
+      "testDurationSeconds": 865.26,
+      "coveragePercent": 80.43
+    },
+    "frontend": {
+      "runId": 37544582302,
+      "runAttempt": 1,
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37544582302",
+      "workflow": ".github/workflows/ci-frontend.yml",
+      "testsPassed": 1695,
+      "suitesPassed": 133,
+      "types": "success",
+      "productionBuild": "success",
+      "packagedPages": 26,
+      "clientAssets": 73
+    },
+    "android": {
+      "runId": 37544582396,
+      "runAttempt": 1,
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37544582396",
+      "workflow": ".github/workflows/ci-android.yml"
+    },
+    "preview": {
+      "runId": 37544582342,
+      "runAttempt": 1,
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37544582342",
+      "workflow": ".github/workflows/preview-deploy.yml"
+    }
+  },
+  "artifactAdmission": {
+    "web": {
+      "kind": "web",
+      "observedAtUtc": "2026-10-06T23:14:24.004382+00:00",
+      "sourceRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+      "runId": 37544582302,
+      "runAttempt": 1,
+      "jobId": 112545392063,
+      "workflowConclusion": "success",
+      "artifactId": 11450375876,
+      "zipBytes": 120841641,
+      "zipSha256": "54408b1555fedbc1fe6df18e6ec798eec47c700f4c2d64d33da8ac6f10008e9e",
+      "githubArtifactDigestVerified": true,
+      "independentImageLog": {
+        "source": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+        "imageId": "sha256:a91891d25588513bbc8440ee9104ea5f5f608b66627e5b8819a545db15d7b860",
+        "compressedBytes": 120838690,
+        "pages": 26,
+        "assets": 73,
+        "runId": 37544582302,
+        "runtimeInstalled": false
+      },
+      "imageId": "sha256:a91891d25588513bbc8440ee9104ea5f5f608b66627e5b8819a545db15d7b860",
+      "archiveAdmitted": {
+        "sourceRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+        "imageId": "sha256:a91891d25588513bbc8440ee9104ea5f5f608b66627e5b8819a545db15d7b860",
+        "imageTag": "sphere-review-frontend:a41c4e64bf569a7518d34606da0facbba32f77e6",
+        "archiveBytes": 120838690,
+        "runId": 37544582302,
+        "runAttempt": 1,
+        "pages": 26,
+        "clientAssets": 73,
+        "archiveAdmitted": true,
+        "runtimeInstalled": false
+      },
+      "retainedZip": false
+    },
+    "backend": {
+      "kind": "backend",
+      "observedAtUtc": "2026-10-07T02:57:35.223578+00:00",
+      "sourceRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+      "runId": 37544582292,
+      "runAttempt": 1,
+      "jobId": 112545392717,
+      "workflowConclusion": "success",
+      "artifactId": 11450245968,
+      "zipBytes": 236132923,
+      "zipSha256": "5b568b3b64abc21334ad68c539c8a0ee0c502d13d8a1ef6ad3390240eb6b1df4",
+      "resumedOwnedBytes": 145752064,
+      "transferAttempts": 2,
+      "githubArtifactDigestVerified": true,
+      "independentImageLog": {
+        "sourceRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+        "imageId": "sha256:150260b700ef3cb8ba801af230c1d169bb03f10fab14afc69d2c7ac2065ed85d",
+        "imageTag": "sphere-reviewed-backend:a41c4e64bf569a7518d34606da0facbba32f77e6",
+        "archiveBytes": 236131291,
+        "runId": 37544582292,
+        "runAttempt": 1,
+        "migrationHeads": [
+          "20261006_script_catalog_metadata"
+        ],
+        "archiveAdmitted": true,
+        "runtimeInstalled": false
+      },
+      "imageId": "sha256:150260b700ef3cb8ba801af230c1d169bb03f10fab14afc69d2c7ac2065ed85d",
+      "archiveAdmitted": {
+        "sourceRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+        "imageId": "sha256:150260b700ef3cb8ba801af230c1d169bb03f10fab14afc69d2c7ac2065ed85d",
+        "imageTag": "sphere-reviewed-backend:a41c4e64bf569a7518d34606da0facbba32f77e6",
+        "archiveBytes": 236131291,
+        "runId": 37544582292,
+        "runAttempt": 1,
+        "migrationHeads": [
+          "20261006_script_catalog_metadata"
+        ],
+        "archiveAdmitted": true,
+        "runtimeInstalled": false
+      },
+      "retainedZip": false
+    }
+  },
+  "uiInstallation": {
+    "imageId": "sha256:a91891d25588513bbc8440ee9104ea5f5f608b66627e5b8819a545db15d7b860",
+    "loadedImageId": "sha256:d12e372c7c9b00cf61920cd0ae7716c8d3f91e3833a8e781fd1e33628c2f1657",
+    "previousUi": {
+      "id": "00d21e0a778dc85cc0adf745ba0b6dcdd69d7d1088bc584966e3d750e006a4cc",
+      "imageId": "sha256:1ea416ef190c7fc46216aa6c2ade03bc83b66bbbc57fb42ac7015524e1c11729",
+      "imageTag": "sphere-review-frontend:b50d6ae2af537adb12a52503f0809ef565c0ba21",
+      "startedAt": "2026-10-06T21:50:47.354001618Z",
+      "status": "running"
+    },
+    "installedUi": {
+      "id": "42dbe66d8534c50cb5060ff1eafd7a8466eeb4a552f46ffcad380661abcd42f0",
+      "imageId": "sha256:d12e372c7c9b00cf61920cd0ae7716c8d3f91e3833a8e781fd1e33628c2f1657",
+      "imageTag": "sphere-review-frontend:a41c4e64bf569a7518d34606da0facbba32f77e6",
+      "startedAt": "2026-10-06T23:15:49.460459145Z",
+      "status": "running"
+    },
+    "otherContainersPreserved": 45
+  },
+  "backendInstallation": {
+    "imageId": "sha256:150260b700ef3cb8ba801af230c1d169bb03f10fab14afc69d2c7ac2065ed85d",
+    "loadedImageId": "sha256:19d2c43ac03076bf214ddc68c43dc8f14f6c8c9429d5645781e934f4acb2d2c6",
+    "previousBackend": {
+      "id": "eb7c839d201c8edfa0e3b298156d49f8ebbdbbc1c7f677836ad5de4e7a36b400",
+      "imageId": "sha256:4b3b30b6609f5bbd89727eeb6847109023fbf8844d519e639723cded20f3559b",
+      "imageTag": "sphere-reviewed-backend:114775a481f579e840ff63a154f1520b2f37dd0d",
+      "startedAt": "2026-10-06T22:35:01.210852114Z",
+      "status": "running"
+    },
+    "installedBackend": {
+      "id": "e53a10ef8ba8a3e67ad2e0d42aa9c97e5b0061600d9bb82a71466579d9aa4aa9",
+      "imageId": "sha256:19d2c43ac03076bf214ddc68c43dc8f14f6c8c9429d5645781e934f4acb2d2c6",
+      "imageTag": "sphere-reviewed-backend:a41c4e64bf569a7518d34606da0facbba32f77e6",
+      "startedAt": "2026-10-07T02:59:21.905495418Z",
+      "status": "running"
+    },
+    "sourceChanges": [
+      "backend/api/ws/stream/router.py",
+      "backend/websocket/viewer_input.py"
+    ],
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "schemaMigrationPerformed": false,
+    "otherContainersPreserved": 45,
+    "resourceFindings": []
+  },
+  "otaCatalogSha256": "c22124909f08d2df6fd98048eb1c359da5d5c4ee73f0e1f9cc7427988e27d4d4",
+  "before": {
+    "phase": "before",
+    "observedAtUtc": "2026-10-07T02:49:10.881764+00:00",
+    "scriptsPublished": false,
+    "taskExecutionRequested": false,
+    "androidInputCommandsSent": false,
+    "apiRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+    "apiReady": true,
+    "catalogRows": 25,
+    "catalogTotal": 25,
+    "catalogNoStore": true,
+    "catalogFingerprint": "415030f9fd80fd3689c7b6765f68e7125b02ed9b5e40c528bf357b171629b93c",
+    "activeTaskCounts": {
+      "running": 0,
+      "assigned": 0,
+      "queued": 0
+    },
+    "fleetTotal": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "after": {
+    "phase": "after",
+    "observedAtUtc": "2026-10-07T03:00:00.152601+00:00",
+    "scriptsPublished": false,
+    "taskExecutionRequested": false,
+    "androidInputCommandsSent": false,
+    "apiRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "apiReady": true,
+    "catalogRows": 25,
+    "catalogTotal": 25,
+    "catalogNoStore": true,
+    "catalogFingerprint": "415030f9fd80fd3689c7b6765f68e7125b02ed9b5e40c528bf357b171629b93c",
+    "activeTaskCounts": {
+      "running": 0,
+      "assigned": 0,
+      "queued": 0
+    },
+    "fleetTotal": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true,
+    "catalogPreserved": true,
+    "liveContractVerified": true,
+    "anonymousContractStatus": 401,
+    "validDraftStatus": 200,
+    "missingTapCoordinatesStatus": 422,
+    "deviceExecutionVerified": false,
+    "viewerInputCanary": {
+      "androidInputCommandsSent": false,
+      "streamLifecycleCommandsIssued": true,
+      "keyframeRequestsSent": 1,
+      "errors": [
+        {
+          "case": 1,
+          "reason": "invalid_parameter"
+        },
+        {
+          "case": 2,
+          "reason": "invalid_parameter"
+        },
+        {
+          "case": 3,
+          "reason": "invalid_message"
+        },
+        {
+          "case": 4,
+          "reason": "invalid_message"
+        },
+        {
+          "case": 5,
+          "reason": "unsupported_message"
+        }
+      ],
+      "binaryMessages": 5,
+      "binaryBytes": 35568,
+      "pingObservedAfterRejections": true,
+      "videoDecodedByProbe": false,
+      "binaryMessagesAfterRejections": 5,
+      "sameConnectionSurvived": true,
+      "connectionClosed": true,
+      "durationMs": 10047
+    },
+    "agentReconnect": {
+      "onlineDevices": 14,
+      "heartbeatAfterReplacement": 14,
+      "connectedAfterReplacement": 14,
+      "longSoakVerified": false
+    }
+  },
+  "browser": {
+    "observedAtUtc": "2026-10-07T03:01:47.381Z",
+    "frontendRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "backendRevision": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "route": "http://127.0.0.1:3015/scripts/builder",
+    "serverParametersVerified": true,
+    "contractVersion": "1.0",
+    "graphHash": "7439780d8f3fb5afd51e0765a51d4a0a8ed51e0e3524b04d7a89b8272d8c4fea",
+    "nodes": 3,
+    "edges": 2,
+    "edgeDisconnectAndUndoVerified": true,
+    "explicitChainInsertionVerified": true,
+    "elkLayoutVerified": true,
+    "viewportOverrideApplied": false,
+    "rejectedCommandNoticeBrowserCanary": false,
+    "rejectedCommandNoticeReactRegressionVerified": true,
+    "androidInputCommandsSent": false,
+    "scriptsPublished": false,
+    "taskExecutionRequested": false,
+    "screenshot": "docs/audits/2026-10-07/assets/viewer-input/installed-studio-a41c4e6.jpg",
+    "consoleErrorsAndWarnings": [],
+    "screenshotSha256": "a55c4bbca56f5ca80bbba26e2dcfb48a1f1aba1e756a8579586b2c6c16e43925",
+    "screenshotBytes": 92939,
+    "screenshotDimensions": [
+      1280,
+      720
+    ]
+  },
+  "sourceRegressionReceipt": "VIEWER-INPUT-SOURCE-EVIDENCE.json",
+  "androidApkUpdated": false,
+  "scriptsPublished": false,
+  "tasksCreated": false,
+  "continuousInputVerified": false,
+  "richRecorderVerified": false,
+  "movingFpsVerified": false,
+  "inputToRenderedFrameLatencyVerified": false,
+  "longFleetSoakVerified": false,
+  "vpsProductionRoleRolloutVerified": false,
+  "storageGrowthRootCauseResolved": false,
+  "gitCorruptionRootCauseResolved": false,
+  "productLedger": {
+    "accepted": 9,
+    "open": 41
+  }
+}

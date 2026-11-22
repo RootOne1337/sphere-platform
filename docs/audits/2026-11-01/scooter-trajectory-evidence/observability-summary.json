@@ -1,0 +1,37 @@
+{
+  "status": "complete_read_only_in_sample_observability_audit",
+  "definition": "Count only reciprocal image observations belonging to actual model Point3D tracks of length >=3; project only those same observed 3D points into that image using actual model pose/intrinsics. Never project unrelated cloud points or raw matches.",
+  "models": {
+    "SIFT166": {
+      "registered": 166,
+      "model_points3D": 15247,
+      "eligible_tracks": 15001,
+      "observations": 108983,
+      "min": 46,
+      "median": 448.5,
+      "p10": 114.5,
+      "count_under_6": 0,
+      "count_under_15": 0,
+      "grid_occupied_min": 4,
+      "grid_occupied_median": 9.0,
+      "grid_occupied_p10": 6.0
+    },
+    "DISK166": {
+      "registered": 166,
+      "model_points3D": 4475,
+      "eligible_tracks": 4469,
+      "observations": 31958,
+      "min": 1,
+      "median": 115.0,
+      "p10": 20.0,
+      "count_under_6": 8,
+      "count_under_15": 15,
+      "grid_occupied_min": 1,
+      "grid_occupied_median": 8.0,
+      "grid_occupied_p10": 4.0
+    }
+  },
+  "protected_sources_unchanged": true,
+  "independent_pose_truth": false,
+  "executionQualified": false
+}

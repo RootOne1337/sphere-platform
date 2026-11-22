@@ -1,0 +1,503 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-17T09:14:07.688591+00:00",
+  "kind": "LOCAL_AMD_LEARNED_INFERENCE_PILOT_NOT_GAMEPLAY",
+  "workerSourceRevision": "ab5fcd9ba87c432071611653a92bd36ed76866bb",
+  "workerVersion": "0.4.1",
+  "uiApiRevisionPreserved": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+  "apkPreserved": "1.2.82-dev / 10282",
+  "hardware": {
+    "torch": "2.9.1+rocm7.2.1",
+    "hip": "7.2.53211-158bd99533",
+    "available": true,
+    "devices": [
+      {
+        "index": 0,
+        "name": "AMD Radeon RX 9070",
+        "totalMemoryBytes": 17095983104
+      }
+    ],
+    "selectedDevice": 0,
+    "smoke": [
+      {
+        "dtype": "torch.float32",
+        "matmulMs": 0.3247400018153712,
+        "finite": true
+      },
+      {
+        "dtype": "torch.float16",
+        "matmulMs": 0.07826999935787171,
+        "finite": true
+      },
+      {
+        "dtype": "torch.bfloat16",
+        "matmulMs": 0.19817999855149537,
+        "finite": true
+      }
+    ],
+    "sdpa": {
+      "finite": true,
+      "wallMs": 5.731699988245964
+    },
+    "memoryFreeBytes": 16742744064
+  },
+  "models": [
+    {
+      "name": "NitroGen",
+      "codeRevision": "32608444660950ffda95e1e57c79632ad65bea10",
+      "modelRevision": "584c8dded734d032f07a4bcc0ccb330e703298c4",
+      "checkpointSha256": "a266f5fb9c7dbdcdf97216558d2d82075a9a994b824cda69afa9fd3280260a81",
+      "horizon": 18,
+      "actionTicksPerSecond": 60,
+      "denoisingSteps": 16,
+      "peakAllocatedBytes": 2997405696,
+      "textConditioning": false
+    },
+    {
+      "name": "Open Pixel2Play150M",
+      "codeRevision": "a329d98cbe62119679a254d71bea6446773541bc",
+      "modelRevision": "de18b62bc8f9722bda64497600c38c8f7634d86b",
+      "checkpointSha256": "2a3b43121144ca2d9c2b8aa605e313184c98ac5ef6d2c3b530c2d353d886c5bc",
+      "textConditioning": false,
+      "backend": "eager_sdpa_exact_boolean_mask",
+      "peakAllocatedBytes": 929490944
+    }
+  ],
+  "negativeRuns": [
+    {
+      "report": ".local-pilot/motor-amd-20261017/nitrogen-live-gpu.json",
+      "sha256": "1f817b180ad522342d047243dffb597363d457703f82106b9a80df5f7d7be53c",
+      "at": "2026-10-17T08:26:59.418320+00:00",
+      "model": "nitrogen",
+      "successfulTransport": false,
+      "failure": "video_frame_deadline",
+      "observedSeconds": 18.717,
+      "inferenceResponses": 73,
+      "observationHzDuringMonitor": 3.9,
+      "decodedFpsDuringMonitor": 27.676,
+      "decodedFrames": 520,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverToWorkerMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 7,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "rtpBuffer": null,
+      "lastEchoRttMs": 1.0991999879479408,
+      "latencyMs": {
+        "decodedAgeAtSelectionMs": {
+          "count": 73,
+          "p50": 18.002,
+          "p95": 53.736,
+          "max": 183.915
+        },
+        "rgbTransformMs": {
+          "count": 73,
+          "p50": 2.516,
+          "p95": 4.531,
+          "max": 155.885
+        },
+        "gpuRequestMs": {
+          "count": 73,
+          "p50": 230.273,
+          "p95": 292.347,
+          "max": 360.964
+        },
+        "pipeRoundtripMs": {
+          "count": 73,
+          "p50": 231.448,
+          "p95": 293.81,
+          "max": 362.545
+        },
+        "decodedToPredictionMs": {
+          "count": 73,
+          "p50": 256.725,
+          "p95": 371.7,
+          "max": 407.395
+        }
+      },
+      "actionsExecuted": false,
+      "gameplayAccepted": false,
+      "gameState": "disconnected_due_to_inactivity_not_active_gameplay"
+    },
+    {
+      "report": ".local-pilot/motor-amd-20261017/p2p-live-gpu.json",
+      "sha256": "331dd656e5518cd02cfc27e6b7cb4fb385529f3e5f2915bb8bad682ce50cfe1d",
+      "at": "2026-10-17T08:27:51.967409+00:00",
+      "model": "p2p",
+      "successfulTransport": false,
+      "failure": "video_or_control_setup_deadline",
+      "observedSeconds": 0.0,
+      "inferenceResponses": 0,
+      "observationHzDuringMonitor": null,
+      "decodedFpsDuringMonitor": null,
+      "decodedFrames": 0,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverToWorkerMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 0,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "rtpBuffer": null,
+      "lastEchoRttMs": 1.595799985807389,
+      "latencyMs": {},
+      "actionsExecuted": false,
+      "gameplayAccepted": false,
+      "gameState": "disconnected_due_to_inactivity_not_active_gameplay"
+    },
+    {
+      "report": ".local-pilot/motor-amd-20261017/p2p-isolated-live-gpu.json",
+      "sha256": "bc53e3a5341876b182bb1a39eb2323cd189d7960d398cb5b9a6ed8bb6b18810a",
+      "at": "2026-10-17T08:29:10.644387+00:00",
+      "model": "p2p",
+      "successfulTransport": false,
+      "failure": "video_or_control_setup_deadline",
+      "observedSeconds": 0.0,
+      "inferenceResponses": 0,
+      "observationHzDuringMonitor": null,
+      "decodedFpsDuringMonitor": null,
+      "decodedFrames": 0,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverToWorkerMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 0,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "rtpBuffer": null,
+      "lastEchoRttMs": 0.8362999942619354,
+      "latencyMs": {},
+      "actionsExecuted": false,
+      "gameplayAccepted": false,
+      "gameState": "disconnected_due_to_inactivity_not_active_gameplay"
+    }
+  ],
+  "correctedRuns": [
+    {
+      "report": ".local-pilot/motor-amd-20261017/p2p-packet-buffer-live-gpu.json",
+      "sha256": "db294dc92ae595b24b7450e946b7214c8ce8476ffbec2f3ed3eb4f8379dde078",
+      "at": "2026-10-17T08:30:32.009242+00:00",
+      "model": "p2p",
+      "successfulTransport": true,
+      "failure": null,
+      "observedSeconds": 45.001,
+      "inferenceResponses": 233,
+      "observationHzDuringMonitor": 5.178,
+      "decodedFpsDuringMonitor": 27.311,
+      "decodedFrames": 1230,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverToWorkerMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 15,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "rtpBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 130,
+        "overLegacyCapacityFrames": 20,
+        "pliRequests": 0,
+        "emittedFrames": 1231,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "lastEchoRttMs": 0.839299988001585,
+      "latencyMs": {
+        "decodedAgeAtSelectionMs": {
+          "count": 233,
+          "p50": 27.572,
+          "p95": 85.316,
+          "max": 187.815
+        },
+        "rgbTransformMs": {
+          "count": 233,
+          "p50": 2.457,
+          "p95": 3.604,
+          "max": 86.843
+        },
+        "gpuRequestMs": {
+          "count": 233,
+          "p50": 111.813,
+          "p95": 160.87,
+          "max": 257.411
+        },
+        "pipeRoundtripMs": {
+          "count": 233,
+          "p50": 112.761,
+          "p95": 161.813,
+          "max": 258.644
+        },
+        "decodedToPredictionMs": {
+          "count": 233,
+          "p50": 145.566,
+          "p95": 241.1,
+          "max": 313.059
+        }
+      },
+      "actionsExecuted": false,
+      "gameplayAccepted": false,
+      "gameState": "disconnected_due_to_inactivity_not_active_gameplay"
+    },
+    {
+      "report": ".local-pilot/motor-amd-20261017/nitrogen-packet-buffer-live-gpu.json",
+      "sha256": "bce656c3f73f96bc4f2192a7a0af513fe06469def67565f62c9f716ef64b3587",
+      "at": "2026-10-17T08:31:58.959605+00:00",
+      "model": "nitrogen",
+      "successfulTransport": true,
+      "failure": null,
+      "observedSeconds": 20.008,
+      "inferenceResponses": 86,
+      "observationHzDuringMonitor": 4.298,
+      "decodedFpsDuringMonitor": 25.59,
+      "decodedFrames": 513,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "serverToWorkerMedia": {
+        "requested": true,
+        "delivery": "capture_only",
+        "sourceReadinessConfirmed": true,
+        "directDeliveryAcks": 7,
+        "serverBootstrapBytesDiscarded": 0,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "rtpBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 130,
+        "overLegacyCapacityFrames": 9,
+        "pliRequests": 0,
+        "emittedFrames": 514,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "lastEchoRttMs": 0.8239999879151583,
+      "latencyMs": {
+        "decodedAgeAtSelectionMs": {
+          "count": 86,
+          "p50": 18.679,
+          "p95": 65.012,
+          "max": 201.709
+        },
+        "rgbTransformMs": {
+          "count": 86,
+          "p50": 2.315,
+          "p95": 3.768,
+          "max": 76.544
+        },
+        "gpuRequestMs": {
+          "count": 86,
+          "p50": 215.817,
+          "p95": 287.204,
+          "max": 340.388
+        },
+        "pipeRoundtripMs": {
+          "count": 86,
+          "p50": 216.88,
+          "p95": 288.496,
+          "max": 341.601
+        },
+        "decodedToPredictionMs": {
+          "count": 86,
+          "p50": 245.695,
+          "p95": 324.679,
+          "max": 544.598
+        }
+      },
+      "actionsExecuted": false,
+      "gameplayAccepted": false,
+      "gameState": "disconnected_due_to_inactivity_not_active_gameplay"
+    }
+  ],
+  "maskReference": {
+    "kind": "cpu_fp32_reference_not_upstream_gpu_bitwise_parity",
+    "cases": [
+      {
+        "queryTokens": 12,
+        "keyTokens": 24,
+        "decodeOffset": 12,
+        "sinks": 0,
+        "history": 2,
+        "maskEqualsScalarReference": true,
+        "maxAbsAttentionError": 1.7881393432617188e-07
+      },
+      {
+        "queryTokens": 3,
+        "keyTokens": 25,
+        "decodeOffset": 21,
+        "sinks": 1,
+        "history": 2,
+        "maskEqualsScalarReference": true,
+        "maxAbsAttentionError": 1.7881393432617188e-07
+      },
+      {
+        "queryTokens": 3,
+        "keyTokens": 2412,
+        "decodeOffset": 2409,
+        "sinks": 0,
+        "history": 200,
+        "maskEqualsScalarReference": true,
+        "maxAbsAttentionError": 2.60770320892334e-08
+      }
+    ]
+  },
+  "tests": {
+    "motor": 71,
+    "frontendFocusTargeted": 18,
+    "frontendLocalProfile": {
+      "sha": "667acb09798d09cc4872a738cf7380cdf8fb4c9f",
+      "runId": "20261017T081354Z-33f65233",
+      "success": true,
+      "published": false,
+      "installed": false
+    }
+  },
+  "limitations": [
+    "GPU tests are local loopback, not a separate GPU LAN station.",
+    "Decoded receiver timestamp is not Android capture timestamp or action-to-photon latency.",
+    "Learned predictions were not executed on Android.",
+    "Successful corrected runs used the game renderer after server inactivity disconnect; no navigation/gameplay accepted.",
+    "The separate finite3-point pointer probe occurred in disconnected state: dispatch succeeded, game movement not proven.",
+    "P2P text/Gemma not loaded; zero text embedding path only.",
+    "Eager mask checked against CPU reference; full upstream CUDA/Triton numerical parity not accepted.",
+    "No batching,50-device capacity, crash-stop SLA, profiles/multi-touch, or episode delegation accepted."
+  ],
+  "userRecoveryConstraint": {
+    "minimumSecondsBetweenGameConnections": 20,
+    "fullGameRestartAfterDisconnect": true
+  },
+  "privateArtifacts": [
+    {
+      "path": ".local-pilot/motor-amd-20261017/nitrogen-bench.py",
+      "sha256": "88365056125e86fe3d80d7493bc8495e038410b4bcc07498ee70e955ceff7151",
+      "bytes": 3836
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/p2p-bench.py",
+      "sha256": "d8f5b4b7fd5aaac6cee6bdbecd3962f80f1b361c5ce3e94ece5c999672865b4f",
+      "bytes": 7300
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/live-gpu-pilot.py",
+      "sha256": "1ea31f08a89f399e9ae90447fe38228e323a795f8806795f72e44aaaa0a10bf3",
+      "bytes": 5268
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/model-stdio.py",
+      "sha256": "c40032603f533af2f87c7610b6e0f6d7f91adbfd8381ee56163d8d973bc9b61f",
+      "bytes": 1832
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/gpu-smoke.json",
+      "sha256": "eeaa75acad5ed538fcba8fda39bcf7a608a86dd36a5ba75bd105fa1dbe904b90",
+      "bytes": 702
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/p2p-mask-reference.json",
+      "sha256": "8151fb971c70bc1556b94e1f75c0a8f2e02959190d93f42fde191e0c8c3876c9",
+      "bytes": 773
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/nitrogen-bench.json",
+      "sha256": "9222bcd8269ed87d712961ec88241beecee691ebf3e09dcaaa4137b12867e662",
+      "bytes": 90028
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/p2p-bench.json",
+      "sha256": "bf588e36ea6d25d709fb8fced6303e4509a155ef5aa981df5901df862db1487a",
+      "bytes": 1547
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/ph011-20261017T081651Z.png",
+      "sha256": "f1239dd7a34d615d16d79b57c3f9ab0bd1f49fd61bbc81a5a8ceb9fff9b3c753",
+      "bytes": 310269
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/ph011-20261017T081651Z.json",
+      "sha256": "309ceaf17e6cc32dad75a83467b01bffbe61b6fefd9b5f0804caeca35bb5cb35",
+      "bytes": 7168
+    },
+    {
+      "path": ".local-pilot/motor-amd-20261017/stick-probe.json",
+      "sha256": "bdd82d71845ecfe039f18f40443a8c0e73b94318d4e9fe8c67d1c9a091643031",
+      "bytes": 13420
+    }
+  ]
+}

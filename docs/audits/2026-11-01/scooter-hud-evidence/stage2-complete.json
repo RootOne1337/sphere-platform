@@ -1,0 +1,57 @@
+{
+  "status": "matching_complete_not_verified",
+  "images": 163,
+  "raw_pairs": 796,
+  "geometric_verification_complete": false,
+  "precision": "fp32",
+  "pair_graph_lags": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "feature_cache": "lossless float32 per image, LRU <=2",
+  "max_lru_images": 2,
+  "cv2_imported": false,
+  "stage1_receipt_sha256": "41bf4edafdb28c1d531ab4127f5cb1b045252a323aad292bdc0351ca694ff1cb",
+  "pair_file_sha256": "be64e13c11de0c07e861516aa586271b98ba9be43e29da983da4f54615e1f91a",
+  "database_sha256": "155dd2581ed8bd2c4067f98f87c59005e60fd382c3456be27ce3859e0bf7aff6",
+  "source_hashes_after": {
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\video.h264": "0feaeae732c30d2f25ff1359f276f78f53ed029538243ac1b42ae1537192df1e",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\manifest.json": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\frames.jsonl": "c3975f0c8a741b1e5035767d64ac3a362a730437dc7aae74264d407363b677a0",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\inputs.jsonl": "c919e79aefc90ceda827d69142e8c7504ce3fb49fc27bc09ed341d38b241c2e8",
+    ".local-pilot\\reconstruction-jobs\\c667f86cc9de4a378fb12e5269981a6e\\input\\COMPLETE": "31231b7a04f4bdd779637913f554c958f87e33988612b11808296384bcb206b5",
+    ".local-pilot\\zaezd888-diagnosis-20261031\\dense-tracks\\reconstruction-input.json": "f39f19c39712841bc0b4d228bedfbe128e2101cc0b9d561bfafb5e3eea3cf9f3",
+    ".local-pilot\\scooter-precise-hud-20261101\\mask.png": "f638c5d6da826eebfae0f3be57784ea4518dfac4238a6bcddaffbfbed0fb1ec7",
+    ".local-pilot\\scooter-pair-stream-20261101\\feature-receipt.json": "df91dbea41ed986de00be04bfa178453d7228f25c844e607fb5c56464b554f64"
+  },
+  "source_unchanged": true,
+  "gpu": {
+    "peak_allocated": 599569920,
+    "peak_reserved": 2214592512,
+    "cap": 3221225472,
+    "free_before": 16937648128,
+    "total": 17095983104,
+    "release_events": [
+      {
+        "pair": 112,
+        "before": 2204106752,
+        "after": 127926272
+      },
+      {
+        "pair": 288,
+        "before": 2065694720,
+        "after": 127926272
+      },
+      {
+        "pair": 656,
+        "before": 2214592512,
+        "after": 127926272
+      }
+    ]
+  },
+  "elapsed_s": 93.85999999998603,
+  "limitations": "No verified geometry or mapping yet. Requires separate process and explicit completion before assessing route."
+}

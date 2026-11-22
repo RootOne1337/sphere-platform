@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
+import androidx.core.content.IntentCompat
+import com.sphereplatform.agent.workers.LogUploadWorker
 import timber.log.Timber
 
 /**
@@ -13,24 +15,36 @@ class InstallReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)
-        val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+        val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
+        if (!InstallStatusStore.record(context, sessionId, status)) {
+            Timber.w("OTA: install callback could not be persisted (session/status unavailable)")
+        }
+        if (sessionId >= 0) LogUploadWorker.scheduleImmediate(context)
 
         when (status) {
             PackageInstaller.STATUS_SUCCESS -> {
-                Timber.i("OTA: install SUCCESS")
+                Timber.i("OTA: PackageInstaller reports install success for session=$sessionId")
             }
 
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                // Требуется подтверждение пользователя (без root)
-                val confirmIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
-                confirmIntent?.let {
-                    it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(it)
+                Timber.w("OTA: user approval required for PackageInstaller session=$sessionId")
+                val confirmIntent = IntentCompat.getParcelableExtra(
+                    intent, Intent.EXTRA_INTENT, Intent::class.java,
+                )
+                if (confirmIntent != null) {
+                    try {
+                        confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(confirmIntent)
+                    } catch (error: Exception) {
+                        Timber.w(error, "OTA: could not open required install approval UI")
+                    }
                 }
             }
 
             else -> {
-                Timber.e("OTA: install FAILED status=$status: $message")
+                // Do not persist PackageInstaller's free-form message; it can contain
+                // device-specific paths. The numeric status is enough to correlate.
+                Timber.e("OTA: PackageInstaller failed session=$sessionId status=$status")
             }
         }
     }

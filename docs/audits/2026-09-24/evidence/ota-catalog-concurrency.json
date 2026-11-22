@@ -1,0 +1,28 @@
+{
+  "finding_id": "AUD-143",
+  "scope": "isolated temporary catalog; no live server, database, emulator, or external service",
+  "baseline": {
+    "command": "python -m pytest tests/test_updates/test_release_catalog_concurrency.py -q",
+    "outcome": "failed as expected before the fix",
+    "exit_code": 1,
+    "independent_processes": 2,
+    "http_statuses": [201, 201],
+    "expected_version_codes": [501, 502],
+    "observed_version_codes": [501],
+    "failure": "Concurrent read-modify-write lost one successful release publication"
+  },
+  "after": {
+    "command": "python -m pytest tests/test_updates/test_release_catalog_concurrency.py tests/test_updates/test_updates_api.py -q",
+    "test_environment": "synthetic test-only JWT secret supplied through process environment",
+    "outcome": "passed",
+    "tests_passed": 32,
+    "process_level_mutation_regressions": 2,
+    "atomic_replace_failure_regression": "passed; previous catalog retained and temp file removed",
+    "invalid_catalog_regression": "passed; HTTP 503",
+    "ruff_check": "passed",
+    "mypy_follow_imports_skip": "passed",
+    "full_local_mypy": "blocked by invalid UTF-8 in installed Python 3.13 SQLAlchemy source"
+  },
+  "live_pilot_changed": false,
+  "apk_changed": false
+}

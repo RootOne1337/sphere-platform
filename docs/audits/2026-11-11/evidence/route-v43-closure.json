@@ -1,0 +1,40 @@
+{
+  "archive_sha256": "d66afdcc4b506c37f87b0f528d8b539a5801bd8ed7bacfe8724eab3f00a3c91f",
+  "phase": "vehicle_relocalization_timeout",
+  "error_budget_map_units": 5.0,
+  "windows": [
+    {
+      "window": 0,
+      "calibrationWithinBudget": false,
+      "followingPositions": {
+        "scored": 110,
+        "overBudget": 76,
+        "medianMapUnits": 7.255404335699783,
+        "p95MapUnits": 13.257208061607066,
+        "maximumMapUnits": 14.243891834346273
+      }
+    },
+    {
+      "window": 1,
+      "calibrationWithinBudget": false,
+      "followingPositions": {
+        "scored": 194,
+        "overBudget": 133,
+        "medianMapUnits": 6.820744874743301,
+        "p95MapUnits": 16.846097000481148,
+        "maximumMapUnits": 21.317672677516654
+      }
+    },
+    {
+      "window": 2,
+      "calibrationWithinBudget": true,
+      "followingPositions": {
+        "scored": 17,
+        "overBudget": 17,
+        "medianMapUnits": 12.905582349408348,
+        "p95MapUnits": 14.001162213218711,
+        "maximumMapUnits": 14.107120978976287
+      }
+    }
+  ]
+}

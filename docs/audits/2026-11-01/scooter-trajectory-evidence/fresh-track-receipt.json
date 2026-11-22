@@ -1,0 +1,25 @@
+{
+  "status": "track_only_completed",
+  "exit_code": 0,
+  "stop_reason": null,
+  "wall_seconds": 8.719000000040978,
+  "source_hashes_unchanged": true,
+  "initial_memory": {
+    "availableRamBytes": 8742563840,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 76392120320,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 10949427200,
+    "kernelNonpagedBytes": 5168037888,
+    "processCount": 483,
+    "handleCount": 666983
+  },
+  "min_available_RAM_GiB": 7.746089935302734,
+  "min_commit_headroom_GiB": 21.44113540649414,
+  "only_owned_child_terminated": true,
+  "GP_executed": false,
+  "BA_executed": false,
+  "retriangulation_executed": false,
+  "triangulated": false,
+  "physicalActions": 0
+}

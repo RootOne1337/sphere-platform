@@ -1,0 +1,672 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-12T00:14:15.751201+00:00",
+  "runtimeInstalled": true,
+  "scope": "UI/API cac67643 installed on 3015/Tuna; ordinary Chromium without transport overrides passed PH010 native gestures, mode transitions and synthetic recovery. PH030 user-session telemetry confirmed direct media/control. Legacy video copy, WAN/VPS discovery, physical network switching, shared input and full latency acceptance remain OPEN.",
+  "runtime": {
+    "sourceRevision": "cac676431a41de58c5edd1ffd921ae97726b4925",
+    "apiSourceRevision": "cac676431a41de58c5edd1ffd921ae97726b4925",
+    "uiContainer": {
+      "id": "60ce428a2d6958fe79b6d3c10c036ac905dd9cf03bfeeb48e58d62435d50e762",
+      "imageId": "sha256:d763a9e9de12c0391e109cb553ac8d1a7796db3c54a2a69a477324e673bc2532",
+      "imageTag": "sphere-review-frontend:cac676431a41de58c5edd1ffd921ae97726b4925",
+      "startedAt": "2026-10-11T23:57:45.353408614Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "7a0dc60760c5840c20881b7620526f1a7a0242601bb3fe4c4fa4acdf9b24eb1a",
+      "imageId": "sha256:de9a998a56c1905989808d634523b066c6febe9b2533c9597ada59561822ee43",
+      "imageTag": "sphere-reviewed-backend:cac676431a41de58c5edd1ffd921ae97726b4925",
+      "startedAt": "2026-10-11T23:40:08.273169609Z",
+      "status": "running"
+    },
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otherContainersPreservedPerInstall": 45,
+    "primaryDirectVideoEnabled": true,
+    "directMediaControlInstalled": true,
+    "localMdnsDiscoveryConfigured": true
+  },
+  "delivery": {
+    "web": {
+      "runId": 38183801670,
+      "configImageId": "sha256:40e3e84110947fce064ff0bb3eb1cb5a0534459b794f5ad32a2a780f9622d87b",
+      "installedImageId": "sha256:d763a9e9de12c0391e109cb553ac8d1a7796db3c54a2a69a477324e673bc2532"
+    },
+    "api": {
+      "runId": 38183801666,
+      "configImageId": "sha256:1c34a8317717f2246d33b601b1a3eb0be05ab85f7ae71031a6748131b666aea6",
+      "installedImageId": "sha256:de9a998a56c1905989808d634523b066c6febe9b2533c9597ada59561822ee43"
+    },
+    "staticAssetsIdentical": true,
+    "streamRouteStaticAssetCount": 29,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-12T00:11:42.782174+00:00",
+        "sourceRevision": "cac676431a41de58c5edd1ffd921ae97726b4925",
+        "ready": true,
+        "rootStatus": 307,
+        "rootLocation": "/dashboard",
+        "anonymousHistoryStatus": 401,
+        "authenticatedHistoryPrivateNoStore": true,
+        "sessionLimit": 10
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-12T00:11:49.800083+00:00",
+        "sourceRevision": "cac676431a41de58c5edd1ffd921ae97726b4925",
+        "ready": true,
+        "rootStatus": 307,
+        "rootLocation": "/dashboard",
+        "anonymousHistoryStatus": 401,
+        "authenticatedHistoryPrivateNoStore": true,
+        "sessionLimit": 10
+      }
+    ],
+    "localHelper": {
+      "sourceRevision": "cac676431a41de58c5edd1ffd921ae97726b4925",
+      "sourceSha256": "7fd134cd67b8815205b33d3e908706635296f02cac7ea845cea94a774c53741f",
+      "pinnedWorkerReady": true,
+      "automaticLogonStartupConfigured": true,
+      "limitedRunLevel": true,
+      "hidden": true,
+      "mediaRelay": false,
+      "credentialsPrinted": false,
+      "postRebootTested": false
+    }
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "PH010 ordinary owned Chrome154, original WS send, no numeric-ICE flag/SDP callback; PH030 is independent user-session scalar telemetry",
+    "ordinaryBrowserObserved": true,
+    "numericIceOverride": false,
+    "transportOverrides": false,
+    "local": {
+      "at": "2026-10-12T00:02:08.831Z",
+      "control": "\u041d\u0435\u043f\u0440\u0435\u0440\u044b\u0432\u043d\u043e\u0435 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u00b7 \u0437\u0430\u0436\u043c\u0438\u0442\u0435 \u0438 \u0432\u0435\u0434\u0438\u0442\u0435 \u043c\u044b\u0448\u044c \u00b7 ACK \u0441\u0432\u044f\u0437\u0438 \u043d\u0430\u043f\u0440\u044f\u043c\u0443\u044e \u0441 APK: 15 \u043c\u0441",
+      "peers": [
+        {
+          "state": "closed",
+          "ice": "closed",
+          "localHostCandidates": 1,
+          "localMdnsHostCandidates": 1,
+          "localSrflxCandidates": 1,
+          "localRelayCandidates": 0,
+          "video": []
+        },
+        {
+          "state": "connected",
+          "ice": "connected",
+          "localHostCandidates": 1,
+          "localMdnsHostCandidates": 1,
+          "localSrflxCandidates": 1,
+          "localRelayCandidates": 0,
+          "video": [
+            {
+              "framesDecoded": 26541,
+              "framesReceived": 26543,
+              "framesDropped": 0,
+              "framesPerSecond": 28,
+              "freezeCount": 0,
+              "packetsLost": 0,
+              "bytesReceived": 355007416
+            }
+          ]
+        }
+      ]
+    },
+    "tuna": {
+      "at": "2026-10-12T00:06:56.577Z",
+      "control": "\u041d\u0435\u043f\u0440\u0435\u0440\u044b\u0432\u043d\u043e\u0435 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u00b7 \u0437\u0430\u0436\u043c\u0438\u0442\u0435 \u0438 \u0432\u0435\u0434\u0438\u0442\u0435 \u043c\u044b\u0448\u044c \u00b7 ACK \u0441\u0432\u044f\u0437\u0438 \u043d\u0430\u043f\u0440\u044f\u043c\u0443\u044e \u0441 APK: 5 \u043c\u0441",
+      "peers": [
+        {
+          "state": "connected",
+          "ice": "connected",
+          "localHostCandidates": 1,
+          "localMdnsHostCandidates": 1,
+          "localSrflxCandidates": 1,
+          "localRelayCandidates": 0,
+          "video": [
+            {
+              "framesDecoded": 7918,
+              "framesReceived": 7918,
+              "framesDropped": 0,
+              "framesPerSecond": 29,
+              "freezeCount": 0,
+              "packetsLost": 0,
+              "bytesReceived": 100850679
+            }
+          ]
+        }
+      ]
+    },
+    "modeRoundtrips": [
+      {
+        "at": "2026-10-11T23:45:15.193Z",
+        "previousOwnerReleased": true,
+        "peersBefore": 1,
+        "retiredPeers": 1,
+        "ready": true,
+        "control": "\u041d\u0435\u043f\u0440\u0435\u0440\u044b\u0432\u043d\u043e\u0435 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u00b7 \u0437\u0430\u0436\u043c\u0438\u0442\u0435 \u0438 \u0432\u0435\u0434\u0438\u0442\u0435 \u043c\u044b\u0448\u044c",
+        "commandsReplayed": false
+      },
+      {
+        "at": "2026-10-12T00:09:15.781Z",
+        "previousOwnerReleased": true,
+        "peersBefore": 1,
+        "retiredPeers": 1,
+        "ready": true,
+        "control": "\u041d\u0435\u043f\u0440\u0435\u0440\u044b\u0432\u043d\u043e\u0435 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u00b7 \u0437\u0430\u0436\u043c\u0438\u0442\u0435 \u0438 \u0432\u0435\u0434\u0438\u0442\u0435 \u043c\u044b\u0448\u044c \u00b7 ACK \u0441\u0432\u044f\u0437\u0438 \u043d\u0430\u043f\u0440\u044f\u043c\u0443\u044e \u0441 APK: 11 \u043c\u0441",
+        "commandsReplayed": false
+      }
+    ],
+    "recovery": {
+      "at": "2026-10-11T23:46:55.426Z",
+      "trigger": "one synthetic online event",
+      "physicalNetworkChanged": false,
+      "connectedPeersBefore": 1,
+      "peerConnected": true,
+      "controlState": "ready",
+      "video": [
+        {
+          "framesDecoded": 34,
+          "framesPerSecond": 31,
+          "freezeCount": 0
+        }
+      ],
+      "commandsReplayed": false
+    },
+    "nativeGestureObservations": [
+      {
+        "observedAtUtc": "2026-10-11T23:45:10.904Z",
+        "sentEvents": 13,
+        "nativeInputReceipts": 13,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      {
+        "observedAtUtc": "2026-10-11T23:46:50.762Z",
+        "sentEvents": 14,
+        "nativeInputReceipts": 14,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      {
+        "observedAtUtc": "2026-10-11T23:49:22.144Z",
+        "sentEvents": 12,
+        "nativeInputReceipts": 12,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      {
+        "observedAtUtc": "2026-10-12T00:06:59.596Z",
+        "sentEvents": 14,
+        "nativeInputReceipts": 14,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      {
+        "observedAtUtc": "2026-10-12T00:09:18.890Z",
+        "sentEvents": 14,
+        "nativeInputReceipts": 14,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      }
+    ],
+    "ph030UserSession": {
+      "openedAt": "2026-10-11T23:40:18.811035+00:00",
+      "stateAtReadback": "closed",
+      "samples": [
+        {
+          "received_at": "2026-10-11T23:51:28.640439+00:00",
+          "rendered_frames": 2513,
+          "incoming_fps": 0,
+          "control_rtt_ms": 23,
+          "control_transport": "direct_webrtc",
+          "transport": "direct_webrtc",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 17100,
+          "direct_fps": 28.56008978469,
+          "direct_path": "nat",
+          "direct_network_rtt_ms": 1,
+          "direct_jitter_buffer_ms": 46.348846153846,
+          "direct_decode_ms": 1.1079370629371,
+          "direct_state": "connected",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 2,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T23:51:38.639371+00:00",
+          "rendered_frames": 2513,
+          "incoming_fps": 0,
+          "control_rtt_ms": 30,
+          "control_transport": "direct_webrtc",
+          "transport": "direct_webrtc",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 17370,
+          "direct_fps": 28.038030686252,
+          "direct_path": "nat",
+          "direct_network_rtt_ms": 4,
+          "direct_jitter_buffer_ms": 45.801764285715,
+          "direct_decode_ms": 1.0820357142857,
+          "direct_state": "connected",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 2,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T23:51:53.646846+00:00",
+          "rendered_frames": 2513,
+          "incoming_fps": 0,
+          "control_rtt_ms": 18,
+          "control_transport": "direct_webrtc",
+          "transport": "direct_webrtc",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 17760,
+          "direct_fps": 28.162357598784,
+          "direct_path": "nat",
+          "direct_network_rtt_ms": 9,
+          "direct_jitter_buffer_ms": 43.991375886524,
+          "direct_decode_ms": 1.0625319148936,
+          "direct_state": "connected",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 2,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T23:52:03.645983+00:00",
+          "rendered_frames": 2513,
+          "incoming_fps": 0,
+          "control_rtt_ms": 32,
+          "control_transport": "direct_webrtc",
+          "transport": "direct_webrtc",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 18000,
+          "direct_fps": 28.649540763506,
+          "direct_path": "nat",
+          "direct_network_rtt_ms": 2,
+          "direct_jitter_buffer_ms": 41.002566433566,
+          "direct_decode_ms": 1.0636713286713,
+          "direct_state": "connected",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 2,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T23:52:18.649544+00:00",
+          "rendered_frames": 2513,
+          "incoming_fps": 0,
+          "control_rtt_ms": 26,
+          "control_transport": "direct_webrtc",
+          "transport": "direct_webrtc",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 18330,
+          "direct_fps": 24.354681028354,
+          "direct_path": "nat",
+          "direct_network_rtt_ms": 2,
+          "direct_jitter_buffer_ms": 52.592614754098,
+          "direct_decode_ms": 1.1778032786885,
+          "direct_state": "connected",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 2,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T23:52:28.651402+00:00",
+          "rendered_frames": 2513,
+          "incoming_fps": 0,
+          "control_rtt_ms": 13,
+          "control_transport": "direct_webrtc",
+          "transport": "direct_webrtc",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 18570,
+          "direct_fps": 25.762268591484,
+          "direct_path": "nat",
+          "direct_network_rtt_ms": 1,
+          "direct_jitter_buffer_ms": 49.533643410853,
+          "direct_decode_ms": 1.1634728682171,
+          "direct_state": "connected",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 2,
+          "decode_errors": 0,
+          "render_errors": 0
+        },
+        {
+          "received_at": "2026-10-11T23:52:43.644418+00:00",
+          "rendered_frames": 2513,
+          "incoming_fps": 0,
+          "control_rtt_ms": 51,
+          "control_transport": "direct_webrtc",
+          "transport": "direct_webrtc",
+          "control_state": "ready",
+          "control_failure": "none",
+          "direct_frames": 18960,
+          "direct_fps": 28.049198403567,
+          "direct_path": "nat",
+          "direct_network_rtt_ms": 1,
+          "direct_jitter_buffer_ms": 72.901614285714,
+          "direct_decode_ms": 1.17045,
+          "direct_state": "connected",
+          "direct_ice_state": "connected",
+          "direct_dtls_state": "connected",
+          "direct_attempts": 2,
+          "decode_errors": 0,
+          "render_errors": 0
+        }
+      ],
+      "observerOpenedThisDevice": false,
+      "actualMouseGestureIndependentlyVerified": false
+    }
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+        "version": "1.2.55-dev",
+        "versionCode": 10255,
+        "sha256": "9abe0fce7846cfc61e1d19142b2ce854d096eac71b63fe5ba0ec6465030892ca",
+        "bytes": 57688052,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1038,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1038,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      },
+      {
+        "sourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+        "version": "1.2.59-dev",
+        "versionCode": 10259,
+        "sha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "bytes": 57688052,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1043,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1043,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "17991c70-2fc7-4dd6-86ba-42f12ce6a4fc",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:19.676542+00:00"
+      },
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "device": "auto-ph-028",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "c2ef5b87-60b3-4403-aa26-8902c2d1f130",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:21.980667+00:00"
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "c540d277-7811-4672-81d0-67c67356f604",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:26.772577+00:00"
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "device": "auto-ph-022",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "ec2c0883-5c8e-4ce6-b6cb-d55ad36f887f",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:39.476251+00:00"
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "device": "auto-ph-020",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "111061e3-16fe-46ee-99be-73df5eb224cc",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:49.391165+00:00"
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "device": "auto-ph-019",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "78fd72e1-48f7-40cb-8b1f-f1151e72d2e2",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:51.756773+00:00"
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "device": "auto-ph-018",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "162644fa-cc76-48f1-8c90-708227e67110",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:41:59.273574+00:00"
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "device": "auto-ph-017",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "ad58a820-bbd7-45a5-ad49-c64834244b84",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:01.354898+00:00"
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "device": "auto-ph-016",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "a76b7731-618b-4677-b497-ae6406a1bf1f",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:02.777407+00:00"
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "device": "auto-ph-015",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "e0669038-e8ed-4b51-9ea1-93005a6e6375",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:06.182717+00:00"
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "device": "auto-ph-014",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "91cd9cbb-e312-4b72-a536-0c15074f2fa5",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:04.825584+00:00"
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "device": "auto-ph-013",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "2a850884-0f22-41f3-abcf-a713b8776e88",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:08.022650+00:00"
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "device": "auto-ph-012",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "fd022925-db21-4a8e-8233-cb9875e400a1",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:07.948183+00:00"
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "eab9b447-8715-407d-8e24-1973c57f9435",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:42:06.484255+00:00"
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10259,
+        "installedPackageSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "observedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+        "verification": "read-only pm path and sha256sum of installed base.apk",
+        "commandId": "b08efd84-825b-4c4a-be9e-116e0cdeeff5",
+        "status": "completed",
+        "completedAtUtc": "2026-10-11T21:15:00.456247+00:00"
+      }
+    ],
+    "offlineDevices": [
+      {
+        "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+        "device": "auto-ph-029",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+        "device": "auto-ph-027",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+        "device": "auto-ph-026",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+        "device": "auto-ph-024",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+        "device": "auto-ph-023",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      },
+      {
+        "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+        "device": "auto-ph-021",
+        "commandDispatched": false,
+        "installedPackageVerified": false,
+        "lastReportedVersionCode": null
+      }
+    ],
+    "ordinaryChannelUnchanged": true,
+    "targetedRecoveryGrants": 15,
+    "fullExactAndroidCi": {
+      "runId": 38175086842,
+      "sourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+      "status": "completed",
+      "conclusion": "success",
+      "observedAtUtc": "2026-10-11T21:40:01.855801+00:00"
+    },
+    "heldVersionCodes": [
+      10257,
+      10258
+    ],
+    "dataClears": 0,
+    "adbInstalls": 0
+  },
+  "deliveredCorrectionIds": [
+    "ordinary-chromium-local-mdns-discovery"
+  ],
+  "productionAccepted": false,
+  "closestLocalRouteAccepted": false,
+  "physicalNetworkSwitchAccepted": false,
+  "legacyUplinkSuppressed": false,
+  "legacyDuplicateObservedInSource": true,
+  "remaining": [
+    "Legacy H264 still sent APK-to-server and forwarded over viewer WS while RTC is primary",
+    "Server signaling/management generation still participates in peer lifetime",
+    "Nearby discovery from a far VPS requires workstation-side resolution; server-local multicast is insufficient",
+    "Shared input, physical interface switching and glass latency require separate acceptance"
+  ]
+}

@@ -1,0 +1,135 @@
+FFFFFFFF..FFFFFF                                                         [100%]
+================================== FAILURES ===================================
+________ test_tenant_access_survives_transaction_recovery[commit-http] ________
+tests\production\test_tenant_transactions.py:40: in test_tenant_access_survives_transaction_recovery
+    assert await visible_devices(db) == expected
+E   AssertionError: assert set() == {UUID('5db4c8...c639856379b')}
+E
+E     Extra items in the right set:
+E     UUID('d0140b85-e36c-4d6e-9662-4c639856379b')
+E     UUID('5db4c820-bc39-4762-b13c-98237d6b8701')
+E     Use -v to get more diff
+_____ test_tenant_access_survives_transaction_recovery[commit-background] _____
+tests\production\test_tenant_transactions.py:40: in test_tenant_access_survives_transaction_recovery
+    assert await visible_devices(db) == expected
+E   AssertionError: assert set() == {UUID('9242d6...ab6b8ee9a5d')}
+E
+E     Extra items in the right set:
+E     UUID('9242d618-382b-4319-88b0-8b72ade8f0d2')
+E     UUID('cdb072fb-28e1-4471-8a3e-dab6b8ee9a5d')
+E     Use -v to get more diff
+_______ test_tenant_access_survives_transaction_recovery[rollback-http] _______
+tests\production\test_tenant_transactions.py:40: in test_tenant_access_survives_transaction_recovery
+    assert await visible_devices(db) == expected
+E   AssertionError: assert set() == {UUID('285d6a...b9943c00202')}
+E
+E     Extra items in the right set:
+E     UUID('285d6ad9-bc7c-4518-9321-2c5ea71d9104')
+E     UUID('429c4c7c-060d-4334-a77c-3b9943c00202')
+E     Use -v to get more diff
+____ test_tenant_access_survives_transaction_recovery[rollback-background] ____
+tests\production\test_tenant_transactions.py:40: in test_tenant_access_survives_transaction_recovery
+    assert await visible_devices(db) == expected
+E   AssertionError: assert set() == {UUID('1418eb...9d92e1b5927')}
+E
+E     Extra items in the right set:
+E     UUID('9188df5c-466b-4ed4-a7a1-19d92e1b5927')
+E     UUID('1418ebc8-ee1c-4ece-9d08-2cdebf9f5d58')
+E     Use -v to get more diff
+______ test_tenant_access_survives_transaction_recovery[sql_error-http] _______
+tests\production\test_tenant_transactions.py:40: in test_tenant_access_survives_transaction_recovery
+    assert await visible_devices(db) == expected
+E   AssertionError: assert set() == {UUID('0fb289...21da4ac494e')}
+E
+E     Extra items in the right set:
+E     UUID('a1330af1-4b80-4e56-a658-821da4ac494e')
+E     UUID('0fb289f5-9609-4c80-989a-4288c88b5b77')
+E     Use -v to get more diff
+___ test_tenant_access_survives_transaction_recovery[sql_error-background] ____
+tests\production\test_tenant_transactions.py:40: in test_tenant_access_survives_transaction_recovery
+    assert await visible_devices(db) == expected
+E   AssertionError: assert set() == {UUID('10341d...814f78d1501')}
+E
+E     Extra items in the right set:
+E     UUID('10341d54-84d1-40e2-8f09-a7f35f694309')
+E     UUID('96dd4426-3488-4102-94c1-5814f78d1501')
+E     Use -v to get more diff
+______ test_tenant_access_survives_transaction_recovery[disconnect-http] ______
+tests\production\test_tenant_transactions.py:40: in test_tenant_access_survives_transaction_recovery
+    assert await visible_devices(db) == expected
+E   AssertionError: assert set() == {UUID('45c069...79a4ab23f1c')}
+E
+E     Extra items in the right set:
+E     UUID('45c0694d-5871-44be-ac6d-b43572711856')
+E     UUID('d030b9d0-94c8-4b4d-bfbf-979a4ab23f1c')
+E     Use -v to get more diff
+___ test_tenant_access_survives_transaction_recovery[disconnect-background] ___
+tests\production\test_tenant_transactions.py:40: in test_tenant_access_survives_transaction_recovery
+    assert await visible_devices(db) == expected
+E   AssertionError: assert set() == {UUID('1ed2fb...657c993dc81')}
+E
+E     Extra items in the right set:
+E     UUID('1ed2fb39-948d-489d-9640-1d86c93c4b78')
+E     UUID('c00a7c9c-1955-4c8a-adab-0657c993dc81')
+E     Use -v to get more diff
+____ test_interleaved_tenants_reapply_own_context_on_one_shared_connection ____
+tests\production\test_tenant_transactions.py:91: in test_interleaved_tenants_reapply_own_context_on_one_shared_connection
+    pid_a, pid_b = await asyncio.gather(tenant_a(), tenant_b())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\production\test_tenant_transactions.py:76: in tenant_a
+    assert await visible_devices(db) == {w.dev_a.id, w.dev_a2.id}
+E   AssertionError: assert set() == {UUID('119082...9079424aea4')}
+E
+E     Extra items in the right set:
+E     UUID('119082b9-b700-441d-8a37-dc34cc39935b')
+E     UUID('157d61e7-6fe4-4de5-abb9-e9079424aea4')
+E     Use -v to get more diff
+______ test_session_cannot_switch_tenant_with_cached_orm_identity[False] ______
+tests\production\test_tenant_transactions.py:111: in test_session_cannot_switch_tenant_with_cached_orm_identity
+    pytest.fail("One Session retains tenant A's ORM object and loads tenant B after rebinding")
+E   Failed: One Session retains tenant A's ORM object and loads tenant B after rebinding
+______ test_session_cannot_switch_tenant_with_cached_orm_identity[True] _______
+tests\production\test_tenant_transactions.py:111: in test_session_cannot_switch_tenant_with_cached_orm_identity
+    pytest.fail("One Session retains tenant A's ORM object and loads tenant B after rebinding")
+E   Failed: One Session retains tenant A's ORM object and loads tenant B after rebinding
+_ test_first_binding_inside_savepoint_is_rejected_before_context_can_be_rolled_back _
+tests\production\test_tenant_transactions.py:120: in test_first_binding_inside_savepoint_is_rejected_before_context_can_be_rolled_back
+    with pytest.raises(ValueError, match="savepoint"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+____ test_existing_binding_survives_savepoint_rollback_and_repeat_binding _____
+tests\production\test_tenant_transactions.py:136: in test_existing_binding_survives_savepoint_rollback_and_repeat_binding
+    assert await visible_devices(db) == {w.dev_a.id, w.dev_a2.id}
+E   AssertionError: assert set() == {UUID('4e6963...05a71db6c04')}
+E
+E     Extra items in the right set:
+E     UUID('85062e9b-a0f4-4253-8cbf-d05a71db6c04')
+E     UUID('4e696340-5516-499d-9f8b-d877f0dc132f')
+E     Use -v to get more diff
+_________ test_invalid_tenant_is_rejected_before_creating_transaction _________
+tests\production\test_tenant_transactions.py:141: in test_invalid_tenant_is_rejected_before_creating_transaction
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_tenant_transactions.py::test_tenant_access_survives_transaction_recovery[commit-http]
+FAILED tests/production/test_tenant_transactions.py::test_tenant_access_survives_transaction_recovery[commit-background]
+FAILED tests/production/test_tenant_transactions.py::test_tenant_access_survives_transaction_recovery[rollback-http]
+FAILED tests/production/test_tenant_transactions.py::test_tenant_access_survives_transaction_recovery[rollback-background]
+FAILED tests/production/test_tenant_transactions.py::test_tenant_access_survives_transaction_recovery[sql_error-http]
+FAILED tests/production/test_tenant_transactions.py::test_tenant_access_survives_transaction_recovery[sql_error-background]
+FAILED tests/production/test_tenant_transactions.py::test_tenant_access_survives_transaction_recovery[disconnect-http]
+FAILED tests/production/test_tenant_transactions.py::test_tenant_access_survives_transaction_recovery[disconnect-background]
+FAILED tests/production/test_tenant_transactions.py::test_interleaved_tenants_reapply_own_context_on_one_shared_connection
+FAILED tests/production/test_tenant_transactions.py::test_session_cannot_switch_tenant_with_cached_orm_identity[False]
+FAILED tests/production/test_tenant_transactions.py::test_session_cannot_switch_tenant_with_cached_orm_identity[True]
+FAILED tests/production/test_tenant_transactions.py::test_first_binding_inside_savepoint_is_rejected_before_context_can_be_rolled_back
+FAILED tests/production/test_tenant_transactions.py::test_existing_binding_survives_savepoint_rollback_and_repeat_binding
+FAILED tests/production/test_tenant_transactions.py::test_invalid_tenant_is_rejected_before_creating_transaction
+14 failed, 2 passed, 1 warning in 4.62s

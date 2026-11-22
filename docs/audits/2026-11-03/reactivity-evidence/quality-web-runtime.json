@@ -1,0 +1,104 @@
+{
+  "schema": "sphere-route-quality-web-runtime-v1",
+  "installed": {
+    "state": "installed_verified",
+    "source": "eac17b519ac8b0c9eb9d944ed19dc158c82dab82",
+    "otherContainersUnchanged": 65,
+    "fullUiApplicationConfigPreserved": true,
+    "uiHostConfigMountsPreserved": true,
+    "protectedAssetsUnchanged": true,
+    "protectedAssetCount": 798,
+    "otaUnchanged": true,
+    "http": {
+      "pages": [
+        "/login",
+        "/stream/414ce0e9-4b93-4f96-b9ca-ee675f53835e?teach=1"
+      ],
+      "clientAssets": 31,
+      "assetSha256": {
+        "/_next/static/chunks/1255-7783d2635cd63343.js": "96dee89aaaa2dd3c48add536d4fc9bee2f5c2067b6c1fecbf82a9718c1832fe5",
+        "/_next/static/chunks/1808-88d68d5fb67303ce.js": "f72de93fb683fefeb17da136851836b7e1483ead9d45a0bd2199b0579763534c",
+        "/_next/static/chunks/2049-0c9cd238cfe22b6c.js": "3303c269877e0ab61a316ba883ba571dcd3817e2b5c25bf4e2ad1eec030e6c14",
+        "/_next/static/chunks/2454-d80d28eff7b10127.js": "0187298047f83536b40ee274577081fe5c918ad697fe9110b42c085541139a08",
+        "/_next/static/chunks/2619-04bc32f026a0d946.js": "a9b6c2213ea787a015c0169d198b4a90d7a44a0cc17abb0d132e8362d3016ced",
+        "/_next/static/chunks/3148-952a6ed4d3b537cd.js": "249a836009021cbb097257a716850615e86e573aba9419157407fc3988f4acba",
+        "/_next/static/chunks/317-0f8cf7b0659f53a3.js": "1b98c6d311ae76b320ef15b41ee47af4b74969eb481d1599a947aafe6c131024",
+        "/_next/static/chunks/3353-3c99ae2ab12684ae.js": "9ed356544af85872d51db7d67106dbfe6ff0a44b5003be55cd938caefa3242b7",
+        "/_next/static/chunks/3505-2811ee535fd73b64.js": "123846888616a7aee8a2b054962ea5a348fe3165c3ee64433ff78e78b61a1b4f",
+        "/_next/static/chunks/3665-9c8ce6aa3bbd2b1d.js": "4091df3b6b1dcd1dfe98f2a7cc1415112719bb15647518df7b49bd6b95206833",
+        "/_next/static/chunks/4193-a6ee8a8bd3560102.js": "07de32e049cba61fb3d97233c561e3866a7ef900e756a303d384c5ef6cf33691",
+        "/_next/static/chunks/4254-16727f38c9da876b.js": "be45fa74a04d2013fd1c034751f23342929cb6e31d0ad271bab2ea95670e907e",
+        "/_next/static/chunks/4545-753eca0214cc2f1e.js": "74994250e81f0f13014c6191a409eee997ccecd0cbc0036a7ea46f41163c73dd",
+        "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js": "5421e13a91a9389517b66179f3b4b5eaa0d95245438066d4d7b19ac30aeb809b",
+        "/_next/static/chunks/5718-16651f0353cbc87c.js": "d57e36d081d510e605b625463639db89d1f306021f878714cf2f0c0b2f440c15",
+        "/_next/static/chunks/5776-04ef09d5a87e6710.js": "390740518086c4ed38333b87ba5e03a22cd562d23424b7836a64dd0e3905448a",
+        "/_next/static/chunks/643-ac6cb88a22cb81ec.js": "ca821c0c816ed855a8b730a3bcbfbe9fa7ea64cbf7a6208c7cf83097ffb58c21",
+        "/_next/static/chunks/8042-e8dafeab339c8023.js": "66e5931937ee3245735b5359aa7edb011d436a138b71a3053f6e3a9f508ea92a",
+        "/_next/static/chunks/8086-2c419844a82b6a87.js": "c218e289786d9a62094a6020fb68a14398e271739f3dc3c395cb7c4e72314185",
+        "/_next/static/chunks/8720-c9ee040177c11cae.js": "5c5e3504935a574ca8219d40d3860ca39e02ac7e68b07024f6749f9aeac3826b",
+        "/_next/static/chunks/app/(auth)/login/page-da6804a0c29a02ec.js": "edeb72b3c14ca044555bf0a77d4a345be02d818759c4879a6785adad38d4fc82",
+        "/_next/static/chunks/app/(dashboard)/layout-98846e43d25db4b0.js": "2bfa5252a8b568cdd1f84913988d3a38ede9937e9fbd40790f87558e112724ab",
+        "/_next/static/chunks/app/(dashboard)/stream/%5Bid%5D/page-671f7b39d89c37de.js": "8882e4dacc9bca7ef007b352ea60a4e9c92941533ebeed197323cd5a0f1f0352",
+        "/_next/static/chunks/app/layout-135b133834188a44.js": "1fcc9024fa75fe6a1b86bc986f11edafc3cff92fd4a2e96bee6231f96e760d18",
+        "/_next/static/chunks/e868780c-91a04c9ad30f5ebf.js": "76344805bf5565619687fac87845103751b88c6c1def9d0c9c6c6efb209f0d22",
+        "/_next/static/chunks/main-app-f3336e172256d2ab.js": "91801d552d3e97ad6aabb535c2d8eeff31bab152fb2448b8556373894e7d7215",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683",
+        "/_next/static/chunks/webpack-c237e61d3f588d02.js": "60ef6cad42ec9213891e17c9b93bdb67ca4528128d37d95efe63e41502117278",
+        "/_next/static/css/343d268372e978c3.css": "060dd6d743cf8de3061f78412d14a6b74012e094c8d58be23cfdd5fc9d6561e8",
+        "/_next/static/css/a6258cbf24573faf.css": "f76b5c7b135263cc28549094499078b1e53bca24f936174ba411aecef09cac92",
+        "/_next/static/css/ee1c600aa5123b7f.css": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855"
+      },
+      "workerSha256": {
+        "teaching-recorder.worker.js": "4a327116bda4850b2aa4241784677837eb72e744f3ffd3c0755a7741e3975769",
+        "walk-frame-encoder.js": "299fd956df1bac46cad0736b7b109e1c9533e3b922ba30622cb7cb6d24daec69"
+      },
+      "browserHydrationVerified": false
+    },
+    "apiReloaded": false,
+    "physicalActions": 0,
+    "archivesCreated": 0
+  },
+  "ci": {
+    "runId": "20261103T014239Z-8fb25d69",
+    "receipt": ".local-pilot\\local-ci\\runs\\20261103T014239Z-8fb25d69\\receipt.json",
+    "receiptSha256": "2355166388c75d4e687f7f7d9bbe9a88f3e34c3f2db26ab2f86ab8bd988cfd7c",
+    "state": "success",
+    "suitesPassed": 237,
+    "testsPassed": 3229,
+    "testsFailed": 0
+  },
+  "artifact": {
+    "directory": ".local-pilot\\route-quality-web-artifact-20261103-v1",
+    "receiptSha256": "45304b5d2eea76ff6063b221fb0aa6755e17292a1552436caf33a64c77c9b6a2",
+    "admitted": {
+      "sourceRevision": "eac17b519ac8b0c9eb9d944ed19dc158c82dab82",
+      "imageId": "sha256:f5241a27d4da1c60d46546582cd1591454021b70a479afdcb451924ccfd427b3",
+      "imageTag": "sphere-review-frontend:eac17b519ac8b0c9eb9d944ed19dc158c82dab82",
+      "runId": "20261103T014239Z-8fb25d69",
+      "archiveBytes": 0,
+      "archivesCreated": 0,
+      "localExecutionAdmitted": true,
+      "runtimeInstalled": false,
+      "pages": 26,
+      "clientAssets": 72
+    },
+    "imageIndex": "sha256:f5241a27d4da1c60d46546582cd1591454021b70a479afdcb451924ccfd427b3",
+    "linuxAmd64Manifest": "sha256:6acf854dc0ea0aae10c1e60f612a46c634cf85e93ca76a4bfa4ede3df4fed3c6",
+    "imageConfig": "sha256:f7db0c51d7d13c7e23824bb91484759e2176737cdf0d89b9a7fa33a60ff84981",
+    "descriptorChainSha256Verified": true,
+    "sourceConfigLabelsVerified": true,
+    "buildRef": "1cdgkdn4zzwe16rf1ok3gunrc",
+    "archivesCreated": 0
+  },
+  "packageProbe": {
+    "pages": 26,
+    "clientAssets": 72,
+    "loopbackOnly": true,
+    "readOnlyContainer": true,
+    "ownedContainerRemoved": true,
+    "browserHydrationVerified": false,
+    "backendExecutionVerified": false
+  },
+  "sourceArchiveSha256": "4ef15910e1ebe04cbad9117cc65118626ede24e0ab9d25d31df6d71ca701f293",
+  "limitation": "Installed HTTP byte identity and isolated component-browser acceptance; user session hydration not verified."
+}

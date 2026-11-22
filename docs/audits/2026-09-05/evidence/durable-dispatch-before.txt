@@ -1,0 +1,69 @@
+FF.FF                                                                    [100%]
+================================== FAILURES ===================================
+______ test_committed_task_is_deliverable_without_any_redis_queue_entry _______
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2334: in assert_awaited_once
+    raise AssertionError(msg)
+E   AssertionError: Expected send_command_live to have been awaited once. Awaited 0 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_durable_dispatch.py:40: in test_committed_task_is_deliverable_without_any_redis_queue_entry
+    publisher.send_command_live.assert_awaited_once()
+E   AssertionError: Expected send_command_live to have been awaited once. Awaited 0 times.
+____________ test_assignment_is_committed_before_network_delivery _____________
+tests\production\test_durable_dispatch.py:58: in test_assignment_is_committed_before_network_delivery
+    assert observed == [TaskStatus.ASSIGNED]
+E   AssertionError: assert [<TaskStatus....ED: 'queued'>] == [<TaskStatus....: 'assigned'>]
+E     
+E     At index 0 diff: <TaskStatus.QUEUED: 'queued'> != <TaskStatus.ASSIGNED: 'assigned'>
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "5d5f28bc-4cd6-44b1-b5e7-8a96be8437da", "device_id": "519aab3c-f4db-4b01-87b4-469a75897cc8", "event": "task.dispatched", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T09:25:22.409639Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:381 {'task_id': '5d5f28bc-4cd6-44b1-b5e7-8a96be8437da', 'device_id': '519aab3c-f4db-4b01-87b4-469a75897cc8', 'event': 'task.dispatched', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T09:25:22.409639Z'}
+________ test_lost_delivery_response_retries_same_committed_assignment ________
+tests\production\test_durable_dispatch.py:83: in test_lost_delivery_response_retries_same_committed_assignment
+    assert publisher.send_command_live.await_count == 2
+E   AssertionError: assert 1 == 2
+E    +  where 1 = <AsyncMock name='mock.send_command_live' id='3058301965312'>.await_count
+E    +    where <AsyncMock name='mock.send_command_live' id='3058301965312'> = <AsyncMock id='3058301910000'>.send_command_live
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "c0f1693d-6d16-4465-9421-e0da757550e8", "error": "isolated lost transport response", "exc_info": true, "event": "task.dispatch_error", "level": "error", "logger": "backend.services.task_service", "timestamp": "2026-09-06T09:25:22.943684Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.services.task_service:task_service.py:398 {'task_id': 'c0f1693d-6d16-4465-9421-e0da757550e8', 'error': 'isolated lost transport response', 'exc_info': True, 'event': 'task.dispatch_error', 'level': 'error', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T09:25:22.943684Z'}
+______ test_active_db_task_blocks_another_task_even_without_redis_lease _______
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2429: in assert_not_awaited
+    raise AssertionError(msg)
+E   AssertionError: Expected send_command_live to not have been awaited. Awaited 1 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_durable_dispatch.py:98: in test_active_db_task_blocks_another_task_even_without_redis_lease
+    publisher.send_command_live.assert_not_awaited()
+E   AssertionError: Expected send_command_live to not have been awaited. Awaited 1 times.
+E   
+E   pytest introspection follows:
+E   
+E   Args:
+E   assert ('c6fc6f33-99...s': 300, ...}) == ()
+E     
+E     Left contains 2 more items, first extra item: 'c6fc6f33-99db-4155-a12e-495cbea4d3e2'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "5bdc9b86-9507-42fd-8f59-17de56364d9b", "device_id": "c6fc6f33-99db-4155-a12e-495cbea4d3e2", "event": "task.dispatched", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T09:25:23.434593Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:381 {'task_id': '5bdc9b86-9507-42fd-8f59-17de56364d9b', 'device_id': 'c6fc6f33-99db-4155-a12e-495cbea4d3e2', 'event': 'task.dispatched', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T09:25:23.434593Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_durable_dispatch.py::test_committed_task_is_deliverable_without_any_redis_queue_entry
+FAILED tests/production/test_durable_dispatch.py::test_assignment_is_committed_before_network_delivery
+FAILED tests/production/test_durable_dispatch.py::test_lost_delivery_response_retries_same_committed_assignment
+FAILED tests/production/test_durable_dispatch.py::test_active_db_task_blocks_another_task_even_without_redis_lease
+4 failed, 1 passed, 485 warnings in 1.98s

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import re
 import uuid
+from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 COLOR_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
@@ -23,6 +24,7 @@ class CreateLocationRequest(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     parent_location_id: uuid.UUID | None = None
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
     @field_validator("name")
     @classmethod
@@ -49,6 +51,16 @@ class UpdateLocationRequest(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     parent_location_id: uuid.UUID | None = None
+    expected_updated_at: datetime | None = None
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def validate_patch(self) -> UpdateLocationRequest:
+        if "name" in self.model_fields_set and self.name is None:
+            raise ValueError("name cannot be null; omit it to retain the current value")
+        if self.expected_updated_at is not None and self.expected_updated_at.utcoffset() is None:
+            raise ValueError("expected_updated_at must include a timezone")
+        return self
 
     @field_validator("name")
     @classmethod
@@ -80,6 +92,8 @@ class LocationResponse(BaseModel):
     longitude: float | None
     parent_location_id: uuid.UUID | None
     org_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
     total_devices: int = 0
     online_devices: int = 0
 

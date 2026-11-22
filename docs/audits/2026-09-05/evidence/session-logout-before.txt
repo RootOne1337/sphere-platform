@@ -1,0 +1,31 @@
+FFF.F                                                                    [100%]
+================================== FAILURES ===================================
+____ test_logout_returns_cookie_expiration_on_actual_http_response[valid] _____
+tests\production\test_session_logout.py:31: in test_logout_returns_cookie_expiration_on_actual_http_response
+    assert "refresh_token" in cookie
+E   AssertionError: assert 'refresh_token' in <SimpleCookie: >
+___ test_logout_returns_cookie_expiration_on_actual_http_response[invalid] ____
+tests\production\test_session_logout.py:31: in test_logout_returns_cookie_expiration_on_actual_http_response
+    assert "refresh_token" in cookie
+E   AssertionError: assert 'refresh_token' in <SimpleCookie: >
+____ test_logout_returns_cookie_expiration_on_actual_http_response[absent] ____
+tests\production\test_session_logout.py:31: in test_logout_returns_cookie_expiration_on_actual_http_response
+    assert "refresh_token" in cookie
+E   AssertionError: assert 'refresh_token' in <SimpleCookie: >
+_ test_logout_revokes_refresh_from_both_supported_browser_transports[header] __
+tests\production\test_session_logout.py:57: in test_logout_revokes_refresh_from_both_supported_browser_transports
+    assert replay.status_code == 401
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_session_logout.py::test_logout_returns_cookie_expiration_on_actual_http_response[valid]
+FAILED tests/production/test_session_logout.py::test_logout_returns_cookie_expiration_on_actual_http_response[invalid]
+FAILED tests/production/test_session_logout.py::test_logout_returns_cookie_expiration_on_actual_http_response[absent]
+FAILED tests/production/test_session_logout.py::test_logout_revokes_refresh_from_both_supported_browser_transports[header]
+4 failed, 1 passed, 1 warning in 1.29s

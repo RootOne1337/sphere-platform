@@ -1,0 +1,109 @@
+{
+  "schema": "art-sampling-method-cost-v1",
+  "thread": "sphere-imagereader",
+  "sampleIntervalUs": 10000,
+  "records": 274,
+  "mismatches": 0,
+  "elapsedWallMs": 4817.154,
+  "exclusive": [
+    {
+      "method": "org.webrtc.YuvHelper.nativeABGRToI420",
+      "wallMs": 4641.817
+    },
+    {
+      "method": "android.media.ImageReader$SurfaceImage.nativeCreatePlanes",
+      "wallMs": 123.984
+    },
+    {
+      "method": "android.os.MessageQueue.nativePollOnce",
+      "wallMs": 10.356
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.H264Encoder.refreshIdleFrame$app_devDebug",
+      "wallMs": 10.277
+    },
+    {
+      "method": "java.nio.ByteBuffer.<init>",
+      "wallMs": 10.255
+    },
+    {
+      "method": "libcore.io.Memory.memmove",
+      "wallMs": 10.239
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.H264Encoder.submitPlanarFrame$app_devDebug",
+      "wallMs": 10.226
+    },
+    {
+      "method": "android.os.HandlerThread.run",
+      "wallMs": 0.0
+    },
+    {
+      "method": "android.os.Looper.loop",
+      "wallMs": 0.0
+    },
+    {
+      "method": "android.os.Handler.dispatchMessage",
+      "wallMs": 0.0
+    },
+    {
+      "method": "android.media.ImageReader$ListenerHandler.handleMessage",
+      "wallMs": 0.0
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.StreamingManagerImpl$$ExternalSyntheticLambda0.onImageAvailable",
+      "wallMs": 0.0
+    }
+  ],
+  "inclusive": [
+    {
+      "method": "android.os.HandlerThread.run",
+      "wallMs": 4817.154
+    },
+    {
+      "method": "android.os.Looper.loop",
+      "wallMs": 4817.154
+    },
+    {
+      "method": "android.os.Handler.dispatchMessage",
+      "wallMs": 4806.798
+    },
+    {
+      "method": "android.media.ImageReader$ListenerHandler.handleMessage",
+      "wallMs": 4796.521
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.StreamingManagerImpl$$ExternalSyntheticLambda0.onImageAvailable",
+      "wallMs": 4796.521
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.StreamingManagerImpl.$r8$lambda$FX9rFClisIe1gLAK8lDUrZTKyoE",
+      "wallMs": 4796.521
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.StreamingManagerImpl.startCapture$lambda$9",
+      "wallMs": 4796.521
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.H264Encoder.submitPlanarFrame$app_devDebug",
+      "wallMs": 4662.282
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.RgbaToI420.convert",
+      "wallMs": 4652.056
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.NativeRgbaToI420.convert",
+      "wallMs": 4641.817
+    },
+    {
+      "method": "com.sphereplatform.agent.streaming.NativeRgbaToI420.nativeConvert",
+      "wallMs": 4641.817
+    },
+    {
+      "method": "org.webrtc.YuvHelper.ABGRToI420",
+      "wallMs": 4641.817
+    }
+  ],
+  "scope": "Short sampled ART profile; approximate occupied method intervals, not per-frame benchmark or network latency."
+}

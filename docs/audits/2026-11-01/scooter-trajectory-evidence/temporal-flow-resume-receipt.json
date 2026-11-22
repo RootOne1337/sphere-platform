@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "stop_reason": null,
+  "wall_seconds": 28.79599999997299,
+  "source_hashes_unchanged": true,
+  "first_recovery_setup_seconds": 14.952999999979511,
+  "cached_cycle_continuation_seconds": 13.84299999999348,
+  "same_recovery_deadline_seconds": 240,
+  "min_available_RAM_GiB": 10.520458221435547,
+  "min_commit_headroom_GiB": 23.216880798339844,
+  "CPU_processors": 4,
+  "OpenCV_threads": 4,
+  "only_missing_edges": true,
+  "completed_edges_recomputed": 0,
+  "forward_backward_recomputed_in_continuation": false,
+  "physicalActions": 0
+}

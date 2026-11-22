@@ -1,0 +1,469 @@
+{
+  "schema": "sphere-private-day-night-direct512-proof-v1",
+  "status": "completed_private_not_qualified",
+  "outcome_sha256": "0925cf921a72392ed6cbca7e8f128fbcf1b38a38e743771f2cdae8d3b31cae61",
+  "worker_sha256": "4261deeab8b92a0cfc0028426157a447f70a468ade57bb93ca4061f01e453a94",
+  "runner_sha256": "7708bb7af8064df43654926b9130db0f5b28d97b4bb4aa558c206b665057bf1a",
+  "preparation_sha256": "d0c959b2cfcf849c2ba0d2aebdbb19d36ae0eafc4cb2a63adbb5db30c4979f7d",
+  "method": "one actual masked SIFT8192 detection, top512 or768 eligible world features, reused RootSIFT FLANN global votes plus three FP32 GPU LightGlue hypotheses, exact native suffix row mapping and unchanged current-image PnP",
+  "runtime_cpu": {
+    "affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "opencvThreads": 4,
+    "torchThreads": 2
+  },
+  "assets": {
+    "source_commit": "eb42fee2d71449efb0aa5c10549752b5d75384d8",
+    "weights_sha256": "5b52b8d9982d43532dc042606b346bb9594c9f5a4bd6f64362c63866287b4ac0",
+    "weights_bytes": 47632573,
+    "torch": "2.9.1+rocm7.2.1",
+    "opencv": "4.13.0",
+    "numpy": "2.4.4",
+    "device": "cuda",
+    "gpu_memory_fraction": 0.15,
+    "threads": 2,
+    "actual_base_python": "C:\\Users\\dimas\\AppData\\Roaming\\uv\\python\\cpython-3.12.12-windows-x86_64-none\\python.exe",
+    "loader_sha256": "942093ffbf9df03b9f792be34bdea6c04aedf2c969658bdc4842a91e9058a83e"
+  },
+  "query_independent_warmup": {
+    "seconds": 2.9362782999960473,
+    "references_cached": 173,
+    "fixed_reference_pair": [
+      0,
+      1
+    ],
+    "noQueryFeaturesOrPoseHints": true,
+    "gpuAllocatedBytes": 212103680,
+    "gpuReservedBytes": 274726912
+  },
+  "A512_fixed_four": {
+    "count": 4,
+    "states": {
+      "confirming": 4
+    },
+    "reasons": {
+      "relative_camera_pose_not_clearance_or_arrival": 4
+    },
+    "actual_queries_by_method": {
+      "private_onepass_native_LG": 4
+    },
+    "compute_ms": {
+      "min": 207.83189999929164,
+      "p50": 238.01929999899585,
+      "p95": 249.60235000253306,
+      "max": 250.50670000200626
+    },
+    "receiver_age_ms": {
+      "max": 250.0,
+      "p95": 250.0
+    },
+    "inlier_counts": [
+      78,
+      99,
+      52,
+      62
+    ],
+    "geometrically_verified_candidate_queries": 4
+  },
+  "B768_fixed_four": {
+    "count": 4,
+    "states": {
+      "unknown": 3,
+      "confirming": 1
+    },
+    "reasons": {
+      "route_frame_expired_during_localization": 3,
+      "relative_camera_pose_not_clearance_or_arrival": 1
+    },
+    "actual_queries_by_method": {
+      "private_onepass_native_LG": 4
+    },
+    "compute_ms": {
+      "min": 250.55650000285823,
+      "p50": 272.67449999635573,
+      "p95": 294.0827849895868,
+      "max": 295.56449998926837
+    },
+    "receiver_age_ms": {
+      "max": 297.0000000059372,
+      "p95": 297.0000000037544
+    },
+    "inlier_counts": [
+      0,
+      0,
+      59,
+      0
+    ],
+    "geometrically_verified_candidate_queries": 4
+  },
+  "A512_four_rows": [
+    {
+      "file": "fresh_live_png",
+      "computeMs": 231.56089999247342,
+      "actualReceiverAgeMs": 233.99999999674037,
+      "state": "confirming",
+      "inliers": 78,
+      "median_error_px": 0.27837653326719436
+    },
+    {
+      "file": "frame-002343.jpg",
+      "computeMs": 207.83189999929164,
+      "actualReceiverAgeMs": 203.00000000861473,
+      "state": "confirming",
+      "inliers": 99,
+      "median_error_px": 0.40034498385185435
+    },
+    {
+      "file": "frame-002417.jpg",
+      "computeMs": 250.50670000200626,
+      "actualReceiverAgeMs": 250.0,
+      "state": "confirming",
+      "inliers": 52,
+      "median_error_px": 0.5033425258157879
+    },
+    {
+      "file": "frame-002482.jpg",
+      "computeMs": 244.47770000551827,
+      "actualReceiverAgeMs": 250.0,
+      "state": "confirming",
+      "inliers": 62,
+      "median_error_px": 0.4854329578629203
+    }
+  ],
+  "A512_day12": {
+    "count": 12,
+    "states": {
+      "confirming": 6,
+      "localized": 4,
+      "unknown": 2
+    },
+    "reasons": {
+      "relative_camera_pose_not_clearance_or_arrival": 10,
+      "route_pose_not_verified": 1,
+      "route_frame_expired_during_localization": 1
+    },
+    "actual_queries_by_method": {
+      "private_onepass_native_LG": 12
+    },
+    "compute_ms": {
+      "min": 221.78900000290014,
+      "p50": 232.96600000321632,
+      "p95": 254.6875899992301,
+      "max": 257.9469999909634
+    },
+    "receiver_age_ms": {
+      "max": 264.9999999994179,
+      "p95": 256.74999999973807
+    },
+    "inlier_counts": [
+      99,
+      88,
+      87,
+      87,
+      90,
+      0,
+      52,
+      49,
+      51,
+      0,
+      67,
+      62
+    ],
+    "geometrically_verified_candidate_queries": 11
+  },
+  "day12_receiver_cadence": {
+    "target_period_ms": 200,
+    "actual_intervals_ms": [
+      233.99999999674037,
+      250.0,
+      218.99999999732245,
+      250.0,
+      250.0,
+      250.0,
+      235.00000000058208,
+      233.99999999674037,
+      218.99999999732245,
+      264.9999999994179,
+      235.00000000058208
+    ],
+    "measured_effective_hz": 4.165088981464231,
+    "timing_boundary": "serial replay targets 200 ms but overruns when queries exceed target; not independent 5Hz producer or latest-slot acceptance",
+    "source_boundary": "12 sparse actual archived JPEG; original archive gaps roughly .51-.80 seconds; surrogate cadence, not dense live gameplay"
+  },
+  "A512_negative89": {
+    "count": 89,
+    "states": {
+      "unknown": 89
+    },
+    "reasons": {
+      "route_pose_not_verified": 84,
+      "route_frame_expired_during_localization": 5
+    },
+    "actual_queries_by_method": {
+      "private_onepass_native_LG": 89
+    },
+    "compute_ms": {
+      "min": 143.26209999853745,
+      "p50": 190.02259999979287,
+      "p95": 254.83077999961097,
+      "max": 277.6338000112446
+    },
+    "receiver_age_ms": {
+      "max": 280.99999998812564,
+      "p95": 258.99999999965064
+    },
+    "inlier_counts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "geometrically_verified_candidate_queries": 0
+  },
+  "negative_boundary": "All89 were actual global matcher queries, none produced any geometrically verified PnP candidate; five also expired. Zero false positives on this finite bank does not establish general false-positive rate.",
+  "failure_boundary": "Day12 frame6 no verified PnP, frame10 expired. Native controller24-inlier minimum was not lowered. First-pose confirming remains distinct from three-pose localized.",
+  "freshness_boundary": "Original received_at precedes feature extraction and matching; unchanged shared 250ms gate. Windows monotonic millisecond quantization can report exactly250ms age while perf_counter wall compute slightly exceeds250ms; results at boundary have no timing margin.",
+  "reused_base_gate_methods": {
+    "_verify_correspondences": true,
+    "_fresh": true,
+    "_rank_proposals": true,
+    "_motion_limit": true,
+    "_nearest": true,
+    "_project": true
+  },
+  "gpu_peak_bytes": {
+    "allocated": 242063872,
+    "reserved": 274726912
+  },
+  "resource_guard": {
+    "physical_ram_floor_bytes": 6442450944,
+    "minimum_available_ram_bytes": 10804858880,
+    "minimum_free_disk_bytes": 47921545216,
+    "snapshots": 164,
+    "all_fresh_healthy_volume_proofs": true
+  },
+  "runner_receipt": {
+    "exitCode": 0,
+    "reason": null,
+    "seconds": 35.875,
+    "allOwnedProcessesClosed": true,
+    "physicalActions": 0
+  },
+  "sources": {
+    ".local-pilot/skuter1-good-native-query-20261103-v2/native-route.json": "c9b8e8d1bef9a2f0f9cebdabf14174ab73e03afd6ed06e00d03fcad71bd6ff84",
+    ".local-pilot/skuter1-good-native-query-20261103-v2/native-private-export.json": "863abaa32652255265cc95d715ebe57200d01ea166e3b02d57914f8ce87cbb38",
+    ".local-pilot/reconstruction-jobs/6a77040681d142ec97d51831a22785fb/walk-diagnostics/f0f98bebce2a4323af8466fe191fb8aa.zip": "848738a0a7acda7da30aa0cf3b3253176aca20b0eaea796e777ae3361af2d7db",
+    ".local-pilot/skuter1-fresh-screen-20261103-v1/live.png": "07469ce986be296ca134b4a04efa85d589344b52924658049007c9b74604de5e",
+    ".local-pilot/skuter1-fused-graph-20261102-v1/namespace.json": "62cb79f1f7235b388f5ad36f681bc81ddeb2d5f77603e50a8649bceb4c4d20f7",
+    ".local-pilot/skuter1-native-binding-20261102-v3/cache/sift.db": "0cd85a71ff7ed7909e111e240c8f8b6d2b27ad82434edb6e27e306ac5745881a",
+    ".local-pilot/skuter1-fused-graph-20261102-v1/row-remapping.npz": "777923669a856afc5d719f3d9d244958b30f19df9bf5df35d0813461a7183ec9",
+    ".local-pilot/reconstruction-tools/lightglue-models/hub/checkpoints/sift_lightglue_v0-1_arxiv.pth": "5b52b8d9982d43532dc042606b346bb9594c9f5a4bd6f64362c63866287b4ac0",
+    "scripts/pilot/learned_route_features.py": "942093ffbf9df03b9f792be34bdea6c04aedf2c969658bdc4842a91e9058a83e",
+    "scripts/pilot/route_native_landmarks.py": "02ffae3b6e964705c7fd8da783b345e1d8aa272009b93a60d4e6ef2b5e4c7f7b",
+    "motor_worker/route_localization.py": "efec9eeeeb36beea6db60e814ae9c75ccc05191702bfda7fb72bb052a51523b2",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/model/cameras.bin": "b91cc00f86302d377a84293589630f17d8d6d1bf84641f8d27fcd8c2fd1be537",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/model/frames.bin": "f64e7a626e40c44c11c180f3391bdcca8965b387f765d652e55e56dad34286e5",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/model/images.bin": "ffd9fe00f97050e510a52252e775476f5f4ea5df1d0f3b71a14dac1df8b7c402",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/model/points3D.bin": "53de3a71e9f452dfa6b32360fc152ec22ec456e66c7603fea1e4cb6172cb12b2",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/model/rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/input/manifest.json": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/reconstruction-input.json": "ef8b5cebaf7d05aeeb71d1a680de784d8ea44d53da929bb93f33e926b6625617",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000000.png": "04bac81a6492ae2a72b83604508580e6bf816fafc987de5861816e34d6c359e0",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000007.png": "960648dde2af810d30bc35d6a086d24ed79e487832cfb56a1c7ca57f276d17c1",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000013.png": "49b5979c684b77e2600c918c89128afb3492579f4814595bcc6fbf7e9b75b125",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000019.png": "b78eb4df8dfa65de6a6749dac023caf2c6f712e17ccd55340b45c490f63cf143",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000025.png": "e2035e557ebc915668469260e368d44ce4d87cc3da161cec383fb3a9172a7491",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000030.png": "58c3380c3c1ce666db55b49272ea192457804392d986b61aeefffe69b5e63d53",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000035.png": "74c85675f886347315e326ab0fcb50da93a5a31086e48182accd581266191e32",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000041.png": "2615538fbd9e95649efc71095dd25b8198bdbe90d4f38237f5368a03dcc11e08",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000047.png": "df2910b61d659583541713732adb9aa9bc50c7f2ae44cfbc2ed62b4f2dfac43a",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000052.png": "821a9587714cf3d3bfa527d43bbb2f679244870d5e0cec5e2af05f8ef1dfc272",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000057.png": "61558e4ad058a342a724abc431e19294774d4026e6be9acc7ee30f70fab7a055",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000062.png": "272c1d007783106be8b866c2181b9c79987921b05ec2d162baed6d9b9a4e9b61",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000067.png": "2f8fb2fead15cdd6a514bf98ca7c3c919272195b176b3362e8c8362fdcd433a6",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000073.png": "2f7e599f9be19c888b276bd6d741f3fe994a3cefcb540036449c3b474c74d32c",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000079.png": "daf8f468640875ebb9b020cc53abf549edda0cd18fa07e1c119bf55bcafa84c9",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000085.png": "9a5f6b645e557b3d8c1b99c65c6935cfe836f1f7d720b5811f44ee6bc0609ea2",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000091.png": "342e0337966eab6c11477d156692a6555160869faf9a912b1c7ecc8f68b52b21",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000097.png": "362860f10acac79254e6c68b05de4e4cf3341050ca27bd84dd7dc958699f2088",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000103.png": "1d4bb8c7091798831cf40fd279dce5b2905d4dfcab18ca24093a47e89649a937",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000109.png": "078b417320cbc1a713354dfa5c465d21291b91bedc8e62908bdf91c7526b9e4f",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000115.png": "a3c6786c3c2ab79f4b0442f5b9fb94c96bba602c41fcaf222c4cd9c14cded002",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000121.png": "54aded9be16bed4d407ce19ffd45fa586ba8c6bb395d712b1f1190e6cf03af50",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000127.png": "e44955ae804d5c869fb62028176ce00b5c1980900e38e174d0db484af59ffcf0",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000133.png": "3ef86855d245e3432d6117a5a63316e5b73571f6ba647c20f122b3f0421f4674",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000138.png": "e8caf01f90f2fec364281d0251a629441a57e94151d01c89a5a90324ea86b84a",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000144.png": "5c7c21c608ea93b53ecede9ae5dd8c95f9772cb464752a8cd6d3d687dbb5304a",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000149.png": "0d59d93f85c3bc3e2381196fead0b3fb9264950772562b590349a92112c2b10c",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000154.png": "ed5858877554245fbc466bdf9187f25c6168faf18962e42a53436e307b5367be",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000160.png": "b15db8695543511022c1da5d778104f4e3ef922086425ae2a415b0fed0e95ef9",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000166.png": "94704b06d37a61c1a7815bab4b0b556a71f1e4cfc7b157c2ab7ce6365026bfc6",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000172.png": "1abcc67c229913421b59a6d5345dd230a3e0a606d28ce82f1735cf5b57e5874f",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000178.png": "11e08900ba38fea6d227ad3def8ba9202973bf7fbe9e71ce6628814bf947e4a7",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000184.png": "fb068c70c5cc3e2d225c35d4eeb55f5e8f01fd481b078a623e551e5544b4317b",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000190.png": "6cb3e5b5e31fe32059653f5c0cdccd6b88539e072a2a6ef201789e6424f72c0f",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000196.png": "41bd73862524245f20af65c8181cf618264052c86a4c24fcd89f7a3c8e727dc4",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000202.png": "e5350b740ac9975f832a88d70aa6d7d35277729689d6bcbbf748744306e5804a",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000208.png": "46de5965efe1f3db2a648651c5255a7279dc9718f4ec31303e3f3c200a002040",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000214.png": "205d9cd81c19521d3e4dc7f355d907e729faaf57e582c308f512e8503b3c2b7a",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000220.png": "0dcd45c3506144ee8478f40d902a497293b2d1f5f869c97b29ed4a29768f21c9",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000226.png": "06392824369b38e0a7b12c8d7be100a601ec786323749971d96269236ef864f5",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000232.png": "9f13c99988fe238aff77e65bfa94274891f480edc4cb2bd75e1d92defad148c9",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000238.png": "7d0aabec4c45268a385ac897b49df473ccab720b868cd39ce345102027925136",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000244.png": "befdd010a1338348a4792bbb5c6be11d2a39d232261230976268ae48808aaa0f",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000250.png": "6aeb6481771347aa21e7315677a98a9bb5362125203c961822a098bb487acc1a",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000255.png": "2c11a4990e5748544eb419041aea61bf03ffa4281b76bb0c812abb178dbd4b0c",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000260.png": "c4d16dd861f5373561941bd3e8e1b59f4a93aa24dfb7541a9c4587cc6f366beb",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000266.png": "ff36248fe958b4afbe42d4e3749b1ab34548dc2b998e95a6152d247c114ed59f",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000272.png": "5465d729d63f98bfeca6e4db8d657b8e8662cbc5451b5fba0896a5f04f07d0aa",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000278.png": "56a7b56e60998cee7977b0c0cd081e2a8aef4f976a6d60053200800d69d7270b",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000284.png": "5f2a20e23496f4791fb6de951258804894c2bb251fd97895a6d7292266af25de",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000290.png": "68a7d001316f05f3da79f16c64f43e99f41ce3fca4586765ecf68b802eba4cb9",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000296.png": "065e9f42cec352e43da36f9ba69fbe992ac32e1171d2b03829fd1f54af9a4f60",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000302.png": "2f9ab8a47409a5aeaf6e69061ad969751bcfe3aa63e0549c7b7e15f5f5fa734b",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000309.png": "491ec294a4c3afaee2b1396a678548fa423a686e2bd0f172f0e0b541d636cee6",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000315.png": "3b239462cffb867cf1484a5ffe2fffcee149f0ba12c736c05efef8e5f0022954",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000321.png": "b8d7c7deedeba8f537debf9a4d2666e73deb30e6dfbc4099b581a0e6ec2ae165",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000327.png": "04410f70a57e290a84ab3ed49db14440055ba25aba1a7dd82d5a2ad86cb62e3e",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000333.png": "bbe4696c26f01576c746b2edfeda1e0f8df78d001c86a6c1e244b1f45fc77d64",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000338.png": "ac6cca4414eaf0baacb505cb174e0550548848e1bb80e9fb5b75d12e70f4f843",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000344.png": "a8d2b9e961f9a7fe91e1054d8d767d52f7fdfec24f495affddc2f455e53f3524",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000350.png": "e5c30fdc32baccfb828f2be816723fd2687586432ab9d330e7e7e66aa8e72726",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000356.png": "e188269b73f388b8ef86087e2d11599a639dc8f5f4c772929f7909225f200cc0",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000361.png": "b6a3b571b38d14aa0e828896ac3ecd18b9981b240fe8284a57fb046893a3a3a4",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000366.png": "ddf03b75d918366f326953160bf7b429ba2f456e97a0a8e1a4c6dbab54de914d",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000372.png": "b966d1650e2bb376a2273560fb6737466b605f171631a0ab8a746491ef1b53de",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000377.png": "e17cabcc47dad596aad65d513213d408e435ca404dc6df6c439d3e3736635c02",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000383.png": "1eaa9f1640bf4b3ea51c982afab32c5a23a8d4252c5add193bc85ec1a2820820",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000389.png": "7a7a0f0913351637c433acb407e67eee0c6c1103474daaa97ff3d2903e265258",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000395.png": "b7521d8a9358d8d6a4d5e2690cfff92819389687a75a2db19c06e50069100d26",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000401.png": "66b3caddb7352708594a6dae939759b4bffec5c43ce55058800a2abf5bd7dbed",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000407.png": "c529be50fa7aa7f14b6e8e08d02c60ed6c125481ef4559662a4e6eca8b011f99",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000413.png": "5e442dc52537fb818824a08e5d770a43b361c66e8c6def7696c5189c2a37980e",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000419.png": "1fe51933c95b99a8652b8f748b29ded1af3602267fcd1e9c1b638860bb829b31",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000425.png": "ece891b553bbe972e2f84646b9aec36ccc43ea6f288c6b6c1d50de4d45546b16",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000431.png": "c8f056b8a35f7726a96c2a70a2c59ed6c7df523c60f0d49d2787235847c8c226",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000437.png": "675692e861d46762d2eba13280321d3f61dc08cfc16b9aae7e850acff5b2d18a",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000443.png": "fc0157c781e882971b5adb832b57a781eea80b6cc3d5426ad12c2d8a91be3691",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000448.png": "c855b62b70895a1c80da88e7d30b052af735158c611a9a0ea143fd6f175957fd",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000454.png": "022357dcf852265f999c723027462d0f999887b1f2a61f56251fc78cd7a768f1",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000460.png": "4686279910b989965c2a9bbc0abe33f7aa7393f6a4abf3d3a17d2fead91dbd31",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000465.png": "672e593fb93454c0b4f63dcaf91071d01f4bb7b666cceff1648919e2cc2248a8",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000471.png": "12f22acd99d3ab6fb2a8370af7df04596bb4dc8c653cc44aa462774f21a65168",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000477.png": "2784e3ad29e94b9ae65ef66fa2ff56bcdbff42ca05f388d6daa9e33cbe02d8ff",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000483.png": "03f26034ed1cb192d4d48d61f15ddd7a17af6608a15433caf912d2278aaca131",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000489.png": "12a2869d237aa895afba18011c2db23b0401d5caf60d26e217daf1e990774b76",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000495.png": "d4dd9409b962a2f43e4a7c4b674acc98b23b1a26e9d1fa29f0435e20fa2b9b05",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000501.png": "a61bf314c5e459fbd2e47d6c3108b6bf330a3e6949493e76114afc659a95daae",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000506.png": "95d510aeceafed1e01a4a50899089962ba022c7dfd964df42b8f9f66b9771942",
+    ".local-pilot/reconstruction-jobs/8140c4bf1cce41819dda4c485fc11d80/prepared/images/00000511.png": "29abc53333fe2fccf397354dfa57132b1573e6f557e7c6272011517c56b970df"
+  },
+  "source_count": 107,
+  "source_unchanged": true,
+  "physical_actions": 0,
+  "network_downloads": false,
+  "shared_source_edits": false,
+  "maps_mutated": false,
+  "runtime_promoted": false,
+  "execution_qualified": false,
+  "limits": [
+    "Four fixed positive scenes and twelve sparse archived day images do not qualify a full route or a new runtime family.",
+    "Still not sustained5Hz: measured serial receiver rate about4.17Hz.",
+    "All173 GPU reference payloads were warm; cold startup and warmup are separately recorded.",
+    "CPU4/GPU resource result is for one shared initializer experiment, not a hundred-window capacity benchmark.",
+    "Existing HUD mask kept unchanged, with about25.62percent eligible world area."
+  ],
+  "publishedProvenance": {
+    "privateReport": "skuter1-day-night-direct512-20261103-v1/compact-proof.json",
+    "sha256": "21f5a7c999fb4be948bdb1a7301bded9f93fa96edfcc156b20898b5e16b7531b"
+  }
+}

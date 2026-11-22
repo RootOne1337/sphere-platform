@@ -1,0 +1,88 @@
+{
+  "outcome": "verified",
+  "commit": "60e7f6ffdab4265d3b838aa8ca1320e003289419",
+  "protectedAssetsUnchanged": true,
+  "allContainersUnchanged": true,
+  "physicalActions": 0,
+  "unauthenticatedStatus": 403,
+  "reloadPerformed": true,
+  "beforeChain": {
+    "listener": {
+      "pid": 19604,
+      "parentPid": 2268,
+      "creationFiletime": 134380902450134182,
+      "commandSha256": "3a9b33465440c5769be3fcf95abe680e6f49c4c4a08d30983da5a7403f49dfed"
+    },
+    "launcher": {
+      "pid": 2268,
+      "parentPid": 4444,
+      "creationFiletime": 134380902449692708,
+      "commandSha256": "1d1195fbe29d6132780b6f5a705e0169cf5b7a6948025f7b210ea1a84df32ff7"
+    },
+    "watchdog": {
+      "pid": 4444,
+      "parentPid": 1988,
+      "creationFiletime": 134377828309384771,
+      "commandSha256": "ff83b5731a54557325c0dc121b5c302b25ea5e0075fd51bb924830a55aae4ff2"
+    }
+  },
+  "afterChain": {
+    "listener": {
+      "pid": 54464,
+      "parentPid": 29740,
+      "creationFiletime": 134381002744405262,
+      "commandSha256": "3a9b33465440c5769be3fcf95abe680e6f49c4c4a08d30983da5a7403f49dfed"
+    },
+    "launcher": {
+      "pid": 29740,
+      "parentPid": 4444,
+      "creationFiletime": 134381002744126000,
+      "commandSha256": "1d1195fbe29d6132780b6f5a705e0169cf5b7a6948025f7b210ea1a84df32ff7"
+    },
+    "watchdog": {
+      "pid": 4444,
+      "parentPid": 1988,
+      "creationFiletime": 134377828309384771,
+      "commandSha256": "ff83b5731a54557325c0dc121b5c302b25ea5e0075fd51bb924830a55aae4ff2"
+    }
+  },
+  "sourceHashes": {
+    "scripts/pilot/reconstruction_service.py": "a5cc9eb181a0c120500590f10219b4cf96adfc7c49820c7756b183f2a0c0a909",
+    "scripts/pilot/route_workspace.py": "a8dec31cc4ee211a11fa458521345b7adc7bbc91f0a23a8d77f6603f4a1cf043",
+    "scripts/pilot/route_owned_process.py": "6ba42083eaf7099a8566c13dfc4489278705feb867608663d8b58f09272efe7e",
+    "scripts/pilot/reconstruct_route.py": "8026343ce58f704e7a938a86353e33a8f0ab0c6dc3373073e07560ee68335a0d",
+    "scripts/pilot/prepare_route_workspace.py": "ebb3c05b64bba75ca0d4390cbb6ef941bae0898fffbd8be6c07bbb4683c16bba",
+    "scripts/pilot/image_route_workspace.py": "b9d88880408f40a62b4e7a34d91ab4ccd68a547bb17e83e29848bbe55fb23f65",
+    "scripts/pilot/route_resource_monitor.py": "7e2bcce7b4581ccc8b9c1a9efea4cc9d12a45b86454a208b35c34d60864f3797",
+    "scripts/pilot/route_hud_profile.py": "116c319ed0676ad0761e6e40d0bab838e3504b5cdd1734431399ccf98bae97e4",
+    "scripts/pilot/black_russia_speed_font_v1.json": "07bf4627ef92b16e8a016dd7ffc806d979c2797db8fa381a206d54d9f7a56bac",
+    "scripts/pilot/route_fused_recovery.py": "ce0cb8e5f9cb915e5a56712cf15ca2467aa02ac3393f5b1359115416ca778d3e",
+    "scripts/pilot/route_native_track_policy.py": "939787a72aad5bab76d978cd6f70afae7aa0487fc2d0be5749c86f05da04f65e",
+    "scripts/pilot/route_native_landmarks.py": "02ffae3b6e964705c7fd8da783b345e1d8aa272009b93a60d4e6ef2b5e4c7f7b",
+    "scripts/pilot/route_masks.py": "e40eb4efe1ddb07d8801ed9b3e0ea2e39f02d90815ee91c2306b179960d17217",
+    "motor_worker/route_localization.py": "c51298cba1c8b96f706a6315bf9a273c0c8714ec3c774aa1ebaf6c99cf94db66",
+    "scripts/pilot/check_route_first_run.py": "5e8960b76cd72991bbb3605876d09e87a1a55fddfada49b4d2d798bc54862c70"
+  },
+  "health": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true,
+    "route_camera_pipeline": "vehicle_geometry_v3_hud",
+    "creation_recovery_contract": "confirmed_absence_v1",
+    "route_lifecycle_contract": "owned_serial_handoff_v1",
+    "job_source_binding_contract": "manifest_sha256_status_v1",
+    "image_route_review_contract": "source_bound_offline_v1",
+    "image_route_preparation_contract": "bounded_cpu_before_sfm_v1",
+    "browser_teach_input_clock_contract": "idle_preroll100_worker_receipt_v1",
+    "alternative_catalog_contract": "source_bound_review_v1",
+    "vehicle_control_contract": "attached_camera_hud_binary_hold_v1",
+    "route_resource_monitor_contract": "task_volume30_fresh_native_v1",
+    "hud_speed_reference_contract": "source_bound_font_display_v1",
+    "fused_recovery_contract": "gated_cpu_native_v1",
+    "fused_recovery_enabled": false,
+    "native_reference_contract": "offline_unqualified_v1",
+    "live_session_active": false
+  },
+  "protectedAssets": 562,
+  "containers": 46,
+  "privateReceiptSha256": "61ca9a9043902742fa14285cd2c60ddd94e8f2523429cacb7aaea1e7430eae7b"
+}

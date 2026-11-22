@@ -1,0 +1,133 @@
+{
+  "head": "94cf7c3a2a50bbc8197737f5cf666e0e2c8ddec3",
+  "branch": "codex/enterprise-audit-20260905",
+  "audited_tree": "working tree; byte hashes are of files on Windows including line endings",
+  "changed_tracked": [
+    {
+      "path": "frontend/__tests__/stream/reconstruction-compact.test.tsx",
+      "worktree_sha256": "43c376e7f4290aaf6ef836e954d818d1fd13b9d957cbe3bb44d6c3bd28c0352e"
+    },
+    {
+      "path": "frontend/__tests__/stream/route-preparation.test.ts",
+      "worktree_sha256": "69fea2ec1fc9c38946ecbb3e3a95e44d63eeee18ef90b06ee949af919bc33b9e"
+    },
+    {
+      "path": "frontend/__tests__/stream/teaching-review.test.tsx",
+      "worktree_sha256": "c6ad9b21b280b57b0a584646e0d55e096981df0299e9649de915565820de4140"
+    },
+    {
+      "path": "frontend/src/features/stream/TeachingNavigation.tsx",
+      "worktree_sha256": "d22d13a290caa8be554e3444df5b42339da6ae6b9015be9c88bdcf9e69d17ca2"
+    },
+    {
+      "path": "frontend/src/features/stream/TeachingReconstruction.tsx",
+      "worktree_sha256": "b6cac72653ef48c3d88078890e05a18cafc9f7f6c5f563875d8d7d5c4fb30d17"
+    },
+    {
+      "path": "frontend/src/features/stream/reconstructionClient.ts",
+      "worktree_sha256": "4d49e0b2a1a6c9e0b2e1ac9a9829b7bd55d172e7d39ae3374ca7d91c51cb5771"
+    },
+    {
+      "path": "frontend/src/features/stream/routePreparation.ts",
+      "worktree_sha256": "d60c8f6b026c2afab81a02a7b6e7468d68dcf2a0714e0e48c9abc2050f60e424"
+    },
+    {
+      "path": "scripts/pilot/browser_route_lab/follow_faggio.py",
+      "worktree_sha256": "59595a6af006cd6779439847f0fc0ddbd691d71d74f3cf518972d2401657cc01"
+    },
+    {
+      "path": "scripts/pilot/browser_route_lab/reference_neighborhood.py",
+      "worktree_sha256": "02e109c40673c2addb9ad5d864831ee58f9f7e959caf8fc248b1fe93f9c5a7c6"
+    },
+    {
+      "path": "scripts/pilot/export_route_localization.py",
+      "worktree_sha256": "0b0a8dae80acc37ecaa7ffc3a2a25b44a408db364bd6958b70a235c46e714137"
+    },
+    {
+      "path": "scripts/pilot/image_route_builder.py",
+      "worktree_sha256": "d19160ca758451db955c9ce7226b80a4387eb6c41c503f0cd0a9f5ec9942aeef"
+    },
+    {
+      "path": "scripts/pilot/learned_route_features.py",
+      "worktree_sha256": "f2d45a2f6309e7cfbbb6beca2de0d72753237bcac007d27529bbc94f34efac87"
+    },
+    {
+      "path": "scripts/pilot/reconstruct_route.py",
+      "worktree_sha256": "347cdb545c402461feff6237374b2a4818bf4b550e66d07be6ec3daf1a480c4c"
+    },
+    {
+      "path": "scripts/pilot/route_fused_recovery.py",
+      "worktree_sha256": "c7da199191ce71dbb07ee6bba196e67747535f4e1e6ffad3f0f479daa7d5a7e3"
+    },
+    {
+      "path": "scripts/pilot/route_learned_recovery.py",
+      "worktree_sha256": "9e25dcd8f460585bee3c1981420d800404eeea360da9ab0a45c8754a2ed6620a"
+    },
+    {
+      "path": "scripts/pilot/route_native_track_policy.py",
+      "worktree_sha256": "727ac0bfe14c56635caed0f1614a2f09965e1de571407d54fe7ca306420ce309"
+    },
+    {
+      "path": "scripts/pilot/route_reconstruction_resources.py",
+      "worktree_sha256": "4b208be9fb4a5e7c5b0b4eebef3e342439ee5ac3193ce4f84b10521e372ebab8"
+    },
+    {
+      "path": "scripts/pilot/route_workspace.py",
+      "worktree_sha256": "99b9a546a56b98a167ca6a6f59629c22acb31d284b3bb2cbc38500b78f015423"
+    },
+    {
+      "path": "tests/test_image_route_builder.py",
+      "worktree_sha256": "5ee62379707865b59049c7913f3dff1d6db021fd28db9fefe0b061c83515074b"
+    },
+    {
+      "path": "tests/test_learned_route_features.py",
+      "worktree_sha256": "91be6ef3fcb674c9b2be29cdb8a1fd710b786cdc0482bdae82fef308bbb5e366"
+    },
+    {
+      "path": "tests/test_route_fused_recovery.py",
+      "worktree_sha256": "03b870b43c422948282679dfe405a9cb1fbfe56480f83090ec40c71e59ace311"
+    },
+    {
+      "path": "tests/test_route_learned_recovery.py",
+      "worktree_sha256": "3677749cda1458fa7d88956be5c8e2e1b3b20a4bc292f2faeaf3baf477825a00"
+    },
+    {
+      "path": "tests/test_route_native_track_policy.py",
+      "worktree_sha256": "3d46f032a6870ffcf00d6acbd3431082cf5277f25822e760c6433fa59ededc08"
+    },
+    {
+      "path": "tests/test_route_only_recovery_pipeline.py",
+      "worktree_sha256": "93444fec137780b1da6a483a58a3c75fe0aa16af03b84fdeced410f104e9ce35"
+    },
+    {
+      "path": "tests/test_route_reconstruction_resources.py",
+      "worktree_sha256": "8fd2a218fae657554e9753c292708269088f8e6a62077f5d75cac0f2044ba9ab"
+    },
+    {
+      "path": "tests/test_route_workspace.py",
+      "worktree_sha256": "2d4f0ddb6b50203be51f2e7303ff1c649db68f216064ebd68c4c26aac0497958"
+    }
+  ],
+  "untracked_source_candidates": [
+    {
+      "path": "motor_worker/route_pose_uncertainty.py",
+      "worktree_sha256": "36985f28a27b89363f822de1b9d075a3024e7fbd272645365966ea1a067b74f7"
+    },
+    {
+      "path": "tests/test_reconstruction_geometry_sampling.py",
+      "worktree_sha256": "29424dc24e9b6896f5c3241908707a4e9c83effe1d1a0ee9f11629b9dc0ae119"
+    },
+    {
+      "path": "tests/test_route_external_model_binding.py",
+      "worktree_sha256": "44c4e8ee15cafc799c9f44fd543227a1da091a765d8b08ddb03d894968db5f0b"
+    },
+    {
+      "path": "tests/test_route_pose_uncertainty.py",
+      "worktree_sha256": "8759a052262fba8f8d16a4e6175b883d0793258dbe22a73b537c0228da968c09"
+    },
+    {
+      "path": "uv.lock",
+      "worktree_sha256": "c59e3d361f8f175c3d661018029aeb9df00761b74d70f79d6d1e3971fcc59082"
+    }
+  ]
+}

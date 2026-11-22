@@ -1,0 +1,78 @@
+name: Package configured Android pilot
+
+on:
+  workflow_call:
+    inputs:
+      validation_run:
+        type: string
+        required: true
+    secrets:
+      SPHERE_PILOT_PACKAGE_ONCE:
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: configured-android-pilot
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Compile configured pilot and upload encrypted artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v6
+        with:
+          java-version: "17"
+          distribution: temurin
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          # Configured compiler outputs may contain the enrollment credential.
+          cache-disabled: true
+      - name: Install artifact encryption dependency
+        run: |
+          python -m pip install --only-binary=:all: cryptography==50.0.2
+      - name: Test packaging admission and encryption before loading any configuration
+        run: python -m unittest tests.test_android_cloud_package -q
+      - name: Admit tested source and reuse verified native libraries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_RUN: ${{ inputs.validation_run }}
+        run: python -m scripts.pilot.android_cloud_package admit --run-id "$VALIDATION_RUN" --output "$RUNNER_TEMP/native"
+      - name: Prepare one-shot configured build
+        env:
+          SPHERE_PILOT_PACKAGE_CONFIG: ${{ secrets.SPHERE_PILOT_PACKAGE_ONCE }}
+        run: python -m scripts.pilot.android_cloud_package prepare --output "$RUNNER_TEMP/recipient.der.base64"
+      - name: Compile and test the configured debug-only pilot
+        working-directory: android
+        env:
+          SPHERE_APP_SCOPED_VPN_CANARY: "true"
+          SPHERE_AWG_NATIVE_DIR: ${{ runner.temp }}/native
+          SPHERE_DIRECT_TRANSPORT_CANARY: "true"
+          SPHERE_DIRECT_PROBE_STUN_URL: "stun:stun.cloudflare.com:3478"
+          SPHERE_STREAM_GPU_BRIDGE: "false"
+          SPHERE_STREAM_PLANAR_INPUT: "true"
+          SPHERE_CONTINUOUS_INPUT_CANARY: "true"
+          SPHERE_DEV_APPLICATION_ID_SUFFIX: ".pilot"
+          GIT_SHA: ${{ github.sha }}
+        run: ./gradlew --no-build-cache --no-configuration-cache --no-daemon --max-workers=2 testDevDebugUnitTest lintDevDebug assembleDevDebug
+      - name: Verify configured output and seal it to the maintainer recipient
+        run: python -m scripts.pilot.android_cloud_package seal --input android/app/build/outputs/apk/dev/debug/app-dev-debug.apk --key "$RUNNER_TEMP/recipient.der.base64" --output "$RUNNER_TEMP/pilot-package.sealed"
+      - name: Upload encrypted package only
+        uses: actions/upload-artifact@v6
+        with:
+          name: configured-android-pilot-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/pilot-package.sealed
+            ${{ runner.temp }}/pilot-package.receipt.json
+          if-no-files-found: error
+          retention-days: 3

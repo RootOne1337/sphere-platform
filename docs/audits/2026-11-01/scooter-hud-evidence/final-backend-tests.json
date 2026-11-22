@@ -1,0 +1,27 @@
+{
+  "exit_code": 0,
+  "seconds": 14.125,
+  "command": [
+    "-m",
+    "pytest",
+    "--noconftest",
+    "tests\\test_hud_backend_integration.py",
+    "tests\\test_route_hud_speed.py",
+    "tests\\test_route_hud_workspace.py",
+    "tests\\test_route_speed_consistency.py",
+    "tests\\test_reconstruction_service.py",
+    "tests\\test_reconstruct_route.py",
+    "tests\\test_route_first_run.py",
+    "tests\\test_route_only_recovery_pipeline.py",
+    "tests\\test_route_learned_recovery.py",
+    "tests\\test_surface_reconstruction.py",
+    "tests\\test_alternative_geometry.py",
+    "tests\\test_route_reconstruction_resources.py",
+    "tests\\test_pilot_resource_guard.py",
+    "tests\\test_route_motion_sampling.py",
+    "tests\\test_route_cpu_runtime.py",
+    "tests/test_route_overlap_sampling.py",
+    "-q",
+    "-rs"
+  ]
+}

@@ -6,12 +6,14 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import InstrumentedAttribute, selectinload
 
+from backend.models.device import Device
 from backend.models.game_account import AccountStatus, GameAccount, GenderEnum, VipType
 from backend.schemas.game_accounts import (
     AccountStatsResponse,
@@ -23,6 +25,16 @@ from backend.schemas.game_accounts import (
     ImportAccountsResponse,
     ReleaseAccountRequest,
     UpdateGameAccountRequest,
+)
+from backend.services.account_credentials import (
+    AccountCredentialUnavailable,
+    get_account_cipher,
+    read_account_password,
+    set_account_password,
+)
+from backend.services.application_account_scope import (
+    require_account_scope,
+    resolve_application_account_scope,
 )
 
 
@@ -39,7 +51,7 @@ class GameAccountService:
 
     # ── Helpers ──────────────────────────────────────────────────────────────
 
-    async def _get_account(self, account_id: uuid.UUID, org_id: uuid.UUID) -> GameAccount:
+    async def _get_account(self, account_id: uuid.UUID, org_id: uuid.UUID, *, lock: bool = False) -> GameAccount:
         """Загрузить аккаунт по id + org_id; 404 если не найден."""
         stmt = (
             select(GameAccount)
@@ -49,6 +61,8 @@ class GameAccountService:
                 GameAccount.org_id == org_id,
             )
         )
+        if lock:
+            stmt = stmt.with_for_update().execution_options(populate_existing=True)
         account = (await self.db.execute(stmt)).scalar_one_or_none()
         if not account:
             raise HTTPException(status_code=404, detail="Аккаунт не найден")
@@ -107,7 +121,7 @@ class GameAccountService:
         base = self._to_response(account)
         return GameAccountWithPasswordResponse(
             **base.model_dump(),
-            password=account.password_encrypted,
+            password=read_account_password(account),
         )
 
     # ── Create ───────────────────────────────────────────────────────────────
@@ -136,7 +150,6 @@ class GameAccountService:
             org_id=org_id,
             game=data.game,
             login=data.login,
-            password_encrypted=data.password,
             status=AccountStatus.free,
             status_changed_at=datetime.now(timezone.utc),
             # Сервер и персонаж
@@ -161,6 +174,7 @@ class GameAccountService:
             registration_provider=data.registration_provider,
             meta=data.meta or {},
         )
+        set_account_password(account, data.password)
         self.db.add(account)
         await self.db.flush()
         await self.db.refresh(account)
@@ -213,7 +227,7 @@ class GameAccountService:
             )
 
         # Сортировка (белый список полей)
-        sort_columns = {
+        sort_columns: dict[str, InstrumentedAttribute[Any]] = {
             "created_at": GameAccount.created_at,
             "login": GameAccount.login,
             "game": GameAccount.game,
@@ -270,7 +284,12 @@ class GameAccountService:
         data: UpdateGameAccountRequest,
     ) -> GameAccountResponse:
         """Обновить поля аккаунта (PATCH-семантика)."""
-        account = await self._get_account(account_id, org_id)
+        account = await self._get_account(account_id, org_id, lock=True)
+
+        if data.server_name is not None and account.device is not None:
+            scope = await resolve_application_account_scope(self.db, account.device)
+            if scope is not None and data.server_name != scope[1]:
+                raise HTTPException(409, "Release the account before changing its server")
 
         if data.login is not None and data.login != account.login:
             # Проверка уникальности нового логина
@@ -292,7 +311,7 @@ class GameAccountService:
             account.login = data.login
 
         if data.password is not None:
-            account.password_encrypted = data.password
+            set_account_password(account, data.password)
 
         if data.status is not None:
             new_status = AccountStatus(data.status)
@@ -353,7 +372,7 @@ class GameAccountService:
 
     async def delete_account(self, account_id: uuid.UUID, org_id: uuid.UUID) -> None:
         """Безвозвратное удаление аккаунта."""
-        account = await self._get_account(account_id, org_id)
+        account = await self._get_account(account_id, org_id, lock=True)
         await self.db.delete(account)
         await self.db.flush()
 
@@ -366,26 +385,20 @@ class GameAccountService:
         data: AssignAccountRequest,
     ) -> GameAccountResponse:
         """Назначить аккаунт на устройство."""
-        account = await self._get_account(account_id, org_id)
+        device = await self.db.scalar(select(Device).where(
+            Device.id == data.device_id, Device.org_id == org_id, Device.is_active.is_(True),
+        ).with_for_update().execution_options(populate_existing=True))
+        if device is None:
+            raise HTTPException(404, "Устройство не найдено")
+        scope = await resolve_application_account_scope(self.db, device)
+        account = await self._get_account(account_id, org_id, lock=True)
+        require_account_scope(account, scope)
 
         if account.status not in (AccountStatus.free,):
             raise HTTPException(
                 status_code=409,
                 detail=f"Нельзя назначить аккаунт в статусе '{account.status.value}'. Требуется статус 'free'.",
             )
-
-        # Проверить, что устройство принадлежит той же организации
-        from backend.models.device import Device
-        device = (
-            await self.db.execute(
-                select(Device).where(
-                    Device.id == data.device_id,
-                    Device.org_id == org_id,
-                )
-            )
-        ).scalar_one_or_none()
-        if not device:
-            raise HTTPException(status_code=404, detail="Устройство не найдено")
 
         now = datetime.now(timezone.utc)
         account.device_id = data.device_id
@@ -406,7 +419,7 @@ class GameAccountService:
         data: ReleaseAccountRequest,
     ) -> GameAccountResponse:
         """Освободить аккаунт (снять с устройства). Опционально — кулдаун."""
-        account = await self._get_account(account_id, org_id)
+        account = await self._get_account(account_id, org_id, lock=True)
 
         if account.status != AccountStatus.in_use:
             raise HTTPException(
@@ -444,6 +457,9 @@ class GameAccountService:
         skipped = 0
         errors: list[str] = []
 
+        # Configuration failure must abort the import before any partial writes.
+        get_account_cipher()
+
         for idx, item in enumerate(items):
             try:
                 # Проверка дубля
@@ -465,7 +481,6 @@ class GameAccountService:
                     org_id=org_id,
                     game=item.game,
                     login=item.login,
-                    password_encrypted=item.password,
                     status=AccountStatus.free,
                     status_changed_at=datetime.now(timezone.utc),
                     server_name=item.server_name,
@@ -476,9 +491,12 @@ class GameAccountService:
                     last_balance_update=datetime.now(timezone.utc) if item.balance_rub is not None else None,
                     meta=item.meta or {},
                 )
+                set_account_password(account, item.password)
                 self.db.add(account)
                 created += 1
 
+            except AccountCredentialUnavailable:
+                raise
             except Exception as e:
                 errors.append(f"Строка {idx + 1}: {str(e)}")
 

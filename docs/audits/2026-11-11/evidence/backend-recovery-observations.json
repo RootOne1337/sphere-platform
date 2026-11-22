@@ -1,0 +1,54 @@
+{
+  "dispatch_rejection_batch_accounting": {
+    "task_status": "failed",
+    "task_error": "pointer_path requires Android agent 1.2.81+; no input was sent",
+    "batch_status": "pending",
+    "batch_failed": 0,
+    "batch_total": 1,
+    "admission_state": "submitted",
+    "admission_outcome": "admitted",
+    "publishes": 0
+  },
+  "overdue_queue_dispatch_order": {
+    "simulated_queue_age_minutes": 65,
+    "queue_deadline_minutes": 60,
+    "dispatch_first": {
+      "publish_count": 1,
+      "command_type": "EXECUTE_DAG",
+      "command_ttl_seconds": 300,
+      "persisted_status": "assigned",
+      "cancel_pending": true,
+      "stop_requests": 1,
+      "local_expirations": 0
+    },
+    "watchdog_first_control": {
+      "publish_count": 0,
+      "persisted_status": "timeout",
+      "cancel_pending": false,
+      "stop_requests": 0,
+      "local_expirations": 1
+    }
+  },
+  "callback_before_commit": {
+    "requests": [
+      {
+        "event_type": "task.completed",
+        "db_status_at_delivery": "running",
+        "db_status_after_transaction": "running"
+      },
+      {
+        "event_type": "task.completed",
+        "db_status_at_delivery": "running",
+        "db_status_after_transaction": "completed"
+      }
+    ]
+  },
+  "inactive_pipeline_schedule": {
+    "pipeline_active": false,
+    "manual_http_exception": 400,
+    "schedule_receipt": "triggered",
+    "run_statuses": [
+      "queued"
+    ]
+  }
+}

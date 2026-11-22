@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-05T22:17:09.602923+00:00",
+  "file": "sphere-scenario.json",
+  "bytes": 723,
+  "fileSha256": "2a8856bf863bbba7b3a4e18941d2ed23e04e352614a54cc496228e25c9cba651",
+  "modifiedAt": "2026-10-05T21:37:03.927242+00:00",
+  "semanticDagHash": "6ba193f89e34a2b93efc41c60d547e21923d54417e69d3f6b795e8c7128c6916",
+  "equalsSavedVersion": true,
+  "nativeFileChooserImportObserved": true,
+  "downloadEventTimedOut": true,
+  "fileVerifiedIndependently": true
+}

@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "status": "PARTIAL_EP_033_READ_AND_STORAGE_INSTALLED",
+  "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+  "readerSource": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "uiSource": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "observedAt": "2026-10-05T20:15:48.168550+00:00",
+  "criterionClosed": false,
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "immutableBaselineRetained": true
+  },
+  "beforeEvidence": "evidence/log-read-budget/before.json",
+  "beforeEvidenceSha256": "9de588480e4b77941a3eba35b68436f3c464a4dba1b18893acb142e0c4d68e71",
+  "apiImage": {
+    "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+    "imageId": "sha256:5d4c245e79e82fe01f5101a50ad89f3ca20ca6c4dc5151816e8bf686e7ae60f9",
+    "image": "sphere-pilot-20260911-backend:9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+    "exit": 0,
+    "gitArchive": true,
+    "applicationTreeUnchangedFromReaderSource": true,
+    "user": "sphere"
+  },
+  "uiImage": {
+    "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+    "imageId": "sha256:2cd9537cbca7ac1ebc841a4843e8b8f77dc84cd9fae5497166c8e819b4b5a3f8",
+    "image": "sphere-review-frontend:5405d465fa456f78e16f5f691fabb2a909cef4f3",
+    "exit": 0,
+    "gitArchive": true
+  },
+  "applicationTreeUnchangedInStorageCommit": true,
+  "receipts": [
+    {
+      "file": "evidence/log-read-budget/after.json",
+      "sha256": "28dc86af9b4d40a74ad3fc1b2c5e74649c8f910875f3757edf8031405b25704c"
+    },
+    {
+      "file": "evidence/log-read-budget/agent-status-image-tests.json",
+      "sha256": "9336ebdde693d06c7653ff19caaaa29b68aca7f1a8fd4199a82bb9b802d605dd"
+    },
+    {
+      "file": "evidence/log-read-budget/agent-status-image-tests.xml",
+      "sha256": "2cc01ec15ae84a585708685e858a5cecfaab09d66f6b52a737520b487b96ec4a"
+    },
+    {
+      "file": "evidence/log-read-budget/resource-image-tests.json",
+      "sha256": "a53fd89899ea6e0d25dab359b65e20f902911628ac78ff7b631b139d4ca5b130"
+    },
+    {
+      "file": "evidence/log-read-budget/resource-image-tests.xml",
+      "sha256": "dc4de0289b19c0d8103a001b03c9781b62ec467fc79f30955ffcf9a90b23b582"
+    },
+    {
+      "file": "evidence/log-read-budget/mypy.json",
+      "sha256": "f98814b3677f547c392ac0a3f14a1e7757d85502ac3de45613002273c53d8bb7"
+    },
+    {
+      "file": "evidence/log-read-budget/ruff.json",
+      "sha256": "a420ba6c06c7747b62ea5270ab45dd69a64e55b0bf4befdaa29bc969d1f3f944"
+    },
+    {
+      "file": "evidence/log-read-budget/api-schema-check.json",
+      "sha256": "f98814b3677f547c392ac0a3f14a1e7757d85502ac3de45613002273c53d8bb7"
+    },
+    {
+      "file": "evidence/log-read-budget/api-build.json",
+      "sha256": "06fb9469dd1303f931eba0a881974c5333dfeace7b374467bccfab030c87c4b8"
+    },
+    {
+      "file": "evidence/log-read-budget/ui-build.json",
+      "sha256": "07178d93e0062c8c6789df371dbc2a9728f18b21e40d63c528be718e83421053"
+    },
+    {
+      "file": "evidence/log-read-budget/api-installed.json",
+      "sha256": "5675f7e02c29899b392ce8e77fc3654fb79939824e790ed7dbc12ec1b3db44ca"
+    },
+    {
+      "file": "evidence/log-read-budget/ui-installed.json",
+      "sha256": "2313bac519573cf1c5dd89c89bb56bd6a19084207f5f5a96b67d20474090b999"
+    },
+    {
+      "file": "evidence/log-read-budget/live.json",
+      "sha256": "b56500b12f56ea02a26ed951c9f67a42a130ef3b953d35ae93f2bceffeb8022d"
+    },
+    {
+      "file": "evidence/log-read-budget/browser-observation.json",
+      "sha256": "3297e412cad4ade7363c85001ce440a38cbd2af4f0af679c86cb842b9e162e0c"
+    },
+    {
+      "file": "evidence/log-read-budget/correlation.json",
+      "sha256": "620e327cd57f7cf380891b03c4f5b2ddf90314b5b9613b8c8cf783c86e104981"
+    },
+    {
+      "file": "evidence/log-read-budget/storage-api-build.json",
+      "sha256": "41959919dcb5cf0e7d91cb664835abdf85291ea80e52f873202fa42acdec1901"
+    },
+    {
+      "file": "evidence/log-read-budget/storage-installed.json",
+      "sha256": "334b444356d22e8e1d7af1cad89d05bec99458869c4c233e03ac3aeeccf04e00"
+    },
+    {
+      "file": "evidence/log-read-budget/storage-live.json",
+      "sha256": "4a1d7a6f04c203963abe7d7742b237bf515a2a3d1ba0c538c55d317c5cbb2650"
+    },
+    {
+      "file": "evidence/log-read-budget/storage-reader-image-tests.json",
+      "sha256": "67bf4fccada1f49d7e35f15b295e6bbd44a8b1ac4e84d359b6467485d5cee3b0"
+    },
+    {
+      "file": "evidence/log-read-budget/storage-reader-image-tests.xml",
+      "sha256": "3d9b2dc1cc13507ac4da64006a1b9126fe93870cbd5d45c0d23e72a7ea8260a7"
+    },
+    {
+      "file": "evidence/log-read-budget/storage-compose-tests.xml",
+      "sha256": "006eaefcade264fa1f642c898f6e7e0aaaf4064263ff1fb7f7bf78c1915722c4"
+    },
+    {
+      "file": "evidence/log-read-budget/document-links.json",
+      "sha256": "745c868385abb55451e88e03c101aa047a9e4a94951f924b747a227f76e0156f"
+    },
+    {
+      "file": "evidence/log-read-budget/source-ci-runner-annotations.json",
+      "sha256": "b8814535c1b7c5284d29ad89ec53cc69bd880a9bffdba226a220b1ce661f6b23"
+    },
+    {
+      "file": "evidence/log-read-budget/frontend-validation.json",
+      "sha256": "83aa586b1282572ddec16b60afe05471531b62354ac139b4dcb8ff3a3a2d3320"
+    },
+    {
+      "file": "evidence/log-read-budget/source-ci.json",
+      "sha256": "95ea1f5f2218824572d9119f3135651718fac2d189a790f139aa4cdf8a2ae7c0"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "file": "backend/api/v1/logs/router.py",
+      "sha256": "10c69bee50ce09e877fe24ea207b68d465f7d2fc1884f9a4eef62ef996f595cc"
+    },
+    {
+      "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "file": "backend/services/device_log_reader.py",
+      "sha256": "13b9a61f75a6a85b7d2ac5b79249ee40cda3d289365e56c3f532027e5d70741a"
+    },
+    {
+      "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "file": "backend/schemas/device_logs.py",
+      "sha256": "d21f50e4cba26c38fb9f90bcff28bcaf94485963443ce695f5a9f9caebf5e1c8"
+    },
+    {
+      "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "file": "tests/devices/test_log_read_budget.py",
+      "sha256": "3bc329f7964a52107fb2eceb52f82a4a0c294839144e4b144613168c52f5872c"
+    },
+    {
+      "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "file": "frontend/app/(dashboard)/logs/page.tsx",
+      "sha256": "d51fb3008257fff8d5aa4113689e4756a04e122950b0f262edb82e69a2c0bcf3"
+    },
+    {
+      "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "file": "frontend/__tests__/logs/page.test.tsx",
+      "sha256": "bed50f14f23ceba5ffd3eb2dd0fc0f53ede5fb70b0c83e5a9ec3cc53ea916ce0"
+    },
+    {
+      "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "file": "scripts/audit/probe_log_read_budget.py",
+      "sha256": "d9e2b6c0d64551cc2e946871f4741d81d1396e59c8f6852ed78cfd2ba368b78d"
+    },
+    {
+      "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "file": "docs/openapi.json",
+      "sha256": "e7092ff1ae22f76f7a5491cfcb801670492c5133ce3006918a94fb0d8a341d23"
+    },
+    {
+      "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+      "file": "backend/Dockerfile",
+      "sha256": "07da7d47b1910c8300f16ac13b9f775fbab55d3b0a22197426b81fe676972e31"
+    },
+    {
+      "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+      "file": "docker-compose.yml",
+      "sha256": "45d833b8f0e408ce8ea2360a71473a37d6f431613de1ea2108426b6d3def7297"
+    },
+    {
+      "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+      "file": "docker-compose.full.yml",
+      "sha256": "078b352a50db47ba13a71d546086f275516189bf38a61510a9b340dec8ba9fa5"
+    },
+    {
+      "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+      "file": "docker-compose.production.yml",
+      "sha256": "343384bc920adddf8685892b144f92544aa4aec162cda243fccf81ea3f5ed5d2"
+    },
+    {
+      "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+      "file": "docker-compose.local-pilot.yml",
+      "sha256": "ecc522bd60cf89d7c4a00ef7c68862c7bad85a8a9c231ef69869f5e54bcfd47b"
+    },
+    {
+      "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+      "file": "tests/deployment/test_compose_local_pilot.py",
+      "sha256": "87a7e2b0d1a7333915f41139706918cb1e18bd28028ee7adc10aa52148f0eb46"
+    },
+    {
+      "source": "9889c9ace2bf3d482cd972b6c79250cf6f8eefad",
+      "file": "tests/deployment/test_compose_production.py",
+      "sha256": "ab1a623601855ce59c498b160606e6cd67e73170e1152506ae8f5e6a17360073"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "assets/log-read-budget/desktop-dark.jpg",
+      "sha256": "72509d09c4db0d586260d07cc056dc1e9b29a20433735d2dece081f7b4990632",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "file": "assets/log-read-budget/desktop-light.jpg",
+      "sha256": "060d5c3fdfb7bd435a916b9c899f5ee0fafc82a9ffad88e652f1a14fca7807d7",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "file": "assets/log-read-budget/mobile-light.jpg",
+      "sha256": "c8bb7cd7ec17ce9e6b8e3b687c65fbdefdb5d9bcb7de43e385eb2fac3eeb3188",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "assets/log-read-budget/mobile-sources.jpg",
+      "sha256": "7dffc8f363473bdc31b60c0dbd3f7407a0a003ed38e8eda3f1f606487d386dd4",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "limitations": [
+    "Global/org quotas, independent retention sweeper and upload-before-buffering budget remain open",
+    "Python fixture allocations are not process RSS, host disk/RAM attribution or load acceptance",
+    "Runtime fleet samples fluctuated; no continuous uptime, 23-device or zero-downtime claim",
+    "Two migration failures and rollback retained; original stopped staging is private",
+    "CI snapshot is finite and not all green; subsequent docs head has separate checks",
+    "Historical Android parser/transport warnings require frame/route/time correlation; no common cause proven"
+  ]
+}

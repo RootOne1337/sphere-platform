@@ -1,0 +1,163 @@
+{
+  "schema": "sphere-good-native-producer-audit-v1",
+  "sourceHashes": {
+    ".local-pilot/skuter1-loop-graph-20261102.py": "055c182b78375d167ace248561d41b5504e9bd2aa5cac846ed15bbbef6eb01b2",
+    ".local-pilot/skuter1-loop-graph-resume-20261102.py": "09e379d0e39f6b311c878ccafb3cd65fe54e19788707940815541b572829f901",
+    ".local-pilot/skuter1-fused-graph-20261102.py": "44058561465af6d60258f51c127f651c0d7a1c434a84193813dc5cf0db40cff2",
+    ".local-pilot/skuter1-fused-graph-resume-20261102.py": "7e0ee8c2212baf0997d0f6e852639a2379190f7699d74a9ce33750c2ed21c0c9",
+    ".local-pilot/skuter1-fused-graph-priority-resume-20261102.py": "cb07a642f8c26575edee622dfce64c849965b95d776d6c51fa865b35dd985636",
+    ".local-pilot/skuter1-fused-track-filter-ba-20261102.py": "d2d7befdcdad70412b265673fcbc2c86774f3c5709a18786abb5c729fb0fe366",
+    ".local-pilot/skuter1-fused-supported-final-20261102.py": "370df2656a64e619b22d5b57ab46bfa00b8174db62c23a383dcec87661c613a7",
+    ".local-pilot/reconstruction-jobs/6a77040681d142ec97d51831a22785fb/prepared/learned-recovery/features.json": "c71c5ba5b99d8cdc80392942e207574d308ef0787383da850f45883bb61d28be",
+    ".local-pilot/skuter1-fused-graph-20261102-v1/namespace.json": "62cb79f1f7235b388f5ad36f681bc81ddeb2d5f77603e50a8649bceb4c4d20f7",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/global-map-receipt.json": "61d3756a53f5ac71d8a6f16523a64cd8ac96b3e0f597f9f0b6d0f0a04169c74e",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/ba-child.py": "d5866ddcd6828ba99d607acaec3bf9d2acb2fa984a8e756040e7fe37fbe26a9a",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/filter-provenance.json": "acb98e350065a619671a46cfe7dbeed2479ec29e09e6df62114fed4b42db05da",
+    ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/supported-3view-20261102-v1/geometry.json": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+    "scripts/pilot/learned_route_features.py": "614216cdb1a167e07b376855b82a4e9f6c8345fcb5f4edcaed5328c276541b74",
+    "scripts/pilot/route_native_track_policy.py": "939787a72aad5bab76d978cd6f70afae7aa0487fc2d0be5749c86f05da04f65e"
+  },
+  "originalLearnedFeatures": {
+    "method": "opencv-rootsift-lightglue",
+    "lightglue_source": "eb42fee2d71449efb0aa5c10549752b5d75384d8",
+    "weights_sha256": "5b52b8d9982d43532dc042606b346bb9594c9f5a4bd6f64362c63866287b4ac0",
+    "opencv": "4.12.0",
+    "torch": "2.9.1+rocm7.2.1",
+    "views": 173,
+    "pairs": 846,
+    "median_raw_matches": 211.0,
+    "max_features": 1024,
+    "device": "cuda",
+    "detector_max_features": 8192,
+    "feature_quota_after_mask": true,
+    "gpu_memory_fraction": 0.65,
+    "footer_exclusion_fraction": 0.025,
+    "semantic_dynamic_mask": false,
+    "network_downloads": false,
+    "geometric_verification_complete": true,
+    "stationary_pair_filter": true
+  },
+  "orderedStages": [
+    {
+      "method": "source_video_corner_tracks",
+      "source": "original prepared/database.db",
+      "cameraIndex": "same173 source images"
+    },
+    {
+      "method": "opencv_rootsift_lightglue",
+      "featuresReceipt": ".local-pilot/reconstruction-jobs/6a77040681d142ec97d51831a22785fb/prepared/learned-recovery/features.json",
+      "featureBudget": 1024,
+      "detectorBudget": 8192
+    },
+    {
+      "method": "six_endpoint_appearance_pairs",
+      "producer": ".local-pilot/skuter1-loop-graph-20261102.py",
+      "pairsStartAndEndOffsetsSeconds": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0.5
+        ],
+        [
+          0.5,
+          1
+        ],
+        [
+          1.5,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "matcher": "same pinned LightGlue; CPU",
+      "descriptorInput": "uint8 database descriptors cast float32 then row L2-normalized",
+      "xyScaleOrientation": "keypoints columns0:2,2,3; image_size1920x1080; batch axis",
+      "trainingSplit": "sha256(decimal x:y)[0] <192 before Fverification; remainder held out"
+    },
+    {
+      "method": "VIDEO_PREFIX_PLUS_EXACT_XY_UNIQUE_SIFT_SUFFIX",
+      "producer": ".local-pilot/skuter1-fused-graph-20261102.py",
+      "namespaceReceipt": ".local-pilot/skuter1-fused-graph-20261102-v1/namespace.json",
+      "sourceVideoDBSHA": "4f549499eac9219b7e4c21dda3ddaff28dfdddda73aa9c501d2071d4cd6a51c8",
+      "sourceSiftDBSHA": "0cd85a71ff7ed7909e111e240c8f8b6d2b27ad82434edb6e27e306ac5745881a"
+    },
+    {
+      "method": "view_graph_calibrator then global_mapper",
+      "producer": ".local-pilot/skuter1-fused-graph-priority-resume-20261102.py",
+      "actualCommand": [
+        "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-tools\\colmap-v4.2.1-cpu\\bin\\colmap.exe",
+        "global_mapper",
+        "--database_path",
+        "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\job\\prepared\\database.db",
+        "--image_path",
+        "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\job\\prepared\\images",
+        "--output_path",
+        "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\models",
+        "--default_random_seed",
+        "17",
+        "--log_target",
+        "stdout",
+        "--GlobalMapper.num_threads",
+        "2",
+        "--GlobalMapper.random_seed",
+        "17",
+        "--GlobalMapper.gp_use_gpu",
+        "0",
+        "--GlobalMapper.ba_ceres_use_gpu",
+        "0",
+        "--GlobalMapper.refine_sensor_from_rig",
+        "0",
+        "--GlobalMapper.track_intra_image_consistency_threshold",
+        "1.0",
+        "--GlobalMapper.tri_complete_max_reproj_error",
+        "1.0",
+        "--GlobalMapper.tri_merge_max_reproj_error",
+        "1.0"
+      ],
+      "focal": "old command omits explicit focal refinement; current exact pinned4.2.1 help default=1; current production explicit=1",
+      "fixedKDuringGlobalMapper": false
+    },
+    {
+      "method": "remove_whole_tracks_with_repeated_image_observation",
+      "producer": ".local-pilot/skuter1-fused-track-filter-ba-20261102.py",
+      "removedCount": 945
+    },
+    {
+      "method": "fixed_K_robust_BA",
+      "producer": ".local-pilot/skuter1-fused-graph-20261102-v2/track-filter-ba-20261102-v2/ba-child.py",
+      "loss": "SOFT_L1",
+      "scalePixels": 2,
+      "minimumTrackLength": 3,
+      "threads": 2,
+      "maximumIterations": 100,
+      "innerMaximumSeconds": 50
+    },
+    {
+      "method": "uniform_minimum_three_distinct_registered_views",
+      "producer": ".local-pilot/skuter1-fused-supported-final-20261102.py",
+      "removedCount": 70,
+      "retainedPosesKXYXYZUnchanged": true
+    }
+  ],
+  "automaticDifferences": [
+    "Native incremental VIDEO-only success skips fused candidate entirely.",
+    "Existing opt-in fused matcher is RootSIFT BF mutual global2NN ratio.75 then F2px, not LightGlue.",
+    "Existing fused generic temporal+appearance proposals differ from six endpoint pairs; no hardcoded skuter pair proposal should enter product.",
+    "Existing native track policy removes under3-view tracks before and after fixed-K BA; old BA ignored these then removed after.",
+    "Native point count, geometry admission and runtime descriptor map coverage are separate gates."
+  ],
+  "runtimeGap": "Old native20556 is not runtime RootSIFT2026: legacy export has8weak neighborhoods and0localized samples5-10s. Native reference LK128/159p95137ms is private, offline-only, not qualified live input.",
+  "physicalActions": 0,
+  "sourceDatabasesOpened": false,
+  "sourceUnchanged": true,
+  "executionQualified": false
+}

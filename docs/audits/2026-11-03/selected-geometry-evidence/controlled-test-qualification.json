@@ -1,0 +1,35 @@
+{
+  "schema": "sphere-reference-lk-controlled-test-qualification-v1",
+  "scope": "controlled_experimental_test_only",
+  "reviewed": true,
+  "execution_qualified": false,
+  "route_sha256": "b18ec0e33e9297728e6760c702e97567bed074fb5f0094e76c33f58f4cc801a0",
+  "cache_sha256": "fef2fad739b1df7cfe20ed3d056dca83962310c15805a69c2bdcbb917688af74",
+  "pipeline_sha256": "af1b9e440ea3c4055189d79fcb725888fcbafa578d5ae00234df6d5307ddf6b9",
+  "source_binding_sha256": "fd21dd98435f3ed834eb84cc8f6a5a37d97c2f081ac6d62ad9544b23a0ba30dc",
+  "positive_report": {
+    "file": "reference-lk-positive.json",
+    "sha256": "401f32e17800581293682e219fe59f69271e2aedef647efaff1c9d5129759252"
+  },
+  "transport_report": {
+    "file": "reference-lk-transport.json",
+    "sha256": "33e6651fd8f8d1e6876fc08eb91081952ce47fb6afdf0010a0f32cd25281e3f7"
+  },
+  "negative_report": {
+    "file": "reference-lk-negative.json",
+    "sha256": "1e7fb9e999e2cc73e29e35f82730bb700913e897d90ec4816723f4828a0ccce6"
+  },
+  "review_limits": {
+    "independent_live_gameplay": false,
+    "android_latency_measured": false,
+    "full_route_completion_proven": false,
+    "continuous_5Hz_proven": false,
+    "paced_jpeg_surrogate": "OpenCV JPEG86, concurrent frontend CI",
+    "observed_transport_localized": 97,
+    "transport_queries": 159,
+    "negative_actually_matched": 89,
+    "negative_false_confirmations": 0,
+    "longest_first_lost_to_next_localized_media_seconds": 3.892,
+    "unknown_commands": "neutral only; existing freshness and motion gates retained"
+  }
+}

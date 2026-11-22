@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "observedDateLocal": "2026-10-08",
+  "timezone": "Asia/Yekaterinburg",
+  "sourceParent": "4a538ebbaa12747202c05690203bac9e28babf27",
+  "device": "PH025",
+  "causeProved": "Hardware-preferred AVC configuration rejects the same packets that no-preference renders on this viewer host",
+  "underlyingHardwareUnavailabilityCauseKnown": false,
+  "browserExperiment": {
+    "engine": "Actual Codex in-app Chromium VideoDecoder",
+    "mock": false,
+    "finiteFixture": true,
+    "isLiveFpsBenchmark": false,
+    "width": 960,
+    "height": 540,
+    "results": [
+      {
+        "mode": "prefer-hardware",
+        "configs": [
+          {
+            "codec": "avc1.42C01F",
+            "hardwareAcceleration": "prefer-hardware"
+          }
+        ],
+        "stats": {
+          "binaryMessagesReceived": 16,
+          "binaryBytesReceived": 105833,
+          "idrUnits": 2,
+          "deltaUnits": 9,
+          "spsUnits": 3,
+          "ppsUnits": 2,
+          "decodeSubmitted": 1,
+          "decodedOutputs": 0,
+          "renderedFrames": 0,
+          "decodeErrors": 1,
+          "renderErrors": 0,
+          "invalidPackets": 0
+        },
+        "errorCodes": [
+          "OperationError"
+        ]
+      },
+      {
+        "mode": "no-preference",
+        "configs": [
+          {
+            "codec": "avc1.42C01F",
+            "hardwareAcceleration": "no-preference"
+          }
+        ],
+        "stats": {
+          "binaryMessagesReceived": 16,
+          "binaryBytesReceived": 105833,
+          "idrUnits": 2,
+          "deltaUnits": 9,
+          "spsUnits": 3,
+          "ppsUnits": 2,
+          "decodeSubmitted": 11,
+          "decodedOutputs": 11,
+          "renderedFrames": 11,
+          "decodeErrors": 0,
+          "renderErrors": 0,
+          "invalidPackets": 0
+        },
+        "errorCodes": []
+      },
+      {
+        "mode": "prefer-software",
+        "configs": [
+          {
+            "codec": "avc1.42C01F",
+            "hardwareAcceleration": "prefer-software"
+          }
+        ],
+        "stats": {
+          "binaryMessagesReceived": 16,
+          "binaryBytesReceived": 105833,
+          "idrUnits": 2,
+          "deltaUnits": 9,
+          "spsUnits": 3,
+          "ppsUnits": 2,
+          "decodeSubmitted": 11,
+          "decodedOutputs": 11,
+          "renderedFrames": 11,
+          "decodeErrors": 0,
+          "renderErrors": 0,
+          "invalidPackets": 0
+        },
+        "errorCodes": []
+      },
+      {
+        "mode": "current",
+        "configs": [
+          {
+            "codec": "avc1.42C01F",
+            "hardwareAcceleration": "no-preference"
+          }
+        ],
+        "stats": {
+          "binaryMessagesReceived": 16,
+          "binaryBytesReceived": 105833,
+          "idrUnits": 2,
+          "deltaUnits": 9,
+          "spsUnits": 3,
+          "ppsUnits": 2,
+          "decodeSubmitted": 11,
+          "decodedOutputs": 11,
+          "renderedFrames": 11,
+          "decodeErrors": 0,
+          "renderErrors": 0,
+          "invalidPackets": 0
+        },
+        "errorCodes": []
+      }
+    ]
+  },
+  "localValidation": {
+    "redRegressions": 3,
+    "greenDecoderTests": 42,
+    "fullFrontendTests": 1820,
+    "fullFrontendSuites": 137,
+    "freshRouteTypes": "passed",
+    "fullNonIncrementalTypeScript": "passed"
+  },
+  "runtimeAtSourceValidation": {
+    "uiSource": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "apiSource": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "PH025ApkVersionCode": 10245,
+    "PH010ApkVersionCode": 10247,
+    "fixedUiInstalled": false
+  },
+  "investigationMutations": {
+    "targetedPH025CaptureStopStartAttempts": 2,
+    "osReboot": false,
+    "emulatorRestart": false,
+    "apkInstall": false,
+    "backendRestart": false,
+    "applicationDatabaseWrites": false
+  },
+  "publication": {
+    "privateFramePayloadIncluded": false,
+    "arbitraryDecoderMessagesIncluded": false,
+    "localHashesAreAuditEvidenceNotArtifactAttestation": true
+  },
+  "openAcceptance": [
+    "exact-source hosted CI/runtime artifact",
+    "3015 live picture after installation",
+    "late viewer on static capture",
+    "continuous input integration and real end-to-end/soak"
+  ],
+  "files": [
+    {
+      "path": "frontend/lib/h264-decoder.ts",
+      "bytes": 13717,
+      "sha256": "45e04fa01a88af5a152a987e9866f21d9686f28ec85017c8cc6a77af446be1ee"
+    },
+    {
+      "path": "frontend/components/sphere/DeviceStream.tsx",
+      "bytes": 39326,
+      "sha256": "80fc536587dc0dd306a8fdb365fc7a2a6baf4064f4fc5bd5001364acf0538de6"
+    },
+    {
+      "path": "frontend/__tests__/stream/h264-decoder.test.ts",
+      "bytes": 18465,
+      "sha256": "a7223414a504d6ef53667773442090100a12fb3269db3c1223dafa2ef23c0947"
+    },
+    {
+      "path": ".local-pilot/stream-025-browser/fixture.json",
+      "bytes": 141871,
+      "sha256": "302bc2b9dd6b4f3ab2f13c8ddee4db060a9c08fec7628eecb2e9037f16e68f0f"
+    },
+    {
+      "path": ".local-pilot/stream-025-browser/decoded-comparison.json",
+      "bytes": 2903,
+      "sha256": "c9f3cfd0be1cf89469d83b215fbebb55f5eba9555c911a3adebf4a280e95dd67"
+    },
+    {
+      "path": ".local-pilot/stream-025-browser/decoded-comparison.jpg",
+      "bytes": 225086,
+      "sha256": "904f71c61fdbd4a2fa99ca9a12c468a847cd9e9c78465a808908c39a28d93ee8"
+    },
+    {
+      "path": ".local-pilot/stream-025-browser/decoded-fixed.json",
+      "bytes": 942,
+      "sha256": "10da7ebb3597a1619874fc2f433218f89bf8bb1664dc2b61c43a8bb6080a0a29"
+    },
+    {
+      "path": ".local-pilot/stream-025-browser/decoded-fixed.jpg",
+      "bytes": 87333,
+      "sha256": "f8a30fca2be9682f1c326672a4ddbcfe93033505a995b6538b6fcd568f367ab9"
+    },
+    {
+      "path": ".local-pilot/stream-025-decoder-leaf-green-20261008.log",
+      "bytes": 3567,
+      "sha256": "5b3da9a73a3ff5a46bfd4e325f6793ec515e01f97a50c8446b7a007f1afeb4c0"
+    },
+    {
+      "path": ".local-pilot/stream-025-decoder-full-20261008.log",
+      "bytes": 105355,
+      "sha256": "13979266ec7f6dcae6b06b8901d01a6438bd90bdde5576fd411af12f8e104a40"
+    },
+    {
+      "path": ".local-pilot/stream-025-decoder-route-types-20261008.log",
+      "bytes": 67,
+      "sha256": "285ddc3cf0afdeab1d4968d2a6f056a3727585c9e973ddb1d943aa7c3f1fc784"
+    },
+    {
+      "path": ".local-pilot/stream-025-decoder-types-20261008.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

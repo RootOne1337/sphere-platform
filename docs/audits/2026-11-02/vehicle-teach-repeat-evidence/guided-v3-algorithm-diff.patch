@@ -1,0 +1,103 @@
+--- v2/ratio-after-F.py
++++ v3/global-ratio-before-F.py
+@@ -15,9 +15,9 @@
+ MAX_FEATURES_PER_VIEW = 4096
+ MAX_OBSERVATIONS = 1_048_576
+ MAX_VIEW_LAG = 8
+-DESCRIPTOR_CANDIDATES = 8
++DESCRIPTOR_CANDIDATES = 2
+ MAX_PAIR_QUERIES = 8_388_608
+-MAX_DESCRIPTOR_PROPOSALS = MAX_PAIR_QUERIES * DESCRIPTOR_CANDIDATES
++MAX_DESCRIPTOR_PROPOSALS = MAX_PAIR_QUERIES * 8
+ MAX_MATCH_EDGES = 1_000_000
+ MAX_PROVENANCE_OBSERVATIONS = 100_000
+ MAX_BUILD_SECONDS = 90.0
+@@ -85,7 +85,6 @@
+ 
+ def _directed(pixels_a, descriptors_a, pixels_b, descriptors_b, fundamental, *, checkpoint, counts):
+     import cv2 as cv
+-    import numpy as np
+ 
+     if len(pixels_b) < 2 or not len(pixels_a):
+         return {}
+@@ -106,30 +105,38 @@
+             raise ValueError("guided_landmark_descriptor_proposal_quota")
+         if not size:
+             continue
+-        query_ids = np.repeat(np.arange(start, start + len(chunk)), [len(row) for row in chunk])
+-        train_ids = np.fromiter((m.trainIdx for row in chunk for m in row), np.int64, count=size)
+-        errors = _sampson(pixels_a[query_ids], pixels_b[train_ids], fundamental)
+-        offset = 0
++        winners = []
+         for index, row in enumerate(chunk, start):
+-            row_errors = errors[offset : offset + len(row)]
+-            offset += len(row)
+-            candidates = sorted(
+-                (
+-                    (m.distance, m.trainIdx, float(error))
+-                    for m, error in zip(row, row_errors)
+-                    if math.isfinite(m.distance) and error <= MAX_SAMPSON_PX
+-                ),
+-                key=lambda item: (item[0], item[1]),
+-            )
+-            counts["epipolar_rejected_proposals"] += len(row) - len(candidates)
+-            if len(candidates) < 2:
+-                counts["fewer_than_two_epipolar_candidates"] += 1
++            if len(row) < 2:
++                counts["fewer_than_two_global_candidates"] += 1
+                 continue
+-            first, second = candidates[:2]
+-            if first[0] < DESCRIPTOR_RATIO * second[0] and first[0] < MAX_DESCRIPTOR_DISTANCE:
+-                selected[index] = (first[1], first[0], first[2])
++            first, second = sorted(row, key=lambda m: (m.distance, m.trainIdx))[:2]
++            # Lowe's ambiguity competitor is the original descriptor neighbor,
++            # even when that competitor fails geometry. Never promote a runner
++            # up or rescue an ambiguous descriptor after the geometric filter.
++            if (
++                not math.isfinite(first.distance)
++                or not math.isfinite(second.distance)
++                or not first.distance < DESCRIPTOR_RATIO * second.distance
++            ):
++                counts["global_ratio_rejected_queries"] += 1
++                continue
++            if not first.distance < MAX_DESCRIPTOR_DISTANCE:
++                counts["descriptor_distance_rejected_queries"] += 1
++                continue
++            counts["global_descriptor_gate_passed_queries"] += 1
++            winners.append((index, first.trainIdx, first.distance))
++        if not winners:
++            continue
++        errors = _sampson(
++            pixels_a[[w[0] for w in winners]], pixels_b[[w[1] for w in winners]], fundamental
++        )
++        counts["epipolar_checked_global_winners"] += len(winners)
++        for (index, target, distance), error in zip(winners, errors):
++            if error <= MAX_SAMPSON_PX:
++                selected[index] = (target, distance, float(error))
+             else:
+-                counts["descriptor_rejected_queries"] += 1
++                counts["epipolar_rejected_global_winners"] += 1
+     return selected
+ 
+ 
+@@ -332,8 +339,8 @@
+     support = Counter(view for row in candidates for view in row[3])
+     bounded()
+     report = dict(
+-        schema="sphere-guided-runtime-landmark-build-v1",
+-        method="known-pose-sampson-rootsift-conflict-free-v1",
++        schema="sphere-guided-runtime-landmark-build-v2",
++        method="global-2nn-ratio-before-known-sampson-conflict-free-v2",
+         tracks=len(tracks),
+         accepted=len(candidates),
+         rejected=len(tracks) - len(candidates),
+@@ -346,6 +353,9 @@
+         max_view_lag=MAX_VIEW_LAG,
+         descriptor_candidates=DESCRIPTOR_CANDIDATES,
+         descriptor_ratio=DESCRIPTOR_RATIO,
++        global_ratio_before_geometry=True,
++        alternate_winner_promotion=False,
++        reverse_policy="global-2nn-ratio-distance-mutual-stricter-than-baseline-nearest-only",
+         max_descriptor_distance=MAX_DESCRIPTOR_DISTANCE,
+         max_sampson_px=MAX_SAMPSON_PX,
+         min_views=3,

@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import {
     IDataObject,
     IHookFunctions,
@@ -11,7 +11,22 @@ import { sphereApiRequest, SphereFunctionContext } from '../BaseNode';
 
 interface WebhookCreateResponse {
     id: string;
-    [key: string]: unknown;
+}
+
+const SUBSCRIPTIONS = '/n8n/webhooks';
+const SUPPORTED_EVENTS = new Set(['task.completed', 'task.failed']);
+
+function eventNames(selected: string[]): string[] {
+    if (selected.includes('all') || selected.includes('*')) return ['*'];
+    const events = selected.map(event => event.replace(/^task_/, 'task.'));
+    if (!events.length || events.some(event => !SUPPORTED_EVENTS.has(event))) {
+        throw new Error('Sphere publishes task.completed and task.failed to this node. Select supported events.');
+    }
+    return [...new Set(events)];
+}
+
+function isMissing(error: unknown): boolean {
+    return String((error as { httpCode?: unknown } | null)?.httpCode) === '404';
 }
 
 export class SphereEventTrigger implements INodeType {
@@ -40,14 +55,9 @@ export class SphereEventTrigger implements INodeType {
                 name: 'eventTypes',
                 type: 'multiOptions',
                 options: [
-                    { name: 'All Events', value: 'all' },
+                    { name: 'All Supported Events', value: 'all' },
                     { name: 'Task Completed', value: 'task_completed' },
                     { name: 'Task Failed', value: 'task_failed' },
-                    { name: 'Device Offline', value: 'device_offline' },
-                    { name: 'Device Online', value: 'device_online' },
-                    { name: 'VPN Connected', value: 'vpn_connected' },
-                    { name: 'VPN Disconnected', value: 'vpn_disconnected' },
-                    { name: 'OTA Update Complete', value: 'ota_complete' },
                 ],
                 default: ['task_completed'],
             },
@@ -72,7 +82,7 @@ export class SphereEventTrigger implements INodeType {
                 typeOptions: { password: true },
                 default: '',
                 displayOptions: { show: { validateHmac: [true] } },
-                description: 'Secret provided by Sphere Platform when webhook was registered',
+                description: 'Original secret shared with Sphere when this subscription is created',
             },
         ],
     };
@@ -81,17 +91,34 @@ export class SphereEventTrigger implements INodeType {
         default: {
             async checkExists(this: IHookFunctions): Promise<boolean> {
                 const webhookData = this.getWorkflowStaticData('node');
-                return !!webhookData.webhookId;
+                if (typeof webhookData.webhookId !== 'string') return false;
+                try {
+                    const result = await sphereApiRequest.call(
+                        this as unknown as SphereFunctionContext,
+                        'GET',
+                        `${SUBSCRIPTIONS}/${encodeURIComponent(webhookData.webhookId)}`,
+                    ) as WebhookCreateResponse;
+                    if (result?.id !== webhookData.webhookId) throw new Error('Sphere did not confirm the subscription ID.');
+                    return true;
+                } catch (error) {
+                    if (isMissing(error)) return false;
+                    throw error;
+                }
             },
 
             async create(this: IHookFunctions): Promise<boolean> {
                 const webhookUrl = this.getNodeWebhookUrl('default');
                 const eventTypes = this.getNodeParameter('eventTypes') as string[];
                 const tagsFilter = this.getNodeParameter('tagsFilter') as string;
+                const validateHmac = this.getNodeParameter('validateHmac') as boolean;
+                const secret = validateHmac ? this.getNodeParameter('webhookSecret') as string : '';
+                if (validateHmac && !secret) throw new Error('Set the Sphere webhook secret before activating this trigger.');
 
                 const body: Record<string, unknown> = {
+                    name: this.getNode().name,
                     url: webhookUrl,
-                    events: eventTypes.includes('all') ? ['*'] : eventTypes,
+                    events: eventNames(eventTypes),
+                    ...(secret ? { secret } : {}),
                 };
                 if (tagsFilter) {
                     body.tags = tagsFilter.split(',').map((t) => t.trim()).filter(Boolean);
@@ -100,10 +127,11 @@ export class SphereEventTrigger implements INodeType {
                 const result = await sphereApiRequest.call(
                     this as unknown as SphereFunctionContext,
                     'POST',
-                    '/webhooks',
+                    SUBSCRIPTIONS,
                     body,
                 ) as WebhookCreateResponse;
 
+                if (typeof result?.id !== 'string' || !result.id) throw new Error('Sphere did not confirm the new subscription ID.');
                 const webhookData = this.getWorkflowStaticData('node');
                 webhookData.webhookId = result.id;
                 return true;
@@ -111,15 +139,15 @@ export class SphereEventTrigger implements INodeType {
 
             async delete(this: IHookFunctions): Promise<boolean> {
                 const webhookData = this.getWorkflowStaticData('node');
-                if (webhookData.webhookId) {
+                if (typeof webhookData.webhookId === 'string') {
                     try {
                         await sphereApiRequest.call(
                             this as unknown as SphereFunctionContext,
                             'DELETE',
-                            `/webhooks/${webhookData.webhookId as string}`,
+                            `${SUBSCRIPTIONS}/${encodeURIComponent(webhookData.webhookId)}`,
                         );
-                    } catch {
-                        // Webhook may already be gone; proceed with cleanup
+                    } catch (error) {
+                        if (!isMissing(error)) throw error;
                     }
                     delete webhookData.webhookId;
                 }
@@ -130,40 +158,44 @@ export class SphereEventTrigger implements INodeType {
 
     async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
         const validateHmac = this.getNodeParameter('validateHmac') as boolean;
-        const body = this.getBodyData() as IDataObject;
+        let body = this.getBodyData() as IDataObject;
         const headers = this.getHeaderData();
 
         if (validateHmac) {
             const secret = this.getNodeParameter('webhookSecret') as string;
-            const signature = headers['x-sphere-signature'] as string | undefined;
-
-            if (!signature) {
-                return {
-                    webhookResponse: { status: 401, body: 'Missing X-Sphere-Signature header' },
-                };
+            const signature = headers['x-sphere-signature'];
+            const request = this.getRequestObject();
+            if (!Buffer.isBuffer(request.rawBody) && typeof request.readRawBody === 'function') {
+                await request.readRawBody();
             }
-
-            const rawBody = JSON.stringify(body);
-            const expected = createHmac('sha256', secret).update(rawBody).digest('hex');
-            const provided = signature.replace('sha256=', '');
-
-            // FIX 9.3: constant-time comparison via crypto.timingSafeEqual
-            // Prevents timing side-channel attacks on HMAC verification
-            const expectedBuf = Buffer.from(expected, 'utf-8');
-            const providedBuf = Buffer.from(provided, 'utf-8');
-            const valid =
-                expectedBuf.length === providedBuf.length &&
-                timingSafeEqual(expectedBuf, providedBuf);
-
-            if (!valid) {
-                return {
-                    webhookResponse: { status: 401, body: 'Invalid signature' },
-                };
+            const provided = typeof signature === 'string' && /^sha256=[0-9a-f]{64}$/.test(signature)
+                ? Buffer.from(signature.slice(7), 'hex') : null;
+            const raw = request.rawBody;
+            const expected = secret && Buffer.isBuffer(raw)
+                ? createHmac('sha256', createHash('sha256').update(secret).digest('hex')).update(raw).digest()
+                : null;
+            if (!provided || !expected || !timingSafeEqual(expected, provided)) {
+                this.getResponseObject().status(401).send('Invalid Sphere webhook signature');
+                return { noWebhookResponse: true };
+            }
+            try {
+                body = JSON.parse(raw.toString('utf8')) as IDataObject;
+            } catch {
+                this.getResponseObject().status(400).send('Invalid Sphere webhook payload');
+                return { noWebhookResponse: true };
             }
         }
 
+        const deliveryId = headers['x-sphere-delivery'];
+        if (validateHmac && deliveryId !== undefined && (
+            typeof deliveryId !== 'string' || body?.delivery_id !== deliveryId
+        )) {
+            this.getResponseObject().status(401).send('Invalid Sphere webhook delivery ID');
+            return { noWebhookResponse: true };
+        }
+        const json = !validateHmac && typeof deliveryId === 'string' ? { ...body, delivery_id: deliveryId } : body;
         return {
-            workflowData: [[{ json: body }]],
+            workflowData: [[{ json }]],
         };
     }
 }

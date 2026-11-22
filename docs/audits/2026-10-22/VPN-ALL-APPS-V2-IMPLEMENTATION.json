@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T16:02:39.197650+00:00",
+  "implementationSource": "f5b2b1d608341ad97279a88a34cb69c5e77a93c9",
+  "allAppsScopeImplemented": true,
+  "candidateApkVersionCode": 10286,
+  "candidateInstalled": false,
+  "installed": {
+    "ui": "46dd02fff711c1667b44520b85290226b7155287",
+    "api": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+    "apkVersionCode": 10285
+  },
+  "localTests": {
+    "vpnBackendPassed": 234,
+    "vpnUiPassed": 89,
+    "vpnUiSuitesPassed": 11
+  },
+  "hosted": {
+    "android": {
+      "runId": 39806178086,
+      "complete": false
+    },
+    "frontend": {
+      "runId": 39806203970,
+      "success": true
+    },
+    "backend": {
+      "runId": 39806191091,
+      "success": false,
+      "testStepPassed": 4447,
+      "skipped": 107,
+      "subtestsPassed": 681,
+      "coveragePercent": 82.62,
+      "failure": "stale_openapi_documentation",
+      "documentationRegeneratedLocally": true
+    },
+    "independentProbe": {
+      "runId": 39807557326,
+      "success": true,
+      "source": "a7011ed08d38a0f3672fd3cdd5b29c0e812f460f",
+      "binarySha256": "6c12bb6c9ec02d1eacee6628b97e5d5c8da31c88be29561718d021bba46a04f9"
+    }
+  },
+  "independentPathComparison": {
+    "oldProfile": {
+      "observedAtUtc": "2026-10-22T15:49:18.680737+00:00",
+      "elapsedMs": 19562,
+      "androidGuardPreserved": true,
+      "sameSphereControlSession": true,
+      "hostRoutesPreserved": true,
+      "probeBinarySha256": "6c12bb6c9ec02d1eacee6628b97e5d5c8da31c88be29561718d021bba46a04f9",
+      "peerKeyConcurrentUse": false,
+      "results": [
+        {
+          "confirmed": false,
+          "elapsedMs": 236,
+          "status": 301,
+          "url": "http://1.1.1.1/cdn-cgi/trace"
+        },
+        {
+          "code": "request_failed",
+          "confirmed": false,
+          "elapsedMs": 8000,
+          "url": "https://1.1.1.1/cdn-cgi/trace"
+        },
+        {
+          "code": "request_failed",
+          "confirmed": false,
+          "elapsedMs": 8000,
+          "url": "https://www.cloudflare.com/cdn-cgi/trace"
+        },
+        {
+          "last_handshake_time_sec": 1792684139,
+          "osNetworkChanged": false,
+          "rx_bytes": 956,
+          "tx_bytes": 1700
+        }
+      ]
+    },
+    "leetproxySinglePeer": {
+      "observedAtUtc": "2026-10-22T15:56:26.794703+00:00",
+      "elapsedMs": 3702,
+      "androidGuardPreserved": true,
+      "sameSphereControlSession": true,
+      "hostRoutesPreserved": true,
+      "probeBinarySha256": "6c12bb6c9ec02d1eacee6628b97e5d5c8da31c88be29561718d021bba46a04f9",
+      "peerKeyConcurrentUse": false,
+      "results": [
+        {
+          "confirmed": false,
+          "elapsedMs": 264,
+          "status": 301,
+          "url": "http://1.1.1.1/cdn-cgi/trace"
+        },
+        {
+          "confirmed": true,
+          "elapsedMs": 304,
+          "status": 200,
+          "url": "https://1.1.1.1/cdn-cgi/trace"
+        },
+        {
+          "confirmed": true,
+          "elapsedMs": 381,
+          "status": 200,
+          "url": "https://www.cloudflare.com/cdn-cgi/trace"
+        },
+        {
+          "last_handshake_time_sec": 1792684583,
+          "osNetworkChanged": false,
+          "rx_bytes": 12924,
+          "tx_bytes": 6596
+        }
+      ]
+    },
+    "rootCauseConfirmed": false
+  },
+  "externalProvider": {
+    "baseUrl": "https://wg1-api.leetproxy.com",
+    "serverId": 1,
+    "peerName": "sphere-ph030-20261022",
+    "createdPeers": 1,
+    "serverIdentityAndTunnelUnchanged": true,
+    "otherServersMutated": false,
+    "profileId": "6fbe8c17-67f6-4268-9f0f-afc2c457609d",
+    "revisionId": "b902f27f-90b0-41f6-a6a0-5dc2feb63dec",
+    "encryptedCatalogSaved": true,
+    "androidApplied": false,
+    "fleetApplied": false,
+    "apiKeyPublished": false,
+    "configPublished": false
+  },
+  "ph030": {
+    "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+    "phase": "PAUSED_GUARD_HELD",
+    "selectedPackage": "com.br.top",
+    "guardReleased": false,
+    "wholeDeviceVpn": false,
+    "sameSphereControlSession": true
+  },
+  "productionAccepted": false
+}

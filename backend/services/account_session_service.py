@@ -6,18 +6,26 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 import structlog
+from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from backend.models.account_session import AccountSession, SessionEndReason
+from backend.models.device import Device
 from backend.models.game_account import GameAccount
 from backend.schemas.account_sessions import (
     AccountSessionResponse,
     EndSessionRequest,
     SessionStatsResponse,
     StartSessionRequest,
+)
+from backend.services.application_account_scope import (
+    require_account_scope,
+    resolve_application_account_scope,
 )
 
 logger = structlog.get_logger()
@@ -80,27 +88,44 @@ class AccountSessionService:
 
     # ── Создание / завершение ────────────────────────────────────────────
 
+    async def _start_scope(
+        self, org_id: uuid.UUID, device_id: uuid.UUID, account_id: uuid.UUID,
+    ) -> tuple[Device, GameAccount]:
+        # Serialize with rebind and manual assignment in device → account order.
+        device = await self.db.scalar(select(Device).where(
+            Device.org_id == org_id, Device.id == device_id, Device.is_active.is_(True),
+        ).with_for_update().execution_options(populate_existing=True))
+        if device is None:
+            raise HTTPException(404, "Устройство не найдено")
+        scope = await resolve_application_account_scope(self.db, device)
+        account = await self.db.scalar(select(GameAccount).where(
+            GameAccount.org_id == org_id, GameAccount.id == account_id,
+        ).with_for_update().execution_options(populate_existing=True))
+        if account is None:
+            raise HTTPException(404, "Аккаунт не найден")
+        require_account_scope(account, scope)
+        return device, account
+
     async def start_session(
         self,
         org_id: uuid.UUID,
         data: StartSessionRequest,
     ) -> AccountSessionResponse:
         """Начать новую сессию аккаунта на устройстве."""
-        # Получить текущие значения level/balance для фиксации before-снимка
-        account = await self.db.get(GameAccount, data.account_id)
-        level_before = account.level if account else None
-        balance_before = account.balance_rub if account else None
+        device, account = await self._start_scope(org_id, data.device_id, data.account_id)
 
         session = AccountSession(
             org_id=org_id,
             account_id=data.account_id,
             device_id=data.device_id,
+            account=account,
+            device=device,
             started_at=datetime.now(timezone.utc),
             script_id=data.script_id,
             task_id=data.task_id,
             pipeline_run_id=data.pipeline_run_id,
-            level_before=level_before,
-            balance_before=balance_before,
+            level_before=account.level,
+            balance_before=account.balance_rub,
             meta=data.meta or {},
         )
         self.db.add(session)
@@ -123,16 +148,18 @@ class AccountSessionService:
         pipeline_run_id: uuid.UUID | None = None,
     ) -> AccountSession:
         """Начать сессию из внутреннего кода. Возвращает ORM-объект."""
-        account = await self.db.get(GameAccount, account_id)
+        device, account = await self._start_scope(org_id, device_id, account_id)
         session = AccountSession(
             org_id=org_id,
             account_id=account_id,
             device_id=device_id,
+            account=account,
+            device=device,
             started_at=datetime.now(timezone.utc),
             script_id=script_id,
             pipeline_run_id=pipeline_run_id,
-            level_before=account.level if account else None,
-            balance_before=account.balance_rub if account else None,
+            level_before=account.level,
+            balance_before=account.balance_rub,
             meta={},
         )
         self.db.add(session)
@@ -146,8 +173,6 @@ class AccountSessionService:
         data: EndSessionRequest,
     ) -> AccountSessionResponse:
         """Завершить сессию с указанием причины и метрик."""
-        from fastapi import HTTPException
-
         stmt = select(AccountSession).where(
             AccountSession.id == session_id,
             AccountSession.org_id == org_id,
@@ -168,6 +193,7 @@ class AccountSessionService:
             session.meta = {**session.meta, **data.meta}
 
         await self.db.flush()
+        await self.db.refresh(session, ["updated_at"])
 
         duration = 0
         _ended = session.ended_at
@@ -229,8 +255,6 @@ class AccountSessionService:
         org_id: uuid.UUID,
     ) -> AccountSessionResponse:
         """Получить одну сессию по ID."""
-        from fastapi import HTTPException
-
         stmt = select(AccountSession).where(
             AccountSession.id == session_id,
             AccountSession.org_id == org_id,
@@ -268,7 +292,7 @@ class AccountSessionService:
             conditions.append(AccountSession.ended_at.is_(None))
 
         # Сортировка (белый список)
-        sort_columns = {
+        sort_columns: dict[str, InstrumentedAttribute[Any]] = {
             "started_at": AccountSession.started_at,
             "ended_at": AccountSession.ended_at,
             "created_at": AccountSession.created_at,

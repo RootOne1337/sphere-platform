@@ -1,0 +1,61 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "createdAt": "2026-09-09T16:57:04Z",
+  "databaseId": 34379906033,
+  "event": "pull_request",
+  "headBranch": "codex/enterprise-audit-20260905",
+  "headSha": "d642273f596b83f9d953527518b6b4fabff30b24",
+  "jobs": [
+    {
+      "completedAt": "2026-09-09T17:02:24Z",
+      "conclusion": "success",
+      "databaseId": 102561922437,
+      "name": "Tests",
+      "startedAt": "2026-09-09T16:57:09Z",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34379906033/job/102561922437"
+    },
+    {
+      "completedAt": "2026-09-09T16:57:17Z",
+      "conclusion": "success",
+      "databaseId": 102561922839,
+      "name": "RLS Policy Coverage",
+      "startedAt": "2026-09-09T16:57:10Z",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34379906033/job/102561922839"
+    },
+    {
+      "completedAt": "2026-09-09T16:57:27Z",
+      "conclusion": "success",
+      "databaseId": 102561922861,
+      "name": "Lint (ruff + mypy)",
+      "startedAt": "2026-09-09T16:57:10Z",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34379906033/job/102561922861"
+    },
+    {
+      "completedAt": "2026-09-09T16:57:42Z",
+      "conclusion": "success",
+      "databaseId": 102561922872,
+      "name": "Security (bandit + pip-audit)",
+      "startedAt": "2026-09-09T16:57:09Z",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34379906033/job/102561922872"
+    },
+    {
+      "completedAt": "2026-09-09T17:03:55Z",
+      "conclusion": "success",
+      "databaseId": 102563741280,
+      "name": "Alembic Single Head",
+      "startedAt": "2026-09-09T17:03:03Z",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34379906033/job/102563741280"
+    }
+  ],
+  "number": 154,
+  "status": "completed",
+  "updatedAt": "2026-09-09T17:03:56Z",
+  "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34379906033",
+  "workflowName": "CI — Backend"
+}

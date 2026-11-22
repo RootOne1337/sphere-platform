@@ -1,0 +1,20 @@
+{
+  "callbackCalls": 10538,
+  "cumulativeGuardWallSeconds": 30.540312801487744,
+  "evidenceIoWallSeconds": 0.9730305005796254,
+  "guardWallExcludingEvidenceIo": 29.56728230090812,
+  "byPhase": {
+    "export": {
+      "calls": 10530,
+      "wallSeconds": 30.385034601320513
+    },
+    "localization": {
+      "calls": 8,
+      "wallSeconds": 0.15527820016723126
+    }
+  },
+  "persistedSamples": 126,
+  "maxEvidenceRateHz": 2.0,
+  "checksStillEveryCallback": true,
+  "isRealtimeBenchmark": false
+}

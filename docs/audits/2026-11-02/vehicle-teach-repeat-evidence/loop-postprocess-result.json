@@ -1,0 +1,158 @@
+{
+  "schema": "sphere-loop-model-postprocess-v1",
+  "status": "failed",
+  "physicalActions": 0,
+  "executionQualified": false,
+  "posesForcedClosed": false,
+  "error": "component_merge_duplicate_image_observation",
+  "errorType": "ValueError",
+  "seconds": 10.952999999979511,
+  "resourceSamples": [
+    {
+      "seconds": 0.06299999996554106,
+      "availableRamBytes": 8032047104,
+      "commitPercent": 78.43696286501846,
+      "rssBytes": 93347840,
+      "diskBytes": 37881458688
+    },
+    {
+      "seconds": 2.047000000020489,
+      "availableRamBytes": 7835996160,
+      "commitPercent": 78.63143415278009,
+      "rssBytes": 116154368,
+      "diskBytes": 37844975616
+    },
+    {
+      "seconds": 2.547000000020489,
+      "availableRamBytes": 7749083136,
+      "commitPercent": 78.71227725931185,
+      "rssBytes": 142532608,
+      "diskBytes": 37844910080
+    },
+    {
+      "seconds": 3.047000000020489,
+      "availableRamBytes": 7714787328,
+      "commitPercent": 78.81080850515819,
+      "rssBytes": 134103040,
+      "diskBytes": 37843296256
+    },
+    {
+      "seconds": 3.547000000020489,
+      "availableRamBytes": 7688245248,
+      "commitPercent": 78.85580048368321,
+      "rssBytes": 132861952,
+      "diskBytes": 37842538496
+    },
+    {
+      "seconds": 4.047000000020489,
+      "availableRamBytes": 7480274944,
+      "commitPercent": 78.92314313118709,
+      "rssBytes": 132689920,
+      "diskBytes": 37842419712
+    },
+    {
+      "seconds": 4.547000000020489,
+      "availableRamBytes": 7566884864,
+      "commitPercent": 78.90863975752553,
+      "rssBytes": 133042176,
+      "diskBytes": 37842173952
+    },
+    {
+      "seconds": 5.047000000020489,
+      "availableRamBytes": 7525539840,
+      "commitPercent": 79.01044173313637,
+      "rssBytes": 133013504,
+      "diskBytes": 37841973248
+    },
+    {
+      "seconds": 5.547000000020489,
+      "availableRamBytes": 7524933632,
+      "commitPercent": 78.97635900970818,
+      "rssBytes": 146468864,
+      "diskBytes": 37841760256
+    },
+    {
+      "seconds": 6.047000000020489,
+      "availableRamBytes": 7503167488,
+      "commitPercent": 79.03154796926366,
+      "rssBytes": 138268672,
+      "diskBytes": 37836849152
+    },
+    {
+      "seconds": 6.547000000020489,
+      "availableRamBytes": 7447281664,
+      "commitPercent": 79.03891632167426,
+      "rssBytes": 139321344,
+      "diskBytes": 37836824576
+    },
+    {
+      "seconds": 7.202999999979511,
+      "availableRamBytes": 7475671040,
+      "commitPercent": 79.10100697132103,
+      "rssBytes": 153702400,
+      "diskBytes": 37831938048
+    },
+    {
+      "seconds": 7.765999999945052,
+      "availableRamBytes": 7450230784,
+      "commitPercent": 79.15559008856718,
+      "rssBytes": 152473600,
+      "diskBytes": 37831659520
+    },
+    {
+      "seconds": 8.265999999945052,
+      "availableRamBytes": 7416074240,
+      "commitPercent": 79.08872638397,
+      "rssBytes": 152481792,
+      "diskBytes": 37831606272
+    },
+    {
+      "seconds": 9.765999999945052,
+      "availableRamBytes": 7296815104,
+      "commitPercent": 79.2602493475017,
+      "rssBytes": 141455360,
+      "diskBytes": 37831213056
+    },
+    {
+      "seconds": 10.265999999945052,
+      "availableRamBytes": 7254102016,
+      "commitPercent": 79.30838515638857,
+      "rssBytes": 152559616,
+      "diskBytes": 37831045120
+    },
+    {
+      "seconds": 10.765999999945052,
+      "availableRamBytes": 7259156480,
+      "commitPercent": 79.30927754573608,
+      "rssBytes": 148226048,
+      "diskBytes": 37824905216
+    }
+  ],
+  "volumeChecks": [
+    {
+      "seconds": 1.7339999999385327,
+      "findings": [],
+      "snapshot": {
+        "observedAt": "2026-11-01T20:05:10.417767+00:00",
+        "system": "Windows",
+        "freeDiskBytes": 37881458688,
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ],
+        "availableRamBytes": 7880458240,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 78677176320,
+        "commitLimitBytes": 100060360704,
+        "kernelPagedBytes": 11018326016,
+        "kernelNonpagedBytes": 5287432192,
+        "processCount": 471,
+        "handleCount": 707252,
+        "memoryMeasurement": "GetPerformanceInfo"
+      }
+    }
+  ],
+  "protectedUnchanged": true
+}

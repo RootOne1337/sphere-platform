@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-26T18:13:15.707023+00:00",
+  "scope": "LIVE_OBSERVER_PLUMBING_AND_REFUSAL_NOT_POSITIVE_LOCALIZATION",
+  "runs": [
+    {
+      "version": 1,
+      "reportSha256": "f294016bab982d462a9dfaa9881c782440fd14cdc9afcdd526eeda23d56bb9e0",
+      "scope": "FINITE_LIVE_READ_ONLY_NOT_NAVIGATION",
+      "counts": {
+        "unknown": 74
+      },
+      "publishedFrames": 73,
+      "poseReasons": {
+        "route_scene_geometry_or_age_unqualified": 24,
+        "route_pose_not_verified": 48,
+        "route_observation_gap": 1
+      },
+      "computeMedianMs": 95.06670001428574,
+      "geometry": {
+        "width": 1920,
+        "height": 1080
+      },
+      "observationHz": 4.93,
+      "decodedFps": 28.78,
+      "observedSeconds": 15.01,
+      "peerCleanupConfirmed": true,
+      "captureStopReceiptIndependentlyVerified": false,
+      "controlChannelCreated": false,
+      "physicalActions": 0,
+      "framesArchived": 0,
+      "modelLoaded": false,
+      "fullAndroidToModelLatencyMeasured": false
+    },
+    {
+      "version": 2,
+      "reportSha256": "08878b281d241f8332eb5aa034b3ae084e371442f8a60c70740d178e0eec8da7",
+      "scope": "FINITE_LIVE_READ_ONLY_NOT_NAVIGATION",
+      "counts": {
+        "unknown": 74
+      },
+      "publishedFrames": 74,
+      "poseReasons": {
+        "route_pose_not_verified": 74
+      },
+      "computeMedianMs": 100.04349998780526,
+      "geometry": {
+        "width": 1920,
+        "height": 1080
+      },
+      "observationHz": 4.929,
+      "decodedFps": 25.044,
+      "observedSeconds": 15.014,
+      "peerCleanupConfirmed": true,
+      "captureStopReceiptIndependentlyVerified": false,
+      "controlChannelCreated": false,
+      "physicalActions": 0,
+      "framesArchived": 0,
+      "modelLoaded": false,
+      "fullAndroidToModelLatencyMeasured": false
+    }
+  ],
+  "clockFix": "Pass QueryPerformanceCounter/perf_counter receiver clock explicitly to localizer; no age limit relaxation",
+  "beforeClockFixWindowsClockImplementation": {
+    "monotonic": "GetTickCount64",
+    "perf_counter": "QueryPerformanceCounter",
+    "pointInTimeDifferenceMs": -29.3752
+  },
+  "sameClipMapPoseAcceptanceIsSeparate": true,
+  "independentLivePositiveLocalizationAccepted": false,
+  "liveObserverManualStartWindowPrepared": true,
+  "viewerBrowserAcceptance": false,
+  "originHostAndInvalidSceneRequestsRefusedWithoutStarting": true
+}

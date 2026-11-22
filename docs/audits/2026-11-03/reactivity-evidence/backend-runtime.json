@@ -1,0 +1,15 @@
+{
+  "outcome": "verified",
+  "sourceCommit": "58b264da0302db781a9051f97ffcc43000b3c293",
+  "servedReactivityContract": "gray_reuse_owned_supervision_v1",
+  "reloadPerformed": true,
+  "protectedAssetCount": 612,
+  "containerCount": 66,
+  "protectedAssetsUnchanged": true,
+  "allContainersUnchanged": true,
+  "configuredWatchdogsPreserved": true,
+  "unauthenticatedStatus": 403,
+  "portOwnershipConfirmed": false,
+  "ownershipMethod": "scheduled_task_exact_argv_venv_four_node_ancestry",
+  "physicalActions": 0
+}

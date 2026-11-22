@@ -1,0 +1,74 @@
+{
+  "finalization": {
+    "schema": "sphere-computed-native-ba-finalization-outcome-v1",
+    "fit_recomputed": false,
+    "physicalActions": 0,
+    "executionQualified": false,
+    "modelPublishing": false,
+    "status": "completed",
+    "geometry_review_admitted": true,
+    "registered": 173,
+    "points": 20887,
+    "actual_observation_audit": {
+      "structural": {
+        "status": "complete",
+        "observations": 133784,
+        "duplicate_image_observations": 0,
+        "invalid_reciprocal_observations": 0,
+        "nonpositive_depth": 0
+      },
+      "actual_reprojection_px": {
+        "mean": 0.9035206266726225,
+        "median": 0.5907575151601241,
+        "p95": 2.849810768759726,
+        "maximum": 5.349673464487641
+      },
+      "raw_native_reprojection_px": {
+        "mean": 0.9035206266726225,
+        "median": 0.5907575151601241,
+        "p95": 2.849810768759726,
+        "maximum": 5.349673464487641
+      },
+      "minimum_camera_support_4px": 194,
+      "observations": 133784,
+      "physical_camera_observations": 133784,
+      "cross_landmark_exact_pixel_alias_rows": 0,
+      "support_policy": "unique_exact_xy_per_camera_worst_residual",
+      "execution_qualified": false
+    },
+    "heldout_clean_matches": 512,
+    "model_sha256": {
+      "cameras.bin": "566ff492c1483305f70d55b6eef5cd01b44a64d05a1368ac71955131f36d1b9d",
+      "frames.bin": "3c5224336a8f730ce36e621fa64cf453ab76f76d4457ca5b3312903d4b20159a",
+      "images.bin": "75f381515230c448b7eafda1e34441063f1050be36f350c5a2a5a2c6099dd56c",
+      "points3D.bin": "6251f10db192a0f24af41223e173aefed65b450c9b799573a640a33a22175817",
+      "rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+    },
+    "geometry_sha256": "0579f9f5ddc899792fc366adcbbaa3bc8e8d7bca1dafa15bbbe9c9580d0faede",
+    "source_manifest_sha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "reconstruction_input_sha256": "fd1b80002f79c3957001b99ed561d4449e91cbc7828fe1e3a143fca78ce1f7cf",
+    "source_ba_fit_producer_sha256": "b2aa6529b46c8ca72cb6c610625eb41076561fc2aa3d33e8b9f4fb10c0b179a3",
+    "derived_auditor_producer_sha256": "731843a83a5d0678140c15de3e2f930480344d414e90b9bb68224503658a1227",
+    "audit_fix_semantics": "empty native training rows (0,2,NULL/empty) accepted; malformed nonempty rows rejected",
+    "poses_intrinsics_all_xy_unchanged": true,
+    "retained_xyz_unchanged": true,
+    "native_serialization_reloaded_identity_exact": true,
+    "sourceUnchanged": true,
+    "producerSourcesUnchanged": true,
+    "seconds": 10.234000000000378,
+    "torchImported": false
+  },
+  "supervision": {
+    "exitCode": 0,
+    "reason": null,
+    "seconds": 10.5779999999977,
+    "frozenProducersUnchanged": true,
+    "physicalActions": 0,
+    "primaryReplacement": false,
+    "minAvailableRamGiB": 12.721424102783203,
+    "minFreeCommitGiB": 25.92615509033203,
+    "logSha256": "9fc27d49e8b53c40befa5e85bc73e819264f19ad7e66419b3a80c00f8efaea9f",
+    "allOwnedProcessesClosed": true
+  },
+  "limitation": "Cache-reused native resume plus separate audit/export; not a cold end-to-end production run."
+}

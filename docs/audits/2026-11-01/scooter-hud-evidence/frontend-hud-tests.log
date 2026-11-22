@@ -1,0 +1,17 @@
+
+> sphere-frontend@0.1.0 test
+> jest --passWithNoTests --runInBand __tests__/hudSpeedCard.test.tsx __tests__/stream/teaching-keymap.test.ts __tests__/stream/teaching-profile-storage.test.ts __tests__/stream/reconstruction-recovery.test.tsx __tests__/stream/reconstruction-client.test.ts
+
+PASS __tests__/stream/reconstruction-recovery.test.tsx
+PASS __tests__/hudSpeedCard.test.tsx
+(node:54996) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS __tests__/stream/reconstruction-client.test.ts
+PASS __tests__/stream/teaching-keymap.test.ts
+PASS __tests__/stream/teaching-profile-storage.test.ts
+
+Test Suites: 5 passed, 5 total
+Tests:       32 passed, 32 total
+Snapshots:   0 total
+Time:        2.399 s
+Ran all test suites matching __tests__/hudSpeedCard.test.tsx|__tests__/stream/teaching-keymap.test.ts|__tests__/stream/teaching-profile-storage.test.ts|__tests__/stream/reconstruction-recovery.test.tsx|__tests__/stream/reconstruction-client.test.ts.

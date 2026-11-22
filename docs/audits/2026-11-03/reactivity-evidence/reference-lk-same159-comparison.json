@@ -1,0 +1,1360 @@
+{
+  "schema": "sphere-measured-same159-native-vs-private-reference-lk-v1",
+  "sameClip": true,
+  "independentGameplay": false,
+  "offlineMediaClock": true,
+  "originalRGBBindingSHA": "8314566c982543f4dd80eac3d49009d08c8e71eb10bb6bd08104e4382f1ee578",
+  "same159UntaughtSourceIndices": true,
+  "nativeGeometry": {
+    "registered": 173,
+    "points": 20887,
+    "geometryReviewAdmitted": true
+  },
+  "baseline": {
+    "method": "exact_native_reference_descriptors",
+    "counts": {
+      "confirming": 18,
+      "localized": 73,
+      "unknown": 68
+    },
+    "computeMS": {
+      "p50": 103.13880000103381,
+      "p95": 176.91346999999942,
+      "maximum": 908.416499998566
+    },
+    "freshnessLowerBound": {
+      "receiver_age_budget_ms": 250,
+      "scope": "compute_only_lower_bound",
+      "samples_exceeding_budget": 5,
+      "localized_samples_exceeding_budget": 1
+    }
+  },
+  "experiment": {
+    "method": "private_native_reference_lk_finalized20887_v1",
+    "privateProducerFingerprint": "4361527c5f03799b673d4ae1930bb2938a3d8f9da39c59e55f9d17750dd37609",
+    "counts": {
+      "confirming": 10,
+      "localized": 134,
+      "unknown": 15
+    },
+    "computeMS": {
+      "p50": 58.08489999981248,
+      "p95": 105.13972000262577,
+      "maximum": 587.6879000024928
+    },
+    "freshnessLowerBound": {
+      "receiver_age_budget_ms": 250,
+      "scope": "compute_only_lower_bound",
+      "samples_exceeding_budget": 3,
+      "localized_samples_exceeding_budget": 2
+    },
+    "coldReferenceCacheSeconds": 7.047000000002299,
+    "referenceGrayCacheBytes": 89683200,
+    "minimumNativeMeasuredPointsPerReference": 188,
+    "queryPhaseSeconds": 20.0,
+    "descriptorExtractionCalls": 0
+  },
+  "scope": {
+    "physicalActions": 0,
+    "runtimeQualified": false,
+    "nativeFamilyPromoted": false,
+    "productionQueryFingerprintClaimed": false,
+    "streamEndToEndLatencyKnown": false,
+    "metricPositionGroundTruth": false,
+    "allV6GatesUnchanged": true,
+    "posesAndNativeXYZUnchanged": true,
+    "noSourceTimeOrSequenceRetrievalHints": true
+  },
+  "limits": {
+    "remainingUnknown": 15,
+    "longestNotLocalizedSeconds": 3.8920000000000012,
+    "timingSanity": {
+      "confirmed_or_confirming": 144,
+      "median_seconds": 0.0,
+      "p95_seconds": 1.221249999999999,
+      "maximum_seconds": 2.1629999999999967,
+      "over_2_seconds": 1
+    },
+    "timingOffsetNotPositionGroundTruth": true
+  },
+  "sourceReportSHA": {
+    "native": "a537f9555adc45aed8e218af9957315c71764b25f43ac6104d32895b6ae0fcdf",
+    "privateLK": "133f843b809a59dc7353622d25d622026bf4d906eb36868e1fbb67e5a3c5d41b"
+  },
+  "completedProofSHA": "5b0be9456e553500fe11306cb4688238575a74bd4becf4fd2ca0342d8d013c91",
+  "pngSHA": "226238398a37cf50187f6e317edfce5b024963bab09bc8818de5504a9bb1cda1",
+  "samples": [
+    {
+      "sourceIndex": 1,
+      "seconds": 0.001,
+      "nativeState": "confirming",
+      "nativeComputeMS": 128.96460000047227,
+      "lkState": "confirming",
+      "lkComputeMS": 35.9387999997125
+    },
+    {
+      "sourceIndex": 7,
+      "seconds": 0.259,
+      "nativeState": "confirming",
+      "nativeComputeMS": 97.12480000234791,
+      "lkState": "confirming",
+      "lkComputeMS": 30.530100000760285
+    },
+    {
+      "sourceIndex": 11,
+      "seconds": 0.475,
+      "nativeState": "localized",
+      "nativeComputeMS": 110.84519999712938,
+      "lkState": "localized",
+      "lkComputeMS": 30.880499998602318
+    },
+    {
+      "sourceIndex": 17,
+      "seconds": 0.725,
+      "nativeState": "localized",
+      "nativeComputeMS": 32.746100001531886,
+      "lkState": "localized",
+      "lkComputeMS": 36.72720000031404
+    },
+    {
+      "sourceIndex": 23,
+      "seconds": 0.974,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.669600000052014,
+      "lkState": "localized",
+      "lkComputeMS": 39.18280000289087
+    },
+    {
+      "sourceIndex": 29,
+      "seconds": 1.189,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.124500000325497,
+      "lkState": "localized",
+      "lkComputeMS": 38.023100001737475
+    },
+    {
+      "sourceIndex": 35,
+      "seconds": 1.406,
+      "nativeState": "localized",
+      "nativeComputeMS": 115.51569999937783,
+      "lkState": "localized",
+      "lkComputeMS": 37.56960000100662
+    },
+    {
+      "sourceIndex": 40,
+      "seconds": 1.606,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.527400001388742,
+      "lkState": "localized",
+      "lkComputeMS": 36.840000000665896
+    },
+    {
+      "sourceIndex": 45,
+      "seconds": 1.823,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.83379999868339,
+      "lkState": "localized",
+      "lkComputeMS": 38.87359999862383
+    },
+    {
+      "sourceIndex": 51,
+      "seconds": 2.056,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.93459999881452,
+      "lkState": "localized",
+      "lkComputeMS": 47.93779999818071
+    },
+    {
+      "sourceIndex": 57,
+      "seconds": 2.272,
+      "nativeState": "localized",
+      "nativeComputeMS": 114.23849999846425,
+      "lkState": "localized",
+      "lkComputeMS": 58.5441000002902
+    },
+    {
+      "sourceIndex": 62,
+      "seconds": 2.473,
+      "nativeState": "localized",
+      "nativeComputeMS": 10.151200000109384,
+      "lkState": "localized",
+      "lkComputeMS": 61.78350000118371
+    },
+    {
+      "sourceIndex": 69,
+      "seconds": 2.703,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.359200001199497,
+      "lkState": "localized",
+      "lkComputeMS": 80.99959999890416
+    },
+    {
+      "sourceIndex": 75,
+      "seconds": 2.903,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.152299997367663,
+      "lkState": "localized",
+      "lkComputeMS": 71.37520000105724
+    },
+    {
+      "sourceIndex": 80,
+      "seconds": 3.119,
+      "nativeState": "localized",
+      "nativeComputeMS": 130.77639999755775,
+      "lkState": "localized",
+      "lkComputeMS": 88.22499999951106
+    },
+    {
+      "sourceIndex": 87,
+      "seconds": 3.368,
+      "nativeState": "localized",
+      "nativeComputeMS": 153.31530000185012,
+      "lkState": "localized",
+      "lkComputeMS": 90.35489999951096
+    },
+    {
+      "sourceIndex": 94,
+      "seconds": 3.584,
+      "nativeState": "localized",
+      "nativeComputeMS": 258.98899999810965,
+      "lkState": "localized",
+      "lkComputeMS": 63.42709999807994
+    },
+    {
+      "sourceIndex": 101,
+      "seconds": 3.817,
+      "nativeState": "localized",
+      "nativeComputeMS": 189.02990000060527,
+      "lkState": "localized",
+      "lkComputeMS": 52.50829999931739
+    },
+    {
+      "sourceIndex": 109,
+      "seconds": 4.082,
+      "nativeState": "unknown",
+      "nativeComputeMS": 92.24069999982021,
+      "lkState": "localized",
+      "lkComputeMS": 40.08170000088285
+    },
+    {
+      "sourceIndex": 116,
+      "seconds": 4.314,
+      "nativeState": "unknown",
+      "nativeComputeMS": 76.4056999978493,
+      "lkState": "localized",
+      "lkComputeMS": 41.34680000061053
+    },
+    {
+      "sourceIndex": 122,
+      "seconds": 4.531,
+      "nativeState": "unknown",
+      "nativeComputeMS": 111.42519999702927,
+      "lkState": "localized",
+      "lkComputeMS": 38.48160000052303
+    },
+    {
+      "sourceIndex": 128,
+      "seconds": 4.763,
+      "nativeState": "unknown",
+      "nativeComputeMS": 74.17500000155997,
+      "lkState": "unknown",
+      "lkComputeMS": 27.950700001383666
+    },
+    {
+      "sourceIndex": 135,
+      "seconds": 4.996,
+      "nativeState": "unknown",
+      "nativeComputeMS": 85.0218000014138,
+      "lkState": "unknown",
+      "lkComputeMS": 53.14889999863226
+    },
+    {
+      "sourceIndex": 141,
+      "seconds": 5.245,
+      "nativeState": "unknown",
+      "nativeComputeMS": 73.56530000106432,
+      "lkState": "unknown",
+      "lkComputeMS": 39.27249999833293
+    },
+    {
+      "sourceIndex": 149,
+      "seconds": 5.511,
+      "nativeState": "unknown",
+      "nativeComputeMS": 83.4805000013148,
+      "lkState": "unknown",
+      "lkComputeMS": 47.46589999922435
+    },
+    {
+      "sourceIndex": 154,
+      "seconds": 5.728,
+      "nativeState": "unknown",
+      "nativeComputeMS": 82.72679999936372,
+      "lkState": "confirming",
+      "lkComputeMS": 40.80289999910747
+    },
+    {
+      "sourceIndex": 159,
+      "seconds": 5.945,
+      "nativeState": "unknown",
+      "nativeComputeMS": 103.16289999900619,
+      "lkState": "confirming",
+      "lkComputeMS": 47.04009999841219
+    },
+    {
+      "sourceIndex": 166,
+      "seconds": 6.177,
+      "nativeState": "unknown",
+      "nativeComputeMS": 98.90749999976833,
+      "lkState": "localized",
+      "lkComputeMS": 51.74819999956526
+    },
+    {
+      "sourceIndex": 173,
+      "seconds": 6.409,
+      "nativeState": "unknown",
+      "nativeComputeMS": 94.01989999969373,
+      "lkState": "localized",
+      "lkComputeMS": 58.924199998728
+    },
+    {
+      "sourceIndex": 179,
+      "seconds": 6.609,
+      "nativeState": "unknown",
+      "nativeComputeMS": 111.82790000020759,
+      "lkState": "localized",
+      "lkComputeMS": 57.72589999833144
+    },
+    {
+      "sourceIndex": 185,
+      "seconds": 6.825,
+      "nativeState": "unknown",
+      "nativeComputeMS": 351.6334999985702,
+      "lkState": "localized",
+      "lkComputeMS": 218.41950000089128
+    },
+    {
+      "sourceIndex": 191,
+      "seconds": 7.058,
+      "nativeState": "unknown",
+      "nativeComputeMS": 164.44849999970756,
+      "lkState": "localized",
+      "lkComputeMS": 80.15900000100373
+    },
+    {
+      "sourceIndex": 197,
+      "seconds": 7.258,
+      "nativeState": "confirming",
+      "nativeComputeMS": 139.72049999938463,
+      "lkState": "localized",
+      "lkComputeMS": 91.34970000013709
+    },
+    {
+      "sourceIndex": 202,
+      "seconds": 7.475,
+      "nativeState": "confirming",
+      "nativeComputeMS": 155.72819999943022,
+      "lkState": "unknown",
+      "lkComputeMS": 77.69809999808786
+    },
+    {
+      "sourceIndex": 208,
+      "seconds": 7.707,
+      "nativeState": "unknown",
+      "nativeComputeMS": 908.416499998566,
+      "lkState": "unknown",
+      "lkComputeMS": 118.35430000064662
+    },
+    {
+      "sourceIndex": 214,
+      "seconds": 7.924,
+      "nativeState": "unknown",
+      "nativeComputeMS": 116.62849999993341,
+      "lkState": "confirming",
+      "lkComputeMS": 587.6879000024928
+    },
+    {
+      "sourceIndex": 219,
+      "seconds": 8.124,
+      "nativeState": "unknown",
+      "nativeComputeMS": 106.52349999872968,
+      "lkState": "confirming",
+      "lkComputeMS": 140.50629999837838
+    },
+    {
+      "sourceIndex": 225,
+      "seconds": 8.358,
+      "nativeState": "unknown",
+      "nativeComputeMS": 104.97609999947599,
+      "lkState": "unknown",
+      "lkComputeMS": 48.226200000499375
+    },
+    {
+      "sourceIndex": 231,
+      "seconds": 8.591,
+      "nativeState": "unknown",
+      "nativeComputeMS": 102.21960000126273,
+      "lkState": "unknown",
+      "lkComputeMS": 45.87090000131866
+    },
+    {
+      "sourceIndex": 237,
+      "seconds": 8.807,
+      "nativeState": "unknown",
+      "nativeComputeMS": 109.36170000059064,
+      "lkState": "unknown",
+      "lkComputeMS": 45.19079999954556
+    },
+    {
+      "sourceIndex": 242,
+      "seconds": 9.023,
+      "nativeState": "unknown",
+      "nativeComputeMS": 110.07460000109859,
+      "lkState": "confirming",
+      "lkComputeMS": 48.68220000207657
+    },
+    {
+      "sourceIndex": 248,
+      "seconds": 9.256,
+      "nativeState": "unknown",
+      "nativeComputeMS": 107.57259999809321,
+      "lkState": "unknown",
+      "lkComputeMS": 48.24039999948582
+    },
+    {
+      "sourceIndex": 254,
+      "seconds": 9.489,
+      "nativeState": "confirming",
+      "nativeComputeMS": 101.80250000121305,
+      "lkState": "unknown",
+      "lkComputeMS": 46.51509999894188
+    },
+    {
+      "sourceIndex": 261,
+      "seconds": 9.739,
+      "nativeState": "confirming",
+      "nativeComputeMS": 107.13849999956437,
+      "lkState": "unknown",
+      "lkComputeMS": 46.00130000108038
+    },
+    {
+      "sourceIndex": 269,
+      "seconds": 10.005,
+      "nativeState": "unknown",
+      "nativeComputeMS": 103.17290000239154,
+      "lkState": "unknown",
+      "lkComputeMS": 77.03100000071572
+    },
+    {
+      "sourceIndex": 275,
+      "seconds": 10.257,
+      "nativeState": "unknown",
+      "nativeComputeMS": 112.22389999966254,
+      "lkState": "unknown",
+      "lkComputeMS": 103.8304000030621
+    },
+    {
+      "sourceIndex": 280,
+      "seconds": 10.505,
+      "nativeState": "unknown",
+      "nativeComputeMS": 119.14260000048671,
+      "lkState": "confirming",
+      "lkComputeMS": 92.08230000149342
+    },
+    {
+      "sourceIndex": 286,
+      "seconds": 10.72,
+      "nativeState": "unknown",
+      "nativeComputeMS": 108.00469999958295,
+      "lkState": "unknown",
+      "lkComputeMS": 59.21029999808525
+    },
+    {
+      "sourceIndex": 293,
+      "seconds": 10.952,
+      "nativeState": "unknown",
+      "nativeComputeMS": 103.13880000103381,
+      "lkState": "confirming",
+      "lkComputeMS": 58.12530000184779
+    },
+    {
+      "sourceIndex": 299,
+      "seconds": 11.167,
+      "nativeState": "unknown",
+      "nativeComputeMS": 100.92040000017732,
+      "lkState": "confirming",
+      "lkComputeMS": 49.55659999905038
+    },
+    {
+      "sourceIndex": 305,
+      "seconds": 11.367,
+      "nativeState": "unknown",
+      "nativeComputeMS": 103.30450000037672,
+      "lkState": "localized",
+      "lkComputeMS": 48.16059999939171
+    },
+    {
+      "sourceIndex": 311,
+      "seconds": 11.6,
+      "nativeState": "unknown",
+      "nativeComputeMS": 85.13590000075055,
+      "lkState": "localized",
+      "lkComputeMS": 63.77580000116723
+    },
+    {
+      "sourceIndex": 317,
+      "seconds": 11.816,
+      "nativeState": "unknown",
+      "nativeComputeMS": 81.00990000093589,
+      "lkState": "localized",
+      "lkComputeMS": 58.72120000276482
+    },
+    {
+      "sourceIndex": 323,
+      "seconds": 12.049,
+      "nativeState": "unknown",
+      "nativeComputeMS": 81.21860000028391,
+      "lkState": "localized",
+      "lkComputeMS": 67.88819999928819
+    },
+    {
+      "sourceIndex": 329,
+      "seconds": 12.265,
+      "nativeState": "confirming",
+      "nativeComputeMS": 91.18609999859473,
+      "lkState": "localized",
+      "lkComputeMS": 66.18370000069262
+    },
+    {
+      "sourceIndex": 334,
+      "seconds": 12.482,
+      "nativeState": "unknown",
+      "nativeComputeMS": 85.30080000127782,
+      "lkState": "localized",
+      "lkComputeMS": 57.07750000146916
+    },
+    {
+      "sourceIndex": 340,
+      "seconds": 12.699,
+      "nativeState": "unknown",
+      "nativeComputeMS": 78.48599999852013,
+      "lkState": "localized",
+      "lkComputeMS": 63.37559999883524
+    },
+    {
+      "sourceIndex": 345,
+      "seconds": 12.9,
+      "nativeState": "unknown",
+      "nativeComputeMS": 79.07999999952153,
+      "lkState": "localized",
+      "lkComputeMS": 76.17200000095181
+    },
+    {
+      "sourceIndex": 350,
+      "seconds": 13.168,
+      "nativeState": "unknown",
+      "nativeComputeMS": 89.41720000075293,
+      "lkState": "localized",
+      "lkComputeMS": 77.83520000157296
+    },
+    {
+      "sourceIndex": 354,
+      "seconds": 13.385,
+      "nativeState": "unknown",
+      "nativeComputeMS": 89.63429999857908,
+      "lkState": "localized",
+      "lkComputeMS": 67.59410000086064
+    },
+    {
+      "sourceIndex": 358,
+      "seconds": 13.618,
+      "nativeState": "confirming",
+      "nativeComputeMS": 97.55020000011427,
+      "lkState": "localized",
+      "lkComputeMS": 66.89600000026985
+    },
+    {
+      "sourceIndex": 362,
+      "seconds": 13.871,
+      "nativeState": "confirming",
+      "nativeComputeMS": 147.44150000115042,
+      "lkState": "localized",
+      "lkComputeMS": 63.839099999313476
+    },
+    {
+      "sourceIndex": 367,
+      "seconds": 14.119,
+      "nativeState": "localized",
+      "nativeComputeMS": 105.82829999839305,
+      "lkState": "localized",
+      "lkComputeMS": 73.48500000080094
+    },
+    {
+      "sourceIndex": 373,
+      "seconds": 14.352,
+      "nativeState": "localized",
+      "nativeComputeMS": 122.85739999788348,
+      "lkState": "localized",
+      "lkComputeMS": 68.78199999846402
+    },
+    {
+      "sourceIndex": 378,
+      "seconds": 14.568,
+      "nativeState": "localized",
+      "nativeComputeMS": 109.76840000148513,
+      "lkState": "localized",
+      "lkComputeMS": 52.64600000009523
+    },
+    {
+      "sourceIndex": 384,
+      "seconds": 14.801,
+      "nativeState": "localized",
+      "nativeComputeMS": 121.09509999936563,
+      "lkState": "localized",
+      "lkComputeMS": 57.129600001644576
+    },
+    {
+      "sourceIndex": 389,
+      "seconds": 15.017,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.00309999997262,
+      "lkState": "localized",
+      "lkComputeMS": 83.66670000032173
+    },
+    {
+      "sourceIndex": 395,
+      "seconds": 15.25,
+      "nativeState": "localized",
+      "nativeComputeMS": 122.63380000149482,
+      "lkState": "localized",
+      "lkComputeMS": 58.65289999928791
+    },
+    {
+      "sourceIndex": 400,
+      "seconds": 15.466,
+      "nativeState": "localized",
+      "nativeComputeMS": 116.49210000177845,
+      "lkState": "localized",
+      "lkComputeMS": 62.039299999014474
+    },
+    {
+      "sourceIndex": 405,
+      "seconds": 15.701,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.725899999466492,
+      "lkState": "localized",
+      "lkComputeMS": 60.362799998983974
+    },
+    {
+      "sourceIndex": 410,
+      "seconds": 16.035,
+      "nativeState": "localized",
+      "nativeComputeMS": 122.93240000144579,
+      "lkState": "localized",
+      "lkComputeMS": 54.86849999942933
+    },
+    {
+      "sourceIndex": 415,
+      "seconds": 16.284,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.540400002151728,
+      "lkState": "localized",
+      "lkComputeMS": 54.15680000078282
+    },
+    {
+      "sourceIndex": 421,
+      "seconds": 16.533,
+      "nativeState": "localized",
+      "nativeComputeMS": 175.5671999999322,
+      "lkState": "localized",
+      "lkComputeMS": 58.329800001956755
+    },
+    {
+      "sourceIndex": 426,
+      "seconds": 16.75,
+      "nativeState": "localized",
+      "nativeComputeMS": 30.521000000589993,
+      "lkState": "localized",
+      "lkComputeMS": 56.66420000125072
+    },
+    {
+      "sourceIndex": 431,
+      "seconds": 16.983,
+      "nativeState": "localized",
+      "nativeComputeMS": 11.384299999917857,
+      "lkState": "localized",
+      "lkComputeMS": 57.12639999910607
+    },
+    {
+      "sourceIndex": 436,
+      "seconds": 17.2,
+      "nativeState": "localized",
+      "nativeComputeMS": 11.144699998112628,
+      "lkState": "localized",
+      "lkComputeMS": 65.77160000233562
+    },
+    {
+      "sourceIndex": 440,
+      "seconds": 17.418,
+      "nativeState": "localized",
+      "nativeComputeMS": 117.88499999966007,
+      "lkState": "localized",
+      "lkComputeMS": 59.046099999250146
+    },
+    {
+      "sourceIndex": 444,
+      "seconds": 17.65,
+      "nativeState": "localized",
+      "nativeComputeMS": 10.638299998390721,
+      "lkState": "localized",
+      "lkComputeMS": 58.38270000094781
+    },
+    {
+      "sourceIndex": 450,
+      "seconds": 17.883,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.528800001135096,
+      "lkState": "localized",
+      "lkComputeMS": 57.49360000118031
+    },
+    {
+      "sourceIndex": 455,
+      "seconds": 18.115,
+      "nativeState": "localized",
+      "nativeComputeMS": 119.94459999914397,
+      "lkState": "localized",
+      "lkComputeMS": 57.887699997081654
+    },
+    {
+      "sourceIndex": 461,
+      "seconds": 18.364,
+      "nativeState": "localized",
+      "nativeComputeMS": 119.17689999972936,
+      "lkState": "localized",
+      "lkComputeMS": 56.20499999713502
+    },
+    {
+      "sourceIndex": 467,
+      "seconds": 18.597,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.182399997371249,
+      "lkState": "localized",
+      "lkComputeMS": 55.97510000006878
+    },
+    {
+      "sourceIndex": 473,
+      "seconds": 18.846,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.98099999903934,
+      "lkState": "localized",
+      "lkComputeMS": 53.648400000383845
+    },
+    {
+      "sourceIndex": 479,
+      "seconds": 19.079,
+      "nativeState": "localized",
+      "nativeComputeMS": 119.73589999979595,
+      "lkState": "localized",
+      "lkComputeMS": 54.8038999986602
+    },
+    {
+      "sourceIndex": 484,
+      "seconds": 19.295,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.104900000238558,
+      "lkState": "localized",
+      "lkComputeMS": 69.77760000154376
+    },
+    {
+      "sourceIndex": 489,
+      "seconds": 19.497,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.33880000229692,
+      "lkState": "localized",
+      "lkComputeMS": 70.27890000244952
+    },
+    {
+      "sourceIndex": 494,
+      "seconds": 19.711,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.337799998320406,
+      "lkState": "localized",
+      "lkComputeMS": 52.83149999740999
+    },
+    {
+      "sourceIndex": 499,
+      "seconds": 19.912,
+      "nativeState": "localized",
+      "nativeComputeMS": 112.22239999915473,
+      "lkState": "localized",
+      "lkComputeMS": 56.49770000309218
+    },
+    {
+      "sourceIndex": 505,
+      "seconds": 20.143,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.685899996838998,
+      "lkState": "localized",
+      "lkComputeMS": 54.18860000281711
+    },
+    {
+      "sourceIndex": 509,
+      "seconds": 20.361,
+      "nativeState": "unknown",
+      "nativeComputeMS": 100.8365000016056,
+      "lkState": "localized",
+      "lkComputeMS": 53.08030000014696
+    },
+    {
+      "sourceIndex": 514,
+      "seconds": 20.661,
+      "nativeState": "confirming",
+      "nativeComputeMS": 94.68740000011167,
+      "lkState": "localized",
+      "lkComputeMS": 52.00509999849601
+    },
+    {
+      "sourceIndex": 521,
+      "seconds": 20.943,
+      "nativeState": "unknown",
+      "nativeComputeMS": 92.16250000099535,
+      "lkState": "localized",
+      "lkComputeMS": 54.55689999871538
+    },
+    {
+      "sourceIndex": 526,
+      "seconds": 21.193,
+      "nativeState": "confirming",
+      "nativeComputeMS": 95.92419999898993,
+      "lkState": "localized",
+      "lkComputeMS": 70.31650000135414
+    },
+    {
+      "sourceIndex": 530,
+      "seconds": 21.411,
+      "nativeState": "unknown",
+      "nativeComputeMS": 107.2052999988955,
+      "lkState": "localized",
+      "lkComputeMS": 58.14330000066548
+    },
+    {
+      "sourceIndex": 535,
+      "seconds": 21.644,
+      "nativeState": "unknown",
+      "nativeComputeMS": 93.39510000063456,
+      "lkState": "localized",
+      "lkComputeMS": 65.58230000155163
+    },
+    {
+      "sourceIndex": 541,
+      "seconds": 21.96,
+      "nativeState": "unknown",
+      "nativeComputeMS": 92.99230000033276,
+      "lkState": "localized",
+      "lkComputeMS": 53.52810000113095
+    },
+    {
+      "sourceIndex": 546,
+      "seconds": 22.211,
+      "nativeState": "unknown",
+      "nativeComputeMS": 94.798099999025,
+      "lkState": "localized",
+      "lkComputeMS": 68.82469999982277
+    },
+    {
+      "sourceIndex": 552,
+      "seconds": 22.425,
+      "nativeState": "unknown",
+      "nativeComputeMS": 101.83250000045518,
+      "lkState": "localized",
+      "lkComputeMS": 57.88270000266493
+    },
+    {
+      "sourceIndex": 558,
+      "seconds": 22.658,
+      "nativeState": "unknown",
+      "nativeComputeMS": 94.76079999876674,
+      "lkState": "localized",
+      "lkComputeMS": 62.753000001976034
+    },
+    {
+      "sourceIndex": 563,
+      "seconds": 22.891,
+      "nativeState": "confirming",
+      "nativeComputeMS": 93.23270000095363,
+      "lkState": "localized",
+      "lkComputeMS": 57.294499998533865
+    },
+    {
+      "sourceIndex": 567,
+      "seconds": 23.091,
+      "nativeState": "confirming",
+      "nativeComputeMS": 95.89129999949364,
+      "lkState": "localized",
+      "lkComputeMS": 55.41300000186311
+    },
+    {
+      "sourceIndex": 572,
+      "seconds": 23.341,
+      "nativeState": "localized",
+      "nativeComputeMS": 99.6621000012965,
+      "lkState": "localized",
+      "lkComputeMS": 59.619500003464054
+    },
+    {
+      "sourceIndex": 576,
+      "seconds": 23.557,
+      "nativeState": "localized",
+      "nativeComputeMS": 110.14160000195261,
+      "lkState": "localized",
+      "lkComputeMS": 79.27809999819146
+    },
+    {
+      "sourceIndex": 581,
+      "seconds": 23.793,
+      "nativeState": "unknown",
+      "nativeComputeMS": 104.51090000060503,
+      "lkState": "localized",
+      "lkComputeMS": 65.5813000012131
+    },
+    {
+      "sourceIndex": 585,
+      "seconds": 24.007,
+      "nativeState": "unknown",
+      "nativeComputeMS": 100.4821999995329,
+      "lkState": "localized",
+      "lkComputeMS": 56.04809999931604
+    },
+    {
+      "sourceIndex": 589,
+      "seconds": 24.241,
+      "nativeState": "unknown",
+      "nativeComputeMS": 121.35489999855054,
+      "lkState": "localized",
+      "lkComputeMS": 56.02869999711402
+    },
+    {
+      "sourceIndex": 593,
+      "seconds": 24.457,
+      "nativeState": "unknown",
+      "nativeComputeMS": 105.73329999897396,
+      "lkState": "localized",
+      "lkComputeMS": 60.580499997740844
+    },
+    {
+      "sourceIndex": 598,
+      "seconds": 24.689,
+      "nativeState": "unknown",
+      "nativeComputeMS": 106.8306000015582,
+      "lkState": "localized",
+      "lkComputeMS": 60.68570000206819
+    },
+    {
+      "sourceIndex": 604,
+      "seconds": 24.939,
+      "nativeState": "unknown",
+      "nativeComputeMS": 115.06110000118497,
+      "lkState": "localized",
+      "lkComputeMS": 63.54790000114008
+    },
+    {
+      "sourceIndex": 609,
+      "seconds": 25.156,
+      "nativeState": "unknown",
+      "nativeComputeMS": 107.48819999935222,
+      "lkState": "localized",
+      "lkComputeMS": 61.988299999939045
+    },
+    {
+      "sourceIndex": 613,
+      "seconds": 25.372,
+      "nativeState": "unknown",
+      "nativeComputeMS": 97.23839999787742,
+      "lkState": "localized",
+      "lkComputeMS": 62.43050000193762
+    },
+    {
+      "sourceIndex": 618,
+      "seconds": 25.605,
+      "nativeState": "unknown",
+      "nativeComputeMS": 94.02360000240151,
+      "lkState": "localized",
+      "lkComputeMS": 63.90659999669879
+    },
+    {
+      "sourceIndex": 622,
+      "seconds": 25.847,
+      "nativeState": "unknown",
+      "nativeComputeMS": 95.8768999989843,
+      "lkState": "localized",
+      "lkComputeMS": 69.9547000003804
+    },
+    {
+      "sourceIndex": 626,
+      "seconds": 26.072,
+      "nativeState": "unknown",
+      "nativeComputeMS": 105.51220000343164,
+      "lkState": "localized",
+      "lkComputeMS": 56.98810000103549
+    },
+    {
+      "sourceIndex": 630,
+      "seconds": 26.305,
+      "nativeState": "unknown",
+      "nativeComputeMS": 107.26530000101775,
+      "lkState": "localized",
+      "lkComputeMS": 61.674099997617304
+    },
+    {
+      "sourceIndex": 635,
+      "seconds": 26.539,
+      "nativeState": "unknown",
+      "nativeComputeMS": 98.07440000076895,
+      "lkState": "localized",
+      "lkComputeMS": 71.21169999663834
+    },
+    {
+      "sourceIndex": 640,
+      "seconds": 26.788,
+      "nativeState": "unknown",
+      "nativeComputeMS": 106.92779999953927,
+      "lkState": "localized",
+      "lkComputeMS": 59.66110000008484
+    },
+    {
+      "sourceIndex": 645,
+      "seconds": 27.021,
+      "nativeState": "unknown",
+      "nativeComputeMS": 109.140299999126,
+      "lkState": "localized",
+      "lkComputeMS": 78.96269999764627
+    },
+    {
+      "sourceIndex": 650,
+      "seconds": 27.256,
+      "nativeState": "confirming",
+      "nativeComputeMS": 100.44980000020587,
+      "lkState": "localized",
+      "lkComputeMS": 59.29169999944861
+    },
+    {
+      "sourceIndex": 654,
+      "seconds": 27.51,
+      "nativeState": "unknown",
+      "nativeComputeMS": 97.25569999864092,
+      "lkState": "localized",
+      "lkComputeMS": 56.561299999884795
+    },
+    {
+      "sourceIndex": 658,
+      "seconds": 27.721,
+      "nativeState": "unknown",
+      "nativeComputeMS": 347.03670000089915,
+      "lkState": "localized",
+      "lkComputeMS": 295.37899999922956
+    },
+    {
+      "sourceIndex": 663,
+      "seconds": 27.954,
+      "nativeState": "unknown",
+      "nativeComputeMS": 151.01960000174586,
+      "lkState": "localized",
+      "lkComputeMS": 116.9235999986995
+    },
+    {
+      "sourceIndex": 668,
+      "seconds": 28.187,
+      "nativeState": "confirming",
+      "nativeComputeMS": 150.92510000249604,
+      "lkState": "localized",
+      "lkComputeMS": 89.67779999875347
+    },
+    {
+      "sourceIndex": 672,
+      "seconds": 28.403,
+      "nativeState": "unknown",
+      "nativeComputeMS": 143.86300000114716,
+      "lkState": "localized",
+      "lkComputeMS": 81.0858000004373
+    },
+    {
+      "sourceIndex": 678,
+      "seconds": 28.636,
+      "nativeState": "unknown",
+      "nativeComputeMS": 864.5342999989225,
+      "lkState": "localized",
+      "lkComputeMS": 76.40810000157217
+    },
+    {
+      "sourceIndex": 683,
+      "seconds": 28.868,
+      "nativeState": "unknown",
+      "nativeComputeMS": 141.6151000012178,
+      "lkState": "localized",
+      "lkComputeMS": 568.0543000016769
+    },
+    {
+      "sourceIndex": 688,
+      "seconds": 29.101,
+      "nativeState": "confirming",
+      "nativeComputeMS": 162.01700000237906,
+      "lkState": "localized",
+      "lkComputeMS": 215.67090000098688
+    },
+    {
+      "sourceIndex": 693,
+      "seconds": 29.334,
+      "nativeState": "unknown",
+      "nativeComputeMS": 120.03420000110054,
+      "lkState": "localized",
+      "lkComputeMS": 65.97719999990659
+    },
+    {
+      "sourceIndex": 698,
+      "seconds": 29.55,
+      "nativeState": "unknown",
+      "nativeComputeMS": 106.34639999989304,
+      "lkState": "localized",
+      "lkComputeMS": 77.54179999756161
+    },
+    {
+      "sourceIndex": 703,
+      "seconds": 29.783,
+      "nativeState": "confirming",
+      "nativeComputeMS": 109.81360000005225,
+      "lkState": "localized",
+      "lkComputeMS": 54.417899998952635
+    },
+    {
+      "sourceIndex": 708,
+      "seconds": 30.015,
+      "nativeState": "confirming",
+      "nativeComputeMS": 116.58579999857466,
+      "lkState": "localized",
+      "lkComputeMS": 56.69059999854653
+    },
+    {
+      "sourceIndex": 714,
+      "seconds": 30.265,
+      "nativeState": "localized",
+      "nativeComputeMS": 117.37870000069961,
+      "lkState": "localized",
+      "lkComputeMS": 58.08489999981248
+    },
+    {
+      "sourceIndex": 718,
+      "seconds": 30.502,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.024200000567362,
+      "lkState": "localized",
+      "lkComputeMS": 54.86650000239024
+    },
+    {
+      "sourceIndex": 723,
+      "seconds": 30.731,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.808099999645492,
+      "lkState": "localized",
+      "lkComputeMS": 56.67290000201319
+    },
+    {
+      "sourceIndex": 728,
+      "seconds": 30.98,
+      "nativeState": "localized",
+      "nativeComputeMS": 128.54110000262153,
+      "lkState": "localized",
+      "lkComputeMS": 55.30650000218884
+    },
+    {
+      "sourceIndex": 735,
+      "seconds": 31.262,
+      "nativeState": "localized",
+      "nativeComputeMS": 212.36259999932372,
+      "lkState": "localized",
+      "lkComputeMS": 54.349500001990236
+    },
+    {
+      "sourceIndex": 739,
+      "seconds": 31.479,
+      "nativeState": "localized",
+      "nativeComputeMS": 232.40680000162683,
+      "lkState": "localized",
+      "lkComputeMS": 63.6025999992853
+    },
+    {
+      "sourceIndex": 745,
+      "seconds": 31.728,
+      "nativeState": "localized",
+      "nativeComputeMS": 130.1195000014559,
+      "lkState": "localized",
+      "lkComputeMS": 69.2750000016531
+    },
+    {
+      "sourceIndex": 750,
+      "seconds": 31.944,
+      "nativeState": "localized",
+      "nativeComputeMS": 141.398300002038,
+      "lkState": "localized",
+      "lkComputeMS": 59.08930000077817
+    },
+    {
+      "sourceIndex": 754,
+      "seconds": 32.162,
+      "nativeState": "localized",
+      "nativeComputeMS": 133.58810000136145,
+      "lkState": "localized",
+      "lkComputeMS": 60.25420000150916
+    },
+    {
+      "sourceIndex": 758,
+      "seconds": 32.378,
+      "nativeState": "localized",
+      "nativeComputeMS": 117.90190000101575,
+      "lkState": "localized",
+      "lkComputeMS": 66.32840000020224
+    },
+    {
+      "sourceIndex": 762,
+      "seconds": 32.596,
+      "nativeState": "localized",
+      "nativeComputeMS": 126.51860000187298,
+      "lkState": "localized",
+      "lkComputeMS": 66.04009999864502
+    },
+    {
+      "sourceIndex": 767,
+      "seconds": 32.845,
+      "nativeState": "localized",
+      "nativeComputeMS": 121.14090000250144,
+      "lkState": "localized",
+      "lkComputeMS": 68.30110000009881
+    },
+    {
+      "sourceIndex": 772,
+      "seconds": 33.094,
+      "nativeState": "localized",
+      "nativeComputeMS": 118.40400000073714,
+      "lkState": "localized",
+      "lkComputeMS": 75.41960000162362
+    },
+    {
+      "sourceIndex": 778,
+      "seconds": 33.343,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.473300000536256,
+      "lkState": "localized",
+      "lkComputeMS": 49.35939999995753
+    },
+    {
+      "sourceIndex": 784,
+      "seconds": 33.575,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.677899997564964,
+      "lkState": "localized",
+      "lkComputeMS": 47.91589999877033
+    },
+    {
+      "sourceIndex": 789,
+      "seconds": 33.809,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.588100001361454,
+      "lkState": "localized",
+      "lkComputeMS": 47.63230000025942
+    },
+    {
+      "sourceIndex": 794,
+      "seconds": 34.041,
+      "nativeState": "localized",
+      "nativeComputeMS": 113.88090000036755,
+      "lkState": "localized",
+      "lkComputeMS": 46.815500001684995
+    },
+    {
+      "sourceIndex": 799,
+      "seconds": 34.258,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.545900000375696,
+      "lkState": "localized",
+      "lkComputeMS": 45.16420000072685
+    },
+    {
+      "sourceIndex": 804,
+      "seconds": 34.474,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.054400001332397,
+      "lkState": "localized",
+      "lkComputeMS": 45.7432000002882
+    },
+    {
+      "sourceIndex": 809,
+      "seconds": 34.69,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.91810000030091,
+      "lkState": "localized",
+      "lkComputeMS": 42.165799997746944
+    },
+    {
+      "sourceIndex": 815,
+      "seconds": 34.973,
+      "nativeState": "localized",
+      "nativeComputeMS": 116.70199999934994,
+      "lkState": "localized",
+      "lkComputeMS": 40.704299997742055
+    },
+    {
+      "sourceIndex": 820,
+      "seconds": 35.205,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.459000000788365,
+      "lkState": "localized",
+      "lkComputeMS": 39.55180000048131
+    },
+    {
+      "sourceIndex": 825,
+      "seconds": 35.438,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.849300000292715,
+      "lkState": "localized",
+      "lkComputeMS": 39.206800000101794
+    },
+    {
+      "sourceIndex": 830,
+      "seconds": 35.689,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.855000000039581,
+      "lkState": "localized",
+      "lkComputeMS": 40.396899999905145
+    },
+    {
+      "sourceIndex": 834,
+      "seconds": 35.955,
+      "nativeState": "localized",
+      "nativeComputeMS": 118.89629999859608,
+      "lkState": "localized",
+      "lkComputeMS": 39.692700000159675
+    },
+    {
+      "sourceIndex": 839,
+      "seconds": 36.204,
+      "nativeState": "localized",
+      "nativeComputeMS": 9.180100001685787,
+      "lkState": "localized",
+      "lkComputeMS": 37.30039999936707
+    },
+    {
+      "sourceIndex": 845,
+      "seconds": 36.437,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.912699999200413,
+      "lkState": "localized",
+      "lkComputeMS": 37.71280000000843
+    },
+    {
+      "sourceIndex": 851,
+      "seconds": 36.686,
+      "nativeState": "localized",
+      "nativeComputeMS": 8.871599999110913,
+      "lkState": "localized",
+      "lkComputeMS": 43.365400000766385
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T08:47:02.784515+00:00",
+  "sourceRevision": "a21177882f4194bb6c97c86f69a8df3684ebb91f",
+  "runtimeInstalled": false,
+  "scope": "Keep video peer independent of recording/XPath input-mode transitions. Native release remains required; no fabricated ACK.",
+  "browser": {
+    "sourceRevision": "a21177882f4194bb6c97c86f69a8df3684ebb91f",
+    "modeChecks": [
+      {
+        "mode": "record",
+        "iteration": 1,
+        "control": "closed",
+        "direct": true
+      },
+      {
+        "mode": "record",
+        "iteration": 2,
+        "control": "closed",
+        "direct": true
+      },
+      {
+        "mode": "record",
+        "iteration": 3,
+        "control": "closed",
+        "direct": true
+      }
+    ],
+    "xpath": {
+      "direct": true,
+      "nodes": 46,
+      "connections": 1
+    },
+    "streamSummary": "кадров 2340 · подключений 1",
+    "androidActionsSent": false,
+    "rootHierarchyRead": true,
+    "observedAtUtc": "2026-10-15T08:45:47.471Z"
+  },
+  "regressionTests": {
+    "pointerControlTests": 124,
+    "passed": true
+  },
+  "limits": [
+    "Recording tap/swipe/wheel transport remains legacy server WebSocket, without execution ACK.",
+    "XPath hierarchy retrieval remains root/APK command via API; only video stays direct.",
+    "No recorded gesture playback, arbitrary path fidelity or complete native input recorder acceptance.",
+    "Card glass and mode labels have source checks; final deployment has separate receipt."
+  ]
+}

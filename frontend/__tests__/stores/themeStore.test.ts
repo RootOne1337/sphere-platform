@@ -9,7 +9,7 @@ describe('useThemeStore', () => {
   });
 
   describe('начальное состояние', () => {
-    it('theme = neo-dark', () => expect(useThemeStore.getState().theme).toBe('neo-dark'));
+    it('uses dark as the first-run theme', () => expect(useThemeStore.getInitialState().theme).toBe('neo-dark'));
     it('density = cozy', () => expect(useThemeStore.getState().density).toBe('cozy'));
   });
 

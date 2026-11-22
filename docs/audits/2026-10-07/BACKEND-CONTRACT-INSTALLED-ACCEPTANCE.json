@@ -1,0 +1,196 @@
+{
+  "evidenceSchema": 1,
+  "assembledAtUtc": "2026-10-06T22:39:10.918433+00:00",
+  "sourceRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+  "frontendRevision": "b50d6ae2af537adb12a52503f0809ef565c0ba21",
+  "previousApiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "deliveryToolCommit": "fa4dd411be367bde064134a11b5d09b2686fec17",
+  "runtimeInstalled": true,
+  "installedBackend": {
+    "id": "eb7c839d201c8edfa0e3b298156d49f8ebbdbbc1c7f677836ad5de4e7a36b400",
+    "imageId": "sha256:4b3b30b6609f5bbd89727eeb6847109023fbf8844d519e639723cded20f3559b",
+    "imageTag": "sphere-reviewed-backend:114775a481f579e840ff63a154f1520b2f37dd0d",
+    "startedAt": "2026-10-06T22:35:01.210852114Z",
+    "status": "running"
+  },
+  "independentCiConfigId": "sha256:228efeb59880d9a1ab8badbd96a61318b72f6014de6fbee4b73a14130769b2b9",
+  "loadedManifestId": "sha256:4b3b30b6609f5bbd89727eeb6847109023fbf8844d519e639723cded20f3559b",
+  "githubArtifact": {
+    "artifactId": 11447958740,
+    "sourceRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+    "zipBytes": 236142884,
+    "zipSha256": "fd92513f10bd6910fbd743d8a1fc5834201f7c2cdf04cb974ed2c6fce3a149da",
+    "githubArtifactDigestVerified": true,
+    "retainedZip": false,
+    "imageId": "sha256:228efeb59880d9a1ab8badbd96a61318b72f6014de6fbee4b73a14130769b2b9",
+    "archiveAdmitted": true
+  },
+  "archiveBytes": 236141252,
+  "archiveSha256": "81c3652e5f891996ff907775d892d67fb999f93bc7cae8b46435e594006e0f00",
+  "sourceChanges": [
+    "backend/api/v1/scripts/router.py",
+    "backend/schemas/action_contract.v1.json",
+    "backend/schemas/action_parameters.py",
+    "backend/schemas/dag.py",
+    "backend/schemas/script.py",
+    "backend/services/script_service.py"
+  ],
+  "schemaHeads": [
+    "20261006_script_catalog_metadata"
+  ],
+  "schemaMigrationPerformed": false,
+  "otherContainersPreserved": 45,
+  "preservationCheck": "installer compared all other container IDs/images/start epochs/status before and after",
+  "otaCatalogSha256": "c22124909f08d2df6fd98048eb1c359da5d5c4ee73f0e1f9cc7427988e27d4d4",
+  "apkRolloutPerformed": false,
+  "ci": [
+    {
+      "runId": 37539920295,
+      "name": "CI — Backend",
+      "sourceRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+      "runAttempt": 1,
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37539920295"
+    },
+    {
+      "runId": 37539920276,
+      "name": "CI — Frontend",
+      "sourceRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+      "runAttempt": 1,
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37539920276"
+    },
+    {
+      "runId": 37539920262,
+      "name": "CI — Android",
+      "sourceRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+      "runAttempt": 1,
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37539920262"
+    }
+  ],
+  "backendTests": {
+    "passed": 3050,
+    "skipped": 37,
+    "subtestsPassed": 112,
+    "coveragePercent": 80.41
+  },
+  "localDeliveryTests": {
+    "methodsPassed": 51,
+    "scope": "bounded archives, streaming packager, backend/UI installer boundaries"
+  },
+  "liveApiCanary": {
+    "phase": "after",
+    "observedAtUtc": "2026-10-06T22:35:41.783688+00:00",
+    "deviceCommandsSent": false,
+    "scriptsPublished": false,
+    "taskExecutionRequested": false,
+    "apiRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+    "apiReady": true,
+    "catalogRows": 25,
+    "catalogTotal": 25,
+    "catalogNoStore": true,
+    "catalogWithoutSource": true,
+    "catalogFingerprint": "415030f9fd80fd3689c7b6765f68e7125b02ed9b5e40c528bf357b171629b93c",
+    "taskDetailStatus": 200,
+    "activeTaskCounts": {
+      "running": 0,
+      "assigned": 0,
+      "queued": 0
+    },
+    "fleetTotal": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true,
+    "catalogPreserved": true,
+    "liveContractVerified": true,
+    "contractActionCount": 32,
+    "anonymousContractStatus": 401,
+    "validDraftStatus": 200,
+    "missingTapCoordinatesStatus": 422,
+    "deviceExecutionVerified": false,
+    "validDagHash": "8483ba124a7709efef382a2887edb8e1e253f38461bf1da1a032efcf948e7267"
+  },
+  "agentReconnectCanary": {
+    "observedAtUtc": "2026-10-06T22:36:15.959234+00:00",
+    "onlineDevices": 14,
+    "heartbeatAfterReplacement": 14,
+    "connectedAfterReplacement": 14,
+    "deviceCommandsSent": false,
+    "fleetExecutionVerified": false,
+    "agentReconnectVerified": true
+  },
+  "browserCanary": {
+    "observedAtUtc": "2026-10-06T22:37:22.786Z",
+    "url": "http://127.0.0.1:3015/scripts/builder",
+    "frontendRevision": "b50d6ae2af537adb12a52503f0809ef565c0ba21",
+    "apiRevision": "114775a481f579e840ff63a154f1520b2f37dd0d",
+    "serverParameterContractVisible": true,
+    "androidExecutionNotClaimed": true,
+    "nodeCount": 3,
+    "edgeCount": 2,
+    "dagHash": "290b690a72d599b8491239e08a2ee10dc36806701d4588b94980e4155369f168",
+    "layoutAfterValidation": true,
+    "scriptsPublished": false,
+    "tasksStarted": false,
+    "errorWarningCount": 0,
+    "viewport": {
+      "height": 1080,
+      "width": 1920
+    }
+  },
+  "hostAfter": {
+    "observedAt": "2026-10-06T22:36:16.055724+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 40440664064,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "availableRamBytes": 20962144256,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 51920404480,
+    "commitLimitBytes": 101336473600,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "findings": [],
+    "buildAllowed": true
+  },
+  "limitations": [
+    "No script/version/task was published or executed by this rollout canary.",
+    "No APK capability admission for all 32 actions; no continuous pointer or correlated replay acceptance.",
+    "No full fleet faults/soak/capacity admission or storage-growth/corruption root cause established.",
+    "No VPS production-role rollout; installed pilot remains development with real authentication."
+  ],
+  "productLedger": {
+    "accepted": 9,
+    "open": 41
+  },
+  "screenshots": [
+    {
+      "file": "assets/backend-contract/installed-validation-114775a.jpg",
+      "capture": "native-codex-browser",
+      "bytes": 150728,
+      "sha256": "72f0f7addd364b7552f76f0207c8c468d0856715aa22a7ca374b82be808034e0",
+      "dimensions": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "file": "assets/backend-contract/arranged-validation-114775a.jpg",
+      "capture": "native-codex-browser",
+      "bytes": 149645,
+      "sha256": "9715bffb672ce85db30d3b13a983c99444557997b4f851509bf7222ad8902dc3",
+      "dimensions": [
+        1920,
+        1080
+      ]
+    }
+  ]
+}

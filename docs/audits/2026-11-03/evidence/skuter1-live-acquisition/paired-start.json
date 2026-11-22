@@ -1,0 +1,93 @@
+{
+  "schema": "sphere-confirmation-source-motion-proof-v1",
+  "scope": "same_recording_untaught_night_JPEG86_plus_all89_unrelated_negative_images",
+  "independent_gameplay": false,
+  "full_route_execution_qualified": false,
+  "physical_actions": 0,
+  "etalon_geometry_sha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "etalon_cameras": 173,
+  "etalon_points": 20556,
+  "source_and_models_unchanged": true,
+  "producer_unchanged_during_measurement": true,
+  "producer_unchanged_now": true,
+  "report_sha256": "d28f5a13f449ae1275196109ad8e9c9aa9a38cc9eed4659fce547ca4ba89cb68",
+  "runner_receipt_sha256": "380f5e8b1e715944d4c7f99b2ae8e1564a83c72902187e2bb02017a42af0a51b",
+  "root_authorized_resources": {
+    "cpu": 2,
+    "ram_bytes": 1073741824,
+    "wall_seconds": 60,
+    "minimum_host_ram_bytes": 6442450944
+  },
+  "runner": {
+    "exit_code": 0,
+    "reason": null,
+    "seconds": 27.0,
+    "all_owned_processes_closed": true,
+    "physical_actions": 0,
+    "memory_bytes": 1073741824,
+    "cpu_affinity": [
+      0,
+      1
+    ]
+  },
+  "policies": {
+    "confirmation": "distinct_current_pose_3of5_source_bound_1second_v1",
+    "subpixel_center": "current_inlier_center_subpixel_0p5px_1pct_moving_step_v2",
+    "source_motion": "bounded_source_arc_preimage_local_speed_v1"
+  },
+  "positive_source_indices": [
+    1,
+    7,
+    11,
+    17,
+    23,
+    29,
+    35,
+    40,
+    45,
+    51,
+    57,
+    62
+  ],
+  "counts": {
+    "old": {
+      "confirming": 5,
+      "localized": 5,
+      "unknown": 2
+    },
+    "new": {
+      "confirming": 2,
+      "localized": 10
+    }
+  },
+  "all_new_after_third_localized": true,
+  "compute_ms": {
+    "old": {
+      "p95": 82.1000000032654,
+      "maximum": 125.0
+    },
+    "new": {
+      "p95": 105.89999999647257,
+      "maximum": 139.99999999941792
+    }
+  },
+  "negative_count": 89,
+  "negative_false_poses": 0,
+  "negative_reasons": {
+    "route_pose_not_verified": 88,
+    "route_frame_expired_during_localization": 1
+  },
+  "negative_all_actually_attempted": true,
+  "negative_max_verified_candidates": 0,
+  "current_misses_authorize_motion": false,
+  "speed_limit": {
+    "maximum_selectable_kmh": 50,
+    "default_kmh_unchanged": 15,
+    "actual_50kmh_drive_tested": false
+  },
+  "uncertainty_covariance_integrated": false,
+  "local_receipt": {
+    "path": ".local-pilot/skuter1-confirmation-regression-20261104-v4/compact-proof.json",
+    "sha256": "b51bde550cc1177d5c6b1aa8e9a07475a09a8ecdb10e029c67b5953330b5b2a3"
+  }
+}

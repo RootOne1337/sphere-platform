@@ -1,0 +1,267 @@
+{
+  "schema": "sphere-route-reactivity-evidence-v1",
+  "scope": "historical_browser_reports_no_new_gameplay",
+  "physicalActions": 0,
+  "reports": [
+    {
+      "file": "c5ac79591b11493bab7d41db0493b6d1.json",
+      "sha256": "36f0d1cee6c67b2ff5d397b6914724c46712423725f97c3b7b0947dc51eb8f94",
+      "modified": 1793394254.1191308,
+      "stop": "walk_camera_trace_end_confirmed",
+      "client": "walk_live_v8",
+      "analysis": {
+        "schema": "sphere-route-reactivity-v1",
+        "executionQualified": false,
+        "analysisPhysicalActions": 0,
+        "fullAndroidLatencyKnown": false,
+        "timing": "single_browser_clock",
+        "observationsRetained": 376,
+        "observationCount": 1470,
+        "observationCoverage": "incomplete",
+        "sourceFrameToReplyMs": {
+          "count": 376,
+          "p50": 44.749999940395355,
+          "p95": 202.02500000596046,
+          "maximum": 249.5
+        },
+        "backendComputeMs": {
+          "count": 376,
+          "p50": 10.878300003241748,
+          "p95": 152.02999996836297,
+          "maximum": 223.77000004053116
+        },
+        "freshFollowingCorrections": 226,
+        "retainedCorrectionGapMs": {
+          "count": 225,
+          "p50": 164.90000009536743,
+          "p95": 1326.2799999475476,
+          "maximum": 4319.800000071526
+        },
+        "correctionCadenceQualified": false,
+        "nativeSubmitToAppliedAckMs": {
+          "count": 255,
+          "p50": 9.7998046875,
+          "p95": 20.630126953125,
+          "maximum": 79.89990234375
+        },
+        "nativeReceiptsUnmatched": 1,
+        "nativeReceiptsAmbiguous": 0,
+        "nativeRejectedOutcomes": {},
+        "limitations": [
+          "retained_samples_may_be_decimated_or_tail_only",
+          "no_query_to_native_command_correlation",
+          "no_android_capture_or_world_motion_latency",
+          "ack_is_not_distance_or_route_completion"
+        ]
+      }
+    },
+    {
+      "file": "d34d4383fca149d882eea1522b5a39e0.json",
+      "sha256": "bddb7ef061a2d5c384d75622082d518b443df6505d61055a6dc2e8b7510b66ad",
+      "modified": 1793393224.724659,
+      "stop": "walk_camera_response_not_observed",
+      "client": "walk_live_v7",
+      "analysis": {
+        "schema": "sphere-route-reactivity-v1",
+        "executionQualified": false,
+        "analysisPhysicalActions": 0,
+        "fullAndroidLatencyKnown": false,
+        "timing": "single_browser_clock",
+        "observationsRetained": 142,
+        "observationCount": 142,
+        "observationCoverage": "complete_by_counter",
+        "sourceFrameToReplyMs": {
+          "count": 142,
+          "p50": 31.450000047683716,
+          "p95": 190.87499997615814,
+          "maximum": 244.39999997615814
+        },
+        "backendComputeMs": {
+          "count": 142,
+          "p50": 9.000999969430268,
+          "p95": 152.33000494190492,
+          "maximum": 221.20199992787093
+        },
+        "freshFollowingCorrections": 138,
+        "retainedCorrectionGapMs": {
+          "count": 137,
+          "p50": 72.39999997615814,
+          "p95": 269.2600000143051,
+          "maximum": 604.3000000715256
+        },
+        "correctionCadenceQualified": false,
+        "nativeSubmitToAppliedAckMs": {
+          "count": 95,
+          "p50": 8.599853515625,
+          "p95": 20.87998046875,
+          "maximum": 57.7001953125
+        },
+        "nativeReceiptsUnmatched": 0,
+        "nativeReceiptsAmbiguous": 0,
+        "nativeRejectedOutcomes": {},
+        "limitations": [
+          "retained_samples_may_be_decimated_or_tail_only",
+          "no_query_to_native_command_correlation",
+          "no_android_capture_or_world_motion_latency",
+          "ack_is_not_distance_or_route_completion"
+        ]
+      }
+    },
+    {
+      "file": "1c376bed3bbf4271a659054e1134559b.json",
+      "sha256": "9b253ce71993c04715051c68a0f96050b0f47707a2a963ce6631bf16fa918849",
+      "modified": 1793391292.9930246,
+      "stop": "resource_guard",
+      "client": "walk_live_v7",
+      "analysis": {
+        "schema": "sphere-route-reactivity-v1",
+        "executionQualified": false,
+        "analysisPhysicalActions": 0,
+        "fullAndroidLatencyKnown": false,
+        "timing": "single_browser_clock",
+        "observationsRetained": 0,
+        "observationCount": 0,
+        "observationCoverage": "complete_by_counter",
+        "sourceFrameToReplyMs": {
+          "count": 0,
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        },
+        "backendComputeMs": {
+          "count": 0,
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        },
+        "freshFollowingCorrections": 0,
+        "retainedCorrectionGapMs": {
+          "count": 0,
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        },
+        "correctionCadenceQualified": false,
+        "nativeSubmitToAppliedAckMs": {
+          "count": 0,
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        },
+        "nativeReceiptsUnmatched": 0,
+        "nativeReceiptsAmbiguous": 0,
+        "nativeRejectedOutcomes": {},
+        "limitations": [
+          "retained_samples_may_be_decimated_or_tail_only",
+          "no_query_to_native_command_correlation",
+          "no_android_capture_or_world_motion_latency",
+          "ack_is_not_distance_or_route_completion"
+        ]
+      }
+    },
+    {
+      "file": "573484e0ab6d4a10a69e7d3aa62c4503.json",
+      "sha256": "3143cd0ae65a0eda4927b77a09cb54742f554ec7c3ba6ae17d20489f4724f09f",
+      "modified": 1793391255.7529972,
+      "stop": "walk_visibility_pause",
+      "client": "walk_live_v7",
+      "analysis": {
+        "schema": "sphere-route-reactivity-v1",
+        "executionQualified": false,
+        "analysisPhysicalActions": 0,
+        "fullAndroidLatencyKnown": false,
+        "timing": "single_browser_clock",
+        "observationsRetained": 60,
+        "observationCount": 60,
+        "observationCoverage": "complete_by_counter",
+        "sourceFrameToReplyMs": {
+          "count": 60,
+          "p50": 36.550000071525574,
+          "p95": 168.46500006914135,
+          "maximum": 201.69999992847443
+        },
+        "backendComputeMs": {
+          "count": 60,
+          "p50": 9.79199999710545,
+          "p95": 137.0112049684394,
+          "maximum": 185.33720006234944
+        },
+        "freshFollowingCorrections": 48,
+        "retainedCorrectionGapMs": {
+          "count": 47,
+          "p50": 70.0,
+          "p95": 298.5699999690055,
+          "maximum": 603.2000000476837
+        },
+        "correctionCadenceQualified": false,
+        "nativeSubmitToAppliedAckMs": {
+          "count": 37,
+          "p50": 11.5,
+          "p95": 29.099999999999998,
+          "maximum": 42.39990234375
+        },
+        "nativeReceiptsUnmatched": 0,
+        "nativeReceiptsAmbiguous": 0,
+        "nativeRejectedOutcomes": {},
+        "limitations": [
+          "retained_samples_may_be_decimated_or_tail_only",
+          "no_query_to_native_command_correlation",
+          "no_android_capture_or_world_motion_latency",
+          "ack_is_not_distance_or_route_completion"
+        ]
+      }
+    },
+    {
+      "file": "825be4dfd17340c5bed3346f58627c09.json",
+      "sha256": "3f435394b1dbdaa50bbdc82e398c562c5e284b88e3966253dbd795cbdbd09b7f",
+      "modified": 1793391221.3688076,
+      "stop": "walk_recovery_time_budget",
+      "client": "walk_live_v7",
+      "analysis": {
+        "schema": "sphere-route-reactivity-v1",
+        "executionQualified": false,
+        "analysisPhysicalActions": 0,
+        "fullAndroidLatencyKnown": false,
+        "timing": "single_browser_clock",
+        "observationsRetained": 299,
+        "observationCount": 550,
+        "observationCoverage": "incomplete",
+        "sourceFrameToReplyMs": {
+          "count": 299,
+          "p50": 35.700000047683716,
+          "p95": 159.63000004291501,
+          "maximum": 239.90000009536743
+        },
+        "backendComputeMs": {
+          "count": 299,
+          "p50": 9.20359999872744,
+          "p95": 122.66658004373302,
+          "maximum": 186.13839999306947
+        },
+        "freshFollowingCorrections": 251,
+        "retainedCorrectionGapMs": {
+          "count": 250,
+          "p50": 163.0,
+          "p95": 538.0300000607967,
+          "maximum": 1979.8999999761581
+        },
+        "correctionCadenceQualified": false,
+        "nativeSubmitToAppliedAckMs": {
+          "count": 255,
+          "p50": 8.900146484375,
+          "p95": 21.0299560546875,
+          "maximum": 35.300048828125
+        },
+        "nativeReceiptsUnmatched": 1,
+        "nativeReceiptsAmbiguous": 0,
+        "nativeRejectedOutcomes": {},
+        "limitations": [
+          "retained_samples_may_be_decimated_or_tail_only",
+          "no_query_to_native_command_correlation",
+          "no_android_capture_or_world_motion_latency",
+          "ack_is_not_distance_or_route_completion"
+        ]
+      }
+    }
+  ]
+}

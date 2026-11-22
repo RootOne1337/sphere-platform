@@ -1,0 +1,162 @@
+{
+  "schema": "sphere-walk-live-delivery-v1",
+  "date": "2026-10-30",
+  "timezone": "Asia/Yekaterinburg",
+  "baseline": "e1e42515",
+  "clientVersion": "walk_live_v4",
+  "physicalDeviceActions": 0,
+  "postFixGamePassVerified": false,
+  "coverage": {
+    "oldLocalReports": 64,
+    "recentReports": 7,
+    "firstLocalTime": "2026-10-30T22:20:40",
+    "lastLocalTime": "2026-10-30T22:23:42",
+    "completeAttemptHistory": false,
+    "userReportedCamera130NotIndependentlyVerified": true,
+    "rawReportArchiveSha256": "46d4ddcf927c26c0550bf38ad729d12d95b8fe97fd45928426d7b13633410849"
+  },
+  "tests": {
+    "python": {
+      "passed": 159,
+      "skipped": 1,
+      "subtestsPassed": 63,
+      "logSha256": "0d2b1927ddc32b0d76eef060714e6f98b9be0582cd86f8f99c438da7db1b2f49",
+      "xmlSha256": "ad0c4d800cc8448a416c0261ff0703f0c37314c6ee988af6a51b9f818b9b3cfd"
+    },
+    "metadataAfterCorrelationFields": {
+      "passed": 36,
+      "subtestsPassed": 18,
+      "overlapsPythonSuite": true,
+      "logSha256": "832eefc190c954dc25c2210044c6d69abfb5c60ec77bc82166732e58450f6152"
+    },
+    "frontend": {
+      "success": true,
+      "passed": 117,
+      "suites": 9,
+      "sha256": "3d9d9e2a7e0e4531890693e7d56cb8d2da37bcd237ad74e2947a0152cd814fa2"
+    },
+    "cameraPlant": {
+      "simulatedPlant": true,
+      "realGame": false,
+      "actualLocalization": false,
+      "cases": 23,
+      "passed": 23,
+      "sha256": "4413a4abaeec7f38a80935a768cfd8466400dacefbd24892ec03e02d12548f0f"
+    }
+  },
+  "browserBenchmark": {
+    "source": "synthetic_canvas_stream_1920x1080_30fps",
+    "realWebRTC": false,
+    "userTab": false,
+    "cases": [
+      {
+        "mode": "bitmap",
+        "samples": 60,
+        "totalMs": {
+          "p50": 9.899999976158142,
+          "p95": 27.90000009536743,
+          "maximum": 35.299999952316284
+        },
+        "captureMs": {
+          "p50": 4.600000023841858,
+          "p95": 9.800000071525574
+        }
+      },
+      {
+        "mode": "video_frame",
+        "samples": 60,
+        "totalMs": {
+          "p50": 9.300000071525574,
+          "p95": 12.899999976158142,
+          "maximum": 14.100000023841858
+        },
+        "captureMs": {
+          "p50": 0,
+          "p95": 0.10000002384185791
+        }
+      }
+    ],
+    "sha256": "5834a11ec61e5ef8b80da3fd32fb80c720aed9afad85eee51ad9961b1ec871b2"
+  },
+  "build": {
+    "path": ".local-pilot/walk-live-build-20261030-v3.json",
+    "sha256": "ac1eced7efa7bcf4a8869d24104ea263eae42d65f7214672cc8bb8ae35435550",
+    "value": {
+      "exit_code": 0,
+      "stopped_reason": null,
+      "source_sha_before": "4ca10241b4e4bd0cc57514a4e165c0071b0dc3a27c16f740eff820487e40c50c",
+      "source_sha_after": "4ca10241b4e4bd0cc57514a4e165c0071b0dc3a27c16f740eff820487e40c50c",
+      "source_unchanged": true,
+      "local_only": true,
+      "installed": false,
+      "resource_profile": {
+        "kind": "bounded_frontend_only",
+        "workers": 1,
+        "node_heap_mib": 1024,
+        "start_ram_gib": 6.5,
+        "stop_ram_gib": 5.5,
+        "max_commit_percent": 85,
+        "android_and_reconstruction_guards_unchanged": true
+      }
+    }
+  },
+  "probe": {
+    "path": ".local-pilot/walk-live-image-20261030-v2/probe3.json",
+    "sha256": "cdf4603114bba5c624e5a430c215115fbed817204d087fe89274106f8d1daed9",
+    "value": {
+      "outcome": "verified",
+      "physicalActions": 0,
+      "pages": 2,
+      "assets": 31,
+      "workerMatches": true,
+      "encoderWorkerMatches": true,
+      "newBundlePresent": true
+    }
+  },
+  "installation": {
+    "path": ".local-pilot/walk-live-image-20261030-v2/install-receipt.json",
+    "sha256": "0aacfdc973462e2673ccd17e281d68abfa5e0b6b87dd6415d378ddd25799e8a5",
+    "value": {
+      "outcome": "verified",
+      "candidateImageId": "sha256:f9e51872c9c90c005d79cf3a4fbc60e7f82bfe2a67fb2aa8b9d721eb3c0d1a65",
+      "physicalDeviceActions": 0,
+      "pages": 2,
+      "assets": 31,
+      "uiHealthy": true,
+      "otherContainersPreserved": true,
+      "sourceMatches": true
+    }
+  },
+  "runtimeReload": {
+    "path": ".local-pilot/walk-live-runtime-reload-20261030-v1.json",
+    "sha256": "e2878c3881cd17834969618f70702e1c9bb7fd4e77bcb9d73d300c3e39a193df",
+    "value": {
+      "oldPid": 9492,
+      "watchdogPid": 4444,
+      "physicalActions": 0,
+      "sourceSha": "d30fe3e6dd54d8ce15b109ecadab580b5c732e2d68d357595d147bdfdca3d8f1",
+      "outcome": "verified",
+      "newPid": 49764,
+      "existingAssetsUnchanged": true
+    }
+  },
+  "processorHealth": {
+    "service": "sphere-reconstruction-v1",
+    "one_active_job": true
+  },
+  "sourceHashes": {
+    "frontend/src/features/stream/WalkingRoutePilot.tsx": "57bd6572892fc88721a0446cf09baf50b76ed081603721c2f1253e2942061b3d",
+    "frontend/src/features/stream/walkFrameEncoder.ts": "6e04792ee9b6af91d604c57c5d0a5468b7027f6ec91a817c133be88da0e63337",
+    "frontend/src/features/stream/walkRunDiagnostics.ts": "dad3d90eceb1a3ce4bc896c4050f5108e28ee0c0453854eb1e6c6eb32e9e7c1a",
+    "frontend/public/walk-frame-encoder.js": "299fd956df1bac46cad0736b7b109e1c9533e3b922ba30622cb7cb6d24daec69",
+    "motor_worker/route_tracking.py": "44579e5ef761da1ae94413b666d97a28a438fb77ce767e7aab6ba2cd94e3be9e",
+    "motor_worker/walk_route.py": "6001b0dba089fdae854ea7ff3b5c96a86e886dd32ba400196f5cb08f3063b597",
+    "scripts/pilot/route_workspace.py": "d30fe3e6dd54d8ce15b109ecadab580b5c732e2d68d357595d147bdfdca3d8f1",
+    "scripts/pilot/route_walk_reports.py": "5e6c8fb53a2b890a8138593c33bd675f49f1d1b7c7523df87495142919d0af21",
+    "scripts/pilot/walk_diagnostics.py": "69c6ebb327d343231a7ff4fccbb801a7eddd632c9ea6546e1b7174621059c0f4",
+    "scripts/pilot/check_walk_encoder_browser.cjs": "2494bf33fa505634623425c2a94b4d4264e0f7b720915f5a6e403558c6c1bf41",
+    "scripts/pilot/check_walk_camera_loop.cjs": "335ef30057e55383a7f34eced397d8b5f07996ea3a6ffa1860ea56a57f60dd9d",
+    "scripts/pilot/analyze_walk_live_reports.py": "34e07ed5a54313789e5eb96bca983f19ea51d6a6028781f24df8211e5dcfe79e"
+  },
+  "analysisSha256": "2f3503912096f6da371aa3b371cc60378dbdad5021166660d2a5f0d140d745c1"
+}

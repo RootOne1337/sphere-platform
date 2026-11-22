@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T00:40:06.833372+00:00",
+  "runtimeInstalled": true,
+  "correction": {
+    "id": "continuous-idle-auto-recovery",
+    "sourceRevision": "639b6ad52fe3651579499659ded46ff73027f313"
+  },
+  "scope": "UI-only automatic readiness/reconnect and notice contrast correction; finite one-device visible browser navigation/readiness/frame checks on two origins. One natural unknown-pointer notice followed by new ready/native receipts and acknowledged Home was observed on each of UI13 and final UI639. Release/hold/terminal permutations remain fixture-only; no wire trace, latency/fleet/direct/soak or stable APK acceptance.",
+  "runtime": {
+    "sourceRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+    "apiSourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "uiContainer": {
+      "id": "2109cf7c08790a48f9637031f1603bbdba1d435e9260a1f32a5719c827be9102",
+      "imageId": "sha256:addce2bdef7e7c574fa68abfa0bc273184e63df81d1a721268caefbf4874ab13",
+      "imageTag": "sphere-review-frontend:639b6ad52fe3651579499659ded46ff73027f313",
+      "startedAt": "2026-10-10T00:38:05.533230075Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "aaf5b22a8901c412a08e3f3c8604798ea0fcef836fb3f549ef548d9ef5297182",
+      "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "startedAt": "2026-10-09T23:01:33.29485218Z"
+    },
+    "otherContainersPreserved": 45,
+    "containerCount": 46,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "apkChanged": false,
+    "pilotApk": {
+      "device": "PH011",
+      "version": "1.2.49-dev",
+      "versionCode": 10249
+    },
+    "schemaMigrationPerformed": false,
+    "directMediaControlEnabled": false,
+    "publicHostMapChanged": false
+  },
+  "delivery": {
+    "sourceRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+    "runId": 38009290896,
+    "imageId": "sha256:92623e5cfabb8f91033c113c3ac788fa482a17cac8432dcc139e3dceeee43528",
+    "archiveBytes": 120891993,
+    "previousUi": {
+      "id": "cff2d725a614268e029b49735ddfc6cd0cc47f97c29bbe88017526204ba81cf4",
+      "imageId": "sha256:504535b25ca25de1af5a0134bdf4fff0b34e29983019981fccc7b34c1f91e202",
+      "imageTag": "sphere-review-frontend:13f38ca95d2e2135736fe31a6c0634c1e02b69a5",
+      "startedAt": "2026-10-10T00:25:14.043768205Z",
+      "status": "running"
+    },
+    "containerCount": 46,
+    "observedAtUtc": "2026-10-10T00:37:36.653921+00:00",
+    "resourceFindings": [],
+    "applyRequested": true,
+    "onlyUiImageAndBuildRemovalDelta": true,
+    "backendPreserved": true,
+    "previousComposeFileCount": 2,
+    "candidateComposeFileCount": 2,
+    "completeBaselineRoundtripVerified": true,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-639b6ad52fe3-f9655ebc",
+    "runtimeInstalled": true,
+    "loadedImageId": "sha256:addce2bdef7e7c574fa68abfa0bc273184e63df81d1a721268caefbf4874ab13",
+    "installedUi": {
+      "id": "2109cf7c08790a48f9637031f1603bbdba1d435e9260a1f32a5719c827be9102",
+      "imageId": "sha256:addce2bdef7e7c574fa68abfa0bc273184e63df81d1a721268caefbf4874ab13",
+      "imageTag": "sphere-review-frontend:639b6ad52fe3651579499659ded46ff73027f313",
+      "startedAt": "2026-10-10T00:38:05.533230075Z",
+      "status": "running"
+    },
+    "otherContainersPreserved": 45,
+    "browserVerified": false
+  },
+  "artifact": {
+    "source": "639b6ad52fe3651579499659ded46ff73027f313",
+    "runId": 38009290896,
+    "artifactId": 11652284001,
+    "zipBytes": 120894944,
+    "zipSha256": "ad6e9ef7c423d7fda1cb8f2f9ea9d1ac209684c2cd50ed6ad60bea2d4979c107",
+    "independentImageId": "sha256:92623e5cfabb8f91033c113c3ac788fa482a17cac8432dcc139e3dceeee43528",
+    "ciAdmission": {
+      "source": "639b6ad52fe3651579499659ded46ff73027f313",
+      "imageId": "sha256:92623e5cfabb8f91033c113c3ac788fa482a17cac8432dcc139e3dceeee43528",
+      "compressedBytes": 120891993,
+      "pages": 26,
+      "assets": 73,
+      "runId": 38009290896,
+      "runtimeInstalled": false
+    },
+    "artifactDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\contrast-delivery-20261010-639b6ad5\\artifact",
+    "ciImageIdentityIndependentOfDownloadedReceipt": true
+  },
+  "exactSourceCiAtObservation": [
+    {
+      "conclusion": "success",
+      "databaseId": 38009290896,
+      "headSha": "639b6ad52fe3651579499659ded46ff73027f313",
+      "name": "CI — Frontend",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38009290849,
+      "headSha": "639b6ad52fe3651579499659ded46ff73027f313",
+      "name": "Preview — Deploy",
+      "status": "completed"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38009290854,
+      "headSha": "639b6ad52fe3651579499659ded46ff73027f313",
+      "name": "CI — Android",
+      "status": "in_progress"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38009290870,
+      "headSha": "639b6ad52fe3651579499659ded46ff73027f313",
+      "name": "CI — Backend",
+      "status": "in_progress"
+    }
+  ],
+  "validation": {
+    "frontendTests": 1996,
+    "frontendSuites": 142,
+    "localFullFunctionalSource": "13f38ca95d2e2135736fe31a6c0634c1e02b69a5",
+    "finalSourceHostedFrontendTests": 1996,
+    "localFinalNoticeRegressionTests": 84,
+    "typeScriptPassed": true,
+    "scopedEslintPassed": true,
+    "documentationRegressionTests": 28,
+    "inputReplayAllowed": false,
+    "nativeAckDeadlineMs": 500
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "deviceScope": "PH011 only; finite visible UI observations, not fleet",
+    "observations": [
+      {
+        "atUtc": "2026-10-10T00:32:50.716Z",
+        "origin": "local",
+        "action": "New blank launcher drag after acknowledged Home",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: захват активен · snapshot 24 сек назад\nПоследний Android heartbeat: 25 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 9\nCaptured: 15\nRendered: 9\nLocal WS accepted: 11/11\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 6\nRaw codec input skips: 0\nEncoded FPS drops: 0\nБраузерный viewer: 47 пакетов · 382267 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 1 сек назад\nПоследний canvas frame: 1 сек назад\nNAL SPS/PPS: 3/3\nIDR/delta: 3/38\nDecode submitted: 41\nDecoded output: 41\nDrawn to canvas: 41\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №56: 250 мс",
+          "«Домой»: выполнение подтверждено · ответ команды 667 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:32:50.346Z",
+        "origin": "local",
+        "action": "Home acknowledged on 3015; fresh native readiness",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: захват активен · snapshot 23 сек назад\nПоследний Android heartbeat: 24 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 9\nCaptured: 15\nRendered: 9\nLocal WS accepted: 11/11\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 6\nRaw codec input skips: 0\nEncoded FPS drops: 0\nБраузерный viewer: 47 пакетов · 382267 байт\nВходной видео FPS (1 с): 1\nОтрисовка FPS (1 с): 1\nПоследний пакет: 1 сек назад\nПоследний canvas frame: 1 сек назад\nNAL SPS/PPS: 3/3\nIDR/delta: 3/38\nDecode submitted: 41\nDecoded output: 41\nDrawn to canvas: 41\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №52: 247 мс",
+          "«Домой»: выполнение подтверждено · ответ команды 667 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:32:35.605Z",
+        "origin": "local",
+        "action": "Fresh local viewer after public viewer release",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: захват активен · snapshot 39 сек назад\nПоследний Android heartbeat: 39 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 129\nCaptured: 202\nRendered: 107\nLocal WS accepted: 175/175\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 94\nRaw codec input skips: 1\nEncoded FPS drops: 0\nБраузерный viewer: 14 пакетов · 125233 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 1 сек назад\nПоследний canvas frame: 1 сек назад\nNAL SPS/PPS: 2/2\nIDR/delta: 2/8\nDecode submitted: 10\nDecoded output: 10\nDrawn to canvas: 10\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №50: 249 мс",
+          "Клавиши работают и на неподвижном экране. Действие «Меню» зависит от приложения Android."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:33:27.385Z",
+        "origin": "local",
+        "action": "Later local readiness/video snapshot after navigation and drag",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: захват активен · snapshot 30 сек назад\nПоследний Android heartbeat: 31 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 62\nCaptured: 114\nRendered: 60\nLocal WS accepted: 68/68\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 54\nRaw codec input skips: 0\nEncoded FPS drops: 0\nБраузерный viewer: 76 пакетов · 658510 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 4 сек назад\nПоследний canvas frame: 4 сек назад\nNAL SPS/PPS: 5/5\nIDR/delta: 5/61\nDecode submitted: 66\nDecoded output: 66\nDrawn to canvas: 66\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №203: 247 мс",
+          "«Домой»: выполнение подтверждено · ответ команды 667 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:26:31.797Z",
+        "origin": "public",
+        "action": "Blank launcher drag; unknown pointer notice appeared and the viewer automatically recovered",
+        "state": "closed",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: closed · причина: idle_receipt_timeout\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 4 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nПоследний сбой управления · native_receipt_timeout\nФаза при остановке\nready\nОтправлено / подтверждено\n№10 / №8\nОжидали ACK\n2\nСамая старая команда\n№9 · HEARTBEAT\nВозраст / отсчёт deadline\n512 мс / 512 мс\nРазрыв тиков браузера\n15 мс\nПоследний ACK: RTT / возраст\n482 мс / 286 мс\nС последней отправки\n256 мс\nКасание / terminal ACK\nпалец не удерживался · не ожидался\nWebSocket / буфер\nOPEN · 0 B\n\nЗадержался только heartbeat без касания. Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.\n\nОтчёт APK: захват активен · snapshot 35 сек назад\nПоследний Android heartbeat: 36 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 8\nCaptured: 10\nRendered: 8\nLocal WS accepted: 10/10\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 2\nRaw codec input skips: 0\nEncoded FPS drops: 0\nБраузерный viewer: 58 пакетов · 480992 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 2 сек назад\nПоследний canvas frame: 2 сек назад\nNAL SPS/PPS: 4/4\nIDR/delta: 4/46\nDecode submitted: 50\nDecoded output: 50\nDrawn to canvas: 50\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Автоматически восстанавливаем управление · задержалось подтверждение связи без касания. Команды не повторяются.",
+          "Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.Скрыть",
+          "Навигация доступна после первого видеокадра при активной связи без ошибки управления."
+        ],
+        "homeEnabled": false,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:30:04.097Z",
+        "origin": "public",
+        "action": "Third explicit Home completed; final finite control snapshot",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nПоследний сбой управления · native_receipt_timeout\nФаза при остановке\nready\nОтправлено / подтверждено\n№35 / №33\nОжидали ACK\n2\nСамая старая команда\n№34 · HEARTBEAT\nВозраст / отсчёт deadline\n512 мс / 512 мс\nРазрыв тиков браузера\n16 мс\nПоследний ACK: RTT / возраст\n475 мс / 292 мс\nС последней отправки\n256 мс\nКасание / terminal ACK\nпалец не удерживался · не ожидался\nWebSocket / буфер\nOPEN · 0 B\n\nЗадержался только heartbeat без касания. Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.\n\nОтчёт APK: захват активен · snapshot 37 сек назад\nПоследний Android heartbeat: 38 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 90\nCaptured: 146\nRendered: 78\nLocal WS accepted: 116/116\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 67\nRaw codec input skips: 1\nEncoded FPS drops: 0\nБраузерный viewer: 172 пакетов · 1478674 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 3 сек назад\nПоследний canvas frame: 3 сек назад\nNAL SPS/PPS: 18/18\nIDR/delta: 18/118\nDecode submitted: 136\nDecoded output: 136\nDrawn to canvas: 136\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №141: 492 мс",
+          "Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.Скрыть",
+          "«Домой»: выполнение подтверждено · ответ команды 1186 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:27:14.630Z",
+        "origin": "public",
+        "action": "Explicit Home after natural pointer recovery, with new native readiness",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 5 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nПоследний сбой управления · native_receipt_timeout\nФаза при остановке\nready\nОтправлено / подтверждено\n№18 / №16\nОжидали ACK\n2\nСамая старая команда\n№17 · HEARTBEAT\nВозраст / отсчёт deadline\n512 мс / 512 мс\nРазрыв тиков браузера\n16 мс\nПоследний ACK: RTT / возраст\n487 мс / 282 мс\nС последней отправки\n256 мс\nКасание / terminal ACK\nпалец не удерживался · не ожидался\nWebSocket / буфер\nOPEN · 0 B\n\nЗадержался только heartbeat без касания. Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.\n\nОтчёт APK: захват активен · snapshot 17 сек назад\nПоследний Android heartbeat: 18 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 10\nCaptured: 13\nRendered: 7\nLocal WS accepted: 18/18\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 5\nRaw codec input skips: 1\nEncoded FPS drops: 0\nБраузерный viewer: 97 пакетов · 839580 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 7 сек назад\nПоследний canvas frame: 7 сек назад\nNAL SPS/PPS: 6/6\nIDR/delta: 6/79\nDecode submitted: 85\nDecoded output: 85\nDrawn to canvas: 85\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №29: 484 мс",
+          "Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.Скрыть",
+          "«Домой»: выполнение подтверждено · ответ команды 1154 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:26:09.598Z",
+        "origin": "public",
+        "action": "Fresh installed viewer",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 1 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nПоследний сбой управления · native_receipt_timeout\nФаза при остановке\nready\nОтправлено / подтверждено\n№42 / №40\nОжидали ACK\n2\nСамая старая команда\n№41 · HEARTBEAT\nВозраст / отсчёт deadline\n513 мс / 513 мс\nРазрыв тиков браузера\n16 мс\nПоследний ACK: RTT / возраст\n492 мс / 276 мс\nС последней отправки\n257 мс\nКасание / terminal ACK\nпалец не удерживался · не ожидался\nWebSocket / буфер\nOPEN · 0 B\n\nЗадержался только heartbeat без касания. Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.\n\nОтчёт APK: захват активен · snapshot 12 сек назад\nПоследний Android heartbeat: 13 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 8\nCaptured: 10\nRendered: 8\nLocal WS accepted: 10/10\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 2\nRaw codec input skips: 0\nEncoded FPS drops: 0\nБраузерный viewer: 12 пакетов · 77746 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 9 сек назад\nПоследний canvas frame: 9 сек назад\nNAL SPS/PPS: 1/1\nIDR/delta: 1/9\nDecode submitted: 10\nDecoded output: 10\nDrawn to canvas: 10\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №28: 488 мс",
+          "Клавиши работают и на неподвижном экране. Действие «Меню» зависит от приложения Android."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:32:14.564Z",
+        "origin": "public",
+        "action": "Finite later snapshot after second drag; distinguishes readiness from gesture completion",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 1 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nПоследний сбой управления · native_receipt_timeout\nФаза при остановке\nready\nОтправлено / подтверждено\n№151 / №149\nОжидали ACK\n2\nСамая старая команда\n№150 · HEARTBEAT\nВозраст / отсчёт deadline\n513 мс / 513 мс\nРазрыв тиков браузера\n16 мс\nПоследний ACK: RTT / возраст\n480 мс / 289 мс\nС последней отправки\n257 мс\nКасание / terminal ACK\nпалец не удерживался · не ожидался\nWebSocket / буфер\nOPEN · 0 B\n\nЗадержался только heartbeat без касания. Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.\n\nОтчёт APK: захват активен · snapshot 18 сек назад\nПоследний Android heartbeat: 18 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 129\nCaptured: 202\nRendered: 107\nLocal WS accepted: 175/175\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 94\nRaw codec input skips: 1\nEncoded FPS drops: 0\nБраузерный viewer: 228 пакетов · 1730672 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 2 сек назад\nПоследний canvas frame: 2 сек назад\nNAL SPS/PPS: 27/27\nIDR/delta: 27/147\nDecode submitted: 174\nDecoded output: 174\nDrawn to canvas: 174\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №62: 483 мс",
+          "Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.Скрыть",
+          "«Домой»: выполнение подтверждено · ответ команды 1186 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:27:45.329Z",
+        "origin": "public",
+        "action": "Recents completed; subsequent idle ACK pause remains visible",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 6 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nПоследний сбой управления · native_receipt_timeout\nФаза при остановке\nready\nОтправлено / подтверждено\n№9 / №7\nОжидали ACK\n2\nСамая старая команда\n№8 · HEARTBEAT\nВозраст / отсчёт deadline\n512 мс / 512 мс\nРазрыв тиков браузера\n17 мс\nПоследний ACK: RTT / возраст\n485 мс / 284 мс\nС последней отправки\n257 мс\nКасание / terminal ACK\nпалец не удерживался · не ожидался\nWebSocket / буфер\nOPEN · 0 B\n\nЗадержался только heartbeat без касания. Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.\n\nОтчёт APK: захват активен · snapshot 18 сек назад\nПоследний Android heartbeat: 19 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 67\nCaptured: 122\nRendered: 64\nLocal WS accepted: 75/75\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 57\nRaw codec input skips: 1\nEncoded FPS drops: 0\nБраузерный viewer: 127 пакетов · 1008604 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 3 сек назад\nПоследний canvas frame: 3 сек назад\nNAL SPS/PPS: 8/8\nIDR/delta: 8/103\nDecode submitted: 111\nDecoded output: 111\nDrawn to canvas: 111\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №33: 494 мс",
+          "Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.Скрыть",
+          "«Недавние»: выполнение подтверждено · ответ команды 1590 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:30:43.631Z",
+        "origin": "public",
+        "action": "New blank launcher drag after Home/Recents/Home and sustained native readiness",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 1 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nПоследний сбой управления · native_receipt_timeout\nФаза при остановке\nready\nОтправлено / подтверждено\n№243 / №241\nОжидали ACK\n2\nСамая старая команда\n№242 · HEARTBEAT\nВозраст / отсчёт deadline\n511 мс / 511 мс\nРазрыв тиков браузера\n16 мс\nПоследний ACK: RTT / возраст\n488 мс / 279 мс\nС последней отправки\n255 мс\nКасание / terminal ACK\nпалец не удерживался · не ожидался\nWebSocket / буфер\nOPEN · 0 B\n\nЗадержался только heartbeat без касания. Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.\n\nОтчёт APK: захват активен · snapshot 17 сек назад\nПоследний Android heartbeat: 17 сек назад\nCapture FPS: 0\nSurface FPS: 0\nEncoder FPS: 0\nEncoded: 96\nCaptured: 148\nRendered: 79\nLocal WS accepted: 132/132\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 68\nRaw codec input skips: 1\nEncoded FPS drops: 0\nБраузерный viewer: 187 пакетов · 1578677 байт\nВходной видео FPS (1 с): 1\nОтрисовка FPS (1 с): 1\nПоследний пакет: 1 сек назад\nПоследний canvas frame: 1 сек назад\nNAL SPS/PPS: 21/21\nIDR/delta: 21/124\nDecode submitted: 145\nDecoded output: 145\nDrawn to canvas: 145\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 13f38ca9 · API 369654a0W:13f38ca9 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №45: 480 мс",
+          "Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.Скрыть",
+          "«Домой»: выполнение подтверждено · ответ команды 1186 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:39:55.280Z",
+        "origin": "local",
+        "action": "Final-source explicit Home completion and fresh native readiness",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: not_streaming\nПоследний Android heartbeat: 29 сек назад\nНет свежего отчёта активного захвата от APK.\nБраузерный viewer: 47 пакетов · 422440 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 3 сек назад\nПоследний canvas frame: 3 сек назад\nNAL SPS/PPS: 3/3\nIDR/delta: 3/38\nDecode submitted: 41\nDecoded output: 41\nDrawn to canvas: 41\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №14: 253 мс",
+          "«Домой»: выполнение подтверждено · ответ команды 674 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:39:27.434Z",
+        "origin": "local",
+        "action": "Final installed source; native readiness in unchanged dark theme",
+        "state": "idle",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: idle\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: not_streaming\nПоследний Android heartbeat: 1 сек назад\nНет свежего отчёта активного захвата от APK.\nБраузерный viewer: 0 пакетов · 0 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: никогда\nПоследний canvas frame: никогда\nNAL SPS/PPS: 0/0\nIDR/delta: 0/0\nDecode submitted: 0\nDecoded output: 0\nDrawn to canvas: 0\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Управление Android",
+          "Ожидание видеокадра…",
+          "Навигация доступна после первого видеокадра при активной связи без ошибки управления."
+        ],
+        "homeEnabled": false,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:39:50.390Z",
+        "origin": "local",
+        "action": "Natural final-source native readiness after initial frame wait",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: not_streaming\nПоследний Android heartbeat: 24 сек назад\nНет свежего отчёта активного захвата от APK.\nБраузерный viewer: 14 пакетов · 130874 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 10 сек назад\nПоследний canvas frame: 10 сек назад\nNAL SPS/PPS: 2/2\nIDR/delta: 2/8\nDecode submitted: 10\nDecoded output: 10\nDrawn to canvas: 10\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №86: 256 мс",
+          "Экран не обновлялся более 10 секунд · управление по последнему кадру",
+          "Клавиши работают и на неподвижном экране. Действие «Меню» зависит от приложения Android."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:38:53.916Z",
+        "origin": "public",
+        "action": "Safe blank-launcher drag after confirmed Home; gesture result not independently confirmed",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: not_streaming\nПоследний Android heartbeat: 28 сек назад\nНет свежего отчёта активного захвата от APK.\nБраузерный viewer: 40 пакетов · 331606 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 10 сек назад\nПоследний canvas frame: 10 сек назад\nNAL SPS/PPS: 1/1\nIDR/delta: 1/37\nDecode submitted: 38\nDecoded output: 38\nDrawn to canvas: 38\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №42: 498 мс",
+          "Экран не обновлялся более 10 секунд · управление по последнему кадру",
+          "«Домой»: выполнение подтверждено · ответ команды 1182 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:38:46.878Z",
+        "origin": "public",
+        "action": "Outcome and readiness after explicit Home",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: not_streaming\nПоследний Android heartbeat: 21 сек назад\nНет свежего отчёта активного захвата от APK.\nБраузерный viewer: 40 пакетов · 331606 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 3 сек назад\nПоследний canvas frame: 3 сек назад\nNAL SPS/PPS: 1/1\nIDR/delta: 1/37\nDecode submitted: 38\nDecoded output: 38\nDrawn to canvas: 38\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №15: 491 мс",
+          "«Домой»: выполнение подтверждено · ответ команды 1182 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:38:41.062Z",
+        "origin": "public",
+        "action": "Explicit Home after final-source readiness",
+        "state": "closing",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: closing\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: not_streaming\nПоследний Android heartbeat: 15 сек назад\nНет свежего отчёта активного захвата от APK.\nБраузерный viewer: 10 пакетов · 60374 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 10 сек назад\nПоследний canvas frame: 10 сек назад\nNAL SPS/PPS: 1/1\nIDR/delta: 1/7\nDecode submitted: 8\nDecoded output: 8\nDrawn to canvas: 8\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Клавиатура и навигация · ожидаем подтверждение Android",
+          "Нет новых видеокадров более 10 секунд · показан последний кадр",
+          "«Домой»: ожидаем ответ Android…"
+        ],
+        "homeEnabled": false,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:38:35.072Z",
+        "origin": "public",
+        "action": "Final installed source; natural native readiness and video",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: not_streaming\nПоследний Android heartbeat: 9 сек назад\nНет свежего отчёта активного захвата от APK.\nБраузерный viewer: 10 пакетов · 60374 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 4 сек назад\nПоследний canvas frame: 4 сек назад\nNAL SPS/PPS: 1/1\nIDR/delta: 1/7\nDecode submitted: 8\nDecoded output: 8\nDrawn to canvas: 8\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №12: 489 мс",
+          "Клавиши работают и на неподвижном экране. Действие «Меню» зависит от приложения Android."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:39:13.492Z",
+        "origin": "public",
+        "action": "Explicit new Home after natural unknown-pointer notice and new native readiness",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 2 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: захват активен · snapshot 17 сек назад\nПоследний Android heartbeat: 17 сек назад\nCapture FPS: 9\nSurface FPS: 6\nEncoder FPS: 6\nEncoded: 62\nCaptured: 108\nRendered: 61\nLocal WS accepted: 66/66\nLocal WS rejected: 0\nCapture errors: 0\nSurface errors: 0\nEncoder errors: 0\nRaw capture FPS skips: 47\nRaw codec input skips: 0\nEncoded FPS drops: 0\nБраузерный viewer: 130 пакетов · 1062447 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 5 сек назад\nПоследний canvas frame: 5 сек назад\nNAL SPS/PPS: 4/4\nIDR/delta: 4/118\nDecode submitted: 122\nDecoded output: 122\nDrawn to canvas: 122\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №21: 488 мс",
+          "Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.Скрыть",
+          "«Домой»: выполнение подтверждено · ответ команды 700 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      },
+      {
+        "atUtc": "2026-10-10T00:39:00.720Z",
+        "origin": "public",
+        "action": "Second blank-launcher drag; preserve any native timeout outcome",
+        "state": "ready",
+        "diagnostics": "Сквозная диагностика кадра\nЗакрыть диагностику\nУправление Android: ready\nВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.\nАвтоматическое восстановление управления: 1 попыток с задержкой до 15 секунд. Касания и команды не повторяются.\nОтчёт APK: not_streaming\nПоследний Android heartbeat: 34 сек назад\nНет свежего отчёта активного захвата от APK.\nБраузерный viewer: 69 пакетов · 599636 байт\nВходной видео FPS (1 с): 0\nОтрисовка FPS (1 с): 0\nПоследний пакет: 3 сек назад\nПоследний canvas frame: 3 сек назад\nNAL SPS/PPS: 3/3\nIDR/delta: 3/60\nDecode submitted: 63\nDecoded output: 63\nDrawn to canvas: 63\nInvalid packets: 0\nDecode/render errors: 0/0\nWebCodecs queue: 0\nPending outputs: 0\nQueue recoveries: 0\nStale output drops: 0\nDropped before SPS/PPS: 0\n\nПринятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+        "statuses": [
+          "События: подключеныСобытия: подключены",
+          "WEB 639b6ad5 · API 369654a0W:639b6ad5 A:369654a0MISMATCH!",
+          "Непрерывное управление · зажмите и ведите мышь · ACK №8: 483 мс",
+          "Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.Скрыть",
+          "«Домой»: выполнение подтверждено · ответ команды 1182 мс. Это не задержка появления кадра."
+        ],
+        "homeEnabled": true,
+        "manualRecoveryButtons": 0
+      }
+    ],
+    "previous344StrandedIdleEvidence": "CONTINUOUS-POINTER-RECOVERY.md",
+    "naturalPointerRecoveryFiniteObserved": true,
+    "pointerLossRecoveryCoverage": "One natural notice/new ready/explicit confirmed Home on each of UI13 and final UI639; exact release and hold/terminal/foreign/missing permutations fixture-only. No independent wire trace.",
+    "noticeContrast": "Natural final-source unknown-pointer notice observed readable on public light-theme video; local dark theme checked without changing preferences.",
+    "nativeLatencyAccepted": false,
+    "directPathAccepted": false,
+    "testTabsClosed": true
+  },
+  "remaining": [
+    "500ms native ACK boundary still crossed on public relay; cause unproven",
+    "Controlled numeric/STUN/TURN ICE pair plus real echo RTT, then media/control/network matrix",
+    "Fleet/resource soak, rich continuous recorder, whole-PC disk writer, stable APK1.3 gates"
+  ]
+}

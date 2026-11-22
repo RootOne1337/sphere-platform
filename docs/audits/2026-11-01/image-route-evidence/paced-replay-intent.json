@@ -1,0 +1,9 @@
+{
+  "mode": "one PTS-paced recording, producer presents latest frame in one overwrite slot, consumer no backlog, zero actuator authority",
+  "pacing": "scheduled from original relative_ticks_90k; received_at is real monotonic presentation after source decode; now is monotonic after all processing",
+  "ranking": "same frozen DCT top8 + RootSIFT F geometry and minimap masked ZNCC; PTS only used for exclusion and posthoc proxy",
+  "fusion": "world**.7 * max(0,(NCC+1)/2)**.3 when aux valid, otherwise neutral",
+  "beam": "actual CausalSequenceBeam defaults, real presentation timestamp and postcompute now",
+  "no_independent_repeat": true,
+  "no_actions": true
+}

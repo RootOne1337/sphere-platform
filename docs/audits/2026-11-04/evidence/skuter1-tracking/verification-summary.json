@@ -1,0 +1,330 @@
+{
+  "schema": "sphere-skuter1-tracking-public-evidence-v1",
+  "date": "2026-11-04",
+  "physical_actions": 0,
+  "adopted": false,
+  "execution_qualified": false,
+  "etalon_geometry_sha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "scope": "finite same-recording replay and independent-recording image probes; no complete game traversal",
+  "private_evidence_sha256": {
+    "balanced116": "fea25dd602fd44c6ab345a19aef2395b6d5f7e2562b58719510ead7ce8bd1124",
+    "whole_route_review": "b608514e3710a1c33903d42f056492613e13b62fe14e39b8520132dec5a34cf2",
+    "batch97": "8859245b78dcbfb3f220344d7a6a56fa2a184db18abc7d354ab5eded72a9d848",
+    "clock_correction": "05a37dc1eec21d481db224b58331a641bdf5dfb41eefe4eb05280d8e1a24b177",
+    "exact_orientation_aliases": "57322295ac09988a77d3f254a3d573a3ec672e29c1c8220bc3b1835390d1b1d3",
+    "rejected_live_anchor": "bcf86c0f411a5bb8dcd77ba807592de5b163955869182c219d4522ad4f7c4010",
+    "optional_minimap_cue": "e23055bd165365ef1661e0d9802ed9a2e23fb10ea33c1caf69f93e41962df4ba"
+  },
+  "balanced116": {
+    "attempted_counts": {
+      "initial": 12,
+      "middle": 15,
+      "unrelated": 89,
+      "total": 116
+    },
+    "positive_counts": {
+      "unknown": 0,
+      "confirming": 12,
+      "localized": 15
+    },
+    "unrelated_false_pose_count": 0,
+    "source_unchanged": true,
+    "producer_unchanged": true
+  },
+  "whole_route": {
+    "verdict": "DO_NOT_ADOPT_FOR_UNINTERRUPTED_CONTROL",
+    "production_clock_pair_used": true,
+    "query_counts": {
+      "unknown": 22,
+      "confirming": 23,
+      "localized": 130
+    },
+    "consumed_queries": 175,
+    "taught_query_count": 31,
+    "source_end_reached": true,
+    "same_clip_reference_consistency": {
+      "localized": {
+        "count": 130,
+        "center_error_units": {
+          "median": 0.0077485108593353886,
+          "p95": 0.032019596832861194,
+          "p99": 0.05224160474697445,
+          "maximum": 0.06721748807257942
+        },
+        "above_one_median_step": 0,
+        "above_two_median_steps": 0,
+        "private_fallback_winners": 4
+      },
+      "confirming": {
+        "count": 23,
+        "center_error_units": {
+          "median": 0.005009049340518775,
+          "p95": 0.8709312414286675,
+          "p99": 1.5769045463420133,
+          "maximum": 1.7758519512582882
+        },
+        "above_one_median_step": 3,
+        "above_two_median_steps": 1,
+        "private_fallback_winners": 0
+      }
+    },
+    "compute_ms": {
+      "median": 60.49960000382271,
+      "p95": 111.00903999904392,
+      "p99": 523.8203060053632,
+      "maximum": 623.6521999962861
+    },
+    "current_pose_over_250ms_count": 0
+  },
+  "batch97": {
+    "status": "completed_partial_transfer_not_runtime_qualified",
+    "negative89": {
+      "count": 89,
+      "states": {
+        "unknown": 89
+      },
+      "reasons": {
+        "route_pose_not_verified": 87,
+        "route_frame_expired_during_localization": 2
+      },
+      "false_or_unexpected_pose_count": 0,
+      "verified_candidate_hypotheses": 0,
+      "ambiguity_rejections": 0,
+      "compute_ms": {
+        "minimum": 145.03770000010263,
+        "median": 182.67810001270846,
+        "p95_linear": 224.8830799973802,
+        "maximum": 316.58020000031684
+      },
+      "actual_receiver_age_ms": {
+        "minimum": 139.99999999941792,
+        "median": 187.0000000053551,
+        "p95_linear": 228.00000000279388,
+        "maximum": 312.0000000053551
+      },
+      "candidate_count_distribution": {
+        "3": 89
+      },
+      "maximum_raw_LG_matches": 9,
+      "maximum_exact_native_3D_pairs": 3
+    },
+    "crossclip8": {
+      "count": 8,
+      "states": {
+        "confirming": 2,
+        "unknown": 6
+      },
+      "reasons": {
+        "relative_camera_pose_not_clearance_or_arrival": 2,
+        "route_pose_not_verified": 6
+      },
+      "false_or_unexpected_pose_count": null,
+      "verified_candidate_hypotheses": 6,
+      "ambiguity_rejections": 0,
+      "compute_ms": {
+        "minimum": 166.5800000046147,
+        "median": 183.7764999945648,
+        "p95_linear": 252.35274500009837,
+        "maximum": 262.4618999980157
+      },
+      "actual_receiver_age_ms": {
+        "minimum": 171.99999999138527,
+        "median": 179.50000000564614,
+        "p95_linear": 244.75000000020373,
+        "maximum": 250.0
+      },
+      "candidate_count_distribution": {
+        "3": 8
+      },
+      "maximum_raw_LG_matches": 189,
+      "maximum_exact_native_3D_pairs": 100
+    }
+  },
+  "batch_clock_limit": "Historical private B3 receipt/tracker used GetTickCount64; boundary 250ms positives are not production QPC qualification. Original receipts preserved.",
+  "orientation_alias_rows": [
+    {
+      "source_index": 451,
+      "reference": 69,
+      "old_native": 23,
+      "new_native": 34,
+      "added_native_IDs": 11,
+      "old_IDs_replaced": 0,
+      "untriangulated_refused": 35,
+      "source_conflicts": 0,
+      "query_physical_ID_collisions": 0,
+      "verified": true,
+      "inliers": 29,
+      "fraction": 0.8529411764705882,
+      "median_error_px": 0.7837278568860335,
+      "full_spatial_pass": true,
+      "first_refusal": null
+    },
+    {
+      "source_index": 451,
+      "reference": 62,
+      "old_native": 24,
+      "new_native": 36,
+      "added_native_IDs": 12,
+      "old_IDs_replaced": 0,
+      "untriangulated_refused": 10,
+      "source_conflicts": 0,
+      "query_physical_ID_collisions": 0,
+      "verified": true,
+      "inliers": 26,
+      "fraction": 0.7222222222222222,
+      "median_error_px": 0.7792919932675721,
+      "full_spatial_pass": true,
+      "first_refusal": null
+    },
+    {
+      "source_index": 451,
+      "reference": 8,
+      "old_native": 6,
+      "new_native": 9,
+      "added_native_IDs": 3,
+      "old_IDs_replaced": 0,
+      "untriangulated_refused": 4,
+      "source_conflicts": 0,
+      "query_physical_ID_collisions": 0,
+      "verified": false,
+      "inliers": null,
+      "fraction": null,
+      "median_error_px": null,
+      "full_spatial_pass": null,
+      "first_refusal": "input_count"
+    },
+    {
+      "source_index": 1031,
+      "reference": 167,
+      "old_native": 64,
+      "new_native": 82,
+      "added_native_IDs": 18,
+      "old_IDs_replaced": 0,
+      "untriangulated_refused": 50,
+      "source_conflicts": 0,
+      "query_physical_ID_collisions": 0,
+      "verified": false,
+      "inliers": 33,
+      "fraction": 0.4024390243902439,
+      "median_error_px": 0.8782887578666857,
+      "full_spatial_pass": true,
+      "first_refusal": "positive_depth_error3_fraction"
+    },
+    {
+      "source_index": 1031,
+      "reference": 171,
+      "old_native": 71,
+      "new_native": 86,
+      "added_native_IDs": 15,
+      "old_IDs_replaced": 0,
+      "untriangulated_refused": 56,
+      "source_conflicts": 0,
+      "query_physical_ID_collisions": 0,
+      "verified": false,
+      "inliers": 26,
+      "fraction": 0.3023255813953488,
+      "median_error_px": 0.6606878132560777,
+      "full_spatial_pass": true,
+      "first_refusal": "positive_depth_error3_fraction"
+    },
+    {
+      "source_index": 1031,
+      "reference": 158,
+      "old_native": 62,
+      "new_native": 74,
+      "added_native_IDs": 12,
+      "old_IDs_replaced": 0,
+      "untriangulated_refused": 31,
+      "source_conflicts": 0,
+      "query_physical_ID_collisions": 0,
+      "verified": false,
+      "inliers": 24,
+      "fraction": 0.32432432432432434,
+      "median_error_px": 0.7263838217314493,
+      "full_spatial_pass": true,
+      "first_refusal": "positive_depth_error3_fraction"
+    }
+  ],
+  "rejected_live_anchor": {
+    "consumed_queries": 177,
+    "counts": {
+      "unknown": 20,
+      "confirming": 18,
+      "localized": 139
+    },
+    "source_end_reached": true,
+    "taught_queries": 41,
+    "compute_ms": {
+      "n": 177,
+      "min": 0.6423000013455749,
+      "median": 25.885099996230565,
+      "p95": 146.75641999347124,
+      "p99": 486.8254799942952,
+      "max": 560.4850000090664
+    },
+    "source_time_center_errors": {
+      "confirming": {
+        "n": 18,
+        "min": 3.46976601620572e-05,
+        "median": 0.0063860078042107925,
+        "p95": 0.03381738006462746,
+        "p99": 0.041629566382686306,
+        "max": 0.043582612962201034
+      },
+      "localized": {
+        "n": 139,
+        "min": 2.9979373306842096e-05,
+        "median": 0.013223164080961369,
+        "p95": 0.8601629988055712,
+        "p99": 4.123920300008097,
+        "max": 5.338439137414099
+      }
+    }
+  },
+  "live_anchor_limit": "Nine localized outputs exceeded 0.2 native source units; max 5.338. Rejected. 22 source indices overlap prior run; not a paired causal latency comparison.",
+  "minimap_cue": {
+    "reference_count": 173,
+    "reference_available": 173,
+    "retained_signature_bytes": 885760,
+    "night_alias_evaluation": {
+      "count": 7,
+      "source_time_neighborhood_top1": 7,
+      "source_time_neighborhood_seconds": 0.35,
+      "top1_scores": [
+        0.9883678555488586,
+        0.9779524803161621,
+        0.9746172428131104,
+        0.9864137172698975,
+        0.9156348705291748,
+        0.9638096690177917,
+        0.9906938672065735
+      ],
+      "source_time_not_matching_hint": true,
+      "independent_ground_truth": false
+    },
+    "compute_ms": {
+      "median": 6.889500000397675,
+      "p95": 7.011330004024785,
+      "maximum": 7.029599990346469
+    },
+    "black_control": {
+      "reason": "no_hint_circle_not_visible",
+      "hint_given": false
+    },
+    "negative_bank": {
+      "total": 89,
+      "attempted_matching": 0,
+      "no_hint_unknown_hud_profile": 89,
+      "reason": "manifest has no calibrated minimap HUD profile; first source PNG manually inspected without HUD",
+      "negative_qualification_claimed": false
+    },
+    "limits": [
+      "All seven successful alias evaluations are from the same recording and were selected as known difficult cases before the experiment.",
+      "Crossclip start has a wrong rotated-road top1 and correct start onlythird; correlation can only be an optional retrieval/disambiguation cue.",
+      "No PnP was rerun, no pose or vote was created, no controller or native input was used.",
+      "The89-image bank has no calibrated HUD and was not used to claim negative map-recognition accuracy.",
+      "Only independently source-calibrated circle/visibility changed fromV1; masks,32x32gradients,24rotations,3scales andmasked Pearson scoring stayedfixed."
+    ]
+  },
+  "minimap_limit": "Retrieval only. Daytime start received a rotated wrong-road top1, true-start third; near-ties remain. No independent place accuracy or PnP/control admission."
+}

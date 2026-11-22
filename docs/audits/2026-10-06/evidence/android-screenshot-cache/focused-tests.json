@@ -1,0 +1,10 @@
+{
+  "total": {
+    "tests": 110,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 2
+  },
+  "suites": 5,
+  "scope": "Dev focused ScreenshotFileStore/AdbScreenshot/DagRunner/AdbRootClear/LuaEngine"
+}

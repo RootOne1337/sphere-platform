@@ -1,0 +1,52 @@
+{
+  "schema": "sphere-owned-batch-scheduling-observation-v1",
+  "scope": "one bounded fused trial, evidence of success after scheduling change, not causal proof across hosts",
+  "nativePriorityClass": 16384,
+  "volumeProbePriorityClasses": [
+    32
+  ],
+  "nativeChildAffinity": [
+    0,
+    1
+  ],
+  "nativeEnvironment": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "maxActualChildOSThreads": 5,
+  "threadLimitMeaning": "two CPU affinity; five OS threads does not mean five active CPUs",
+  "strictResourceSamples": 235,
+  "resourceFindings": 0,
+  "collectionErrors": [],
+  "volumeProofTTLSeconds": 30,
+  "volumeRefreshObservations": 13,
+  "maximumVolumeProofAgeMs": 10844.000000040978,
+  "minAvailableRamGiB": 6.9831390380859375,
+  "minFreeDiskGiB": 43.23225784301758,
+  "maxCommitPercent": 81.23482452002655,
+  "peakCombinedParentChildRSSMiB": 505.53515625,
+  "resourceBudgetsChanged": false,
+  "volumeHealthWaived": false,
+  "memoryCached": false,
+  "physicalActions": 0,
+  "tests": {
+    "passed": 112,
+    "seconds": 4.52,
+    "log": ".local-pilot\\route-resource-monitor-20261102\\priority-tests.txt",
+    "sha256": "24af7b30e55e1946aa312e266d27faa18441f17e63d6392dfead58f9d85a5734"
+  },
+  "files": {
+    "scripts\\pilot\\route_resource_monitor.py": "7e2bcce7b4581ccc8b9c1a9efea4cc9d12a45b86454a208b35c34d60864f3797",
+    "tests\\test_route_resource_monitor.py": "86dab30458cfe1ef06c20ae10f4aab3b8a273e1bc1d68aa5a21d08f6b644d736",
+    "tests\\test_reconstruction_service.py": "1b13beafc9e33b3cd07e38c2925dd33cf9572f2f27c8f4112cc95b21e5363f99",
+    "scripts\\pilot\\reconstruction_service.py": "2f76d641b06ef9cd9d2c16c6f490ed85f38ee32ff96acebea68a6965c8143771"
+  },
+  "receipts": {
+    ".local-pilot\\skuter1-fused-graph-20261102-v2\\result.json": "3abc54376e6c40efc294ecda8a34797bf32ce45a4f80d5e3398dc0f903be7b5a",
+    ".local-pilot\\skuter1-fused-graph-20261102-v2\\global-map-receipt.json": "61d3756a53f5ac71d8a6f16523a64cd8ac96b3e0f597f9f0b6d0f0a04169c74e",
+    ".local-pilot\\skuter1-fused-graph-20261102-v2\\calibrate-receipt.json": "12efd0d558d8f51c00814065b35e5cb87452cf00cf010628f9f9311ce5303f0e"
+  },
+  "allProtectedSourceHashesUnchanged": true,
+  "noAdoption": true
+}

@@ -1,0 +1,22 @@
+{
+  "frontend": {
+    "success": true,
+    "numPassedTestSuites": 239,
+    "numFailedTestSuites": 0,
+    "numPassedTests": 3252,
+    "numFailedTests": 0
+  },
+  "backend": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "278",
+    "time": "7.643",
+    "timestamp": "2026-11-03T21:15:27.888324+05:00",
+    "hostname": "NIFILIM1337"
+  },
+  "real_browser_fixture_only": true,
+  "android_actions": 0,
+  "legacy_localizer_sha256": "efec9eeeeb36beea6db60e814ae9c75ccc05191702bfda7fb72bb052a51523b2"
+}

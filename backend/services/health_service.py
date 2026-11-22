@@ -149,10 +149,11 @@ class HealthService:
             details: dict = {"pong": bool(pong)}
             try:
                 info = await self.redis.info("memory")
-                details["used_memory_mb"] = round(
-                    info.get("used_memory", 0) / 1024 / 1024, 2
-                )
-                details["connected_clients"] = info.get("connected_clients", 0)
+                used_bytes = info.get("used_memory")
+                if isinstance(used_bytes, int) and not isinstance(used_bytes, bool) and used_bytes >= 0:
+                    details["used_memory_mb"] = round(used_bytes / 1024 / 1024, 2)
+                # INFO memory does not contain connected_clients. Its real
+                # measurement comes from INFO clients in /monitoring/metrics.
             except Exception:
                 pass  # info() may not be available in all Redis configurations
 

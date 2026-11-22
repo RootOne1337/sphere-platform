@@ -1,0 +1,1220 @@
+{
+  "schemaVersion": 1,
+  "source": "c3937a1abf55eca73662bdc720699eb29b6653a6",
+  "createdAt": "2026-10-05T01:42:57.352525+00:00",
+  "scope": "analysis only; all listed work remains OPEN",
+  "countsByKind": {
+    "CONFIRMED_DEFECT": 6,
+    "OBSERVED_RUNTIME_GAP": 1,
+    "CAPABILITY_GAP": 32,
+    "DESIGN_DEBT": 6,
+    "FUTURE_DESIGN": 5
+  },
+  "items": [
+    {
+      "id": "EP-001",
+      "title": "Сохранять видимость колонок после F5",
+      "kind": "CONFIRMED_DEFECT",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "В браузере Доступ появился, затем исчез после reload; before=true/after=false.",
+      "sources": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "line": 63
+        }
+      ],
+      "acceptance": [
+        "Изменить набор колонок → F5 → тот же набор.",
+        "Миграция старой/повреждённой local schema без потери темы.",
+        "Недоступный storage не ломает каталог."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-002",
+      "title": "Исправить canonical export визуального сценария",
+      "kind": "CONFIRMED_DEFECT",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Чистый Start→Tap→End: frontendErrors=[], backend list_type по nodes.",
+      "sources": [
+        {
+          "file": "frontend/lib/dag/export.ts",
+          "line": 15
+        },
+        {
+          "file": "backend/schemas/dag.py",
+          "line": 106
+        },
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "line": 318
+        }
+      ],
+      "acceptance": [
+        "POST canonical fixture принимается сервером.",
+        "Lowercase action, links/retry/timeout сохранены.",
+        "Неверный граф не публикуется и не запускается."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-003",
+      "title": "Открывать existing canonical script в builder",
+      "kind": "CONFIRMED_DEFECT",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Открыть из каталога → Сценарий не загружен; importDag явно отвергает Array.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "line": 63
+        }
+      ],
+      "acceptance": [
+        "Сохранённый canonical graph открывается.",
+        "Roundtrip не теряет поля/ветви/версию.",
+        "Load failure по-прежнему блокирует запись."
+      ],
+      "dependencies": [
+        "EP-002"
+      ]
+    },
+    {
+      "id": "EP-004",
+      "title": "Нормализовать device_model в Fleet Matrix",
+      "kind": "CONFIRMED_DEFECT",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "REST возвращает device_model; таблица читает только model и пишет Модель не сообщена.",
+      "sources": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "line": 105
+        },
+        {
+          "file": "frontend/lib/hooks/useDevices.ts",
+          "line": 9
+        }
+      ],
+      "acceptance": [
+        "API model отображается в registry и picker одинаково.",
+        "Пустое/legacy поле отображается с честным fallback.",
+        "Поиск/сортировка используют тот же canonical field."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-005",
+      "title": "Не показывать пустое количество узлов в pipeline picker",
+      "kind": "CONFIRMED_DEFECT",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "DOM формы содержит ( нод); три picker читают отсутствующий s.node_count.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx",
+          "line": 1345
+        }
+      ],
+      "acceptance": [
+        "Count canonical current_version одинаков в scripts/pipeline/schedule.",
+        "Unknown count обозначен явно, не пустой строкой/нулём.",
+        "Старая форма ответа не ломает выбор версии."
+      ],
+      "dependencies": [
+        "EP-002"
+      ]
+    },
+    {
+      "id": "EP-006",
+      "title": "HTTP rejection не является delivered в legacy webhook",
+      "kind": "CONFIRMED_DEFECT",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Изолированный mocked HTTP403 дал logger.info(webhook.delivered). Reachable task/batch callbacks.",
+      "sources": [
+        {
+          "file": "backend/services/webhook_service.py",
+          "line": 79
+        },
+        {
+          "file": "backend/services/task_service.py",
+          "line": 532
+        },
+        {
+          "file": "backend/services/batch_service.py",
+          "line": 183
+        }
+      ],
+      "acceptance": [
+        "2xx success, 403 rejected, 429 rate limited и 5xx retry различаются.",
+        "Не повторять terminal rejection бесконечно.",
+        "Новый результат отражён в delivery logs/receipts; n8n compatibility проверена."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-007",
+      "title": "Встроенная Grafana должна открыть запрошенный dashboard",
+      "kind": "OBSERVED_RUNTIME_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Несколько DOM-срезов и снимок: Welcome вместо sphere-collection; причина OPEN.",
+      "sources": [
+        {
+          "file": "frontend/lib/server/observability.ts",
+          "line": 5
+        }
+      ],
+      "acceptance": [
+        "Получены dashboard и реальные панели, не Welcome.",
+        "Request/redirect/auth/org/UID цепочка установлена.",
+        "Истечение/отзыв Sphere session не даёт обхода RBAC."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-008",
+      "title": "Подключить реальные HTTP RPS и latency panels",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Prometheus query success: RPS0.529856, p95 0.037952s; UI query keys их не содержат.",
+      "sources": [
+        {
+          "file": "frontend/lib/server/observability.ts",
+          "line": 12
+        },
+        {
+          "file": "backend/metrics.py",
+          "line": 33
+        }
+      ],
+      "acceptance": [
+        "RPS/p95 отображают unit/window/scope.",
+        "Empty/stale/error/partial vector различаются.",
+        "Endpoint/error drilldown и bounded query allowlist."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-009",
+      "title": "История CPU/RAM с корректным scope",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "REST history=[]; process series есть, host/container series не найдены в проверенном наборе.",
+      "sources": [
+        {
+          "file": "backend/api/v1/monitoring/router.py",
+          "line": 142
+        },
+        {
+          "file": "backend/api/v1/monitoring/router.py",
+          "line": 143
+        }
+      ],
+      "acceptance": [
+        "История источник/единица/интервал указаны.",
+        "Process, cgroup и host не смешаны.",
+        "Unknown memory/CPU не рисуется нулём."
+      ],
+      "dependencies": [
+        "EP-008"
+      ]
+    },
+    {
+      "id": "EP-010",
+      "title": "Активные tunnels и fleet metric coverage",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "activeTunnels=null; sphere_devices_total/online пустые vectors; REST fleet доступен.",
+      "sources": [
+        {
+          "file": "backend/api/v1/monitoring/router.py",
+          "line": 150
+        },
+        {
+          "file": "backend/metrics.py",
+          "line": 72
+        }
+      ],
+      "acceptance": [
+        "Assignment/Android applied/heartbeat имеют отдельные counts.",
+        "Collector semantics не умножают gauge по workers.",
+        "Tenant scope и source freshness видны."
+      ],
+      "dependencies": [
+        "EP-008"
+      ]
+    },
+    {
+      "id": "EP-011",
+      "title": "Версионировать все browser table/view preferences",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Column state source local React; theme persistence отдельно работает.",
+      "sources": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "line": 343
+        },
+        {
+          "file": "frontend/src/shared/store/useUIStore.ts",
+          "line": 39
+        }
+      ],
+      "acceptance": [
+        "View, columns/order/width/pin/sort/density/page size persist.",
+        "Shareable фильтры в URL, private prefs без secrets.",
+        "Reset одной таблицы и cross-tab migration."
+      ],
+      "dependencies": [
+        "EP-001"
+      ]
+    },
+    {
+      "id": "EP-012",
+      "title": "Расширить registry typed columns и пресеты",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Текущие fields/catalog описаны в source/API; полный resource/capability профиль не в таблице.",
+      "sources": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "line": 72
+        },
+        {
+          "file": "backend/schemas/devices.py",
+          "line": 125
+        }
+      ],
+      "acceptance": [
+        "Пресеты Operations/Connection/Versions/Resources.",
+        "Каждое поле имеет provenance и unknown.",
+        "1000 rows server pagination, sticky identity, no page overflow."
+      ],
+      "dependencies": [
+        "EP-004",
+        "EP-011"
+      ]
+    },
+    {
+      "id": "EP-013",
+      "title": "Единые tokens, preferences и icon semantics",
+      "kind": "DESIGN_DEBT",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "AppearanceDrawer сохраняет theme; legacy панели имеют другую typography; два persisted stores.",
+      "sources": [
+        {
+          "file": "frontend/src/features/preferences/AppearanceDrawer.tsx",
+          "line": 34
+        },
+        {
+          "file": "frontend/src/shared/store/themeStore.ts",
+          "line": 23
+        }
+      ],
+      "acceptance": [
+        "Старая theme/density мигрирует без reset.",
+        "Named icons/focus/reduced motion/zoom и единые units.",
+        "4 темы/5 акцентов/3 density проходят визуальную матрицу."
+      ],
+      "dependencies": [
+        "EP-011"
+      ]
+    },
+    {
+      "id": "EP-014",
+      "title": "Studio canonical AST и отдельный layout",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "ReactFlow export не является execution DAG; palette ограничена.",
+      "sources": [
+        {
+          "file": "frontend/lib/dag/export.ts",
+          "line": 3
+        },
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "line": 62
+        }
+      ],
+      "acceptance": [
+        "Semantic AST versioned, canvas metadata отдельно.",
+        "Visual/source switch без semantic drift.",
+        "Unsupported action сохраняется read-only либо блокирует Run."
+      ],
+      "dependencies": [
+        "EP-002",
+        "EP-003"
+      ]
+    },
+    {
+      "id": "EP-015",
+      "title": "Studio source schema, drafts, conflict и undo",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Monaco есть, canonical JSON edit и conflict workflow не завершены.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "line": 24
+        },
+        {
+          "file": "backend/services/script_service.py",
+          "line": 69
+        }
+      ],
+      "acceptance": [
+        "Dirty parse error не теряет текст.",
+        "Draft autosave не публикует / не запускает.",
+        "Concurrent version conflict с diff и undo/redo."
+      ],
+      "dependencies": [
+        "EP-014"
+      ]
+    },
+    {
+      "id": "EP-016",
+      "title": "Studio каталог всех runtime actions",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Backend action catalogue шире palette; parameter validation большей частью agent-side.",
+      "sources": [
+        {
+          "file": "backend/schemas/dag.py",
+          "line": 9
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+          "line": 120
+        }
+      ],
+      "acceptance": [
+        "Capability/action schema содержит поля/limits/effects/result.",
+        "Неизвестные версии/permissions блокируют конкретный action.",
+        "Нет promises arbitrary host code."
+      ],
+      "dependencies": [
+        "EP-014"
+      ]
+    },
+    {
+      "id": "EP-017",
+      "title": "Live device picker и capability preflight в Studio",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "В новом builder нет рабочего live target recorder flow.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "line": 445
+        }
+      ],
+      "acceptance": [
+        "Target identity/version/display/root/input видны.",
+        "Offline edit разрешён, Run/Record по свежему preflight.",
+        "Смена target не переносит старый coordinate transform."
+      ],
+      "dependencies": [
+        "EP-014",
+        "EP-016"
+      ]
+    },
+    {
+      "id": "EP-018",
+      "title": "Запись Android input и selector candidates",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Recorder с live device/XPath отсутствует в проверенном builder.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "line": 445
+        },
+        {
+          "file": "backend/services/ui_hierarchy.py",
+          "line": 8
+        }
+      ],
+      "acceptance": [
+        "Tap/drag/text/wheel нормализуются с receipts.",
+        "Ambiguity и fallback coordinates видимы.",
+        "Secrets redacted, bounded buffer, Stop освобождает subscriptions."
+      ],
+      "dependencies": [
+        "EP-017"
+      ]
+    },
+    {
+      "id": "EP-019",
+      "title": "Пошаговый trace и replay с frame correlation",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "История task есть; visual playback/debug overlay в Studio отсутствует.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/tasks/page.tsx",
+          "line": 35
+        },
+        {
+          "file": "backend/schemas/dag.py",
+          "line": 44
+        }
+      ],
+      "acceptance": [
+        "Replay trace не запускает Android actions.",
+        "Каждый step связан с command/frame/snapshot/attempt.",
+        "Unknown/failed/cancelled различаются; TTL/quota artifacts."
+      ],
+      "dependencies": [
+        "EP-017"
+      ]
+    },
+    {
+      "id": "EP-020",
+      "title": "Server/agent debug pause, step, cancel и safety",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Нельзя реализовать настоящее Step одной browser animation; требуются capabilities.",
+      "sources": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+          "line": 104
+        }
+      ],
+      "acceptance": [
+        "Pause/step настоящий protocol, либо явно unavailable.",
+        "Late result не возрождает cancelled run.",
+        "Retry non-idempotent input зависит от outcome."
+      ],
+      "dependencies": [
+        "EP-019"
+      ]
+    },
+    {
+      "id": "EP-021",
+      "title": "Объединить automation workspace и references",
+      "kind": "DESIGN_DEBT",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Scripts/tasks/pipelines/schedules/events/triggers разнесены; backend сущности реальны.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx",
+          "line": 208
+        },
+        {
+          "file": "frontend/app/(dashboard)/event-triggers/page.tsx",
+          "line": 89
+        }
+      ],
+      "acceptance": [
+        "Origin → version → run → task → device → trace deep links.",
+        "Existing URLs сохранены.",
+        "Used-by/dependency graph и glossary без неоднозначных sessions."
+      ],
+      "dependencies": [
+        "EP-014"
+      ]
+    },
+    {
+      "id": "EP-022",
+      "title": "Task detail: полные outcomes и artifacts",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Исторические задачи доступны; не все command/frame/error связи отображены.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/tasks/[id]/page.tsx",
+          "line": 63
+        }
+      ],
+      "acceptance": [
+        "Pinned hash, attempts, deadline, ACK/result раздельно.",
+        "Parent pipeline/trigger/schedule отображён.",
+        "Rerun preview выдаёт новый task, а не меняет history."
+      ],
+      "dependencies": [
+        "EP-019",
+        "EP-021"
+      ]
+    },
+    {
+      "id": "EP-023",
+      "title": "Schedules: timezone, missed fire и next run explain",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Schedule UI/backend существуют, нужен целостный operational preview.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx",
+          "line": 54
+        }
+      ],
+      "acceptance": [
+        "Cron/UTC/local/DST policy показаны.",
+        "Next/missed/duplicate fire outcomes и execution history.",
+        "Отмена/enable version conflicts без double fire."
+      ],
+      "dependencies": [
+        "EP-021"
+      ]
+    },
+    {
+      "id": "EP-024",
+      "title": "Triggers: безопасная simulation и feedback loop limits",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Форма event pattern/pipeline/cooldown есть; match explain не завершён.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/event-triggers/page.tsx",
+          "line": 89
+        }
+      ],
+      "acceptance": [
+        "Test match без pipeline Run.",
+        "Cooldown/dedup/rate limits explain.",
+        "Event origin и recursion budget предотвратят бесконечную петлю."
+      ],
+      "dependencies": [
+        "EP-021"
+      ]
+    },
+    {
+      "id": "EP-025",
+      "title": "Webhook attempts/outbox и совместимость доставки",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Configured n8n delivery отдельно от legacy callbacks; durable attempts UI отсутствует.",
+      "sources": [
+        {
+          "file": "backend/services/n8n_webhook_service.py",
+          "line": 41
+        },
+        {
+          "file": "frontend/app/(dashboard)/webhooks/page.tsx",
+          "line": 28
+        }
+      ],
+      "acceptance": [
+        "Delivery ID/outcome/retry deadline/last error доступны.",
+        "Подпись и payload сохраняют совместимость.",
+        "DLQ/replay bounded и не дублируют irreversible effects."
+      ],
+      "dependencies": [
+        "EP-006",
+        "EP-021"
+      ]
+    },
+    {
+      "id": "EP-026",
+      "title": "Typed datasources и project manifest",
+      "kind": "FUTURE_DESIGN",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Сложная orchestration требует versioned connector contract; произвольное DB provision не разрешено сейчас.",
+      "sources": [
+        {
+          "file": "backend/schemas/pipeline_settings.py",
+          "line": 12
+        }
+      ],
+      "acceptance": [
+        "Import plan diff/conflicts/dependencies до применения.",
+        "Secrets по refs, credentials tenant scoped.",
+        "Connector write effects/rollback отдельно от workflow definitions."
+      ],
+      "dependencies": [
+        "EP-021"
+      ]
+    },
+    {
+      "id": "EP-027",
+      "title": "Inspector tree, selectors, freshness и performance",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Native hierarchy есть, ограничена 128KiB/4096 nodes/64 depth; не полный openatx server.",
+      "sources": [
+        {
+          "file": "backend/services/ui_hierarchy.py",
+          "line": 9
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt",
+          "line": 38
+        }
+      ],
+      "acceptance": [
+        "Video selection/tree selection синхронны.",
+        "Ancestors/attributes/duplicates/export/selector candidates.",
+        "Singleflight/cancel obsolete, stale marked, no hidden polling."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-028",
+      "title": "Явный device/agent telemetry scope и inventory",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "RAM DeviceStatusProvider = totalMem-availMem; CPU fallback0 может означать ошибку.",
+      "sources": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/providers/DeviceStatusProvider.kt",
+          "line": 92
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/providers/DeviceStatusProvider.kt",
+          "line": 58
+        }
+      ],
+      "acceptance": [
+        "Device RAM и agent PSS/RSS отдельно.",
+        "Source/error/observed_at validity не заменяется0.",
+        "Version/display/storage/network/capabilities structured."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-029",
+      "title": "Selected video end-to-end диагностика и управление",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Исторически input/FPS улучшены; новое живое performance окно этим аудитом не проводилось.",
+      "sources": [
+        {
+          "file": "frontend/src/features/stream/SingleDeviceStream.tsx",
+          "line": 6
+        }
+      ],
+      "acceptance": [
+        "Capture/encode/relay/decode/render FPS + drops/bitrate.",
+        "Home/Back/Recents/text/wheel и transform при rotation.",
+        "Input ACK/result/frame timings без ложного cross-clock one-way claim."
+      ],
+      "dependencies": [
+        "EP-028"
+      ]
+    },
+    {
+      "id": "EP-030",
+      "title": "Original PNG и matching asset provenance",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "PNG workflow существует; dpi metadata не равна lossy compression; нужна явная source provenance.",
+      "sources": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandDispatcher.kt",
+          "line": 456
+        }
+      ],
+      "acceptance": [
+        "Pixel dimensions/hash/MIME/capture source проверены.",
+        "Screenshot не перекодируется из H264.",
+        "Asset version/region/scale/rotation для future matcher."
+      ],
+      "dependencies": [
+        "EP-028"
+      ]
+    },
+    {
+      "id": "EP-031",
+      "title": "Thumbnail wall 128 вместо множества full video",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Текущий stream page — on-demand DeviceStream, page size до64.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/stream/page.tsx",
+          "line": 5
+        }
+      ],
+      "acceptance": [
+        "Интервалы5/10s и128tile, shared capture/stagger.",
+        "TTL/cache/bytes/concurrency budgets.",
+        "Selected stream отдельно, teardown при filter/hidden/unmount."
+      ],
+      "dependencies": [
+        "EP-012",
+        "EP-029"
+      ]
+    },
+    {
+      "id": "EP-032",
+      "title": "Общие structured logs всех разрешённых sources",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Logs route только device_id, browser selector один device.",
+      "sources": [
+        {
+          "file": "backend/api/v1/logs/router.py",
+          "line": 136
+        },
+        {
+          "file": "frontend/app/(dashboard)/logs/page.tsx",
+          "line": 115
+        }
+      ],
+      "acceptance": [
+        "All devices / groups / run / correlation server query.",
+        "Source / severity / time / build / sequence schema.",
+        "Bounded cursor/export, без 1000 client fanout."
+      ],
+      "dependencies": [
+        "EP-028"
+      ]
+    },
+    {
+      "id": "EP-033",
+      "title": "Byte-bounded backend log reads и global retention",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "50MiB/day/device; get читает до3files полностью; TTLcleanup только upload.",
+      "sources": [
+        {
+          "file": "backend/api/v1/logs/router.py",
+          "line": 43
+        },
+        {
+          "file": "backend/api/v1/logs/router.py",
+          "line": 162
+        }
+      ],
+      "acceptance": [
+        "Tail/filter byte budget и bounded concurrency.",
+        "Org/global quotas и independent retention sweeper.",
+        "Offline sources expire; disk forecast/drop counters."
+      ],
+      "dependencies": [
+        "EP-032"
+      ]
+    },
+    {
+      "id": "EP-034",
+      "title": "Audit journal semantic outcome и redacted diff",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Audit API/page существуют; request status не гарантирует Android outcome.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/audit/page.tsx",
+          "line": 51
+        }
+      ],
+      "acceptance": [
+        "Actor/effect/result/receipt correlations.",
+        "Before/after diff без secrets.",
+        "Server filters/cursor и bounded export всего scope."
+      ],
+      "dependencies": [
+        "EP-021",
+        "EP-032"
+      ]
+    },
+    {
+      "id": "EP-035",
+      "title": "Dashboard attention queue и actionable drilldown",
+      "kind": "DESIGN_DEBT",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Реальные counters/freshness есть; overview largely повторяет разделы.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/dashboard/page.tsx",
+          "line": 259
+        }
+      ],
+      "acceptance": [
+        "Reasons affected scope/version/reconnect/task outcomes.",
+        "Link открывает конкретный filter/detail.",
+        "Data coverage и query total/page semantics видны."
+      ],
+      "dependencies": [
+        "EP-008",
+        "EP-012",
+        "EP-022"
+      ]
+    },
+    {
+      "id": "EP-036",
+      "title": "Groups membership и bulk plan",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "CRUD/counts/devices links существуют; operational metadata мало.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/groups/page.tsx",
+          "line": 15
+        }
+      ],
+      "acceptance": [
+        "Membership preview и affected target count.",
+        "Notes/owner/last changed и audit links.",
+        "Bulk partial outcome и filter scope понятны."
+      ],
+      "dependencies": [
+        "EP-012"
+      ]
+    },
+    {
+      "id": "EP-037",
+      "title": "Locations hierarchy UX и validation",
+      "kind": "DESIGN_DEBT",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Пустой каталог корректно отображён, create form открыта; submit не выполнялся.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/locations/page.tsx",
+          "line": 17
+        }
+      ],
+      "acceptance": [
+        "Parent tree/breadcrumb/cycle validation.",
+        "Address/coordinates source/multiple membership explain.",
+        "Create/edit failures удерживают поля и focus."
+      ],
+      "dependencies": [
+        "EP-012"
+      ]
+    },
+    {
+      "id": "EP-038",
+      "title": "Discovery capability-scoped onboarding",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "APK self-register; дополнительный ADB требует PC Agent; scan не запускался.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/discovery/page.tsx",
+          "line": 54
+        }
+      ],
+      "acceptance": [
+        "Android onboarding не требует PC Agent.",
+        "Agent-scoped subnet/ports/budgets/progress/cancel.",
+        "Dedup results/registration receipts, permission explain."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-039",
+      "title": "Users role preview, safety и access review",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Показаны role/state/MFA/lastlogin; create dialog исследован безsubmit.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/users/page.tsx",
+          "line": 20
+        }
+      ],
+      "acceptance": [
+        "Permissions preview и role revision conflict.",
+        "Last admin/self disable policy + server enforcement.",
+        "Revoked session и tenant tests."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-040",
+      "title": "Configuration effective state и разделение policies",
+      "kind": "DESIGN_DEBT",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Account/security/API keys отдельно от appearance и automation settings.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/settings/page.tsx",
+          "line": 45
+        },
+        {
+          "file": "frontend/app/(dashboard)/pipeline-settings/page.tsx",
+          "line": 77
+        }
+      ],
+      "acceptance": [
+        "Workspace tabs с независимыми permission scopes.",
+        "Pending/effective/applied config generations.",
+        "Secret lifecycle и errors без ложного save success."
+      ],
+      "dependencies": [
+        "EP-013",
+        "EP-021"
+      ]
+    },
+    {
+      "id": "EP-041",
+      "title": "Release rollout receipts и каналы",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Canary 10245 есть; normal / stable не promoted; catalog≠installed.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/updates/page.tsx",
+          "line": 63
+        }
+      ],
+      "acceptance": [
+        "Offered/downloaded/verified/installed/unknown по target.",
+        "Platform/flavor/code/signer/hash preflight.",
+        "Recovery/rollback constraints видны; нет скрытого массового обновления."
+      ],
+      "dependencies": [
+        "EP-012",
+        "EP-028"
+      ]
+    },
+    {
+      "id": "EP-042",
+      "title": "Generic resources вместо game domain assumptions",
+      "kind": "FUTURE_DESIGN",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Game Accounts / levels / farming / registration существуют в models/settings/UI.",
+      "sources": [
+        {
+          "file": "backend/models/game_account.py",
+          "line": 67
+        },
+        {
+          "file": "backend/schemas/pipeline_settings.py",
+          "line": 12
+        }
+      ],
+      "acceptance": [
+        "Versioned ResourceType/Record/Lease/SecretRef/Connector.",
+        "Legacy adapters/migration/rollback сохраняют history.",
+        "Никакого удаления game models в UI fix phase."
+      ],
+      "dependencies": [
+        "EP-026"
+      ]
+    },
+    {
+      "id": "EP-043",
+      "title": "Разделить account session и universal run",
+      "kind": "FUTURE_DESIGN",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Session page domain-specific; понятие не равноuserauth session.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/sessions/page.tsx",
+          "line": 157
+        }
+      ],
+      "acceptance": [
+        "Названия, relations и lease context однозначны.",
+        "Исторические sessions доступны через adapter.",
+        "CanonicalRun/Task не зависят от одной игры."
+      ],
+      "dependencies": [
+        "EP-042"
+      ]
+    },
+    {
+      "id": "EP-044",
+      "title": "VPN assigned/applied/handshake/egress outcomes",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Peer list пуст; UI честно предупреждает, что router assignment не Android applied.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/vpn/page.tsx",
+          "line": 40
+        }
+      ],
+      "acceptance": [
+        "Provision receipt иactual Android state раздельны.",
+        "Unknown не превращается в successбез проверки.",
+        "Control transport и egress VPN разделены."
+      ],
+      "dependencies": [
+        "EP-028"
+      ]
+    },
+    {
+      "id": "EP-045",
+      "title": "Versioned VPN provider adapters и rotation",
+      "kind": "FUTURE_DESIGN",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "Amnezia/proxy/WireGuard future scope; сейчас не внедряется.",
+      "sources": [
+        {
+          "file": "frontend/app/(dashboard)/vpn/page.tsx",
+          "line": 40
+        }
+      ],
+      "acceptance": [
+        "Validate/import/apply/status/rotate/upgrade/rollback contract.",
+        "Config / binary / capability versions и secret refs.",
+        "Manual/script/schedule один API, recovery control сохраняется."
+      ],
+      "dependencies": [
+        "EP-044",
+        "EP-026"
+      ]
+    },
+    {
+      "id": "EP-046",
+      "title": "AI-ready schemas/runbooks и scoped artifacts",
+      "kind": "FUTURE_DESIGN",
+      "priority": "P2",
+      "state": "OPEN",
+      "evidence": "AI integration будущая; нужны проверяемые API/capabilities/outcomes.",
+      "sources": [
+        {
+          "file": "backend/schemas/dag.py",
+          "line": 92
+        }
+      ],
+      "acceptance": [
+        "Natural language → draft → validate → test → publish.",
+        "API schemas / examples / reason codes / recovery instructions.",
+        "Observations не дают privileges, budgets / TTL / RBAC обязательны."
+      ],
+      "dependencies": [
+        "EP-016",
+        "EP-019",
+        "EP-021",
+        "EP-032"
+      ]
+    },
+    {
+      "id": "EP-047",
+      "title": "Общая matrix500/1000 иresource leak gates",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Текущий live срез: 19 / 14; это непроверка производительности 500 / 1000. Disk recorder продолжает работу.",
+      "sources": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "line": 11
+        },
+        {
+          "file": "backend/api/v1/logs/router.py",
+          "line": 43
+        }
+      ],
+      "acceptance": [
+        "1000 registry / 128 thumbnails / 1 selected video measured.",
+        "Нет роста decoder / URL / log / report buffers после teardown.",
+        "VHD/guest/RAM/provenance отдельные readings."
+      ],
+      "dependencies": [
+        "EP-031",
+        "EP-033"
+      ]
+    },
+    {
+      "id": "EP-048",
+      "title": "Тесты всех меню/форм/ролей иvisual states",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "22pages/read-only forms проверены; mutations, role matrix и live Run остаются будущими проверками.",
+      "sources": [
+        {
+          "file": "frontend/src/features/preferences/AppearanceDrawer.tsx",
+          "line": 34
+        },
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx",
+          "line": 208
+        }
+      ],
+      "acceptance": [
+        "Loading/empty/error/offline/forbidden/partial/conflict.",
+        "Keyboard / zoom / mobile / reduced motion / 4 themes.",
+        "Actual write receipt + repeat validation после deploy."
+      ],
+      "dependencies": [
+        "EP-013"
+      ]
+    },
+    {
+      "id": "EP-049",
+      "title": "Документация source/runtime/schema freshness",
+      "kind": "DESIGN_DEBT",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Sourcec393/runtimec1a; local venv serializer drift resolved by runtime OpenAPI equality.",
+      "sources": [
+        {
+          "file": "scripts/export_api_docs.py",
+          "line": 20
+        },
+        {
+          "file": "docs/operations/CURRENT-STATE.md",
+          "line": 5
+        }
+      ],
+      "acceptance": [
+        "Installed SHA/manifest/capability visible с датой.",
+        "Docs генерацияв pinned runtime, с проверенной версией генератора.",
+        "Evidence immutable; новый результат отдельнымclosure receipt.",
+        "Default-branch dependency alerts сопоставлены с PR lock и installed SBOM; другие 142 alerts пока не приняты."
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "EP-050",
+      "title": "Alert delivery иsynthetic Android SLI",
+      "kind": "CAPABILITY_GAP",
+      "priority": "P1",
+      "state": "OPEN",
+      "evidence": "Metrics up не проверяет stream/script; alerts route logging не является полным Android SLI.",
+      "sources": [
+        {
+          "file": "backend/api/v1/monitoring/router.py",
+          "line": 5
+        }
+      ],
+      "acceptance": [
+        "Scrape/HTTP/stream/script/OTA разные SLI.",
+        "Alert→affected scope→runbook→observed recovery.",
+        "Synthetic target bounded с разрешёнными effects."
+      ],
+      "dependencies": [
+        "EP-008",
+        "EP-019",
+        "EP-029"
+      ]
+    }
+  ]
+}

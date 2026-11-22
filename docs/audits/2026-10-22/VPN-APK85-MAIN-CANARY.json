@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T12:08:42.323204+00:00",
+  "device": "auto-ph-011",
+  "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+  "apkVersionCode": 10285,
+  "apkSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+  "deliveryEvidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+  "android": 9,
+  "guardPlanVersion": 4,
+  "selectedPackage": "com.sphereplatform.awgclientprobe",
+  "selectedUid": 10108,
+  "sphereUid": 10082,
+  "legacyReleasedV3JournalReadableAfterUpgrade": true,
+  "newGuardHasNoPacketMarkOrMangleChain": true,
+  "externalWgProvider": {
+    "protocol": "wireguard",
+    "protocolVersion": "1",
+    "steps": [
+      {
+        "step": "apply",
+        "commandId": "5ddd22f3-727a-47b0-99c0-547f64d7dff8",
+        "status": "completed",
+        "phase": "TRANSPORT_READY",
+        "providerPid": 6120,
+        "sameControlSession": true
+      },
+      {
+        "step": "active",
+        "commandId": "224171e0-15dc-4a33-9831-38d1f8504e88",
+        "status": "completed",
+        "phase": "HANDSHAKE_CONFIRMED",
+        "providerPid": 6120,
+        "sameControlSession": true
+      },
+      {
+        "step": "pause",
+        "commandId": "b84acf4d-fab7-4562-a28a-4a5e2171c8f5",
+        "status": "completed",
+        "phase": "PAUSED_GUARD_HELD",
+        "providerPid": 6120,
+        "sameControlSession": true
+      },
+      {
+        "step": "resume",
+        "commandId": "aa4cd299-5ea8-49e6-871c-214d674ccf67",
+        "status": "completed",
+        "phase": "TRANSPORT_READY",
+        "providerPid": 6120,
+        "sameControlSession": true
+      },
+      {
+        "step": "resumed-status",
+        "commandId": "98eb1c23-11d3-4e0e-af07-33b149cdb087",
+        "status": "completed",
+        "phase": "HANDSHAKE_CONFIRMED",
+        "providerPid": 6120,
+        "sameControlSession": true
+      },
+      {
+        "step": "reconciled-after-fault",
+        "commandId": "5b2c23b3-9663-4f5f-aca4-cefb27850dfd",
+        "status": "failed",
+        "phase": "RECONCILIATION_REQUIRED",
+        "providerPid": 8261,
+        "sameControlSession": true
+      },
+      {
+        "step": "disconnect",
+        "commandId": "3178c45a-0fc6-4b6b-9a15-bd0846f5cc8a",
+        "status": "completed",
+        "phase": "DISCONNECTED_CONFIRMED",
+        "providerPid": 8261,
+        "sameControlSession": true
+      }
+    ],
+    "initialTcp": "uid=10108 connected=1 errno=0\nuid=10082 connected=1 errno=0\n",
+    "initialData": {
+      "unbound": "uid=10108 connected=1 errno=0\nsource=10.66.66.62\n",
+      "bound": "uid=10108 connected=0 errno=110\nsource=10.66.66.62\n",
+      "dns": "uid=10108 dnsAnswer=0 errno=110\n",
+      "alternate": "uid=10108 connected=0 errno=110\nsource=10.66.66.62\n"
+    },
+    "laterTcp": "uid=10108 connected=0 errno=110\nuid=10082 connected=1 errno=0\n",
+    "resumedData": {
+      "unbound": "uid=10108 connected=1 errno=0\nsource=10.66.66.62\n",
+      "bound": "uid=10108 connected=0 errno=110\nsource=10.66.66.62\n",
+      "dns": "uid=10108 dnsAnswer=0 errno=110\n",
+      "alternate": "uid=10108 connected=0 errno=110\nsource=10.66.66.62\n"
+    },
+    "pausedTcp": "uid=10108 connected=0 errno=22\nuid=10082 connected=1 errno=0\n",
+    "afterProviderDeathTcp": "uid=10108 connected=0 errno=22\nuid=10082 connected=1 errno=0\n",
+    "disconnectedTcp": "uid=10108 connected=1 errno=0\nuid=10082 connected=1 errno=0\n",
+    "publicDataReliabilityAccepted": false,
+    "dnsAccepted": false,
+    "rootCauseConfirmed": false,
+    "classification": "Initial TCP succeeds after apply/resume; subsequent TCP/DNS time out. Local peer test narrows scope but does not prove external-server fault.",
+    "cleanup": {
+      "atUtc": "2026-10-22T11:54:21.364411+00:00",
+      "ownedUidRulesRemovedBothFamilies": true,
+      "ownedTablesEmptyBothFamilies": true,
+      "ownedFilterJumpsRemovedBothFamilies": true,
+      "tunAbsent": true,
+      "mainPidUnchanged": true,
+      "mainPid": 5785,
+      "guardPlanVersion": 4,
+      "phase": "RELEASED",
+      "fixtureRetainedForLocalPeerTest": true
+    },
+    "profileArchived": true
+  },
+  "controlledLocalPeer": {
+    "protocol": "amneziawg",
+    "protocolVersion": "1",
+    "nativeImplementationVersion": "v3.1.20260814",
+    "steps": [
+      {
+        "step": "apply",
+        "commandId": "d9d2b37d-6e95-48c3-ad80-d0fc0ef23ae5",
+        "status": "completed",
+        "phase": "TRANSPORT_READY",
+        "providerPid": 8261,
+        "sameControlSession": true
+      },
+      {
+        "step": "active-status",
+        "commandId": "349ffccc-9a95-4d3b-833a-75b54ccdebe3",
+        "status": "completed",
+        "phase": "HANDSHAKE_CONFIRMED",
+        "providerPid": 8261,
+        "sameControlSession": true
+      },
+      {
+        "step": "pause",
+        "commandId": "40c44425-ba06-4b59-aebf-062594a47f33",
+        "status": "completed",
+        "phase": "PAUSED_GUARD_HELD",
+        "providerPid": 8261,
+        "sameControlSession": true
+      },
+      {
+        "step": "resume",
+        "commandId": "78d2375b-e9a3-40a4-aa55-21af38c34d81",
+        "status": "completed",
+        "phase": "TRANSPORT_READY",
+        "providerPid": 8261,
+        "sameControlSession": true
+      },
+      {
+        "step": "resumed-status",
+        "commandId": "1b461998-c88c-4a3c-aaa8-1ae14f066a23",
+        "status": "completed",
+        "phase": "HANDSHAKE_CONFIRMED",
+        "providerPid": 8261,
+        "sameControlSession": true
+      },
+      {
+        "step": "reconciled-after-fault",
+        "commandId": "1e8c5a17-6008-4bff-83d9-8458b6cc3a20",
+        "status": "failed",
+        "phase": "RECONCILIATION_REQUIRED",
+        "providerPid": 14364,
+        "sameControlSession": true
+      },
+      {
+        "step": "disconnect",
+        "commandId": "a6734284-bbf3-46be-ab0b-7f40504b82b7",
+        "status": "completed",
+        "phase": "DISCONNECTED_CONFIRMED",
+        "providerPid": 14364,
+        "sameControlSession": true
+      }
+    ],
+    "activeHttpEchoes": [
+      {
+        "atUtc": "2026-10-22T11:59:10.652019+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:11.914016+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:13.416973+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:14.674220+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:16.181994+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:17.691527+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:19.199907+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:20.460518+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:21.965223+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:23.477235+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:24.736563+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:26.244320+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      }
+    ],
+    "resumedHttpEchoes": [
+      {
+        "atUtc": "2026-10-22T11:59:37.034081+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:38.539205+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:39.799407+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:41.305059+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      },
+      {
+        "atUtc": "2026-10-22T11:59:42.816638+00:00",
+        "echoed": true,
+        "output": "uid=10108 connected=1 echoed=1 errno=0"
+      }
+    ],
+    "pauseBlocksSelectedUid": true,
+    "controlWorksDuringPause": true,
+    "providerCrashBlocksSelectedUid": true,
+    "controlWorksAfterCrash": true,
+    "providerDeathRequiresReconciliation": true,
+    "closedTunLeavesUidBlackhole": true,
+    "mainProcessPreserved": true,
+    "kernelCleanupConfirmed": true,
+    "profileArchived": true,
+    "finiteAccepted": true,
+    "dnsTested": false,
+    "obfuscation31Tested": false,
+    "longSoakAccepted": false,
+    "freshEphemeralPeerKeys": true,
+    "clientProfileSecretsStagedOnDevice": false,
+    "ephemeralServerKeyTemporaryDirectoryMode": "0700; deleted after process shutdown"
+  },
+  "diagnosticFixtureFailuresPreserved": [
+    "First stdin-based peer launch could not open its config; no profile/guard mutation.",
+    "A staging permission failure preceded profile import; no VPN activation.",
+    "An ephemeral fixture public-key mismatch prevented handshake; explicit disconnect/cleanup/archive completed before corrected fixture."
+  ],
+  "cleanup": {
+    "atUtc": "2026-10-22T12:06:19.432113+00:00",
+    "diagnosticPackageRemoved": true,
+    "ownedFilesRemoved": 8,
+    "ownedDirectoryRemoved": true,
+    "mainPidUnchanged": true,
+    "gamePackagesChanged": false,
+    "allTestProfilesArchived": true
+  },
+  "allVpnRpcThroughSphere": true,
+  "serverProductionJournalClaimed": false,
+  "automaticPhysicalRetries": 0,
+  "gameCommandsSent": 0,
+  "hostVpnChanged": false,
+  "productionAccepted": false
+}

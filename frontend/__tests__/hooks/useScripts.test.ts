@@ -4,7 +4,7 @@
  * useUpdateScript, useArchiveScript, useRollbackScript.
  */
 import { waitFor } from '@testing-library/react';
-import { renderQueryHook } from '../helpers';
+import { createTestQueryClient, renderQueryHook } from '../helpers';
 import {
   useScripts,
   useScript,
@@ -45,23 +45,22 @@ const MOCK_SCRIPTS_RESPONSE = {
 };
 
 const MOCK_DAG = { nodes: { start: { type: 'start' } }, edges: [] };
+const MOCK_CURRENT_VERSION = {
+  id: 'ver-003',
+  script_id: 'scr-001',
+  version: 3,
+  dag: MOCK_DAG,
+  dag_hash: 'abc123',
+  notes: 'Добавлен watchdog',
+  created_by_id: 'user-001',
+  created_at: '2026-03-01T15:30:00Z',
+};
 
 const MOCK_SCRIPT_DETAIL = {
   ...MOCK_SCRIPT,
-  dag: MOCK_DAG,
-  current_version: 3,
-  versions: [
-    {
-      id: 'ver-003',
-      script_id: 'scr-001',
-      version: 3,
-      dag: MOCK_DAG,
-      dag_hash: 'abc123',
-      notes: 'Добавлен watchdog',
-      created_by_id: 'user-001',
-      created_at: '2026-03-01T15:30:00Z',
-    },
-  ],
+  current_version_id: 'ver-003',
+  current_version: MOCK_CURRENT_VERSION,
+  versions: [MOCK_CURRENT_VERSION],
 };
 
 const MOCK_VERSIONS = [
@@ -119,6 +118,7 @@ describe('useScripts', () => {
     await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
     expect(mockApi.get).toHaveBeenCalledWith('/scripts', {
       params: { query: 'авториз' },
+      signal: expect.any(AbortSignal),
     });
   });
 });
@@ -132,8 +132,7 @@ describe('useScript', () => {
     const { result } = renderQueryHook(() => useScript('scr-001'));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.dag).toEqual(MOCK_DAG);
-    expect(result.current.data?.current_version).toBe(3);
+    expect(result.current.data?.current_version).toMatchObject({ version: 3, dag: MOCK_DAG });
   });
 
   it('не делает запрос при пустом scriptId', async () => {
@@ -153,6 +152,22 @@ describe('useScript', () => {
     expect(mockApi.get).toHaveBeenCalledWith('/scripts/scr-001', {
       params: { include_dag: false },
     });
+  });
+
+  it('не смешивает кэшированные детали с DAG и без DAG', async () => {
+    const queryClient = createTestQueryClient();
+    mockApi.get.mockResolvedValue({ data: MOCK_SCRIPT_DETAIL });
+
+    const withDag = renderQueryHook(() => useScript('scr-001', { includeDag: true }), { queryClient });
+    const withoutDag = renderQueryHook(() => useScript('scr-001', { includeDag: false }), { queryClient });
+
+    await waitFor(() => expect(mockApi.get).toHaveBeenCalledTimes(2));
+    await waitFor(() => {
+      expect(withDag.result.current.isSuccess).toBe(true);
+      expect(withoutDag.result.current.isSuccess).toBe(true);
+    });
+    expect(mockApi.get).toHaveBeenCalledWith('/scripts/scr-001', { params: { include_dag: true } });
+    expect(mockApi.get).toHaveBeenCalledWith('/scripts/scr-001', { params: { include_dag: false } });
   });
 });
 

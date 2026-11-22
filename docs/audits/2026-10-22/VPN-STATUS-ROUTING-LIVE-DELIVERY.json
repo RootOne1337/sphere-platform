@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T10:41:52.227211+00:00",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "46dd02fff711c1667b44520b85290226b7155287",
+    "apiSourceRevision": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+    "uiImageId": "sha256:7fd4d52ec5402dae96b715d890f9f905e0ca1a4b5417423eb9de5f3ce0d238d0",
+    "apiImageId": "sha256:cf84467ff9fe581f18cc67ecdb3a28a128466fd670d7de1737e26995d4f3f3b3"
+  },
+  "apiInstallation": {
+    "source": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+    "githubRunId": 39681623774,
+    "imageArchiveLoadedAgain": false,
+    "resourceFindings": [],
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261021_vpn_profiles"
+    ],
+    "otherContainersPreserved": 45,
+    "otaCatalogUnchangedDuringInstallation": true,
+    "privateReceiptSha256NormalizedLf": "e9bb0c59bc47a2e9b9e8f954073143ef1319d1df2e9c8b3887977ce7e5364555"
+  },
+  "nativeStatusAcceptance": {
+    "observedAtUtc": "2026-10-22T10:07:50.365788+00:00",
+    "apiSource": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "commandId": "df7f4ec1-b6da-4c1f-87d9-afe09f94e88d",
+    "statusRpcCompleted": true,
+    "authenticatedApiObservationMatched": true,
+    "sameControlSession": true,
+    "phase": "IDLE",
+    "freshness": "stale",
+    "providerPid": 22801,
+    "sampledAtEpochMs": 1792617716783,
+    "deviceCommandsSent": 1,
+    "physicalVpnChanged": false,
+    "profileDelivered": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Actual installed VPN diagnostics/list after confirmed disconnect; no media, input, game or physical VPN acceptance.",
+    "origin": "http://127.0.0.1:3015",
+    "viewports": [
+      [
+        1440,
+        1000
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "mobileDocumentWidth": 390,
+    "mobileDialogWidth": 390,
+    "mobileHorizontalOverflow": false,
+    "apkVersionDisplayed": "1.2.84-dev",
+    "providerPidDisplayed": 22801,
+    "staleSnapshotNotRefreshedByStatusRead": true,
+    "identifiersReachable": true,
+    "footerReachable": true,
+    "screenshots": [
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-status84-live/desktop-diagnostics.png",
+        "sha256": "e73dda5104e1952f76a420c0e39760161e0a513a299c276990a9b6c280a1779d"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-status84-live/mobile-diagnostics.png",
+        "sha256": "af17cff3254efff9fa22240532f9dd0c2b231f1081549ffc20c18e86d7e8ed59"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-status84-live/mobile-identifiers.png",
+        "sha256": "8d6633b621e5de533453872311cd6a6cb3cc7cef551106831b74c66f43d407c9"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-status84-live/mobile-list.png",
+        "sha256": "dc8e2272bdc7edb282cbc075e1ab4b45db3e4e6a43b9aeb294d2925ebbf04bb7"
+      }
+    ],
+    "browserClosed": true,
+    "expectedPreLogin401": true,
+    "consoleCleanlinessClaimed": false,
+    "directFramesPresented": 0
+  },
+  "reportedFleetSnapshot": [
+    {
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "name": "auto-ph-011",
+      "reportedVersionCode": 10284,
+      "status": "online",
+      "packageHashVerifiedInThisRead": false
+    },
+    {
+      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+      "name": "auto-ph-030",
+      "reportedVersionCode": 10283,
+      "status": "online",
+      "packageHashVerifiedInThisRead": false
+    },
+    {
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "name": "auto-ph-025",
+      "reportedVersionCode": 10283,
+      "status": "online",
+      "packageHashVerifiedInThisRead": false
+    },
+    {
+      "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+      "name": "auto-ph-010",
+      "reportedVersionCode": 10283,
+      "status": "online",
+      "packageHashVerifiedInThisRead": false
+    }
+  ],
+  "physicalVpnAccepted": false,
+  "fleetRollout": false,
+  "productionAccepted": false
+}

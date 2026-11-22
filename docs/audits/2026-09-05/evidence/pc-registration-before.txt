@@ -1,0 +1,24 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______________ test_pc_registration_updates_existing_workstation ______________
+tests\production\test_security_regressions.py:211: in test_pc_registration_updates_existing_workstation
+    assert workstation.hostname == "audit-host"
+E   AssertionError: assert None == 'audit-host'
+E    +  where None = <backend.models.workstation.Workstation object at 0x0000025FEDA98BF0>.hostname
+---------------------------- Captured stdout call -----------------------------
+{"workstation_id": "6da6df13-68c8-4812-b048-ea4603ad218c", "error": "(sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"ip_address\" of relation \"workstations\" does not exist\n[SQL: \n                UPDATE workstations\n                SET hostname       = $1,\n                    os_version     = $2,\n                    ip_address     = $3,\n                    agent_version  = $4,\n                    last_seen      = now()\n                WHERE id::text = $5\n            ]\n[parameters: ('audit-host', 'test', '127.0.0.1', 'audit', '6da6df13-68c8-4812-b048-ea4603ad218c')]\n(Background on this error at: https://sqlalche.me/e/20/f405)", "event": "workstation_register error", "level": "error", "logger": "backend.api.ws.agent.router", "timestamp": "2026-09-06T08:37:13.860155Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.api.ws.agent.router:router.py:129 {'workstation_id': '6da6df13-68c8-4812-b048-ea4603ad218c', 'error': '(sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class \'asyncpg.exceptions.UndefinedColumnError\'>: column "ip_address" of relation "workstations" does not exist\n[SQL: \n                UPDATE workstations\n                SET hostname       = $1,\n                    os_version     = $2,\n                    ip_address     = $3,\n                    agent_version  = $4,\n                    last_seen      = now()\n                WHERE id::text = $5\n            ]\n[parameters: (\'audit-host\', \'test\', \'127.0.0.1\', \'audit\', \'6da6df13-68c8-4812-b048-ea4603ad218c\')]\n(Background on this error at: https://sqlalche.me/e/20/f405)', 'event': 'workstation_register error', 'level': 'error', 'logger': 'backend.api.ws.agent.router', 'timestamp': '2026-09-06T08:37:13.860155Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_security_regressions.py::test_pc_registration_updates_existing_workstation
+1 failed, 8 deselected, 485 warnings in 0.75s

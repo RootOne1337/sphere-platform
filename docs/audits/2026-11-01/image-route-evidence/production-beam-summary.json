@@ -1,0 +1,40 @@
+{
+  "forward": {
+    "queries": 100,
+    "known": 44,
+    "unknown_or_ambiguous_or_stale": 56,
+    "status_counts": {
+      "reference_selected": 44,
+      "unknown": 7,
+      "ambiguous": 49,
+      "stale": 0
+    },
+    "same_video_hit_within_0_6s": 42,
+    "same_video_wrong_over_2s": 0,
+    "denominator": "all 100 queries including unknown",
+    "research_count_expected": 44,
+    "row_mismatches": 0,
+    "mismatches": []
+  },
+  "reverse": {
+    "queries": 100,
+    "known": 42,
+    "unknown_or_ambiguous_or_stale": 58,
+    "status_counts": {
+      "reference_selected": 42,
+      "unknown": 9,
+      "ambiguous": 49,
+      "stale": 0
+    },
+    "same_video_hit_within_0_6s": 39,
+    "same_video_wrong_over_2s": 1,
+    "denominator": "all 100 queries including unknown",
+    "research_count_expected": 42,
+    "row_mismatches": 0,
+    "mismatches": []
+  },
+  "source_authority": false,
+  "execution_qualified": false,
+  "same_video_only": true,
+  "minimap_optional_clip_specific": true
+}

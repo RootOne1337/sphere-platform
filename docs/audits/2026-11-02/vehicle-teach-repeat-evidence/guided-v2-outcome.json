@@ -1,0 +1,60 @@
+{
+  "status": "completed_negative_not_admitted",
+  "model": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-fused-graph-20261102-v2\\track-filter-ba-20261102-v2\\supported-3view-20261102-v1\\model",
+  "comparison": "comparison.json",
+  "exportReceipt": "export-receipt.json",
+  "localizationReport": "localization/report.json",
+  "sourceUnchanged": true,
+  "runtimeSourcesUnchanged": true,
+  "canonicalMapReady": false,
+  "unsupportedNeighborhoods": 13,
+  "actualQueries": 159,
+  "localized": 52,
+  "computeMs": {
+    "p50": 109.5262001035735,
+    "p95": 194.6458000456914,
+    "maximum": 1620.8364999620244
+  },
+  "callbackMetrics": {
+    "callbackCalls": 10538,
+    "cumulativeGuardWallSeconds": 30.540312801487744,
+    "evidenceIoWallSeconds": 0.9730305005796254,
+    "guardWallExcludingEvidenceIo": 29.56728230090812,
+    "byPhase": {
+      "export": {
+        "calls": 10530,
+        "wallSeconds": 30.385034601320513
+      },
+      "localization": {
+        "calls": 8,
+        "wallSeconds": 0.15527820016723126
+      }
+    },
+    "persistedSamples": 126,
+    "maxEvidenceRateHz": 2.0,
+    "checksStillEveryCallback": true,
+    "isRealtimeBenchmark": false
+  },
+  "builderTiming": {
+    "wallSeconds": 50.73510349995922,
+    "resourceCallbackCalls": 10500,
+    "resourceCallbackWallSeconds": 28.587445601122454,
+    "evidenceIoWallSeconds": 0.8253055003006011,
+    "wallExcludingResourceCallbacks": 22.14765789883677,
+    "isRealtimeBenchmark": false
+  },
+  "peakSampledPrivateBytes": 275509248,
+  "minAvailableRamGiB": 7.3724365234375,
+  "successfulAttemptWallSeconds": 107.78099999995902,
+  "previousIncompleteLoggingAttemptSeconds": 54.125,
+  "bothAttemptsWallSeconds": 161.90599999995902,
+  "isResume": false,
+  "freshExtractions": 2,
+  "sourceClock": "offline-media-clock-not-full-transport-or-realtime",
+  "productionApiTouched": false,
+  "navigationPromoted": false,
+  "httpFixtureCreated": false,
+  "additionalRetries": 0,
+  "physicalActions": 0,
+  "executionQualified": false
+}

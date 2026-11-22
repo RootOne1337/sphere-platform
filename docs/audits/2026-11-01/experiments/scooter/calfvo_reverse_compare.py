@@ -1,0 +1,21 @@
+import os,sys,pathlib,json,math,hashlib
+os.environ.update(OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='1');sys.path.insert(0,os.getcwd())
+from scripts.pilot.route_cpu_runtime import initialize_route_cpu_runtime
+initialize_route_cpu_runtime()
+import numpy as np
+root=pathlib.Path('.local-pilot/scooter-calfvo-reverse-20261101');f=np.load('.local-pilot/scooter-calfvo-full-20261101/candidate.npz');b=np.load(root/'candidate.npz');
+assert np.array_equal(f['frame_indices'],np.arange(901)) and np.array_equal(b['frame_indices'],np.arange(900,-1,-1)) and np.array_equal(f['ticks_90k'],b['ticks_90k'][::-1]);F=f['trajectory_c2w'].copy();R=b['trajectory_c2w'][::-1].copy()
+assert F.shape==R.shape==(901,4,4) and np.allclose(F[0],np.eye(4),atol=1e-5) and np.allclose(R[-1],np.eye(4),atol=1e-5)
+def so3(A):
+ u,s,v=np.linalg.svd(A);d=np.eye(3);d[-1,-1]=np.linalg.det(u@v);return u@d@v
+F[:,:3,:3]=np.array([so3(x) for x in F[:,:3,:3]]);R[:,:3,:3]=np.array([so3(x) for x in R[:,:3,:3]])
+# F edge i->i+1 and B edge i+1->i are in the same two camera frames.
+frot=np.einsum('nij,njk->nik',F[:-1,:3,:3].transpose(0,2,1),F[1:,:3,:3]);brot=np.einsum('nij,njk->nik',R[1:,:3,:3].transpose(0,2,1),R[:-1,:3,:3]);
+ft=np.einsum('nij,nj->ni',F[:-1,:3,:3].transpose(0,2,1),F[1:,:3,3]-F[:-1,:3,3]);bt=np.einsum('nij,nj->ni',R[1:,:3,:3].transpose(0,2,1),R[:-1,:3,3]-R[1:,:3,3]);
+fn=np.linalg.norm(ft,axis=1);bn=np.linalg.norm(bt,axis=1);train_valid=(fn[:450]>1e-6)&(bn[:450]>1e-6);scale=float(np.median(fn[:450][train_valid]/bn[:450][train_valid]));cycles=frot@brot;angles=np.degrees(np.arccos(np.clip((np.trace(cycles,axis1=1,axis2=2)-1)/2,-1,1)));trans=np.linalg.norm(ft+np.einsum('nij,nj->ni',frot,bt*scale),axis=1);den=fn+bn*scale;relative=trans/np.maximum(den,1e-12)
+def stats(a):
+ a=np.asarray(a);return {'count':len(a),'median':float(np.median(a)),'p90':float(np.percentile(a,90)),'p99':float(np.percentile(a,99)),'max':float(np.max(a))}
+A=F[0,:3,:3]@R[0,:3,:3].T;aligned=(R[:,:3,3]-R[0,:3,3])@A.T*scale+F[0,:3,3];err=np.linalg.norm(aligned-F[:,:3,3],axis=1);path=float(np.sum(fn));edges=[]
+for i in range(900):edges.append({'a':i,'b':i+1,'seconds_a':float(f['ticks_90k'][i]/90000),'seconds_b':float(f['ticks_90k'][i+1]/90000),'rotation_cycle_deg':float(angles[i]),'translation_cycle_forward_units':float(trans[i]),'translation_cycle_relative':float(relative[i]),'forward_step':float(fn[i]),'reverse_step_scaled':float(bn[i]*scale),'partition':'train' if i<450 else 'heldout'})
+result={'frames':901,'edges':900,'binding':'forward source indices 0..900, reverse source indices 900..0; exact ticks per source index','reverse_origin':'source frame 900','comparison':'for each chronological edge compose forward i->i+1 with reverse i+1->i; relative camera transforms, no model serves as truth','rotation_cycle_deg_all':stats(angles),'rotation_cycle_deg_train':stats(angles[:450]),'rotation_cycle_deg_heldout':stats(angles[450:]),'rotation_above_5deg':int(np.sum(angles>5)),'rotation_above_10deg':int(np.sum(angles>10)),'reverse_to_forward_scale_fit':scale,'scale_fit':'median forward/reverse camera-step magnitude on first 450 chronological edges with both lengths >1e-6; heldout edges never used for scale fit','scale_fit_edges':int(train_valid.sum()),'translation_cycle_forward_units_train':stats(trans[:450]),'translation_cycle_forward_units_heldout':stats(trans[450:]),'translation_cycle_relative_train':stats(relative[:450]),'translation_cycle_relative_heldout':stats(relative[450:]),'first_frame_anchor':'align reverse world to forward using source frame 0 orientation and position only; no all-frame Sim3 fit','anchored_position_difference_forward_units_train_frames':stats(err[:451]),'anchored_position_difference_forward_units_heldout_frames':stats(err[451:]),'last_position_difference_forward_units':float(err[-1]),'forward_path_units':path,'end_difference_over_forward_path':float(err[-1]/path) if path else None,'limits':'Same learned model, same recording, overlapping windows, assumptions; two directions not ground truth. Holdout is solely from translation scale fit, not model inference or input. Predicted scales not metres; axes/vehicle-camera relation unverified. SO3 normalized for numerical comparison.'}
+(root/'edges.json').write_text(json.dumps(edges));(root/'comparison.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))

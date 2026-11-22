@@ -1,0 +1,3759 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T20:30:27.622Z",
+  "installedUiSource": "fc7cdad4bbae51da8b86e6c12d5ba5c13dff6e64",
+  "device": "PH030",
+  "scope": "One instrumented desktop observer and a second ordinary desktop browser context; idle observation only, no Android commands.",
+  "first": {
+    "elapsedMs": 562722,
+    "control": "ready",
+    "summary": "Прямой канал · видео и касанияRTT 163 мс960 × 54057 FPS5.8 Мбит/с",
+    "network": [
+      {
+        "peerOrdinal": 1,
+        "connection": "connected",
+        "ice": "connected",
+        "dtls": "connected",
+        "path": {
+          "localType": "srflx",
+          "remoteType": "srflx",
+          "protocol": "udp",
+          "rttMs": 166
+        },
+        "video": [
+          {
+            "framesReceived": 30575,
+            "framesDecoded": 27872,
+            "framesDropped": 1145,
+            "packetsReceived": 324723,
+            "packetsLost": 10389,
+            "nackCount": 18056,
+            "pliCount": 141,
+            "jitter": 0.004,
+            "framesPerSecond": 59,
+            "totalDecodeTime": 14.683923,
+            "jitterBufferDelay": 5350.628028,
+            "jitterBufferEmittedCount": 28996
+          }
+        ]
+      }
+    ],
+    "peerEvents": [
+      {
+        "ordinal": 1,
+        "events": [
+          {
+            "at": 5554,
+            "event": "icegatheringstatechange",
+            "connection": "new",
+            "ice": "new",
+            "gathering": "gathering"
+          },
+          {
+            "at": 5690,
+            "event": "icegatheringstatechange",
+            "connection": "new",
+            "ice": "new",
+            "gathering": "complete"
+          },
+          {
+            "at": 7744,
+            "event": "iceconnectionstatechange",
+            "connection": "new",
+            "ice": "checking",
+            "gathering": "complete"
+          },
+          {
+            "at": 7744,
+            "event": "connectionstatechange",
+            "connection": "connecting",
+            "ice": "checking",
+            "gathering": "complete"
+          },
+          {
+            "at": 8014,
+            "event": "iceconnectionstatechange",
+            "connection": "connecting",
+            "ice": "connected",
+            "gathering": "complete"
+          },
+          {
+            "at": 10950,
+            "event": "connectionstatechange",
+            "connection": "connected",
+            "ice": "connected",
+            "gathering": "complete"
+          }
+        ]
+      }
+    ],
+    "channels": [
+      {
+        "index": 1,
+        "label": "sphere-video-v1",
+        "state": "open",
+        "sent": 110,
+        "received": 111,
+        "events": [
+          {
+            "at": 246405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 247197,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 251397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 251619,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 256405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 256619,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 261397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 261607,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 266390,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 266601,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 271399,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 271607,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 276406,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 276609,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 281397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 281586,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 286390,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 286571,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 291398,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 291577,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 296390,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 296577,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 301397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 301578,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 306405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 306588,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 311398,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 311583,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 316405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 316586,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 321397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 321578,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 326405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 326588,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 331397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 331582,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 336406,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 336591,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 341397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 341583,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 346405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 346588,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 351397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 351578,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 356405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 356587,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 361397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 361558,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 366405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 366965,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 371397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 371550,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 376405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 376563,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 381397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 381549,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 386392,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 386548,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 391397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 391556,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 396405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 396560,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 401397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 401555,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 406406,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 406591,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 411397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 411630,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 416405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 416583,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 421397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 421582,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 426405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 426579,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 431397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 431577,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 436405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 436585,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 441398,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 441584,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 446405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 446579,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 451397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 451583,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 456405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 457049,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 461397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 461588,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 466390,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 466554,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 471397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 472777,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 476405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 476571,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 481397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 481558,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 486406,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 486558,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 491397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 491574,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 496405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 496986,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 501397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 501573,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 506405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 506573,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 511398,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 511571,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 516405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 516579,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 521397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 521577,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 526405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 526581,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 531397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 531576,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 536405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 536593,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 541397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 541574,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 546405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 546579,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 551398,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 551562,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 556405,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 556575,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 561397,
+            "direction": "send",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 561565,
+            "direction": "receive",
+            "type": "other",
+            "sequence": null,
+            "action": null,
+            "outcome": null,
+            "buffered": 0
+          }
+        ],
+        "heartbeatDelays": []
+      },
+      {
+        "index": 2,
+        "label": "sphere-control-v2",
+        "state": "open",
+        "sent": 2153,
+        "received": 2132,
+        "events": [
+          {
+            "at": 546420,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2088,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 546595,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2088,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 546677,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2089,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 546853,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2089,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 546933,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2090,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 547109,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2090,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 547188,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2091,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 547445,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2092,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 547701,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2093,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 547758,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2091,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 547759,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2092,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 547861,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2093,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 547956,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2094,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 548121,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2094,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 548213,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2095,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 548388,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2095,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 548469,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2096,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 548638,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2096,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 548725,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2097,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 548897,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2097,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 548981,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2098,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 549148,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2098,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 549237,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2099,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 549410,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2099,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 549493,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2100,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 549662,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2100,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 549749,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2101,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 549923,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2101,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 550004,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2102,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 550177,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2102,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 550261,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2103,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 550444,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2103,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 550517,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2104,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 550685,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2104,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 550773,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2105,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 550942,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2105,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 551029,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2106,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 551200,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2106,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 551285,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2107,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 551452,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2107,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 551541,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2108,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 551711,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2108,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 551797,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2109,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 551981,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2109,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 552053,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2110,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 552220,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2110,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 552309,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2111,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 552478,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2111,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 552565,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2112,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 552742,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2112,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 552821,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2113,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 552986,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2113,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 553077,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2114,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 553244,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2114,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 553333,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2115,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 553508,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2115,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 553589,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2116,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 553757,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2116,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 553845,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2117,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 554024,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2117,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 554101,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2118,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 554273,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2118,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 554357,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2119,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 554537,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2119,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 554613,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2120,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 554787,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2120,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 554870,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2121,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 555039,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2121,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 555125,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2122,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 555297,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2122,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 555381,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2123,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 555547,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2123,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 555638,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2124,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 555804,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2124,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 555893,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2125,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 556063,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2125,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 556149,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2126,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 556330,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2126,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 556405,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2127,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 556575,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2127,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 556661,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2128,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 556917,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2129,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 557173,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2130,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 557233,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2128,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 557233,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2129,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 557355,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2130,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 557429,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2131,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 557603,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2131,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 557685,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2132,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 557860,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2132,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 557941,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2133,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 558118,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2133,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 558197,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2134,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 558366,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2134,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 558453,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2135,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 558613,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2135,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 558709,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2136,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 558871,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2136,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 558964,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2137,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 559137,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2137,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 559221,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2138,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 559391,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2138,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 559477,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2139,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 559644,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2139,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 559733,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2140,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 559900,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2140,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 559989,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2141,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 560157,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2141,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 560245,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2142,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 560411,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2142,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 560502,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2143,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 560673,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2143,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 560757,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2144,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 560922,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2144,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 561013,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2145,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 561180,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2145,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 561269,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2146,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 561435,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2146,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 561525,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2147,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 561692,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2147,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 561780,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2148,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 562037,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2149,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 562293,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2150,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 562353,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2148,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 562353,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2149,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 562465,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2150,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          },
+          {
+            "at": 562549,
+            "direction": "send",
+            "type": "touch_event",
+            "sequence": 2151,
+            "action": 4,
+            "outcome": null,
+            "buffered": 0
+          },
+          {
+            "at": 562719,
+            "direction": "receive",
+            "type": "shared_input_status",
+            "sequence": 2151,
+            "action": 4,
+            "outcome": "alive",
+            "buffered": 0
+          }
+        ],
+        "heartbeatDelays": [
+          {
+            "at": 388454,
+            "oldestAge": 1008,
+            "state": "open",
+            "buffered": 0,
+            "events": [
+              {
+                "at": 384101,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1454,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 384253,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1454,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 384357,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1455,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 384511,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1455,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 384613,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1456,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 384770,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1456,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 384869,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1457,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 385026,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1457,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 385125,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1458,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 385276,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1458,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 385381,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1459,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 385532,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1459,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 385637,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1460,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 385788,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1460,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 385893,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1461,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 386049,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1461,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 386149,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1462,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 386303,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1462,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 386419,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1463,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 386575,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1463,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 386677,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1464,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 386835,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1464,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 386933,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1465,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 387086,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1465,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 387189,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1466,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 387344,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1466,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 387446,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1467,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 387701,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1468,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 387958,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1469,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 388213,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1470,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              }
+            ]
+          },
+          {
+            "at": 472677,
+            "oldestAge": 1009,
+            "state": "open",
+            "buffered": 0,
+            "events": [
+              {
+                "at": 468341,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1783,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 468527,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1783,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 468598,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1784,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 468778,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1784,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 468853,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1785,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 469027,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1785,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 469109,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1786,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 469287,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1786,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 469364,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1787,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 469546,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1787,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 469621,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1788,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 469796,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1788,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 469877,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1789,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 470054,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1789,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 470133,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1790,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 470319,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1790,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 470389,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1791,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 470565,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1791,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 470645,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1792,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 470824,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1792,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 470901,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1793,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 471074,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1793,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 471157,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1794,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 471332,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1794,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 471413,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1795,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 471583,
+                "direction": "receive",
+                "type": "shared_input_status",
+                "sequence": 1795,
+                "action": 4,
+                "outcome": "alive",
+                "buffered": 0
+              },
+              {
+                "at": 471669,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1796,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 471926,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1797,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 472181,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1798,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              },
+              {
+                "at": 472437,
+                "direction": "send",
+                "type": "touch_event",
+                "sequence": 1799,
+                "action": 4,
+                "outcome": null,
+                "buffered": 0
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "socketCloses": []
+  },
+  "pairSamples": [
+    {
+      "at": "2026-10-15T20:27:51.316Z",
+      "primary": {
+        "at": 406432,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 161 мс960 × 54056 FPS3.7 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 56889,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 146 мс960 × 54047 FPS3.6 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:27:53.816Z",
+      "primary": {
+        "at": 408933,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 176 мс960 × 54052 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 59389,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 169 мс960 × 54032 FPS6.0 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:27:56.316Z",
+      "primary": {
+        "at": 411433,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 176 мс960 × 54052 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 61889,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 169 мс960 × 54032 FPS6.0 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:27:58.817Z",
+      "primary": {
+        "at": 413933,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 202 мс960 × 54052 FPS6.0 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 64390,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 207 мс960 × 54043 FPS5.2 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:01.316Z",
+      "primary": {
+        "at": 416433,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 202 мс960 × 54052 FPS6.0 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 66889,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 207 мс960 × 54043 FPS5.2 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:03.817Z",
+      "primary": {
+        "at": 418933,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 181 мс960 × 54058 FPS2.9 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 69390,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 171 мс960 × 54048 FPS5.0 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:06.317Z",
+      "primary": {
+        "at": 421433,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 181 мс960 × 54058 FPS2.9 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 71890,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 171 мс960 × 54048 FPS5.0 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:08.816Z",
+      "primary": {
+        "at": 423933,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 181 мс960 × 54056 FPS2.6 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 74390,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 175 мс960 × 54049 FPS2.5 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:11.316Z",
+      "primary": {
+        "at": 426433,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 181 мс960 × 54056 FPS2.6 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 76889,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 175 мс960 × 54049 FPS2.5 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:13.817Z",
+      "primary": {
+        "at": 428934,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 187 мс960 × 54055 FPS4.1 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 79390,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 170 мс960 × 54039 FPS2.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:16.317Z",
+      "primary": {
+        "at": 431434,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 187 мс960 × 54055 FPS4.1 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 81891,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 170 мс960 × 54039 FPS2.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:18.818Z",
+      "primary": {
+        "at": 433935,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 180 мс960 × 54054 FPS6.6 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 84391,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 174 мс960 × 54041 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:21.318Z",
+      "primary": {
+        "at": 436435,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 180 мс960 × 54054 FPS6.6 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 86892,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 174 мс960 × 54041 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:23.819Z",
+      "primary": {
+        "at": 438936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 174 мс960 × 54058 FPS5.8 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 89392,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 174 мс960 × 54047 FPS7.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:26.319Z",
+      "primary": {
+        "at": 441436,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 174 мс960 × 54058 FPS5.8 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 91892,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 174 мс960 × 54047 FPS7.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:28.818Z",
+      "primary": {
+        "at": 443935,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 185 мс960 × 54054 FPS6.0 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 94392,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 178 мс960 × 54040 FPS5.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:31.318Z",
+      "primary": {
+        "at": 446435,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 185 мс960 × 54054 FPS6.0 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 96892,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 178 мс960 × 54040 FPS5.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:33.818Z",
+      "primary": {
+        "at": 448935,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 178 мс960 × 54056 FPS8.2 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 99392,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 176 мс960 × 54029 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:36.319Z",
+      "primary": {
+        "at": 451436,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 178 мс960 × 54056 FPS8.2 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 101893,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 176 мс960 × 54029 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:38.819Z",
+      "primary": {
+        "at": 453936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 183 мс960 × 54056 FPS5.9 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 104393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 176 мс960 × 54050 FPS6.4 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:41.319Z",
+      "primary": {
+        "at": 456436,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 183 мс960 × 54056 FPS5.9 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 106892,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 176 мс960 × 54050 FPS6.4 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:43.819Z",
+      "primary": {
+        "at": 458936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 182 мс960 × 54055 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 109393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 172 мс960 × 54042 FPS6.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:46.319Z",
+      "primary": {
+        "at": 461436,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 182 мс960 × 54055 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 111893,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 172 мс960 × 54042 FPS6.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:48.819Z",
+      "primary": {
+        "at": 463936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 183 мс960 × 54055 FPS7.0 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 114393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 177 мс960 × 54025 FPS5.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:51.320Z",
+      "primary": {
+        "at": 466437,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 183 мс960 × 54055 FPS7.0 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 116894,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 177 мс960 × 54025 FPS5.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:53.819Z",
+      "primary": {
+        "at": 468936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 161 мс960 × 54055 FPS5.8 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 119393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 160 мс960 × 54056 FPS6.0 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:56.319Z",
+      "primary": {
+        "at": 471436,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 161 мс960 × 54055 FPS5.8 Мбит/с",
+        "peers": 1,
+        "alerts": 1,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 121893,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 160 мс960 × 54056 FPS6.0 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:28:58.820Z",
+      "primary": {
+        "at": 473937,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 168 мс960 × 54055 FPS5.5 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 124393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 169 мс960 × 54055 FPS7.2 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:01.320Z",
+      "primary": {
+        "at": 476436,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 168 мс960 × 54055 FPS5.5 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 126893,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 169 мс960 × 54055 FPS7.2 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:03.819Z",
+      "primary": {
+        "at": 478936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 163 мс960 × 54056 FPS5.8 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 129392,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 157 мс960 × 54055 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:06.319Z",
+      "primary": {
+        "at": 481436,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 163 мс960 × 54056 FPS5.8 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 131892,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 157 мс960 × 54055 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:08.819Z",
+      "primary": {
+        "at": 483936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 158 мс960 × 54056 FPS6.3 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 134393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 149 мс960 × 54057 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:11.320Z",
+      "primary": {
+        "at": 486437,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 158 мс960 × 54056 FPS6.3 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 136893,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 149 мс960 × 54057 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:13.819Z",
+      "primary": {
+        "at": 488936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 153 мс960 × 54055 FPS5.6 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 139393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 155 мс960 × 54059 FPS6.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:16.320Z",
+      "primary": {
+        "at": 491436,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 153 мс960 × 54055 FPS5.6 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 141893,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 155 мс960 × 54059 FPS6.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:18.820Z",
+      "primary": {
+        "at": 493936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 170 мс960 × 54058 FPS6.0 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 144393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 166 мс960 × 54055 FPS6.3 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:21.320Z",
+      "primary": {
+        "at": 496437,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 170 мс960 × 54058 FPS6.0 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 146894,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 166 мс960 × 54055 FPS6.3 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:23.820Z",
+      "primary": {
+        "at": 498936,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 166 мс960 × 54057 FPS5.6 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 149393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 163 мс960 × 54055 FPS6.4 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:26.320Z",
+      "primary": {
+        "at": 501437,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 166 мс960 × 54057 FPS5.6 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 151894,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 163 мс960 × 54055 FPS6.4 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:28.821Z",
+      "primary": {
+        "at": 503937,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 180 мс960 × 54055 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 154394,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 182 мс960 × 54057 FPS7.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:31.321Z",
+      "primary": {
+        "at": 506437,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 180 мс960 × 54055 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 156894,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 182 мс960 × 54057 FPS7.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:33.821Z",
+      "primary": {
+        "at": 508938,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 166 мс960 × 54055 FPS6.5 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 159395,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 167 мс960 × 54057 FPS6.0 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:36.321Z",
+      "primary": {
+        "at": 511438,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 166 мс960 × 54055 FPS6.5 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 161894,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 167 мс960 × 54057 FPS6.0 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:38.820Z",
+      "primary": {
+        "at": 513937,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 175 мс960 × 54056 FPS7.5 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 164394,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 170 мс960 × 54056 FPS5.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:41.321Z",
+      "primary": {
+        "at": 516438,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 175 мс960 × 54056 FPS7.5 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 166894,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 170 мс960 × 54056 FPS5.7 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:43.820Z",
+      "primary": {
+        "at": 518937,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 179 мс960 × 54057 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 169393,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 162 мс960 × 54057 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:46.321Z",
+      "primary": {
+        "at": 521437,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 179 мс960 × 54057 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 171894,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 162 мс960 × 54057 FPS5.8 Мбит/с"
+      }
+    },
+    {
+      "at": "2026-10-15T20:29:48.820Z",
+      "primary": {
+        "at": 523937,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 180 мс960 × 54056 FPS5.7 Мбит/с",
+        "peers": 1,
+        "alerts": 2,
+        "socketCloses": 0
+      },
+      "secondary": {
+        "at": 174394,
+        "state": "ready",
+        "summary": "Прямой канал · видео и касанияRTT 176 мс960 × 54054 FPS5.7 Мбит/с"
+      }
+    }
+  ],
+  "pageErrors": [
+    0,
+    0
+  ],
+  "acceptance": {
+    "finiteIdleObservation": true,
+    "broadReliability": false,
+    "physicalPhone": false,
+    "vpnBypassProven": false
+  },
+  "limits": [
+    "Sampled READY states are not proof of uninterrupted command execution.",
+    "Heartbeat diagnostic alerts use a1000ms observation threshold; controller expiry is a separate boundary."
+  ]
+}

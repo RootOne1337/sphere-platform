@@ -1,0 +1,135 @@
+{
+  "observedAt": "2026-10-06T14:28:55.382237+00:00",
+  "sourceRevision": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+  "candidate": {
+    "source_commit": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+    "file": "SphereAgent-pilot-candidate-1.2.47-dev-3493eb6.apk",
+    "sha256": "7481ca620f4cbea60807121ad5f00f1bb3e1cb9dc12098980346acfd527a8c69",
+    "bytes": 8484947,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.47-dev",
+    "version_code": 10247,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 872,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 872,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "signed_discovery_manifest_version": 28,
+    "baked_management_urls": [],
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "debug_video_probe": true,
+    "screenshot_cache_source_fix": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+    "android_tree_matches_reviewed_version_commit": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+    "installed": false,
+    "published_to_ota": false,
+    "built_at": "2026-10-06T14:27:48.970244+00:00"
+  },
+  "trackedAndroidFilesMatchedGitSource": 186,
+  "zipCrcPassed": true,
+  "dex": [
+    {
+      "file": "classes.dex",
+      "sha256": "7c5d5fbe0418bc51d3b0085c4646cfcea12ffc901d981de57e6a797c8a01d95b",
+      "bytes": 9165780,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes10.dex",
+      "sha256": "89d06f1d7b510b25f85b96b8a656868c35ae0ddbad7f81808b0b9f1b16f4e030",
+      "bytes": 54748,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes11.dex",
+      "sha256": "3e91ffe513e662b41f8e1216cc9385ba9ae07a22e1aa0af7262d9518fbfa8673",
+      "bytes": 212936,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes12.dex",
+      "sha256": "d30bfc68fe71c562d3dca09c87918b0665c3fb1708884cabd808145a1309b907",
+      "bytes": 44716,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes13.dex",
+      "sha256": "a89d929e63d47c0a8854d8799e31881be39408eec3b53e905eaec3b889dc35b8",
+      "bytes": 369460,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes14.dex",
+      "sha256": "98f90f1b1a0ecd025d60836e19109f32f198024035e63d1a98c73ba854b20ffa",
+      "bytes": 23676,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes15.dex",
+      "sha256": "e40f72927dd4baac200d113a233103bcc8ae3dcc2292bbb73f9b41d09872faa1",
+      "bytes": 6298896,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes2.dex",
+      "sha256": "3500859bffb42b9835460efc76fd9d0943e58caf245e8d42df4142a0e58ab0ed",
+      "bytes": 495132,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes3.dex",
+      "sha256": "ae9f323be6d5c2df62bb37785ba322264a97c9231c7a196b7314099bb333887d",
+      "bytes": 34828,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes4.dex",
+      "sha256": "fc9e4a0566571de1f257865bf5ae0deaf80e91fb54822c3bc2f9ee195a55d51e",
+      "bytes": 41912,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes5.dex",
+      "sha256": "94bf9980f0ba1a91d245b792cd0de92d59ad8bddd42158b90c64f954b508caac",
+      "bytes": 11652,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes6.dex",
+      "sha256": "f521068e927e63c55f1616b4340b980fada4d5f7d624b862b2ed70e1d76a5ecd",
+      "bytes": 193256,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes7.dex",
+      "sha256": "dd25a62dfd7dd0c69aa02d3585f7edc010c5cbc7d72313b1382b4708f3591753",
+      "bytes": 21144,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes8.dex",
+      "sha256": "6b822a4140f71d1e8ede950cc87e74342609dea5dd7923ecac4b04dafd2cae76",
+      "bytes": 19216,
+      "headerChecksumsValid": true
+    },
+    {
+      "file": "classes9.dex",
+      "sha256": "d9342f8edcd60bc7f865028601a68d543e9e23038b043ce3e6bd13f965c4357d",
+      "bytes": 46080,
+      "headerChecksumsValid": true
+    }
+  ],
+  "apkBinaryPublishedInRepository": false,
+  "remoteFleetOrProductionAccepted": false
+}

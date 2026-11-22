@@ -1,0 +1,711 @@
+{
+  "schema": "sphere-day-night-fresh-comparison-v1",
+  "provenance": {
+    "privateReport": "skuter1-fresh-three-methods-20261103-v1/outcome.json",
+    "sha256": "f7b6d7a4a7e2bd400f78b8a75ecfeb7af5b3f8e890b2f34bea8226c74ed6ebe2"
+  },
+  "capture": {
+    "captured_at_utc": "2026-11-03T16:57:00.879877+00:00",
+    "adb_serial": "emulator-5554",
+    "connected_android_devices": 1,
+    "display_geometry": [
+      1920,
+      1080
+    ],
+    "png_sha256": "07469ce986be296ca134b4a04efa85d589344b52924658049007c9b74604de5e",
+    "bytes": 2552152,
+    "physical_actions": 0,
+    "method": "adb exec-out screencap -p",
+    "server_device_label_11_mapping_verified": false
+  },
+  "sourceGeometrySha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "maskSha256": "4fc84e852a6d26135c22a84e1f8cf86959f79ccf361c1db675911c29659580b2",
+  "sameReferenceQueryMask": true,
+  "eligibleMaskFraction": 0.2561979166666667,
+  "queryRows": [
+    {
+      "method": "ReferenceLK",
+      "computeMs": 62.000000005355105,
+      "pose": {
+        "state": "unknown",
+        "reason": "route_pose_not_verified",
+        "route_id": "fa253a61-bc3c-4d88-972a-e1f39ce5f45f",
+        "world_revision": "e0347332-2c65-486a-8265-c24373c3b39b",
+        "capture_epoch": "eee00251-4e07-4c13-b2bc-e1d03e041182",
+        "receiver_sequence": 1,
+        "received_at": 80342.125,
+        "completed_at": 80342.187,
+        "source_rgb_sha256": "e76e0de0b12bbf5b79fff10fbd5afe6f04cf0ae2ec5c05ea6c6344f114dc0008",
+        "geometry": [
+          960,
+          540
+        ],
+        "center": null,
+        "rotation": null,
+        "segment": null,
+        "progress_units": null,
+        "cross_track_units": null,
+        "inliers": 0,
+        "median_error_px": null,
+        "polyline_px": []
+      },
+      "diagnostic": {
+        "method": "measured_reference_lk",
+        "featurePreparationMs": 0.3871999942930415,
+        "candidateReferenceIndices": [
+          156,
+          157,
+          143
+        ],
+        "coarseSearchMs": 0.381499994546175,
+        "queryFamily": "measured_native_reference_lk_v1",
+        "flowRetainedByCandidate": [
+          0,
+          0,
+          0
+        ],
+        "verifiedCandidateCount": 0,
+        "candidateMatchPnPMs": 59.52100000286009
+      }
+    },
+    {
+      "method": "NativeRootSIFT",
+      "computeMs": 139.99999999941792,
+      "pose": {
+        "state": "confirming",
+        "reason": "relative_camera_pose_not_clearance_or_arrival",
+        "route_id": "93d3acc9-7b50-43be-b1b7-dd8b0f0a6f4f",
+        "world_revision": "991722a6-2535-4471-9ca4-501190483c94",
+        "capture_epoch": "6f983107-9780-4874-a4ec-dfc03c4fb0d9",
+        "receiver_sequence": 1,
+        "received_at": 80342.203,
+        "completed_at": 80342.343,
+        "source_rgb_sha256": "e76e0de0b12bbf5b79fff10fbd5afe6f04cf0ae2ec5c05ea6c6344f114dc0008",
+        "geometry": [
+          960,
+          540
+        ],
+        "center": [
+          -1.1662757529240912,
+          -0.31382551736963243,
+          -4.095057661365678
+        ],
+        "rotation": [
+          0.6524894126145465,
+          0.03463183924890571,
+          0.7570060780047686,
+          -0.03796924377965856,
+          0.9991945440657583,
+          -0.01298459225475217,
+          -0.7568460232786619,
+          -0.02027063934510365,
+          0.6532788058921059
+        ],
+        "segment": 6,
+        "progress_units": 0.00159793638431441,
+        "cross_track_units": 0.04917948102598138,
+        "inliers": 55,
+        "median_error_px": 0.24323089367609346,
+        "polyline_px": []
+      },
+      "diagnostic": {
+        "method": "not_attempted",
+        "featurePreparationMs": 0.22420000459533185,
+        "featureExtractionMs": 86.13339999283198,
+        "queryFeatures": 450,
+        "coarseSearchMs": 32.7155999984825,
+        "candidateReferenceIndices": [
+          6,
+          2,
+          11
+        ],
+        "candidateMatchPnPMs": 11.249599992879666,
+        "verifiedCandidateCount": 3
+      }
+    },
+    {
+      "method": "AnchoredNative",
+      "computeMs": 141.00000000325963,
+      "pose": {
+        "state": "confirming",
+        "reason": "relative_camera_pose_not_clearance_or_arrival",
+        "route_id": "93d3acc9-7b50-43be-b1b7-dd8b0f0a6f4f",
+        "world_revision": "991722a6-2535-4471-9ca4-501190483c94",
+        "capture_epoch": "4e69066a-ac45-422e-8bb3-399347f7d60c",
+        "receiver_sequence": 1,
+        "received_at": 80342.359,
+        "completed_at": 80342.5,
+        "source_rgb_sha256": "e76e0de0b12bbf5b79fff10fbd5afe6f04cf0ae2ec5c05ea6c6344f114dc0008",
+        "geometry": [
+          960,
+          540
+        ],
+        "center": [
+          -1.1662757529240912,
+          -0.31382551736963243,
+          -4.095057661365678
+        ],
+        "rotation": [
+          0.6524894126145465,
+          0.03463183924890571,
+          0.7570060780047686,
+          -0.03796924377965856,
+          0.9991945440657583,
+          -0.01298459225475217,
+          -0.7568460232786619,
+          -0.02027063934510365,
+          0.6532788058921059
+        ],
+        "segment": 6,
+        "progress_units": 0.00159793638431441,
+        "cross_track_units": 0.04917948102598138,
+        "inliers": 55,
+        "median_error_px": 0.24323089367609346,
+        "polyline_px": []
+      },
+      "diagnostic": {
+        "method": "descriptor_pnp",
+        "featurePreparationMs": 0.1863000070443377,
+        "descriptorAgeSeconds": null,
+        "mandatoryGlobalCheck": true,
+        "descriptorCandidates": 3,
+        "featureExtractionMs": 86.77239999815356,
+        "queryFeatures": 450,
+        "coarseSearchMs": 34.023500003968365,
+        "candidateReferenceIndices": [
+          6,
+          2,
+          11
+        ],
+        "candidateMatchPnPMs": 12.31499999994412,
+        "verifiedCandidateCount": 3,
+        "state": "confirming"
+      }
+    }
+  ],
+  "sequenceStates": {
+    "unknown": 4,
+    "confirming": 5,
+    "localized": 3
+  },
+  "plotSummary": {
+    "file": "night-day-measured.png",
+    "sha256": "0b22cbbc0894ba8c0f3718df5270e4d34dfc4b094d1683202e7aa0cfd39c586f",
+    "actual_reference_projections": 578,
+    "query_2D_features": 450,
+    "query_native_pnp_inliers": 55,
+    "same_reference0_pairs": 46,
+    "correspondence_rows": [
+      {
+        "native_point3D_id": 39459,
+        "reference_px": [
+          578.2124595844301,
+          164.6046513423605
+        ],
+        "query_px": [
+          533.01123046875,
+          180.01754760742188
+        ]
+      },
+      {
+        "native_point3D_id": 26273,
+        "reference_px": [
+          588.8535505457,
+          197.1016341101537
+        ],
+        "query_px": [
+          542.0411987304688,
+          208.48211669921875
+        ]
+      },
+      {
+        "native_point3D_id": 26426,
+        "reference_px": [
+          368.21985436855977,
+          179.35347937511654
+        ],
+        "query_px": [
+          321.34539794921875,
+          181.99964904785156
+        ]
+      },
+      {
+        "native_point3D_id": 26486,
+        "reference_px": [
+          352.8890402697949,
+          201.57176469611912
+        ],
+        "query_px": [
+          304.7383117675781,
+          204.93821716308594
+        ]
+      },
+      {
+        "native_point3D_id": 26422,
+        "reference_px": [
+          368.7872138002793,
+          196.71430563115854
+        ],
+        "query_px": [
+          321.7348937988281,
+          199.789306640625
+        ]
+      },
+      {
+        "native_point3D_id": 26248,
+        "reference_px": [
+          355.56098368167596,
+          215.2832991579686
+        ],
+        "query_px": [
+          307.1422119140625,
+          219.4201202392578
+        ]
+      },
+      {
+        "native_point3D_id": 38306,
+        "reference_px": [
+          627.5624315645085,
+          256.95145022685904
+        ],
+        "query_px": [
+          576.2030639648438,
+          265.5323486328125
+        ]
+      },
+      {
+        "native_point3D_id": 26594,
+        "reference_px": [
+          282.29234082164714,
+          245.02291194184272
+        ],
+        "query_px": [
+          227.48008728027344,
+          249.40525817871094
+        ]
+      },
+      {
+        "native_point3D_id": 26302,
+        "reference_px": [
+          356.88079947584686,
+          221.7455238539046
+        ],
+        "query_px": [
+          308.5134582519531,
+          225.4883270263672
+        ]
+      },
+      {
+        "native_point3D_id": 48409,
+        "reference_px": [
+          574.7664049628581,
+          277.404694337671
+        ],
+        "query_px": [
+          528.5767822265625,
+          284.6654357910156
+        ]
+      },
+      {
+        "native_point3D_id": 26260,
+        "reference_px": [
+          379.91263668344146,
+          160.37158503120824
+        ],
+        "query_px": [
+          334.07000732421875,
+          163.1417694091797
+        ]
+      },
+      {
+        "native_point3D_id": 26576,
+        "reference_px": [
+          319.4860228153706,
+          216.3190270441034
+        ],
+        "query_px": [
+          267.9028625488281,
+          219.48974609375
+        ]
+      },
+      {
+        "native_point3D_id": 38247,
+        "reference_px": [
+          624.2338499452056,
+          235.9130109629478
+        ],
+        "query_px": [
+          572.9078369140625,
+          246.86009216308594
+        ]
+      },
+      {
+        "native_point3D_id": 48738,
+        "reference_px": [
+          567.2334214435887,
+          228.7271852632332
+        ],
+        "query_px": [
+          522.5303955078125,
+          237.81427001953125
+        ]
+      },
+      {
+        "native_point3D_id": 26520,
+        "reference_px": [
+          330.02920141060105,
+          195.7599273611514
+        ],
+        "query_px": [
+          280.07330322265625,
+          198.3617401123047
+        ]
+      },
+      {
+        "native_point3D_id": 26476,
+        "reference_px": [
+          326.9307320752183,
+          259.72274720540537
+        ],
+        "query_px": [
+          275.265625,
+          265.0985412597656
+        ]
+      },
+      {
+        "native_point3D_id": 26379,
+        "reference_px": [
+          634.7542245042819,
+          240.3683772161979
+        ],
+        "query_px": [
+          582.7398071289062,
+          248.86752319335938
+        ]
+      },
+      {
+        "native_point3D_id": 26636,
+        "reference_px": [
+          326.97682403317833,
+          265.35531430233885
+        ],
+        "query_px": [
+          275.0926818847656,
+          271.1044921875
+        ]
+      },
+      {
+        "native_point3D_id": 26408,
+        "reference_px": [
+          190.7628452506061,
+          233.8247992255744
+        ],
+        "query_px": [
+          127.21819305419922,
+          237.3771209716797
+        ]
+      },
+      {
+        "native_point3D_id": 26506,
+        "reference_px": [
+          328.93159603910715,
+          217.9941918679979
+        ],
+        "query_px": [
+          278.4742736816406,
+          221.51393127441406
+        ]
+      },
+      {
+        "native_point3D_id": 26331,
+        "reference_px": [
+          369.67167132720647,
+          231.54292800989867
+        ],
+        "query_px": [
+          321.7514343261719,
+          235.94090270996094
+        ]
+      },
+      {
+        "native_point3D_id": 26669,
+        "reference_px": [
+          326.9701941973567,
+          253.78376795670928
+        ],
+        "query_px": [
+          275.21478271484375,
+          259.0038146972656
+        ]
+      },
+      {
+        "native_point3D_id": 26587,
+        "reference_px": [
+          373.4116827389095,
+          207.0863805714143
+        ],
+        "query_px": [
+          326.5025634765625,
+          210.8741912841797
+        ]
+      },
+      {
+        "native_point3D_id": 26307,
+        "reference_px": [
+          645.0342040214873,
+          188.0668691285531
+        ],
+        "query_px": [
+          591.5687866210938,
+          202.67681884765625
+        ]
+      },
+      {
+        "native_point3D_id": 26605,
+        "reference_px": [
+          266.7730847808559,
+          231.13874069245983
+        ],
+        "query_px": [
+          210.75917053222656,
+          234.57769775390625
+        ]
+      },
+      {
+        "native_point3D_id": 26582,
+        "reference_px": [
+          327.639133798221,
+          249.08170709774606
+        ],
+        "query_px": [
+          276.1365051269531,
+          253.91311645507812
+        ]
+      },
+      {
+        "native_point3D_id": 38269,
+        "reference_px": [
+          331.1713752838696,
+          232.54205407335715
+        ],
+        "query_px": [
+          280.5630187988281,
+          236.80421447753906
+        ]
+      },
+      {
+        "native_point3D_id": 38292,
+        "reference_px": [
+          353.4498140968595,
+          191.72476397135625
+        ],
+        "query_px": [
+          305.2807312011719,
+          193.95083618164062
+        ]
+      },
+      {
+        "native_point3D_id": 26406,
+        "reference_px": [
+          283.3452611778574,
+          170.11837129479088
+        ],
+        "query_px": [
+          230.7795867919922,
+          171.0529022216797
+        ]
+      },
+      {
+        "native_point3D_id": 39399,
+        "reference_px": [
+          354.56307697888184,
+          219.03800822768898
+        ],
+        "query_px": [
+          305.91650390625,
+          222.64703369140625
+        ]
+      },
+      {
+        "native_point3D_id": 26627,
+        "reference_px": [
+          622.8051894248887,
+          274.15439122493797
+        ],
+        "query_px": [
+          571.97802734375,
+          281.6702575683594
+        ]
+      },
+      {
+        "native_point3D_id": 26257,
+        "reference_px": [
+          312.51452734294173,
+          188.40056182577575
+        ],
+        "query_px": [
+          261.3604736328125,
+          190.59197998046875
+        ]
+      },
+      {
+        "native_point3D_id": 26461,
+        "reference_px": [
+          269.93047524019926,
+          157.63350986087565
+        ],
+        "query_px": [
+          216.35348510742188,
+          157.65838623046875
+        ]
+      },
+      {
+        "native_point3D_id": 26659,
+        "reference_px": [
+          272.9495737383088,
+          179.24119312601854
+        ],
+        "query_px": [
+          219.01429748535156,
+          180.32618713378906
+        ]
+      },
+      {
+        "native_point3D_id": 26618,
+        "reference_px": [
+          746.233270255412,
+          157.79877654283794
+        ],
+        "query_px": [
+          672.9426879882812,
+          180.7855987548828
+        ]
+      },
+      {
+        "native_point3D_id": 38333,
+        "reference_px": [
+          346.5799171123796,
+          167.7525556112232
+        ],
+        "query_px": [
+          298.6466064453125,
+          169.5306396484375
+        ]
+      },
+      {
+        "native_point3D_id": 26608,
+        "reference_px": [
+          251.66531864039672,
+          201.52708617795923
+        ],
+        "query_px": [
+          193.39141845703125,
+          202.72665405273438
+        ]
+      },
+      {
+        "native_point3D_id": 26281,
+        "reference_px": [
+          281.2844993016776,
+          213.61144784618597
+        ],
+        "query_px": [
+          227.28985595703125,
+          216.59339904785156
+        ]
+      },
+      {
+        "native_point3D_id": 26375,
+        "reference_px": [
+          275.79071867291896,
+          153.76792896161828
+        ],
+        "query_px": [
+          223.03244018554688,
+          153.51551818847656
+        ]
+      },
+      {
+        "native_point3D_id": 26389,
+        "reference_px": [
+          283.5720584118312,
+          161.82279774668262
+        ],
+        "query_px": [
+          231.2722930908203,
+          162.54127502441406
+        ]
+      },
+      {
+        "native_point3D_id": 26403,
+        "reference_px": [
+          283.15090158938443,
+          174.89896300699493
+        ],
+        "query_px": [
+          230.45956420898438,
+          175.94650268554688
+        ]
+      },
+      {
+        "native_point3D_id": 26631,
+        "reference_px": [
+          250.7350288643914,
+          220.65419641597262
+        ],
+        "query_px": [
+          192.00868225097656,
+          222.935302734375
+        ]
+      },
+      {
+        "native_point3D_id": 38199,
+        "reference_px": [
+          325.77415691793595,
+          184.60906159468882
+        ],
+        "query_px": [
+          275.9642028808594,
+          186.7086639404297
+        ]
+      },
+      {
+        "native_point3D_id": 26668,
+        "reference_px": [
+          266.8340392713405,
+          236.5233731356302
+        ],
+        "query_px": [
+          210.52960205078125,
+          240.4231719970703
+        ]
+      },
+      {
+        "native_point3D_id": 26327,
+        "reference_px": [
+          279.18913641389713,
+          199.04506658811002
+        ],
+        "query_px": [
+          225.48545837402344,
+          201.26597595214844
+        ]
+      },
+      {
+        "native_point3D_id": 26439,
+        "reference_px": [
+          193.6550082125978,
+          241.494449282421
+        ],
+        "query_px": [
+          130.16099548339844,
+          245.4873046875
+        ]
+      }
+    ]
+  },
+  "sourceUnchanged": true,
+  "physicalActions": 0,
+  "executionQualified": false,
+  "boundary": "Single confirming image is not localized and authorizes no movement. No meter ground truth."
+}

@@ -1,0 +1,17 @@
+{
+  "uiCurrentImage": "sha256:05552b04a203620f66392a8052889769c57592cc83cd613dbeee38f5bc5a8f6d",
+  "uiCurrentHealth": "healthy",
+  "createEvents": 0,
+  "failedEvents": 0,
+  "currentRelevantLabels": {
+    "com.docker.compose.config-hash": "e0f1f9b564fc638e770d864902bb8c9fd78854751703c3ecb8144b5c3a013a2e",
+    "com.docker.compose.image": "sha256:05552b04a203620f66392a8052889769c57592cc83cd613dbeee38f5bc5a8f6d",
+    "com.docker.compose.project.config_files": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-712694dfdef5-8c84c3b3\\baseline.json,C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\image-route-review-image-20261101-v3\\candidate.yml"
+  },
+  "composeHashes": {
+    "old": "review-ui e0f1f9b564fc638e770d864902bb8c9fd78854751703c3ecb8144b5c3a013a2e",
+    "new": "review-ui d801ddf2e7797e59c935e711185d17db0d1beffd27adcd50f89972bb1f9bbdc2"
+  },
+  "expectedOldConfigFiles": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-712694dfdef5-8c84c3b3\\baseline.json,C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\image-route-review-image-20261101-v3\\candidate.yml",
+  "expectedNewConfigFiles": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-712694dfdef5-8c84c3b3\\baseline.json,C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\recorder-clock-image-20261101-v1\\candidate.yml"
+}

@@ -1,0 +1,17 @@
+{
+  "input_hashes_before": {
+    ".local-pilot\\scooter-image-route-20261101\\minimap-fusion\\fusion-scores.npz": "8ff25998148c8374f9a18efbbbb85dd4bbfc60da873e90030ff570934c314f9a",
+    ".local-pilot\\scooter-image-route-20261101\\minimap-fusion\\summary.json": "73510107d174b01d245cf85a41b24737f485b0f3e3c188ba4d1a4f1a67b94c29",
+    ".local-pilot\\scooter-image-route-20261101\\minimap-fusion\\dp-results.json": "fb32a777149090cba651f525f646814d0f088c274376fadbddac57f802463242",
+    ".local-pilot\\scooter-image-route-20261101\\query-metrics.json": "523c46317d6a7e0e30c1d6cf1cfad5f2248440145c46d9c39e6c59910efd0f75",
+    "motor_worker\\image_route_sequence.py": "b50388781b6b9e0cf52161ca80221c0fd235f9b5419085e9e3365181fef5a5e1"
+  },
+  "input_hashes_unchanged": true,
+  "exit": 0,
+  "stop": null,
+  "seconds": 0.6720000000204891,
+  "min_ram": 8610467840,
+  "min_commit": 22973661184,
+  "owned_direct_child_only": true,
+  "no_actions": true
+}

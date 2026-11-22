@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "scope": "finite native navigation and read-only input-startup controls; not browser latency/FPS acceptance",
+  "native_back_control": {
+    "at": "2026-09-30T23:15:05.465450+00:00",
+    "device": "auto-ph-025",
+    "version_code": 10238,
+    "launch_attempts": 1,
+    "back_attempts": 1,
+    "private_foreground_confirmed": true,
+    "confirmed_result": true,
+    "returned_to_launcher": true,
+    "command_round_trip_ms": 1672
+  },
+  "native_back_control_limits": [
+    "one finite private debug Activity; one key",
+    "Home/Recents/Menu have source tests but no native acceptance in this run",
+    "command response time is not input-to-visible latency"
+  ],
+  "read_only_controls": {
+    "at": "2026-09-30T23:21:11.645198+00:00",
+    "input_events_injected": 0,
+    "video_viewers_started": 0,
+    "round_trips": [
+      {
+        "device": "auto-ph-010",
+        "command": "true",
+        "elapsed_ms": 437,
+        "confirmed": true
+      },
+      {
+        "device": "auto-ph-010",
+        "command": "input",
+        "elapsed_ms": 500,
+        "confirmed": true
+      },
+      {
+        "device": "auto-ph-010",
+        "command": "true",
+        "elapsed_ms": 250,
+        "confirmed": true
+      },
+      {
+        "device": "auto-ph-010",
+        "command": "input",
+        "elapsed_ms": 500,
+        "confirmed": true
+      },
+      {
+        "device": "auto-ph-025",
+        "command": "true",
+        "elapsed_ms": 1125,
+        "confirmed": true
+      },
+      {
+        "device": "auto-ph-025",
+        "command": "input",
+        "elapsed_ms": 391,
+        "confirmed": true
+      },
+      {
+        "device": "auto-ph-025",
+        "command": "true",
+        "elapsed_ms": 203,
+        "confirmed": true
+      },
+      {
+        "device": "auto-ph-025",
+        "command": "input",
+        "elapsed_ms": 390,
+        "confirmed": true
+      }
+    ],
+    "installed_input_launcher": "CLASSPATH=/system/framework/input.jar; app_process com.android.commands.input.Input",
+    "limits": [
+      "input without arguments prints usage, not event injection",
+      "two samples per command/device, no percentile/SLO",
+      "full API/transport/Android receipt elapsed time, no isolated server or codec timing"
+    ]
+  },
+  "loopback_switch": {
+    "source": "c547f5ddce232f4ae6dc2ad39b30db54c0e8c397",
+    "observedAt": "2026-09-30T23:19:15.4382734+00:00",
+    "state": "api_ready_ui_listener_owned",
+    "nextPid": 45944,
+    "relayPid": 28872,
+    "previousNextPid": 28988,
+    "previousNextPreserved": true,
+    "port": 3015,
+    "uiPort": 3021,
+    "apiRevision": "85c8014e3ad9e86ff3139cc679618698f79b9aaa",
+    "ready": true,
+    "browserVerified": false
+  },
+  "validation": {
+    "frontend_test_suites": 73,
+    "frontend_tests_passed": 567,
+    "type_check": "passed",
+    "targeted_eslint": "passed",
+    "isolated_production_compile": "passed",
+    "visual_browser_review": "blocked by existing CUA URL policy; not bypassed",
+    "public_ui_backend_apk_tunnels_changed_by_ui_switch": false
+  }
+}

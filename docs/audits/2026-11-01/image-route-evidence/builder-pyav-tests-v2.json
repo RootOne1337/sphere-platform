@@ -1,0 +1,22 @@
+{
+  "exit_code": 0,
+  "seconds": 2.25,
+  "command": [
+    "C:\\Users\\dimas\\AppData\\Roaming\\uv\\python\\cpython-3.12.12-windows-x86_64-none\\python.exe",
+    "-B",
+    "-c",
+    "import sys; sys.path.append('C:/Users/dimas/AppData/Local/Programs/Python/Python313/Lib/site-packages'); import pytest; raise SystemExit(pytest.main(['tests/test_image_route_builder.py','-q','--noconftest']))"
+  ],
+  "environment": {
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "2",
+    "PYTHONPATH": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform;C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\motor-worker-venv\\Lib\\site-packages"
+  },
+  "source_sha256": {
+    "scripts\\pilot\\image_route_builder.py": "ca83c44e2ef0c43d7213b7a0b3c63fc60b20b6203725790371d743615918d1d3",
+    "tests\\test_image_route_builder.py": "52ac4a17c806a77d9ec43439ee4e8952c67b209884284ab1560640701bd77aa2"
+  },
+  "log_sha256": "cf2a6b47667a1fbc45f9084dfce4c214d1f8d8de1a3f5c54d1296e22fcdd5025",
+  "purpose": "Durable rerun evidence for docs; no source changes or production inference"
+}

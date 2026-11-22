@@ -1,0 +1,25 @@
+{
+  "status": "ready_for_review_not_deployed",
+  "files_sha256": {
+    "frontend\\public\\teaching-recorder.worker.js": "4a327116bda4850b2aa4241784677837eb72e744f3ffd3c0755a7741e3975769",
+    "frontend\\__tests__\\stream\\teaching-recorder.test.ts": "220010e7a7469a9c3ddf6474291cd99b48bedcd8289587cbcd05ed9adc729939"
+  },
+  "tests": {
+    "suites": [
+      "frontend/__tests__/stream/teaching-recorder.test.ts",
+      "frontend/__tests__/stream/teaching-connection.test.ts",
+      "frontend/__tests__/stream/teaching-workbench.test.tsx"
+    ],
+    "passed": 47,
+    "jest_seconds": 6.145,
+    "tsc_exit_code": 0
+  },
+  "clock_contract": {
+    "input": "worker_message_received_performance_timeOrigin_plus_now",
+    "source_input": "page_performance_timeOrigin_plus_now",
+    "source_at_ms": "original page emission, unchanged",
+    "at_ms": "actual worker message receipt before command queue or OPFS awaits"
+  },
+  "source_capture_modified": false,
+  "runtime_deployed": false
+}

@@ -1,0 +1,139 @@
+{
+  "at": "2026-09-15T19:10:58.280818+00:00",
+  "backend": "12249b1",
+  "frontend": "6dea6b4",
+  "android_versions": [
+    10205,
+    10206
+  ],
+  "trials": [
+    {
+      "mode": "android",
+      "started": "2026-09-15T15:45:06.509433+00:00",
+      "fault_seconds_actual": 78.931,
+      "evidence_sha256": "1bcbfee7cf5653f6fd412dc9ab89b9eb732357443dac859b9c4520243bdf0347",
+      "devices": [
+        {
+          "crash_buffer_unchanged": true,
+          "stream_connections": 1,
+          "stream_errors": []
+        },
+        {
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 2.484,
+          "echo_passed": true,
+          "dag_passed": true,
+          "stream_connections": 1,
+          "frames_after_recovery": 10,
+          "stream_errors": []
+        }
+      ],
+      "restored": true,
+      "containers_preserved": true
+    },
+    {
+      "mode": "server",
+      "started": "2026-09-15T18:55:18.502251+00:00",
+      "fault_seconds_actual": 82.835,
+      "evidence_sha256": "142b18f2d6eb20b1c393212dea0e75b0046f2f14a7ce5f648b2f77bd0245410b",
+      "devices": [
+        {
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 0.782,
+          "echo_passed": true,
+          "dag_passed": true,
+          "stream_connections": 1,
+          "frames_after_recovery": 12,
+          "stream_errors": []
+        },
+        {
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 5.282,
+          "echo_passed": true,
+          "dag_passed": true,
+          "stream_connections": 1,
+          "frames_after_recovery": 8,
+          "stream_errors": []
+        }
+      ],
+      "restored": true,
+      "containers_preserved": true
+    },
+    {
+      "mode": "both",
+      "started": "2026-09-15T18:58:02.381019+00:00",
+      "fault_seconds_actual": 83.202,
+      "evidence_sha256": "a1a40affbfb4ea0cef577cee7987c39a12d453acea90de9424e9de3abd45d58a",
+      "devices": [
+        {
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 0.859,
+          "echo_passed": true,
+          "dag_passed": true,
+          "stream_connections": 1,
+          "frames_after_recovery": 12,
+          "stream_errors": []
+        },
+        {
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 12.625,
+          "echo_passed": true,
+          "dag_passed": true,
+          "stream_connections": 1,
+          "frames_after_recovery": 12,
+          "stream_errors": []
+        }
+      ],
+      "restored": true,
+      "containers_preserved": true
+    },
+    {
+      "mode": "browser",
+      "started": "2026-09-15T19:05:30.367269+00:00",
+      "fault_seconds_actual": 76.465,
+      "evidence_sha256": "1f044692575755c3df78dea3705c43a23285b4dd33cf94358a3395ce882debac",
+      "devices": [
+        {
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 74.312,
+          "echo_passed": true,
+          "dag_passed": true,
+          "stream_connections": 2,
+          "frames_after_recovery": 12,
+          "stream_errors": [
+            "ConnectionClosedError",
+            "TimeoutError",
+            "stream_control_unavailable"
+          ]
+        },
+        {
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 79.641,
+          "echo_passed": true,
+          "dag_passed": true,
+          "stream_connections": 2,
+          "frames_after_recovery": 8,
+          "stream_errors": [
+            "ConnectionClosedError",
+            "TimeoutError",
+            "stream_control_unavailable"
+          ]
+        }
+      ],
+      "restored": true,
+      "containers_preserved": true
+    }
+  ],
+  "reconnect_timing": "Upper-bound observation after network restoration; devices checked sequentially, including the first device command and DAG before the second sample.",
+  "browser_visual_observation": "Same tab, no F5/Start intervention. Offline cards retained; shared Nginx loss covers stale frames with reconnect overlay; both decoded home-screen images returned.",
+  "incomplete_first_browser_fixture": "First run expected unchanged Android sessions while pausing shared Nginx; timed out, fault restored, original failure retained. Corrected run expects new sessions.",
+  "new_finding": "AUD-124: successful authenticated sessions do not reset failure counters when the eventual close is exceptional. Repeated independent outages accumulate circuit/backoff debt; runtime browser/common-ingress trial took 74.312/79.641 seconds.",
+  "scope": "Two rooted Android9/API28 LDPlayer instances. UID IPv4/IPv6 DROP, public gateway pause, shared Nginx pause; not an ISP/router/Windows reboot/fleet soak or independent-ingress proof."
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "sphere-live-metadata-summary-v1",
+  "session": "8bca14664ed74db89ea4002054fff5be",
+  "snapshot_sha256": "b2b7f3848c9490e1d25ffc297774cefce653b54ffad7865b7863e0b86c4e7fd1",
+  "snapshot_bytes": 65129,
+  "modified_utc": "2026-11-03T23:36:07.368826+00:00",
+  "retained_rows": 55,
+  "elapsed_first_ms": 14437.53629999992,
+  "elapsed_last_ms": 19401.596199997584,
+  "pose_reasons": {
+    "route_pose_not_verified": 55
+  },
+  "candidate_sets": [
+    [
+      30,
+      27,
+      26
+    ],
+    [
+      27,
+      30,
+      26
+    ]
+  ],
+  "maximum_retained_lk": 5,
+  "maximum_verified_candidates": 0,
+  "compute_median_ms": 55.50529999891296,
+  "compute_maximum_ms": 179.09000000508968,
+  "pedal_counts": {
+    "coast": 55
+  },
+  "geometry_sha256": "75e491be5dff83a4566414c903cc1c666dfb96b88ca0c713e7565de102bff1aa",
+  "scope": "retained_tail_of_one_actual_live_session_not_full_run",
+  "contains_rgb": false,
+  "physical_input_ack_available": false
+}

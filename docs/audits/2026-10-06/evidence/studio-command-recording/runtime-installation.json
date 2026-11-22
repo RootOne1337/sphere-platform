@@ -1,0 +1,26 @@
+{
+  "source": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb",
+  "startedAt": "2026-10-06T11:50:09.116046+00:00",
+  "apiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "target": "sphere-review-20261002-review-ui-1",
+  "apiReady": true,
+  "catalogItems": 22,
+  "fleet": {
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "completedAt": "2026-10-06T11:50:17.393135+00:00",
+  "imageId": "sha256:9c408135c5bcee80814886361e4ec15934e94e407cb4509d9ada4b90209331ae",
+  "preservedContainers": 45,
+  "targetOnlyInstalled": true,
+  "sourceRevision": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb"
+}

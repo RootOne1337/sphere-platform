@@ -1,0 +1,387 @@
+{
+  "at": "2026-09-16T00:32:01.701986+00:00",
+  "apk_source": "0f257fecedd757c5216c9399b462aeb2759dcff7",
+  "sha256": "7964ede8c621754da616493dcbff958df8a1d8da1dd823c229fd253bd99855c6",
+  "bytes": 8392449,
+  "version": "1.2.7-dev / 10207",
+  "full_tests": {
+    "at": "2026-09-15T19:20:04.962082+00:00",
+    "finding": "AUD-124",
+    "version": "1.2.7 / 10207",
+    "baseline": {
+      "tests": 11,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "before_junit_sha256": "d6368e1e5376e5fa7e4e8de71a60beaf6544064dd13f9e64d26074f61f325ced",
+    "full_android_suites": {
+      "dev": {
+        "tests": 579,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suites": 43,
+        "websocket_suites": {
+          "SavedRouteFailoverTest": 29,
+          "SphereWebSocketClientTest": 15,
+          "WebSocketAuthenticationTest": 16,
+          "WebSocketLifecycleTest": 11
+        }
+      },
+      "enterprise": {
+        "tests": 579,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "suites": 43,
+        "websocket_suites": {
+          "SavedRouteFailoverTest": 29,
+          "SphereWebSocketClientTest": 15,
+          "WebSocketAuthenticationTest": 16,
+          "WebSocketLifecycleTest": 11
+        }
+      }
+    },
+    "full_log_sha256": "63ce30da3f4bad2009235816f918ee84be87ed82f52bafff6690fbca39f66b01"
+  },
+  "signed_build_tests": {
+    "dev": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "root_projection_tests": 8,
+      "native_boot_tests": 10,
+      "ota_worker_tests": 14,
+      "ota_recovery_tests": 9,
+      "capture_lifecycle_tests": 4,
+      "journal_tests": 16,
+      "receipt_store_tests": 9,
+      "delivery_tests": 9,
+      "total_including_recovery": 164,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "enterprise": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "root_projection_tests": 8,
+      "native_boot_tests": 10,
+      "ota_worker_tests": 14,
+      "ota_recovery_tests": 9,
+      "capture_lifecycle_tests": 4,
+      "journal_tests": 16,
+      "receipt_store_tests": 9,
+      "delivery_tests": 9,
+      "total_including_recovery": 164,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "ota_canary_seconds": 9.687,
+  "ota_stable_seconds": 9.671,
+  "ota_adb_install": 0,
+  "ota_app_launch": 0,
+  "manual_permission_grants": 0,
+  "windows_station_watchdog_disabled_during_each_ota": true,
+  "watchdog_restored": true,
+  "canaries_retired": true,
+  "faults": [
+    {
+      "mode": "android",
+      "started": "2026-09-16T00:17:07.157331+00:00",
+      "ended": "2026-09-16T00:18:22.943295+00:00",
+      "blocked_seconds": 75.786,
+      "affected_indices": [
+        1
+      ],
+      "cleanup_verified": true,
+      "containers_preserved": true,
+      "evidence_sha256": "1d119eeef845786b32164bc0e8540a46d2b100b6071d506daacebc416aae10e5",
+      "devices": [
+        {
+          "index": 0,
+          "crash_buffer_unchanged": true,
+          "stream_connections": 1,
+          "stream_errors": []
+        },
+        {
+          "index": 1,
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 2.015,
+          "echo_passed": true,
+          "dag_passed": true,
+          "frames_after_recovery": 11,
+          "stream_connections": 1,
+          "stream_errors": []
+        }
+      ],
+      "second_device_retry_sequence_in_latest_outage": [
+        {
+          "attempt": 1,
+          "backoff_ms": 1788
+        },
+        {
+          "attempt": 2,
+          "backoff_ms": 3629
+        },
+        {
+          "attempt": 3,
+          "backoff_ms": 7186
+        }
+      ],
+      "second_device_app_log_sha256": "05a141d23f95138379c3ab3da854136bb311b416ad8c48250d46161d0feb450d"
+    },
+    {
+      "mode": "both",
+      "started": "2026-09-16T00:27:50.828279+00:00",
+      "ended": "2026-09-16T00:29:07.556867+00:00",
+      "blocked_seconds": 76.729,
+      "affected_indices": [
+        0,
+        1
+      ],
+      "cleanup_verified": true,
+      "containers_preserved": true,
+      "evidence_sha256": "51460aada8f878804f71cae429b9a015268c4f40751434fdca5aedf095d877ae",
+      "devices": [
+        {
+          "index": 0,
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 0.516,
+          "echo_passed": true,
+          "dag_passed": true,
+          "frames_after_recovery": 12,
+          "stream_connections": 1,
+          "stream_errors": []
+        },
+        {
+          "index": 1,
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 5.141,
+          "echo_passed": true,
+          "dag_passed": true,
+          "frames_after_recovery": 8,
+          "stream_connections": 1,
+          "stream_errors": []
+        }
+      ],
+      "second_device_retry_sequence_in_latest_outage": [
+        {
+          "attempt": 1,
+          "backoff_ms": 1262
+        },
+        {
+          "attempt": 2,
+          "backoff_ms": 2638
+        },
+        {
+          "attempt": 3,
+          "backoff_ms": 5745
+        }
+      ],
+      "second_device_app_log_sha256": "b8293cd0ccee6bc3b8d54a85942f12e42ca26707cd1f1706ea89abcda0bf2340"
+    },
+    {
+      "mode": "browser",
+      "started": "2026-09-16T00:29:37.404565+00:00",
+      "ended": "2026-09-16T00:30:53.815198+00:00",
+      "blocked_seconds": 76.411,
+      "affected_indices": [
+        0,
+        1
+      ],
+      "cleanup_verified": true,
+      "containers_preserved": true,
+      "evidence_sha256": "d0ac9b320a3563f8cb75a99b904a26d46ccdefbf660be09d7f6a30dced38cecb",
+      "devices": [
+        {
+          "index": 0,
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 0.531,
+          "echo_passed": true,
+          "dag_passed": true,
+          "frames_after_recovery": 15,
+          "stream_connections": 2,
+          "stream_errors": [
+            "ConnectionClosedError",
+            "TimeoutError"
+          ]
+        },
+        {
+          "index": 1,
+          "same_apk_pid": true,
+          "crash_buffer_unchanged": true,
+          "reconnect_seconds": 6.062,
+          "echo_passed": true,
+          "dag_passed": true,
+          "frames_after_recovery": 10,
+          "stream_connections": 2,
+          "stream_errors": [
+            "ConnectionClosedError",
+            "TimeoutError"
+          ]
+        }
+      ],
+      "second_device_retry_sequence_in_latest_outage": [
+        {
+          "attempt": 1,
+          "backoff_ms": 1093
+        },
+        {
+          "attempt": 2,
+          "backoff_ms": 3116
+        },
+        {
+          "attempt": 3,
+          "backoff_ms": 4715
+        }
+      ],
+      "second_device_app_log_sha256": "f9d3393404e800205aabc5c8bdf9e4ae42696e97c362e8bc4e561108ef449a16"
+    }
+  ],
+  "devices": [
+    {
+      "index": 0,
+      "version_code": 10207,
+      "installed_hash_verified": true,
+      "same_pid_during_capture": true,
+      "cycles": [
+        {
+          "cycle": 0,
+          "frames": 14,
+          "bytes": 161605,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 11
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.61,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.046,
+          "same_pid": true
+        },
+        {
+          "cycle": 1,
+          "frames": 17,
+          "bytes": 248187,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 14
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.266,
+          "projection_active": true,
+          "overlapping_viewer_got_frame": true,
+          "automatic_stop_seconds": 1.797,
+          "same_pid": true
+        },
+        {
+          "cycle": 2,
+          "frames": 14,
+          "bytes": 197805,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 11
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.234,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.063,
+          "same_pid": true
+        }
+      ],
+      "automatic_stop_verified": true
+    },
+    {
+      "index": 1,
+      "version_code": 10207,
+      "installed_hash_verified": true,
+      "same_pid_during_capture": true,
+      "cycles": [
+        {
+          "cycle": 0,
+          "frames": 14,
+          "bytes": 173230,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 11
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.266,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.032,
+          "same_pid": true
+        },
+        {
+          "cycle": 1,
+          "frames": 14,
+          "bytes": 204093,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 11
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.25,
+          "projection_active": true,
+          "overlapping_viewer_got_frame": true,
+          "automatic_stop_seconds": 1.781,
+          "same_pid": true
+        },
+        {
+          "cycle": 2,
+          "frames": 13,
+          "bytes": 202669,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 10
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.219,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.125,
+          "same_pid": true
+        }
+      ],
+      "automatic_stop_verified": true
+    }
+  ],
+  "scope": "Two rooted Android9/API28 emulators, bounded network and capture trials. Not all Android, fleet, provider-independent failover or overnight acceptance.",
+  "postflight": {
+    "at": "2026-09-16T00:33:25.179142+00:00",
+    "healthy_pilot_containers": 9,
+    "devices_version_code": [
+      10207,
+      10207
+    ],
+    "https_commands_passed": 2,
+    "capture_released": true,
+    "fault_rules_absent": true,
+    "station_watchdog_enabled": true,
+    "published_dev_versions": [
+      10203,
+      10204,
+      10205,
+      10207
+    ],
+    "latest_hash_verified": true
+  },
+  "timing_caveat": "Recovery times are sequential observation upper bounds, not latency percentiles. Android-only affected index1 on 10207; index0 still ran10205 then. Both subsequent trials used10207 on both. Final Nginx retest uses protocol viewers; earlier real web UI acceptance is separate."
+}

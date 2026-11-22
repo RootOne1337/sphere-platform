@@ -1,0 +1,10 @@
+{
+  "exit_code": 1,
+  "stop_reason": "timeout",
+  "elapsed_seconds": 25.125,
+  "observed_peak_rss": 652304384,
+  "source_model_weights_unchanged": true,
+  "cpu_only": true,
+  "no_download": true,
+  "execution_qualified": false
+}

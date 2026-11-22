@@ -122,6 +122,115 @@
         }
       ],
       "fieldConfig": {"defaults": {"unit": "kbytes"}}
+    },
+    {
+      "id": 8,
+      "title": "Android capture → encoder surface FPS",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sphere_stream_capture_fps", "legendFormat": "capture {{device_id}}"},
+        {"expr": "sphere_stream_render_fps", "legendFormat": "surface {{device_id}}"},
+        {"expr": "sphere_stream_fps", "legendFormat": "encoder {{device_id}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "fps"}}
+    },
+    {
+      "id": 9,
+      "title": "Android frame queue accepted / rejected (session total)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sphere_stream_ws_queue_accepted_session", "legendFormat": "accepted {{device_id}}"},
+        {"expr": "sphere_stream_ws_queue_rejected_session", "legendFormat": "rejected {{device_id}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    },
+    {
+      "id": 10,
+      "title": "Android capture, render and encoder errors (session total)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 30},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sphere_stream_capture_read_failures_session", "legendFormat": "capture {{device_id}}"},
+        {"expr": "sphere_stream_render_failures_session", "legendFormat": "surface {{device_id}}"},
+        {"expr": "sphere_stream_encoder_errors_session", "legendFormat": "encoder {{device_id}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    },
+    {
+      "id": 11,
+      "title": "Android intentional FPS throttle drops (session total)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 30},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sphere_stream_frame_throttle_drops_session", "legendFormat": "{{device_id}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    },
+    {
+      "id": 12,
+      "title": "Server pipeline frames/s: Android ingress → Redis → viewer socket",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 38},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sum by (device_id) (rate(sphere_stream_backend_ingress_frames_total[1m]))", "legendFormat": "backend ingress {{device_id}}"},
+        {"expr": "sum by (device_id) (rate(sphere_stream_redis_publish_calls_total[1m]))", "legendFormat": "Redis publish {{device_id}}"},
+        {"expr": "sum by (device_id) (rate(sphere_stream_viewer_send_frames_total[1m]))", "legendFormat": "viewer send {{device_id}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "fps"}}
+    },
+    {
+      "id": 13,
+      "title": "Server pipeline bytes/s: Android ingress → Redis → viewer socket",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 38},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sum by (device_id) (rate(sphere_stream_backend_ingress_bytes_total[1m]))", "legendFormat": "backend ingress {{device_id}}"},
+        {"expr": "sum by (device_id) (rate(sphere_stream_redis_published_bytes_total[1m]))", "legendFormat": "Redis publish {{device_id}}"},
+        {"expr": "sum by (device_id) (rate(sphere_stream_viewer_send_bytes_total[1m]))", "legendFormat": "viewer send {{device_id}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "Bps"}}
+    },
+    {
+      "id": 14,
+      "title": "Backend ingress packets by first H.264 NAL type/s",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 46},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sum by (device_id, nal_type) (rate(sphere_stream_backend_ingress_packets_by_nal_total[1m]))", "legendFormat": "{{device_id}} / {{nal_type}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "reqps"}}
+    },
+    {
+      "id": 15,
+      "title": "Server queue drops in the last 5 minutes",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 46},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sum by (device_id, queue_stage, reason) (increase(sphere_stream_server_queue_drops_total[5m]))", "legendFormat": "{{device_id}} / {{queue_stage}} / {{reason}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    },
+    {
+      "id": 16,
+      "title": "Active browser viewers and latest Redis subscriber count",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 54},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sum by (device_id) (sphere_stream_active_viewers)", "legendFormat": "active viewer sessions {{device_id}}"},
+        {"expr": "sphere_stream_redis_publish_subscribers", "legendFormat": "latest Redis subscribers {{device_id}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
     }
   ],
   "templating": {

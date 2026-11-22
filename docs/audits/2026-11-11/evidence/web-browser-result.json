@@ -1,0 +1,294 @@
+{
+  "chromium": "157.0.4341.46",
+  "rows": [
+    {
+      "requested": "/",
+      "expected": "/dashboard",
+      "path": "/dashboard",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Обзор парка",
+      "errors": []
+    },
+    {
+      "requested": "/login",
+      "expected": "/login",
+      "path": "/login",
+      "status": 200,
+      "result": "rendered",
+      "marker": "email",
+      "errors": []
+    },
+    {
+      "requested": "/dashboard",
+      "expected": "/dashboard",
+      "path": "/dashboard",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Обзор парка",
+      "errors": []
+    },
+    {
+      "requested": "/monitoring",
+      "expected": "/monitoring",
+      "path": "/monitoring",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Инфраструктура",
+      "errors": []
+    },
+    {
+      "requested": "/devices",
+      "expected": "/devices",
+      "path": "/devices",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Устройства",
+      "errors": []
+    },
+    {
+      "requested": "/devices/00000000-0000-4000-8000-000000000001",
+      "expected": "/devices/00000000-0000-4000-8000-000000000001",
+      "path": "/devices/00000000-0000-4000-8000-000000000001",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Карточка устройства",
+      "errors": []
+    },
+    {
+      "requested": "/stream",
+      "expected": "/stream",
+      "path": "/stream",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Потоки устройств",
+      "errors": []
+    },
+    {
+      "requested": "/stream/00000000-0000-4000-8000-000000000001",
+      "expected": "/stream/00000000-0000-4000-8000-000000000001",
+      "path": "/stream/00000000-0000-4000-8000-000000000001",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Видеопоток",
+      "errors": []
+    },
+    {
+      "requested": "/discovery",
+      "expected": "/discovery",
+      "path": "/discovery",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Обнаружение",
+      "errors": []
+    },
+    {
+      "requested": "/fleet",
+      "expected": "/groups",
+      "path": "/groups",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Группы устройств",
+      "errors": []
+    },
+    {
+      "requested": "/groups",
+      "expected": "/groups",
+      "path": "/groups",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Группы устройств",
+      "errors": []
+    },
+    {
+      "requested": "/locations",
+      "expected": "/locations",
+      "path": "/locations",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Локации",
+      "errors": []
+    },
+    {
+      "requested": "/tasks",
+      "expected": "/tasks",
+      "path": "/tasks",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Задачи и исполнения",
+      "errors": []
+    },
+    {
+      "requested": "/tasks/00000000-0000-4000-8000-000000000001",
+      "expected": "/tasks/00000000-0000-4000-8000-000000000001",
+      "path": "/tasks/00000000-0000-4000-8000-000000000001",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Задание не найдено",
+      "errors": []
+    },
+    {
+      "requested": "/orchestration",
+      "expected": "/orchestration",
+      "path": "/orchestration",
+      "status": 200,
+      "result": "rendered",
+      "marker": "ORCHESTRATION",
+      "errors": []
+    },
+    {
+      "requested": "/pipeline-settings",
+      "expected": "/pipeline-settings",
+      "path": "/pipeline-settings",
+      "status": 200,
+      "result": "rendered",
+      "marker": "PIPELINE SETTINGS",
+      "errors": []
+    },
+    {
+      "requested": "/accounts",
+      "expected": "/accounts",
+      "path": "/accounts",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Игровые аккаунты",
+      "errors": []
+    },
+    {
+      "requested": "/scripts",
+      "expected": "/scripts",
+      "path": "/scripts",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Сценарии",
+      "errors": []
+    },
+    {
+      "requested": "/scripts/builder",
+      "expected": "/scripts/builder",
+      "path": "/scripts/builder",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Клавиши Android · 6 УПРАВЛЕНИЕ ЭКРАНОМ Нажатие tap Свайп swipe Траектория касания pointer_path Ввод текста typ",
+      "errors": []
+    },
+    {
+      "requested": "/events",
+      "expected": "/events",
+      "path": "/events",
+      "status": 200,
+      "result": "rendered",
+      "marker": "События устройств",
+      "errors": []
+    },
+    {
+      "requested": "/event-triggers",
+      "expected": "/event-triggers",
+      "path": "/event-triggers",
+      "status": 200,
+      "result": "rendered",
+      "marker": "EVENT TRIGGERS",
+      "errors": []
+    },
+    {
+      "requested": "/sessions",
+      "expected": "/sessions",
+      "path": "/sessions",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Сессии аккаунтов",
+      "errors": []
+    },
+    {
+      "requested": "/vpn",
+      "expected": "/vpn",
+      "path": "/vpn",
+      "status": 200,
+      "result": "rendered",
+      "marker": "VPN и маршрутизация",
+      "errors": []
+    },
+    {
+      "requested": "/webhooks",
+      "expected": "/webhooks",
+      "path": "/webhooks",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Вебхуки",
+      "errors": []
+    },
+    {
+      "requested": "/users",
+      "expected": "/users",
+      "path": "/users",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Пользователи",
+      "errors": []
+    },
+    {
+      "requested": "/audit",
+      "expected": "/audit",
+      "path": "/audit",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Журнал аудита",
+      "errors": []
+    },
+    {
+      "requested": "/logs",
+      "expected": "/logs",
+      "path": "/logs",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Выберите устройство, чтобы просмотреть логи.",
+      "errors": []
+    },
+    {
+      "requested": "/updates",
+      "expected": "/updates",
+      "path": "/updates",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Обновления и приложения",
+      "errors": []
+    },
+    {
+      "requested": "/settings",
+      "expected": "/settings",
+      "path": "/settings",
+      "status": 200,
+      "result": "rendered",
+      "marker": "Настройки",
+      "errors": []
+    }
+  ],
+  "fallbackPaths": [
+    "/account-sessions",
+    "/audit/logs",
+    "/device-events",
+    "/devices",
+    "/devices/status/fleet",
+    "/event-triggers",
+    "/game-accounts",
+    "/game-accounts/servers",
+    "/health/build",
+    "/monitoring/fleet-coverage",
+    "/monitoring/metrics",
+    "/n8n/webhooks",
+    "/pipeline-settings",
+    "/pipeline-settings/status",
+    "/pipelines",
+    "/pipelines/runs",
+    "/schedules",
+    "/scripts",
+    "/scripts/catalog",
+    "/tasks",
+    "/tasks/00000000-0000-4000-8000-000000000001/logs",
+    "/updates",
+    "/users",
+    "/vpn/health",
+    "/vpn/pool/stats",
+    "/vpn/runtime"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "connection_established": true,
+  "registration_calls": [
+    {
+      "type": "workstation_register",
+      "connected": false
+    }
+  ],
+  "queued_after_connect": 0
+}

@@ -1,0 +1,693 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-25T17:57:26.333510+00:00",
+  "baseSourceRevision": "f808b4863509c19dbf02a83ceb4845bc8121017b",
+  "scope": "isolated official Spirula end-to-end trials on Route012; no replacement of installed map, no live motor execution",
+  "officialTool": {
+    "name": "Spirula Studio",
+    "version": "2026.10.16",
+    "upstreamCommit": "65246c5579c127081bff6f4422bd12a542906f78",
+    "executableSha256": "eb57050c90fc046f079d2b788eb62f0cf9639afbe50941ecb4f945d52876bd14",
+    "gpu": "AMD Radeon RX 9070",
+    "backend": "Vulkan",
+    "license": "GPL-3.0"
+  },
+  "sourcePreservation": {
+    "bindings": {
+      "geometry.json": "f79f9380ac0362eea1038977f3570227e1f4560567accccd3f739ebefd4a89c0",
+      "input/manifest.json": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b",
+      "input/video.h264": "66ef484e6f7160431bd03c6b990daef322e6ca98e0678317775f82ba3f0d60b8",
+      "control.json": "a4a654b1d5f80bbb059f4df116475d76354d2f29e994b739959fee7efa71d0ee",
+      "dense-attempt-2/scene.ply": "d5a061f10b18c7b9731757b351a6e4816ecb0266780cbed3fecad6f3836e1d0e",
+      "surface/scene.glb": "7ffb6792504721d606581d8cb550be1e9a7e4d9adde65a7af7c386a293e156e8"
+    },
+    "allMatched": true
+  },
+  "losslessRemux": {
+    "schema": "sphere-lossless-mp4-export-v1",
+    "frames": 458,
+    "pixels_identical": true,
+    "original_timestamps_preserved": true,
+    "source_video_sha256": "66ef484e6f7160431bd03c6b990daef322e6ca98e0678317775f82ba3f0d60b8",
+    "mp4_sha256": "c5e817699335b804cfdc3f6215db4b99eb9a0ea21cb34fc064414aff8fdaa010",
+    "bytes": 20817760,
+    "reencoded": false,
+    "original_modified": false
+  },
+  "inputObservability": {
+    "schema": "sphere-capture-observability-v1",
+    "declared_target_fps": 60,
+    "media_spacing": {
+      "intervals": 457,
+      "median_ms": 100.0,
+      "p95_ms": 117.0,
+      "max_ms": 151.0,
+      "gaps_over_200ms": 0,
+      "gaps_over_500ms": 0
+    },
+    "unique_decoded_rgb": 458,
+    "consecutive_identical_rgb": 0,
+    "video_bytes": 20811685,
+    "measured_depth": false,
+    "engine_camera_poses": false,
+    "calibrated_intrinsics": false,
+    "metric_scale": null,
+    "capture_to_receive_latency_ms": null,
+    "exact_rgb_repeats_are_not_a_disconnect_verdict": true
+  },
+  "sourceMedia": {
+    "frames": 458,
+    "seconds": 44.146,
+    "width": 1920,
+    "height": 1080,
+    "mediaFps": 10.352013772482218
+  },
+  "sparse": {
+    "selected": 153,
+    "registeredDistinct": 142,
+    "components": 2,
+    "largest": 132,
+    "landmarks": 44032,
+    "models": [
+      {
+        "component": 0,
+        "registered": 132,
+        "points": 44032,
+        "first_seconds": 0.0,
+        "last_seconds": 44.063,
+        "model_sha256": {
+          "cameras.bin": "b4ac9788452b3ae3d96fcc4e4cff464481401374f8e74d1fde71e6f0bcec1fe3",
+          "images.bin": "520f191529d2cddecd1ddf56922163489bfcd6e07f3e87a9adcfa5a3a8599c47",
+          "points3D.bin": "ac20e4d2483ce8c2dff4dce9019249dfcda34fc7d7dde59e4df8f519b6ba77bd"
+        },
+        "reprojection_saved_error_fields_px": 0.0,
+        "reprojection_computed": {
+          "observations": 143364,
+          "negative_depth": 0,
+          "mean_px": 0.7242658827591831,
+          "median_px": 0.5768580455143734,
+          "p90_px": 1.5446486151927108
+        }
+      },
+      {
+        "component": 1,
+        "registered": 31,
+        "points": 11742,
+        "first_seconds": 10.114,
+        "last_seconds": 36.674,
+        "model_sha256": {
+          "cameras.bin": "c547d488f7f9eb879b560e1904319a848dafab309369819f2ba5aaf369bbfed7",
+          "images.bin": "c8b7d2fc7da80f5d077a0e65b5fb8ddec5e463451eb0aa44cbc46a41d70a7ea5",
+          "points3D.bin": "039a72122a7a3a5f31c59d40b67e397be3132b2679d995624ae8b0900200bdd6"
+        },
+        "reprojection_saved_error_fields_px": 0.0,
+        "reprojection_computed": {
+          "observations": 32605,
+          "negative_depth": 0,
+          "mean_px": 0.7798835269797488,
+          "median_px": 0.64700048400806,
+          "p90_px": 1.6180624832320414
+        }
+      }
+    ],
+    "cameraWarning": {
+      "rapidReversals": 7,
+      "forwardSpeedOutliers": 3,
+      "heuristicOnly": true
+    },
+    "metricScale": null,
+    "navigationQualified": false
+  },
+  "operations": {
+    "extract": {
+      "result": {
+        "stage": "extract",
+        "exit_code": 0,
+        "seconds": 8.94,
+        "native_finished": true,
+        "accepted": false
+      },
+      "intentSha256": "fc4f6ed3c2932423f12089be5b5711b0fc76dbc54f2a0a81e2c6c2559d9fb110",
+      "logSha256": "a67ea0e76015843843157377050c8e4506b7585ec6b497de8a0be05235f0e0f0"
+    },
+    "sfm": {
+      "result": {
+        "stage": "sfm",
+        "exit_code": 0,
+        "seconds": 270.49,
+        "native_finished": true,
+        "accepted": false
+      },
+      "intentSha256": "b1a5e5638b7bfbbaea668bf06f07d506f8e66ed8851f5722b5779df1e7e4c857",
+      "logSha256": "e1203387f5c34316a1fd9a4904f3e9bcaa076df20778c735b22c74e808b55291"
+    },
+    "train": {
+      "result": {
+        "stage": "train",
+        "exit_code": 0,
+        "seconds": 1212.2,
+        "native_finished": true,
+        "accepted": false
+      },
+      "intentSha256": "722a635577784d28765657d4639fed514ee6e534040dabd3eee436b356c3b173",
+      "logSha256": "c25de34a8cf468a8977a9ab634a7a5240acbdd21cccb9489c3beb32ab50ee5ba"
+    },
+    "mesh": {
+      "result": {
+        "stage": "mesh",
+        "exit_code": 0,
+        "seconds": 41.19,
+        "native_finished": true,
+        "accepted": false
+      },
+      "intentSha256": "eb07d23f13419dd2d21749b6be3d7353bbfb865a97d07713247cd50bd0f5d3de",
+      "logSha256": "aa16eb443aaa930d561971ac819e62214defef8bae48ef82e12294a7b38929b0"
+    },
+    "geometry": {
+      "result": {
+        "stage": "geometry",
+        "exit_code": 0,
+        "seconds": 67.14,
+        "native_finished": true,
+        "accepted": false
+      },
+      "intentSha256": "a5dbab36e8c0e47cc2cf87728eb565c50265e7bc651e3cb49eef98560fdaac88",
+      "logSha256": "f004fa8f36e6e1c84e9430c994c23032173312e8c574d16fcff8c7bb69c8a3a7"
+    },
+    "normal-train": {
+      "result": {
+        "stage": "normal-train",
+        "exit_code": 0,
+        "seconds": 396.58,
+        "native_finished": true,
+        "accepted": false
+      },
+      "intentSha256": "9bfbbf628ff9b07468d16da4b6c43470763126717f05682da1825bf10f98dbc9",
+      "logSha256": "c0160a846d4194187a82fd2b1d725f35f12591e267bc0981e5d3ee17f7f41466"
+    },
+    "normal-mesh": {
+      "result": {
+        "stage": "normal-mesh",
+        "exit_code": 0,
+        "seconds": 31.89,
+        "native_finished": true,
+        "accepted": false
+      },
+      "intentSha256": "49141274c36bc2e964a8300bf0054bb5214f5b121970183964cc4272214c30b3",
+      "logSha256": "8f2b0287d2b13d887131109b830aa00eaf8ab25b9c4c41a566bac675dd41acbb"
+    },
+    "html": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 6.34,
+        "bytes": 10899561,
+        "sha256": "c1ab358f9be71974e0f9cbfe17f18d8dfbcd80627665f4f362a0e71a3a391986",
+        "source_unchanged": true,
+        "browser_checked": false,
+        "geometry_qualified": false
+      },
+      "intentSha256": "463d7528cc453bc6690e5be3c9df0fedb1becd615cbd8dac77f0ab1a71b5a040",
+      "logSha256": "2ef3cc62a6687e8d50cea2c32e857a8760c8d7b821abfadc5aaa436cc95592a1"
+    }
+  },
+  "geometryNormalCheckpoint": {
+    "sourceUrl": "https://huggingface.co/Ruicheng/moge-2-vitb-normal-onnx/resolve/main/model.onnx",
+    "sha256": "bbf14e07a30f11e69d36ab861590123f5598ababcbc8946a063eb4a966f35a21",
+    "predictedNotMeasured": true
+  },
+  "baseMesh": {
+    "schema": "sphere-surface-geometry-proof-v1",
+    "embedded_glb_sha256": "442b0f4ec9f197f7562b9b9c47541837e5504a13ada56f5ea38c4d1499148579",
+    "embedded_glb_bytes": 49555716,
+    "source_parts": {
+      "route012.glb": "442b0f4ec9f197f7562b9b9c47541837e5504a13ada56f5ea38c4d1499148579"
+    },
+    "split_uv_vertices": 256439,
+    "triangles": 228630,
+    "embedded_textures": 1,
+    "external_uris": 0,
+    "triangle_cpu_renders": [
+      {
+        "image": "00000.png",
+        "visible_mesh_fraction": 0.47328703703703706
+      },
+      {
+        "image": "00081.png",
+        "visible_mesh_fraction": 0.5085648148148149
+      },
+      {
+        "image": "00162.png",
+        "visible_mesh_fraction": 0.6226234567901234
+      },
+      {
+        "image": "00225.png",
+        "visible_mesh_fraction": 0.48684413580246916
+      },
+      {
+        "image": "00330.png",
+        "visible_mesh_fraction": 0.4534722222222222
+      },
+      {
+        "image": "00453.png",
+        "visible_mesh_fraction": 0.525841049382716
+      }
+    ],
+    "hole_closure": false,
+    "smoothing": true,
+    "native_quality_iters": 3,
+    "projection_uses_recovered_cameras": true,
+    "diagnostic_texture_v_flip": false,
+    "geometry_qualified": false,
+    "navigation_qualified": false
+  },
+  "normalMesh": {
+    "schema": "sphere-surface-geometry-proof-v1",
+    "embedded_glb_sha256": "77c74e65d6c8b07988f9d41b06f628d0d5d07d502239d37ba59db43af50dd4ba",
+    "embedded_glb_bytes": 43152392,
+    "source_parts": {
+      "route012.glb": "77c74e65d6c8b07988f9d41b06f628d0d5d07d502239d37ba59db43af50dd4ba"
+    },
+    "split_uv_vertices": 221965,
+    "triangles": 193152,
+    "embedded_textures": 1,
+    "external_uris": 0,
+    "triangle_cpu_renders": [
+      {
+        "image": "00000.png",
+        "visible_mesh_fraction": 0.3091203703703704
+      },
+      {
+        "image": "00081.png",
+        "visible_mesh_fraction": 0.47129629629629627
+      },
+      {
+        "image": "00162.png",
+        "visible_mesh_fraction": 0.6317978395061729
+      },
+      {
+        "image": "00225.png",
+        "visible_mesh_fraction": 0.6027777777777777
+      },
+      {
+        "image": "00330.png",
+        "visible_mesh_fraction": 0.4645216049382716
+      },
+      {
+        "image": "00453.png",
+        "visible_mesh_fraction": 0.4830632716049383
+      }
+    ],
+    "hole_closure": false,
+    "smoothing": true,
+    "native_quality_iters": 3,
+    "projection_uses_recovered_cameras": true,
+    "diagnostic_texture_v_flip": false,
+    "geometry_qualified": false,
+    "navigation_qualified": false
+  },
+  "baseEvaluation": {
+    "schema": "sphere-native-eval-review-v1",
+    "native_rows": 17,
+    "unique_gt_images": 16,
+    "source_matched": 17,
+    "native_mean_psnr": 20.2,
+    "native_mean_ssim": 0.78164,
+    "deduplicated_mean_psnr": 20.11095625,
+    "deduplicated_mean_ssim": 0.77969325,
+    "rows": [
+      {
+        "index": 0,
+        "source": "00120.png",
+        "gt_rgb_sha256": "033c0222fb50d4ff45631bd7872589e2e371ee2df1c256034af7b57cd4ea79e5",
+        "render_rgb_sha256": "a23e9ee4b678892510afa092dc80f1c8a7ab65ca6ca6afc0d928c1bbff81f865",
+        "psnr": 16.7292,
+        "ssim": 0.757556
+      },
+      {
+        "index": 1,
+        "source": "00399.png",
+        "gt_rgb_sha256": "60888ec77c8d68adf78fb9246f27f165fcf0818972f009d9c30e1831b820f73c",
+        "render_rgb_sha256": "afeb205876f4c5ebd22a5ad6d629fe4d908cd9e745e767378d3cdd6851f90b15",
+        "psnr": 18.4587,
+        "ssim": 0.787222
+      },
+      {
+        "index": 2,
+        "source": "00279.png",
+        "gt_rgb_sha256": "e8eac08ac760582cd2df255c416246ab1ae6fe1afc69bba8469a365f42aaf175",
+        "render_rgb_sha256": "8496173b89c1d65016ced5217949c7ec5999a0d660cd035d35f62b677c848ee9",
+        "psnr": 21.6244,
+        "ssim": 0.812793
+      },
+      {
+        "index": 3,
+        "source": "00327.png",
+        "gt_rgb_sha256": "0fa52586721f5893198045238e0591cddc39e24bb260ca3b0a132ea0b5a1b5d3",
+        "render_rgb_sha256": "33fe2227a2b3d9e990e4e3bb29c7862a224e5cfbbed81a4871cb87b2f9b523d9",
+        "psnr": 22.5844,
+        "ssim": 0.797272
+      },
+      {
+        "index": 4,
+        "source": "00375.png",
+        "gt_rgb_sha256": "1a98900eeef69217052631f39fa724288aa1e8538c16f50111e71d84b11e3084",
+        "render_rgb_sha256": "72dae717c0f4a41f293270bcd166ea80cc890addf13dab5733a25c83005f1c07",
+        "psnr": 19.8921,
+        "ssim": 0.73799
+      },
+      {
+        "index": 5,
+        "source": "00423.png",
+        "gt_rgb_sha256": "6703fd92a5bb1d53974bcf3e616b63dd81cbae12f2306924e75dd8e461bae43a",
+        "render_rgb_sha256": "aa46d1b83aa5802c94e9fa4159015f84df50f5b2a26a7de256a473c824b52d7d",
+        "psnr": 19.7146,
+        "ssim": 0.834809
+      },
+      {
+        "index": 6,
+        "source": "00447.png",
+        "gt_rgb_sha256": "c1a07ac1808e33fc5dc43b34568636ab87c771eaa9cac53142892d980515f161",
+        "render_rgb_sha256": "a84d4933c6a1098d560a636d99dc717bfc1001dfe023b5172ef6726c65eca08e",
+        "psnr": 17.582,
+        "ssim": 0.771939
+      },
+      {
+        "index": 7,
+        "source": "00144.png",
+        "gt_rgb_sha256": "4372e9016355c2e0aa44f460d529a3d46646e9b0ceba06de409266d2842eb93a",
+        "render_rgb_sha256": "d67dcca97bfd086b080fea056e97edd1522ca5e4d46b8a27fcec5e5a262dcc2e",
+        "psnr": 21.1353,
+        "ssim": 0.812604
+      },
+      {
+        "index": 8,
+        "source": "00303.png",
+        "gt_rgb_sha256": "f35ebfa717216135a29600fad355ef1e94232a90d1a9743a470b4862cb02018e",
+        "render_rgb_sha256": "c445a8d9c77a8550897ecd34f5587f34508e2c35b01f726a7503257bc3506cc2",
+        "psnr": 26.1288,
+        "ssim": 0.808825
+      },
+      {
+        "index": 9,
+        "source": "00168.png",
+        "gt_rgb_sha256": "0a43f24ea5a2d4a0b86333ad9e352a19dca8ec1321b6f0f1ce94e0a4a69a6dab",
+        "render_rgb_sha256": "f1df00a198a49274c0c31f7fcb2a8cc2de34ff92ebaf52bfc40a441ff91a0c1c",
+        "psnr": 20.7154,
+        "ssim": 0.733122
+      },
+      {
+        "index": 10,
+        "source": "00084.png",
+        "gt_rgb_sha256": "89acdcd2240f2638ad7d0facf551562036a5bf2aeaf85a07800410946dfcccc5",
+        "render_rgb_sha256": "07a31cc8510c0e9ae9179c757fb55dc31af604014a2dad661a03c02dcdc19fdd",
+        "psnr": 18.7276,
+        "ssim": 0.802906
+      },
+      {
+        "index": 11,
+        "source": "00255.png",
+        "gt_rgb_sha256": "b4747bfab8f826ca96529bc75f8718b0f74938cdb4aabdf7290aaf90c06415a3",
+        "render_rgb_sha256": "5ee92f45b763b000f6706081df3a9577a405a73537a2c7480921aea03af7d5d4",
+        "psnr": 19.9596,
+        "ssim": 0.733014
+      },
+      {
+        "index": 12,
+        "source": "00048.png",
+        "gt_rgb_sha256": "d733ea7cb6f76c61630f8da6a2df8ed20b5358a025a33edb31832accd58690d0",
+        "render_rgb_sha256": "ed7a3ee30d20d333905918b312d2cc04054ec69aa901116eab9ef9b0b790e33c",
+        "psnr": 14.4545,
+        "ssim": 0.666602
+      },
+      {
+        "index": 13,
+        "source": "00201.png",
+        "gt_rgb_sha256": "fb25f138c7b294fe7bc9304135d9ad55f7d95376dc37b7dd4f4df75be803f58f",
+        "render_rgb_sha256": "b7d954e5eb37086c99bf509a34e06f93746938901be5f8ebd6dc6168d8fdc780",
+        "psnr": 17.5593,
+        "ssim": 0.744261
+      },
+      {
+        "index": 14,
+        "source": "00231.png",
+        "gt_rgb_sha256": "94101c97d6e6748c20840ec3eff3b15239d6e05b228d6c94842687ea3c8668b7",
+        "render_rgb_sha256": "20740ce7db73343db679609bf8cf2f1e97b7155545a67131d29389dcc57fcdc5",
+        "psnr": 21.729,
+        "ssim": 0.800029
+      },
+      {
+        "index": 15,
+        "source": "00024.png",
+        "gt_rgb_sha256": "882acb18ded778109029360369317cc69fbe978e02948ab6fdfaa8f606baca06",
+        "render_rgb_sha256": "8fcb13042389bdc0ee38652267e4e9aab3d9dc0eabb38e3350a4448e8c285ff0",
+        "psnr": 24.7804,
+        "ssim": 0.874148
+      },
+      {
+        "index": 16,
+        "source": "00279.png",
+        "gt_rgb_sha256": "e8eac08ac760582cd2df255c416246ab1ae6fe1afc69bba8469a365f42aaf175",
+        "render_rgb_sha256": "8496173b89c1d65016ced5217949c7ec5999a0d660cd035d35f62b677c848ee9",
+        "psnr": 21.6244,
+        "ssim": 0.812793
+      }
+    ]
+  },
+  "normalEvaluation": {
+    "native_rows": 17,
+    "unique_gt_images": 17,
+    "native_mean_psnr": 20.9148,
+    "native_mean_ssim": 0.790897,
+    "paired_same_source": {
+      "images": 16,
+      "base_mean_psnr": 20.11095625,
+      "normal_mean_psnr": 20.177231250000002,
+      "base_mean_ssim": 0.77969325,
+      "normal_mean_ssim": 0.781616
+    },
+    "rows": [
+      {
+        "index": 0,
+        "source": "00084.png",
+        "gt_rgb_sha256": "89acdcd2240f2638ad7d0facf551562036a5bf2aeaf85a07800410946dfcccc5",
+        "psnr": 19.1146,
+        "ssim": 0.805517,
+        "unique": true
+      },
+      {
+        "index": 1,
+        "source": "00375.png",
+        "gt_rgb_sha256": "1a98900eeef69217052631f39fa724288aa1e8538c16f50111e71d84b11e3084",
+        "psnr": 20.2788,
+        "ssim": 0.750019,
+        "unique": true
+      },
+      {
+        "index": 2,
+        "source": "00423.png",
+        "gt_rgb_sha256": "6703fd92a5bb1d53974bcf3e616b63dd81cbae12f2306924e75dd8e461bae43a",
+        "psnr": 19.3164,
+        "ssim": 0.829328,
+        "unique": true
+      },
+      {
+        "index": 3,
+        "source": "00201.png",
+        "gt_rgb_sha256": "fb25f138c7b294fe7bc9304135d9ad55f7d95376dc37b7dd4f4df75be803f58f",
+        "psnr": 17.7129,
+        "ssim": 0.749994,
+        "unique": true
+      },
+      {
+        "index": 4,
+        "source": "00144.png",
+        "gt_rgb_sha256": "4372e9016355c2e0aa44f460d529a3d46646e9b0ceba06de409266d2842eb93a",
+        "psnr": 20.3918,
+        "ssim": 0.802908,
+        "unique": true
+      },
+      {
+        "index": 5,
+        "source": "00399.png",
+        "gt_rgb_sha256": "60888ec77c8d68adf78fb9246f27f165fcf0818972f009d9c30e1831b820f73c",
+        "psnr": 18.4245,
+        "ssim": 0.796146,
+        "unique": true
+      },
+      {
+        "index": 6,
+        "source": "00447.png",
+        "gt_rgb_sha256": "c1a07ac1808e33fc5dc43b34568636ab87c771eaa9cac53142892d980515f161",
+        "psnr": 17.9584,
+        "ssim": 0.776328,
+        "unique": true
+      },
+      {
+        "index": 7,
+        "source": "00279.png",
+        "gt_rgb_sha256": "e8eac08ac760582cd2df255c416246ab1ae6fe1afc69bba8469a365f42aaf175",
+        "psnr": 23.2133,
+        "ssim": 0.832178,
+        "unique": true
+      },
+      {
+        "index": 8,
+        "source": "00048.png",
+        "gt_rgb_sha256": "d733ea7cb6f76c61630f8da6a2df8ed20b5358a025a33edb31832accd58690d0",
+        "psnr": 13.7932,
+        "ssim": 0.640631,
+        "unique": true
+      },
+      {
+        "index": 9,
+        "source": "00255.png",
+        "gt_rgb_sha256": "b4747bfab8f826ca96529bc75f8718b0f74938cdb4aabdf7290aaf90c06415a3",
+        "psnr": 20.3594,
+        "ssim": 0.751125,
+        "unique": true
+      },
+      {
+        "index": 10,
+        "source": "00231.png",
+        "gt_rgb_sha256": "94101c97d6e6748c20840ec3eff3b15239d6e05b228d6c94842687ea3c8668b7",
+        "psnr": 21.7951,
+        "ssim": 0.803726,
+        "unique": true
+      },
+      {
+        "index": 11,
+        "source": "00303.png",
+        "gt_rgb_sha256": "f35ebfa717216135a29600fad355ef1e94232a90d1a9743a470b4862cb02018e",
+        "psnr": 24.9831,
+        "ssim": 0.776021,
+        "unique": true
+      },
+      {
+        "index": 12,
+        "source": "00000.png",
+        "gt_rgb_sha256": "685999c7fa77d8896511eed083d603043b2e14789bfb19990ebd5cd941e69e85",
+        "psnr": 32.7151,
+        "ssim": 0.939391,
+        "unique": true
+      },
+      {
+        "index": 13,
+        "source": "00327.png",
+        "gt_rgb_sha256": "0fa52586721f5893198045238e0591cddc39e24bb260ca3b0a132ea0b5a1b5d3",
+        "psnr": 22.64,
+        "ssim": 0.808419,
+        "unique": true
+      },
+      {
+        "index": 14,
+        "source": "00168.png",
+        "gt_rgb_sha256": "0a43f24ea5a2d4a0b86333ad9e352a19dca8ec1321b6f0f1ce94e0a4a69a6dab",
+        "psnr": 20.6205,
+        "ssim": 0.734382,
+        "unique": true
+      },
+      {
+        "index": 15,
+        "source": "00024.png",
+        "gt_rgb_sha256": "882acb18ded778109029360369317cc69fbe978e02948ab6fdfaa8f606baca06",
+        "psnr": 24.8163,
+        "ssim": 0.875772,
+        "unique": true
+      },
+      {
+        "index": 16,
+        "source": "00120.png",
+        "gt_rgb_sha256": "033c0222fb50d4ff45631bd7872589e2e371ee2df1c256034af7b57cd4ea79e5",
+        "psnr": 17.4174,
+        "ssim": 0.773362,
+        "unique": true
+      }
+    ]
+  },
+  "screenshots": {
+    "docs/audits/2026-10-25/assets/spirula-turnkey/base-eval.jpg": "8b921a861ddffac12307a62b52b7048f6700fee25f55bf94908bafbb16de6ac6",
+    "docs/audits/2026-10-25/assets/spirula-turnkey/normal-eval.jpg": "af16547b6d882d5660ed779d200816051a5450701002876173d430c5e27e16d7",
+    "docs/audits/2026-10-25/assets/spirula-turnkey/base-mesh.jpg": "b283d7b4cb370ab87efb3e5545b598bb300e568cf9ac21c56fb02585df2bdb0a",
+    "docs/audits/2026-10-25/assets/spirula-turnkey/normal-mesh.jpg": "bfb40cc9ce5fc3a7d1742fab5f8b025fe0fa4e66d66d8f4baaa4d2f70af3e769"
+  },
+  "resourceSnapshot": {
+    "observedAt": "2026-10-25T17:57:26.333510+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 66913378304,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "availableRamBytes": 17368543232,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 70889050112,
+    "commitLimitBytes": 100060360704,
+    "kernelPagedBytes": 4099203072,
+    "kernelNonpagedBytes": 2775744512,
+    "processCount": 460,
+    "handleCount": 348252,
+    "memoryMeasurement": "GetPerformanceInfo"
+  },
+  "localApi": {
+    "port": 3342,
+    "bound": "127.0.0.1",
+    "loadedSourceRevision": "f808b4863509c19dbf02a83ceb4845bc8121017b",
+    "optionsStatus": 204,
+    "expectedCorsOrigin": "http://127.0.0.1:3015",
+    "noCapabilityStatus": 403,
+    "backgroundProcess": true,
+    "rebootAutostartVerified": false
+  },
+  "browserLimits": {
+    "staticHttpServer": "rejected_by_automatic_review_without_reason",
+    "localFileUrl": "rejected_by_browser_url_policy_http_https_only",
+    "workaroundAttempted": false,
+    "browserAcceptance": false
+  },
+  "acceptance": {
+    "wholeStreetModel": false,
+    "geometryQualified": false,
+    "navigationQualified": false,
+    "sourceCaptureUnchanged": true,
+    "installedMapReplaced": false,
+    "androidChanged": false,
+    "vpnChanged": false,
+    "liveGameControlled": false
+  },
+  "changedCodeSha256": {
+    "motor_worker/browser_teach.py": "08d6a88273e7e761484c969d886b204568f9d438f1a4d83108fbc74bac679a40",
+    "tests/test_motor_browser_teach.py": "ea386d2bc5392d3e32500f978e13c5fca4500b6dfe72b82e0038d520859adfe1",
+    "scripts/pilot/teaching_scene.py": "a6b1b0106e568e2b15da31af9b2a66dedd37a05388051646dddfa35883642d9e",
+    "tests/pilot/test_teaching_scene.py": "8420fc8d896fb08ce28ae6d7006b05e6ae9985320e1d7d24e5d56bc126d1e868"
+  },
+  "validation": {
+    "pytest": {
+      "tests": 139,
+      "failures": 0,
+      "errors": 0,
+      "subtestsPassed": 94,
+      "junitCases": 233,
+      "junitSha256": "01da5b0e7635e85c0b61d1ddac3c8caeb70236ef554f68efd37b1ffd8563745d"
+    },
+    "ruffPassed": true,
+    "preFixSocketFailures": [
+      {
+        "test": "busy_request",
+        "receiptSha256": "458f940556fbb8f5c3de332902616369ef1bde72f177bfe968116c29c0632431"
+      },
+      {
+        "test": "expired_preview",
+        "receiptSha256": "c9b0642ef7bcf7e93a7541359dadf007b5c7bbf5ed84c52e4a208a582da37767"
+      }
+    ],
+    "previewHttpFix": "bounded body consumed before early busy/expired/denied reply; no inference queue; oversized and ambiguous framing rejected",
+    "previewProcessRestarted": false
+  },
+  "installedWeb": {
+    "sourceRevision": "49f8b12abf77c2affd8584f72703b18bcbeb63f9",
+    "imageId": "sha256:c951da0b16e4467385f8b735cc5735831d4b86df68bc9f1b287358c0ac0fa2a5",
+    "replaced": false
+  }
+}

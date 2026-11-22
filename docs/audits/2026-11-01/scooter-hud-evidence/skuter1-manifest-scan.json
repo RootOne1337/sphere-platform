@@ -1,0 +1,72 @@
+{
+  "scanned": 13,
+  "skuter1_exact_title_found": false,
+  "scope": "local reconstruction job input manifest declared titles only; not browser OPFS, device or other storage",
+  "jobs": [
+    {
+      "job": "1198590c508340838befe8e1bbea7360",
+      "manifest_sha256": "d70864eee802ead1e7666ff31a047ee3a8fb567cfc8b0f6f4c000179807429a9",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "24c36740539b4e1c8fc6c0ae12ecd7b4",
+      "manifest_sha256": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "35ef07fe96824ffc81bc0906cf08dd69",
+      "manifest_sha256": "d2f8df0458ab29783fd3c745e5c929e39063834287582ea4501146e7b621edb9",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "38f24ff879a341b7a508729c6a7d58b8",
+      "manifest_sha256": "ed2db45077d95eed9bc3c9d065cb4b998024d5d24e8b093c30ae79d7c779994b",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "4fb278ec735145a5872cf7fd44d1ed9b",
+      "manifest_sha256": "ca28894d898bf88e7d9a8e7fe0639a1e0e3df49849f95abaa4c70bdb48a635b4",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "5f77587f2f7a464e862bb0b61d0d786b",
+      "manifest_sha256": "b4974cd56baef5ac1a8c780b43032796e96ec690fd152d4146e449d83df72cce",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "619ba4c5f4b54b8db88c330f29dc6cfc",
+      "manifest_sha256": "07bce887d9dff37b9572283f5eb375a40c2eb5dfef723e191f08bf81901ddcc3",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "8140c4bf1cce41819dda4c485fc11d80",
+      "manifest_sha256": "87840abea2fa8627f2f50a18306de503a91db5d26ff5895460280c411410c66f",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "b1b7e4dc0ee24e42be13e80293cf5bd8",
+      "manifest_sha256": "0f79e89fb520823b51cb3916b14ed17174fbc8f1e9af21687d72e0952e9a416e",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "b7bce94214db48e195dea1a2ac65faf2",
+      "manifest_sha256": "3310a3ed9edf439f5f8877ef396ba5819bff68de82b3cd82aea3fafc2863f96f",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "b861ac82fcd64425bc583b37f620ba2a",
+      "manifest_sha256": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "c667f86cc9de4a378fb12e5269981a6e",
+      "manifest_sha256": "67e22e330837646e4f0d3b0ab95895371f79136c54bd8c1b0014478aa8c3d417",
+      "title_matches_skuter1": false
+    },
+    {
+      "job": "f7dc528660854681b4dc8fe257c7fa09",
+      "manifest_sha256": "6600429df8f21fb079ca3c5256efa986ea702c6df9a9be984cf2a764639f7cd0",
+      "title_matches_skuter1": false
+    }
+  ]
+}

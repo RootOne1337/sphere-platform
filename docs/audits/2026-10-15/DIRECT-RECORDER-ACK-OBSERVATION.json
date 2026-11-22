@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T10:05:21.802193+00:00",
+  "runtimeInstalled": false,
+  "productionAccepted": false,
+  "scope": "Owned ordinary Chrome source-preview checks on PH011. Recorder logic c76e9537, outcome presentation06081fb5, fleet height19a850f8; preview build stamp is not installed-source proof.",
+  "sourceRevisions": [
+    "c76e953719feecfed04093ef4633bd7022408d5c",
+    "06081fb56a0a1d0db40106bd0f1210e03dfa6fe1",
+    "19a850f86707616cc468e78176693037d8b1f654"
+  ],
+  "stream": {
+    "six": {
+      "entries": 6,
+      "confirmed": 6,
+      "control": "ready",
+      "legacyWsCounts": {
+        "click": 0,
+        "swipe": 0,
+        "touch_event": 0
+      },
+      "canvasStableDuringHeld": true
+    },
+    "curve": {
+      "unsupportedVisible": true,
+      "recordingStopped": true,
+      "entriesPreserved": 6,
+      "control": "ready"
+    },
+    "shared": {
+      "interruptedExplicitly": true,
+      "entriesPreserved": 6,
+      "firstControl": "ready",
+      "secondControl": "ready"
+    },
+    "stop": {
+      "cancelledExplicitly": true,
+      "entriesPreserved": 6,
+      "control": "ready"
+    },
+    "final": {
+      "frames": 18630,
+      "connections": 1,
+      "control": "ready"
+    },
+    "graphValidated": true,
+    "currentNotice": {
+      "cancelled": true,
+      "nonemptyAlerts": 0,
+      "control": "ready"
+    },
+    "mobileWorkbench": {
+      "width": 390,
+      "height": 844,
+      "rootOverflow": false
+    }
+  },
+  "table": {
+    "mobile": {
+      "sectionHeight": 589,
+      "gridHeight": 516,
+      "rows": 20,
+      "overflow": false
+    },
+    "desktop": {
+      "sectionHeight": 578,
+      "gridHeight": 529,
+      "overflow": false
+    },
+    "paginationVisible": true
+  },
+  "pageErrorCount": 0,
+  "androidActionsSent": true,
+  "commandsReplayed": false,
+  "savedScript": false,
+  "taskLaunched": false,
+  "limits": [
+    "No arbitrary trajectory replay or physical keyboard recording.",
+    "Two clients only; no20+ viewer, WAN, real relay, physical phone IME or offline-server acceptance."
+  ]
+}

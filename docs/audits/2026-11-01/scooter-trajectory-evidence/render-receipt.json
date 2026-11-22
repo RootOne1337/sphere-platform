@@ -1,0 +1,14 @@
+{
+  "source_hashes": {
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\data.npz": "966fe547ff0a795d1c5977d051a79debd440974b85e14c51fb747f1a868514f9",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\review-comparison.json": "72a6642d30755dd250c29ae7cecd83cf7f9067b6f3e190d573250ef088f35e87",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w0\\fit.npz": "12595487857689055ef4e1da9448ceec740dcd95b480f64ded9d96b00743994e",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w05\\fit.npz": "1f6744a0b821d78711af0c2aad8001b9f0df2c6dc7f456e9a99529fbd209890a",
+    ".local-pilot\\scooter-joint-ba-20261101-v3\\w2\\fit.npz": "6a9b0984d95f55247a46789c290936533e167250b00f8b14ddde9f4b9e476ff0"
+  },
+  "source_unchanged": true,
+  "output_sha256": "aa60916d426967bc810d107e9be17d312b0fc4314ff77d68bee12a816e370a5e",
+  "physical_actions": 0,
+  "pose_interpolation": false,
+  "diagnostic_only": true
+}

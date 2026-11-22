@@ -1,0 +1,16 @@
+{
+  "phase": "after",
+  "at": "2026-09-13T00:43:46.629968+00:00",
+  "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+  "apk_sha256": "d6db04c6101349050913bd48582839e8be098b02660834603bfffd11b42151ea",
+  "fixture_bytes": 540034,
+  "requested_apk_bytes": 65536,
+  "api_line_limit": 100,
+  "http_status": 200,
+  "latest_marker_present": true,
+  "response_utf8_bytes": 4388,
+  "replacement_character_present": false,
+  "duration_seconds": 0.609,
+  "apk_pid_unchanged_during_probe": true,
+  "synthetic_fixture_removed_original_logs_preserved": true
+}

@@ -1,0 +1,13 @@
+{
+  "inspected_file": "/system/framework/oat/x86_64/services.vdex",
+  "sha256": "9bbeaafe6008bad658fe2c3c2e0f7e3af699df2acd16e89ed3d114efe3dc5c79",
+  "bytes": 9683008,
+  "sdk": 28,
+  "method": "read-only oatdump of installed services.odex with BroadcastQueue class filter",
+  "observed_class": "com.android.server.am.BroadcastQueue",
+  "observed_dex_offsets": "0x097e-0x0a93",
+  "finding": "Vendor code skips non-explicit Android/system broadcast startup for ordinary non-exempt packages; APK receiver is registered and enabled but no process starts at boot.",
+  "firmware_modified": false,
+  "global_debug_property_changed": false,
+  "raw_vendor_binary_or_disassembly_committed": false
+}

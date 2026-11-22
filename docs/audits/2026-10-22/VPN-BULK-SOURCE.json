@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T20:02:08.050567+00:00",
+  "sourceParent": "0342b8db2a006ca64856223e339e39ba0896cf07",
+  "sourceFilesSha256NormalizedLf": {
+    "frontend/src/features/vpn/VpnProfileBatchImport.tsx": "786f21efadaac00ebcdf74c33ab23ee79cacd1efedcdb848364e78e0a2e6d971",
+    "frontend/src/features/vpn/profileBatchTypes.ts": "4796dba657371e7e1b8c0310ffbc1354bf03d6820a58dfc69ed5472b425c7361",
+    "backend/services/vpn/profile_batch.py": "662966d3af7424333188eaeb7f26052dcec1dda0318e4b79200c67fe2ffde341",
+    "backend/schemas/vpn/bulk_profiles.py": "bf1b5db3d1dbee56c2f1fbf791a0192634fad22cdce31d55ac938c5cee73ea61"
+  },
+  "implementation": {
+    "maxItems": 100,
+    "maxHttpBytes": 4194304,
+    "atomicNewWrites": true,
+    "perItemRequestIdentity": true,
+    "preflightPersists": false,
+    "statusNullMeansCancelled": false,
+    "deviceDispatchImplemented": false
+  },
+  "localChecks": {
+    "vpnTestsPassed": 230,
+    "batchUiTestsPassed": 7,
+    "typeScriptPassed": true,
+    "backendMypyFiles": 279,
+    "backendMypyPassed": true,
+    "documentationStatusTestsPassed": 41
+  },
+  "visual": {
+    "actualSourceComponents": true,
+    "syntheticApiAndConfigs": true,
+    "saveDisabledInHarness": true,
+    "viewports": [
+      [
+        1440,
+        900
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "mobileDocumentWidth": 390,
+    "mobileDialogWidth": 390,
+    "renderedRows": 100,
+    "lastRowReached": true,
+    "errorsBroughtForward": true,
+    "screenshots": [
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-source/mobile-errors.png",
+        "sha256": "824c06627b1458f530dc4bed3d6f103facaaa1ebf0f294aac4aa1c423d7cf1fb"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-source/mobile-100-final.png",
+        "sha256": "fff88757ce8aa9a1e48fa23749e06886be33371c54670ea5cd8ca94dee8b482e"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-batch-source/desktop-100-final.png",
+        "sha256": "794c3bde15c196f1b7a0296ac5ce70976ca13b1258386906e210970b60ca4e02"
+      }
+    ],
+    "physicalTouchTested": false,
+    "ownedBrowserClosed": true,
+    "ownedPreviewStopped": true
+  },
+  "runtimeInstalled": false,
+  "apkInstalled": false,
+  "physicalVpnChanged": false,
+  "hostedCi": {
+    "firstFrontendBuildAndPackagedHttpPassed": true,
+    "firstFrontendArchiveAdmitted": false,
+    "failureCode": "image_config_digest_mismatch",
+    "correctiveOciChainVerifierTestedLocally": true,
+    "newHostedResultsPending": true
+  },
+  "open": [
+    "complete hosted CI",
+    "admitted web/API delivery",
+    "APK84 full CI/OTA and physical main-service fault tests",
+    "server operation journal/leases",
+    "per-app metrics adapters",
+    "proxy provider execution",
+    "pool assignment and script/pipeline integration"
+  ]
+}

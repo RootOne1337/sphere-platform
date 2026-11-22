@@ -1,0 +1,20 @@
+{
+  "source": "29e545d54b84c2d8bf760ee9747183e5e9d2a54f",
+  "command": [
+    "C:/Users/dimas/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\node_modules\\jest\\bin\\jest.js",
+    "__tests__/stream/walking-route-pilot.test.tsx",
+    "--ci",
+    "--runInBand",
+    "--silent",
+    "--json",
+    "--outputFile",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\vehicle-route-deployment-20261102-v1\\timing-targeted-node24.json"
+  ],
+  "exitCode": 0,
+  "tests": 45,
+  "passed": 45,
+  "failed": 0,
+  "seconds": 4.125,
+  "logSha256": "5d22b9091226004e551fe8e78e0e0e461ed3c50d63aa1897e62eb973a62890b9"
+}

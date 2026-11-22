@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "collectorState": "complete",
+  "finishedUtc": "2026-10-05T07:58:42.644183+00:00",
+  "rawSamplesFileSha256": "b6f75d7674219adcba21efe5d7e7530b4bb3ddb556488fa63b40aa46e9cab13f",
+  "rawSamplesBytes": 8350664,
+  "state": "COMPLETE_ATTRIBUTION_OPEN",
+  "samplesRead": 241,
+  "firstUtc": "2026-10-04T23:58:34.375346+00:00",
+  "lastUtc": "2026-10-05T07:58:34.389514+00:00",
+  "firstSampleCanonicalSha256": "c1308cda121269c70ae9140da712d39fb8d8f50e341044e9fba7dcb9888c70de",
+  "lastSampleCanonicalSha256": "8b165f6369f0e596553db9a1537ee6e4088e894736d0cdbfd1a3ce83225fe59a",
+  "rawMetadataKeptPrivate": true,
+  "firstFreeDiskBytes": 63238893568,
+  "lastFreeDiskBytes": 60926562304,
+  "netFreeDiskDeltaBytes": -2312331264,
+  "namedFileCounters": [
+    {
+      "scope": "Docker Desktop shared VHD",
+      "firstAllocatedBytes": 234731077632,
+      "lastAllocatedBytes": 234731077632,
+      "firstLogicalBytes": 234731077632,
+      "lastLogicalBytes": 234731077632,
+      "allocationUnavailable": false
+    },
+    {
+      "scope": "Windows pagefile logical size",
+      "firstAllocatedBytes": null,
+      "lastAllocatedBytes": null,
+      "firstLogicalBytes": 44485144576,
+      "lastLogicalBytes": 44485144576,
+      "allocationUnavailable": true
+    }
+  ],
+  "measuredVssSamples": 241,
+  "minimumVssAllocatedBytes": 0,
+  "maximumVssAllocatedBytes": 0,
+  "firstMemory": {
+    "bootUtc": "2026-10-04T16:39:32.5000000Z",
+    "availableRamBytes": 17396490240,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 65264529408,
+    "commitLimitBytes": 95153381376,
+    "pagedPoolBytes": 3838062592,
+    "nonpagedPoolBytes": 2863079424
+  },
+  "lastMemory": {
+    "bootUtc": "2026-10-04T16:39:32.5000000Z",
+    "availableRamBytes": 11606102016,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 71771127808,
+    "commitLimitBytes": 95153381376,
+    "pagedPoolBytes": 3667431424,
+    "nonpagedPoolBytes": 2826838016
+  },
+  "largestFreeDiskDrops": [
+    {
+      "observedAt": "2026-10-05T06:22:34.389151+00:00",
+      "freeDiskDeltaBytes": -1897357312
+    },
+    {
+      "observedAt": "2026-10-05T02:18:34.381570+00:00",
+      "freeDiskDeltaBytes": -559411200
+    },
+    {
+      "observedAt": "2026-10-05T06:24:34.378387+00:00",
+      "freeDiskDeltaBytes": -125698048
+    },
+    {
+      "observedAt": "2026-10-05T00:32:34.378743+00:00",
+      "freeDiskDeltaBytes": -40824832
+    },
+    {
+      "observedAt": "2026-10-05T01:50:34.380637+00:00",
+      "freeDiskDeltaBytes": -32944128
+    }
+  ],
+  "writerAttribution": "UNDETERMINED",
+  "productionApiRestartInsideWindow": true,
+  "buildsInsideWindow": true,
+  "cleanupPerformedByRecorder": false,
+  "diskOrRamLeakDeclaredFixed": false,
+  "limits": [
+    "Named-file inventory is not exhaustive; unchanged VHD size does not exclude writes inside it.",
+    "Windows commit is not physical RAM; process totals not equated with host commit.",
+    "Builds and restarts occurred inside the observation window; no controlled leak-soak claim.",
+    "This is the final bounded 8-hour report; historical attribution and a controlled RAM soak remain open."
+  ]
+}

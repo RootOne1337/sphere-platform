@@ -6,12 +6,13 @@ const config: Config = {
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
+      tsconfig: 'tsconfig.jest.json',
       // Ускорение: diagnostics только при CI
       diagnostics: { ignoreDiagnostics: [151001] },
     }],
   },
   moduleNameMapper: {
+    "\\.module\\.css$": "<rootDir>/__tests__/css-module.cjs",
     // Поддержка алиасов @/* → ./*
     '^@/(.*)$': '<rootDir>/$1',
   },

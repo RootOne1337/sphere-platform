@@ -1,0 +1,109 @@
+{
+  "baseline_original_views": {
+    "median_step": 0.15231052833659114,
+    "orig496_500_displacement": 3.42810378901192,
+    "orig_interval_over_median_step": 22.50733305471931,
+    "orig_496_500_seconds": 0.217
+  },
+  "new_same_original_views": {
+    "median_step": 0.2297563169738638,
+    "orig496_500_displacement": 0.29223258515003026,
+    "orig_interval_over_median_step": 1.2719240497891229,
+    "orig_496_500_seconds": 0.217
+  },
+  "focal_px": 604.171514438519,
+  "pairs": [
+    {
+      "a": 492,
+      "b": 496,
+      "seconds_a": 19.639,
+      "seconds_b": 19.839,
+      "camera_step": 0.2903044544601694,
+      "global_rotation_deg": 17.678646232313117,
+      "verified_matches": 542,
+      "essential_inliers": 418,
+      "positive_depth": 284,
+      "direct_E_rotation_deg": 17.21783876464333,
+      "direct_vs_global_deg": 0.6030635996159556
+    },
+    {
+      "a": 496,
+      "b": 500,
+      "seconds_a": 19.839,
+      "seconds_b": 20.056,
+      "camera_step": 0.29223258515003026,
+      "global_rotation_deg": 28.79807748666949,
+      "verified_matches": 301,
+      "essential_inliers": 219,
+      "positive_depth": 105,
+      "direct_E_rotation_deg": 28.74401617563503,
+      "direct_vs_global_deg": 0.27559173316333047
+    },
+    {
+      "a": 500,
+      "b": 504,
+      "seconds_a": 20.056,
+      "seconds_b": 20.271,
+      "camera_step": 0.22809038541203874,
+      "global_rotation_deg": 34.368915004833205,
+      "verified_matches": 232,
+      "essential_inliers": 184,
+      "positive_depth": 80,
+      "direct_E_rotation_deg": 34.09548419051495,
+      "direct_vs_global_deg": 0.7100959008625796
+    },
+    {
+      "a": 496,
+      "b": 497,
+      "seconds_a": 19.839,
+      "seconds_b": 19.889,
+      "camera_step": 0.07659067621267351,
+      "global_rotation_deg": 5.935734361220546,
+      "verified_matches": 1021,
+      "essential_inliers": 830,
+      "positive_depth": 480,
+      "direct_E_rotation_deg": 6.1943575888486215,
+      "direct_vs_global_deg": 0.32721908020044066
+    },
+    {
+      "a": 497,
+      "b": 498,
+      "seconds_a": 19.889,
+      "seconds_b": 19.938,
+      "camera_step": 0.04746510010838615,
+      "global_rotation_deg": 4.142735823090942,
+      "verified_matches": 1263,
+      "essential_inliers": 1176,
+      "positive_depth": 608,
+      "direct_E_rotation_deg": 3.975863569011754,
+      "direct_vs_global_deg": 0.19548812789507178
+    },
+    {
+      "a": 498,
+      "b": 499,
+      "seconds_a": 19.938,
+      "seconds_b": 19.972,
+      "camera_step": 0.0488948347909009,
+      "global_rotation_deg": 4.752477675218549,
+      "verified_matches": 1183,
+      "essential_inliers": 1035,
+      "positive_depth": 576,
+      "direct_E_rotation_deg": 4.633626457729607,
+      "direct_vs_global_deg": 0.1668641096220327
+    },
+    {
+      "a": 499,
+      "b": 500,
+      "seconds_a": 19.972,
+      "seconds_b": 20.056,
+      "camera_step": 0.12320833710301475,
+      "global_rotation_deg": 14.002702240531267,
+      "verified_matches": 669,
+      "essential_inliers": 544,
+      "positive_depth": 341,
+      "direct_E_rotation_deg": 13.965209270207811,
+      "direct_vs_global_deg": 0.11254335994567706
+    }
+  ],
+  "note": "Camera units arbitrary; normalized comparisons and HUD are same-video diagnostics. Direct E uses same verified correspondences and assumed model focal; not independent truth. Temporal neighborhood chosen after inspecting original jump."
+}

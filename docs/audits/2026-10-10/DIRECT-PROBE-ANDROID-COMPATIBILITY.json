@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-09T22:40:41.644664+00:00",
+  "scope": "Source compatibility fix and rejected candidate receipt; no new APK installed, live JNI or connectivity acceptance.",
+  "sourceBaseRevision": "0abe15ce1e8ab82ab9ac232ce42b7c65b1055bdc",
+  "sourceHashesNormalizedLf": {
+    "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeNetwork.kt": "fbd33aec788603d443dbeb24b5ac6adf6938663b445144e51d6203d128bc9a37",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/direct/DirectProbeNetworkTest.kt": "651a59ab2ddca741960293741e2c791a7c0e873ce98b8bb4b82cb5b401ac575c"
+  },
+  "rejectedHostedCi": {
+    "runId": 37998676869,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37998676869",
+    "conclusion": "failure",
+    "task": ":app:lintDevDebug",
+    "issue": "NewApi",
+    "method": "java.math.BigInteger#longValueExact",
+    "requiresApi": 31,
+    "minimumApi": 26
+  },
+  "rejectedCandidate": {
+    "sha256": "bb542b6b1e15cbe4c1f7be2b68eefdd13202f3334f6b7b327ce7b453eb10f084",
+    "installed": false,
+    "otaPublished": false
+  },
+  "fix": {
+    "conversion": "nonnegative sign and bitLength <= 63 before toLong",
+    "minimumSdkChanged": false,
+    "lintSuppressed": false
+  },
+  "localChecks": {
+    "gradleOutcome": "BUILD SUCCESSFUL",
+    "elapsedSeconds": 301,
+    "offline": true,
+    "workers": 2,
+    "heapMiB": 1536,
+    "testProfiles": [
+      {
+        "profile": "DevDebug",
+        "directCanaryEnabled": true,
+        "tests": 990,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3,
+        "suites": 85,
+        "newReducerTests": 6,
+        "junitManifestSha256": "eaa560028f6ba824bc933016135dc31162325fcd1969baa57b6cb311197f3ccf"
+      },
+      {
+        "profile": "EnterpriseDebug",
+        "directCanaryEnabled": true,
+        "tests": 990,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3,
+        "suites": 85,
+        "newReducerTests": 6,
+        "junitManifestSha256": "f376cdcd06220db2a72f5078cc0a25bac8e1dc2987b5f34c9cd9948df9568e20"
+      }
+    ],
+    "lint": {
+      "profile": "DevDebug",
+      "errors": 0,
+      "warnings": 37,
+      "reportSha256NormalizedLf": "c6ee6d646b736516740472b402a60dcdb2aa9fd80300ede06a7d3ea973437a87"
+    },
+    "buildLogSha256NormalizedLf": "ff234539704c38a9dfae9a48432c916a4063df80243160b651e37efea3243a65"
+  },
+  "cleanupObserved": {
+    "observedAtUtc": "2026-10-09T22:35:50.117393+00:00",
+    "candidateSource": "0abe15ce1e8ab82ab9ac232ce42b7c65b1055bdc",
+    "candidateInstalled": false,
+    "reason": "Hosted Android lint rejected BigInteger.longValueExact: requires API31, minimum26",
+    "androidCiRunId": 37998676869,
+    "androidCiConclusion": "failure",
+    "originalApkSha256": "6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013",
+    "apiContainerId": "5b602999c25f60cc12e6a82b52b1004a5957d22eff688dc0509e52aa8bfcf83c",
+    "apiBuild": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "probeEnabled": false,
+    "allowlist": [],
+    "temporaryListenersStopped": true,
+    "diagnosticTabClosed": true,
+    "otaPublished": false
+  },
+  "remaining": [
+    "Exact corrected-source hosted Android CI",
+    "Signed candidate admission",
+    "Live native callback and bounded cleanup",
+    "Correlated native/browser ICE counters",
+    "Working DataChannel and RTT",
+    "Public idle ACK reliability",
+    "Production media/control and network matrix"
+  ],
+  "productCounts": {
+    "acceptedRecordedScope": 9,
+    "open": 41,
+    "legacyUnclosed": 7
+  }
+}

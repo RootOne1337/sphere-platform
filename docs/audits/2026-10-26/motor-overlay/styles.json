@@ -1,0 +1,1006 @@
+{
+  "kind": "OFFLINE_STYLE_SENSITIVITY_NOT_NAVIGATION",
+  "schemaVersion": 1,
+  "commonSeeds": [
+    29,
+    43
+  ],
+  "physicalActions": 0,
+  "modelDownloads": 0,
+  "horizonMs": 200,
+  "comparedStyles": [
+    "cyan_line",
+    "yellow_arrow",
+    "purple_chevrons",
+    "green_corridor"
+  ],
+  "materialAxisDelta": 0.1,
+  "models": {
+    "p2p": {
+      "responses": 160,
+      "styles": {
+        "cyan_line": {
+          "summary": {
+            "pairs": [
+              {
+                "style": "cyan_line",
+                "image": 0,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "cyan_line",
+                "image": 1,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "cyan_line",
+                "image": 2,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "cyan_line",
+                "image": 3,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "cyan_line",
+                "image": 0,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": -1,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": -1.0
+              },
+              {
+                "style": "cyan_line",
+                "image": 1,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "cyan_line",
+                "image": 2,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "cyan_line",
+                "image": 3,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              }
+            ],
+            "repeatRawIdentical": true,
+            "positiveLateralPairs": 0,
+            "positiveCameraPairs": 0,
+            "positiveWindowLateralPairs": 0,
+            "positiveWindowCameraPairs": 0,
+            "totalPairs": 8,
+            "directionalNavigationAccepted": false,
+            "inferenceWallMedianMs": 108.72660001041368
+          },
+          "absoluteOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "relativeOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "monotonicLeftStraightRightOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "inferenceWallMaxMs": 167.08709998056293
+        },
+        "yellow_arrow": {
+          "summary": {
+            "pairs": [
+              {
+                "style": "yellow_arrow",
+                "image": 0,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 1,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 2,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 3,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 0,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 1,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 2,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": -1,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": -1.0
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 3,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              }
+            ],
+            "repeatRawIdentical": true,
+            "positiveLateralPairs": 0,
+            "positiveCameraPairs": 0,
+            "positiveWindowLateralPairs": 0,
+            "positiveWindowCameraPairs": 0,
+            "totalPairs": 8,
+            "directionalNavigationAccepted": false,
+            "inferenceWallMedianMs": 106.51165001036134
+          },
+          "absoluteOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "relativeOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "monotonicLeftStraightRightOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "inferenceWallMaxMs": 145.4714999999851
+        },
+        "purple_chevrons": {
+          "summary": {
+            "pairs": [
+              {
+                "style": "purple_chevrons",
+                "image": 0,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 1,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 2,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 3,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 0,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 1,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 2,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 3,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              }
+            ],
+            "repeatRawIdentical": true,
+            "positiveLateralPairs": 0,
+            "positiveCameraPairs": 0,
+            "positiveWindowLateralPairs": 0,
+            "positiveWindowCameraPairs": 0,
+            "totalPairs": 8,
+            "directionalNavigationAccepted": false,
+            "inferenceWallMedianMs": 104.62025001470465
+          },
+          "absoluteOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "relativeOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "monotonicLeftStraightRightOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "inferenceWallMaxMs": 171.1428000126034
+        },
+        "green_corridor": {
+          "summary": {
+            "pairs": [
+              {
+                "style": "green_corridor",
+                "image": 0,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "green_corridor",
+                "image": 1,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "green_corridor",
+                "image": 2,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "green_corridor",
+                "image": 3,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "green_corridor",
+                "image": 0,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "green_corridor",
+                "image": 1,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "green_corridor",
+                "image": 2,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              },
+              {
+                "style": "green_corridor",
+                "image": 3,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0,
+                "rightMinusLeftCamera": 0,
+                "windowCoveredMs": 50.0,
+                "windowRightMinusLeftLateral": 0.0,
+                "windowRightMinusLeftCamera": 0.0
+              }
+            ],
+            "repeatRawIdentical": true,
+            "positiveLateralPairs": 0,
+            "positiveCameraPairs": 0,
+            "positiveWindowLateralPairs": 0,
+            "positiveWindowCameraPairs": 0,
+            "totalPairs": 8,
+            "directionalNavigationAccepted": false,
+            "inferenceWallMedianMs": 107.08025000349153
+          },
+          "absoluteOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "relativeOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "monotonicLeftStraightRightOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "inferenceWallMaxMs": 161.13960000802763
+        }
+      },
+      "receipts": [
+        {
+          "name": "p2p-r3",
+          "sha256": "a9e44275b348d3a0c5a18430d19847570d56ab0df6ddd787490517789b9e1a4f",
+          "adapterSha256": "38c1b7304c3c85ab720701f105c628680c85a99a8adf1da902b0c34234a2e49f",
+          "providerCleanupConfirmed": true,
+          "postWarmupAvailableRamBytes": [
+            15734136832,
+            15824982016
+          ]
+        },
+        {
+          "name": "p2p-styles-v1",
+          "sha256": "3830da39f297a1da68da53aeef937e1847b104653aa1f2a643d269b109f9f065",
+          "adapterSha256": "38c1b7304c3c85ab720701f105c628680c85a99a8adf1da902b0c34234a2e49f",
+          "providerCleanupConfirmed": true,
+          "postWarmupAvailableRamBytes": [
+            14109896704,
+            15489507328
+          ]
+        }
+      ],
+      "rawChunksIdenticalAcrossStyles": true
+    },
+    "nitrogen": {
+      "responses": 160,
+      "styles": {
+        "cyan_line": {
+          "summary": {
+            "pairs": [
+              {
+                "style": "cyan_line",
+                "image": 0,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.01904296875,
+                "rightMinusLeftCamera": -0.0024413466453552246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.018384943405787002,
+                "windowRightMinusLeftCamera": -0.0009352167447408039
+              },
+              {
+                "style": "cyan_line",
+                "image": 1,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.09423828125,
+                "rightMinusLeftCamera": -0.00634765625,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.07541846732298552,
+                "windowRightMinusLeftCamera": -0.0019683837890625
+              },
+              {
+                "style": "cyan_line",
+                "image": 2,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.0986328125,
+                "rightMinusLeftCamera": 0.00048828125,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.1012535045544305,
+                "windowRightMinusLeftCamera": 0.0006675819555918368
+              },
+              {
+                "style": "cyan_line",
+                "image": 3,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.64794921875,
+                "rightMinusLeftCamera": -0.0009765625,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.6412354956070583,
+                "windowRightMinusLeftCamera": -0.0007799367109934479
+              },
+              {
+                "style": "cyan_line",
+                "image": 0,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.008789122104644775,
+                "rightMinusLeftCamera": 0.0006103515625,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.0012207130591074633,
+                "windowRightMinusLeftCamera": -0.0002593944470087688
+              },
+              {
+                "style": "cyan_line",
+                "image": 1,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.62969970703125,
+                "rightMinusLeftCamera": -0.49468994140625,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.6436436573664347,
+                "windowRightMinusLeftCamera": -0.5166168212890626
+              },
+              {
+                "style": "cyan_line",
+                "image": 2,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.003662109375,
+                "rightMinusLeftCamera": -0.018798828125,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.0031738181908925363,
+                "windowRightMinusLeftCamera": 0.03525416056315095
+              },
+              {
+                "style": "cyan_line",
+                "image": 3,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.2589111328125,
+                "rightMinusLeftCamera": -0.0012206435203552246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.2548014223575592,
+                "windowRightMinusLeftCamera": -0.0010477503140767412
+              }
+            ],
+            "repeatRawIdentical": true,
+            "positiveLateralPairs": 2,
+            "positiveCameraPairs": 2,
+            "positiveWindowLateralPairs": 2,
+            "positiveWindowCameraPairs": 2,
+            "totalPairs": 8,
+            "directionalNavigationAccepted": false,
+            "inferenceWallMedianMs": 124.31889999425039
+          },
+          "absoluteOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "relativeOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "monotonicLeftStraightRightOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "inferenceWallMaxMs": 170.6893999944441
+        },
+        "yellow_arrow": {
+          "summary": {
+            "pairs": [
+              {
+                "style": "yellow_arrow",
+                "image": 0,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.54345703125,
+                "rightMinusLeftCamera": -0.0029296875,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.5414646367232006,
+                "windowRightMinusLeftCamera": -0.0014422635237375887
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 1,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.109375,
+                "rightMinusLeftCamera": -0.0009765028953552246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.10944048563639323,
+                "windowRightMinusLeftCamera": 0.0006313323974609375
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 2,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.021484375,
+                "rightMinusLeftCamera": -0.004394471645355225,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.021657943725585938,
+                "windowRightMinusLeftCamera": 0.00024000803629557326
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 3,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.015625,
+                "rightMinusLeftCamera": -0.0009765625,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.012938340504964193,
+                "windowRightMinusLeftCamera": 1.7931063969926038e-06
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 0,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.004150450229644775,
+                "rightMinusLeftCamera": 0.004272401332855225,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -2.035498619079568e-05,
+                "windowRightMinusLeftCamera": 0.0013427585363388062
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 1,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.0026856064796447754,
+                "rightMinusLeftCamera": 0.006469666957855225,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.0016886393229166667,
+                "windowRightMinusLeftCamera": 0.0008036295572916665
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 2,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.001220703125,
+                "rightMinusLeftCamera": -0.00439453125,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.0016377717256546012,
+                "windowRightMinusLeftCamera": 0.0023733675479888916
+              },
+              {
+                "style": "yellow_arrow",
+                "image": 3,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.001708984375,
+                "rightMinusLeftCamera": 0.008056581020355225,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.0012410531441370645,
+                "windowRightMinusLeftCamera": 0.0009155223766962681
+              }
+            ],
+            "repeatRawIdentical": true,
+            "positiveLateralPairs": 6,
+            "positiveCameraPairs": 3,
+            "positiveWindowLateralPairs": 4,
+            "positiveWindowCameraPairs": 7,
+            "totalPairs": 8,
+            "directionalNavigationAccepted": false,
+            "inferenceWallMedianMs": 114.98480000591371
+          },
+          "absoluteOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "relativeOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "monotonicLeftStraightRightOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "inferenceWallMaxMs": 137.16939999721944
+        },
+        "purple_chevrons": {
+          "summary": {
+            "pairs": [
+              {
+                "style": "purple_chevrons",
+                "image": 0,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.11865234375,
+                "rightMinusLeftCamera": -0.0009765625,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.12421721716721845,
+                "windowRightMinusLeftCamera": -0.001010576883951823
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 1,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.02978515625,
+                "rightMinusLeftCamera": 0.00048828125,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.03586324055989598,
+                "windowRightMinusLeftCamera": 0.00021887322266896586
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 2,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.05810546875,
+                "rightMinusLeftCamera": -0.0034179091453552246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.05488332609335578,
+                "windowRightMinusLeftCamera": 0.00020820895830790214
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 3,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.010498046875,
+                "rightMinusLeftCamera": -0.0019530653953552246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.013556152582168468,
+                "windowRightMinusLeftCamera": -0.000538830955823263
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 0,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.003173828125,
+                "rightMinusLeftCamera": 0.002197265625,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.00034586588541666674,
+                "windowRightMinusLeftCamera": 0.0004679312308629353
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 1,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.00146484375,
+                "rightMinusLeftCamera": 0.0035399794578552246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.0014648586511611943,
+                "windowRightMinusLeftCamera": -0.00044759114583333294
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 2,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.041015625,
+                "rightMinusLeftCamera": 0.0029296875,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.039499923586845405,
+                "windowRightMinusLeftCamera": 0.0005009969075520828
+              },
+              {
+                "style": "purple_chevrons",
+                "image": 3,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.5159759521484375,
+                "rightMinusLeftCamera": 0.0022582411766052246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.5288403828938802,
+                "windowRightMinusLeftCamera": -0.00232696533203125
+              }
+            ],
+            "repeatRawIdentical": true,
+            "positiveLateralPairs": 4,
+            "positiveCameraPairs": 5,
+            "positiveWindowLateralPairs": 4,
+            "positiveWindowCameraPairs": 4,
+            "totalPairs": 8,
+            "directionalNavigationAccepted": false,
+            "inferenceWallMedianMs": 112.83635000290815
+          },
+          "absoluteOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "relativeOppositeSignsOverPointOne": {
+            "lateral": 1,
+            "camera": 0
+          },
+          "monotonicLeftStraightRightOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "inferenceWallMaxMs": 159.31009998894297
+        },
+        "green_corridor": {
+          "summary": {
+            "pairs": [
+              {
+                "style": "green_corridor",
+                "image": 0,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.18505859375,
+                "rightMinusLeftCamera": -0.00048828125,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.1854648540417354,
+                "windowRightMinusLeftCamera": -0.0004367679357528684
+              },
+              {
+                "style": "green_corridor",
+                "image": 1,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.00341796875,
+                "rightMinusLeftCamera": 0.004394471645355225,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.0010849883159002038,
+                "windowRightMinusLeftCamera": 0.0011723687251408894
+              },
+              {
+                "style": "green_corridor",
+                "image": 2,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.0380859375,
+                "rightMinusLeftCamera": 0.0029296278953552246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.04201428095499682,
+                "windowRightMinusLeftCamera": 0.0011517802874247227
+              },
+              {
+                "style": "green_corridor",
+                "image": 3,
+                "seed": 29,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.6948241591453552,
+                "rightMinusLeftCamera": -0.005859315395355225,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.6969699611266453,
+                "windowRightMinusLeftCamera": -0.0007695953051249189
+              },
+              {
+                "style": "green_corridor",
+                "image": 0,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.0029296875,
+                "rightMinusLeftCamera": -0.0029296278953552246,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.000488276282946269,
+                "windowRightMinusLeftCamera": 0.00025431811809539817
+              },
+              {
+                "style": "green_corridor",
+                "image": 1,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": 0.6909180283546448,
+                "rightMinusLeftCamera": 0.3923625946044922,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": 0.6989396313826244,
+                "windowRightMinusLeftCamera": 0.5309446354707081
+              },
+              {
+                "style": "green_corridor",
+                "image": 2,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.20184326171875,
+                "rightMinusLeftCamera": 0.11622613668441772,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.2128855536381404,
+                "windowRightMinusLeftCamera": 0.06833011408646901
+              },
+              {
+                "style": "green_corridor",
+                "image": 3,
+                "seed": 43,
+                "repeatRawIdentical": true,
+                "rightMinusLeftLateral": -0.32894134521484375,
+                "rightMinusLeftCamera": 0.0001220703125,
+                "windowCoveredMs": 200.0,
+                "windowRightMinusLeftLateral": -0.32439099748929334,
+                "windowRightMinusLeftCamera": 2.0340085029601942e-05
+              }
+            ],
+            "repeatRawIdentical": true,
+            "positiveLateralPairs": 5,
+            "positiveCameraPairs": 5,
+            "positiveWindowLateralPairs": 5,
+            "positiveWindowCameraPairs": 6,
+            "totalPairs": 8,
+            "directionalNavigationAccepted": false,
+            "inferenceWallMedianMs": 112.90474999987055
+          },
+          "absoluteOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "relativeOppositeSignsOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "monotonicLeftStraightRightOverPointOne": {
+            "lateral": 0,
+            "camera": 0
+          },
+          "inferenceWallMaxMs": 159.63869998813607
+        }
+      },
+      "receipts": [
+        {
+          "name": "nitrogen-r2",
+          "sha256": "adeeab2ee4d57bb685d7e3934950bb1cf397482a71851eb644bec703b805a367",
+          "adapterSha256": "c194ee3a8e8fcfdd50cb205784b63bfa3297b29ffc1c43aadd2924b09b3bec85",
+          "providerCleanupConfirmed": true,
+          "postWarmupAvailableRamBytes": [
+            15840149504,
+            15675478016
+          ]
+        },
+        {
+          "name": "nitrogen-styles-v1",
+          "sha256": "6aab3cec8af5e3b9e96440130c801fa3b47e837297b60d78f58350f104f860d2",
+          "adapterSha256": "c194ee3a8e8fcfdd50cb205784b63bfa3297b29ffc1c43aadd2924b09b3bec85",
+          "providerCleanupConfirmed": true,
+          "postWarmupAvailableRamBytes": [
+            15861673984,
+            15653515264
+          ]
+        }
+      ],
+      "rawChunksIdenticalAcrossStyles": true
+    }
+  },
+  "limits": [
+    "first-frame/reset probes, not gameplay or temporal history",
+    "P2P zero text embedding; goal-conditioned P2P not tested",
+    "NitroGen FP32, 8 denoising steps; P2P BF16",
+    "no line derived from verified road geometry",
+    "axis threshold .1 is exploratory, not a calibrated game action or acceptance threshold",
+    "P2P covers 50/200ms with no synthetic hold",
+    "wall latency excludes capture, transport, localization, Android input and visible response",
+    "no trajectory-following, obstacle avoidance, arrival or fleet SLA accepted"
+  ]
+}

@@ -1,0 +1,7166 @@
+{
+  "generated_at_local": "2026-11-02",
+  "scope": "Static source inventory; direct page imports and direct literal tabs/aria labels only. Decorators are not resolved effective paths; composed routers and runtime conditional registration require manual verification.",
+  "counts": {
+    "next_page_files": 29,
+    "routers_with_literal_decorators": 34,
+    "literal_route_decorators": 204,
+    "live_pages_visited": 22,
+    "action_modals_tested": 2,
+    "live_selected_tabs": 7,
+    "static_jsx_control_occurrences": 665,
+    "static_jsx_files_with_controls": 113
+  },
+  "pages": [
+    {
+      "route": "/login",
+      "source": "frontend/app/(auth)/login/page.tsx",
+      "direct_local_imports": [
+        "@/src/shared/ui/SphereMark",
+        "@/components/ui/button",
+        "@/components/ui/input",
+        "@/components/ui/label",
+        "@/src/shared/theme",
+        "@/lib/apiError",
+        "@/lib/store"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Sphere Platform",
+        "Возможности платформы"
+      ],
+      "source_inventoried": true,
+      "live_visited": false,
+      "actions_tested": false
+    },
+    {
+      "route": "/accounts",
+      "source": "frontend/app/(dashboard)/accounts/page.tsx",
+      "direct_local_imports": [
+        "@/lib/hooks/useDebounce",
+        "@/lib/hooks/useGameAccounts",
+        "@/components/sphere/DeviceSearchSelect",
+        "@/src/shared/ui/button",
+        "@/components/ui/input",
+        "@/src/shared/ui/badge",
+        "@/components/ui/select",
+        "@/components/ui/dialog",
+        "@/components/ui/label",
+        "@/components/ui/textarea"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Законопослушность",
+        "Предыдущая страница аккаунтов",
+        "Следующая страница аккаунтов"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/audit",
+      "source": "frontend/app/(dashboard)/audit/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/src/features/audit/AuditFiltersForm",
+        "@/src/features/audit/investigation",
+        "@/src/features/audit/useAuditExport",
+        "@/lib/store",
+        "@/src/features/audit/AuditDrawer",
+        "@/src/features/audit/types",
+        "@/src/shared/ui/badge",
+        "@/src/shared/ui/button",
+        "@/components/ui/card",
+        "@/src/shared/ui/page-layout"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Предыдущая страница",
+        "Сводка журнала аудита",
+        "Следующая страница",
+        "Страницы журнала"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/dashboard",
+      "source": "frontend/app/(dashboard)/dashboard/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/lib/hooks/useDeviceEvents",
+        "@/lib/hooks/useVpn",
+        "@/lib/queryPollIntervals",
+        "@/src/features/dashboard/dataFreshness",
+        "@/src/shared/ui/badge",
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/card"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Свежесть источников данных",
+        "Сводные показатели устройств",
+        "События и быстрые переходы",
+        "Состояние и инфраструктура"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/devices/[id]",
+      "source": "frontend/app/(dashboard)/devices/[id]/page.tsx",
+      "direct_local_imports": [
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/page-layout",
+        "@/src/features/devices/DeviceInspectorDetail"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [],
+      "source_inventoried": true,
+      "live_visited": false,
+      "actions_tested": false
+    },
+    {
+      "route": "/devices",
+      "source": "frontend/app/(dashboard)/devices/page.tsx",
+      "direct_local_imports": [
+        "@/lib/hooks/useDevices",
+        "@/lib/hooks/useVpn",
+        "@/lib/apiError",
+        "@/lib/hooks/useDebounce",
+        "@/src/features/devices/deviceListFilters",
+        "@/lib/hooks/useGroups",
+        "@/lib/hooks/useLocations",
+        "@/src/features/devices/FleetMatrix",
+        "@/src/features/devices/MultiStreamGrid",
+        "@/src/features/devices/DeviceBulkDeleteButton",
+        "@/src/features/devices/DeviceDeleteConfirmationDialog",
+        "@/src/features/devices/constants",
+        "@/src/shared/ui/button",
+        "@/components/ui/input",
+        "@/components/ui/label",
+        "@/components/ui/dialog",
+        "@/components/ui/select",
+        "@/lib/hooks/usePipelineSettings",
+        "@/src/features/access/Capabilities"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Карточки устройств",
+        "Поиск устройств",
+        "Предыдущая страница",
+        "Режим отображения устройств",
+        "Сетка видеопотоков",
+        "Следующая страница",
+        "Состояние устройств",
+        "Страницы реестра устройств",
+        "Табличный вид",
+        "Устройства и операции",
+        "Фильтр по группе",
+        "Фильтр по локации"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/discovery",
+      "source": "frontend/app/(dashboard)/discovery/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/lib/apiError",
+        "@/components/ui/button",
+        "@/components/ui/input",
+        "@/components/ui/label",
+        "@/components/ui/badge",
+        "@/components/ui/card",
+        "@/src/shared/ui/page-layout"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Сводка результатов"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/event-triggers",
+      "source": "frontend/app/(dashboard)/event-triggers/page.tsx",
+      "direct_local_imports": [
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/input",
+        "@/src/shared/ui/badge",
+        "@/components/ui/label",
+        "@/components/ui/dialog",
+        "@/components/ui/select",
+        "@/lib/hooks/useEventTriggers",
+        "@/lib/api",
+        "@/src/shared/ui/catalog-pagination"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Поиск триггеров на текущей странице"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/events",
+      "source": "frontend/app/(dashboard)/events/page.tsx",
+      "direct_local_imports": [
+        "@/lib/hooks/useDeviceEvents",
+        "@/src/shared/ui/button",
+        "@/components/ui/card",
+        "@/src/shared/ui/page-layout",
+        "@/lib/hooks/useDebounce",
+        "@/components/ui/input",
+        "@/src/shared/ui/badge",
+        "@/components/ui/select",
+        "@/components/ui/dialog"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Поиск событий",
+        "Предыдущая страница",
+        "Следующая страница"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/fleet",
+      "source": "frontend/app/(dashboard)/fleet/page.tsx",
+      "direct_local_imports": [],
+      "direct_tab_values": [],
+      "direct_aria_labels": [],
+      "source_inventoried": true,
+      "live_visited": false,
+      "actions_tested": false
+    },
+    {
+      "route": "/groups",
+      "source": "frontend/app/(dashboard)/groups/page.tsx",
+      "direct_local_imports": [
+        "@/lib/hooks/useGroups",
+        "@/components/ui/button",
+        "@/components/ui/badge",
+        "@/components/ui/card",
+        "@/src/shared/ui/page-layout",
+        "@/src/features/groups/GroupEditor",
+        "@/src/features/groups/GroupDeleteDialog",
+        "@/src/features/access/Capabilities"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Загрузка групп",
+        "Список групп"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/locations",
+      "source": "frontend/app/(dashboard)/locations/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/lib/store",
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/badge",
+        "@/src/shared/ui/input",
+        "@/src/shared/ui/card",
+        "@/src/shared/ui/page-layout",
+        "@/src/features/locations/LocationDialog",
+        "@/src/features/locations/locationContract",
+        "@/src/features/access/Capabilities"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Поиск локаций",
+        "Список локаций"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/logs",
+      "source": "frontend/app/(dashboard)/logs/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/lib/hooks/useDeviceSnapshot",
+        "@/components/sphere/DeviceLogSourcePicker",
+        "@/lib/hooks/useDebounce",
+        "@/src/shared/ui/badge",
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/card",
+        "@/src/shared/ui/input",
+        "@/components/ui/dialog",
+        "@/components/ui/select"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Журнал выбранного устройства",
+        "Обновить логи",
+        "Поиск в логах",
+        "Строки системного журнала",
+        "Фильтр уровня логов"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/monitoring",
+      "source": "frontend/app/(dashboard)/monitoring/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/src/shared/ui/badge",
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/card",
+        "@/src/shared/ui/input",
+        "@/src/features/monitoring/ClusterHeatmap",
+        "@/src/features/monitoring/ObservabilityPanel",
+        "@/src/features/monitoring/FleetCoveragePanel",
+        "@/src/features/monitoring/monitoringTypes"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Метрики backend",
+        "Обновить метрики и проверки сервисов",
+        "Поиск сервисов",
+        "Фильтр состояния сервисов"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/orchestration",
+      "source": "frontend/app/(dashboard)/orchestration/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/lib/store",
+        "@/src/features/orchestration/PipelineDefinitionDialog",
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/input",
+        "@/src/shared/ui/badge",
+        "@/components/ui/label",
+        "@/components/ui/dialog",
+        "@/components/sphere/DeviceSelector",
+        "@/lib/hooks/useScripts",
+        "@/src/features/scripts/scriptPresentation",
+        "@/components/orchestration/ScheduleExecutionHistoryDialog",
+        "@/components/orchestration/PipelineCatalogPicker",
+        "@/components/orchestration/PipelineResumeControl",
+        "@/src/features/orchestration/scheduleTime",
+        "@/src/features/orchestration/useCatalogPage",
+        "@/src/shared/ui/catalog-pagination"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Дата и время запуска (UTC)",
+        "Интервал запуска в секундах",
+        "Обновить текущий каталог",
+        "Определение и управление",
+        "Поиск на текущей странице"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/pipeline-settings",
+      "source": "frontend/app/(dashboard)/pipeline-settings/page.tsx",
+      "direct_local_imports": [
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/input",
+        "@/src/shared/ui/badge",
+        "@/components/ui/label",
+        "@/components/ui/switch",
+        "@/components/ui/select",
+        "@/lib/hooks/usePipelineSettings",
+        "@/lib/hooks/useScripts"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Авто-генерация",
+        "Авто-замена",
+        "Заметки",
+        "Обнаружение банов",
+        "Обновить настройки и состояние"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/scripts/builder",
+      "source": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+      "direct_local_imports": [
+        "@/lib/dag/nodeTypes",
+        "@/lib/dag/export",
+        "@/lib/dag/studio",
+        "@/lib/dag/canvasPlacement",
+        "@/src/shared/ui/button",
+        "@/components/ui/input",
+        "@/lib/api",
+        "@/lib/store",
+        "@/src/features/access/Capabilities",
+        "@/components/sphere/RunScriptModal",
+        "@/src/features/scripts/studio/NodeInspector",
+        "@/src/features/scripts/studio/ConnectionInspector",
+        "@/lib/dag/connections",
+        "@/src/features/scripts/studio/DeviceWorkbench",
+        "@/src/features/scripts/studio/presentation",
+        "@/src/features/scripts/studio/layout",
+        "@/src/features/scripts/studio/useStudioViewport",
+        "@/src/features/scripts/studio/useCanvasOverview",
+        "@/lib/dag/export",
+        "@/lib/dag/actionParameters",
+        "@/src/features/navigation/workspaceNavigationGuard",
+        "@/src/features/navigation/routeScrollRestoration",
+        "@/src/features/scripts/studio/StudioLeaveDialog"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Script Studio",
+        "Готовые клавиши Android",
+        "Граф не готов к публикации",
+        "Закрыть панель действий",
+        "Инструменты сценария",
+        "К каталогу сценариев",
+        "Каталог действий",
+        "Направление схемы",
+        "Настройки Studio",
+        "Начальный шаг сценария",
+        "Отменить изменение",
+        "Панели редактора",
+        "Параметры шага",
+        "Повторить изменение",
+        "Поиск действия",
+        "Поле графа",
+        "Представление сценария",
+        "Проверить на сервере",
+        "Способ добавления действия",
+        "Файл сценария"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/scripts",
+      "source": "frontend/app/(dashboard)/scripts/page.tsx",
+      "direct_local_imports": [
+        "@/lib/hooks/useScriptCatalog",
+        "@/components/ui/button",
+        "@/components/ui/input",
+        "@/components/ui/badge",
+        "@/components/ui/card",
+        "@/components/ui/dialog",
+        "@/components/sphere/RunScriptModal",
+        "@/src/shared/ui/page-layout",
+        "@/src/shared/ui/catalog-pagination",
+        "@/lib/hooks/useDebounce",
+        "@/src/features/scripts/scriptPresentation",
+        "@/src/features/scripts/ScriptVersionsDialog",
+        "@/src/features/access/Capabilities",
+        "@/lib/store"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Вид каталога",
+        "Загрузка сценариев",
+        "Карточки сценариев",
+        "Подробный список",
+        "Поиск сценариев во всём каталоге",
+        "Сводка каталога",
+        "Состояние каталога сценариев",
+        "Список сценариев",
+        "Сценариев на странице"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/sessions",
+      "source": "frontend/app/(dashboard)/sessions/page.tsx",
+      "direct_local_imports": [
+        "@/lib/hooks/useAccountSessions",
+        "@/src/shared/ui/button",
+        "@/components/ui/card",
+        "@/src/shared/ui/page-layout",
+        "@/components/ui/input",
+        "@/src/shared/ui/badge",
+        "@/components/ui/select",
+        "@/components/ui/dialog"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Поиск сессий на текущей странице",
+        "Предыдущая страница",
+        "Следующая страница"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/settings",
+      "source": "frontend/app/(dashboard)/settings/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/lib/apiError",
+        "@/lib/store",
+        "@/src/shared/ui/button",
+        "@/components/ui/input",
+        "@/components/ui/tabs",
+        "@/components/ui/dialog"
+      ],
+      "direct_tab_values": [
+        "apikeys",
+        "mfa",
+        "profile"
+      ],
+      "direct_aria_labels": [
+        "Разделы настроек",
+        "Сводка аккаунта",
+        "Скопировать секрет MFA"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/stream/[id]",
+      "source": "frontend/app/(dashboard)/stream/[id]/page.tsx",
+      "direct_local_imports": [
+        "@/components/sphere/DeviceStream",
+        "@/components/ui/button",
+        "@/src/shared/ui/page-layout",
+        "@/src/features/access/Capabilities",
+        "@/src/features/stream/TeachingWorkbench"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [],
+      "source_inventoried": true,
+      "live_visited": false,
+      "actions_tested": false
+    },
+    {
+      "route": "/stream",
+      "source": "frontend/app/(dashboard)/stream/page.tsx",
+      "direct_local_imports": [
+        "@/components/sphere/DeviceStream",
+        "@/lib/hooks/useDevices",
+        "@/lib/hooks/useDebounce",
+        "@/lib/hooks/useGroups",
+        "@/lib/hooks/useLocations",
+        "@/src/features/devices/devicePresentation",
+        "@/src/features/devices/deviceListFilters",
+        "@/src/features/stream/streamAspectRatio"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Время последнего успешного ответа каталога API",
+        "Количество устройств на странице",
+        "Обновить список устройств",
+        "Предыдущая страница",
+        "Следующая страница",
+        "Сортировка устройств",
+        "Состояние устройств",
+        "Страницы списка устройств",
+        "Управление потоками",
+        "Фильтр по группе",
+        "Фильтр по локации",
+        "Фильтр состояния устройств"
+      ],
+      "source_inventoried": true,
+      "live_visited": false,
+      "actions_tested": false
+    },
+    {
+      "route": "/tasks/[id]",
+      "source": "frontend/app/(dashboard)/tasks/[id]/page.tsx",
+      "direct_local_imports": [
+        "@/lib/hooks/useTasks",
+        "@/components/ui/badge",
+        "@/components/ui/button",
+        "@/components/tasks/TaskScreenshot",
+        "@/src/shared/ui/page-layout",
+        "@/lib/task-status",
+        "@/lib/apiError"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Контекст задания",
+        "Навигация задания",
+        "Ошибка выполнения"
+      ],
+      "source_inventoried": true,
+      "live_visited": false,
+      "actions_tested": false
+    },
+    {
+      "route": "/tasks",
+      "source": "frontend/app/(dashboard)/tasks/page.tsx",
+      "direct_local_imports": [
+        "@/src/shared/ui/button",
+        "@/src/shared/ui/input",
+        "@/src/shared/ui/badge",
+        "@/components/ui/dialog",
+        "@/components/ui/select",
+        "@/components/ui/label",
+        "@/lib/hooks/useTasks",
+        "@/lib/task-status",
+        "@/lib/hooks/usePipelineRuns",
+        "@/lib/hooks/useDebounce",
+        "@/lib/hooks/useBatches",
+        "@/lib/hooks/useScripts",
+        "@/lib/hooks/useDevices",
+        "@/lib/task-status-summary",
+        "@/lib/apiError"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Активные pipeline",
+        "Активные задачи",
+        "Поиск задач",
+        "Показатели выбранной истории",
+        "Предыдущая страница",
+        "Следующая страница",
+        "Статус задачи"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/updates",
+      "source": "frontend/app/(dashboard)/updates/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/lib/apiError",
+        "@/components/ui/button",
+        "@/components/ui/badge",
+        "@/components/ui/select",
+        "@/lib/store",
+        "@/src/features/updates/CreateReleaseDialog",
+        "@/src/features/updates/RecoveryDialog",
+        "@/src/features/updates/recovery",
+        "@/src/features/updates/AgentDownloadPanel"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Flavor filter",
+        "Platform filter"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/users",
+      "source": "frontend/app/(dashboard)/users/page.tsx",
+      "direct_local_imports": [
+        "@/lib/hooks/useUsers",
+        "@/lib/store",
+        "@/src/features/users/access",
+        "@/src/features/users/UserDialogs",
+        "@/components/ui/badge",
+        "@/components/ui/button",
+        "@/components/ui/card",
+        "@/src/shared/ui/page-layout"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Загрузка пользователей"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/vpn",
+      "source": "frontend/app/(dashboard)/vpn/page.tsx",
+      "direct_local_imports": [
+        "@/components/ui/button",
+        "@/components/ui/tabs",
+        "@/lib/store",
+        "@/src/features/vpn/AppVpnRuntimePanel",
+        "@/src/features/vpn/VpnProfileCatalog",
+        "@/src/features/vpn/VpnProfileInspector",
+        "@/src/features/vpn/VpnRouterInfrastructure"
+      ],
+      "direct_tab_values": [
+        "devices",
+        "infrastructure",
+        "policy",
+        "profiles"
+      ],
+      "direct_aria_labels": [
+        "Принцип маршрутизации VPN",
+        "Проверить профиль",
+        "Разделы VPN"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/webhooks",
+      "source": "frontend/app/(dashboard)/webhooks/page.tsx",
+      "direct_local_imports": [
+        "@/lib/api",
+        "@/components/ui/button",
+        "@/components/ui/input",
+        "@/components/ui/label",
+        "@/components/ui/badge",
+        "@/components/ui/card",
+        "@/components/ui/dialog",
+        "@/src/shared/ui/page-layout"
+      ],
+      "direct_tab_values": [],
+      "direct_aria_labels": [
+        "Загрузка вебхуков",
+        "Список вебхуков"
+      ],
+      "source_inventoried": true,
+      "live_visited": true,
+      "actions_tested": false
+    },
+    {
+      "route": "/",
+      "source": "frontend/app/page.tsx",
+      "direct_local_imports": [],
+      "direct_tab_values": [],
+      "direct_aria_labels": [],
+      "source_inventoried": true,
+      "live_visited": false,
+      "actions_tested": false
+    }
+  ],
+  "backend_router_decorators": [
+    {
+      "source": "backend/api/v1/account_sessions/router.py",
+      "declared_prefix": "/account-sessions",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/stats",
+          "line": 39
+        },
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 54
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 87
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{session_id}",
+          "line": 100
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{session_id}/end",
+          "line": 110
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/audit/router.py",
+      "declared_prefix": "/audit",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/logs",
+          "line": 23
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/logs/export",
+          "line": 59
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/auth/router.py",
+      "declared_prefix": "/auth",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path_decorator": "/login",
+          "line": 65
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/login/mfa",
+          "line": 111
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/refresh",
+          "line": 150
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/logout",
+          "line": 213
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/me",
+          "line": 254
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/capabilities",
+          "line": 264
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/mfa/setup",
+          "line": 276
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/mfa/verify-setup",
+          "line": 299
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/mfa",
+          "line": 335
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/api-keys",
+          "line": 353
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/api-keys",
+          "line": 393
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/api-keys/{key_id}",
+          "line": 409
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/batches/router.py",
+      "declared_prefix": "/batches",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 60
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/broadcast",
+          "line": 84
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{batch_id}",
+          "line": 113
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{batch_id}",
+          "line": 129
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/bulk/router.py",
+      "declared_prefix": "/devices/bulk",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path_decorator": "/action",
+          "line": 38
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "",
+          "line": 56
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/config/router.py",
+      "declared_prefix": "/config",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/agent",
+          "line": 80
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/device_events/router.py",
+      "declared_prefix": "/device-events",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/stats",
+          "line": 38
+        },
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 51
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 88
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{event_id}",
+          "line": 101
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{event_id}/processed",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/devices/router.py",
+      "declared_prefix": "/devices",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/viewers",
+          "line": 60
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/me",
+          "line": 93
+        },
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 133
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/status/bulk",
+          "line": 269
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/status/fleet",
+          "line": 286
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/refresh",
+          "line": 308
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/register",
+          "line": 325
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 381
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}",
+          "line": 401
+        },
+        {
+          "method": "PUT",
+          "path_decorator": "/{device_id}",
+          "line": 435
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{device_id}",
+          "line": 455
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}/status",
+          "line": 474
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}/stream-diagnostics",
+          "line": 487
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/connect",
+          "line": 546
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}/screenshot",
+          "line": 565
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/ui-hierarchy",
+          "line": 612
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/screenshot/native",
+          "line": 731
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/shell",
+          "line": 818
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/logcat",
+          "line": 845
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/reboot",
+          "line": 881
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/direct_probe/router.py",
+      "declared_prefix": "/devices",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}/stream-sessions",
+          "line": 50
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}/direct-probe-capabilities",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/discovery/router.py",
+      "declared_prefix": "/discovery",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path_decorator": "/scan",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/event_triggers/router.py",
+      "declared_prefix": "/event-triggers",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 36
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 84
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{trigger_id}",
+          "line": 124
+        },
+        {
+          "method": "PATCH",
+          "path_decorator": "/{trigger_id}",
+          "line": 140
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{trigger_id}",
+          "line": 178
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{trigger_id}/toggle",
+          "line": 204
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/game_accounts/router.py",
+      "declared_prefix": "/game-accounts",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/stats",
+          "line": 50
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/servers",
+          "line": 64
+        },
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 83
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 124
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/import",
+          "line": 144
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{account_id}",
+          "line": 163
+        },
+        {
+          "method": "PATCH",
+          "path_decorator": "/{account_id}",
+          "line": 189
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{account_id}",
+          "line": 213
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{account_id}/assign",
+          "line": 231
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{account_id}/release",
+          "line": 255
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/groups/router.py",
+      "declared_prefix": "/groups",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 31
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 45
+        },
+        {
+          "method": "PUT",
+          "path_decorator": "/{group_id}",
+          "line": 64
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{group_id}",
+          "line": 83
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{group_id}/devices/move",
+          "line": 101
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/tags",
+          "line": 121
+        },
+        {
+          "method": "PUT",
+          "path_decorator": "/devices/{device_id}/tags",
+          "line": 133
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/health/router.py",
+      "declared_prefix": "/health",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/build",
+          "line": 29
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/healthz",
+          "line": 42
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/readyz",
+          "line": 60
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/full",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/locations/router.py",
+      "declared_prefix": "/locations",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 32
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 46
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{location_id}",
+          "line": 63
+        },
+        {
+          "method": "PUT",
+          "path_decorator": "/{location_id}",
+          "line": 74
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{location_id}",
+          "line": 93
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{location_id}/devices",
+          "line": 114
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{location_id}/devices",
+          "line": 134
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/logs/router.py",
+      "declared_prefix": "/logs",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path_decorator": "/upload",
+          "line": 96
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}",
+          "line": 155
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{device_id}",
+          "line": 184
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/monitoring/router.py",
+      "declared_prefix": "/monitoring",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/fleet-coverage",
+          "line": 31
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/alerts",
+          "line": 65
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/metrics",
+          "line": 122
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/nodes",
+          "line": 172
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/n8n/router.py",
+      "declared_prefix": "/n8n",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path_decorator": "/webhooks",
+          "line": 26
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/webhooks",
+          "line": 55
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/webhooks/{webhook_id}",
+          "line": 69
+        },
+        {
+          "method": "PATCH",
+          "path_decorator": "/webhooks/{webhook_id}",
+          "line": 83
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/webhooks/{webhook_id}",
+          "line": 109
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/tasks",
+          "line": 149
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/tasks/{task_id}",
+          "line": 185
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/pipeline_settings/router.py",
+      "declared_prefix": "/pipeline-settings",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 56
+        },
+        {
+          "method": "PATCH",
+          "path_decorator": "",
+          "line": 76
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/toggle/orchestration",
+          "line": 103
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/toggle/scheduler",
+          "line": 122
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/toggle/registration",
+          "line": 141
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/toggle/farming",
+          "line": 159
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/status",
+          "line": 180
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/servers",
+          "line": 288
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/nick/generate",
+          "line": 306
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/nick/check",
+          "line": 327
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/pipelines/router.py",
+      "declared_prefix": "/pipelines",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 80
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 110
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/runs",
+          "line": 142
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/runs/{run_id}",
+          "line": 176
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/runs/{run_id}/cancel",
+          "line": 190
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/runs/{run_id}/pause",
+          "line": 207
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/runs/{run_id}/resume",
+          "line": 224
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{pipeline_id}",
+          "line": 246
+        },
+        {
+          "method": "PATCH",
+          "path_decorator": "/{pipeline_id}",
+          "line": 260
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{pipeline_id}",
+          "line": 281
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{pipeline_id}/toggle",
+          "line": 298
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{pipeline_id}/run",
+          "line": 323
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{pipeline_id}/run-batch",
+          "line": 346
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/schedules/router.py",
+      "declared_prefix": "/schedules",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 74
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 104
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{schedule_id}",
+          "line": 127
+        },
+        {
+          "method": "PATCH",
+          "path_decorator": "/{schedule_id}",
+          "line": 141
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{schedule_id}",
+          "line": 159
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{schedule_id}/toggle",
+          "line": 180
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{schedule_id}/fire-now",
+          "line": 197
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{schedule_id}/executions",
+          "line": 218
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/scripts/router.py",
+      "declared_prefix": "/scripts",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 64
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/catalog",
+          "line": 98
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 121
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/action-contract",
+          "line": 140
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/validate",
+          "line": 152
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{script_id}",
+          "line": 170
+        },
+        {
+          "method": "PUT",
+          "path_decorator": "/{script_id}",
+          "line": 198
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{script_id}",
+          "line": 220
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{script_id}/versions",
+          "line": 239
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{script_id}/versions/{version_id}",
+          "line": 254
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{script_id}/versions/{version_id}/rollback",
+          "line": 266
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/streaming/router.py",
+      "declared_prefix": "/streaming",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}/quality",
+          "line": 27
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/quality",
+          "line": 38
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{device_id}/status",
+          "line": 91
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/start",
+          "line": 111
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/stop",
+          "line": 132
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{device_id}/keyframe",
+          "line": 146
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/tasks/router.py",
+      "declared_prefix": "/tasks",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 94
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 141
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{task_id}/rerun",
+          "line": 175
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{task_id}",
+          "line": 193
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{task_id}/logs",
+          "line": 209
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{task_id}/progress",
+          "line": 228
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{task_id}/live-logs",
+          "line": 257
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{task_id}/screenshots",
+          "line": 280
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{task_id}/screenshots/content",
+          "line": 300
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{task_id}",
+          "line": 338
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{task_id}/stop",
+          "line": 356
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/updates/router.py",
+      "declared_prefix": "/updates",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path_decorator": "/recovery",
+          "line": 244
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/recovery/{device_id}/dispatch",
+          "line": 275
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/recovery/{device_id}",
+          "line": 295
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/recovery/{device_id}",
+          "line": 361
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/latest",
+          "line": 382
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/artifacts/{sha256}",
+          "line": 439
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/downloads/latest",
+          "line": 460
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/",
+          "line": 518
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/",
+          "line": 535
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/{release_id}",
+          "line": 579
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/users/router.py",
+      "declared_prefix": "/users",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 38
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 74
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{user_id}",
+          "line": 121
+        },
+        {
+          "method": "PUT",
+          "path_decorator": "/{user_id}/role",
+          "line": 141
+        },
+        {
+          "method": "PATCH",
+          "path_decorator": "/{user_id}/deactivate",
+          "line": 198
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/vpn/profile_router.py",
+      "declared_prefix": "/profiles",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 38
+        },
+        {
+          "method": "POST",
+          "path_decorator": "",
+          "line": 49
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/imports/{request_id}",
+          "line": 59
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/batch/preflight",
+          "line": 64
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/batch",
+          "line": 73
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/batch/status",
+          "line": 84
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{profile_id}",
+          "line": 92
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/{profile_id}/revisions",
+          "line": 97
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{profile_id}/revisions",
+          "line": 105
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/{profile_id}/archive",
+          "line": 114
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/vpn/router.py",
+      "declared_prefix": "/vpn",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "/providers",
+          "line": 105
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/profile-preflight",
+          "line": 112
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/admin/keypair",
+          "line": 133
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/admin/config-preview",
+          "line": 145
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/assign",
+          "line": 183
+        },
+        {
+          "method": "DELETE",
+          "path_decorator": "/revoke/{device_id}",
+          "line": 213
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/revoke/bulk",
+          "line": 232
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/health",
+          "line": 276
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/peers",
+          "line": 291
+        },
+        {
+          "method": "GET",
+          "path_decorator": "/pool/stats",
+          "line": 342
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/rotate",
+          "line": 387
+        },
+        {
+          "method": "POST",
+          "path_decorator": "/killswitch",
+          "line": 458
+        }
+      ]
+    },
+    {
+      "source": "backend/api/v1/vpn/runtime_router.py",
+      "declared_prefix": "/runtime",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path_decorator": "",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "source": "backend/api/ws/agent/router.py",
+      "declared_prefix": null,
+      "endpoints": [
+        {
+          "method": "WEBSOCKET",
+          "path_decorator": "/ws/agent/{workstation_id}",
+          "line": 192
+        }
+      ]
+    },
+    {
+      "source": "backend/api/ws/android/router.py",
+      "declared_prefix": null,
+      "endpoints": [
+        {
+          "method": "WEBSOCKET",
+          "path_decorator": "/ws/android/{device_id}",
+          "line": 632
+        }
+      ]
+    },
+    {
+      "source": "backend/api/ws/direct/router.py",
+      "declared_prefix": null,
+      "endpoints": [
+        {
+          "method": "WEBSOCKET",
+          "path_decorator": "/ws/direct-probe/{device_id}",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "source": "backend/api/ws/events/router.py",
+      "declared_prefix": null,
+      "endpoints": [
+        {
+          "method": "WEBSOCKET",
+          "path_decorator": "/ws/events",
+          "line": 269
+        }
+      ]
+    },
+    {
+      "source": "backend/api/ws/stream/router.py",
+      "declared_prefix": null,
+      "endpoints": [
+        {
+          "method": "WEBSOCKET",
+          "path_decorator": "/ws/stream/{device_id}",
+          "line": 96
+        }
+      ]
+    }
+  ],
+  "live_blockers": [
+    "Existing Yandex Sphere window was minimized; a separate background IAB reached an authenticated dashboard. Served UI/API revision need not equal checkout.",
+    "No dynamic detail or stream pages observed; Studio graph editing, device execution and persistent writes were not tested.",
+    "Static JSX count is a heuristic across source files, not the total number of runtime controls or proof of complete action coverage."
+  ],
+  "live_tab_observations": {
+    "/settings": [
+      "profile",
+      "mfa",
+      "apikeys"
+    ],
+    "/vpn": [
+      "devices",
+      "profiles",
+      "infrastructure",
+      "policy"
+    ]
+  },
+  "static_jsx_controls": [
+    {
+      "source": "frontend/app/(dashboard)/layout.tsx",
+      "controls": [
+        {
+          "line": 99,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Вернуться на предыдущую страницу",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 104,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Открыть меню навигации",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 124,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Поиск по разделам и командам",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 136,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 147,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/accounts/page.tsx",
+      "controls": [
+        {
+          "line": 213,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 217,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 221,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 292,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 347,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 549,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 553,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 558,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 562,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 581,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Предыдущая страница аккаунтов"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 584,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Следующая страница аккаунтов"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 693,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 696,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 854,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 855,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Создать"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1067,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1068,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1165,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1166,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Импортировать"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1214,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1215,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1270,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1271,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1309,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1310,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Удалить"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1366,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1370,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1455,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/audit/page.tsx",
+      "controls": [
+        {
+          "line": 102,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 106,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 156,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Отменить экспорт"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 180,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 205,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Предыдущая страница"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 207,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Следующая страница"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/dashboard/page.tsx",
+      "controls": [
+        {
+          "line": 301,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 305,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Открыть реестр"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 314,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 346,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Диагностика устройств"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 392,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Инфраструктура"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 393,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Настройки VPN"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 406,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Все события"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/devices/page.tsx",
+      "controls": [
+        {
+          "line": 348,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Табличный вид",
+            "title": "Табличный вид",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 360,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Карточки устройств",
+            "title": "Карточки устройств",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 365,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Сетка видеопотоков",
+            "title": "Сетка видеопотоков",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 378,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 400,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 476,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 499,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 509,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 510,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 514,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 517,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 521,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 537,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 578,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 610,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 613,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 662,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 670,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 701,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 719,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 744,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 762,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 788,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 832,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/discovery/page.tsx",
+      "controls": [
+        {
+          "line": 96,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Открыть парк устройств"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 151,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 168,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/event-triggers/page.tsx",
+      "controls": [
+        {
+          "line": 167,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 170,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 208,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 262,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 278,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Редактировать"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 287,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Удалить"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 502,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 589,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 592,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/events/page.tsx",
+      "controls": [
+        {
+          "line": 191,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 286,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 365,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 425,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 436,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 464,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 474,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 562,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/groups/page.tsx",
+      "controls": [
+        {
+          "line": 33,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 34,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 42,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 52,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 64,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 74,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Устройства"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 75,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/locations/page.tsx",
+      "controls": [
+        {
+          "line": 43,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 43,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 45,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 53,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 53,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/logs/page.tsx",
+      "controls": [
+        {
+          "line": 274,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 278,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 282,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 330,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 359,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 360,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/monitoring/page.tsx",
+      "controls": [
+        {
+          "line": 230,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Обновить метрики и проверки сервисов",
+            "literal_text": "Обновить"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 300,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/orchestration/page.tsx",
+      "controls": [
+        {
+          "line": 336,
+          "element": "button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 365,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Обновить текущий каталог"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 410,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 533,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 550,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Запустить"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 553,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Определение и управление",
+            "title": "Определение и управление"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 754,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Пауза"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 757,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 765,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Отменить pipeline"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 852,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Новое расписание"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 890,
+          "element": "button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 934,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 942,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "История срабатываний"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 946,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Редактировать"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 954,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Удалить"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1142,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1221,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Добавить шаг"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1238,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1241,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1244,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1247,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1378,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1381,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1392,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1509,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1512,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1588,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1604,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1625,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1643,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1659,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1891,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1943,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 1951,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 2007,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 2010,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 2139,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 2190,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 2198,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 2255,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 2258,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/pipeline-settings/page.tsx",
+      "controls": [
+        {
+          "line": 156,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 177,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 188,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 208,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 214,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 215,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 561,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/scripts/page.tsx",
+      "controls": [
+        {
+          "line": 98,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 98,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Новый сценарий"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 98,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Новый сценарий"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 109,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 112,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Подробный список"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 113,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Карточки сценариев"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 118,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 128,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 132,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Создать сценарий"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 157,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Открыть"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 158,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 159,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 171,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 186,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 190,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 190,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 209,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 212,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Свернуть"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 221,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/sessions/page.tsx",
+      "controls": [
+        {
+          "line": 246,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 353,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 432,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 496,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 507,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 535,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 545,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 668,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 691,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 692,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/settings/page.tsx",
+      "controls": [
+        {
+          "line": 154,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 170,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "profile",
+            "literal_text": "Профиль"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 171,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "mfa",
+            "literal_text": "Безопасность"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 172,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "apikeys",
+            "literal_text": "API-ключи"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 179,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 191,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 192,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 199,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 199,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Скопировать секрет MFA"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 202,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit",
+            "literal_text": "Подтвердить MFA"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 202,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Отменить настройку"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 211,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 211,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 218,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 231,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 231,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть и скрыть ключ"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 233,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 233,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 241,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 241,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/settings/TeamTab.tsx",
+      "controls": [
+        {
+          "line": 92,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Добавить"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 130,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 182,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/stream/page.tsx",
+      "controls": [
+        {
+          "line": 198,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 238,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 253,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 295,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 316,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 341,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 407,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 409,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 420,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 422,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/tasks/page.tsx",
+      "controls": [
+        {
+          "line": 160,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 163,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 201,
+          "element": "button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 216,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 224,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 230,
+          "element": "button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 234,
+          "element": "button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 243,
+          "element": "button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 249,
+          "element": "Button",
+          "literal_attributes": {
+            "title": "Перезапустить задачу"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 258,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Предыдущая страница"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 260,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Следующая страница"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 361,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 368,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "{broadcastBatch.isPending ? ( Запуск... ) : ( Запустить на устройствах )}"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/updates/page.tsx",
+      "controls": [
+        {
+          "line": 104,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 153,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 194,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 195,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/users/page.tsx",
+      "controls": [
+        {
+          "line": 48,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 55,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 84,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 93,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 93,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/vpn/page.tsx",
+      "controls": [
+        {
+          "line": 24,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Проверить профиль"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 24,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 27,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "devices",
+            "literal_text": "Подключения"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 27,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "profiles",
+            "literal_text": "Профили"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 27,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "infrastructure",
+            "literal_text": "Инфраструктура"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 27,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "policy",
+            "literal_text": "Политика трафика"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/webhooks/page.tsx",
+      "controls": [
+        {
+          "line": 89,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Добавить вебхук"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 98,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 104,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 112,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 123,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 127,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 135,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 135,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/vpn/_tabs/VpnAgentsTab.tsx",
+      "controls": [
+        {
+          "line": 22,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/vpn/_tabs/VpnBatchTab.tsx",
+      "controls": [
+        {
+          "line": 147,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 154,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 161,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/vpn/_tabs/VpnKillSwitchTab.tsx",
+      "controls": [
+        {
+          "line": 65,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 72,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/vpn/_tabs/VpnRotateTab.tsx",
+      "controls": [
+        {
+          "line": 72,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 80,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/tasks/[id]/page.tsx",
+      "controls": [
+        {
+          "line": 120,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 121,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "К заданиям"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 148,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Все задания"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 154,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 175,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 187,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 199,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 291,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/stream/[id]/page.tsx",
+      "controls": [
+        {
+          "line": 26,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 26,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Карточка устройства"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+      "controls": [
+        {
+          "line": 456,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 456,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "К каталогу сценариев"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 479,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "К каталогу сценариев"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 484,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Проверить на сервере"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 485,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 489,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 489,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 490,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Отменить изменение"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 490,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Повторить изменение"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 494,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 494,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Экспорт"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 495,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 497,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 502,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 503,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 506,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 514,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 514,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 517,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Закрыть панель действий"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 518,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 518,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 523,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Весь граф"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 526,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 530,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 530,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 532,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Удалить шаг"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 533,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 539,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(dashboard)/devices/[id]/page.tsx",
+      "controls": [
+        {
+          "line": 13,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Открыть поток"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 13,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Реестр"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/app/(auth)/login/page.tsx",
+      "controls": [
+        {
+          "line": 149,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 159,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit",
+            "literal_text": "{loading ? : }"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 162,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/shared/ui/catalog-pagination.tsx",
+      "controls": [
+        {
+          "line": 14,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 15,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/access/Capabilities.tsx",
+      "controls": [
+        {
+          "line": 130,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Проверить доступ снова"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 130,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Мой профиль"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/audit/AuditFiltersForm.tsx",
+      "controls": [
+        {
+          "line": 21,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 22,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit",
+            "literal_text": "Применить фильтры"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 23,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/audit/AuditQueryBuilder.tsx",
+      "controls": [
+        {
+          "line": 36,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Очистить запрос",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 42,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/AndroidProfilePanel.tsx",
+      "controls": [
+        {
+          "line": 102,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/DeviceBulkDeleteButton.tsx",
+      "controls": [
+        {
+          "line": 75,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/DeviceDeleteConfirmationDialog.tsx",
+      "controls": [
+        {
+          "line": 61,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 64,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/DeviceInspectorDetail.tsx",
+      "controls": [
+        {
+          "line": 72,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 78,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 78,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Полная карточка"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 83,
+          "element": "TabsTrigger",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 86,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 109,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 110,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Записать маршрут"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 111,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 112,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 113,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 114,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 117,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 121,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 130,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Изменить запись в реестре"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 138,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 138,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/DeviceOperationsPanels.tsx",
+      "controls": [
+        {
+          "line": 55,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 95,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 103,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Открыть поток с диагностикой браузера"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 122,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/FleetDataGrid.tsx",
+      "controls": [
+        {
+          "line": 153,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Подогнать столбцы по ширине",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 154,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Настроить видимые колонки",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 189,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 190,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 203,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/FleetMatrix.tsx",
+      "controls": [
+        {
+          "line": 127,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 398,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 426,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/LogcatViewer.tsx",
+      "controls": [
+        {
+          "line": 37,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/MultiStreamGrid.tsx",
+      "controls": [
+        {
+          "line": 68,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 71,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 76,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Остановить потоки"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 88,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Метки"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 89,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Статистика"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 90,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Изменить масштаб видео"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/NativeScreenshotPanel.tsx",
+      "controls": [
+        {
+          "line": 115,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 122,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 123,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 130,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Скачать исходный PNG"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/devices/RunScriptTab.tsx",
+      "controls": [
+        {
+          "line": 141,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "назад"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 180,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Очистить"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 189,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 236,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/groups/GroupDeleteDialog.tsx",
+      "controls": [
+        {
+          "line": 37,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 38,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/groups/GroupEditor.tsx",
+      "controls": [
+        {
+          "line": 107,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 108,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/inspector/ContextInspector.tsx",
+      "controls": [
+        {
+          "line": 42,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/locations/LocationDialog.tsx",
+      "controls": [
+        {
+          "line": 82,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 109,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 109,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 110,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть окно"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 111,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 112,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/monitoring/ClusterHeatmap.tsx",
+      "controls": [
+        {
+          "line": 82,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/monitoring/FleetCoveragePanel.tsx",
+      "controls": [
+        {
+          "line": 53,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/monitoring/HttpMetricsPanel.tsx",
+      "controls": [
+        {
+          "line": 43,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Обновить HTTP-метрики"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 55,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/monitoring/ObservabilityPanel.tsx",
+      "controls": [
+        {
+          "line": 95,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 96,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 97,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 123,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Закрыть Grafana"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/monitoring/ResourceMetricsPanel.tsx",
+      "controls": [
+        {
+          "line": 36,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Обновить ресурсы backend"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/navigation/GlobalCommandPalette.tsx",
+      "controls": [
+        {
+          "line": 80,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Закрыть поиск",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 152,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/navigation/MobileMenuHandle.tsx",
+      "controls": [
+        {
+          "line": 13,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Открыть меню: потяните вправо",
+            "title": "Потяните вправо или нажмите",
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/navigation/NOCSidebar.tsx",
+      "controls": [
+        {
+          "line": 105,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Закрыть меню навигации"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 144,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Настройки интерфейса"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 155,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Выйти"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 166,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/orchestration/PipelineDefinitionDialog.tsx",
+      "controls": [
+        {
+          "line": 94,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 110,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 111,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 115,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 142,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 142,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 143,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть окно"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 144,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 144,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 145,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Проверить изменения"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/preferences/AppearanceDrawer.tsx",
+      "controls": [
+        {
+          "line": 28,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 50,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "style",
+            "literal_text": "Стиль"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 50,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "layout",
+            "literal_text": "Компоновка"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 59,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 63,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 68,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Акцент темы",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 69,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 75,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 80,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 86,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/scripts/ScriptVersionsDialog.tsx",
+      "controls": [
+        {
+          "line": 101,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 115,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 120,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 132,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 143,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 143,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 145,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 145,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 145,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть окно"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/settings/ThemeSwitcherModal.tsx",
+      "controls": [
+        {
+          "line": 47,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 68,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 86,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Основное действие"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 87,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Вторичное"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 91,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть настройки"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/AndroidNavigationBar.tsx",
+      "controls": [
+        {
+          "line": 171,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 175,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 179,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/CompactReconstructionWorkflow.tsx",
+      "controls": [
+        {
+          "line": 10,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 27,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/DirectProbeAccess.tsx",
+      "controls": [
+        {
+          "line": 56,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/DirectProbeDiagnostics.tsx",
+      "controls": [
+        {
+          "line": 62,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Проверить прямой канал"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 63,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/DirectVideoProbe.tsx",
+      "controls": [
+        {
+          "line": 143,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Проверить видео с APK"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 144,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/ImageRouteReview.tsx",
+      "controls": [
+        {
+          "line": 49,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 49,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 58,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 58,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/ReconstructedScene.tsx",
+      "controls": [
+        {
+          "line": 164,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 166,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 166,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 169,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 170,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 171,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 174,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 176,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 176,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 176,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/RecordedControlReplay.tsx",
+      "controls": [
+        {
+          "line": 90,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 90,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/RemoteKeyboardCapture.tsx",
+      "controls": [
+        {
+          "line": 166,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 170,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Открыть экранную клавиатуру",
+            "title": "Поле Android готово к вводу",
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/RouteDebugArchive.tsx",
+      "controls": [
+        {
+          "line": 33,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/RouteGeometryMap.tsx",
+      "controls": [
+        {
+          "line": 61,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Повернуть карту влево на 90 градусов",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 61,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Повернуть карту вправо на 90 градусов",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 61,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/SingleDeviceStream.tsx",
+      "controls": [
+        {
+          "line": 202,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 203,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 204,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "XPath-инспектор"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 207,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 208,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 238,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 252,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 254,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 259,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 263,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Копировать атрибуты элемента"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 264,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 265,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "{ if (report && performance.now() - report.at Добавить XPath в очередь записи"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/StreamControlsTray.tsx",
+      "controls": [
+        {
+          "line": 44,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/StreamOverlayToolbar.tsx",
+      "controls": [
+        {
+          "line": 27,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/StreamQualityControl.tsx",
+      "controls": [
+        {
+          "line": 69,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Качество видеопотока",
+            "title": "Качество видеопотока",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 86,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 115,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 116,
+          "element": "button",
+          "literal_attributes": {
+            "type": "submit"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 121,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingCaptureSetup.tsx",
+      "controls": [
+        {
+          "line": 36,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 36,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 36,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingKeyBindings.tsx",
+      "controls": [
+        {
+          "line": 13,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 15,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingLocalWorker.tsx",
+      "controls": [
+        {
+          "line": 30,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingNavigation.tsx",
+      "controls": [
+        {
+          "line": 169,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 169,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 169,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 169,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 177,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Открыть подготовку записи"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 178,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Открыть восстановление камер"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 178,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 178,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 181,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 181,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 181,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Скачать диагностику ·"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingReconstruction.tsx",
+      "controls": [
+        {
+          "line": 283,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Повторить подготовку записи"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 283,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Новое отдельное задание"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 284,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 285,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 292,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 297,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 313,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 316,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 321,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 326,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 328,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 329,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Повторить подготовку записи"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 329,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 340,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 351,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingRecordingCatalog.tsx",
+      "controls": [
+        {
+          "line": 44,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 54,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 58,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 71,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 72,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 76,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 76,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingReview.tsx",
+      "controls": [
+        {
+          "line": 276,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 277,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 278,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 283,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 297,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 306,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 321,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 328,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 329,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 330,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 341,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 342,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 343,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 346,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 347,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 347,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 347,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingScenePreview.tsx",
+      "controls": [
+        {
+          "line": 72,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/TeachingWorkbench.tsx",
+      "controls": [
+        {
+          "line": 468,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 474,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 475,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Включить управление"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 476,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 477,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 520,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 520,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 523,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 532,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 536,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 539,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 541,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 542,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/stream/WalkingRoutePilot.tsx",
+      "controls": [
+        {
+          "line": 440,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 440,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 440,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Скачать отчёт теста"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/updates/AgentDownloadPanel.tsx",
+      "controls": [
+        {
+          "line": 108,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 120,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/updates/CreateReleaseDialog.tsx",
+      "controls": [
+        {
+          "line": 79,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "+ Новый релиз"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 92,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 94,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 94,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/updates/RecoveryDialog.tsx",
+      "controls": [
+        {
+          "line": 39,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit",
+            "literal_text": "Найти"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 41,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 45,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 47,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Предыдущие устройства"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 47,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Следующие устройства"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 52,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 123,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 143,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 143,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 143,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 143,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 147,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/users/UserDialogs.tsx",
+      "controls": [
+        {
+          "line": 80,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 80,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 129,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 129,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/vpn/AppVpnRuntimePanel.tsx",
+      "controls": [
+        {
+          "line": 69,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Обновить состояние"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 89,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 91,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Предыдущие устройства VPN"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 91,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Следующие устройства VPN"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 112,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "connection",
+            "literal_text": "Соединение"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 112,
+          "element": "TabsTrigger",
+          "literal_attributes": {
+            "value": "identifiers",
+            "literal_text": "Идентификаторы"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 114,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Готово"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 114,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Открыть устройство"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/vpn/VpnControlDialog.tsx",
+      "controls": [
+        {
+          "line": 65,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть результаты"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 66,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 67,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/vpn/VpnProfileBatchImport.tsx",
+      "controls": [
+        {
+          "line": 124,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 131,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 136,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 136,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 136,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 136,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/vpn/VpnProfileCatalog.tsx",
+      "controls": [
+        {
+          "line": 40,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Обновить профили"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 40,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 40,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 52,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 52,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 52,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 54,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 54,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 80,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 80,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 101,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 101,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/vpn/VpnProfileInspector.tsx",
+      "controls": [
+        {
+          "line": 199,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 209,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Закрыть"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 210,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/vpn/VpnRouterInfrastructure.tsx",
+      "controls": [
+        {
+          "line": 157,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 160,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 224,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 243,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 254,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 264,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 307,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 319,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 365,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 412,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 424,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/scripts/studio/ConnectionInspector.tsx",
+      "controls": [
+        {
+          "line": 26,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Разорвать связь"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/scripts/studio/DeviceWorkbench.tsx",
+      "controls": [
+        {
+          "line": 53,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Сменить устройство"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 57,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 58,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 61,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 61,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 205,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 206,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 207,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 224,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 224,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 231,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/scripts/studio/NodeInspector.tsx",
+      "controls": [
+        {
+          "line": 46,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 49,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 50,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 83,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 83,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 87,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 95,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Применить параметры"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 95,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Отменить параметры"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/features/scripts/studio/StudioLeaveDialog.tsx",
+      "controls": [
+        {
+          "line": 24,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 25,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 26,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/src/components/streaming/RemoteControlWidget.tsx",
+      "controls": [
+        {
+          "line": 45,
+          "element": "Button",
+          "literal_attributes": {
+            "type": "submit"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 53,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 65,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 74,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 86,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 99,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 108,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 117,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/orchestration/PipelineCatalogPicker.tsx",
+      "controls": [
+        {
+          "line": 43,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/orchestration/PipelineResumeControl.tsx",
+      "controls": [
+        {
+          "line": 26,
+          "element": "Button",
+          "literal_attributes": {
+            "aria-label": "Возобновить pipeline"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/orchestration/ScheduleExecutionHistoryDialog.tsx",
+      "controls": [
+        {
+          "line": 61,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 66,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/sphere/DeviceLogSourcePicker.tsx",
+      "controls": [
+        {
+          "line": 48,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/sphere/DeviceSearchSelect.tsx",
+      "controls": [
+        {
+          "line": 133,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/sphere/DeviceSelector.tsx",
+      "controls": [
+        {
+          "line": 284,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Выбрать все"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 287,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button",
+            "literal_text": "Снять все"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 344,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/sphere/DeviceStream.tsx",
+      "controls": [
+        {
+          "line": 1531,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1534,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1612,
+          "element": "button",
+          "literal_attributes": {
+            "aria-label": "Сохранить кадр видео (PNG)",
+            "title": "Кадр видео (PNG), не оригинал Android",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1613,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1620,
+          "element": "button",
+          "literal_attributes": {
+            "title": "Диагностика стрима",
+            "type": "button"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 1665,
+          "element": "button",
+          "literal_attributes": {
+            "type": "button"
+          },
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/sphere/RunScriptModal.tsx",
+      "controls": [
+        {
+          "line": 247,
+          "element": "button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 420,
+          "element": "Button",
+          "literal_attributes": {
+            "literal_text": "Отмена"
+          },
+          "live_action_tested": false
+        },
+        {
+          "line": 423,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    },
+    {
+      "source": "frontend/components/tasks/TaskScreenshot.tsx",
+      "controls": [
+        {
+          "line": 58,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 65,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        },
+        {
+          "line": 72,
+          "element": "Button",
+          "literal_attributes": {},
+          "live_action_tested": false
+        }
+      ]
+    }
+  ],
+  "live_modal_observations": [
+    {
+      "route": "/vpn",
+      "action": "Проверить профиль",
+      "result": "opened and closed; no file and no submit"
+    },
+    {
+      "route": "/vpn",
+      "action": "Импорт .conf",
+      "result": "opened and closed; no file and no submit"
+    }
+  ]
+}

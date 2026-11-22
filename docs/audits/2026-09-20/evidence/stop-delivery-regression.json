@@ -1,0 +1,51 @@
+{
+  "finding": "AUD-128 / F32-01 delivery failure subset",
+  "before_source": "d43d7e53581e3fa277b28ee58e364eb7ba571302",
+  "before": {
+    "failed": 8,
+    "errors": 0,
+    "seconds": 3.243,
+    "tests": [
+      "test_stop_api_rejects_real_redis_zero_subscribers",
+      "test_unconfirmed_stop_retains_sql_and_device_lock[False]",
+      "test_unconfirmed_stop_retains_sql_and_device_lock[None]",
+      "test_unconfirmed_stop_retains_sql_and_device_lock[true]",
+      "test_unconfirmed_stop_retains_sql_and_device_lock[missing]",
+      "test_unconfirmed_stop_retains_sql_and_device_lock[exception]",
+      "test_unconfirmed_stop_retains_sql_and_device_lock[timeout]",
+      "test_genuine_completion_is_still_accepted_after_rejected_stop"
+    ]
+  },
+  "after": {
+    "passed": 26,
+    "failed": 0,
+    "errors": 0,
+    "seconds": 8.01,
+    "suites": [
+      "test_stop_delivery_failure.py",
+      "test_cancellation_commands.py",
+      "test_cancellation_serialization.py"
+    ],
+    "new_regression_cases": 9
+  },
+  "verification": {
+    "ruff": "passed",
+    "mypy_task_service": "passed",
+    "scope": "Disposable loopback PostgreSQL/Redis; actual authenticated stop endpoint with zero Redis subscribers"
+  },
+  "corrected_behavior": [
+    "HTTP 503 when publisher missing or result is not exactly True",
+    "Publication exception or deadline returns unconfirmed, with no automatic resend",
+    "RUNNING status, finished_at, result and device lock remain intact",
+    "Genuine completion after rejected stop remains accepted",
+    "Caller cancellation propagates and does not retry or release the running task"
+  ],
+  "residual_limits": [
+    "A successful Redis publish is still not physical stop confirmation",
+    "Durable cancellation intent/reconciliation and pipeline child cancellation remain open",
+    "QUEUED/ASSIGNED cancellation and other stop writers are not changed",
+    "A timed-out publication may have been delivered; check actual state before retrying",
+    "No backend/APK deployment or native stop acceptance in this change"
+  ],
+  "regression_source_sha256_lf_normalized": "b028424d3aa47988c3158b809d0c193d5ff0d0d6a010ab505a1bb6f1192cddd0"
+}

@@ -1,0 +1,23 @@
+{
+  "finding": "F32-25 continuation: scheduler runtime visibility",
+  "status": "reproduced, open; pipeline fixes do not repair scheduler",
+  "priority": "P0 / High for runtime-role rollout with schedules",
+  "source_base": "294bd15",
+  "scope_note": "Scheduler source unchanged in concurrent AUD-134 working tree.",
+  "observed_at": "2026-09-21T04:04:00+05:00",
+  "probe": "scheduler_runtime_probe.py",
+  "result": {"tests": 1, "failed": 1, "errors": 0, "duration_seconds": 0.73},
+  "before": {"is_active": true, "total_runs": 1, "max_runs": 1, "next_fire_at": "one minute before probe"},
+  "after_actual_scheduler_tick": {"is_active": true},
+  "expected": "Due exhausted schedule becomes inactive without creating any device task.",
+  "root_cause": "SchedulerEngine._tick creates AsyncSessionLocal without trusted tenant context; RLS excludes due schedule rows for the actual non-owner role.",
+  "affected_files": ["backend/services/scheduler/scheduler_engine.py"],
+  "required_fix": "Bounded schedule discovery, scoped transaction/commit and recovery paths; preserve conflict policy, next-fire calculation and child identity.",
+  "limitations": [
+    "Real disposable loopback PostgreSQL, random fixture organization and non-owner/NOBYPASSRLS login.",
+    "No device task is required by this exhausted-schedule fixture; no Android or game commands.",
+    "No pilot, APK or old Docker project changes.",
+    "Does not yet reproduce every task-dispatcher/watchdog RLS path; those remain to be tested.",
+    "Expected failing probe is outside standard tests; runtime regressions and a fix are still required."
+  ]
+}

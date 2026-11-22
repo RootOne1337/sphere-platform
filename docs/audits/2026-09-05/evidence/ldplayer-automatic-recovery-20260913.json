@@ -1,0 +1,155 @@
+{
+  "started_at": "2026-09-12T22:17:03.345619+00:00",
+  "events": [
+    {
+      "event": "scoped_fault_orphan_dhcp",
+      "at": "2026-09-12T22:17:06.518681+00:00",
+      "diagnosis": {
+        "instance": 1,
+        "network": "LdNatNetwork1",
+        "nat_running": false,
+        "dhcp_running": true,
+        "action": "missing_nat",
+        "internet_verified": false,
+        "apk_connection_verified": false
+      },
+      "first_agent": {
+        "index": 0,
+        "http_status": 200,
+        "expected_output": true,
+        "duration_seconds": 0.609
+      }
+    },
+    {
+      "event": "scheduled_check",
+      "at": "2026-09-12T22:17:49.928456+00:00",
+      "state": {
+        "status": "observing_missing_nat",
+        "last_observed": 1789251466.0024107,
+        "missing_since": 1789251466.0024107
+      },
+      "status": "degraded",
+      "since_fault_seconds": 44.47
+    },
+    {
+      "event": "scheduled_check",
+      "at": "2026-09-12T22:18:51.988422+00:00",
+      "state": {
+        "status": "nat_restored",
+        "last_attempt": 1789251526.2361047,
+        "action": "started_existing_network"
+      },
+      "status": "ok",
+      "since_fault_seconds": 106.53
+    },
+    {
+      "event": "automatic_nat_restored",
+      "at": "2026-09-12T22:18:52.362856+00:00",
+      "since_fault_seconds": 106.91
+    },
+    {
+      "event": "second_apk_command",
+      "at": "2026-09-12T22:18:53.586911+00:00",
+      "command": {
+        "index": 1,
+        "http_status": 200,
+        "expected_output": true,
+        "duration_seconds": 0.86
+      },
+      "since_automatic_nat_seconds": 1.22,
+      "since_fault_seconds": 108.12
+    },
+    {
+      "event": "both_agents_verified",
+      "at": "2026-09-12T22:18:57.313678+00:00",
+      "parallel_commands": [
+        {
+          "index": 0,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.688
+        },
+        {
+          "index": 1,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.75
+        },
+        {
+          "index": 0,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        },
+        {
+          "index": 1,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        },
+        {
+          "index": 0,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        },
+        {
+          "index": 1,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        },
+        {
+          "index": 0,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.515
+        },
+        {
+          "index": 1,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        },
+        {
+          "index": 0,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        },
+        {
+          "index": 1,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        },
+        {
+          "index": 0,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        },
+        {
+          "index": 1,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        }
+      ],
+      "apk_pids_unchanged": true,
+      "first_nat_unchanged": true,
+      "manual_fallback_used": false
+    }
+  ],
+  "task": "Sphere-LDPlayer-pilot-20260911",
+  "device_ids": [
+    "85f2f935-7739-400e-9389-0d71227e8f0a",
+    "ba1346c1-1581-452f-adee-451d36622aaf"
+  ],
+  "apk_pids_before": [
+    "3062",
+    "3143"
+  ],
+  "manual_fallback_used": false,
+  "passed": true
+}

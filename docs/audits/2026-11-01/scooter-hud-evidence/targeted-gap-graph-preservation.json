@@ -1,0 +1,7 @@
+{
+  "old_raw_pairs": 796,
+  "old_raw_pairs_equal_after_map": 796,
+  "old_verified_pair_records": 796,
+  "old_verified_pair_match_data_equal_after_map": 796,
+  "qualifier": "Comparison covers pair IDs, inlier counts and match index blobs; geometry matrices/config can change during calibration."
+}

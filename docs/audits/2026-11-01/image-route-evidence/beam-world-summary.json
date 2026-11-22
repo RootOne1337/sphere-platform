@@ -1,0 +1,56 @@
+{
+  "results": {
+    "forward": {
+      "queries": 100,
+      "selected": 43,
+      "selected_fraction": 0.43,
+      "status_counts": {
+        "ambiguous": 45,
+        "reference_selected": 43,
+        "unknown": 12
+      },
+      "time_proxy_hits_within_0_6s": 35,
+      "time_proxy_wrong_over_2s": 0,
+      "time_proxy_median_error_seconds": 0.333,
+      "all_query_denominator": 100,
+      "abstentions_not_successes": true,
+      "checked_min": 8,
+      "checked_median": 8.0,
+      "checked_max": 8,
+      "elapsed_seconds": 0.0779999999795109
+    },
+    "reverse": {
+      "queries": 100,
+      "selected": 42,
+      "selected_fraction": 0.42,
+      "status_counts": {
+        "ambiguous": 46,
+        "reference_selected": 42,
+        "unknown": 12
+      },
+      "time_proxy_hits_within_0_6s": 32,
+      "time_proxy_wrong_over_2s": 2,
+      "time_proxy_median_error_seconds": 0.333,
+      "all_query_denominator": 100,
+      "abstentions_not_successes": true,
+      "checked_min": 8,
+      "checked_median": 8.0,
+      "checked_max": 8,
+      "elapsed_seconds": 0.07900000002700835
+    }
+  },
+  "original_baseline": {
+    "time_proxy_hit_within_0_6s": 70,
+    "high_score_wrong_over_2s": 8,
+    "queries": 100
+  },
+  "original_strict": {
+    "reference_selected": 5,
+    "time_proxy_hit_within_0_6s": 5,
+    "wrong_over_2s": 0
+  },
+  "input_hashes_unchanged": true,
+  "elapsed_seconds": 0.18799999996554106,
+  "intent_sha256": "30af0d2888c776013207103ed9f8afe5145c41e399c0c02b79162a8bf325c364",
+  "caveats": "Same-video temporal labels only, not spatial ground truth or independent traversal. Synthetic zero-latency receipt clock; reverse is the same samples in a new artificial stream, not independent video. No query truth enters ranking. checked shortlist only, not all-reference verified search. Raw uncalibrated max-product masses are not probability. Neither pose nor arrival nor execution permit."
+}

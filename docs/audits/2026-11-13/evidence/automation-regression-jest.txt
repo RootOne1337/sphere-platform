@@ -1,0 +1,24 @@
+jest-haste-map: Haste module naming collision: sphere-frontend
+  The following files share their name; please adjust your hasteImpl:
+    * <rootDir>\package.json
+    * <rootDir>\.next-audit\standalone\package.json
+
+PASS __tests__/scripts/studio-workbench.test.tsx
+PASS __tests__/tasks/detail-outcomes.test.tsx
+PASS __tests__/scripts/version-workflow.test.tsx
+PASS __tests__/orchestration/catalog-pages.test.tsx
+PASS __tests__/scripts/run-script-modal.test.tsx
+PASS __tests__/pipeline-settings/settings-write.test.tsx
+PASS __tests__/tasks/history.test.tsx
+PASS __tests__/orchestration/schedule-history.test.tsx
+PASS __tests__/scripts/catalog-pagination.test.tsx
+PASS __tests__/orchestration/pipeline-picker.test.tsx
+PASS __tests__/sessions/page.test.tsx
+PASS __tests__/accounts/form-search.test.tsx
+PASS __tests__/orchestration/schedule-create-boundaries.test.tsx
+PASS __tests__/scripts/studio-connections.test.ts
+
+Test Suites: 14 passed, 14 total
+Tests:       179 passed, 179 total
+Snapshots:   0 total
+Time:        20.195 s

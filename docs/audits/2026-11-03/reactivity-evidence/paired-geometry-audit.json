@@ -1,0 +1,53 @@
+{
+  "schema": "sphere-skuter1-geometry-and-independent-pair-audit-v1",
+  "sourceUnchangedAfterFigures": true,
+  "pairedSourceCount": 63,
+  "same173FrameTicks": true,
+  "properSim3": true,
+  "reflection": false,
+  "forcedClosure": false,
+  "nonlinearWarp": false,
+  "physicalActions": 0,
+  "executionQualified": false,
+  "adoption": false,
+  "findings": {
+    "globalSimilarityInsufficient": true,
+    "normalizedCentreRmsPercentOldPath": 4.019352790952652,
+    "oldStartEndGapPercentPath": 3.0594163674749577,
+    "fourthStartEndGapPercentPath": 11.8236532801705,
+    "orientationDifferenceP95Degrees": 17.16204171237495,
+    "independentOldLowerPairs": 20,
+    "independentShortPairs": 21,
+    "independentMetric": "median of per-pair symmetric epipolar RMS medians on fresh ORB associations",
+    "nativeActualReprojectionOld": {
+      "count": 130081,
+      "mean": 0.8879859104215804,
+      "median": 0.5811277913010129,
+      "p95": 2.8097361584941067,
+      "maximum": 5.798725208215495,
+      "rms": 1.2421927223373734
+    },
+    "nativeActualReprojectionFourth": {
+      "count": 80377,
+      "mean": 1.2890334671188057,
+      "median": 1.0387756173004945,
+      "p95": 3.167080035127248,
+      "maximum": 3.999489846873891,
+      "rms": 1.594317002758192
+    }
+  },
+  "authoritativeNativeTrackingResolution": [
+    1280,
+    720
+  ],
+  "motionSelectionResolution": [
+    480,
+    270
+  ],
+  "limitations": [
+    "Old reconstruction is comparison reference, not metric ground truth.",
+    "Fresh feature pairs use the same recording, not independent gameplay.",
+    "Endpoint gap/path ratio does not assert physical distance.",
+    "2D pair consistency supports local old-model advantage but does not prove full route/navigation readiness."
+  ]
+}

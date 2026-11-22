@@ -1,0 +1,33 @@
+{
+  "schema": "sphere-scooter-figure-v1",
+  "source_geometry": ".local-pilot\\scooter-stage-global-focal-20261101\\geometry-0.json",
+  "geometry_sha256": "daa78df1661571a9e0a394fbb1c387b4e78c28108928b92d7cdbd34ea47b7ef2",
+  "source_frames": [
+    {
+      "image": "00000000.png",
+      "ticks_90k": 0,
+      "sha256": "3e19311bd30def3a2d660154e3ca5eb2d3c695206b02b1d55c1bb06a1738650a"
+    },
+    {
+      "image": "00000257.png",
+      "ticks_90k": 896220,
+      "sha256": "09bb0766f5df7a2209002edd9191b986ea1b09aaeed855e49c6d3bd652049582"
+    },
+    {
+      "image": "00000500.png",
+      "ticks_90k": 1805040,
+      "sha256": "19d5ede8980b9dde657beffeb678d0b521a21e6b0bc2181276dae2c7779ff56a"
+    },
+    {
+      "image": "00000900.png",
+      "ticks_90k": 3194370,
+      "sha256": "fe165fbb0451fb0c5baa7c259de4710545d2b00c9d4fa17ccd4352aaacd0e08b"
+    }
+  ],
+  "figure": "docs\\audits\\2026-11-01\\assets\\scooter-refined-focal-result.png",
+  "sha256": "552180cc1baa866767e388c829e20930d7ef2a278b5aa2af01f58613322891b7",
+  "bytes": 909066,
+  "points_visible": 12727,
+  "points_total": 15041,
+  "execution_qualified": false
+}

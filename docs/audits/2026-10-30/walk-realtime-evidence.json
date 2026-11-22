@@ -1,0 +1,1259 @@
+{
+  "schema": "sphere-walk-realtime-evidence-v1",
+  "date": "2026-10-30",
+  "timezone": "Asia/Yekaterinburg",
+  "sourceAssets": {
+    ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+    ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9"
+  },
+  "importMemory": {
+    "default": {
+      "threadEnv": {
+        "OPENBLAS_NUM_THREADS": null,
+        "OMP_NUM_THREADS": null,
+        "MKL_NUM_THREADS": null
+      },
+      "rows": [
+        {
+          "stage": "python",
+          "privateBytes": 10457088,
+          "workingSet": 18542592,
+          "peakWorkingSet": 18542592
+        },
+        {
+          "stage": "numpy",
+          "privateBytes": 525561856,
+          "workingSet": 30351360,
+          "peakWorkingSet": 30351360
+        },
+        {
+          "stage": "cv2",
+          "privateBytes": 528801792,
+          "workingSet": 35835904,
+          "peakWorkingSet": 35835904
+        },
+        {
+          "stage": "service_modules",
+          "privateBytes": 539242496,
+          "workingSet": 48574464,
+          "peakWorkingSet": 48574464
+        }
+      ]
+    },
+    "scopedInitializer": {
+      "threadEnv": {
+        "OPENBLAS_NUM_THREADS": null,
+        "OMP_NUM_THREADS": null,
+        "MKL_NUM_THREADS": null
+      },
+      "rows": [
+        {
+          "stage": "python",
+          "privateBytes": 10407936,
+          "workingSet": 18513920,
+          "peakWorkingSet": 18513920
+        },
+        {
+          "stage": "numpy",
+          "privateBytes": 24256512,
+          "workingSet": 34902016,
+          "peakWorkingSet": 34902016
+        },
+        {
+          "stage": "cv2",
+          "privateBytes": 24256512,
+          "workingSet": 34902016,
+          "peakWorkingSet": 34902016
+        },
+        {
+          "stage": "service_modules",
+          "privateBytes": 33673216,
+          "workingSet": 47566848,
+          "peakWorkingSet": 47566848
+        }
+      ]
+    },
+    "counter": "private commit bytes; not physical RAM freed"
+  },
+  "recoveryBaseline": {
+    "schema": "sphere-route-tracking-latency-v1",
+    "sourceUnchanged": true,
+    "queryFramesHeldOut": true,
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "feedbackLoop": false,
+    "includes": [
+      "JPEG_decode",
+      "localization",
+      "planner"
+    ],
+    "excludes": [
+      "HTTP",
+      "browser",
+      "stream",
+      "Android",
+      "GPU_reconstruction"
+    ],
+    "agreements": [],
+    "cases": [
+      {
+        "kind": "synchronous",
+        "nativeThreads": 4,
+        "skipped": 0,
+        "localized": 47,
+        "backgroundAccepted": 0,
+        "wallMs": {
+          "p50": 11.70899992575869,
+          "p95": 120.30440006637943,
+          "maximum": 129.1514999466017
+        },
+        "flowMs": {
+          "p50": 10.203899932093918,
+          "p95": 17.865999951027334,
+          "maximum": 18.162699998356402
+        },
+        "cpuCoreSeconds": 5.203125,
+        "wallSeconds": 7.062999999965541,
+        "averageCpuCores": 0.7366735098436054,
+        "privateBytesBeforeQueries": 64827392,
+        "privateBytesAfterQueries": 110424064,
+        "observed": 64,
+        "states": {
+          "confirming": 8,
+          "unknown": 9,
+          "localized": 47
+        },
+        "unknownFrames": [
+          {
+            "sourceIndex": 512,
+            "seconds": 19.138,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 518,
+            "seconds": 19.355,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 521,
+            "seconds": 19.472,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 530,
+            "seconds": 19.789,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 534,
+            "seconds": 19.904,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 537,
+            "seconds": 20.004,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 543,
+            "seconds": 20.204,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 546,
+            "seconds": 20.337,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 552,
+            "seconds": 20.588,
+            "reason": "route_pose_not_verified"
+          }
+        ]
+      }
+    ]
+  },
+  "recoveryAdaptive": {
+    "schema": "sphere-route-tracking-latency-v1",
+    "sourceUnchanged": true,
+    "queryFramesHeldOut": true,
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "feedbackLoop": false,
+    "includes": [
+      "JPEG_decode",
+      "localization",
+      "planner"
+    ],
+    "excludes": [
+      "HTTP",
+      "browser",
+      "stream",
+      "Android",
+      "GPU_reconstruction"
+    ],
+    "agreements": [],
+    "cases": [
+      {
+        "kind": "synchronous",
+        "nativeThreads": 4,
+        "skipped": 2,
+        "localized": 60,
+        "backgroundAccepted": 0,
+        "wallMs": {
+          "p50": 10.056350089143962,
+          "p95": 133.00344003946518,
+          "maximum": 194.6933000581339
+        },
+        "flowMs": {
+          "p50": 9.925050020683557,
+          "p95": 11.703560000751168,
+          "maximum": 12.671699980273843
+        },
+        "cpuCoreSeconds": 3.140625,
+        "wallSeconds": 7.047000000020489,
+        "averageCpuCores": 0.44566836951764843,
+        "privateBytesBeforeQueries": 64958464,
+        "privateBytesAfterQueries": 110727168,
+        "observed": 62,
+        "states": {
+          "confirming": 2,
+          "localized": 60
+        },
+        "unknownFrames": []
+      }
+    ]
+  },
+  "recoveryStart4": {
+    "schema": "sphere-route-tracking-latency-v1",
+    "sourceUnchanged": true,
+    "queryFramesHeldOut": true,
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "feedbackLoop": false,
+    "includes": [
+      "JPEG_decode",
+      "localization",
+      "planner"
+    ],
+    "excludes": [
+      "HTTP",
+      "browser",
+      "stream",
+      "Android",
+      "GPU_reconstruction"
+    ],
+    "agreements": [],
+    "cases": [
+      {
+        "kind": "synchronous",
+        "nativeThreads": 4,
+        "skipped": 0,
+        "localized": 62,
+        "backgroundAccepted": 0,
+        "wallMs": {
+          "p50": 10.789050022140145,
+          "p95": 132.47373495833014,
+          "maximum": 143.40749999973923
+        },
+        "flowMs": {
+          "p50": 10.48970001284033,
+          "p95": 12.244060030207036,
+          "maximum": 19.161000032909214
+        },
+        "cpuCoreSeconds": 3.078125,
+        "wallSeconds": 7.656000000075437,
+        "averageCpuCores": 0.4020539446146382,
+        "privateBytesBeforeQueries": 63987712,
+        "privateBytesAfterQueries": 110190592,
+        "observed": 64,
+        "states": {
+          "confirming": 2,
+          "localized": 62
+        },
+        "unknownFrames": []
+      }
+    ]
+  },
+  "backgroundEarlier": [
+    {
+      "schema": "sphere-route-tracking-latency-v1",
+      "sourceUnchanged": true,
+      "queryFramesHeldOut": true,
+      "physicalActions": 0,
+      "independentGameplay": false,
+      "feedbackLoop": false,
+      "includes": [
+        "JPEG_decode",
+        "localization",
+        "planner"
+      ],
+      "excludes": [
+        "HTTP",
+        "browser",
+        "stream",
+        "Android",
+        "GPU_reconstruction"
+      ],
+      "agreements": [
+        {
+          "nativeThreads": 1,
+          "commonLocalizedFrames": 26,
+          "centerDifferenceUnitsP95": 0.00756296329091931,
+          "rotationDifferenceRadiansP95": 0.001851106492299267
+        },
+        {
+          "nativeThreads": 4,
+          "commonLocalizedFrames": 56,
+          "centerDifferenceUnitsP95": 0.006738695789546396,
+          "rotationDifferenceRadiansP95": 0.003034917701426088
+        }
+      ],
+      "cases": [
+        {
+          "kind": "synchronous",
+          "nativeThreads": 1,
+          "skipped": 9,
+          "localized": 42,
+          "backgroundAccepted": 0,
+          "wallMs": {
+            "p50": 13.49439995829016,
+            "p95": 238.1598300067708,
+            "maximum": 262.2066999319941
+          },
+          "flowMs": {
+            "p50": 12.596749991644174,
+            "p95": 16.01525000296533,
+            "maximum": 26.287600048817694
+          },
+          "cpuCoreSeconds": 4.0625,
+          "wallSeconds": 7.547000000020489,
+          "averageCpuCores": 0.5382933615991746,
+          "privateBytesBeforeQueries": 64176128,
+          "privateBytesAfterQueries": 107130880,
+          "observed": 55,
+          "states": {
+            "confirming": 9,
+            "unknown": 4,
+            "localized": 42
+          },
+          "unknownFrames": [
+            {
+              "sourceIndex": 115,
+              "seconds": 4.354,
+              "reason": "route_pose_discontinuity"
+            },
+            {
+              "sourceIndex": 130,
+              "seconds": 4.853,
+              "reason": "route_frame_expired_during_localization"
+            },
+            {
+              "sourceIndex": 143,
+              "seconds": 5.371,
+              "reason": "route_pose_discontinuity"
+            },
+            {
+              "sourceIndex": 167,
+              "seconds": 6.223,
+              "reason": "route_pose_discontinuity"
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "nativeThreads": 1,
+          "skipped": 11,
+          "localized": 30,
+          "backgroundAccepted": 2,
+          "wallMs": {
+            "p50": 14.74479993339628,
+            "p95": 211.8929800344631,
+            "maximum": 229.29010004736483
+          },
+          "flowMs": {
+            "p50": 12.743650062475353,
+            "p95": 16.924449941143394,
+            "maximum": 18.809600034728646
+          },
+          "cpuCoreSeconds": 5.6875,
+          "wallSeconds": 7.687000000034459,
+          "averageCpuCores": 0.7398855210061799,
+          "privateBytesBeforeQueries": 101380096,
+          "privateBytesAfterQueries": 113242112,
+          "observed": 53,
+          "states": {
+            "confirming": 16,
+            "unknown": 7,
+            "localized": 30
+          },
+          "unknownFrames": [
+            {
+              "sourceIndex": 115,
+              "seconds": 4.354,
+              "reason": "route_pose_discontinuity"
+            },
+            {
+              "sourceIndex": 130,
+              "seconds": 4.853,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 167,
+              "seconds": 6.223,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 229,
+              "seconds": 8.689,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 242,
+              "seconds": 9.123,
+              "reason": "route_pose_discontinuity"
+            },
+            {
+              "sourceIndex": 281,
+              "seconds": 10.522,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 293,
+              "seconds": 10.989,
+              "reason": "route_pose_discontinuity"
+            }
+          ]
+        },
+        {
+          "kind": "synchronous",
+          "nativeThreads": 4,
+          "skipped": 0,
+          "localized": 62,
+          "backgroundAccepted": 0,
+          "wallMs": {
+            "p50": 10.57944999774918,
+            "p95": 127.16488991864024,
+            "maximum": 169.67179998755455
+          },
+          "flowMs": {
+            "p50": 10.41720004286617,
+            "p95": 12.133019999600945,
+            "maximum": 14.165100059472024
+          },
+          "cpuCoreSeconds": 3.1875,
+          "wallSeconds": 7.546999999904074,
+          "averageCpuCores": 0.42235325295355963,
+          "privateBytesBeforeQueries": 100700160,
+          "privateBytesAfterQueries": 109133824,
+          "observed": 64,
+          "states": {
+            "confirming": 2,
+            "localized": 62
+          },
+          "unknownFrames": []
+        },
+        {
+          "kind": "background",
+          "nativeThreads": 4,
+          "skipped": 0,
+          "localized": 56,
+          "backgroundAccepted": 8,
+          "wallMs": {
+            "p50": 11.208849959075451,
+            "p95": 144.30491004022764,
+            "maximum": 151.25890006311238
+          },
+          "flowMs": {
+            "p50": 10.837500100024045,
+            "p95": 20.369780040346086,
+            "maximum": 34.700100077316165
+          },
+          "cpuCoreSeconds": 5.21875,
+          "wallSeconds": 7.547000000020489,
+          "averageCpuCores": 0.691499933746632,
+          "privateBytesBeforeQueries": 106893312,
+          "privateBytesAfterQueries": 116416512,
+          "observed": 64,
+          "states": {
+            "confirming": 6,
+            "localized": 56,
+            "unknown": 2
+          },
+          "unknownFrames": [
+            {
+              "sourceIndex": 167,
+              "seconds": 6.223,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 226,
+              "seconds": 8.59,
+              "reason": "route_pose_not_verified"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schema": "sphere-route-tracking-latency-v1",
+      "sourceUnchanged": true,
+      "queryFramesHeldOut": true,
+      "physicalActions": 0,
+      "independentGameplay": false,
+      "feedbackLoop": false,
+      "includes": [
+        "JPEG_decode",
+        "localization",
+        "planner"
+      ],
+      "excludes": [
+        "HTTP",
+        "browser",
+        "stream",
+        "Android",
+        "GPU_reconstruction"
+      ],
+      "agreements": [
+        {
+          "nativeThreads": 1,
+          "commonLocalizedFrames": 41,
+          "centerDifferenceUnitsP95": 0.007226817225675783,
+          "rotationDifferenceRadiansP95": 0.00452633956309997
+        },
+        {
+          "nativeThreads": 4,
+          "commonLocalizedFrames": 44,
+          "centerDifferenceUnitsP95": 0.008036743975963023,
+          "rotationDifferenceRadiansP95": 0.005387499786134682
+        }
+      ],
+      "cases": [
+        {
+          "kind": "synchronous",
+          "nativeThreads": 1,
+          "skipped": 7,
+          "localized": 41,
+          "backgroundAccepted": 0,
+          "wallMs": {
+            "p50": 14.372200006619096,
+            "p95": 179.6621400397271,
+            "maximum": 192.1788000036031
+          },
+          "flowMs": {
+            "p50": 11.195900035090744,
+            "p95": 17.865710065234452,
+            "maximum": 22.450500051490963
+          },
+          "cpuCoreSeconds": 3.921875,
+          "wallSeconds": 7.062000000034459,
+          "averageCpuCores": 0.5553490512575564,
+          "privateBytesBeforeQueries": 64405504,
+          "privateBytesAfterQueries": 107220992,
+          "observed": 57,
+          "states": {
+            "confirming": 9,
+            "unknown": 7,
+            "localized": 41
+          },
+          "unknownFrames": [
+            {
+              "sourceIndex": 512,
+              "seconds": 19.138,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 521,
+              "seconds": 19.472,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 530,
+              "seconds": 19.789,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 534,
+              "seconds": 19.904,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 543,
+              "seconds": 20.204,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 552,
+              "seconds": 20.588,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 568,
+              "seconds": 21.136,
+              "reason": "route_pose_discontinuity"
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "nativeThreads": 1,
+          "skipped": 7,
+          "localized": 42,
+          "backgroundAccepted": 7,
+          "wallMs": {
+            "p50": 12.392800068482757,
+            "p95": 172.73778002709147,
+            "maximum": 232.2219000197947
+          },
+          "flowMs": {
+            "p50": 10.730400099419057,
+            "p95": 16.739999991841614,
+            "maximum": 29.020600020885468
+          },
+          "cpuCoreSeconds": 4.34375,
+          "wallSeconds": 7.077999999979511,
+          "averageCpuCores": 0.6136973721407988,
+          "privateBytesBeforeQueries": 102043648,
+          "privateBytesAfterQueries": 115134464,
+          "observed": 57,
+          "states": {
+            "confirming": 8,
+            "unknown": 7,
+            "localized": 42
+          },
+          "unknownFrames": [
+            {
+              "sourceIndex": 512,
+              "seconds": 19.138,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 521,
+              "seconds": 19.472,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 534,
+              "seconds": 19.904,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 537,
+              "seconds": 20.004,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 543,
+              "seconds": 20.204,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 552,
+              "seconds": 20.588,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 565,
+              "seconds": 21.037,
+              "reason": "route_pose_discontinuity"
+            }
+          ]
+        },
+        {
+          "kind": "synchronous",
+          "nativeThreads": 4,
+          "skipped": 0,
+          "localized": 47,
+          "backgroundAccepted": 0,
+          "wallMs": {
+            "p50": 11.087599908933043,
+            "p95": 116.28324995399453,
+            "maximum": 122.68679996486753
+          },
+          "flowMs": {
+            "p50": 10.22320007905364,
+            "p95": 12.647500028833747,
+            "maximum": 14.631500001996756
+          },
+          "cpuCoreSeconds": 5.328125,
+          "wallSeconds": 7.047000000020489,
+          "averageCpuCores": 0.7560841492811847,
+          "privateBytesBeforeQueries": 101105664,
+          "privateBytesAfterQueries": 110772224,
+          "observed": 64,
+          "states": {
+            "confirming": 8,
+            "unknown": 9,
+            "localized": 47
+          },
+          "unknownFrames": [
+            {
+              "sourceIndex": 512,
+              "seconds": 19.138,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 518,
+              "seconds": 19.355,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 521,
+              "seconds": 19.472,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 530,
+              "seconds": 19.789,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 534,
+              "seconds": 19.904,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 537,
+              "seconds": 20.004,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 543,
+              "seconds": 20.204,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 546,
+              "seconds": 20.337,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 552,
+              "seconds": 20.588,
+              "reason": "route_pose_not_verified"
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "nativeThreads": 4,
+          "skipped": 0,
+          "localized": 44,
+          "backgroundAccepted": 7,
+          "wallMs": {
+            "p50": 11.9038499542512,
+            "p95": 116.397664998658,
+            "maximum": 134.1785000404343
+          },
+          "flowMs": {
+            "p50": 10.54160000057891,
+            "p95": 15.137090039206663,
+            "maximum": 19.35139996930957
+          },
+          "cpuCoreSeconds": 6.078125,
+          "wallSeconds": 7.062999999965541,
+          "averageCpuCores": 0.8605585445320195,
+          "privateBytesBeforeQueries": 107749376,
+          "privateBytesAfterQueries": 118374400,
+          "observed": 64,
+          "states": {
+            "confirming": 10,
+            "unknown": 10,
+            "localized": 44
+          },
+          "unknownFrames": [
+            {
+              "sourceIndex": 512,
+              "seconds": 19.138,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 518,
+              "seconds": 19.355,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 521,
+              "seconds": 19.472,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 530,
+              "seconds": 19.789,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 534,
+              "seconds": 19.904,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 537,
+              "seconds": 20.004,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 543,
+              "seconds": 20.204,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 546,
+              "seconds": 20.337,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 552,
+              "seconds": 20.588,
+              "reason": "route_pose_not_verified"
+            },
+            {
+              "sourceIndex": 649,
+              "seconds": 23.948,
+              "reason": "route_pose_not_verified"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "backgroundFinal": {
+    "schema": "sphere-route-tracking-latency-v1",
+    "sourceUnchanged": true,
+    "queryFramesHeldOut": true,
+    "physicalActions": 0,
+    "independentGameplay": false,
+    "feedbackLoop": false,
+    "includes": [
+      "JPEG_decode",
+      "localization",
+      "planner"
+    ],
+    "excludes": [
+      "HTTP",
+      "browser",
+      "stream",
+      "Android",
+      "GPU_reconstruction"
+    ],
+    "agreements": [
+      {
+        "nativeThreads": 4,
+        "commonLocalizedFrames": 55,
+        "centerDifferenceUnitsP95": 0.007965815993073097,
+        "rotationDifferenceRadiansP95": 0.004439918488772483
+      }
+    ],
+    "cases": [
+      {
+        "kind": "synchronous",
+        "nativeThreads": 4,
+        "skipped": 2,
+        "localized": 60,
+        "backgroundAccepted": 0,
+        "wallMs": {
+          "p50": 10.763299942482263,
+          "p95": 147.13451502029778,
+          "maximum": 194.81050001922995
+        },
+        "flowMs": {
+          "p50": 10.523200035095215,
+          "p95": 16.923699935432523,
+          "maximum": 19.71099991351366
+        },
+        "cpuCoreSeconds": 3.859375,
+        "wallSeconds": 7.641000000061467,
+        "averageCpuCores": 0.5050876848539397,
+        "privateBytesBeforeQueries": 63922176,
+        "privateBytesAfterQueries": 110399488,
+        "observed": 62,
+        "states": {
+          "confirming": 2,
+          "localized": 60
+        },
+        "unknownFrames": []
+      },
+      {
+        "kind": "background",
+        "nativeThreads": 4,
+        "skipped": 0,
+        "localized": 56,
+        "backgroundAccepted": 8,
+        "wallMs": {
+          "p50": 10.952999989967793,
+          "p95": 145.56788001209492,
+          "maximum": 172.19099996145815
+        },
+        "flowMs": {
+          "p50": 10.793900000862777,
+          "p95": 17.51488004811108,
+          "maximum": 22.255699965171516
+        },
+        "cpuCoreSeconds": 5.8125,
+        "wallSeconds": 7.547000000020489,
+        "averageCpuCores": 0.7701735789034344,
+        "privateBytesBeforeQueries": 106754048,
+        "privateBytesAfterQueries": 118247424,
+        "observed": 64,
+        "states": {
+          "confirming": 6,
+          "localized": 56,
+          "unknown": 2
+        },
+        "unknownFrames": [
+          {
+            "sourceIndex": 167,
+            "seconds": 6.223,
+            "reason": "route_pose_not_verified"
+          },
+          {
+            "sourceIndex": 222,
+            "seconds": 8.423,
+            "reason": "route_pose_not_verified"
+          }
+        ]
+      }
+    ]
+  },
+  "backgroundAdopted": false,
+  "expiredBinaryHttp": {
+    "scope": "REAL_RGB_HTTP_EXPIRED_REPLY",
+    "physicalActions": 0,
+    "injectedDelayMs": 300,
+    "neutralOnExpired": true,
+    "threeFreshObservationsRequired": true,
+    "resumed": true,
+    "independentGameplay": false,
+    "feedbackLoop": false,
+    "rows": [
+      {
+        "sequence": 1,
+        "sourceIndex": 510,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 230.08090001530945,
+        "injected": false
+      },
+      {
+        "sequence": 2,
+        "sourceIndex": 515,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 201.07509999070317,
+        "injected": false
+      },
+      {
+        "sequence": 3,
+        "sourceIndex": 521,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_confirming_current_position",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 201.4803000492975,
+        "injected": false
+      },
+      {
+        "sequence": 4,
+        "sourceIndex": 526,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_confirming_current_position",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 21.090100053697824,
+        "injected": false
+      },
+      {
+        "sequence": 5,
+        "sourceIndex": 532,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.006648303611985506,
+          -0.1998894696052868
+        ],
+        "replyMs": 22.734500002115965,
+        "injected": false
+      },
+      {
+        "sequence": 6,
+        "sourceIndex": 539,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 323.0999999213964,
+        "injected": true
+      },
+      {
+        "sequence": 7,
+        "sourceIndex": 545,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 139.3339999485761,
+        "injected": false
+      },
+      {
+        "sequence": 8,
+        "sourceIndex": 550,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 22.205800050869584,
+        "injected": false
+      },
+      {
+        "sequence": 9,
+        "sourceIndex": 554,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.0015727912245104374,
+          -0.1999938157237971
+        ],
+        "replyMs": 22.120999987237155,
+        "injected": false
+      },
+      {
+        "sequence": 10,
+        "sourceIndex": 560,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.014386028552019363,
+          -0.3494076895738846
+        ],
+        "replyMs": 23.037099977955222,
+        "injected": false
+      },
+      {
+        "sequence": 11,
+        "sourceIndex": 566,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.05094151498484421,
+          -0.3424215101205604
+        ],
+        "replyMs": 25.30740003567189,
+        "injected": false
+      },
+      {
+        "sequence": 12,
+        "sourceIndex": 572,
+        "pose": "unknown",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 125.03700004890561,
+        "injected": false
+      },
+      {
+        "sequence": 13,
+        "sourceIndex": 578,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 171.34699993766844,
+        "injected": false
+      },
+      {
+        "sequence": 14,
+        "sourceIndex": 583,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 180.63329998403788,
+        "injected": false
+      },
+      {
+        "sequence": 15,
+        "sourceIndex": 588,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 180.9343999484554,
+        "injected": false
+      },
+      {
+        "sequence": 16,
+        "sourceIndex": 594,
+        "pose": "localized",
+        "phase": "stopped",
+        "reason": "walk_relocalization_drift",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 22.583100013434887,
+        "injected": false
+      },
+      {
+        "sequence": 17,
+        "sourceIndex": 600,
+        "pose": "localized",
+        "phase": "stopped",
+        "reason": "walk_relocalization_drift",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 22.856099996715784,
+        "injected": false
+      },
+      {
+        "sequence": 18,
+        "sourceIndex": 607,
+        "pose": "localized",
+        "phase": "stopped",
+        "reason": "walk_relocalization_drift",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 19.018699997104704,
+        "injected": false
+      }
+    ]
+  },
+  "tests": {
+    "frontendTests": 129,
+    "frontendSuites": 14,
+    "typescript": true,
+    "productionBuild": true,
+    "pythonUnitTests": 135,
+    "httpServiceTests": 28,
+    "allPassed": true
+  },
+  "delivery": {
+    "apiReload": {
+      "oldPid": 49132,
+      "watchdogPid": 4444,
+      "physicalActions": 0,
+      "sourceSha": "e05723d6d448da7de9c1c507b1661d4b86daae7005a87416ba3dae3fc07ad25c",
+      "outcome": "verified",
+      "newPid": 6252,
+      "existingAssetsUnchanged": true
+    },
+    "webInstall": {
+      "outcome": "verified",
+      "candidateImageId": "sha256:c43298e746ecca100f703c23d06736e5388e32a85bd9808120d10b9c57c31ffe",
+      "physicalDeviceActions": 0,
+      "pages": 2,
+      "assets": 31,
+      "uiHealthy": true,
+      "otherContainersPreserved": true,
+      "sourceMatches": true
+    },
+    "webProbe": {
+      "outcome": "verified",
+      "physicalActions": 0,
+      "pages": 2,
+      "assets": 31,
+      "workerMatches": true,
+      "newBundlePresent": true
+    },
+    "frontendSourceFingerprint": "b9287baaeb6ccd5456b255789a6900286eb660a0cb333c1cb16ea6735303155a"
+  },
+  "rawArtifacts": [
+    {
+      "path": ".local-pilot/route-import-memory-default-20261030.json",
+      "sha256": "cb2cb47e96a3d4d45fd7d1580fb627158effee18cd6ed6ca188aa4cd9112c5f7"
+    },
+    {
+      "path": ".local-pilot/route-import-memory-scoped-20261030.json",
+      "sha256": "b0ac0224533fbef6d96e5f74171801769d6ae3c44ed6048361aa8e75d2a89a9a"
+    },
+    {
+      "path": ".local-pilot/route-recovery-baseline-20261030-v1.json",
+      "sha256": "6df5b7c3597f7cf10a10ce5a62f3868b4c815fe2b8db225d9b705bc2f0c733fd"
+    },
+    {
+      "path": ".local-pilot/route-recovery-adaptive-20261030-v1.json",
+      "sha256": "f6367870026d4fce1672c3bbd34f213e8e0aa2d6e483486dd78d80df42d8833b"
+    },
+    {
+      "path": ".local-pilot/route-recovery-adaptive-start4-20261030-v1.json",
+      "sha256": "3dd8478c18fa3d5107695466862ea0929fb2979d2210dc52b38030b5bf1f16cf"
+    },
+    {
+      "path": ".local-pilot/route-background-latency-20261030-v3.json",
+      "sha256": "bab21180fa83b9808647ff59109de442b8a4730b6b076e4f5202d2cf79c78d7a"
+    },
+    {
+      "path": ".local-pilot/route-background-latency-20261030-v4.json",
+      "sha256": "058ee6023cc4480d1b5abea1574e90b503b22fd1a2e9d35c4cfcf507545af328"
+    },
+    {
+      "path": ".local-pilot/route-background-final-20261030-v1.json",
+      "sha256": "06295bcd11ffa7a5976dcd15a5aeb3ee8ba55fbcbd26206a6e0bd93d613a4d50"
+    },
+    {
+      "path": ".local-pilot/route-realtime-jest-final-20261030-v2.json",
+      "sha256": "12effd5160e91c963ead054103a61131cfac2974911fe05b3051855a10f33259"
+    },
+    {
+      "path": ".local-pilot/route-realtime-python-final-20261030.log",
+      "sha256": "a27f797d6f1190ec33e9a7df211c1a5af4a027e7851b37f06cee1d8704be7a0c"
+    },
+    {
+      "path": ".local-pilot/route-realtime-http-final-20261030.log",
+      "sha256": "966f022f65c7442fea509a3da4c70bf0d8bc3783f652139167f6b03abf4d091a"
+    },
+    {
+      "path": ".local-pilot/expired-pose-binary-http-20261030-v2/result.json",
+      "sha256": "5d1596196130c7efc2c7eacab62670dffbdfa08f932d63a05e26cb7434965846"
+    }
+  ],
+  "physicalDeviceActions": 0,
+  "liveAtoBVerified": false,
+  "browserInteractionVerified": false,
+  "multiWindowLoadTest": false
+}

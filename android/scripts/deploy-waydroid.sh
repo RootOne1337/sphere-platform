@@ -32,7 +32,7 @@ DEST_DIR="/system/priv-app/SphereAgent"
 
 # Серверная конфигурация (измените под вашу инфраструктуру)
 SERVER_URL="${SPHERE_SERVER_URL:?SPHERE_SERVER_URL is required}"
-API_KEY="${SPHERE_API_KEY:-sphr_dev_enrollment_key_2025}"
+API_KEY="${SPHERE_API_KEY:?SPHERE_API_KEY is required}"
 DEVICE_ID="${SPHERE_DEVICE_ID:-waydroid-$(hostname)}"
 
 APK_PATH="${1:?Ошибка: укажите путь к APK. Использование: sudo ./deploy-waydroid.sh <agent.apk>}"

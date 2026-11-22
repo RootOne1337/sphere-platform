@@ -56,7 +56,7 @@ async def bulk_action(
 @router.delete(
     "",
     response_model=BulkDeleteResponse,
-    summary="Массовое удаление устройств (требует org_admin или выше)",
+    summary="Убрать устройства из активного каталога, сохранив историю (org_admin+)",
 )
 async def bulk_delete(
     body: BulkDeleteRequest,
@@ -64,6 +64,6 @@ async def bulk_delete(
     svc: DeviceService = Depends(get_device_service_simple),
     db: AsyncSession = Depends(get_db),
 ) -> BulkDeleteResponse:
-    deleted = await svc.bulk_soft_delete(body.device_ids, current_user.org_id)
+    deleted = await svc.bulk_delete(body.device_ids, current_user.org_id)
     await db.commit()
     return BulkDeleteResponse(deleted=deleted)

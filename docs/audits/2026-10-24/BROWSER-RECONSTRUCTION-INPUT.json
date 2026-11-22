@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-24T18:40:37.985163+00:00",
+  "scope": "Offline browser recording reader and full-resolution reconstruction preparation only",
+  "sourceFiles": [
+    {
+      "file": "motor_worker/browser_teach.py",
+      "sha256NormalizedLf": "aa16ba7b7bf9df9ea13dadad9acbeee0076d96e7df2cd35e9300b2c727101c7c"
+    },
+    {
+      "file": "tests/test_motor_browser_teach.py",
+      "sha256NormalizedLf": "9cdc4fb8b7512cdbd74ad408549200a6247ce78d9cdc26da22a8057906b03071"
+    }
+  ],
+  "tests": {
+    "scopedTests": 12,
+    "motorTests": 315,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "ruffPassed": true
+  },
+  "historicalSource": {
+    "clip": "c7aa48d84c90402da68012da51ed34be",
+    "frames": 6026,
+    "decodedFrames": 6026,
+    "mediaSeconds": 190.215,
+    "geometry": [
+      960,
+      540
+    ],
+    "newRecording": false
+  },
+  "preparation": {
+    "images": 188,
+    "geometry": [
+      960,
+      540
+    ],
+    "sourceFrames": 6026,
+    "allPngHashesVerified": true,
+    "originalJournalsPreserved": true,
+    "sourceManifestSha256": "0f79e89fb520823b51cb3916b14ed17174fbc8f1e9af21687d72e0952e9a416e",
+    "cameraPosesKnown": false,
+    "metricScaleKnown": false,
+    "autonomousNavigationAccepted": false,
+    "imageBytes": 67692305,
+    "preparedManifestSha256": "e31a1f9ce3688f2318e073ff7c37bb2954de79b496bd055dd3ee5869bbc61ece"
+  },
+  "completed": [
+    "browser_v1_v2_complete_hash_and_native_journal_validation",
+    "all_access_units_hashed_and_decoded_with_exact_pts_binding",
+    "exclusive_bounded_full_resolution_png_preparation",
+    "source_journal_preservation_and_per_image_provenance"
+  ],
+  "limitations": [
+    "selection_is_fixed_media_interval_plus_last_not_quality_keyframe_selection",
+    "no_masks_or_camera_pose_estimation",
+    "not_yet_a_colmap_or_brush_model",
+    "browser_bundle_not_automatically_connected_to_teach_compile",
+    "source_capture_to_browser_clock_mapping_unknown",
+    "original_video_not_copied_into_preparation_directory"
+  ],
+  "physicalDeviceCommands": 0,
+  "newGitHubJobs": 0,
+  "apkChanged": false,
+  "webChanged": false,
+  "apiChanged": false,
+  "reconstructionQualified": false,
+  "autonomousNavigationAccepted": false,
+  "productionAccepted": false
+}

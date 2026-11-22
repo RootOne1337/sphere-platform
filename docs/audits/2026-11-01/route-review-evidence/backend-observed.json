@@ -1,0 +1,15 @@
+{
+  "schema": "backend-review-tests-observed-v1",
+  "provenance": "parent agent observed tool output; raw log was not saved",
+  "command": "C:/Users/dimas/AppData/Local/Programs/Python/Python313/python.exe -m pytest --noconftest tests/test_alternative_geometry.py tests/test_reconstruction_service.py -q",
+  "passed": 38,
+  "subtests_passed": 9,
+  "seconds_observed": 5.53,
+  "files_sha256_at_documentation": {
+    "tests/test_alternative_geometry.py": "8eb20fadfe5b17ef23672bd9004e25c1472d1543e72930920bda77b74fa8f713",
+    "tests/test_reconstruction_service.py": "575adfa56749bfe22a9630ccaf192a0aaecbe2b21b1e29b72cb747edf45ca957",
+    "scripts/pilot/alternative_geometry.py": "02565fd072be6e9922c8fb59856122f8685e62a4c73fb86b83dd5f06b60bb458",
+    "scripts/pilot/reconstruction_service.py": "f6ff2ebe786a74228ce614fc3defc5f311b7d10929c709b5c395f558a81f3f75"
+  },
+  "qualification": "Parent reports no backend changes after test; hashes were captured while documenting, not by the test process."
+}

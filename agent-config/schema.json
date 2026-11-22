@@ -22,6 +22,12 @@
       "default": "/ws/android",
       "description": "Путь WebSocket эндпоинта. По умолчанию /ws/android."
     },
+    "fallback_server_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "pattern": "^https?://",
+      "description": "Опциональный второй маршрут той же установки Sphere для WS и refresh; не отдельный сервер с независимой БД."
+    },
     "enrollment_api_key": {
       "type": "string",
       "pattern": "^sphr_",

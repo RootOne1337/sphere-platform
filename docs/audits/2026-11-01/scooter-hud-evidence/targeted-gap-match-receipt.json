@@ -1,0 +1,171 @@
+{
+  "old_raw_pairs_unchanged": true,
+  "old_raw_pairs": 796,
+  "new_pairs": 27,
+  "new_pair_details": [
+    {
+      "first": "00000465.png",
+      "second": "00000497.png",
+      "matches": 4
+    },
+    {
+      "first": "00000469.png",
+      "second": "00000498.png",
+      "matches": 8
+    },
+    {
+      "first": "00000474.png",
+      "second": "00000499.png",
+      "matches": 52
+    },
+    {
+      "first": "00000479.png",
+      "second": "00000497.png",
+      "matches": 69
+    },
+    {
+      "first": "00000484.png",
+      "second": "00000498.png",
+      "matches": 75
+    },
+    {
+      "first": "00000488.png",
+      "second": "00000497.png",
+      "matches": 219
+    },
+    {
+      "first": "00000488.png",
+      "second": "00000499.png",
+      "matches": 136
+    },
+    {
+      "first": "00000492.png",
+      "second": "00000497.png",
+      "matches": 437
+    },
+    {
+      "first": "00000492.png",
+      "second": "00000498.png",
+      "matches": 408
+    },
+    {
+      "first": "00000496.png",
+      "second": "00000497.png",
+      "matches": 1043
+    },
+    {
+      "first": "00000496.png",
+      "second": "00000498.png",
+      "matches": 880
+    },
+    {
+      "first": "00000496.png",
+      "second": "00000499.png",
+      "matches": 749
+    },
+    {
+      "first": "00000497.png",
+      "second": "00000498.png",
+      "matches": 1279
+    },
+    {
+      "first": "00000497.png",
+      "second": "00000499.png",
+      "matches": 1037
+    },
+    {
+      "first": "00000500.png",
+      "second": "00000497.png",
+      "matches": 510
+    },
+    {
+      "first": "00000509.png",
+      "second": "00000497.png",
+      "matches": 197
+    },
+    {
+      "first": "00000526.png",
+      "second": "00000497.png",
+      "matches": 8
+    },
+    {
+      "first": "00000498.png",
+      "second": "00000499.png",
+      "matches": 1203
+    },
+    {
+      "first": "00000500.png",
+      "second": "00000498.png",
+      "matches": 610
+    },
+    {
+      "first": "00000504.png",
+      "second": "00000498.png",
+      "matches": 212
+    },
+    {
+      "first": "00000515.png",
+      "second": "00000498.png",
+      "matches": 219
+    },
+    {
+      "first": "00000532.png",
+      "second": "00000498.png",
+      "matches": 49
+    },
+    {
+      "first": "00000500.png",
+      "second": "00000499.png",
+      "matches": 694
+    },
+    {
+      "first": "00000504.png",
+      "second": "00000499.png",
+      "matches": 217
+    },
+    {
+      "first": "00000509.png",
+      "second": "00000499.png",
+      "matches": 209
+    },
+    {
+      "first": "00000520.png",
+      "second": "00000499.png",
+      "matches": 77
+    },
+    {
+      "first": "00000539.png",
+      "second": "00000499.png",
+      "matches": 76
+    }
+  ],
+  "cache_used_hashes": {
+    "00000465.png": "1fcf828a41a7bf96d3f86d3f3ad814576b2a86df0f5cb34cd28346c543ac6e42",
+    "00000497.png": "30a3fcfb87333215371a244fc7cda21e823ad2768aeb202b2eb29ac585124cc4",
+    "00000469.png": "8a3193781af74855922846a3015d2508f2983cd4e5c2565d450ac6cd136f4de4",
+    "00000498.png": "6d5a8dd527a1decfab277e47e1489a2beb0a7641fc827737b2f93958f4ab7a51",
+    "00000474.png": "47072ee58d4dc5e78e94607677de8c0d78cd929eb8470f0e90282a941a294931",
+    "00000499.png": "037d4ebd6e35cd5d878bb625a9fd19f101c9adb75603781add3a46115cb00593",
+    "00000479.png": "3a147cfad3390512c9a5b21cdffeffbcc92e4263055a8aeb22c59d7ff4aee0d2",
+    "00000484.png": "413d19c85669caf9f154b15226547d43c870859b787ecdf8723cd33862a47013",
+    "00000488.png": "5af9956d88eb2a7cdc7ebdfbae7a4fa05516d1c0cba72283cecdfa02c91df462",
+    "00000492.png": "6f22e01592609c3b6b6199079d383db49a01cf791b5293d2209ee96321c7ec3d",
+    "00000496.png": "7db4ed590db3bbb1ad793c2b09d3b15da99a7905f8dd043d009017b2c38dc7c5",
+    "00000500.png": "3ef458772224256197e88b53f41f0138e25f03edd1ee1eff2e14765ea607de56",
+    "00000509.png": "4e375352de9681b05ee0895b1e4c79bc71d759cd408be42e149c5cd90ae927a8",
+    "00000526.png": "ddd15008a3c75151d639f708711ccd1746b2613c3ef84ee4e337c65a9c63b34e",
+    "00000504.png": "f370baa7d493220ef82dcde00ef59f48852f9d506473df00b827b3ab594943fc",
+    "00000515.png": "a4d1886a5f684dbe2d200f3f7288e902e6ec7b29b3d4cc46602517faff0955d2",
+    "00000532.png": "b09ee46b89b2a73cc1ac7b5c1c3569467001ba57a5deb7aae50a94e7a029ade9",
+    "00000520.png": "b5cf29b4bcac1ebe2f2d0546245efcc2e9fbb8b360a8042334a96a87b0c0f4c8",
+    "00000539.png": "9c5751c8727b141e16289cba2178cc36373ab3fb2840e365d0b6820c5a61a10b"
+  },
+  "gpu": {
+    "free_before": 16937648128,
+    "total": 17095983104,
+    "cap": 3221225472,
+    "peak_allocated": 444891648,
+    "peak_reserved": 822083584
+  },
+  "graph_contract": "old raw796+old verified; only edges incident to new real frames with same lag set; no old edge changed"
+}

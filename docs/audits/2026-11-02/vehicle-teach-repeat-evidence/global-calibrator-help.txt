@@ -1,0 +1,31 @@
+I20261102 01:14:52.280790 11472 option_manager.cc:1319] COLMAP 4.2.1 (Commit bd1fcf6 on 2026-09-29 without GPU support, boost hash maps)
+I20261102 01:14:52.281766 11472 option_manager.cc:1321] Options can either be specified via command-line or by defining them in a .ini project file passed to `--project_path`.
+  -h [ --help ] 
+  --project_path arg
+  --default_random_seed arg (=0)
+  --log_target arg (=stderr_and_file)   {stderr, stdout, file, stderr_and_file}
+  --log_path arg
+  --log_level arg (=0)
+  --log_severity arg (=0)               0:INFO, 1:WARNING, 2:ERROR, 3:FATAL
+  --log_color arg (=1)
+  --database_path arg
+  --cross_validate_prior_focal_lengths arg (=1)
+                                        Cross-validate prior focal lengths
+  --min_calibrated_pair_ratio arg (=0.5)
+                                        Minimum ratio of calibrated pairs for 
+                                        cross-validation
+  --reestimate_relative_pose arg (=1)   Re-estimate relative poses after 
+                                        calibration
+  --min_focal_length_ratio arg (=0.1)   Minimum ratio of estimated to prior 
+                                        focal length
+  --max_focal_length_ratio arg (=10)    Maximum ratio of estimated to prior 
+                                        focal length
+  --max_calibration_error arg (=2)      Maximum calibration error for an image 
+                                        pair
+  --relpose_max_error arg (=1)          Maximum error for relative pose 
+                                        re-estimation
+  --relpose_min_num_inliers arg (=30)   Minimum inliers for relative pose 
+                                        re-estimation
+  --relpose_min_inlier_ratio arg (=0.25)
+                                        Minimum inlier ratio for relative pose 
+                                        re-estimation

@@ -1,0 +1,89 @@
+{
+  "state": "delivered",
+  "frontendSourceRevision": "29e545d54b84c2d8bf760ee9747183e5e9d2a54f",
+  "installerSourceRevision": "622d951661937b44fea3b9a16400fd33eb5cbb41",
+  "installedImage": "sha256:d8cf74b843b00b442a5e1c9ec3c6cd94cd836d121e7d7cea00b7c962932390f1",
+  "sourceArchiveSha256": "83254c0d566b2a73ee9a5a31c51803555bde59f92efdeba719b4f668c2332dbf",
+  "canonicalCi": {
+    "run": "20261101T203558Z-60cdcab0",
+    "passed": 2999,
+    "failed": 0,
+    "suites": 224,
+    "skips": 0,
+    "mandatorySteps": 7,
+    "publishedStatusId": 57793832100,
+    "processSeconds": 174.35900000005495
+  },
+  "node24TimingProof": {
+    "targetedPassed": 45,
+    "focusedRepetitionsPassed": 100
+  },
+  "packagingRegressionPassed": 50,
+  "build": {
+    "processSeconds": 143.7970000000205,
+    "minAvailableRamGiB": 5.127521514892578,
+    "minFreeCommitGiB": 16.821563720703125,
+    "rebuildsAfterSuccessfulBuild": 0,
+    "remoteDockerCpuLimitClaimed": false
+  },
+  "http": {
+    "pages": 2,
+    "assets": 31,
+    "workers": {
+      "teaching-recorder.worker.js": "4a327116bda4850b2aa4241784677837eb72e744f3ffd3c0755a7741e3975769",
+      "walk-frame-encoder.js": "299fd956df1bac46cad0736b7b109e1c9533e3b922ba30622cb7cb6d24daec69"
+    },
+    "bundleTokensVerified": [
+      "vehicle_live_v1",
+      "sphere-vehicle-plan-v1",
+      "vehicle-start",
+      "cameraFollowsBodyConfirmed",
+      "maxDecisionAgeMs",
+      "vehicle_speed_reference",
+      "Повторить подготовку записи",
+      "29e545d54b84c2d8bf760ee9747183e5e9d2a54f"
+    ]
+  },
+  "preservation": {
+    "otherContainers": 45,
+    "fullUiApplicationConfigExceptExactImageComposeMetadata": true,
+    "fullUniqueEnvMapping": true,
+    "HostConfigMounts": true,
+    "api": {
+      "pid": 48248,
+      "service": "sphere-reconstruction-v1",
+      "vehicle_control_contract": "attached_camera_hud_binary_hold_v1",
+      "route_resource_monitor_contract": "task_volume30_fresh_native_v1",
+      "live_session_active": false
+    },
+    "protectedAssetsHashed": 456,
+    "ota": true
+  },
+  "canonicalInstallReceipt": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-29e545d54b84-885f5fe3/installed.json",
+  "supplementalInstallReceipt": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\vehicle-route-deployment-20261102-v1\\install-v3-receipt.json",
+  "retainedFailures": [
+    "install-preflight-failure.json",
+    "install-v2-failure-receipt.json",
+    "supplemental-rollback.json"
+  ],
+  "fixture": {
+    "kind": "isolated-component-static-SSR",
+    "sourceRevision": "29e545d54b84c2d8bf760ee9747183e5e9d2a54f",
+    "screenshot": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\output\\playwright\\vehicle-route-29e545d5-20261102\\blocked-skuter1.png",
+    "sha256": "b572227448ce4a03c34c945575cb4b41414d7667e58b3ba7af686f1cbfddb609",
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "actualJobState": "failed/resource_guard",
+    "startDisabled": true,
+    "capKmh": 15,
+    "durationSeconds": 300,
+    "browserHydrationVerified": false,
+    "iabAcceptance": false,
+    "physicalActions": 0,
+    "isolatedBrowserClosed": true,
+    "serverStopped": true
+  },
+  "physicalActions": 0,
+  "actualSkuter1MainState": "failed/resource_guard; no navigation admission granted",
+  "archivesCreated": 0
+}

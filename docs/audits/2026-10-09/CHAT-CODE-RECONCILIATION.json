@@ -1,0 +1,1529 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-08T22:58:43.540517+00:00",
+  "sourceRevision": "1577e01e09dcf256efaed391941606bd2c400e8e",
+  "baselineRevision": "c3937a1abf55eca73662bdc720699eb29b6653a6",
+  "workingTreeIncludesDocumentationOnlyEdits": true,
+  "scope": "chat/doc/source reconciliation and finite read-only installed UI; not platform or fleet acceptance",
+  "counts": {
+    "items": 50,
+    "acceptedRecordedScope": 9,
+    "open": 41
+  },
+  "legacyWebLedger": {
+    "sourceFixed": 34,
+    "unclosed": 7,
+    "partial": [
+      "F32",
+      "F33",
+      "F39"
+    ],
+    "open": [
+      "F34",
+      "F36",
+      "F40",
+      "F41"
+    ],
+    "scope": "latest recorded legacy state, not new closure"
+  },
+  "installedVisible": {
+    "ui": "ec3f2267",
+    "api": "be803773",
+    "port": 3015,
+    "viewport": {
+      "width": 648,
+      "height": 884
+    },
+    "main": {
+      "width": 648,
+      "height": 820
+    },
+    "pageWidth": 648,
+    "nodes": 3,
+    "edges": 2,
+    "version": 1,
+    "actions": "read only; no navigation, Save, Run or Android input"
+  },
+  "clockCorrection": {
+    "sourceRevision": "1577e01e09dcf256efaed391941606bd2c400e8e",
+    "focusedTests": 76,
+    "focusedSuites": 3,
+    "fullTests": 1938,
+    "fullSuites": 139,
+    "typeCheckExitCode": 0,
+    "redCasesBeforeCorrection": 2,
+    "installed": false,
+    "receipt": "docs/audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md"
+  },
+  "storageCoverage": {
+    "visibleMatchingProcesses": 0,
+    "processReadUtc": "2026-10-08T22:46:42.0708856Z",
+    "scope": "visible process command lines, not privileged kernel evidence",
+    "oneFreeDiskReadingBytes": 50802831360,
+    "continuousCoverageConfirmed": false,
+    "afterDeadlineWriter": "UNKNOWN"
+  },
+  "evidence": [
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json",
+      "sha256": "0fa6d46d8dae17bde3f530ff8ce0598f2fef09d2324a314e5b2af95a6f9e9771"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json",
+      "sha256": "ddb599c5a6ade247bd7c251c89ed593f9954ff3f511dd01f367a77658a0d27f4"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-HTTP-METRICS-EVIDENCE.json",
+      "sha256": "9255b013043aceae1b853cd917c991861d154e3407b7e7daf503828f18aa1ed2"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-EVIDENCE.json",
+      "sha256": "d41a76810d02d46e076cc3feb55438fdd453829b812c1799687ef445ba7301db"
+    },
+    {
+      "file": "docs/audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json",
+      "sha256": "50aa0d0fed76bb8fe32fe6bb37e9e10de3a1e63fee6e67f60aad5f5e3159a04c"
+    },
+    {
+      "file": "docs/audits/2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.json",
+      "sha256": "d6c05db087d8c3f7263d30ee520f937300cc0d8e22764d81f7e3999f978ed92c"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
+      "sha256": "eb87fff170d96bd53b4e39147a7e0ca8bd74625beced785c88e4ffe9044aac25"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STUDIO-IDLE-RECEIPT-TIMING.json",
+      "sha256": "47c5b29d7a3c80690811ecbe1dae55958f863fd52f501193d759ffb8f9087bcb"
+    }
+  ],
+  "items": [
+    {
+      "id": "EP-001",
+      "title": "Сохранять видимость колонок после F5",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "Видимость колонок сохраняется; конечная приёмка EP-001 записана отдельно.",
+      "remaining": "Общие table preferences относятся к EP-011, не автоматически к EP-001.",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "sha256": "8682ab6ec28920e686fa8979e52dd21154ab2d6d3338e27b4039c8fc896c3b30"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Изменить набор колонок → F5 → тот же набор.",
+        "Миграция старой/повреждённой local schema без потери темы.",
+        "Недоступный storage не ломает каталог."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json"
+    },
+    {
+      "id": "EP-002",
+      "title": "Исправить canonical export визуального сценария",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "Canonical array/action DAG совместим с сервером; связи и Undo используют тот же формат.",
+      "remaining": "Новые action/version regressions должны сохранять этот контракт.",
+      "sourceRefs": [
+        {
+          "file": "frontend/lib/dag/export.ts",
+          "sha256": "1c85e7e13d6ebc4cdd2847c2f1fb8c40f51ed0e223b88ee13be8110868826490"
+        },
+        {
+          "file": "backend/schemas/dag.py",
+          "sha256": "031ffe206758162eef5f2806183547f9d741fc50e3b8e6f3c1cef793a9b2de2c"
+        },
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "sha256": "f00714d48c9880c1209e9aea49175ebdba53a152ef74d3cfcf0c3e6bd81222c6"
+        }
+      ],
+      "acceptanceCriteria": [
+        "POST canonical fixture принимается сервером.",
+        "Lowercase action, links/retry/timeout сохранены.",
+        "Неверный граф не публикуется и не запускается."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json"
+    },
+    {
+      "id": "EP-003",
+      "title": "Открывать existing canonical script в builder",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "Сохранённые canonical версии открываются; текущий browser canary показывает v1, 3 узла/2 связи.",
+      "remaining": "Это не roundtrip всех будущих action или legacy документов.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "sha256": "f00714d48c9880c1209e9aea49175ebdba53a152ef74d3cfcf0c3e6bd81222c6"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Сохранённый canonical graph открывается.",
+        "Roundtrip не теряет поля/ветви/версию.",
+        "Load failure по-прежнему блокирует запись."
+      ],
+      "dependencies": [
+        "EP-002"
+      ],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json"
+    },
+    {
+      "id": "EP-004",
+      "title": "Нормализовать device_model в Fleet Matrix",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "Модель нормализована для registry/picker; отсутствие данных имеет fallback.",
+      "remaining": "Полный inventory и колонки относятся к EP-012/028.",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "sha256": "8682ab6ec28920e686fa8979e52dd21154ab2d6d3338e27b4039c8fc896c3b30"
+        },
+        {
+          "file": "frontend/lib/hooks/useDevices.ts",
+          "sha256": "7fa6b75488760b8b98a756100310b5d5de7b1eca473356fcb6eae4d92492d254"
+        }
+      ],
+      "acceptanceCriteria": [
+        "API model отображается в registry и picker одинаково.",
+        "Пустое/legacy поле отображается с честным fallback.",
+        "Поиск/сортировка используют тот же canonical field."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json"
+    },
+    {
+      "id": "EP-005",
+      "title": "Не показывать пустое количество узлов в pipeline picker",
+      "priority": "P2",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "Canonical current_version count принят; unknown count не считается нулём.",
+      "remaining": "Pipeline/schedule UX и semantic references — отдельные работы.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx",
+          "sha256": "77c5d23d54417435e59ad370bef4e3394b718636cbf43ad40a8843664e900106"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Count canonical current_version одинаков в scripts/pipeline/schedule.",
+        "Unknown count обозначен явно, не пустой строкой/нулём.",
+        "Старая форма ответа не ломает выбор версии."
+      ],
+      "dependencies": [
+        "EP-002"
+      ],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json"
+    },
+    {
+      "id": "EP-006",
+      "title": "HTTP rejection не является delivered в legacy webhook",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "HTTP outcomes исправлены; loopback receipts204/403/429/503 и bounded retry приняты.",
+      "remaining": "Durable outbox/DLQ/replay требуют EP-025.",
+      "sourceRefs": [
+        {
+          "file": "backend/services/webhook_service.py",
+          "sha256": "26173427077886c0aeeb8b934fd3097355821a8fb197cd7d6151c887321832a3"
+        },
+        {
+          "file": "backend/services/task_service.py",
+          "sha256": "911836a4bdea1f5d0ac26b088d8a6840329f0b85e0e84766d999222b9bf22565"
+        },
+        {
+          "file": "backend/services/batch_service.py",
+          "sha256": "88c1ca4f98172514263d82d9eaad7f3a7bc3c93a8547e9f6ed79ec3e9713fda2"
+        }
+      ],
+      "acceptanceCriteria": [
+        "2xx success, 403 rejected, 429 rate limited и 5xx retry различаются.",
+        "Не повторять terminal rejection бесконечно.",
+        "Новый результат отражён в delivery logs/receipts; n8n compatibility проверена."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json"
+    },
+    {
+      "id": "EP-007",
+      "title": "Встроенная Grafana должна открыть запрошенный dashboard",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "Grafana proxy/dashboard/Viewer query и отзыв собственной сессии подтверждены.",
+      "remaining": "Новые панели/mobile themes/synthetic Android SLI не приняты автоматически.",
+      "sourceRefs": [
+        {
+          "file": "frontend/lib/server/observability.ts",
+          "sha256": "f50a0424b2db8f010ea28f55a957d88c75fe2274c2a8162827dda2698a6777d7"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Получены dashboard и реальные панели, не Welcome.",
+        "Request/redirect/auth/org/UID цепочка установлена.",
+        "Истечение/отзыв Sphere session не даёт обхода RBAC."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json"
+    },
+    {
+      "id": "EP-008",
+      "title": "Подключить реальные HTTP RPS и latency panels",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "HTTP RPS/p95 подключены с window/unit/scope, empty/stale/error states.",
+      "remaining": "HTTP до заголовков не измеряет жест→экран или APK execution.",
+      "sourceRefs": [
+        {
+          "file": "frontend/lib/server/observability.ts",
+          "sha256": "f50a0424b2db8f010ea28f55a957d88c75fe2274c2a8162827dda2698a6777d7"
+        },
+        {
+          "file": "backend/metrics.py",
+          "sha256": "2b545f911106ca020f096b17d68d73c1e08260fb68aae678cb776dbb8a235ea5"
+        }
+      ],
+      "acceptanceCriteria": [
+        "RPS/p95 отображают unit/window/scope.",
+        "Empty/stale/error/partial vector различаются.",
+        "Endpoint/error drilldown и bounded query allowlist."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-HTTP-METRICS-EVIDENCE.json"
+    },
+    {
+      "id": "EP-009",
+      "title": "История CPU/RAM с корректным scope",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "baselineState": "OPEN",
+      "currentScope": "История cgroup CPU/RAM подключена; код задаёт cadence15s.",
+      "remaining": "Windows disk/RAM, process RSS и fleet soak вне этой приёмки.",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/monitoring/router.py",
+          "sha256": "9b320d5dafb5aa478c62f75610f8826db97bebea163ddd3cf945e411a2f7a1df"
+        }
+      ],
+      "acceptanceCriteria": [
+        "История источник/единица/интервал указаны.",
+        "Process, cgroup и host не смешаны.",
+        "Unknown memory/CPU не рисуется нулём."
+      ],
+      "dependencies": [
+        "EP-008"
+      ],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-EVIDENCE.json"
+    },
+    {
+      "id": "EP-010",
+      "title": "Активные tunnels и fleet metric coverage",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Tenant fleet coverage и VPN observations реализованы; StageA/B receipts сохранены.",
+      "remaining": "Independent producer/transport probes/active tunnel semantics/load ещё не приняты.",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/monitoring/router.py",
+          "sha256": "9b320d5dafb5aa478c62f75610f8826db97bebea163ddd3cf945e411a2f7a1df"
+        },
+        {
+          "file": "backend/metrics.py",
+          "sha256": "2b545f911106ca020f096b17d68d73c1e08260fb68aae678cb776dbb8a235ea5"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Assignment/Android applied/heartbeat имеют отдельные counts.",
+        "Collector semantics не умножают gauge по workers.",
+        "Tenant scope и source freshness видны."
+      ],
+      "dependencies": [
+        "EP-008"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-011",
+      "title": "Версионировать все browser table/view preferences",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Column visibility/theme persistence и Back tab-memory scroll restoration есть.",
+      "remaining": "Общий registry order/width/pin/sort и cross-tab migration не принят; F5 scroll не обещан.",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "sha256": "8682ab6ec28920e686fa8979e52dd21154ab2d6d3338e27b4039c8fc896c3b30"
+        },
+        {
+          "file": "frontend/src/shared/store/useUIStore.ts",
+          "sha256": "101dfa7dbaa76816f18d9616354b66c21b373aeffbecc66e2280120acb1965db"
+        }
+      ],
+      "acceptanceCriteria": [
+        "View, columns/order/width/pin/sort/density/page size persist.",
+        "Shareable фильтры в URL, private prefs без secrets.",
+        "Reset одной таблицы и cross-tab migration."
+      ],
+      "dependencies": [
+        "EP-001"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-012",
+      "title": "Расширить registry typed columns и пресеты",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Базовый Fleet Matrix существует; модель исправлена.",
+      "remaining": "Typed column registry, provenance/unknown, presets и 1000 rows layout/pagination остаются.",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "sha256": "8682ab6ec28920e686fa8979e52dd21154ab2d6d3338e27b4039c8fc896c3b30"
+        },
+        {
+          "file": "backend/schemas/devices.py",
+          "sha256": "7349099f87c01220991157ad1e1d2eff3a919efad4964e5427c792749f8cc1d2"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Пресеты Operations/Connection/Versions/Resources.",
+        "Каждое поле имеет provenance и unknown.",
+        "1000 rows server pagination, sticky identity, no page overflow."
+      ],
+      "dependencies": [
+        "EP-004",
+        "EP-011"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-013",
+      "title": "Единые tokens, preferences и icon semantics",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Theme tokens/AppearanceDrawer/Lucide и responsive Studio существуют.",
+      "remaining": "Полная 4 themes/5 accents/3 density matrix и единый redesign страниц не приняты.",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/preferences/AppearanceDrawer.tsx",
+          "sha256": "06ddfc5ad2b556e1de2b43fd3d2dceea49de13e2656f8244fadbdb58bfdd4e1f"
+        },
+        {
+          "file": "frontend/src/shared/store/themeStore.ts",
+          "sha256": "aef79ae4cb1b3e86844539af608ef2690148934da994d233871b14ff3f367fe4"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Старая theme/density мигрирует без reset.",
+        "Named icons/focus/reduced motion/zoom и единые units.",
+        "4 темы/5 акцентов/3 density проходят визуальную матрицу."
+      ],
+      "dependencies": [
+        "EP-011"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-014",
+      "title": "Studio canonical AST и отдельный layout",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "React Flow/ELK, отдельные узлы/drag/drop/explicit insertion/reconnect/remove/Undo реализованы и конечные canaries приняты.",
+      "remaining": "Versioned composition/subgraphs и unsupported action roundtrip остаются.",
+      "sourceRefs": [
+        {
+          "file": "frontend/lib/dag/export.ts",
+          "sha256": "1c85e7e13d6ebc4cdd2847c2f1fb8c40f51ed0e223b88ee13be8110868826490"
+        },
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "sha256": "f00714d48c9880c1209e9aea49175ebdba53a152ef74d3cfcf0c3e6bd81222c6"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Semantic AST versioned, canvas metadata отдельно.",
+        "Visual/source switch без semantic drift.",
+        "Unsupported action сохраняется read-only либо блокирует Run."
+      ],
+      "dependencies": [
+        "EP-002",
+        "EP-003"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-015",
+      "title": "Studio source schema, drafts, conflict и undo",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Draft/source/undo/outage retention и pending/unknown guards реализованы.",
+      "remaining": "Полный conflict diff и dirty draft browser Back/Forward protection не приняты.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "sha256": "f00714d48c9880c1209e9aea49175ebdba53a152ef74d3cfcf0c3e6bd81222c6"
+        },
+        {
+          "file": "backend/services/script_service.py",
+          "sha256": "c61909430ce2366a089aa2277380665c65f22b61c9755de6ca77f3efbcf1f412"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Dirty parse error не теряет текст.",
+        "Draft autosave не публикует / не запускает.",
+        "Concurrent version conflict с diff и undo/redo."
+      ],
+      "dependencies": [
+        "EP-014"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-016",
+      "title": "Studio каталог всех runtime actions",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "32 action forms/contract1.0 есть в web/backend; APK содержит исполнителей.",
+      "remaining": "Parameter validation не проверяет installed APK; action-specific live matrix всего парка не принята.",
+      "sourceRefs": [
+        {
+          "file": "backend/schemas/dag.py",
+          "sha256": "031ffe206758162eef5f2806183547f9d741fc50e3b8e6f3c1cef793a9b2de2c"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+          "sha256": "bbf221e19a5db0da0a6689d7f4d02de280c7b5bf2d63e59951cd625d3070e131"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Capability/action schema содержит поля/limits/effects/result.",
+        "Неизвестные версии/permissions блокируют конкретный action.",
+        "Нет promises arbitrary host code."
+      ],
+      "dependencies": [
+        "EP-014"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-017",
+      "title": "Live device picker и capability preflight в Studio",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Лаборатория выбирает один Android и version-pinned task с viewer-local handoff.",
+      "remaining": "Полный свежий action/capability preflight и competing input admission не приняты.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "sha256": "f00714d48c9880c1209e9aea49175ebdba53a152ef74d3cfcf0c3e6bd81222c6"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Target identity/version/display/root/input видны.",
+        "Offline edit разрешён, Run/Record по свежему preflight.",
+        "Смена target не переносит старый coordinate transform."
+      ],
+      "dependencies": [
+        "EP-014",
+        "EP-016"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-018",
+      "title": "Запись Android input и selector candidates",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Click/swipe endpoints, explicit XPath plan и key/text ACK есть; queue200. Clock defect исправлен source1577e01e.",
+      "remaining": "Новая доставка pending; MOVE recording/Unicode/IME/automatic tree-crop-pixel bundle отсутствуют.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+          "sha256": "f00714d48c9880c1209e9aea49175ebdba53a152ef74d3cfcf0c3e6bd81222c6"
+        },
+        {
+          "file": "backend/services/ui_hierarchy.py",
+          "sha256": "e31bf15bab325248482fe90c4b8f68344f0532b3b2479b62e034c8d424f333cc"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Tap/drag/text/wheel нормализуются с receipts.",
+        "Ambiguity и fallback coordinates видимы.",
+        "Secrets redacted, bounded buffer, Stop освобождает subscriptions."
+      ],
+      "dependencies": [
+        "EP-017"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-019",
+      "title": "Пошаговый trace и replay с frame correlation",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Task logs/marks показывают завершённый шаг, но не correlated frame trace.",
+      "remaining": "Нужны command/frame/snapshot/attempt IDs, side-effect-free replay и artifact quotas/TTL.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/tasks/page.tsx",
+          "sha256": "dfc083d0769c309a684fc3286b132b7557a19644148088d13b6cf012fb323660"
+        },
+        {
+          "file": "backend/schemas/dag.py",
+          "sha256": "031ffe206758162eef5f2806183547f9d741fc50e3b8e6f3c1cef793a9b2de2c"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Replay trace не запускает Android actions.",
+        "Каждый step связан с command/frame/snapshot/attempt.",
+        "Unknown/failed/cancelled различаются; TTL/quota artifacts."
+      ],
+      "dependencies": [
+        "EP-017"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-020",
+      "title": "Server/agent debug pause, step, cancel и safety",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Viewer-local release/read handoff, APK ownership и Redis continuous lease используются.",
+      "remaining": "Global viewer/task/API arbitration и debugger acceptance не завершены; idle timeoutP1.",
+      "sourceRefs": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+          "sha256": "bbf221e19a5db0da0a6689d7f4d02de280c7b5bf2d63e59951cd625d3070e131"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Pause/step настоящий protocol, либо явно unavailable.",
+        "Late result не возрождает cancelled run.",
+        "Retry non-idempotent input зависит от outcome."
+      ],
+      "dependencies": [
+        "EP-019"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-021",
+      "title": "Объединить automation workspace и references",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Сценарии/tasks/schedules/pipelines/triggers существуют отдельно с некоторыми deep links.",
+      "remaining": "Definition→version→run→task→device→trace, used-by graph/glossary остаются.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx",
+          "sha256": "77c5d23d54417435e59ad370bef4e3394b718636cbf43ad40a8843664e900106"
+        },
+        {
+          "file": "frontend/app/(dashboard)/event-triggers/page.tsx",
+          "sha256": "13014d02ef33b7525e69c67d1705a2bca1b982fadd45bfabcc3b36fdb96553ef"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Origin → version → run → task → device → trace deep links.",
+        "Existing URLs сохранены.",
+        "Used-by/dependency graph и glossary без неоднозначных sessions."
+      ],
+      "dependencies": [
+        "EP-014"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-022",
+      "title": "Task detail: полные outcomes и artifacts",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Task detail показывает version/outcomes/logs/доступные screenshots; missing server file обозначается.",
+      "remaining": "Полный origin/attempt/deadline/artifact manifest и rerun plan не закрыты.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/tasks/[id]/page.tsx",
+          "sha256": "db44ab13b9e0a6679cd6ba11f9abdba9e06d5a71647c8dfbaeb7d3b019e296e6"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Pinned hash, attempts, deadline, ACK/result раздельно.",
+        "Parent pipeline/trigger/schedule отображён.",
+        "Rerun preview выдаёт новый task, а не меняет history."
+      ],
+      "dependencies": [
+        "EP-019",
+        "EP-021"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-023",
+      "title": "Schedules: timezone, missed fire и next run explain",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Расписания/pipeline forms имеют имеющийся API и предыдущие regressions.",
+      "remaining": "Полный DST/missed/duplicate fire/history/conflict acceptance ещё нужен.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx",
+          "sha256": "77c5d23d54417435e59ad370bef4e3394b718636cbf43ad40a8843664e900106"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Cron/UTC/local/DST policy показаны.",
+        "Next/missed/duplicate fire outcomes и execution history.",
+        "Отмена/enable version conflicts без double fire."
+      ],
+      "dependencies": [
+        "EP-021"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-024",
+      "title": "Triggers: безопасная simulation и feedback loop limits",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Event triggers/delivery и catalog/read evidence существуют.",
+      "remaining": "Dry match без Run, cooldown/dedup/rate/recursion budgets и origin trace остаются.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/event-triggers/page.tsx",
+          "sha256": "13014d02ef33b7525e69c67d1705a2bca1b982fadd45bfabcc3b36fdb96553ef"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Test match без pipeline Run.",
+        "Cooldown/dedup/rate limits explain.",
+        "Event origin и recursion budget предотвратят бесконечную петлю."
+      ],
+      "dependencies": [
+        "EP-021"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-025",
+      "title": "Webhook attempts/outbox и совместимость доставки",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Legacy HTTP outcome исправлен EP-006; n8n имеет отдельный service.",
+      "remaining": "Operator attempts/outbox/DLQ/replay и duplicate policy требуют отдельной приёмки.",
+      "sourceRefs": [
+        {
+          "file": "backend/services/n8n_webhook_service.py",
+          "sha256": "d57db23aed41d35825fb9e8cf6684416b95a7b6e418d3170bb286e0027f0ca49"
+        },
+        {
+          "file": "frontend/app/(dashboard)/webhooks/page.tsx",
+          "sha256": "77cc14e2e5cfb6ac37c9bc0bfc62c1e0e26a3a05e4132bb706ae872777f3cad9"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Delivery ID/outcome/retry deadline/last error доступны.",
+        "Подпись и payload сохраняют совместимость.",
+        "DLQ/replay bounded и не дублируют irreversible effects."
+      ],
+      "dependencies": [
+        "EP-006",
+        "EP-021"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-026",
+      "title": "Typed datasources и project manifest",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Pipeline settings schema есть; generic datasource/resource manifest не принят.",
+      "remaining": "Versioned connector contract, plan/diff/conflicts, secret refs/write effects нужны.",
+      "sourceRefs": [
+        {
+          "file": "backend/schemas/pipeline_settings.py",
+          "sha256": "6df2ea3e1ccfa408a206c781e96a3c99c2f8cd8c4ace6b7e40503ef5482faaef"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Import plan diff/conflicts/dependencies до применения.",
+        "Secrets по refs, credentials tenant scoped.",
+        "Connector write effects/rollback отдельно от workflow definitions."
+      ],
+      "dependencies": [
+        "EP-021"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-027",
+      "title": "Inspector tree, selectors, freshness и performance",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Video/tree selection, raw attributes, bounded snapshot/refresh реализованы. APK вызывает root uiautomator dump.",
+      "remaining": "Это не Appium UiAutomator2 server; performance/freshness/matcher/automatic bundle ещё открыты.",
+      "sourceRefs": [
+        {
+          "file": "backend/services/ui_hierarchy.py",
+          "sha256": "e31bf15bab325248482fe90c4b8f68344f0532b3b2479b62e034c8d424f333cc"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt",
+          "sha256": "abf2bae11a58a95bec5483fd1b75d9876a2709e258e76f7546bb3a9af0cca046"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Video selection/tree selection синхронны.",
+        "Ancestors/attributes/duplicates/export/selector candidates.",
+        "Singleflight/cancel obsolete, stale marked, no hidden polling."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-028",
+      "title": "Явный device/agent telemetry scope и inventory",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "DeviceStatusProvider/профиль отдают доступную Android telemetry.",
+      "remaining": "Полный inventory, deviceRAM против agentRSS/PSS, observed_at/provenance/network identity не принят.",
+      "sourceRefs": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/providers/DeviceStatusProvider.kt",
+          "sha256": "67808800dcc1236df661e2a3b9f4eb7289eb3594e40b1e17850cd8cd78d395a6"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Device RAM и agent PSS/RSS отдельно.",
+        "Source/error/observed_at validity не заменяется0.",
+        "Version/display/storage/network/capabilities structured."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-029",
+      "title": "Selected video end-to-end диагностика и управление",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Normal continuous Control принят PH011APK10249; отдельный idle receipt failure повторился.",
+      "remaining": "Нет fleet input-to-pictureSLO; нужны bounded correlated timing и idle loss fix.",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/stream/SingleDeviceStream.tsx",
+          "sha256": "de882d9243cbedcdf39508da96b2f4faf80985ed685c57a7b1196abd023a40af"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Capture/encode/relay/decode/render FPS + drops/bitrate.",
+        "Home/Back/Recents/text/wheel и transform при rotation.",
+        "Input ACK/result/frame timings без ложного cross-clock one-way claim."
+      ],
+      "dependencies": [
+        "EP-028"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-030",
+      "title": "Original PNG и matching asset provenance",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Original PNG имеет finite pixel/hash receipts; пользователь отложил спор.",
+      "remaining": "Matching asset provenance/region/rotation и workflow artifactsOPEN; DPI/вес сами не доказывают pixel loss.",
+      "sourceRefs": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandDispatcher.kt",
+          "sha256": "a49fe7d0e307f5544d7bb0213bb1c1d8893e4632a8eeecebb02bb513fe38073d"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Pixel dimensions/hash/MIME/capture source проверены.",
+        "Screenshot не перекодируется из H264.",
+        "Asset version/region/scale/rotation для future matcher."
+      ],
+      "dependencies": [
+        "EP-028"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-031",
+      "title": "Thumbnail wall 128 вместо множества full video",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "stream/page.tsx импортирует DeviceStream; GRID_SIZES до 64, это full-video matrix.",
+      "remaining": "Thumbnail wall128, cadence5/10s, shared capture/budgets/teardown не реализован.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/stream/page.tsx",
+          "sha256": "81eb4186ebfca4bb3a9dc16f947fc062c4ca78519797fa4687f84535310e6efa"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Интервалы5/10s и128tile, shared capture/stagger.",
+        "TTL/cache/bytes/concurrency budgets.",
+        "Selected stream отдельно, teardown при filter/hidden/unmount."
+      ],
+      "dependencies": [
+        "EP-012",
+        "EP-029"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-032",
+      "title": "Общие structured logs всех разрешённых sources",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Различение log sources и bounded device read реализованы.",
+      "remaining": "Общий server cursor devices/groups/run/correlation без client fanout и полный export не приняты.",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/logs/router.py",
+          "sha256": "b9be49d09d5121932e05d43ab9c7a4be9d2ac9c30e010741eb568164c7ea0123"
+        },
+        {
+          "file": "frontend/app/(dashboard)/logs/page.tsx",
+          "sha256": "e25f0e4538243e0d6d7ea6123892f03c33e453c4201ab6c95ef0a9dec3fa6864"
+        }
+      ],
+      "acceptanceCriteria": [
+        "All devices / groups / run / correlation server query.",
+        "Source / severity / time / build / sequence schema.",
+        "Bounded cursor/export, без 1000 client fanout."
+      ],
+      "dependencies": [
+        "EP-028"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-033",
+      "title": "Byte-bounded backend log reads и global retention",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Byte-bounded read/upload реализованы; router отделяет global quota/cross-worker lock от writer.",
+      "remaining": "Org/global sweeper/quotas/offline expiry/backup/restore/load остаются.",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/logs/router.py",
+          "sha256": "b9be49d09d5121932e05d43ab9c7a4be9d2ac9c30e010741eb568164c7ea0123"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Tail/filter byte budget и bounded concurrency.",
+        "Org/global quotas и independent retention sweeper.",
+        "Offline sources expire; disk forecast/drop counters."
+      ],
+      "dependencies": [
+        "EP-032"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-034",
+      "title": "Audit journal semantic outcome и redacted diff",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Audit journal/investigation имеют предыдущие исправления.",
+      "remaining": "Полный redacted diff, actor/effect/result correlation и cursor export не закрыты.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/audit/page.tsx",
+          "sha256": "297294d2203777e7f0fabac24432d3b18121c7330d77596177d12f4fea547fea"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Actor/effect/result/receipt correlations.",
+        "Before/after diff без secrets.",
+        "Server filters/cursor и bounded export всего scope."
+      ],
+      "dependencies": [
+        "EP-021",
+        "EP-032"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-035",
+      "title": "Dashboard attention queue и actionable drilldown",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Dashboard содержит текущие агрегаты/drilldowns.",
+      "remaining": "Actionable attention queue с reason/version/affected scope и total/page acceptance нужна.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/dashboard/page.tsx",
+          "sha256": "13827ad57808c5e1d72a0f0a8066a960fc75f4babb53a531381a13f0c1c4f514"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Reasons affected scope/version/reconnect/task outcomes.",
+        "Link открывает конкретный filter/detail.",
+        "Data coverage и query total/page semantics видны."
+      ],
+      "dependencies": [
+        "EP-008",
+        "EP-012",
+        "EP-022"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-036",
+      "title": "Groups membership и bulk plan",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Group workflow/permissions/hierarchy имеют предыдущие исправления.",
+      "remaining": "Membership preview/owner/change evidence/bulk partial outcome UX ещё нужны.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/groups/page.tsx",
+          "sha256": "6f55e14d5f37a1d13964b3fafe923329e451c2a88e7e8010d2f5a60494a70191"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Membership preview и affected target count.",
+        "Notes/owner/last changed и audit links.",
+        "Bulk partial outcome и filter scope понятны."
+      ],
+      "dependencies": [
+        "EP-012"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-037",
+      "title": "Locations hierarchy UX и validation",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Location hierarchy/forms имеют отдельные regressions.",
+      "remaining": "Полная create/edit/error/focus/mobile matrix и membership explain не приняты.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/locations/page.tsx",
+          "sha256": "41372113f2a80208be2bf4f9c0642ab7f517abf05ffb27456da19f008dc272a9"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Parent tree/breadcrumb/cycle validation.",
+        "Address/coordinates source/multiple membership explain.",
+        "Create/edit failures удерживают поля и focus."
+      ],
+      "dependencies": [
+        "EP-012"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-038",
+      "title": "Discovery capability-scoped onboarding",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Discovery использует текущий agent/onboarding API; будущий PC-agent не установлен.",
+      "remaining": "Android onboarding без обязательного PC-agent, budgets/progress/cancel/dedup/receipts нужны.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/discovery/page.tsx",
+          "sha256": "a8f8d97dea4a38de654271b04c7d281dfde7f1999f640f8d40298d3d4435ad22"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Android onboarding не требует PC Agent.",
+        "Agent-scoped subnet/ports/budgets/progress/cancel.",
+        "Dedup results/registration receipts, permission explain."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-039",
+      "title": "Users role preview, safety и access review",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Role-aware Users и описания UserDialogs есть; Jest сохраняет Radix warnings.",
+      "remaining": "Fixture warning не доказывает production defect; полная role/revision/revocation/a11y matrix нужна.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/users/page.tsx",
+          "sha256": "d3189805d9a19ddaeaf7ddc7c653e8ab8117161b475b1aad183e8d67b1a2259c"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Permissions preview и role revision conflict.",
+        "Last admin/self disable policy + server enforcement.",
+        "Revoked session и tenant tests."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-040",
+      "title": "Configuration effective state и разделение policies",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Settings/pipeline settings имеют текущие permission scopes.",
+      "remaining": "Effective/applied generations, policy composition, secret lifecycle и unknown/conflict save states не приняты целиком.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/settings/page.tsx",
+          "sha256": "5984d356fa8fc0bda2153a313fe0cd7e073850a860a1a89d755b09b678a88494"
+        },
+        {
+          "file": "frontend/app/(dashboard)/pipeline-settings/page.tsx",
+          "sha256": "fd261818b02d56bd717c5de68a32886ad36b127c75859acb1b01fa5c8458e3f8"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Workspace tabs с независимыми permission scopes.",
+        "Pending/effective/applied config generations.",
+        "Secret lifecycle и errors без ложного save success."
+      ],
+      "dependencies": [
+        "EP-013",
+        "EP-021"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-041",
+      "title": "Release rollout receipts и каналы",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Addressed OTA/release identity имеют finite receipts; pilot10249 не означает весь парк.",
+      "remaining": "Stable promotion, normal/dev compatibility, rollout/rollback и mixed-fleet soak остаются.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/updates/page.tsx",
+          "sha256": "08d939808e3502404c782d1a69ca493a9c65fc0e35652d5765e909a50cb113a9"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Offered/downloaded/verified/installed/unknown по target.",
+        "Platform/flavor/code/signer/hash preflight.",
+        "Recovery/rollback constraints видны; нет скрытого массового обновления."
+      ],
+      "dependencies": [
+        "EP-012",
+        "EP-028"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-042",
+      "title": "Generic resources вместо game domain assumptions",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "GameAccount/game-specific history остаются в backend.",
+      "remaining": "ResourceType/Record/Lease/SecretRef/Connector с migration/legacy adapter/rollback нужны.",
+      "sourceRefs": [
+        {
+          "file": "backend/models/game_account.py",
+          "sha256": "a008a73d2cd05cde86866da26f3a4b6f55c124aafd36eb04fc3dafd4f5932f8d"
+        },
+        {
+          "file": "backend/schemas/pipeline_settings.py",
+          "sha256": "6df2ea3e1ccfa408a206c781e96a3c99c2f8cd8c4ace6b7e40503ef5482faaef"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Versioned ResourceType/Record/Lease/SecretRef/Connector.",
+        "Legacy adapters/migration/rollback сохраняют history.",
+        "Никакого удаления game models в UI fix phase."
+      ],
+      "dependencies": [
+        "EP-026"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-043",
+      "title": "Разделить account session и universal run",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Sessions связаны с domain model; workflowRun/account session не унифицированы.",
+      "remaining": "Ясный naming/lease context/history adapter и independent CanonicalRun нужны.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/sessions/page.tsx",
+          "sha256": "0ffb593db132587eb2abdd5bc0f9fcb0141d87714e15bba2bdd34db495db78e3"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Названия, relations и lease context однозначны.",
+        "Исторические sessions доступны через adapter.",
+        "CanonicalRun/Task не зависят от одной игры."
+      ],
+      "dependencies": [
+        "EP-042"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-044",
+      "title": "VPN assigned/applied/handshake/egress outcomes",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Provision outcomes/assignment/Android VPN observation разделены.",
+      "remaining": "Actual applied/handshake/egress и partial/unknown recovery требуют live targets.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/vpn/page.tsx",
+          "sha256": "68c9001d5a8a64c09bf4488f61478eae654ec58fe053116c097f42588c09892f"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Provision receipt иactual Android state раздельны.",
+        "Unknown не превращается в successбез проверки.",
+        "Control transport и egress VPN разделены."
+      ],
+      "dependencies": [
+        "EP-028"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-045",
+      "title": "Versioned VPN provider adapters и rotation",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "DEFERRED_DESIGN",
+      "baselineState": "OPEN",
+      "currentScope": "Amnezia/WireGuard/proxy adapters/script rotation остаются проектированием.",
+      "remaining": "Versioned import/apply/status/rotate/upgrade/rollback, secret refs исохранность control нужны.",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/vpn/page.tsx",
+          "sha256": "68c9001d5a8a64c09bf4488f61478eae654ec58fe053116c097f42588c09892f"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Validate/import/apply/status/rotate/upgrade/rollback contract.",
+        "Config / binary / capability versions и secret refs.",
+        "Manual/script/schedule один API, recovery control сохраняется."
+      ],
+      "dependencies": [
+        "EP-044",
+        "EP-026"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-046",
+      "title": "AI-ready schemas/runbooks и scoped artifacts",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "DEFERRED_DESIGN",
+      "baselineState": "OPEN",
+      "currentScope": "API/schemas/runbooks есть; AI provider/chat/tool runner не установлен.",
+      "remaining": "Scoped tools, draft→validate→test→publish, effects/TTL/budgets/provenance нужны.",
+      "sourceRefs": [
+        {
+          "file": "backend/schemas/dag.py",
+          "sha256": "031ffe206758162eef5f2806183547f9d741fc50e3b8e6f3c1cef793a9b2de2c"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Natural language → draft → validate → test → publish.",
+        "API schemas / examples / reason codes / recovery instructions.",
+        "Observations не дают privileges, budgets / TTL / RBAC обязательны."
+      ],
+      "dependencies": [
+        "EP-016",
+        "EP-019",
+        "EP-021",
+        "EP-032"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-047",
+      "title": "Общая matrix500/1000 иresource leak gates",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Observer завершён 8 октября 09: 01UTC; VHD/VMDK allocations постоянны, freeC падал; writerUNKNOWN.",
+      "remaining": "Сейчас нет новых writer measurements; нужен bounded collector health/deadline/coverage и 500/1000/128/1 load matrix.",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx",
+          "sha256": "8682ab6ec28920e686fa8979e52dd21154ab2d6d3338e27b4039c8fc896c3b30"
+        },
+        {
+          "file": "backend/api/v1/logs/router.py",
+          "sha256": "b9be49d09d5121932e05d43ab9c7a4be9d2ac9c30e010741eb568164c7ea0123"
+        }
+      ],
+      "acceptanceCriteria": [
+        "1000 registry / 128 thumbnails / 1 selected video measured.",
+        "Нет роста decoder / URL / log / report buffers после teardown.",
+        "VHD/guest/RAM/provenance отдельные readings."
+      ],
+      "dependencies": [
+        "EP-031",
+        "EP-033"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-048",
+      "title": "Тесты всех меню/форм/ролей иvisual states",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Finite desktop/portrait/landscape Studio принят ec3f2267; после clock fix1938 tests проходят.",
+      "remaining": "Все страницы/модалки/роли/темы/zoom/reduced-motion не приняты; landscape chain fit мелкий.",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/preferences/AppearanceDrawer.tsx",
+          "sha256": "06ddfc5ad2b556e1de2b43fd3d2dceea49de13e2656f8244fadbdb58bfdd4e1f"
+        },
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx",
+          "sha256": "77c5d23d54417435e59ad370bef4e3394b718636cbf43ad40a8843664e900106"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Loading/empty/error/offline/forbidden/partial/conflict.",
+        "Keyboard / zoom / mobile / reduced motion / 4 themes.",
+        "Actual write receipt + repeat validation после deploy."
+      ],
+      "dependencies": [
+        "EP-013"
+      ],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-049",
+      "title": "Документация source/runtime/schema freshness",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "baselineState": "OPEN",
+      "currentScope": "Source/installed UI/API/schema/evidenceSHA разделены; старые pointers/comments исправляются.",
+      "remaining": "Effective ledger и admission каждой новойдоставки нужны; CI старого SHA не переносится.",
+      "sourceRefs": [
+        {
+          "file": "scripts/export_api_docs.py",
+          "sha256": "705fd2532739fbdaa3c89b0b276a95b2214a882fa156974e15d2680316449e1c"
+        },
+        {
+          "file": "docs/operations/CURRENT-STATE.md",
+          "sha256": "055af5470fd5cf8355695e90c9215b6a1e8b598582884e75356f3c8603016f56"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Installed SHA/manifest/capability visible с датой.",
+        "Docs генерацияв pinned runtime, с проверенной версией генератора.",
+        "Evidence immutable; новый результат отдельнымclosure receipt.",
+        "Default-branch dependency alerts сопоставлены с PR lock и installed SBOM; другие 142 alerts пока не приняты."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null
+    },
+    {
+      "id": "EP-050",
+      "title": "Alert delivery иsynthetic Android SLI",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "baselineState": "OPEN",
+      "currentScope": "Collection/HTTP/resources и events есть; synthetic Android SLI не принят.",
+      "remaining": "Alert→affected scope→runbook→recovery и bounded Android synthetic нужны.",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/monitoring/router.py",
+          "sha256": "9b320d5dafb5aa478c62f75610f8826db97bebea163ddd3cf945e411a2f7a1df"
+        }
+      ],
+      "acceptanceCriteria": [
+        "Scrape/HTTP/stream/script/OTA разные SLI.",
+        "Alert→affected scope→runbook→observed recovery.",
+        "Synthetic target bounded с разрешёнными effects."
+      ],
+      "dependencies": [
+        "EP-008",
+        "EP-019",
+        "EP-029"
+      ],
+      "acceptanceEvidence": null
+    }
+  ],
+  "reviewedCrossLayerFiles": [
+    {
+      "file": "frontend/src/features/scripts/studio/DeviceWorkbench.tsx",
+      "sha256": "e4f021ebda048c786fa9c5200ba86f6440e87a16ea9bcaff3107e08f2e6d91ab"
+    },
+    {
+      "file": "frontend/src/features/scripts/studio/recording.ts",
+      "sha256": "3edc76abbdf8f142798592386404d2ba985d726b2ea28323ad7f9f6ddd65a40f"
+    },
+    {
+      "file": "frontend/src/features/stream/controlObservation.ts",
+      "sha256": "c16e0222a22833c37cca5bf0f8898a70db9aaaafdf9eb30935135cedce861837"
+    },
+    {
+      "file": "frontend/src/features/stream/AndroidNavigationBar.tsx",
+      "sha256": "0488557e797e5bde2eb589311513187458d3a81827902546861fde870a68bdff"
+    },
+    {
+      "file": "frontend/components/sphere/DeviceStream.tsx",
+      "sha256": "7c79b86ef02bf3b56a957daa67e7b1c2fbf7d40ce422c24a66d5d0073b626d28"
+    },
+    {
+      "file": "frontend/lib/queryPollIntervals.ts",
+      "sha256": "6989f8c84b4d723c59b51807b7fd8ebc815d6ad042b5a2bfae41a7a2f358835c"
+    },
+    {
+      "file": "frontend/lib/hooks/useFleetEvents.ts",
+      "sha256": "216d07b884c2231aad0600d2797bbd109d5b024745ed163cdaf3d18bb1dd0660"
+    },
+    {
+      "file": "frontend/__tests__/scripts/studio-workbench.test.tsx",
+      "sha256": "49e999916815fdfde05ee89e3fff3c3b4e2d9f68dfa123157a99c174a59fe73d"
+    },
+    {
+      "file": "backend/websocket/startup.py",
+      "sha256": "6a5ddd4bf1509d2edda1c0a473e41113ada33efec7ab5bb9651225292a9dcb80"
+    },
+    {
+      "file": "backend/websocket/continuous_runtime.py",
+      "sha256": "1f52c8d98136c7109235e58405b82317bbb07f269888b488e1c04bfbe7e60831"
+    },
+    {
+      "file": "backend/websocket/continuous_lease.py",
+      "sha256": "fca39694d1369b8133ee29b7cc27238e86092989c36e23d48418759c1a3c8798"
+    },
+    {
+      "file": "backend/schemas/script.py",
+      "sha256": "4752faa56881bcf67d3408a245e649bd7fa329fda96962ea0a014b13647022f4"
+    },
+    {
+      "file": "backend/schemas/action_contract.v1.json",
+      "sha256": "40e92789a06d8256c43eb057a88fc2648cbc5a8ea5c7b6398ce7c44459d72557"
+    },
+    {
+      "file": "backend/services/ui_hierarchy.py",
+      "sha256": "e31bf15bab325248482fe90c4b8f68344f0532b3b2479b62e034c8d424f333cc"
+    },
+    {
+      "file": "backend/api/v1/logs/router.py",
+      "sha256": "b9be49d09d5121932e05d43ab9c7a4be9d2ac9c30e010741eb568164c7ea0123"
+    },
+    {
+      "file": "frontend/app/(dashboard)/stream/page.tsx",
+      "sha256": "81eb4186ebfca4bb3a9dc16f947fc062c4ca78519797fa4687f84535310e6efa"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt",
+      "sha256": "abf2bae11a58a95bec5483fd1b75d9876a2709e258e76f7546bb3a9af0cca046"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+      "sha256": "bbf221e19a5db0da0a6689d7f4d02de280c7b5bf2d63e59951cd625d3070e131"
+    },
+    {
+      "file": "frontend/src/features/users/UserDialogs.tsx",
+      "sha256": "43471a42a219c820a18994e3c9a5c6827b7baa34a298419c60ff16bf5e1733b2"
+    }
+  ],
+  "limits": [
+    "Acceptances inherited only from pinned receipts; not all50pages re-tested.",
+    "No Android command, API replacement, APK install, cleanup, compaction or new collector.",
+    "Direct-media/WebRTC analysis and implementation explicitly deferred.",
+    "Code existence or passing CI does not close open acceptance criteria."
+  ]
+}

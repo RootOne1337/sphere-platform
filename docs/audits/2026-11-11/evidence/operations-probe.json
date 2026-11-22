@@ -1,0 +1,121 @@
+{
+  "compose": {
+    "base_production": {
+      "host_ports": {
+        "postgres": [],
+        "redis": [],
+        "backend": [],
+        "frontend": [],
+        "nginx": [
+          {
+            "published": "80",
+            "target": 80
+          },
+          {
+            "published": "443",
+            "target": 443
+          }
+        ],
+        "n8n": [
+          {
+            "published": "5678",
+            "target": 5678
+          }
+        ],
+        "minio": [
+          {
+            "published": "9000",
+            "target": 9000
+          },
+          {
+            "published": "9001",
+            "target": 9001
+          }
+        ]
+      },
+      "screenshot_env_forwarded": [],
+      "tls_named_volume": "audit-config-20261111_certbot-data"
+    },
+    "base_full_production": {
+      "host_ports": {
+        "postgres": [],
+        "redis": [],
+        "backend": [],
+        "frontend": [],
+        "nginx": [
+          {
+            "published": "80",
+            "target": 80
+          },
+          {
+            "published": "443",
+            "target": 443
+          }
+        ],
+        "n8n": [
+          {
+            "published": "5678",
+            "target": 5678
+          }
+        ],
+        "minio": [
+          {
+            "published": "9000",
+            "target": 9000
+          },
+          {
+            "published": "9001",
+            "target": 9001
+          }
+        ]
+      },
+      "screenshot_env_forwarded": [
+        "SCREENSHOT_STORAGE_ENDPOINT",
+        "SCREENSHOT_STORAGE_ACCESS_KEY",
+        "SCREENSHOT_STORAGE_SECRET_KEY"
+      ],
+      "tls_named_volume": "audit-config-20261111_certbot-data"
+    },
+    "staging_workflow_file_set": {
+      "exit_code": 1,
+      "diagnostic": "service \"frontend\" refers to undefined network frontend-net: invalid compose project"
+    }
+  },
+  "offline_shell": {
+    "health_check_on_running_unhealthy": {
+      "exit_code": 0,
+      "docker_check": {
+        "status": "pass",
+        "code": "running",
+        "latency": "-",
+        "critical": true
+      },
+      "summary": {
+        "pass": 15,
+        "fail": 0,
+        "warn": 0
+      }
+    },
+    "backup_on_failed_redis_snapshot_and_copy": {
+      "exit_code": 0,
+      "reports_completed": true,
+      "old_postgres_file_retained": true,
+      "old_redis_file_retained": false,
+      "new_redis_files": 0,
+      "documented_space_separated_args_exit_code": 0,
+      "documented_destination_created": false,
+      "default_destination_created": true
+    },
+    "certbot_failure_after_stopping_nginx": {
+      "exit_code": 1,
+      "mock_docker_commands": [
+        "compose -f docker-compose.yml stop nginx",
+        "run --rm -v certbot-data:/etc/letsencrypt -p 80:80 certbot/certbot:latest certonly --standalone --non-interactive --agree-tos --email audit@example.test --domains audit.example.test --rsa-key-size 4096"
+      ]
+    }
+  },
+  "screenshot_storage_factory_without_forwarded_environment": {
+    "http_status": 503,
+    "detail": "Screenshot storage is not configured"
+  }
+}

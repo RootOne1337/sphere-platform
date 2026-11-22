@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T15:31:14.455138+00:00",
+  "stage": "source-ui-review-only",
+  "sourceBase": "61df572960724dacf9b2cf20d1befaab0d72a8aa",
+  "sourceFilesSha256NormalizedLf": {
+    "frontend/app/(dashboard)/vpn/page.tsx": "1de15562c29f2403625438a83ff31881c4dc3d4b62f480b30c70872217f1adb8",
+    "frontend/src/features/vpn/AppVpnRuntimePanel.tsx": "c104292f10d77b23a1d83edcd2412e32c5e3f6d21c8b18470e889c8520df4e42",
+    "frontend/src/features/vpn/VpnProfileCatalog.tsx": "a9c77c4d89c891f889a9112b1522b4a2338e65104dfa3ce185de6b44735067cd",
+    "frontend/src/features/vpn/VpnProfileInspector.tsx": "636f09284cb4cdc4f99c06dd12f30bdbba1b5430d4d282d5805480bd486ee3ab",
+    "frontend/src/features/vpn/VpnControlDialog.tsx": "58308437deb58665bb1fd803ed778fe541800d69b5b19b61a7aa9a1f9a6cf6b9",
+    "frontend/src/features/vpn/VpnRouterInfrastructure.tsx": "3b2b9d8a33dc673a3911534d0214cedc356057f00abc388ee47d8b6c46b378df",
+    "frontend/__tests__/vpn/workspace.test.tsx": "bcb8c3797dd3511cd9cedee88ba434bf2a7be034d80f330de1b718e55e197753",
+    "frontend/__tests__/vpn/runtime.test.tsx": "3f9613c9f0462e230ce487d67127d3c4b66e976b5d9f67cd07ef53afc9d3a8ef",
+    "frontend/__tests__/vpn/provision-device-picker.test.tsx": "5968e1bc57bbe85cc0ea7c9acb9357cc49bff9697f4811fcd8987a1430230321",
+    "backend/services/vpn/profile_delivery.py": "48ccb74790361d61ed2a4c03874e1fe621c8c8a55af5ef952772ef0f47a2ff68",
+    "tests/vpn/test_profile_delivery.py": "6e4d01867338d01d49faeab10130cefc331785a15a81d6f8fbd98fc3105e9f27"
+  },
+  "installedRuntimeChanged": false,
+  "screenshots": [
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-connections-dark-desktop.png",
+      "sha256": "5f09d998b66144f8468e48237081a4b4f1ecea457dab5a77a5699e107764533b",
+      "bytes": 169666
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-connections-sandstone-mobile.png",
+      "sha256": "2cf448fda322264576e8eb0677a57fcab0cdd8ff4105164a4d65e176545fb71c",
+      "bytes": 83534
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-profiles-dark-desktop.png",
+      "sha256": "c20950fa7472eeaf66ad86bf1e36aefbf43711a283ffbbb056bcb75e8043836c",
+      "bytes": 117575
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-profiles-sandstone-mobile.png",
+      "sha256": "3fce24cced675a1114604f27864a258efcbf77fafba38d085beb3c61fb067523",
+      "bytes": 87213
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-import-sandstone-desktop.png",
+      "sha256": "ab8a73da88359c15815b5dc7cf5931888c9f073cd1fb93230a7e5603dda25b39",
+      "bytes": 231160
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-import-sandstone-mobile.png",
+      "sha256": "78cabb63f0f800ea6dab6b8b7b23a7d0d9260be6b148bc3876c207688e7c6cad",
+      "bytes": 86529
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-diagnostics-dark-desktop.png",
+      "sha256": "59b9115dd01e972e0c35f2a983a6488e66d4bb076c109f245ffca2a4189ccc7e",
+      "bytes": 229400
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-diagnostics-dark-mobile.png",
+      "sha256": "13e40142e5b885d3c4c600373a13db4ada3909bdd1adc817a41b4d2abd47b8a2",
+      "bytes": 101839
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-versions-sandstone-desktop.png",
+      "sha256": "9f728082c9968baa400a2fc72c5c485ea72d6305add95dc2e33c93a4f8842743",
+      "bytes": 196647
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-archive-sandstone-desktop.png",
+      "sha256": "0ec43244cd25acad89a407a8741cd35765d4cbc384478d5ba7e56218ec3b9d7f",
+      "bytes": 176024
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-infrastructure-sandstone-desktop.png",
+      "sha256": "9e91c4f119516b19cccf790806d12bcdb5524cf8b6a052efbfc240f5736acc0a",
+      "bytes": 147638
+    },
+    {
+      "path": "docs/audits/2026-10-21/assets/vpn-workspace/final-infrastructure-sandstone-mobile.png",
+      "sha256": "1147bb160f06f547afc2920a415d01e49ca8417527e077b12af8a30d9fe623fa",
+      "bytes": 101159
+    }
+  ],
+  "visualScope": {
+    "data": "synthetic, network writes rejected, no game or device operations",
+    "components": "actual VPN workspace, runtime panel, catalog and dialogs; dashboard shell not included",
+    "themes": [
+      "neo-dark",
+      "sandstone"
+    ],
+    "viewports": [
+      [
+        1440,
+        900
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "fonts": "same local Inter and JetBrains Mono assets as root layout",
+    "layoutObservations": {
+      "mobileDocumentWidth": 390,
+      "mobileViewportWidth": 390,
+      "importMobileHeaderBottom": 144,
+      "importMobileFooterTop": 766,
+      "importMobileBodyClientHeight": 622,
+      "importMobileBodyScrollHeight": 873,
+      "importDesktopBodyWidth": 766,
+      "importDesktopBodyScrollWidth": 766
+    },
+    "limitations": [
+      "No real mobile keyboard or hardware touch acceptance",
+      "No main APK VpnService or selected-app egress acceptance",
+      "Final reduced-motion-aware tab entrance classes added after static captures; static layout unchanged",
+      "Screenshots are not production telemetry"
+    ]
+  },
+  "tests": {
+    "vpnFrontend": {
+      "suites": 8,
+      "tests": 61,
+      "failed": 0
+    },
+    "typescript": "passed",
+    "profileDeliveryAndDeviceListTargeted": {
+      "tests": 10,
+      "failed": 0,
+      "coverageEnabled": false
+    },
+    "ruff": "passed",
+    "previousFullCi": {
+      "source": "61df572960724dacf9b2cf20d1befaab0d72a8aa",
+      "run": "20261021T143837Z-f87a8859",
+      "frontendPassed": 2600,
+      "backendPassed": 4389,
+      "backendFailed": 1,
+      "backendSkipped": 63,
+      "failure": "test_list_100_devices_under_50ms measured 203ms against unchanged 200ms limit",
+      "currentSourceFullRegressionAccepted": false
+    }
+  },
+  "internalDeliveryHelper": {
+    "httpOrQueueConnected": false,
+    "plaintextReturned": false,
+    "authenticatedRecipientBindingRequired": true,
+    "uniqueClientLeaseImplemented": false
+  },
+  "open": [
+    "Exact final-source full regression and immutable packages",
+    "Catalog migration, runtime non-owner DB role and encryption key recovery",
+    "Single-APK consent/protection/revoke/selected-app pilot",
+    "Server operation journal, unique client-key lease, scripts and orchestration"
+  ]
+}

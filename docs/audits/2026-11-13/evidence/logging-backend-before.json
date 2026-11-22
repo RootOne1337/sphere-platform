@@ -1,0 +1,19 @@
+{
+  "isolated_storage": true,
+  "scaled_daily_file_threshold_bytes": 200,
+  "upload_statuses": [
+    204,
+    204,
+    204
+  ],
+  "successive_daily_file_bytes": [
+    174,
+    348,
+    174
+  ],
+  "daily_file_exceeds_threshold_before_next_upload": true,
+  "first_two_successful_uploads_erased_by_rollover": true,
+  "third_upload_remains": true,
+  "expired_active_device_file_remains": false,
+  "expired_inactive_device_file_remains": true
+}

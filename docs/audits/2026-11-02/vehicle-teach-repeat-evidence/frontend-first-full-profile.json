@@ -1,0 +1,95 @@
+{
+  "state": "failure",
+  "startedAt": "2026-11-01T20:30:14.656046+00:00",
+  "steps": [
+    {
+      "name": "action-contract",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 0.093,
+      "logBytes": 36,
+      "logTruncated": false,
+      "resourcePreflight": {
+        "observedAt": "2026-11-01T20:30:15.089348+00:00",
+        "system": "Windows",
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "freeDiskBytes": 37688619008,
+        "diskObservedAt": "2026-11-01T20:30:15.089348+00:00",
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ],
+        "volumeObservedAt": "2026-11-01T20:30:16.549594+00:00",
+        "availableRamBytes": 11483807744,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 77437378560,
+        "commitLimitBytes": 100060360704,
+        "kernelPagedBytes": 11031982080,
+        "kernelNonpagedBytes": 5276475392,
+        "processCount": 476,
+        "handleCount": 709525,
+        "memoryMeasurement": "GetPerformanceInfo",
+        "memoryObservedAt": "2026-11-01T20:30:16.549594+00:00",
+        "collectionCompletedAt": "2026-11-01T20:30:16.549594+00:00",
+        "findings": [],
+        "admissionFindings": []
+      }
+    },
+    {
+      "name": "jest",
+      "exitCode": 1,
+      "timedOut": false,
+      "elapsedSeconds": 132.297,
+      "logBytes": 169278,
+      "logTruncated": false,
+      "resourcePreflight": {
+        "observedAt": "2026-11-01T20:30:16.647140+00:00",
+        "system": "Windows",
+        "deviceCommandsSent": false,
+        "mutationsPerformed": false,
+        "freeDiskBytes": 37687558144,
+        "diskObservedAt": "2026-11-01T20:30:16.647662+00:00",
+        "volumeHealthStatus": "Healthy",
+        "volumeOperationalStatus": [
+          "OK"
+        ],
+        "volumeObservedAt": "2026-11-01T20:30:17.932285+00:00",
+        "availableRamBytes": 11420450816,
+        "totalRamBytes": 50668236800,
+        "committedBytes": 77522599936,
+        "commitLimitBytes": 100060360704,
+        "kernelPagedBytes": 11032043520,
+        "kernelNonpagedBytes": 5278195712,
+        "processCount": 476,
+        "handleCount": 709533,
+        "memoryMeasurement": "GetPerformanceInfo",
+        "memoryObservedAt": "2026-11-01T20:30:17.932285+00:00",
+        "collectionCompletedAt": "2026-11-01T20:30:17.932285+00:00",
+        "findings": [],
+        "admissionFindings": []
+      }
+    }
+  ],
+  "packagingVerified": false,
+  "nodeVersion": "v24.22.1",
+  "dependencies": {
+    "lockSha256": "d04493d745f1d6200a51e7c0a661a9a5feda0552225bd4d01b3490f9455cfc78",
+    "installedManifestSha256": "6df90657826862e17a0829227b1246183eda98fc334c3172681569527a2b127f",
+    "installedPackages": 880,
+    "optionalPackagesAbsent": 49,
+    "contentIntegrityAttested": false
+  },
+  "reason": "step_failed:jest",
+  "tests": {
+    "tests": 2999,
+    "passed": 2998,
+    "failures": 1,
+    "failedSuites": 1,
+    "skipped": 0,
+    "suites": 224,
+    "success": false
+  },
+  "finishedAt": "2026-11-01T20:32:30.238643+00:00",
+  "elapsedSeconds": 135.582
+}

@@ -1,0 +1,3 @@
+# Optional CPU motion sensor. Does not install Torch, game models or a desktop UI.
+-r requirements-motor-worker.txt
+opencv-python-headless==4.13.0.92

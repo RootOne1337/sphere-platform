@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Play } from 'lucide-react';
+import { ActionRoutes } from './ActionRoutes';
 
 export function StartNode({ selected }: NodeProps) {
   return (
@@ -10,7 +11,8 @@ export function StartNode({ selected }: NodeProps) {
     >
       <Play className="w-5 h-5 text-green-400 fill-green-400" />
       <span className="text-xs text-green-300 mt-0.5">Start</span>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="target" position={Position.Top} />
+      <ActionRoutes />
     </div>
   );
 }

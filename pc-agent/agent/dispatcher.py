@@ -4,7 +4,6 @@ SPHERE-042/044  TZ-08 SPLIT-2 + SPLIT-4
 """
 from __future__ import annotations
 
-import asyncio
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -40,6 +39,7 @@ class CommandDispatcher:
             result = await self._handle(cmd_type, payload)
             if command_id and self.ws_client:
                 await self.ws_client.send({
+                    "type": "command_result",
                     "command_id": command_id,
                     "status": "completed",
                     "result": result,
@@ -48,6 +48,7 @@ class CommandDispatcher:
             logger.error(f"Команда {cmd_type!r} упала: {exc!r}")
             if command_id and self.ws_client:
                 await self.ws_client.send({
+                    "type": "command_result",
                     "command_id": command_id,
                     "status": "failed",
                     "error": str(exc),
@@ -136,5 +137,6 @@ class CommandDispatcher:
                 return {"pong": True}
 
             case _:
-                logger.warning(f"Неизвестный тип команды: {cmd_type!r}")
-                return None
+                # An unsupported operation performed no action and must not
+                # produce the same completed envelope as a successful command.
+                raise ValueError(f"Unsupported command type: {cmd_type!r}")

@@ -1,0 +1,100 @@
+{
+  "schema": "sphere-private-LK-minimap-combination-disposition-v1",
+  "status": "staged_not_run_due_minimap_latency",
+  "decision": "ROOTSTOP: standalone p95>1.4s fails current250ms freshness budget; do not run fusion for apparent recall",
+  "sameRecording": true,
+  "independentGameplay": false,
+  "physicalActions": 0,
+  "fusionExecuted": false,
+  "fusionGainMeasured": false,
+  "fusionGainClaimed": false,
+  "sourceJobAdopted": false,
+  "runtimeQualified": false,
+  "productSourceChanged": false,
+  "servicesRestarted": 0,
+  "uiInstalled": false,
+  "ownedProcessesStarted": 0,
+  "stagingResourcesClosed": true,
+  "shortlistBindingFileCreated": false,
+  "sourceCaptureSHA": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "referenceSourceIndexSHA": "fd1b80002f79c3957001b99ed561d4449e91cbc7828fe1e3a143fca78ce1f7cf",
+  "all159IdentitySHA": "ff9837847c41368dec897fa063aeb40cf815b6fc4388d6e47861e47a6b719514",
+  "standaloneMethods": {
+    "lsh6": {
+      "samples": 159,
+      "verified": 154,
+      "apparentUniqueWithinShortlist": 93,
+      "verifiedWithin1SourceSecond": 152,
+      "verifiedButOver2SourceSeconds": 0,
+      "top3AnyWithin1SourceSecond": 152,
+      "computeMS": {
+        "p50": 760.9677000000374,
+        "p95": 1466.5743099998506,
+        "maximum": 2068.4178000010434,
+        "over250": 148
+      },
+      "indexBuildMS": 28.8935999997193,
+      "stageP95MS": {
+        "extraction": 2.974419997917719,
+        "retrieval": 1442.9131999990202,
+        "verification": 19.663699998636726
+      },
+      "weak4to5p5Verified": 6,
+      "lostVersusOldVerified": [
+        767
+      ]
+    },
+    "bf6": {
+      "samples": 159,
+      "verified": 154,
+      "apparentUniqueWithinShortlist": 93,
+      "verifiedWithin1SourceSecond": 152,
+      "verifiedButOver2SourceSeconds": 0,
+      "top3AnyWithin1SourceSecond": 152,
+      "computeMS": {
+        "p50": 87.84600000217324,
+        "p95": 1415.3818100003261,
+        "maximum": 1652.8260000013688,
+        "over250": 16
+      },
+      "indexBuildMS": 9.290599999076221,
+      "stageP95MS": {
+        "extraction": 2.232030000595839,
+        "retrieval": 1403.4615499978827,
+        "verification": 21.71898000051442
+      },
+      "weak4to5p5Verified": 6,
+      "lostVersusOldVerified": [
+        767
+      ]
+    }
+  },
+  "standaloneTimingScope": "separate standalone perquery extraction/retrieval/verification; excludes decode/BGR conversion/cache index; no combined timing exists",
+  "shortlistHandoff": {
+    "file": ".local-pilot/skuter1-minimap-shortlist-20261103-v1/handoff.json",
+    "sha256": "b0ddcc9dc0bf4335c26ed5731645ba669e32506b4de3498762f13dd55b3d6e92"
+  },
+  "closedStandaloneRunnerReceipt": {
+    "file": ".local-pilot/skuter1-minimap-shortlist-20261103-v1/runner-receipt.json",
+    "sha256": "5299c72e86290b32a4652b084e2ebff14e3edeb086d2e70eec8b1cacacd27e1d",
+    "exitCode": 0
+  },
+  "stagedFiles": {
+    "worker.py": {
+      "sha256": "a675299d543fa3e25b9c450462b8c366ccee5d0b1a45b40020e5510743f3c674",
+      "bytes": 21694
+    },
+    "run.py": {
+      "sha256": "7daba08bac2e50bab30fcc3b2686657918a5f55a2095f320da089f5d36b72e27",
+      "bytes": 4228
+    }
+  },
+  "promisingUnfusedBaseline": {
+    "folder": ".local-pilot/skuter1-native-reference-lk-20261103-v1",
+    "localized": 128,
+    "samples": 159,
+    "longestNonlocalizedSpanSeconds": 3.692,
+    "independentGameplayTested": false,
+    "productionQualified": false
+  }
+}

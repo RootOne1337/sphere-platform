@@ -1,0 +1,31 @@
+{
+  "sourceRevision": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+  "observedAt": "2026-10-06T12:41:02.163622+00:00",
+  "scope": "root-helper-only-on-local-Android",
+  "serial": "emulator-5554",
+  "sdk": 28,
+  "screen": [
+    960,
+    540
+  ],
+  "application": "Android Settings",
+  "initialText": "sphere-clear-original",
+  "cursorMovedFromEnd": true,
+  "afterClearText": "",
+  "emptyFieldVerifiedBy": "Settings search returned to its initial placeholder; before/after native PNGs retained",
+  "searchPackage": "com.android.settings.intelligence",
+  "emptyClearIdempotent": true,
+  "followUpText": "after-clear",
+  "helperRoundTripMs": 1734,
+  "apkSha256": "87db8510a091de310481c39804899ac6255a243df8f8de630db65d428d3dafc4",
+  "installed": false,
+  "publishedToOta": false,
+  "rootQueueIntegrationVerifiedByNativeTest": false,
+  "clipboardReadOrModifiedByFixture": false,
+  "installedAgentVersionPreserved": "1.2.44-dev / 10244",
+  "fixtureTempFilesAbsentAfterTest": true,
+  "restoredToAndroidHome": true,
+  "clipboardContentVerifiedByNativeTest": false,
+  "unicodeOrPasswordOrImeFieldProvenByNativeTest": false,
+  "helperTimingIsVideoLatencyOrFleetP95": false
+}

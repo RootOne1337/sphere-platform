@@ -1,0 +1,170 @@
+{
+  "source": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+  "samples": [
+    {
+      "observedAt": "2026-10-05T16:20:04.354699+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true,
+      "observationStates": {
+        "fresh": 14,
+        "stale": 0,
+        "unknown": 5
+      },
+      "reportedVpnValues": {
+        "true": 0,
+        "false": 14,
+        "unknown": 5
+      },
+      "freshAgeMinSeconds": 5.643,
+      "freshAgeMaxSeconds": 29.729,
+      "bulkFreshOwnershipVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T16:20:07.378990+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true,
+      "observationStates": {
+        "fresh": 14,
+        "stale": 0,
+        "unknown": 5
+      },
+      "reportedVpnValues": {
+        "true": 0,
+        "false": 14,
+        "unknown": 5
+      },
+      "freshAgeMinSeconds": 0.333,
+      "freshAgeMaxSeconds": 29.749,
+      "bulkFreshOwnershipVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T16:20:10.412731+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true,
+      "observationStates": {
+        "fresh": 14,
+        "stale": 0,
+        "unknown": 5
+      },
+      "reportedVpnValues": {
+        "true": 0,
+        "false": 14,
+        "unknown": 5
+      },
+      "freshAgeMinSeconds": 2.455,
+      "freshAgeMaxSeconds": 29.436,
+      "bulkFreshOwnershipVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T16:20:13.431646+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true,
+      "observationStates": {
+        "fresh": 14,
+        "stale": 0,
+        "unknown": 5
+      },
+      "reportedVpnValues": {
+        "true": 0,
+        "false": 14,
+        "unknown": 5
+      },
+      "freshAgeMinSeconds": 2.457,
+      "freshAgeMaxSeconds": 23.51,
+      "bulkFreshOwnershipVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T16:20:16.455119+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true,
+      "observationStates": {
+        "fresh": 14,
+        "stale": 0,
+        "unknown": 5
+      },
+      "reportedVpnValues": {
+        "true": 0,
+        "false": 14,
+        "unknown": 5
+      },
+      "freshAgeMinSeconds": 5.481,
+      "freshAgeMaxSeconds": 26.533,
+      "bulkFreshOwnershipVerified": true
+    },
+    {
+      "observedAt": "2026-10-05T16:20:19.480098+00:00",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true,
+      "observationStates": {
+        "fresh": 14,
+        "stale": 0,
+        "unknown": 5
+      },
+      "reportedVpnValues": {
+        "true": 0,
+        "false": 14,
+        "unknown": 5
+      },
+      "freshAgeMinSeconds": 8.506,
+      "freshAgeMaxSeconds": 29.558,
+      "bulkFreshOwnershipVerified": true
+    }
+  ],
+  "deviceCommandsSent": false,
+  "continuousUptimeClaimed": false,
+  "vpnTrafficProven": false,
+  "buildVerified": true,
+  "resourceStates": {
+    "cpu": "ready",
+    "cpuQuota": "empty",
+    "memory": "ready",
+    "memoryLimit": "ready"
+  },
+  "httpRequestSucceeded": true,
+  "ready": true,
+  "ownLogout": 204,
+  "revokedRead": 401,
+  "observedAt": "2026-10-05T16:20:19.538901+00:00"
+}

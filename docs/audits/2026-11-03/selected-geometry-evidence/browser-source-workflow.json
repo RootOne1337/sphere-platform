@@ -1,0 +1,81 @@
+{
+  "checks": [
+    {
+      "name": "preferred173_20556_schema_remains_selected_despite_failed_old_primary",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "source_bound_prepare_button_is_available_without_rerunning_sfm",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "stale_primary_ram_refusal_is_not_presented_for_selected_approved_source",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "showing_many_points_and_manual_scene_confirmation_cannot_unlock_missing_map",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "building_freezes_same_selected_geometry_and_keeps_movement_disabled",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "awaiting_qualification_has_no_repeat_prepare_or_control_unlock",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "only_bound_ready_state_unlocks_manual_observer_button",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "same_geometry_bytes_with_different_alternative_id_do_not_inherit_ready_map",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "manual_schema_survives_switch_to_vehicle_without_input",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "mobile_page_does_not_overflow",
+      "passed": true,
+      "detail": {
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "name": "exactly_one_source_bound_mock_preparation_intent",
+      "passed": true,
+      "detail": [
+        {
+          "id": "0f36dd68341844bbbe8f4f5b1874c188",
+          "alternativeId": "fixed-k-fused-173-supported-diagnostic"
+        }
+      ]
+    },
+    {
+      "name": "no_game_input_other_mutations_or_external_connections",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "no_console_or_page_errors",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "boundary": "ACTUAL_REACT_REAL_SAVED_SKUTER1_173_20556_AND_H264_MOCK_PREPARATION_API_ONLY",
+  "physicalActions": 0,
+  "console": [],
+  "pageErrors": []
+}

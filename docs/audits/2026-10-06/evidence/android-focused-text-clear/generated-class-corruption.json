@@ -1,0 +1,49 @@
+{
+  "sourceRevision": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+  "observedAt": "2026-10-06T12:30:32.624051+00:00",
+  "classes": [
+    {
+      "file": "android/app/build/tmp/kotlin-classes/devDebugUnitTest/com/sphereplatform/agent/ws/WebSocketAuthenticationTest$http$1$1.class",
+      "bytes": 1753,
+      "magic": "cafebabe",
+      "sha256": "bbc2ba76e9fafc358ce811c78a5c694cf4f3a47df7a3d8e31dbdeb6d02196840",
+      "validJavaMagic": true
+    },
+    {
+      "file": "android/app/build/intermediates/classes/devDebugUnitTest/transformDevDebugUnitTestClassesWithAsm/dirs/com/sphereplatform/agent/ws/WebSocketAuthenticationTest$http$1$1.class",
+      "bytes": 1753,
+      "magic": "cafebabe",
+      "sha256": "bbc2ba76e9fafc358ce811c78a5c694cf4f3a47df7a3d8e31dbdeb6d02196840",
+      "validJavaMagic": true
+    },
+    {
+      "file": "android/app/build/tmp/kotlin-classes/enterpriseDebugUnitTest/com/sphereplatform/agent/ws/WebSocketAuthenticationTest$http$1$1.class",
+      "bytes": 1753,
+      "magic": "cafebabe",
+      "sha256": "bbc2ba76e9fafc358ce811c78a5c694cf4f3a47df7a3d8e31dbdeb6d02196840",
+      "validJavaMagic": true
+    },
+    {
+      "file": "android/app/build/intermediates/classes/enterpriseDebugUnitTest/transformEnterpriseDebugUnitTestClassesWithAsm/dirs/com/sphereplatform/agent/ws/WebSocketAuthenticationTest$http$1$1.class",
+      "bytes": 1753,
+      "magic": "ffffffff",
+      "sha256": "3d212e4aa7b626516a5554ca3ae6805da897d54578258a99e5a95456cddc1670",
+      "validJavaMagic": false
+    }
+  ],
+  "sourceFilesChanged": false,
+  "rootCauseEstablished": false,
+  "regeneratedAtOrBefore": "2026-10-06T12:34:28.079841+00:00",
+  "regeneratedClass": {
+    "file": "android/app/build/intermediates/classes/enterpriseDebugUnitTest/transformEnterpriseDebugUnitTestClassesWithAsm/dirs/com/sphereplatform/agent/ws/WebSocketAuthenticationTest$http$1$1.class",
+    "bytes": 1753,
+    "magic": "cafebabe",
+    "sha256": "bbc2ba76e9fafc358ce811c78a5c694cf4f3a47df7a3d8e31dbdeb6d02196840"
+  },
+  "firstEnterpriseClassFormatFailures": 19,
+  "onlyOneGeneratedFileRemovedAndRegenerated": true,
+  "removedBytes": 1753,
+  "rawSourceFilesPreserved": true,
+  "failedOutputPrivateCopyPreserved": true,
+  "filesystemRepairOrDiskGrowthWriterEstablished": false
+}

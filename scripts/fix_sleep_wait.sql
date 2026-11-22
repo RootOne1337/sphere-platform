@@ -1,20 +1,6 @@
-UPDATE script_versions
-SET dag = (
-    SELECT jsonb_set(
-        sv.dag,
-        '{nodes}',
-        (
-            SELECT jsonb_agg(
-                CASE
-                    WHEN n->>'id' = 'sleep_wait'
-                    THEN jsonb_set(n, '{on_failure}', '"check_game_alive"')
-                    ELSE n
-                END
-            )
-            FROM jsonb_array_elements(sv.dag->'nodes') AS n
-        )
-    )
-    FROM script_versions sv
-    WHERE sv.id = '892c980b-fa38-4291-8c3c-b3eaa0a52172'
-)
-WHERE id = '892c980b-fa38-4291-8c3c-b3eaa0a52172';
+-- Retired in-place DAG mutation; replacement creates a pinned immutable version.
+-- python -m scripts.publish_script_source --org-id UUID --script-id UUID
+--   --expected-version-id UUID --patch fix_sleep_wait [--apply]
+DO $$ BEGIN
+  RAISE EXCEPTION 'Retired in-place DAG patch; use scripts.publish_script_source --patch fix_sleep_wait';
+END $$;

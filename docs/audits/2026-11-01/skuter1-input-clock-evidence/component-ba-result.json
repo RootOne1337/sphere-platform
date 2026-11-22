@@ -1,0 +1,251 @@
+{
+  "run": {
+    "exit": 0,
+    "reason": null,
+    "seconds": 3.469000000040978,
+    "sampled_peak_rss": 125669376
+  },
+  "primary": {
+    "registered": 144,
+    "points": 9529,
+    "obs": 69591,
+    "mean_px": 1.145011750514118,
+    "median_px": 0.9280857058583752,
+    "p95_px": 2.8720925318815222,
+    "bad": 0,
+    "duplicate": 0,
+    "negative": 0,
+    "support": {
+      "min": 84,
+      "median": 436.5,
+      "p10": 310.3,
+      "count_under_6": 0,
+      "count_under_15": 0
+    },
+    "scene_admissible": true,
+    "route_admissible": false,
+    "route_reasons": [
+      "route_endpoints_unobserved"
+    ],
+    "coverage": {
+      "first_seconds": 5.678,
+      "last_seconds": 36.404,
+      "missing_start_seconds": 5.678,
+      "missing_end_seconds": 0.4989999999999952,
+      "max_observed_gap_seconds": 0.2849999999999966,
+      "endpoints_observed": false,
+      "all_intervals_observed": true,
+      "endpoint_limit_seconds": 1.0,
+      "interval_limit_seconds": 1.0
+    },
+    "motion": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 144,
+      "first_seconds": 5.678,
+      "last_seconds": 36.404,
+      "path_units": 18.85485226260345,
+      "endpoint_displacement_units": 3.0526106933227704,
+      "median_step_units": 0.1397877165774429,
+      "max_step_units": 0.26161329579752207,
+      "rapid_reversals": [],
+      "median_rate_units_per_second": 0.6646564637135802,
+      "speed_outliers": [],
+      "warning": null,
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "normalized_loop_displacement": 0.16190053630795567,
+    "intrinsics": {
+      "1": [
+        606.0977855786747,
+        960.0,
+        540.0
+      ]
+    }
+  },
+  "merged": {
+    "registered": 169,
+    "points": 9987,
+    "obs": 72406,
+    "mean_px": 1.7580747134473675,
+    "median_px": 1.6843853230026729,
+    "p95_px": 3.5815538982547563,
+    "bad": 0,
+    "duplicate": 0,
+    "negative": 0,
+    "support": {
+      "min": 95,
+      "median": 401.0,
+      "p10": 240.0,
+      "count_under_6": 0,
+      "count_under_15": 0
+    },
+    "scene_admissible": true,
+    "route_admissible": true,
+    "route_reasons": [],
+    "coverage": {
+      "first_seconds": 0.441,
+      "last_seconds": 36.404,
+      "missing_start_seconds": 0.441,
+      "missing_end_seconds": 0.4989999999999952,
+      "max_observed_gap_seconds": 0.2849999999999966,
+      "endpoints_observed": true,
+      "all_intervals_observed": true,
+      "endpoint_limit_seconds": 1.0,
+      "interval_limit_seconds": 1.0
+    },
+    "motion": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 169,
+      "first_seconds": 0.441,
+      "last_seconds": 36.404,
+      "path_units": 72.0200505952677,
+      "endpoint_displacement_units": 7.83690623358089,
+      "median_step_units": 0.46525379712182546,
+      "max_step_units": 0.9362011773836466,
+      "rapid_reversals": [],
+      "median_rate_units_per_second": 2.049743277596912,
+      "speed_outliers": [],
+      "warning": null,
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "normalized_loop_displacement": 0.10881561688455461,
+    "intrinsics": {
+      "1": [
+        601.5647540123381,
+        960.0,
+        540.0
+      ]
+    }
+  },
+  "source_before": {
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\control.json": "0407672a9e12b7a29f1a4dab98a9a0bc72dd4b67f8717d62b2259e772650834f",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\START": "8b43ec9dba5945f6d33fcfc62e9228da9198ff4fe3187b466e35519feafc77bc",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\state.json": "1f4b809096a638fb1600b9d53af795cf4af8d7724ec717c87fb4e87906065ede",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\geometry.json": "f0558a9dee168d9216534bdae15ea463c0612f3eb0002d9ef8ee7bd3621dbd6a",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\quality.json": "51b1425d2c959d8311247c28cccd6354579d9d943f699227e5a41d82ba0fce74",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\database.db": "4f549499eac9219b7e4c21dda3ddaff28dfdddda73aa9c501d2071d4cd6a51c8",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\cameras.bin": "733e60dfa670ac83249f2ef3fa61a027a2d2b5ac2e6548282275c52a35259c2e",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\frames.bin": "17bfca53e83e19cbdf090b4a1ffd274b8fabd05fbd2484281963e6ed0289714d",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\images.bin": "7e0bae2d2d7a9754cd8b7ca7d3cec2e0364047534b5e7813980f0aef79dbdd5f",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\points3D.bin": "bcc91923e936727f5a6792e1595920d1887c625fc534b4ce117125649f402312",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\cameras.bin": "13ba0a5223d32f30cec06d830e0269a0cfc4bf2025d731c624387311ef628e34",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\frames.bin": "60aad361769ce48b4badeb1c3753dcaed838d1ff0ea9129a379d2ed677c6062e",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\images.bin": "9582a65bc4dba324e9ded6709b09f22de08681c9a7a8271f735b98e84b3ffc84",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\points3D.bin": "3ea4bb7b79a4aa20f85b33e308a3483ac7318c986d14c6bcb081bd80723ec809",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\cameras.bin": "13ba0a5223d32f30cec06d830e0269a0cfc4bf2025d731c624387311ef628e34",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\frames.bin": "324d06fb47c30610fa2af75927e5e458c92aceba9aa16940897b17e13410eb01",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\images.bin": "03e7fec74bf79bf0cd6207181b0e01c8ac2bef0ea277be4248f566d1355bf1e6",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\points3D.bin": "8acfd02bd3453fdc3ce909b3ecfd1b00a4fe8506ccb5344eac676e2cf577f8a9",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+  },
+  "execution_qualified": false,
+  "ba": {
+    "registered": 169,
+    "points": 9987,
+    "obs": 72406,
+    "mean_px": 0.9951458866451991,
+    "median_px": 0.7901567275559247,
+    "p95_px": 2.5787766937899272,
+    "bad": 0,
+    "duplicate": 0,
+    "negative": 0,
+    "support": {
+      "min": 95,
+      "median": 401.0,
+      "p10": 240.0,
+      "count_under_6": 0,
+      "count_under_15": 0
+    },
+    "scene_admissible": true,
+    "route_admissible": true,
+    "route_reasons": [],
+    "coverage": {
+      "first_seconds": 0.441,
+      "last_seconds": 36.404,
+      "missing_start_seconds": 0.441,
+      "missing_end_seconds": 0.4989999999999952,
+      "max_observed_gap_seconds": 0.2849999999999966,
+      "endpoints_observed": true,
+      "all_intervals_observed": true,
+      "endpoint_limit_seconds": 1.0,
+      "interval_limit_seconds": 1.0
+    },
+    "motion": {
+      "schema": "sphere-camera-temporal-audit-v1",
+      "views": 169,
+      "first_seconds": 0.441,
+      "last_seconds": 36.404,
+      "path_units": 74.0759195087906,
+      "endpoint_displacement_units": 4.830121928700749,
+      "median_step_units": 0.48419720438068303,
+      "max_step_units": 0.9171660750174123,
+      "rapid_reversals": [],
+      "median_rate_units_per_second": 2.180142851672218,
+      "speed_outliers": [],
+      "warning": null,
+      "heuristic_only": true,
+      "metric_scale": null,
+      "navigation_qualified": false,
+      "interpretation": "Camera motion may include head bob, camera effects or reconstruction error; no automatic correction."
+    },
+    "normalized_loop_displacement": 0.06520502156071863,
+    "intrinsics": {
+      "1": [
+        601.5647540123381,
+        960.0,
+        540.0
+      ]
+    }
+  },
+  "ba_changes": {
+    "camera_orientation_deg_median": 0.8421275187043272,
+    "camera_orientation_deg_p95": 1.9425451662670168,
+    "camera_center_shift_median": 2.1032498776638144,
+    "camera_center_shift_p95": 3.0799223771743875
+  },
+  "chosen": "ba",
+  "source_after": {
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\COMPLETE": "82cf9311cfc4b106395d07b09768c432aa91195c0b369ff58527338bfaaf4475",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\frames.jsonl": "0f7bcefa6dd95677167eea8372a3bb197a2ed13cef3580f91dfc5f8cf2bb9b12",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\inputs.jsonl": "efcfcbfabe71d396091e0fec9c128e7a69f1d057a7faf4240e42cc3a6dfc71cb",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\manifest.json": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\input\\video.h264": "cdaf4232576e737e87a4a38aa8a93039deef1b407c77dcf3afd43e564e6e77ce",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\control.json": "0407672a9e12b7a29f1a4dab98a9a0bc72dd4b67f8717d62b2259e772650834f",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\START": "8b43ec9dba5945f6d33fcfc62e9228da9198ff4fe3187b466e35519feafc77bc",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\state.json": "1f4b809096a638fb1600b9d53af795cf4af8d7724ec717c87fb4e87906065ede",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\geometry.json": "f0558a9dee168d9216534bdae15ea463c0612f3eb0002d9ef8ee7bd3621dbd6a",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\quality.json": "51b1425d2c959d8311247c28cccd6354579d9d943f699227e5a41d82ba0fce74",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\CANCEL": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\database.db": "4f549499eac9219b7e4c21dda3ddaff28dfdddda73aa9c501d2071d4cd6a51c8",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\cameras.bin": "733e60dfa670ac83249f2ef3fa61a027a2d2b5ac2e6548282275c52a35259c2e",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\frames.bin": "17bfca53e83e19cbdf090b4a1ffd274b8fabd05fbd2484281963e6ed0289714d",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\images.bin": "7e0bae2d2d7a9754cd8b7ca7d3cec2e0364047534b5e7813980f0aef79dbdd5f",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\points3D.bin": "bcc91923e936727f5a6792e1595920d1887c625fc534b4ce117125649f402312",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\0\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\cameras.bin": "13ba0a5223d32f30cec06d830e0269a0cfc4bf2025d731c624387311ef628e34",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\frames.bin": "60aad361769ce48b4badeb1c3753dcaed838d1ff0ea9129a379d2ed677c6062e",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\images.bin": "9582a65bc4dba324e9ded6709b09f22de08681c9a7a8271f735b98e84b3ffc84",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\points3D.bin": "3ea4bb7b79a4aa20f85b33e308a3483ac7318c986d14c6bcb081bd80723ec809",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reconstruction-jobs\\6a77040681d142ec97d51831a22785fb\\prepared\\models\\1\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\cameras.bin": "13ba0a5223d32f30cec06d830e0269a0cfc4bf2025d731c624387311ef628e34",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\frames.bin": "324d06fb47c30610fa2af75927e5e458c92aceba9aa16940897b17e13410eb01",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\images.bin": "03e7fec74bf79bf0cd6207181b0e01c8ac2bef0ea277be4248f566d1355bf1e6",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\points3D.bin": "8acfd02bd3453fdc3ce909b3ecfd1b00a4fe8506ccb5344eac676e2cf577f8a9",
+    "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\skuter1-component-merge-20261101-v1\\merged\\rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+  },
+  "source_unchanged": true
+}

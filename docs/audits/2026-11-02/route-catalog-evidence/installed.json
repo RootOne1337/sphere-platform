@@ -1,0 +1,44 @@
+{
+  "sourceRevision": "41101d00a999cac4f6574d65131e3ca7c5ea9820",
+  "runId": "20261102T110430Z-d7b0ccd7",
+  "imageId": "sha256:ee18994f586f7428d5767f68ac53f7a6002f8a39e88895ea3a63c46f5e35cb23",
+  "archiveBytes": 0,
+  "previousUi": {
+    "id": "cbcf57f56fc6534432b0ac352614a530303d9c5d5be67b27791db08d9eda271b",
+    "imageId": "sha256:fd8ba0f63407e496db40a47a46b3fbe5f77380c8a1c5aa2ff74ae869e4c87eeb",
+    "imageTag": "sphere-review-frontend:45801659e1d2122ed4aa50ffd89341074228e541",
+    "startedAt": "2026-11-01T21:45:59.493987119Z",
+    "status": "running"
+  },
+  "containerCount": 46,
+  "observedAtUtc": "2026-11-02T11:11:37.961336+00:00",
+  "resourceFindings": [],
+  "admissionFindings": [],
+  "volumeExceptionRequested": false,
+  "volumeExceptionApplied": false,
+  "applyRequested": true,
+  "onlyUiImageAndBuildRemovalDelta": true,
+  "backendPreserved": true,
+  "previousComposeFileCount": 2,
+  "candidateComposeFileCount": 2,
+  "completeBaselineRoundtripVerified": true,
+  "otaCatalogSha256": "4ca1b279ddfda769dacd8f1aaff72c56f8ef0e4721c009c2e9ba3add5e89b441",
+  "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-41101d00a999-355392ab",
+  "runtimeInstalled": true,
+  "admissionMode": "maintainer-local-executor",
+  "loadedImageId": "sha256:ee18994f586f7428d5767f68ac53f7a6002f8a39e88895ea3a63c46f5e35cb23",
+  "installedUi": {
+    "id": "ea735131ca57f7f53085e89b392392d455601aab10e37a601d8436a5af41f4ec",
+    "imageId": "sha256:ee18994f586f7428d5767f68ac53f7a6002f8a39e88895ea3a63c46f5e35cb23",
+    "imageTag": "sphere-review-frontend:41101d00a999cac4f6574d65131e3ca7c5ea9820",
+    "startedAt": "2026-11-02T11:12:07.886110576Z",
+    "status": "running"
+  },
+  "otherContainersPreserved": 45,
+  "browserVerified": false,
+  "cacheRetention": {
+    "state": "not-run",
+    "archivesCreated": 0,
+    "previousImagePreserved": true
+  }
+}

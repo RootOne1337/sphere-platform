@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-10-05T19:38:02.382679+00:00",
+  "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "workingTreeModified": false,
+  "workingFileHashes": {
+    "backend/api/v1/logs/router.py": "10c69bee50ce09e877fe24ea207b68d465f7d2fc1884f9a4eef62ef996f595cc",
+    "backend/services/device_log_reader.py": "13b9a61f75a6a85b7d2ac5b79249ee40cda3d289365e56c3f532027e5d70741a"
+  },
+  "fixtureBytes": 25165824,
+  "files": 3,
+  "requestedLines": 1000,
+  "returnedLines": 1000,
+  "pythonTracedPeakBytes": 468754,
+  "wholeFileReadBytes": 0,
+  "linesSha256": "ac031c501fa8a9623896c0b34d8637a33dafb031a710b6707d30d9fcdea00b7a",
+  "readMetadata": {
+    "schema_version": 1,
+    "scope": "recent-file-tail",
+    "date": null,
+    "truncated": true,
+    "reasons": [
+      "line_limit"
+    ],
+    "bytes_scanned": 131072,
+    "scan_byte_limit": 2097152,
+    "response_lines_bytes": 130001,
+    "response_byte_limit": 524288,
+    "max_line_bytes": 16384,
+    "omitted_oversized_lines": 0,
+    "files_scanned": 1,
+    "files_available": 3,
+    "max_files": 3,
+    "concurrent_reads_per_worker": 4
+  },
+  "liveServicesContacted": false,
+  "authorizationProven": false,
+  "temporaryFilesRemoved": true,
+  "hostDiskWriterIdentified": false
+}

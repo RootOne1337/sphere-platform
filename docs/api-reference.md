@@ -1,16 +1,102 @@
 # API Reference
 
-> **Sphere Platform v4.7** — REST API
+> **Sphere Platform** — manual REST API guide
 
 **Base URL:** `https://yourdomain.com/api/v1`
-**Interactive docs:** `https://yourdomain.com/api/v1/docs` (Swagger UI)
-**OpenAPI spec:** `https://yourdomain.com/api/v1/openapi.json`
+**Interactive docs:** `https://yourdomain.com/api/docs` (Swagger UI)
+**OpenAPI snapshot:** [openapi.json](openapi.json). Native FastAPI defaults to
+`/openapi.json`; the public gateway must explicitly route that path. Do not infer
+schema availability from `/api/docs`: the local gateway returned404 for the
+root schema URL during the9October documentation review.
+
+**Historical schema observation, 12 October 2026:** UI/API `ed9d54d0` served 3015 and Tuna at that time.
+The then-running API schema matched the then-committed JSON: 185 HTTP operations,
+147 paths. This does not identify the current installation or current snapshot.
+That snapshot included authenticated exact-channel APK download at
+`GET /api/v1/updates/downloads/latest`; `platform=android-canary&flavor=dev`
+is the default. The response is a binary APK with private/no-store caching,
+download filename and Range support. Operator `device:read` is required;
+the agent artifact endpoint retains its separate authentication.
+[Installed proof and limits](audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md).
+
+**Historical 9 October schema reconciliation:** the then-committed JSON equalled the installed
+APIbe803773 `app.openapi()` after canonical JSON normalization:182 HTTP operations,
+144 paths. Exporting the schema did not run startup hooks or execute HTTP actions.
+The snapshot omits WebSocket protocols and does not prove authorization/outcomes.
+[Current status and scope](operations/WORK-STATUS.md).
 
 ---
 
+The [generated endpoint catalog](api-endpoints.md) and [OpenAPI snapshot](openapi.json)
+reflect the registered HTTP contracts and are checked in CI. The Tasks section
+was reconciled with application source `5fcf18a` on 2 October 2026. The Scripts
+section and optional task/batch version admission condition were reconciled with
+source `d2846ef` on 2 October; other Batches details retain their 7 September review.
+Locations were reconciled with `db6be05` on 3 October. OTA publication was
+reconciled with `facba9a` on 3 October: [metadata/receipt and Android APK checks](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
+The generated snapshot includes draft validation for Script Studio and the additive
+metadata-only catalog installed from `eb7a7c26` on 6 October 2026.
+See the [endpoint catalog](api-endpoints.md) for current operation/path
+counts. Earlier finite schema proofs retain their dated source revisions.
+Other manual sections
+still need component review; a listed contract does not establish runtime or
+security correctness. See the [API reconciliation register](audits/2026-11-01/API-REFERENCE-RECONCILIATION.md)
+for reviewed routes and remaining coverage, and the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
+
+## Native capture failure diagnostics
+
+API c1a6e79 on 4 October adds bounded `X-Screenshot-Id`, `X-Screenshot-Elapsed-Ms`,
+`X-Screenshot-Failed-Phase` when applicable and `X-Screenshot-Cleanup-Confirmed`
+to native capture 502/503/504. Metadata-only `native_screenshot.finished`,
+`interactive_rpc.forwarded` and `interactive_rpc.finished` correlate actual
+socket write, RPC outcome/progress and cleanup. A socket write does not prove
+Android completion; cleanup failure does not replace the original response.
+There is no automatic root-command replay. [Actual success/failure evidence](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md).
+
+## Original Android PNG
+
+`POST /api/v1/devices/{device_id}/screenshot/native`, manual root APK capture,
+requires `device:write` and tenant-owned device. No user shell/path is accepted.
+The existing GET screenshot stub is not this contract. Success returns exact
+native `image/png`, `no-store`, `nosniff`, attachment, plus `X-Screenshot-Device-Id`,
+`Id`, `SHA256`, `Android-SHA256`, `Width`, `Height`, `Requested-At`, `Completed-At`,
+`Cleanup-Confirmed` (all prefixed `X-Screenshot-`). The Android-file digest must
+match assembled bytes before success; browser checks its own SHA-256 before download.
+No video/canvas/re-encoding/resize or DPI metadata rewrite is used.
+
+Bounded PNG5MiB, chunks128KiB, read deadline80s, per-RPC8s, separate cleanup;
+per-organization/device lock120s. 429 concurrent capture,502 invalid/partial/hash
+mismatch,503 unavailable channel/lock,504 timeout. No automatic/offline replay.
+Cleanup=false can accompany a valid file. Captures are scoped private temporary
+files; this endpoint does not close the N01 durable DAG artifact-upload gate.
+[Contract, actual PH025/PH010 byte proof and preserved failures](audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
+
+## Android UI hierarchy snapshot
+
+`POST /api/v1/devices/{device_id}/ui-hierarchy`, no request body, requires
+`device:write` and tenant-owned device. It uses existing APK root SHELL to issue
+five separate fixed read/UUID-cleanup commands; it accepts no user shell/XML/XPath.
+Success is `UiHierarchyResponse`: native width/height/rotation, source,
+device/snapshot identity, requested/completed timestamps, cleanup flag and bounded
+nodes with parent/depth/positional XPath/full returned attributes/bounds.
+Successful response is `Cache-Control: no-store`. Root/UI Automator is required;
+Canvas pixels and unsupported nonroot devices do not become inspectable nodes.
+
+Runtime outcomes include409 geometry change,429 concurrent inspection,
+502 failed/invalid dump or receipt,503 unavailable transport/lock,504 deadline.
+The server has40s read budget; each RPC8s, separate best-effort UUID cleanup.
+No background polling/automatic retry/offline replay. Cleanup failure preserves
+the original error or returns a valid snapshot with cleanup flag false.
+Read-only refers to UI state: a UUID-owned temporary dump is created and deleted.
+Tree and video are independent, with a conservative30s UI lease from request start.
+See [full contract, tests and actual local/remote Android proof](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md).
+
 ## Authentication
 
-All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token or API Key.
+Authentication and authorization are route-specific. The backend uses Bearer
+tokens, API keys and dedicated device/enrollment contracts; permission checks
+are not fully described by OpenAPI security declarations. Verify the selected
+route and its role/tenant requirements instead of applying one global exception list.
 
 ```http
 # JWT Bearer token
@@ -21,10 +107,18 @@ X-API-Key: sphr_<env>_<64hex>
 ```
 
 Tokens are obtained via the login endpoint and refreshed via `/auth/refresh`.
-API keys are created via `POST /api-keys` and have the format `sphr_{env}_{64hex}` (256-bit entropy).
-При одновременной передаче Bearer JWT и X-API-Key — API-ключ имеет приоритет.
+API keys are created via `POST /auth/api-keys` and have the format `sphr_{env}_{64hex}` (256-bit entropy).
+При использовании общего resolver API-ключ имеет приоритет; отдельные маршруты могут использовать другую зависимость или только Bearer.
 
 ### Error responses
+
+The OpenAPI snapshot does not declare every explicit handler error. For example,
+`GET /health/readyz` and `/health/full` can return 503, native screenshot can
+return 429/502/503/504, and device stream-session history can return 503 even
+where those statuses are absent from the corresponding schema response map.
+This is a source/declaration comparison, not a claim that any deployment returned
+those responses. The [status audit](audits/2026-11-01/API-REFERENCE-RECONCILIATION.md)
+separates conditional errors from success responses.
 
 | Code | Meaning |
 |------|---------|
@@ -45,29 +139,25 @@ API keys are created via `POST /api-keys` and have the format `sphr_{env}_{64hex
 POST /auth/login
 Content-Type: application/json
 
-{
-  "email": "admin@example.com",
-  "password": "securepassword",
-  "totp_code": "123456"    // required if MFA enabled
-}
+{ "email": "admin@example.com", "password": "example-password" }
 ```
 
-**Response 200:**
-```json
-{
-  "access_token": "eyJ...",
-  "token_type": "bearer",
-  "expires_in": 1800,
-  "user": {
-    "id": "uuid",
-    "email": "admin@example.com",
-    "role": "super_admin",
-    "org_id": "uuid"
-  }
-}
+If MFA is disabled, the response contains `access_token`, `token_type`, `expires_in`,
+`refresh_token` and `user`. If MFA is enabled, it returns `mfa_required: true` and
+`state_token` without an access token. Complete that challenge with:
+
+```http
+POST /auth/login/mfa
+Content-Type: application/json
+
+{ "state_token": "<state-token>", "code": "123456" }
 ```
 
-Refresh token is set as `HttpOnly` cookie `sphere_refresh`.
+Successful login also sets the HttpOnly `refresh_token` cookie at path `/`. Its
+transport policy is `Secure; SameSite=None` when `COOKIE_SECURE` is set or the
+request scheme is HTTPS; otherwise it is non-Secure with `SameSite=Lax`. The
+refresh token is also returned in the response body for fallback transport. Treat
+both the cookie and response as credentials. See [session boundaries](security/frontend-sessions.md).
 
 ---
 
@@ -75,16 +165,13 @@ Refresh token is set as `HttpOnly` cookie `sphere_refresh`.
 
 ```http
 POST /auth/refresh
-Cookie: sphere_refresh=<refresh_token>
+Cookie: refresh_token=<refresh-token>
 ```
 
-**Response 200:**
-```json
-{
-  "access_token": "eyJ...",
-  "expires_in": 1800
-}
-```
+The backend rotates the refresh token and returns the same token response shape
+as a successful login. It accepts the cookie first, then `X-Refresh-Token`, then
+`{"refresh_token": "..."}` in the JSON body. A lost response does not prove that
+rotation did not occur; see [session boundaries](security/frontend-sessions.md).
 
 ---
 
@@ -95,38 +182,36 @@ POST /auth/logout
 Authorization: Bearer <token>
 ```
 
-Revokes the refresh token. Returns `204 No Content`.
+With a valid signed Bearer token (including an expired access token), blacklists
+the unexpired access token and revokes the supplied refresh token. Supply
+`Cookie: refresh_token=...` or `X-Refresh-Token: ...`; cookie takes precedence.
+Returns an empty `204 No Content` with the cookie-expiration header. An absent
+or invalid Bearer still clears the cookie but does not revoke the SQL token.
+Server-side revocation is not confirmed when Redis/PostgreSQL operations fail.
+The client must also clear its in-memory/localStorage credentials and private
+cached data; see [AUD-48 and remaining session work](audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 
 ### POST /auth/mfa/setup
 
-```http
-POST /auth/mfa/setup
-Authorization: Bearer <token>
-```
+Requires a Bearer-authenticated user. Returns `secret` and `qr_code` (base64 PNG);
+these are sensitive. The pending setup expires after five minutes. Setup alone
+does not enable MFA.
 
-**Response 200:**
-```json
-{
-  "secret": "BASE32SECRET",
-  "qr_uri": "otpauth://totp/Sphere:user@example.com?secret=BASE32SECRET&issuer=Sphere",
-  "backup_codes": ["xxxx-xxxx", "xxxx-xxxx"]
-}
-```
-
----
-
-### POST /auth/mfa/verify
+### POST /auth/mfa/verify-setup
 
 ```http
-POST /auth/mfa/verify
+POST /auth/mfa/verify-setup
 Authorization: Bearer <token>
+Content-Type: application/json
 
 { "code": "123456" }
 ```
 
-Returns `200 { "mfa_enabled": true }` on success.
+Success returns `200 {"message": "MFA enabled successfully"}`. `DELETE /auth/mfa`
+disables MFA for the authenticated user and returns `204` in the handler; the
+checked-in OpenAPI declaration lists `200`.
 
 ---
 
@@ -142,13 +227,23 @@ Authorization: Bearer <token>
 {
   "id": "uuid",
   "email": "user@example.com",
-  "username": "username",
   "role": "org_admin",
   "org_id": "uuid",
+  "is_active": true,
   "mfa_enabled": false,
+  "last_login_at": null,
   "created_at": "2026-01-01T00:00:00Z"
 }
 ```
+
+---
+
+### GET /auth/capabilities
+
+Bearer-authenticated `GET /auth/capabilities` returns `user_id`, `org_id`, `role`
+and sorted `permissions` from the current database-backed user role, with
+`Cache-Control: no-store`. It is a snapshot for this session, not an authorization
+grant for a later operation; the target route performs its own check.
 
 ---
 
@@ -158,40 +253,22 @@ Authorization: Bearer <token>
 
 ### GET /config/agent
 
-Получение конфигурации для агента. **Не требует авторизации** (soft-auth: если передан токен — используется `org_id` из JWT, иначе — конфиг по умолчанию).
-
-```http
-GET /config/agent
-```
-
-**Response 200:**
-```json
-{
-  "server": {
-    "wsUrl": "wss://sphere.example.com/ws",
-    "apiUrl": "https://sphere.example.com/api/v1",
-    "environment": "production"
-  },
-  "agent": {
-    "heartbeatIntervalMs": 30000,
-    "reconnectMaxRetries": 10,
-    "logLevel": "INFO"
-  },
-  "features": {
-    "autoRegister": true,
-    "autoUpdate": true,
-    "telemetryEnabled": true,
-    "vpnAutoConnect": false
-  },
-  "provisioning": {
-    "namingPattern": "sphere-{org}-{seq}",
-    "defaultTags": ["auto-registered"],
-    "defaultGroupId": null
-  }
-}
-```
-
-Конфигурация загружается из `agent-config/environments/{env}.json` и кэшируется в Redis (TTL 300s).
+This endpoint may return base configuration without an API key. An optional
+`X-API-Key` (enrollment or device key) is validated and may enrich the response
+with organization-scoped data; it does not use a JWT to infer the organization.
+An invalid supplied key returns 401. The handler accepts `X-Agent-Fingerprint` but
+does not use it to select or authorize this response. **Source exposure boundary:**
+when file configuration contains `enrollment_api_key`, the handler includes that
+credential in its base response even without an API key. Treat the response as
+sensitive and restrict access at the deployment boundary. Whether any installed
+environment is externally reachable or contains such a key is not established here.
+The response uses fields such as `server_url`, `ws_path`, `config_version`,
+`environment`, `config_poll_interval_seconds`, `features`, `enrollment_allowed`
+and optional `enrollment_api_key` and `org_id`. The schema describes `min_agent_version` as
+forcing OTA, but a source search for that field found no such enforcement consumer;
+the field is not proof of forced update. Enrollment credentials are
+sensitive and must not be published. Source of truth: [router](../backend/api/v1/config/router.py)
+and [schema](../backend/schemas/agent_config.py).
 
 ---
 
@@ -201,57 +278,30 @@ GET /config/agent
 
 ### POST /devices/register
 
-Идемпотентная авторегистрация устройства по composite fingerprint. При повторном вызове с тем же fingerprint возвращает существующее устройство.
+Requires an active enrollment API key with `device:register` in `X-API-Key`.
+Registration is scoped to the key's organization and accounts for both the
+fingerprint and optional instance binding; copying an APK fingerprint to a new
+VM does not necessarily identify the same device.
 
 ```http
 POST /devices/register
+X-API-Key: <enrollment-key>
 Content-Type: application/json
 
 {
-  "fingerprint": "a1b2c3d4e5f6...sha256hash",
-  "device_info": {
-    "model": "sdk_gphone64_x86_64",
-    "android_version": "13",
-    "sdk_version": 33,
-    "manufacturer": "Google",
-    "display": "TP1A.220624.014"
-  },
-  "agent_version": "1.2.0"
+  "fingerprint": "a1b2c3d4e5f6",
+  "model": "sdk_gphone64_x86_64",
+  "android_version": "13",
+  "device_type": "ldplayer"
 }
 ```
 
-**Response 200 (существующее устройство):**
-```json
-{
-  "device_id": "uuid",
-  "name": "sphere-dev-0042",
-  "is_new": false,
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "token_type": "bearer",
-  "expires_in": 1800
-}
-```
-
-**Response 201 (новое устройство):**
-```json
-{
-  "device_id": "uuid",
-  "name": "sphere-dev-0043",
-  "is_new": true,
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "token_type": "bearer",
-  "expires_in": 1800
-}
-```
-
-**Логика дедупликации:**
-- Поиск по `device.fingerprint @> '{"hash": "<fingerprint>"}'` (JSONB containment)
-- Если устройство найдено — обновляет `device_info`, генерирует новые токены
-- Если не найдено — создаёт устройство с авто-именем `sphere-{org_prefix}-{sequence}`
-
-**Не требует авторизации** (создаёт токены в процессе регистрации).
+The route returns `201` with `device_id`, `name`, `access_token`, opaque
+`refresh_token`, `expires_in`, `server_url`, `is_new` and optional binding and
+creation fields. `is_new` distinguishes a new record from re-enrollment. Do not
+publish either token. After a lost response, reconcile registration/device state
+before retrying; the response alone is not proof that the agent is connected. See the [registration schema](../backend/schemas/device_register.py)
+and [credential bootstrap](security/device-credential-bootstrap.md).
 
 ---
 
@@ -259,47 +309,30 @@ Content-Type: application/json
 
 ### GET /devices
 
-List devices with optional filtering and pagination.
+Requires `device:read`. Query parameters are `status` (legacy stored status),
+`group_id`, `location_id`, `type`, `search`, `live_status`, `page` and `per_page`
+(maximum 5000). Unrecognized legacy `status` values are ignored by the service;
+they do not filter the result by status. There is no `tag` query parameter on this
+route. For the distinction between stored and live state see [device catalog](operations/DEVICE-CATALOG.md).
 
-```http
-GET /devices?status=ONLINE&group_id=uuid&tag=production&page=1&per_page=50
-Authorization: Bearer <token>
-```
+`200` is a `DeviceListResponse` with `items`, `total`, `page`, `per_page`, `pages`,
+and coverage fields `scope_total`, `status_counts`, `presence_available`, `as_of`.
+Item fields include `id`, `name`, `status`, `is_active`, `group_ids`, `location_ids`,
+`tags`, `last_heartbeat` and `connected_since`; consult the [schema](openapi.json)
+for nullable fields. Presence availability and timestamp do not prove device action.
 
-**Query parameters:**
+`connected_since` is nullable and starts at the first accepted pong of the current
+WebSocket session; it is cleared when that session is marked offline.
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `status` | `ONLINE\|OFFLINE\|BUSY\|ERROR` | Filter by status |
-| `group_id` | UUID | Filter by device group |
-| `tag` | string | Filter by tag |
-| `search` | string | Search by name or serial |
-| `page` | int | Page number (default: 1) |
-| `per_page` | int | Items per page (default: 50, max: 5000) |
+---
 
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "name": "Device-001",
-      "serial": "emulator-5554",
-      "status": "ONLINE",
-      "tags": ["production", "group-a"],
-      "group_id": "uuid",
-      "org_id": "uuid",
-      "last_seen": "2026-02-23T10:00:00Z",
-      "vpn_ip": "10.100.0.5",
-      "battery_level": 87,
-      "android_version": "13"
-    }
-  ],
-  "total": 142,
-  "page": 1,
-  "per_page": 50
-}
-```
+### GET /devices/me
+
+Requires `X-API-Key`; the optional `X-Device-Id` selects the device within the
+key's organization. Despite the handler docstring promising 404, the source
+returns `200` with `null` when no device is resolved; its broad exception handler
+also covers lookup failures, so `null` does not prove the device is absent.
+This is source behavior, not a measurement of an installed deployment.
 
 ---
 
@@ -331,16 +364,38 @@ Content-Type: application/json
 
 ### GET /devices/{id}
 
-Get a single device by ID.
+Get a tenant-owned device by ID; requires `device:read`.
+
+### GET /devices/{id}/stream-diagnostics
+
+Return the latest authenticated Android stream-stage snapshot. Requires
+`device:read`; the handler checks that the device belongs to the caller's
+organization before reading its Redis keys.
+
+```http
+GET /devices/{id}/stream-diagnostics
+Authorization: Bearer <token>
+```
+
+The response distinguishes `active_report`, `not_streaming`, `stale`, and
+`unavailable`. `active_report` means the APK recently reported an active local
+capture session; it does **not** certify server receipt or browser rendering.
+The snapshot has a 24-hour Redis TTL and becomes stale after 75 seconds without
+a fresh heartbeat. Version 1 agents omit capture/surface fields; version 2 adds
+capture, render, encoder-error, throttle-drop and local WebSocket-queue counters.
+No raw frames or per-frame database rows are stored. Field definitions and
+operator diagnosis steps are in the
+[stream observability audit](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md).
 
 ---
 
-### PATCH /devices/{id}
+### PUT /devices/{id}
 
-Update device name, tags, or group.
+Requires `device:write`. Update device name, tags, or group. A non-null `group_id`
+replaces current group memberships; omitted or null `group_id` leaves them unchanged.
 
 ```http
-PATCH /devices/{id}
+PUT /devices/{id}
 Authorization: Bearer <token>
 
 { "name": "New Name", "tags": ["updated"], "group_id": "uuid" }
@@ -350,7 +405,10 @@ Authorization: Bearer <token>
 
 ### DELETE /devices/{id}
 
-Delete a device. Returns `204 No Content`.
+Retire the device from active inventory and return `204 No Content`. The handler
+preserves the record and referenced history, sets offline and clears device refresh
+credentials; this response does not prove that an already-running physical action
+stopped. Tenant-owned detail retrieval may still find the inactive record.
 
 **Requires:** `device:delete` permission.
 
@@ -360,7 +418,7 @@ Delete a device. Returns `204 No Content`.
 
 > Добавлено в v4.4.0
 
-Отправка команды перезагрузки устройства через WebSocket Command Manager.
+Требует `device:write`; отправляет команду через WebSocket Command Manager.
 
 ```http
 POST /devices/{id}/reboot
@@ -369,495 +427,582 @@ Authorization: Bearer <token>
 
 **Response 200:**
 ```json
-{ "status": "rebooting", "device_id": "uuid" }
+{ "status": "reboot_initiated", "device_id": "uuid" }
 ```
+
+The shown `reboot_initiated` response indicates an accepted agent receipt, not
+proof that reboot has completed. The handler can also return HTTP 200 with an
+`error` object when the agent reports failure; inspect the body.
 
 **Ошибки:**
 - `404` — устройство не найдено
-- `503` — агент оффлайн (нет WS-соединения)
+- `503` — недоступен канал или транспорт команды; это не всегда доказательство, что устройство офлайн
 
-Timeout-fallback: устройство может перезагрузиться до ACK (3с grace period).
+A `504` without agent acknowledgement reports an unknown outcome; inspect the device before retrying.
 
 ---
 
 ### POST /devices/{id}/shell
 
-> Добавлено в v4.4.0
-
-Выполнение shell-команды на устройстве через WebSocket.
-
-```http
-POST /devices/{id}/shell
-Authorization: Bearer <token>
-
-{ "command": "adb shell getprop ro.build.display.id" }
-```
-
-**Response 200:**
-```json
-{
-  "exit_code": 0,
-  "stdout": "UP1A.231005.007",
-  "stderr": ""
-}
-```
-
-**Requires:** `device:command` permission.
-
----
+Requires `device:write` and an owned device. The live-only command accepts a
+`command` string (1–4096 characters), executes through the device agent, and returns
+`{"output": "..."}` for a completed result or `{"error": "..."}` for an agent
+failure. It is not a host-side `adb shell` invocation. A transport timeout does not
+prove that the command had no effect; inspect device state before retrying.
 
 ### POST /devices/{id}/logcat
 
-> Добавлено в v4.4.0
+Requires `device:read`. The request accepts `lines` (1–10000, default 500) and
+`mode` (default `sphere`). The default requests Sphere logs; the returned object
+contains `logcat` on success or `error` on reported agent failure. It is a live
+request, not a `202` collection receipt.
 
-Запрос на сбор logcat с устройства (UPLOAD_LOGCAT команда).
+### POST /devices/{id}/connect
 
-```http
-POST /devices/{id}/logcat
-Authorization: Bearer <token>
-
-{ "lines": 1000, "filter": "SphereAgent" }
-```
-
-**Response 202:**
-```json
-{ "status": "collecting", "device_id": "uuid" }
-```
-
-Логи загружаются агентом и доступны через `GET /logs/{device_id}`.
-
----
+Requires `device:write` and an assigned workstation. This is a cache-writing
+stub returning 204; it is not confirmation that ADB connected.
 
 ### GET /devices/{id}/screenshot
 
-> Добавлено в v4.4.0
-
-Снятие скриншота устройства.
-
-```http
-GET /devices/{id}/screenshot
-Authorization: Bearer <token>
-```
-
-**Response 200:**
-```json
-{
-  "screenshot_url": "https://storage.example.com/screenshots/uuid.png",
-  "timestamp": "2026-03-04T10:00:00Z"
-}
-```
+Requires `device:read`. This legacy endpoint is a stub that records a request in the cache and returns
+`status: screenshot_requested`; it does not return an image URL. For the manual
+original PNG contract see [Original Android PNG](#original-android-png).
 
 ---
 
 ### GET /devices/{id}/status
 
-Get real-time device status from Redis cache.
-
-**Response 200:**
-```json
-{
-  "device_id": "uuid",
-  "status": "ONLINE",
-  "battery_level": 87,
-  "cpu_usage": 23.4,
-  "ram_usage": 45.1,
-  "last_heartbeat": "2026-02-23T10:00:00Z"
-}
-```
+Requires `device:read`. Returns `DeviceStatusResponse` combining device data with
+`live` Redis status; this is not the older flat `device_id`/`ram_usage` example.
+A cache read is an observation, not proof that a command completed.
 
 ---
 
-## Bulk Actions — `/bulk`
+### Device observation and agent refresh
 
-### POST /bulk/devices/action
+- `POST /devices/status/bulk` requires `device:read`, accepts 1–500 string
+  `device_ids`, and filters them to owned IDs. `GET /devices/status/fleet` uses
+  the active owned inventory. Both return counters from the status cache. In these
+  aggregates `online` and `busy` are separate; missing cache entries contribute
+  to `offline`. A missing Redis client can therefore produce an offline count
+  without confirming devices are offline. This differs from `GET /devices`, whose
+  online count includes busy and whose unavailable presence is reported as unknown.
+- `POST /devices/{id}/viewers` requires `device:read` and a 32-character lowercase
+  hexadecimal session ID plus optional boolean `active`. It updates a card-viewer
+  lease and reports availability/counts; this is not proof of stream playback.
+- `GET /devices/{id}/stream-sessions` and `/direct-probe-capabilities` require
+  `stream:read` and an owned active device. History may return 503 if unavailable;
+  capability admission is not proof of relay reachability or device acceptance.
+- `POST /devices/refresh` uses the device `refresh_token` cookie, not the user
+  refresh endpoint, and returns the rotated device credentials in the response
+  body. It accepts an optional `X-Refresh-Request-Id` UUID. Persist the request ID
+  before sending: source allows recovery of one unconsumed successor
+  with the same original token and ID; a missing/different ID or later rotation
+  cannot recover that prior reply. Keep both token and response secret. See
+  [device credential bootstrap](security/device-credential-bootstrap.md).
 
-Execute bulk action on multiple devices.
+---
 
-```http
-POST /bulk/devices/action
-Authorization: Bearer <token>
+## Bulk Actions — `/devices/bulk`
 
-{
-  "device_ids": ["uuid1", "uuid2"],
-  "action": "assign_group",
-  "params": { "group_id": "uuid" }
-}
-```
-
-**Supported actions:**
-
-| Action | Params | Description |
-|--------|--------|-------------|
-| `assign_group` | `group_id` | Move devices to group |
-| `remove_group` | — | Remove from current group |
-| `add_tag` | `tag` | Add tag to devices |
-| `remove_tag` | `tag` | Remove tag from devices |
-| `set_status` | `status` | Force-set status |
-| `reboot` | — | Send reboot command |
-
-**Requires:** `device:bulk_action` permission.
+`POST /devices/bulk/action` requires `device:write` and accepts 1–500 `device_ids`,
+`action` and optional `params`. The schema permits `reboot`, `connect_adb`,
+`disconnect_adb`, `set_group`, `set_tags` and `send_command`; `set_group` requires
+`group_id`, and `send_command` requires `command_type`. The response gives
+`total`, `succeeded`, `failed` and per-device `results`. Inspect each result.
+Per-item failures do not necessarily mean no side effect: a lost reboot receipt
+leaves the result unknown. Reboot success means an agent receipt, not a finished
+reboot. `connect_adb`,
+`disconnect_adb` and `send_command` are cache-writing stubs, not proof of device
+execution. `DELETE /devices/bulk` requires `device:delete` and removes records
+from the active catalog while preserving history. See [schema](../backend/schemas/bulk.py)
+and [service](../backend/services/bulk_service.py). `DELETE /devices/bulk` returns
+`{ "deleted": N }` for active owned records retired; malformed, foreign and
+already-inactive IDs are not counted. A count alone does not stop physical actions.
 
 ---
 
 ## Groups — `/groups`
 
-### GET /groups
+Updated 2 October 2026. Paths below are relative to `/api/v1` and match the
+[router](../backend/api/v1/groups/router.py). Requests use the current
+organization and listed permission. Group mutations reject a foreign target with
+404; the device-list group filter does not separately establish group existence.
 
-List all device groups in the organization.
+| Request | Permission | Result |
+|---|---|---|
+| `GET /groups` | `device:read` |200, groups with total/online counts |
+| `POST /groups` | `device:write` |201, confirmed group |
+| `PUT /groups/{group_id}` | `device:write` |200, confirmed metadata/parent |
+| `DELETE /groups/{group_id}` | `device:delete` |204; devices survive, membership is removed, children become roots |
+| `GET /devices?group_id=<UUID>` | `device:read` |200, paged members using the existing device catalog |
+| `POST /groups/{group_id}/devices/move` | `device:write` |200, `{ "moved": n }`; replaces each owned device's memberships with the path group |
+| `GET /groups/tags` | `device:read` |200, distinct normalized tags |
+| `PUT /groups/devices/{device_id}/tags` | `device:write` |204, replacement tag list |
 
-### POST /groups
-
-```http
-POST /groups
-{ "name": "Production Fleet", "description": "All production devices" }
+```json
+{ "name": "Production Fleet", "description": "All production devices", "parent_group_id": null }
 ```
 
-### GET /groups/{id}/devices
+For PUT, omission preserves an optional field; explicit `null` clears
+`parent_group_id`, `description` or `color`. A parent must belong to the same
+organization and have a valid ancestor chain. Self/descendant/corrupt ancestry
+returns400; an unknown/foreign parent returns404. Validation precedes metadata
+writes. Duplicate names or concurrent group writes return409. The client must
+refresh and explicitly retry; it must not automatically replay an uncertain write.
 
-List devices in a group (same response format as `GET /devices`).
+Group create/update/delete share a PostgreSQL transaction fence scoped to the
+organization. Other organizations proceed independently; commit/rollback releases
+the fence. This protocol covers service writes, not arbitrary direct SQL writers
+or optimistic version checks. [Hierarchy contract and tests](operations/GROUP-HIERARCHY.md).
+Group counters use persisted ONLINE status, not live heartbeat/ONLINE+BUSY totals.
 
-### POST /groups/{id}/devices
+The previous `GET/POST /groups/{id}/devices` examples were unsupported routes.
+`MoveDevicesRequest.group_id` is not used by this router: the path owns the target.
+A move request contains 1–500 `device_ids`; the tag replacement body is
+`{"tags":["production"]}` and accepts at most 20 entries, normalized by the schema.
 
-Add devices to a group.
+---
 
-```http
-{ "device_ids": ["uuid1", "uuid2"] }
+## Locations — `/locations`
+
+Reconciled with application `db6be05` on 3 October 2026.
+[Operator contract](operations/LOCATION-HIERARCHY.md) · [F26 evidence](audits/2026-10-03/LOCATION-HIERARCHY.md).
+
+| Method | Path | Permission | Success |
+|---|---|---|---|
+| GET | `/locations` | `device:read` | 200, full organization array with direct counters |
+| GET | `/locations/{id}` | `device:read` | 200, owned detail |
+| POST | `/locations` | `device:write` | 201, created detail |
+| PUT | `/locations/{id}` | `device:write` | 200, updated detail |
+| DELETE | `/locations/{id}` | `device:delete` | 204; optional query `expected_updated_at` |
+| POST | `/locations/{id}/devices` | `device:write` | 200, additive `assigned` count |
+| DELETE | `/locations/{id}/devices` | `device:write` | 200, `removed` count |
+
+Create/update metadata: `name`, nullable `description/color/address/latitude/
+longitude/parent_location_id`. PUT preserves omitted fields; null explicitly
+clears nullable fields. Name cannot be null. Coordinates are finite decimal
+numbers within ±90/±180; zero is valid. Parent must be owned, accessible and
+acyclic. Unknown request fields return 422. Read/create/update details include
+`id/org_id/created_at/updated_at`, direct `total_devices` and `online_devices`.
+Counters use persisted online status; they do not sum descendants or prove
+current sockets. The response array has no pagination wrapper.
+
+```json
+{"name":"Floor","latitude":0,"longitude":0,"parent_location_id":null}
 ```
+
+For conditional PUT, pass the inspected timezone-aware `updated_at` as body
+`expected_updated_at`. DELETE uses the same optional condition in the query,
+with normal URL encoding. A stale revision or competing tenant writer returns
+409. Old clients without the condition retain compatibility but do not get
+stale-draft protection. Missing/foreign target or parent returns 404;
+self/descendant/corrupt ancestry returns 400; invalid schema/range/date returns
+422. Rejection preserves the existing fields.
+
+Deleting a parent removes its memberships, preserves devices and promotes
+immediate children to roots; their memberships remain. The timestamp condition
+covers the target row, not an immutable preview of all child/membership changes.
+Membership requests use `{"device_ids":["<UUID>"]}`, 1–500 strings; historical
+skip behavior for invalid/missing/foreign devices is retained.
 
 ---
 
 ## Scripts — `/scripts`
 
+Existing version workflows were reviewed against `d2846ef` on 2 October 2026;
+draft validation was added in `561d08a`. In the recorded 6 October 2026, 07:35 UTC
+observation, API/UI `eb7a7c26` included the separate metadata catalog. This is a
+historical installation; consult [current state](operations/CURRENT-STATE.md) and
+verify the deployment separately.
+All routes require an authenticated principal and enforce organization scope.
+Read operations require `script:read`, mutations `script:write`; task/batch submission
+checks `script:execute` separately.
+See [the operator workflow and failure contract](operations/SCRIPT-VERSIONS.md).
+
+### POST /scripts/validate — проверка черновика
+
+`POST /api/v1/scripts/validate`, право `script:read`, тело `{ "dag": <DAG 1.0> }`.
+После обычной проверки пользователя/организации сервер нормализует DAG тем же
+`DAGScript`, что create/update, проверяет уникальные ID, маршруты, достижимость и
+Lua safety и опубликованные правила параметров действий. Возвращает `schema_version=1`,
+`dag`, `dag_hash` (SHA256), `node_count`, `action_types`,
+`scope=structure-routes-lua-safety`, `action_contract_version=1.0`,
+`action_parameters_verified=true`, `device_execution_verified=false`.
+Ошибки DAG дают 422 с location/type/message без исходных input/context.
+Проверка не создаёт сценарий, версию, task или команду Android; доступность селектора,
+разрешения APK, побочные эффекты и совместимость runtime этим ответом не проверены.
+Сохранение использует существующие create/update и optimistic guard
+`expected_current_version_id`; 409 требует разрешения конфликта оператором.
+[Аудит и этапы Studio](audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md).
+
+### GET /scripts/action-contract
+
+Requires `script:read`, returns the versioned published action parameter contract
+with `Cache-Control: no-store`. Its receipt explicitly marks device execution and
+installed APK capabilities as unverified; validation does not prove either.
+
+### GET /scripts/catalog — metadata-only list
+
+`GET /api/v1/scripts/catalog`, permission `script:read`, tenant scope and
+`Cache-Control: no-store`. Query parameters: `query`, `state=active|archived|all`,
+`page>=1`, `per_page=1..200` (defaults: active, 1, 50). The response contains
+`catalog_schema: 1`, `items`, `total`, `page`, `per_page`, `pages`; zero total gives
+zero pages, and an empty offset page retains its total. Ordering is
+`updated_at DESC, id ASC`; page and count use one SQL snapshot.
+
+Each item contains script/organization IDs, name, description, archive state,
+creation/update timestamps, `current_version_id`, `node_count` and `current_version`.
+The version contains only ID, `script_id`, version number, lowercase 64-hex `dag_hash`
+and creation time. DAG bodies, notes, author and version history are excluded.
+An unpublished script has null pointer/version/count; unknown values do not become zero.
+Selected published versions with missing or invalid owned metadata return 503:
+`{"detail":{"code":"script_catalog_metadata_unavailable"}}`, also with no-store.
+Catalog reads neither repair metadata nor compute hashes from DAGs.
+
+The UI requests the pinned source separately using
+`GET /scripts/{script_id}/versions/{version_id}` and verifies the selected receipt.
+Legacy list/detail/history/CRUD responses remain compatible. Schema, tenant-specific
+backfill and clean reconciliation precede enabling the new UI; an application
+rollback leaves additive columns intact. See the [operator contract](operations/SCRIPT-CATALOG.md)
+and [installation evidence](audits/2026-10-06/SCRIPT-CATALOG-EVIDENCE.json).
+This delivery does not establish production p95, browser heap or WAN performance.
+
 ### GET /scripts
 
-List scripts with pagination.
+Paginated active catalog by default. Query parameters: `state=active|archived|all`,
+`query`, `page` (at least 1), `per_page` (1–200, default 50). The response contains
+`items`, `total`, `page`, `per_page` and `pages`. Each item contains script metadata,
+`is_archived`, `current_version_id` and nested `current_version` with its immutable
+DAG and SHA-256. The DAG is nested in that version, not at the script root.
+Search and pagination apply to the selected archive state and organization.
 
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "name": "Auto Login",
-      "description": "Automated login script",
-      "dag": { "nodes": [...], "edges": [...] },
-      "created_at": "2026-02-23T10:00:00Z",
-      "updated_at": "2026-02-23T10:00:00Z"
-    }
-  ],
-  "total": 12,
-  "page": 1,
-  "per_page": 50
-}
-```
+### GET /scripts/{id} and immutable versions
 
----
+`GET /scripts/{id}?include_dag=false` returns metadata and all version metadata
+without DAG bodies. `GET /scripts/{id}/versions` lists the history without DAG bodies by default;
+`?include_dag=true` includes them.
+`GET /scripts/{id}/versions/{version_id}` returns one owned immutable version,
+including DAG, hash, version number, author, notes and UTC creation time.
+Foreign or missing script/version IDs return 404. History metadata is not yet
+paginated; large histories need a separate volume acceptance test.
 
 ### POST /scripts
 
-Create a new script with a DAG definition.
+Create a script and immutable v1. This minimal example uses the registered DAG
+format and performs no Android actions:
 
 ```http
 POST /scripts
 Authorization: Bearer <token>
 
 {
-  "name": "Auto Login",
-  "description": "Tab the login button and enter credentials",
+  "name": "Empty workflow",
+  "description": "Finite no-action DAG example",
   "dag": {
+    "version": "1.0",
+    "name": "Empty workflow",
+    "entry_node": "start",
     "nodes": [
-      { "id": "n1", "type": "action", "data": { "cmd": "adb shell input tap 540 960" } },
-      { "id": "n2", "type": "delay",  "data": { "ms": 500 } },
-      { "id": "n3", "type": "action", "data": { "cmd": "adb shell input text username" } }
-    ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" }
+      { "id": "start", "action": { "type": "start" }, "on_success": "end" },
+      { "id": "end", "action": { "type": "end" } }
     ]
   }
 }
 ```
 
+### Update, rollback and archive
+
+`PUT /scripts/{id}` accepts metadata and an optional DAG. A changed normalized
+DAG creates a new immutable version; an identical DAG hash does not create one,
+though metadata may still change. Omitted or null description is not applied.
+The optional `expected_current_version_id` protects the selected baseline; it is
+not an idempotency key for the whole mutation.
+
+`POST /scripts/{id}/versions/{version_id}/rollback` creates a **new** version
+with the selected historical DAG; existing versions and tasks remain unchanged.
+Opt-in body: `{"expected_current_version_id":"<current-version-uuid>"}`.
+Legacy callers may omit the body; a supplied body requires the condition. A
+rollback is a new version, so reconcile an unknown response before repeating it.
+
+`DELETE /scripts/{id}?expected_current_version_id=<current-version-uuid>` archives
+the script and returns 204 after commit. History is retained; this does not cancel
+tasks. An archive restore endpoint is not registered. Archived update/rollback
+returns 409.
+
+Mutation paths hold a tenant-owned row lock through commit. A stale condition or
+contested row returns 409 before mutation; foreign ownership returns 404.
+Clients must refresh and reconfirm after conflict, and reconcile unknown results
+instead of automatically repeating a mutation.
+
+### Admit a task or batch against an inspected version
+
+Both `POST /tasks` and `POST /batches` accept optional
+`expected_current_version_id`. When supplied, a shared row lock protects the
+current version until admission commits; stale or archived state is refused.
+The accepted receipt contains `script_version_id`, which must match the inspected
+version. Existing admitted tasks/batches keep their pinned version after rollback.
+Callers that omit the condition preserve legacy behavior and do not receive
+optimistic stale-selection protection.
+
+### Unregistered script execution route
+
+This route is not registered. Use [POST /batches](#post-batches) for wave
+submission or [POST /tasks](#post-tasks) for one device. The previous example
+with `group_id` and `wave_delay_seconds` did not describe the current API.
+
 ---
 
-### POST /scripts/{id}/execute
+### Task progress is not batch progress
 
-Execute a script on a set of devices or a device group.
-
-```http
-POST /scripts/{id}/execute
-
-{
-  "device_ids": ["uuid1", "uuid2"],
-  "group_id": "uuid",          // alternative to device_ids
-  "wave_size": 50,             // devices per wave
-  "wave_delay_seconds": 5      // delay between waves
-}
-```
-
-**Response 202:**
-```json
-{
-  "batch_id": "uuid",
-  "total_devices": 100,
-  "total_waves": 2,
-  "status": "PENDING"
-}
-```
-
----
-
-### GET /tasks/{batch_id}/progress
-
-Server-Sent Events stream for execution progress.
-
-```http
-GET /tasks/{batch_id}/progress
-Accept: text/event-stream
-Authorization: Bearer <token>
-```
-
-Events:
-```
-event: task.complete
-data: {"device_id":"uuid","exit_code":0,"duration_ms":1234}
-
-event: batch.done
-data: {"batch_id":"uuid","success":98,"failed":2,"total":100}
-```
+The registered `/tasks/{task_id}/progress` endpoint describes a single task,
+not a batch SSE stream. Poll [GET /batches/{id}](#get-batchesid) for batch status;
+see the [Tasks section](#tasks--tasks) for progress and live logs.
 
 ---
 
 ## VPN — `/vpn`
 
+Contract reviewed: 2026-10-03. Canonical schemas: [OpenAPI](openapi.json).
+Operator recovery and execution boundaries: [VPN control outcomes](operations/VPN-CONTROL-OUTCOMES.md).
+Profile preflight/import/revision routes and their separate outcomes are described in
+[VPN profiles](operations/VPN-PROFILES.md); listing a route does not prove device application.
+The `/vpn/admin/keypair` and `/vpn/admin/config-preview` handlers do not declare a
+user permission dependency; preview is blocked when `ENVIRONMENT=production` and
+`DEBUG=false`. Preview may return sensitive configuration and must be protected.
+Gateway or other deployment controls must be verified separately.
+
+### VPN profile catalog and runtime observations
+
+These catalog operations do **not** apply a tunnel. Reads require `vpn:read`;
+imports, revisions, archives and preflight require `vpn:write`. Metadata is
+organization-scoped and does not include stored configuration ciphertext or keys;
+metadata such as endpoint and package IDs can still be sensitive.
+
+| Request | Source contract |
+| --- | --- |
+| `GET /vpn/providers` | Provider capabilities; not proof of device compatibility. |
+| `POST /vpn/profile-preflight` | Inspect one supplied profile without saving or probing the network; maximum request body 96 KiB. |
+| `GET /vpn/profiles` | Paged catalog with `page`, `page_size`, `include_archived`, `search`. |
+| `POST /vpn/profiles` | Save encrypted profile using client `request_id`; returns a persistence receipt, `apply_allowed=false`, `execution_confirmed=false`. |
+| `GET /vpn/profiles/imports/{request_id}` | Read an owned import receipt; 404 only means not observed in that SQL snapshot. |
+| `POST /vpn/profiles/batch/preflight` | Inspect 1–100 unique request IDs; body capped at 4 MiB, no save or application. |
+| `POST /vpn/profiles/batch` | Save valid items in one transaction with per-item request IDs; response receipts preserve input order. |
+| `POST /vpn/profiles/batch/status` | Read receipts for 1–100 unique IDs with `vpn:read`; null does not prove cancellation or failed write. |
+| `GET /vpn/profiles/{id}` and `/revisions` | Read metadata or paged immutable revision metadata. |
+| `POST /vpn/profiles/{id}/revisions` | Save a new revision using `request_id` and `expected_revision`. |
+| `POST /vpn/profiles/{id}/archive` | Archive with `expected_revision`; does not disconnect an existing tunnel. |
+| `GET /vpn/runtime` | Paged owned-device Android observation; accepts `page`, `page_size`, `search`, `group_id`. `fresh`, `stale`, `unknown` describe bounded sample/session evidence, not independent proof of end-to-end traffic. |
+
+A timed-out import can still commit. Reconcile the same request IDs and do not
+infer failure from a missing snapshot; raw profile data and metadata must be
+handled as sensitive. The full schemas,
+idempotency and operational limitations are in [VPN profiles](operations/VPN-PROFILES.md)
+and [VPN Web guide](operations/VPN-WEB-GUIDE.md).
+
 ### GET /vpn/peers
 
-List VPN peers for the organization.
+Optional filters are `status` and `device_id`. Returns an array of peers owned by
+the organization, not an `items/total` envelope.
+Fields: `id`, nullable `device_id`, nullable `assigned_ip`, `status`, `is_active`,
+`public_key`, nullable `last_handshake_at`, and `created_at`.
+`is_active` requires a recent handshake under 180 seconds. It does not prove
+Android command delivery or per-peer RX/TX traffic. Requires `vpn:read`.
 
-**Requires:** `vpn:read` permission.
+### POST /vpn/assign
 
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "device_id": "uuid",
-      "device_name": "Device-001",
-      "vpn_ip": "10.100.0.5",
-      "public_key": "base64pubkey==",
-      "status": "assigned",
-      "last_handshake": "2026-02-23T09:55:00Z"
-    }
-  ],
-  "total": 142
-}
-```
+Body: `device_id` (UUID), optional `split_tunnel` (default true).
+Returns `peer_id`, `device_id`, `assigned_ip`, `public_key`, `config`, and `qr_code`.
+Configuration and QR content are sensitive; do not include them in logs.
+The response confirms a provider assignment, not Android configuration application.
+Requires `vpn:write`.
 
----
+### DELETE /vpn/revoke/{device_id}
 
-### POST /vpn/peers
+Revokes the owned peer using the durable provider lifecycle. Returns 204 only
+after the lifecycle completes. A timeout/error may retain a `REVOKING` reservation
+and requires reconciliation. Requires `vpn:write`.
 
-Provision a new VPN peer for a device.
+### POST /vpn/revoke/bulk
 
-```http
-POST /vpn/peers
+Accepts 1–500 unique UUID `device_ids`. Returns `total`, `succeeded`, `failed`,
+and per-device `results` (`device_id`, `success`, nullable `error`). Requires
+`vpn:mass_operation`; a false result is not proof that provider side effects
+never occurred.
 
-{ "device_id": "uuid" }
-```
+### POST /vpn/rotate
 
-Allocates an IP from the pool, generates WireGuard keypair, stores encrypted config.
+Accepts 1–500 unique UUID `device_ids` and optional `reason` (1–100 characters).
+Empty lists no longer mean the whole organization. Unknown fields are rejected.
+All active target devices must belong to the organization before any provider IO.
+Requires `vpn:mass_operation`.
 
-**Requires:** `vpn:write` permission.
+Returns `total`, `success`, `failed`, `execution_confirmed: false`, and `details`:
+`device_id`, nullable `old_ip/new_ip/error`, `outcome` (`configured|rejected|unknown`),
+and `revoke_confirmed`. `configured` refers to the provider operation, not the
+APK. An unknown result can follow a completed revoke and must not be blindly
+retried. A missing assigned peer is rejected without an implicit assignment.
 
----
+### POST /vpn/killswitch
 
-### DELETE /vpn/peers/{id}
+Body: 1–500 unique UUID `device_ids`, **required** `action` (`enable|disable`),
+and optional `method` (`vpnservice|iptables`, default `vpnservice`). Legacy
+`enabled` booleans and unknown fields produce 422. The whole selection is
+ownership-checked before dispatch. Requires `vpn:mass_operation`.
 
-Revoke a VPN peer and release the IP back to the pool.
-
----
+Returns `action`, `total`, `success`, boolean `results`, per-device `outcomes`
+(`submitted|not_sent|unsupported|unknown`), and `execution_confirmed: false`.
+The current legacy sender is not connected: owned requests report `unsupported`
+without dispatching. `success` counts sender acceptance, not Android execution.
 
 ### GET /vpn/pool/stats
 
-Pool utilization statistics.
-
-**Response 200:**
-```json
-{
-  "total": 65534,
-  "allocated": 142,
-  "available": 65392,
-  "utilization_pct": 0.22
-}
-```
-
----
+Returns `total_ips`, `allocated`, `free`, `active_tunnels`, `stale_handshakes`.
+Capacity/free counts refer to the platform pool; allocated/handshake counts
+refer to the caller's organization. Requires `vpn:read`.
 
 ### GET /vpn/health
 
-VPN subsystem health check.
+The current response is a static service status (`status: ok`,
+`checks.vpn_service.status: ok`). It does not probe router reachability or
+publish latency. Do not use it as a transport readiness or SLA measurement.
+Requires `vpn:read`; measured health coverage remains a separate open finding.
 
-**Response 200:**
-```json
-{
-  "status": "ok",
-  "checks": {
-    "vpn_service": { "status": "ok" },
-    "wg_router": { "status": "ok", "latency_ms": 4 }
-  }
-}
-```
+---
+
+## n8n integration — `/n8n`
+
+Webhook registry routes use `get_current_user` (Bearer user dependency); the
+investigated router does not add a separate permission check to their CRUD. Tenant
+ownership is checked against the current user. Effective database policies and
+deployment access controls must also be verified.
+
+| Request | Source contract |
+| --- | --- |
+| `POST /n8n/webhooks` | `name`, HTTP(S) `url`, nonempty `events`; optional `tags` and `secret`. Returns 201 and the plaintext secret once; only its hash is stored. |
+| `GET /n8n/webhooks` | `{items,total}` for active registrations only. Disabled records disappear from this list but are not deleted. |
+| `GET /n8n/webhooks/{id}` | Owned detail; the secret is not returned. |
+| `PATCH /n8n/webhooks/{id}` | Changes `name`, `events`, `tags`, `is_active`; a known owned ID can be re-enabled. URL and secret are not patch fields. |
+| `DELETE /n8n/webhooks/{id}` | Deletes an owned registration. The handler returns 204 while the current OpenAPI declaration lists 200. |
+| `POST /n8n/tasks` | Requires `script:execute`; `device_id`, `script_id`, optional `priority`, `webhook_url`. Returns a 201 task identity/status, not physical execution. |
+| `GET /n8n/tasks/{id}` | Uses `get_current_user` with an owned task check; returns id, status, device_id, script_id. The router does not separately declare `script:read` here. |
+
+A repository search found no call to the registry service's `dispatch_event` in
+backend source. Registration therefore does not establish an active event delivery
+path. If that service is invoked, its signing key is the UTF-8 bytes of the hex
+SHA-256 digest of the issued secret, rather than the raw secret; see the
+[operator guide](operations/USER-ADMIN-GUIDE.md#вебхуки--webhooks).
+
+The per-task `webhook_url` is a **separate callback mechanism**: the task result
+handler starts an in-process delivery with retries, without passing a signing
+secret. Its payload uses `event_type: task.completed` even when `success=false`;
+consumers must inspect `success`. Callback delivery or processing is not durable
+or confirmed by the task receipt. After a lost task-create response, reconcile
+before creating another task. Avoid placing secrets in URLs or logs.
 
 ---
 
 ## Discovery — `/discovery`
 
-### POST /discovery/scan
-
-Trigger ADB device discovery on a connected PC Agent workstation.
-
-```http
-POST /discovery/scan
-
-{ "workstation_id": "uuid" }
-```
-
-**Response 200:**
-```json
-{
-  "devices": [
-    { "serial": "emulator-5554", "state": "device", "model": "sdk_gphone64_x86_64" },
-    { "serial": "192.168.1.100:5555", "state": "device", "model": "Pixel_6" }
-  ],
-  "workstation_id": "uuid",
-  "scanned_at": "2026-02-23T10:00:00Z"
-}
-```
+`POST /discovery/scan` requires `device:write`. The request requires `subnet` and
+`workstation_id`, and accepts `port_range`, `timeout_ms`, `auto_register`, and
+optional `group_id`. **`auto_register` defaults to true**; set it explicitly to
+`false` for a scan that must not create device records. The schema normalizes a
+network of at most 65,536 addresses, limits timeout to 100–5000 ms, and takes a
+pair of inclusive ports (default 5554–5584). The response reports `scanned`,
+`found`, `registered`, `devices` and `duration_ms`. `scanned` is calculated as
+address count × port count, even when the agent returns no result; it is not a
+receipt proving every address/port was contacted. A network scan
+and registration do not prove an Android agent is connected or ready for control.
+The service obtains `PubSubRouter` but calls an RPC method implemented by
+`PubSubPublisher`; the resulting exception can be converted to an empty result.
+The intended `discover_adb` command is also absent from the PC-agent dispatcher.
+No explicit workstation ownership check was found in the reviewed route/service;
+actual tenant isolation and deployed behavior were not tested. An empty list does
+not establish that a scan ran or no devices exist. See [PC agent](pc-agent.md),
+[operator workflow](operations/DEVICE-STREAM-GUIDE.md#поиск-discovery) and
+[request and response schemas](../backend/schemas/discovery.py).
 
 ---
 
 ## Users — `/users`
 
-**Requires:** `user:read` or `user:write` permissions.
-
-### GET /users
-
-List users in the organization.
-
-### POST /users
-
-Create a new user (invite to org).
-
-```http
-{
-  "email": "newuser@example.com",
-  "username": "newuser",
-  "password": "TempPass123!",
-  "role": "device_manager"
-}
-```
-
-### PATCH /users/{id}
-
-Update user role or status.
-
-### DELETE /users/{id}
-
-Remove user from organization. Returns `204 No Content`.
+`GET /users` and `POST /users` require an administrator, organization owner or
+platform administrator. Creation uses `email`, `password` and `role`; it creates
+a user in the caller's organization. For non-super-admins the list/detail is
+filtered to that organization; the handler's `super_admin` branch removes that
+application-level list filter. Effective database policies are deployment-dependent.
+`GET /users/{id}` reads a user subject to the same role and scope checks.
+`PUT /users/{id}/role` changes a role subject
+to owner/platform-admin and target-role checks. `PATCH /users/{id}/deactivate`
+disables a user; self-deactivation and removal of the last active owner are
+blocked. The deactivate handler returns `204` although OpenAPI declares `200`.
+There is no documented DELETE/reactivation route here. The full contract
+and receipt boundaries are in [user access](operations/USER-ACCESS.md).
 
 ---
 
-## API Keys — `/api-keys`
+## API Keys — `/auth/api-keys`
 
-### GET /api-keys
-
-List API keys for the current user.
-
-### POST /api-keys
-
-Create a new API key.
-
-```http
-{ "name": "CI/CD Pipeline", "expires_at": "2027-01-01T00:00:00Z" }
-```
-
-**Response 201:**
-```json
-{
-  "id": "uuid",
-  "name": "CI/CD Pipeline",
-  "key": "sk_live_xxxxxxxxxxxx",   // only shown once
-  "expires_at": "2027-01-01T00:00:00Z"
-}
-```
-
-### DELETE /api-keys/{id}
-
-Revoke an API key.
+`GET /auth/api-keys` lists organization keys whose `is_active` is true, without
+the raw secret, and requires `api_key:read`. Expired entries can still have
+`is_active=true`; the list is not a proof that a key authenticates. `POST /auth/api-keys` requires `api_key:write`; a request contains
+`name` and may specify `permissions`, `expires_at` and `key_type`. Delegated
+permissions must be held by the caller; omitted permissions default to an empty
+list and omitted `expires_at` to no expiry. The `201` response contains `id`, `name`,
+`key_prefix`, `raw_key`, `permissions`, `expires_at` and `created_at`; `raw_key`
+is displayed once and has the `sphr_{env}_{64hex}` format. Store it as a secret.
+`DELETE /auth/api-keys/{id}` requires `api_key:write` and returns `204` in the
+handler, although OpenAPI declares `200`.
+See [schemas](../backend/schemas/auth.py) and [router](../backend/api/v1/auth/router.py).
 
 ---
 
-## Audit Log — `/audit`
+## Audit Log — `/audit/logs`
 
-**Requires:** `audit:read` permission.
+`GET /audit/logs` requires `audit:read` and returns an organization-scoped
+`AuditLogPage`: `items`, `total`, `page`, `per_page`, `pages`. Parameters are
+`action`, `resource_type`, `user_id`, `status`, `q`, `from`, `to`, `page`, and
+`per_page` (maximum 100). Items use `user_id`, `ip_address`, `old_value`,
+`new_value`, and `meta`; do not depend on the earlier `actor_email` or `remote_ip`
+example. `GET /audit/logs/export` requires the same permission and returns CSV,
+limited to 5000 rows, with truncation indicated by `X-Audit-Truncated`. See
+[investigation and export](operations/AUDIT-INVESTIGATION.md).
 
-### GET /audit
+---
 
-```http
-GET /audit?user_id=uuid&action=device.delete&from=2026-01-01T00:00:00Z&page=1&per_page=100
-```
+## Device logs — `/logs`
 
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "actor_id": "user-uuid",
-      "actor_email": "admin@example.com",
-      "action": "device.delete",
-      "resource_type": "device",
-      "resource_id": "device-uuid",
-      "remote_ip": "1.2.3.4",
-      "created_at": "2026-02-23T10:00:00Z",
-      "metadata": { "device_serial": "emulator-5554" }
-    }
-  ],
-  "total": 1234
-}
-```
+These retained device logs are separate from the administrative audit journal.
+`POST /logs/upload` takes bounded raw bytes (up to 512 KiB), an `X-API-Key`
+credential checked by the Android authenticator, and `X-Device-Id` or legacy
+`device_id` query. Conflicting IDs return 400; the principal and device must pass
+the owned-active-device check. The handler returns 204 although OpenAPI declares
+200. A lost response may follow a completed append, so an automatic replay can
+duplicate data.
+
+`GET /logs/{device_id}` requires `device:read` and accepts `lines` (1–10000),
+`date` (UTC `YYYY-MM-DD`) and `search`. Its `lines`, `total` and `read` metadata
+represent a bounded recent-file tail, not a complete archive; inspect `truncated`
+and `reasons`. `DELETE /logs/{device_id}` requires `device:delete`; the handler
+returns 204 while OpenAPI declares 200. Deletion calls filesystem removal with
+`ignore_errors=True`, so 204 alone does not verify all files were removed. Consult
+[log storage](operations/DEVICE-LOG-STORAGE.md) for resource and retention limits.
 
 ---
 
 ## Health — `/health`
 
-### GET /health
-
-```http
-GET /health
-```
-
-No auth required.
-
-**Response 200:**
-```json
-{
-  "status": "ok",
-  "version": "4.2.0",
-  "environment": "production",
-  "checks": {
-    "database": {
-      "status": "ok",
-      "latency_ms": 2
-    },
-    "redis": {
-      "status": "ok",
-      "latency_ms": 1
-    }
-  }
-}
-```
+`GET /health` is the public basic process response, `{"status":"ok","version":"4.0.0"}`
+in this source; it is not a dependency report. `GET /health/healthz` is liveness;
+`GET /health/readyz` checks dependencies and can return 503; `GET /health/full`
+returns component diagnostics and can return 503. `GET /health/build` exposes a
+validated build revision or `unknown`. These source contracts do not prove the
+health or identity of an installed environment. The separately registered
+`GET /health/ready` in [main.py](../backend/main.py) uses a different implementation: when the Redis client is absent it still writes
+`redis: ok` to its checks without a ping. Thus its 200 does not establish Redis
+availability. `/health/readyz` uses `HealthService`, which reports an uninitialized
+Redis client as down. Neither source description establishes deployed readiness.
 
 ---
 
@@ -875,777 +1020,525 @@ wss://yourdomain.com/ws/device/uuid?token=eyJ...
 
 **Message format (JSON text or binary for stream frames):**
 
-See [Architecture — WebSocket Architecture](architecture.md#6-websocket-architecture) for full message type reference.
+See [Architecture — WebSocket Architecture](architecture.md#6-websocket-architecture) for protocol-specific sources; this overview is not a complete wire-message reference.
 
 ---
 
 ## Rate Limits
 
-Default limits (configured in nginx):
+The checked-in [nginx configuration](../infrastructure/nginx/nginx.conf) defines
+an `/api/` request zone of `100r/s` per `$binary_remote_addr` with `burst=50`
+and `nodelay`. Its WebSocket locations separately limit concurrent connections:
+100 for `/api/v1/ws/` and 200 for `/ws/`. Actual client identity depends on the
+proxy chain and effective configuration; deployed values can differ.
 
-| Endpoint group | Limit |
-|---------------|-------|
-| `/auth/login` | 10 req/min per IP |
-| `/auth/refresh` | 60 req/min per IP |
-| `/api/v1/*` | 300 req/min per JWT user |
-| `/ws/*` | No limit (long-lived connections) |
-
-Rate limit errors return `429 Too Many Requests` with header:
-```
-Retry-After: 60
-X-RateLimit-Reset: 1740308400
-```
+Separately, the login service checks five requests per IP per 60 seconds and
+returns 429 when exceeded. Do not assume every limiter emits the same status or
+`Retry-After`/`X-RateLimit-Reset` headers. See [auth service](../backend/services/auth_service.py)
+and [login handler](../backend/api/v1/auth/router.py).
 
 ---
 
 ## Pipelines — `/pipelines`
 
-> Добавлено в v4.2.0 (TZ-12)
+**Проверено 3 октября 2026, API `cc28e9b`.** Пути ниже относительны к
+`/api/v1`. [Полный операторский контракт](operations/PIPELINE-DEFINITIONS.md)
+и [generated OpenAPI](openapi.json) задают точные поля, defaults и bounds.
 
-Пайплайны объединяют скрипты, условия, задержки и HTTP-вызовы в управляемые
-цепочки с персистенцией состояния и возможностью вложенного запуска.
+| Операция | Разрешение | Результат |
+| --- | --- | --- |
+| GET /pipelines | pipeline:read | Каталог: items, total, page, per_page, pages |
+| POST /pipelines | pipeline:write | 201: созданное определение |
+| GET /pipelines/{id} | pipeline:read | 200: полное owned определение |
+| PATCH /pipelines/{id} | pipeline:write | 200: сохранённое определение |
+| DELETE /pipelines/{id} | pipeline:write | 204: мягкая деактивация |
+| POST /pipelines/{id}/toggle | pipeline:write | 200: explicit desired active state |
+| POST /pipelines/{id}/run | pipeline:execute | 201: queued PipelineRun |
+| POST /pipelines/{id}/run-batch | pipeline:execute | 201: PipelineBatch и созданные queued runs |
+| GET /pipelines/runs | pipeline:read | Пагинированный журнал запусков |
+| GET /pipelines/runs/{run_id} | pipeline:read | 200: состояние, context, step_logs, execution/child/cancel fields |
+| POST /pipelines/runs/{run_id}/pause, /resume, /cancel | pipeline:execute | 200: сохранённое состояние управления запуском |
 
-**Требуемые разрешения:** `pipeline:read`, `pipeline:write`, `pipeline:execute`.
+### Каталог и определение
 
-### GET /pipelines
+GET /pipelines принимает `is_active` boolean, `tag`, `page` (от 1) и
+`per_page` (1–200, default50). Глобального `search` и `status=draft` у этого
+каталога нет. Определение возвращает `id`, `org_id`, `name`, `description`,
+`steps`, `input_schema`, `global_timeout_ms`, `max_retries`, `version`,
+`is_active`, `tags`, `created_by_id`, `created_at`, `updated_at`.
 
-Список пайплайнов организации с пагинацией.
+Пример POST /pipelines (только создание, не запуск):
 
-```http
-GET /pipelines?status=active&page=1&per_page=50
-Authorization: Bearer <token>
-```
-
-**Query parameters:**
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `status` | `draft\|active\|archived` | Фильтр по статусу |
-| `search` | string | Поиск по имени |
-| `page` | int | Номер страницы (default: 1) |
-| `per_page` | int | Элементов на странице (default: 50) |
-
-**Response 200:**
 ```json
 {
-  "items": [
-    {
-      "id": "uuid",
-      "name": "Onboarding Pipeline",
-      "description": "Автоматическая настройка устройства",
-      "status": "active",
-      "version": 3,
-      "steps": [...],
-      "created_at": "2026-02-28T10:00:00Z",
-      "updated_at": "2026-02-28T12:00:00Z"
-    }
-  ],
-  "total": 8,
-  "page": 1,
-  "per_page": 50
+  "name": "Finite delay control",
+  "description": "A single delay step",
+  "steps": [{
+    "id": "start",
+    "name": "Wait one second",
+    "type": "delay",
+    "params": { "delay_ms": 1000 },
+    "on_success": null,
+    "on_failure": null,
+    "timeout_ms": 10000,
+    "retries": 0
+  }],
+  "global_timeout_ms": 30000,
+  "input_schema": {},
+  "max_retries": 0,
+  "tags": ["control"]
 }
 ```
 
----
+Известные type: execute_script, condition, action, delay, parallel,
+wait_for_event, n8n_workflow, loop, sub_pipeline. ID уникальны; переходы
+ссылаются на существующие шаги или null. Циклы допускаются. Параметры handlers
+не получают универсальной semantic validation только от проверки schema.
 
-### POST /pipelines
+### Изменение и деактивация
 
-Создание нового пайплайна.
+PATCH отправляет только изменённые поля и optional `expected_updated_at` из
+просмотренного ответа. Description:null очищает описание; другие поля с null
+дают422. Steps ограничены1–100, теги 20. Version увеличивается только при
+фактическом изменении steps. При неверном baseline, занятой записи или runtime
+edit с nonterminal runs возвращается409 без частичного сохранения.
 
-```http
-POST /pipelines
-Authorization: Bearer <token>
+POST /pipelines/{id}/toggle требует query `active=true|false`; optional
+`expected_updated_at` защищает прочитанный baseline. DELETE тоже принимает
+optional timestamp condition и только выключает новые admissions. Уже
+созданные runs не отменяются. Для существующего run нужен отдельный cancel.
 
-{
-  "name": "Onboarding Pipeline",
-  "description": "Автоматическая настройка нового устройства",
-  "steps": [
-    {
-      "id": "s1",
-      "type": "run_script",
-      "config": { "script_id": "uuid", "timeout_seconds": 300 }
-    },
-    {
-      "id": "s2",
-      "type": "condition",
-      "config": { "expression": "steps.s1.exit_code == 0", "on_true": "s3", "on_false": "s5" }
-    },
-    {
-      "id": "s3",
-      "type": "delay",
-      "config": { "seconds": 10 }
-    },
-    {
-      "id": "s4",
-      "type": "http_request",
-      "config": { "method": "POST", "url": "https://hooks.example.com/done", "body": {} }
-    },
-    {
-      "id": "s5",
-      "type": "notify",
-      "config": { "channel": "webhook", "url": "https://hooks.example.com/fail" }
-    }
-  ]
-}
-```
+### Запуски
 
-**Response 201:**
-```json
-{ "id": "uuid", "name": "Onboarding Pipeline", "status": "draft", "version": 1, ... }
-```
+POST /pipelines/{id}/run принимает `device_id` UUID и `input_params` object.
+POST /pipelines/{id}/run-batch принимает `device_ids`, `group_id`, `device_tags`,
+`input_params`, `wave_size`, `wave_delay_seconds`. Service объединяет выбранные
+устройства и сразу создаёт `QUEUED` run для каждого; параметры волн сохраняются в
+`wave_config`, но их применение для задержки admission в исследованном backend не
+обнаружено. Не рассчитывайте на поэтапный запуск только по этим полям. `201`
+подтверждает созданный intent, а не завершение Android-действия. Steps фиксируются
+в run snapshot; повтор после потери ответа может создать новый run или batch.
 
-**Requires:** `pipeline:write`
+GET /pipelines/runs принимает `pipeline_id`, `device_id`, `status`,
+`active_only`, `page`, `per_page`; состояние выполнения читается по run_id.
+Pause/resume/cancel возвращают сохранённое состояние, не подтверждение физической
+остановки. Pause допускается для RUNNING/WAITING, resume — для PAUSED; при ещё
+занятом executor или неизвестном исходе шага resume возвращает 409. Cancel может
+оставаться незавершённым, пока активный child не завершён. После неизвестного
+ответа перечитайте run перед повтором. Input_schema пока сохраняется как
+описание, без валидации входа исполнителем; глобальные max_retries пока не
+реализуют повтор всей цепочки. [Ограничения и восстановление](operations/PIPELINE-DEFINITIONS.md).
 
----
-
-### GET /pipelines/{id}
-
-Получение пайплайна по ID.
-
----
-
-### PATCH /pipelines/{id}
-
-Обновление пайплайна. Автоматически инкрементирует `version`.
-
-```http
-PATCH /pipelines/{id}
-{ "name": "Updated Name", "steps": [...] }
-```
-
-**Requires:** `pipeline:write`
-
----
-
-### DELETE /pipelines/{id}
-
-Удаление пайплайна. Returns `204 No Content`.
-
-**Requires:** `pipeline:write`
-
----
-
-### POST /pipelines/{id}/execute
-
-Запуск пайплайна на устройствах.
-
-```http
-POST /pipelines/{id}/execute
-Authorization: Bearer <token>
-
-{
-  "device_ids": ["uuid1", "uuid2"],
-  "group_id": "uuid",
-  "variables": { "env": "staging" }
-}
-```
-
-**Response 202:**
-```json
-{
-  "run_id": "uuid",
-  "pipeline_id": "uuid",
-  "status": "running",
-  "total_devices": 2,
-  "started_at": "2026-02-28T10:00:00Z"
-}
-```
-
-**Requires:** `pipeline:execute`
-
----
-
-### POST /pipelines/{id}/stop
-
-Принудительная остановка выполнения пайплайна.
-
----
-
-### POST /pipelines/{id}/clone
-
-Клонирование пайплайна (создаёт копию со всеми шагами).
-
-**Response 201:**
-```json
-{ "id": "new-uuid", "name": "Onboarding Pipeline (копия)", "status": "draft", "version": 1 }
-```
-
----
-
-### GET /pipelines/{id}/runs
-
-История запусков пайплайна.
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "pipeline_id": "uuid",
-      "status": "completed",
-      "total_devices": 50,
-      "success_count": 48,
-      "fail_count": 2,
-      "started_at": "2026-02-28T10:00:00Z",
-      "finished_at": "2026-02-28T10:05:00Z",
-      "duration_ms": 300000
-    }
-  ],
-  "total": 12
-}
-```
-
----
-
-### GET /pipelines/{id}/runs/{run_id}
-
-Детали конкретного запуска с пошаговыми результатами.
-
----
-
-### GET /pipelines/{id}/stats
-
-Статистика запусков пайплайна (success rate, avg duration).
-
-**Response 200:**
-```json
-{
-  "total_runs": 45,
-  "success_rate": 0.96,
-  "avg_duration_ms": 180000,
-  "last_run_at": "2026-02-28T10:05:00Z"
-}
-```
-
----
-
-### POST /pipelines/{id}/validate
-
-Валидация конфигурации пайплайна без запуска.
-
-**Response 200:**
-```json
-{ "valid": true, "warnings": [] }
-```
-
-**Response 422:**
-```json
-{ "valid": false, "errors": ["Step s3 references non-existent step s99"] }
-```
-
----
-
-### Типы шагов (Step Types)
-
-| Type | Config | Description |
-|------|--------|-------------|
-| `run_script` | `script_id`, `timeout_seconds` | Запуск DAG-скрипта на устройстве |
-| `run_pipeline` | `pipeline_id` | Вложенный запуск другого пайплайна |
-| `http_request` | `method`, `url`, `headers`, `body` | HTTP-вызов внешнего API |
-| `condition` | `expression`, `on_true`, `on_false` | Условная логика (if/else) |
-| `delay` | `seconds` | Задержка между шагами |
-| `parallel` | `steps[]` | Параллельное исполнение подшагов |
-| `set_variable` | `key`, `value` | Установка переменной контекста |
-| `notify` | `channel`, `url`, `message` | Отправка уведомления (webhook/email) |
-| `approval` | `approvers[]`, `timeout_hours` | Ожидание ручного подтверждения |
+Пути `/execute`, `/stop`, `/clone`, `/{id}/stats`, `/{id}/validate` и вложенные
+`/{id}/runs` отсутствуют в текущем Pipeline API. Старые примеры этих операций
+были планом, а не реализованным контрактом; использовать их нельзя.
 
 ---
 
 ## Schedules — `/schedules`
 
-> Добавлено в v4.2.0 (TZ-12)
+Read routes require `schedule:read`; mutations require `schedule:write`. The
+[router](../backend/api/v1/schedules/router.py), [schemas](../backend/schemas/schedule.py)
+and [service](../backend/services/scheduler/schedule_service.py) define the source contract.
 
-Cron-планировщик для автоматического запуска пайплайнов по расписанию.
-Поддерживает стандартные cron-выражения, таймзоны и политики конфликтов.
+- `GET /schedules` filters by `is_active`, `target_type`, `page`, `per_page` (max 200).
+- `POST /schedules` requires `name`, `target_type`, exactly one of `cron_expression`,
+  `interval_seconds` (60–86400), `one_shot_at`, and at least one device selector:
+  `device_ids`, `group_id`, or `device_tags`. For `script`/`pipeline` targets the
+  corresponding ID is required. Parameters are `input_params`, not `variables`.
+  For cron, an unrecognized timezone falls back to UTC in the calculation; verify
+  the intended IANA timezone and returned `next_fire_at`. A successful `201` returns
+  `ScheduleResponse`, including `is_active`,
+  `next_fire_at`, `last_fired_at` and `total_runs`.
+- `GET /schedules/{id}` reads; `PATCH /schedules/{id}` partially changes; `DELETE`
+  returns `204` and deactivates the schedule rather than deleting the row.
+- `POST /schedules/{id}/toggle?active=false` sets an explicit desired state using
+  a required query parameter, not a JSON `enabled` body.
+- `POST /schedules/{id}/fire-now` sets `next_fire_at` to now and returns the
+  schedule; it is not a receipt that execution happened. `GET /schedules/{id}/executions`
+  returns the paginated execution history with `fire_time`, `actual_time`, counts
+  and batch identifiers. There is no registered `POST /schedules/{id}/dry-run`.
 
-**Требуемые разрешения:** `schedule:read`, `schedule:write`.
-
-### GET /schedules
-
-Список расписаний организации.
-
-```http
-GET /schedules?enabled=true&page=1&per_page=50
-Authorization: Bearer <token>
-```
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "name": "Nightly Cleanup",
-      "pipeline_id": "uuid",
-      "cron_expression": "0 3 * * *",
-      "timezone": "Europe/Moscow",
-      "enabled": true,
-      "conflict_policy": "skip",
-      "next_run_at": "2026-03-01T03:00:00+03:00",
-      "last_run_at": "2026-02-28T03:00:00+03:00"
-    }
-  ],
-  "total": 5
-}
-```
-
----
-
-### POST /schedules
-
-Создание расписания.
-
-```http
-POST /schedules
-Authorization: Bearer <token>
-
-{
-  "name": "Nightly Cleanup",
-  "pipeline_id": "uuid",
-  "cron_expression": "0 3 * * *",
-  "timezone": "Europe/Moscow",
-  "conflict_policy": "skip",
-  "variables": { "env": "production" },
-  "device_ids": ["uuid1"],
-  "group_id": "uuid"
-}
-```
-
-**Conflict policies:**
-
-| Policy | Описание |
-|--------|----------|
-| `skip` | Пропустить запуск, если предыдущий ещё выполняется |
-| `queue` | Поставить в очередь и запустить после завершения текущего |
-
-**Response 201:**
-```json
-{ "id": "uuid", "name": "Nightly Cleanup", "enabled": true, ... }
-```
-
-**Requires:** `schedule:write`
-
----
-
-### GET /schedules/{id}
-
-Получение расписания по ID.
-
----
-
-### PATCH /schedules/{id}
-
-Обновление расписания (cron, timezone, pipeline, conflict_policy).
-
-**Requires:** `schedule:write`
-
----
-
-### DELETE /schedules/{id}
-
-Удаление расписания. Returns `204 No Content`.
-
----
-
-### POST /schedules/{id}/toggle
-
-Включение/отключение расписания.
-
-```http
-POST /schedules/{id}/toggle
-{ "enabled": false }
-```
-
----
-
-### GET /schedules/{id}/executions
-
-История выполнений расписания.
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "schedule_id": "uuid",
-      "pipeline_run_id": "uuid",
-      "status": "completed",
-      "triggered_at": "2026-02-28T03:00:00Z",
-      "finished_at": "2026-02-28T03:05:00Z"
-    }
-  ],
-  "total": 30
-}
-```
-
----
-
-### POST /schedules/{id}/dry-run
-
-Предварительный расчёт следующих N запусков без реального выполнения.
-
-```http
-POST /schedules/{id}/dry-run
-{ "count": 5 }
-```
-
-**Response 200:**
-```json
-{
-  "next_runs": [
-    "2026-03-01T03:00:00+03:00",
-    "2026-03-02T03:00:00+03:00",
-    "2026-03-03T03:00:00+03:00",
-    "2026-03-04T03:00:00+03:00",
-    "2026-03-05T03:00:00+03:00"
-  ]
-}
-```
-
----
+A saved schedule or requested fire is not evidence that a scheduler is running,
+that a target was reached, or that the resulting task completed. After a lost
+mutation response, read back the schedule and execution history before retrying.
 
 ## Game Accounts — `/game-accounts`
 
-### GET /game-accounts
+`account:read` is required for reads and `account:write` for changes. `GET
+/game-accounts` supports `game`, `status`, `device_id`, `server_name`, `search`,
+`sort_by`, `sort_dir`, `page`, `per_page`; the response is a paginated
+`GameAccountListResponse`. Unknown status values are ignored by the service, and
+an unsupported sort field falls back to `created_at`. Fields include `login`,
+`game`, `status`, `server_name`, `device_id` and timestamps. `GET /game-accounts/stats`
+and `/servers` also require `account:read`. See [schemas](../backend/schemas/game_accounts.py).
 
-List game accounts with filtering and pagination.
+`POST /game-accounts` requires `game`, `login`, `password`; `nickname` is optional
+and is not automatically generated by this service. `GET /game-accounts/{id}`
+returns details; `?show_password=true` also requires `account:credentials:read`
+and sets `Cache-Control: no-store`. Handle secrets according to the
+[credentials contract](security/account-credentials.md). `PATCH /game-accounts/{id}`
+updates fields; null fields are not applied by this service. When status changes
+to `free`, the service clears assignment and cooldown. `DELETE /game-accounts/{id}`
+deletes the record and returns 204 from the handler, although the checked-in
+OpenAPI snapshot declares 200.
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `game` | string | Filter by game name |
-| `status` | string | Filter by status (`active`, `banned`, `idle`) |
-| `device_id` | uuid | Filter by assigned device |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "nickname": "string",
-      "game": "string",
-      "server": "string",
-      "status": "active",
-      "device_id": "uuid",
-      "created_at": "datetime",
-      "updated_at": "datetime"
-    }
-  ],
-  "total": 100,
-  "page": 1,
-  "per_page": 50
-}
-```
-
-### POST /game-accounts
-
-Create a new game account. If `nickname` is omitted, a random one is generated.
-
-### GET /game-accounts/{id}
-
-Get game account details.
-
-### PUT /game-accounts/{id}
-
-Update game account fields.
-
-### DELETE /game-accounts/{id}
-
-Delete a game account.
-
----
+`POST /game-accounts/import` accepts 1–1000 account objects and returns `created`,
+`skipped` and `errors`; credentials must be protected. `POST
+/game-accounts/{id}/assign` requires a free account and an owned device and sets
+`in_use`. `POST /game-accounts/{id}/release` requires `in_use`, clears the device,
+increments `total_sessions` and sets free or cooldown according to the optional
+`cooldown_minutes` (0–10080). These are account-record operations: assignment is
+not proof of game login, and release is not proof of physical logout or completion
+of a separate session record. The routes do not provide a per-request idempotency
+key; reconcile account state after an uncertain response before retrying.
 
 ## Event Triggers — `/event-triggers`
 
-### GET /event-triggers
+`pipeline:read` permits reads; `pipeline:write` is required for changes. `GET
+/event-triggers` filters by `is_active`, `event_type_pattern`, `pipeline_id`,
+`page`, `per_page` (max 200). Items contain `event_type_pattern`, `pipeline_id`,
+`input_params_template`, `is_active`, cooldown and counters, not generic
+`condition` and `action` objects.
 
-List configured event triggers.
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `event_type` | string | Filter by event type |
-| `enabled` | bool | Filter by enabled status |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "name": "string",
-      "event_type": "string",
-      "condition": "object",
-      "action": "object",
-      "enabled": true,
-      "created_at": "datetime"
-    }
-  ],
-  "total": 10,
-  "page": 1,
-  "per_page": 50
-}
-```
-
-### POST /event-triggers
-
-Create a new event trigger rule.
-
-### GET /event-triggers/{id}
-
-Get trigger details.
-
-### PUT /event-triggers/{id}
-
-Update trigger configuration.
-
-### DELETE /event-triggers/{id}
-
-Delete a trigger.
-
-### POST /event-triggers/{id}/toggle
-
-Enable or disable a trigger.
-
----
+`POST /event-triggers` requires `name`, `event_type_pattern` and `pipeline_id`;
+the owned pipeline is checked. Optional JSON object `input_params_template`,
+`cooldown_seconds` and `max_triggers_per_hour` default to `{}`, 60 and 100;
+zero hourly limit means no limit. `GET /event-triggers/{id}` reads the rule,
+`PATCH /event-triggers/{id}` updates it, and `DELETE /event-triggers/{id}` hard
+removes it with 204. `POST /event-triggers/{id}/toggle?active=true` requires an
+explicit query boolean. The PATCH handler skips fields explicitly set to null;
+null therefore does not clear the description. A stored rule does not prove event
+delivery or pipeline execution; after an uncertain mutation read back the rule. See [router](../backend/api/v1/event_triggers/router.py) and
+[schema](../backend/schemas/event_trigger.py).
 
 ## Pipeline Settings — `/pipeline-settings`
 
-### GET /pipeline-settings
-
-List pipeline settings.
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `pipeline_id` | uuid | Filter by pipeline |
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "pipeline_id": "uuid",
-      "key": "string",
-      "value": "any",
-      "updated_at": "datetime"
-    }
-  ],
-  "total": 5,
-  "page": 1,
-  "per_page": 50
-}
-```
-
-### POST /pipeline-settings
-
-Create or update a pipeline setting.
-
-### DELETE /pipeline-settings/{id}
-
-Delete a pipeline setting.
-
----
+These are organization settings, not a list of key/value records. `GET
+/pipeline-settings` requires `pipeline:read`, returns `PipelineSettingsResponse`,
+and may create and commit default settings if none exist. `PATCH /pipeline-settings`
+requires `pipeline:write` and partially updates settings. The four `POST
+/pipeline-settings/toggle/{orchestration|scheduler|registration|farming}` routes
+accept `{"enabled": true|false}` and require `pipeline:write`. There is no
+registered `POST /pipeline-settings` or `DELETE /pipeline-settings/{id}`. Status,
+servers and nickname routes are listed in the [router](../backend/api/v1/pipeline_settings/router.py).
+`GET /pipeline-settings/status` also calls `get_or_create` and commits. Its
+`registrations_completed`, `registrations_failed` and `bans_detected` are schema
+defaults of zero in this handler, not measured completed/failed/ban counters. The
+nickname check requires `pipeline:read`; generation requires `pipeline:write`. Persisting
+settings does not prove automation has run. Re-read settings after an uncertain write.
 
 ## Account Sessions — `/account-sessions`
 
-### GET /account-sessions
+Reads require `session:read`; changes require `session:write`. `GET
+/account-sessions` accepts `account_id`, `device_id`, `end_reason`, `active_only`,
+`sort_by`, `sort_dir`, `page`, `per_page`. The paginated item has `started_at`,
+`ended_at`, `end_reason` and `meta`, not the old `status`/`metadata` fields.
+`POST /account-sessions` requires `account_id` and `device_id`; `GET
+/account-sessions/{id}` reads one. `POST /account-sessions/{id}/end` requires a
+JSON `end_reason` (one of `completed`, `banned`, `captcha`, `error`, `manual`,
+`rotation`, `timeout`, `device_offline`); the method is POST, not PUT. A missing or
+already ended owned active session returns 404; 404 following a lost response does
+not establish which attempt ended it. Re-read the session. An unrecognized list
+`end_reason` is ignored by the service and does not filter the result.
+Supported sort fields are `started_at`, `ended_at`, `created_at`; other values
+fall back to `started_at`. `GET /account-sessions/stats` accepts optional
+`account_id` and `device_id`.
 
-List active account sessions.
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `account_id` | uuid | Filter by game account |
-| `device_id` | uuid | Filter by device |
-| `status` | string | Filter by status (`active`, `ended`, `error`) |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "account_id": "uuid",
-      "device_id": "uuid",
-      "started_at": "datetime",
-      "ended_at": "datetime|null",
-      "status": "active",
-      "metadata": "object"
-    }
-  ],
-  "total": 50,
-  "page": 1,
-  "per_page": 50
-}
-```
-
-### POST /account-sessions
-
-Start a new account session.
-
-### GET /account-sessions/{id}
-
-Get session details.
-
-### PUT /account-sessions/{id}/end
-
-End an active session.
-
----
+**End overwrites metrics:** omitted `nodes_executed` and `errors_count` default to
+0, and omitted `error_message`, `level_after`, `balance_after` to null; the service
+assigns those values to the record. Supply confirmed values when available and
+read the record back. The `/sessions` UI sends only `end_reason=manual`, so it
+can replace existing values with those defaults; see the [operator guide](operations/USER-ADMIN-GUIDE.md).
+See [router](../backend/api/v1/account_sessions/router.py) and
+[schema](../backend/schemas/account_sessions.py). A database record does not prove
+that a real game login or logout occurred.
 
 ## Device Events — `/device-events`
 
-### GET /device-events
-
-List device lifecycle events.
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `device_id` | uuid | Filter by device |
-| `event_type` | string | Filter by event type (`connect`, `disconnect`, `error`, `command`, `heartbeat`) |
-| `since` | datetime | Events after this timestamp |
-| `until` | datetime | Events before this timestamp |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "device_id": "uuid",
-      "event_type": "string",
-      "payload": "object",
-      "created_at": "datetime"
-    }
-  ],
-  "total": 1000,
-  "page": 1,
-  "per_page": 50
-}
-```
-
-### GET /device-events/{id}
-
-Get event details.
+Reads require `event:read`, writes `event:write`. `GET /device-events` filters by
+`device_id`, `event_type`, `severity`, `account_id`, `processed`, `search`,
+`sort_by`, `sort_dir`, `page`, `per_page`; it has no `since`/`until` parameters.
+Items contain `occurred_at`, `data`, `severity` and `processed` rather than the old
+`payload` example. `GET /device-events/{id}` reads one and `GET
+/device-events/stats` gives aggregate counts. `POST /device-events` creates an
+event with required `device_id` and `event_type`, optional `severity` (default
+`info`), `message`, `data` and related IDs. An unrecognized list `severity` is
+ignored by the service rather than producing an empty result. `POST
+/device-events/{id}/processed` returns 204 in the handler although the snapshot
+declares 200. Marking processed is an application record, not proof of a
+device-side action. See [router](../backend/api/v1/device_events/router.py).
 
 ---
 
 ## Batches — `/batches`
 
-### GET /batches
-
-List batch operations.
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `status` | string | Filter by batch status (`pending`, `running`, `completed`, `failed`) |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
+These paths are under `/api/v1`. Verified against the batch router/schema on
+7 September 2026; the API has no GET collection route or POST cancel route.
 
 ### POST /batches
 
-Create a new batch operation targeting multiple devices.
+Requires `script:execute`; accepts `script_id` and 1–1000 `device_ids` plus
+unique `device_ids` and optional `wave_size` (1–100, default 10), `wave_delay_ms` (default 5000),
+`jitter_ms` (default 1000), `priority` (1–10, default 5), `name`, `webhook_url`
+and `stagger_by_workstation` (default true). The service commits a batch and pinned wave plan before returning 202. An independent
+startup worker discovers pending plans and advances the persisted wave cursor; it
+is not started separately for each request. A 202 is admission of the plan, not a
+receipt for execution on every device. Source recovery depends on the worker,
+database and correctly configured tenant lookup being available.
+
+Wave submission creates QUEUED task intents; it does not mean devices completed
+execution. `failed` includes rejected device slots (for example missing, foreign
+or already busy devices), plus failed/timed-out tasks. Final task results determine
+COMPLETED/FAILED/PARTIAL when all requested slots have an outcome. A database
+error aborts the current wave; prior committed waves remain. The worker retries
+pending admission using the stored cursor. Invalid plans enter `review_required`;
+a lost database commit acknowledgement is not evidence the wave failed. Inspect
+the plan and receipts before any new batch.
+
+`webhook_url` is accepted/stored, but reliable batch completion delivery is not
+implemented. The premature callback previously emitted after submission has
+been disabled. Poll status until a durable outcome notification mechanism exists.
 
 ```json
 {
-  "device_ids": ["uuid", "uuid"],
-  "action": "execute_script",
-  "params": {
-    "script_id": "uuid"
-  }
+  "script_id": "<script UUID>",
+  "device_ids": ["<device UUID>"],
+  "wave_size": 10,
+  "wave_delay_ms": 5000,
+  "jitter_ms": 1000
 }
 ```
 
+### POST /batches/broadcast
+
+Requires `script:execute`; accepts the same wave options and `script_id`, with
+no `device_ids`. Resolves online devices in the caller's organization and returns
+202 with the batch record plus `online_devices`. Unlike `POST /batches`, its
+request schema does not define or enforce `expected_current_version_id`; the
+selected version is nevertheless pinned when the plan is created.
+
 ### GET /batches/{id}
 
-Get batch operation status and per-device results.
+Requires `script:read`. Returns the tenant-scoped batch record with status,
+`total`, `succeeded`, `failed`, `wave_config`, timestamps and optional `notes`.
+It also exposes `admission_state`, `next_wave_index`, `next_wave_at` and
+`admission_receipts`; receipts identify admitted or rejected device slots and task
+IDs but are not terminal task results. Read individual tasks for execution state.
 
-### POST /batches/{id}/cancel
+### DELETE /batches/{id}
 
-Cancel a running batch.
+Requires `script:execute`. Returns 204 after the caller commits cancellation.
+Unknown/foreign batch returns 404; COMPLETED, PARTIAL, FAILED and CANCELLED
+batches return 409. The server serializes cancellation with in-flight wave
+admission, then locks eligible tasks and the batch before validation and queue
+effects. Later waves re-read tenant/status after this transaction fence and do
+not create tasks after cancellation. QUEUED tasks become CANCELLED with UTC
+`finished_at`; ASSIGNED tasks receive a durable cancellation request and remain
+active until a terminal device result. RUNNING tasks retain the batch endpoint's
+finish-current-work policy.
+
+SQL cancellation is not proof of physical stop. ASSIGNED may already be in
+transit; Redis/commit failure and durable producer recovery remain open.
+Late RUNNING task results/timeouts update counters while retaining CANCELLED.
+All backend workers must run the updated fence; mixed versions do not provide
+this guarantee. See [AUD-43–47 and remaining work](audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 
 ## Tasks — `/tasks`
 
+Verified against the task router/schema on 2 October 2026, source `5fcf18a`. Reads require
+`script:read`; create/cancel/stop/rerun require `script:execute`. All paths below are
+under `/api/v1` and apply the caller's organization boundary.
+
 ### GET /tasks
 
-List tasks with filtering and pagination.
+Filters: `device_id`, `script_id`, `batch_id` (UUIDs) and `status` (`queued`,
+`assigned`, `running`, `completed`, `failed`, `timeout`, `cancelled`).
+`page` defaults to 1; `per_page` defaults to 50 and is limited to **200** here.
+Response contains `items`, `total`, `page`, `per_page`, `pages`.
+Optional `search` (up to 200 characters), `sort_by` (`created_at`, `status`,
+`script_name`, `priority`), `sort_dir` (`asc`, `desc`) and `active_only` are
+server-side filters/order. `include_counts=true` adds status counts over the
+full filtered tenant history before pagination; counts are server reports.
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `device_id` | uuid | Filter by device |
-| `status` | string | Filter by status (`pending`, `running`, `completed`, `failed`, `cancelled`) |
-| `type` | string | Filter by task type |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
+### POST /tasks
+
+Accepts `script_id`, `device_id`, optional `account_id`, `priority` (1–10,
+default 5) and `webhook_url`. Returns 201 with the committed task. Execution
+admission validates script version/device/account ownership and current work;
+creation does not acknowledge physical device execution. The active duplicate
+check is scoped to device and pinned version, not an idempotency key; a later
+request can create another task after the earlier task becomes terminal. The
+handler commits before reloading the response; a lost response or later read failure can follow a commit.
+Reconcile the task before submitting another execution.
 
 ### GET /tasks/{id}
 
-Get task details including execution logs.
+Returns task identity, lifecycle timestamps, result, error and input parameters.
+Related read routes are `/{id}/logs` (stored node logs), `/{id}/progress`
+(Redis progress), `/{id}/live-logs` (Redis node entries) and `/{id}/screenshots`
+(a structured manifest described below). When no progress key exists the handler
+returns zero/default fields; this does not prove zero work. An empty live log similarly means no entries were observed,
+not that no execution occurred. Redis progress and stored result fields retain
+their respective observation scopes.
 
-### POST /tasks/{id}/cancel
+### POST /tasks/{id}/rerun
 
-Cancel a pending or running task.
+No request body is needed. For a terminal owned task, returns 201 with a new
+independent queued task using its recorded `script_version_id`, `device_id`,
+priority, timeout and deep-copied input parameters. Active tasks, unknown legacy
+versions and conflicting active work return 409. Script/version/device and any
+explicit account context are revalidated against the caller's organization.
 
-### POST /tasks/{id}/retry
+Old batch/wave membership, results and lifecycle timestamps are not copied.
+This does not restore external Android/account state or confirm execution.
+The Sphere web client disables automatic mutation retry after an uncertain response. Reconcile
+the new task before making another explicit request; a later request after its
+completion can create another execution. [Detailed contract and evidence](audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
 
-Retry a failed task.
+### GET /tasks/{id}/screenshots
+
+Returns `{ "task_id": "uuid", "screenshots": [...] }`. Each deduplicated entry
+has `key`, an authenticated relative content `url` or null, and
+`unavailable_reason` or null. Unsafe/foreign reported keys have no URL.
+This replaces the former string-array response; external consumers must adapt.
+An empty manifest means no recorded server keys, not that Android has no image.
+
+### GET /tasks/{id}/screenshots/content?key=...
+
+Rechecks task ownership, task/device namespace and key membership in the stored
+result before reading private storage. Returns JPEG/PNG bytes, maximum 5 MiB,
+with `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`.
+It does not redirect clients to MinIO or expose storage credentials.
+
+Absent tasks/keys/objects return 404; invalid raster content returns 422;
+unconfigured or unavailable storage returns 503. Configure the optional
+[server storage read account](configuration.md#private-task-screenshot-reads).
+A historical pilot observation recorded reads as disabled; check the selected
+deployment's actual settings. Android DAG screenshot upload is still open (N01):
+its local file path is not a stored object key.
+
+### DELETE /tasks/{id}
+
+Accepts cancellation of QUEUED/ASSIGNED tasks; returns 204 after the SQL intent
+commit. QUEUED can become CANCELLED locally; ASSIGNED remains active until a
+terminal device result. RUNNING or terminal states return 409; unknown/foreign
+IDs return 404. The row is locked/refreshed before validation. Do not infer a
+physical stop from the empty HTTP response.
+
+### POST /tasks/{id}/stop
+
+Accepts QUEUED/ASSIGNED/RUNNING. QUEUED cancellation returns 200 with
+`status: stopped`; ASSIGNED/RUNNING returns 202 with `status: cancelling` after
+persisting the cancellation request. Both include `task_id`; terminal source
+states return 409. Delivery is retried by the existing durable dispatcher.
+ASSIGNED/RUNNING finish only after a terminal DAG result, not a control ACK.
+The control has a distinct command ID and explicit task target; see the
+[control contract](security/task-control-protocol.md).
+
+The router has no POST `/{id}/cancel` or `/{id}/retry` endpoint. Submitting a
+new task or using `/{id}/rerun` is new execution and requires reconciling any
+earlier unknown outcome.
+
+---
+
+## OTA release metadata — `/updates`
+
+All paths in this section are relative to `/api/v1`. The checked-in handler
+uses a file-backed release catalog; its HTTP metadata does not establish the
+state of another deployment.
+
+- `GET /updates/` requires `device:read`, accepts optional `platform` and
+  `flavor`, and returns `releases` and `total`. `POST /updates/` requires
+  `super_admin` and returns 201 with registered metadata. For a managed artifact
+  the handler verifies file existence, size and SHA-256; for an external URL it
+  requires HTTPS but does not fetch or verify that external file.
+- `GET /updates/latest` reads `platform`, `flavor`, `version_code` and requires
+  an `X-API-Key` header. Its token is evaluated by the Android WebSocket
+  authenticator or the scoped OTA recovery path. It returns availability and
+  release metadata, not proof of installation. `GET /updates/artifacts/{sha256}`
+  uses a Bearer credential with those authentication paths and serves a published
+  managed artifact. These routes are distinct from the operator download below.
+- `GET /updates/downloads/latest` requires `device:read`, defaults to the
+  `android-canary/dev` channel and serves the latest managed APK. Missing channel
+  returns 404, an external latest artifact 409 and unavailable/invalid data 503.
+  The binary response includes private/no-store caching and SHA-256/version headers.
+- `POST /updates/recovery` requires `super_admin`, an owned active device, a
+  published managed SHA-256 and a duration of 60–3600 seconds. A committed grant
+  can return `wake_published` or `awaiting_connection`; neither establishes receipt
+  or install. `POST /updates/recovery/{device_id}/dispatch` requires the matching
+  `command_id`, returns 202 and re-wakes the same grant without extending it.
+  `GET /updates/recovery/{device_id}` requires `device:read` and returns state,
+  sanitized active grant and result history. `DELETE` requires `super_admin`,
+  optionally checks `command_id` and returns 204. Revocation does not establish
+  cancellation of an installation already underway. Re-read status after a lost
+  response instead of creating a duplicate grant.
+- `DELETE /updates/{release_id}` requires `super_admin`: the handler returns 204
+  on deletion and 404 if absent, while OpenAPI declares 200. The release creation
+schema accepts `version_name` up to 128 characters; the addressed recovery grant
+and frontend receipt validators cap it at 100. Names above 100 therefore cannot be
+assumed compatible with that workflow. See [publication](operations/OTA-PUBLICATION-AND-APK-CHECKS.md)
+and [addressed OTA](operations/OTA-ADDRESSED-UPDATES.md). A metadata response does
+not prove device installation.
 
 ---
 
 ## Streaming — `/streaming`
 
-### POST /streaming/start
+The registered controls are `POST /streaming/{device_id}/start`, `/stop`, and
+`/keyframe` with `stream:control`; each checks device ownership and sends a live
+command. Their `*_requested` receipt does not confirm agent execution, frame receipt
+or browser playback. A transport error may leave delivery unknown; reconcile before
+repeating. `GET /streaming/{device_id}/status` requires `stream:read` and observes
+the local stream bridge. In this handler `viewer_connected` mirrors `is_streaming`,
+not a separate viewer observation; when the bridge is absent, `drop_ratio` is 0.0,
+not evidence that no frames were lost. This source behavior does not establish
+the state of an installed runtime.
 
-Start a streaming session for a device.
-
-### POST /streaming/stop
-
-Stop an active streaming session.
-
-### GET /streaming/sessions
-
-List active streaming sessions.
-
----
+`GET /streaming/{device_id}/quality` requires `stream:read`; `POST` on the same
+path requires `stream:control`. Both require an owned device and use a live Android
+RPC. POST accepts `profile` (`auto`, `detail`, `economy`), optional `max_fps`
+(1–60) and `max_bitrate_bps` (100000–32000000); omitted fields take schema defaults.
+A validated `StreamQualitySnapshot` reports source settings and optional active
+limits, not measured browser performance. An unsupported agent or rejected setting
+can return 409; invalid receipts return 502, unavailable transport 503. A lost
+reply or transport error can follow an applied setting: re-read before retrying.
+See [stream operator guide](operations/DEVICE-STREAM-GUIDE.md). The former
+`/streaming/start`, `/stop`, and `/sessions` paths are not registered in the checked-in snapshot.
 
 ## Monitoring — `/monitoring`
 
-### GET /monitoring/health
-
-System health check endpoint.
-
-### GET /monitoring/metrics
-
-Prometheus-compatible metrics endpoint.
-
-### GET /monitoring/pool-stats
-
-Database and Redis connection pool statistics.
+`GET /monitoring/metrics` requires `monitoring:read` and returns JSON with current
+CPU load, cgroup RAM, Redis and network observations; it is not a Prometheus text
+endpoint. `GET /monitoring/nodes` uses the same permission; `GET
+/monitoring/fleet-coverage` requires `device:read` and separately gates VPN data.
+`POST /monitoring/alerts` logs the submitted Alertmanager payload; the router does
+not declare a user permission dependency and does not implement the future Fleet
+Events broadcast. There are no registered `/monitoring/health` or
+`/monitoring/pool-stats` routes in the snapshot. Consult the
+[router](../backend/api/v1/monitoring/router.py) and deployment access controls.
 
 ---
 
 ## Pagination
 
-All list endpoints support:
+Pagination is endpoint-specific. Check each route; for example, Tasks limits
+`per_page` to 200. The following legacy defaults are not a universal contract:
 
 | Param | Default | Max | Description |
 |-------|---------|-----|-------------|
 | `page` | `1` | — | Page number |
 | `per_page` | `50` | `5000` | Items per page |
 
-Response always includes `{ "items": [...], "total": N, "page": N, "per_page": N }`.
+Several paginated endpoints include `{ "items": [...], "total": N, "page": N, "per_page": N }`; verify the response schema for the selected route.
 
 > **v4.6.0:** `per_page` max увеличен с 200 до 5 000 для поддержки массовых
 > операций и нагрузочных тестов. Рекомендуется использовать значения ≤ 200
 > для стандартных UI-запросов.
+
+
+## Расследование журнала аудита — 2 октября2026
+
+`GET /api/v1/audit/logs` и `GET /api/v1/audit/logs/export` используют одни tenant-scoped filters: status/action/user_id/resource_type/q/from/to. Доступ `audit:read`, aware timestamps, literal search и validated bounds. CSV до5000 scalar rows; `X-Audit-Truncated` обозначает неполную выгрузку. [Полный контракт, поля и ограничения](operations/AUDIT-INVESTIGATION.md) · [Finite installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md). Generated [OpenAPI](openapi.json) содержит параметры и typed audit page.

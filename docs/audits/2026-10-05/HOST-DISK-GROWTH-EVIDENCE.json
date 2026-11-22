@@ -1,0 +1,1771 @@
+{
+  "observedAt": "2026-10-04T19:32:50.727541+00:00",
+  "clientDate": "2026-10-05",
+  "timezone": "Asia/Yekaterinburg",
+  "source": "6180faf59b4f3100123b202fdbaac22add13ccff",
+  "installedApiAndReviewUi": "c1a6e79",
+  "androidVersionCode": 10244,
+  "conclusion": "HOST_DISK_FREE_DECLINE_CONFIRMED_WRITER_UNDETERMINED",
+  "windowComplete": false,
+  "cleanupPerformedThisStage": false,
+  "runtimeRestarted": false,
+  "collector": {
+    "launchBefore": "2026-10-04T18:15:55.782311+00:00",
+    "launchAfter": "2026-10-04T18:15:55.789667+00:00",
+    "launcherPid": 27100,
+    "hidden": true,
+    "source": "6180faf59b4f3100123b202fdbaac22add13ccff",
+    "sourceSha256": "237c8519ccd79a697ca033d16d358a3eb7e8f0e8ebb346931a2189ce947d8d29",
+    "samples": 97,
+    "intervalSeconds": 300,
+    "rootIntervalSeconds": 900,
+    "maximumReportBytes": 16777216,
+    "maximumTemporaryBytes": 1048576,
+    "registeredService": false,
+    "autostart": false,
+    "deviceCommandsSent": false,
+    "targetMutationsPerformed": false,
+    "status": "INTERRUPTED_PROCESS_ABSENCE_OBSERVED",
+    "verificationAt": "2026-10-04T19:27:46.472953+00:00",
+    "process": {
+      "pid": 33340,
+      "startUtc": "2026-10-04T18:15:55.8036235Z",
+      "moduleIdentityMatched": true,
+      "privateBytes": 15196160,
+      "workingSetBytes": 22421504,
+      "cpuSeconds": 251.65625
+    },
+    "firstSampleAt": "2026-10-04T18:16:45.948870+00:00",
+    "firstSampleBytes": 56683,
+    "rootScopes": {
+      "sphere-platform": {
+        "state": "complete",
+        "errors": 0,
+        "entriesSeen": 288866,
+        "logicalBytesSeen": 8587610507
+      },
+      "Temp": {
+        "state": "partial_access",
+        "errors": 1,
+        "entriesSeen": 3792,
+        "logicalBytesSeen": 975759390
+      },
+      "sessions": {
+        "state": "complete",
+        "errors": 0,
+        "entriesSeen": 162,
+        "logicalBytesSeen": 3829689147
+      },
+      "npm-cache": {
+        "state": "complete",
+        "errors": 0,
+        "entriesSeen": 263833,
+        "logicalBytesSeen": 4629391474
+      }
+    },
+    "statusAtOriginalObservation": "RUNNING_FIRST_SAMPLE_VERIFIED"
+  },
+  "diskWindow": {
+    "samples": 15,
+    "from": "2026-10-04T18:16:45.948870+00:00",
+    "to": "2026-10-04T19:25:55.899124+00:00",
+    "freeBefore": 44431917056,
+    "freeAfter": 42207911936,
+    "freeDelta": -2224005120,
+    "fileChanges": [
+      {
+        "at": "2026-10-04T18:20:55.888488+00:00",
+        "scope": "Other file",
+        "event": "size_changed",
+        "logicalDeltaBytes": 352256,
+        "allocatedDeltaBytes": 352256
+      },
+      {
+        "at": "2026-10-04T18:20:55.888488+00:00",
+        "scope": "Chat session",
+        "event": "size_changed",
+        "logicalDeltaBytes": 249603,
+        "allocatedDeltaBytes": 249603
+      },
+      {
+        "at": "2026-10-04T18:31:50.119395+00:00",
+        "scope": "Other file",
+        "event": "size_changed",
+        "logicalDeltaBytes": 40960,
+        "allocatedDeltaBytes": 40960
+      }
+    ],
+    "rootSamples": [
+      {
+        "at": "2026-10-04T18:16:45.948870+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8587610507,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829689147,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": []
+      },
+      {
+        "at": "2026-10-04T18:31:50.119395+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8588264531,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829809136,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": [
+          {
+            "root": "sphere-platform",
+            "logicalDeltaBytes": 654024,
+            "changedDirectories": [
+              {
+                "path": ".local-pilot/resource-recovery-20261004",
+                "logicalDeltaBytes": 650931
+              },
+              {
+                "path": ".local-pilot/disk-growth-20261004",
+                "logicalDeltaBytes": 3093
+              }
+            ]
+          },
+          {
+            "root": "sessions",
+            "logicalDeltaBytes": 119989,
+            "changedDirectories": [
+              {
+                "path": "2026/09",
+                "logicalDeltaBytes": 119989
+              }
+            ]
+          },
+          {
+            "root": "npm-cache",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          }
+        ]
+      },
+      {
+        "at": "2026-10-04T18:46:45.814807+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8588838071,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829809136,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": [
+          {
+            "root": "sphere-platform",
+            "logicalDeltaBytes": 573540,
+            "changedDirectories": [
+              {
+                "path": ".local-pilot/resource-recovery-20261004",
+                "logicalDeltaBytes": 573540
+              }
+            ]
+          },
+          {
+            "root": "sessions",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          },
+          {
+            "root": "npm-cache",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          }
+        ]
+      },
+      {
+        "at": "2026-10-04T19:01:45.210809+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8589494100,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829809136,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": [
+          {
+            "root": "sphere-platform",
+            "logicalDeltaBytes": 656029,
+            "changedDirectories": [
+              {
+                "path": ".local-pilot/resource-recovery-20261004",
+                "logicalDeltaBytes": 656029
+              }
+            ]
+          },
+          {
+            "root": "sessions",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          },
+          {
+            "root": "npm-cache",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          }
+        ]
+      },
+      {
+        "at": "2026-10-04T19:16:50.668820+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8590072046,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829809136,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": [
+          {
+            "root": "sphere-platform",
+            "logicalDeltaBytes": 577946,
+            "changedDirectories": [
+              {
+                "path": ".local-pilot/resource-recovery-20261004",
+                "logicalDeltaBytes": 577947
+              },
+              {
+                "path": ".local-pilot/station-network",
+                "logicalDeltaBytes": -1
+              }
+            ]
+          },
+          {
+            "root": "sessions",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          },
+          {
+            "root": "npm-cache",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          }
+        ]
+      }
+    ]
+  },
+  "ramWindow": {
+    "samples": 57,
+    "from": "2026-10-04T17:32:56.826123+00:00",
+    "to": "2026-10-04T19:24:56.832449+00:00",
+    "lastBootSame": true,
+    "freeBefore": 43644616704,
+    "freeAfter": 42203512832,
+    "ramAvailableBefore": 20114542592,
+    "ramAvailableAfter": 21179318272,
+    "commitBefore": 51696529408,
+    "commitAfter": 55944769536,
+    "largestMatchedProcessDeltas": [
+      {
+        "name": "Telegram",
+        "privateBefore": 1176317952,
+        "privateAfter": 1522823168,
+        "privateDelta": 346505216,
+        "epochMatched": true
+      },
+      {
+        "name": "ChatGPT",
+        "privateBefore": 708108288,
+        "privateAfter": 925032448,
+        "privateDelta": 216924160,
+        "epochMatched": true
+      },
+      {
+        "name": "ChatGPT",
+        "privateBefore": 438427648,
+        "privateAfter": 503717888,
+        "privateDelta": 65290240,
+        "epochMatched": true
+      },
+      {
+        "name": "com.docker.backend",
+        "privateBefore": 210153472,
+        "privateAfter": 274763776,
+        "privateDelta": 64610304,
+        "epochMatched": true
+      },
+      {
+        "name": "Spotify",
+        "privateBefore": 288468992,
+        "privateAfter": 346308608,
+        "privateDelta": 57839616,
+        "epochMatched": true
+      },
+      {
+        "name": "parsecd",
+        "privateBefore": 183369728,
+        "privateAfter": 216104960,
+        "privateDelta": 32735232,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 52838400,
+        "privateAfter": 79372288,
+        "privateDelta": 26533888,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 179212288,
+        "privateAfter": 202784768,
+        "privateDelta": 23572480,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 802631680,
+        "privateAfter": 825806848,
+        "privateDelta": 23175168,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 413048832,
+        "privateAfter": 432599040,
+        "privateDelta": 19550208,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 551501824,
+        "privateAfter": 566382592,
+        "privateDelta": 14880768,
+        "epochMatched": true
+      },
+      {
+        "name": "Spotify",
+        "privateBefore": 259366912,
+        "privateAfter": 273436672,
+        "privateDelta": 14069760,
+        "epochMatched": true
+      }
+    ],
+    "keys": [
+      "observedAt",
+      "system",
+      "freeDiskBytes",
+      "deviceCommandsSent",
+      "mutationsPerformed",
+      "availableRamBytes",
+      "totalRamBytes",
+      "committedBytes",
+      "commitLimitBytes",
+      "sample",
+      "findings",
+      "lastBoot",
+      "poolNonpagedBytes",
+      "poolPagedBytes",
+      "processes",
+      "containers",
+      "linuxMemory"
+    ]
+  },
+  "containerMemory": {
+    "windowFrom": "2026-10-04T17:32:56.826123+00:00",
+    "windowTo": "2026-10-04T19:24:56.832449+00:00",
+    "containerDisplayValuesRounded": true,
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 73977037,
+        "afterBytesApprox": 80163635,
+        "deltaBytesApprox": 6186598
+      },
+      {
+        "name": "sphere-pilot-20260911-backend-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 617925837,
+        "afterBytesApprox": 624217293,
+        "deltaBytesApprox": 6291456
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 3833594,
+        "afterBytesApprox": 3822060,
+        "deltaBytesApprox": -11534
+      },
+      {
+        "name": "sphere-observability-20260930-grafana-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 390489702,
+        "afterBytesApprox": 390489702,
+        "deltaBytesApprox": 0
+      },
+      {
+        "name": "sphere-observability-20260930-prometheus-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 57598280,
+        "afterBytesApprox": 60125348,
+        "deltaBytesApprox": 2527068
+      },
+      {
+        "name": "sphere-tuna-canary",
+        "sameContainerId": true,
+        "beforeBytesApprox": 24368906,
+        "afterBytesApprox": 25794970,
+        "deltaBytesApprox": 1426063
+      },
+      {
+        "name": "sphere-pilot-20260911-frontend-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 108737331,
+        "afterBytesApprox": 108003328,
+        "deltaBytesApprox": -734003
+      },
+      {
+        "name": "sphere-pilot-20260911-cloudflare-quick-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 67014492,
+        "afterBytesApprox": 67066921,
+        "deltaBytesApprox": 52429
+      },
+      {
+        "name": "sphere-pilot-20260911-public-gateway-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 36469473,
+        "afterBytesApprox": 36563845,
+        "deltaBytesApprox": 94372
+      },
+      {
+        "name": "sphere-pilot-20260911-nginx-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 42687529,
+        "afterBytesApprox": 42687529,
+        "deltaBytesApprox": 0
+      },
+      {
+        "name": "sphere-pilot-20260911-n8n-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 204577178,
+        "afterBytesApprox": 210134630,
+        "deltaBytesApprox": 5557453
+      },
+      {
+        "name": "sphere-pilot-20260911-minio-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 124151398,
+        "afterBytesApprox": 125933978,
+        "deltaBytesApprox": 1782579
+      },
+      {
+        "name": "sphere-pilot-20260911-postgres-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 143759770,
+        "afterBytesApprox": 147954074,
+        "deltaBytesApprox": 4194304
+      },
+      {
+        "name": "sphere-pilot-20260911-redis-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 16357786,
+        "afterBytesApprox": 16315843,
+        "deltaBytesApprox": -41943
+      },
+      {
+        "name": "sphere-audit-20260905-redis",
+        "sameContainerId": true,
+        "beforeBytesApprox": 8495563,
+        "afterBytesApprox": 9022996,
+        "deltaBytesApprox": 527434
+      },
+      {
+        "name": "sphere-audit-20260905-postgres",
+        "sameContainerId": true,
+        "beforeBytesApprox": 60072919,
+        "afterBytesApprox": 60072919,
+        "deltaBytesApprox": 0
+      },
+      {
+        "name": "sphere-tunnel",
+        "sameContainerId": true,
+        "beforeBytesApprox": 4636803,
+        "afterBytesApprox": 4632609,
+        "deltaBytesApprox": -4194
+      }
+    ],
+    "linuxBefore": {
+      "MemTotal": 24773992448,
+      "MemAvailable": 21486727168,
+      "Buffers": 1192747008,
+      "Cached": 4925841408,
+      "SwapTotal": 6442450944,
+      "SwapFree": 6398177280,
+      "AnonPages": 2137395200
+    },
+    "linuxAfter": {
+      "MemTotal": 24773992448,
+      "MemAvailable": 21463752704,
+      "Buffers": 1237929984,
+      "Cached": 4946104320,
+      "SwapTotal": 6442450944,
+      "SwapFree": 6396342272,
+      "AnonPages": 2215657472
+    }
+  },
+  "dockerVhd": {
+    "logicalBefore": 234731077632,
+    "logicalAfter": 234731077632,
+    "storageApiBefore": 234731077632,
+    "storageApiAfter": 234731077632,
+    "identityUnchanged": true
+  },
+  "wholeVolumeFollowup": {
+    "state": "complete_accessible_scope",
+    "startedAt": "2026-10-04T19:27:17.637927+00:00",
+    "finishedAt": "2026-10-04T19:30:00.290891+00:00",
+    "durationSeconds": 162.656,
+    "files": 5029835,
+    "directories": 814352,
+    "logicalBytesSeen": 936363664284,
+    "errors": 123,
+    "skippedReparse": 6142,
+    "hardLinksDeduplicated": false,
+    "sparseCompressedAllocationMeasuredPerFile": false,
+    "coverage": "Accessible files only; reparse points excluded; logical sizes can duplicate hardlinks and exceed allocation",
+    "mutationsPerformed": false,
+    "fileContentsRead": false
+  },
+  "wholeVolumeComparison": {
+    "beforeFinishedAt": "2026-10-04T17:45:24.877792+00:00",
+    "afterFinishedAt": "2026-10-04T19:30:00.290891+00:00",
+    "logicalDelta": -5043181260,
+    "fileDelta": -9134,
+    "errorsBefore": 123,
+    "errorsAfter": 123,
+    "nestedAreasNotAdditive": true
+  },
+  "protectedVolumeProbes": [
+    {
+      "command": [
+        "vssadmin.exe",
+        "list",
+        "shadowstorage"
+      ],
+      "exitCode": 2,
+      "readOnly": true,
+      "outcome": "ADMINISTRATOR_REQUIRED"
+    },
+    {
+      "command": [
+        "fsutil.exe",
+        "volume",
+        "diskfree",
+        "C:"
+      ],
+      "exitCode": 1,
+      "readOnly": true,
+      "outcome": "ACCESS_DENIED"
+    },
+    {
+      "command": [
+        "fsutil.exe",
+        "usn",
+        "queryjournal",
+        "C:"
+      ],
+      "exitCode": 0,
+      "readOnly": true,
+      "outcome": "USN_MAXIMUM_32_MIB_ALLOCATION_DELTA_8_MIB"
+    }
+  ],
+  "backendDeviceLogs": {
+    "scope": "recursive device logs",
+    "fileCount": 14,
+    "logicalBytes": 8112062,
+    "largestFileBytes": [
+      588852,
+      588334,
+      588325,
+      588325,
+      588148
+    ],
+    "fileContentsRead": false,
+    "observedAt": "2026-10-04T19:27:46.676785+00:00"
+  },
+  "androidStorage": {
+    "cohort": [
+      "PH010 local",
+      "PH025 remote"
+    ],
+    "packageKiB": [
+      11456,
+      12272
+    ],
+    "sphereLogDirectoryKiB": [
+      10616,
+      11432
+    ],
+    "tmpKiB": [
+      285624,
+      52
+    ],
+    "regularSphereLogsPerDevice": [
+      6,
+      6
+    ],
+    "configuredFileCount": 5,
+    "retentionBugFixed": false,
+    "scope": "Two devices only; not full fleet"
+  },
+  "validation": {
+    "startedAt": "2026-10-04T19:28:23.833928+00:00",
+    "finishedAt": "2026-10-04T19:28:30.080998+00:00",
+    "testsPassed": 44,
+    "pytestExitCode": 0,
+    "ruffExitCode": 0,
+    "longPathFilesystemTestExecuted": true,
+    "source": "6180faf59b4f3100123b202fdbaac22add13ccff",
+    "note": "Initial missing JWT fixture prevented collection; rerun uses test-only env without changing runtime credentials."
+  },
+  "privateArtifacts": [
+    {
+      "path": ".local-pilot/disk-growth-20261004/watch-start-receipt-longpaths.json",
+      "sha256": "a939abc545314a35811c4eac77c473b5e624cfe7a0ebc9ded6efdb7510d2f197",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/owned-watcher-replaced.json",
+      "sha256": "03067264dff9bc7a3dc9185124ca14cdb709a1afc7d44bcde38b4b168197dbc6",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/watch-analysis-interim.json",
+      "sha256": "601f4f92b2529a76a3dec9c25b2ab5f788396e539444e78ebedf576ea218206c",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/ram-analysis-interim.json",
+      "sha256": "03d636cd9fb22c8cd3f9d4c0c39807f956b2402954b5dad5e5a622134dd995e9",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/container-memory-interim.json",
+      "sha256": "7d0b61b95971afcc9216052922fee9fe3405469bd0fcaec4ad024906ff026dfe",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-broad-comparison.json",
+      "sha256": "fa236b2cb5cd49542063d564998fa1d63d0a5bd7aa8222c1c268dc7c175296b9",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/broad-followup/private-disk-inventory.json",
+      "sha256": "929ab0e19cc1026e9f67b1d586e97372e4bf09346d582dd269c75bece1479182",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/backend-log-directory-recursive-metadata.json",
+      "sha256": "abb0e9b927f8e4a8100acd0a7ebb781dbfe9397c8fba6d5541f5d07ee6c85a49",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-android-storage.json",
+      "sha256": "394ba717a85f0794ed02a458205fa9c764a03a41b0d20eddd823e0bbb06e07f9",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-android-storage-fixed.json",
+      "sha256": "e33c0ad2c9b43ff8a97065573740e8a6a6e96fd2ef25f5f430452f5d2f145e51",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-android-storage-pilot-package.json",
+      "sha256": "a4627bfdc48fde73ee022e417e24e916f7d1c0bf8f7a7e73d377168b93c47ad3",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-android-log-file-metadata.json",
+      "sha256": "c9867b028b2e5a45d2dd0085a5faf7346e9bbd20d43774c53fe9d91c9245a514",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-protected-volume-probes.json",
+      "sha256": "b6942ebf5fe6b425ff14b2576954948eb5cec8b5500f441b65373ecd628dcbb0",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/targeted-validation.json",
+      "sha256": "abd1c61a293d1f749963f5786d77a1a99f58ac755cad048704cb76110339f9bb",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/long-path-probe.json",
+      "sha256": "c9b43a810ff9c20540d29b0e397ffcc2e3ac8af3d1418cded69771779cafe055",
+      "contentsNotCommitted": true
+    }
+  ],
+  "followUp": {
+    "observedAt": "2026-10-04T20:15:59.329239+00:00",
+    "previousDiskWindow": {
+      "samples": 17,
+      "from": "2026-10-04T18:16:45.948870+00:00",
+      "to": "2026-10-04T19:35:55.894300+00:00",
+      "freeBeforeBytes": 44431917056,
+      "freeAfterBytes": 37496315904,
+      "freeDeltaBytes": -6935601152,
+      "largestInterval": {
+        "from": "2026-10-04T19:25:55.899124+00:00",
+        "to": "2026-10-04T19:31:45.558612+00:00",
+        "freeDeltaBytes": -4706394112
+      },
+      "completeRootChanges": [
+        {
+          "scope": "workspace",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 3499811,
+          "from": "2026-10-04T18:16:45.948870+00:00",
+          "to": "2026-10-04T19:31:45.558612+00:00"
+        },
+        {
+          "scope": "Temp",
+          "completeAtBothEnds": false,
+          "logicalDeltaBytes": null,
+          "from": "2026-10-04T18:16:45.948870+00:00",
+          "to": "2026-10-04T19:31:45.558612+00:00"
+        },
+        {
+          "scope": "chat sessions",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 617833,
+          "from": "2026-10-04T18:16:45.948870+00:00",
+          "to": "2026-10-04T19:31:45.558612+00:00"
+        },
+        {
+          "scope": "npm cache",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 0,
+          "from": "2026-10-04T18:16:45.948870+00:00",
+          "to": "2026-10-04T19:31:45.558612+00:00"
+        }
+      ],
+      "eightHourWindowCompleted": false
+    },
+    "diskContinuation": {
+      "samples": 31,
+      "from": "2026-10-04T19:42:37.659144+00:00",
+      "to": "2026-10-04T20:12:37.271537+00:00",
+      "freeDeltaBytes": -264237056,
+      "status": {
+        "state": "complete",
+        "samplesWritten": 31,
+        "pid": 17088,
+        "maximumSampleBytes": 1048576,
+        "maximumReportBytes": 16777216,
+        "fileContentsRead": false,
+        "targetMutationsPerformed": false,
+        "watcherOutputExcludedFromRootScan": true,
+        "reportBytes": 1177595,
+        "lastSampleAt": "2026-10-04T20:12:37.271537+00:00",
+        "finishedAt": "2026-10-04T20:12:37.276102+00:00"
+      },
+      "completeRootChanges": [
+        {
+          "scope": "workspace",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 1335206,
+          "from": "2026-10-04T19:42:37.659144+00:00",
+          "to": "2026-10-04T20:12:37.271537+00:00"
+        },
+        {
+          "scope": "Temp",
+          "completeAtBothEnds": false,
+          "logicalDeltaBytes": null,
+          "from": "2026-10-04T19:42:37.659144+00:00",
+          "to": "2026-10-04T20:12:37.271537+00:00"
+        },
+        {
+          "scope": "chat sessions",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 13976105,
+          "from": "2026-10-04T19:42:37.659144+00:00",
+          "to": "2026-10-04T20:12:37.271537+00:00"
+        },
+        {
+          "scope": "npm cache",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 0,
+          "from": "2026-10-04T19:42:37.659144+00:00",
+          "to": "2026-10-04T20:12:37.271537+00:00"
+        }
+      ],
+      "observedLargeFiles": [
+        {
+          "scope": "Docker VHD",
+          "samples": 31,
+          "logicalBytesFirst": 234731077632,
+          "logicalBytesLast": 234731077632,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 234731077632,
+          "storageApiSizeLast": 234731077632
+        },
+        {
+          "scope": "Windows system file",
+          "samples": 31,
+          "logicalBytesFirst": 44485144576,
+          "logicalBytesLast": 44485144576,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": false,
+          "storageApiSizeFirst": null,
+          "storageApiSizeLast": null
+        },
+        {
+          "scope": "Windows system file",
+          "samples": 31,
+          "logicalBytesFirst": 20267294720,
+          "logicalBytesLast": 20267294720,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": false,
+          "storageApiSizeFirst": null,
+          "storageApiSizeLast": null
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 12709658624,
+          "logicalBytesLast": 12709658624,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 12709658624,
+          "storageApiSizeLast": 12709658624
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 9272950784,
+          "logicalBytesLast": 9272950784,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 9272950784,
+          "storageApiSizeLast": 9272950784
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 9239199744,
+          "logicalBytesLast": 9239199744,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 9239199744,
+          "storageApiSizeLast": 9239199744
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 6768754688,
+          "logicalBytesLast": 6768754688,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 6768754688,
+          "storageApiSizeLast": 6768754688
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 1865482240,
+          "logicalBytesLast": 1865482240,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 1865482240,
+          "storageApiSizeLast": 1865482240
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 1023737856,
+          "logicalBytesLast": 1023737856,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 1023737856,
+          "storageApiSizeLast": 1023737856
+        }
+      ]
+    },
+    "administratorCollector": {
+      "status": {
+        "lastSampleAt": "2026-10-04T20:15:20.4232720Z",
+        "reportBytes": 85612,
+        "startUtc": "2026-10-04T19:45:20.2386642Z",
+        "systemChangesPerformed": false,
+        "finishedAt": "2026-10-04T20:15:20.4671296Z",
+        "samplesLimit": 31,
+        "state": "complete",
+        "intervalSeconds": 60,
+        "pid": 11352,
+        "administrator": true,
+        "samplesWritten": 31
+      },
+      "samplesParsed": 31,
+      "allNativeQueriesSucceededWithoutTruncation": true,
+      "series": [
+        {
+          "observedAt": "2026-10-04T19:45:20.5609607Z",
+          "sample": 0,
+          "freeBytes": 37504024576,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982037618688,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,5 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:46:20.3537376Z",
+          "sample": 1,
+          "freeBytes": 37501341696,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982040301568,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,5 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:47:20.3542223Z",
+          "sample": 2,
+          "freeBytes": 37501313024,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982040330240,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,5 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:48:20.3546482Z",
+          "sample": 3,
+          "freeBytes": 37505662976,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982035980288,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,5 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:49:20.3551115Z",
+          "sample": 4,
+          "freeBytes": 37506793472,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982034849792,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:50:20.3620682Z",
+          "sample": 5,
+          "freeBytes": 37505634304,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982036008960,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:51:20.3551254Z",
+          "sample": 6,
+          "freeBytes": 37508657152,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982032986112,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:52:20.3568246Z",
+          "sample": 7,
+          "freeBytes": 37482283008,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982059360256,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:53:20.3629081Z",
+          "sample": 8,
+          "freeBytes": 37481631744,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982060011520,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:54:20.3738921Z",
+          "sample": 9,
+          "freeBytes": 37478215680,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982063427584,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:55:20.3776123Z",
+          "sample": 10,
+          "freeBytes": 37478170624,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982063472640,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:56:20.3843950Z",
+          "sample": 11,
+          "freeBytes": 37478105088,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982063538176,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:57:20.3849456Z",
+          "sample": 12,
+          "freeBytes": 37477842944,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982063800320,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:58:20.3915783Z",
+          "sample": 13,
+          "freeBytes": 37470523392,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982071119872,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:59:20.3987447Z",
+          "sample": 14,
+          "freeBytes": 37470527488,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982071115776,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:00:20.3993718Z",
+          "sample": 15,
+          "freeBytes": 37470478336,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982071164928,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:01:20.4016809Z",
+          "sample": 16,
+          "freeBytes": 37233967104,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982307676160,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:02:20.4006913Z",
+          "sample": 17,
+          "freeBytes": 37244928000,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982296715264,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:03:20.4010614Z",
+          "sample": 18,
+          "freeBytes": 37244059648,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982297583616,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:04:20.4020116Z",
+          "sample": 19,
+          "freeBytes": 37243756544,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982297886720,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:05:20.4037405Z",
+          "sample": 20,
+          "freeBytes": 37242884096,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982298759168,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:06:20.4037282Z",
+          "sample": 21,
+          "freeBytes": 37241135104,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982300508160,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:07:20.4062855Z",
+          "sample": 22,
+          "freeBytes": 37249495040,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982292148224,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:08:20.4049292Z",
+          "sample": 23,
+          "freeBytes": 37246603264,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982295040000,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:09:20.4057067Z",
+          "sample": 24,
+          "freeBytes": 37245624320,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982296018944,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:10:20.4181125Z",
+          "sample": 25,
+          "freeBytes": 37242630144,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982299013120,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:11:20.4249518Z",
+          "sample": 26,
+          "freeBytes": 37234040832,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982307602432,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:12:20.4207578Z",
+          "sample": 27,
+          "freeBytes": 37231083520,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982310559744,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:13:20.4251844Z",
+          "sample": 28,
+          "freeBytes": 37229035520,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982312607744,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:14:20.4208999Z",
+          "sample": 29,
+          "freeBytes": 37227225088,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982314418176,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:15:20.4232720Z",
+          "sample": 30,
+          "freeBytes": 37226446848,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982315196416,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        }
+      ],
+      "freeDeltaBytes": -277577728,
+      "exactVssBytes": null,
+      "preDeclineVssBaselineAvailable": false,
+      "coincidentAllocationInterval": {
+        "from": "2026-10-04T20:00:20.3993718Z",
+        "to": "2026-10-04T20:01:20.4016809Z",
+        "allocatedDisplayBefore": "13,9 ГБ (1%)",
+        "allocatedDisplayAfter": "14,1 ГБ (1%)",
+        "freeDeltaBytes": -236511232,
+        "causalWriterTraceCaptured": false
+      }
+    },
+    "ramPreviousWindow": {
+      "samples": 62,
+      "from": "2026-10-04T17:32:56.826123+00:00",
+      "to": "2026-10-04T19:34:56.834607+00:00",
+      "sameBoot": true,
+      "before": {
+        "availableRamBytes": 20114542592,
+        "committedBytes": 51696529408,
+        "poolPagedBytes": 2325778432,
+        "poolNonpagedBytes": 2082156544
+      },
+      "after": {
+        "availableRamBytes": 21091328000,
+        "committedBytes": 56325083136,
+        "poolPagedBytes": 4085690368,
+        "poolNonpagedBytes": 2806194176
+      },
+      "deltaBytes": {
+        "availableRamBytes": 976785408,
+        "committedBytes": 4628553728,
+        "poolPagedBytes": 1759911936,
+        "poolNonpagedBytes": 724037632
+      },
+      "controlledIdleLoad": false,
+      "linuxAnonDeltaBytes": 71786496,
+      "backendContainerDisplay": {
+        "name": "sphere-pilot-20260911-backend-1",
+        "identity": "ec6723322cc9",
+        "beforeDisplay": "589.3MiB / 2GiB",
+        "afterDisplay": "596.8MiB / 2GiB"
+      },
+      "reviewUiContainerDisplay": {
+        "name": "sphere-review-20261002-review-ui-1",
+        "identity": "a331484c6ef3",
+        "beforeDisplay": "70.55MiB / 768MiB",
+        "afterDisplay": "77.59MiB / 768MiB"
+      }
+    },
+    "ramContinuation": {
+      "samples": 16,
+      "from": "2026-10-04T19:45:11.593207+00:00",
+      "to": "2026-10-04T20:15:11.605667+00:00",
+      "sameBoot": true,
+      "before": {
+        "availableRamBytes": 20516474880,
+        "committedBytes": 55797944320,
+        "poolPagedBytes": 4097568768,
+        "poolNonpagedBytes": 2798747648
+      },
+      "after": {
+        "availableRamBytes": 20420149248,
+        "committedBytes": 55860551680,
+        "poolPagedBytes": 4123193344,
+        "poolNonpagedBytes": 2806935552
+      },
+      "deltaBytes": {
+        "availableRamBytes": -96325632,
+        "committedBytes": 62607360,
+        "poolPagedBytes": 25624576,
+        "poolNonpagedBytes": 8187904
+      },
+      "controlledIdleLoad": false,
+      "linuxAnonDeltaBytes": 17584128,
+      "backendContainerDisplay": {
+        "name": "sphere-pilot-20260911-backend-1",
+        "identity": "ec6723322cc9",
+        "beforeDisplay": "597.1MiB / 2GiB",
+        "afterDisplay": "597.7MiB / 2GiB"
+      },
+      "reviewUiContainerDisplay": {
+        "name": "sphere-review-20261002-review-ui-1",
+        "identity": "a331484c6ef3",
+        "beforeDisplay": "76.86MiB / 768MiB",
+        "afterDisplay": "76.95MiB / 768MiB"
+      }
+    },
+    "events": [
+      {
+        "atUtc": "2026-10-04T18:31:09.6810768Z",
+        "id": 8224,
+        "provider": "VSS"
+      },
+      {
+        "atUtc": "2026-10-04T18:28:06.5657675Z",
+        "id": 8231,
+        "provider": "VSS"
+      }
+    ],
+    "writerAttribution": "UNDETERMINED",
+    "systemChangesPerformed": false,
+    "references": [
+      {
+        "path": ".local-pilot/disk-growth-20261004/private-vss-events.json",
+        "sha256": "f563c151376c66739cbc11ad0b00829877f367f19971635c256a8808920c3175"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/observer-process-absence.json",
+        "sha256": "cae5a12355e7191c4d00e02cb50827550fbe468677759915edf4a3824a13160b"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-verification.json",
+        "sha256": "5454f4d2865474b630a0599aec26b8f9046f52fe1e093c8aebf9ddfc3bf0ed22"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-ram-receipt-corrected.json",
+        "sha256": "be26e59cb7c1a29ca59ad39b7ed735b124d0ad27f89c95b65b62b3ec39d4d300"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-ram-launch-failure.json",
+        "sha256": "14b105fd1fdac78be9e6c91b1a227f908898dc2a81f3a8d967dfbe9a5a68591e"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/bounded-window-longpaths/sample-014.json",
+        "sha256": "c93aec8f90e6136665b7ce9b2e7b0b8ad2c951e540f3222799bb6a0af0be3558"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/bounded-window-longpaths/sample-015.json",
+        "sha256": "8fb7b5b838b2b48df47db289dd72374081c366a66204df12f6aca25310180130"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/bounded-window-longpaths/sample-016.json",
+        "sha256": "bba3c2903c95dd9aa63ccc676fe0da6f1ef85f267e9f39de5990f01624b3b7d2"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-disk-window/sample-000.json",
+        "sha256": "8329dfbc67179e3339182ec8d841b9043a098cccfca8a5ecea5b62f475db52e7"
+      },
+      {
+        "path": ".local-pilot/resource-recovery-20261004/overnight-window-bounded/sample-061.json",
+        "sha256": "cd77cdfcc5ca5174597f8cdf632a599cb0145af62761aa54417a8a58843540da"
+      },
+      {
+        "path": ".local-pilot/admin-storage-20261004T194520-648979d8aa244df58355b08fd0040590/sample-000.json",
+        "sha256": "cd61ec949ac11bd629d116264c6d23f16242e51cdd3e17854fb2eb80e450dbe5"
+      },
+      {
+        "path": ".local-pilot/admin-storage-20261004T194520-648979d8aa244df58355b08fd0040590/sample-015.json",
+        "sha256": "1c671113e59afeaacf5bd55db322b4aa0a098bfe0cf982e71297d16c426fd9c6"
+      },
+      {
+        "path": ".local-pilot/admin-storage-20261004T194520-648979d8aa244df58355b08fd0040590/sample-016.json",
+        "sha256": "e4bcc6ac7c4f53e993d6bd101e34acfb6491f6eeec50bb56964bba4f434c0af5"
+      },
+      {
+        "path": ".local-pilot/admin-storage-20261004T194520-648979d8aa244df58355b08fd0040590/sample-030.json",
+        "sha256": "e2e84cc047317225ec25550c14fdedb3fe35e22f1cba5fb80f199ba4d9e4dc94"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-ram-window/sample-000.json",
+        "sha256": "13ba31fc902e41e9339c2267fe328893e023674073600d6a799ebd7d8198eebc"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-ram-window/sample-015.json",
+        "sha256": "8d23c6ee25a57fe81484131491d378362de9cd705a748c76ae7ddcfa49ab9be4"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/ci-533756f-complete.json",
+        "sha256": "1ed18066db3883fd0de36d1fd6018a78ab63f422b07d112a1623f51a3155910a"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/ci-a305076.json",
+        "sha256": "8bfa5d6bf3d048a94b088e4ebecd52d631c0974962d0742bbb4fe0b534135aa4"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/runtime-readback-follow-up.json",
+        "sha256": "092f1bef4f44e576a7597aa72765d56a134adbd10031a492a23d776d7928eb04"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/runtime-readback-follow-up-initial.json",
+        "sha256": "bdf0f5e1405e884d8c43a76f71236b79d3c302cc458be9a662cb4de8c8ed3a2f"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/admin-follow-up-analysis.json",
+        "sha256": "79b739ffa72e739e1f8456b9e40ce7446771f67a8a4d03b1a7bbe5bf99dfbd98"
+      }
+    ],
+    "collectorSource": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+    "eightHourWindowsAccepted": false,
+    "finding": "VSS_ALLOCATION_GROWTH_CONFIRMED_PRIOR_DECLINE_NOT_FULLY_ATTRIBUTED",
+    "event8231": {
+      "meaning": "Snapshot set creation initiated; successful completion not independently proven",
+      "requesterProcess": "taskhostw.exe",
+      "exactVssBaselineBeforeLargeDeclineAvailable": false
+    },
+    "vssReference": "https://learn.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service",
+    "kernelMemoryAttribution": "UNDETERMINED; growth overlaps full file inventories; no pool tags captured",
+    "localDiagnosticTests": 48,
+    "sourceCi": [
+      {
+        "observedAt": "2026-10-04T20:03:05.508431+00:00",
+        "source": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+        "runs": [
+          {
+            "conclusion": "success",
+            "databaseId": 37228849426,
+            "headSha": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37228849426",
+            "workflowName": "CI — Android"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37228849436,
+            "headSha": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37228849436",
+            "workflowName": "CI — Backend"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37228849597,
+            "headSha": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37228849597",
+            "workflowName": "Preview — Deploy"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37228849461,
+            "headSha": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37228849461",
+            "workflowName": "CI — Frontend"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-04T20:13:09.075033+00:00",
+        "source": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+        "runs": [
+          {
+            "conclusion": "success",
+            "databaseId": 37230173230,
+            "headSha": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37230173230",
+            "workflowName": "Preview — Deploy"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37230173291,
+            "headSha": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37230173291",
+            "workflowName": "CI — Frontend"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37230173304,
+            "headSha": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37230173304",
+            "workflowName": "CI — Backend"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37230173258,
+            "headSha": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37230173258",
+            "workflowName": "CI — Android"
+          }
+        ]
+      }
+    ],
+    "runtimeReadback": {
+      "observedAt": "2026-10-04T20:05:15.914316+00:00",
+      "containerMutationsPerformed": false,
+      "containers": [
+        {
+          "name": "sphere-pilot-20260911-backend-1",
+          "id": "ec6723322cc9aec8560a3b06a37c6d22d4b602ad3b3f855892a189476c6394f0",
+          "image": "sha256:32b1173d05fa7e301e09481a92ca49f1e78e2a66dd6cad546f2b2d6323b7c0f5",
+          "startedAt": "2026-10-04T17:14:27.069979728Z",
+          "running": true,
+          "health": "healthy",
+          "revision": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+          "logConfig": {
+            "Type": "json-file",
+            "Config": {
+              "max-file": "5",
+              "max-size": "20m"
+            }
+          }
+        },
+        {
+          "name": "sphere-review-20261002-review-ui-1",
+          "id": "a331484c6ef3e6433d9cbce1ef5f86fec452d8bd64009cd40217e20bf195b21b",
+          "image": "sha256:730240135af0e4a0bd5d1713c1ddd8c93f23c7e3af60f14b705d680bea2958b8",
+          "startedAt": "2026-10-04T17:14:38.934801162Z",
+          "running": true,
+          "health": "healthy",
+          "revision": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+          "logConfig": {
+            "Type": "json-file",
+            "Config": {
+              "max-file": "3",
+              "max-size": "5m"
+            }
+          }
+        },
+        {
+          "name": "sphere-review-20261002-review-gateway-1",
+          "id": "83fa3baddd2d4fa5c8d5ccad3879b6dd3ba0b1f02353375d8844c442b92d2d2f",
+          "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+          "startedAt": "2026-10-04T16:42:04.005124091Z",
+          "running": true,
+          "health": "healthy",
+          "revision": null,
+          "logConfig": {
+            "Type": "json-file",
+            "Config": {
+              "max-file": "3",
+              "max-size": "5m"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

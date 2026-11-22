@@ -15,33 +15,161 @@ import javax.inject.Singleton
 class StreamQualityMonitor @Inject constructor() {
 
     private val frameTimestamps = ArrayDeque<Long>()
-    private var bytesSentTotal = 0L
-    private var frameCount = 0
-    private var keyFrameCount = 0
+    private val captureTimestamps = ArrayDeque<Long>()
+    private val renderTimestamps = ArrayDeque<Long>()
+    private var encodedBytesTotal = 0L
+    private var frameCount = 0L
+    private var keyFrameCount = 0L
+    private var captureFramesTotal = 0L
+    private var renderedFramesTotal = 0L
+    private var captureReadFailuresTotal = 0L
+    private var renderFailuresTotal = 0L
+    private var encoderErrorsTotal = 0L
+    private var frameThrottleDropsTotal = 0L
+    private var captureThrottleDropsTotal = 0L
+    private var encoderInputDropsTotal = 0L
+    private var webSocketQueueAttemptsTotal = 0L
+    private var webSocketQueueAcceptedTotal = 0L
+    private var webSocketQueueRejectedTotal = 0L
+    private var webSocketQueueAcceptedBytesTotal = 0L
+    private var lastCaptureMs: Long? = null
+    private var lastRenderMs: Long? = null
+    private var lastEncodedMs: Long? = null
+    private var idleRefreshFramesTotal = 0L
+    private var legacySuppressedPacketsTotal = 0L
+    private var legacySuppressedEncodedBytesTotal = 0L
 
     @Synchronized
-    fun recordFrame(sizeBytes: Int, isKeyFrame: Boolean) {
+    fun recordFrame(sizeBytes: Int, isKeyFrame: Boolean, isCodecConfig: Boolean = false) {
+        // SPS/PPS describe the decoder configuration, not a displayed media frame.
+        if (isCodecConfig) return
         val now = SystemClock.elapsedRealtime()
         frameTimestamps.addLast(now)
+        lastEncodedMs = now
+        evictExpiredFrames(now)
 
-        // Evict frames outside the 1-second window
-        while (frameTimestamps.isNotEmpty() && (now - frameTimestamps.peekFirst()!!) > 1_000) {
-            frameTimestamps.removeFirst()
-        }
-
-        bytesSentTotal += sizeBytes
+        encodedBytesTotal += sizeBytes.coerceAtLeast(0)
         frameCount++
         if (isKeyFrame) keyFrameCount++
     }
 
     @Synchronized
-    fun getStats(): StreamStats = StreamStats(
-        currentFps = frameTimestamps.size,
-        totalFrames = frameCount,
-        totalBytesSent = bytesSentTotal,
-        keyFrameRatio = keyFrameCount.toFloat() / frameCount.coerceAtLeast(1),
-        avgFrameSizeKb = if (frameCount > 0) bytesSentTotal / frameCount / 1024f else 0f,
-    )
+    fun recordCapturedFrame() {
+        val now = SystemClock.elapsedRealtime()
+        captureTimestamps.addLast(now)
+        lastCaptureMs = now
+        evictExpired(captureTimestamps, now)
+        captureFramesTotal++
+    }
+
+    @Synchronized
+    fun recordCaptureReadFailure() {
+        captureReadFailuresTotal++
+    }
+
+    @Synchronized
+    fun recordRenderedFrame() {
+        val now = SystemClock.elapsedRealtime()
+        renderTimestamps.addLast(now)
+        lastRenderMs = now
+        evictExpired(renderTimestamps, now)
+        renderedFramesTotal++
+    }
+
+    @Synchronized
+    fun recordRenderFailure() {
+        renderFailuresTotal++
+    }
+
+    /** Re-encoding retained pixels is not a new Android capture or source render. */
+    @Synchronized
+    fun recordIdleRefresh() { idleRefreshFramesTotal++ }
+
+    @Synchronized
+    fun recordEncoderError() {
+        encoderErrorsTotal++
+    }
+
+    @Synchronized
+    fun recordFrameThrottleDrop() {
+        frameThrottleDropsTotal++
+    }
+
+    /** Raw images skipped before encoder submission; not encoded-picture loss. */
+    @Synchronized
+    fun recordCaptureThrottleDrop() {
+        captureThrottleDropsTotal++
+    }
+
+    /** No free codec input buffer: a raw image was skipped, no coded frame lost. */
+    @Synchronized
+    fun recordEncoderInputDrop() { encoderInputDropsTotal++ }
+
+    /** Records whether OkHttp accepted an encoded frame into its local WS queue. */
+    @Synchronized
+    fun recordWebSocketQueueResult(sizeBytes: Int, accepted: Boolean) {
+        webSocketQueueAttemptsTotal++
+        if (accepted) {
+            webSocketQueueAcceptedTotal++
+            webSocketQueueAcceptedBytesTotal += sizeBytes.coerceAtLeast(0)
+        } else {
+            webSocketQueueRejectedTotal++
+        }
+    }
+
+    /** Deliberately omitted duplicate NAL bytes; neither RTP loss nor WS rejection. */
+    @Synchronized
+    fun recordLegacySuppression(sizeBytes: Int) {
+        legacySuppressedPacketsTotal++
+        legacySuppressedEncodedBytesTotal += sizeBytes.coerceAtLeast(0)
+    }
+
+    @Synchronized
+    fun getStats(): StreamStats {
+        // Prune during reads too: after an encoder stalls, no new frame arrives to
+        // evict the old timestamps, so otherwise FPS would remain falsely non-zero.
+        evictExpiredFrames(SystemClock.elapsedRealtime())
+        val now = SystemClock.elapsedRealtime()
+        evictExpired(captureTimestamps, now)
+        evictExpired(renderTimestamps, now)
+        return StreamStats(
+            currentFps = frameTimestamps.size,
+            currentCaptureFps = captureTimestamps.size,
+            currentRenderFps = renderTimestamps.size,
+            totalFrames = frameCount,
+            totalEncodedBytes = encodedBytesTotal,
+            keyFrameRatio = keyFrameCount.toFloat() / frameCount.coerceAtLeast(1L),
+            avgEncodedFrameSizeKb = if (frameCount > 0) encodedBytesTotal / frameCount / 1024f else 0f,
+            captureFramesTotal = captureFramesTotal,
+            renderedFramesTotal = renderedFramesTotal,
+            captureReadFailuresTotal = captureReadFailuresTotal,
+            renderFailuresTotal = renderFailuresTotal,
+            encoderErrorsTotal = encoderErrorsTotal,
+            frameThrottleDropsTotal = frameThrottleDropsTotal,
+            captureThrottleDropsTotal = captureThrottleDropsTotal,
+            encoderInputDropsTotal = encoderInputDropsTotal,
+            webSocketQueueAttemptsTotal = webSocketQueueAttemptsTotal,
+            webSocketQueueAcceptedTotal = webSocketQueueAcceptedTotal,
+            webSocketQueueRejectedTotal = webSocketQueueRejectedTotal,
+            webSocketQueueAcceptedBytesTotal = webSocketQueueAcceptedBytesTotal,
+            lastCaptureAgeMs = lastCaptureMs?.let { (now - it).coerceIn(0L, 86_400_000L) },
+            lastRenderAgeMs = lastRenderMs?.let { (now - it).coerceIn(0L, 86_400_000L) },
+            lastEncodedAgeMs = lastEncodedMs?.let { (now - it).coerceIn(0L, 86_400_000L) },
+            idleRefreshFramesTotal = idleRefreshFramesTotal,
+            legacySuppressedPacketsTotal = legacySuppressedPacketsTotal,
+            legacySuppressedEncodedBytesTotal = legacySuppressedEncodedBytesTotal,
+        )
+    }
+
+    private fun evictExpiredFrames(nowElapsedMs: Long) {
+        evictExpired(frameTimestamps, nowElapsedMs)
+    }
+
+    private fun evictExpired(timestamps: ArrayDeque<Long>, nowElapsedMs: Long) {
+        while (timestamps.isNotEmpty() && nowElapsedMs - timestamps.peekFirst()!! > 1_000) {
+            timestamps.removeFirst()
+        }
+    }
 
     /**
      * FIX F3: Сброс счётчиков при остановке стрима.
@@ -51,16 +179,54 @@ class StreamQualityMonitor @Inject constructor() {
     @Synchronized
     fun reset() {
         frameTimestamps.clear()
-        bytesSentTotal = 0L
+        captureTimestamps.clear()
+        renderTimestamps.clear()
+        encodedBytesTotal = 0L
         frameCount = 0
         keyFrameCount = 0
+        captureFramesTotal = 0L
+        renderedFramesTotal = 0L
+        captureReadFailuresTotal = 0L
+        renderFailuresTotal = 0L
+        encoderErrorsTotal = 0L
+        frameThrottleDropsTotal = 0L
+        captureThrottleDropsTotal = 0L
+        encoderInputDropsTotal = 0L
+        webSocketQueueAttemptsTotal = 0L
+        webSocketQueueAcceptedTotal = 0L
+        webSocketQueueRejectedTotal = 0L
+        webSocketQueueAcceptedBytesTotal = 0L
+        lastCaptureMs = null; lastRenderMs = null; lastEncodedMs = null
+        idleRefreshFramesTotal = 0L
+        legacySuppressedPacketsTotal = 0L
+        legacySuppressedEncodedBytesTotal = 0L
     }
 
     data class StreamStats(
         val currentFps: Int,
-        val totalFrames: Int,
-        val totalBytesSent: Long,
+        val currentCaptureFps: Int = 0,
+        val currentRenderFps: Int = 0,
+        val totalFrames: Long,
+        val totalEncodedBytes: Long,
         val keyFrameRatio: Float,
-        val avgFrameSizeKb: Float,
+        val avgEncodedFrameSizeKb: Float,
+        val captureFramesTotal: Long = 0,
+        val renderedFramesTotal: Long = 0,
+        val captureReadFailuresTotal: Long = 0,
+        val renderFailuresTotal: Long = 0,
+        val encoderErrorsTotal: Long = 0,
+        val frameThrottleDropsTotal: Long = 0,
+        val captureThrottleDropsTotal: Long = 0,
+        val encoderInputDropsTotal: Long = 0,
+        val webSocketQueueAttemptsTotal: Long,
+        val webSocketQueueAcceptedTotal: Long,
+        val webSocketQueueRejectedTotal: Long,
+        val webSocketQueueAcceptedBytesTotal: Long,
+        val lastCaptureAgeMs: Long? = null,
+        val lastRenderAgeMs: Long? = null,
+        val lastEncodedAgeMs: Long? = null,
+        val idleRefreshFramesTotal: Long = 0,
+        val legacySuppressedPacketsTotal: Long = 0,
+        val legacySuppressedEncodedBytesTotal: Long = 0,
     )
 }

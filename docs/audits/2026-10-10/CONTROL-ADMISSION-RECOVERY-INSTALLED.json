@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T16:26:54.631476+00:00",
+  "runtimeInstalled": true,
+  "scope": "CI-admitted UI/API delivery, finite public device-card rendering and per-device HTTP admission. Recovery permutations are fixtures; no new native input, primary direct-video or latency acceptance.",
+  "runtime": {
+    "sourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+    "apiSourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+    "uiContainer": {
+      "id": "cce5945d5baf2b2233ad4e3897c1b0032f9cd9680e972fef227d3d5bad193be1",
+      "imageId": "sha256:07e52136800e1d4fa633c3a4b3806219ec1a32349b5296ea9fcaa498cd5aaf5d",
+      "imageTag": "sphere-review-frontend:678f78cf746e2be7b189e01a65b4b77134b373eb",
+      "startedAt": "2026-10-10T16:09:51.941118345Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "550ecc5a696760bdc123dae92b6d44a396f1865d37fa82324b02259bfca00736",
+      "imageId": "sha256:0843e8c6eb052024ea422696ddaec7aa6086331304f4ead852f8df2ff6534ce8",
+      "imageTag": "sphere-reviewed-backend:678f78cf746e2be7b189e01a65b4b77134b373eb",
+      "startedAt": "2026-10-10T16:08:02.391598839Z",
+      "status": "running"
+    },
+    "otherContainersPreservedPerInstall": 45,
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otaCatalogSha256": "71d037d2746ba16e81927b85c5a9f011e03cde49e474840d3c6e18f9045e65e6",
+    "publicHostMapChanged": false,
+    "directMediaControlInstalled": false
+  },
+  "delivery": {
+    "web": {
+      "sourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+      "runId": 38065273772,
+      "imageId": "sha256:f65fc826c5bf03b06c5068f838872e5f1001719f91561ca5643c8fbd56cdb02f",
+      "archiveBytes": 120898627,
+      "previousUi": {
+        "id": "9be2719df1c744d7bb8c77899567611dca17127e229e985df471efb064b9638f",
+        "imageId": "sha256:bac99541be23596fde8576715659ebb6915e1db2b4dd6128db63f9204bfdcec2",
+        "imageTag": "sphere-review-frontend:ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "startedAt": "2026-10-10T11:25:36.726808924Z",
+        "status": "running"
+      },
+      "containerCount": 46,
+      "observedAtUtc": "2026-10-10T16:09:20.401043+00:00",
+      "resourceFindings": [],
+      "applyRequested": true,
+      "onlyUiImageAndBuildRemovalDelta": true,
+      "backendPreserved": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "otaCatalogSha256": "71d037d2746ba16e81927b85c5a9f011e03cde49e474840d3c6e18f9045e65e6",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:07e52136800e1d4fa633c3a4b3806219ec1a32349b5296ea9fcaa498cd5aaf5d",
+      "installedUi": {
+        "id": "cce5945d5baf2b2233ad4e3897c1b0032f9cd9680e972fef227d3d5bad193be1",
+        "imageId": "sha256:07e52136800e1d4fa633c3a4b3806219ec1a32349b5296ea9fcaa498cd5aaf5d",
+        "imageTag": "sphere-review-frontend:678f78cf746e2be7b189e01a65b4b77134b373eb",
+        "startedAt": "2026-10-10T16:09:51.941118345Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "browserVerified": false
+    },
+    "backend": {
+      "sourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+      "runId": 38065273786,
+      "imageId": "sha256:490b21aef3729a98b8fa92d0c2b8ef2c881b5f3a477d12de2f2b8972fd32f306",
+      "archiveBytes": 236261898,
+      "previousBackend": {
+        "id": "9ac4348d591e0aedab2496e29ac258516217e3a0a04ce0af99735dba969ded49",
+        "imageId": "sha256:abacfdd57f0e83df87926a9e8427f2843d45c0cce4840fdfcbb6ab344472a25f",
+        "imageTag": "sphere-reviewed-backend:ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "startedAt": "2026-10-10T11:28:04.146588572Z",
+        "status": "running"
+      },
+      "sourceChanges": [
+        "backend/api/ws/stream/router.py",
+        "backend/websocket/continuous_runtime.py"
+      ],
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false,
+      "resourceFindings": [],
+      "observedAtUtc": "2026-10-10T16:07:18.138699+00:00",
+      "applyRequested": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "directProbeDevice": "753fd530-2f19-4e5e-98ba-769863678141",
+      "directProbeMediaControlEnabled": false,
+      "directProbeReadOnlyVideoEnabled": true,
+      "directProbeExplicitlyDisabled": false,
+      "otaCatalogSha256": "71d037d2746ba16e81927b85c5a9f011e03cde49e474840d3c6e18f9045e65e6",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:0843e8c6eb052024ea422696ddaec7aa6086331304f4ead852f8df2ff6534ce8",
+      "installedBackend": {
+        "id": "550ecc5a696760bdc123dae92b6d44a396f1865d37fa82324b02259bfca00736",
+        "imageId": "sha256:0843e8c6eb052024ea422696ddaec7aa6086331304f4ead852f8df2ff6534ce8",
+        "imageTag": "sphere-reviewed-backend:678f78cf746e2be7b189e01a65b4b77134b373eb",
+        "startedAt": "2026-10-10T16:08:02.391598839Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "liveContractVerified": false,
+      "agentReconnectVerified": false
+    }
+  },
+  "http": {
+    "observedAtUtc": "2026-10-10T16:16:39.899068+00:00",
+    "observations": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-10T16:16:37.686950+00:00",
+        "apiSourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+        "readiness": {
+          "postgres": "ok",
+          "redis": "ok"
+        },
+        "anonymousStatus": 401,
+        "cacheControl": "private, no-store",
+        "admission": {
+          "schema_version": 1,
+          "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "enabled": true,
+          "profiles": [
+            "host",
+            "public-stun"
+          ],
+          "scope": "diagnostic_echo_only",
+          "max_duration_ms": 30000,
+          "samples": 20,
+          "readonly_video_enabled": true
+        },
+        "nonAllowlistedDevice": {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "enabled": false,
+          "readonly_video_enabled": false
+        },
+        "device": {
+          "id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "name": "auto-ph-030",
+          "status": "online",
+          "agent_version": "1.2.51-dev",
+          "agent_version_code": 10251,
+          "last_heartbeat": "2026-10-10T16:16:10.340200Z"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-10T16:16:39.898861+00:00",
+        "apiSourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+        "readiness": {
+          "postgres": "ok",
+          "redis": "ok"
+        },
+        "anonymousStatus": 401,
+        "cacheControl": "private, no-store",
+        "admission": {
+          "schema_version": 1,
+          "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "enabled": true,
+          "profiles": [
+            "host",
+            "public-stun"
+          ],
+          "scope": "diagnostic_echo_only",
+          "max_duration_ms": 30000,
+          "samples": 20,
+          "readonly_video_enabled": true
+        },
+        "nonAllowlistedDevice": {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "enabled": false,
+          "readonly_video_enabled": false
+        },
+        "device": {
+          "id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "name": "auto-ph-030",
+          "status": "online",
+          "agent_version": "1.2.51-dev",
+          "agent_version_code": 10251,
+          "last_heartbeat": "2026-10-10T16:16:10.340200Z"
+        }
+      }
+    ],
+    "runtimeChanged": false,
+    "peerAllocated": false,
+    "androidCommandSent": false
+  },
+  "ci": {
+    "sourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+    "backendRun": 38065273786,
+    "frontendRun": 38065273772,
+    "androidRun": 38065273796,
+    "previewRun": 38065273775,
+    "allFourSuccess": true,
+    "backendTestsPassed": 3513,
+    "backendSkipped": 37,
+    "backendSubtestsPassed": 272,
+    "frontendTestsPassed": 2134
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Public PH030 device card only: WEB/API678 and installed APK10251 visible; no viewer or Android input opened in this check.",
+    "screenshot": "docs/audits/2026-10-10/assets/control-recovery-installed.png",
+    "primaryDirectVideoAccepted": false,
+    "nativeRecoveryReproductionAccepted": false
+  },
+  "correction": {
+    "id": "continuous-admission-auto-recovery",
+    "sourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb"
+  }
+}

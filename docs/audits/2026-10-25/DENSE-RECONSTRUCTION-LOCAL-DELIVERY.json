@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "kind": "teaching-dense-local-delivery",
+  "observedAtUtc": "2026-10-24T19:15:31.504740+00:00",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "8efe43f4e91dae2044bcd06e954c31b943b7027b",
+    "imageId": "sha256:f8e33ede67b5a5500b436a279e9c377300d3405a8f130831dc32745c97cc9ca2",
+    "healthy": true,
+    "apiSourceRevision": "1afdc529e18cd34b5d8ee0919f217076a8592846",
+    "apiImageId": "sha256:1e3cec38599d9f982c3002afd12f227a374d2924b39438e60ff5b4e493460063",
+    "otherContainersPreserved": 45,
+    "http": {
+      "/login": 200,
+      "/api/v1/health/healthz": 200,
+      "/api/v1/health/readyz": 200
+    }
+  },
+  "browser": {
+    "finiteAccepted": false,
+    "visualAccepted": false,
+    "blocker": "Local browser use is disabled in Work settings",
+    "source": "current computer-use tool response",
+    "automaticGameInputSent": false
+  },
+  "checks": {
+    "frontend": {
+      "source": "8efe43f4e91dae2044bcd06e954c31b943b7027b",
+      "runId": "20261024T190920Z-ee8315f7",
+      "suites": 191,
+      "passed": 2686,
+      "failed": 0,
+      "skipped": 0,
+      "fullGate": "success"
+    },
+    "python": {
+      "passed": 19,
+      "failed": 0,
+      "scope": "service boundaries, mask preservation and browser-package reader"
+    },
+    "ruff": "passed",
+    "packagedPages": 26,
+    "clientAssets": 72
+  },
+  "worker": {
+    "health": {
+      "service": "sphere-reconstruction-v1",
+      "one_active_job": true
+    },
+    "tools": {
+      "pycolmap": "4.2.1",
+      "pycolmap_sha256": "b6a562b33bcbf0757c7b28c33b9166e095fa5451f9a4b38236018cf8a8d49380",
+      "av": "16.1.0",
+      "av_sha256": "f49243b1d27c91cd8c66fdba90a674e344eb8eb917264f36117bf2b6879118fd",
+      "brush": "0.3.0",
+      "brush_sha256": "b68e3e9cf052d51bf3ee30776fa5a364de7f2ba13b58443128ff797bb7bcfcd6",
+      "system_packages_changed": false
+    },
+    "oneActiveJob": true,
+    "concurrentHttpRequests": 8,
+    "automaticWindowsStartup": false,
+    "retainedJobLimit": 12
+  },
+  "existingRecording": {
+    "id": "c7aa48d84c90402da68012da51ed34be",
+    "geometry": [
+      960,
+      540
+    ],
+    "quality": {
+      "registered": 227,
+      "selected": 227,
+      "coverage": 1.0,
+      "points": 259,
+      "mean_reprojection_px": 0.10128964932410194,
+      "components": 1
+    },
+    "accepted": false,
+    "outcome": "rejected_camera_quality_gate_failed",
+    "denseSceneAccepted": false
+  },
+  "brushHardwareBench": {
+    "qualified_scene": false,
+    "training_steps": 300,
+    "vertices": 270,
+    "bytes": 25489,
+    "sha256": "d7ed53fcc661c72fdeed74f492931883fa4f335ccbebab193104040250a6a87d"
+  },
+  "transfer": {
+    "files": 5,
+    "bytes": 54498219,
+    "elapsedSeconds": 0.141,
+    "allReceivedHashesIndependentlyVerified": true,
+    "terminalState": "cancelled",
+    "trainingStarted": false,
+    "browserTest": false
+  },
+  "capture": {
+    "device": "auto-ph-011",
+    "versionCodeReadback": 10290,
+    "settings": {
+      "profile": "detail",
+      "max_fps": 60,
+      "max_bitrate_bps": 24000000
+    },
+    "activeCaptureAtReadback": null,
+    "new1080pRecordingAccepted": false
+  },
+  "limits": {
+    "metricScale": null,
+    "cameraBodyTransform": null,
+    "collisionMap": false,
+    "dynamicObjectsFullyRemoved": false,
+    "autonomousNavigationAccepted": false,
+    "requiredNextEvidence": "new 20-60 second FullHD overlapping walking clip and browser inspection"
+  },
+  "privacy": {
+    "loopbackOnly": true,
+    "sourceSphereJwtForwarded": false,
+    "perJobCapability": true,
+    "rawCaptureChanged": false,
+    "automaticFrameArchive": false,
+    "optInJobRetainsSourceAndDerivedImages": true
+  },
+  "apk": {
+    "newBuildRequired": false,
+    "newBuildInstalled": false,
+    "scope": "Frontend and local worker only; PH011 remains APK90"
+  },
+  "productionAccepted": false
+}

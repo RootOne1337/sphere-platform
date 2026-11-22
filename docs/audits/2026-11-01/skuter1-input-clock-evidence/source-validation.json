@@ -1,0 +1,11 @@
+{
+  "result": "passed",
+  "validator": "validate_browser + browser_units per-AU sha/NAL validation",
+  "frames": 857,
+  "events": 3,
+  "verified_access_units": 857,
+  "elapsed_seconds": 0.057,
+  "manifest_sha256": "22b319e094981dbc8e737984b956c71ed6faa8a7db3d3782d4f91942d6e71fbc",
+  "source_modified": false,
+  "note": "AU bitstream/hash validation; this separate check does not itself decode frames."
+}

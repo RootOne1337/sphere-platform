@@ -1,0 +1,39 @@
+{
+  "source": "9ad0a69e729f9b4960bf8aea529a88e25e4f73cf",
+  "observedAt": "2026-10-05T18:55:33.219411+00:00",
+  "stage": "api",
+  "target": "sphere-pilot-20260911-backend-1",
+  "changedContainers": [
+    "sphere-pilot-20260911-backend-1"
+  ],
+  "otherContainersPreserved": 45,
+  "mountsPreserved": true,
+  "logRotationPreserved": true,
+  "beforeFleet": {
+    "observedAt": "2026-10-05T18:55:24.125033+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "afterFleet": {
+    "observedAt": "2026-10-05T18:55:33.217862+00:00",
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "ready": true
+}
