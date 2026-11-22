@@ -707,7 +707,7 @@ def serve(args):
                     )
                 if result["pose"] is not None:
                     if global_search:
-                        global_search.recent_walk.remember(result["pose"])
+                        global_search.remember_walk_fix(result["pose"])
                     result["startLevels"] = probe_start_levels(road, result["pose"]["eye"])
                 return self.reply(200, result)
             if self.path == "/start":
@@ -873,7 +873,7 @@ def serve(args):
         def walk_frame(self, trip, raw, gray, now, clock, seq):
             pose = global_search.match_verified_view(gray)
             if pose is not None:
-                global_search.recent_walk.remember(pose)
+                global_search.remember_walk_fix(pose)
             elif global_search.dense_walk:
                 pose = global_search.recent_walk.observe(raw, global_search.cfg, road)
             at_menu = False

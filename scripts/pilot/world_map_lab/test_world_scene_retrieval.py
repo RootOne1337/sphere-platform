@@ -27,12 +27,15 @@ def test_camera_pauses_during_geometry_but_can_collect_during_retrieval(phase, f
     search.phase = phase
     search.bank = object()
     search.samples = []
+    search.in_flight = []
 
     assert search.status()["phase"] == phase
     awaiting = search.status(seeking_view=True)
     assert awaiting["phase"] == foreground
     assert awaiting["computePhase"] == phase
     assert awaiting["tracking"]
+    search.in_flight = [None] * 4
+    assert search.status(seeking_view=True)["phase"] == phase
     search.samples = [None] * 10
     assert search.status(seeking_view=True)["phase"] == phase
 

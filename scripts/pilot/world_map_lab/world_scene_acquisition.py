@@ -335,6 +335,7 @@ class WorldAcquisition:
         self.in_flight = []
         self.searched = []
         self.last_seen = self.last_sample = self.first_sample = self.retry = -math.inf
+        self.last_walk_fix = -math.inf
         self.busy = False
         self.last_detail = -math.inf
         self.detailed_samples = False
@@ -352,7 +353,10 @@ class WorldAcquisition:
             # Keep the camera on its current view during geometric verification
             # so a fresh follow-up can match the views being verified.
             phase = self.phase
-            accepting_views = seeking_view and phase != "verifying_geometry" and len(self.samples) < 10
+            accepting_views = (
+                seeking_view and phase != "verifying_geometry"
+                and len(self.in_flight) < 4 and len(self.samples) < 10
+            )
             return dict(
                 phase="collecting_views" if accepting_views else phase,
                 computePhase=phase,
@@ -368,6 +372,12 @@ class WorldAcquisition:
             return None
         pose = bank.locate_near_verified_view(gray)
         return pose if pose and bank.covers([[*pose["eye"][:2], pose["eye"][2] - 1.45]]) else None
+
+    def remember_walk_fix(self, pose):
+        with self.lock:
+            self.last_walk_fix = time.monotonic()
+            self.samples.clear()
+        self.recent_walk.remember(pose)
 
     def observe(self, raw, gray, observed, *, walk_road=None):
         with self.lock:
@@ -386,6 +396,8 @@ class WorldAcquisition:
     def collect(self, raw, gray):
         now = time.monotonic()
         with self.lock:
+            if now - self.last_walk_fix < 3:
+                return None
             if now - self.last_seen > 5:
                 self.samples.clear()
                 self.searched.clear()
