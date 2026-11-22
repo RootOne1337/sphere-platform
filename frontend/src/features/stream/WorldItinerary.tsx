@@ -311,6 +311,8 @@ export function WorldItinerary({
             : plan?.status === "unavailable"
               ? (plan.reason === "wrong_surface"
                   ? "Неподходящая поверхность в точке "
+                  : plan.reason === "surface_unconfirmed"
+                  ? "До точки есть участок без подтверждённого тротуара или перехода "
                   : "Нет связного пути к точке ") + letter(plan.stop ?? 0)
               : stops.length === 18
                 ? "Достигнут предел в 18 точек"

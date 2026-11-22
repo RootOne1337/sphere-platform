@@ -151,22 +151,28 @@ export function WorldDestinationMap(props: Props) {
       const region = info.searchRegions?.find(
         (item) => "search-" + item.name === id,
       );
-      const trace = region?.points ?? info.atlas.visualTrace;
+      const route = id === "route" ? latest.current.legs?.flatMap((leg) => leg.path) : undefined;
+      const trace = route ?? region?.points ?? info.atlas.visualTrace;
       if (id === "goal" && (latest.current.point || latest.current.initialFocus)) {
         [camera.x, camera.y] = (latest.current.point ?? latest.current.initialFocus)!;
         camera.zoom = clamp(Math.min(w, h) / 210 / fit(), 1, 128);
       } else if (id === "position" && latest.current.observation) {
         [camera.x, camera.y] = latest.current.observation;
         camera.zoom = clamp(Math.min(w, h) / 260 / fit(), 1, 128);
-      } else if ((id === "coverage" || region) && trace.length) {
-        const xx = trace.map((p) => p[0]),
-          yy = trace.map((p) => p[1]);
-        camera.x = (Math.min(...xx) + Math.max(...xx)) / 2;
-        camera.y = (Math.min(...yy) + Math.max(...yy)) / 2;
+      } else if ((id === "coverage" || route || region) && trace.length) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const [x, y] of trace) {
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+        camera.x = (minX + maxX) / 2;
+        camera.y = (minY + maxY) / 2;
         camera.zoom = clamp(
           Math.min(
-            w / (Math.max(...xx) - Math.min(...xx) + 55),
-            h / (Math.max(...yy) - Math.min(...yy) + 55),
+            w / (maxX - minX + 55),
+            h / (maxY - minY + 55),
           ) / fit(),
           1,
           128,
@@ -551,6 +557,9 @@ export function WorldDestinationMap(props: Props) {
     if (props.observation) actions.current?.go("position");
     else setSector((id) => (id === "position" ? "custom" : id));
   }, [props.observation]);
+  useEffect(() => {
+    if (!props.legs?.length) setSector((id) => (id === "route" ? "custom" : id));
+  }, [props.legs]);
   return (
     <>
       <div className={styles.mapbar}>
@@ -566,6 +575,7 @@ export function WorldDestinationMap(props: Props) {
               <option key={d.name}>{d.name}</option>
             ))}
             {props.point && <option value="goal">Выбранная метка</option>}
+            {props.legs?.length ? <option value="route">Маршрут целиком</option> : null}
             {props.observation && (
               <option value="position">Последняя проверка</option>
             )}

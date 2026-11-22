@@ -25,7 +25,7 @@ import {
   type XYZ,
 } from "./worldDestination";
 
-import { WorldItinerary, useWorldItinerary, letter } from "./WorldItinerary";
+import { WorldItinerary, useWorldItinerary, letter, type RoutePlan } from "./WorldItinerary";
 
 const searchPhases: Record<string, string> = {
   collecting_views: "Собираем ракурсы",
@@ -59,6 +59,7 @@ const reasons: Record<string, string> = {
   frame_stale: "Кадр устарел",
   input_closed: "Канал управления закрыт",
   world_camera_unavailable: "Канал поворота камеры недоступен",
+  world_camera_no_motion: "После команд поворота ракурс в игре не изменился",
   walk_input_not_ready: "Поворот камеры требует настроенного пешего управления",
   stream_stopped: "Поток остановлен",
   stream_geometry_or_clock: "Нужен свежий горизонтальный кадр 16:9",
@@ -143,6 +144,31 @@ export function WorldDestinationPilot({
   const [data, setData] = useState<Decision | null>(null),
     [age, setAge] = useState<number | null>(null);
   const [commandAge, setCommandAge] = useState<number | null>(null);
+  const [preview, setPreview] = useState<RoutePlan | "pending" | "error" | null>(null);
+  useEffect(() => {
+    setPreview(null);
+    if (!info || !walking || multiple || !observation || !liveStartFresh ||
+        !point || level === null || observation.startLevels.walk === null || active) return;
+    const controller = new AbortController();
+    setPreview("pending");
+    void worldRequest<RoutePlan>(
+      "/itinerary",
+      AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
+      {
+        revision: info.mapRevision,
+        mode: "walk",
+        surface: "crossings",
+        stops: [
+          [observation.eye[0], observation.eye[1], observation.startLevels.walk],
+          [...point, level],
+        ],
+      },
+    ).then(
+      (plan) => { if (!controller.signal.aborted) setPreview(plan); },
+      () => { if (!controller.signal.aborted) setPreview("error"); },
+    );
+    return () => controller.abort();
+  }, [info, walking, multiple, observation, liveStartFresh, point, level, active]);
   const choice = useRef<AbortController | null>(null),
     run = useRef<AbortController | null>(null),
     mounted = useRef(false);
@@ -207,10 +233,10 @@ export function WorldDestinationPilot({
         video.current,
         c.signal,
         acquireMinutes * 60_000,
-        ({ frames, secondsLeft: seconds, phase, cameraSteps, cameraIssue: issue }) => {
+        ({ frames, secondsLeft: seconds, phase, cameraSteps, cameraTurns, cameraIssue: issue }) => {
           if (!c.signal.aborted)
             setProbeMessage(
-              `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Собираем ракурсы"}. Кадров ${frames}, команд камеры ${cameraSteps}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
+              `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Собираем ракурсы"}. Кадров ${frames}, поворотов ${cameraTurns} из ${cameraSteps}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
             );
         },
         !cameraIssue && openCamera ? (signal) => openCamera(signal, () => {}) : undefined,
@@ -284,7 +310,7 @@ export function WorldDestinationPilot({
         !result.levels.length
           ? (walking ? "Под меткой нет тротуара" : "Под меткой нет проезжей дороги")
           : valid.length > 1
-            ? "Выберите уровень дороги"
+            ? (walking ? "Выберите уровень тротуара" : "Выберите уровень дороги")
             : "Цель выбрана",
       );
     } catch (e) {
@@ -353,9 +379,9 @@ export function WorldDestinationPilot({
         try {
           const position = await probeWorldPosition(
             el, c.signal, acquireMinutes * 60_000,
-            ({ phase, frames, cameraSteps, cameraIssue: issue }) => {
+            ({ phase, frames, cameraSteps, cameraTurns, cameraIssue: issue }) => {
               if (!c.signal.aborted) setStatus(
-                `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Сбор ракурсов"} · ${frames} кадров · ${cameraSteps} поворотов камеры`,
+                `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Сбор ракурсов"} · ${frames} кадров · поворотов ${cameraTurns} из ${cameraSteps}`,
               );
             },
             (signal) => openCamera!(signal, journal),
@@ -442,6 +468,9 @@ export function WorldDestinationPilot({
       itinerary.plan.covered
     : level !== null && (walking ? info?.walkAutopilot === true : covered.includes(level));
   const currentIssue = walking && !multiple ? walkIssue ?? cameraIssue : inputIssue;
+  const previewLegs = preview && typeof preview !== "string" && preview.status === "complete"
+    ? preview.legs
+    : undefined;
   function switchPlan(value: "drive" | "walk" | "itinerary") {
     choice.current?.abort();
     if (value !== "itinerary") {
@@ -487,7 +516,7 @@ export function WorldDestinationPilot({
           observation={observation?.eye ?? null}
           decision={data}
           stops={multiple ? itinerary.stops : []}
-          legs={multiple ? itinerary.plan?.legs : undefined}
+          legs={multiple ? itinerary.plan?.legs : previewLegs}
           onChoose={(x, y) => {
             if (!run.current) {
               if (multiple) itinerary.add(x, y);
@@ -594,9 +623,24 @@ export function WorldDestinationPilot({
                 {walking ? "Выбрать тротуар рядом" : "Выбрать дорогу рядом"} · {suggestion.distance.toFixed(1)} м
               </Button>
             )}
+            {preview && (
+              <div role="status" className={styles.walkPreview}>
+                <Footprints size={16} />
+                <div>
+                  <strong>{previewLegs ? "Пеший маршрут" : "Проверка пешего маршрута"}</strong>
+                  <p>
+                    {preview === "pending" ? "Проверяем тротуары и переходы"
+                      : preview === "error" ? "Служба карты не вернула маршрут"
+                      : preview.reason === "surface_unconfirmed" ? "На пути есть участок без подтверждённого тротуара или перехода"
+                      : preview.status === "unavailable" ? "Между этими точками нет связного пешего пути"
+                      : `${Math.round(preview.distance ?? 0)} м · переходов ${preview.legs.reduce((n, leg) => n + (leg.crossings?.length ?? 0), 0)}`}
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
-        {(active || (point && !multiple) || data) && status && (
+        {(active || (point && !multiple) || data) && status && (!preview || status !== "Цель выбрана") && (
           <p role="status" className={styles.status}>
             {status}
             {multiple && data?.stopIndex != null

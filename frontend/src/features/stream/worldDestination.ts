@@ -13,7 +13,13 @@ export type WorldInfo = {
   tiles: { revision: string; width: number; height: number; tileSize: number };
   atlas: { visualTrace: XYZ[]; coverageRadius: number };
 };
-type SearchState = { phase: string; samples: number; tracking: boolean; detailWidth?: number };
+type SearchState = {
+  phase: string;
+  computePhase?: string;
+  samples: number;
+  tracking: boolean;
+  detailWidth?: number;
+};
 export type Decision = VehicleCommand & {
   worldSearch?: SearchState;
   reason: string;
@@ -169,6 +175,7 @@ type ProbeProgress = {
   secondsLeft: number;
   phase?: string;
   cameraSteps: number;
+  cameraTurns: number;
   cameraIssue?: string;
 };
 export type StartLevels = { drive: number | null; walk: number | null };
@@ -201,6 +208,45 @@ function detailSampler(allowWhileSearching = false) {
     return true;
   };
 }
+
+function cameraViewSampler(video: HTMLVideoElement) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 48;
+  canvas.height = 48;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  return () => {
+    if (!context || !video.videoWidth || !video.videoHeight) return null;
+    context.drawImage(video, 0, 0, 48, 48);
+    const rgba = context.getImageData(0, 0, 48, 48).data;
+    return Float32Array.from({ length: 48 * 48 }, (_, i) =>
+      0.299 * rgba[4 * i] + 0.587 * rgba[4 * i + 1] + 0.114 * rgba[4 * i + 2],
+    );
+  };
+}
+
+export function cameraViewChanged(before: Float32Array, after: Float32Array) {
+  const differences = before.map((value, index) => value - after[index]);
+  const sorted = differences.slice().sort();
+  const exposure = sorted[sorted.length >> 1];
+  const columns = new Set<number>();
+  let tiles = 0;
+  for (let row = 2; row < 5; row++) {
+    for (let column = 0; column < 6; column++) {
+      let sum = 0;
+      for (let y = row * 8; y < row * 8 + 8; y++) {
+        for (let x = column * 8; x < column * 8 + 8; x++) {
+          sum += Math.abs(differences[y * 48 + x] - exposure);
+        }
+      }
+      if (sum / 64 >= 6) {
+        tiles++;
+        columns.add(column);
+      }
+    }
+  }
+  return tiles >= 7 && columns.size >= 4;
+}
+
 export async function probeWorldPosition(
   video: HTMLVideoElement,
   signal: AbortSignal,
@@ -224,6 +270,10 @@ export async function probeWorldPosition(
   let camera: WalkInputLease | undefined;
   let cameraIssue: string | undefined;
   let cameraSteps = 0;
+  let cameraTurns = 0;
+  let stillStrokes = 0;
+  let pendingView: Float32Array | null = null;
+  const sampleView = cameraViewSampler(video);
   let nextStroke = performance.now() + 1400;
   try {
     while (!search.aborted) {
@@ -283,6 +333,18 @@ export async function probeWorldPosition(
         previousTime = frame.mediaTime;
       }
       const phase = result.worldSearch?.phase;
+      if (pendingView && now >= nextStroke) {
+        const currentView = sampleView();
+        if (currentView && cameraViewChanged(pendingView, currentView)) {
+          cameraTurns++;
+          stillStrokes = 0;
+        } else if (currentView && ++stillStrokes >= 3) {
+          cameraIssue = "world_camera_no_motion";
+          await camera?.close();
+          camera = undefined;
+        }
+        pendingView = null;
+      }
       if (openCamera && !cameraIssue && !previous && !search.aborted &&
           cameraSteps < 12 && now >= nextStroke &&
           phase !== "tracking" && phase !== "verifying_geometry") {
@@ -292,7 +354,11 @@ export async function probeWorldPosition(
           if (camera.canLook?.() === true) {
             // Sweep one side and then cross the starting direction. The walking stick stays neutral.
             const fraction = cameraSteps < 3 || cameraSteps >= 9 ? 0.16 : -0.16;
-            if (await camera.look(fraction, performance.now() + 240)) cameraSteps++;
+            const before = sampleView();
+            if (await camera.look(fraction, performance.now() + 240)) {
+              cameraSteps++;
+              pendingView = before;
+            }
             nextStroke = performance.now() + 500;
           } else {
             nextStroke = performance.now() + 300;
@@ -305,7 +371,8 @@ export async function probeWorldPosition(
       }
       if (now - lastUpdate >= 1000) {
         progress?.({ frames: count, secondsLeft: Math.max(0, Math.ceil((deadline - now) / 1000)),
-          phase, cameraSteps, cameraIssue });
+          phase: result.worldSearch?.computePhase ?? phase,
+          cameraSteps, cameraTurns, cameraIssue });
         lastUpdate = now;
       }
     }
@@ -314,7 +381,7 @@ export async function probeWorldPosition(
   } finally {
     await camera?.close();
   }
-  throw Error(signal.aborted ? "stream_stopped" : "position_timeout");
+  throw Error(signal.aborted ? "stream_stopped" : cameraIssue ?? "position_timeout");
 }
 
 export async function runWorldTrip(

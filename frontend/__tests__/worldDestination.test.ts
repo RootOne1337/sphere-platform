@@ -1,4 +1,4 @@
-import {probeWorldPosition, usableDecision, type Decision} from '../src/features/stream/worldDestination';
+import {cameraViewChanged, probeWorldPosition, usableDecision, type Decision} from '../src/features/stream/worldDestination';
 
 const good:Decision={sequence:93,reason:'following',pedal:'throttle',steering:.1,remaining:14,computeMs:48,
   pose:{eye:[-15,24,9],heading:1,supports:37}};
@@ -33,7 +33,7 @@ test("position search turns a neutral camera, submits detail frames and closes t
   });
   const widths: number[] = [];
   const context = jest.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
-    { drawImage: jest.fn() } as unknown as CanvasRenderingContext2D,
+    { drawImage: jest.fn(), getImageData: () => ({data: new Uint8ClampedArray(48 * 48 * 4)}) } as unknown as CanvasRenderingContext2D,
   );
   const encode = jest.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
     function (this: HTMLCanvasElement, done) { widths.push(this.width); done(new Blob(["jpeg"])); },
@@ -72,4 +72,12 @@ test("position search turns a neutral camera, submits detail frames and closes t
     encode.mockRestore();
     globalThis.fetch = prevFetch;
   }
+});
+
+test("local animation and exposure do not count as a camera turn", () => {
+  const before = Float32Array.from({length: 48 * 48}, (_, i) => 70 + (i % 56));
+  const animation = before.map((v, i) => v + 12 + (i % 48 < 14 ? 40 : 0));
+  const turn = before.map((v, i) => v + (16 <= (i / 48 | 0) && (i / 48 | 0) < 40 && i % 48 < 38 ? 45 : 0));
+  expect(cameraViewChanged(before, animation)).toBe(false);
+  expect(cameraViewChanged(before, turn)).toBe(true);
 });
