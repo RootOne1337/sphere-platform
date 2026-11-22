@@ -20,17 +20,17 @@ def surface_kind(point):
 
 
 def road_width(profile, spacing):
-    """Return the continuous marked road width around the centre of a cross-section."""
+    """Measure the marked road on both sides of the centre of a cross-section."""
     center = len(profile) // 2
     road = [q["road"] is not None and abs(q["road"] - q["referenceZ"]) < 0.65 for q in profile]
     if not road[center]:
-        return 0.0
+        return 0.0, 0.0
     left = right = center
     while left > 0 and road[left - 1]:
         left -= 1
     while right + 1 < len(road) and road[right + 1]:
         right += 1
-    return (right - left + 1) * spacing
+    return (center - left + 0.5) * spacing, (right - center + 0.5) * spacing
 
 
 def transverse(crossing, measure, width_limit=22):
@@ -46,19 +46,47 @@ def transverse(crossing, measure, width_limit=22):
     # The road must extend appreciably farther along its own axis. This rejects
     # following a lane and ambiguous diagonals through broad intersections.
     widths = []
-    for degrees in (0, -45, 45, 90):
+    for degrees in (0, -45, 45):
         angle = math.radians(degrees)
         axis = math.cos(angle) * direction + math.sin(angle) * side
         distance = 1.6 * span
         offset = np.r_[axis * distance, 0.0]
         profile = measure(middle - offset, middle + offset, samples=49)["profile"]
-        widths.append(road_width(profile, distance / 24))
-    across, oblique_left, oblique_right, along = widths
+        widths.append(sum(road_width(profile, distance / 24)))
+    along_offset = np.r_[side * max(20.0, 1.6 * span), 0.0]
+    along_profile = measure(middle - along_offset, middle + along_offset, samples=49)["profile"]
+    along_widths = road_width(along_profile, np.linalg.norm(along_offset) / 24)
+    across, oblique_left, oblique_right = widths
     return (
         0.55 * span <= across <= 1.25 * span
-        and along >= 1.45 * across
+        and min(along_widths) >= max(11.0, 0.72 * across)
         and min(oblique_left, oblique_right) >= 0.85 * across
     )
+
+
+def crossing_target(ground, entry, exit, measure):
+    """Keep a walking command inside the previously verified crossing strip."""
+    start = np.asarray(ground, dtype=float)
+    beginning = np.asarray(entry, dtype=float)
+    finish = np.asarray(exit, dtype=float)
+    axis = (finish - beginning)[:2]
+    length = np.linalg.norm(axis)
+    if length < 0.7:
+        return None
+    direction = axis / length
+    offset = (start - beginning)[:2]
+    along = offset @ direction
+    if not -0.75 <= along < length or np.linalg.norm(offset - direction * along) > 0.75:
+        return None
+    # The endpoint is rechecked along the actual predicted foot line, also after
+    # a small lateral displacement from the planned line.
+    check = measure(start, finish, samples=max(3, math.ceil((length - along) / 0.25) + 1))
+    if check["bodyIntersections"] or not continuous_floor(check):
+        return None
+    kinds = [surface_kind(point) for point in check["profile"]]
+    if None in kinds or kinds[-1] != "pavement":
+        return None
+    return finish
 
 
 def verified_crossings(path, measure):

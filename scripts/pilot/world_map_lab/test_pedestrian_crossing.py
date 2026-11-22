@@ -1,6 +1,6 @@
 import numpy as np
 
-from scripts.pilot.world_map_lab.pedestrian_crossing import verified_crossings
+from scripts.pilot.world_map_lab.pedestrian_crossing import crossing_target, verified_crossings
 
 
 def street(a, b, *, samples, wall=False, gap=False):
@@ -35,3 +35,27 @@ def test_reject_longitudinal_travel_a_diagonal_wall_and_unmarked_exit():
     road = np.array([[-6, -1, 0], [6, 1, 0]])
     assert verified_crossings(road, lambda a, b, **kw: street(a, b, wall=True, **kw)) is None
     assert verified_crossings(road, lambda a, b, **kw: street(a, b, gap=True, **kw)) is None
+
+
+def test_crossing_command_stays_between_verified_curbs():
+    entry, exit = [-4.1, 0, 0], [4.1, 0, 0]
+    assert np.allclose(crossing_target([-4.4, 0, 0], entry, exit, street), exit)
+    assert np.allclose(crossing_target([0, 0.28, 0], entry, exit, street), exit)
+    assert crossing_target([0, 1.1, 0], entry, exit, street) is None
+    assert crossing_target([5, 0, 0], entry, exit, street) is None
+    assert (
+        crossing_target([0, 0, 0], entry, exit, lambda a, b, **kw: street(a, b, wall=True, **kw))
+        is None
+    )
+
+
+def test_driveway_ends_before_a_continuous_street():
+    def driveway(a, b, *, samples):
+        result = street(a, b, samples=samples)
+        for point, row in zip(np.linspace(a, b, samples), result["profile"]):
+            if point[1] > 6:
+                row["road"] = None
+        return result
+
+    path = np.array([[-6, 0, 0], [0, 0, 0], [6, 0, 0]])
+    assert verified_crossings(path, driveway) is None

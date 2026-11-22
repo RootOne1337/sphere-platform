@@ -275,15 +275,16 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
     stopPromise.current = null; change('opening');
     try { openInput('control',conn); } catch { void stop('contact_protocol_unavailable'); }
   };
-  const openPilotInput = async (signal:AbortSignal,journal:(event:TeachingInput)=>void,vehicleMode=false):Promise<WalkInputLease|VehicleInputLease> => {
+  const openPilotInput = async (signal:AbortSignal,journal:(event:TeachingInput)=>void,vehicleMode=false,cameraOnly=false):Promise<WalkInputLease|VehicleInputLease> => {
     const conn=connection.current,b=conn?.binding(),endpoint=conn?.endpoint(),p=profileRef.current;
     if(signal.aborted||readOnly||phaseRef.current!=='preview'||!conn?.fresh()||!attached.current||!b||!endpoint
-      ||(vehicleMode?vehicleCalibrationIssue(p,b):walkingCalibrationIssue(p,b))||!result||!['host','nat'].includes(result.path))throw Error(vehicleMode?'vehicle_input_not_ready':'walk_input_not_ready');
+      ||(vehicleMode?vehicleCalibrationIssue(p,b):cameraOnly?walkingCameraIssue(p,b):walkingCalibrationIssue(p,b))||!result||!['host','nat'].includes(result.path))throw Error(vehicleMode?'vehicle_input_not_ready':'walk_input_not_ready');
     let interrupted:string|null=null;
     pilotInterrupt.current=vehicleMode?reason=>{interrupted=reason;}:null;
     stopPromise.current=null;walkOpening.current=true;change('opening');
     let released=false,decisionUntil=0,requestedMotion=false,appliedMotion=false,settle:(lease:WalkInputLease)=>void=()=>{};const stickSlew=new WalkStickSlew();
-    const center=vehicleMode?vehicleSteeringTarget(p,b,0).center:walkingStickTarget(p,b,[0,0]).center;
+    const center=vehicleMode?vehicleSteeringTarget(p,b,0).center:cameraOnly
+      ?fromPercent({x:p.stick_x,y:p.stick_y},b):walkingStickTarget(p,b,[0,0]).center;
     const cameraIssue=()=>vehicleMode?vehicleCameraIssue(p,b):walkingCameraIssue(p,b);
     let vehicleContacts:VehicleContacts|null=null;
     let commandLoop:PilotCommandLoop<{stick:[number,number]}|{vehicle:VehicleCommand}>|null=null;
@@ -322,7 +323,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
         return control.horizontalStroke(origin,x,notAfter);
       },
       set:vector=>{
-        if(vehicleMode)throw Error('vehicle_native_mode_required');
+        if(vehicleMode||cameraOnly)throw Error('walking_input_mode_required');
         if(!lease.active())throw Error('walk_native_closed');
         if(Math.hypot(...vector)>0&&!conn.fresh())throw Error('contact_video_stale');
         commandLoop!.update({stick:[...vector]},decisionUntil);
@@ -366,6 +367,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
     try{return await opened;}finally{walkOpening.current=false;if(signal.aborted)signal.removeEventListener('abort',cancelled);}
   };
   const openWalkInput=(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>=>openPilotInput(signal,journal);
+  const openCameraInput=(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>=>openPilotInput(signal,journal,false,true);
   const openVehicleInput=(signal:AbortSignal,journal:(event:TeachingInput)=>void)=>openPilotInput(signal,journal,true) as Promise<VehicleInputLease>;
   const record = async () => {
     const conn = connection.current, binding = conn?.binding(), endpoint = conn?.endpoint();
@@ -504,9 +506,9 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
       ?'Подключите прямой поток устройства':calibrate?'Завершите калибровку':vehicleCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Канал управления занят');
     const cameraIssue=readOnly?'Доступен только просмотр':!ready||!result||!['host','nat'].includes(result.path)
       ?'Для поворота камеры подключите прямой поток':calibrate?'Завершите калибровку'
-      :walkingCalibrationIssue(profile,binding??null)??walkingCameraIssue(profile,binding??null);
+      :walkingCameraIssue(profile,binding??null);
     return <div ref={host} className={styles.console} aria-label="Навигация по живому экрану">
-      <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} connected={attached.current && result !== null} inputIssue={inputIssue} openInput={openVehicleInput} cameraIssue={cameraIssue} openCamera={openWalkInput}/>
+      <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} connected={attached.current && result !== null} inputIssue={inputIssue} openInput={openVehicleInput} cameraIssue={cameraIssue} openCamera={openCameraInput}/>
       <aside className={styles.rail}>
         <section id="destination-stream" aria-label="Живой экран" className={styles.panel}>
           <header className={styles.panelHeader}><div><Radio size={17}/><h2>Живой экран</h2></div><span className={ready?styles.online:styles.offline}>{ready?'В эфире':'Офлайн'}</span></header>
@@ -519,6 +521,10 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
         </section>
         <section className={styles.panel}><header className={styles.panelHeader}><div><Settings2 size={16}/><h2>Настройки</h2></div></header>
           <details className={styles.setting}><summary>Качество потока</summary><div><StreamQualityControl deviceId={deviceId} readOnly={readOnly||active(phase)}/></div></details>
+          <details className={styles.setting}><summary>Камера поиска</summary><div>
+            <Button size="sm" variant="outline" disabled={readOnly||!ready||active(phase)} onClick={()=>chooseCalibration('look')}>Указать область поворота камеры</Button>
+            {calibrate==='look'&&<Button size="sm" variant="ghost" onClick={()=>setCalibrate(null)}>Отменить</Button>}
+          </div></details>
           <details className={styles.setting}><summary>Управление скутером</summary><div>
             <p>Положения педалей и руля сохраняются для этого устройства и размера экрана.</p>
             <Button variant="outline" size="sm" disabled={readOnly||!ready||!binding||active(phase)} onClick={()=>{if(binding){setCalibrate(null);setProfile(p=>blackRussiaScooterProfile(binding,p));}}}>Применить профиль скутера</Button>
