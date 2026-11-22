@@ -1,7 +1,7 @@
 import type { WalkInputLease } from "./walkPilot";
 import type { VehicleCommand, VehicleInputLease } from "./vehiclePilot";
 
-export const worldService = "http://127.0.0.1:8849";
+export const worldService = process.env.NEXT_PUBLIC_WORLD_SERVICE ?? "http://127.0.0.1:8849";
 export type XYZ = [number, number, number];
 export type WorldInfo = {
   bounds: [number, number, number, number];
