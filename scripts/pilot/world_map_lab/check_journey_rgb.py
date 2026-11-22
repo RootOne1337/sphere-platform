@@ -530,10 +530,40 @@ def publish_status(folder, state, last):
         (folder / "terminal.json").write_text(tmp.read_text(encoding="utf8"), encoding="utf8")
 
 
+def walk_start(lane, spawn, observation, eye_height):
+    actual = np.asarray(spawn["position"], dtype=float)
+    eye = np.asarray(observation["eye"], dtype=float)
+    yaw, heading = float(spawn["heading"]), float(observation["heading"])
+    if (
+        lane.mode != "walk"
+        or actual.shape != (3,)
+        or eye.shape != (3,)
+        or not np.isfinite([*actual, *eye, yaw, heading, eye_height]).all()
+        or not 0.8 <= eye_height <= 2.4
+        or not isinstance(observation["supports"], int)
+        or observation["supports"] < 24
+    ):
+        raise ValueError("walk requires a verified camera and a valid simulated spawn")
+    estimated = eye - [0, 0, eye_height]
+    if math.dist(estimated, lane.path[0]) > 1.0:
+        raise ValueError("walk route start is inconsistent with the camera estimate")
+    return actual, angle(yaw), estimated, angle(heading)
+
+
 def run(args):
     sparse = getattr(args, "experimental_tracking", False)
     output_dir = args.run_dir or args.folder / "journey"
     config = json.loads((output_dir / "route.json").read_bytes())
+    spawn_path = getattr(args, "synthetic_spawn", None)
+    observation_path = getattr(args, "initial_observation", None)
+    if bool(spawn_path) != bool(observation_path):
+        raise ValueError(
+            "a simulated spawn and an independent camera observation are both required"
+        )
+    eye_height = getattr(args, "eye_height", 1.68)
+    if not math.isfinite(eye_height) or not 0.8 <= eye_height <= 2.4:
+        raise ValueError("invalid camera height")
+    walk_folder = getattr(args, "walk_folder", None) or args.folder
     profiles = json.loads((args.folder / "journey/vehicles.json").read_bytes())
     profile = profiles[args.model]
     mounted_eye = profile["lift"] + profile["seat"][2] + 0.61 if args.model == "faggio" else 1.23
@@ -555,11 +585,18 @@ def run(args):
 
     rows = []
     result = "time_limit"
+    startup_ms = None
     references = []
     with ExitStack() as stack:
         nets = {
-            m: stack.enter_context(Network(args.folder, m, adapter=args.adapter))
-            for m in ("walk", "drive")
+            "walk": stack.enter_context(
+                Network(
+                    walk_folder,
+                    "walk",
+                    adapter=args.adapter if walk_folder == args.folder else None,
+                )
+            ),
+            "drive": stack.enter_context(Network(args.folder, "drive", adapter=args.adapter)),
         }
         pw = stack.enter_context(sync_playwright())
         browser = pw.chromium.launch(
@@ -574,9 +611,17 @@ def run(args):
             ),
         )
         page.goto(args.url.rstrip("/") + "/rgb-lab")
+        optics = dict(width=W, height=H, model=args.model)
+        if getattr(args, "detail_radius", None) is not None:
+            optics["detailRadius"] = args.detail_radius
+        calibration = getattr(args, "focal_at_640", None)
+        if calibration is not None:
+            if not math.isfinite(calibration) or not 80 <= calibration <= 1200:
+                raise ValueError("invalid camera focal length")
+            optics["verticalFov"] = math.degrees(2 * math.atan(180 / calibration))
         focal = page.evaluate(
             Path(__file__).with_name("observe_world_journey.mjs").read_text(encoding="utf-8"),
-            dict(width=W, height=H, model=args.model),
+            optics,
         )
         if args.probes:
             for phase, lane in enumerate(lanes):
@@ -585,7 +630,7 @@ def run(args):
                     p = lane.at(s)
                     v = lane.at(s + 1) - lane.at(s - 1)
                     a = math.atan2(v[1], v[0])
-                    eye = mounted_eye if lane.mode == "drive" else 1.68
+                    eye = mounted_eye if lane.mode == "drive" else eye_height
                     prior = [*p[:2], p[2] + eye, a, -0.045]
                     live = [
                         p[0] + 0.38 * math.sin(a),
@@ -638,6 +683,19 @@ def run(args):
         yaw = math.atan2(v[1], v[0])
         estimated = actual.copy()
         angle_est = yaw + 0.022
+        if observation_path:
+            actual, yaw, estimated, angle_est = walk_start(
+                first,
+                json.loads(spawn_path.read_bytes()),
+                json.loads(observation_path.read_bytes()),
+                eye_height,
+            )
+            started = time.perf_counter()
+            page.evaluate(
+                "async pose => { await mapReference(pose); }",
+                [*estimated[:2], estimated[2] + eye_height, angle_est, -0.045],
+            )
+            startup_ms = (time.perf_counter() - started) * 1000
         velocity = estimated_speed = 0.0
         unseen = 0
         since_fix = 0.0
@@ -654,9 +712,9 @@ def run(args):
             previous_view = None
             clearance_ticks = 0
             moving = lane.mode == "drive"
-            eye = mounted_eye if moving else 1.68
-            stations, caps = lane.curve_limits()
-            for _ in range(9000):
+            eye = mounted_eye if moving else eye_height
+            stations, caps = lane.curve_limits() if moving else (None, None)
+            for _ in range(getattr(args, "max_steps", 9000)):
                 tick_started = time.perf_counter()
                 if args.run_dir and (args.run_dir / "stop").is_file():
                     result = "stopped"
@@ -979,10 +1037,10 @@ def run(args):
     if args.run_dir:
         publish_status(output_dir, result, rows[-1] if rows else None)
     out = output_dir / "rgb-drive.json"
-    out.write_text(
-        json.dumps(dict(result=result, rows=rows, disturbance=disturbance), separators=(",", ":")),
-        encoding="utf8",
-    )
+    report = dict(result=result, rows=rows, disturbance=disturbance)
+    if startup_ms is not None:
+        report["startupMs"] = startup_ms
+    out.write_text(json.dumps(report, separators=(",", ":")), encoding="utf8")
     print(result, len(rows), rows[-1] if rows else "", flush=True)
 
 
@@ -1000,6 +1058,13 @@ if __name__ == "__main__":
     )
     c.add_argument("--adapter", type=Path)
     c.add_argument("--run-dir", type=Path)
+    c.add_argument("--walk-folder", type=Path)
+    c.add_argument("--initial-observation", type=Path)
+    c.add_argument("--synthetic-spawn", type=Path)
+    c.add_argument("--eye-height", type=float, default=1.68)
+    c.add_argument("--focal-at-640", type=float)
+    c.add_argument("--detail-radius", type=int, choices=(320, 640, 960))
+    c.add_argument("--max-steps", type=int, default=9000)
     c.add_argument(
         "--displace",
         type=float,

@@ -467,6 +467,9 @@ if __name__ == "__main__":
     p.add_argument("--config", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--planner", default="http://127.0.0.1:8817")
+    p.add_argument(
+        "--walk-folder", type=Path, help="Refine visual matches on the published walking mesh"
+    )
     alternate = p.add_mutually_exclusive_group()
     alternate.add_argument(
         "--wide-search",
@@ -486,6 +489,7 @@ if __name__ == "__main__":
         args.output,
         args.planner,
         lambda phase: print(phase, flush=True),
+        walk_folder=args.walk_folder,
         wide_search=args.wide_search,
         material_index=args.material_index,
     )

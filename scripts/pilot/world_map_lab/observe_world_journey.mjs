@@ -1,11 +1,16 @@
-async ({ width: w, height: h, model = "faggio" }) => {
+async ({ width: w, height: h, model = "faggio", verticalFov = null, detailRadius }) => {
   const T = await import("three"),
     { createWorld } = await import("/journey/scene.mjs");
   const canvas = document.getElementById("eye"),
     config = await (await fetch("/journey/route.json")).json();
-  const world = await createWorld(canvas, config, model);
+  const settings = detailRadius === undefined ? config : { ...config, detailRadius };
+  const world = await createWorld(canvas, settings, model);
   world.size(w, h);
   const { renderer, scene, camera } = world;
+  if (verticalFov !== null) {
+    camera.fov = verticalFov;
+    camera.updateProjectionMatrix();
+  }
   const target = new T.WebGLRenderTarget(w, h, {
     minFilter: T.NearestFilter,
     magFilter: T.NearestFilter,

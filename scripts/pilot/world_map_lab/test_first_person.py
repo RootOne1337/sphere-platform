@@ -11,6 +11,7 @@ cv2 = pytest.importorskip("cv2")
 pytest.importorskip("av")
 
 from scripts.pilot.world_map_lab.check_game_views import cost, edges  # noqa: E402
+from scripts.pilot.world_map_lab.check_journey_rgb import walk_start  # noqa: E402
 from scripts.pilot.world_map_lab.detail_scene_service import scene_files  # noqa: E402
 from scripts.pilot.world_map_lab.indexed_landmarks import IndexedLandmarks  # noqa: E402
 from scripts.pilot.world_map_lab.neighborhood_search import NeighborhoodSearch  # noqa: E402
@@ -18,6 +19,21 @@ from scripts.pilot.world_map_lab.replay_game_map import select_agreement  # noqa
 from scripts.pilot.world_map_lab.serve_world_navmesh import movie_range  # noqa: E402
 from scripts.pilot.world_map_lab.track_landmarks import LandmarkTrack  # noqa: E402
 from scripts.pilot.world_map_lab.verify_stationary_view import rendered_agreement  # noqa: E402
+
+
+def test_walk_starts_from_visual_estimate_without_using_simulator_pose():
+    lane = SimpleNamespace(mode="walk", path=[[20.4, 31.2, 5]])
+    spawn = {"position": [20, 31, 5], "heading": 0.8}
+    view = {"eye": [20.4, 31.2, 6.55], "heading": 1.1, "supports": 35}
+
+    actual, yaw, estimated, heading = walk_start(lane, spawn, view, 1.55)
+
+    assert actual == pytest.approx(spawn["position"])
+    assert yaw == pytest.approx(spawn["heading"])
+    assert estimated == pytest.approx(lane.path[0])
+    assert heading == pytest.approx(view["heading"])
+    with pytest.raises(ValueError, match="inconsistent"):
+        walk_start(lane, spawn, {**view, "eye": [26, 31, 6.55]}, 1.55)
 
 
 def test_independent_edges_prefer_aligned_facade():
