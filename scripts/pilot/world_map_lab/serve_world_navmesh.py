@@ -352,6 +352,7 @@ def serve(folder, port, adapter=None, *, walk_folder=None, detail_folder=None):
                             "parkedVehicle": parked,
                             "review": "/review" in files,
                             "detail": "/detail" in files,
+                            "detailMaxRadius": 960 if "/detail" in files else None,
                             "explore": "/explore" in files,
                             "gameplay": "/gameplay" in files,
                             "classicGame": "/classic-game" in files,

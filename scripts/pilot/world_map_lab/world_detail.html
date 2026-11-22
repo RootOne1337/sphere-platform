@@ -218,7 +218,16 @@
     for (const k of ["x", "y", "z", "radius"])
       if (params.has(k)) $("#" + k).value = params.get(k);
     const capture = params.get("capture") === "1";
-    if (capture && !params.has("radius")) $("#radius").value = "96";
+    const maxRadius = await fetch("/api/world")
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((info) => [320, 640, 960].includes(info.detailMaxRadius) ? info.detailMaxRadius : 320)
+      .catch(() => 320);
+    const radiusPicker = $("#radius");
+    for (const option of radiusPicker.options)
+      option.disabled = Number(option.value) > maxRadius;
+    if (!radiusPicker.value || Number(radiusPicker.value) > maxRadius)
+      radiusPicker.value = String(maxRadius);
+    if (capture && !params.has("radius")) radiusPicker.value = "96";
     document.body.classList.toggle("capture", capture);
     for (const id of ["view", "yaw", "pitch"])
       if (params.has(id)) $("#" + id).value = params.get(id);

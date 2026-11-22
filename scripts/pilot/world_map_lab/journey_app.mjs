@@ -62,7 +62,13 @@ async function main() {
     location.href = u.href;
   };
   const detail = Number(params.get("detail"));
-  const detailRadius = [320, 640, 960].includes(detail) ? detail : capture ? 320 : 960;
+  const maximumDetail = [320, 640, 960].includes(server.detailMaxRadius)
+    ? server.detailMaxRadius
+    : 320;
+  const detailRadius =
+    [320, 640, 960].includes(detail) && detail <= maximumDetail
+      ? detail
+      : capture ? 320 : maximumDetail;
   const [world, atlas] = await Promise.all([
     createWorld(canvas, { ...config, detailRadius }, model),
     createImageBitmap(await (await fetch("/journey/terrain.jpg")).blob()),
