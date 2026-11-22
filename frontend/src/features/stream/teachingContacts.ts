@@ -69,6 +69,12 @@ export class TeachingContacts {
       &&(this.centeredStick(center)||this.recoverVideoGaps&&this.held.has(this.steeringId))
       &&(this.contactLayout==='vehicle'||![...this.held].some(id=>id!==0&&id!==1)&&!this.desired.has(2));
   }
+  releaseCenteredWalkingStick(){
+    if(this.contactLayout==='walking'&&this.neutralStick&&this.held.has(this.steeringId)
+      &&this.centeredStick()&&this.canCameraCommand(this.neutralStick)){
+      this.set(this.steeringId,null);
+    }
+  }
   /** Exactly one fresh edge. No delayed waveform or old MOVE is queued. */
   cameraCommand(point:TeachingPoint|null,notAfter:number,center:TeachingPoint):Promise<boolean>{
     if(!this.canCameraCommand(center)||point&&(!this.fresh()||!Number.isFinite(notAfter)||performance.now()>=notAfter||notAfter-performance.now()>250))return Promise.resolve(false);
@@ -175,7 +181,7 @@ export class TeachingContacts {
     this.queue=this.queue.filter(edge=>this.isNeutralEdge(edge));
     for(const id of [0,1,2]){
       if(!this.held.has(id)){this.desired.delete(id);continue;}
-      if(id===this.steeringId&&this.neutralStick)this.set(this.steeringId,this.neutralStick);
+      if(id===this.steeringId&&this.neutralStick&&this.desired.has(id))this.set(this.steeringId,this.neutralStick);
       else this.set(id,null);
     }
     this.pump();

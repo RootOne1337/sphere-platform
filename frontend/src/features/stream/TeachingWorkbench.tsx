@@ -319,7 +319,11 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
       },
       look:(fraction,notAfter)=>{
         const maxFraction=cameraOnly ? 0.18 : 0.04;
-        if(!lease.active()||cameraIssue()||!p.look||!Number.isFinite(fraction)||Math.abs(fraction)>maxFraction||!control.isNeutral)return Promise.resolve(false);
+        if(!lease.active()||cameraIssue()||!p.look||!Number.isFinite(fraction)||Math.abs(fraction)>maxFraction)return Promise.resolve(false);
+        if(!control.isNeutral){
+          if(!vehicleMode&&!cameraOnly)control.releaseCenteredWalkingStick();
+          return Promise.resolve(false);
+        }
         const origin=fromPercent(p.look,b),short=Math.min(b.width,b.height),margin=Math.ceil(short*.05);
         const x=Math.max(margin,Math.min(b.width-1-margin,origin.x+Math.round(fraction*short)));
         return control.horizontalStroke(origin,x,notAfter,cameraOnly);

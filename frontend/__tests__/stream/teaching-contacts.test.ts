@@ -212,6 +212,21 @@ test('automatic horizontal stroke waits for each native receipt and preserves Y 
   jest.advanceTimersByTime(24);expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1,x:720,y:200});
   f.ack();await expect(stroke).resolves.toBe(true);expect(f.driver.isNeutral).toBe(true);
 });
+test('a parked walking stick is released before a turn and survives late neutral calls',async()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();
+  f.driver.set(0,{x:110,y:330});f.ack();
+  f.driver.releaseCenteredWalkingStick();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:0});
+  f.driver.neutralize();f.ack();
+  f.driver.releaseCenteredWalkingStick();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:1});
+  f.driver.neutralize();
+  f.ack();
+  expect(f.driver.isNeutral).toBe(true);
+  expect(f.sent.filter(e=>e.pointer_id===0&&e.action===0)).toHaveLength(1);
+  void f.driver.horizontalStroke({x:700,y:200},720,performance.now()+230);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:0});
+});
 test('an expired camera permit cannot emit MOVE even when DOWN was applied',async()=>{
   const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200);
   jest.advanceTimersByTime(210);f.ack();await expect(stroke).resolves.toBe(false);

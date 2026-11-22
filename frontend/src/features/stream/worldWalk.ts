@@ -34,10 +34,14 @@ export async function runWorldWalk(
   let sequence = -1;
   let lease: WalkInputLease | undefined;
   let missingSince = performance.now();
+  let detailedAt = -Infinity;
+  let tracked = false;
   let nextLook = 0;
   try {
     while (!signal.aborted) {
-      const frame = await sample(signal, sequence);
+      const sampleDetail = !tracked && performance.now() - detailedAt >= 650;
+      if (sampleDetail) detailedAt = performance.now();
+      const frame = await sample(signal, sequence, sampleDetail);
       if (!frame) {
         waitingForVideo?.();
         lease?.neutral?.();
@@ -69,6 +73,7 @@ export async function runWorldWalk(
       const pose = result.pose;
       const verified = !!pose && pose.supports >= 24 && Number.isFinite(pose.heading)
         && pose.eye.every(Number.isFinite);
+      tracked = verified;
       if (verified) missingSince = now;
       else if (now - missingSince >= 6500) {
         lease?.neutral?.();
