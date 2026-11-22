@@ -111,7 +111,9 @@ def acquire(
             from scripts.pilot.world_map_lab.world_material_search import search
 
             report("material_search")
-            cues = search(material_index, frames)
+            # Normalize the material proposal scale across test captures and full-HD input.
+            # Geometric verification still receives the original RGB frames.
+            cues = search(material_index, frames, query_width=960)
             (output / "materials.json").write_text(json.dumps(cues), encoding="utf8")
             refs = json.loads((cfg["gallery"] / "survey.json").read_bytes())["eyes"]
             merged = material_regions(json.loads(coarse.read_bytes()), cues, refs)

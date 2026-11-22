@@ -150,7 +150,7 @@ def verify_material(uv, desc, qxy, qindex):
     return dict(inliers=len(dst), area=round(hull, 1))
 
 
-def search(folder, files):
+def search(folder, files, *, query_width=1280):
     cv2.setNumThreads(3)
     meta = json.loads((folder / "manifest.json").read_bytes())
     offsets = np.load(folder / "offsets.npy", allow_pickle=False)
@@ -173,9 +173,8 @@ def search(folder, files):
         if gray is None:
             raise ValueError("missing frame " + str(file))
         h, w = gray.shape
-        gray = cv2.resize(
-            gray, (min(w, 1280), max(1, round(h * min(w, 1280) / w))), interpolation=cv2.INTER_AREA
-        )
+        width = min(w, query_width)
+        gray = cv2.resize(gray, (width, max(1, round(h * width / w))), interpolation=cv2.INTER_AREA)
         qxy, qd = features(gray, 3200)
         matches = {}
         if len(qd) >= 9:
