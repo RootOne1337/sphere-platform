@@ -374,15 +374,18 @@ def serve(args):
 
         def reply(self, status, body):
             raw = json.dumps(body, allow_nan=False).encode()
-            self.send_response(status)
-            if self.headers.get("Origin") == args.origin:
-                self.send_header("Access-Control-Allow-Origin", args.origin)
-                self.send_header("Vary", "Origin")
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(raw)))
-            self.end_headers()
-            self.wfile.write(raw)
+            try:
+                self.send_response(status)
+                if self.headers.get("Origin") == args.origin:
+                    self.send_header("Access-Control-Allow-Origin", args.origin)
+                    self.send_header("Vary", "Origin")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                return
 
         def permitted(self):
             return (
@@ -613,7 +616,7 @@ def serve(args):
                     result.update(
                         pose=pose,
                         district="Поиск по всей карте" if pose else None,
-                        worldSearch=global_search.status(),
+                        worldSearch=global_search.status(seeking_view=pose is None),
                     )
                 if result["pose"] is not None:
                     result["startLevels"] = probe_start_levels(road, result["pose"]["eye"])
@@ -714,7 +717,9 @@ def serve(args):
             if global_search:
                 if fix["pose"] and trip.extend_visual:
                     global_search.collect(raw, gray)
-                response["worldSearch"] = global_search.status()
+                response["worldSearch"] = global_search.status(
+                    seeking_view=response["reason"] == "position_unknown"
+                )
             response.update(district=fix["district"], ambiguous=fix["ambiguous"])
             response["stopIndex"] = trip.stop_index
             if response["pose"] and trip.path is not None:

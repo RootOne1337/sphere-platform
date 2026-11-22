@@ -12,7 +12,13 @@ export type WorldInfo = {
   tiles: { revision: string; width: number; height: number; tileSize: number };
   atlas: { visualTrace: XYZ[]; coverageRadius: number };
 };
-type SearchState = { phase: string; samples: number; tracking: boolean; detailWidth?: number };
+type SearchState = {
+  phase: string;
+  computePhase?: string;
+  samples: number;
+  tracking: boolean;
+  detailWidth?: number;
+};
 export type Decision = VehicleCommand & {
   worldSearch?: SearchState;
   reason: string;
@@ -236,13 +242,26 @@ export async function probeWorldPosition(
         previous = null;
         continue;
       }
-      const result = await worldRequest<Probe>(
-        "/probe",
-        AbortSignal.any([search, AbortSignal.timeout(3500)]),
-        undefined,
-        undefined,
-        jpeg,
-      );
+      const requestDeadline = AbortSignal.timeout(3500);
+      let result: Probe;
+      try {
+        result = await worldRequest<Probe>(
+          "/probe", AbortSignal.any([search, requestDeadline]), undefined, undefined, jpeg,
+        );
+      } catch (error) {
+        if (!search.aborted && requestDeadline.aborted) {
+          previous = null;
+          progress?.({
+            frames: count,
+            secondsLeft: Math.max(0, Math.ceil((deadline - performance.now()) / 1000)),
+            phase: "probe_reply_timeout",
+            cameraSteps,
+            cameraIssue,
+          });
+          continue;
+        }
+        throw error;
+      }
       if (search.aborted) break;
       if (result.screen === "menu_backdrop") throw Error("menu_backdrop");
       searchState = result.worldSearch;
@@ -280,10 +299,10 @@ export async function probeWorldPosition(
         previous = result;
         previousTime = frame.mediaTime;
       }
-      const phase = result.worldSearch?.phase;
+      const phase = result.worldSearch?.computePhase ?? result.worldSearch?.phase;
       if (openCamera && !cameraIssue && !previous && !search.aborted &&
           cameraSteps < 12 && now >= nextStroke &&
-          phase !== "tracking") {
+          now - frame.captured <= 800) {
         try {
           camera ??= await openCamera(search);
           if (search.aborted || !camera.active() || !camera.look) throw Error("world_camera_unavailable");
@@ -363,7 +382,7 @@ export async function runWorldTrip(
       // Stationary visual search uses the calibrated camera control of this trip.
       // Finish the symmetric sweep before allowing the first pedal command.
       const nowForLook = performance.now();
-      const collecting = !d.pose && d.reason === "position_unknown" && d.worldSearch?.phase === "collecting_views";
+      const collecting = !d.pose && d.reason === "position_unknown";
       if (!commanded && strokes < 36 && collecting && nowForLook >= nextLook
           && nowForLook - frame.captured < 300) {
         lease ??= await openInput();

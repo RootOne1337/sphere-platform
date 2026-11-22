@@ -336,10 +336,16 @@ class WorldAcquisition:
             bank = self.bank
         return bank is not None and bank.covers(path)
 
-    def status(self):
+    def status(self, *, seeking_view=False):
         with self.lock:
+            # A previous geometry job may still run while the next attempt
+            # adds views. Older browser builds issue camera sweeps only in
+            # the collecting phase, so expose the foreground state separately.
+            phase = self.phase
+            accepting_views = seeking_view and len(self.samples) < 10
             return dict(
-                phase=self.phase,
+                phase="collecting_views" if accepting_views else phase,
+                computePhase=phase,
                 samples=len(self.samples),
                 tracking=self.bank is not None,
                 detailWidth=1920,

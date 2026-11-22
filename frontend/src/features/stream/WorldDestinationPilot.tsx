@@ -35,6 +35,7 @@ const searchPhases: Record<string, string> = {
   tracking: "Сверяем свежий кадр",
   no_verified_position: "Положение пока не подтверждено",
   search_error: "Сбой поиска по карте",
+  probe_reply_timeout: "Ответ по кадру опоздал. Ждём следующий кадр",
 };
 
 const reasons: Record<string, string> = {
@@ -145,7 +146,9 @@ export function WorldDestinationPilot({
   }, []);
   useEffect(() => {
     mounted.current = true;
-    const blur = () => stop(),
+    const blur = () => {
+        if (run.current || document.hidden) stop();
+      },
       key = (e: KeyboardEvent) => {
         if (e.key === "Escape") stop();
       },
@@ -191,7 +194,7 @@ export function WorldDestinationPilot({
         ({ frames, secondsLeft: seconds, phase, cameraSteps, cameraIssue: issue }) => {
           if (!c.signal.aborted)
             setProbeMessage(
-              `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Собираем ракурсы"}. Кадров ${frames}, команд камеры ${cameraSteps}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
+              `${issue ? problem(Error(issue)) + ". " : cameraIssue ? cameraIssue + ". " : ""}${searchPhases[phase ?? ""] ?? "Собираем ракурсы"}. Кадров ${frames}, подтверждённых поворотов ${cameraSteps}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
             );
         },
         !cameraIssue && openCamera ? (signal) => openCamera(signal, () => {}) : undefined,
@@ -352,7 +355,7 @@ export function WorldDestinationPilot({
                 ms >= 320
                   ? "Ответ по устаревшему кадру"
                   : (d.reason === "position_unknown" && d.worldSearch
-                      ? (searchPhases[d.worldSearch.phase] ?? reasons.position_unknown)
+                      ? (searchPhases[d.worldSearch.computePhase ?? d.worldSearch.phase] ?? reasons.position_unknown)
                       : (reasons[d.reason] ?? d.reason)),
               );
             }

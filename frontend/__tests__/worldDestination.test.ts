@@ -14,7 +14,9 @@ test('only current geometric decisions authorize input',()=>{
 
 
 
-test("position search turns a neutral camera, submits detail frames and closes the lease", async () => {
+test.each(["collecting_views", "verifying_geometry", "tracking"])(
+  "position search turns a neutral camera with no confirmed pose during %s",
+  async (phase) => {
   jest.useFakeTimers();
   const video = document.createElement("video");
   let frame = 0;
@@ -47,11 +49,12 @@ test("position search turns a neutral camera, submits detail frames and closes t
     pose: moved ? good.pose : null, district: "Проверка", ambiguous: false,
     screen: menu ? "menu_backdrop" : undefined,
     startLevels: { drive: 8 - frame % 2, walk: 7.5 },
-    worldSearch: { phase: "collecting_views", samples: 1, tracking: false, detailWidth: 1920 },
+    worldSearch: { phase, samples: 1, tracking: phase === "tracking", detailWidth: 1920 },
   }) } as Response));
   try {
     const running = probeWorldPosition(video, new AbortController().signal, 10000,
-      undefined, async () => ({ active: () => true, canLook: () => true, look, set, close }), {phase:"collecting_views", samples:0, tracking:false, detailWidth:1920});
+      undefined, async () => ({ active: () => true, canLook: () => true, look, set, close }),
+      {phase:"collecting_views", samples:0, tracking:false, detailWidth:1920});
     await jest.advanceTimersByTimeAsync(3500);
     await expect(running).resolves.toMatchObject({ supports: 37, startLevels: { drive: null, walk: 7.5 } });
     expect(look).toHaveBeenCalledTimes(1);

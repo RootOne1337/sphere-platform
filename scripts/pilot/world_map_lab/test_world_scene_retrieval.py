@@ -17,6 +17,23 @@ from scripts.pilot.world_map_lab.world_scene_acquisition import (
 from scripts.pilot.world_map_lab.world_scene_retrieval import infer_rotations
 
 
+@pytest.mark.parametrize("phase", ["global_search", "verifying_geometry", "tracking"])
+def test_awaiting_more_views_does_not_inherit_the_previous_search_phase(phase):
+    search = WorldAcquisition.__new__(WorldAcquisition)
+    search.lock = threading.Lock()
+    search.phase = phase
+    search.bank = object()
+    search.samples = []
+
+    assert search.status()["phase"] == phase
+    awaiting = search.status(seeking_view=True)
+    assert awaiting["phase"] == "collecting_views"
+    assert awaiting["computePhase"] == phase
+    assert awaiting["tracking"]
+    search.samples = [None] * 10
+    assert search.status(seeking_view=True)["phase"] == phase
+
+
 def test_survey_selects_real_road_faces_on_both_decks():
     faces = np.zeros(3, dtype=[("vertices", "i4"), ("xyz", "f4", (6, 3))])
     for f, (x, z) in zip(faces, [(2, 0), (35, 0), (35, 8)], strict=True):
