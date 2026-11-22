@@ -25,6 +25,37 @@ from scripts.pilot.world_map_lab.render_ariane_world import (
 )
 
 
+def mesh_primitives(raw, *, masked_only=False):
+    n = struct.unpack_from("<I", raw, 12)[0]
+    doc = json.loads(raw[20 : 20 + n])
+    body = memoryview(raw)[28 + n :]
+
+    def read(index):
+        a = doc["accessors"][index]
+        v = doc["bufferViews"][a["bufferView"]]
+        dtype = {5126: "<f4", 5123: "<u2", 5125: "<u4"}[a["componentType"]]
+        dims = {"SCALAR": 1, "VEC2": 2, "VEC3": 3}[a["type"]]
+        return np.frombuffer(
+            body,
+            dtype,
+            count=a["count"] * dims,
+            offset=v.get("byteOffset", 0) + a.get("byteOffset", 0),
+        ).reshape(-1, dims)
+
+    primitives = []
+    for part in doc["meshes"][0]["primitives"]:
+        if masked_only and doc["materials"][part["material"]].get("alphaMode") != "MASK":
+            continue
+        attrs = part["attributes"]
+        tri = read(part["indices"]).reshape(-1, 3)
+        mat = doc["materials"][part["material"]]["pbrMetallicRoughness"]["baseColorTexture"][
+            "index"
+        ]
+        key = Path(doc["images"][doc["textures"][mat]["source"]]["uri"]).stem
+        primitives.append((read(attrs["POSITION"]), read(attrs["TEXCOORD_0"]), tri, key))
+    return primitives
+
+
 class StreetTiles:
     pixels = 512
     spans = (256, 64)
@@ -70,32 +101,7 @@ class StreetTiles:
         raw = gzip.decompress(
             self.db.execute("select glb from model where id=?", (model,)).fetchone()[0]
         )
-        n = struct.unpack_from("<I", raw, 12)[0]
-        doc = json.loads(raw[20 : 20 + n])
-        body = memoryview(raw)[28 + n :]
-
-        def read(index):
-            a = doc["accessors"][index]
-            v = doc["bufferViews"][a["bufferView"]]
-            dtype = {5126: "<f4", 5123: "<u2", 5125: "<u4"}[a["componentType"]]
-            dims = {"SCALAR": 1, "VEC2": 2, "VEC3": 3}[a["type"]]
-            return np.frombuffer(
-                body,
-                dtype,
-                count=a["count"] * dims,
-                offset=v.get("byteOffset", 0) + a.get("byteOffset", 0),
-            ).reshape(-1, dims)
-
-        primitives = []
-        for part in doc["meshes"][0]["primitives"]:
-            attrs = part["attributes"]
-            tri = read(part["indices"]).reshape(-1, 3)
-            mat = doc["materials"][part["material"]]["pbrMetallicRoughness"]["baseColorTexture"][
-                "index"
-            ]
-            key = Path(doc["images"][doc["textures"][mat]["source"]]["uri"]).stem
-            primitives.append((read(attrs["POSITION"]), read(attrs["TEXCOORD_0"]), tri, key))
-        return primitives
+        return mesh_primitives(raw)
 
     def tile(self, span, col, row):
         left, right, bottom, top = self.bounds

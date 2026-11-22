@@ -7,6 +7,7 @@ import numpy as np
 
 from scripts.pilot.world_map_lab.destination_itinerary import fmt
 from scripts.pilot.world_map_lab.pedestrian_clearance import can_jump, continuous_floor
+from scripts.pilot.world_map_lab.pedestrian_visibility import PedestrianVisibility
 from scripts.pilot.world_map_lab.survey_clearance import measure
 from scripts.pilot.world_map_lab.world_navmesh import spatial_index
 
@@ -19,6 +20,16 @@ class FootSurface:
         bounds = road.meta["bounds"]
         self.index, self.chunks = spatial_index(self.data, bounds)
         self.origin = bounds[0], bounds[3]
+        detail = Path(folder) / "detail-scene.sqlite"
+        self.visibility = (
+            PedestrianVisibility(detail, road.meta["placementRevision"])
+            if detail.is_file()
+            else None
+        )
+
+    def close(self):
+        if self.visibility:
+            self.visibility.close()
 
     def sweep(self, start, end):
         row = measure(
@@ -81,7 +92,11 @@ class FootSurface:
         heading = math.atan2(offset[1], offset[0])
         lookahead = min(max(1.0, np.linalg.norm(offset)), 3.0)
         side = 1 if avoid_bias >= 0 else -1
+        best_cost, best = math.inf, None
         for turn in (0, 0.38, -0.38, 0.74, -0.74, 1.18, -1.18, 1.58, -1.58, 2.13, -2.13, math.pi):
+            direction_cost = 0.18 * abs(turn)
+            if direction_cost >= best_cost:
+                break
             angle = heading + turn * side
             end = start + lookahead * np.array([math.cos(angle), math.sin(angle), 0])
             levels = self.road.levels(*end[:2], mode="walk")
@@ -89,8 +104,11 @@ class FootSurface:
             if nearby:
                 end[2] = min(nearby, key=lambda z: abs(start[2] - z))
                 if self.clear_or_exiting(start, end):
-                    return end[:2]
-        return None
+                    exposure = self.visibility.exposure(eye, end) if self.visibility else 0
+                    cost = direction_cost + 4 * exposure
+                    if cost < best_cost:
+                        best_cost, best = cost, end[:2]
+        return best
 
     def low_barrier(self, eye, height, heading):
         start = np.array([*eye[:2], eye[2] - height])

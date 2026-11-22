@@ -30,8 +30,8 @@ def read_config(path):
     return cfg
 
 
-def acquire(cfg, frames, output, planner, report):
-    """Global retrieval, local road sampling, image-to-mesh verification. No start coordinate."""
+def acquire(cfg, frames, output, planner, report, *, walk_anchor=None, walk_folder=None):
+    """Retrieve a fresh world pose, optionally searching near a recent verified walking pose."""
     output.mkdir(parents=True, exist_ok=True)
     if not 1 <= len(frames) <= 24:
         raise ValueError("expected a bounded set of camera views")
@@ -68,8 +68,31 @@ def acquire(cfg, frames, output, planner, report):
     coarse, fine = output / "global.json", output / "local.json"
     gallery, index = output / "views", output / "local.npy"
     focal = str(cfg["focalAt640"])
-    report("global_search")
-    encode(cfg["gallery"], "search", "--stream-focal", focal, cfg["index"], coarse, *frames)
+    if walk_anchor is None:
+        report("global_search")
+        encode(cfg["gallery"], "search", "--stream-focal", focal, cfg["index"], coarse, *frames)
+        spacing, regions, radius = 10, 3, 110
+    else:
+        anchor = np.asarray(walk_anchor, dtype=float)
+        if anchor.shape != (3,) or not np.isfinite(anchor).all() or walk_folder is None:
+            raise ValueError("walking recovery needs a verified eye position and walk mesh")
+        revision = json.loads((cfg["folder"] / "journey/route.json").read_bytes())["revision"]
+        coarse.write_text(
+            json.dumps(
+                {
+                    "revision": revision,
+                    "results": [
+                        {
+                            "frames": [0],
+                            "distinctDirections": 1,
+                            "candidates": [{"eye": anchor.tolist()}],
+                        }
+                    ],
+                }
+            ),
+            encoding="utf8",
+        )
+        spacing, regions, radius = 4, 1, 16
     report("rendering_candidates")
     execute(
         sys.executable,
@@ -79,12 +102,13 @@ def acquire(cfg, frames, output, planner, report):
             cfg["folder"],
             "--planner",
             planner,
+            *(["--surface", "walk", "--face-folder", walk_folder] if walk_folder else []),
             "--spacing",
-            10,
+            spacing,
             "--regions",
-            3,
+            regions,
             "--radius",
-            110,
+            radius,
             "--candidates",
             coarse,
             "--output",

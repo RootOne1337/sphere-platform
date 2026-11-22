@@ -90,7 +90,9 @@ def build(args):
     if not 4 <= args.spacing <= 512:
         raise ValueError("invalid survey spacing")
     road = RoadMap(args.planner)
-    with np.load(args.folder / "drive-faces.npz", allow_pickle=False) as archive:
+    surface = getattr(args, "surface", "drive")
+    face_folder = getattr(args, "face_folder", None) or args.folder
+    with np.load(face_folder / f"{surface}-faces.npz", allow_pickle=False) as archive:
         if str(archive["geometry"]) != road.meta["geometrySha256"]:
             raise ValueError("road source mismatch")
         faces = archive["faces"]
@@ -104,13 +106,17 @@ def build(args):
             seeds = candidate_regions(search, args.regions)
             if not seeds:
                 raise ValueError("no world search candidates")
-            counts = faces["vertices"]
-            mask = np.arange(faces["xyz"].shape[1])[None, :] < counts[:, None]
-            center = np.where(mask[:, :, None], faces["xyz"], 0).sum(1) / counts[:, None]
-            eligible = np.zeros(len(faces), dtype=bool)
-            for eye in seeds:
-                eligible |= np.linalg.norm(center[:, :2] - eye[:2], axis=1) <= args.radius
-            faces = faces[eligible]
+            nearby = []
+            for start in range(0, len(faces), 32768):
+                part = faces[start : start + 32768]
+                # The exported face buffer is zero-padded after the final vertex.
+                centers = part["xyz"][:, :, :2].sum(1) / part["vertices"][:, None]
+                eligible = np.zeros(len(part), dtype=bool)
+                for eye in seeds:
+                    eligible |= np.sum((centers - eye[:2]) ** 2, axis=1) <= args.radius**2
+                if eligible.any():
+                    nearby.append(part[eligible])
+            faces = np.concatenate(nearby) if nearby else faces[:0]
         sites = select_sites(faces, args.spacing)
         if not sites:
             raise ValueError("no road surfaces in the search area")
@@ -129,6 +135,8 @@ def build(args):
         eyes=sites,
         renderer=hashlib.sha256(CAPTURE.encode()).hexdigest(),
     )
+    if surface == "walk":
+        manifest["surface"] = surface
     if args.candidates:
         manifest["parentSearch"] = hashlib.sha256(args.candidates.read_bytes()).hexdigest()
         manifest["candidateRadius"] = args.radius
@@ -177,6 +185,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--folder", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--surface", choices=("drive", "walk"), default="drive")
+    parser.add_argument("--face-folder", type=Path, help="Published surface pack for the same map")
     parser.add_argument("--spacing", type=int, default=128)
     parser.add_argument("--planner", default="http://127.0.0.1:8817")
     parser.add_argument(
