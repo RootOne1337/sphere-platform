@@ -95,10 +95,10 @@ export class TeachingContacts {
       this.set(this.cameraId,{x:Math.round(from.x+dx*scale),y:Math.round(from.y+dy*scale)},path.deadline);
     },16);
   }
-  horizontalStroke(origin:TeachingPoint,targetX:number,notAfter:number):Promise<boolean> {
+  horizontalStroke(origin:TeachingPoint,targetX:number,notAfter:number,wideSearch=false):Promise<boolean> {
     if(!this.isReady||!this.isNeutral||this.stroke||this.hasContact(this.cameraId)||!this.fresh()||performance.now()>=notAfter
       ||!Number.isFinite(notAfter)||notAfter-performance.now()>250||notAfter-performance.now()<170||!Number.isInteger(targetX)||targetX===origin.x
-      ||Math.abs(targetX-origin.x)>Math.min(this.binding.width,this.binding.height)*.04+1)return Promise.resolve(false);
+      ||Math.abs(targetX-origin.x)>Math.min(this.binding.width,this.binding.height)*(wideSearch ? 0.18 : 0.04)+1)return Promise.resolve(false);
     return new Promise(resolve=>{
       this.stroke={id:this.cameraId,origin:{...origin},target:{x:targetX,y:origin.y},deadline:notAfter,phase:'down',
         step:0,lastEdgeAt:performance.now(),timer:null,finish:resolve};

@@ -265,14 +265,14 @@ export async function probeWorldPosition(
       }
       const phase = result.worldSearch?.phase;
       if (openCamera && !cameraIssue && !previous && !search.aborted &&
-          cameraSteps < 24 && now >= nextStroke &&
+          cameraSteps < 12 && now >= nextStroke &&
           (!phase || ["collecting_views", "no_verified_position", "search_error"].includes(phase))) {
         try {
           camera ??= await openCamera(search);
           if (search.aborted || !camera.active() || !camera.look) throw Error("world_camera_unavailable");
           if (camera.canLook?.() === true) {
             // Sweep one side and then cross the starting direction. The walking stick stays neutral.
-            const fraction = cameraSteps < 8 ? 0.038 : -0.038;
+            const fraction = cameraSteps < 4 ? 0.16 : -0.16;
             if (await camera.look(fraction, performance.now() + 240)) cameraSteps++;
             nextStroke = performance.now() + 500;
           } else {
