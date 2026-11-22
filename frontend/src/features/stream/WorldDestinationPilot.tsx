@@ -337,18 +337,21 @@ export function WorldDestinationPilot({
     window.history.replaceState(window.history.state, "", url);
     void choose(x, y);
   }
+  const walkItinerary = multiple && itinerary.mode === "walk";
+  const onFoot = walkItinerary || (walking && !multiple);
+  const eligible = walkItinerary
+    ? info?.walkAutopilot === true && itinerary.stops.length > 0 &&
+      itinerary.stops.every((stop) => stop.mode === "walk" && stop.z !== null)
+    : multiple
+      ? itinerary.mode === "drive" && itinerary.plan?.status === "complete" && itinerary.plan.covered
+      : level !== null && !!point && (onFoot ? info?.walkAutopilot === true : covered.includes(level));
+  const currentIssue = onFoot ? walkIssue ?? cameraIssue : inputIssue;
   async function start() {
     const el = video.current;
-    const onFoot = walking && !multiple;
     if (
       !el ||
       !info ||
-      (multiple
-        ? itinerary.mode !== "drive" ||
-          !itinerary.plan?.covered ||
-          itinerary.plan.status !== "complete"
-        : !point || level === null || (onFoot ? !info.walkAutopilot : !covered.includes(level))) ||
-      (onFoot ? walkIssue || cameraIssue || !openWalk || !openCamera : inputIssue) ||
+      !eligible || currentIssue || (onFoot && (!openWalk || !openCamera)) ||
       !ready ||
       run.current ||
       probe.current
@@ -406,6 +409,7 @@ export function WorldDestinationPilot({
           ? {
               stops: itinerary.stops.map((p) => [...p.xy, p.z]),
               revision: info.mapRevision,
+              ...(walkItinerary ? { mode: "walk" } : {}),
             }
           : { goal: [...point!, level], revision: info.mapRevision, ...(onFoot ? { mode: "walk" } : {}) },
       );
@@ -462,12 +466,6 @@ export function WorldDestinationPilot({
       if (mounted.current) setActive(false);
     }
   }
-  const eligible = multiple
-    ? itinerary.mode === "drive" &&
-      itinerary.plan?.status === "complete" &&
-      itinerary.plan.covered
-    : level !== null && (walking ? info?.walkAutopilot === true : covered.includes(level));
-  const currentIssue = walking && !multiple ? walkIssue ?? cameraIssue : inputIssue;
   const previewLegs = preview && typeof preview !== "string" && preview.status === "complete"
     ? preview.legs
     : undefined;
@@ -539,23 +537,15 @@ export function WorldDestinationPilot({
       <div className={styles.tripFooter}>
         {multiple ? (
           <>
-            {observation && liveStartFresh && ready && !active && (
+            {observation && liveStartFresh && ready && !active && itinerary.mode === "drive" && (
               <div className={styles.tripAction}>
-                {(["walk", "drive"] as const).map((mode) => {
-                  const z = observation.startLevels[mode];
-                  if (z === null) return null;
-                  return (
-                    <Button key={mode} size="sm" variant="outline" onClick={() => {
-                      if (performance.now() - observation.acquiredAt >= 30000) return;
-                      itinerary.useLiveStart([observation.eye[0], observation.eye[1], z], mode);
-                    }}>
-                      {mode === "walk" ? "Поставить A на тротуаре" : "Поставить A на дороге"}
-                    </Button>
-                  );
-                })}
-                {Object.values(observation.startLevels).every((z) => z === null) && (
-                  <small>Позиция найдена. Под ней пока не подтверждён тротуар или уровень дороги.</small>
-                )}
+                <Button size="sm" variant="outline" disabled={observation.startLevels.drive === null} onClick={() => {
+                  const z = observation.startLevels.drive;
+                  if (z === null || performance.now() - observation.acquiredAt >= 30000) return;
+                  itinerary.useLiveStart([observation.eye[0], observation.eye[1], z], "drive");
+                }}>
+                  Поставить A на дороге
+                </Button>
               </div>
             )}
             <WorldItinerary model={itinerary} locked={active} />
@@ -648,19 +638,20 @@ export function WorldDestinationPilot({
               : ""}
           </p>
         )}
-        {((!multiple && point && level !== null && !eligible) ||
+        {((walkItinerary && itinerary.stops.length > 0 && !info?.walkAutopilot) ||
+          (!multiple && point && level !== null && !eligible) ||
           (multiple && itinerary.plan?.status === "complete" && !eligible)) && (
           <p className={styles.attention}>
-            {multiple
+            {onFoot ? "Служба карты не поддерживает пешее управление."
+              : multiple
               ? "Путь рассчитан. Автопоездка доступна на транспортных участках с проверенными ориентирами."
-              : walking ? "Служба карты не поддерживает пешее управление."
-                : "Дорога найдена. Для автопоездки здесь ещё нужны визуальные ориентиры."}
+              : "Дорога найдена. Для автопоездки здесь ещё нужны визуальные ориентиры."}
           </p>
         )}
         {data && (
           <p className={styles.status}>
             Опор {data.pose?.supports ?? 0} · Кадр до решения {age} мс
-            {walking && commandAge != null && ` · Кадр до команды ${commandAge} мс`}
+            {onFoot && commandAge != null && ` · Кадр до команды ${commandAge} мс`}
             {data.remaining != null
               ? " · Осталось " + data.remaining.toFixed(1) + " м"
               : ""}
@@ -676,8 +667,8 @@ export function WorldDestinationPilot({
               disabled={!ready || !!currentIssue || !eligible || probing}
               onClick={() => void start()}
             >
-              {walking && !multiple ? <Footprints size={15} /> : <Navigation size={15} />}
-              {multiple ? "Ехать по точкам" : walking ? "Идти к метке" : "Ехать к метке"}
+              {onFoot ? <Footprints size={15} /> : <Navigation size={15} />}
+              {multiple ? (onFoot ? "Идти по точкам" : "Ехать по точкам") : onFoot ? "Идти к метке" : "Ехать к метке"}
             </Button>
           )}
           {!active && currentIssue && (

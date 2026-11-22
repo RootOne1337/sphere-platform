@@ -211,7 +211,9 @@ export function WorldItinerary({
       </label>
       {!stops.length && (
         <p>
-          Нажмите на карту для точки A, затем добавьте B и следующие остановки.
+          {mode === "walk"
+            ? "Отметьте A и следующие цели. Старт определится по кадрам игры."
+            : "Нажмите на карту для точки A, затем добавьте B и следующие остановки."}
         </p>
       )}
       {stops.length > 0 && (
@@ -316,7 +318,7 @@ export function WorldItinerary({
                   : "Нет связного пути к точке ") + letter(plan.stop ?? 0)
               : stops.length === 18
                 ? "Достигнут предел в 18 точек"
-                : stops.length === 1
+                : stops.length === 1 && mode !== "walk"
                   ? "Выберите следующую точку на карте"
                   : stops.length >= 2 && !unresolved
                     ? "Строим маршрут…"
