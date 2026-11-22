@@ -30,11 +30,45 @@ def read_config(path):
     return cfg
 
 
-def acquire(cfg, frames, output, planner, report, *, walk_anchor=None, walk_folder=None):
+def material_regions(coarse, cues, references):
+    if (
+        cues["revision"] != coarse["revision"]
+        or [view["sha256"] for view in cues["frames"]] != coarse["frameDigests"]
+    ):
+        raise ValueError("material search does not match the RGB batch and map revision")
+    extra = []
+    for area in [row for row in cues["areas"] if row["materials"] >= 2][:2]:
+        center = [area["x"], area["y"]]
+        height = min(references, key=lambda p: math.dist(p[:2], center))[2]
+        extra.append(dict(eye=[*center, height], source="material-correspondences"))
+    return {
+        **coarse,
+        "results": [
+            {**group, "candidates": extra + group["candidates"]} for group in coarse["results"]
+        ],
+    }
+
+
+def acquire(
+    cfg,
+    frames,
+    output,
+    planner,
+    report,
+    *,
+    walk_anchor=None,
+    walk_folder=None,
+    wide_search=False,
+    material_index=None,
+):
     """Retrieve a fresh world pose, optionally searching near a recent verified walking pose."""
     output.mkdir(parents=True, exist_ok=True)
     if not 1 <= len(frames) <= 24:
         raise ValueError("expected a bounded set of camera views")
+    if (wide_search or material_index) and walk_anchor is not None:
+        raise ValueError("alternate search is only available for cold recognition")
+    if wide_search and material_index:
+        raise ValueError("choose one alternate search")
     prefix = "scripts.pilot.world_map_lab."
 
     def execute(executable, module, args):
@@ -71,7 +105,21 @@ def acquire(cfg, frames, output, planner, report, *, walk_anchor=None, walk_fold
     if walk_anchor is None:
         report("global_search")
         encode(cfg["gallery"], "search", "--stream-focal", focal, cfg["index"], coarse, *frames)
-        spacing, regions, radius = (10, 2, 75) if len(frames) == 1 else (10, 3, 110)
+        if wide_search:
+            spacing, regions, radius = 24, 12, 155
+        elif material_index:
+            from scripts.pilot.world_map_lab.world_material_search import search
+
+            report("material_search")
+            cues = search(material_index, frames)
+            (output / "materials.json").write_text(json.dumps(cues), encoding="utf8")
+            refs = json.loads((cfg["gallery"] / "survey.json").read_bytes())["eyes"]
+            merged = material_regions(json.loads(coarse.read_bytes()), cues, refs)
+            coarse = output / "global-with-materials.json"
+            coarse.write_text(json.dumps(merged), encoding="utf8")
+            spacing, regions, radius = 12, 3, 110
+        else:
+            spacing, regions, radius = (10, 2, 75) if len(frames) == 1 else (10, 3, 110)
     else:
         anchor = np.asarray(walk_anchor, dtype=float)
         if anchor.shape != (3,) or not np.isfinite(anchor).all() or walk_folder is None:
@@ -417,6 +465,17 @@ if __name__ == "__main__":
     p.add_argument("--config", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--planner", default="http://127.0.0.1:8817")
+    alternate = p.add_mutually_exclusive_group()
+    alternate.add_argument(
+        "--wide-search",
+        action="store_true",
+        help="Verify more image-retrieved map areas with a coarser survey",
+    )
+    alternate.add_argument(
+        "--material-index",
+        type=Path,
+        help="Rank areas using an additional index built from source-map textures",
+    )
     p.add_argument("frames", type=Path, nargs="+")
     args = p.parse_args()
     result = acquire(
@@ -425,5 +484,7 @@ if __name__ == "__main__":
         args.output,
         args.planner,
         lambda phase: print(phase, flush=True),
+        wide_search=args.wide_search,
+        material_index=args.material_index,
     )
     print(json.dumps({k: v for k, v in result.items() if k != "comparisons"}))

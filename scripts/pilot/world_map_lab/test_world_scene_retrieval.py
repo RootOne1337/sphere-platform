@@ -9,7 +9,11 @@ import pytest
 from scripts.pilot.world_map_lab import world_scene_acquisition as acquisition
 from scripts.pilot.world_map_lab.render_world_search_views import candidate_regions, select_sites
 from scripts.pilot.world_map_lab.verify_world_scene_candidates import consistent_views
-from scripts.pilot.world_map_lab.world_scene_acquisition import WorldAcquisition, same_view
+from scripts.pilot.world_map_lab.world_scene_acquisition import (
+    WorldAcquisition,
+    material_regions,
+    same_view,
+)
 from scripts.pilot.world_map_lab.world_scene_retrieval import infer_rotations
 
 
@@ -116,6 +120,31 @@ def test_single_view_search_starts_early_and_keeps_new_views_during_a_job(tmp_pa
     frame(9, before)
     assert len(jobs) == 2 and len(jobs[1]) == 1
     assert jobs[0][0] != jobs[1][0]
+
+
+def test_material_proposals_keep_world_candidates_and_bind_to_the_image_batch():
+    coarse = {
+        "revision": "world",
+        "frameDigests": ["image-a"],
+        "results": [{"frames": [0], "candidates": [{"eye": [31, 42, 8]}]}],
+    }
+    cues = {
+        "revision": "world",
+        "frames": [{"sha256": "image-a"}],
+        "areas": [
+            {"x": 9, "y": 12, "materials": 1},
+            {"x": 31, "y": 34, "materials": 2},
+        ],
+    }
+    merged = material_regions(coarse, cues, [[1, 2, 3], [30, 40, 8]])
+    assert merged["results"][0]["candidates"] == [
+        {"eye": [31, 34, 8], "source": "material-correspondences"},
+        {"eye": [31, 42, 8]},
+    ]
+    assert len(coarse["results"][0]["candidates"]) == 1
+    cues["frames"][0]["sha256"] = "image-b"
+    with pytest.raises(ValueError, match="image|RGB"):
+        material_regions(coarse, cues, [[1, 2, 3]])
 
 
 def test_refinement_budget_goes_to_distinct_supported_regions():
