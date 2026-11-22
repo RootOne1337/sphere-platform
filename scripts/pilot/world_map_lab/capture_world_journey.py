@@ -28,8 +28,13 @@ def render(args):
     route_hash = digest(folder / "route.json")
     payload = None
     model = "faggio"
+    focal_at_640 = args.focal_at_640
     if args.attempt:
         stats = json.loads((dest / "rgb-drive.json").read_bytes())
+        if focal_at_640 is None:
+            focal_at_640 = stats.get("camera", {}).get("focalAt640")
+        if focal_at_640 is not None and not 80 <= focal_at_640 <= 1200:
+            raise ValueError("invalid focal length in trace")
         rows = [json.loads(line) for line in (dest / "telemetry.jsonl").read_bytes().splitlines()]
         if (
             not rows
@@ -51,6 +56,12 @@ def render(args):
             dt=0.2,
             result=stats["result"],
             title=args.title,
+            eyeHeight=args.eye_height,
+            verticalFov=(
+                math.degrees(2 * math.atan(180 / focal_at_640))
+                if focal_at_640 is not None
+                else None
+            ),
         )
 
     hashes = {
@@ -76,7 +87,18 @@ def render(args):
         hashes["attemptRoute"] = digest(dest / "route.json")
     key = hashlib.sha256(
         json.dumps(
-            [hashes, route_hash, args.width, args.height, args.bitrate, args.title], sort_keys=True
+            [
+                hashes,
+                route_hash,
+                args.width,
+                args.height,
+                args.bitrate,
+                args.title,
+                args.detail_radius,
+                args.eye_height,
+                focal_at_640,
+            ],
+            sort_keys=True,
         ).encode()
     ).hexdigest()[:16]
     chunks = dest / ("frames-" + key)
@@ -96,7 +118,10 @@ def render(args):
             page.add_init_script(
                 script="window.captureAttempt=" + json.dumps(payload, separators=(",", ":"))
             )
-        page.goto(args.url.rstrip("/") + "/explore?capture=1&model=" + model, timeout=120000)
+        page.goto(
+            args.url.rstrip("/") + f"/explore?capture=1&model={model}&detail={args.detail_radius}",
+            timeout=120000,
+        )
         page.wait_for_function("window.journey || window.journeyError", timeout=180000)
         if message := page.evaluate("window.journeyError || null"):
             raise RuntimeError(message)
@@ -227,6 +252,9 @@ def render(args):
         mode="recorded_rgb_control" if payload else "planned_motion_in_offline_scene",
         result=payload["result"] if payload else None,
         vehicle=model,
+        detailRadius=args.detail_radius,
+        eyeHeight=args.eye_height,
+        focalAt640=focal_at_640,
     )
     temp.replace(dest / "film.mp4")
     receipt = dest / "film.partial.json"
@@ -249,6 +277,9 @@ if __name__ == "__main__":
     cli.add_argument("--width", default=1920, type=int)
     cli.add_argument("--height", default=1080, type=int)
     cli.add_argument("--bitrate", default=9000000, type=int)
+    cli.add_argument("--detail-radius", default=320, type=int, choices=(320, 640, 960))
+    cli.add_argument("--eye-height", default=1.68, type=float)
+    cli.add_argument("--focal-at-640", type=float)
     cli.add_argument(
         "--chrome",
         default=str(
@@ -256,4 +287,9 @@ if __name__ == "__main__":
             / "Google/Chrome/Application/chrome.exe"
         ),
     )
-    render(cli.parse_args())
+    args = cli.parse_args()
+    if not 0.8 <= args.eye_height <= 2.4 or (
+        args.focal_at_640 is not None and not 80 <= args.focal_at_640 <= 1200
+    ):
+        cli.error("invalid recording camera calibration")
+    render(args)

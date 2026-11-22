@@ -309,9 +309,10 @@ async () => {
       16,
       row.visualConfirmed ? colors.mint : colors.gold,
     );
-    bar(c, 1168, 525, "Газ", idx < 0 ? 0 : row.throttle, colors.mint);
-    bar(c, 1168, 555, "Тормоз", idx < 0 ? 0 : row.brake, colors.gold);
-    bar(c, 1168, 585, "Руль", idx < 0 ? 0 : row.steering, colors.cyan, true);
+    const walking = row.mode === "walk";
+    bar(c, 1168, 525, walking ? "Ускорение" : "Газ", idx < 0 ? 0 : row.throttle, colors.mint);
+    bar(c, 1168, 555, walking ? "Замедление" : "Тормоз", idx < 0 ? 0 : row.brake, colors.gold);
+    bar(c, 1168, 585, walking ? "Поворот" : "Руль", idx < 0 ? 0 : row.steering, colors.cyan, true);
     const progress = Math.min(
       1,
       Math.max(0, s.distance / Math.max(0.001, journey.length)),

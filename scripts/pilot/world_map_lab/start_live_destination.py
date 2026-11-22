@@ -12,6 +12,8 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+from scripts.pilot.world_map_lab.detail_scene_service import detail_appearance
+
 
 def code_digest():
     folder = Path(__file__).resolve().parent
@@ -21,6 +23,9 @@ def code_digest():
         "live_destination_atlas.py",
         "destination_tiles.py",
         "destination_detail.py",
+        "detail_scene_service.py",
+        "ariane_terrain_materials.mjs",
+        "journey_scene.mjs",
         "destination_itinerary.py",
         "world_scene_acquisition.py",
         "world_scene_retrieval.py",
@@ -85,6 +90,7 @@ def main():
         "--water", type=Path, help="Source data/water.dat for detailed street map tiles"
     )
     parser.add_argument("--world-search-config", type=Path)
+    parser.add_argument("--texture-pack", type=Path)
     parser.add_argument("--menu-background", type=Path)
     parser.add_argument("--drive-region", action="append", default=[], metavar="DISTRICT")
     parser.add_argument("--search-hfov", action="append", type=float, default=[])
@@ -94,12 +100,24 @@ def main():
     adapter = (folder / "journey/ariane-nav.dll").resolve(strict=True)
     logs = args.logs.resolve()
     logs.mkdir(parents=True, exist_ok=True)
+    texture_pack = args.texture_pack.resolve(strict=True) if args.texture_pack else None
     road = start(
         "scripts.pilot.world_map_lab.serve_world_navmesh",
-        ["--folder", folder, "--adapter", adapter, "--port", "8817"],
+        [
+            "--folder",
+            folder,
+            "--adapter",
+            adapter,
+            "--port",
+            "8817",
+            *(["--detail-folder", texture_pack] if texture_pack else []),
+        ],
         "http://127.0.0.1:8817/api/world",
         logs,
     )
+    appearance = detail_appearance(texture_pack) if texture_pack else None
+    if appearance and road.get("detailAppearance") != appearance:
+        raise ValueError("The map server is still serving a different texture pack")
     search_args = []
     for angle in args.search_hfov:
         search_args.extend(["--search-hfov", str(angle)])
@@ -123,6 +141,8 @@ def main():
             expected[label] = hashlib.file_digest(source, "sha256").hexdigest()
     if args.water:
         search_args.extend(["--detail-folder", folder, "--water", args.water.resolve(strict=True)])
+    if texture_pack:
+        search_args.extend(["--texture-pack", texture_pack])
     visual = start(
         "scripts.pilot.world_map_lab.live_destination",
         ["--atlas", atlas, "--logs", logs, *search_args],
@@ -139,6 +159,14 @@ def main():
         or visual.get("menuBackgroundDigest") != menu_digest
         or visual.get("driveRegions", []) != args.drive_region
         or (args.water and not visual.get("streetTiles"))
+        or (
+            appearance
+            and args.water
+            and any(
+                (visual.get("streetTiles") or {}).get(key) != appearance[key]
+                for key in ("textureLimit", "layeredMaterials")
+            )
+        )
         or visual.get("atlasDigest") != digest
         or visual.get("mapRevision") != road["drive"]["placementRevision"]
     ):

@@ -73,6 +73,10 @@ async function main() {
     createWorld(canvas, { ...config, detailRadius }, model),
     createImageBitmap(await (await fetch("/journey/terrain.jpg")).blob()),
   ]);
+  if (Number.isFinite(replay?.verticalFov)) {
+    world.camera.fov = replay.verticalFov;
+    world.camera.updateProjectionMatrix();
+  }
   const trip = free
       ? null
       : new Itinerary(route, {
@@ -626,7 +630,7 @@ async function main() {
         world.draw([
           p[0],
           p[1],
-          p[2] + (mounted ? world.eyeHeight : 1.68),
+          p[2] + (mounted ? world.eyeHeight : (replay.eyeHeight ?? 1.68)),
           yaw + pan,
           -0.045 + 0.004 * Math.sin((a.frame - 1) * 0.13),
         ]);

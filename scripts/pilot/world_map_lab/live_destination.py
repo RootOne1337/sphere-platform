@@ -345,11 +345,10 @@ def serve(args):
         return locator.covers(path) or any(bank.covers(path) for bank in drive_banks.values())
 
     tiles = DestinationTiles(road.base)
+    texture_pack = getattr(args, "texture_pack", None) or args.detail_folder
     detail = (
-        StreetTiles(
-            args.detail_folder, args.water, road.meta["bounds"], road.meta["placementRevision"]
-        )
-        if args.detail_folder and args.water
+        StreetTiles(texture_pack, args.water, road.meta["bounds"], road.meta["placementRevision"])
+        if texture_pack and args.water
         else None
     )
     cv2.setNumThreads(3)
@@ -775,6 +774,7 @@ if __name__ == "__main__":
     p.add_argument("--drive-region", action="append", default=[], metavar="DISTRICT")
     p.add_argument("--search-hfov", action="append", type=float, default=[])
     p.add_argument("--detail-folder", type=Path)
+    p.add_argument("--texture-pack", type=Path, help="Street textures for the same map revision")
     p.add_argument("--water", type=Path)
     p.add_argument("--port", type=int, default=8849)
     serve(p.parse_args())

@@ -69,6 +69,8 @@ class StreetTiles:
             meta = json.loads(con.execute("select value from meta").fetchone()[0])
         if meta["revision"] != revision or water_file.name != "water.dat":
             raise ValueError("street geometry or water source does not match the map")
+        self.texture_limit = meta.get("textureLimit")
+        self.layered_materials = meta.get("layeredMaterials", 0)
         self.bounds = bounds
         with db.open("rb") as f:
             signature = hashlib.file_digest(f, "sha256").hexdigest()
@@ -90,7 +92,13 @@ class StreetTiles:
         self.textures = lru_cache(maxsize=96)(self._texture)
 
     def manifest(self):
-        return dict(revision=self.version, spans=self.spans, pixels=self.pixels)
+        return dict(
+            revision=self.version,
+            spans=self.spans,
+            pixels=self.pixels,
+            textureLimit=self.texture_limit,
+            layeredMaterials=self.layered_materials,
+        )
 
     def _texture(self, key):
         row = self.db.execute("select png from texture where key=?", (key,)).fetchone()

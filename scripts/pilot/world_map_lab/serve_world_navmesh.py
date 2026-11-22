@@ -15,7 +15,11 @@ from urllib.parse import parse_qs, urlsplit
 
 import numpy as np
 
-from scripts.pilot.world_map_lab.detail_scene_service import read_scene, scene_files
+from scripts.pilot.world_map_lab.detail_scene_service import (
+    detail_appearance,
+    read_scene,
+    scene_files,
+)
 from scripts.pilot.world_map_lab.journey_runs import JourneyRuns
 from scripts.pilot.world_map_lab.pedestrian_surface import FootSurface
 from scripts.pilot.world_map_lab.taxi_surface import TaxiSurface
@@ -127,6 +131,7 @@ def serve(folder, port, adapter=None, *, walk_folder=None, detail_folder=None):
                 raise FileNotFoundError(file)
 
         files.update(scene_files(folder, nets, detail_folder=detail_folder))
+        appearance = detail_appearance(detail_folder or folder) if "/detail" in files else None
         examples = {}
         paved_example = walk_folder / "pavement-example.json"
         if pavement and paved_example.is_file():
@@ -359,6 +364,7 @@ def serve(folder, port, adapter=None, *, walk_folder=None, detail_folder=None):
                             "review": "/review" in files,
                             "detail": "/detail" in files,
                             "detailMaxRadius": 960 if "/detail" in files else None,
+                            "detailAppearance": appearance,
                             "explore": "/explore" in files,
                             "gameplay": "/gameplay" in files,
                             "classicGame": "/classic-game" in files,

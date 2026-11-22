@@ -1043,6 +1043,11 @@ def run(args):
         publish_status(output_dir, result, rows[-1] if rows else None)
     out = output_dir / "rgb-drive.json"
     report = dict(result=result, rows=rows, disturbance=disturbance)
+    report["camera"] = dict(
+        eyeHeight=eye_height,
+        focalAt640=calibration,
+        detailRadius=getattr(args, "detail_radius", None),
+    )
     if startup_ms is not None:
         report["startupMs"] = startup_ms
     out.write_text(json.dumps(report, separators=(",", ":")), encoding="utf8")

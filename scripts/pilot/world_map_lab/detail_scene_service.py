@@ -17,6 +17,18 @@ VENDOR = {
 }
 
 
+def detail_appearance(folder):
+    path = folder / "detail-scene.sqlite"
+    uri = path.resolve(strict=True).as_uri() + "?mode=ro&immutable=1"
+    with closing(sqlite3.connect(uri, uri=True)) as db:
+        meta = json.loads(db.execute("select value from meta").fetchone()[0])
+    return dict(
+        placementRevision=meta["revision"],
+        textureLimit=meta.get("textureLimit"),
+        layeredMaterials=meta.get("layeredMaterials", 0),
+    )
+
+
 def recorded_movie(folder, item):
     ident = item["id"]
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,70}", ident):
