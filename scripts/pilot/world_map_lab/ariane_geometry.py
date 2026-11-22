@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from importlib import import_module
 
 import numpy as np
@@ -78,4 +79,34 @@ def scene_parts(model, kind):
 def instance_parts(blob, kind):
     dff = import_module("gtaLib.dff").dff()
     dff.load_memory(blob)
-    return scene_parts(dff, kind)
+    for vertices, mesh in scene_parts(dff, kind):
+        yield vertices, restore_split_materials(mesh)
+
+
+def restore_split_materials(mesh):
+    """Recover material IDs when the geometry header lost them but Bin Mesh retained them."""
+    faces = mesh.triangles
+    splits = mesh.extensions.get("mat_split") or ()
+    if (
+        not faces or len(mesh.materials) < 2 or len(faces) != len(splits)
+        or any(face.material != 0 for face in faces)
+        or not any(face.material != 0 for face in splits)
+    ):
+        return mesh
+
+    def key(face):
+        return tuple(sorted((face.a, face.b, face.c)))
+
+    materials = {}
+    counts = Counter()
+    for face in splits:
+        ids = key(face)
+        if not 0 <= face.material < len(mesh.materials):
+            return mesh
+        if materials.setdefault(ids, face.material) != face.material:
+            return mesh
+        counts[ids] += 1
+    if counts == Counter(map(key, faces)):
+        # Keep the original winding, order and indices for rendering and collision checks.
+        mesh.triangles = [face._replace(material=materials[key(face)]) for face in faces]
+    return mesh

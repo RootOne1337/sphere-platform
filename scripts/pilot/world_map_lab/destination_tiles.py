@@ -1,6 +1,7 @@
 """Revision-bound overview and native-resolution tiles of the navigation map."""
 
 import hashlib
+import json
 from io import BytesIO
 from urllib.request import urlopen
 
@@ -10,12 +11,22 @@ from PIL import Image
 class DestinationTiles:
     tile_size = 512
 
-    def __init__(self, planner):
+    def __init__(self, planner, *, terrain_folder=None, map_revision=None, bounds=None):
         self.files = {}
         digest = hashlib.sha256(b"destination-tiles-v1")
         for layer, source in (("terrain", "world"), ("roads", "drive"), ("walk", "walk")):
-            with urlopen(f"{planner}/{source}.png", timeout=12) as response:
-                raw = response.read()
+            if layer == "terrain" and terrain_folder is not None:
+                proof = json.loads((terrain_folder / "ariane-world-render.json").read_bytes())
+                ordered_bounds = [proof["bounds"][side] for side in ("left", "right", "bottom", "top")]
+                raw = (terrain_folder / "ariane-world-top.png").read_bytes()
+                if (
+                    proof["placementRevision"] != map_revision or ordered_bounds != list(bounds)
+                    or hashlib.sha256(raw).hexdigest() != proof["views"]["top"]["sha256"]
+                ):
+                    raise ValueError("terrain overview is not bound to the planner's world")
+            else:
+                with urlopen(f"{planner}/{source}.png", timeout=12) as response:
+                    raw = response.read()
             digest.update(hashlib.sha256(raw).digest())
             with Image.open(BytesIO(raw)) as image:
                 if layer == "terrain":

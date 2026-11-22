@@ -346,7 +346,12 @@ def serve(args):
     def covers(path):
         return locator.covers(path) or any(bank.covers(path) for bank in drive_banks.values())
 
-    tiles = DestinationTiles(road.base)
+    tiles = DestinationTiles(
+        road.base,
+        terrain_folder=getattr(args, "terrain_overview", None),
+        map_revision=road.meta["placementRevision"],
+        bounds=road.meta["bounds"],
+    )
     texture_pack = getattr(args, "texture_pack", None) or args.detail_folder
     detail = (
         StreetTiles(texture_pack, args.water, road.meta["bounds"], road.meta["placementRevision"])
@@ -843,6 +848,7 @@ if __name__ == "__main__":
     p.add_argument("--search-hfov", action="append", type=float, default=[])
     p.add_argument("--detail-folder", type=Path)
     p.add_argument("--texture-pack", type=Path, help="Street textures for the same map revision")
+    p.add_argument("--terrain-overview", type=Path, help="Verified map overview output directory")
     p.add_argument("--water", type=Path)
     p.add_argument("--port", type=int, default=8849)
     serve(p.parse_args())

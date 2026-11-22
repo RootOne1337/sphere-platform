@@ -71,6 +71,7 @@ class StreetTiles:
             raise ValueError("street geometry or water source does not match the map")
         self.texture_limit = meta.get("textureLimit")
         self.layered_materials = meta.get("layeredMaterials", 0)
+        self.material_repairs = meta.get("binMeshMaterialRepairs", 0)
         self.bounds = bounds
         with db.open("rb") as f:
             signature = hashlib.file_digest(f, "sha256").hexdigest()
@@ -98,6 +99,7 @@ class StreetTiles:
             pixels=self.pixels,
             textureLimit=self.texture_limit,
             layeredMaterials=self.layered_materials,
+            binMeshMaterialRepairs=self.material_repairs,
         )
 
     def _texture(self, key):

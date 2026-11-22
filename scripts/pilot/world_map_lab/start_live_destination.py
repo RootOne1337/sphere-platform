@@ -23,6 +23,7 @@ def code_digest():
         "live_destination_atlas.py",
         "destination_tiles.py",
         "destination_detail.py",
+        "ariane_geometry.py",
         "detail_scene_service.py",
         "ariane_terrain_materials.mjs",
         "journey_scene.mjs",
@@ -92,6 +93,7 @@ def main():
     )
     parser.add_argument("--world-search-config", type=Path)
     parser.add_argument("--texture-pack", type=Path)
+    parser.add_argument("--terrain-overview", type=Path)
     parser.add_argument("--menu-background", type=Path)
     parser.add_argument("--drive-region", action="append", default=[], metavar="DISTRICT")
     parser.add_argument("--search-hfov", action="append", type=float, default=[])
@@ -144,6 +146,8 @@ def main():
         search_args.extend(["--detail-folder", folder, "--water", args.water.resolve(strict=True)])
     if texture_pack:
         search_args.extend(["--texture-pack", texture_pack])
+    if args.terrain_overview:
+        search_args.extend(["--terrain-overview", args.terrain_overview.resolve(strict=True)])
     visual = start(
         "scripts.pilot.world_map_lab.live_destination",
         ["--atlas", atlas, "--logs", logs, *search_args],
