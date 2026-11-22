@@ -22,6 +22,7 @@ class WalkTrip:
         self.crossings = ()
         self.entry = None
         self.last_plan = -math.inf
+        self.last_edge_replan = None
         self.next_search = -math.inf
         self.pose_bank = None
         self.normalized_pose_bank = False
@@ -143,6 +144,7 @@ class WalkTrip:
             self.arrival = self.path = self.entry = None
             self.crossings = ()
             self.last_plan = -math.inf
+            self.last_edge_replan = None
             return dict(reply, reason="planning_walk", path=[], stopIndex=self.stop_index)
         self.arrival = None
         if not len(self.segments):
@@ -210,6 +212,12 @@ class WalkTrip:
         if aim is None:
             aim = nearby_step((0.22, -0.22, 0.44, -0.44))
         if aim is None:
+            if self.last_edge_replan is None or math.dist(eye[:2], self.last_edge_replan) > 0.5:
+                ground = self.surface.ground_support(eye, 1.55)
+                if ground is not None and not ground.on_mesh:
+                    self.last_edge_replan = eye[:2].copy()
+                    self.path = self.motion_origin = None
+                    return dict(reply, path=[], reason="walk_outside_path")
             return dict(reply, reason="walk_clearance_unknown", remaining=remaining)
         delta = aim - start
         error = math.remainder(math.atan2(delta[1], delta[0]) - heading, math.tau)
@@ -217,7 +225,9 @@ class WalkTrip:
             return dict(reply, reason="walk_aligning", lookRadians=error, remaining=remaining)
         if self.motion_origin is None:
             self.motion_origin = now, eye[:2].copy()
-        pace = min(0.25 if recovering else 0.35, max(0.15, 0.26 * remaining)) * (
+        entering = self.entry is not None and station < self.arc[1] + 0.4
+        pace_limit = 0.18 if entering else 0.25 if recovering else 0.35
+        pace = min(pace_limit, max(0.15, 0.26 * remaining)) * (
             1 - 0.32 * abs(error)
         )
         return dict(

@@ -195,12 +195,14 @@ class FootSurface:
     def pavement_entries(self, eye, goal, camera_height=1.55):
         """Find short, dry approaches, with transverse egress if already on the road."""
         support = self.ground_support(eye, camera_height)
-        if support is None or not support.on_mesh:
+        if support is None:
             return
         start = [float(eye[0]), float(eye[1]), support.height]
         heading = math.atan2(goal[1] - start[1], goal[0] - start[0])
         profile = self._measure(start, start)["profile"]
         on_road = continuous_floor({"profile": profile}) and surface_kind(profile[0]) == "road"
+        if on_road and not support.on_mesh:
+            return
         samples = 24 if on_road else 12
         directions = sorted(
             (index * math.tau / samples for index in range(samples)),
@@ -209,6 +211,10 @@ class FootSurface:
         radii = (0.65, 1.25, 2.25, 3.0, 3.5, 4.0, 4.5, 5.0) if on_road else (
             0.65, 1.25, 2.25, 3.5, 5.0
         )
+        if not support.on_mesh:
+            # An eroded mesh edge can leave a narrow strip of actual dry ground.
+            # Only bridge a short, collision-checked gap to confirmed pavement.
+            radii = (0.35, 0.65, 1.25)
         for radius in radii:
             for angle in directions:
                 x = start[0] + radius * math.cos(angle)
@@ -221,7 +227,7 @@ class FootSurface:
                     if row["bodyIntersections"] or not continuous_floor(row):
                         continue
                     if any(surface_kind(p) == "road" for p in row["profile"]):
-                        if not transverse_exit(start, end, row["profile"], self._measure):
+                        if not support.on_mesh or not transverse_exit(start, end, row["profile"], self._measure):
                             continue
                     yield start, end
 
