@@ -245,6 +245,14 @@ class RecentWalkProbe:
         return None
 
 
+def same_view(a, b):
+    # Ignore uniform lighting shifts and moving objects confined to a few tiles.
+    diff = a - b
+    diff = np.abs(diff - np.median(diff))
+    tiles = diff.reshape(6, 6, 8, 8).mean(axis=(1, 3))
+    return np.median(tiles) < 5
+
+
 class WorldAcquisition:
     """At most one GPU job. Historical results only seed a fresh per-frame geometric solve."""
 
@@ -262,6 +270,8 @@ class WorldAcquisition:
         self.lock = threading.Lock()
         self.phase = "collecting_views"
         self.samples = []
+        self.in_flight = []
+        self.searched = []
         self.last_seen = self.last_sample = self.first_sample = self.retry = -math.inf
         self.busy = False
         self.last_detail = -math.inf
@@ -301,16 +311,13 @@ class WorldAcquisition:
     def collect(self, raw, gray):
         now = time.monotonic()
         with self.lock:
-            if self.busy or now < self.retry:
-                return None
             if now - self.last_seen > 5:
                 self.samples.clear()
+                self.searched.clear()
             self.last_seen = now
             with Image.open(BytesIO(raw)) as image:
                 detailed = image.width >= 1280
             if detailed:
-                if not self.detailed_samples:
-                    self.samples.clear()
                 self.detailed_samples = True
                 self.last_detail = now
             elif now - self.last_detail < 2:
@@ -324,14 +331,21 @@ class WorldAcquisition:
             # Ignore undersampled overlays and frozen or near-identical video frames.
             if np.std(thumb) < 8:
                 return None
-            if not self.samples:
-                self.first_sample = now
-                self.phase = "collecting_views"
-            if all(np.mean(np.abs(thumb - old)) >= 5 for old, _ in self.samples):
+            if (
+                len(self.samples) < 10
+                and not any(same_view(thumb, old) for old in self.in_flight)
+                and not any(same_view(thumb, old) for old in self.searched)
+                and not any(same_view(thumb, old) for old, _ in self.samples)
+            ):
+                if not self.samples:
+                    self.first_sample = now
+                    if not self.busy:
+                        self.phase = "collecting_views"
                 self.samples.append((thumb, raw))
             count = len(self.samples)
             elapsed = now - self.first_sample
-            if count >= 10 or (count >= 4 and elapsed >= 12) or (count and elapsed >= 24):
+            if not self.busy and now >= self.retry and (count >= 4 or (count and elapsed >= 4)):
+                self.in_flight = [view for view, _ in self.samples]
                 frames = [im for _, im in self.samples]
                 self.samples.clear()
                 self.busy = True
@@ -391,7 +405,11 @@ class WorldAcquisition:
             state = "search_error"
         finally:
             with self.lock:
-                self.phase, self.busy, self.retry = state, False, time.monotonic() + 10
+                if state != "search_error":
+                    self.searched = (self.searched + self.in_flight)[-20:]
+                self.in_flight = []
+                self.phase, self.busy = state, False
+                self.retry = time.monotonic() + (10 if state == "search_error" else 0)
 
 
 if __name__ == "__main__":

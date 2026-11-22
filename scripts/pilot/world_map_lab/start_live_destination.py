@@ -31,6 +31,7 @@ def code_digest():
         "walking_mesh_tracker.py",
         "pedestrian_surface.py",
         "pedestrian_crossing.py",
+        "serve_world_navmesh.py",
     ):
         digest.update(hashlib.sha256((folder / name).read_bytes()).digest())
     return digest.hexdigest()

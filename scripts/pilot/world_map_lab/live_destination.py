@@ -40,8 +40,9 @@ class RoadMap:
         ) as response:
             return json.load(response)
 
-    def levels(self, x, y, mode="drive"):
-        return self.query("levels", mode=mode, x=x, y=y)["levels"]
+    def levels(self, x, y, mode="drive", *, surface=None):
+        params = {"surface": surface} if surface else {}
+        return self.query("levels", mode=mode, x=x, y=y, **params)["levels"]
 
     def route(self, start, goal):
         def fmt(p):
@@ -287,6 +288,23 @@ def probe_atlases(gray, main, districts, *, observed=None, include_main=True):
     return dict(**best, ambiguous=False)
 
 
+def probe_start_levels(road, eye):
+    x, y, z = eye
+    eligible = {}
+    for mode, minimum, maximum in (("drive", 0.1, 3.5), ("walk", 0.85, 2.55)):
+        surfaces = {"surface": "pavement"} if mode == "walk" else {}
+        try:
+            valid = [
+                level
+                for level in road.levels(x, y, mode=mode, **surfaces)
+                if minimum < z - level < maximum
+            ]
+        except (KeyError, ValueError, OSError):
+            valid = []
+        eligible[mode] = valid[0] if len(valid) == 1 else None
+    return eligible
+
+
 def serve(args):
     code_revision = code_digest()
     road = RoadMap(args.planner)
@@ -465,7 +483,16 @@ def serve(args):
                     payload = json.loads(raw)
                     if payload.get("revision") != road.meta["placementRevision"]:
                         raise ValueError("invalid_goal")
-                    return self.reply(200, plan(road, payload["stops"], payload["mode"], covers))
+                    return self.reply(
+                        200,
+                        plan(
+                            road,
+                            payload["stops"],
+                            payload["mode"],
+                            covers,
+                            surface=payload.get("surface"),
+                        ),
+                    )
                 if self.path == "/preview":
                     payload = json.loads(raw)
                     if payload["revision"] != road.meta["placementRevision"]:
@@ -518,10 +545,13 @@ def serve(args):
             if mode not in ("walk", "drive", "taxi"):
                 raise ValueError("invalid_goal")
             surface = "drive" if mode == "drive" else "walk"
+            pavement = payload.get("surface")
+            if pavement is not None and (mode != "walk" or pavement != "pavement"):
+                raise ValueError("invalid_goal")
             if not all(math.isfinite(v) for v in (x, y)):
                 raise ValueError("invalid_goal")
             drive = road.levels(x, y)
-            walk = road.levels(x, y, mode="walk")
+            walk = road.levels(x, y, mode="walk", surface=pavement)
             levels = drive if surface == "drive" else walk
             suggestion = None
             if not levels:
@@ -529,7 +559,7 @@ def serve(args):
                     for direction in range(8):
                         angle = math.pi * direction / 4
                         sx, sy = x + radius * math.cos(angle), y + radius * math.sin(angle)
-                        nearby = road.levels(sx, sy, mode=surface)
+                        nearby = road.levels(sx, sy, mode=surface, surface=pavement)
                         if nearby:
                             suggestion = dict(point=[sx, sy], distance=radius)
                             break
@@ -575,6 +605,8 @@ def serve(args):
                         district="Поиск по всей карте" if pose else None,
                         worldSearch=global_search.status(),
                     )
+                if result["pose"] is not None:
+                    result["startLevels"] = probe_start_levels(road, result["pose"]["eye"])
                 return self.reply(200, result)
             if self.path == "/start":
                 if sessions:

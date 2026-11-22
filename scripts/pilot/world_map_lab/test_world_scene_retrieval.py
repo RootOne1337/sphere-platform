@@ -6,9 +6,10 @@ import cv2
 import numpy as np
 import pytest
 
+from scripts.pilot.world_map_lab import world_scene_acquisition as acquisition
 from scripts.pilot.world_map_lab.render_world_search_views import candidate_regions, select_sites
 from scripts.pilot.world_map_lab.verify_world_scene_candidates import consistent_views
-from scripts.pilot.world_map_lab.world_scene_acquisition import WorldAcquisition
+from scripts.pilot.world_map_lab.world_scene_acquisition import WorldAcquisition, same_view
 from scripts.pilot.world_map_lab.world_scene_retrieval import infer_rotations
 
 
@@ -56,7 +57,7 @@ def test_parked_stream_needs_independent_source_baselines_and_agreement():
 def test_global_worker_never_exposes_a_cached_fix_on_an_unrecognized_frame():
     worker = WorldAcquisition.__new__(WorldAcquisition)
     worker.lock = threading.Lock()
-    worker.busy = True
+    worker.collect = lambda *_: None
     worker.bank = SimpleNamespace(locate_features=lambda *_: None)
     frame = np.zeros((360, 640), np.uint8)
     assert worker.observe(b"frame", frame, (None, None)) is None
@@ -65,6 +66,56 @@ def test_global_worker_never_exposes_a_cached_fix_on_an_unrecognized_frame():
     assert worker.observe(b"frame", frame, (None, None)) is None
     worker.bank.covers = lambda _: True
     assert worker.observe(b"frame", frame, (None, None)) == pose
+
+
+def test_local_animation_and_uniform_lighting_do_not_count_as_camera_rotation():
+    rng = np.random.default_rng(11)
+    before = rng.integers(15, 220, size=(36, 64), dtype=np.int16)
+    after = before + 12
+    after[:, :16] = 0
+    assert same_view(before, after)
+    assert not same_view(before, np.roll(before, 7, axis=1))
+
+
+def test_single_view_search_starts_early_and_keeps_new_views_during_a_job(tmp_path, monkeypatch):
+    gallery = tmp_path / "gallery"
+    gallery.mkdir()
+    (gallery / "survey.json").write_text('{"revision":"test"}')
+    config = tmp_path / "config.json"
+    config.write_text("{}")
+    monkeypatch.setattr(acquisition, "read_config", lambda _: {"gallery": gallery})
+    now = [0.0]
+    monkeypatch.setattr(acquisition.time, "monotonic", lambda: now[0])
+    jobs = []
+    monkeypatch.setattr(
+        acquisition.threading,
+        "Thread",
+        lambda *, target, args, daemon: SimpleNamespace(start=lambda: jobs.append(args[0])),
+    )
+    worker = WorldAcquisition(config, tmp_path, "unused", "test")
+    raw_first = np.random.default_rng(15).integers(0, 255, (36, 64), dtype=np.uint8)
+    before = cv2.resize(raw_first, (1920, 1080), interpolation=cv2.INTER_NEAREST)
+    after = np.roll(before, 205, axis=1)
+
+    def frame(t, pixels):
+        now[0] = t
+        _, jpeg = cv2.imencode(".jpg", pixels)
+        worker.collect(jpeg.tobytes(), pixels)
+
+    frame(0, before)
+    frame(3, before)
+    assert not jobs
+    frame(4, before)
+    assert len(jobs) == 1 and len(jobs[0]) == 1
+    frame(5, after)
+    frame(6, before)
+    assert len(worker.samples) == 1 and len(jobs) == 1
+    worker.searched = worker.in_flight
+    worker.in_flight = []
+    worker.busy = False
+    frame(9, before)
+    assert len(jobs) == 2 and len(jobs[1]) == 1
+    assert jobs[0][0] != jobs[1][0]
 
 
 def test_refinement_budget_goes_to_distinct_supported_regions():

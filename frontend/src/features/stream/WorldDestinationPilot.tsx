@@ -19,6 +19,7 @@ import {
   runWorldTrip,
   worldRequest,
   type Decision,
+  type StartLevels,
   type WorldInfo,
   type XYZ,
 } from "./worldDestination";
@@ -93,7 +94,9 @@ export function WorldDestinationPilot({
 }) {
   const [probing, setProbing] = useState(false),
     [probeMessage, setProbeMessage] = useState("");
-  const [observation, setObservation] = useState<XYZ | null>(null);
+  const [observation, setObservation] = useState<{
+    eye: XYZ; startLevels: StartLevels; acquiredAt: number;
+  } | null>(null);
   const probe = useRef<AbortController | null>(null);
   const [info, setInfo] = useState<WorldInfo | null>(null);
   const [suggestion, setSuggestion] = useState<{
@@ -104,6 +107,17 @@ export function WorldDestinationPilot({
   const [multiple, setMultiple] = useState(false);
   const [acquireMinutes, setAcquireMinutes] = useState(3);
   const itinerary = useWorldItinerary(info?.mapRevision);
+  const [liveStartFresh, setLiveStartFresh] = useState(false);
+  useEffect(() => {
+    if (!observation) {
+      setLiveStartFresh(false);
+      return;
+    }
+    const expires = observation.acquiredAt + 30000 - performance.now();
+    setLiveStartFresh(expires > 0);
+    const timer = setTimeout(() => setLiveStartFresh(false), Math.max(0, expires));
+    return () => clearTimeout(timer);
+  }, [observation]);
   const [point, setPoint] = useState<[number, number] | null>(null),
     [levels, setLevels] = useState<number[]>([]),
     [level, setLevel] = useState<number | null>(null);
@@ -183,7 +197,7 @@ export function WorldDestinationPilot({
         info?.worldSearch,
       );
       if (!c.signal.aborted) {
-        setObservation(r.eye);
+        setObservation({ eye: r.eye, startLevels: r.startLevels, acquiredAt: performance.now() });
         setProbeMessage(
           (r.district
             ? "Ориентиры · " + r.district
@@ -400,7 +414,7 @@ export function WorldDestinationPilot({
           info={info}
           point={multiple ? null : point}
           initialFocus={initialFocus}
-          observation={observation}
+          observation={observation?.eye ?? null}
           decision={data}
           stops={multiple ? itinerary.stops : []}
           legs={multiple ? itinerary.plan?.legs : undefined}
@@ -425,7 +439,28 @@ export function WorldDestinationPilot({
       )}
       <div className={styles.tripFooter}>
         {multiple ? (
-          <WorldItinerary model={itinerary} locked={active} />
+          <>
+            {observation && liveStartFresh && ready && !active && (
+              <div className={styles.tripAction}>
+                {(["walk", "drive"] as const).map((mode) => {
+                  const z = observation.startLevels[mode];
+                  if (z === null) return null;
+                  return (
+                    <Button key={mode} size="sm" variant="outline" onClick={() => {
+                      if (performance.now() - observation.acquiredAt >= 30000) return;
+                      itinerary.useLiveStart([observation.eye[0], observation.eye[1], z], mode);
+                    }}>
+                      {mode === "walk" ? "Поставить A на тротуаре" : "Поставить A на дороге"}
+                    </Button>
+                  );
+                })}
+                {Object.values(observation.startLevels).every((z) => z === null) && (
+                  <small>Позиция найдена. Под ней пока не подтверждён тротуар или уровень дороги.</small>
+                )}
+              </div>
+            )}
+            <WorldItinerary model={itinerary} locked={active} />
+          </>
         ) : (
           <>
             <div className={styles.target}>

@@ -426,9 +426,17 @@ def serve(folder, port, adapter=None, *, walk_folder=None):
                         )
                         self.send_json(movement_step(nav, start, xy, mode))
                     elif req.path == "/api/levels":
-                        self.send_json(
-                            {"levels": nav.levels(float(args["x"][0]), float(args["y"][0]))}
-                        )
+                        x, y = (float(args[axis][0]) for axis in ("x", "y"))
+                        if not all(math.isfinite(v) for v in (x, y)):
+                            raise ValueError("invalid position")
+                        levels = nav.levels(x, y)
+                        if "surface" in args:
+                            if mode != "walk" or args["surface"] != ["pavement"]:
+                                raise ValueError("expected pavement restriction")
+                            levels = [
+                                z for z in levels if pavement and pavement.paved_route([[x, y, z]])
+                            ]
+                        self.send_json({"levels": levels})
                     else:
                         ends = [[float(n) for n in args[k][0].split(",")] for k in ("start", "end")]
                         vehicle = args.get("vehicle")

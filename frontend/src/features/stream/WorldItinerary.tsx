@@ -17,6 +17,7 @@ export type RoadLeg = {
   fromIndex: number;
   distance: number;
   path: XYZ[];
+  crossings?: { entry: XYZ; exit: XYZ }[];
 };
 export type RoutePlan = {
   status: "complete" | "unavailable";
@@ -30,6 +31,7 @@ export type Stop = {
   id: string;
   xy: [number, number];
   z: number | null;
+  preferredLevel?: number;
   mode?: TravelMode;
   ground?: Levels;
   error?: string;
@@ -70,7 +72,7 @@ export function useWorldItinerary(revision: string | undefined) {
       worldRequest<Levels>(
         "/levels",
         AbortSignal.any([c.signal, AbortSignal.timeout(5000)]),
-        { point: stop.xy, mode },
+        { point: stop.xy, mode, ...(mode === "walk" ? { surface: "pavement" } : {}) },
       )
         .then((ground) => {
           if (!c.signal.aborted)
@@ -83,7 +85,9 @@ export function useWorldItinerary(revision: string | undefined) {
                       mode,
                       ground,
                       error: undefined,
-                      z: ground.levels.length === 1 ? ground.levels[0] : null,
+                      z: p.preferredLevel !== undefined
+                        ? ground.levels.find((z) => Math.abs(z - p.preferredLevel!) <= 0.2) ?? null
+                        : ground.levels.length === 1 ? ground.levels[0] : null,
                     },
               ),
             );
@@ -120,7 +124,8 @@ export function useWorldItinerary(revision: string | undefined) {
       worldRequest<RoutePlan>(
         "/itinerary",
         AbortSignal.any([c.signal, AbortSignal.timeout(300000)]),
-        { revision, mode, stops: stops.map((p) => [...p.xy, p.z]) },
+        { revision, mode, stops: stops.map((p) => [...p.xy, p.z]),
+          ...(mode === "walk" ? { surface: "crossings" } : {}) },
       )
         .then((r) => {
           if (!c.signal.aborted) setPlan(r);
@@ -143,6 +148,13 @@ export function useWorldItinerary(revision: string | undefined) {
       ),
     [],
   );
+  function useLiveStart(point: XYZ, mode: Exclude<TravelMode, "taxi">) {
+    const first: Stop = {
+      id: crypto.randomUUID(), xy: [point[0], point[1]], z: null, preferredLevel: point[2], mode,
+    };
+    setMode(mode);
+    setStops((list) => [first, ...list.slice(1)]);
+  }
   function revise(id: string, patch: Partial<Stop>) {
     setStops((list) => list.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   }
@@ -165,6 +177,7 @@ export function useWorldItinerary(revision: string | undefined) {
     plan,
     error,
     add,
+    useLiveStart,
     revise,
     move,
     retry,
@@ -192,7 +205,7 @@ export function WorldItinerary({
           onChange={(e) => setMode(e.target.value as TravelMode)}
         >
           <option value="drive">Транспорт</option>
-          <option value="walk">Пешком</option>
+          <option value="walk">Пешком по тротуарам</option>
           <option value="taxi">Пешком и на транспорте</option>
         </select>
       </label>

@@ -170,17 +170,31 @@ type ProbeProgress = {
   cameraSteps: number;
   cameraIssue?: string;
 };
+export type StartLevels = { drive: number | null; walk: number | null };
+
+function agreedStartLevels(a?: Partial<StartLevels>, b?: Partial<StartLevels>): StartLevels {
+  const level = (mode: keyof StartLevels) => {
+    const previous = a?.[mode], current = b?.[mode];
+    return typeof previous === "number" && Number.isFinite(previous) &&
+      typeof current === "number" && Number.isFinite(current) && Math.abs(previous - current) <= 0.2
+      ? current : null;
+  };
+  return { drive: level("drive"), walk: level("walk") };
+}
+
 type Probe = {
+  startLevels?: StartLevels;
   worldSearch?: SearchState;
   pose: Decision["pose"];
   district: string | null;
   ambiguous: boolean;
 };
-function detailSampler() {
+function detailSampler(allowWhileSearching = false) {
   let last = -Infinity;
   return (state?: SearchState) => {
     const now = performance.now();
-    if (state?.phase !== "collecting_views" || !state.detailWidth || now - last < 650) return false;
+    if (!state?.detailWidth || now - last < 650 || state.phase === "tracking" ||
+      (!allowWhileSearching && state.phase !== "collecting_views")) return false;
     last = now;
     return true;
   };
@@ -194,7 +208,7 @@ export async function probeWorldPosition(
   initialSearch?: SearchState | null,
 ) {
   const sample = worldFrameSampler(video);
-  const detail = detailSampler();
+  const detail = detailSampler(true);
   let searchState = initialSearch ?? undefined;
   const timeout = AbortSignal.timeout(acquireMs);
   const search = AbortSignal.any([signal, timeout]);
@@ -258,6 +272,7 @@ export async function probeWorldPosition(
             eye: pose.eye,
             district: result.district,
             supports: pose.supports,
+            startLevels: agreedStartLevels(previous.startLevels, result.startLevels),
           };
         }
         previous = result;
@@ -266,7 +281,7 @@ export async function probeWorldPosition(
       const phase = result.worldSearch?.phase;
       if (openCamera && !cameraIssue && !previous && !search.aborted &&
           cameraSteps < 12 && now >= nextStroke &&
-          (!phase || ["collecting_views", "no_verified_position", "search_error"].includes(phase))) {
+          phase !== "tracking") {
         try {
           camera ??= await openCamera(search);
           if (search.aborted || !camera.active() || !camera.look) throw Error("world_camera_unavailable");

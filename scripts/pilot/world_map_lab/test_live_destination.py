@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 import pytest
 
-from scripts.pilot.world_map_lab.live_destination import Trip, probe_atlases
+from scripts.pilot.world_map_lab.destination_itinerary import plan
+from scripts.pilot.world_map_lab.live_destination import Trip, probe_atlases, probe_start_levels
 from scripts.pilot.world_map_lab.live_destination_atlas import Locator, distributed_surface_support
 
 
@@ -16,6 +17,43 @@ class Roads:
 
 def pose(x, y=0, z=1.45, heading=0):
     return {"eye": [x, y, z], "heading": heading, "supports": 40}
+
+
+def test_probe_can_show_position_without_a_valid_route_level():
+    class StackedRoads:
+        def levels(self, x, y, mode, **kwargs):
+            assert (x, y) == (12, 14)
+            if mode == "walk":
+                assert kwargs == {"surface": "pavement"}
+                return [4, 8]
+            return [8, 9]
+
+    assert probe_start_levels(StackedRoads(), (12, 14, 10)) == {"walk": 8, "drive": None}
+    assert probe_start_levels(StackedRoads(), (12, 14, 15)) == {"walk": None, "drive": None}
+
+
+def test_walk_itinerary_requires_pavement_endpoints_and_keeps_crossing_geometry():
+    entry, exit = [2, 0, 0], [9, 0, 0]
+    stop_a, stop_b = [0, 0, 0], [12, 0, 0]
+
+    class PedestrianMap:
+        def levels(self, x, y, mode, surface):
+            assert (mode, surface) == ("walk", "pavement")
+            return [0] if x in (0, 12) else []
+
+        def query(self, name, mode, surface, **_):
+            assert (name, mode, surface) == ("path", "walk", "crossings")
+            return {
+                "status": "complete",
+                "path": [stop_a, entry, exit, stop_b],
+                "crossings": [{"entry": entry, "exit": exit}],
+            }
+
+    road = PedestrianMap()
+    blocked = plan(road, [[1, 0, 0], stop_b], "walk", None, surface="crossings")
+    assert blocked["reason"] == "wrong_surface"
+    result = plan(road, [stop_a, stop_b], "walk", None, surface="crossings")
+    assert result["legs"][0]["crossings"] == [{"entry": entry, "exit": exit}]
 
 
 def test_follow_loss_reacquire_and_stationary_arrival():
