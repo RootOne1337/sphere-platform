@@ -365,7 +365,7 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
     if(signal.aborted)cancelled();
     try{return await opened;}finally{walkOpening.current=false;if(signal.aborted)signal.removeEventListener('abort',cancelled);}
   };
-  const openWalkInput=(signal:AbortSignal,journal:(event:TeachingInput)=>void)=>openPilotInput(signal,journal);
+  const openWalkInput=(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>=>openPilotInput(signal,journal);
   const openVehicleInput=(signal:AbortSignal,journal:(event:TeachingInput)=>void)=>openPilotInput(signal,journal,true) as Promise<VehicleInputLease>;
   const record = async () => {
     const conn = connection.current, binding = conn?.binding(), endpoint = conn?.endpoint();
@@ -502,8 +502,11 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
   if(destination){
     const inputIssue=readOnly?'Доступен только просмотр':!ready||!result||!['host','nat'].includes(result.path)
       ?'Подключите прямой поток устройства':calibrate?'Завершите калибровку':vehicleCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Канал управления занят');
+    const cameraIssue=readOnly?'Доступен только просмотр':!ready||!result||!['host','nat'].includes(result.path)
+      ?'Для поворота камеры подключите прямой поток':calibrate?'Завершите калибровку'
+      :walkingCalibrationIssue(profile,binding??null)??walkingCameraIssue(profile,binding??null);
     return <div ref={host} className={styles.console} aria-label="Навигация по живому экрану">
-      <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} connected={attached.current && result !== null} inputIssue={inputIssue} openInput={openVehicleInput}/>
+      <WorldDestinationPilot key={deviceId+':'+storageScope} video={video} ready={ready} connected={attached.current && result !== null} inputIssue={inputIssue} openInput={openVehicleInput} cameraIssue={cameraIssue} openCamera={openWalkInput}/>
       <aside className={styles.rail}>
         <section id="destination-stream" aria-label="Живой экран" className={styles.panel}>
           <header className={styles.panelHeader}><div><Radio size={17}/><h2>Живой экран</h2></div><span className={ready?styles.online:styles.offline}>{ready?'В эфире':'Офлайн'}</span></header>

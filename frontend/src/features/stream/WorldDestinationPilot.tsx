@@ -12,6 +12,7 @@ import { WorldDestinationMap } from "./WorldDestinationMap";
 import styles from "./worldConsole.module.css";
 import { Button } from "@/components/ui/button";
 import type { TeachingInput } from "./teachingContacts";
+import type { WalkInputLease } from "./walkPilot";
 import type { VehicleInputLease } from "./vehiclePilot";
 import {
   probeWorldPosition,
@@ -54,6 +55,8 @@ const reasons: Record<string, string> = {
   arrived: "Прибытие подтверждено",
   frame_stale: "Кадр устарел",
   input_closed: "Канал управления закрыт",
+  world_camera_unavailable: "Канал поворота камеры недоступен",
+  walk_input_not_ready: "Поворот камеры требует настроенного пешего управления",
   stream_stopped: "Поток остановлен",
   stream_geometry_or_clock: "Нужен свежий горизонтальный кадр 16:9",
   unreachable_goal: "Метка вне проезжей части",
@@ -74,11 +77,15 @@ export function WorldDestinationPilot({
   connected,
   inputIssue,
   openInput,
+  openCamera,
+  cameraIssue,
 }: {
   video: RefObject<HTMLVideoElement | null>;
   ready: boolean;
   connected: boolean;
   inputIssue: string | null;
+  cameraIssue?: string | null;
+  openCamera?: (signal: AbortSignal, journal: (event: TeachingInput) => void) => Promise<WalkInputLease>;
   openInput: (
     signal: AbortSignal,
     journal: (event: TeachingInput) => void,
@@ -166,12 +173,14 @@ export function WorldDestinationPilot({
         video.current,
         c.signal,
         acquireMinutes * 60_000,
-        (frames, seconds, phase) => {
+        ({ frames, secondsLeft: seconds, phase, cameraSteps, cameraIssue: issue }) => {
           if (!c.signal.aborted)
             setProbeMessage(
-              `${searchPhases[phase ?? ""] ?? "Поиск ориентиров"} · ${frames} кадров. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
+              `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Собираем ракурсы"}. Кадров ${frames}, поворотов ${cameraSteps}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
             );
         },
+        !cameraIssue && openCamera ? (signal) => openCamera(signal, () => {}) : undefined,
+        info?.worldSearch,
       );
       if (!c.signal.aborted) {
         setObservation(r.eye);
@@ -538,6 +547,7 @@ export function WorldDestinationPilot({
             {probing ? "Остановить поиск" : "Определить положение"}
           </Button>
           {probeMessage && <small role="status">{probeMessage}</small>}
+          {cameraIssue && !probing && <small>{cameraIssue}</small>}
         </div>
         <details className={styles.previewOptions}>
           <summary>Параметры поиска</summary>
