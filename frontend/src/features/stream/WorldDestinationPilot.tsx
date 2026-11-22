@@ -176,7 +176,7 @@ export function WorldDestinationPilot({
         ({ frames, secondsLeft: seconds, phase, cameraSteps, cameraIssue: issue }) => {
           if (!c.signal.aborted)
             setProbeMessage(
-              `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Собираем ракурсы"}. Кадров ${frames}, поворотов ${cameraSteps}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
+              `${issue ? problem(Error(issue)) + ". " : ""}${searchPhases[phase ?? ""] ?? "Собираем ракурсы"}. Кадров ${frames}, команд камеры ${cameraSteps}. Осталось ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
             );
         },
         !cameraIssue && openCamera ? (signal) => openCamera(signal, () => {}) : undefined,

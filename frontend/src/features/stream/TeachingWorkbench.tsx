@@ -318,9 +318,11 @@ export function TeachingWorkbench({ deviceId, readOnly, destination = false }: {
         return control.cameraCommand(point,notAfter,center);
       },
       look:(fraction,notAfter)=>{
-        if(!lease.active()||cameraIssue()||!p.look||!Number.isFinite(fraction)||Math.abs(fraction)>.04||!control.isNeutral)return Promise.resolve(false);
-        const origin=fromPercent(p.look,b),x=origin.x+Math.round(fraction*Math.min(b.width,b.height));
-        return control.horizontalStroke(origin,x,notAfter);
+        const maxFraction=cameraOnly ? 0.18 : 0.04;
+        if(!lease.active()||cameraIssue()||!p.look||!Number.isFinite(fraction)||Math.abs(fraction)>maxFraction||!control.isNeutral)return Promise.resolve(false);
+        const origin=fromPercent(p.look,b),short=Math.min(b.width,b.height),margin=Math.ceil(short*.05);
+        const x=Math.max(margin,Math.min(b.width-1-margin,origin.x+Math.round(fraction*short)));
+        return control.horizontalStroke(origin,x,notAfter,cameraOnly);
       },
       set:vector=>{
         if(vehicleMode||cameraOnly)throw Error('walking_input_mode_required');

@@ -53,6 +53,7 @@ test("position search turns a neutral camera, submits detail frames and closes t
     await jest.advanceTimersByTimeAsync(3500);
     await expect(running).resolves.toMatchObject({ supports: 37 });
     expect(look).toHaveBeenCalledTimes(1);
+    expect(look).toHaveBeenCalledWith(0.16, expect.any(Number));
     expect(set).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalledTimes(1);
     expect(widths).toContain(1920);
