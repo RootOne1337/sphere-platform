@@ -345,6 +345,8 @@
     async function load() {
       const submit = $("button");
       submit.disabled = true;
+      const wasReady = ready;
+      let next = null;
       ready = false;
       resourceError = false;
       try {
@@ -352,34 +354,20 @@
         for (const k of ["x", "y", "z", "radius"]) p.set(k, $("#" + k).value);
         const addr = new URL(location.href);
         for (const [key, v] of p) addr.searchParams.set(key, v);
-        history.replaceState(null, "", addr);
         const x = +p.get("x"),
           y = +p.get("y"),
           z = +p.get("z"),
           rad = +p.get("radius");
-        sector = { x, y, z, rad };
-        syncView();
         status.textContent = "Поиск видимых моделей…";
         const res = await fetch("/api/neighborhood?" + p);
         if (!res.ok) throw Error("neighborhood");
         const data = await res.json();
-        scene.remove(group);
-        disposeGroup(group);
-        group = new T.Group();
-        scene.add(group);
+        next = new T.Group();
+        const anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
         let cursor = 0,
           done = 0,
           tris = 0,
           n = 0;
-        renderer.clippingPlanes = [
-          new T.Plane(new T.Vector3(1, 0, 0), rad - x),
-          new T.Plane(new T.Vector3(-1, 0, 0), x + rad),
-          new T.Plane(new T.Vector3(0, 1, 0), rad - y),
-          new T.Plane(new T.Vector3(0, -1, 0), y + rad),
-        ];
-        controls.target.set(x, y, z);
-        camera.position.set(x + rad * 0.6, y - rad * 0.72, z + rad * 0.58);
-        controls.update();
         async function worker() {
           while (cursor < data.length) {
             const entry = data[cursor++],
@@ -392,7 +380,6 @@
               if (!mesh.isMesh) return;
               if (!mesh.geometry.attributes.normal)
                 mesh.geometry.computeVertexNormals();
-              const anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
               for (const material of [mesh.material].flat()) {
                 if (material.map && material.map.anisotropy !== anisotropy) {
                   material.map.anisotropy = anisotropy;
@@ -415,13 +402,13 @@
                 inst.setMatrixAt(i, matrix);
               });
               inst.computeBoundingSphere();
-              group.add(inst);
+              next.add(inst);
             });
             tris += entry.triangles * entry.instances.length;
             n += entry.instances.length;
             done++;
-            status.textContent = done + "/" + data.length + " моделей";
-            draw();
+            if (done % 8 === 0 || done === data.length)
+              status.textContent = done + "/" + data.length + " моделей";
           }
         }
         const all = await Promise.allSettled(
@@ -429,6 +416,23 @@
         );
         if (resourceError || all.some((v) => v.status === "rejected"))
           throw Error("model");
+        scene.remove(group);
+        disposeGroup(group);
+        group = next;
+        next = null;
+        scene.add(group);
+        sector = { x, y, z, rad };
+        renderer.clippingPlanes = [
+          new T.Plane(new T.Vector3(1, 0, 0), rad - x),
+          new T.Plane(new T.Vector3(-1, 0, 0), x + rad),
+          new T.Plane(new T.Vector3(0, 1, 0), rad - y),
+          new T.Plane(new T.Vector3(0, -1, 0), y + rad),
+        ];
+        controls.target.set(x, y, z);
+        camera.position.set(x + rad * 0.6, y - rad * 0.72, z + rad * 0.58);
+        controls.update();
+        history.replaceState(null, "", addr);
+        syncView();
         status.textContent =
           n.toLocaleString("ru") +
           " объектов · " +
@@ -438,6 +442,8 @@
         if (!n) status.textContent = "В выбранном объёме исходных моделей нет.";
         draw();
       } catch (e) {
+        if (next) disposeGroup(next);
+        ready = wasReady;
         status.textContent = "Не удалось загрузить все модели участка.";
         console.error(e);
       } finally {
