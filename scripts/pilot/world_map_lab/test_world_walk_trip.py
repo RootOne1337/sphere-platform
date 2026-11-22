@@ -7,7 +7,7 @@ def test_walk_trip_reacquires_and_requires_stable_arrival():
     road = Mock()
     road.levels.return_value = [0]
     surface = Mock()
-    surface.sweep.return_value = (0, True)
+    surface.sweep_route.return_value = True
     goal = [10, 0, 0]
 
     def pose(x, heading=0):
@@ -37,7 +37,7 @@ def test_shortens_the_aim_when_the_walk_mesh_blocks_a_corner_cut():
     road = Mock()
     road.levels.return_value = [0]
     surface = Mock()
-    surface.sweep.return_value = (0, True)
+    surface.sweep_route.return_value = True
     surface.step_supported.side_effect = lambda start, finish: finish[1] < 0.01
     goal = [4, 1, 0]
     walk = WalkTrip(road, goal, surface)
@@ -57,7 +57,7 @@ def test_standstill_with_a_fresh_pose_attempts_a_new_direction():
     road = Mock()
     road.levels.return_value = [0]
     surface = Mock()
-    surface.sweep.return_value = (0, True)
+    surface.sweep_route.return_value = True
     surface.step_supported.return_value = True
     goal = [10, 0, 0]
     walk = WalkTrip(road, goal, surface)

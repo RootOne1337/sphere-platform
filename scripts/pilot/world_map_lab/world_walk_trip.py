@@ -24,6 +24,8 @@ class WalkTrip:
         self.last_sequence = -1
         self.last_media_time = self.previous = self.motion_origin = None
         self.path = None
+        self.crossings = ()
+        self.entry = None
         self.last_plan = -math.inf
         self.next_search = -math.inf
         self.pose_bank = None
@@ -83,11 +85,17 @@ class WalkTrip:
                 result = plan(self.road, [start, goal], "walk", None, surface="crossings")
                 if result["status"] != "complete":
                     continue
-                path = result["legs"][0]["path"]
+                leg = result["legs"][0]
+                path = leg["path"]
                 if connector is not None:
                     if math.dist(start, path[0]) >= 0.45:
                         continue
                     path = [connector, start, *path]
+                self.entry = np.asarray([connector, start], float) if connector is not None else None
+                self.crossings = tuple(
+                    np.asarray(strip.get("path", [strip["entry"], strip["exit"]]), float)
+                    for strip in leg.get("crossings", ())
+                )
                 points = np.asarray(path, float)
                 break
             if points is None:
@@ -141,7 +149,7 @@ class WalkTrip:
         def reachable(end):
             return (
                 math.dist(start[:2], end[:2]) >= 0.05
-                and self.surface.sweep(start, end) == (0, True)
+                and self.surface.sweep_route(start, end, self.crossings, self.entry)
                 and self.surface.step_supported(start, end)
             )
 

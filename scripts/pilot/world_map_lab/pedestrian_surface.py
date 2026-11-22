@@ -66,6 +66,38 @@ class FootSurface:
         supported = continuous_pavement(row) if self.pavement else continuous_floor(row)
         return row["bodyIntersections"], supported
 
+    def sweep_route(self, start, end, crossings, entry):
+        """Check a steering step against collision and the approved walking surfaces."""
+        distance = math.dist(start[:2], end[:2])
+        row = self._measure(start, end, samples=max(3, math.ceil(distance / 0.25) + 1))
+        if row["bodyIntersections"] or not continuous_floor(row):
+            return False
+
+        def within_strip(point, strip):
+            line = np.asarray(strip)
+            start = line[:-1]
+            direction = np.diff(line, axis=0)
+            xy = direction[:, :2]
+            distance2 = np.einsum("ij,ij->i", xy, xy)
+            numerator = np.einsum("ij,ij->i", point[:2] - start[:, :2], xy)
+            t = np.clip(numerator / np.maximum(distance2, 1e-6), 0.0, 1.0)
+            offset = point - (start + t[:, None] * direction)
+            return bool(np.any(
+                (distance2 >= 1e-6) & (np.abs(offset[:, 2]) < 0.40)
+                & (np.einsum("ij,ij->i", offset[:, :2], offset[:, :2]) <= 0.65 ** 2)
+            ))
+
+        points = np.linspace(start, end, len(row["profile"]))
+        for sample, point in zip(row["profile"], points):
+            kind = surface_kind(sample)
+            if kind == "pavement":
+                continue
+            if entry is not None and within_strip(point, entry):
+                continue
+            if kind != "road" or not any(within_strip(point, segment) for segment in crossings):
+                return False
+        return True
+
     def paved_route(self, path):
         points = np.asarray(path, dtype=float)
         if points.shape == (1, 3):

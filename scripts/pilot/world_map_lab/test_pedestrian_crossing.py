@@ -29,6 +29,8 @@ def test_transverse_crossing_and_pavement_only():
     crossing = verified_crossings(path, street)
     assert crossing and len(crossing) == 1
     assert crossing[0]["entry"][0] <= -4 and crossing[0]["exit"][0] >= 4
+    assert crossing[0]["path"][0] == crossing[0]["entry"]
+    assert crossing[0]["path"][-1] == crossing[0]["exit"]
     assert verified_crossings(np.array([[-6, 0, 0], [-6, 4, 0]]), street) == []
 
 

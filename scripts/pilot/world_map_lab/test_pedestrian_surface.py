@@ -105,3 +105,22 @@ def test_sidewalk_lookahead_shortens_at_bend_instead_of_leaving_pavement():
     assert surface.pavement_aim([0, 0, 1.55], 1.55, [[2, 1, 0], [0.5, 0, 0]]) == pytest.approx(
         [0.5, 0]
     )
+
+
+def test_walk_steps_admit_only_the_verified_strip_on_the_same_level():
+    surface = FootSurface.__new__(FootSurface)
+    ground = dict(floor=0, referenceZ=0, water=None, road=0, paving=None, footpath=None)
+    reading = dict(profile=[ground] * 3, bodyIntersections=0)
+    surface._measure = lambda *args, **kwargs: reading
+    entry, exit = np.array([0, 0, 0]), np.array([12, 0, 0])
+    strips = ((entry, exit),)
+    assert surface.sweep_route([0.5, 0.15, 0], [1.5, 0.15, 0], strips, None)
+    assert not surface.sweep_route([0.5, 1, 0], [1.5, 1, 0], strips, None)
+    assert not surface.sweep_route([0.5, 0, 0], [1.5, 0, 0], (), None)
+    bent = np.array([[0, 0, 0], [2, 1, 0], [4, 1, 0], [8, 0, 0]])
+    assert surface.sweep_route([2, 1, 0], [3, 1, 0], (bent,), None)
+    assert not surface.sweep_route([2, 1, 0], [3, 1, 0], (bent[[0,-1]],), None)
+    other_level = ((entry + [0, 0, -2], exit + [0, 0, -2]),)
+    assert not surface.sweep_route([0.5, 0, 0], [1.5, 0, 0], other_level, None)
+    reading["bodyIntersections"] = 1
+    assert not surface.sweep_route([0.5, 0, 0], [1.5, 0, 0], strips, None)

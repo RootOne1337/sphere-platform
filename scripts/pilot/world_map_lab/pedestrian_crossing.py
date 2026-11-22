@@ -137,7 +137,11 @@ def verified_crossings(path, measure, *, on_unclassified=None):
                     strip.append(point)
                     if not transverse(np.asarray(strip), measure):
                         return None
-                    crossings.append({"entry": strip[0].tolist(), "exit": point.tolist()})
+                    crossings.append({
+                        "entry": strip[0].tolist(),
+                        "exit": point.tolist(),
+                        "path": np.asarray(strip).tolist(),
+                    })
                     strip.clear()
                 last_pavement = point
             elif kind == "road" and last_pavement is not None:
