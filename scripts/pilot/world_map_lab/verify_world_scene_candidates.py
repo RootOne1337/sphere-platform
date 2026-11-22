@@ -311,7 +311,8 @@ def run(args):
     ambiguous = any(math.dist(a["eye"], b["eye"]) > 1.5 for a, b in combinations(confirmed, 2))
     result = dict(
         candidatesChecked=len(evidence),
-        framesWithPose=sum(e["pose"] is not None for e in evidence),
+        framesWithPose=len({e["frame"] for e in evidence if e["pose"] is not None}),
+        comparisonsWithPose=sum(e["pose"] is not None for e in evidence),
         pose=None if not confirmed or ambiguous else max(confirmed, key=lambda p: p["supports"]),
         ambiguous=ambiguous,
         comparisons=evidence,

@@ -24,6 +24,17 @@ struct Chunk {
     uint32_t count, kind;
 };
 enum Source { Collision, Obstacle, Water, Road, Paving, Foot };
+// Paint only physically walkable spans. Zero preserves driving and legacy tiles.
+enum WalkArea : unsigned char { LegacyArea, GenericFloor, Carriageway, PavedGround, Footpath };
+static float travelCost(unsigned char area) {
+    switch (area) {
+    case Footpath: return 1.f;
+    case PavedGround: return 1.18f;
+    case GenericFloor: return 1.75f;
+    case Carriageway: return 2.5f;
+    default: return 1.f;
+    }
+}
 constexpr float ch = 0.125f;
 constexpr float tileWidth = 128.f;
 
@@ -38,6 +49,7 @@ static void toGame(const float *v, float *xyz) {
     xyz[2] = v[1];
 }
 
+API int walk_material_version() { return 1; }
 API float bake_cell_size(int profile) { return profile == 2 ? 0.125f : 0.25f; }
 API int build_tile(const Chunk *chunks, int count, float originX, float originY, int tx, int ty,
                    float ymin, float ymax, int layer, int profile, unsigned char **out,
@@ -64,14 +76,15 @@ API int build_tile(const Chunk *chunks, int count, float originX, float originY,
     auto init = [&](rcHeightfield &f) {
         return rcCreateHeightfield(&ctx, f, side, side, bmin, bmax, cs, ch);
     };
-    if (!init(solid) || !init(water) || (drive && !init(roads)))
+    if (!init(solid) || !init(water) || !init(roads))
         return -2;
     const float cosine = drive ? 0.906308f : 0.707107f;
     for (int k = 0; k < count; ++k) {
         const Chunk &batch = chunks[k];
-        if (batch.kind == Paving || batch.kind == Foot || (!drive && batch.kind == Road))
+        if (drive && (batch.kind == Paving || batch.kind == Foot))
             continue;
-        rcHeightfield &target = batch.kind == Water ? water : batch.kind == Road ? roads : solid;
+        const bool paint = batch.kind == Road || batch.kind == Paving || batch.kind == Foot;
+        rcHeightfield &target = batch.kind == Water ? water : paint ? roads : solid;
         for (uint32_t i = 0; i < batch.count; ++i) {
             float a[3], b[3], c[3];
             const float *xyz = batch.xyz + i * 9;
@@ -89,8 +102,11 @@ API int build_tile(const Chunk *chunks, int count, float originX, float originY,
             if ((batch.kind == Collision && n[1] >= cosine * length) ||
                 (batch.kind == Road && std::abs(n[1]) >= cosine * length) || batch.kind == Water)
                 area = RC_WALKABLE_AREA;
-            if (batch.kind == Road && !area)
-                continue;
+            if (paint) {
+                if (std::abs(n[1]) < cosine * length) continue;
+                area = drive ? RC_WALKABLE_AREA :
+                       batch.kind == Foot ? Footpath : batch.kind == Paving ? PavedGround : Carriageway;
+            }
             if (!rcRasterizeTriangle(&ctx, a, b, c, area, target, 0))
                 return -3;
         }
@@ -118,22 +134,16 @@ API int build_tile(const Chunk *chunks, int count, float originX, float originY,
     // Paint seams and the roadside material boundary are not vertical obstacles.
     if (!rcErodeWalkableArea(&ctx, radius, compact))
         return -5;
-    if (drive) {
-        for (int cell = 0; cell < side * side; ++cell) {
-            const auto &column = compact.cells[cell];
-            for (unsigned j = column.index; j < column.index + column.count; ++j) {
-                if (!compact.areas[j])
-                    continue;
-                bool road = false;
-                for (auto *r = roads.spans[cell]; r; r = r->next) {
-                    if (std::abs(int(r->smax) - int(compact.spans[j].y)) <= 3) {
-                        road = true;
-                        break;
-                    }
-                }
-                if (!road)
-                    compact.areas[j] = RC_NULL_AREA;
+    for (int cell = 0; cell < side * side; ++cell) {
+        const auto &column = compact.cells[cell];
+        for (unsigned j = column.index; j < column.index + column.count; ++j) {
+            if (!compact.areas[j]) continue;
+            unsigned char material = drive ? RC_NULL_AREA : GenericFloor;
+            for (auto *r = roads.spans[cell]; r; r = r->next) {
+                if (std::abs(int(r->smax) - int(compact.spans[j].y)) <= 3)
+                    material = std::max(material, static_cast<unsigned char>(r->area));
             }
+            compact.areas[j] = material;
         }
     }
     if (!rcBuildRegionsMonotone(&ctx, compact, border, fine ? 48 : 12, fine ? 256 : 64))
@@ -151,7 +161,7 @@ API int build_tile(const Chunk *chunks, int count, float originX, float originY,
         return 0;
     for (int i = 0; i < mesh.npolys; ++i) {
         mesh.flags[i] = 1;
-        mesh.areas[i] = 0;
+        if (drive) mesh.areas[i] = LegacyArea;
     }
     rcPolyMeshDetail detail;
     if (!rcBuildPolyMeshDetail(&ctx, mesh, compact, 3.0f, 0.25f, detail))
@@ -492,7 +502,8 @@ static bool world_corridor(const dtNavMesh *nav, dtPolyRef start, dtPolyRef end,
                 continue;
             float point[3];
             center(nextTile, nextPoly, point);
-            float cost = item.cost + distance(current, point);
+            float cost = item.cost + distance(current, point) *
+                         .5f * (travelCost(poly->getArea()) + travelCost(nextPoly->getArea()));
             auto it = nodes.find(next);
             if (it != nodes.end() && cost >= it->second.cost)
                 continue;
@@ -512,6 +523,8 @@ API int query_cluster_path(const dtNavMesh *nav, const ClusterGraph *graph, cons
     if (dtStatusFailed(q.init(nav, 65535)))
         return -1;
     dtQueryFilter filter;
+    for (int area = GenericFloor; area <= Footpath; ++area)
+        filter.setAreaCost(area, travelCost(static_cast<unsigned char>(area)));
     float nearA[3], nearB[3];
     dtPolyRef af = 0, bf = 0;
     if (dtStatusFailed(endpoint(q, filter, start, af, nearA)) ||

@@ -44,6 +44,8 @@ def bake(base, fine, out):
     with ZipFile(a) as coarse, ZipFile(b) as detail:
         m = json.loads(coarse.read("manifest.json"))
         fm = json.loads(detail.read("manifest.json"))
+        if m.get("walkMaterialVersion") != fm.get("walkMaterialVersion"):
+            raise ValueError("different pedestrian surface policies")
         for k in (
             "geometrySha256",
             "bounds",

@@ -76,21 +76,39 @@ class PlannerServer(ThreadingHTTPServer):
     request_queue_size = 64
 
 
-def serve(folder, port, adapter=None):
+def pedestrian_release(folder):
+    selection = folder / "pedestrian-release.json"
+    if not selection.is_file():
+        return folder
+    name = json.loads(selection.read_bytes())["release"]
+    if not isinstance(name, str) or not name or not all(
+        ch.isascii() and (ch.isalnum() or ch in "_-") for ch in name
+    ):
+        raise ValueError("invalid pedestrian release name")
+    return folder / "pedestrian-releases" / name
+
+
+def serve(folder, port, adapter=None, *, walk_folder=None):
+    walk_folder = pedestrian_release(folder) if walk_folder is None else walk_folder
     with ExitStack() as stack:
         nets = {
-            mode: stack.enter_context(Network(folder, mode, adapter=adapter))
-            for mode in ("drive", "walk")
+            "drive": stack.enter_context(Network(folder, "drive", adapter=adapter)),
+            "walk": stack.enter_context(
+                Network(walk_folder, "walk", adapter=adapter if walk_folder == folder else None)
+            ),
         }
-        if nets["drive"].meta["geometrySha256"] != nets["walk"].meta["geometrySha256"]:
+        if any(
+            nets["drive"].meta[key] != nets["walk"].meta[key]
+            for key in ("geometrySha256", "placementRevision", "bounds")
+        ):
             raise ValueError("travel modes are from different source revisions")
-        trip = TripPlanner(nets, folder)
+        trip = TripPlanner(nets, folder, walk_folder=walk_folder)
         accessible = TaxiSurface(trip)
         files = {
             "/": Path(__file__).with_name("world_nav_planner.html"),
             "/world.png": folder / "atlas/ariane-world-top.png",
             "/drive.png": folder / "drive-overlay.png",
-            "/walk.png": folder / "walk-overlay.png",
+            "/walk.png": walk_folder / "walk-overlay.png",
         }
         for file in files.values():
             if not file.is_file():
@@ -105,7 +123,8 @@ def serve(folder, port, adapter=None):
             "fixed-pair-recheck.json",
             "world-gap-review.json",
         ):
-            path = folder / name
+            location = walk_folder if name == "world-navigation-audit.json" else folder
+            path = location / name
             if path.is_file():
                 files["/" + name] = path
         for district in ("", "batyrevo/", "uzhny/"):
@@ -121,7 +140,7 @@ def serve(folder, port, adapter=None):
                 path = folder / relative
                 if path.is_file():
                     files["/" + relative] = path
-        audit_file = folder / "world-navigation-audit.json"
+        audit_file = walk_folder / "world-navigation-audit.json"
         if audit_file.is_file():
             audit = json.loads(audit_file.read_bytes())
             for mode, network in nets.items():
@@ -141,7 +160,8 @@ def serve(folder, port, adapter=None):
         mixed_file = folder / "mixed-validation.json"
         if mixed_file.is_file():
             mixed = json.loads(mixed_file.read_bytes())
-            if all(mixed["meshes"].get(m) == checksum(folder / f"{m}.nav.zip") for m in nets):
+            mesh_files = {"drive": folder / "drive.nav.zip", "walk": walk_folder / "walk.nav.zip"}
+            if all(mixed["meshes"].get(mode) == checksum(file) for mode, file in mesh_files.items()):
                 examples["trip"] = {key: mixed[key] for key in ("start", "vehicle", "end")}
                 examples["taxi"] = {key: mixed[key] for key in ("start", "end")}
 
@@ -401,5 +421,6 @@ if __name__ == "__main__":
     parser.add_argument("--folder", type=Path, required=True)
     parser.add_argument("--port", type=int, default=8817)
     parser.add_argument("--adapter", type=Path)
+    parser.add_argument("--walk-folder", type=Path, help="Preview a separately baked pedestrian release")
     args = parser.parse_args()
-    serve(args.folder, args.port, args.adapter)
+    serve(args.folder, args.port, args.adapter, walk_folder=args.walk_folder)

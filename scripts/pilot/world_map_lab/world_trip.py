@@ -11,7 +11,7 @@ from scripts.pilot.world_map_lab.world_navmesh import checksum
 
 
 class TripPlanner:
-    def __init__(self, networks, folder):
+    def __init__(self, networks, folder, *, walk_folder=None):
         self.drive, self.walk = networks["drive"], networks["walk"]
         with np.load(folder / "drive-faces.npz", allow_pickle=False) as cache:
             if str(cache["geometry"]) != self.drive.meta["geometrySha256"]:
@@ -38,12 +38,18 @@ class TripPlanner:
 
         self._cached_taxi = lru_cache(maxsize=24)(self._plan_taxi)
         self.transfers = {}
-        file = folder / "taxi-transfers.npz"
+        walk_folder = folder if walk_folder is None else walk_folder
+        file = walk_folder / "taxi-transfers.npz"
+        if walk_folder != folder and not file.is_file():
+            raise ValueError("pedestrian release lacks its transfer index")
         if file.is_file():
             with np.load(file, allow_pickle=False) as cache:
                 if int(cache["version"]) != 1 or any(
-                    str(cache[key]) != checksum(folder / name)
-                    for key, name in (("walkMesh", "walk.nav.zip"), ("driveMesh", "drive.nav.zip"))
+                    str(cache[key]) != checksum(mesh_file)
+                    for key, mesh_file in (
+                        ("walkMesh", walk_folder / "walk.nav.zip"),
+                        ("driveMesh", folder / "drive.nav.zip"),
+                    )
                 ):
                     raise ValueError("taxi transfers belong to another world")
                 portals = cache["points"]

@@ -64,6 +64,8 @@ def library(path):
     }
     if hasattr(dll, "move_body"):
         signatures["move_body"] = (integer, [void, FLOATS, FLOATS, FLOATS])
+    if hasattr(dll, "walk_material_version"):
+        signatures["walk_material_version"] = (integer, [])
     if hasattr(dll, "bake_cell_size"):
         signatures["bake_cell_size"] = (real, [integer])
     if hasattr(dll, "collect_labels"):
@@ -143,6 +145,25 @@ def build(args):
     data = np.memmap(source, dtype="u1", mode="r")
     index, chunks = spatial_index(data, bounds)
     dll = library(folder / "ariane-nav.dll")
+    refined = set()
+    refinements = getattr(args, "preserve_walk_refinements", None)
+    if refinements:
+        with ZipFile(refinements) as earlier:
+            previous = json.loads(earlier.read("manifest.json"))
+        if (
+            previous["mode"] != "walk"
+            or previous["geometrySha256"] != geo["geometrySha256"]
+            or previous["bounds"] != bounds
+            or previous["tileWidth"] != TILE
+            or previous.get("fineCell") != 0.125
+            or args.walk_cell != 0.25
+        ):
+            raise ValueError("walk refinement grid differs from the source")
+        refined = {tuple(x) for x in previous["refinedTiles"]}
+    if "walk" in args.modes and (
+        not hasattr(dll, "walk_material_version") or dll.walk_material_version() != 1
+    ):
+        raise ValueError("rebuild the native adapter for pedestrian surface costs")
     for mode in args.modes:
         fine = mode == "walk" and getattr(args, "walk_cell", 0.25) == 0.125
         if not hasattr(dll, "bake_cell_size") or dll.bake_cell_size(
@@ -154,7 +175,7 @@ def build(args):
             selected = [
                 chunks[i]
                 for i in ids
-                if chunks[i][2] in ((0, 1, 2, 3) if mode == "drive" else (0, 1, 2))
+                if chunks[i][2] in ((0, 1, 2, 3) if mode == "drive" else (0, 1, 2, 3, 4, 5))
             ]
             bands = []
             for _, _, _, low, high in sorted(
@@ -195,7 +216,7 @@ def build(args):
                 lo,
                 hi,
                 layer,
-                2 if fine else int(mode == "drive"),
+                2 if fine or (mode == "walk" and (tx, ty) in refined) else int(mode == "drive"),
                 ct.byref(pointer),
                 ct.byref(size),
             )
@@ -247,6 +268,10 @@ def build(args):
                 "tiles": tiles,
                 "polygons": polygons,
             }
+            if mode == "walk":
+                meta["walkMaterialVersion"] = 1
+                if refined:
+                    meta.update(fineCell=0.125, refinedTiles=sorted(refined))
             archive.writestr("manifest.json", json.dumps(meta))
         temp.replace(dest)
         with Network(folder, mode) as network:
@@ -277,6 +302,11 @@ class Network:
             self.meta = json.loads(archive.read("manifest.json"))
             if self.meta["format"] != "sphere.exterior-navmesh.v1" or self.meta["mode"] != mode:
                 raise ValueError("unexpected mesh manifest")
+            if self.meta.get("walkMaterialVersion") and (
+                not hasattr(self.dll, "walk_material_version")
+                or self.dll.walk_material_version() != self.meta["walkMaterialVersion"]
+            ):
+                raise ValueError("native adapter does not implement this pedestrian surface policy")
             b = self.meta["bounds"]
             self.handle = self.dll.create_nav(b[0], b[3], max(1, self.meta["tiles"]))
             if not self.handle:
@@ -385,6 +415,11 @@ def main():
     b.add_argument("--road-report", required=True, type=Path)
     b.add_argument("--workers", type=int, default=2, choices=range(1, 9))
     b.add_argument("--modes", nargs="+", choices=["drive", "walk"], default=["drive", "walk"])
+    b.add_argument(
+        "--preserve-walk-refinements",
+        type=Path,
+        help="reuse the fine tile grid from a matching walk archive",
+    )
     b.add_argument("--walk-cell", type=float, choices=(0.125, 0.25), default=0.25)
     q = sub.add_parser("route")
     q.add_argument("--folder", required=True, type=Path)

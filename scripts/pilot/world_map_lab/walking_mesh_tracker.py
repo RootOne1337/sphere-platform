@@ -23,8 +23,11 @@ class WalkingMeshTracker:
         self.pending = self.refresh = self.track = None
         self.closed = False
         self.failed = None
+        self.attempts = 0
+        self.observation = None
         self.ready = threading.Event()
         self.last_submit = -math.inf
+        self.invalid_before = -math.inf
         self.thread = threading.Thread(target=self._worker, daemon=True)
         self.thread.start()
 
@@ -37,11 +40,19 @@ class WalkingMeshTracker:
             self.last_submit = now
             self.lock.notify()
 
-    def _solve(self, points, pixels, origin):
+    def invalidate(self):
+        """Drop tracks and any outstanding match belonging to the previous scene."""
+        with self.lock:
+            self.invalid_before = time.monotonic()
+            self.track = self.refresh = self.pending = None
+
+    def _solve(self, points, pixels, origin, *, verified_tracks=False):
         if len(points) < 24:
             return None
         solver = Locator.__new__(Locator)
-        solver.meta = dict(source="source-map-grid", independentScenery=True)
+        solver.meta = (
+            {} if verified_tracks else dict(source="source-map-grid", independentScenery=True)
+        )
         solver.origin = np.asarray(origin, dtype=np.float64)
         inliers = {}
         pose = solver.solve_with_camera(
@@ -80,9 +91,14 @@ class WalkingMeshTracker:
                         bgr, initial, stamp = self.pending
                         self.pending = None
                     obs = source_observation(
-                        page, [*initial["eye"], initial["heading"], -0.015], fr
+                        page,
+                        [*initial["eye"], initial["heading"], initial.get("pitch", -0.015)],
+                        fr,
                     )
                     if not obs:
+                        with self.lock:
+                            self.attempts += 1
+                            self.observation = {"supports": 0, "yaw": initial["heading"]}
                         continue
                     rgb, source_px, world = obs
                     query = cv2.warpAffine(
@@ -109,6 +125,14 @@ class WalkingMeshTracker:
                     xy = ((xy - [479.5, 269.5]) / zoom + [479.5, 269.5] + 0.5) / 1.5 - 0.5
                     _, idx = np.unique(np.floor(xy / 6).astype(int), axis=0, return_index=True)
                     solved = self._solve(world[ids[idx]], xy[idx], initial["eye"])
+                    with self.lock:
+                        self.attempts += 1
+                        self.observation = {
+                            "supports": 0 if not solved else solved[0]["supports"],
+                            "yaw": initial["heading"],
+                            "matches": len(idx),
+                            "ms": round(1000 * (time.monotonic() - stamp)),
+                        }
                     if not solved:
                         continue
                     pose, xyz, uv = solved
@@ -121,7 +145,8 @@ class WalkingMeshTracker:
                         cv2.resize(bgr, SIZE, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY
                     )
                     with self.lock:
-                        self.refresh = (gray, xyz, uv, pose, stamp, stamp)
+                        if stamp > self.invalid_before:
+                            self.refresh = (gray, xyz, uv, pose, stamp, stamp)
                 browser.close()
         except Exception as error:
             self.failed = repr(error)
@@ -158,6 +183,17 @@ class WalkingMeshTracker:
                 & (np.linalg.norm(back - uv, axis=1) < 0.85)
             )
             solved = self._solve(xyz[keep], moved[keep], prior["eye"])
+            # A freshly verified multi-surface view can temporarily reduce to its
+            # tracked facade. These are the same world points tracked both ways.
+            # Bound this exception to a short interval from the original refresh.
+            if not solved and now - baked < 1.25 and np.count_nonzero(keep) >= 60:
+                solved = self._solve(xyz[keep], moved[keep], prior["eye"], verified_tracks=True)
+                if solved and (
+                    solved[0]["supports"] < 45
+                    or math.dist(solved[0]["eye"], prior["eye"]) > 0.60
+                    or math.cos(solved[0]["heading"] - prior["heading"]) < 0.995
+                ):
+                    solved = None
             if not solved:
                 continue
             pose, xyz, uv = solved

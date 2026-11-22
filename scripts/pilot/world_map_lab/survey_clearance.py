@@ -58,7 +58,7 @@ def measure(row, data, index, chunks, origin=(-3072, 3584)):
         if mask.any():
             batch.extend(t[mask])
             kinds.extend([k] * int(mask.sum()))
-    t = np.asarray(batch, dtype=float)
+    t = np.asarray(batch, dtype=float).reshape(-1, 3, 3)
     kinds = np.asarray(kinds)
     cross = np.cross(t[:, 1] - t[:, 0], t[:, 2] - t[:, 0])
     normal = cross[:, 2] / np.maximum(1e-8, np.linalg.norm(cross, axis=1))
@@ -108,12 +108,17 @@ def measure(row, data, index, chunks, origin=(-3072, 3584)):
                 {
                     "kind": "primitive" if kinds[i] == 1 else "collision face",
                     "along": round(float(arr[:, 0].mean()), 2),
+                    "from": round(float(arr[:, 0].min()), 2),
+                    "to": round(float(arr[:, 0].max()), 2),
                     "height": round(float(arr[:, 2].max()), 2),
                 }
             )
     return {
         "profile": prof,
         "bodyIntersections": len(hits),
+        "blockingHeight": max((hit["height"] for hit in hits), default=0.0),
+        "blockedFrom": min((hit["from"] for hit in hits), default=None),
+        "blockedTo": max((hit["to"] for hit in hits), default=None),
         "firstIntersections": sorted(hits, key=lambda x: x["along"])[:6],
     }
 

@@ -8,7 +8,13 @@ from collections import Counter
 
 import pytest
 
-from scripts.pilot.world_map_lab.collect_ariane_nav_geometry import COLLISION, DRIVE, WATER, put
+from scripts.pilot.world_map_lab.collect_ariane_nav_geometry import (
+    COLLISION,
+    DRIVE,
+    FOOT,
+    WATER,
+    put,
+)
 from scripts.pilot.world_map_lab.world_navmesh import Network, build, checksum
 
 
@@ -55,6 +61,18 @@ def meshes(tmp_path_factory):
         put(write, COLLISION, deck(7, 53, 22, 69, 0), stats)
         put(write, COLLISION, deck(210, 53, 240, 69, 0), stats)
         put(write, DRIVE, deck(5, 65, 60, 75, 2), stats)
+        # Two sidewalk ends with a moderate paved detour across the top of a lawn.
+        put(write, COLLISION, deck(125, 86, 204, 124, 0), stats)
+        for strip in [
+            deck(128, 90, 134, 112, 0),
+            deck(128, 106, 200, 112, 0),
+            deck(194, 90, 200, 112, 0),
+        ]:
+            put(write, FOOT, strip, stats)
+        # Facing walkways separated by eight metres of lawn with a 50 m detour above.
+        put(write, COLLISION, deck(211, 83, 248, 125, 0), stats)
+        for strip in (deck(213, 86, 219, 121, 0), deck(227, 86, 233, 121, 0), deck(213, 115, 233, 121, 0)):
+            put(write, FOOT, strip, stats)
         put(write, COLLISION, deck(4, 85, 70, 105, 0), stats)
         put(write, WATER, deck(5, 86, 17, 104, 2), stats)
         put(write, WATER, deck(10, 38, 20, 54, 1499), stats)
@@ -196,3 +214,33 @@ def test_reachable_map_does_not_include_an_isolated_pavement(meshes):
             assert index(225, 64) == 0
         with pytest.raises(ValueError):
             surface.png([25, 95, 100])
+
+
+def test_walk_accepts_worthwhile_lawn_shortcuts_and_prefers_a_nearby_sidewalk(meshes):
+    with Network(meshes, "walk") as foot:
+        mild = foot.route([131, 102, 0], [197, 102, 0])
+        assert mild["status"] == "complete"
+        assert any(y >= 105 for _, y, _ in mild["path"])
+        # On the same unmarked floor a short cross-lawn link is still navigable.
+        across = foot.route([155, 92, 0], [160, 92, 0])
+        assert across["status"] == "complete"
+        assert across["length"] < 6
+        saving = foot.route([216, 90, 0], [230, 90, 0])
+        assert saving["status"] == "complete"
+        assert saving["length"] < 20
+
+
+def test_pedestrian_release_must_be_local_and_transfers_bound_to_it(tmp_path, meshes):
+    from scripts.pilot.world_map_lab.serve_world_navmesh import pedestrian_release
+    from scripts.pilot.world_map_lab.world_trip import TripPlanner
+
+    assert pedestrian_release(tmp_path) == tmp_path
+    marker = tmp_path / "pedestrian-release.json"
+    marker.write_text('{"release":"walk-v1"}')
+    assert pedestrian_release(tmp_path) == tmp_path / "pedestrian-releases" / "walk-v1"
+    marker.write_text('{"release":"../wrong"}')
+    with pytest.raises(ValueError, match="release"):
+        pedestrian_release(tmp_path)
+    with Network(meshes, "drive") as drive, Network(meshes, "walk") as walk:
+        with pytest.raises(ValueError, match="transfer index"):
+            TripPlanner({"drive": drive, "walk": walk}, meshes, walk_folder=tmp_path)
