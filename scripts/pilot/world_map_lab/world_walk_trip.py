@@ -125,6 +125,12 @@ class WalkTrip:
         station = float(self.arc[index] + u[index] * self.distances[index])
         remaining = float(self.arc[-1] - station)
         start = np.array([*eye[:2], projected[index, 2]])
+        if self.motion_origin and math.dist(self.motion_origin[1], eye[:2]) >= 0.35:
+            self.motion_origin = None
+        stalled = 0 if self.motion_origin is None else now - self.motion_origin[0]
+        if stalled >= 6:
+            return dict(reply, reason="no_motion", remaining=remaining)
+
         def point_at(lookahead):
             return np.array([
                 np.interp(min(self.arc[-1], station + lookahead), self.arc, col)
@@ -138,34 +144,44 @@ class WalkTrip:
                 and self.surface.step_supported(start, end)
             )
 
-        preferred = (point_at(distance) for distance in (1.75, 1.05, 0.55, 0.3))
-        aim = next((point for point in preferred if reachable(point)), None)
-        if aim is None:
+        def nearby_step(turns):
             # Small steer-around within the corridor. A floor-only sweep can
             # otherwise cut the corner of a walk polygon and hold the stick still.
             forward = point_at(0.55) - start
             angle = math.atan2(forward[1], forward[0])
             lane = projected[max(0, index - 1) : index + 2, :2]
-            for turn in (0.22, -0.22, 0.44, -0.44):
+            for turn in turns:
                 bearing = angle + turn
                 offset = np.array([0.5 * math.cos(bearing), 0.5 * math.sin(bearing), 0.0])
                 proposed = start + offset
                 if np.linalg.norm(lane - proposed[:2], axis=1).min() <= 0.65 and reachable(proposed):
-                    aim = proposed
-                    break
+                    return proposed
+            return None
+
+        recovering = stalled >= 0.9
+        aim = None
+        if recovering:
+            # A small camera-position error can put the pose on the opposite side
+            # of a nav-mesh edge. Try a different direction when motion stays flat.
+            turns = (-0.65, 0.65, -0.9, 0.9)
+            side = min(3, int((stalled - 0.9) / 0.9))
+            aim = nearby_step(turns[side:] + turns[:side])
         if aim is None:
-            self.motion_origin = None
+            preferred = (point_at(distance) for distance in (1.75, 1.05, 0.55, 0.3))
+            aim = next((point for point in preferred if reachable(point)), None)
+        if aim is None:
+            aim = nearby_step((0.22, -0.22, 0.44, -0.44))
+        if aim is None:
             return dict(reply, reason="walk_clearance_unknown", remaining=remaining)
         delta = aim - start
         error = math.remainder(math.atan2(delta[1], delta[0]) - heading, math.tau)
         if abs(error) > 0.34:
-            self.motion_origin = None
             return dict(reply, reason="walk_aligning", lookRadians=error, remaining=remaining)
-        if self.motion_origin is None or math.dist(self.motion_origin[1], eye[:2]) >= 0.35:
+        if self.motion_origin is None:
             self.motion_origin = now, eye[:2].copy()
-        elif now - self.motion_origin[0] >= 6:
-            return dict(reply, reason="no_motion", remaining=remaining)
-        pace = min(0.35, max(0.15, 0.26 * remaining)) * (1 - 0.32 * abs(error))
+        pace = min(0.25 if recovering else 0.35, max(0.15, 0.26 * remaining)) * (
+            1 - 0.32 * abs(error)
+        )
         return dict(
             reply,
             reason="walking",
